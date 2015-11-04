@@ -1,0 +1,250 @@
+NDRXCONFIG.XML(5)
+=================
+:doctype: manpage
+
+
+NAME
+----
+ndrxconfig.xml - EnduroX ATMI Application Domain configuration
+
+
+SYNOPSIS
+--------
+---------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+	<appconfig>
+		<sanity>SANITY_SECONDS</sanity>
+		<brrefresh>BRIDGE_REFRESH_TIME</brrefresh>
+		<restart_min>MIN_RESTART_TIME</restart_min>
+		<restart_step>RESTART_STEP</restart_step>
+		<restart_max>MAX_RESTART_TIME</restart_max>
+		<restart_to_check>NDRXD_RESTART_TO_CHECK</restart_to_check>
+		<gather_pq_stats>NDRXD_GATHER_PQ_STATS</gather_pq_stats>
+	</appconfig>
+	<defaults>
+		<min>MIN_SERVERS_DEFAULT</min>
+		<max>MAX_SERVERS_DEFAULT</max>
+		<autokill>AUTOKILL_DEFAULT</autokill>
+		<env>ENV_OVERRIDE_DEFAULT</env>
+		<start_max>MAX_STARTUP_TIME_DEFAULT</start_max>
+		<pingtime>PING_EVERY_TIME_DEFAULT</pingtime>
+		<ping_max>MAX_PING_TIME_DEFAULT</ping_max>
+		<end_max>MAX_SERVER_SHUTDOWN_TIME_DEFAULT</end_max>
+		<killtime>KILL_TIME_DEFAULT</killtime>
+		<exportsvcs>EXPORT_SERVICES_DEFAULT</exportsvcs>
+	</defaults>
+	<servers>
+		<server name="SERVER_BINARY_NAME">
+			<min>MIN_SERVERS_SRV</min>
+			<max>MAX_SERVERS_SRV</max>
+			<autokill>AUTOKILL_SRV</autokill>
+			<respawn>RESPAWN_SRV<respawn>
+			<env>ENV_OVERRIDE_SRV</env>
+			<start_max>MAX_STARTUP_TIME_SRV</start_max>
+			<pingtime>PING_EVERY_TIME_SRV</pingtime>
+			<ping_max>MAX_PING_TIME_SRV</ping_max>
+			<end_max>MAX_SERVER_SHUTDOWN_TIME_SRV</end_max>
+			<killtime>KILL_TIME_SRV</killtime>
+			<sleep_after>SECONDS_TO_SLEEP_AFTER_SRV_START</sleep_after>
+			<srvid>SERVER_ID</srvid>
+			<sysopt>ATMI_SERVER_SYSTEM_OPTIONS</sysopt>
+			<appopt>ATMI_SERVER_APPLICATION_OPTIONS</appopt>
+			<exportsvcs>ATMI_SERVER_EXPORT_SERVICES</exportsvcs>
+		</server>
+		...
+		<server name="SERVER_BINARY_NAME_N">
+			...
+		</server>
+	</servers>
+</endurox>
+---------------------------------------------------------------------
+
+
+DESCRIPTION
+-----------
+'ndrxconfig.xml' holds the application domain configuration. It describes the ATMI
+servers which needs to be started. Counts of the, how much to start. Also it
+describes sanity times i.e. period after which system sanity checks should be made.
+Also it describes time frames in which ATMI server should start or stop.
+Internal server ping can be configured here too.
+
+
+DEBUG CONFIGURATION FILE SYNTAX
+-------------------------------
+
+*SANITY_SECONDS*::
+	Number of seconds after which perform system sanity checks. This number
+	should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
+	is time by which 'ndrxd' sleeps periodically.
+*BRIDGE_REFRESH_TIME*::
+	Number of sanity units in which 'tpbridge' refresh should be send to other node.
+	If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
+	then period between bridge refreshes will be 10*2 = 20 seconds.
+*MIN_RESTART_TIME*::
+	Number of sanity units in which died server will be tried to start back. This is
+	minimal time, means that this time is applied in case if server was running and died.
+	If it is consecutive try, then RESTART_STEP is applied on this timer.	
+*RESTART_STEP*::
+	Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
+	Meaning that next try of restart will tried later that previous by this
+	number of sanity units.
+*MAX_RESTART_TIME*::
+	Max number of sanity units after which server will tried to restart.
+	After each consecutive ATMI server death, next reboot is tried
+	by 'MIN_RESTART_TIME'+'RESTART_STEP'*try_count. If this goes over the
+	'MAX_RESTART_TIME' then 'MAX_RESTART_TIME' is used instead.
+*NDRXD_RESTART_TO_CHECK*::
+	Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
+	mode. Within this time no sanity checks are perfomed, but instead "learning" mode
+	is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
+	If in this time ATMI server does not responds, then ATMI server is subject
+	of sanity checks.
+*NDRXD_GATHER_PQ_STATS*::
+        Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
+        stats for service queues. In future this might be used for automatic service starting
+        and stopping.
+*MIN_SERVERS_DEFAULT*::
+	Default minimum number of copies of the server which needs to be started automatically.
+	This can be overriden by 'MIN_SERVERS_SRV' per server.
+*MAX_SERVERS_DEFAULT*::
+	Max number of ATMI server copies per ATMI server entry. The difference between
+	MIN and MAX servers means the number of standby servers configured. They can be started
+	by hand with out system re-configuration. But they are not booted automatically at
+	system startup. You will have to start them with $ xadmin start -s <server_name>
+	or by $ xadmin start -i <server_id>. This can be overriden by
+	'MAX_SERVERS_SRV'.
+*AUTOKILL_DEFAULT*::
+	Should server be automatically killed (by sequence signal sequence 
+	-2, -15, -9) in case if server have been starting up too long, or
+	does not respond to pings too long, or it is performing shutdown
+	too long. This can be overriden by 'AUTOKILL_SRV' on per server
+	basis.
+*ENV_OVERRIDE_DEFAULT*::
+	Full path to file containing environment variable overrides.
+	see 'ex_envover(5)' for more details. This can be overriden
+	by per server basis by ENV_OVERRIDE_SRV. 
+	Both are optional settings.
+*MAX_STARTUP_TIME_DEFAULT*::
+	Max time (in sanity units) in which server should start up, i.e. send init info to
+	'ndrxd'. If during this time server have not initialized, it is being restarted. This
+	can be overriden by 'MAX_STARTUP_TIME_SRV'.
+*PING_EVERY_TIME_DEFAULT*::
+	Number of sanity units in which perform peridical server pings. This can be
+	overriden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
+*MAX_PING_TIME_DEFAULT*::
+	Number of sanity units, time in which server *must* respond to ping requests.
+	If there is no response from server within this time, then restart sequence is
+	initiated. This can be overriden by 'MAX_PING_TIME_SRV'.
+*MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
+	Maximum time in which shutdown of server must complete in sanity units.
+	If in given time server is not shutdown, then forced shutdown sequence
+	is started until server exits. This can be overriden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
+	on per server basis.
+*EXPORT_SERVICES_DEFAULT*::
+    Comma seperated list of services to be applied to all binaries which means the list of
+    services to be exported by tpbridge service to the node. This can be overriden by 
+    'ATMI_SERVER_EXPORT_SERVICES'.
+*KILL_TIME_DEFAULT*::
+	Time in sanity units after which to progress from first signal -2 to next signal
+	-15. And after -15 this time means when next -9 signal will be sent. This is used
+	if forced restart of forced shutdown was initiated by 'ndrxd'. This
+	can be overriden by 'KILL_TIME_SRV'.
+*SECONDS_TO_SLEEP_AFTER_SRV_START*::
+	Number of seconds to wait for next item to start after the server is launched.
+	This is useful in cases when for example we start bridge server, let it for some
+	seconds to connect to other node, then continue with other service startup.
+*SERVER_BINARY_NAME*::
+	ATMI server executable's name. The executable must be in $PATH.
+	This name cannot contain special symbols like path seperator '/'
+	and it cannot contains commas ','! Commas are used as internal
+	queue seperator combined with binary names.
+*SERVER_ID*::
+	Server ID. It is internal ID for server instance. For each seperate ATMI server
+	the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
+	than 1. In this case up till MAX servers, internally 'SERVER_ID' is incremented.
+	Thus for example if SERVER_ID is 200, and MAX_SERVERS_SRV is 5, then
+	following server IDs will be reserved: 200, 201, 202, 203, 204. The maximum server
+	id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
+*ATMI_SERVER_SYSTEM_OPTIONS*::
+	Command line system options passed to ATMI server. Following paramters are
+	used by EnduroX ATMI servers: '-N', boolean type. If present, then no services
+	will be advertised by server. In this case will be advertised only services specified
+	by '-s' flag. For example if server advertises SERVICE1, SERVICE2, SERVICE3, but '-N'
+	was specified, and '-sSERVICE3' is specified, then only service SERVICE3 will be 
+	advertised. The '-s' argument also can contain aliases for services, for example
+	'-sOTHERSVC:SERVICE2', then new service OTHERSVC will be advertised which
+	basically is the same SERVICE2 (same function used). '-s' and '-N' can be mixed.
+	'-s' can appear multiple times in system options.
+	Server binaries output is controlled via '-e LOG_FILE', which means
+	that stdout & stderr of server is dumped to LOG_FILE.
+	There are few internal params: param '-k' is just a random key
+	for shell scripts. Another internal param is Server ID which is automatically passed
+	to binary via '-i SERVER_ID'.
+*ATMI_SERVER_APPLICATION_OPTIONS*::
+	Application specific command line options. This follows content after sys options as:
+	'system options -- app options'.
+*ATMI_SERVER_EXPORT_SERVICES*::
+    EnduroX server specific list of services to be exported. This list is only for 
+    *tpbridge* servers.
+
+
+EXAMPLE
+-------
+Sample configuration:
+---------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+	<appconfig>
+		<sanity>10</sanity>
+		<brrefresh>6</brrefresh>
+		<restart_min>1</restart_min>
+		<restart_step>1</restart_step>
+		<restart_max>5</restart_max>
+		<restart_to_check>20</restart_to_check>
+	</appconfig>
+	<defaults>
+		<min>1</min>
+		<max>2</max>
+		<autokill>1</autokill>
+		<start_max>2</start_max>
+		<pingtime>1</pingtime>
+		<ping_max>4</ping_max>
+		<end_max>3</end_max>
+		<killtime>1</killtime>
+	</defaults>
+	<servers>
+		<server name="tpevsrv">
+			<srvid>14</srvid>
+			<min>1</min>
+			<max>1</max>
+			<env>${NDRX_HOME}/tpevsrv_env</env>
+			<sysopt>-e /tmp/TPEVSRV -r</sysopt>
+		</server>
+		<server name="tpbridge">
+			<max>1</max>
+			<srvid>100</srvid>
+			<sysopt>-e /tmp/BRIDGE -r</sysopt>
+			<appopt>-n2 -r -i 0.0.0.0 -p 4433 -tA</appopt>
+		</server>
+	</servers>
+</endurox>
+---------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

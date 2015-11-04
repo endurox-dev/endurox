@@ -1,0 +1,79 @@
+$/* 
+$** Enduro/X internal UBF field table
+$**
+$** @file Exfields.h
+$** 
+$** -----------------------------------------------------------------------------
+$** Enduro/X Middleware Platform for Distributed Transaction Processing
+$** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+$** This software is released under one of the following licenses:
+$** GPL or ATR Baltic's license for commercial use.
+$** -----------------------------------------------------------------------------
+$** GPL license:
+$** 
+$** This program is free software; you can redistribute it and/or modify it under
+$** the terms of the GNU General Public License as published by the Free Software
+$** Foundation; either version 2 of the License, or (at your option) any later
+$** version.
+$**
+$** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+$** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+$** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+$**
+$** You should have received a copy of the GNU General Public License along with
+$** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+$** Place, Suite 330, Boston, MA 02111-1307 USA
+$**
+$** -----------------------------------------------------------------------------
+$** A commercial use license is available from ATR Baltic, SIA
+$** contact@atrbaltic.com
+$** -----------------------------------------------------------------------------
+$*/
+
+$#ifndef __EXFIELDS_H
+$#define __EXFIELDS_H
+
+*base 100
+
+#NAME		ID	TYPE	FLAG	COMMENT
+#----		--	----	----	-------
+# Service name for UD
+SRVCNM		1	string	-	Service name to be called
+
+# Event subsystem related
+EV_FLAGS        4       long    -       Event subscription flags
+EV_MASK         5       string  -       Event subscription mask
+EV_FILTER       6       string  -       Event subscription filter
+EV_SRVCNM	7	string	-	Event subscription service name
+EV_SUBSNR       8       long    -       Event subscriber number
+
+# EnduroXD monitor
+EXDM_RESTARTS   15      long    -       ndrxd restarts done
+# Transaction manager specific fields
+TMCMD           20      char    -       Transaction Manager Command code
+TMXID           21      string  -       XID used for TM exchange
+TMRMID          23      short   -       Resource Manager ID - branch id (master)
+TMNODEID        22      short   -       Transaction Manager Node id
+TMSRVID         24      short   -       Server ID of Transaction Manager
+TMKNOWNRMS      25      string  -       List of known Resource Managers involved in tx
+# Error handling for XA:
+TMERR_CODE       30      short   -       Error code returned by TM (0 - OK)
+TMERR_REASON     31      short   -       Reason code (0 - not specific)
+TMERR_MSG        32      string  -       Error message returned by TM
+
+# Initiator
+TMPROCESSID     50       string  -       Process ID starting the transaction
+TMCALLERRM      51       short   -       Caller's resource manager
+TMTXTOUT        52       long    -       Transaction timeout value (seconds)
+TMTXTOUT_LEFT   53       long    -       Time left for transaction till timeout
+TMTXSTAGE       54       short   -       Transaction stage, where we are currenlty
+TMTXRMID        55       short   M       Resource manager id (grpno)
+TMTXRMSTATUS    56       char    M       Resource manager status
+TMTXRMERRCODE   57       long    M       Resource manager error code associated
+TMTXRMREASON    58       short   M       Reason code associated with RM
+TMTXTRYCNT      59       long    -       Transaction try count
+TMTXTRYMAXCNT   60       long    -       Transaction try count, max
+TMTXFLAGS       61       long    -       Various TM flags...
+
+$#endif
+

@@ -1,0 +1,315 @@
+/* 
+** Enduro/X Deamon definitions
+**
+** @file ndrxd.h
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or ATR Baltic's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from ATR Baltic, SIA
+** contact@atrbaltic.com
+** -----------------------------------------------------------------------------
+*/
+#ifndef NDRXD_H
+#define	NDRXD_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*---------------------------Includes-----------------------------------*/
+#include <sys/param.h>
+#include <atmi.h>
+#include <atmi_int.h>
+#include <ndrxdcmn.h>
+#include <ntimer.h>
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+#define PARSE_SECTION_FAIL         FAIL
+#define PARSE_SECTION_CONFIG      0
+#define PARSE_SECTION_SERVERS     1
+
+
+#define COMMAND_WAIT_DEFAULT        2 /* seconds */
+    
+    
+#define RESPAWN_CNTR_MAX            1000
+    
+#define         DEF_SRV_STARTWAIT         30      /* Default process startup time */
+#define         DEF_SRV_STOPWAIT        30      /* Default process shutdown time */
+    
+#define         SANITY_CNT_START            0   /* Reset value of cycle counter */
+    
+#define         MAX_SERVICE_LIST            1024    /* MAX list of exportsvcs */
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Type defintion for *SERVER section entry
+ */
+typedef struct conf_server_node conf_server_node_t;
+struct conf_server_node
+{
+    char binary_name[MAXTIDENT+1]; /* Name of the binary */
+    int srvid;
+    int min;
+    int max;
+    int autokill;
+    char env[PATH_MAX]; /* Environment override file */
+    
+    int start_max;  /* Max process startup time, if no server info in time
+                     * process will be killed. */
+    int pingtime;   /* ping servers every X seconds (divided by sanity counter) */
+    int ping_max;   /* max time in which server must respond, otherwise it will be killed */
+    int end_max;    /* Max time in which process should exit */
+    int killtime;   /* periodical time for signal sending */
+    /* list of services to export (for bridge, special). comma seperated list */
+    char exportsvcs[MAX_SERVICE_LIST]; 
+    int sleep_after;
+    char SYSOPT[PATH_MAX/2 - 8 ]; /* take off -i xxxxx PID */
+    char APPOPT[PATH_MAX/2];
+    char clopt[PATH_MAX];
+    /* Linked list */
+    conf_server_node_t *prev;
+    conf_server_node_t *next;
+};
+
+/**
+ * Service node
+ */
+typedef struct pm_node_svc pm_node_svc_t;
+struct pm_node_svc
+{
+    svc_inf_t svc;
+    pm_node_svc_t *prev;
+    pm_node_svc_t *next;
+};
+/**
+ * Process Model node.
+ * Will be present in simple linked list.
+ */
+typedef struct pm_node pm_node_t;
+struct pm_node
+{
+    conf_server_node_t *conf; /* <<< This can be NULL?  */
+    char binary_name[MAXTIDENT+1]; /* Name of the binary*/
+    int srvid;
+    char clopt[PATH_MAX - 128]; /* take off -i xxxxx PID and some key  */
+    long state;             /* process state code (current)  */
+    long reqstate;          /* Requested state               */
+    short autostart;        /* Start automatically after "start" cmd */
+    int exec_seq_try;       /* Sequental start try           */
+    long rsptimer;           /* Sanity cycle counter for (start/ping/stop)     */
+    long pingtimer;    /* Timer which counts ping intervals              */
+    n_timer_t pingroundtrip; /* Ping  roundtrip tipe         */
+    int pingseq;            /* Last ping sequence sent       */
+            
+    int num_term_sigs;      /* Number of times to send term sig, before -9 */
+    long last_sig;          /* Time when signal was sent     */
+    int autokill;           /* Kill the process if not started in time */
+    int killreq;            /* process kill is requested (long startup, 
+                             * no ping, long shutdown) */
+    __pid_t pid;            /* process PID                   */
+    long state_changed;     /* Timer for state changed       */
+    pm_node_svc_t   *svcs;  /* list of services              */
+    int flags;              /* Flags sent by server info     */
+    short   nodeid;         /* other node id, if this is bridge */
+    /* Linked list */
+    pm_node_t *prev;
+    pm_node_t *next;
+};
+
+/**
+ * PID hash entry (we will have linked list for each entry.
+ */
+typedef struct pm_pidhash pm_pidhash_t;
+struct pm_pidhash
+{
+    __pid_t pid;            /* process PID          */
+    pm_node_t *p_pm;
+    pm_pidhash_t *prev;
+    pm_pidhash_t *next;
+};
+
+/**
+ * Full configuration handler
+ */
+typedef struct
+{
+    /* Active monitor configuration */
+    conf_server_node_t *monitor_config;
+    int default_min;
+    int default_max;
+    int default_autokill; /* Kill process which have not started in time */
+    char default_env[PATH_MAX]; /* Default env file (might be empty!)*/
+    
+    /* Reloadable system configuration */
+    int sanity; /* Sanity checking */
+   
+    int restart_min; /* restart min wait sec */
+    int restart_step; /* restart stepping, sec */
+    int restart_max; /* restart max wait time, sec */
+    
+    int default_start_max;  /* Max process startup time, if no server info in time
+                             * process will be killed. */
+    int default_pingtime;   /* ping servers every X seconds (divided by sanity counter) */
+    int default_ping_max;   /* max time in which server must respond, otherwise it will be killed */
+    int default_end_max;    /* Max time in which process should exit */
+    int default_killtime;   /* periodical time for signal sending */
+    /* Special config param for bridge services - which services to export */
+    char default_exportsvcs[MAX_SERVICE_LIST]; 
+    
+    int qrmdelay;   /* queue remove delay (i.e. remove only after this time + check shm on removal!) */
+    
+    int restart_to_check;    /* Seconds after re-attach sanity & spawn checks will be done */  
+    
+    int checkpm;             /* Time for sending info to self about process exit. */
+    int brrefresh;           /* Bridge refresh timer */
+    
+    int srvstartwait;        /* Time to wait for server startup (after report in progress) */
+    int srvstopwait;         /* Time to wait for server shutdown (after report in progress)*/
+    
+    int gather_pq_stats;     /* if set to 1, then queue stats will be gathered */
+    
+} config_t;
+
+/**
+ * Standard command arguments
+ */
+typedef struct
+{
+    char    args[CMD_ARG_MAX+1];
+    int     cmd;
+} cmd_arg_t;
+
+/**
+ * Daemon configuration
+ */
+typedef struct
+{
+    char    *qprefix;
+    char    *config_file; /* Pointer to configuration file path... */
+    long    cmd_wait_time;  /* Command wait time in nano-seconds (1/(10^9)) */
+    char    *pidfile;       /* PID file to open... */
+    long    stat_flags;     /* Program state flags */
+    char    *qpath;         /* Path to the queue directory */
+    /* NDRXD restart: */
+    short restarting;  /* In restart mode, after restart_to_check expired, 
+                        * process becomes in normal mode */
+    n_timer_t time_from_restart; /* Time counter, how long we are restarting/learning */
+} sys_config_t;
+
+/**
+ * State of the command processor
+ */
+typedef struct
+{
+    mqd_t listenq;                       /* The queue on which  */
+    char  listenq_str[NDRX_MAX_Q_SIZE+1];
+    int   context;                      /* Current context */
+} command_state_t;
+/*---------------------------Globals------------------------------------*/
+
+extern config_t     *G_app_config;          /* Running application config   */
+extern sys_config_t  G_sys_config;          /* Self daemon configuration    */
+
+/* Active configuration:
+ * externs from appconfig.c
+ */
+extern char *G_config_file;
+extern pm_node_t *G_process_model;
+extern pm_node_t **G_process_model_hash;
+extern pm_pidhash_t **G_process_model_pid_hash;
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+/* cmd processor: */
+extern int command_wait_and_run(int *finished, int *abort);
+extern int get_cmdq_attr(struct mq_attr *attr);
+
+/* pmodel */
+extern int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid);
+extern pm_node_t * get_pm_from_srvid(int srvid);
+extern int remove_service_q(char *svc);
+extern char * get_srv_admin_q(pm_node_t * p_pm);
+
+/* Configuration */
+extern int load_config(config_t *config, char *config_file);
+extern int load_active_config(config_t **app_config, pm_node_t **process_model,
+            pm_node_t ***process_model_hash, pm_pidhash_t ***process_model_pid_hash);
+/* test config or reload */
+extern int test_config(int reload, command_call_t * call, void (*p_reload_error)(command_call_t * call,
+                    int srvid, char *old_bin, char *new_bin, int error));
+extern int build_process_model(conf_server_node_t *p_server_conf,
+                                pm_node_t **p_pm_model, /* proces model linked list */
+                                pm_node_t **p_pm_hash/* Hash table models */);
+extern int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm);
+extern pm_pidhash_t * pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid);
+extern int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid);
+extern void sign_chld_handler(int sig);
+extern int check_child_exit(void);
+extern int cmd_close_queue(void);
+
+extern int load_new_env(pm_node_t *p_pm);
+
+/* Sanity & restart */
+extern int do_sanity_check(void);
+extern int self_notify(srv_status_t *status, int block);
+extern int remove_server_queues(char *process, __pid_t pid, int srv_id, char *rplyq);
+
+/* Restart */
+extern int do_restart_actions(void);
+extern int do_restart_chk(void);
+
+/* Startup */
+extern int app_startup(command_startstop_t *call,
+        void (*p_startup_progress)(command_startstop_t *call, pm_node_t *pm, int calltype),
+        long *p_processes_started); /* have some progress feedback */
+extern int is_srvs_down(void);
+
+/* Error handling API */
+extern void NDRXD_error (char *str);
+extern void NDRXD_set_error(int error_code);
+extern void NDRXD_set_error_msg(int error_code, char *msg);
+extern void NDRXD_set_error_fmt(int error_code, const char *fmt, ...);
+extern void NDRXD_unset_error(void);
+extern int NDRXD_is_error(void);
+extern void NDRXD_append_error_msg(char *msg);
+extern int * _ndrxd_getNDRXD_errno_addr (void);
+extern char * ndrxd_strerror (int err);
+#define ndrxd_errno	(*_ndrxd_getNDRXD_errno_addr())
+
+/* Advertise & unadvertise */
+extern int cmd_xadunadv (command_call_t * call, char *data, size_t len, int context);
+extern int cmd_srvunadv (command_call_t * call, char *data, size_t len, int context);
+extern int cmd_srvadv (command_call_t * call, char *data, size_t len, int context);
+extern int cmd_xadreadv (command_call_t * call, char *data, size_t len, int context);
+
+
+extern int readv_request(int srvid, char *svc);
+extern char * get_srv_admin_q(pm_node_t * p_pm);
+public int pq_run_santiy(int run_hist);
+#ifdef	__cplusplus
+}
+#endif
+
+#endif	/* NDRXD_H */
+

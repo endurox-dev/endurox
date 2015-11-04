@@ -1,0 +1,163 @@
+*** Configure kernel params ***
+1. Configure system limits
+cat << EOF >> /etc/security/limits.conf
+
+*               soft    msgqueue        -1
+*               hard    msgqueue        -1
+
+*               soft    nofile  1024
+*               hard    nofile  65536
+
+
+EOF
+
+
+2. Configure queue params
+$ cat << EOF >  /etc/rc.local
+# Mount the /dev/mqueue
+mkdir /dev/mqueue
+mount -t mqueue none /dev/mqueue
+echo 10000 > /proc/sys/fs/mqueue/msg_max
+echo 32000 > /proc/sys/fs/mqueue/msgsize_max
+echo 10000 > /proc/sys/fs/mqueue/queues_max
+
+exit 0
+EOF
+
+
+*** Install distributed dependencies ***
+cd endurox/ThirdParity/c-unit-tests
+tar -xzvf cgreen-1.0.0-beta2.tar.gz
+mv cgreen-1.0.0-beta2 cgreen
+cd cgreen
+cmake ../cgreen -DLIB_INSTALL_DIR=/usr/lib -DINCLUDE_INSTALL_DIR=/usr/include
+make
+sudo make install
+
+*** Gsoap
+Install from ThirdParty (otherwise problems with IPV6)
+cd endurox/ThirdParity/web_services
+unzip gsoap_2.8.8.zip
+cd gsoap-2.8
+./configure
+make
+sudo make install
+
+
+*** Installing build dependencies ***
+$ sudo -s
+apt-get install mono-dmcs mono-xsp4 libxml2-utils indent asciidoc dblatex libxml2-dev fop libmono-microsoft-build-tasks-v4.0-4.0-cil apache2-utils cmake dia flex bison  gcc g++ subversion libz-dev libssl-dev libcrypto++9 libcrypto++-dev libgpgme11-dev
+*************************************
+*** Configure asciidoc/dia integration ***
+$ sudo -s
+$ mkdir /etc/asciidoc/filters/dia
+$ cat << EOF > /etc/asciidoc/filters/dia/dia-filter.conf
+#
+# AsciiDoc Dia filter configuration file.
+#
+# Version: 0.1
+
+[blockdef-listing]
+dia-style=template="dia-block",subs=(),posattrs=("style","file","target","size"),filter='dia -t png -e "{outdir={indir}}/{imagesdir=}{imagesdir?/}{target}" "{outdir}/{file}" {size?-s {size}} > /dev/null'
+
+[dia-block]
+template::[image-blockmacro]
+EOF
+*************************************
+*** Configure runtime_home
+
+cat << EOF > $HOME/ndrx_home
+#!/bin/bash
+
+# Where app domain lives
+export NDRX_APPHOME=$HOME/projects/endurox
+# Where NDRX runtime lives
+export NDRX_HOME=$HOME/projects/endurox/dist/bin
+# Debug config too
+export NDRX_DEBUG_CONF=$HOME/projects/endurox/debug.conf
+# NDRX config too.
+export NDRX_CONFIG=$HOME/projects/endurox/ndrxd/ndrxconfig.xml
+
+# For PY testing...
+export PATH=$PATH:$HOME/projects/endurox/py/tuxmodule-python2/test:$HOME/projects/endurox:$HOME/projects/endurox/dist/bin
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/projects/endurox/dist/lib
+export export FLDTBLDIR=$HOME/projects/endurox/ubftest/tuxfbuf
+EOF
+
+chmod +x $HOME/ndrx_home
+
+
+*** NETBEANS
+If you develop in Gnome session, then do `export DESKTOP_SESSION=gnome' before run ide.
+
+**************** CENTOS 6.0 notes ******************
+yum install subversion
+yum install asciidoc
+yum install libssl
+yum install openssl-dev
+yum install openssl
+yum install openssl-devel.x86_64
+yum install libgpgme11-dev
+yum install uuid-dev <<?
+
+# Mono build deps:
+
+yum -y install httpd httpd-devel make glib2-devel libpng-devel libjpeg-devel  giflib-devel libtiff-devel libX11-devel gcc* fontconfig-devel bison gettext bzip2   libtool automake autoconf wget unzip
+mkdir mono
+cd mono
+wget http://download.mono-project.com/sources/mono/mono-2.10.2.tar.bz2
+wget http://download.mono-project.com/sources/xsp/xsp-2.10.2.tar.bz2
+wget http://download.mono-project.com/sources/mod_mono/mod_mono-2.10.tar.bz2
+wget http://download.mono-project.com/sources/libgdiplus/libgdiplus-2.10.tar.bz2
+
+tar -xjf mono-2.10.2.tar.bz2
+tar -xjf xsp-2.10.2.tar.bz2
+tar -xjf mod_mono-2.10.tar.bz2
+tar -xjf libgdiplus-2.10.tar.bz2
+
+tar -xjf mono-2.10.2.tar.bz2
+tar -xjf xsp-2.10.2.tar.bz2
+tar -xjf mod_mono-2.10.tar.bz2
+tar -xjf libgdiplus-2.10.tar.bz2
+
+cd libgdiplus-2.10
+./configure --prefix=/opt/mono
+make ; make install
+
+cd ../mono-2.10.2
+./configure  --prefix=/opt/mono --with-libgdiplus=/opt/mono
+make ; make install
+export PATH=$PATH:/opt/mono/bin
+export PKG_CONFIG_PATH=/opt/mono/lib/pkgconfig
+
+cd ../xsp-2.10.2
+./configure --prefix=/opt/mono
+make ; make install
+ls -alrt
+
+# Not mandatory, but lets put it there:
+cd ../mod_mono-2.10
+./configure --prefix=/opt/mono --with-mono-prefix=/opt/mono
+make ; make install
+mv /etc/httpd/conf/mod_mono.conf /etc/httpd/conf.d/
+
+yum install libxml2-devel.x86_64
+yum install gpgme-devel.x86_64
+
+# Stuff for docs, dblatex:
+wget http://dl.fedoraproject.org/pub/epel/5/i386/dblatex-0.2.8-2.el5.noarch.rpm
+rpm -i dblatex-0.2.8-2.el5.noarch.rpm
+
+yum install transfig.x86_64
+yum install ImageMagick.x86_64
+yum install passivetex.noarch
+rpm --nodeps -i dblatex-0.2.8-2.el5.noarch.rpm
+
+# Fix dblatex issues:
+cd /usr/lib/python2.6/site-packages
+ln -s ../../python2.4/site-packages/dbtexmf .
+
+
+
+

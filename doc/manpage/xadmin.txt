@@ -1,0 +1,122 @@
+XADMIN(8)
+========
+:doctype: manpage
+
+
+NAME
+----
+xadmin - EnduroX administration command line utility
+
+
+SYNOPSIS
+--------
+*xadmin* ['COMMAND'] ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+'xadmin' is command line interface to EnduroX. It is administration utility.
+Which is servers as communication interface between EnduroX ATMI local daemon
+and administrator. 'xadmin' can receive commands as parameter to 'xadmin'. It
+can read command from pipe (stdin). And it can work in interactive mode. In this
+case 'xadmin' is started with no paramters.
+
+'xadmin' is responsible to start idle instance of 'ndrxd'. After that 'xadmin'
+sends commands to 'ndrxd' and prints the response from daemon to the stdout in
+human readable form. Commands are sent and response from 'ndrxd' are received
+via POSIX Queues.
+
+
+COMMANDS
+-------
+*quit*::
+	Quit from command line utility
+*q*::
+	Same as quit
+*echo*::
+	Echo text back to terminal
+*idle*::
+	Enter daemon process in idle state (if not started)
+*help*::
+	Print help (this output)
+*stat*::
+	Prints general status information
+*ldcf*::
+	Load configuration
+*start* [-y] [-s <server>] [-i <srvid>]::
+	Start application domain. If config not loaded, it loads
+	configuration automatically. '-y' means do not ask for confirmation. '-s' means
+	ATMI servers binary name to be started, instead of whole application domain.
+	'-i' means start specific server instance.
+*psc*::
+	Print services
+*stop* [-y] [-c]|[-s <server>] [-i <srvid>]::
+	Stop application domain. '-y' means do not ask for confirmation. '-s' means
+	ATMI servers binary name to be stopped, instead of whole application domain.
+	'-i' means stop specific server instance. '-c' flag will shutdown 'ndrxd' deamon,
+	otherwise daemon keeps running.
+*sreload* [-y] [-s <server>] [-i <srvid>]::
+	Reload application domain - restart server instance by instance.
+	Configuration be loaded prior.
+	'-y' means do not ask for confirmation. '-s' means ATMI servers binary name 
+	to be reloaded, instead of whole application domain.
+	'-i' means restart specific server instance.
+*psc*::
+	
+*down* [-y]::
+	Force appserver shuttdown & resurce cleanup. RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!
+	Basically this kills all ATMI servers and EnduroX daemon. This does NOT remove client
+	processes.
+*at*::
+	Attached to ndrxd user session in progress
+*reload*::
+	Load new configuration
+*testcfg*::
+	Test new configuration
+*unadv* -i server_id -s service_name::
+	Un-advertise service. '-i' is server id, '-s' is service name to be
+	unadvertised.
+*readv* -i server_id -s service_name::
+	Re-advertise service. Might be usable if service Q was unlinked.
+	'-i  is server id, '-s' is service name to be re-advertised.
+*restart* [-y] [-s <server>] [-i <srvid>]::
+	Restart app or service (invokes start & stop with same args!). '-y'
+	makes to not to ask for confirmation. '-s' is server/binary name. '-i' is server ID.
+*-v*::
+	Print version info
+*ver*::
+	Print version info, same as -v
+*ppm*::
+	Print process model
+*psvc*::
+	Shared mem, print services
+*psrv*::
+	Shared mem, print servers
+*abort* [-y]::
+	Abort shutdown or startup operation in progress. '-y' do not ask for confirmation.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrxd(8)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

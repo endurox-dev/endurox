@@ -1,0 +1,162 @@
+MKFLDHDR(8)
+===========
+:doctype: manpage
+
+
+NAME
+----
+mkfldhdr - Generate C header files for UBF field defintions.
+
+
+SYNOPSIS
+--------
+*mkfldhdr* [-D dbglev, legacy] [-d target directory] [field table ...]
+
+
+DESCRIPTION
+-----------
+Program generates C header files from field table declaration tables.
+Field tables are declared as macros which later are translated into C header
+files. Field tables also are used in runtime in boolean expressions and
+also in dumping the buffer.
+
+There is special syntax within field tables.
+
+* Lines to be sent to C Header are declared as: '$'
+* The base number is declared as '*base NUMBER'. The number is logical field
+offset.
+* Empty lines are ignored.
+* '#' Is comment, which is ingored.
+* All other are treated as field name in start of the line.
+* Syntax for field definition is following: "FIELD_NAME	ID	TYPE	OCC	DESCRIPTION"
+where
+
+*FIELD_NAME*::
+	Is field UBF field name.
+*ID*::
+	Is relative field it whitin '*base'. '*base'+field ID must be bellow 'NDRX_UBFMAXFLDS' number
+	defined in environment. Max number is 33554432 (25 bit).
+
+*OCC*::
+	Occurrances, 1 - single field. M - maybe be multiple fields.
+*DESCRIPTION*::
+	Field description.
+
+Example input (testws.fd file):
+
+-----------------------------------------------------
+$/**
+$ * Web service test ud file.
+$ *
+$ * @file       testws.fd
+$ * @author     madars Vitolins
+$ * @copyright  madars Vitolins
+$ * @version    SVN: $Id$
+$ */
+
+$#ifndef __TEST_FD
+$#define __TEST_FD
+
+*base 1000
+
+T_STATCODE	0	long		1 Test field...
+T_STATMSG	1	string		1 Test field...
+T_ITEMSTOT	2	long		1 Test field...
+T_AMTSTRTOT	3	string		1 Test field...
+T_PAGESTOT	4	long		1 Test field...
+T_SHORT		5	short		1 Test field...
+T_CHAR		6	char		1 Test field...
+T_FLOAT		7	float		1 Test field...
+T_DOUBLE	8	double		1 Test field...
+T_STRING	9	string		1 Test field...
+T_USERNAME	10	string		1 Test field...
+T_PAGENUM	11	long		1 Test field...
+T_ITEMSPP	12	long		1 Test field...
+
+T_SOMEDATE	13	long		1 Test field...
+T_SRCHDATE	14	long		1 Test field...
+T_SRCHPRM1	15	string		1 Test field...
+T_SRCHPRM2	16	string		1 Test field...
+T_MYFIELDS	17	string		1 Test field...
+SRVCNM		18	string		1 Service name to call
+T_CONSTFIELD	19	string		1 This is constant.
+T_MYLONGFLDS	20	long		1 Long array test
+
+$#endif
+-----------------------------------------------------
+
+Example output after utility run (testws.fd.h):
+
+-----------------------------------------------------
+/**
+ * Web service test ud file.
+ *
+ * @file       testws.fd
+ * @author     madars Vitolins
+ * @copyright  madars Vitolins
+ * @version    SVN: $Id$
+ */
+#ifndef __TEST_FD
+#define __TEST_FD
+/*	fname	bfldid            */
+/*	-----	-----            */
+#define	T_STATCODE	((BFLDID32)33555432)	/* number: 1000	 type: long */
+#define	T_STATMSG	((BFLDID32)167773161)	/* number: 1001	 type: string */
+#define	T_ITEMSTOT	((BFLDID32)33555434)	/* number: 1002	 type: long */
+#define	T_AMTSTRTOT	((BFLDID32)167773163)	/* number: 1003	 type: string */
+#define	T_PAGESTOT	((BFLDID32)33555436)	/* number: 1004	 type: long */
+#define	T_SHORT	((BFLDID32)1005)	/* number: 1005	 type: short */
+#define	T_CHAR	((BFLDID32)67109870)	/* number: 1006	 type: char */
+#define	T_FLOAT	((BFLDID32)100664303)	/* number: 1007	 type: float */
+#define	T_DOUBLE	((BFLDID32)134218736)	/* number: 1008	 type: double */
+#define	T_STRING	((BFLDID32)167773169)	/* number: 1009	 type: string */
+#define	T_USERNAME	((BFLDID32)167773170)	/* number: 1010	 type: string */
+#define	T_PAGENUM	((BFLDID32)33555443)	/* number: 1011	 type: long */
+#define	T_ITEMSPP	((BFLDID32)33555444)	/* number: 1012	 type: long */
+#define	T_SOMEDATE	((BFLDID32)33555445)	/* number: 1013	 type: long */
+#define	T_SRCHDATE	((BFLDID32)33555446)	/* number: 1014	 type: long */
+#define	T_SRCHPRM1	((BFLDID32)167773175)	/* number: 1015	 type: string */
+#define	T_SRCHPRM2	((BFLDID32)167773176)	/* number: 1016	 type: string */
+#define	T_MYFIELDS	((BFLDID32)167773177)	/* number: 1017	 type: string */
+#define	SRVCNM	((BFLDID32)167773178)	/* number: 1018	 type: string */
+#define	T_CONSTFIELD	((BFLDID32)167773179)	/* number: 1019	 type: string */
+#define	T_MYLONGFLDS	((BFLDID32)33555452)	/* number: 1020	 type: long */
+#endif
+-----------------------------------------------------
+
+Note that program uses 'FIELDTBLS' and 'FLDTBLDIR' environment variables 
+for accessing field tables.
+
+OPTIONS
+-------
+*-D* 'DEBUG_LEVEL'::
+Not used. Left for capablity with Tuxedo.
+
+*-d*::
+Directory where to dump the generated header files.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*NON_ZERO*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ex_overview*, *ex_env(5)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

@@ -1,0 +1,141 @@
+/* 
+**
+** @file test_readwrite.c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or ATR Baltic's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from ATR Baltic, SIA
+** contact@atrbaltic.com
+** -----------------------------------------------------------------------------
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <cgreen/cgreen.h>
+#include <ubf.h>
+#include <ndrstandard.h>
+#include <string.h>
+#include "test.fd.h"
+#include "ubfunit1.h"
+
+
+/**
+ * Test - Test buffer read/write
+ */
+void test_readwrite(void)
+{
+    char fb[1024];
+    UBFH *p_ub = (UBFH *)fb;
+    char fb2[1024];
+    UBFH *p_ub2 = (UBFH *)fb2;
+    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+
+    /* Load test stuff */
+    set_up_dummy_data(p_ub);
+    open_test_temp("wb");
+
+    assert_equal(Bwrite(p_ub, M_test_temp_file), SUCCEED);
+    close_test_temp();
+
+    /* Now read the stuff in second buffer */
+    open_test_temp_for_read("rb");
+    assert_equal(Bread(p_ub2, M_test_temp_file), SUCCEED);
+
+    close_test_temp();
+    remove_test_temp();
+
+    /* Now compare the buffers */
+    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
+    /* run check on data */
+    do_dummy_data_test(p_ub2);
+}
+
+/**
+ * Dest buffer from read too short
+ */
+void test_readwrite_err_space(void)
+{
+    char fb[1024];
+    UBFH *p_ub = (UBFH *)fb;
+    char fb2[128];
+    UBFH *p_ub2 = (UBFH *)fb2;
+    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+
+    /* Load test stuff */
+    set_up_dummy_data(p_ub);
+    open_test_temp("wb");
+
+    assert_equal(Bwrite(p_ub, M_test_temp_file), SUCCEED);
+    close_test_temp();
+
+    /* Now read the stuff in second buffer */
+    open_test_temp_for_read("rb");
+    assert_equal(Bread(p_ub2, M_test_temp_file), FAIL);
+    assert_equal(Berror, BNOSPACE);
+
+    close_test_temp();
+    remove_test_temp();
+}
+
+/**
+ * Test unix error on bad file descriptor
+ */
+void test_readwrite_invalid_descr(void)
+{
+    char fb[1024];
+    UBFH *p_ub = (UBFH *)fb;
+    char fb2[128];
+    UBFH *p_ub2 = (UBFH *)fb2;
+    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+
+    /* Load test stuff */
+    set_up_dummy_data(p_ub);
+    open_test_temp("r");
+
+    assert_equal(Bwrite(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Berror, BEUNIX);
+    close_test_temp();
+
+    /* Now read the stuff in second buffer */
+    open_test_temp_for_read("w");
+    assert_equal(Bread(p_ub2, M_test_temp_file), FAIL);
+    assert_equal(Berror, BEUNIX);
+
+    close_test_temp();
+    remove_test_temp();
+}
+
+TestSuite *ubf_readwrite_tests(void)
+{
+    TestSuite *suite = create_test_suite();
+
+    add_test(suite, test_readwrite);
+    add_test(suite, test_readwrite_err_space);
+    add_test(suite, test_readwrite_invalid_descr);
+
+    return suite;
+}
+

@@ -1,0 +1,125 @@
+TPBRIDGE(8)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tpbridge - EnduroX Bridge Server.
+
+
+SYNOPSIS
+--------
+*tpbridge* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+This is special ATMI server which is used to connect local ATMI instances
+over the network. The result is network joined instances which makes
+EnduroX cluster.
+
+Bridge process is used to exchange service lists between two nodes,
+calculate monotonic clock diff (so that later for messages time can
+be adjusted) between nodes.
+
+To establish network connection, on one machine it must be in passive mode
+and on other machine it must be in active mode. Active 'tpbridge' periodically
+tries to connect to the other machine. To one passive bridge only one
+connection can be made.
+
+If connection is dropped, active node will re-try to connect.
+
+All data messages are prefixed with two byte message length indicator.
+Meaning that the logical message can be split over the multiple packets or
+within one packed can be carried multiple logical messages - 'tpbridge' will
+solve that.
+
+When connection is estableshed, clock diff and service lists are exchanged,
+then 'bridge' is used to serve ATMI actions over the machines. I.e. 'tpcall()',
+'tpforward()', conversations, etc.
+
+When connection is stopped. This is reported to 'ndrxd' daemon which
+removes services from shared memory accordingly.
+
+tpbridge supports two network message formats. First format is native format
+which sends over the network directly internetal (C lang) structures. This format
+will work faster, but cannot be used between different type of computers.
+I.e. in this case it is not possible to mix for example x86_64 with x86. Or
+x86 with RISC/ARM 32bit.
+If mixing is necessary, then use EnduroX Network Protocol option, activated by
+flag '-f' on both nodes. In this case standard common TLV data format is used
+for data exchange between nodes. This might be slower than native format.
+
+OPTIONS
+-------
+*-n* 'NODE_ID'::
+Other EnduroX instance's Node ID. Numerical 1..32.
+
+[*-r*]::
+Send Refresh messages to other node. If not set, other node will
+not see our's node's services. OPTIONAL flag.
+
+*-t* 'MODE'::
+'MODE' can be 'P' for passive/TCPIP server mode, any other (e.g. 'A')
+will be client mode.
+
+*-i* 'IP_ADDRESS'::
+In Active mode it is IP address to connect to. In passive mode it is
+binding/listen address.
+
+*-p* 'PORT_NUMBER'::
+In active mode 'PORT_NUMBER' is port to connect to. In passive mode it is
+port on which to listen for connection.
+
+*-T* 'TIME_OUT_SEC'::
+Parameter indicates time-out value for packet receive in seconds. This is
+socket option. Receive is initiate when it either there is poll even on socket
+or incomplete logical message is received and then next 'recv()' is called.
+If the message part is not received in time, then socket is closed and connection
+is restarted.
+
+[*-b* 'BACKLOG_NR']::
+Number of backlog entries. This is server's (passive mode) connection queue, before
+server accepts connection. OPTIONAL parameter. Default value is 100. But
+could be set to something like 5.
+
+[*-c* 'CONNECTION_CHECK_SEC']::
+Connection check interval in seconds. OPTIONAL parameter. Default value 5.
+
+[*-z* 'PERIODIC_ZERO_SEND_SEC']::
+Interval in seconds between which zero length message is wrote to socket.
+This is useful to keep the connection option over the firewalls, etc.
+OPTIONAL parameter. Default value 0 (Do not send).
+
+[*-f*]::
+Use 'EnduroX Standard Network TLV Protocol' instead of native data structures
+for sending data over the network. This also ensure some backwards compatiblity
+between EnduroX versions. But cases for backwards compatility must be checked
+individually.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

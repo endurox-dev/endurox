@@ -1,0 +1,67 @@
+$/* 
+$** Test UD file
+$** Using values from here for test UBF library.
+$**
+$** @file test.fd.h
+$** 
+$** -----------------------------------------------------------------------------
+$** Enduro/X Middleware Platform for Distributed Transaction Processing
+$** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+$** This software is released under one of the following licenses:
+$** GPL or ATR Baltic's license for commercial use.
+$** -----------------------------------------------------------------------------
+$** GPL license:
+$** 
+$** This program is free software; you can redistribute it and/or modify it under
+$** the terms of the GNU General Public License as published by the Free Software
+$** Foundation; either version 2 of the License, or (at your option) any later
+$** version.
+$**
+$** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+$** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+$** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+$**
+$** You should have received a copy of the GNU General Public License along with
+$** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+$** Place, Suite 330, Boston, MA 02111-1307 USA
+$**
+$** -----------------------------------------------------------------------------
+$** A commercial use license is available from ATR Baltic, SIA
+$** contact@atrbaltic.com
+$** -----------------------------------------------------------------------------
+$*/
+
+$#ifndef __TEST_FD
+$#define __TEST_FD
+
+*base 1000
+
+T_CHAR_FLD	        11	char	- 1 Chart test field 1
+T_CHAR_2_FLD	    	12	char	- 1 Chart test field 2
+T_SHORT_FLD	        21	short	- 1 Short test field 1
+T_SHORT_2_FLD		22	short   - 1 Short test field 2
+T_LONG_FLD		31	long	- 1 Long test field 1
+T_LONG_2_FLD		32	long	- 1 Long test field 2
+T_FLOAT_FLD		41	float   - 1 Float test field 1
+T_FLOAT_2_FLD		42	float	- 1 Float test field 2
+T_FLOAT_3_FLD		43	float	- 1 Float test field 3
+T_DOUBLE_FLD		51	double  - 1 Double test field 1
+T_DOUBLE_2_FLD		52	double  - 1 Double test field 2
+T_DOUBLE_3_FLD		53	double  - 1 Double test field 3
+T_DOUBLE_4_FLD		54	double  - 1 Double test field 4
+T_STRING_FLD		61	string  - 1 String test field 1
+T_STRING_2_FLD		62	string  - 1 String test field 2
+T_STRING_3_FLD		63	string  - 1 String test field 3
+T_STRING_4_FLD		64	string  - 1 String test field 4
+T_STRING_5_FLD		65	string  - 1 String test field 5
+T_STRING_6_FLD		66	string  - 1 String test field 6
+T_STRING_7_FLD		67	string  - 1 String test field 7
+T_STRING_8_FLD		68	string  - 1 String test field 8
+T_STRING_9_FLD		69	string  - 1 String test field 9
+T_STRING_10_FLD		10	string  - 1 String test field 10
+T_CARRAY_FLD		81	carray  - 1 Carray test field 1
+T_CARRAY_2_FLD		82	carray	- 1 Carray test field 2
+
+
+$#endif
+

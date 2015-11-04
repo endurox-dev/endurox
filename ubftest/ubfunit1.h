@@ -1,0 +1,91 @@
+/* 
+**
+** @file ubfunit1.h
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or ATR Baltic's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from ATR Baltic, SIA
+** contact@atrbaltic.com
+** -----------------------------------------------------------------------------
+*/
+
+#ifndef UBFUNIT1_H
+#define	UBFUNIT1_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+#include <cgreen/cgreen.h>
+
+
+#define BIG_TEST_STRING \
+"as0dfuoij34n5roi32u98ujh;oaot3i2h4;523juh4l8y7af8sdufjk34i5ry7834h532kj4h5rt89"\
+"iaudoifua09s8df0a870s882390480923u4uj23hnkjabndf98yhpugb345234234234*/-*//*/-9"\
+"adslkflkasdkfjhkjhk3482u3940u23hj4;lhn2l3h4283u49;2j3kln;kjbn.kvnb.fbzxkchvzxc"\
+"asdjf;alkjdfkajkdfjklru902034jtp²45kjl34nltn3klmnbkkjlkvnbmxvb.xvsdlfsdfsfdsfs"\
+"-809u89wy679856674r5e6dytfvkgjhknjlk;i0-=87p96yotghlj;io876tgyuhj90a7usdyhczcv"\
+"sajdfoyuas9ohfbn;23ru7gbv98yzgbpiuzhbncvl/w8e4hr3p289ubhr;.kljfgn;zucbuvlbsdas"\
+"ajsdof8w3y80r9h23oij4ne2ljnjjksdghifopasyd8f09u[2o34h;kjrh23;ijrfpdysahpugvasz"\
+"adslkflkasdkfjhkjhk3482u3940u23hj4;lhn2l3h4283u49;2j3kln;kjbn.kvnb.fbzxkchvzxc"
+
+/* globals */
+extern char M_test_temp_filename[];
+extern FILE *M_test_temp_file;
+
+/* Common functions */
+extern void load_field_table(void);
+void set_up_dummy_data(UBFH *p_ub);
+void do_dummy_data_test(UBFH *p_ub);
+
+extern void open_test_temp(char *mode);
+extern void open_test_temp_for_read(char *mode);
+extern void write_to_temp(char **data);
+extern void close_test_temp(void);
+extern void remove_test_temp(void);
+
+/* Test suites */
+extern TestSuite *ubf_Badd_tests(void);
+extern TestSuite *ubf_genbuf_tests(void);
+extern TestSuite *ubf_cfchg_tests(void);
+extern TestSuite *ubf_cfget_tests(void);
+extern TestSuite *ubf_expr_tests(void);
+extern TestSuite *ubf_fdel_tests(void);
+extern TestSuite *ubf_fnext_tests(void);
+extern TestSuite *ubf_fproj_tests(void);
+extern TestSuite *ubf_mem_tests(void);
+extern TestSuite *ubf_fupdate_tests(void);
+extern TestSuite *ubf_fconcat_tests(void);
+extern TestSuite *ubf_find_tests(void);
+extern TestSuite *ubf_get_tests(void);
+extern TestSuite *ubf_print_tests(void);
+extern TestSuite *ubf_macro_tests(void);
+extern TestSuite *ubf_readwrite_tests(void);
+extern TestSuite *ubf_mkfldhdr_tests(void);
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif	/* UBFUNIT1_H */
+

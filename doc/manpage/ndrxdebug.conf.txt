@@ -1,0 +1,76 @@
+NDRXDEBUG.CONF(5)
+=================
+:doctype: manpage
+
+
+NAME
+----
+ndrxdebug.conf - EnduroX Runtime Debug configuration
+
+
+SYNOPSIS
+--------
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [bufsz=DEBUG_BUFFER_SIZE] file=[LOG_FILE]
+
+
+DESCRIPTION
+-----------
+'debug.conf' a file specified by 'NDRX_DEBUG_CONF' env variable configures
+EnduroX platform logging for each of the seperate executable. The logging is
+done from two sources. One source is UBF and another is ATMI (ndrx). For each
+of the sources debug level can be set for each seperate binary. Debug file
+or stderr also can be specified for each of the seperate binaries.
+
+
+DEBUG CONFIGURATION FILE SYNTAX
+-------------------------------
+
+*BINARY_NAME*::
+	Binary name is either executable name or *. In case of * it is applied to
+	default configuration. It is recommended to put it in start of the file. Any
+	binary afterwards in file will override defaults.
+*NDRX_DEBUG_LEVEL*::
+	ATMI debug level. 0..5. 0=No loging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
+	5=Program detail.
+*UBF_DEBUG_LEVEL*::
+	UBF debug level. 0..5. 0=No loging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
+	5=Program detail.
+*DEBUG_BUFFER_SIZE*::
+	Number of lines to buffer before writting out to disk.
+*LOG_FILE*::
+	Log file. If empty then 'stderr' will be used.
+*COMMENTS*::
+	Commented lines starts with '#'. Empty lines are ignored.
+
+
+EXAMPLE
+-------
+Sample configuration:
+---------------------------------------------------------------------
+# Global config:
+* ndrx=5 ubf=1 lines=1 bufsz=1000 file=
+# Per binary config:
+xadmin 		file=${NDRX_APPHOME}/tmp/XADMIN
+ndrxd 		file=${NDRX_APPHOME}/tmp/NDRXD
+myclient	file=${NDRX_APPHOME}/tmp/MYCLIENT
+myserver	file=${NDRX_APPHOME}/tmp/MYSERVER
+ud		file=${NDRX_APPHOME}/tmp/NDRX
+---------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

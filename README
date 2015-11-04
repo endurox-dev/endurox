@@ -1,0 +1,3 @@
+-- CMake custom install dir:
+
+cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .

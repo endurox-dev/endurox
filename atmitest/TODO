@@ -1,0 +1,7 @@
+Following tests shall be added:
+- xadmin receives output longer then Q size, 
+	-> done test012
+- ndrxd gets dead process counter longer then Q size, 
+	-> done test012
+- call is made to server by two clients. Server times-out. Second call shall be dropped. If TPNOTIME, then call shall not be dropped., 
+	-> done test011

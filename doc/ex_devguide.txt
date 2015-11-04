@@ -1,0 +1,81 @@
+EnduroX Internal Develper Guide
+===============================
+Madars Vitolins
+v1.0, 2012-12:
+	Initial draft
+:doctype: book
+
+EnduroX Development standard
+----------------------------
+EnduroX build system is CMake. Version used should be 2.8 and above. It uses
+Flex and Bison for building UBF (FML) Expressions.
+
+Intension is done with as 4x spaces. EnduroX is programmed in NetBeans c/c++
+project. NetBeans supports CMake projects.
+
+Project also uses 'libxml2' (provided by system), 'uthash' (already included in 'include' dir) 
+and cgreen (provided ThirdParity/c-unit-tests directory) for unit testing.
+Gsoap (also included in ThirdParity/web_services) is used for webservice access
+layer generation.
+
+WebService generator uses mono (v4) for c source generation.
+
+
+Unit testing
+------------
+
+Bot UBF and ATMI sub-systems are unit tested. UBF tests are located under 
+'ubftest' folder, which could be run by:
+
+--------------------------------------------------------------------------------
+$ ./ubfunit1 2>/dev/null
+Running "main"...
+Completed "main": 5749 passes, 0 failures, 0 exceptions.
+--------------------------------------------------------------------------------
+
+ATMI tests are located at 'atmitest' directory, can be run by:
+--------------------------------------------------------------------------------
+$ ./run.sh 
+tail -n1 test.out
+Completed "main": 18 passes, 0 failure, 0 exceptions.
+--------------------------------------------------------------------------------
+
+
+EnduroX libraries
+-----------------
+
+The framework is composed by following internal libraries and it's dependencies:
+[dia, module_dependency.dia, module_dependency.png, x450]
+-------------------------------
+-------------------------------
+
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Internet resources
+- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
+- [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
+
+[glossary]
+Glossary
+--------
+This section lists
+
+[glossary]
+ATMI::
+  Application Transaction Monitor Interface
+
+UBF::
+  Unified Buffer Format it is similar API as Tuxedo's FML
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////

@@ -1,0 +1,130 @@
+<?xml version="1.0" ?>
+<endurox>
+    <appconfig>
+         <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
+         <!-- Sanity check time, sec -->
+         <sanity>5</sanity>
+         <!--
+             Seconds in which we should send service refresh to other node.
+         -->
+         <brrefresh>6</brrefresh>
+         
+         <!--  <sanity> timer, end -->
+         
+         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
+         <!-- Do dead process restart every X seconds 
+         NOT USED ANYMORE, REPLACED WITH SANITY!
+         <respawncheck>10</respawncheck>
+         -->
+         <!-- Do process reset after 1 sec -->
+         <restart_min>1</restart_min>
+         <!-- If restart fails, then boot after +5 sec of previous wait time -->
+         <restart_step>1</restart_step>
+         <!-- If still not started, then max boot time is a 30 sec. -->
+         <restart_max>5</restart_max>
+         <!--  <sanity> timer, end -->
+         
+         <!-- Time after attach when program will start do sanity & respawn checks,
+              starts counting after configuration load -->
+         <restart_to_check>20</restart_to_check>
+         
+         <!-- Setting for pq command, should ndrxd collect service 
+              queue stats automatically
+         If set to Y or y, then queue stats are on.
+         Default is off.
+         -->
+         <gather_pq_stats>Y</gather_pq_stats>
+         
+	</appconfig>
+    <defaults>
+        <min>1</min>
+        <max>2</max>
+        <!-- Kill the process which have not started in <start_max> time -->
+        <autokill>1</autokill>
+        <!--
+        <respawn>1<respawn>
+        -->
+        <!--
+            <env></env> works here too!
+        -->
+         <!-- The maximum time while process can hang in 'starting' state i.e.
+            have not completed initialization, sec
+            X <= 0 = disabled 
+        -->
+         <start_max>2</start_max>
+         <!--
+            Ping server in every X seconds (step is <sanity>).
+         -->
+         <pingtime>10</pingtime>
+         <!--
+            Max time in seconds in which server must respond.
+            The granularity is sanity time.
+            X <= 0 = disabled 
+         -->
+         <ping_max>40</ping_max>
+         <!--
+            Max time to wait until process should exit on shutdown
+            X <= 0 = disabled 
+         -->
+         <end_max>30</end_max>
+         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+         to process until it have been terminated. -->
+         <killtime>1</killtime>
+         <!-- List of services (comma separated) for ndrxd to export services over bridges -->
+    <!--     <exportsvcs>FOREX</exportsvcs> -->
+	</defaults>
+	<servers>
+		<server name="tprecover">
+			<srvid>1</srvid>
+			<min>1</min>
+			<max>1</max>
+			<sysopt>-e /tmp/RECOVER -r</sysopt>
+			<appopt>-c10</appopt>
+		</server>
+		<server name="tpevsrv">
+			<srvid>300</srvid>
+			<min>1</min>
+			<max>1</max>
+			<sysopt>-e /tmp/TPEVSRV -r</sysopt>
+		</server>
+                <!-- Default RM1 -->
+		<server name="tmsrv">
+			<srvid>310</srvid>
+			<min>1</min>
+			<max>1</max>
+			<sysopt>-e /tmp/TM1 -r -- -t10 -l/tmp</sysopt>
+		</server>
+                <!-- RM2 -->
+		<server name="tmsrv">
+			<srvid>350</srvid>
+			<min>1</min>
+			<max>1</max>
+                        <env>/home/mvitolin/projects/endurox/setndrx.rm2</env>
+			<sysopt>-e /tmp/TM2 -r -- -t10 -l/tmp</sysopt>
+		</server>
+		<server name="atmi.sv1">
+			<srvid>1400</srvid>
+			<min>2</min>
+			<max>2</max>
+			<sysopt>-e /tmp/ATMISV1 -r</sysopt>
+		</server>
+		<server name="atmi.sv20_1">
+			<srvid>1600</srvid>
+			<min>2</min>
+			<max>2</max>
+			<sysopt>-e /tmp/ATMISV20_1 -r</sysopt>
+		</server>
+		<server name="sv20_sql">
+			<srvid>1700</srvid>
+			<min>2</min>
+			<max>2</max>
+			<sysopt>-e /tmp/SQ20 -r</sysopt>
+		</server>
+		<server name="tpbridge">
+			<max>1</max>
+			<srvid>1802</srvid>
+			<sysopt>-e /tmp/BRIDGE006 -r</sysopt>
+			<appopt>-f -n6 -r -i 85.15.200.133 -p 9874 -tA -z30</appopt>
+		</server>
+	</servers>
+</endurox>

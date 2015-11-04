@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<endurox>
+	<defaults>
+		
+		<min>1</min>
+		<max>1</max>
+		<!-- The maximum time while process can hang in 'starting' state i.e.
+		have not completed initialization, sec -->
+		<start_max>20</start_max>
+		<!--
+		Ping server in every X seconds (minimum step is <sanity>).
+		-->
+		<pingtime>9</pingtime>
+		<!--
+		Max time in seconds in which server must respond.
+		The granularity is sanity time.
+		-->
+		<ping_max>40</ping_max>
+		<!--
+		Max time to wait until process should exit on shutdown
+		-->
+		<end_max>30</end_max>
+		<!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+		to process until it have been terminated. -->
+		<killtime>20</killtime>
+	</defaults>
+	<servers>
+		<server name="atmisv1">
+			<srvid>10</srvid>
+			<sysopt>-e ${NDRXROOT}/atmisv1.log -r</sysopt>
+		</server>
+	</servers>
+</endurox>

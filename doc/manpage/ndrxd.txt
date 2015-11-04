@@ -1,0 +1,76 @@
+NDRXD(8)
+========
+:doctype: manpage
+
+
+NAME
+----
+ndrxd - EnduroX local ATMI monitor.
+
+
+SYNOPSIS
+--------
+*ndrxd* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+This is endurox backend daemon. Normally it is startd by EnduroX
+command line utlity xadmin. But for recovery mode it can be started
+by hand. 'ndrxd' is responsible for starting/stopping ATMI servers.
+It also monitors the servers, restarts them if they are crashed. It
+can perform server pinging, in case if ping fails it might restart them.
+The front-end for 'ndrxd' is 'xadmin'. 'xadmin' is responsible for
+starting idle instance of the daemon. When idle instance is started,
+it waits for commands from 'xadmin'.
+
+During the server startup, daemon recieves lists of advertised services
+from servers. Service queues are opened by servers. But when services
+are shutdown, 'ndrxd' counts the instances of the servers advertising
+services. If count gets 0, 'ndrxd' removes service queues.
+
+In case of clustered mode, 'ndrxd' via 'tpbridge' sends updates to
+other EnduroX instances. 
+
+
+OPTIONS
+-------
+*-k* 'RANDOM_KEY'::
+Random key associate with EnduroX instance. This is used so that
+shell scripts can identify processes belonging the some specific
+instance of EnduroX.
+
+*-r*::
+Restart/Recovery mode. This is used when 'ndrxd' process is killed
+during applicaton domain running. When starting in this mode, 'ndrxd'
+will request service listings from running servers (resolved from
+queues, usually <prefix>,srv,admin,<server>. In given time frame
+(set via configuration) servers must provide listings. After the
+learing timeframe, 'ndrxd' starts to act as it would work normally,
+i.e. kill unresponsible services, etc.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

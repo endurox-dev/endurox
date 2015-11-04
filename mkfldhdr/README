@@ -1,0 +1,2 @@
+This program is replacement for mkfldhdr. Program arguments are the same.
+There is no support for $PATH like syntax of $FLDTBLDIR. There only single directory is expected.

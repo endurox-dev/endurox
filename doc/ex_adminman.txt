@@ -1,0 +1,197 @@
+EnduroX Administration Manual
+=============================
+Madars Vitolins
+v1.0, 2012-12:
+	Initial draft
+:doctype: book
+
+How to configure EnduroX
+------------------------
+To configure EnduroX you have to finish several steps.
+
+- Have a seperate system user for each EnduroX instance.
+- Setup System Environment (mount mq file system, configure mq params)
+- Setup environment configuration
+- Setup 'ndrxdconfig.xml'
+- Setup 'ndrxdebug.conf'
+- Startup the application
+
+
+Setup System Environment
+------------------------
+In this chapter will be descirbed typical GNU/Linux system configuration required
+for EnduroX. Server Posix queue paramters must be set-up:
+
+Typical configuration would look like (normally you can put this in /etc/rc.local):
+
+--------------------------------------------------------------------------------
+# Mount the /dev/mqueue
+mkdir /dev/mqueue
+mount -t mqueue none /dev/mqueue
+echo 32000 > /proc/sys/fs/mqueue/msg_max
+echo 10000 > /proc/sys/fs/mqueue/msgsize_max
+echo 10000 > /proc/sys/fs/mqueue/queues_max
+--------------------------------------------------------------------------------
+
+Which means:
+
+- 'msg_max' - Maximum number of messages in queue (32K)
+- 'msgsize_max' - Maximum message size, ~10KB (can be set up up to 32K)
+- 'queues_max' - Maximum number of queues (10K)
+
+See [[[MQ_OVERVIEW]]] for more details about Posix queues on GNU/Linux.
+
+Also do not remember to update EnduroX environment variables to reflect these
+settings. Variabales like:
+
+- 'NDRX_MSGMAX'
+- 'NDRX_MSGSIZEMAX'
+
+See [[[EX_ENV]]] for more configuration flags.
+
+Update also should be done to system security configuration. I.e. update to
+'/etc/security/limits.conf' is required, following lines must be added:
+
+--------------------------------------------------------------------------------
+*               soft    msgqueue        -1
+*               hard    msgqueue        -1
+--------------------------------------------------------------------------------
+
+
+Setup environment configuration
+-------------------------------
+EnduroX depends lot of Environment variables. See manpage of 'ex_env' ([[[EX_ENV]]])
+to see all paramters that must be setup. There is also sample configuration
+provided. Normally it is expected that seperate shell script file is setup containing
+all paramters. Then to load the environment, login with EnduroX user in, and run
+following command in your app dir, for example:
+--------------------------------------------------------------------------------
+$ cd /endurox/app/conf
+$ . setapp
+--------------------------------------------------------------------------------
+
+Setup 'ndrxdconfig.xml'
+-----------------------
+Vital part of EnduroX is 'ndrxdconfig.xml' config. Full path to it is configured
+in 'NDRX_CONFIG' environment variable.
+To see how to setup see manpage of it [[[NDRXCONFIG]]].
+
+Setup 'ndrxdebug.conf'
+----------------------
+Environment variable 'NDRX_DEBUG_CONF' contains full path to debug file. 
+See [[[DEBUGCONF]] for more details about 'debug.conf' setup.
+
+Start EnduroX application
+-------------------------
+To start the EnduroX application, login with EnduroX instance user, and issue
+following command 'xa start', for example:
+
+--------------------------------------------------------------------------------
+$ xa start -y
+ndrxd PID (from PID file): 25037
+exec tpevsrv -k 0myWI5nu -i 14 -e /tmp/TPEVSRV -r --  :
+	process id=26793 ... Started.
+exec tpbridge -k 0myWI5nu -i 101 -e /tmp/BRIDGE002 -r -- -n2 -r -i 0.0.0.0 -p 4433 -tP -z30 :
+	process id=26794 ... Started.
+exec tpbridge -k 0myWI5nu -i 102 -e /tmp/BRIDGE012 -r -- -n12 -r -i 10.10.10.2 -p 14433 -tA -z30 :
+	process id=26795 ... Started.
+Startup finished. 3 processes started.
+--------------------------------------------------------------------------------
+
+To see all commands available by 'xadmin' (xa) see manpage of it [[[XADMIN]]].
+
+Recovery from crashed local ATMI monitor
+----------------------------------------
+EnduroX is capable to continue with out restart in case if 'ndrxd' local ATMI
+monitor is crashed or contains invalid data structures for some reason. In this
+case administrator can do following:
+
+- $ kill -9 <ndrxd PID>
+- remove ndrxd queue, for example: $ rm /dev/mq/n00b,sys,bg,ndrxd
+- restart 'ndrxd' in learning mode, by: $ nohup ndrxd -k $NDRX_RNDK -r 
+
+Cluster configuration
+---------------------
+To setup cluster see you have to setup bridge ATMI processes on each of the machines.
+See [[[TPBRIDGE]]] documentation to have understanding of clustering. Sample setup of
+cluster node which activetly connects to Node 2 and waits call from Node 12 could
+look like:
+
+--------------------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+	<appconfig>
+		<sanity>10</sanity>
+		<brrefresh>6</brrefresh>
+		<restart_min>1</restart_min>
+		<restart_step>1</restart_step>
+		<restart_max>5</restart_max>
+		<restart_to_check>20</restart_to_check>
+	</appconfig>
+	<defaults>
+		<min>1</min>
+		<max>2</max>
+		<autokill>1</autokill>
+		<respawn>1<respawn>
+		<start_max>2</start_max>
+		<pingtime>1</pingtime>
+		<ping_max>4</ping_max>
+		<end_max>3</end_max>
+		<killtime>1</killtime>
+	</defaults>
+	<servers>
+		<!-- Connect to cluster node 2, we will wait for call -->
+		<server name="tpbridge">
+			<max>1</max>
+			<srvid>101</srvid>
+			<sysopt>-e /tmp/BRIDGE002 -r</sysopt>
+			<appopt>-n2 -r -i 0.0.0.0 -p 4433 -tP -z30</appopt>
+		</server>
+		<!-- Connect to cluster node 12, we try to connect activetly to it -->
+		<server name="tpbridge">
+			<max>1</max>
+			<srvid>102</srvid>
+			<sysopt>-e /tmp/BRIDGE012 -r</sysopt>
+			<appopt>-n12 -r -i 195.122.24.13 -p 14433 -tA -z30</appopt>
+		</server>
+	</servers>
+</endurox>
+--------------------------------------------------------------------------------
+
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Internet resources
+- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
+- [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
+- [[[EX_OVERVIEW]]] ex_overview.pdf
+- [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
+- [[[EX_ENV]]] 'man 5 ex_env' or 'ex_env.pdf'
+- [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
+- [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
+- [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
+- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
+
+[glossary]
+Glossary
+--------
+This section lists
+
+[glossary]
+ATMI::
+  Application Transaction Monitor Interface
+
+UBF::
+  Unified Buffer Format it is similar API as Tuxedo's FML
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////

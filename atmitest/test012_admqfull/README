@@ -1,0 +1,43 @@
+Alarm handling:
+
+
+#!/bin/bash                                                                     
+ 
+#Time to wait for stuck processes before killing them                           
+export ALARMTIME=30
+ 
+PARENTPID=$$
+ 
+exit_timeout() {
+    echo "Alarm signal received : killing all children"
+    for pid in ${CHILDPIDS[@]}; do
+            kill $pid >/dev/null 2>&1
+    done
+    exit
+}
+ 
+CHILDCOUNT=0
+ 
+for server in alice bob charlie; do
+CHILDCOUNT=$CHILDCOUNT+1
+    echo "Running command on $server:"
+    ssh $server "uname -a" &
+    CHILDPIDS[$CHILDCOUNT]=$!
+done
+ 
+#Prepare to catch SIGALRM, call exit_timeout
+trap exit_timeout SIGALRM
+ 
+#Sleep in a subprocess, then signal parent with ALRM
+(sleep $ALARMTIME; kill -ALRM $PARENTPID) &
+#Record PID of subprocess                                                       
+ALARMPID=$!
+ 
+#Wait for child processes to complete normally
+wait ${CHILDPIDS[*]}
+ 
+echo "Alarm never reached, children exited cleanly."
+#Tidy up the Alarm subprocess                    
+kill $ALARMPID
+
+

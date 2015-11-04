@@ -1,0 +1,88 @@
+## 
+## Enduro Execution platform main Make descriptor
+##
+## @file CMakeLists.txt
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or ATR Baltic's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from ATR Baltic, SIA
+## contact@atrbaltic.com
+## -----------------------------------------------------------------------------
+##
+
+cmake_minimum_required (VERSION 2.6) 
+project (ENDUROX) 
+
+# Enable release only if specified.
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	MESSAGE( RELEASE_BUILD )
+	SET(CMAKE_BUILD_TYPE release)
+        SET(CMAKE_C_FLAGS -O2)
+ELSE ($ENV{RELEASE_BUILD})
+	MESSAGE( DEBUG_BUILD )
+	SET(CMAKE_BUILD_TYPE debug)
+        SET(CMAKE_C_FLAGS -ggdb)
+ENDIF ($ENV{RELEASE_BUILD})
+
+# Recurse into the project subdirectories. This does not actually
+# cause another cmake executable to run. The same process will walk through 
+# the project's entire directory structure. 
+add_subdirectory (libnstd)
+add_subdirectory (libubf)
+add_subdirectory (libnetproto)
+add_subdirectory (libexnet)
+add_subdirectory (ubftest)
+add_subdirectory (mkfldhdr)
+# EnduroX sub-directories for ATMI
+add_subdirectory (libatmi) # General Purpose ATMI library
+add_subdirectory (libatmisrv) #  ATMI server library 
+add_subdirectory (libatmiclt) #  ATMI client library 
+add_subdirectory (tpevsrv)
+add_subdirectory (tprecover) # Special recovery server
+add_subdirectory (ud)
+add_subdirectory (ndrxd) # Enduro X daemon
+add_subdirectory (xadmin) # Enduro X command line interface
+add_subdirectory (bridge) # Cluster bridge server
+add_subdirectory (tmsrv) # Transaction Manager server for XA transactions
+add_subdirectory (xadrv) # XA Drivers for RMs
+add_subdirectory (atmitest) #  ATMI testing
+add_subdirectory (doc) #  Documentation project.
+add_subdirectory (include) #  For install
+add_subdirectory (scripts) #  For install
+add_subdirectory (sampleconfig) #  For install
+
+
+################################################################################
+# uninstall target
+################################################################################
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+################################################################################
+
+

@@ -1,0 +1,77 @@
+UD(8)
+=====
+:doctype: manpage
+
+
+NAME
+----
+ud - UBF Dump.
+
+
+SYNOPSIS
+--------
+*ud*
+
+
+DESCRIPTION
+-----------
+This is command line utility used for sending UBF buffer to service specified in field 'SRVCNM' in buffer.
+Buffer is read from 'stdin'. The result is printed back to 'stdout'.
+
+For example servce call could look like:
+--------------------------------------------------
+$ ud < unix.ud 2>/dev/null 
+SENT pkt(1) is :
+SRVCNM	UNIXINFO
+
+RTN pkt(1) is :
+SRVCNM	UNIXINFO
+T_STRING_FLD	Linux znaroks 2.6.23-gentoo-r6 #9...
+T_STRING_FLD	 13:55:10 up 749 days, 19:46,  0...
+T_STRING_FLD	Linux mailsrv 2.6.21-xen #2 SMP...
+T_STRING_FLD	 13:55:11 up 97 days, 22:34,  0...
+--------------------------------------------------
+
+Where 'unix.ud' file consists of following lines:
+
+--------------------------------------------------
+SRVCNM	UNIXINFO
+--------------------------------------------------
+
+In this case only one field is present (which is service name to be called). But file might contain
+as many as needed fields.
+
+Fields must be seperated by tab character (i.e. field name and value).
+Extended syntax for 'ud' buffers are supported, like lines starting with:
+
+* + Means change fields value
+* - Delete field
+* = Copy value from other field.
+* # Comment
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrxd(8)*, *ex_overview*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

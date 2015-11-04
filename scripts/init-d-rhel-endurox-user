@@ -1,0 +1,116 @@
+#!/bin/bash
+## 
+## @(#) Initialize system environment
+## ndrxd      Start/Stop EnduroX
+## chkconfig: 345 95 5
+## description: Start EnduroX Domain for user
+## processname: ndrxd
+##
+## @file init-d-rhel-endurox-user
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or ATR Baltic's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from ATR Baltic, SIA
+## contact@atrbaltic.com
+## -----------------------------------------------------------------------------
+##
+
+#
+# Note that for user environment shall load automatically with su - !
+# this can be done in users .bashrc file, for example:
+# $ cat /home/mrun/.bashrc
+#. /enduro/mrun/conf/setmrun
+#
+#
+# To add this to the init, use command 
+# # chkconfig --add endurox-$USER
+
+
+# Source function library
+. /etc/init.d/functions
+
+# Get network config
+. /etc/sysconfig/network
+
+RETVAL=0
+USER=mrun
+
+init_env() {
+	/opt/endurox/bin/sysenv.sh
+}
+
+start() {
+    echo $"Starting EnduroX for $USER:" 
+    init_env
+    # Start me up!
+    su - $USER -c "xa start -y"
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/endurox-${USER}
+	#sleep 20
+    return $RETVAL
+}
+
+stop() {
+    echo $"Stopping EnduroX for $USER:" 
+    su - $USER -c "xa stop -c -y"
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/endurox-${USER}
+    return $RETVAL
+}    
+
+restart() {
+      stop
+    start
+}    
+
+reload() {
+    su - $USER -c "xa reload"
+}
+
+case "$1" in
+  start)
+      start
+    ;;
+  stop)
+      stop
+    ;;
+  status)
+    su - $USER -c "xa stat"
+    ;;
+  restart)
+      restart
+    ;;
+  condrestart)
+      [ -f /var/lock/subsys/endurox-${USER} ] && restart || :
+    ;;
+  reload)
+    reload
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}" 
+    exit 1
+esac
+
+exit $?

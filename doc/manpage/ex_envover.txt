@@ -1,0 +1,73 @@
+EX_ENVOVER(5)
+=============
+:doctype: manpage
+
+
+NAME
+----
+ex_envover - EnduroX Environment override configuration file
+
+DESCRIPTION
+-----------
+This is simple text file with shell like syntax for environment variable setup.
+Used for per ATMI server environment process environment variable override. File
+is configured in *ndrxconfig.xml(5)* config file.
+
+SYNOPSYS
+--------
+Configuration file synax:
+---------------------------------------------------------------------
+# this line is commented
+export PARAM_NAME=VALUE
+#
+PARAM_NAME_2=PARAM_VALUE_2
+---------------------------------------------------------------------
+
+
+PARAMTERS
+---------
+*PARAM_NAME*::
+	Name of the of the environment variable to be overriden. 
+*VALUE*::
+	The value to be used. The value starting from '=' is directly loaded
+	into memory. All symbols up till end of the line are used.
+
+EXAMPLE
+-------
+Sample configuration:
+---------------------------------------------------------------------
+#
+# This is environment override file for tpevsrv
+#
+
+# Syntax is following:
+# # = comment
+# [export ] = ignored
+# ENV_VAR = name of env
+# = = equals sign
+# VALUE
+
+# Just for test, we set not clusterized
+export NDRX_CLUSTERISED=0
+
+# Also for testing se set wrong node id.
+NDRX_NODEID=9
+---------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ndrxconfig.xml(5)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+

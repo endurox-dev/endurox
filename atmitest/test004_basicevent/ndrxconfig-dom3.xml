@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+<endurox>
+	<appconfig>
+		<!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
+		<!-- Sanity check time, sec -->
+		<sanity>15</sanity>
+		<!-- If process have been state changed to other than dead, exit or not running
+		but PID of program does not exists in system, then send internel message, then 
+		program have been stopped.
+		In Seconds.
+		-->
+		<checkpm>5</checkpm>
+		<!--  <sanity> timer, end -->
+
+		<!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
+		<!-- Do dead process restart every X seconds -->
+		<respawncheck>10</respawncheck>
+		<!-- Do process reset after 1 sec -->
+		<restart_min>1</restart_min>
+		<!-- If restart fails, then boot after +5 sec of previous wait time -->
+		<restart_step>10</restart_step>
+		<!-- If still not started, then max boot time is a 30 sec. -->
+		<restart_max>30</restart_max>
+		<!--  <sanity> timer, end -->
+
+		<!-- Time after attach when program will start do sanity & respawn checks,
+		starts counting after configuration load -->
+		<restart_to_check>20</restart_to_check>
+	</appconfig>
+	<defaults>
+		<min>1</min>
+		<max>1</max>
+		<autokill>1</autokill>
+		<!-- Do not need respawning! -->
+		<respawn>0</respawn>
+		<!-- The maximum time while process can hang in 'starting' state i.e.
+		have not completed initialization, sec -->
+		<start_max>20</start_max>
+		<!--
+		Ping server in every X seconds (minimum step is <sanity>).
+		-->
+		<pingtime>9</pingtime>
+		<!--
+		Max time in seconds in which server must respond.
+		The granularity is sanity time.
+		-->
+		<ping_max>40</ping_max>
+		<!--
+		Max time to wait until process should exit on shutdown
+		-->
+		<end_max>30</end_max>
+		<!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+		to process until it have been terminated. -->
+		<killtime>20</killtime>
+	</defaults>
+	<servers>
+		<server name="tpevsrv">
+			<srvid>10</srvid>
+			<sysopt>-e ${TESTDIR}/tpevsrv-dom3.log -r</sysopt>
+		</server>
+        	<server name="tpbridge">
+			<max>1</max>
+			<srvid>1</srvid>
+       		     	<sysopt>-e ${TESTDIR}/bridge-dom3.log -r</sysopt>
+       		     	<appopt>-f -n1 -r -i 0.0.0.0 -p 44002 -tP -z30</appopt>
+	        </server>
+		<server name="atmisv4_1ST">
+			<srvid>50</srvid>
+			<sysopt>-e ${TESTDIR}/atmisv4_1ST-dom3.log -r</sysopt>
+		</server>
+        	<server name="atmisv4_2ND">
+			<srvid>51</srvid>
+			<sysopt>-e ${TESTDIR}/atmisv4_2ND-dom3.log -r</sysopt>
+		</server>
+	</servers>
+</endurox>

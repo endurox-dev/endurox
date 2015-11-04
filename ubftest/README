@@ -1,0 +1,18 @@
+*** This is UBF testing facility. ***
+
+To run all test cases exectue following:
+
+$ ./ubfunit1 2>/dev/null
+output should be something like this:
+Running "main"...
+Completed "main": 5684 passes, 0 failures, 0 exceptions.
+
+To get dubug output (lot of that), remove 2>/dev/null from end of the line.
+
+Note that in this mode, every test is run in forked environment. Meaning if some of thest made segmentation fault, then this does not crash all the testing, but exception will appear in test output.
+
+
+To get testing in forked environment, then you can run the test, by passing test name to command line, like:
+
+$ ./ubfunit1 test_expr_basic_floatev
+

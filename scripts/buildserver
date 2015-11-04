@@ -1,0 +1,70 @@
+#!/usr/bin/perl
+## 
+## @(#) Builds EnduroX server process
+##
+## @file buildserver
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or ATR Baltic's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from ATR Baltic, SIA
+## contact@atrbaltic.com
+## -----------------------------------------------------------------------------
+##
+
+use Getopt::Std;
+
+
+my %options=();
+getopts("o:f:s:", \%options);
+
+my $CFLAGS = $ENV{'CFLAGS'};
+my $LIBPATH = $ENV{'LIBPATH'};
+my $BUILD_LIB_PATH="";
+
+# Print out the options we have
+print "-o $options{o}\n" if defined $options{o};
+print "-f $options{f}\n" if defined $options{f};
+
+my $command="ld -o $options{o} $options{f}";
+
+# Extract the CFLAGS
+@CFLAGS_ARR = split (/ |\t+/,$CFLAGS);
+
+foreach my $item (@CFLAGS_ARR) {
+	if ($item =~ m/-L.*/ || $item =~ m/-l.*/)
+	{
+		print "$item\n";
+		$BUILD_LIB_PATH="$BUILD_LIB_PATH $item";
+	}
+}
+
+# Extract LIBPATH
+@LIBPATH_ARR = split (":",$LIBPATH);
+foreach my $item (@LIBPATH_ARR) {
+	$BUILD_LIB_PATH="$BUILD_LIB_PATH -L$item";
+}
+
+$command="gcc -o $options{o} $options{f} -latmisrv -lm -lc -lrt -latmi -lubf -lnstd -ldl $BUILD_LIB_PATH";
+
+print "$command\n";
+`$command`
