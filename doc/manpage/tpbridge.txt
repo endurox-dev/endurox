@@ -51,6 +51,10 @@ If mixing is necessary, then use EnduroX Network Protocol option, activated by
 flag '-f' on both nodes. In this case standard common TLV data format is used
 for data exchange between nodes. This might be slower than native format.
 
+tpbridge supports traffic encryption & signing by GNU PGP keys. In this case
+for Enduro/X user keys must be setup and exchanged with receipient. Bridge
+process needs to know sender (for signing) and recipient (for encryption) references.
+
 OPTIONS
 -------
 *-n* 'NODE_ID'::
@@ -97,6 +101,13 @@ Use 'EnduroX Standard Network TLV Protocol' instead of native data structures
 for sending data over the network. This also ensure some backwards compatiblity
 between EnduroX versions. But cases for backwards compatility must be checked
 individually.
+
+[*-g* 'PGP_RECIPIENT']::
+This is recipients reference code for GNU PGP message encryption.
+
+[*-s* 'PGP_SIGNER']::
+Signer reference for GNU PGP scheme. Signer works if '-g' is enabled.
+'-s' is optional.
 
 EXIT STATUS
 -----------

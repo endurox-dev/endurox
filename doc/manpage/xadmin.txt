@@ -5,7 +5,7 @@ XADMIN(8)
 
 NAME
 ----
-xadmin - EnduroX administration command line utility
+xadmin - EnduroX Administration command line utility
 
 
 SYNOPSIS
@@ -67,8 +67,8 @@ COMMANDS
 	Force appserver shuttdown & resurce cleanup. RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!
 	Basically this kills all ATMI servers and EnduroX daemon. This does NOT remove client
 	processes.
-*at*::
-	Attached to ndrxd user session in progress
+*cat*::
+	Attached console to ndrxd user session in progress
 *reload*::
 	Load new configuration
 *testcfg*::
@@ -78,7 +78,7 @@ COMMANDS
 	unadvertised.
 *readv* -i server_id -s service_name::
 	Re-advertise service. Might be usable if service Q was unlinked.
-	'-i  is server id, '-s' is service name to be re-advertised.
+	'-i'  is server id, '-s' is service name to be re-advertised.
 *restart* [-y] [-s <server>] [-i <srvid>]::
 	Restart app or service (invokes start & stop with same args!). '-y'
 	makes to not to ask for confirmation. '-s' is server/binary name. '-i' is server ID.
@@ -92,8 +92,27 @@ COMMANDS
 	Shared mem, print services
 *psrv*::
 	Shared mem, print servers
-*abort* [-y]::
+*cabort* [-y]::
 	Abort shutdown or startup operation in progress. '-y' do not ask for confirmation.
+*sreload* [-y] [-s <server>] [-i <srvid>]::
+	Restart servers instance by instance
+*pq*::
+	Print Queue stats from ndrxd.
+*pqa* [-a]::
+	Print all queues including client and admin Q. '-a' includes other prefix queues.
+*pt*::
+	Print global transactions in progress.
+*printtrans*::
+	Same as 'pt'.
+*abort* -t <transaction_manager_reference> -x <XID> [-g <resource_manager_id>] [-y]::
+	Abort transaction. '-g' does abort single resource manager's transaction.
+	'-y' is for auto confirmation.
+*aborttrans*::
+	Same as 'abort'.
+*commit* -t <transaction_manager_reference> -x <XID> [-y]::
+	Commit transaction. '-y' is for auto confirmation.
+*committrans*::
+	Same as 'commit'.
 
 EXIT STATUS
 -----------
