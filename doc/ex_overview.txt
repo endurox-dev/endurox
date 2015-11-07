@@ -33,11 +33,9 @@ Basically EnduroX is consider as clone of Tuxedo. EnduroX have source level comp
 However there are set of functionality which is missing in EnduroX.
 This is the list what EnduroX does NOT support:
 
-. No support distributed transactions (one DB transaction over multiple ATMI servers);
 . No support for FML views;
 . No FML indexing;
 . Some FML functionality is not implemented (but mostly all is supported);
-. Cluster machines must be on the same system architecture i.e. X86_64 or i386;
 . No support for permanent queues;
 
 Improvements over Tuxedo:
