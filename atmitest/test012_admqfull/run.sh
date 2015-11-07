@@ -118,8 +118,8 @@ xadmin start -y
 #####
 
 # ALARM: THIS SHOULD NOT HANG!
-xa psc
-CNT=`xa psc | wc | awk '{print $1}'`
+xadmin psc
+CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
 if [[ $CNT -ne 1000 ]]; then
 	echo "Service count != 1000! (1)"
@@ -129,25 +129,25 @@ fi
 echo 
 echo "Before running kill -9"
 date
-xa psc
+xadmin psc
 
 killall -9 atmisv_$TESTNO
 
 echo "After runing kill -9"
 date
-xa psc
+xadmin psc
 
 # Wait for respawn, now it should be respawned...
 sleep 90
 
 echo "After sleeping of kill -9"
 date
-xa psc
+xadmin psc
 
 # This should raise the fail!
 # sleep 30
 # ALARM: THIS SHOULD NOT HANG & should be all servers booted.
-CNT=`xa psc | wc | awk '{print $1}'`
+CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
 if [[ $CNT -ne 1000 ]]; then
 	echo "Service count != 1000! (2)"

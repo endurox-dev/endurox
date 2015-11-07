@@ -103,7 +103,7 @@ echo 2 > $TESTDIR/case_type
 
 # will stop the process so that PING will hang
 kill -STOP $NO_PING_PROCESS_PID
-xa stop -i 127 &
+xadmin stop -i 127 &
 
 #### Sleep some 10 sec
 sleep 15
@@ -158,7 +158,7 @@ if [ "X$LONG_STOP_PID2" != "X" ]; then
 fi
 
 # Print process model
-xa ppm
+xadmin ppm
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

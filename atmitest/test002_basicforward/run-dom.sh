@@ -95,19 +95,19 @@ function set_dom3 {
 function print_domains {
 
     set_dom1;
-    xa ppm
-    xa psvc
-    xa psc
+    xadmin ppm
+    xadmin psvc
+    xadmin psc
 
     set_dom2;
-    xa ppm
-    xa psvc
-    xa psc
+    xadmin ppm
+    xadmin psvc
+    xadmin psc
 
     set_dom3;
-    xa ppm
-    xa psvc
-    xa psc
+    xadmin ppm
+    xadmin psvc
+    xadmin psc
 }
 
 

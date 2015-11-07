@@ -116,9 +116,9 @@ set_dom1;
 
 # Run the client test...
 echo "Soon will issue client calls:"
-xa psc
-xa psvc
-xa ppm
+xadmin psc
+xadmin psvc
+xadmin ppm
 (./atmiclt3 2>&1) > ./atmiclt-dom1.log
 RET=$?
 
