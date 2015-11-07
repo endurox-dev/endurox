@@ -35,7 +35,7 @@ export NDRX_QPREFIX=/mccp
 rm -rf /dev/mqueue/*
 
 # Load UBF, we assume that we are inside of test dir!
-. ../../setndrx
+. ../../sampleconfig/setndrx
 . ../../ubftest/setenv
 unset NDRX_DEBUG_CONF
 export FLDTBLDIR=../../ubftest/ubftab
