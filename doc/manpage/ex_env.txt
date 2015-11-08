@@ -84,6 +84,23 @@ Mandatory Env. Variables
 	Full path to 'xadmin' log file. Used by shell scripts.
 *NDRX_LEV*='LOG_LEVEL_OF_XADMIN'::
 	Log level of 'xadmin'. From 1..5. 5 is max. Used by shell scripts.
+*NDRX_XA_RES_ID*='XA_RESOURCE_ID'::
+	XA API two phase commit resource id.
+        Must be set if using distributed transactions.
+*NDRX_XA_OPEN_STR*='XA_OPEN_STRING'::
+	This is open string for two phase commit XA driver.
+        Must be set if using distributed transactions.
+*NDRX_XA_CLOSE_STR*='XA_CLOSE_STRING'::
+	This is close string for two phase commit XA driver. This is optional, 'NDRX_XA_OPEN_STR' will be used
+        if not set.
+*NDRX_XA_DRIVERLIB*='ENDUROX_XA_DRIVER_LIB'::
+	This is full path to Enduro/X shared library which loads the XA api.
+*NDRX_XA_RMLIB*='RESOURCE_MANAGER_SPECIFIC_DRIVER'::
+	This is full path to resource manager's specific driver (shared library).
+        Must be set if using distributed transactions.
+*NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
+	Set to '1' if XA sub-system should be initialized on first transactions. 
+        If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
 *PATH='PATH'*
 	This is not EnduroX specific env variable. But EnduroX distro bin directory should be included in system PATH env. variable.
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
@@ -123,6 +140,26 @@ export NDRX_SVCMAX=600
 export NDRX_TOUT=60
 export NDRX_UBFMAXFLDS=16000
 export NDRX_ULOG=/enduro/tst1/logs
+
+# XA 2PC SECTION, ORACLE DB
+export ORACLE_SID=ROCKY
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
+export PATH=$PATH:ORACLE_HOME/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
+export NDRX_XA_RES_ID=1
+export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f"
+export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+
+# XA Static registration driver
+export NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaoras.so
+
+# XA Dynamic registration driver
+#export NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaorad.so
+
+export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
+export NDRX_XA_LAZY_INIT=1
+# XA SECTION, END
+
 ---------------------------------------------------------------------
 
 BUGS
