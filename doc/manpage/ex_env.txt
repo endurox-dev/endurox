@@ -101,7 +101,7 @@ Mandatory Env. Variables
 *NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
 	Set to '1' if XA sub-system should be initialized on first transactions. 
         If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
-*PATH='PATH'*
+*PATH='PATH'*::
 	This is not EnduroX specific env variable. But EnduroX distro bin directory should be included in system PATH env. variable.
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
 	This is directory where .fd files are located. I.e. UBF field definitions.
