@@ -39,7 +39,7 @@ Which means:
 - 'msgsize_max' - Maximum message size, ~10KB (can be set up up to 32K)
 - 'queues_max' - Maximum number of queues (10K)
 
-See [[[MQ_OVERVIEW]]] for more details about Posix queues on GNU/Linux.
+See <<MQ_OVERVIEW>> for more details about Posix queues on GNU/Linux.
 
 Also do not remember to update EnduroX environment variables to reflect these
 settings. Variabales like:
@@ -47,7 +47,7 @@ settings. Variabales like:
 - 'NDRX_MSGMAX'
 - 'NDRX_MSGSIZEMAX'
 
-See [[[EX_ENV]]] for more configuration flags.
+See <<EX_ENV>> for more configuration flags.
 
 Update also should be done to system security configuration. I.e. update to
 '/etc/security/limits.conf' is required, following lines must be added:
@@ -60,7 +60,7 @@ Update also should be done to system security configuration. I.e. update to
 
 Setup environment configuration
 -------------------------------
-EnduroX depends lot of Environment variables. See manpage of 'ex_env' ([[[EX_ENV]]])
+EnduroX depends lot of Environment variables. See manpage of 'ex_env' (<<EX_ENV>>)
 to see all paramters that must be setup. There is also sample configuration
 provided. Normally it is expected that seperate shell script file is setup containing
 all paramters. Then to load the environment, login with EnduroX user in, and run
@@ -74,12 +74,12 @@ Setup 'ndrxdconfig.xml'
 -----------------------
 Vital part of EnduroX is 'ndrxdconfig.xml' config. Full path to it is configured
 in 'NDRX_CONFIG' environment variable.
-To see how to setup see manpage of it [[[NDRXCONFIG]]].
+To see how to setup see manpage of it <<NDRXCONFIG>>.
 
 Setup 'ndrxdebug.conf'
 ----------------------
 Environment variable 'NDRX_DEBUG_CONF' contains full path to debug file. 
-See [[[DEBUGCONF]] for more details about 'debug.conf' setup.
+See <<DEBUGCONF>> for more details about 'debug.conf' setup.
 
 Start EnduroX application
 -------------------------
@@ -98,7 +98,7 @@ exec tpbridge -k 0myWI5nu -i 102 -e /tmp/BRIDGE012 -r -- -n12 -r -i 10.10.10.2 -
 Startup finished. 3 processes started.
 --------------------------------------------------------------------------------
 
-To see all commands available by 'xadmin' (xa) see manpage of it [[[XADMIN]]].
+To see all commands available by 'xadmin' (xa) see manpage of it <<XADMIN>>.
 
 Recovery from crashed local ATMI monitor
 ----------------------------------------
@@ -113,7 +113,7 @@ case administrator can do following:
 Cluster configuration
 ---------------------
 To setup cluster see you have to setup bridge ATMI processes on each of the machines.
-See [[[TPBRIDGE]]] documentation to have understanding of clustering. Sample setup of
+See <<TPBRIDGE>> documentation to have understanding of clustering. Sample setup of
 cluster node which activetly connects to Node 2 and waits call from Node 12 could
 look like:
 

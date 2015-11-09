@@ -31,7 +31,8 @@
 ##
 
 cmake_minimum_required (VERSION 2.6) 
-project (ENDUROX) 
+project (endurox) 
+set(VERSION "2.3.2")
 
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -84,5 +85,38 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 ################################################################################
+# Packages
+################################################################################
+  if(CMAKE_SYSTEM_NAME MATCHES Linux)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+      set(T_A "linux-x86")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86_64$")
+      set(T_A "linux-x86_64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
+      set(T_A "linux-ppc")
+    else(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+      message(FATAL_ERROR "Unknown Linux Variant: ${CMAKE_SYSTEM_PROCESSOR}")
+    endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+  else(CMAKE_SYSTEM_NAME MATCHES Linux)
+    message(FATAL_ERROR "Unknown OS Variant: ${CMAKE_SYSTEM_NAME}")
+  endif(CMAKE_SYSTEM_NAME MATCHES Linux)
+
+set(CPACK_GENERATOR "DEB;RPM;TGZ")
+set(CPACK_PACKAGE_CONTACT "madars.vitolins@gmail.com")
+set(CPACK_PACKAGE_VERSION ${VERSION})
+#set(CPACK_PACKAGE_VERSION_MAJOR "2")
+#set(CPACK_PACKAGE_VERSION_MINOR "3")
+#set(CPACK_PACKAGE_VERSION_PATCH "2")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2")
+#set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME}-${VERSION_STRING}${PACK_ARCH})
+
+set(CPACK_PACKAGE_DESCRIPTION "Enduro/X Middleware Platform")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION  ${CPACK_PACKAGE_DESCRIPTION})
+
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/Debian/postinst")
+
+include(CPack)
+################################################################################
+
 
 

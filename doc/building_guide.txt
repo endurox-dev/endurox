@@ -1,0 +1,236 @@
+Building Enduro/X On GNU/Linux Platform
+=======================================
+Madars Vitolins
+v1.0, 2015-11:
+	Initial draft
+:doctype: book
+
+About manual
+------------
+This manual describes how to build 'Enduro/X' on fresh installed Ubuntu 14.04 and Centos 6.x.
+Process includes description of kernel configuration, required package installation 
+and finally finishing all with unit test completion.
+
+This installation manual assumes that OS user for  installation is 'user1', 
+located at '/home/user1'. The Enduro/X system will build at path '/home/user1/endurox'.
+
+== Configuring Linux Kernel parameters
+
+Kernel parameter configuration is needed for Enduro/X runtime. But as we plan here
+to build the system and run unit-tests, then we need a configuration for runtime.
+
+=== Security Configuration
+---------------------------------------------------------------------
+$ sudo -s
+# cat << EOF >> /etc/security/limits.conf
+
+# Do not limit message Q Count.
+# Some Linux 3.x series kernels have a bug, that limits 1024 
+# queues for one system user.
+# In 2.6.x and 4.x this is fixed, to have 
+# unlimited count of queues (memory limit).
+# ealrier and later Linuxes have fixed this issue.
+*               soft    msgqueue        -1
+*               hard    msgqueue        -1
+
+# Increase the number of open files 
+*               soft    nofile  1024
+*               hard    nofile  65536
+
+EOF
+# exit
+$
+---------------------------------------------------------------------
+
+=== Message Queue Configuration
+At the startup of the system needs to mount a Posix Queues folder, and needs to 
+set a appropriate limits. To do this automatically at system startup, 
+Linuxes which supports '/etc/rc.local', must add following lines before "exit 0":
+
+---------------------------------------------------------------------
+# Mount the /dev/mqueue
+mkdir /dev/mqueue
+mount -t mqueue none /dev/mqueue
+
+# Max Messages in Queue
+echo 10000 > /proc/sys/fs/mqueue/msg_max
+
+# Max message size (Currently Enduro/X supports only 32K as max)
+echo 32000 > /proc/sys/fs/mqueue/msgsize_max
+
+# Max number of queues for user
+echo 10000 > /proc/sys/fs/mqueue/queues_max
+---------------------------------------------------------------------
+
+== Getting the source & building
+
+=== OS dependency installation
+
+==== System level dependencies - for Ubuntu 14.04
+---------------------------------------------------------------------
+$ sudo apt-get install indent asciidoc dblatex libxml2-dev fop\
+	cmake dia flex bison gcc g++ libz-dev\
+	libssl-dev libcrypto++9 libcrypto++-dev\
+	libgpgme11-dev uuid-dev
+---------------------------------------------------------------------
+
+==== System level dependencies - for Centos 6.x
+---------------------------------------------------------------------
+$ su - root
+# yum install git cmake asciidoc libssl\
+	openssl-dev openssl openssl-devel.x86_64\
+	libgpgme11-dev uuid-dev
+# exit
+$
+---------------------------------------------------------------------
+
+=== Getting the Source code
+---------------------------------------------------------------------
+$ cd /home/user1
+$ git clone https://github.com/endurox-dev/endurox endurox
+---------------------------------------------------------------------
+
+=== Install Third Party dependencies (shipped with Enduro/X source)
+
+Enduro/X have dependency on CGreen unit testing package. Version '1.0.0-beta2'
+is used for system development.
+
+==== C-Green unit testing framework
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/ThirdParty/c-unit-tests
+$ tar -xzvf cgreen-1.0.0-beta2.tar.gz
+$ mv cgreen-1.0.0-beta2 cgreen
+$ cd cgreen
+$ cmake ../cgreen -DLIB_INSTALL_DIR=/usr/lib -DINCLUDE_INSTALL_DIR=/usr/include
+$ make
+$ sudo make install 
+---------------------------------------------------------------------
+
+==== AsciiDoc Integration with Dia
+Also Enduro/X includes documentation in sources, thus additional config is needed
+so that `Dia` package can build illustrations needed for manuals.
+
+---------------------------------------------------------------------
+$ sudo mkdir /etc/asciidoc/filters/dia
+$ sudo -s
+# cat << EOF > /etc/asciidoc/filters/dia/dia-filter.conf
+#
+# AsciiDoc Dia filter configuration file.
+#
+# Version: 0.1
+
+[blockdef-listing]
+dia-style=template="dia-block",subs=(),posattrs=("style","file","target","size"),filter='dia -t png -e "{outdir={indir}}/{imagesdir=}{imagesdir?/}{target}" "{outdir}/{file}" {size?-s {size}} > /dev/null'
+
+[dia-block]
+template::[image-blockmacro]
+EOF
+---------------------------------------------------------------------
+
+
+=== Enduro/X basic Environment configuration for HOME directory
+This code bellow creates 'ndrx_home' executable file which loads basic environment, 
+so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
+This also assumes that you are going to install to '$HOME/endurox/dist' folder.
+
+---------------------------------------------------------------------
+cat << EOF > $HOME/ndrx_home
+#!/bin/bash
+
+# Where app domain lives
+export NDRX_APPHOME=/home/user1/endurox
+# Where NDRX runtime lives
+export NDRX_HOME=/home/user1/endurox/dist/bin
+# Debug config too
+export NDRX_DEBUG_CONF=/home/user1/endurox/sampleconfig/debug.conf
+
+# NDRX config too.
+export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
+
+# Access for binaries
+export PATH=$PATH:/$HOME/endurox/dist/bin
+
+# LIBPATH for .so 
+export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib
+
+# UBF/FML field tables
+export export FLDTBLDIR=$HOME/endurox/ubftest/tuxfbuf
+
+EOF
+
+$ chmod +x $HOME/ndrx_home
+---------------------------------------------------------------------
+
+NOTE: If you develop in Gnome (e.g. Mate) session, then 
+do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
+
+
+=== Building the code
+---------------------------------------------------------------------
+$ cd /home/user1/endurox
+# If you want to have install folder to /home/user1/endurox/dist
+# if you want system level install then run just $ cmake .
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ make 
+$ make install
+---------------------------------------------------------------------
+
+== Unit Testing
+
+Enduro/X basically consists of two parts:
+. XATMI runtime;
+. UBF/FML buffer processing. 
+Each of these two sub-systems have own units tests.
+
+==== UBF/FML Unit testing
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/ubftest
+$ ./ubfunit1 2>/dev/null
+Running "main"...
+Completed "main": 5751 passes, 0 failures, 0 exceptions.
+---------------------------------------------------------------------
+
+==== XATMI Unit testing
+ATMI testing might take some time. Also ensure that you have few Gigabytes of free 
+disk space, as logging requires some space. To run the ATMI tests do following:
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/atmitest
+$ nohup ./run.sh &
+$ tail -f /home/user1/endurox/atmitest
+...
+Setting domain 2
+Server executable = tpbridge    Id = 101 :      Shutdown succeeded.
+Server executable = convsv21    Id = 50 :       Shutdown succeeded.
+Server executable = atmi.sv21   Id = 30 :       Shutdown succeeded.
+Server executable = tmsrv       Id = 10 :       Shutdown succeeded.
+Shutdown finished. 4 processes stopped.
+atmiclt21: no process found
+************ FINISHED TEST: [test021_xafull/run.sh] with 0 ************
+Running "main"...
+Running "main"...
+Completed "main": 21 passes, 0 failures, 0 exceptions.
+---------------------------------------------------------------------
+
+
+== Conclusions
+At finish you have a configured system which is read to process the transactions
+by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
+to other same architecture machine and run it there with out need of building.
+This process is described in <<BINARY_INSTALL>> guide.
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Resources
+- [[[BINARY_INSTALL]]] See Enduro/X 'binary_install' manual.
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////

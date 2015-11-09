@@ -33,8 +33,8 @@ cmake_minimum_required(VERSION 2.8)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
 
-set(PDF_NAMES ex_devguide ex_overview ex_adminman)
-set(HTML_NAMES ex_devguide ex_overview)
+set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide)
+set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide)
 
 # Generate PDFs...
 set(A2X_OPTS_PDF -L -f pdf --doctype book)
