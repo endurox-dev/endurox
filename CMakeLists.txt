@@ -87,33 +87,18 @@ add_custom_target(uninstall
 ################################################################################
 # Packages
 ################################################################################
-  if(CMAKE_SYSTEM_NAME MATCHES Linux)
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
-      set(T_A "linux-x86")
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86_64$")
-      set(T_A "linux-x86_64")
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
-      set(T_A "linux-ppc")
-    else(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
-      message(FATAL_ERROR "Unknown Linux Variant: ${CMAKE_SYSTEM_PROCESSOR}")
-    endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
-  else(CMAKE_SYSTEM_NAME MATCHES Linux)
-    message(FATAL_ERROR "Unknown OS Variant: ${CMAKE_SYSTEM_NAME}")
-  endif(CMAKE_SYSTEM_NAME MATCHES Linux)
-
+# Support only for Linux
+MESSAGE( STATUS "CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME} )
+MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 set(CPACK_GENERATOR "DEB;RPM;TGZ")
 set(CPACK_PACKAGE_CONTACT "madars.vitolins@gmail.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
-#set(CPACK_PACKAGE_VERSION_MAJOR "2")
-#set(CPACK_PACKAGE_VERSION_MINOR "3")
-#set(CPACK_PACKAGE_VERSION_PATCH "2")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2")
-#set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME}-${VERSION_STRING}${PACK_ARCH})
-
-set(CPACK_PACKAGE_DESCRIPTION "Enduro/X Middleware Platform")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2,openssl,libgpgme11")
+set(CPACK_RPM_PACKAGE_REQUIRES "libxml2,openssl,libssl,libgpgme11")
+set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME}-${VERSION}-${CMAKE_SYSTEM_PROCESSOR})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Enduro/X Middleware Platform")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION  ${CPACK_PACKAGE_DESCRIPTION})
-
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/Debian/postinst")
+#set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/Debian/postinst")
 
 include(CPack)
 ################################################################################
