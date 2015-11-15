@@ -41,7 +41,7 @@ set(A2X_OPTS_PDF -L -f pdf --doctype book)
 set(PDF_FILES)
 foreach(m IN LISTS PDF_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.pdf)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.txt)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
     COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF} ${ms}
     DEPENDS ${ms}
@@ -63,7 +63,7 @@ set(A2X_OPTS_HTML -D . -f xhtml)
 set(HTML_FILES)
 foreach(m IN LISTS HTML_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.html)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.txt)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
     COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_HTML} ${ms}
     DEPENDS ${ms}

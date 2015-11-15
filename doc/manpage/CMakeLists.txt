@@ -45,7 +45,7 @@ set(A2X_OPTS_MAN5 --format=manpage -D man5)
 set(MAN5_FILES)
 foreach(m IN LISTS MAN5_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/man5/${m}.5)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.txt)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
     COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_MAN5} ${ms}
     DEPENDS ${ms}
@@ -66,7 +66,7 @@ set(A2X_OPTS_MAN8 --format=manpage -D man8)
 set(MAN8_FILES)
 foreach(m IN LISTS MAN8_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/man8/${m}.8)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.txt)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
     COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_MAN8} ${ms}
     DEPENDS ${ms}
@@ -87,7 +87,7 @@ set(A2X_OPTS_PDF_MAN -L -f pdf --doctype book)
 set(PDF_MAN_FILES)
 foreach(m IN LISTS PDF_MAN_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.pdf)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.txt)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
     COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF_MAN} ${ms}
     DEPENDS ${ms}
