@@ -62,6 +62,25 @@ echo 10000 > /proc/sys/fs/mqueue/queues_max
 
 == Installing binary package (RPM for Centos 6.x)
 
+== Configuring the application environment 
+
+== Creating the server process
+
+=== Defining the UBF fields
+
+=== Server source code
+
+=== Booting the server process
+
+=== Testing the service with "ud" command
+
+== Creating the client application
+
+=== Client binary source code
+
+=== Running the client process
+
+== Conclusions
 
 :numbered!:
 
