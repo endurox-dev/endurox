@@ -73,7 +73,7 @@ when responses is received, it is dumped back to stdout.
 | xadmin | EnduroX Administration command utility. Basically utility is also responsible for 
 local ATMI instance start, stop, configuration test/load/reload, status printing, etc.
 | tmsrv | Transaction Manager Server. Responsible for XA two phase transaction management.
-| tprecover | Enduro/X main daemon (ndrxd) monitoring and recovery daemon.
+| tprecover | Enduro/X main daemon (ndrxd) monitoring and recovery server.
 |==============================================
 
 .Distribution package description - "lib" directory
