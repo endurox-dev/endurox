@@ -45,6 +45,7 @@ Improvements over Tuxedo:
 . Cluster is peer based, there is no master node;
 . Much simpler configuration reload during running app. Just edit 'ndrxconf.xml' and run 'xadmin reload' command.
 Tuxedo UBB configuration file is much harder to update in running up.
+. System can run with out the main Enduro/X daemon (ndrxd). It is much like running the Tuxedo with out Bulletin Board, which is not possible for Tuxedo. Even if 'ndrxd' daemon dies for some reason, it is possible to start in back in running application server instance with out service interruption.
 
 
 What EnduroX deliverable contains?
