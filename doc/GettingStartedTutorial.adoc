@@ -1,0 +1,4 @@
+Getting Started Guide. Convers Enduro/X installation from binary package,
+environment setup, creating a sample Enduro/X server and creating sample client.
+This include creating a neccessary configuration files. Finally the applicatioin is booted,
+and client process calls the sample server process.
