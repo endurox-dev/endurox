@@ -60,7 +60,6 @@ The distribution package contains following list of resources:
 Basically it links developers object files with libatmisrv.so which contains main() entry of the process
 | ckserver.sh| Internal shell script for checking is some server process down, part of `ndrxd' process.
 | fdown.sh| Internal shell script forced shutdown of the transaction monitor. Part of `ndrx' admin utility
-| libwsif.dll | .NET (mono) library used by ndrxwsif.exe, which is build time WebService interface generator between UBF and gsoap
 | mkfldhdr | Generates C header files for UBF buffers
 | ndrxd | EnduroX deamon. This process is central point of the application which does the Application Transaction Monitoring
 | ndrxd_chkdown.sh | Internal shell script which assists admin utility (xadmin) for checking for ndrxd to be down
@@ -71,9 +70,10 @@ It allows to connect one EnduroX instance to another EnduroX instance
 | tpevsrv | Special ATMI server which serves the local even distribution over the services
 | ud | ATMI client utility. This reads stdin of dumped UBF buffer. And sends request to specified service.
 when responses is received, it is dumped back to stdout.
-| xa | Alias for xadmin
 | xadmin | EnduroX Administration command utility. Basically utility is also responsible for 
 local ATMI instance start, stop, configuration test/load/reload, status printing, etc.
+| tmsrv | Transaction Manager Server. Responsible for XA two phase transaction management.
+| tprecover | Enduro/X main daemon (ndrxd) monitoring and recovery daemon.
 |==============================================
 
 .Distribution package description - "lib" directory
@@ -198,7 +198,7 @@ and how much to send to remote machine. Percentage is calculated on random basis
 and remote node is also calculated on random basis.
 The shared mem info can be looked by 'xadmin', 'psvc' command, for example:
 ---------------------------------------------------------------------
-$ xa
+$ xadmin
 NDRX> psvc
 ndrxd PID (from PID file): 5505
 Slot   Service Name Nsrv Flags CSrvs TClst CMAX CNODES
