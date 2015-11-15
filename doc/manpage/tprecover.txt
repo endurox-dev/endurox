@@ -1,0 +1,51 @@
+TPRECOVER(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+tprecover - Transaction Processing System Recovery.
+
+
+SYNOPSIS
+--------
+'*tprecover*'
+
+
+DESCRIPTION
+-----------
+This is special ATMI system process which is started in standrd way by
+'ndrxd' process application server boot. This service shall be run in single
+instance (min=1 and max=1). The process performs monitoring of the
+'ndrxd' executable. If it sees that 'ndrxd' process is dead, then
+it will start a new copy of 'ndrxd', which initially is put in recovery mode.
+During recovery mode 'ndrxd' requests all running servers information about their
+services. Once learning mode is completed 'ndrxd' will start to do sanity works, pings
+and other processes to keep the system in order.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)*
+
+AUTHOR
+------
+Enduro/X is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
