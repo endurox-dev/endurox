@@ -63,7 +63,6 @@ Basically it links developers object files with libatmisrv.so which contains mai
 | mkfldhdr | Generates C header files for UBF buffers
 | ndrxd | EnduroX deamon. This process is central point of the application which does the Application Transaction Monitoring
 | ndrxd_chkdown.sh | Internal shell script which assists admin utility (xadmin) for checking for ndrxd to be down
-| ndrxwsif.exe | .NET (mono) executable. This is optional source UFB:gsoap mapping generation utlity
 | tmadmin | Alias for xadmin
 | tpbridge | Special ATMI server which drives the connectivity for cluster purposes.
 It allows to connect one EnduroX instance to another EnduroX instance
