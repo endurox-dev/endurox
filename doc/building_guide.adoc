@@ -114,6 +114,7 @@ $ cd /home/user1/endurox/ThirdParty/c-unit-tests
 $ tar -xzvf cgreen-1.0.0-beta2.tar.gz
 $ mv cgreen-1.0.0-beta2 cgreen
 $ cd cgreen
+$ sed --in-place '/add_subdirectory(doc)/d' CMakeLists.txt
 $ cmake ../cgreen -DLIB_INSTALL_DIR=/usr/lib -DINCLUDE_INSTALL_DIR=/usr/include
 $ make
 $ sudo make install 
