@@ -71,7 +71,7 @@ echo 10000 > /proc/sys/fs/mqueue/queues_max
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev fop\
 	cmake dia flex bison gcc g++ libz-dev\
 	libssl-dev libcrypto++9 libcrypto++-dev\
-	libgpgme11-dev uuid-dev
+	libgpgme11-dev uuid-dev libxml2-devel
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
