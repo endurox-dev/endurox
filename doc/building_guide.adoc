@@ -75,11 +75,24 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev fop\
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
+As some packages like `dia' does not exists in base Centos install,
+then few of them we will borrow from Fedora project via epel-release.
+Which should be installed in following way:
+Download the latest epel-release rpm from (e.g. epel-release-6-8.noarch.rpm or later)
+http://dl.fedoraproject.org/pub/epel/6/x86_64/
+Install epel-release rpm:
 ---------------------------------------------------------------------
 $ su - root
-# yum install git cmake asciidoc libssl\
-	openssl-dev openssl openssl-devel.x86_64\
-	libgpgme11-dev uuid-dev
+# cd 
+# wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+# rpm -Uvh epel-release*rpm
+---------------------------------------------------------------------
+Now install 
+---------------------------------------------------------------------
+# yum groupinstall 'Development Tools'
+# yum install git cmake asciidoc uuid-devel\
+	openssl openssl-devel\
+	gpgme-devel dia
 # exit
 $
 ---------------------------------------------------------------------
