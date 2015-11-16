@@ -72,4 +72,7 @@ add_library (atmisrvnomain SHARED
 install (TARGETS 
     atmisrv 
     atmisrvnomain
-    DESTINATION lib)
+    DESTINATION lib
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries
+    )

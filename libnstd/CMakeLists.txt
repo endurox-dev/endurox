@@ -42,4 +42,7 @@ add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c)
 
 install (TARGETS 
     nstd 
-    DESTINATION lib)
+    DESTINATION lib
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries
+    )
