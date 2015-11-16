@@ -76,6 +76,8 @@ corresponding RMDI via 'NDRX_XA_RES_ID' environment variable.
 To configure different RMID's for different processes or 'tmsrvs'. Use the Enduro/X build in
 facility of environment variable override. See the manpage of 'ex_env(5)'.
 
+Enduro/X support static and dynamic XA registration.
+
 OPTIONS
 -------
 *-t* 'DEFAULT_TIMEOUT'::
