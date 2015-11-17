@@ -54,7 +54,6 @@
 
 #include "tmsrv.h"
 #include "../libatmisrv/srv_int.h"
-#include <uuid/uuid.h>
 #include <xa_cmn.h>
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/

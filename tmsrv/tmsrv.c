@@ -62,7 +62,6 @@
 #include "../libatmisrv/srv_int.h"
 #include "tperror.h"
 #include "userlog.h"
-#include <uuid/uuid.h>
 #include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;

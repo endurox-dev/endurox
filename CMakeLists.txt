@@ -31,7 +31,7 @@
 ##
 
 cmake_minimum_required (VERSION 2.6) 
-project (endurox) 
+project (ENDUROX) 
 set(VERSION "2.3.2")
 
 # Enable release only if specified.

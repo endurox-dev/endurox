@@ -42,7 +42,9 @@ ELSE ($ENV{RELEASE_BUILD})
 ENDIF ($ENV{RELEASE_BUILD})
 
 # Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
+                        /usr/include/uuid /usr/include/shit
+                )
 
 # Create a library called "ATMI" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 

@@ -52,7 +52,6 @@
 #include "tmsrv.h"
 #include "../libatmisrv/srv_int.h"
 #include "userlog.h"
-#include <uuid/uuid.h>
 #include <xa_cmn.h>
 #include <uthash.h>
 #include <unistd.h>
