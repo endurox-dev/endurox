@@ -90,7 +90,7 @@ $ su - root
 Now install 
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc uuid-devel\
+# yum install git cmake asciidoc libuuid-devel\
 	openssl openssl-devel\
 	gpgme-devel dia
 # exit
