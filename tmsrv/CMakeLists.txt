@@ -36,7 +36,6 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest
-                                         /usr/include/uuid
                         )
 
 

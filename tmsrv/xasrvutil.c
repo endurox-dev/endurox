@@ -49,7 +49,7 @@
 
 #include "tmsrv.h"
 #include "../libatmisrv/srv_int.h"
-#include <uuid.h>
+#include <uuid/uuid.h>
 #include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
