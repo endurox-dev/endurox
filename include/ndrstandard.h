@@ -57,7 +57,9 @@ extern "C" {
 
 
 #ifndef  __cplusplus
+#ifndef bool
 typedef int         bool;
+#endif
 #endif
 
 #define FALSE        0

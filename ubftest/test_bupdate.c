@@ -283,7 +283,7 @@ void test_update_data_2(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_fupdate(void)
+Ensure(test_fupdate)
 {
     char fb[9000];
     UBFH *p_ub = (UBFH *)fb;

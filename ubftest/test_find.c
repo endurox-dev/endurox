@@ -178,7 +178,7 @@ void load_bfindlast_test_data(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_cbfind(void)
+Ensure(test_cbfind)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -296,7 +296,7 @@ void test_cbfind(void)
 /**
  * Get occurrance out from value.
  */
-void test_bfindocc(void)
+Ensure(test_bfindocc)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -357,7 +357,7 @@ void test_bfindocc(void)
 /**
  * Get occurrance out from value (from user converted value)
  */
-void test_cbfindocc(void)
+Ensure(test_cbfindocc)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -500,7 +500,7 @@ void test_cbfindocc(void)
 /**
  * Test Bgetalloc
  */
-void test_bfindlast(void)
+Ensure(test_bfindlast)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;

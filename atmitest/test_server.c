@@ -36,7 +36,7 @@
 /**
  * Delete all items from
  */
-void test_server_basic(void)
+Ensure(test_server_basic)
 {
     
 }

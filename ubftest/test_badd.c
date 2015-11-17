@@ -46,7 +46,7 @@ UBFH *M_p_ub1 = NULL;
 /**
  * Basic preparation before the test
  */
-void basic_setup1(void)
+Ensure(basic_setup1)
 {
     /*printf("basic_setup\n"); */
     M_p_ub1 = malloc(DEFAULT_BUFFER);
@@ -69,7 +69,7 @@ void basic_teardown1(void)
 /**
  * Basic test for Badd & Bget
  */
-void test_Badd_str(void)
+Ensure(test_Badd_str)
 {
     char pan1[32] = "THIS IS 1";
     char pan2[32] = "THIS IS 2";
@@ -178,8 +178,8 @@ TestSuite *ubf_Badd_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
-    setup_(suite, basic_setup1);
-    teardown_(suite, basic_teardown1);
+    set_setup(suite, basic_setup1);
+    set_teardown(suite, basic_teardown1);
 
     add_test(suite, test_Badd_str);
 

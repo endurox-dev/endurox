@@ -73,7 +73,7 @@ void load_fdel_test_data_1(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), SUCCEED);
 }
 
-void test_fdel_simple(void)
+Ensure(test_fdel_simple)
 {
     char fb[500];
     UBFH *p_ub = (UBFH *)fb;

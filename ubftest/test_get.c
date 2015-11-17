@@ -121,7 +121,7 @@ void load_get_test_data_2(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_cbgetalloc(void)
+Ensure(test_cbgetalloc)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -316,7 +316,7 @@ void test_cbgetalloc(void)
 /**
  * Test Bgetalloc
  */
-void test_bgetalloc(void)
+Ensure(test_bgetalloc)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -394,7 +394,7 @@ void test_bgetalloc(void)
 /**
  * Test Bgetalloc
  */
-void test_bgetlast(void)
+Ensure(test_bgetlast)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;

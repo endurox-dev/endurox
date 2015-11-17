@@ -42,7 +42,7 @@
  * Calls scripts for checing mkfldhdr. Return code says
  * was OK or not OK.
  */
-void test_mkfldhdr()
+Ensure(test_mkfldhdr)
 {
     assert_equal(system("./test_mkfldhdr_cmd.sh"), SUCCEED);
     assert_equal(system("./test_mkfldhdr_env.sh"), SUCCEED);

@@ -41,7 +41,7 @@
 /**
  * Performs basic macro function testing.
  */
-void test_macros(void)
+Ensure(test_macros)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;

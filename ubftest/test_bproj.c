@@ -140,7 +140,7 @@ void load_proj_test_data(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_proj_simple(void)
+Ensure(test_proj_simple)
 {
     char fb[400];
     UBFH *p_ub = (UBFH *)fb;
@@ -235,7 +235,7 @@ void test_proj_simple(void)
 /**
  * This test projcpy function
  */
-void test_projcpy(void)
+Ensure(test_projcpy)
 {
     char fb_src[400];
     UBFH *p_ub_src = (UBFH *)fb_src;
@@ -305,7 +305,7 @@ void test_projcpy(void)
 /**
  * Test Bdelall function
  */
-void test_Bdelall(void)
+Ensure(test_Bdelall)
 {
     char fb[1024];
     char buf[64];
@@ -341,7 +341,7 @@ void test_Bdelall(void)
 /**
  * Delete all items from 
  */
-void test_Bdelete(void)
+Ensure(test_Bdelete)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;

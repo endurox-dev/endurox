@@ -32,11 +32,13 @@
 cmake_minimum_required(VERSION 2.8)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
+find_program(DBLATEX "dblatex")
 
 set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide)
 set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide)
 
 # Generate PDFs...
+if(DBLATEX)
 set(A2X_OPTS_PDF -L -f pdf --doctype book)
 set(PDF_FILES)
 foreach(m IN LISTS PDF_NAMES)
@@ -57,6 +59,7 @@ foreach(m IN LISTS PDF_NAMES)
 
 endforeach()
 add_custom_target(pdf ALL DEPENDS ${PDF_FILES})
+endif()
 
 # Generate HTMLs
 set(A2X_OPTS_HTML -D . -f xhtml)

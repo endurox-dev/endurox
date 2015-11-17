@@ -42,7 +42,7 @@
 /**
  * Original field is BFLD_SHORT => T_SHORT_FLD
  */
-void test_CBget_short_org(void)
+Ensure(test_CBget_short_org)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -100,7 +100,7 @@ void test_CBget_short_org(void)
 /**
  * Original field is BFLD_LONG => T_LONG_FLD
  */
-void test_CBget_long_org(void)
+Ensure(test_CBget_long_org)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -164,7 +164,7 @@ void test_CBget_long_org(void)
 /**
  * Original field is BFLD_CHAR => T_CHAR_FLD
  */
-void test_CBget_char_org(void)
+Ensure(test_CBget_char_org)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -232,7 +232,7 @@ void test_CBget_char_org(void)
 /**
  * Original field is BFLD_FLOAT => T_FLOAT_FLD
  */
-void test_CBget_float_org(void)
+Ensure(test_CBget_float_org)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -308,7 +308,7 @@ void test_CBget_float_org(void)
 /**
  * Original field is BFLD_DOUBLE => T_DOUBLE_FLD
  */
-void test_CBget_double_org(void)
+Ensure(test_CBget_double_org)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -382,7 +382,7 @@ void test_CBget_double_org(void)
 /**
  * Original field is BFLD_STRING => T_STRING_FLD
  */
-void test_CBget_string_org(void)
+Ensure(test_CBget_string_org)
 {
     char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
@@ -456,7 +456,7 @@ void test_CBget_string_org(void)
 /**
  * Original field is BFLD_CARRAY => T_CARRAY_FLD
  */
-void test_CBget_carray_org(void)
+Ensure(test_CBget_carray_org)
 {
     char buf[2048];
     UBFH *p_ub = (UBFH *)buf;

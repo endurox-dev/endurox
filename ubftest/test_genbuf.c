@@ -42,7 +42,7 @@
 /**
  * Bcpy tests.
  */
-void test_Bcpy(void)
+Ensure(test_Bcpy)
 {
     char buf1[550];
     char buf2[480];
@@ -69,7 +69,7 @@ void test_Bcpy(void)
  * Test user type conversation function
  * which dynamically allocates the buffer.
  */
-void test_btypcvt(void)
+Ensure(test_btypcvt)
 {
     BFLDLEN len;
     short s=-11;
@@ -264,7 +264,7 @@ void test_btypcvt(void)
 /**
  * Test data structures by it self
  */
-void ubf_test_struct(void)
+Ensure(ubf_test_struct)
 {
     /* test data structures */
     assert_equal(sizeof(UBF_header_t), 24);

@@ -1,4 +1,4 @@
-/* 
+/* )
 **
 ** @file test_expr.c
 ** 
@@ -123,7 +123,7 @@ void load_expr_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), SUCCEED);
 }
 
-void test_expr_basic(void)
+Ensure(test_expr_basic)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -187,7 +187,7 @@ void test_expr_basic(void)
 /**
  * Tests basic logic operations:- &&, ||, ^, !
  */
-void test_expr_basic_logic(void)
+Ensure(test_expr_basic_logic)
 {
     char buf[128];
     UBFH *p_ub = (UBFH *)buf;
@@ -302,7 +302,7 @@ void test_expr_basic_logic(void)
 /**
  * Tests ==, !=, %%, !%
  */
-void test_expr_basic_equality(void)
+Ensure(test_expr_basic_equality)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -412,7 +412,7 @@ void test_expr_basic_equality(void)
  * +, -, !, ~
  * Not sure about ~, but it should work simillary.
  */
-void test_expr_basic_unary(void)
+Ensure(test_expr_basic_unary)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -474,7 +474,7 @@ void test_expr_basic_unary(void)
 /**
  * Math operations with: +, -
  */
-void test_expr_basic_additive(void)
+Ensure(test_expr_basic_additive)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -574,7 +574,7 @@ void test_expr_basic_additive(void)
 /**
  * Math operations with: *, /, %
  */
-void test_expr_basic_multiplicative(void)
+Ensure(test_expr_basic_multiplicative)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -745,7 +745,7 @@ void test_expr_basic_multiplicative(void)
 /**
  * Basic floatev support test
  */
-void test_expr_basic_floatev(void)
+Ensure(test_expr_basic_floatev)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -837,7 +837,7 @@ void test_expr_basic_floatev(void)
 /**
  * Relational: < , >, <=, >=, ==, !=
  */
-void test_expr_basic_relational(void)
+Ensure(test_expr_basic_relational)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -1205,7 +1205,7 @@ void test_expr_basic_relational(void)
         Btreefree(tree);
 }
 
-void test_expr_basic_scopes(void)
+Ensure(test_expr_basic_scopes)
 {
     char buf[200];
     UBFH *p_ub = (UBFH *)buf;
@@ -1224,7 +1224,7 @@ void test_expr_basic_scopes(void)
 /**
  * Test expressions with manuplating with string field
  */
-void test_expr_short(void)
+Ensure(test_expr_short)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;
@@ -1287,7 +1287,7 @@ void test_expr_short(void)
 /**
  * Test tree printing routine
  */
-void test_bboolpr(void)
+Ensure(test_bboolpr)
 {
     char *tree;
     char buf[640];
@@ -1377,7 +1377,7 @@ long callback_function_value(UBFH *p_ub)
 /**
  * Test callback functions
  */
-void test_cbfunc(void)
+Ensure(test_cbfunc)
 {
     char buf[640];
     UBFH *p_ub = (UBFH *)buf;

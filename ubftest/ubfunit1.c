@@ -195,7 +195,7 @@ void basic_teardown(void)
 /**
  * Base Binit test
  */
-void test_Binit(void) {
+Ensure(test_Binit) {
     char tmpbuf[1024];
     UBFH * p_ub =  (UBFH *) tmpbuf;
     /* Check basic Binit */
@@ -207,7 +207,7 @@ void test_Binit(void) {
 /**
  * Basic Field table tests
  */
-void test_fld_table(void)
+Ensure(test_fld_table)
 {
     assert_equal(strcmp(Bfname(T_STRING_FLD), "T_STRING_FLD"), 0);
     assert_equal(Bfldid("T_STRING_FLD"), T_STRING_FLD);
@@ -219,7 +219,7 @@ void test_fld_table(void)
  *
  * Or replace with generic numbers?
  */
-void test_Bmkfldid(void)
+Ensure(test_Bmkfldid)
 {
     /* Short */
     assert_equal(Bmkfldid(BFLD_SHORT, 1021), T_SHORT_FLD);
@@ -240,7 +240,7 @@ void test_Bmkfldid(void)
 /**
  * Test function the returns field number out of ID
  */
-void test_Bfldno(void)
+Ensure(test_Bfldno)
 {
        /* Short */
     assert_equal(Bfldno(T_SHORT_FLD), 1021);
@@ -258,7 +258,7 @@ void test_Bfldno(void)
     assert_equal(Bfldno(T_CARRAY_FLD), 1081);
 }
 
-void test_Btype(void)
+Ensure(test_Btype)
 {
     assert_string_equal(Btype(T_SHORT_FLD), "short");
     assert_string_equal(Btype(T_LONG_FLD), "long");
@@ -274,7 +274,7 @@ void test_Btype(void)
 /**
  * Test Bisubf function
  */
-void test_Bisubf(void)
+Ensure(test_Bisubf)
 {
     char tmpbuf[64];
     UBFH * p_ub =  (UBFH *) tmpbuf;
@@ -290,7 +290,7 @@ void test_Bisubf(void)
 /**
  * Test Bsizeof
  */
-void test_Bsizeof(void)
+Ensure(test_Bsizeof)
 {
     char tmpbuf[64];
     UBFH * p_ub =  (UBFH *) tmpbuf;
@@ -303,7 +303,7 @@ void test_Bsizeof(void)
 /**
  * Test buffer usage.
  */
-void test_Bunused(void)
+Ensure(test_Bunused)
 {
     char tmpbuf[40]; /* +2 for short align */
     short s;
@@ -324,7 +324,7 @@ void test_Bunused(void)
 /**
  * Simple Blen test.
  */
-void test_Blen(void)
+Ensure(test_Blen)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -365,7 +365,7 @@ void test_Blen(void)
  * This tests so that buffer terminats with BBADFLDID
  * and then pre-last item is the data.
  */
-void test_buffer_align_fadd(void)
+Ensure(test_buffer_align_fadd)
 {
 #if 0
     /* Cannot test this directly because of align... */
@@ -396,7 +396,7 @@ void test_buffer_align_fadd(void)
  * Do test with Bchg
  * Tests Bpres and Boccur
  */
-void test_buffer_align_fchg_and_fpresocc(void)
+Ensure(test_buffer_align_fchg_and_fpresocc)
 {
     char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
@@ -439,7 +439,7 @@ void test_buffer_align_fchg_and_fpresocc(void)
 /**
  * Basically we should test all API functions here which operate with FB!
  */
-void test_buffer_alignity(void)
+Ensure(test_buffer_alignity)
 {
     char buf[1024];
     int short_v;
@@ -470,8 +470,8 @@ void test_buffer_alignity(void)
 TestSuite *ubf_basic_tests() {
     TestSuite *suite = create_test_suite();
     
-    setup_(suite, basic_setup);
-    teardown_(suite, basic_teardown);
+    set_setup(suite, basic_setup);
+    set_teardown(suite, basic_teardown);
 
     /*  UBF init test */
     add_test(suite, test_Binit);

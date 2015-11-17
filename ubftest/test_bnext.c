@@ -92,7 +92,7 @@ void load_fdel_test_data(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_fnext_simple(void)
+Ensure(test_fnext_simple)
 {
     char fb[400];
     char fb_2[400];
@@ -134,7 +134,7 @@ void test_fnext_simple(void)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_fnext_chk_errors(void)
+Ensure(test_fnext_chk_errors)
 {
     char fb[400];
     UBFH *p_ub = (UBFH *)fb;

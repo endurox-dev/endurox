@@ -32,6 +32,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
+find_program(DBLATEX "dblatex")
 
 set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover)
 set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv tprecover)
@@ -83,6 +84,7 @@ foreach(m IN LISTS MAN8_NAMES)
 endforeach()
 add_custom_target(man8 ALL DEPENDS ${MAN8_FILES})
 
+if(DBLATEX)
 set(A2X_OPTS_PDF_MAN -L -f pdf --doctype book)
 set(PDF_MAN_FILES)
 foreach(m IN LISTS PDF_MAN_NAMES)
@@ -103,6 +105,7 @@ foreach(m IN LISTS PDF_MAN_NAMES)
 
 endforeach()
 add_custom_target(pdf_man ALL DEPENDS ${PDF_MAN_FILES})
+endif()
 
 # end.
 

@@ -42,7 +42,7 @@
 /**
  * Test - Test buffer read/write
  */
-void test_readwrite(void)
+Ensure(test_readwrite)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -74,7 +74,7 @@ void test_readwrite(void)
 /**
  * Dest buffer from read too short
  */
-void test_readwrite_err_space(void)
+Ensure(test_readwrite_err_space)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -102,7 +102,7 @@ void test_readwrite_err_space(void)
 /**
  * Test unix error on bad file descriptor
  */
-void test_readwrite_invalid_descr(void)
+Ensure(test_readwrite_invalid_descr)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;

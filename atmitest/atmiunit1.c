@@ -53,28 +53,28 @@ int system_dbg(char *cmd)
 	return ret;
 }
 
-void test001_basiccall(void)
+Ensure(test001_basiccall)
 {
     int ret;
     ret=system_dbg("test001_basiccall/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test002_basicforward(void)
+Ensure(test002_basicforward)
 {
     int ret;
     ret=system_dbg("test002_basicforward/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test003_basicconvers(void)
+Ensure(test003_basicconvers)
 {
     int ret;
     ret=system_dbg("test003_basicconvers/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test004_basicevent(void)
+Ensure(test004_basicevent)
 {
     int ret;
     ret=system_dbg("test004_basicevent/run.sh");
@@ -82,84 +82,84 @@ void test004_basicevent(void)
 
 }
 
-void test005_convconfload(void)
+Ensure(test005_convconfload)
 {
     int ret;
     ret=system_dbg("test005_convconfload/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test006_ulog(void)
+Ensure(test006_ulog)
 {
     int ret;
     ret=system_dbg("test006_ulog/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test007_advertise(void)
+Ensure(test007_advertise)
 {
     int ret;
     ret=system_dbg("test007_advertise/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test008_extensions(void)
+Ensure(test008_extensions)
 {
     int ret;
     ret=system_dbg("test008_extensions/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test009_srvdie(void)
+Ensure(test009_srvdie)
 {
     int ret;
     ret=system_dbg("test009_srvdie/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test010_strtracecond(void)
+Ensure(test010_strtracecond)
 {
     int ret;
     ret=system_dbg("test010_strtracecond/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test011_tout(void)
+Ensure(test011_tout)
 {
     int ret;
     ret=system_dbg("test011_tout/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test012_admqfull(void)
+Ensure(test012_admqfull)
 {
     int ret;
     ret=system_dbg("test012_admqfull/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test001_basiccall_dom(void)
+Ensure(test001_basiccall_dom)
 {
     int ret;
     ret=system_dbg("test001_basiccall/run-dom.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test002_basicforward_dom(void)
+Ensure(test002_basicforward_dom)
 {
     int ret;
     ret=system_dbg("test002_basicforward/run-dom.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test003_basicconvers_dom(void)
+Ensure(test003_basicconvers_dom)
 {
     int ret;
     ret=system_dbg("test003_basicconvers/run-dom.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test004_basicevent_dom(void)
+Ensure(test004_basicevent_dom)
 {
     int ret;
     ret=system_dbg("test004_basicevent/run-dom.sh");
@@ -167,35 +167,35 @@ void test004_basicevent_dom(void)
 
 }
 
-void test013_procnorsp(void)
+Ensure(test013_procnorsp)
 {
     int ret;
     ret=system_dbg("test013_procnorsp/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test015_threads(void)
+Ensure(test015_threads)
 {
     int ret;
     ret=system_dbg("test015_threads/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test017_srvthread(void)
+Ensure(test017_srvthread)
 {
     int ret;
     ret=system_dbg("test017_srvthread/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test018_tpacalltout(void)
+Ensure(test018_tpacalltout)
 {
     int ret;
     ret=system_dbg("test018_tpacalltout/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
-void test021_xafull(void)
+Ensure(test021_xafull)
 {
     int ret;
     ret=system_dbg("test021_xafull/run.sh");

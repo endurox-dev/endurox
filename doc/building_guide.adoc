@@ -110,10 +110,8 @@ is used for system development.
 ==== C-Green unit testing framework
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/ThirdParty/c-unit-tests
-$ tar -xzvf cgreen-1.0.0-beta2.tar.gz
-$ mv cgreen-1.0.0-beta2 cgreen
+$ tar -xzvf cgreen-svn-561-20141228.tar.gz
 $ cd cgreen
-$ sed --in-place '/add_subdirectory(doc)/d' CMakeLists.txt
 $ cmake ../cgreen -DLIB_INSTALL_DIR=/usr/lib -DINCLUDE_INSTALL_DIR=/usr/include
 $ make
 $ sudo make install 
@@ -195,7 +193,7 @@ Enduro/X basically consists of two parts:
 . UBF/FML buffer processing. 
 Each of these two sub-systems have own units tests.
 
-==== UBF/FML Unit testing
+=== UBF/FML Unit testing
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/ubftest
 $ ./ubfunit1 2>/dev/null
@@ -203,7 +201,7 @@ Running "main"...
 Completed "main": 5751 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
-==== XATMI Unit testing
+=== XATMI Unit testing
 ATMI testing might take some time. Also ensure that you have few Gigabytes of free 
 disk space, as logging requires some space. To run the ATMI tests do following:
 ---------------------------------------------------------------------

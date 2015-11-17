@@ -42,7 +42,7 @@
  * Test Balloc
  * @return
  */
-void test_Balloc_Bfree(void)
+Ensure(test_Balloc_Bfree)
 {
     UBFH *p_ub = NULL;
     int i;
@@ -63,7 +63,7 @@ void test_Balloc_Bfree(void)
 /**
  * Basic test for reallocation
  */
-void test_Brealloc(void)
+Ensure(test_Brealloc)
 {
     UBFH *p_ub = NULL;
 

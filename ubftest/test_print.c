@@ -165,7 +165,7 @@ void load_print_test_data(UBFH *p_ub)
  * Bfprint testing.
  * @return
  */
-void test_bfprint(void)
+Ensure(test_bfprint)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -214,7 +214,7 @@ void test_bfprint(void)
  * There is special note for this!
  * If running in single test mode, then STDOUT will be lost!
  */
-void test_bprint(void)
+Ensure(test_bprint)
 {
     char fb[1024];
     UBFH *p_ub = (UBFH *)fb;
@@ -249,7 +249,7 @@ void test_bprint(void)
 /**
  * Test function for Bextread, using field IDs (not present in table)
  */
-void test_bextread_bfldid(void)
+Ensure(test_bextread_bfldid)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -287,7 +287,7 @@ void test_bextread_bfldid(void)
 /**
  * Test function for Bextread, using field names
  */
-void test_bextread_fldnm(void)
+Ensure(test_bextread_fldnm)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -323,7 +323,7 @@ void test_bextread_fldnm(void)
 /**
  * Testing extread for errors
  */
-void test_bextread_chk_errors(void)
+Ensure(test_bextread_chk_errors)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -532,7 +532,7 @@ void test_bextread_chk_errors(void)
 /**
  * Testing extread for errors
  */
-void test_bextread_comments(void)
+Ensure(test_bextread_comments)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -580,7 +580,7 @@ void test_bextread_comments(void)
 /**
  * Test - flag for buffer delete
  */
-void test_bextread_minus(void)
+Ensure(test_bextread_minus)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -628,7 +628,7 @@ void test_bextread_minus(void)
 /**
  * Test - flag for buffer delete
  */
-void test_bextread_plus(void)
+Ensure(test_bextread_plus)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -678,7 +678,7 @@ void test_bextread_plus(void)
 /**
  * Test - Test buffer EQ op
  */
-void test_bextread_eq(void)
+Ensure(test_bextread_eq)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
@@ -745,7 +745,7 @@ void test_bextread_eq(void)
 /**
  * Test - Test buffer EQ failure
  */
-void test_bextread_eq_err(void)
+Ensure(test_bextread_eq_err)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;

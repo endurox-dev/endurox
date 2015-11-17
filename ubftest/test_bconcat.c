@@ -285,7 +285,7 @@ void test_concat_data_2(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-void test_fconcat(void)
+Ensure(test_fconcat)
 {
     char fb[9000];
     UBFH *p_ub = (UBFH *)fb;
