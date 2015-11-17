@@ -86,13 +86,6 @@ $ su - root
 # wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 # rpm -Uvh epel-release*rpm
 ---------------------------------------------------------------------
-Install dbletex (needed for PDF documentation build):
----------------------------------------------------------------------
-$ su - root
-# wget https://dl.fedoraproject.org/pub/epel/5/x86_64/dblatex-0.2.8-2.el5.noarch.rpm
-# rpm -i dblatex-0.2.8-2.el5.noarch.rpm
----------------------------------------------------------------------
-
 Now install system depenencies  
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
