@@ -33,6 +33,7 @@
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
 set(VERSION "2.3.2")
+set(RELEASE "1")
 
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -45,6 +46,20 @@ ELSE ($ENV{RELEASE_BUILD})
 	SET(CMAKE_BUILD_TYPE debug)
         SET(CMAKE_C_FLAGS -ggdb)
 ENDIF ($ENV{RELEASE_BUILD})
+
+get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+
+if ("${LIB64}" STREQUAL "TRUE")
+    set(LIB_SUFFIX 64)
+else()
+    set(LIB_SUFFIX "")
+endif()
+
+set(INSTALL_LIB_DIR     lib${LIB_SUFFIX} CACHE PATH "Installation directory for libraries")
+mark_as_advanced(INSTALL_LIB_DIR) 
+MESSAGE( STATUS "INSTALL_LIB_DIR: " ${INSTALL_LIB_DIR} )
+
+
 
 # Recurse into the project subdirectories. This does not actually
 # cause another cmake executable to run. The same process will walk through 
@@ -87,16 +102,45 @@ add_custom_target(uninstall
 ################################################################################
 # Packages
 ################################################################################
+
+find_program(LSB_RELEASE_EXECUTABLE lsb_release)
+if(LSB_RELEASE_EXECUTABLE)
+        execute_process(COMMAND ${LSB_RELEASE_EXECUTABLE} -si
+                OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_OS
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+        string(TOLOWER 
+                ${_TMP_LSB_RELEASE_OUTPUT_OS}
+        LSB_RELEASE_OUTPUT_OS)
+
+        execute_process(COMMAND ${LSB_RELEASE_EXECUTABLE} -sr
+                OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
+else ()
+        set(LSB_RELEASE_OUTPUT_OS "unknown")
+        set(LSB_RELEASE_OUTPUT_VER "0")
+endif()
+
+message("CPack:Debug: LSB_RELEASE OS  = ${LSB_RELEASE_OUTPUT_OS}")
+message("CPack:Debug: LSB_RELEASE VER = ${LSB_RELEASE_OUTPUT_VER}")
+
+
 # Support only for Linux
-MESSAGE( STATUS "CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME} )
-MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
+MESSAGE( "CPack:Debug: CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME} )
+MESSAGE( "CPack:Debug: CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 set(CPACK_MONOLITHIC_INSTALL 1)
 set(CPACK_GENERATOR "DEB;RPM;TGZ")
 set(CPACK_PACKAGE_CONTACT "madars.vitolins@gmail.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
 #set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2,openssl,libgpgme11")
 #set(CPACK_RPM_PACKAGE_REQUIRES "libxml2,openssl,libssl,libgpgme11")
-set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME}-${VERSION}-${CMAKE_SYSTEM_PROCESSOR})
+string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LO)
+message("CPack:Debug: PROJECT NAME = ${PROJECT_NAME_LO}")
+set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME_LO}-${VERSION}-${RELEASE}.${LSB_RELEASE_OUTPUT_OS}${LSB_RELEASE_OUTPUT_VER}.${CMAKE_SYSTEM_PROCESSOR})
+message("CPack:Debug: CPACK_PACKAGE_FILE_NAME = ${CPACK_PACKAGE_FILE_NAME}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Enduro/X Middleware Platform")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION  ${CPACK_PACKAGE_DESCRIPTION})
 set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
