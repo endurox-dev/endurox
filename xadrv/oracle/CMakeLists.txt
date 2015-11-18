@@ -59,4 +59,5 @@ add_library (ndrxxaorad SHARED
 install (TARGETS 
     ndrxxaoras
     ndrxxaorad
-    DESTINATION lib)
+    DESTINATION "${INSTALL_LIB_DIR}"
+    )
