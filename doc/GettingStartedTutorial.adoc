@@ -440,7 +440,10 @@ int tpsvrinit(int argc, char **argv)
 	{
 		fprintf(stderr, "Failed to advertise BALANCE - %s\n", 
 			tpstrerror(tperrno));
+		return FAIL;
 	}
+	
+	return SUCCEED;
 }
 
 /**
