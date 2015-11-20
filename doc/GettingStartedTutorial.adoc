@@ -68,17 +68,19 @@ echo 10000 > /proc/sys/fs/mqueue/queues_max
 We will run our app "app1" from new user "user1". Application domain will be located in /opt/app1 folder. With follwing direcotry structure:
 [options="compact"]
 - /opt/app1/conf - will contain configuration files.
-- /opt/app1/src/eclient - Enduro/X sample client sources.
-- /opt/app1/src/eserver - Enduro/X sample server process sources.
+- /opt/app1/src/bankcl - Enduro/X sample client process source
+- /opt/app1/src/banksv - Enduro/X sample server process sources.
 - /opt/app1/bin - for executables.
 - /opt/app1/ubftab - for tables for field defintions.
+- /opt/app1/tmp - temp dir
+- /opt/app1/log - for logging
 
 Create the user & directories:
 ---------------------------------------------------------------------
 # useradd -m user1
 # mkdir -p /opt/app1/conf
-# mkdir -p /opt/app1/src/eclient
-# mkdir -p /opt/app1/src/eserver
+# mkdir -p /opt/app1/src/bankcl
+# mkdir -p /opt/app1/src/banksv
 # mkdir -p /opt/app1/bin
 # mkdir -p /opt/app1/ubftab
 # mkdir -p /opt/app1/tmp
@@ -141,8 +143,8 @@ export NDRX_LEV=5
 # Correct the path so that ndrx can find ndrxd
 export PATH=$PATH:$NDRX_HOME/bin
 
-# UBFTAB Exfields - Enduro/X specifc, test.fd - our apps' UBF fields 
-export FIELDTBLS=Exfields,test.fd
+# UBFTAB Exfields - Enduro/X specifc, bank.fd - our apps' UBF fields 
+export FIELDTBLS=Exfields,bank.fd
 ---------------------------------------------------------------------
 
 Basic application server configuration (/opt/app1/conf/ndrxconfig.xml)
@@ -225,11 +227,11 @@ Basic application server configuration (/opt/app1/conf/ndrxconfig.xml)
 	</defaults>
 	<servers>
 		<!-- This is binary we are about to build -->
-		<server name="eserver">
+		<server name="banksv">
 			<srvid>1</srvid>
 			<min>2</min>
 			<max>2</max>
-			<sysopt>-e /opt/app1/log/ESERVER -r</sysopt>
+			<sysopt>-e /opt/app1/log/BANKSV -r</sysopt>
 		</server>
 	</servers>
 </endurox>
@@ -242,12 +244,12 @@ Setup debug config (/opt/app1/conf/debug.conf):
 * ndrx=5 ubf=0 lines=1 bufsz=1000 file=
 xadmin file=${NDRX_APPHOME}/log/xadmin.log
 ndrxd file=${NDRX_APPHOME}/log/ndrxd.log
-eserver file=${NDRX_APPHOME}/log/ESERVER
-eclient file=${NDRX_APPHOME}/log/ECLIENT
+eserver file=${NDRX_APPHOME}/log/BANKSV
+eclient file=${NDRX_APPHOME}/log/BANKCL
 ---------------------------------------------------------------------
 
 We will get the default Exfields version and will 
-try to start the app server, should start, except `eserver' will not be found:
+try to start the app server, should start, except `banksv' will not be found:
 
 ---------------------------------------------------------------------
 $ cp /usr/share/endurox/ubftab/Exfields /opt/app1/ubftab
@@ -267,9 +269,9 @@ GPLv2 (or later) or ATR Baltic's license for commercial use.
 EnduroX back-end (ndrxd) is not running!
 ndrxd PID (from PID file): 1695
 ndrxd idle instance started!
-exec eserver -k 0myWI5nu -i 1 -e /opt/app1/log/ESERVER -r --  :
+exec banksv -k 0myWI5nu -i 1 -e /opt/app1/log/BANKSV -r --  :
 	process id=1696 ... No such file or directory.
-exec eserver -k 0myWI5nu -i 2 -e /opt/app1/log/ESERVER -r --  :
+exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
 	process id=1698 ... No such file or directory.
 Startup finished. 0 processes started.
 ---------------------------------------------------------------------
@@ -287,8 +289,55 @@ Then this typically means, that you do not have run /etc/rc.local (either by roo
 to /opt/app1/log/xadmin.log
 
 == Creating the server process
+Firstly to create a "bank" server, we will have to define the fields in which we will transfer the data. We will need following fields:
+[options="compact"]
+- T_ACCNUM - Account number, type string
+- T_ACCCUR - Account currency, type string
+- T_AMTAVL - Available balance in account, type double
+So we will create a service "BALANCE" to which we will T_ACCNUM and T_ACCCUR. The process will return balance in T_AMTAVL.
 
 === Defining the UBF fields
+Requried fields will be define into /opt/app1/ubftab/bank.fd with follwing contents:
+
+---------------------------------------------------------------------
+$/* -----------------------------------------------------------------------------
+$** Bank app field defintions for UBF buffer
+$** -----------------------------------------------------------------------------
+$*/
+
+$#ifndef __BANK_H
+$#define __BANK_H
+
+*base 1000
+
+#NAME		ID	TYPE	FLAG	COMMENT
+#----		--	----	----	-------
+# Service name for UD
+T_ACCNUM	1	string	-	Account number
+T_ACCCUR	2	string	-	Account currency
+T_AMTAVL	3	double	-	Account balance
+
+$#endif
+---------------------------------------------------------------------
+
+To generate C header fields for UBF buffer, run `mkfldhdr' command in /opt/app1/ubftab folder:
+
+---------------------------------------------------------------------
+$ mkfldhdr 
+NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0265:Output directory is [.]
+NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0277:Use environment variables
+NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0337:enter generate_files()
+NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0395:/opt/app1/ubftab/Exfields processed OK, output: ./Exfields.h
+NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0395:/opt/app1/ubftab/bank.fd processed OK, output: ./bank.fd.h
+NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0290:Finished with : SUCCESS
+ls -l
+total 16
+-rw-r--r--. 1 user1 user1  459 Nov 16 03:36 bank.fd
+-rw-rw-r--. 1 user1 user1  525 Nov 16 03:37 bank.fd.h
+-rw-r--r--. 1 user1 user1 3704 Nov 16 03:18 Exfields
+-rw-rw-r--. 1 user1 user1 3498 Nov 16 03:37 Exfields.h
+---------------------------------------------------------------------
+
 
 === Server source code
 
