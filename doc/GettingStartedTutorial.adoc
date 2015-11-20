@@ -76,6 +76,7 @@ We will run our app "app1" from new user "user1". Application domain will be loc
 - /opt/app1/ubftab - for tables for field defintions.
 - /opt/app1/tmp - temp dir
 - /opt/app1/log - for logging
+- /opt/app1/test - test data
 
 Create the user & directories:
 ---------------------------------------------------------------------
@@ -87,6 +88,7 @@ Create the user & directories:
 # mkdir -p /opt/app1/ubftab
 # mkdir -p /opt/app1/tmp
 # mkdir -p /opt/app1/log
+# mkdir -p /opt/app1/test
 # chown -R user1 /opt/app1 
 ---------------------------------------------------------------------
 Next we will configure environment files, file /opt/app1/conf/setndrx - this will contain neccessary configuration for Enduro/X.
@@ -243,7 +245,7 @@ Basic application server configuration (/opt/app1/conf/ndrxconfig.xml)
 Setup debug config (/opt/app1/conf/debug.conf):
 
 ---------------------------------------------------------------------
-* ndrx=5 ubf=0 lines=1 bufsz=1000 file=
+* ndrx=1 ubf=0 lines=1 bufsz=1000 file=
 xadmin file=${NDRX_APPHOME}/log/xadmin.log
 ndrxd file=${NDRX_APPHOME}/log/ndrxd.log
 eserver file=${NDRX_APPHOME}/log/BANKSV
@@ -527,7 +529,7 @@ T_ACCNUM	ABC123467890
 T_ACCCUR	EUR
 ---------------------------------------------------------------------
 
-To call the service just pipe the data `ud':
+To call the service just pipe the data to the `ud':
 ---------------------------------------------------------------------
 $ ud < /opt/app1/test/test.ud
 SENT pkt(1) is :
