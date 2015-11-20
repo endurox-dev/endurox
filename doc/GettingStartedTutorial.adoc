@@ -344,10 +344,179 @@ total 16
 We will have sample server process which will just print in trace file account, currency. In return it will set "random" balance in field "T_AMTAVL". The source code of /opt/app1/banksv/banksv.c looks as follows:
 
 ---------------------------------------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
+/* Enduro/X includes: */
+#include <atmi.h>
+#include <ubf.h>
+#include <bank.fd.h>
+
+#define SUCCEED		0
+#define FAIL		-1
+
+/**
+ * BALANCE service
+ */
+void BALANCE (TPSVCINFO *p_svc)
+{
+	int ret=SUCCEED;
+	double balance;
+	char account[28+1];
+	char currency[3+1];
+	BFLDLEN len;
+
+	UBFH *p_ub = (UBFH *)p_svc->data;
+
+	fprintf(stderr, "BALANCE got call\n");
+
+	/* Resize the buffer to have some space in... */
+	if (NULL==(p_ub = (UBFH *)tprealloc ((char *)p_ub, 1024)))
+	{
+		fprintf(stderr, "Failed to realloc the UBF buffer - %s\n", 
+			tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	
+	/* Read the account field */
+	len = sizeof(account);
+	if (SUCCEED!=Bget(p_ub, T_ACCNUM, 0, account, &len))
+	{
+		fprintf(stderr, "Failed to get T_ACCNUM[0]! -  %s\n", 
+			Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+	
+	/* Read the currency field */
+	len = sizeof(currency);
+	if (SUCCEED!=Bget(p_ub, T_ACCCUR, 0, currency, &len))
+	{
+		fprintf(stderr, "Failed to get T_ACCCUR[0]! -  %s\n", 
+			Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+	
+	fprintf(stderr, "Got request for account: [%s] currency [%s]\n",
+			account, currency);
+
+	srand(time(NULL));
+	balance = (double)rand()/(double)RAND_MAX + rand();
+
+	/* Return the value in T_AMTAVL field */
+	
+	fprintf(stderr, "Retruning balance %lf\n", balance);
+	
+
+	if (SUCCEED!=Bchg(p_ub, T_AMTAVL, 0, (char *)&balance, 0L))
+	{
+		fprintf(stderr, "Failed to set T_AMTAVL! -  %s\n", 
+			Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+
+out:
+	tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+		0L,
+		(char *)p_ub,
+		0L,
+		0L);
+}
+
+/**
+ * Do initialization
+ */
+int tpsvrinit(int argc, char **argv)
+{
+	if (SUCCEED!=tpadvertise("BALANCE", BALANCE))
+	{
+		fprintf(stderr, "Failed to initialize BALANCE - %s\n", 
+			tpstrerror(tperrno));
+	}
+}
+
+/**
+ * Do de-initialization
+ */
+void tpsvrdone(void)
+{
+	fprintf(stderr, "tpsvrdone called\n");
+}
 ---------------------------------------------------------------------
 
+Very simple Makefile will look like (/opt/app1/src/banksv/Makefile):
+
+---------------------------------------------------------------------
+banksv: banksv.c
+	gcc -o banksv banksv.c -I. -I ../../ubftab -lm -lubf -lnstd -latmi -latmisrv -lrt -ldl
+---------------------------------------------------------------------
+
+Build the binary:
+---------------------------------------------------------------------
+$ cd /opt/app1/src/banksv
+$ make
+gcc -o banksv banksv.c -I. -I ../../ubftab -lm -lubf -lnstd -latmi -latmisrv -lrt -ldl
+ls -l
+total 20
+-rwxrwxr-x. 1 user1 user1 9937 Nov 16 04:11 banksv
+-rw-rw-r--. 1 user1 user1 1926 Nov 16 04:07 banksv.c
+-rw-rw-r--. 1 user1 user1  105 Nov 16 04:01 Makefile
+---------------------------------------------------------------------
+So binary is built next we will try to start it.
+
 === Booting the server process
+To start the binary, first we need to copy it to binary directory:
+---------------------------------------------------------------------
+$ cp /opt/app1/src/banksv/banksv /opt/app1/bin/banksv
+---------------------------------------------------------------------
+
+Now start it with "xadmin start". This will cause to boot any unbooted processes to start (which previosly did not start because we didn't have `banksv' executable in bin directory.
+
+---------------------------------------------------------------------
+$ xadmin start
+Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+ndrxd PID (from PID file): 2608
+Are you sure you want to start application? [Y/N]: y
+exec banksv -k 0myWI5nu -i 1 -e /opt/app1/log/BANKSV -r --  :
+	process id=2617 ... Started.
+exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
+	process id=2618 ... Started.
+Startup finished. 2 processes started.
+---------------------------------------------------------------------
+
+To check that our BALANCE service is advertized, we can execute command "xadmin psc" - print services:
+
+---------------------------------------------------------------------
+$ xadmin psc
+Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+ndrxd PID (from PID file): 2608
+Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
+-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----
+1  BALANCE      BALANCE      banksv    1     0     0     0ms      0ms      AVAIL
+1  BALANCE      BALANCE      banksv    2     0     0     0ms      0ms      AVAIL
+---------------------------------------------------------------------
+
+We see here two copies for banksv binaries running (Server ID 1 & 2). Both advertizes "BALANCE" service.
 
 === Testing the service with "ud" command
 
