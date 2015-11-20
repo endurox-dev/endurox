@@ -338,8 +338,12 @@ total 16
 -rw-rw-r--. 1 user1 user1 3498 Nov 16 03:37 Exfields.h
 ---------------------------------------------------------------------
 
-
 === Server source code
+We will have sample server process which will just print in trace file account, currency. In return it will set "random" balance in field "T_AMTAVL". The source code of /opt/app1/banksv/banksv.c looks as follows:
+
+---------------------------------------------------------------------
+
+---------------------------------------------------------------------
 
 === Booting the server process
 
