@@ -604,7 +604,7 @@ int main(int argc, char** argv) {
     {
         ret=FAIL;
         NDRX_LOG(log_error, "Failed to initialize!");
-        fprintf(stderr, "Failed to initialize!");
+        fprintf(stderr, "Failed to initialize!\n");
         goto out;
     }
     
