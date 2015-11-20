@@ -135,7 +135,7 @@ export NDRX_UBFMAXFLDS=16000
 export NDRX_DMNLOG=/opt/app1/log/ndrxd.log
 export NDRX_DMNLEV=5
 
-export NDRX_LOG=/opt/app1/log/ndrx.log
+export NDRX_LOG=/opt/app1/log/xadmin.log
 export NDRX_LEV=5
 
 # Correct the path so that ndrx can find ndrxd
