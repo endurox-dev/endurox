@@ -59,9 +59,11 @@ echo 10000 > /proc/sys/fs/mqueue/queues_max
 ---------------------------------------------------------------------
 
 == Installing binary package (RPM for Centos 6.x)
+We will also need a gcc compiler to build our bankapp
 ---------------------------------------------------------------------
 # wget http://www.endurox.org/attachments/download/6/endurox-2.3.2-1.centos6.x86_64.rpm
 # rpm -i endurox-2.3.2-1.centos6.x86_64.rpm
+# yum install gcc
 ---------------------------------------------------------------------
 
 == Configuring the application environment 
