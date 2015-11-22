@@ -1,0 +1,54 @@
+#!/bin/bash
+export NDRX_NODEID=1
+# If 1 - then yes, if 0 - then not clusterised.
+export NDRX_CLUSTERISED=0
+# Load balance, 0 = process all locally, 100 = process all on remote servers
+export NDRX_LDBAL=0
+# tpcall() timeout:
+export NDRX_TOUT=60
+# where to write ulog
+export NDRX_ULOG=/opt/app1/log
+export NDRX_QPREFIX=/app1
+export NDRX_SVCMAX=20000
+export NDRX_SRVMAX=10000
+export NDRX_QPATH=/dev/mqueue
+export NDRX_SHMPATH=/dev/shm
+# Milli seconds to wait for command
+export NDRX_CMDWAIT=1
+export NDRX_DPID=/opt/app1/tmp/ndrxd.pid
+# Random key to indentify the processes beloning to this session (i.e. used in ps ef)
+export NDRX_RNDK="0myWI5nu"
+# System V Semaphores...
+export NDRX_IPCKEY=44000
+# Posix queue config (attribs..)
+# Max number of messages that can be put in one queue
+export NDRX_MSGMAX=1000
+# Daemon Q size...
+export NDRX_DQMAX=100
+# Max message size (in bytes), max 64K
+export NDRX_MSGSIZEMAX=10000
+# Where app domain lives
+export NDRX_APPHOME=/opt/app1
+# Where NDRX runtime lives
+export NDRX_HOME=/usr
+# Debug config too
+export NDRX_DEBUG_CONF=/opt/app1/conf/debug.conf
+# NDRX config too.
+export NDRX_CONFIG=/opt/app1/conf/ndrxconfig.xml
+export PATH=$PATH:/opt/app1/bin
+export export FLDTBLDIR=/opt/app1/ubftab
+# Max fields for hashing UBF
+export NDRX_UBFMAXFLDS=16000
+
+# Log & levels (basic for scripting..)
+export NDRX_DMNLOG=/opt/app1/log/ndrxd.log
+export NDRX_DMNLEV=5
+
+export NDRX_LOG=/opt/app1/log/ndrx.log
+export NDRX_LEV=5
+
+# Correct the path so that ndrx can find ndrxd
+export PATH=$PATH:$NDRX_HOME/bin
+
+# UBFTAB Exfields - Enduro/X specifc, bank.fd - our apps' UBF fields 
+export FIELDTBLS=Exfields,bank.fd

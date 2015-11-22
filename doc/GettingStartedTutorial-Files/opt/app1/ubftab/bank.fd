@@ -1,0 +1,19 @@
+$/* -----------------------------------------------------------------------------
+$** Bank app field defintions for UBF buffer
+$** -----------------------------------------------------------------------------
+$*/
+
+$#ifndef __BANK_H
+$#define __BANK_H
+
+*base 1000
+
+#NAME		ID	TYPE	FLAG	COMMENT
+#----		--	----	----	-------
+# Service name for UD
+T_ACCNUM	1	string	-	Account number
+T_ACCCUR	2	string	-	Account currency
+T_AMTAVL	3	double	-	Account balance
+
+$#endif
+
