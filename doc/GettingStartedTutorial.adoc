@@ -547,12 +547,116 @@ T_ACCCUR	EUR
 We see that our "dummy" balance returned is "1355808545.118969". So test service is working ok. Now we should write a client app, which could call the service via tpcall() XATMI API call.
 
 == Creating the client application
+Bank client application will setup T_ACCNUM and T_ACCCUR fields and will call "BALANCE" service, after the call client application will print the balance on screen.
 
 === Client binary source code
+Code for client application: /opt/app1/bankcl/bankcl.c
+
+---------------------------------------------------------------------
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <atmi.h>
+#include <ubf.h>
+#include <bank.fd.h>
+
+#define SUCCEED		0
+#define FAIL		-1
+
+/**
+ * Do the test call to the server
+ */
+int main(int argc, char** argv) {
+
+	int ret=SUCCEED;
+	UBFH *p_ub;
+	long rsplen;
+	double balance;
+	
+	/* allocate the call buffer */
+	if (NULL== (p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+	{
+		fprintf(stderr, "Failed to realloc the UBF buffer - %s\n", 
+			tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	/* Set the data */
+	if (SUCCEED!=Badd(p_ub, T_ACCNUM, "ACC00000000001", 0) ||
+		SUCCEED!=Badd(p_ub, T_ACCCUR, "USD", 0))
+	{
+		fprintf(stderr, "Failed to get T_ACCNUM[0]! -  %s\n", 
+			Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+	
+	/* Call the server */
+	if (FAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+	{
+		fprintf(stderr, "Failed to call BALANCE - %s\n", 
+			tpstrerror(tperrno));
+		
+		ret=FAIL;
+		goto out;
+	}
+	
+	/* Read the balance field */
+	
+	if (SUCCEED!=Bget(p_ub, T_AMTAVL, 0, (char *)&balance, 0L))
+	{
+		fprintf(stderr, "Failed to get T_AMTAVL[0]! -  %s\n", 
+			Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+	
+	printf("Account balance is: %.2lf USD\n", balance);
+	
+out:
+	/* free the buffer */
+	if (NULL!=p_ub)
+	{
+		tpfree((char *)p_ub);
+	}
+	
+	/* Terminate ATMI session */
+	tpterm();
+	return ret;
+}
+---------------------------------------------------------------------
+Makefile (/opt/app1/src/bankcl/Makefile) looks like:
+
+---------------------------------------------------------------------
+bankcl: bankcl.c
+	gcc -o bankcl bankcl.c -I. -I ../../ubftab -lm -lubf -lnstd -latmi -latmiclt -lrt -ldl
+---------------------------------------------------------------------
+
+Once both bankcl.c and Makefile is created, you can run the build process:
+---------------------------------------------------------------------
+$ cd /opt/app1/src/bankcl
+$ make
+$ ls -l
+total 20
+-rwxrwxr-x. 1 user1 user1 9471 Nov 22 13:34 bankcl
+-rw-rw-r--. 1 user1 user1 1380 Nov 22 13:34 bankcl.c
+-rw-rw-r--. 1 user1 user1  105 Nov 22 13:32 Makefile
+---------------------------------------------------------------------
 
 === Running the client process
+We will start the application from the same build directory. The results are following:
+
+---------------------------------------------------------------------
+$ /opt/app1/src/bankcl/bankcl 
+Account balance is: 883078058.68 USD
+---------------------------------------------------------------------
 
 == Conclusions
+From the above sample it could be seen that creating a ATMI application ir pretty and stright forward. This application was very basic, just doing the call to Enduro/X service. However the same application could work in cluster, where "BALANCE" service can be located on different physical machine and `bankcl' will still work, as platform will ensure that visibility of the "BALANCE" service, see the <<TPBRIDGE>> for clustering.
 
 :numbered!:
 
@@ -571,6 +675,7 @@ This section lists additional related documents.
 - [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
 - [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
 - [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
+- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
 
 [glossary]
 Glossary
