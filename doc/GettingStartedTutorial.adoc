@@ -656,7 +656,7 @@ Account balance is: 883078058.68 USD
 ---------------------------------------------------------------------
 
 == Conclusions
-From the above sample it could be seen that creating a ATMI application ir pretty and stright forward. This application was very basic, just doing the call to Enduro/X service. However the same application could work in cluster, where "BALANCE" service can be located on different physical machine and `bankcl' will still work, as platform will ensure that visibility of the "BALANCE" service, see the <<TPBRIDGE>> for clustering.
+From the above sample it could be seen that creating a ATMI application ir pretty easy and stright forward. This application was very basic, just doing the call to Enduro/X service. However the same application could work in cluster, where "BALANCE" service can be located on different physical machine and `bankcl' will still work, as platform will ensure the visibility of the "BALANCE" service, see the <<TPBRIDGE>> for clustering.
 The source files of the sample app are located in "GettingStartedTutorial-Files/opt/app1" folder.
 
 :numbered!:
