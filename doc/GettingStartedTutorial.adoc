@@ -222,7 +222,7 @@ Basic application server configuration (/opt/app1/conf/ndrxconfig.xml)
             Max time to wait until process should exit on shutdown
             X <= 0 = disabled 
          -->
-         <end_max>30</end_max>
+         <end_max>5</end_max>
          <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
          to process until it have been terminated. -->
          <killtime>1</killtime>
@@ -248,8 +248,8 @@ Setup debug config (/opt/app1/conf/debug.conf):
 * ndrx=1 ubf=0 lines=1 bufsz=1000 file=
 xadmin file=${NDRX_APPHOME}/log/xadmin.log
 ndrxd file=${NDRX_APPHOME}/log/ndrxd.log
-eserver file=${NDRX_APPHOME}/log/BANKSV
-eclient file=${NDRX_APPHOME}/log/BANKCL
+banksv file=${NDRX_APPHOME}/log/BANKSV
+bankcl file=${NDRX_APPHOME}/log/BANKCL
 ---------------------------------------------------------------------
 
 We will get the default Exfields version and will 
