@@ -32,7 +32,7 @@ COMMANDS
 *quit*::
 	Quit from command line utility
 *q*::
-	Same as quit
+	Alias for quit
 *echo*::
 	Echo text back to terminal
 *idle*::
@@ -61,6 +61,8 @@ COMMANDS
 	'-y' means do not ask for confirmation. '-s' means ATMI servers binary name 
 	to be reloaded, instead of whole application domain.
 	'-i' means restart specific server instance.
+*sr*::
+	Alias for 'sreload'
 *psc*::
 	
 *down* [-y]::
@@ -82,10 +84,12 @@ COMMANDS
 *restart* [-y] [-s <server>] [-i <srvid>]::
 	Restart app or service (invokes start & stop with same args!). '-y'
 	makes to not to ask for confirmation. '-s' is server/binary name. '-i' is server ID.
+*r*::
+	Alias for 'restart'
 *-v*::
 	Print version info
 *ver*::
-	Print version info, same as -v
+	Alias for '-v'
 *ppm*::
 	Print process model
 *psvc*::
@@ -103,16 +107,16 @@ COMMANDS
 *pt*::
 	Print global transactions in progress.
 *printtrans*::
-	Same as 'pt'.
+	Alias for 'pt'.
 *abort* -t <transaction_manager_reference> -x <XID> [-g <resource_manager_id>] [-y]::
 	Abort transaction. '-g' does abort single resource manager's transaction.
 	'-y' is for auto confirmation.
 *aborttrans*::
-	Same as 'abort'.
+	Alias for 'abort'.
 *commit* -t <transaction_manager_reference> -x <XID> [-y]::
 	Commit transaction. '-y' is for auto confirmation.
 *committrans*::
-	Same as 'commit'.
+	Alias for 'commit'.
 
 EXIT STATUS
 -----------

@@ -95,13 +95,13 @@ private int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 cmd_mapping_t M_command_map[] = 
 {
     {"quit",    cmd_quit,  FAIL,                 1,  1,  0, "Quit from command line utility"},
-    {"q",       cmd_quit,  FAIL,                 1,  1,  0, "Same as quit"},
+    {"q",       cmd_quit,  FAIL,                 1,  1,  0, "Alias for `quit'"},
     {"echo",    cmd_echo,  FAIL,                 1,  999,0, "Echo text back to terminal"},
     {"idle",    cmd_idle,  FAIL,                 1,  1,  0, "Enter daemon process in idle state (if not started)"},
     {"help",    cmd_help,  FAIL,                 1,  2,  0, "Print help (this output)\n"
                                                 "\t\tArgs: help [command]"},
-    {"h",       cmd_help,  FAIL,                 1,  2,  0, "Same as help"},
-    {"info",    cmd_help,  FAIL,                 1,  2,  0, "Same as help"},
+    {"h",       cmd_help,  FAIL,                 1,  2,  0, "Alias for `help'"},
+    {"info",    cmd_help,  FAIL,                 1,  2,  0, "Alias for `help'"},
     {"stat",    cmd_stat,  FAIL,                 1,  1,  0, "Prints general status information"},
     {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,    1,  1,  1, "Load configuration"},
     {"start",   cmd_start, NDRXD_COM_START_RQ,   1,  4,  1, "Start application domain\n"
@@ -122,6 +122,7 @@ cmd_mapping_t M_command_map[] =
                                                          "\t\tArgs: readv -i server_id -s service_name\n"
                                                          "\t\tmight be usable if service Q was unlinked"},
     {"restart", cmd_r,    FAIL,                 1,  4,  0, "Restart app or service (invokes start & stop with same args!)"},
+    {"r", cmd_r,    FAIL,                       1,  4,  0, "Alias for `restart'"},
     {"-v",      cmd_ver,  FAIL,                 1,  1,  0, "Print version info"},
     {"ver",     cmd_ver,  FAIL,                 1,  1,  0, "Print version info, same as -v"},
     {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,   1,  1,  1, "Print process model"},
@@ -131,6 +132,7 @@ cmd_mapping_t M_command_map[] =
                                                            "\t\tArgs: abort [-y]"},
     {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Restarts server instance by instance\n"
                                                          "\t\tArgs: sreload [-y] [-s <server>] [-i <srvid>]"},
+    {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Alias for `sreload'"},
     {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, "Print service queues"},
     {"pqa",cmd_pqa,  FAIL,            1,  2,  0, "Print all queues\n"
                                                 "\t\tArgs: pqa [-a]\n"
@@ -140,13 +142,13 @@ cmd_mapping_t M_command_map[] =
      * abort + install ctrl+c handler 
      */
     {"pt",        cmd_pt,FAIL,   1,  1,  1, "Print transactions"},
-    {"printtrans",cmd_pt,FAIL,   1,  1,  1, "see `pt'"},
+    {"printtrans",cmd_pt,FAIL,   1,  1,  1, "Alias for `pt'"},
     {"abort",     cmd_abort,FAIL,   3,  5,  1, "Abort transaction\n"
                                             "\t\tArgs: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]"},
-    {"aborttrans",cmd_abort,FAIL,   3,  5,  1, "see `abort'"},
+    {"aborttrans",cmd_abort,FAIL,   3,  5,  1, "Alias for `abort'"},
     {"commit",     cmd_commit,FAIL,   3,  4,  1, "Commit transaction\n"
                                             "\t\tArgs: commit -t <RM Ref> -x <XID> [-y]"},
-    {"committrans",cmd_commit,FAIL,   3,  4,  1, "see `commit'"},
+    {"committrans",cmd_commit,FAIL,   3,  4,  1, "Alias for `commit'"},
 };
 
 /**
