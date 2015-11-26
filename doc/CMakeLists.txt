@@ -34,8 +34,8 @@ cmake_minimum_required(VERSION 2.8)
 find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
-set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide GettingStartedTutorial)
-set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide GettingStartedTutorial)
+set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide getting_started_tutorial)
+set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide getting_started_tutorial)
 
 # Generate PDFs...
 if(DBLATEX)
