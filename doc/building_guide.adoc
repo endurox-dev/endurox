@@ -167,7 +167,7 @@ export PATH=$PATH:/$HOME/endurox/dist/bin
 export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib
 
 # UBF/FML field tables
-export export FLDTBLDIR=$HOME/endurox/ubftest/tuxfbuf
+export export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
 EOF
 
