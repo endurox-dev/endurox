@@ -98,6 +98,8 @@ $
 
 === Getting the Source code
 ---------------------------------------------------------------------
+# useradd -m user1
+# su - user1
 $ cd /home/user1
 $ git clone https://github.com/endurox-dev/endurox endurox
 ---------------------------------------------------------------------
