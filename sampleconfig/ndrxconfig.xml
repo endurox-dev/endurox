@@ -120,11 +120,5 @@
 			<max>2</max>
 			<sysopt>-e /tmp/SQ20 -r</sysopt>
 		</server>
-		<server name="tpbridge">
-			<max>1</max>
-			<srvid>1802</srvid>
-			<sysopt>-e /tmp/BRIDGE006 -r</sysopt>
-			<appopt>-f -n6 -r -i 85.15.200.133 -p 9874 -tA -z30</appopt>
-		</server>
 	</servers>
 </endurox>
