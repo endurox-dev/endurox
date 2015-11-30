@@ -175,11 +175,19 @@ public int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         {0}
     };
         
-    /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+    if (argc>=2 && '-'!=argv[1][0])
     {
-        fprintf(stderr, "Invalid options, see `help'.");
-        FAIL_OUT(ret);
+	strncpy(srvnm, argv[1], MAXTIDENT);
+	srvnm[MAXTIDENT] = 0;
+    }
+    else
+    {
+        /* parse command line */
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+        {
+            fprintf(stderr, "Invalid options, see `help'.");
+            FAIL_OUT(ret);
+        }
     }
     
     memset(&call, 0, sizeof(call));
@@ -246,11 +254,19 @@ public int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         {0}
     };
         
-    /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+    if (argc>=2 && '-'!=argv[1][0])
     {
-        fprintf(stderr, "Invalid options, see `help'.");
-        FAIL_OUT(ret);
+	strncpy(srvnm, argv[1], MAXTIDENT);
+	srvnm[MAXTIDENT] = 0;
+    }
+    else
+    {
+        /* parse command line */
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+        {
+            fprintf(stderr, "Invalid options, see `help'.");
+            FAIL_OUT(ret);
+        }
     }
     
     memset(&call, 0, sizeof(call));
@@ -384,11 +400,19 @@ public int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         {0}
     };
         
-    /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+    if (argc>=2 && '-'!=argv[1][0])
     {
-        fprintf(stderr, "Invalid options, see `help'.");
-        FAIL_OUT(ret);
+	strncpy(srvnm, argv[1], MAXTIDENT);
+	srvnm[MAXTIDENT] = 0;
+    }
+    else
+    {
+        /* parse command line */
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+        {
+            fprintf(stderr, "Invalid options, see `help'.");
+            FAIL_OUT(ret);
+        }
     }
     
     memset(&call, 0, sizeof(call));
