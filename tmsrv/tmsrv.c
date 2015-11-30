@@ -429,6 +429,15 @@ private int tx_tout_check(void)
             XA_TX_COPY((&xai), el->p_tl);
             
             tms_log_stage(el->p_tl, XA_TX_STAGE_ABORTING);
+            /* NOTE: We migth want to move this to background processing
+             * because for example, oracle in some cases does long aborts...
+             * thus it slows down general processing
+             * BUT: if we want to move it to background, we should protect
+             * transaction log from concurent access, e.g.
+             * - background does the abort()
+             * - meanwhile forground calls commit()
+             * This can be reached with per transaction locking...
+             */
             tm_drive(&xai, el->p_tl, XA_OP_ROLLBACK, FAIL);
         }
         free(el);
