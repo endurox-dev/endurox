@@ -37,9 +37,10 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <stdint.h>
 #include <mqueue.h>
 #include <xa.h>
-
+    
 #include <ndrxdcmn.h>
 #include <stdint.h>
 #include <ntimer.h>
@@ -230,6 +231,7 @@ struct atmi_xa_log
     long txtout;  /* Number of seconds for timeout */
     
     int is_background;  /* Is background responsible for tx? */
+    uint64_t    lockthreadid;   /* Thread ID, locked the log entry */
     
     UT_hash_handle hh;         /* makes this structure hashable */
 };
@@ -239,7 +241,7 @@ typedef struct atmi_xa_log atmi_xa_log_t;
 typedef struct atmi_xa_log_list atmi_xa_log_list_t;
 struct atmi_xa_log_list
 {
-    atmi_xa_log_t *p_tl;/* ptr to txn */
+    atmi_xa_log_t p_tl;/* copy of transaction */
     /* Linked list 
     atmi_xa_log_dl_t *prev;*/
     atmi_xa_log_list_t *next;

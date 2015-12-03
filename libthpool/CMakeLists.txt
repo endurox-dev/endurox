@@ -1,5 +1,6 @@
 ## 
-## Transaction Monitor server
+## Enduro standard library
+## Enduro Execution platform
 ##
 ## @file CMakeLists.txt
 ## 
@@ -29,35 +30,12 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 2.8)
 
-# Make sure the compiler can find include files from UBF library
-include_directories (${ENDUROX_SOURCE_DIR}/libubf
-					 ${ENDUROX_SOURCE_DIR}/include
-					 ${ENDUROX_SOURCE_DIR}/libnstd
-					 ${ENDUROX_SOURCE_DIR}/ubftest
-                        )
+# Set minimum version
+cmake_minimum_required(VERSION 2.6)
 
+# Make sure the compiler can find include files from our Hello library. 
+include_directories (. ../include)
 
-# Add debug options
-# By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
-	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
-	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
-
-# Make sure the linker can find the UBF library once it is built.
-link_directories (${ENDUROX_BINARY_DIR}/libubf) 
-
-############################# Executables ######################################
-add_executable (tmsrv tmsrv.c xasrvutil.c log.c local.c background.c tmapi.c
-                    statedrv.c)
-target_link_libraries (tmsrv m atmisrv uuid nstd atmi ubf thpool rt dl pthread)
-set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-################################################################################
-
-# Install bin
-install (TARGETS 
-    tmsrv
-    DESTINATION bin)
+# Generate library from our source files
+add_library (thpool STATIC thpool.c)

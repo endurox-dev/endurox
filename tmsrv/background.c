@@ -194,6 +194,7 @@ public int background_loop(void)
     atmi_xa_log_list_t *tx_list;
     atmi_xa_log_list_t *el, *tmp;
     atmi_xa_tx_info_t xai;
+    atmi_xa_log_t *p_tl;
     
     memset(&xai, 0, sizeof(xai));
     
@@ -211,24 +212,32 @@ public int background_loop(void)
         
         LL_FOREACH_SAFE(tx_list,el,tmp)
         {
-            el->p_tl->trycount++;
+            el->p_tl.trycount++;
             NDRX_LOG(log_info, "XID: [%s] stage: [%hd]. Try: %d, max: %d", 
-                    el->p_tl->tmxid, el->p_tl->txstage, el->p_tl->trycount, 
+                    el->p_tl.tmxid, el->p_tl.txstage, el->p_tl.trycount, 
                     G_tmsrv_cfg.max_tries);
             
-            if (el->p_tl->trycount>=G_tmsrv_cfg.max_tries)
+            if (el->p_tl.trycount>=G_tmsrv_cfg.max_tries)
             {
                 NDRX_LOG(log_debug, "Skipping...");
                 continue;
             }
             
-            XA_TX_COPY((&xai), el->p_tl);
+            /* Now try to get transaction for real (with a lock!) */
+            if (NULL!=(p_tl = tms_log_get_entry(p_tl->tmxid)))
+            {
+                XA_TX_COPY((&xai), p_tl);
 
-            /* If we have transaction in background, then do something with it
-             * The master_op does not matter, as we ignore the error code.
-             */
-            tm_drive(&xai, el->p_tl, XA_OP_COMMIT, FAIL);
-            
+                /* If we have transaction in background, then do something with it
+                 * The master_op does not matter, as we ignore the error code.
+                 */
+                tm_drive(&xai, p_tl, XA_OP_COMMIT, FAIL);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Transaction locked or already "
+                        "processed by foreground...");
+            }
             /* Have some housekeep. */
             free(el);
         }

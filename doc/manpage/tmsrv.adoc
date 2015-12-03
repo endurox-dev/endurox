@@ -101,6 +101,13 @@ Max tries to complete the transactions by background thread. If the counter is r
 then no more attempts to complete the transaction are done. The counter is restarted at
 'tmsrv' reboot. Default is set to '100'.
 
+[*-p* 'THREAD_POOL_SIZE']::
+This is the number of threads processing incoming requsts. If all threads are busy, then
+job is internally queued. It is known that some databases slowly process some of 
+the XA operations, for example 'xa_rollback'. Thus multiple threads can handle this
+more efficiently. Default threadpool size is set to 10. For more load balacing it
+is recommended to start multiple 'tmsrv' processes for same RMID.
+
 
 EXIT STATUS
 -----------

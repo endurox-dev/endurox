@@ -63,6 +63,7 @@
 #include "tperror.h"
 #include "userlog.h"
 #include <xa_cmn.h>
+#include "thpool.h"
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 extern char *optarg;
@@ -72,22 +73,55 @@ extern char *optarg;
 /*---------------------------Globals------------------------------------*/
 public tmsrv_cfg_t G_tmsrv_cfg;
 /*---------------------------Statics------------------------------------*/
+private int M_init_ok = FALSE;
 /*---------------------------Prototypes---------------------------------*/
 private int tx_tout_check(void);
 
 /**
- * Tmsrv service entry
+ * Tmsrv service entry (working thread)
  * @param p_svc - data & len used only...!
  */
-void TPTMSRV (TPSVCINFO *p_svc)
+void TPTMSRV_TH (void *ptr)
 {
     /* Ok we should not handle the commands 
      * TPBEGIN...
      */
-    UBFH *p_ub = (UBFH *)p_svc->data;
     int ret=SUCCEED;
-    
+    static __thread int first = TRUE;
+    thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EOS;
+    int cd;
+    
+    /**************************************************************************/
+    /*                        THREAD CONTEXT RESTORE                          */
+    /**************************************************************************/
+    UBFH *p_ub = (UBFH *)thread_data->buffer;
+    
+    /* Do the ATMI init */
+    if (first)
+    {
+        first = FALSE;
+        if (SUCCEED!=tpinit(NULL))
+        {
+            NDRX_LOG(log_error, "Failed to init worker client");
+            userlog("tmsrv: Failed to init worker client");
+            exit(1);
+        }
+    }
+    
+    /* restore context. */
+    if (SUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
+    {
+        userlog("tmsrv: Failed to set context");
+        NDRX_LOG(log_error, "Failed to set context");
+        exit(1);
+    }
+    
+    cd = thread_data->cd;
+    /* free up the transport data.*/
+    free(thread_data->context_data);
+    free(thread_data);
+    /**************************************************************************/
     
     /* get some more stuff! */
     if (Bunused (p_ub) < 4096)
@@ -137,7 +171,7 @@ void TPTMSRV (TPSVCINFO *p_svc)
         case ATMI_XA_PRINTTRANS:
             
             /* request for printing active transactions */
-            if (SUCCEED!=tm_tpprinttrans(p_ub, p_svc->cd))
+            if (SUCCEED!=tm_tpprinttrans(p_ub, cd))
             {
                 ret=FAIL;
                 goto out;
@@ -227,6 +261,68 @@ out:
                 0L);
 }
 
+/**
+ * Entry point for service (main thread)
+ * @param p_svc
+ */
+void TPTMSRV (TPSVCINFO *p_svc)
+{
+    int ret=SUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
+    long size;
+    char btype[16];
+    char stype[16];
+    thread_server_t *thread_data = malloc(sizeof(thread_server_t));
+    
+    if (NULL==thread_data)
+    {
+        userlog("Failed to malloc memory - %s!", strerror(errno));
+        NDRX_LOG(log_error, "Failed to malloc memory");
+        FAIL_OUT(ret);
+    }
+    
+    if (0==(size = tptypes (p_svc->data, btype, stype)))
+    {
+        NDRX_LOG(log_error, "Zero buffer received!");
+        userlog("Zero buffer received!");
+        FAIL_OUT(ret);
+    }
+    
+    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
+    thread_data->buffer =  tpalloc(btype, NULL, size);
+    
+    if (NULL==thread_data->buffer)
+    {
+        NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
+        FAIL_OUT(ret);
+    }
+    
+    /* copy off the data */
+    memcpy(thread_data->buffer, p_svc->data, size);
+    thread_data->cd = p_svc->cd;
+    thread_data->context_data = tpsrvgetctxdata();
+    
+    /* submit the job to thread pool: */
+    thpool_add_work(G_tmsrv_cfg.thpool, (void*)TPTMSRV_TH, (void *)thread_data);
+    
+out:
+    if (SUCCEED==ret)
+    {
+        /* serve next.. */
+        tpcontinue();
+    }
+    else
+    {
+        /* return error back */
+        tpreturn(  TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+    }
+
+}
+
 /*
  * Do initialization
  */
@@ -238,7 +334,7 @@ int tpsvrinit(int argc, char **argv)
     NDRX_LOG(log_debug, "tpsvrinit called");
     int nodeid;
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "t:s:l:c:m:")) != -1)
+    while ((c = getopt(argc, argv, "t:s:l:c:m:p:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -264,6 +360,9 @@ int tpsvrinit(int argc, char **argv)
             case 'm': 
                 G_tmsrv_cfg.max_tries = atol(optarg);
                 break;
+            case 'p': 
+                G_tmsrv_cfg.threadpoolsize = atol(optarg);
+                break;
             default:
                 /*return FAIL;*/
                 break;
@@ -286,6 +385,11 @@ int tpsvrinit(int argc, char **argv)
         G_tmsrv_cfg.tout_check_time = TOUT_CHECK_TIME;
     }
     
+    if (0>=G_tmsrv_cfg.threadpoolsize)
+    {
+        G_tmsrv_cfg.threadpoolsize = THREADPOOL_DFLT;
+    }
+    
     if (EOS==G_tmsrv_cfg.tlog_dir[0])
     {
         userlog("TMS log dir not set!");
@@ -298,8 +402,8 @@ int tpsvrinit(int argc, char **argv)
     NDRX_LOG(log_debug, "Tx max tries set to [%d]",
                             G_tmsrv_cfg.max_tries);
     
-    NDRX_LOG(log_debug, "Tx tout check time [%d]",
-                            G_tmsrv_cfg.tout_check_time);
+    NDRX_LOG(log_debug, "Worker pool size [%d] threads",
+                            G_tmsrv_cfg.threadpoolsize);
     
     NDRX_LOG(log_debug, "About to initialize XA!");
     if (SUCCEED!=atmi_xa_init()) /* will open next... */
@@ -358,6 +462,13 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
+    if (NULL==(G_tmsrv_cfg.thpool = thpool_init(G_tmsrv_cfg.threadpoolsize)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
+                G_tmsrv_cfg.threadpoolsize);
+        FAIL_OUT(ret);
+    }
+    
     /* Start the background processing */
     background_process_init();
     
@@ -370,6 +481,8 @@ int tpsvrinit(int argc, char **argv)
             NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                             tpstrerror(tperrno));
     }
+    
+    M_init_ok = TRUE;
     
 out:
     return ret;
@@ -384,65 +497,87 @@ void tpsvrdone(void)
             "background thread shutdown...");
     
     G_bacground_req_shutdown = TRUE;
-    background_wakeup();
     
-    /* Wait to complete */
-    pthread_join(G_bacground_thread, NULL);
-    
+    if (M_init_ok)
+    {
+        background_wakeup();
+
+        /* Wait to complete */
+        pthread_join(G_bacground_thread, NULL);
+
+        /* Wait for threads to finish */
+        thpool_wait(G_tmsrv_cfg.thpool);
+        thpool_destroy(G_tmsrv_cfg.thpool);
+    }
     atmi_xa_close_entry();
     
 }
 
 /**
  * Periodic main thread callback for 
+ * (will be done by threadpoll)
  * @return 
  */
-private int tx_tout_check(void)
+private void tx_tout_check_th(void)
 {
-    int ret = SUCCEED;
     long tspent;
     atmi_xa_log_list_t *tx_list;
     atmi_xa_log_list_t *el, *tmp;
     atmi_xa_tx_info_t xai;
+    atmi_xa_log_t *p_tl;
     
     /* Create a copy of hash, iterate and check each tx for timeout condition
      * If so then initiate internal abort call
      */
-    
+    NDRX_LOG(log_debug, "Timeout check (processing...)");
     tx_list = tms_copy_hash2list(COPY_MODE_FOREGROUND | COPY_MODE_ACQLOCK);
         
     LL_FOREACH_SAFE(tx_list,el,tmp)
     {
-        if ((tspent = n_timer_get_delta_sec(&el->p_tl->ttimer)) > 
-                el->p_tl->txtout && XA_TX_STAGE_ACTIVE==el->p_tl->txstage)
+        NDRX_LOG(log_debug, "Checking [%s]...", el->p_tl.tmxid);
+        if ((tspent = n_timer_get_delta_sec(&el->p_tl.ttimer)) > 
+                el->p_tl.txtout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
         {
             NDRX_LOG(log_error, "XID [%s] timed out "
                     "(spent %ld, limit: %ld sec) - aborting...!", 
-                    el->p_tl->tmxid, tspent, 
-                    el->p_tl->txtout);
+                    el->p_tl.tmxid, tspent, 
+                    el->p_tl.txtout);
             
             userlog("XID [%s] timed out "
                     "(spent %ld, limit: %ld sec) - aborting...!", 
-                    el->p_tl->tmxid, tspent, 
-                    el->p_tl->txtout);
+                    el->p_tl.tmxid, tspent, 
+                    el->p_tl.txtout);
             
-            XA_TX_COPY((&xai), el->p_tl);
-            
-            tms_log_stage(el->p_tl, XA_TX_STAGE_ABORTING);
-            /* NOTE: We migth want to move this to background processing
-             * because for example, oracle in some cases does long aborts...
-             * thus it slows down general processing
-             * BUT: if we want to move it to background, we should protect
-             * transaction log from concurent access, e.g.
-             * - background does the abort()
-             * - meanwhile forground calls commit()
-             * This can be reached with per transaction locking...
-             */
-            tm_drive(&xai, el->p_tl, XA_OP_ROLLBACK, FAIL);
+            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid)))
+            {
+                XA_TX_COPY((&xai), p_tl);
+
+                tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
+                /* NOTE: We migth want to move this to background processing
+                 * because for example, oracle in some cases does long aborts...
+                 * thus it slows down general processing
+                 * BUT: if we want to move it to background, we should protect
+                 * transaction log from concurent access, e.g.
+                 * - background does the abort()
+                 * - meanwhile forground calls commit()
+                 * This can be reached with per transaction locking...
+                 */
+                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, FAIL);
+            }
         }
         free(el);
     }
 out:    
-    return ret;
+    return;
 }
 
+/**
+ * Callback routine for scheduled timeout checks.
+ * @return 
+ */
+private int tx_tout_check(void)
+{
+    NDRX_LOG(log_debug, "Timeout check (submit job...)");
+    thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
+    return SUCCEED;
+}

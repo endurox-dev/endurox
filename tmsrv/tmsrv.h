@@ -39,6 +39,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
+#include "thpool.h"
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
@@ -46,6 +47,7 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
+#define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
 
 #define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements */
 #define COPY_MODE_BACKGROUND        0x2       /* Copy background elements */
@@ -65,13 +67,26 @@ typedef struct
                          * transaction, until stop processing it 
                          * (in this process session) */
     int tout_check_time; /* seconds used for detecting transaction timeout   */
+    int threadpoolsize; /* thread pool size */
+    
+    threadpool thpool;
 } tmsrv_cfg_t;
+
+struct thread_server
+{
+    char *context_data; /* malloced by enduro/x */
+    int cd;
+    char *buffer; /* buffer data, managed by enduro/x */
+};
+/* note we must malloc this struct too. */
+typedef struct thread_server thread_server_t;
 
 
 extern tmsrv_cfg_t G_tmsrv_cfg;
 
 extern void atmi_xa_new_xid(XID *xid);
 
+extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_t * tms_log_get_entry(char *tmxid);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged);

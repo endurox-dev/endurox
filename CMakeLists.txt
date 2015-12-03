@@ -68,6 +68,7 @@ add_subdirectory (libnstd)
 add_subdirectory (libubf)
 add_subdirectory (libnetproto)
 add_subdirectory (libexnet)
+add_subdirectory (libthpool)
 add_subdirectory (ubftest)
 add_subdirectory (mkfldhdr)
 # EnduroX sub-directories for ATMI

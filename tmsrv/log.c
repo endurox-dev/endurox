@@ -63,6 +63,15 @@
 #define LOG_COMMAND_STAGE           'S' /* Identify stage of txn */
 #define LOG_COMMAND_I               'I' /* Info about txn */
 #define LOG_COMMAND_RMSTAT          'R' /* Log the RM status */
+
+#define CHK_THREAD_ACCESS if (ndrx_gettid()!=p_tl->lockthreadid)\
+    {\
+        NDRX_LOG(log_error, "Transaction [%s] not locked for thread %ul, but for %ul!",\
+                p_tl->tmxid, ndrx_gettid(), p_tl->lockthreadid);\
+        userlog("Transaction [%s] not locked for thread %ul, but for %ul!",\
+                p_tl->tmxid, ndrx_gettid(), p_tl->lockthreadid);\
+        return FAIL;\
+    }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -76,8 +85,28 @@ private int tms_parse_info(char *buf, atmi_xa_log_t *p_tl);
 private int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl);
 private int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl);
 
+
+/**
+ * Unlock transaction
+ * @param p_tl
+ * @return SUCCEED/FAIL
+ */
+public int tms_unlock_entry(atmi_xa_log_t *p_tl)
+{
+    CHK_THREAD_ACCESS;
+    
+    NDRX_LOG(log_info, "Transaction [%s] unlocked by thread %ul", p_tl->tmxid,
+            p_tl->lockthreadid);
+    
+    MUTEX_LOCK_V(M_tx_hash_lock);
+    p_tl->lockthreadid = 0;
+    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    
+    return SUCCEED;
+}
 /**
  * Get the log entry of the transaction
+ * Now we should lock it for thread.
  * @param tmxid - serialized XID
  * @return NULL or log entry
  */
@@ -87,6 +116,29 @@ public atmi_xa_log_t * tms_log_get_entry(char *tmxid)
     
     MUTEX_LOCK_V(M_tx_hash_lock);
     HASH_FIND_STR( M_tx_hash, tmxid, r);
+    
+    if (NULL!=r)
+    {
+        if (r->lockthreadid)
+        {
+            NDRX_LOG(log_error, "Transaction [%s] already locked for thread_id: %lu",
+                    tmxid,
+                    r->lockthreadid);
+            
+            userlog("tmsrv: Transaction [%s] already locked for thread_id: %lu",
+                    tmxid,
+                    r->lockthreadid);
+            r = NULL;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Transaction [%s] locked for thread_id: %lu",
+                    tmxid,
+                    r->lockthreadid);
+            r->lockthreadid = ndrx_gettid();
+        }
+    }
+    
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
     return r;
@@ -144,13 +196,13 @@ out:
 public int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged)
 {
     int ret = SUCCEED;
-    atmi_xa_log_t *tl= NULL;
+    atmi_xa_log_t *p_tl= NULL;
     atmi_xa_rm_status_t stat;
     
     memset(&stat, 0, sizeof(stat));
     stat.rmstatus = XA_RM_STATUS_ACTIVE;
     
-    if (NULL==(tl = tms_log_get_entry(xai->tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid)))
     {
         NDRX_LOG(log_error, "No transaction under xid_str: [%s]", 
                 xai->tmxid);
@@ -163,15 +215,18 @@ public int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_l
         FAIL_OUT(ret);
     }
     
-    if (tl->rmstatus[rmid-1].rmstatus && NULL!=p_is_already_logged)
+    if (p_tl->rmstatus[rmid-1].rmstatus && NULL!=p_is_already_logged)
     {
         *p_is_already_logged = TRUE;
     }
     
-    tl->rmstatus[rmid-1] = stat;
+    p_tl->rmstatus[rmid-1] = stat;
     
     NDRX_LOG(log_info, "RMID %hd joined to xid_str: [%s]", 
             rmid, xai->tmxid);
+    
+    /* unlock transaction from thread */
+    tms_unlock_entry(p_tl);
     
 out:
     return ret;
@@ -414,7 +469,7 @@ public void tms_remove_logfile(atmi_xa_log_t *p_tl)
     /* Remove the log for hash! */
     
     MUTEX_LOCK_V(M_tx_hash_lock);
-    HASH_DEL(M_tx_hash, p_tl);
+    HASH_DEL(M_tx_hash, p_tl); 
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     free(p_tl);
     
@@ -430,6 +485,8 @@ private int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fm
     char msg[LOG_MAX+1] = {EOS};
     char msg2[LOG_MAX+1] = {EOS};
     va_list ap;
+    
+    CHK_THREAD_ACCESS;
     
     /* If log not open - just skip... */
     if (NULL==p_tl->f)
@@ -463,6 +520,8 @@ public int tms_log_info(atmi_xa_log_t *p_tl)
     char rmsbuf[NDRX_MAX_RMS*3+1]={EOS};
     int i;
     int len;
+    
+    CHK_THREAD_ACCESS;
     
     /* log the RMs participating in transaction */
     for (i=0; i<NDRX_MAX_RMS; i++)
@@ -568,6 +627,8 @@ public int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
 {
     int ret = SUCCEED;
     
+    CHK_THREAD_ACCESS;
+    
     if (p_tl->txstage!=stage)
     {
         p_tl->txstage = stage;
@@ -621,6 +682,8 @@ public int tms_log_rmstatus(atmi_xa_log_t *p_tl, short rmid,
 {
     int ret = SUCCEED;
     int do_log = FALSE;
+    
+    CHK_THREAD_ACCESS;
     
     if (p_tl->rmstatus[rmid-1].rmstatus != rmstatus)
     {
@@ -705,6 +768,8 @@ public int tm_chk_tx_status(atmi_xa_log_t *p_tl)
     int all_aborted = TRUE;
     int all_committed = TRUE;
     
+    CHK_THREAD_ACCESS;
+    
     for (i=0; i<NDRX_MAX_RMS; i++)
     {
         if (!(XA_RM_STATUS_COMMITTED == p_tl->rmstatus[i].rmstatus ||
@@ -762,6 +827,8 @@ out:
  * Copy the background items to the linked list.
  * The idea is that this is processed by background. During that time, it does not
  * remove any items from hash. Thus pointers should be still valid. 
+ * TODO: We should copy here transaction info too....
+ * 
  * @param p_tl
  * @return 
  */
@@ -793,7 +860,14 @@ public atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode)
                     sizeof(atmi_xa_log_list_t), strerror(errno));
             goto out;
         }
-        tmp->p_tl = r;
+        
+        /* we should copy full TL structure, because some other thread might
+         * will use it.
+         * Having some invalid pointers inside does not worry us, because
+         * we just need a list for a printing or xids for background txn lookup
+         */
+        memcpy(&tmp->p_tl, r, sizeof(*r));
+        
         LL_APPEND(ret, tmp);
     }
     

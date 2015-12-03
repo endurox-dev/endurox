@@ -37,6 +37,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
+#include <stdint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -70,6 +71,9 @@ extern char *nstdutil_str_strip(char *haystack, char *needle);
 /* Mapping functions: */
 extern char *dolongstrgmap(longstrmap_t *map, long val, long endval);
 extern char *docharstrgmap(longstrmap_t *map, char val, char endval);
+
+/* Threading functions */
+extern uint64_t ndrx_gettid(void);
 
 #ifdef	__cplusplus
 }

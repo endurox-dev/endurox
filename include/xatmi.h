@@ -36,7 +36,7 @@ extern "C" {
 #define TPEVSERVICE	0x00000001
 #define TPEVPERSIST	0x00000008
 
-#define NDRX_XID_SERIAL_BUFSIZE     48 /* << Needs adjusment! */
+#define NDRX_XID_SERIAL_BUFSIZE     48 /* Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /* Number of resource managers supported */
 #define TMTXFLAGS_IS_ABORT_ONLY           0x0001      /* transaction is marked as abort only */
 

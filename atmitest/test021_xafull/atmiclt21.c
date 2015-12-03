@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
         ret = SUCCEED;
     }    
     /***************************************************************************/
-    NDRX_LOG(log_debug, "Service timeout");
+    NDRX_LOG(log_debug, "Transaction time-out (by tmsrv)");
     /***************************************************************************/
     for (i=0; i<5; i++)
     {
@@ -181,12 +181,12 @@ int main(int argc, char** argv) {
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD TOUT", 0L);
 
         /* Call Svc1 */
-        if (FAIL != (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+        if (FAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
             NDRX_LOG(log_error, "RUNTX should return fail!");
         }
         
-        sleep(3);
+        sleep(4);
 
         ret=tpcommit(0);
         

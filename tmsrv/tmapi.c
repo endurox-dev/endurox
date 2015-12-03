@@ -495,7 +495,7 @@ public int tm_tpprinttrans(UBFH *p_ub, int cd)
         
         /* Erase FB & setup the info there... */
         Bproj(p_ub, NULL); /* clear the FB! */
-        if (SUCCEED!=tms_log_cpy_info_to_fb(p_ub, el->p_tl))
+        if (SUCCEED!=tms_log_cpy_info_to_fb(p_ub, &(el->p_tl)))
         {
             FAIL_OUT(ret);
         }

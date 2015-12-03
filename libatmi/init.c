@@ -614,7 +614,7 @@ public int	tpinit (TPINIT * init_data)
 
     if (G_atmi_is_init)
     {
-        NDRX_LOG(log_error, "Clt already initialized...");
+        NDRX_LOG(log_info, "ATMI already initialized...");
         goto out;
     }
 

@@ -263,6 +263,8 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         NDRX_LOG(log_info, "Transaction not completed - leave "
                 "to background");
         p_tl->is_background = TRUE;
+        /* TODO: Unlock the transaction */
+        tms_unlock_entry(p_tl);
     }
     
     /* map stage to return code */

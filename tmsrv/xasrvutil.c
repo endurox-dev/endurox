@@ -51,28 +51,53 @@
 #include "../libatmisrv/srv_int.h"
 #include <uuid/uuid.h>
 #include <xa_cmn.h>
+#include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Generate new transaction id
  * @param xid
  */
-void atmi_xa_new_xid(XID *xid)
+public void atmi_xa_new_xid(XID *xid)
 {
     uuid_t uuid_val;
     unsigned char rmid =  (unsigned char)G_atmi_env.xa_rmid;
+    short node_id = (short) G_atmi_env.our_nodeid;
+    short srv_id = (short) G_srv_id;
+    
+    /* Do the locking, so that we get unique xids... */
+    MUTEX_LOCK_V(M_xid_gen_lock);
+   
+    /* we will include here following additional data:
+     * - cluster node_id
+     * - endurox server_id
+     */
     
     xid->formatID = NDRX_XID_FORMAT_ID;
     xid->gtrid_length = sizeof(uuid_t);
-    xid->bqual_length = sizeof(unsigned char);
+    xid->bqual_length = sizeof(unsigned char) + sizeof(short) + sizeof(short);
     memset(xid->data, 0, XIDDATASIZE); /* this is not necessary, but... */
     uuid_generate(uuid_val);
     memcpy(xid->data, uuid_val, sizeof(uuid_t));
     memcpy(xid->data + sizeof(uuid_t), &G_atmi_env.xa_rmid, sizeof(unsigned char));
+    /* Have an additional infos for transaction id... */
+    memcpy(xid->data  
+            +sizeof(uuid_t)  
+            +sizeof(unsigned char)
+            ,(char *)&(node_id), sizeof(short));
+    memcpy(xid->data  
+            +sizeof(uuid_t) 
+            +sizeof(unsigned char)
+            +sizeof(short)
+            ,(char *)&(srv_id), sizeof(short));
+    
+    MUTEX_UNLOCK_V(M_xid_gen_lock);
 }
+

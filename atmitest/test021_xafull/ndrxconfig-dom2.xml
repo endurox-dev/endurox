@@ -58,7 +58,7 @@
                 <srvid>10</srvid>
                 <min>1</min>
                 <max>1</max>
-                <sysopt>-e ${TESTDIR}/TM2.log -r -- -t10 -l${TESTDIR}/RM2</sysopt>
+                <sysopt>-e ${TESTDIR}/TM2.log -r -- -t1 -l${TESTDIR}/RM2</sysopt>
             </server>
             <server name="atmi.sv21">
                 <srvid>30</srvid>

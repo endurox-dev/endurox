@@ -42,6 +42,7 @@
 #include "nstdutil.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -288,4 +289,17 @@ public char *docharstrgmap(longstrmap_t *map, char val, char endval)
     } while (endval!=map->from);
     
     return map->to;
+}
+
+
+/**
+ * Get thread id (not the very portable way...)
+ * @return 
+ */
+public uint64_t ndrx_gettid(void) 
+{
+    pthread_t ptid = pthread_self();
+    uint64_t threadId = 0;
+    memcpy(&threadId, &ptid, _MIN(sizeof(threadId), sizeof(ptid)));
+    return threadId;
 }
