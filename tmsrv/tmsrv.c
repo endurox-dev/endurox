@@ -308,7 +308,12 @@ void TPTMSRV (TPSVCINFO *p_svc)
 out:
     if (SUCCEED==ret)
     {
-        /* serve next.. */
+        /* serve next.. 
+         * TODO: At this point we should somehow understand
+         * that atleast one thread is free, otherwise sleep.
+         * This might be reached with submitting some special
+         * job which wakes up the main thread.
+         */
         tpcontinue();
     }
     else
