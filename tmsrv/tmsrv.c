@@ -74,8 +74,13 @@ extern char *optarg;
 public tmsrv_cfg_t G_tmsrv_cfg;
 /*---------------------------Statics------------------------------------*/
 private int M_init_ok = FALSE;
+/* Wait for one free thread: */
+pthread_mutex_t M_wait_th_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
+
 /*---------------------------Prototypes---------------------------------*/
-private int tx_tout_check(void);
+private void tx_tout_check(void *ptr);
+private void tm_chk_one_free_thread(void *ptr);
 
 /**
  * Tmsrv service entry (working thread)
@@ -308,7 +313,17 @@ void TPTMSRV (TPSVCINFO *p_svc)
 out:
     if (SUCCEED==ret)
     {
-        /* serve next.. */
+        /* serve next.. 
+         * At this point we should know that at least one thread is free
+         */
+        pthread_mutex_lock(&M_wait_th_mutex);
+        
+        /* submit the job to verify free thread */
+        
+        thpool_add_work(G_tmsrv_cfg.thpool, (void*)tm_chk_one_free_thread, NULL);
+        pthread_cond_wait(&M_wait_th_cond, &M_wait_th_mutex);
+        pthread_mutex_unlock(&M_wait_th_mutex);
+        
         tpcontinue();
     }
     else
@@ -575,9 +590,21 @@ out:
  * Callback routine for scheduled timeout checks.
  * @return 
  */
-private int tx_tout_check(void)
+private void tx_tout_check(void *ptr)
 {
     NDRX_LOG(log_debug, "Timeout check (submit job...)");
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
-    return SUCCEED;
+    /* return SUCCEED; */
+}
+
+/**
+ * Just run down one task via pool, to ensure that at least one
+ * thread is free, before we are going to mail poll.
+ * @param ptr
+ */
+private void tm_chk_one_free_thread(void *ptr)
+{
+    pthread_mutex_lock(&M_wait_th_mutex);
+    pthread_cond_signal(&M_wait_th_cond);
+    pthread_mutex_unlock(&M_wait_th_mutex);
 }

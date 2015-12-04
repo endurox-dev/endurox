@@ -65,8 +65,8 @@ public pthread_t G_bacground_thread;
 public int G_bacground_req_shutdown = FALSE;    /* Is shutdown request? */
 
 
-pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
+private pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
+private pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
 
 MUTEX_LOCKDECL(M_background_lock); /* Background operations sync        */
