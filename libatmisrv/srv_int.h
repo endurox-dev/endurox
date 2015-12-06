@@ -148,6 +148,17 @@ struct srv_conf
 
 typedef struct srv_conf srv_conf_t;
 
+
+/*
+ * Server multi threading, context switching
+ */
+struct server_ctx_info
+{
+    tp_conversation_control_t G_accepted_connection;
+    tp_command_call_t        G_last_call;
+};
+typedef struct server_ctx_info server_ctx_info_t;
+
 /*---------------------------Globals------------------------------------*/
 extern srv_conf_t G_server_conf;
 extern shm_srvinfo_t *G_shm_srv;

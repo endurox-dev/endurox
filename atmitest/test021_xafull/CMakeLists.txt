@@ -56,6 +56,9 @@ add_executable (atmiclt21 atmiclt21.c)
 # Conversations
 add_executable (convsv21 convsv21.c)
 add_executable (convclt21 convclt21.c)
+
+# shell testing
+add_executable (atmiclt21-cli atmiclt21-cli.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
@@ -66,12 +69,18 @@ target_link_libraries (atmiclt21 m ubf nstd atmi atmiclt rt dl xadrv)
 target_link_libraries (convsv21 m ubf nstd atmi atmisrv rt dl xadrv)
 target_link_libraries (convclt21 m ubf nstd atmi atmiclt rt dl xadrv)
 
+# shell testing
+target_link_libraries (atmiclt21-cli m ubf nstd atmi atmiclt rt dl xadrv)
+
 set_target_properties(atmi.sv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Conversation test
+set_target_properties(convsv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(convclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(convclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+# shell testing
+set_target_properties(atmiclt21-cli PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 
 add_library (xadrv SHARED

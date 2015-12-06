@@ -544,7 +544,7 @@ private void tx_tout_check_th(void)
     /* Create a copy of hash, iterate and check each tx for timeout condition
      * If so then initiate internal abort call
      */
-    NDRX_LOG(log_debug, "Timeout check (processing...)");
+    NDRX_LOG(log_dump, "Timeout check (processing...)");
     tx_list = tms_copy_hash2list(COPY_MODE_FOREGROUND | COPY_MODE_ACQLOCK);
         
     LL_FOREACH_SAFE(tx_list,el,tmp)
@@ -592,7 +592,7 @@ out:
  */
 private void tx_tout_check(void *ptr)
 {
-    NDRX_LOG(log_debug, "Timeout check (submit job...)");
+    NDRX_LOG(log_dump, "Timeout check (submit job...)");
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
     /* return SUCCEED; */
 }

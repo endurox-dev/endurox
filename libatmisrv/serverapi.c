@@ -250,13 +250,15 @@ public void	tpext_configbrige
 /**
  * Read current call context data
  * NOTE: buffer must be freed by caller!
+ * + Server context is being reset. Assuming that next action by main thread
+ * is tpcontinue()
  * @param data
  * @param flags
  * @return 
  */
 public char * tpsrvgetctxdata (void)
 {
-    char *ret = malloc(sizeof(G_last_call));
+    server_ctx_info_t *ret = malloc(sizeof(server_ctx_info_t));
     API_ENTRY;
     
     if (NULL==ret)
@@ -265,9 +267,15 @@ public char * tpsrvgetctxdata (void)
         goto out;
     }
     
-    memcpy(ret, &G_last_call, sizeof(G_last_call));
+    /* reset thread data */
+    memcpy(&ret->G_last_call, &G_last_call, sizeof(G_last_call));
+    memset(&G_last_call, 0, sizeof(G_last_call));
+    
+    memcpy(&ret->G_accepted_connection, &G_accepted_connection, sizeof(G_accepted_connection));
+    memset(&G_accepted_connection, 0, sizeof(G_accepted_connection));
+    
 out:    
-    return ret;
+    return (char *)ret;
 }
 
 /**
@@ -280,6 +288,8 @@ public int tpsrvsetctxdata (char *data, long flags)
 {
     int ret=SUCCEED;
     API_ENTRY;
+    server_ctx_info_t *ctxdata  = (server_ctx_info_t *)data;
+    
     
 #if 0
     if (flags & SYS_SRV_THREAD)
@@ -293,7 +303,9 @@ public int tpsrvsetctxdata (char *data, long flags)
         }
     }
 #endif
-    memcpy(&G_last_call, data, sizeof(G_last_call));
+    memcpy(&G_last_call, &ctxdata->G_last_call, sizeof(G_last_call));
+    memcpy(&G_accepted_connection, &ctxdata->G_accepted_connection, 
+                sizeof(G_accepted_connection));
     
     /* Add the additional flags to the user. */
     G_last_call.sysflags |= flags;

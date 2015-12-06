@@ -48,6 +48,9 @@ fi;
 
 . ../testenv.sh
 
+# Include testing functions
+source ./test-func-include.sh
+
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
@@ -173,6 +176,14 @@ print_domains;
 # Go to domain 1
 set_dom1;
 
+echo "Testing journal recovery..."
+cp ./test_data/* ./RM1
+xadmin restart -s tmsrv
+sleep 5
+
+# All must be completed
+ensure_tran 0
+
 # Run the client test...
 echo "Will issue calls to clients:"
 (./atmiclt21 2>&1) > ./atmiclt-dom1.log
@@ -182,8 +193,16 @@ echo "Will run conversation tests:"
 (./convclt21 2>&1) > ./convclt21-dom1.log
 RET2=$?
 
+echo "Cli tests..."
+(./cli-tests.sh 2>&1) > ./cli-tests.sh.log
+RET3=$?
+
 if [[ $RET -eq 0 ]]; then
 	RET=$RET2;
+fi
+
+if [[ $RET -eq 0 ]]; then
+	RET=$RET3;
 fi
 
 # Catch is there is test error!!!
