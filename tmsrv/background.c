@@ -186,7 +186,7 @@ public void background_wakeup(void)
 /**
  * Continues transaction background loop..
  * Try to complete the transactions.
- * @return 
+ * @return  SUCCEED/FAIL
  */
 public int background_loop(void)
 {
