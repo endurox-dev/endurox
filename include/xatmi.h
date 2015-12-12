@@ -324,6 +324,7 @@ extern int * _exget_tperrno_addr (void);
 extern long * _exget_tpurcode_addr (void);
 extern void tpsvrdone (void);
 extern void tpsvrthrdone (void);
+extern int tpinit(TPINIT *tpinfo);
 
 
 #if defined(__cplusplus)
