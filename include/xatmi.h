@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <stdint.h>
 #include <ubf.h>
 /*---------------------------Macros-------------------------------------*/
     
@@ -323,9 +324,15 @@ extern int tppost (char *eventname, char *data, long len, long flags);
 extern int * _exget_tperrno_addr (void);
 extern long * _exget_tpurcode_addr (void);
 extern void tpsvrdone (void);
-extern void tpsvrthrdone (void);
 extern int tpinit(TPINIT *tpinfo);
-
+/* Poller & timer extension: */
+extern int tpext_addpollerfd(int fd, uint32_t events, 
+        void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
+extern int tpext_delpollerfd(int fd);
+extern int tpext_addperiodcb(int secs, int (*p_periodcb)(void));
+extern int tpext_delperiodcb(void);
+extern int tpext_addb4pollcb(int (*p_b4pollcb)(void));
+extern int tpext_delb4pollcb(void);
 
 #if defined(__cplusplus)
 }

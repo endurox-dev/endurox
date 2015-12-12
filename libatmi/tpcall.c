@@ -738,7 +738,17 @@ out:
     }
                 
     NDRX_LOG(log_debug, "%s return %d", fn, ret);
-    return ret;
+    /* mvitolin 12/12/2015 - according to spec we must return 
+     * service returned return code
+     */
+    if (SUCCEED==ret)
+    {
+        return M_svc_return_code;
+    }
+    else 
+    {
+        return ret;
+    }
 }
 
 /**

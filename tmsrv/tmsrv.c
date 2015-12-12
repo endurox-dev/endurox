@@ -79,7 +79,7 @@ pthread_mutex_t M_wait_th_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
 /*---------------------------Prototypes---------------------------------*/
-private void tx_tout_check(void *ptr);
+private int tx_tout_check(void);
 private void tm_chk_one_free_thread(void *ptr);
 
 /**
@@ -533,7 +533,7 @@ void tpsvrdone(void)
  * (will be done by threadpoll)
  * @return 
  */
-private void tx_tout_check_th(void)
+private void tx_tout_check_th(void *ptr)
 {
     long tspent;
     atmi_xa_log_list_t *tx_list;
@@ -590,7 +590,7 @@ out:
  * Callback routine for scheduled timeout checks.
  * @return 
  */
-private void tx_tout_check(void *ptr)
+private int tx_tout_check(void)
 {
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
