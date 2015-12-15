@@ -63,15 +63,28 @@ add_library (atmisrvnomain SHARED
                 init.c
                 serverapi.c
                 tpreturn.c
-                rawmain.c
+                srvmain.c
                 ndrxdapi.c
                 dynadv.c
                 pollextension.c
+   	    )
+# Integration library
+add_library (atmisrvinteg SHARED
+                svqdispatch.c
+                init.c
+                serverapi.c
+                tpreturn.c
+                srvmain.c
+                ndrxdapi.c
+                dynadv.c
+                pollextension.c
+                integra.c
    	    )
 
 install (TARGETS 
     atmisrv 
     atmisrvnomain
+    atmisrvinteg
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries

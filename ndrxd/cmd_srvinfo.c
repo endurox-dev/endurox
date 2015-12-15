@@ -67,7 +67,6 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
     pm_node_t * p_pm_chk;
     pm_pidhash_t *pm_pid;
     int i;
-    long old_state;
     int srvid;
     /* So what we should do here?
      * 1. Mark that service is running.
@@ -80,11 +79,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
     /* refresh the state */
     NDRX_LOG(log_debug, "Call from server: %d, state: %d",
                             srvinfo->srvinfo.srvid, srvinfo->srvinfo.state);
-    old_state = G_process_model_hash[srvinfo->srvinfo.srvid]->state;
-/*
-    G_process_model_hash[srvinfo->srvinfo.srvid]->state =
-            srvinfo->srvinfo.state;
-*/
+    
     srvid=srvinfo->srvinfo.srvid;
     if (srvid>=0 && srvid<G_atmi_env.max_servers)
     {

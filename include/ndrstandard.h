@@ -67,7 +67,7 @@ typedef int         bool;
 
 #define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
 
-#define FAIL_OUT(X)    X=FAIL; goto out;
+#define FAIL_OUT(X)    {X=FAIL; goto out;}
 
 #ifdef SYS64BIT
 #define OFFSET(s,e)   ((long) &(((s *)0)->e) )
