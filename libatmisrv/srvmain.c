@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include "srv_int.h"
+#include "userlog.h"
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -281,57 +282,72 @@ int ndrx_main(int argc, char** argv)
     int ret=SUCCEED;
 
     /* do internal initialization, get configuration, request for admin q */
-    ret=ndrx_init(argc, argv);
+    if (SUCCEED!=ndrx_init(argc, argv))
+    {
+        NDRX_LOG(log_error, "ndrx_init() fail");
+        userlog("ndrx_init() fail");
+        FAIL_OUT(ret);
+    }
     
     /*
      * Initialize services
      */
-    if (SUCCEED==ret)
+    if (SUCCEED!=tpsvrinit(argc, argv))
     {
-        ret=tpsvrinit(argc, argv);
+        NDRX_LOG(log_error, "tpsvrinit() fail");
+        userlog("tpsvrinit() fail");
+        FAIL_OUT(ret);
     }
 
     /*
      * Push the services out!
      */
-    if (SUCCEED==ret)
+    if (SUCCEED!=build_advertise_list())
     {
-        ret=build_advertise_list();
+        NDRX_LOG(log_error, "tpsvrinit() fail");
+        userlog("tpsvrinit() fail");
+        FAIL_OUT(ret);
     }
 
-    if (SUCCEED==ret)
+    /* initialize the library */
+    if (SUCCEED!=initialize_atmi_library())
     {
-        /* initialize the library */
-        ret=initialize_atmi_library();
+        NDRX_LOG(log_error, "initialize_atmi_library() fail");
+        userlog("initialize_atmi_library() fail");
+        FAIL_OUT(ret);
     }
     
     /*
      * Open the queues
      */
-    if (SUCCEED==ret)
+    if (SUCCEED!=sv_open_queue())
     {
-        ret=sv_open_queue();
+        NDRX_LOG(log_error, "initialize_atmi_library() fail");
+        userlog("initialize_atmi_library() fail");
+        FAIL_OUT(ret);
     }
     
     /* Do lib updates after Q open... */
-    if (SUCCEED==ret)
+    if (SUCCEED!=tp_internal_init_upd_replyq(G_server_conf.service_array[1]->q_descr,
+                G_server_conf.service_array[1]->listen_q))
     {
-        ret=tp_internal_init_upd_replyq(G_server_conf.service_array[1]->q_descr,
-                G_server_conf.service_array[1]->listen_q);
+        NDRX_LOG(log_error, "tp_internal_init_upd_replyq() fail");
+        userlog("tp_internal_init_upd_replyq() fail");
+        FAIL_OUT(ret);
     }
     
-    if (SUCCEED==ret)
-    {
-        /* As we can run even witout ndrxd, then we ingore the result of send op */
-        report_to_ndrxd();
-    }
+    /* As we can run even witout ndrxd, then we ingore the result of send op */
+    report_to_ndrxd();
 
     /* run process here! */
-    if (SUCCEED==ret)
+    if (SUCCEED!=(ret=sv_wait_for_request()))
     {
-        ret=sv_wait_for_request();
+        NDRX_LOG(log_error, "sv_wait_for_request() fail %d", ret);
+        userlog("sv_wait_for_request() fail %d", ret);
+        goto out;
     }
-
+    
+out:
     /* finish up. */
     tpsvrdone();
 

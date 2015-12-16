@@ -264,6 +264,7 @@ typedef struct
 	int 	cd;
 	long    appkey;
         CLIENTID cltid; /* RFU */
+        char	fname[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
 } TPSVCINFO;
 
 struct	tpinfo_t
@@ -271,12 +272,16 @@ struct	tpinfo_t
 	char usrname[MAXTIDENT+2];
 	char cltname[MAXTIDENT+2];
 	char passwd[MAXTIDENT+2];
-	char    grpname[MAXTIDENT+2];
+	char grpname[MAXTIDENT+2];
 	long flags;
 	long datalen;
 	long data;
 };
 typedef	struct	tpinfo_t TPINIT;
+
+/*---------------------------Globals------------------------------------*/
+extern int (*G_tpsvrinit__)(int, char **);
+extern void (*G_tpsvrdone__)(void);
 /*---------------------------Prototypes---------------------------------*/
 
 /*
@@ -323,7 +328,7 @@ extern int tpunsubscribe (long subscription, long flags);
 extern int tppost (char *eventname, char *data, long len, long flags);
 extern int * _exget_tperrno_addr (void);
 extern long * _exget_tpurcode_addr (void);
-extern void tpsvrdone (void);
+/*extern void tpsvrdone (void);*/
 extern int tpinit(TPINIT *tpinfo);
 /* Poller & timer extension: */
 extern int tpext_addpollerfd(int fd, uint32_t events, 

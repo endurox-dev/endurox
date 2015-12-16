@@ -305,6 +305,8 @@ public int sv_serve_call(int *service, int *status)
             /* put reply address */
             strcpy(G_shm_srv->last_reply_q, call->reply_to);
         }
+        /* For golang integration we need to know at service the function name */
+        strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         G_server_conf.service_array[no]->p_func(&svcinfo);
 
         NDRX_LOG(log_warn, "No return from service!");
@@ -477,8 +479,13 @@ public int sv_serve_connect(int *service, int *status)
             /* put reply address */
             strcpy(G_shm_srv->last_reply_q, call->reply_to);
         }
+        /* For golang integration we need to know at service the function name */
+        strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         G_server_conf.service_array[no]->p_func(&svcinfo);
-
+        
+        /*Needs some patch for go-lang that we do not use long jumps...
+         * + we we need to get the status back...
+         */
 
         NDRX_LOG(log_warn, "No return from service!");
 
@@ -869,7 +876,6 @@ public int sv_wait_for_request(void)
                 {
                     NDRX_LOG(log_info, "FD found in extension list, invoking");
                     
-                    /*NDRX_LOG(log_info, "YOPT: %p", ext->ptr1);*/
                     ret = ext->p_pollevent(evfd, G_server_conf.events[n].events, ext->ptr1);
                     if (SUCCEED!=ret)
                     {
@@ -884,24 +890,24 @@ public int sv_wait_for_request(void)
                 }
             }
             
-			if (FAIL==(len=mq_receive (evfd,
-                        (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
-			{
-				if (EAGAIN==errno)
-				{
+            if (FAIL==(len=mq_receive (evfd,
+            (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
+            {
+                if (EAGAIN==errno)
+                {
                     /* In this case we ignore the error and try on next q
                      * This may happen in cases when in load balance mode
                      * someone else took the message off.
                      */
                     NDRX_LOG(log_debug, "EAGAIN");
                     continue; /* try to get next message */
-				}
+                }
                 else
                 {
                     ret=FAIL;
                     _TPset_error_fmt(TPEOS, "mq_receive failed: %s", strerror(errno));
                 }
-			}
+            }
             else
             {
                 /* NDRX_LOG(log_debug, "Got request"); */
@@ -932,12 +938,9 @@ public int sv_wait_for_request(void)
                 }
                 else
                 {   
-                    
                     /* If this was even post, then we should adjust last call no */
                     if (ATMI_COMMAND_EVPOST==p_adm_cmd->command_id)
                     {
-
-                        
                         G_server_conf.last_call.no = FAIL;
                         for (j=0; j<G_server_conf.adv_service_count; j++)
                         {
@@ -971,7 +974,7 @@ public int sv_wait_for_request(void)
                     sv_server_request(msg_buf, len);
                 }
             }
-		} /* for */
+        } /* for */
     }
 out:
     return ret;
