@@ -47,11 +47,7 @@ extern "C" {
 /* STRING Header record */
 struct STRING_header
 {
-    unsigned char       buffer_type;
-    unsigned char       version;
-    char                magic[STRING_MAGIC_SIZE];
-    BFLDLEN             buf_len;
-    /* Actual data goes here... */
+    /* Actual data goes here (bollow format is just prt to data)  */
     char str[1];
 };
 
