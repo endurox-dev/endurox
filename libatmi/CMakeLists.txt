@@ -53,6 +53,7 @@ add_library (atmi SHARED
                     typed_ubf.c
                     typed_tpinit.c
                     typed_null.c
+                    typed_string.c
                     atmiutils.c
                     init.c
                     conversation.c

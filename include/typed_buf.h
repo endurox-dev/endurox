@@ -43,11 +43,12 @@ extern "C" {
 
 #define BUF_TYPE_MIN        0 /* min buffer type, for integrity */
 #define BUF_TYPE_UBF        0
-#define BUF_TYPE_INIT       1
-#define BUF_TYPE_STRING     2
-#define BUF_TYPE_CARRAY     3
-#define BUF_TYPE_NULL       4
-#define BUF_TYPE_MAX        4 /* max buffer type, for integrity */
+#define BUF_TYPE_INIT       2 /* Keep the G_buf_descr indexes */
+#define BUF_TYPE_NULL       3
+#define BUF_TYPE_STRING     4
+#define BUF_TYPE_CARRAY     5 /* RFU */
+#define BUF_TYPE_JSON       6 /* RFU */
+#define BUF_TYPE_MAX        6 /* max buffer type, for integrity */
 
 #define BUF_TYPE_UBF_STR        "UBF"
 #define BUF_TYPE_INIT_STR       "INIT"

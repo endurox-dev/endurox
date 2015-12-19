@@ -1,5 +1,5 @@
 ## 
-## Enduro Execution platform's ATMI server library
+## Tests for STRING buffer testing
 ##
 ## @file CMakeLists.txt
 ## 
@@ -29,10 +29,13 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
-
-# Set minimum version
 cmake_minimum_required(VERSION 2.8)
 
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -41,53 +44,19 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Create a library called "SRVNDRX" which includes the source files.
-# The extension is already found. Any number of sources could be listed here. 
-add_library (atmisrv SHARED
-                srvmain.c
-                svqdispatch.c
-                init.c
-                serverapi.c
-                tpreturn.c
-                rawmain.c
-                ndrxdapi.c
-                dynadv.c
-                pollextension.c
-                standard.c
-            )
+############################# Test - executables ###############################
+add_executable (atmisv22 atmisv22.c)
+add_executable (atmiclt22 atmiclt22.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmisv22  atmisrv atmi ubf nstd m rt dl)
+target_link_libraries (atmiclt22 atmiclt atmi ubf nstd m rt dl)
 
-add_library (atmisrvnomain SHARED
-                svqdispatch.c
-                init.c
-                serverapi.c
-                tpreturn.c
-                srvmain.c
-                ndrxdapi.c
-                dynadv.c
-                pollextension.c
-                standard.c
-   	    )
-# Integration library
-add_library (atmisrvinteg SHARED
-                svqdispatch.c
-                init.c
-                serverapi.c
-                tpreturn.c
-                srvmain.c
-                ndrxdapi.c
-                dynadv.c
-                pollextension.c
-                integra.c
-   	    )
+set_target_properties(atmisv22 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt22 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
-install (TARGETS 
-    atmisrv 
-    atmisrvnomain
-    atmisrvinteg
-    DESTINATION "${INSTALL_LIB_DIR}"
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-    COMPONENT libraries
-    )
+################################################################################

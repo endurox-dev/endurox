@@ -59,6 +59,7 @@ public void (*___G_test_delayed_startup)(void) = NULL;
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 public int G_shutdown_req = 0;
+public int G_atmisrv_reply_type = 0; /* Used no-long-jump systems  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -197,6 +198,7 @@ public int sv_serve_call(int *service, int *status)
     long call_age;
     
     *status=SUCCEED;
+    G_atmisrv_reply_type = 0;
     
     call_age = n_timer_get_delta_sec(&call->timer);
 
@@ -259,7 +261,8 @@ public int sv_serve_call(int *service, int *status)
 
     /* Now we should call the service by it self, also we should check was reply back or not */
 
-    if (0==(reply_type=setjmp(G_server_conf.call_ret_env)))
+    if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP ||
+            0==(reply_type=setjmp(G_server_conf.call_ret_env)))
     {
         int no = G_server_conf.last_call.no;
         TPSVCINFO svcinfo;
@@ -309,15 +312,34 @@ public int sv_serve_call(int *service, int *status)
         strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         G_server_conf.service_array[no]->p_func(&svcinfo);
 
-        NDRX_LOG(log_warn, "No return from service!");
-
-        if (!(svcinfo.flags & TPNOREPLY))
+        if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
+                /* Server did return:  */
+                (G_atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
+                 G_atmisrv_reply_type & RETURN_TYPE_TPFORWARD
+                )
+            )
         {
-            /* if we are here, then there was no reply! */
-            NDRX_LOG(log_error, "PROTO error - no reply from service [%s]",
-                                            call->name);
-            /* reply with failure back */
-            *status=FAIL;
+            /* System does normal function return... */
+            NDRX_LOG(log_debug, "Got back from reply/forward (%d) w/o long jump",
+                                        G_atmisrv_reply_type);
+            if (G_atmisrv_reply_type & RETURN_FAILED || 
+                    G_atmisrv_reply_type & RETURN_SVC_FAIL)
+            {
+                *status=FAIL;
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_warn, "No return from service!");
+
+            if (!(svcinfo.flags & TPNOREPLY))
+            {
+                /* if we are here, then there was no reply! */
+                NDRX_LOG(log_error, "PROTO error - no reply from service [%s]",
+                                                call->name);
+                /* reply with failure back */
+                *status=FAIL;
+            }
         }
     }
     else
@@ -358,6 +380,7 @@ public int sv_serve_connect(int *service, int *status)
     long call_age;
 
     *status=SUCCEED;
+    G_atmisrv_reply_type = 0;
     
     NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %u",
                                         call->cd, call->timestamp, call->callseq);
@@ -398,7 +421,7 @@ public int sv_serve_connect(int *service, int *status)
 
     /* Now we should call the service by it self, also we should check was reply back or not */
 
-    if (0==(reply_type=setjmp(G_server_conf.call_ret_env)))
+    if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP || 0==(reply_type=setjmp(G_server_conf.call_ret_env)))
     {
         int no = G_server_conf.last_call.no;
         TPSVCINFO svcinfo;
@@ -486,16 +509,34 @@ public int sv_serve_connect(int *service, int *status)
         /*Needs some patch for go-lang that we do not use long jumps...
          * + we we need to get the status back...
          */
-
-        NDRX_LOG(log_warn, "No return from service!");
-
-        if (!(svcinfo.flags & TPNOREPLY))
+        if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
+                /* Server did return:  */
+                (G_atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
+                 G_atmisrv_reply_type & RETURN_TYPE_TPFORWARD
+                )
+            )
         {
-            /* if we are here, then there was no reply! */
-            NDRX_LOG(log_error, "PROTO error - no reply from service [%s]",
-                                            call->name);
-            /* reply with failure back */
-            *status=FAIL;
+            NDRX_LOG(log_debug, "Got back from reply/forward (%d) (no longjmp)",
+                                        G_atmisrv_reply_type);
+        
+            if (G_atmisrv_reply_type & RETURN_FAILED || 
+                    G_atmisrv_reply_type & RETURN_SVC_FAIL)
+            {
+                *status=FAIL;
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_warn, "No return from service!");
+
+            if (!(svcinfo.flags & TPNOREPLY))
+            {
+                /* if we are here, then there was no reply! */
+                NDRX_LOG(log_error, "PROTO error - no reply from service [%s]",
+                                                call->name);
+                /* reply with failure back */
+                *status=FAIL;
+            }
         }
     }
     else

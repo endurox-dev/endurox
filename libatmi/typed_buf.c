@@ -42,6 +42,7 @@
 #include "typed_buf.h"
 #include "ndebug.h"
 #include <thlock.h> /* muli thread support */
+#include <typed_string.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -69,6 +70,8 @@ public typed_buffer_descr_t G_buf_descr[] =
                                 TPINIT_tpalloc, NULL, TPINIT_tpfree, NULL},
     {BUF_TYPE_NULL,  NULL,  NULL,      NULL,             NULL,            NULL,
                                 TPNULL_tpalloc, NULL, TPNULL_tpfree, NULL},
+    {BUF_TYPE_STRING,   "STRING", NULL,     NULL, STRING_prepare_outgoing, STRING_prepare_incoming,
+                                STRING_tpalloc, STRING_tprealloc, STRING_tpfree, STRING_test},
 #if 0
 /* Those bellow ones are not supported! */
     {BUF_TYPE_STRING,"STRING",  NULL,      NULL, /* todo:  */NULL, /* todo: */NULL, NULL},
@@ -179,7 +182,7 @@ private typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
  * @param len
  * @return
  */
-public char	* _tpalloc (typed_buffer_descr_t *known_type,
+public char * _tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len)
 {
     MUTEX_LOCK_V(M_spinlock);
@@ -230,8 +233,8 @@ public char	* _tpalloc (typed_buffer_descr_t *known_type,
     node->buf = ret;
     node->size = len;
     
-    node->type_id = BUF_TYPE_UBF; /* <<<< WHAT IS THIS??? */
-    node->sub_type_id = 0;
+    node->type_id = usr_type->type_id;
+    node->sub_type_id = 0; /* So currently sub-type not supported. ok */
 
     /* Save the allocated buffer in the list */
     DL_APPEND(G_buffers, node);
@@ -248,7 +251,7 @@ out:
  * @param
  * @return
  */
-public char	* _tprealloc (char *buf, long len)
+public char * _tprealloc (char *buf, long len)
 {
     MUTEX_LOCK_V(M_spinlock);
     {
@@ -332,7 +335,7 @@ public void	_tpfree (char *buf, buffer_obj_t *known_buffer)
 
     if (NULL!=elt)
     {
-        buf_type = &G_buf_descr[elt->sub_type_id];
+        buf_type = &G_buf_descr[elt->type_id];
         /* Remove it! */
         buf_type->pf_free(buf_type, elt->buf);
         
@@ -363,11 +366,11 @@ public void free_auto_buffers(void)
     {
         if (elt->autoalloc)
         {
-            NDRX_LOG(log_debug, "Free-up auto buffer : %p", 
-                    elt->buf);
+            NDRX_LOG(log_debug, "Free-up auto buffer : %p typeid: %d", 
+                    elt->buf, elt->type_id);
             
             /* Free up the buffer */
-            buf_type = &G_buf_descr[elt->sub_type_id];
+            buf_type = &G_buf_descr[elt->type_id];
             buf_type->pf_free(buf_type, elt->buf);
             DL_DELETE(G_buffers,elt);
             /* fix up memory leak issues. */
@@ -420,7 +423,7 @@ public long	_tptypes (char *ptr, char *type, char *subtype)
     
     if (NULL!=subtype && NULL!=buf_type->subtype)
     {
-            strcpy(subtype, buf_type->type);
+        strcpy(subtype, buf_type->type);
     }
     
 out:

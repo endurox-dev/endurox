@@ -59,6 +59,7 @@ add_subdirectory (test015_threads)
 add_subdirectory (test017_srvthread)
 add_subdirectory (test018_tpacalltout)
 add_subdirectory (test021_xafull)
+add_subdirectory (test022_typedstring)
 
 ################################################################################
 # Master test case driver

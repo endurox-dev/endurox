@@ -1,9 +1,7 @@
 /* 
- * Integration library with different platforms.
-** Currently provides linked entry points of tpsvrinit() and tpsvrdone(), 
-** but does call the registered callbacks (currently needed for golang linking)
-** 
-** @file integra.c
+** Typed STRING testing
+**
+** @file atmiclt22.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,71 +29,101 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-
-/*---------------------------Includes-----------------------------------*/
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ndrstandard.h>
-#include <ndebug.h>
-#include <utlist.h>
-#include <string.h>
-#include <unistd.h>
+#include <memory.h>
 
-#include "srv_int.h"
-#include <atmi_int.h>
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include "test022.h"
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-int (*G_tpsvrinit__)(int, char **) = NULL;
-void (*G_tpsvrdone__)(void) = NULL;
-public long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; /* No jump please */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Do initialization
+/*
+ * Do the test call to the server
  */
-int tpsvrinit(int argc, char **argv)
-{
-    int ret = SUCCEED;
-    NDRX_LOG(log_debug, "tpsvrinit() called");
-    if (NULL!=G_tpsvrinit__)
+int main(int argc, char** argv) {
+
+    long rsplen;
+    int i, j;
+    int ret=SUCCEED;
+    char *buf = tpalloc("STRING", NULL, 30);
+    
+    if (NULL==buf)
     {
-        if (SUCCEED!=(ret = G_tpsvrinit__(argc, argv)))
+        NDRX_LOG(log_error, "TESTERROR: failed to alloc STRING buffer!");
+        FAIL_OUT(ret);
+    }
+
+    for (j=0; j<10000; j++)
+    {
+        strcpy(buf, "HELLO WORLD");
+
+        if (SUCCEED!=tpcall("TEST22_STRING", buf, 0, &buf, &rsplen, 0))
         {
-            NDRX_LOG(log_error, "G_tpsvrinit__() failed");
+            NDRX_LOG(log_error, "TESTERROR: failed to call TEST22_STRING");
+            FAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "Got message [%s] ", buf);
+
+        /* Check the len */
+        if (TEST_REPLY_SIZE!=strlen(buf))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid message len for [%s] got: %d, "
+                    "but need: %d ", buf, strlen(buf), TEST_REPLY_SIZE);
+        }
+
+        for (i=0; i<TEST_REPLY_SIZE; i++)
+        {
+            if (((char)buf[i])!=((char)(i%255+1)))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Invalid char at %d, "
+                        "expected: 0x%1x, but got 0x%1x", i, 
+                        (unsigned char)buf[i], (unsigned char)(i%255+1));
+            }
+        }
+
+        if (EOS!=buf[1024])
+        {
+            NDRX_LOG(log_error, "TESTERROR: Not EOS!");
+        }
+
+        strcpy(buf, "Hello Enduro/X from Mars");
+
+        ret=tppost("TEST22EV", buf, 0L, TPSIGRSTRT);
+
+        if (1!=ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Event is not processed by "
+                    "exactly 1 service! (%d) ", ret);
+            ret=FAIL;
             goto out;
         }
-        else
+        /* Realloc to some more... */
+        if (NULL== (buf = tprealloc(buf, 2048)))
         {
-            NDRX_LOG(log_debug, "G_tpsvrinit__() ok");
+            NDRX_LOG(log_error, "TESTERROR: failed "
+                    "to realloc the buffer");
         }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "G_tpsvrinit__ == NULL => FAIL!");
-        FAIL_OUT(ret);
+        
     }
     
 out:
+
+    if (ret>=0)
+        ret=SUCCEED;
+
     return ret;
 }
 
-/**
- * Do de-initialization
- */
-void tpsvrdone(void)
-{
-    NDRX_LOG(log_debug, "tpsvrdone() called");
-    
-    if (NULL!=G_tpsvrdone__)
-    {
-        G_tpsvrdone__();
-    }
-    else
-    {
-        NDRX_LOG(log_warn, "G_tpsvrdone__ null, not calling");
-    }
-}

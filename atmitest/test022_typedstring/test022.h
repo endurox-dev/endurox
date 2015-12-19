@@ -1,7 +1,7 @@
 /* 
-** Typed string support
+** Typed STRING tests
 **
-** @file typed_string.h
+** @file test022.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,35 +29,19 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef __TYPED_STRING_H
-#define	__TYPED_STRING_H
+#ifndef TEST022_H
+#define	TEST022_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-/*---------------------------Includes-----------------------------------*/
-#include <atmi_int.h>
-/*---------------------------Externs------------------------------------*/
-/*---------------------------Macros-------------------------------------*/
-/*---------------------------Enums--------------------------------------*/
-/*---------------------------Typedefs-----------------------------------*/
-/*---------------------------Globals------------------------------------*/
-/*---------------------------Statics------------------------------------*/
-/*---------------------------Prototypes---------------------------------*/
-    
-extern int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
-                    char *obuf, long *olen, long flags);
-extern int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
-                        long rcv_len, char **odata, long *olen, long flags);
-extern char * STRING_tpalloc (typed_buffer_descr_t *descr, long len);
-extern char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
-extern void STRING_tpfree(typed_buffer_descr_t *descr, char *buf);
-extern int STRING_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
+
+#define TEST_REPLY_SIZE         1024
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* __TYPED_STRING_H */
+#endif	/* TEST022_H */
 

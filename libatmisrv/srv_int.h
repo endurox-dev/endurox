@@ -43,20 +43,24 @@ extern "C" {
 #include <setjmp.h>
 #include <ndrxdcmn.h>
 /*---------------------------Externs------------------------------------*/
+extern long G_libatmisrv_flags; /* present in integra.c or standard.c */
+extern int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
 /*---------------------------Macros-------------------------------------*/
 #define MIN_SVC_LIST_LEN        30
 #define SVN_LIST_REALLOC        15
 
-#define RETURN_FAILED             0x1
-#define RETURN_TYPE_TPRETURN      0x2
-#define RETURN_TYPE_TPFORWARD     0x4
-#define RETURN_SVC_FAIL           0x8
-#define RETURN_TYPE_THREAD        0x16  /* processing sent to thread   */
+#define RETURN_FAILED             0x00000001
+#define RETURN_TYPE_TPRETURN      0x00000002
+#define RETURN_TYPE_TPFORWARD     0x00000004
+#define RETURN_SVC_FAIL           0x00000008
+#define RETURN_TYPE_THREAD        0x00000010  /* processing sent to thread   */
 
 /* Special queue logical numbers */
 #define ATMI_SRV_ADMIN_Q            0           /* This is admin queue */
 #define ATMI_SRV_REPLY_Q            1           /* This is reply queue */
 #define ATMI_SRV_Q_ADJUST           2           /* Adjustment for Q nr */
+    
+#define ATMI_SRVLIB_NOLONGJUMP     0x00000001 /* Do not use long jump   */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

@@ -1,9 +1,8 @@
 /* 
- * Integration library with different platforms.
-** Currently provides linked entry points of tpsvrinit() and tpsvrdone(), 
-** but does call the registered callbacks (currently needed for golang linking)
+** Standard Enduro/X server configuration, i.e. not the integra mode.
+** Use long jumps...
 ** 
-** @file integra.c
+** @file standard.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -48,54 +47,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-int (*G_tpsvrinit__)(int, char **) = NULL;
-void (*G_tpsvrdone__)(void) = NULL;
-public long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; /* No jump please */
+public long G_libatmisrv_flags     =   0;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Do initialization
- */
-int tpsvrinit(int argc, char **argv)
-{
-    int ret = SUCCEED;
-    NDRX_LOG(log_debug, "tpsvrinit() called");
-    if (NULL!=G_tpsvrinit__)
-    {
-        if (SUCCEED!=(ret = G_tpsvrinit__(argc, argv)))
-        {
-            NDRX_LOG(log_error, "G_tpsvrinit__() failed");
-            goto out;
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "G_tpsvrinit__() ok");
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "G_tpsvrinit__ == NULL => FAIL!");
-        FAIL_OUT(ret);
-    }
-    
-out:
-    return ret;
-}
-
-/**
- * Do de-initialization
- */
-void tpsvrdone(void)
-{
-    NDRX_LOG(log_debug, "tpsvrdone() called");
-    
-    if (NULL!=G_tpsvrdone__)
-    {
-        G_tpsvrdone__();
-    }
-    else
-    {
-        NDRX_LOG(log_warn, "G_tpsvrdone__ null, not calling");
-    }
-}

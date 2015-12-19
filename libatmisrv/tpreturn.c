@@ -71,7 +71,7 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     typed_buffer_descr_t *descr;
     NDRX_LOG(log_debug, "%s enter", fn);
     long data_len;
-    long return_status=0;
+    int return_status=0;
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EOS};
     
     /* client with out last call is acceptable...! */
@@ -226,13 +226,21 @@ return_to_main:
 
     /* server thread, no long jump... (thread should kill it self.)*/
     if (!(G_last_call.sysflags & SYS_SRV_THREAD))
-    {
-        NDRX_LOG(log_debug, "%s about to jump to main()", fn);
+    {        
         return_status|=RETURN_TYPE_TPRETURN;
-        if (FAIL==ret)
-            return_status|=RETURN_FAILED;
+         if (FAIL==ret)
+             return_status|=RETURN_FAILED;
 
-        longjmp(G_server_conf.call_ret_env, return_status);
+        if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
+        {
+            NDRX_LOG(log_debug, "%s normal return to main - no longjmp", fn);
+            G_atmisrv_reply_type = return_status;
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "%s about to jump to main()", fn);
+            longjmp(G_server_conf.call_ret_env, return_status);
+        }
     }
 
     return;
@@ -380,8 +388,17 @@ out:
         return_status|=RETURN_TYPE_TPFORWARD;
         if (FAIL==ret)
             return_status|=RETURN_FAILED;
-
-        longjmp(G_server_conf.call_ret_env, return_status);
+        
+        if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
+        {
+            NDRX_LOG(log_debug, "%s normal return to main - no longjmp", fn);
+            G_atmisrv_reply_type = return_status;
+        }
+        else 
+        {
+            NDRX_LOG(log_debug, "%s longjmp to main()", fn);
+            longjmp(G_server_conf.call_ret_env, return_status);
+        }
     }
 
 out_no_jump:
