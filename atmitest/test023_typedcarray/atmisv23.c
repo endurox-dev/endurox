@@ -1,7 +1,7 @@
 /* 
-** Typed STRING tests
+** Typed CARRAY tests
 **
-** @file atmisv22.c
+** @file atmisv23.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -38,14 +38,14 @@
 #include <ubf.h>
 #include <test.fd.h>
 #include <string.h>
-#include "test022.h"
+#include "test023.h"
 
 long M_subs_to_unsibscribe = -1;
 
 /**
- * Receive some string & reply back with string, ok?
+ * Receive some carray & reply back with carray, ok?
  */
-void TEST22_STRING(TPSVCINFO *p_svc)
+void TEST23_CARRAY(TPSVCINFO *p_svc)
 {
     int ret = SUCCEED;
     char *buf = p_svc->data;
@@ -54,49 +54,51 @@ void TEST22_STRING(TPSVCINFO *p_svc)
     
     if (FAIL==tptypes(buf, type, NULL))
     {
-        NDRX_LOG(log_error, "TESTERROR: TEST22_STRING cannot "
+        NDRX_LOG(log_error, "TESTERROR: TEST23_CARRAY cannot "
                 "determine buffer type");
         FAIL_OUT(ret);
     }
     
-    if (0!=strcmp(type, "STRING"))
+    if (0!=strcmp(type, "CARRAY"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Buffer not STRING!");
+        NDRX_LOG(log_error, "TESTERROR: Buffer not CARRAY!");
         FAIL_OUT(ret);
     }
     
-    if (0!=strcmp(buf, "HELLO WORLD"))
+    for (i=0; i<TEST_REQ_SIZE; i++)
     {
-        NDRX_LOG(log_error, "TESTERROR: Incoming string not \"HELLO WORLD\"");
-        FAIL_OUT(ret);
+        if (((char)buf[i]) != ((char)i))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Buffer pos %d not equal to %d!",
+                            i, i);
+            FAIL_OUT(ret);
+        }
     }
     
-    if (NULL== (buf = tprealloc(buf, TEST_REPLY_SIZE+1)))
+    if (NULL== (buf = tprealloc(buf, TEST_REPLY_SIZE)))
     {
-        NDRX_LOG(log_error, "TESTERROR: TEST22_STRING failed "
+        NDRX_LOG(log_error, "TESTERROR: TEST23_CARRAY failed "
                 "to realloc the buffer");
     }
     
     /* fill all the buffer with  */
     for (i=0; i<TEST_REPLY_SIZE; i++)
     {
-        buf[i]=i%255+1;
+        buf[i]=i%256;
     }
-    
-    buf[TEST_REPLY_SIZE] = EOS;
     
     NDRX_LOG(log_debug, "Sending buffer: [%s]", buf);
     
 out:
     
-    tpreturn(SUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
+    tpreturn(SUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, TEST_REPLY_SIZE, 0L);
     
 }
 
 /**
  * This should match the regex of caller (extra filter test func)
  */
-void TEST22 (TPSVCINFO *p_svc)
+void TEST23 (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
     
@@ -109,11 +111,11 @@ out:
 /**
  * This shall not match the regex of caller (extra filter test func)
  */
-void TEST22_2(TPSVCINFO *p_svc)
+void TEST23_2(TPSVCINFO *p_svc)
 {
     long ret;
     
-    NDRX_LOG(log_debug, "TEST22_2 - Called");
+    NDRX_LOG(log_debug, "TEST23_2 - Called");
     
     tpreturn(0, 0, NULL, 0L, 0L);
 }
@@ -130,19 +132,19 @@ int tpsvrinit(int argc, char **argv)
 
     memset(&evctl, 0, sizeof(evctl));
 
-    if (SUCCEED!=tpadvertise("TEST22_STRING", TEST22_STRING))
+    if (SUCCEED!=tpadvertise("TEST23_CARRAY", TEST23_CARRAY))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST22_STRING!");
+        NDRX_LOG(log_error, "Failed to initialize TEST23_CARRAY!");
         ret=FAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST22", TEST22))
+    else if (SUCCEED!=tpadvertise("TEST23", TEST23))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST22 (first)!");
+        NDRX_LOG(log_error, "Failed to initialize TEST23 (first)!");
         ret=FAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST22_2", TEST22_2))
+    else if (SUCCEED!=tpadvertise("TEST23_2", TEST23_2))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST22_2!");
+        NDRX_LOG(log_error, "Failed to initialize TEST23_2!");
         ret=FAIL;
     }
     
@@ -151,25 +153,27 @@ int tpsvrinit(int argc, char **argv)
         goto out;
     }
 
-    strcpy(evctl.name1, "TEST22");
+    strcpy(evctl.name1, "TEST23");
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */
-    if (FAIL==tpsubscribe("TEST22EV", "Hello (.*) Mars", &evctl, 0L))
+    if (FAIL==tpsubscribe("TEST23EV", NULL, &evctl, 0L))
     {
-        NDRX_LOG(log_error, "Failed to subscribe TEST22 "
-                                        "to TEST22EV event failed");
+        NDRX_LOG(log_error, "Failed to subscribe TEST23 "
+                                        "to EV..TEST event failed");
         ret=FAIL;
     }
 
-    strcpy(evctl.name1, "TEST22_2");
+#if 0
+    strcpy(evctl.name1, "TEST23_2");
     /* Subscribe to event server */
-    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST22EV", "Hello (.*) Pluto", &evctl, 0L)))
+    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST23EV", "Hello (.*) Pluto", &evctl, 0L)))
     {
-        NDRX_LOG(log_error, "Failed to subscribe TEST22 "
-                                        "to TEST22EV event failed");
+        NDRX_LOG(log_error, "Failed to subscribe TEST23 "
+                                        "to EV..TEST event failed");
         ret=FAIL;
     }
+#endif
     
 out:
     return ret;

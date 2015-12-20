@@ -1,7 +1,7 @@
 /* 
-** Typed STRING testing
+** Typed CARRAY testing
 **
-** @file atmiclt22.c
+** @file atmiclt23.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -39,7 +39,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include "test022.h"
+#include "test023.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -57,28 +57,31 @@ int main(int argc, char** argv) {
     long rsplen;
     int i, j;
     int ret=SUCCEED;
-    char *buf = tpalloc("STRING", NULL, 30);
+    char *buf = tpalloc("CARRAY", NULL, 100);
     
     if (NULL==buf)
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to alloc STRING buffer!");
+        NDRX_LOG(log_error, "TESTERROR: failed to alloc CARRAY buffer!");
         FAIL_OUT(ret);
     }
 
     for (j=0; j<10000; j++)
     {
-        strcpy(buf, "HELLO WORLD");
-
-        if (SUCCEED!=tpcall("TEST22_STRING", buf, 0, &buf, &rsplen, 0))
+        for (i=0; i<TEST_REQ_SIZE; i++)
         {
-            NDRX_LOG(log_error, "TESTERROR: failed to call TEST22_STRING");
+            buf[i] = i;
+        }
+
+        if (SUCCEED!=tpcall("TEST23_CARRAY", buf, TEST_REQ_SIZE, &buf, &rsplen, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to call TEST23_CARRAY");
             FAIL_OUT(ret);
         }
 
         NDRX_LOG(log_debug, "Got message [%s] ", buf);
 
         /* Check the len */
-        if (TEST_REPLY_SIZE!=strlen(buf))
+        if (TEST_REPLY_SIZE!=rsplen)
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid message len for [%s] got: %d, "
                     "but need: %d ", buf, strlen(buf), TEST_REPLY_SIZE);
@@ -86,22 +89,17 @@ int main(int argc, char** argv) {
 
         for (i=0; i<TEST_REPLY_SIZE; i++)
         {
-            if (((char)buf[i])!=((char)(i%255+1)))
+            if (((char)buf[i])!=((char)(i%256)))
             {
                 NDRX_LOG(log_error, "TESTERROR: Invalid char at %d, "
                         "expected: 0x%1x, but got 0x%1x", i, 
-                        (unsigned char)buf[i], (unsigned char)(i%255+1));
+                        (unsigned char)buf[i], (unsigned char)(i%256));
             }
-        }
-
-        if (EOS!=buf[TEST_REPLY_SIZE])
-        {
-            NDRX_LOG(log_error, "TESTERROR: Not EOS!");
         }
 
         strcpy(buf, "Hello Enduro/X from Mars");
 
-        ret=tppost("TEST22EV", buf, 0L, TPSIGRSTRT);
+        ret=tppost("TEST23EV", buf, strlen(buf), TPSIGRSTRT);
 
         if (1!=ret)
         {

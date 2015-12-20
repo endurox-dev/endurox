@@ -66,8 +66,8 @@ extern typed_buffer_descr_t G_buf_descr[];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /*extern typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype);*/
-extern char	* _tprealloc (char *buf, long len);
-extern char	* _tpalloc (typed_buffer_descr_t *known_type,
+extern char * _tprealloc (char *buf, long len);
+extern char * _tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
 extern buffer_obj_t * find_buffer(char *ptr);
 /*extern void free_up_buffers(void);*/
@@ -81,10 +81,10 @@ extern void UBF_tpfree(typed_buffer_descr_t *descr, char *buf);
 extern int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
     
 /* Type buffer support */
-extern char	* TPINIT_tpalloc (typed_buffer_descr_t *descr, long len);
+extern char * TPINIT_tpalloc (typed_buffer_descr_t *descr, long len);
 extern void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 /* Type null buffer */
-extern char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, long len);
+extern char * TPNULL_tpalloc (typed_buffer_descr_t *descr, long len);
 extern void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
 
 /* TODO: Add support for string buffers */

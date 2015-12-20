@@ -39,10 +39,11 @@
 #include <ubf.h>
 #include <ndrstandard.h>
 #include <atmi_int.h>
-#include "typed_buf.h"
-#include "ndebug.h"
+#include <typed_buf.h>
+#include <ndebug.h>
 #include <thlock.h> /* muli thread support */
 #include <typed_string.h>
+#include <typed_carray.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -72,6 +73,8 @@ public typed_buffer_descr_t G_buf_descr[] =
                                 TPNULL_tpalloc, NULL, TPNULL_tpfree, NULL},
     {BUF_TYPE_STRING,   "STRING", NULL,     NULL, STRING_prepare_outgoing, STRING_prepare_incoming,
                                 STRING_tpalloc, STRING_tprealloc, STRING_tpfree, STRING_test},
+    {BUF_TYPE_CARRAY,   "CARRAY", "X_OCTET", NULL, CARRAY_prepare_outgoing, CARRAY_prepare_incoming,
+                                CARRAY_tpalloc, CARRAY_tprealloc, CARRAY_tpfree, CARRAY_test},
 #if 0
 /* Those bellow ones are not supported! */
     {BUF_TYPE_STRING,"STRING",  NULL,      NULL, /* todo:  */NULL, /* todo: */NULL, NULL},

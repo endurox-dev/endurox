@@ -1,7 +1,7 @@
 /* 
-** STRING buffer support
+** CARRAY buffer support
 **
-** @file typed_string.c
+** @file typed_carray.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -43,9 +43,10 @@
 #include <ndebug.h>
 #include <fdatatype.h>
 #include <userlog.h>
+#include <typed_carray.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define STRING_DEFAULT_SIZE    512
+#define CARRAY_DEFAULT_SIZE    512
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -59,29 +60,26 @@
  * olen - the actual lenght of data that should sent. Also this may represent
  *          space for the buffer to copy to.
  */
-public int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
+public int CARRAY_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
                     char *obuf, long *olen, long flags)
 {
     int ret=SUCCEED;
-    int str_used;
-    char fn[]="STRING_prepare_outgoing";
-    
-    str_used = strlen(idata)+1; /* include EOS */
+    char fn[]="CARRAY_prepare_outgoing";
     
     /* Check that we have space enought to prepare for send */
-    if (NULL!=olen && 0!=*olen && *olen < str_used)
+    if (NULL!=olen && 0!=*olen && *olen < ilen)
     {
         _TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
-                "but requested: %d", fn, *olen, str_used);
+                "but requested: %d", fn, *olen, ilen);
         ret=FAIL;
         goto out;
     }
 
-    memcpy(obuf, idata, str_used);
+    memcpy(obuf, idata, ilen);
     
     /* return the actual length! */
     if (NULL!=olen)
-        *olen = str_used;
+        *olen = ilen;
     
 out:
     return ret;
@@ -94,19 +92,19 @@ out:
  * odata - ptr to handler. Existing buffer may be reused or re-allocated
  * olen - output data length
  */
-public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+public int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
     int ret=SUCCEED;
     int rcv_buf_size;
     int existing_size;
     
-    char fn[]="STRING_prepare_incoming";
+    char fn[]="CARRAY_prepare_incoming";
     buffer_obj_t *outbufobj=NULL;
 
     NDRX_LOG(log_debug, "Entering %s", fn);
     
-    rcv_buf_size = strlen (rcv_data) + 1;
+    rcv_buf_size = rcv_len;
    
     
     /* Figure out the passed in buffer */
@@ -122,11 +120,11 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     if (NULL!=outbufobj)
     {
         /* If we cannot change the data type, then we trigger an error */
-        if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_STRING)
+        if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_CARRAY)
         {
             /* Raise error! */
             _TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
-                                        G_buf_descr[BUF_TYPE_STRING],
+                                        G_buf_descr[BUF_TYPE_CARRAY],
                                         G_buf_descr[outbufobj->type_id]);
             ret=FAIL;
             goto out;
@@ -135,10 +133,10 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          * we should firstly free it up and then bellow allow to work in mode
          * when odata is NULL!
          */
-        if (outbufobj->type_id!=BUF_TYPE_STRING)
+        if (outbufobj->type_id!=BUF_TYPE_CARRAY)
         {
             NDRX_LOG(log_warn, "User buffer %s is different, "
-                    "free it up and re-allocate as STRING", G_buf_descr[outbufobj->type_id]);
+                    "free it up and re-allocate as CARRAY", G_buf_descr[outbufobj->type_id]);
             _tpfree(*odata, outbufobj);
             *odata=NULL;
         }
@@ -149,7 +147,7 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     {
         NDRX_LOG(log_debug, "%s: Output buffer exists", fn);
         
-        existing_size = outbufobj->size;/*strlen(*odata) + 1;*/
+        existing_size = outbufobj->size;
         
 
         NDRX_LOG(log_debug, "%s: Output buffer size: %d, received %d", fn,
@@ -183,7 +181,7 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
                                          "allocating new!", fn);
 
-        *odata = _tpalloc(&G_buf_descr[BUF_TYPE_STRING], NULL, NULL, rcv_len);
+        *odata = _tpalloc(&G_buf_descr[BUF_TYPE_CARRAY], NULL, NULL, rcv_len);
 
         if (NULL==*odata)
         {
@@ -194,7 +192,8 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     }
     
     /* Copy off the received data including EOS ofcorse. */
-    strcpy(*odata, rcv_data);
+    memcpy(*odata, rcv_data, rcv_len);
+
     if (NULL!=olen)
     {
         *olen = rcv_len;
@@ -211,17 +210,17 @@ out:
  * @param len
  * @return
  */
-public char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
+public char * CARRAY_tpalloc (typed_buffer_descr_t *descr, long len)
 {
     char *ret;
-    char fn[] = "STRING_tpalloc";
+    char fn[] = "CARRAY_tpalloc";
 
     if (0==len)
     {
-        len = STRING_DEFAULT_SIZE;
+        len = CARRAY_DEFAULT_SIZE;
     }
 
-    /* Allocate STRING buffer */
+    /* Allocate CARRAY buffer */
     ret=(char *)malloc(len);
     ret[0] = EOS;
     
@@ -230,22 +229,22 @@ out:
 }
 
 /**
- * Re-allocate STRING buffer. Firstly we will find it in the list.
+ * Re-allocate CARRAY buffer. Firstly we will find it in the list.
  * @param ptr
  * @param size
  * @return
  */
-public char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
+public char * CARRAY_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
 {
     char *ret=NULL;
-    char fn[] = "STRING_tprealloc";
+    char fn[] = "CARRAY_tprealloc";
 
     if (0==len)
     {
-        len = STRING_DEFAULT_SIZE;
+        len = CARRAY_DEFAULT_SIZE;
     }
 
-    /* Allocate STRING buffer */
+    /* Allocate CARRAY buffer */
     ret=(char *)realloc(cur_ptr, len);
     
 
@@ -257,7 +256,7 @@ public char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
  * @param descr
  * @param buf
  */
-public void STRING_tpfree(typed_buffer_descr_t *descr, char *buf)
+public void CARRAY_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
     free(buf);
 }
@@ -270,24 +269,12 @@ public void STRING_tpfree(typed_buffer_descr_t *descr, char *buf)
  * @return TRUE/FALSE.
  * In case of error we just return FALSE as not matched!
  */
-public int STRING_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
+public int CARRAY_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
 {
     int ret=FALSE;
-    regex_t re; /* compiled regex */
-    
-    if (SUCCEED==(ret=regcomp(&re, expr, REG_EXTENDED | REG_NOSUB)))
-    {
-        if (SUCCEED==regexec(&re, buf, (size_t) 0, NULL, 0))
-        {
-            ret = TRUE;
-        }
-        regfree(&re);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Failed to compile regex event filter: [%s]", expr);
-        userlog("Failed to compile regex event filter: [%s]", expr);
-    }
+
+    NDRX_LOG(log_error, "Carray buffers do not support event filters! Expr: [%s]", expr);
+    userlog("Carray buffers do not support event filters! Expr: [%s]", expr);
     
     return ret;
 }
