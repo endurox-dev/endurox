@@ -72,8 +72,6 @@ public int userlog (char *data, ...)
     pid_t pid;
     va_list ap;
 
-    /* Initialize the output file */
-    /*gettimeofday( &time_val, &time_zone );*/
     gettimeofday( &time_val, NULL );
     
     nstdutil_get_dt_local(&ldate, &ltime);
