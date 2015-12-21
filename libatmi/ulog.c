@@ -57,8 +57,8 @@ public int userlog (char *data, ...)
 {
     int ret=SUCCEED;
     int     interval = 20;
-    long    size = 0;       /* size in kilobytes */
-    char* msg_buf; /*JJA NMR 3358*/
+    long    size = 0;
+    char* msg_buf;
     long msg_len =0;
     int first = 1;
     char *out_f = NULL;
