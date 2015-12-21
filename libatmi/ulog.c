@@ -112,9 +112,9 @@ public int userlog (char *data, ...)
                     time_val.tv_usec/10000, __progname);
 
     va_start(ap, data);
-    fputs(pre, output);       /* faster than printf */
+    fputs(pre, output);
     (void) vfprintf(output, data, ap);
-    fputs("\n", output);        /* faster than printf */
+    fputs("\n", output);
     va_end(ap);
 
     if (fopened)
