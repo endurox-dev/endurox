@@ -57,8 +57,8 @@ public int userlog (char *data, ...)
 {
     int ret=SUCCEED;
     int     interval = 20;
-    long    size = 0;       /* size in kilobytes */
-    char* msg_buf; /*JJA NMR 3358*/
+    long    size = 0;
+    char* msg_buf;
     long msg_len =0;
     int first = 1;
     char *out_f = NULL;
@@ -72,8 +72,6 @@ public int userlog (char *data, ...)
     pid_t pid;
     va_list ap;
 
-    /* Initialize the output file */
-    /*gettimeofday( &time_val, &time_zone );*/
     gettimeofday( &time_val, NULL );
     
     nstdutil_get_dt_local(&ldate, &ltime);
@@ -114,9 +112,9 @@ public int userlog (char *data, ...)
                     time_val.tv_usec/10000, __progname);
 
     va_start(ap, data);
-    fputs(pre, output);       /* faster than printf */
+    fputs(pre, output);
     (void) vfprintf(output, data, ap);
-    fputs("\n", output);        /* faster than printf */
+    fputs("\n", output);
     va_end(ap);
 
     if (fopened)
