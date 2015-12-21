@@ -57,7 +57,7 @@
  * @param state
  * @return
  */
-private char *proc_state_to_str(long state)
+private char *proc_state_to_str(long state, short msg_type)
 {
 
     static char *started = "Started";
@@ -85,7 +85,15 @@ private char *proc_state_to_str(long state)
             ret = stillstarting;
             break;
         case NDRXD_PM_EXIT:
-            ret = shutdown;
+            /* Binaries might exit with fail at startup... */
+            if (NDRXD_CALL_TYPE_PM_STOPPED==msg_type)
+            {
+                ret = shutdown;
+            }
+            else
+            {
+                ret = died;
+            }   
             break;
         case NDRXD_PM_ENOENT:
             ret = nosuchfile;
@@ -119,7 +127,7 @@ public int ss_rsp_process(command_reply_t *reply, size_t reply_len)
             break;
         case NDRXD_CALL_TYPE_PM_STARTED:
             fprintf(stderr, "process id=%d ... %s.\n",pm_info->pid,
-                proc_state_to_str(pm_info->state)
+                proc_state_to_str(pm_info->state, reply->msg_type)
                 );
             break;
         case NDRXD_CALL_TYPE_PM_STOPPING:
@@ -128,7 +136,7 @@ public int ss_rsp_process(command_reply_t *reply, size_t reply_len)
             break;
         case  NDRXD_CALL_TYPE_PM_STOPPED:
             fprintf(stderr, "%s.\n",
-                proc_state_to_str(pm_info->state)
+                proc_state_to_str(pm_info->state, reply->msg_type)
                 );
             break;
         case NDRXD_CALL_TYPE_GENERIC:

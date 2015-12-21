@@ -49,17 +49,36 @@
 
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include "mkfldhdr.h"
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+public int G_langmode = HDR_C_LANG; /* Default mode C */
+public char G_privdata[FILENAME_MAX+1] = {EOS}; /* Private data for lang*/
+public char G_active_file[FILENAME_MAX+1] = {EOS}; /* file in progress  */
+public char *G_output_dir=".";
+
+public renderer_descr_t *M_renderer = NULL;
 /*---------------------------Statics------------------------------------*/
-char **M_argv;
-int M_argc;
-char *M_output_dir=".";
-FILE *M_outf=NULL;
+private char **M_argv;
+private int M_argc;
+public FILE *G_outf=NULL;
+
+/*
+ * Mode functions
+ */
+public renderer_descr_t M_renderer_tab[] =
+{
+    {HDR_C_LANG, c_get_fullname, c_put_text_line, c_put_def_line, 
+                 c_put_got_base_line, c_file_open, c_file_close},
+    {HDR_GO_LANG, go_get_fullname, go_put_text_line, go_put_def_line, 
+                 go_put_got_base_line, go_file_open, go_file_close},
+    {FAIL}
+};
+
 /*---------------------------Prototypes---------------------------------*/
 
 /*
@@ -98,7 +117,7 @@ char *get_next_from_env (int *ret)
 {
     static int first = 1;
     static char *flddir=NULL;
-	static char *flds=NULL;
+    static char *flds=NULL;
     static char tmp_flds[FILENAME_MAX+1];
     static char tmp[FILENAME_MAX+1];
     char *ret_ptr=NULL;
@@ -146,75 +165,6 @@ char *get_next_from_env (int *ret)
 }
 
 /**
- * Write text line to output file
- * @param text
- * @return
- */
-int put_text_line (char *text)
-{
-    int ret=SUCCEED;
-    
-    fprintf(M_outf, "%s", text);
-    
-    /* Check errors */
-    if (ferror(M_outf))
-    {
-        _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        ret=FAIL;
-    }
-
-    return ret;
-}
-
-/**
- * Process the baseline
- * @param base
- * @return
- */
-int put_got_base_line(char *base)
-{
-
-    int ret=SUCCEED;
-
-    fprintf(M_outf, "/*\tfname\tbfldid            */\n"
-                    "/*\t-----\t-----            */\n");
-
-    /* Check errors */
-    if (ferror(M_outf))
-    {
-        _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        ret=FAIL;
-    }
-
-    return ret;
-}
-
-/**
- * Write definition to output file
- * @param def
- * @return
- */
-int put_def_line (UBF_field_def_t *def)
-{
-    int ret=SUCCEED;
-    int type = def->bfldid>>EFFECTIVE_BITS;
-    BFLDID number = def->bfldid & EFFECTIVE_BITS_MASK;
-
-    fprintf(M_outf, "#define\t%s\t((BFLDID32)%d)\t/* number: %d\t type: %s */\n",
-            def->fldname, def->bfldid, number,
-            G_dtype_str_map[type].fldname);
-    
-    /* Check errors */
-    if (ferror(M_outf))
-    {
-        _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        ret=FAIL;
-    }
-
-    return ret;
-}
-
-/**
  * Header builder main 
  * @param argc
  * @param argv
@@ -229,22 +179,21 @@ int main(int argc, char **argv)
     
     M_argv = argv;
     M_argc = argc;
+    
+    M_renderer = &M_renderer_tab[HDR_C_LANG]; /* default renderer */
 
-    NDRX_DBG_INIT(("mkhbufhdr", "MKFLDHDR"));
-    /*ndrx_dbg_setlev(log_always);  set default level to fatal */
     /* Parse command line */
-    while ((c = getopt(argc, argv, "h?D:d:")) != -1)
+    while ((c = getopt(argc, argv, "h?D:d:m:p:")) != -1)
     {
         switch(c)
         {
             case 'D':
                 NDRX_LOG(log_debug, "%c = %s", c, optarg);
                 dbglev = atoi(optarg);
-                /*ndrx_dbg_setlev(dbglev);*/
                 break;
             case 'd':
-                M_output_dir = optarg;
-                NDRX_LOG(log_debug, "%c = %s", c, M_output_dir);
+                G_output_dir = optarg;
+                NDRX_LOG(log_debug, "%c = %s", c, G_output_dir);
                 break;
             case ':':
                 NDRX_LOG(log_error,"-%c without filename\n", optopt);
@@ -255,16 +204,32 @@ int main(int argc, char **argv)
                         argv[0]);
                 
                 return FAIL;
-
+                break;
+            /* m - for mode, p - for private mode data (e.g. package name) */
+            case 'm':
+                G_langmode = atoi(optarg);
+                
+                if (HDR_MIN_LANG > G_langmode || HDR_MAX_LANG < G_langmode)
+                {
+                    NDRX_LOG(log_debug, "Invalid language mode %d", G_langmode);
+                    return FAIL;
+                }
+                M_renderer = &M_renderer_tab[G_langmode];
+                break;
+            case 'p':
+                strncpy(G_privdata, optarg, FILENAME_MAX);
+                G_privdata[FILENAME_MAX] = EOS;
                 break;
         }
     }
     
     if (SUCCEED==ret)
     {
-        NDRX_LOG(log_debug, "Output directory is [%s]", M_output_dir);
+        NDRX_LOG(log_debug, "Output directory is [%s]", G_output_dir);
+        NDRX_LOG(log_debug, "Language mode [%d]", G_langmode);
+        NDRX_LOG(log_debug, "Private data [%s]", G_privdata);
     }
-
+    
     /* list other options */
     if (optind < argc)
     {
@@ -287,7 +252,7 @@ int main(int argc, char **argv)
 
 
     NDRX_LOG(log_debug, "Finished with : %s",
-                                        ret==SUCCEED?"SUCCESS":"FAILURE");
+            ret==SUCCEED?"SUCCESS":"FAILURE");
 
     return ret;
 }
@@ -343,31 +308,38 @@ int generate_files(void)
         out_f_name[0] = EOS;
 
         /* Open field table file */
-		if (NULL==(inf=fopen(fname, "r")))
-		{
+        if (NULL==(inf=fopen(fname, "r")))
+        {
             _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
-                                        fname, strerror(errno));
-		    ret=FAIL;
-		}
+                                fname, strerror(errno));
+            ret=FAIL;
+        }
 
         /* Open output file */
         if (SUCCEED==ret)
         {
-            sprintf(out_f_name, "%s/%s.h", M_output_dir, get_file_name(fname));
+            strcpy(G_active_file, get_file_name(fname));
+            
+            M_renderer->get_fullname(out_f_name);
+            
             /* build up path for output file name */
-            if (NULL==(M_outf=fopen(out_f_name, "w")))
+            if (NULL==(G_outf=fopen(out_f_name, "w")))
             {
                 _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                             out_f_name, strerror(errno));
                 ret=FAIL;
+            }
+            else
+            {
+                ret = M_renderer->file_open(out_f_name);
             }
         }
 
         if (SUCCEED==ret)
         {
             /* This will also do the check for duplicates! */
-            ret=_ubf_load_def_file(inf, put_text_line, put_def_line, 
-                                        put_got_base_line, fname, TRUE);
+            ret=_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
+                                        M_renderer->put_got_base_line, fname, TRUE);
         }
 
         /* close opened files. */
@@ -377,10 +349,11 @@ int generate_files(void)
             inf=NULL;
         }
 
-        if (NULL!=M_outf)
+        if (NULL!=G_outf)
         {
-            fclose(M_outf);
-            M_outf=NULL;
+            M_renderer->file_close(out_f_name);
+            fclose(G_outf);
+            G_outf=NULL;
         }
 
         if (SUCCEED!=ret && EOS!=out_f_name[0])

@@ -29,6 +29,10 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#ifndef __EXFIELDS_H
+#define __EXFIELDS_H
+/*	fname	bfldid            */
+/*	-----	-----            */
 #define	SRVCNM	((BFLDID32)167772261)	/* number: 101	 type: string */
 #define	EV_FLAGS	((BFLDID32)33554536)	/* number: 104	 type: long */
 #define	EV_MASK	((BFLDID32)167772265)	/* number: 105	 type: string */
@@ -57,3 +61,4 @@
 #define	TMTXTRYCNT	((BFLDID32)33554591)	/* number: 159	 type: long */
 #define	TMTXTRYMAXCNT	((BFLDID32)33554592)	/* number: 160	 type: long */
 #define	TMTXFLAGS	((BFLDID32)33554593)	/* number: 161	 type: long */
+#endif
