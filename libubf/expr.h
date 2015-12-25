@@ -59,7 +59,7 @@ extern "C" {
 #define OCC_ANY		-2
 #define MAX_FUNC_NAME   66      /* Maximum function name len */
     
-typedef long (*functionPtr_t)(UBFH *p_ub);
+typedef long (*functionPtr_t)(UBFH *p_ub, char *funcname);
 
 
 /***************** AST NODE TYPES **************/

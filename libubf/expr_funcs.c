@@ -1242,7 +1242,7 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
     
     /* Call the function... */
     v->value_type=VALUE_TYPE_LONG;
-    v->longval=func->f(p_ub);
+    v->longval=func->f(p_ub, func->funcname);
 
     if (v->longval)
         v->boolval=TRUE;
@@ -2018,7 +2018,7 @@ public void _Bboolpr (char * tree, FILE *outf)
  * Set callback function
  */
 public int _Bboolsetcbf (char *funcname, 
-        long (*functionPtr)(UBFH *p_ub))
+        long (*functionPtr)(UBFH *p_ub, char *funcname))
 {
 
     int ret=SUCCEED;

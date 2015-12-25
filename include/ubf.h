@@ -172,7 +172,7 @@ extern int Bread (UBFH * p_ub, FILE * inf);
 extern int Bwrite (UBFH *p_ub, FILE * outf);
 extern void Btreefree (char *tree);
 /* Callback function that can be used from expressions */
-extern int Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub));
+extern int Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
 extern int Badds (UBFH *p_ub, BFLDID bfldid, char *buf);
 extern int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
 extern int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);

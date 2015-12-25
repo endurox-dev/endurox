@@ -1338,22 +1338,25 @@ Ensure(test_bboolpr)
 }
 
 /* -------------------------------------------------------------------------- */
-long callback_function_true(UBFH *p_ub)
+long callback_function_true(UBFH *p_ub, char *funcname)
 {
+    assert_string_equal(funcname, "callback_function_true");
     return 1;
 }
 
-long callback_function_false(UBFH *p_ub)
+long callback_function_false(UBFH *p_ub, char *funcname)
 {
+    assert_string_equal(funcname, "callback_function_false");
     UBF_LOG(log_debug, "callback_function_false() called!");
     return 0;
 }
 
-long callback_function_cond(UBFH *p_ub)
+long callback_function_cond(UBFH *p_ub, char *funcname)
 {
     long ret;
     short short_val;
     
+    assert_string_equal(funcname, "callback_function_cond");
     assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0L), SUCCEED);
     
     if (137 == short_val)
@@ -1364,8 +1367,9 @@ long callback_function_cond(UBFH *p_ub)
     return ret;
 }
 
-long callback_function_value(UBFH *p_ub)
+long callback_function_value(UBFH *p_ub, char *funcname)
 {
+    assert_string_equal(funcname, "callback_function_value");
     long ret;
     
     ret = 177788;

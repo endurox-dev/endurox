@@ -1855,7 +1855,7 @@ public int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @return SUCCEED/FAIL
  */
 public int Bboolsetcbf (char *funcname, 
-            long (*functionPtr)(UBFH *p_ub))
+            long (*functionPtr)(UBFH *p_ub, char *funcname))
 {
     API_ENTRY;
     {
