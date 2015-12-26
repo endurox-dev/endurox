@@ -338,6 +338,7 @@ extern int tpext_addperiodcb(int secs, int (*p_periodcb)(void));
 extern int tpext_delperiodcb(void);
 extern int tpext_addb4pollcb(int (*p_b4pollcb)(void));
 extern int tpext_delb4pollcb(void);
+extern int tpterm (void);
 
 #if defined(__cplusplus)
 }
