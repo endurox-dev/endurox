@@ -8,3 +8,6 @@ Enduro/X provides SOA architecture for C/C++ applications and allows to cluster 
 Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues).
 
 Build and installation guides are located at: http://www.endurox.org/dokuwiki
+
+PS,
+Feel free to contact me at madars@atrbaltic.com. I will gladly help you.
