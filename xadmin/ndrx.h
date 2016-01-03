@@ -45,7 +45,7 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <gencall.h>
 /*---------------------------Externs------------------------------------*/
-    #define         MAX_ARGS        10
+#define         MAX_ARGS        20
 extern int G_cmd_argc_logical;
 extern int G_cmd_argc_raw;
 extern char *G_cmd_argv[MAX_ARGS];
@@ -158,6 +158,13 @@ extern int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
 extern int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+
+/* env: */
+extern int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int pe_rsp_process(command_reply_t *reply, size_t reply_len);
+extern int cmd_set(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

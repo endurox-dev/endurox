@@ -117,6 +117,15 @@ COMMANDS
 	Commit transaction. '-y' is for auto confirmation.
 *committrans*::
 	Alias for 'commit'.
+*pe*::
+	Print Envrionment variables of 'ndrxd' process.
+*printenv*::
+	Alias for 'pe'.
+*set* ENV_NAME=ENV VALUE::
+	Set environment value. The value of env variable is parsed as command line arguments.
+        Prior sending to 'ndrxd' they are contactinated with spaces in between.
+*unset* ENV_NAME::
+        Unset environment variable
 
 EXIT STATUS
 -----------

@@ -111,6 +111,11 @@ extern int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int co
 
 /* cmd_pq.c: */
 extern int cmd_pq (command_call_t * call, char *data, size_t len, int context);
+
+/* cmd_env.c: */
+extern int cmd_pe (command_call_t * call, char *data, size_t len, int context);
+extern int cmd_set (command_call_t * call, char *data, size_t len, int context);
+extern int cmd_unset (command_call_t * call, char *data, size_t len, int context);
 #ifdef	__cplusplus
 }
 #endif

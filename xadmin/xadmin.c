@@ -44,9 +44,9 @@
 #include <errno.h>
 /*---------------------------Externs------------------------------------*/
 #define         CMD_MAX         PATH_MAX
-#define         MAX_ARG_LEN     50
+#define         MAX_ARG_LEN     500
 #define         ARG_DEILIM      " \t"
-#define         MAX_CMD_LEN     30
+#define         MAX_CMD_LEN     300
 /*---------------------------Macros-------------------------------------*/
 
 #define PARSE_CMD_STUFF(X)\
@@ -149,6 +149,11 @@ cmd_mapping_t M_command_map[] =
     {"commit",     cmd_commit,FAIL,   3,  4,  1, "Commit transaction\n"
                                             "\t\tArgs: commit -t <RM Ref> -x <XID> [-y]"},
     {"committrans",cmd_commit,FAIL,   3,  4,  1, "Alias for `commit'"},
+    {"pe",        cmd_pe,NDRXD_COM_PE_RQ,   1,  1,  1, "Print env (from ndrxd)"},
+    {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,   2,  2,  1, "Alias for `pe'"},
+    {"set",       cmd_set,NDRXD_COM_SET_RQ,   1,  99,  1, "Set env variable. \n"
+                                                "\t\tFormat: VAR=SOME VALUE (will be contact with spaces)"},
+    {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ,   1,  1,  1, "Set env variable. Forma: VAR"},
 };
 
 /**
@@ -213,7 +218,13 @@ gencall_args_t G_call_args[] =
     {NDRXD_COM_SRELOAD_RQ,    ss_rsp_process, simple_output,TRUE},/*54*/
     {NDRXD_COM_SRELOAD_RP,    NULL,           NULL,        FALSE},/*55*/
     {NDRXD_COM_XAPQ_RQ,       pq_rsp_process,simple_output,TRUE},/*56*/
-    {NDRXD_COM_XAPQ_RP,       NULL,         NULL,         FALSE}/*57*/
+    {NDRXD_COM_XAPQ_RP,       NULL,         NULL,         FALSE},/*57*/
+    {NDRXD_COM_PE_RQ,         pe_rsp_process,simple_output,TRUE},/*58*/
+    {NDRXD_COM_PE_RP,         NULL,         NULL,         FALSE},/*59*/
+    {NDRXD_COM_SET_RQ,NULL,simple_output,      TRUE},/*60*/
+    {NDRXD_COM_SET_RP,        NULL,           NULL,       FALSE},/*61*/
+    {NDRXD_COM_UNSET_RQ,NULL,simple_output,    TRUE},/*62*/
+    {NDRXD_COM_UNSET_RP,       NULL,           NULL,      FALSE},/*63*/
 };
 
 /**

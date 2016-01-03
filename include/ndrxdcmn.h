@@ -137,8 +137,18 @@ extern "C" {
 
 #define NDRXD_COM_XAPQ_RQ           56   /* xadmin print service queue, req  */
 #define NDRXD_COM_XAPQ_RP           57   /* xadmin print service queue, resp */
+    
+    
+#define NDRXD_COM_PE_RQ             58   /* xadmin print env, req  */
+#define NDRXD_COM_PE_RP             59   /* xadmin print env, resp */
+    
+#define NDRXD_COM_SET_RQ            60   /* xadmin set env, req  */
+#define NDRXD_COM_SET_RP            61   /* xadmin set env, resp */
+    
+#define NDRXD_COM_UNSET_RQ          62   /* xadmin unset env, req  */
+#define NDRXD_COM_UNSET_RP          63   /* xadmin unset env, resp */
 
-#define NDRXD_COM_MAX               57
+#define NDRXD_COM_MAX               63
 
 /* Command contexts */
 #define NDRXD_CTX_ANY               -1   /* Any context...                   */
@@ -168,6 +178,7 @@ extern "C" {
 #define NDRXD_ECONTEXT           13         /* Invalid command context      */
 #define NDRXD_EINVPARAM          14         /* Invalid paramters            */
 #define NDRXD_EABORT             15         /* Abort requested              */
+#define NDRXD_EENVFAIL           16         /* putenv failed                */
 #define NDRXD_EMAXVAL            1000
 
 /* This section list call types */
@@ -187,6 +198,7 @@ extern "C" {
 #define NDRXD_CALL_TYPE_BRBCLOCK        13  /* Bridge clock info            */
 #define NDRXD_CALL_TYPE_GETBRS          14  /* Get connected bridges        */
 #define NDRXD_CALL_TYPE_PQ              15  /* Response struct for `pq' cmd */
+#define NDRXD_CALL_TYPE_PE              16  /* Response struct for `pe' cmd */
 
 #define NDRXD_SRC_NDRXD                 0   /* Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /* Call source is admin utility*/
@@ -285,6 +297,8 @@ extern "C" {
 
 
 #define PQ_LEN                  12        /* The len of last print queue data */
+    
+#define EX_ENV_MAX              4096        /* max env name/value size */          
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -369,6 +383,15 @@ typedef struct
 
 } command_startstop_t;
 
+
+/*
+ * Set/unset call
+ */
+typedef struct
+{
+    command_call_t call;
+    char env[EX_ENV_MAX+1];
+} command_setenv_t;
 
 /*
  * Dynamic un/advertise structure
@@ -615,6 +638,15 @@ typedef struct
     command_reply_t rply;
     char nodes[CONF_NDRX_NODEID_COUNT+1];
 } command_reply_getbrs_t;
+
+/*
+ * Packet for print environment (limited to: FILENAME_MAX)
+ */
+typedef struct
+{
+    command_reply_t rply;
+    char env[EX_ENV_MAX+1];         /* Env value */
+} command_reply_pe_t;
 
 /***************** List of request types/subtypes ***********************/
 /**
