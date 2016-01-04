@@ -48,7 +48,7 @@ Ensure(test_CBget_short_org)
     UBFH *p_ub = (UBFH *)buf;
     short test_val=4564;
     int len = 0;
-    char small_val=44;
+    short small_val=44;
     /* test buffers */
     short test_short = 0;
     long test_long = 0;
