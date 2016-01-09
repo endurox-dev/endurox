@@ -111,7 +111,7 @@ private void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, int 
 
     if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
-                            &params, shm_psvc_reply_mod, 0L))
+                            &params, shm_psvc_reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
@@ -140,7 +140,7 @@ public int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int cont
         }
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

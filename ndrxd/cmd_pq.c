@@ -100,7 +100,7 @@ private void pq_progress(command_call_t * call, bridgedef_svcs_t *q_info)
 
     if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
-                            &params, pq_reply_mod, 0L))
+                            &params, pq_reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
@@ -126,7 +126,7 @@ public int cmd_pq (command_call_t * call, char *data, size_t len, int context)
         pq_progress(call, cur);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

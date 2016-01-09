@@ -66,7 +66,7 @@ extern int simple_command_reply(command_call_t * call,
                         mod_param_t *mod_params,
                         void (*p_mod)(command_reply_t *reply, size_t *send_size,
                         mod_param_t *mod_params),
-                        long userfld1);
+                        long userfld1, int error_code, char *error_msg);
 
 /* cmd_config.c: */
 extern int cmd_config_load(command_call_t * call, char *data, size_t len, int context);

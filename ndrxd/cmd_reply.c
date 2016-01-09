@@ -58,7 +58,7 @@ public int simple_command_reply(command_call_t * call,
                         mod_param_t *mod_params,
                         void (*p_mod)(command_reply_t *reply, size_t *send_size,
                                         mod_param_t *mod_params),
-                        long userfld1)
+                        long userfld1, int error_code, char *error_msg)
 {
     int ret=SUCCEED;
     command_reply_t *reply;
@@ -83,6 +83,12 @@ public int simple_command_reply(command_call_t * call,
     reply->msg_src = NDRXD_SRC_NDRXD; /* from NDRXD */
     reply->flags = flags;             /* Response flags */
     reply->userfld1 = userfld1;       /* pass back user field... */
+    reply->error_code = error_code;
+    
+    if (NULL!=error_msg)
+    {
+        strcpy(reply->error_msg, error_msg);
+    }
 
     /* If error is set, then load the message */
     if (NDRXD_is_error())

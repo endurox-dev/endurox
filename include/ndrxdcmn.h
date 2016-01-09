@@ -179,6 +179,7 @@ extern "C" {
 #define NDRXD_EINVPARAM          14         /* Invalid paramters            */
 #define NDRXD_EABORT             15         /* Abort requested              */
 #define NDRXD_EENVFAIL           16         /* putenv failed                */
+#define NDRXD_EINVAL             17         /* Invalid argument             */
 #define NDRXD_EMAXVAL            1000
 
 /* This section list call types */

@@ -90,7 +90,7 @@ public int cmd_xadunadv (command_call_t * call, char *data, size_t len, int cont
             NULL,
             FALSE);
 out:
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

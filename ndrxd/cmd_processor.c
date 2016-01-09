@@ -397,7 +397,7 @@ public int command_wait_and_run(int *finished, int *abort)
 
         /* Reply with error - non supported! */
         NDRXD_set_error_fmt(NDRXD_ECMDNOTFOUND, "Unknown command %d", call->command);
-        if (SUCCEED!=simple_command_reply(call, FAIL, 0L, NULL, NULL, 0L))
+        if (SUCCEED!=simple_command_reply(call, FAIL, 0L, NULL, NULL, 0L, 0, NULL))
         {
             userlog("Failed to send reply back to [%s]", call->reply_queue);
         }
@@ -417,7 +417,7 @@ public int command_wait_and_run(int *finished, int *abort)
         NDRXD_set_error_fmt(NDRXD_ECONTEXT, "Invalid context for command. Current:"
                 " [%s] supported: [%s]", context_check, cmd->contexts);
         
-        if (SUCCEED!=simple_command_reply(call, FAIL, 0L, NULL, NULL, 0L))
+        if (SUCCEED!=simple_command_reply(call, FAIL, 0L, NULL, NULL, 0L, 0, NULL))
         {
             userlog("Failed to send reply back to [%s]", call->reply_queue);
         }

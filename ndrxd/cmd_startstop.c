@@ -94,7 +94,7 @@ public void startup_progress(command_startstop_t * call, pm_node_t *pm, int call
 
     if (SUCCEED!=simple_command_reply((command_call_t *)call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
-                            &params, reply_mod, 0L))
+                            &params, reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->call.reply_queue);
     }
@@ -115,7 +115,8 @@ public int cmd_start (command_call_t * call, char *data, size_t len, int context
     
     ret = app_startup(start, startup_progress, &processes_started);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, processes_started))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
+            processes_started, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
@@ -214,7 +215,7 @@ public void shutdown_progress(command_call_t * call, pm_node_t *pm, int calltype
 
     if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
-                            &params, reply_mod, 0L))
+                            &params, reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
@@ -235,7 +236,8 @@ public int cmd_stop (command_call_t * call, char *data, size_t len, int context)
     
     ret = app_shutdown(call, shutdown_progress, &processes_shutdown);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, processes_shutdown))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
+            processes_shutdown, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
@@ -271,7 +273,7 @@ public int cmd_abort (command_call_t * call, char *data, size_t len, int context
 {
     int ret=SUCCEED;
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
@@ -293,7 +295,8 @@ public int cmd_sreload (command_call_t * call, char *data, size_t len, int conte
     
     ret = app_sreload(start, startup_progress, shutdown_progress, &processes_started);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, processes_started))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
+            processes_started, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

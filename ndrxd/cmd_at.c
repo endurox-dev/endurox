@@ -77,7 +77,8 @@ public int cmd_at (command_call_t * call, char *data, size_t len, int context)
         NDRXD_set_error(NDRXD_ENONICONTEXT);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, cmd_in_progress))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, cmd_in_progress,
+            0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

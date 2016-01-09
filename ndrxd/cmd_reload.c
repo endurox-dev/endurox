@@ -95,7 +95,7 @@ public void reload_error(command_call_t * call, int srvid, char *old_bin, char *
 
     if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
-                            &params, reload_reply_mod, 0L))
+                            &params, reload_reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
@@ -114,7 +114,7 @@ public int cmd_testcfg (command_call_t * call, char *data, size_t len, int conte
 
     ret = test_config(FALSE, call, reload_error);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
@@ -136,7 +136,7 @@ public int cmd_reload (command_call_t * call, char *data, size_t len, int contex
 
     ret = test_config(TRUE, call, reload_error);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

@@ -316,7 +316,8 @@ public int cmd_getbrs (command_call_t * call, char *data, size_t len, int contex
     NDRX_LOG(log_warn, "cmd_getbrs: call flags 0x%x", call->flags);
 
     /* Generate list of connected bridges... (in callback) */
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, getbrs_reply_mod, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, getbrs_reply_mod, 
+            0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

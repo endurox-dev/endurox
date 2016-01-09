@@ -105,7 +105,7 @@ private void ppm_progress(command_call_t * call, pm_node_t *pm)
 
     if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
-                            &params, ppm_reply_mod, 0L))
+                            &params, ppm_reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
@@ -129,7 +129,7 @@ public int cmd_ppm (command_call_t * call, char *data, size_t len, int context)
             ppm_progress(call, pm);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L))
+    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
