@@ -9,4 +9,4 @@ Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for P
 
 Build and installation guides are located at: http://www.endurox.org/dokuwiki
 
-PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you.
+PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to get Enduro/X running ;)
