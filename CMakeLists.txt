@@ -82,6 +82,7 @@ add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (bridge) # Cluster bridge server
 add_subdirectory (tmsrv) # Transaction Manager server for XA transactions
+add_subdirectory (cpmsrv) # Client Process Monitor
 add_subdirectory (xadrv) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing
 add_subdirectory (doc) #  Documentation project.
