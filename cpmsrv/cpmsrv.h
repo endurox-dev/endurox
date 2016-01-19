@@ -70,22 +70,36 @@ struct cpm_process
     
     pid_t pid;  /* pid of the process */
     int is_running; /* is process running? */
+    int is_cfg_refresh; /* Is config refreshed? */
     int exit_status; /* Exit status... */
     int consecutive_fail; /*  Number of consecutive fails */    
     
     char command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
     char env[PATH_MAX+1];
-    n_timer_t last_stat_chg; /* Last time status changes */
-    long flags;              /* flags of the process */
     
+    time_t stattime;         /* Status change time */
+    long flags;              /* flags of the process */
     
     UT_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct cpm_process cpm_process_t;
+
+
+/**
+ * Definition of client processes (full command line & all settings)
+ */
+struct cpmsrv_config
+{
+    char *config_file;
+};
+typedef struct cpmsrv_config cpmsrv_config_t;
+
 /*---------------------------Globals------------------------------------*/
+extern cpmsrv_config_t G_config;
+extern cpm_process_t *G_clt_config;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
+extern int load_config(void);
 
 #ifdef	__cplusplus
 }

@@ -75,5 +75,11 @@ TMTXTRYCNT      59       long    -       Transaction try count
 TMTXTRYMAXCNT   60       long    -       Transaction try count, max
 TMTXFLAGS       61       long    -       Various TM flags...
 
+# Client process manager
+EX_CPMCOMMAND   100     string   -       CPM Command (bc - boot clt, sc - stop clt, pc - print clts)
+EX_CPMOUTPUT    101     string   -       CPM output
+EX_CPMTAG       102     string   -       Tag
+EX_CPMSUBSECT   103     string   -       Sub-section
+
 $#endif
 

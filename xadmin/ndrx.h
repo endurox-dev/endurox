@@ -166,6 +166,9 @@ extern int pe_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_set(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+/* cpm: */
+extern int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 #ifdef	__cplusplus
 }
 #endif

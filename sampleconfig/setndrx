@@ -71,22 +71,22 @@ export NDRX_LOG=/tmp/ndrx.log
 export NDRX_LEV=5
 
 # Correct the path so that ndrx can find ndrxd
-export PATH=$PATH:$NDRX_HOME/bin
+export PATH=$PATH:$NDRX_HOME/bin:/home/mvitolin/projects/endurox-go/src/gtest
 
 # UBFTAB
 export FIELDTBLS=Exfields,test.fd
 
 # XA SECTION
-#export ORACLE_SID=ROCKY
-#export ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
-#export PATH=$PATH:ORACLE_HOME/bin
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
-#export NDRX_XA_RES_ID=1
-#export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f"
-#export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+export ORACLE_SID=ROCKY
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
+export PATH=$PATH:ORACLE_HOME/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
+export NDRX_XA_RES_ID=1
+export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f"
+export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 ##Static reg:
-#export NDRX_XA_DRIVERLIB=/home/mvitolin/projects/endurox/dist/lib/libndrxxaoras.so
+export NDRX_XA_DRIVERLIB=/usr/lib/libndrxxaoras.so
 #export NDRX_XA_DRIVERLIB=/home/mvitolin/projects/endurox/dist/lib/libndrxxaorad.so
-#export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
-#export NDRX_XA_LAZY_INIT=1
+export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
+export NDRX_XA_LAZY_INIT=1
 # XA SECTION, END

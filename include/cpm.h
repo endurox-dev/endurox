@@ -1,9 +1,7 @@
 /* 
-** Command with prefix config. Supported commands:
-** 1. config.load     - for first time
-** 2. config.reload   - for configuration re-load
+** Client Process Monitor interface
 **
-** @file cmd_config.c
+** @file cpm.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,44 +29,32 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
 
-#include <ndrstandard.h>
+#ifndef _CPM_H
+#define	_CPM_H
 
-#include "ndebug.h"
-#include "userlog.h"
-#include <ndrxd.h>
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*---------------------------Includes-----------------------------------*/
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define CPM_CMD_PC          "pc" /* Print Clients */
+#define CPM_CMD_BC          "bc" /* Boot Client */
+#define CPM_CMD_SC          "sc" /* Stop Client */
+    
+#define CPM_DEF_BUFFER_SZ       1024
+    
+#define CPM_OUTPUT_SIZE         256 /* Output buffer size */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Commad for loading initial configuration.
- * If initial config is set, then just respond with OK.
- * @param args
- * @return 
- */
-public int cmd_config_load (command_call_t * call, char *data, size_t len, int context)
-{
-    int ret=SUCCEED;
-
-    ret = load_active_config(&G_app_config, &G_process_model,
-                &G_process_model_hash, &G_process_model_pid_hash);
-
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0, 0, NULL))
-    {
-        userlog("Failed to send reply back to [%s]", call->reply_queue);
-    }
-
-    NDRX_LOG(log_warn, "cmd_config_load returns with status %d", ret);
     
-    return SUCCEED; /* Do not want to break the system! */
+#ifdef	__cplusplus
 }
+#endif
+
+#endif	/* _CPM_H */
 

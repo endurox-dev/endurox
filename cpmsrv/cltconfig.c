@@ -38,6 +38,9 @@
 
 #include <ndrstandard.h>
 #include <userlog.h>
+#include <atmi.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "cpmsrv.h"
 /*---------------------------Externs------------------------------------*/
@@ -50,10 +53,20 @@
 /*
  * Active monitor configuration
  */
-cpm_process_t *G_clt_config=NULL;
+public cpm_process_t *G_clt_config=NULL;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+
+/**
+ * Set current time of the status change
+ * @param p_cltproc
+ */
+public void cpm_set_cur_time(cpm_process_t *p_cltproc)
+{
+    time (&p_cltproc->stattime);
+}
 
 /**
  * Parser client entry
@@ -110,7 +123,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
         FAIL_OUT(ret);
     }
     
-    /* parse tags */
+    /* parse tags - we should also move out (save the tag to continue with different client) */
     cur=cur->children;
 
     for (; cur; cur=cur->next)
@@ -158,11 +171,17 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             }
             
             /* Check the client config... */
-            if (EOS==cltproc.tag[0])
+            if (EOS==p_cltproc->tag[0])
             {
                 NDRX_LOG(log_error, "Missing tag at line %hd", cur->line);
                 userlog("Missing tag at line %hd", cur->line);
                 FAIL_OUT(ret);
+            }
+            
+            /* Default the subsect */
+            if (EOS==p_cltproc->subsect[0])
+            {
+                strcpy(cltproc.subsect, "-");
             }
             
             /* Render the final command line */
@@ -188,7 +207,16 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             /* add to hash list */
             sprintf(p_cltproc->key, "%s%c%s", p_cltproc->tag, S_FS, p_cltproc->subsect);
             
+            /* Set the time of config load... */
+            cpm_set_cur_time(p_cltproc);
+            
             /* Add to hashlist */
+            p_cltproc->is_cfg_refresh = TRUE;
+            
+            /* Try to get from hash, if found update the infos but keep the PID */
+            
+            NDRX_LOG(log_info, "Adding %s/%s [%s] to process list", 
+                    p_cltproc->tag, p_cltproc->subsect, p_cltproc->command_line);
             HASH_ADD_STR( G_clt_config, key, p_cltproc );
         }
     }
@@ -269,7 +297,7 @@ out:
  * This initially loads the configuration int internal represtation of the
  * configuration file. After that from this info we will build work structures.
  */
-public int load_config(char *config_file)
+public int load_xml_config(char *config_file)
 {
     int ret=SUCCEED;
     xmlDocPtr doc;
@@ -310,3 +338,77 @@ out:
 
     return ret;
 }
+
+/**
+ * Load the active configuration.
+ * @return 
+ */
+public int load_config(void)
+{
+    int ret = SUCCEED;
+    cpm_process_t *c = NULL;
+    cpm_process_t *ct = NULL;
+    
+    static struct stat prev_attr;
+    static struct stat attr;
+    static int first = TRUE;
+    
+    /* Test for the file time stamp changes */
+    
+    if (first)
+    {
+        memset(&prev_attr, 0, sizeof(prev_attr));
+        first = FALSE;
+    }
+    
+    memset(&attr, 0, sizeof(attr));
+    
+    if (SUCCEED!=stat(G_config.config_file, &attr))
+    {
+        NDRX_LOG(log_error, "Config file error [%s]: [%s]",
+                G_config.config_file, strerror(errno));
+        userlog("Config file error [%s]: [%s]",
+                G_config.config_file, strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    if (0!=memcmp(&attr.st_mtim, &prev_attr.st_mtim, sizeof(attr.st_mtim)))
+    {
+        prev_attr = attr;
+    }
+    else
+    {
+        /* config not changed. */
+        goto out;
+    }
+    
+    
+    /* Mark config as not refreshed */
+    HASH_ITER(hh, G_clt_config, c, ct)
+    {
+        c->is_cfg_refresh = FALSE;
+    }
+
+    if (SUCCEED!=load_xml_config(G_config.config_file))
+    {
+        NDRX_LOG(log_error, "Failed to parse config");
+        userlog("Failed to parse config");
+        FAIL_OUT(ret);
+    }
+    
+    /* Remove dead un-needed processes (killed & not in new config) */
+    HASH_ITER(hh, G_clt_config, c, ct)
+    {
+        if (!c->is_cfg_refresh && !c->is_running)
+        {
+            NDRX_LOG(log_error, "Removing process: [%s]", c->command_line);
+            HASH_DEL(G_clt_config, c);
+            free(c);
+        }
+    }
+    
+out:
+    return ret;    
+}
+
+

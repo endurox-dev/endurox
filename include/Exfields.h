@@ -61,4 +61,8 @@
 #define	TMTXTRYCNT	((BFLDID32)33554591)	/* number: 159	 type: long */
 #define	TMTXTRYMAXCNT	((BFLDID32)33554592)	/* number: 160	 type: long */
 #define	TMTXFLAGS	((BFLDID32)33554593)	/* number: 161	 type: long */
+#define	EX_CPMCOMMAND	((BFLDID32)167772360)	/* number: 200	 type: string */
+#define	EX_CPMOUTPUT	((BFLDID32)167772361)	/* number: 201	 type: string */
+#define	EX_CPMTAG	((BFLDID32)167772362)	/* number: 202	 type: string */
+#define	EX_CPMSUBSECT	((BFLDID32)167772363)	/* number: 203	 type: string */
 #endif
