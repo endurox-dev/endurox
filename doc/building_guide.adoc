@@ -182,7 +182,7 @@ do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
 # If you want to have install folder to /home/user1/endurox/dist
-# if you want system level install then run just $ cmake .
+# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/ .
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
