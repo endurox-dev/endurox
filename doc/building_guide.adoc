@@ -97,7 +97,7 @@ Now install system depenencies
 # yum groupinstall 'Development Tools'
 # yum install git cmake asciidoc libuuid-devel\
 	openssl openssl-devel\
-	gpgme-devel dia
+	gpgme-devel dia libxml2-devel
 # exit
 $
 ---------------------------------------------------------------------
