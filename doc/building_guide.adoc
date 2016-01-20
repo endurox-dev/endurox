@@ -74,9 +74,9 @@ Note for Centos/RHEL 7 you need to give execute permissions for rc.local:
 
 ==== System level dependencies - for Ubuntu 14.04
 ---------------------------------------------------------------------
-$ sudo apt-get install indent asciidoc dblatex libxml2-dev fop\
-	cmake dia flex bison gcc g++ libz-dev\
-	libssl-dev libcrypto++9 libcrypto++-dev\
+$ sudo apt-get install indent asciidoc dblatex libxml2-dev fop \
+	cmake dia flex bison gcc g++ libz-dev \
+	libssl-dev libcrypto++9 libcrypto++-dev \
 	libgpgme11-dev uuid-dev libxml2-devel
 ---------------------------------------------------------------------
 
@@ -95,8 +95,8 @@ $ su - root
 Now install system depenencies  
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc libuuid-devel\
-	openssl openssl-devel\
+# yum install git cmake asciidoc libuuid-devel \
+	openssl openssl-devel \
 	gpgme-devel dia libxml2-devel
 # exit
 $
@@ -109,7 +109,7 @@ Now install system depenencies
 
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc libuuid-devel openssl openssl-devel\
+# yum install git cmake asciidoc libuuid-devel openssl openssl-devel \
 	gpgme-devel redhat-lsb dblatex libxml2-devel
 ---------------------------------------------------------------------
 
@@ -118,7 +118,7 @@ Fodra Core package: dia-0.97.2-5.fc19.x86_64.rpm. Also we need to install
 additional deps to run dia.
 
 ---------------------------------------------------------------------
-# yum install -y cairo-gobject-devel gtk2 gtk2-devel gdk-pixbuf2-devel\
+# yum install -y cairo-gobject-devel gtk2 gtk2-devel gdk-pixbuf2-devel \
 		libglade2-devel libgnomeui.x86_64
 # wget http://ftp.scientificlinux.org/linux/fedora/releases/19/Fedora/x86_64/os/Packages/d/dia-0.97.2-5.fc19.x86_64.rpm
 # rpm -i --nodeps dia-0.97.2-5.fc19.x86_64.rpm
