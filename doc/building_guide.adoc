@@ -62,6 +62,12 @@ echo 32000 > /proc/sys/fs/mqueue/msgsize_max
 echo 10000 > /proc/sys/fs/mqueue/queues_max
 ---------------------------------------------------------------------
 
+Note for Centos/RHEL 7 you need to give execute permissions for rc.local:
+
+---------------------------------------------------------------------
+# chmod +x /etc/rc.local
+---------------------------------------------------------------------
+
 == Getting the source & building
 
 === OS dependency installation
@@ -94,6 +100,28 @@ Now install system depenencies
 	gpgme-devel dia
 # exit
 $
+---------------------------------------------------------------------
+
+
+==== System level dependencies - for Centos 7.x
+
+Now install system depenencies  
+
+---------------------------------------------------------------------
+# yum groupinstall 'Development Tools'
+# yum install git cmake asciidoc libuuid-devel openssl openssl-devel\
+	gpgme-devel redhat-lsb
+---------------------------------------------------------------------
+
+Centos 7 does not ship with `dia' package. Thus we will install
+Fodra Core package: dia-0.97.2-5.fc19.x86_64.rpm. Also we need to install
+additional deps to run dia.
+
+---------------------------------------------------------------------
+# yum install -y cairo-gobject-devel gtk2 gtk2-devel gdk-pixbuf2-devel\
+		libglade2-devel libgnomeui.x86_64
+# wget http://ftp.scientificlinux.org/linux/fedora/releases/19/Fedora/x86_64/os/Packages/d/dia-0.97.2-5.fc19.x86_64.rpm
+# rpm -i --nodeps dia-0.97.2-5.fc19.x86_64.rpm
 ---------------------------------------------------------------------
 
 === Getting the Source code
