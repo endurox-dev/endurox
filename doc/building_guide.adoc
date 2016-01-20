@@ -110,7 +110,7 @@ Now install system depenencies
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
 # yum install git cmake asciidoc libuuid-devel openssl openssl-devel\
-	gpgme-devel redhat-lsb
+	gpgme-devel redhat-lsb dblatex
 ---------------------------------------------------------------------
 
 Centos 7 does not ship with `dia' package. Thus we will install
