@@ -49,8 +49,12 @@ Linuxes which supports '/etc/rc.local', must add following lines before "exit 0"
 
 ---------------------------------------------------------------------
 # Mount the /dev/mqueue
-mkdir /dev/mqueue
-mount -t mqueue none /dev/mqueue
+# Not for Debian 8.x: queue is readly mounted, thus test:
+
+if [ ! -d /dev/mqueue ]; then
+	mkdir /dev/mqueue
+	mount -t mqueue none /dev/mqueue
+fi
 
 # Max Messages in Queue
 echo 10000 > /proc/sys/fs/mqueue/msg_max
