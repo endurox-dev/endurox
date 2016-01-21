@@ -81,7 +81,7 @@ Note for Centos/RHEL 7 you need to give execute permissions for rc.local:
 apt-get install indent asciidoc dblatex libxml2-dev fop \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
-	libgpgme11-dev uuid-dev libxml2-dev
+	libgpgme11-dev uuid-dev libxml2-dev git
 ---------------------------------------------------------------------
 	
 ==== System level dependencies - for Ubuntu 14.04
@@ -89,7 +89,7 @@ apt-get install indent asciidoc dblatex libxml2-dev fop \
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev fop \
 	cmake dia flex bison gcc g++ libz-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
-	libgpgme11-dev uuid-dev libxml2-devel
+	libgpgme11-dev uuid-dev libxml2-devel git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
