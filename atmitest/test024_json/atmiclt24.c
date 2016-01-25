@@ -71,7 +71,7 @@ int main(int argc, char **argv)
             p_fb = (UBFH *)tpalloc("UBF", NULL, 4096);
             if (SUCCEED!=tpjsontoubf(p_fb, json))
             {
-                NDRX_LOG(log_error, "TESTERROR: failed to alloc UBF buffer!");
+                NDRX_LOG(log_error, "TESTERROR: failed to parse json!");
                 ret=FAIL;
                 goto out;
             }
