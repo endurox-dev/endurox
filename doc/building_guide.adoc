@@ -86,10 +86,10 @@ apt-get install indent asciidoc dblatex libxml2-dev fop \
 	
 ==== System level dependencies - for Ubuntu 14.04
 ---------------------------------------------------------------------
-$ sudo apt-get install indent asciidoc dblatex libxml2-dev fop \
-	cmake dia flex bison gcc g++ libz-dev \
+$ apt-get install indent asciidoc dblatex libxml2-dev fop \
+	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
-	libgpgme11-dev uuid-dev libxml2-devel git
+	libgpgme11-dev uuid-dev libxml2-dev git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
