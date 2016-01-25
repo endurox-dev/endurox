@@ -216,6 +216,13 @@ Ensure(test023_typedcarray)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test024_json)
+{
+    int ret;
+    ret=system_dbg("test024_json/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -245,6 +252,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test021_xafull);
     add_test(suite, test022_typedstring);
     add_test(suite, test023_typedcarray);
+    add_test(suite, test024_json);
     
     return suite;
 }

@@ -16,7 +16,7 @@ extern "C" {
 #include <ubf.h>
 /*---------------------------Macros-------------------------------------*/
     
-#define NDRX_VERSION "Enduro/X v2.3.3"
+#define NDRX_VERSION "Enduro/X v2.3.4"
     
 /*
  * flag bits for C language xatmi routines
@@ -340,6 +340,11 @@ extern int tpext_addb4pollcb(int (*p_b4pollcb)(void));
 extern int tpext_delb4pollcb(void);
 extern int tpterm (void);
 extern int tpgetsrvid (void);
+
+/* JSON<->ubf buffer support */
+extern int tpjsontoubf(UBFH *p_ub, char *buffer);
+extern int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+
 
 #if defined(__cplusplus)
 }

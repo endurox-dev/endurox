@@ -61,6 +61,7 @@ add_subdirectory (test018_tpacalltout)
 add_subdirectory (test021_xafull)
 add_subdirectory (test022_typedstring)
 add_subdirectory (test023_typedcarray)
+add_subdirectory (test024_json)
 
 ################################################################################
 # Master test case driver

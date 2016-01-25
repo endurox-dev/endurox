@@ -463,6 +463,14 @@ extern void	tpext_configbrige
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 extern int _get_evpost_sendq(char *send_q, char *extradata);
 
+extern char * atmi_base64_encode(const unsigned char *data, size_t input_length, 
+        size_t *output_length, char *encoded_data);
+extern unsigned char *atmi_base64_decode(const char *data, size_t input_length, 
+        size_t *output_length, char *decoded_data);
+
+extern int _tpjsontoubf(UBFH *p_ub, char *buffer);
+extern int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+
 #ifdef	__cplusplus
 }
 #endif

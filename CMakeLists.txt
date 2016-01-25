@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "2.3.3")
+set(VERSION "2.3.4")
 set(RELEASE "1")
 
 # Enable release only if specified.

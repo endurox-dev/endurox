@@ -72,7 +72,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+static char encoding_table_xa[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                                 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
                                 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -80,12 +80,119 @@ static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
                                 'w', 'x', 'y', 'z', '0', '1', '2', '3',
                                 '4', '5', '6', '7', '8', '9', '+', '_'};
-static char *decoding_table = NULL;
+
+static char encoding_table_normal[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                                'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                                'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                                'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+                                'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                                'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                                'w', 'x', 'y', 'z', '0', '1', '2', '3',
+                                '4', '5', '6', '7', '8', '9', '+', '/'};
+
+static char *decoding_table_xa = NULL;
+static char *decoding_table_normal = NULL;
+
 static int mod_table[] = {0, 2, 1};
 
 /*---------------------------Prototypes---------------------------------*/
-private void build_decoding_table(void);
-private void base64_cleanup(void);
+private char * build_decoding_table(char *encoding_table);
+
+/* private void base64_cleanup(void); */
+
+private char * b64_encode(const unsigned char *data,
+                    size_t input_length,
+                    size_t *output_length,
+                    char *encoded_data, 
+                    char *encoding_table);
+
+
+private unsigned char *b64_decode(const char *data,
+                             size_t input_length,
+                             size_t *output_length,
+                             char *decoded_data,
+                             char *encoding_table);
+
+
+
+/**
+ * XA Version of Base64 encode
+ * @param data
+ * @param input_length
+ * @param output_length
+ * @param encoded_data
+ * @return 
+ */
+char * atmi_xa_base64_encode(const unsigned char *data,
+                    size_t input_length,
+                    size_t *output_length,
+                    char *encoded_data) 
+{
+    return b64_encode(data, input_length, output_length, 
+            encoded_data, encoding_table_xa);
+}
+
+/**
+ * XA Version of base64 decode
+ * @param data
+ * @param input_length
+ * @param output_length
+ * @param decoded_data
+ * @return 
+ */
+unsigned char *atmi_xa_base64_decode(const char *data,
+                             size_t input_length,
+                             size_t *output_length,
+                             char *decoded_data)
+{
+    if (decoding_table_xa == NULL)
+    {
+            decoding_table_xa =  build_decoding_table(encoding_table_xa);
+    }
+    
+    return b64_decode(data, input_length, output_length, 
+            decoded_data, decoding_table_xa);
+}
+
+
+/**
+ * Standard Version of Base64 encode
+ * @param data
+ * @param input_length
+ * @param output_length
+ * @param encoded_data
+ * @return 
+ */
+char * atmi_base64_encode(const unsigned char *data,
+                    size_t input_length,
+                    size_t *output_length,
+                    char *encoded_data) 
+{
+    return b64_encode(data, input_length, output_length, 
+            encoded_data, encoding_table_normal);
+}
+
+/**
+ * Standard Version of base64 decode
+ * @param data
+ * @param input_length
+ * @param output_length
+ * @param decoded_data
+ * @return 
+ */
+unsigned char *atmi_base64_decode(const char *data,
+                             size_t input_length,
+                             size_t *output_length,
+                             char *decoded_data)
+{
+    if (decoding_table_normal == NULL)
+    {
+            decoding_table_normal =  build_decoding_table(encoding_table_normal);
+    }
+    
+    return b64_decode(data, input_length, output_length, 
+            decoded_data, decoding_table_normal);
+}
 
 /**
  * Encode the data
@@ -94,10 +201,11 @@ private void base64_cleanup(void);
  * @param output_length
  * @return 
  */
-char * atmi_xa_base64_encode(const unsigned char *data,
+private char * b64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
-                    char *encoded_data) 
+                    char *encoded_data, 
+                    char *encoding_table) 
 {
     int i;
     int j;
@@ -136,16 +244,15 @@ char * atmi_xa_base64_encode(const unsigned char *data,
  * @param output_length
  * @return 
  */
-unsigned char *atmi_xa_base64_decode(const char *data,
+private unsigned char *b64_decode(const char *data,
                              size_t input_length,
                              size_t *output_length,
-                             char *decoded_data)
+                             char *decoded_data,
+                             char *decoding_table)
 {
 
     int i;
     int j;
-    
-    if (decoding_table == NULL) build_decoding_table();
 
     if (input_length % 4 != 0) return NULL;
 
@@ -180,15 +287,18 @@ unsigned char *atmi_xa_base64_decode(const char *data,
 /**
  * Build encoding table
  */
-private void build_decoding_table(void)
+private char * build_decoding_table(char *encoding_table)
 {
     int i;
-    decoding_table = malloc(256);
+    char *ptr = malloc(256);
 
     for (i = 0; i < 64; i++)
-        decoding_table[(unsigned char) encoding_table[i]] = i;
+        ptr[(unsigned char) encoding_table[i]] = i;
+    
+    return ptr;
 }
 
+#if 0
 /**
  * Cleanup table
  */
@@ -196,6 +306,7 @@ private void base64_cleanup(void)
 {
     free(decoding_table);
 }
+#endif
 
 /*************************** XID manipulation *********************************/
 /**
