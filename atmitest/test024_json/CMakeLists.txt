@@ -1,5 +1,5 @@
 ## 
-## Enduro Execution platform's ATMI library
+## Tests for JSON buffer testing
 ##
 ## @file CMakeLists.txt
 ## 
@@ -29,10 +29,13 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
-
-# Set minimum version
 cmake_minimum_required(VERSION 2.8)
 
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -41,38 +44,16 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd) 
-# Create a library called "ATMI" which includes the source files.
-# The extension is already found. Any number of sources could be listed here. 
-add_library (atmi SHARED
-                    atmi.c
-                    tperror.c
-                    tpcall.c
-                    typed_buf.c
-                    typed_ubf.c
-                    typed_tpinit.c
-                    typed_null.c
-                    typed_string.c
-                    typed_carray.c
-                    atmiutils.c
-                    init.c
-                    conversation.c
-                    tpevents.c
-                    shm.c
-                    ulog.c
-                    sem.c
-                    brsupport.c
-                    xa.c
-                    xautils.c
-                    xastates.c
-                    exparson.c
-                    ubf2exjson.c
-            )
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-install (TARGETS 
-    atmi 
-    DESTINATION "${INSTALL_LIB_DIR}"
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-    COMPONENT libraries)
+############################# Test - executables ###############################
+add_executable (atmiclt24 atmiclt24.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmiclt24 atmiclt atmi ubf nstd m rt dl)
 
+set_target_properties(atmiclt24 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+################################################################################

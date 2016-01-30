@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "2.3.3")
+set(VERSION "2.3.4")
 set(RELEASE "1")
 
 # Enable release only if specified.
@@ -115,6 +115,7 @@ if(LSB_RELEASE_EXECUTABLE)
         string(TOLOWER 
                 ${_TMP_LSB_RELEASE_OUTPUT_OS}
         LSB_RELEASE_OUTPUT_OS)
+        string(REPLACE " " "_" LSB_RELEASE_OUTPUT_OS ${LSB_RELEASE_OUTPUT_OS})
 
         execute_process(COMMAND ${LSB_RELEASE_EXECUTABLE} -sr
                 OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER

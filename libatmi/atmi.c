@@ -808,3 +808,27 @@ public long tpgetnodeid(void)
 out:
     return ret;
 }
+
+/**
+ * Convert JSON to UBF
+ * @param p_ub  output UBF
+ * @param buffer    input buffer
+ * @return 
+ */
+public int tpjsontoubf(UBFH *p_ub, char *buffer)
+{
+    return _tpjsontoubf(p_ub, buffer);
+}
+
+/**
+ * Convert UBF to JSON text
+ * @param p_ub
+ * @param buffer
+ * @param bufsize
+ * @return 
+ */
+public int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
+{
+    return _tpubftojson(p_ub, buffer, bufsize);
+}
+

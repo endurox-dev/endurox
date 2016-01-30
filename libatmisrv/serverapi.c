@@ -88,6 +88,18 @@ public void tpcontinue (void)
     _tpcontinue ();
 }
 
+
+/**
+ * Return server id
+ * @return Server id (-i argument value). Can be 0 or random value, if server
+ *                  not intialized
+ */
+public int tpgetsrvid (void)
+{
+    API_ENTRY;
+    return  G_server_conf.srv_id;
+}
+
 /**
  * Add poller extension
  * @param fd

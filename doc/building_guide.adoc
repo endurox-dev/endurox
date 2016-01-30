@@ -49,8 +49,12 @@ Linuxes which supports '/etc/rc.local', must add following lines before "exit 0"
 
 ---------------------------------------------------------------------
 # Mount the /dev/mqueue
-mkdir /dev/mqueue
-mount -t mqueue none /dev/mqueue
+# Not for Debian 8.x: queue is readly mounted, thus test:
+
+if [ ! -d /dev/mqueue ]; then
+	mkdir /dev/mqueue
+	mount -t mqueue none /dev/mqueue
+fi
 
 # Max Messages in Queue
 echo 10000 > /proc/sys/fs/mqueue/msg_max
@@ -62,16 +66,30 @@ echo 32000 > /proc/sys/fs/mqueue/msgsize_max
 echo 10000 > /proc/sys/fs/mqueue/queues_max
 ---------------------------------------------------------------------
 
+Note for Centos/RHEL 7 you need to give execute permissions for rc.local:
+
+---------------------------------------------------------------------
+# chmod +x /etc/rc.local
+---------------------------------------------------------------------
+
 == Getting the source & building
 
 === OS dependency installation
 
+==== System level dependencies - for Debian 8.2
+---------------------------------------------------------------------
+apt-get install indent asciidoc dblatex libxml2-dev fop \
+	cmake dia flex bison gcc g++ zlib1g-dev \
+	libssl-dev libcrypto++9 libcrypto++-dev \
+	libgpgme11-dev uuid-dev libxml2-dev git
+---------------------------------------------------------------------
+	
 ==== System level dependencies - for Ubuntu 14.04
 ---------------------------------------------------------------------
-$ sudo apt-get install indent asciidoc dblatex libxml2-dev fop\
-	cmake dia flex bison gcc g++ libz-dev\
-	libssl-dev libcrypto++9 libcrypto++-dev\
-	libgpgme11-dev uuid-dev libxml2-devel
+$ apt-get install indent asciidoc dblatex libxml2-dev fop \
+	cmake dia flex bison gcc g++ zlib1g-dev \
+	libssl-dev libcrypto++9 libcrypto++-dev \
+	libgpgme11-dev uuid-dev libxml2-dev git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
@@ -89,11 +107,33 @@ $ su - root
 Now install system depenencies  
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc libuuid-devel\
-	openssl openssl-devel\
-	gpgme-devel dia
+# yum install git cmake asciidoc libuuid-devel \
+	openssl openssl-devel \
+	gpgme-devel dia libxml2-devel
 # exit
 $
+---------------------------------------------------------------------
+
+
+==== System level dependencies - for Centos 7.x
+
+Now install system depenencies  
+
+---------------------------------------------------------------------
+# yum groupinstall 'Development Tools'
+# yum install git cmake asciidoc libuuid-devel openssl openssl-devel \
+	gpgme-devel redhat-lsb dblatex libxml2-devel
+---------------------------------------------------------------------
+
+Centos 7 does not ship with `dia' package. Thus we will install
+Fodra Core package: dia-0.97.2-5.fc19.x86_64.rpm. Also we need to install
+additional deps to run dia.
+
+---------------------------------------------------------------------
+# yum install -y cairo-gobject-devel gtk2 gtk2-devel gdk-pixbuf2-devel \
+		libglade2-devel libgnomeui.x86_64
+# wget http://ftp.scientificlinux.org/linux/fedora/releases/19/Fedora/x86_64/os/Packages/d/dia-0.97.2-5.fc19.x86_64.rpm
+# rpm -i --nodeps dia-0.97.2-5.fc19.x86_64.rpm
 ---------------------------------------------------------------------
 
 === Getting the Source code
@@ -182,7 +222,7 @@ do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
 # If you want to have install folder to /home/user1/endurox/dist
-# if you want system level install then run just $ cmake .
+# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/ .
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
