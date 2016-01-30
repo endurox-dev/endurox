@@ -462,7 +462,7 @@ extern int _tppost(char *eventname, char *data, long len, long flags);
 extern void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 extern int _get_evpost_sendq(char *send_q, char *extradata);
-
+   
 #ifdef	__cplusplus
 }
 #endif

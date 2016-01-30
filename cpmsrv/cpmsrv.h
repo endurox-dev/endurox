@@ -75,6 +75,8 @@ struct cpm_process
     int consecutive_fail; /*  Number of consecutive fails */    
     
     char command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
+    char log_stdout[PATH_MAX+1];
+    char log_stderr[PATH_MAX+1];
     char env[PATH_MAX+1];
     
     time_t stattime;         /* Status change time */

@@ -60,6 +60,17 @@ public cpm_process_t *G_clt_config=NULL;
 
 
 /**
+ * Return client by tag & subsect
+ * @param tag
+ * @param subsect
+ * @return ptr to client or NULL (if not found)
+ */
+public cpm_process_t * client_get(char *tag, char *subsect)
+{
+    
+}
+
+/**
  * Set current time of the status change
  * @param p_cltproc
  */
@@ -100,6 +111,31 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.env, p, PATH_MAX);
             cltproc.env[PATH_MAX] = EOS;
+            xmlFree(p);
+        }
+        else if (0==strcmp(attr->name, "stdout"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+            strncpy(cltproc.log_stdout, p, PATH_MAX);
+            cltproc.log_stdout[PATH_MAX] = EOS;
+            xmlFree(p);
+        }
+        else if (0==strcmp(attr->name, "stderr"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+            strncpy(cltproc.log_stderr, p, PATH_MAX);
+            cltproc.log_stderr[PATH_MAX] = EOS;
+            xmlFree(p);
+        }
+        else if (0==strcmp(attr->name, "log"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+            /* Install both: */
+            strncpy(cltproc.log_stdout, p, PATH_MAX);
+            cltproc.log_stdout[PATH_MAX] = EOS;
+            
+            strncpy(cltproc.log_stderr, p, PATH_MAX);
+            cltproc.log_stderr[PATH_MAX] = EOS;
             xmlFree(p);
         }
         else if (0==strcmp(attr->name, "autostart"))
@@ -166,6 +202,30 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->env, p, PATH_MAX);
                     p_cltproc->env[PATH_MAX] = EOS;
+                    xmlFree(p);
+                } else if (0==strcmp(attr->name, "stdout"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    strncpy(p_cltproc->log_stdout, p, PATH_MAX);
+                    p_cltproc->log_stdout[PATH_MAX] = EOS;
+                    xmlFree(p);
+                }
+                else if (0==strcmp(attr->name, "stderr"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    strncpy(p_cltproc->log_stderr, p, PATH_MAX);
+                    p_cltproc->log_stderr[PATH_MAX] = EOS;
+                    xmlFree(p);
+                }
+                else if (0==strcmp(attr->name, "log"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    /* Install both: */
+                    strncpy(p_cltproc->log_stdout, p, PATH_MAX);
+                    p_cltproc->log_stdout[PATH_MAX] = EOS;
+
+                    strncpy(p_cltproc->log_stderr, p, PATH_MAX);
+                    p_cltproc->log_stderr[PATH_MAX] = EOS;
                     xmlFree(p);
                 }
             }
