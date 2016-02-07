@@ -126,6 +126,13 @@ COMMANDS
         Prior sending to 'ndrxd' they are contactinated with spaces in between.
 *unset* ENV_NAME::
         Unset environment variable
+*pc*::
+	Print client processes. This sends command to Client Process Monitor server ('cpmsrv').
+*bc* -t <process tag> [-s <sub section>]::
+	Boot client process. This sends command to Client Process Monitor server ('cpmsrv').
+	Processes are registered in 'ndrxconfig.xml' '<clients>' section.
+*sc* -t <process tag> [-s <sub section>]::
+	Stop client process. This sends command to Client Process Monitor server ('cpmsrv').
 
 EXIT STATUS
 -----------
