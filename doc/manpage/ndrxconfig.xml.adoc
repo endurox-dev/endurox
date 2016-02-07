@@ -57,6 +57,29 @@ SYNOPSIS
 			...
 		</server>
 	</servers>
+        <clients>
+		<client cmdline="CLT_COMMAND_LINE [${NDRX_CLTTAG} ${NDRX_CLTSUBSECT}]" 
+			log="CLT_LOG" 
+			stdout="CLT_STDOUT"
+			stderr="CLT_STDERR"
+			env="CLT_ENV" 
+			autostart="CLT_AUTOSTART">
+			
+				<exec tag="CLT_TAG_EXEC" 
+					subsect="CLT_SUBSECT_EXEC" 
+					log="CLT_LOG_EXEC" 
+					stdout="CLT_STDOUT_EXEC" 
+					stderr="CLT_STDERR_EXEC" 
+					env="CLT_ENV_EXEC" 
+					autostart="CLT_AUTOSTART_EXEC"/>
+				<exec tag="CLT_TAG_EXEC2" 
+					subsect="CLT_SUBSECT2_EXEC2" 
+					.../>
+		</client>
+		<client cmdline="BINARY2" ...>
+			<exec tag="CLT_EXE_TAG2" .../>
+		</client>
+	<clients>
 </endurox>
 ---------------------------------------------------------------------
 
@@ -185,10 +208,33 @@ DEBUG CONFIGURATION FILE SYNTAX
 	Application specific command line options. This follows content after sys options as:
 	'system options -- app options'.
 *ATMI_SERVER_EXPORT_SERVICES*::
-    EnduroX server specific list of services to be exported. This list is only for 
-    *tpbridge* servers.
-
-
+	EnduroX server specific list of services to be exported. This list is only for 
+	*tpbridge* servers.
+*CLT_COMMAND_LINE*::
+	Executable name and arguments for client program. Command line basically is a format
+	string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
+	for subsection substitution. Other env variables available here too.
+*CLT_LOG*::
+	Logfile to which stdout and stderr is logged. Can be overriden by 'CLT_LOG_EXEC'
+	for each individual process. Optional attribute.
+*CLT_STDOUT*::
+	File where to log stdout. Can be overriden by 'CLT_STDOUT_EXEC'
+	for each individual process. Optional attribute.
+*CLT_STDERR*::
+	File where to log stderr. Can be overriden by 'CLT_STDERR_EXEC'
+	for each individual process. Optional attribute.
+*CLT_ENV*::
+	Environment override file. See *ex_envover(5)* for syntax. Can be overriden by 'CLT_ENV_EXEC'
+	for each individual process. Optional attribute.
+*CLT_AUTOSTART*::
+	Should process be started automatically? 'Y' or 'y' means boot at start.
+	Can be overriden by 'CLT_AUTOSTART_EXEC' for each individual process. 
+	Optional attribute. Default 'n'.
+*CLT_TAG_EXEC*::
+	Tagname to be set for process.
+*CLT_SUBSECT_EXEC*::
+	Subsection to be set for process. '-' used as default.
+	
 EXAMPLE
 -------
 Sample configuration:
@@ -237,7 +283,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*
 
 AUTHOR
 ------

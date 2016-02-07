@@ -1,0 +1,61 @@
+CPMSRV(8)
+=========
+:doctype: manpage
+
+
+NAME
+----
+cpmsrv - Client Process Monitor Server.
+
+
+SYNOPSIS
+--------
+*cpmrv* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+Client process monitor is Enduro/X server process which is responsible for managing client processes,
+which are described in 'ndrxconfig.xml', '<clients>' section. The process reloads configuration file
+every time when timestamp is changed. If process is removed from '<clients>' section and process
+is stopped, then it is removed from listings. If process is running, it is left in curren process model.
+
+'cpmsrv' is servicing backend functionality for xadmin's pc (print clients), bc (boot client), 
+sc (stop client) commands. Invoked via ATMI subsystem resources.
+
+During the startup phase, all 'autostart' processes are started. During the shutdown phase all started
+processes are shut-down, by doing standard kill signallings.
+
+OPTIONS
+-------
+*-i* 'CHK_INTERVAL'::
+'CHK_INTERVAL' process checking interval in seconds. Default 15.
+
+*-k* 'KILL_INTERVAL'::
+'KILL_INTERVAL' process kill interval (wait seconds between -2, -15, -9 signals). Default 30.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)*
+
+AUTHOR
+------
+Enduro/X is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
