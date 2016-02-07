@@ -348,6 +348,7 @@ int tpsvrinit(int argc, char **argv)
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
     int nodeid;
+    
     /* Parse command line  */
     while ((c = getopt(argc, argv, "t:s:l:c:m:p:")) != -1)
     {
@@ -489,8 +490,7 @@ int tpsvrinit(int argc, char **argv)
     
     
     /* Register timer check (needed for time-out detection) */
-    if (SUCCEED==ret &&
-            SUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tx_tout_check))
+    if (SUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tx_tout_check))
     {
             ret=FAIL;
             NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",

@@ -48,6 +48,7 @@
 #include <ntimer.h>
 #include <cmd_processor.h>
 #include <pthread.h>
+#include <nstdutil.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -606,7 +607,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /*  Override environment, if there is such thing */
         if (EOS!=p_pm->conf->env[0])
         {
-            if (SUCCEED!=load_new_env(p_pm))
+            if (SUCCEED!=load_new_env(p_pm->conf->env))
             {
                 fprintf(stderr, "Failed to load custom env from: %s!\n", 
                         p_pm->conf->env);

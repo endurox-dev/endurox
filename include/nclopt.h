@@ -60,7 +60,7 @@ struct ncloptmap
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int nstd_parse_clopt(ncloptmap_t *opts, int print_values, 
-        int argc, char **argv);
+        int argc, char **argv, int ignore_unk);
 
 #ifdef	__cplusplus
 }

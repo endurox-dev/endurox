@@ -75,7 +75,7 @@ public int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
     {
         fprintf(stderr, "Invalid options, see `help'.");
         FAIL_OUT(ret);

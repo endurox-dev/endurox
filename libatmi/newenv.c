@@ -77,7 +77,7 @@ private void strip_whitespace(char **pp)
  * @param p_pm
  * @return 
  */
-public int load_new_env(pm_node_t *p_pm)
+public int load_new_env(char *file)
 {
     int ret=SUCCEED;
     FILE *f;
@@ -89,10 +89,10 @@ public int load_new_env(pm_node_t *p_pm)
     
     /* Just open the file, and load new env.... */
     
-    if (NULL==(f=fopen(p_pm->conf->env, "r")))
+    if (NULL==(f=fopen(file, "r")))
     {
         NDRX_LOG(log_error, "Failed to open environment override file [%s]:%s",
-                            p_pm->conf->env, strerror(errno));
+                            file, strerror(errno));
         FAIL_OUT(ret);
     }
    

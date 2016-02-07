@@ -64,7 +64,7 @@ extern char *optarg;
  * @return SUCCEED/FAIL
  */
 public int nstd_parse_clopt(ncloptmap_t *opts, int print_values, 
-        int argc, char **argv)
+        int argc, char **argv, int ignore_unk)
 {
     int ret = SUCCEED;
     char clopt_string[1024]={EOS};
@@ -107,9 +107,16 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
         
         if (0==p->key)
         {
-            NDRX_LOG(log_error, "Unknown command line option: [%c]", 
-                    c);
-            FAIL_OUT(ret);
+            if (!ignore_unk)
+            {
+                NDRX_LOG(log_error, "Unknown command line option: [%c]", 
+                        c);
+                FAIL_OUT(ret);
+            }
+            else
+            {
+                continue;
+            }
         }
         
         /* Translate the value */

@@ -191,7 +191,7 @@ public int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     else
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
         {
             fprintf(stderr, "Invalid options, see `help'.");
             FAIL_OUT(ret);
@@ -270,7 +270,7 @@ public int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     else
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
         {
             fprintf(stderr, "Invalid options, see `help'.");
             FAIL_OUT(ret);
@@ -416,7 +416,7 @@ public int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     else
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
         {
             fprintf(stderr, "Invalid options, see `help'.");
             FAIL_OUT(ret);

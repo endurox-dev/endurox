@@ -43,11 +43,14 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <Exfields.h>
+#include <nclopt.h>
 
 #include "cpmsrv.h"
 #include "userlog.h"
   
 /*---------------------------Externs------------------------------------*/
+extern int optind, optopt, opterr;
+extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -56,7 +59,8 @@ public cpmsrv_config_t G_config;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 public int cpm_pc(UBFH *p_ub, int cd);
-
+public int cpm_sc(UBFH *p_ub, int cd);
+public int cpm_callback_timer(void);
 /**
  * Client Process Monitor, main thread entry 
  * @param p_svc
@@ -80,6 +84,13 @@ void CPMSVC (TPSVCINFO *p_svc)
     }
     
     NDRX_LOG(log_info, "Got command: [%s]", cmd);
+    
+    /* Reload the config */
+    if (SUCCEED!=load_config())
+    {
+        NDRX_LOG(log_error, "Failed to load client config!");
+        FAIL_OUT(ret);
+    }
     
     if (0==strcmp(cmd, "bc") || 0==strcmp(cmd, "sc"))
     {
@@ -112,11 +123,19 @@ void CPMSVC (TPSVCINFO *p_svc)
     
     if (0==strcmp(cmd, "bc"))
     {
-        /* start the process */
+        /* boot the process (just mark for startup) */
+        if (SUCCEED!=cpm_bc(p_ub, p_svc->cd))
+        {
+            FAIL_OUT(ret);
+        }
     } 
     else if (0==strcmp(cmd, "sc"))
     {
-        /* stop the process */
+        /* stop the client process */
+        if (SUCCEED!=cpm_sc(p_ub, p_svc->cd))
+        {
+            FAIL_OUT(ret);
+        }
     }
     else if (0==strcmp(cmd, "pc"))
     {
@@ -138,7 +157,7 @@ out:
 int tpsvrinit(int argc, char **argv)
 {
     int ret=SUCCEED;
-
+    char c;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* Get the env */
@@ -148,6 +167,39 @@ int tpsvrinit(int argc, char **argv)
         userlog("%s missing env", CONF_NDRX_CONFIG);
         FAIL_OUT(ret);
     }
+    
+    G_config.chk_interval = FAIL;
+    G_config.kill_interval = FAIL;
+    
+    /* Parse command line  */
+    while ((c = getopt(argc, argv, "i:k:")) != -1)
+    {
+        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        switch(c)
+        {
+            case 'i': 
+                G_config.chk_interval = atoi(optarg);
+                break;
+            case 'k': 
+                G_config.kill_interval = atoi(optarg);
+                break;
+            default:
+                /*return FAIL;*/
+                break;
+        }
+    }
+    
+    if (FAIL==G_config.chk_interval)
+    {
+        G_config.chk_interval = CLT_CHK_INTERVAL_DEFAULT;
+    }
+    
+    if (FAIL==G_config.kill_interval)
+    {
+        G_config.chk_interval = CLT_KILL_INTERVAL_DEFAULT;
+    }
+    
+    signal(SIGCHLD, sign_chld_handler);
     
     /* Load initial config */
     if (SUCCEED!=load_config())
@@ -162,10 +214,225 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
+    /* Register callback timer */
+    if (SUCCEED!=tpext_addperiodcb(G_config.chk_interval, cpm_callback_timer))
+    {
+            ret=FAIL;
+            NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                            tpstrerror(tperrno));
+    }
+    
+    NDRX_LOG(log_info, "Config file: [%s]", G_config.config_file );
+    NDRX_LOG(log_info, "Process checking interval (-i): [%d]", G_config.chk_interval);
+    NDRX_LOG(log_info, "Process kill interval (-i): [%d]", G_config.kill_interval);
+    
+    /* Process the timer now.... */
+    cpm_start_all(); /* Mark all to be started */
+    cpm_callback_timer(); /* Start them all. */
+    
 out:
     return ret;
 }
 
+/**
+ * Do de-initialization
+ */
+void tpsvrdone(void)
+{
+    cpm_process_t *c = NULL;
+    cpm_process_t *ct = NULL;
+    
+    NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
+    
+#if 0
+    /* Mark config as not refreshed */
+    HASH_ITER(hh, G_clt_config, c, ct)
+    {
+        if (CLT_STATE_STARTED==c->dyn.cur_state)
+        {
+            /* Try to boot the process... */
+            cpm_kill(c);
+        }
+    }
+#endif
+    cpm_killall();
+}
+
+/**
+ * Callback function for periodic timer
+ * We need a timer here cause SIGCHILD causes poller interrupts.
+ * @return 
+ */
+public int cpm_callback_timer(void)
+{
+    int ret = SUCCEED;
+    cpm_process_t *c = NULL;
+    cpm_process_t *ct = NULL;
+    static int first = TRUE;
+    static n_timer_t t;
+    
+    if (first)
+    {
+        first = FALSE;
+        n_timer_reset(&t);
+    }
+    
+    if (n_timer_get_delta_sec(&t) < G_config.chk_interval)
+    {
+        goto out;
+    }
+    
+    n_timer_reset(&t);
+    
+    
+    NDRX_LOG(log_debug, "cpm_callback_timer() enter");
+            
+    /* Mark config as not refreshed */
+    HASH_ITER(hh, G_clt_config, c, ct)
+    {
+        NDRX_LOG(log_debug, "%s/%s req %d cur %d", 
+                c->tag, c->subsect, c->dyn.req_state, c->dyn.cur_state);
+        
+        if ((CLT_STATE_NOTRUN==c->dyn.cur_state ||
+                CLT_STATE_STARTING==c->dyn.cur_state)  &&
+                CLT_STATE_STARTED==c->dyn.req_state)
+        {
+            /* Try to boot the process... */
+            cpm_exec(c);
+        }
+    }
+    
+out:
+    return SUCCEED;
+}
+
+/**
+ * Boot the client process
+ * @param p_ub
+ * @param cd
+ * @return 
+ */
+public int cpm_bc(UBFH *p_ub, int cd)
+{
+    int ret = SUCCEED;
+    
+    char tag[CPM_TAG_LEN+1];
+    char subsect[CPM_SUBSECT_LEN+1];
+    cpm_process_t * c;
+    char debug[256];
+    
+    if (SUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
+    {
+        NDRX_LOG(log_error, "Missing EX_CPMTAG!");
+    }
+    
+    if (SUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
+    {
+        strcpy(subsect, "-");
+    }
+    
+    c = cpm_client_get(tag, subsect);
+    
+    if (NULL==c)
+    {
+        sprintf(debug, "Client process %s/%s not found!", tag, subsect);
+        NDRX_LOG(log_error, "%s", debug);
+        userlog("%s!", debug);
+        Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        FAIL_OUT(ret);
+    }
+    else
+    {
+        if (CLT_STATE_STARTED != c->dyn.cur_state)
+        {
+            sprintf(debug, "Client process %s/%s marked for start", tag, subsect);
+            NDRX_LOG(log_info, "%s", debug);
+            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+
+            c->dyn.cur_state = CLT_STATE_STARTING;
+            c->dyn.req_state = CLT_STATE_STARTED;
+        }
+        else
+        {
+            sprintf(debug, "Process %s/%s already marked "
+                                "for startup or running...", tag, subsect);
+            NDRX_LOG(log_info, "%s", debug);
+            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        }
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Stop the client process
+ * @param p_ub
+ * @param cd
+ * @return 
+ */
+public int cpm_sc(UBFH *p_ub, int cd)
+{
+    int ret = SUCCEED;
+    
+    char tag[CPM_TAG_LEN+1];
+    char subsect[CPM_SUBSECT_LEN+1];
+    cpm_process_t * c;
+    char debug[256];
+    
+    if (SUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
+    {
+        FAIL_OUT(ret);
+        NDRX_LOG(log_error, "Missing EX_CPMTAG!");
+    }
+    
+    if (SUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
+    {
+        strcpy(subsect, "-");
+    }
+    
+    c = cpm_client_get(tag, subsect);
+    
+    if (NULL==c)
+    {
+        sprintf(debug, "Client process %s/%s not found!", tag, subsect);
+        NDRX_LOG(log_error, "%s", debug);
+        userlog("%s!", debug);
+        Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        FAIL_OUT(ret);
+    }
+    else
+    {
+        c->dyn.req_state = CLT_STATE_NOTRUN;
+        
+        if (CLT_STATE_STARTED ==  c->dyn.cur_state)
+        {
+            if (SUCCEED==cpm_kill(c))
+            {
+                sprintf(debug, "Client process %s/%s stopped", tag, subsect);
+                NDRX_LOG(log_info, "%s", debug);
+                Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+            }
+            else
+            {
+                sprintf(debug, "Failed to stop %s/%s!", tag, subsect);
+                NDRX_LOG(log_info, "%s", debug);
+                Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+            }
+        }
+        else
+        {
+            sprintf(debug, "Client process %s/%s not running already...", 
+                    tag, subsect);
+            NDRX_LOG(log_info, "%s", debug);
+            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        }
+    }
+    
+out:
+    return ret;
+}
 
 /**
  * Print clients
@@ -190,16 +457,32 @@ public int cpm_pc(UBFH *p_ub, int cd)
         
         NDRX_LOG(log_info, "cpm_pc: %s/%s", c->tag, c->subsect);
         
-        timeinfo = localtime (&c->stattime);
+        timeinfo = localtime (&c->dyn.stattime);
         strftime (buffer,80,"%c",timeinfo);
     
-        if (c->is_running)
+        if (CLT_STATE_STARTED == c->dyn.cur_state)
         {
-            sprintf(output, "%s/%s - running (%s)",c->tag, c->subsect, buffer);
+            sprintf(output, "%s/%s - running pid %d (%s)",
+                                c->tag, c->subsect, c->dyn.pid, buffer);
         }
-        else {
-            sprintf(output, "%s/%s - exit %d (%s)", c->tag, c->subsect, 
-                    c->exit_status, buffer);
+        else if (CLT_STATE_STARTING == c->dyn.cur_state && 
+                c->dyn.req_state != CLT_STATE_NOTRUN)
+        {
+            sprintf(output, "%s/%s - starting (%s)",c->tag, c->subsect, buffer);
+        }
+        else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_STARTED) )
+        {
+            sprintf(output, "%s/%s - dead %d (%s)", c->tag, c->subsect, 
+                    c->dyn.exit_status, buffer);
+        }
+        else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_NOTRUN) )
+        {
+            sprintf(output, "%s/%s - shutdown (%s)", c->tag, c->subsect, 
+                    buffer);
+        }
+        else
+        {
+            sprintf(output, "%s/%s - not started", c->tag, c->subsect);
         }
         
         if (SUCCEED!=Bchg(p_ub, EX_CPMOUTPUT, 0, output, 0L))
@@ -208,11 +491,6 @@ public int cpm_pc(UBFH *p_ub, int cd)
                 Bstrerror(Berror));
             FAIL_OUT(ret);
         }
-        
-        /*
-        fprintf(stderr, "Sending: \n");
-        Bfprint(p_ub, stderr);
-        */
         
         if (FAIL == tpsend(cd,
                             (char *)p_ub,

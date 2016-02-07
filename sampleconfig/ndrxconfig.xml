@@ -102,10 +102,10 @@
                         <env>/home/mvitolin/projects/endurox/setndrx.rm2</env>
 			<sysopt>-e /tmp/TM2 -r -- -t10 -l/tmp</sysopt>
 		</server>
-		<server name="atmi.sv1">
+		<server name="test">
 			<srvid>1400</srvid>
-			<min>2</min>
-			<max>2</max>
+			<min>1</min>
+			<max>1</max>
 			<sysopt>-e /tmp/ATMISV1 -r</sysopt>
 		</server>
 		<server name="atmi.sv20_1">
@@ -114,11 +114,27 @@
 			<max>2</max>
 			<sysopt>-e /tmp/ATMISV20_1 -r</sysopt>
 		</server>
-		<server name="sv20_sql">
+		<server name="gtest">
 			<srvid>1700</srvid>
-			<min>2</min>
-			<max>2</max>
-			<sysopt>-e /tmp/SQ20 -r</sysopt>
+			<min>10</min>
+			<max>10</max>
+			<sysopt>-e /tmp/GOTEST -r -- YOPT=1</sysopt>
+		</server>
+		<server name="cpmsrv">
+			<srvid>9999</srvid>
+			<min>1</min>
+			<max>1</max>
+			<sysopt>-e /tmp/CPMSRV -r -- -i10 -k5</sysopt>
 		</server>
 	</servers>
+	<!-- Client section -->
+	<clients>
+		<client cmdline="/opt/bin/my_binary -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
+			<exec tag="BINARY1" subsect="1" autostart="Y" />
+			<exec tag="BINARY2" subsect="2" autostart="Y" />
+		</client>
+		<client cmdline="firefox"> <exec tag="FF"/> </client>
+		<client cmdline="/tmp/test.bin" env="/tmp/yopt.env"> <exec tag="TT" log="/tmp/test.out"/> </client>
+	</clients>
 </endurox>
+

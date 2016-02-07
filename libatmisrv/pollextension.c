@@ -216,7 +216,7 @@ public int _tpext_addperiodcb(int secs, int (*p_periodcb)(void))
     G_server_conf.p_periodcb = p_periodcb;
     G_server_conf.periodcb_sec = secs;
     NDRX_LOG(log_debug, "Registering periodic callback func ptr "
-            "0x%lx, period: %d sec(s)", 
+            "%p, period: %d sec(s)", 
             G_server_conf.p_periodcb, G_server_conf.periodcb_sec);
     
 out:

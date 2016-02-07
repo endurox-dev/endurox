@@ -152,7 +152,7 @@ public int chk_confirm_clopt(char *message, int argc, char **argv)
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv))
+    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
     {
         fprintf(stderr, "Invalid options, see `help'.");
         FAIL_OUT(ret);

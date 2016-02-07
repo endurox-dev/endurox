@@ -1,7 +1,7 @@
 /* 
-** `committrans' aka `commit' command implementation
+** `sc' (stop client) and `bp' (boot client) command implementation
 **
-** @file cmd_commit.c
+** @file cmd_pc.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -47,6 +47,7 @@
 
 #include "xa_cmn.h"
 #include <ndrx.h>
+#include <cpm.h>
 #include <nclopt.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -56,16 +57,16 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-
 /**
- * Do the call to transaction manager
- * @param svcnm - Service name of transaction manager.
- * @return SUCCEED/FAIL
+ * Call the client process monitor with command
+ * @return
  */
-private int call_tm(char *svcnm, char *tmxid)
+private int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect)
 {
-    UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_COMMITTRANS);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, CPM_DEF_BUFFER_SZ);
     int ret=SUCCEED;
+    long rsplen;
+    char output[CPM_OUTPUT_SIZE];
     
     /* Setup the call buffer... */
     if (NULL==p_ub)
@@ -74,23 +75,36 @@ private int call_tm(char *svcnm, char *tmxid)
         FAIL_OUT(ret);
     }
     
-    /* Do The TM call */
-    if (SUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
+    if (SUCCEED!=Bchg(p_ub, EX_CPMTAG, 0, tag, 0L))
     {
-        fprintf(stderr, "System error!\n");
-        NDRX_LOG(log_error, "Failed to set TMXID: %s!", 
-                Bstrerror(Berror));
+        NDRX_LOG(log_error, "Failed to set EX_CPMCOMMAND to %s!", tag);        
         FAIL_OUT(ret);
     }
     
-    /* printf("!!! About to call [%s]", svcnm); */
-    /* This will return ATMI error */
-    if (NULL==(p_ub = atmi_xa_call_tm_generic_fb(ATMI_XA_COMMITTRANS, svcnm, FALSE, FAIL, 
-        NULL, p_ub)))
+    if (SUCCEED!=Bchg(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
+        NDRX_LOG(log_error, "Failed to set EX_CPMSUBSECT to %s!", subsect);        
         FAIL_OUT(ret);
     }
     
+    if (SUCCEED!=Bchg(p_ub, EX_CPMCOMMAND, 0, cmd, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to set EX_CPMCOMMAND to %s!", cmd);
+        FAIL_OUT(ret);
+    }
+    
+    /* Call the client admin */
+    if (FAIL==(ret=tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0L)))
+    {
+        fprintf(stderr, "%s\n", tpstrerror(tperrno));
+    }
+    
+    /* print the stuff we got from CPM. */
+    if (SUCCEED==Bget(p_ub, EX_CPMOUTPUT, 0, (char *)output, 0L))
+    {
+        fprintf(stdout, "%s\n", output);
+    }
+
 out:
 
     if (NULL!=p_ub)
@@ -102,35 +116,26 @@ out:
 }
 
 /**
- * Commit transaction (all or single RMID)
+ * Stop client
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-public int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+public int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = SUCCEED;
-    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
-    char srvcnm[MAXTIDENT+1];
-    short confirm = FALSE;
+    char tag[CPM_TAG_LEN];
+    char subsect[CPM_SUBSECT_LEN] = {"-"};
+    
     ncloptmap_t clopt[] =
     {
-        {'y', BFLD_SHORT, (void *)&confirm, 0, 
-                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Confirm"},
-        {'t', BFLD_STRING, (void *)srvcnm, sizeof(tmxid), 
-                                NCLOPT_MAND|NCLOPT_HAVE_VALUE, "TM reference"},
-        {'x', BFLD_STRING, (void *)tmxid, sizeof(tmxid), 
-                                NCLOPT_MAND|NCLOPT_HAVE_VALUE, "XID"},
+        {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
+                                NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
+        {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
         {0}
     };
-    
-    /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
-    {
-        fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
-    }
     
     /* parse command line */
     if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
@@ -139,20 +144,42 @@ public int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         FAIL_OUT(ret);
     }
     
-    /* Check for confirmation */
-    if (!chk_confirm("Are you sure you want to commit the transaction?", confirm))
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_SC, tag, subsect);
+    
+out:
+    return ret;
+}
+
+/**
+ * Boot client
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+public int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    int ret = SUCCEED;
+    char tag[CPM_TAG_LEN];
+    char subsect[CPM_SUBSECT_LEN] = {"-"};
+    
+    ncloptmap_t clopt[] =
     {
+        {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
+                                NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
+        {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {0}
+    };
+    
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    {
+        fprintf(stderr, "Invalid options, see `help'.");
         FAIL_OUT(ret);
     }
     
-    /* call the transaction manager */
-    if (SUCCEED!=call_tm(srvcnm, tmxid))
-    {
-        fprintf(stderr, "ERROR: %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
-    }
-    
-    printf("OK\n");
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_BC, tag, subsect);
     
 out:
     return ret;

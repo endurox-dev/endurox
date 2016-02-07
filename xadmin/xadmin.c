@@ -154,7 +154,11 @@ cmd_mapping_t M_command_map[] =
     {"set",       cmd_set,NDRXD_COM_SET_RQ,   1,  99,  1, "Set env variable. \n"
                                                 "\t\tFormat: VAR=SOME VALUE (will be contact with spaces)"},
     {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ,   1,  1,  1, "Set env variable. Forma: VAR"},
-    {"pc",        cmd_pc,FAIL,   1,  1,  1, "Print clients"}
+    {"pc",        cmd_pc,FAIL,   1,  1,  1, "Print clients"},
+    {"sc",        cmd_sc,FAIL,   2,  3,  1, "Stop client\n"
+                                    "\t\tArgs: sc -t <Tag> [-s <Subsection (default -)]"},
+    {"bc",        cmd_bc,FAIL,   2,  3,  1, "Boot(start) client\n"
+                                    "\t\tArgs: bc -t <Tag> [-s <Subsection (default -)]"}
 };
 
 /**

@@ -84,7 +84,7 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-int call_cpm(char *svcnm)
+private int call_cpm(char *svcnm)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, CPM_DEF_BUFFER_SZ);
     int ret=SUCCEED;

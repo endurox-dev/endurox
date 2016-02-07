@@ -168,6 +168,8 @@ extern int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 
 /* cpm: */
 extern int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

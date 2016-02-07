@@ -68,6 +68,7 @@ add_library (atmi SHARED
                     xastates.c
                     exparson.c
                     ubf2exjson.c
+                    newenv.c
             )
 
 install (TARGETS 

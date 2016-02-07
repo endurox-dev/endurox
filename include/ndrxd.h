@@ -268,8 +268,6 @@ extern void sign_chld_handler(int sig);
 extern int check_child_exit(void);
 extern int cmd_close_queue(void);
 
-extern int load_new_env(pm_node_t *p_pm);
-
 /* Sanity & restart */
 extern int do_sanity_check(void);
 extern int self_notify(srv_status_t *status, int block);

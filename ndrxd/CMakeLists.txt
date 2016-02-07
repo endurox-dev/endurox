@@ -77,7 +77,6 @@ add_executable (ndrxd   ndrxd.c
                         svc_q_remove.c
                         bridge.c
                         cmd_bridge.c
-                        newenv.c
 			cmd_ping.c
 			cmd_pq.c
                         cmd_env.c)

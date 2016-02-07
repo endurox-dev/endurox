@@ -47,6 +47,10 @@ extern "C" {
 #define CPM_DEF_BUFFER_SZ       1024
     
 #define CPM_OUTPUT_SIZE         256 /* Output buffer size */
+    
+#define CPM_TAG_LEN             128
+#define CPM_SUBSECT_LEN         128
+#define CPM_KEY_LEN             (CPM_TAG_LEN+1+CPM_SUBSECT_LEN) /* including FS in middle */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Statics------------------------------------*/

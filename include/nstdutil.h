@@ -75,6 +75,9 @@ extern char *docharstrgmap(longstrmap_t *map, char val, char endval);
 /* Threading functions */
 extern uint64_t ndrx_gettid(void);
 
+/* New env */
+extern int load_new_env(char *file);
+
 #ifdef	__cplusplus
 }
 #endif
