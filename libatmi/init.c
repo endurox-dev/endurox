@@ -630,6 +630,7 @@ public int	tpinit (TPINIT * init_data)
             if (SUCCEED!=ndrx_load_common_env())
             {
                 NDRX_LOG(log_error, "Failed to load common env");
+                MUTEX_UNLOCK; /* hang fix during multiple failed inits. */
                 ret=FAIL;
                 goto out;
             }
