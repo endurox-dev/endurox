@@ -35,6 +35,9 @@ project (ENDUROX)
 set(VERSION "2.4.1")
 set(RELEASE "1")
 
+################################################################################
+# Build configuration
+################################################################################
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -47,6 +50,9 @@ ELSE ($ENV{RELEASE_BUILD})
         SET(CMAKE_C_FLAGS -ggdb)
 ENDIF ($ENV{RELEASE_BUILD})
 
+################################################################################
+# Install dir config
+################################################################################
 get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
 
 if ("${LIB64}" STREQUAL "TRUE")
@@ -59,8 +65,16 @@ set(INSTALL_LIB_DIR     lib${LIB_SUFFIX} CACHE PATH "Installation directory for 
 mark_as_advanced(INSTALL_LIB_DIR) 
 MESSAGE( STATUS "INSTALL_LIB_DIR: " ${INSTALL_LIB_DIR} )
 
+# Option to disable gpg-me
+OPTION(DEFINE_DISABLEGPGME "Use GPG-ME encryption" OFF) # Disabled
+ 
+IF(DEFINE_DISABLEGPGME)
+    ADD_DEFINITIONS(-DDISABLEGPGME)
+ENDIF(DEFINE_DISABLEGPGME)
 
-
+################################################################################
+# Submakes
+################################################################################
 # Recurse into the project subdirectories. This does not actually
 # cause another cmake executable to run. The same process will walk through 
 # the project's entire directory structure. 

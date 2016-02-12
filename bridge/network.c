@@ -50,7 +50,11 @@
 
 #include "bridge.h"
 #include "../libatmisrv/srv_int.h"
+
+/* gpg-me - optional */
+#ifndef DISABLEGPGME
 #include "gpgme_encrypt.h"
+#endif
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,7 +62,10 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 int M_is_gpg_init = FALSE;
+
+#ifndef DISABLEGPGME
 pgpgme_enc_t M_enc;
+#endif
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -69,6 +76,7 @@ void og_callback(int lev, char *msg)
 	NDRX_LOG(lev, "%s", msg);
 }
 
+#ifndef DISABLEGPGME
 /**
  * Set the signer (either when we send, or we receive!)
  */
@@ -107,6 +115,7 @@ static int br_init_gpg(void)
 {
 	int ret=SUCCEED;
 	
+
 	if (SUCCEED!=pgpa_init(&M_enc,og_callback, 
 			/* use signing if signer set! */
 			(0==G_bridge_cfg.gpg_signer[0]?FALSE:TRUE)))
@@ -156,6 +165,8 @@ out:
 	return ret;
 }
 
+#endif /* ifndef DISABLEGPGME */
+
 /**
  * Bridge have received message.
  * Got message from Network.
@@ -173,6 +184,7 @@ public int br_process_msg(exnetcon_t *net, char *buf, int len)
     cmd_br_net_call_t *call = (cmd_br_net_call_t *)buf;
     
     
+#ifndef DISABLEGPGME
     /* Decrypt the mssage, if decryption is used... */
     /* use GPG encryption */
     if (EOS!=G_bridge_cfg.gpg_recipient[0])
@@ -215,6 +227,7 @@ public int br_process_msg(exnetcon_t *net, char *buf, int len)
 	call = (cmd_br_net_call_t *)tmp_clr;
 	len = clr_len;
     }
+#endif
     
     if (G_bridge_cfg.common_format)
     {
@@ -414,6 +427,7 @@ public int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         }    
     }
     
+#ifndef DISABLEGPGME
     /* use GPG encryption */
     if (EOS!=G_bridge_cfg.gpg_recipient[0])
     {
@@ -455,6 +469,7 @@ public int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 	snd = tmp_enc;
 	snd_len = enc_len;
     }
+#endif
     
     /* Might want to move this stuff to Q */
     if (SUCCEED!=exnet_send_sync(G_bridge_cfg.con, (char *)snd, snd_len, 0, 0))

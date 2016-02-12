@@ -53,13 +53,23 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ###############################
-add_executable (tpbridge bridgesvc.c
+
+IF(DEFINE_DISABLEGPGME)
+	add_executable (tpbridge bridgesvc.c
                          queue.c
                          network.c
                          clock.c
                          brutils.c
-                         gpgme_encrypt.c
                         )
+ELSE (DEFINE_DISABLEGPGME)
+	add_executable (tpbridge bridgesvc.c
+                         queue.c
+                         network.c
+                         clock.c
+                         brutils.c
+			 gpgme_encrypt.c
+                        )
+ENDIF (DEFINE_DISABLEGPGME)
 target_link_libraries (tpbridge m atmisrv nstd atmi ubf rt gpgme exnet netproto dl)
 set_target_properties(tpbridge PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
