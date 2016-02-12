@@ -63,7 +63,7 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
 export NDRX_TOUT=13
 # Test process count
-PROC_COUNT=200
+PROC_COUNT=100
 
 #
 # Generic exit function
