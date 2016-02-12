@@ -344,7 +344,7 @@ out:
 int tpsvrinit(int argc, char **argv)
 {
     int ret=SUCCEED;
-    char c;
+    signed char c;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
     int nodeid;

@@ -157,7 +157,7 @@ out:
 int tpsvrinit(int argc, char **argv)
 {
     int ret=SUCCEED;
-    char c;
+    signed char c;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* Get the env */

@@ -177,7 +177,7 @@ void handle_sigchld(int sig)
 int tpsvrinit(int argc, char **argv)
 {
     int ret=SUCCEED;
-    char c;
+    signed char c;
     struct sigaction sa;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
