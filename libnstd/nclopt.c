@@ -69,7 +69,7 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
     int ret = SUCCEED;
     char clopt_string[1024]={EOS};
     int len=0;
-    char c;
+    signed char c; /* fix for rpi */
     ncloptmap_t *p = opts;
     
     optind=1; /* reset lib, so that we can scan again. */
