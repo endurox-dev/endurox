@@ -158,7 +158,7 @@ public int pq_run_santiy(int run_hist)
         /* shift the stats (if needed) */
         if (run_hist)
         {
-            for (i=PQ_LEN; i>1; i--) 
+            for (i=PQ_LEN-1; i>1; i--) /* fix for rpi... start with PQ_LEN-1!*/
             {   
                 cur->pq_info[i]=cur->pq_info[i-1];
             }
