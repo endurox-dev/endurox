@@ -65,12 +65,19 @@ set(INSTALL_LIB_DIR     lib${LIB_SUFFIX} CACHE PATH "Installation directory for 
 mark_as_advanced(INSTALL_LIB_DIR) 
 MESSAGE( STATUS "INSTALL_LIB_DIR: " ${INSTALL_LIB_DIR} )
 
-# Option to disable gpg-me
-OPTION(DEFINE_DISABLEGPGME "Use GPG-ME encryption" OFF) # Disabled
+################################################################################
+# Option to disable gpg-me (gpg-me enabled by default)
+OPTION(DEFINE_DISABLEGPGME "Use GPG-ME encryption" OFF)
  
 IF(DEFINE_DISABLEGPGME)
     ADD_DEFINITIONS(-DDISABLEGPGME)
 ENDIF(DEFINE_DISABLEGPGME)
+###############################################################################
+
+################################################################################
+# Option to disable documentation build (dos are enabled by default)
+OPTION(DEFINE_DISABLEDOC "Disable documentation generation" OFF) 
+################################################################################
 
 ################################################################################
 # Submakes
@@ -99,7 +106,13 @@ add_subdirectory (tmsrv) # Transaction Manager server for XA transactions
 add_subdirectory (cpmsrv) # Client Process Monitor
 add_subdirectory (xadrv) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing
-add_subdirectory (doc) #  Documentation project.
+
+IF(DEFINE_DISABLEDOC)
+        message("Documentation disabled - not building")
+ELSE (DEFINE_DISABLEDOC)
+        add_subdirectory (doc) #  Documentation project.
+ENDIF (DEFINE_DISABLEDOC)
+
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
 add_subdirectory (sampleconfig) #  For install

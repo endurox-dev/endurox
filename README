@@ -1,4 +1,6 @@
 -- CMake custom install dir:
 
 cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
-To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
+
+- To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
+- TO disable documentation building add '-DDEFINE_DISABLEDOC=ON'

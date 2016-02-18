@@ -46,8 +46,8 @@ extern "C" {
 #define BUF_TYPE_INIT       2 /* Keep the G_buf_descr indexes */
 #define BUF_TYPE_NULL       3
 #define BUF_TYPE_STRING     4
-#define BUF_TYPE_CARRAY     5 /* RFU */
-#define BUF_TYPE_JSON       6 /* RFU */
+#define BUF_TYPE_CARRAY     5 
+#define BUF_TYPE_JSON       6
 #define BUF_TYPE_MAX        6 /* max buffer type, for integrity */
 
 #define BUF_TYPE_UBF_STR        "UBF"
@@ -55,6 +55,7 @@ extern "C" {
 #define BUF_TYPE_STRING_STR     "STRING"
 #define BUF_TYPE_CARRAY_STR     "CARRAY"
 #define BUF_TYPE_NULL_STR       "NULL"
+#define BUF_TYPE_JSON_STR       "JSON"
 
 /* others: VIEW X_COMMON X_C_TYPE X_OCTET FML32 VIEW32 - not supported currently */
 
