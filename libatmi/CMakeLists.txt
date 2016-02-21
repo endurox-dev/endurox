@@ -70,6 +70,7 @@ add_library (atmi SHARED
                     exparson.c
                     ubf2exjson.c
                     newenv.c
+                    typed_xcvt.c
             )
 
 install (TARGETS 

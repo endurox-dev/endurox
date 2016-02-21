@@ -126,6 +126,9 @@ extern int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
 
 extern atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm));
 
+extern void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
+        long rcode, char *reply_to_q);
+
 #ifdef	__cplusplus
 }
 #endif

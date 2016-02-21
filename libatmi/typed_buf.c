@@ -397,7 +397,7 @@ public void free_auto_buffers(void)
  * @param subtype
  * @return 
  */
-public long	_tptypes (char *ptr, char *type, char *subtype)
+public long _tptypes (char *ptr, char *type, char *subtype)
 {
     MUTEX_LOCK_V(M_spinlock);
     {

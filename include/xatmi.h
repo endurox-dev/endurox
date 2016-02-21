@@ -216,7 +216,13 @@ extern "C" {
 #define SYS_FLAG_REPLY_ERROR    0x00000001
 #define SYS_CONVERSATION        0x00000002 /* We have open conversation */
 #define SYS_SRV_THREAD          0x00000004 /* This is new server thread */
+/* buffer management flags: */
+#define SYS_SRV_CVT_JSON2UBF    0x00000008 /* Message is converted from JSON to UBF */
+#define SYS_SRV_CVT_UBF2JSON    0x00000010 /* Message is converted from UBF to JSON */
 
+/* Test is any flag set */
+#define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON)
+    
 #define tpadvertise(_SVCNM, _FNADDR) tpadvertise_full(_SVCNM, _FNADDR, #_FNADDR)
 
 /*---------------------------Enums--------------------------------------*/

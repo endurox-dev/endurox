@@ -104,7 +104,8 @@ public int sv_open_queue(void)
         }
         
         /* Open the queue */
-        entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+        entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
+                O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
         
         /*
          * Check are we ok or failed?
@@ -196,6 +197,7 @@ public int sv_serve_call(int *service, int *status)
     tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
     buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
     long call_age;
+    int generate_rply = FALSE;
     
     *status=SUCCEED;
     G_atmisrv_reply_type = 0;
@@ -231,7 +233,8 @@ public int sv_serve_call(int *service, int *status)
                                         "min = %d max %d",
                             call->buffer_type_id, BUF_TYPE_MIN, BUF_TYPE_MAX);
             *status=FAIL;
-             goto out;
+            generate_rply = TRUE;
+            goto out;
         }
         call_type = &G_buf_descr[call->buffer_type_id];
         
@@ -242,11 +245,12 @@ public int sv_serve_call(int *service, int *status)
                         &req_len,
                         0L);
 
-
         if (SUCCEED!=ret)
         {
 
             /* TODO: Reply with failure - TPEOTYPE - type not supported! */
+            *status=FAIL;
+            generate_rply = TRUE;
             goto out;
         }
         else
@@ -275,7 +279,6 @@ public int sv_serve_call(int *service, int *status)
         svcinfo.cd = call->cd;
         G_last_call = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
-
         
         /* Register global tx */
         if (EOS!=call->tmxid[0] && 
@@ -288,6 +291,8 @@ public int sv_serve_call(int *service, int *status)
              * failed!!!!
              */
             *status=FAIL;
+            generate_rply = TRUE;
+            goto out;
         }
         
         /* If we run in abort only mode and do some forwards & etc.
@@ -308,10 +313,43 @@ public int sv_serve_call(int *service, int *status)
             /* put reply address */
             strcpy(G_shm_srv->last_reply_q, call->reply_to);
         }
+        
+        /* We need to convert buffer here (if function set...) */
+        if (NULL!=request_buffer &&
+                G_server_conf.service_array[no]->xcvtflags)
+        {
+            /* 
+             * Mark that buffer is converted...
+             * So that later we can convert back...
+             */
+            G_last_call.sysflags|= G_server_conf.service_array[no]->xcvtflags;
+            call->sysflags |= G_server_conf.service_array[no]->xcvtflags;
+            
+            if (SUCCEED!=typed_xcvt(&outbufobj, call->sysflags, FALSE))
+            {
+                NDRX_LOG(log_debug, "Failed to convert buffer service "
+                            "format: %llx", G_last_call.sysflags);
+                userlog("Failed to convert buffer service "
+                            "format: %llx", G_last_call.sysflags);
+                *status=FAIL;
+                generate_rply = TRUE;
+                goto out;
+            }
+            else
+            {
+                svcinfo.data = outbufobj->buf;
+                svcinfo.len = outbufobj->size;
+            }
+        }
+        
         /* For golang integration we need to know at service the function name */
         strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
-        G_server_conf.service_array[no]->p_func(&svcinfo);
-
+        
+        if (FAIL!=*status) /* Dot not invoke if failed! */
+        {
+            G_server_conf.service_array[no]->p_func(&svcinfo);
+        }
+        
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
                 /* Server did return:  */
                 (G_atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
@@ -339,6 +377,7 @@ public int sv_serve_call(int *service, int *status)
                                                 call->name);
                 /* reply with failure back */
                 *status=FAIL;
+                goto out;
             }
         }
     }
@@ -353,6 +392,12 @@ public int sv_serve_call(int *service, int *status)
     }
     
 out:
+
+    if (generate_rply)
+    {
+        /* Reply back with failure... */
+        ndrx_reply_with_failure(call, TPNOBLOCK, TPESVCERR, G_atmi_conf.reply_q_str);
+    }
 
     /* free_up_buffers(); - services assumes that memory is alloced for all the time
      * i.e. they do manual management of memory: tpfree.

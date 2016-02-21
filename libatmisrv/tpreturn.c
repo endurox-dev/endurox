@@ -45,6 +45,7 @@
 #include <gencall.h>
 
 #include "xa_cmn.h"
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -154,18 +155,40 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
         }
         else
         {
-            descr = &G_buf_descr[buffer_info->type_id];
-            /* build reply data here */
-            if (FAIL==descr->pf_prepare_outgoing(descr, data, len, call->data, &call->data_len, flags))
+            /* Convert back, if convert flags was set */
+            if (SYS_SRV_CVT_ANY_SET(G_last_call.sysflags))
             {
-                /* set reply fail FLAG */
-                call->sysflags |=SYS_FLAG_REPLY_ERROR;
-                call->rcode = TPESYSTEM;
-                ret=FAIL;
+                NDRX_LOG(log_debug, "about reverse xcvt...");
+                /* Convert buffer back.. */
+                if (SUCCEED!=typed_xcvt(&buffer_info, G_last_call.sysflags, TRUE))
+                {
+                    NDRX_LOG(log_debug, "Failed to convert buffer back to "
+                            "callers format: %llx", G_last_call.sysflags);
+                    userlog("Failed to convert buffer back to "
+                            "callers format: %llx", G_last_call.sysflags);
+                    /* set reply fail FLAG */
+                    call->sysflags |=SYS_FLAG_REPLY_ERROR;
+                    call->rcode = TPESVCERR;
+                    ret=FAIL;
+                }
             }
-            else
+            
+            if (FAIL!=ret)
             {
-                call->buffer_type_id = buffer_info->type_id;
+                descr = &G_buf_descr[buffer_info->type_id];
+                /* build reply data here */
+                if (FAIL==descr->pf_prepare_outgoing(descr, data, 
+                        len, call->data, &call->data_len, flags))
+                {
+                    /* set reply fail FLAG */
+                    call->sysflags |=SYS_FLAG_REPLY_ERROR;
+                    call->rcode = TPESYSTEM;
+                    ret=FAIL;
+                }
+                else
+                {
+                    call->buffer_type_id = buffer_info->type_id;
+                }
             }
         }
     }
@@ -286,7 +309,7 @@ public void _tpforward (char *svc, char *data,
         ret=FAIL;
         goto out;
     }
-
+    
     descr = &G_buf_descr[buffer_info->type_id];
 
     /* prepare buffer for call */

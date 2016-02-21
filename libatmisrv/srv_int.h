@@ -42,6 +42,7 @@ extern "C" {
 #include <atmi.h>
 #include <setjmp.h>
 #include <ndrxdcmn.h>
+#include <uthash.h>
 /*---------------------------Externs------------------------------------*/
 extern long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -65,7 +66,7 @@ extern int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
 /*---------------------------Typedefs-----------------------------------*/
 
    
-/*
+/**
  * Service name/alias entry.
  */
 typedef struct svc_entry svc_entry_t;
@@ -76,8 +77,18 @@ struct svc_entry
     svc_entry_t *next, *prev;
 };
 
+/**
+ * Hash of buffer conversion functions.
+ */
+typedef struct xbufcvt_entry xbufcvt_entry_t;
+struct xbufcvt_entry
+{
+    char fn_nm[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
+    long xcvtflags; /* Conversion function */
+    UT_hash_handle hh;         /* makes this structure hashable */
+};
 
-/*
+/**
  * Service entry descriptor.
  */
 typedef struct svc_entry_fn svc_entry_fn_t;
@@ -92,6 +103,7 @@ struct svc_entry_fn
     int is_admin;
     mqd_t q_descr; /* queue descriptor */
     n_timer_t qopen_time;
+    long xcvtflags; /* Conversion function */
 };
 
 /*
@@ -148,6 +160,7 @@ struct srv_conf
     
     /* Callback used before server goes in poll state */
     int (*p_b4pollcb)(void);
+    xbufcvt_entry_t *xbufcvt_tab; /* string hashlist for buffer convert funcs */
 };
 
 typedef struct srv_conf srv_conf_t;
@@ -202,6 +215,9 @@ extern int _tpext_addb4pollcb(int (*p_b4pollcb)(void));
 extern int _tpext_delb4pollcb(void);
 extern int process_admin_req(char *buf, long len, int *shutdown_req);
 
+/* auto buffer convert: */
+extern long xcvt_lookup(char *fn_nm);
+    
 #ifdef	__cplusplus
 }
 #endif

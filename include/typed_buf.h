@@ -57,6 +57,13 @@ extern "C" {
 #define BUF_TYPE_NULL_STR       "NULL"
 #define BUF_TYPE_JSON_STR       "JSON"
 
+/**
+ * Automatic buffer conversion:
+ */
+#define BUF_CVT_INCOMING_JSON2UBF_STR           "JSON2UBF"
+#define BUF_CVT_INCOMING_UBF2JSON_STR           "UBF2JSON"
+    
+
 /* others: VIEW X_COMMON X_C_TYPE X_OCTET FML32 VIEW32 - not supported currently */
 
 /*---------------------------Enums--------------------------------------*/
@@ -88,7 +95,12 @@ extern void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 extern char * TPNULL_tpalloc (typed_buffer_descr_t *descr, long len);
 extern void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
 
-/* TODO: Add support for string buffers */
+/* Automatic buffer convert: */
+extern int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse);
+
+extern int typed_xcvt_json2ubf(buffer_obj_t **buffer);
+extern int typed_xcvt_ubf2json(buffer_obj_t **buffer);
+    
 #ifdef	__cplusplus
 }
 #endif

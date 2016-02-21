@@ -42,6 +42,7 @@
 #include "srv_int.h"
 #include "userlog.h"
 #include <atmi_int.h>
+#include <typed_buf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -105,7 +106,98 @@ int parse_svc_arg(char *arg)
                                                          entry->svc_alias);
         p = strtok(NULL, ",");
     }
+    
+    return SUCCEED;
 }
+
+/*
+ * Lookup conversion function registered for hash
+ */
+public long xcvt_lookup(char *fn_nm)
+{
+    xbufcvt_entry_t *entry=NULL;
+    
+    HASH_FIND_STR( G_server_conf.xbufcvt_tab, fn_nm, entry); 
+    
+    if (NULL!=entry)
+    {
+        return entry->xcvtflags;
+    }
+    
+    return 0;
+}
+
+/**
+ * Parse flags
+ * @param argc
+ * @return
+ */
+int parse_xcvt_arg(char *arg)
+{
+    char cvtfunc[XATMI_SERVICE_NAME_LENGTH+1]={EOS};
+    char *p;
+    xbufcvt_entry_t *entry=NULL;
+    int ret = SUCCEED;
+    long flags = 0;
+    NDRX_LOG(log_debug, "Parsing function buffer convert entry: [%s]", arg);
+    
+    if (NULL!=(p=strchr(arg, ':')))
+    {
+        /* Conversion function name */
+        strncpy(cvtfunc, p+1, XATMI_SERVICE_NAME_LENGTH);
+        cvtfunc[XATMI_SERVICE_NAME_LENGTH] = 0;
+        *p=EOS;
+        
+        /* Verify that function is correct */
+        if (0==strcmp(cvtfunc, BUF_CVT_INCOMING_JSON2UBF_STR))
+        {
+            flags!=SYS_SRV_CVT_JSON2UBF;
+        }
+        else if (0!=strcmp(cvtfunc, BUF_CVT_INCOMING_UBF2JSON_STR))
+        {
+            flags!=SYS_SRV_CVT_UBF2JSON;
+        }
+        
+        if (0==flags)
+        {
+            NDRX_LOG(log_error, "Invalid automatic buffer conversion function (%s)!", 
+                    cvtfunc);
+            FAIL_OUT(ret);    
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid argument for -x (%s) missing `:'", arg);
+        FAIL_OUT(ret);
+    }
+    
+    p = strtok(arg, ",");
+    while (NULL!=p)
+    {
+        /* allocate memory for entry */
+        if ( (entry = (xbufcvt_entry_t*)malloc(sizeof(xbufcvt_entry_t))) == NULL)
+        {
+                _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
+                                    sizeof(svc_entry_t));
+                return FAIL; /* <<< return FAIL! */
+        }
+
+        strncpy(entry->fn_nm, p, XATMI_SERVICE_NAME_LENGTH);
+        entry->xcvtflags = flags;
+        
+        
+        NDRX_LOG(log_debug, "Added have automatic convert option [%s] "
+                "for function [%s] (-x)", cvtfunc, entry->fn_nm);
+        
+        HASH_ADD_STR( G_server_conf.xbufcvt_tab, fn_nm, entry );
+        
+        p = strtok(NULL, ",");
+    }
+    
+out:
+    return ret;
+}
+
 
 /**
  * Internal initialization.
@@ -141,7 +233,7 @@ int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:N--")) != FAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:N--")) != FAIL)
     {
         switch(c)
         {
@@ -151,6 +243,9 @@ int ndrx_init(int argc, char** argv)
                 break;
             case 's':
                 ret=parse_svc_arg(optarg);
+                break;
+            case 'x':
+                ret=parse_xcvt_arg(optarg);
                 break;
             case 'D': /* Not used. */
                 dbglev = atoi(optarg);

@@ -96,35 +96,6 @@ private removed_svcs_t * find_removed_entry(char *svc)
 }
 
 /**
- * Send error reply back to originator.
- */
-private void ndrxd_reply_with_failure(tp_command_call_t *tp_call, long flags)
-{
-    int ret=SUCCEED;
-    char fn[] = "ndrxd_reply_with_failure";
-    tp_command_call_t call;
-
-    NDRX_LOG(log_warn, "Replying  back to [%s] with TPESVCERR, on behalf of: [%s]", 
-            tp_call->reply_to, G_command_state.listenq_str);
-    
-    memset(&call, 0, sizeof(call));
-    call.cd = tp_call->cd;
-    call.timestamp = tp_call->timestamp;
-    call.callseq = tp_call->callseq;
-    /* Give some info which server replied */
-    strcpy(call.reply_to, G_command_state.listenq_str);
-    call.sysflags |=SYS_FLAG_REPLY_ERROR;
-    /* Generate no entry, because we removed the queue
-     * yeah, it might be too late for TPNOENT, but this is real error */
-    call.rcode = TPENOENT;
-
-    if (SUCCEED!=(ret=generic_q_send(tp_call->reply_to, (char *)&call, sizeof(call), flags)))
-    {
-        NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", fn, strerror(ret));
-    }
-}
-
-/**
  * Firstly we should open the Q.
  * Then reply with bad response to all msgs, then unlink it.
  * So firstly we try to get semaphore...
@@ -175,7 +146,8 @@ public int remove_service_q(char *svc)
          */
         if (ATMI_COMMAND_TPCALL==gen_command->command_id)
         {
-            ndrxd_reply_with_failure((tp_command_call_t *)gen_command, TPNOBLOCK);
+            ndrx_reply_with_failure((tp_command_call_t *)gen_command, 
+                    TPNOBLOCK, TPENOENT, G_command_state.listenq_str);
         }
         else
         {

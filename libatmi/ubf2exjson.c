@@ -45,6 +45,7 @@
 #include <ubf2exjson.h>
 #include <ubf.h>
 #include <atmi_int.h>
+#include <typed_buf.h>
 
 
 /*------------------------------Externs---------------------------------------*/
@@ -122,197 +123,197 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
 
         switch ((f_type=exjson_value_get_type(exjson_object_nget_value_n(root_object, i))))
         {
-                case EXJSONString:
+            case EXJSONString:
+            {
+                BFLDLEN str_len;
+                s_ptr = str_val = (char *)exjson_object_get_string_n(root_object, i);
+                NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
+
+                /* If it is carray - parse hex... */
+                if (IS_BIN(fid))
                 {
-                    BFLDLEN str_len;
-                    s_ptr = str_val = (char *)exjson_object_get_string_n(root_object, i);
-                    NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
+                    size_t st_len;
+                    NDRX_LOG(log_debug, "Field is binary..."
+                            " convert from b64...");
 
-                    /* If it is carray - parse hex... */
-                    if (IS_BIN(fid))
+                    if (NULL==atmi_base64_decode(str_val,
+                            strlen(str_val),
+                            &st_len,
+                            bin_buf))
                     {
-                        size_t st_len;
-                        NDRX_LOG(log_debug, "Field is binary..."
-                                " convert from b64...");
-
-                        if (NULL==atmi_base64_decode(str_val,
-                                strlen(str_val),
-                                &st_len,
-                                bin_buf))
-                        {
-                            NDRX_LOG(log_debug, "Failed to "
-                                    "decode base64!");
-                            FAIL_OUT(ret);
-                        }
-                        str_len = st_len;
-                        s_ptr = bin_buf;
-                        NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                        NDRX_LOG(log_debug, "Failed to "
+                                "decode base64!");
+                        FAIL_OUT(ret);
                     }
-                    else
-                    {
-                        str_len = strlen(s_ptr);
-                    }
+                    str_len = st_len;
+                    s_ptr = bin_buf;
+                    NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                }
+                else
+                {
+                    str_len = strlen(s_ptr);
+                }
 
-                    if (SUCCEED!=CBchg(p_ub, fid, 0, s_ptr, str_len, BFLD_CARRAY))
+                if (SUCCEED!=CBchg(p_ub, fid, 0, s_ptr, str_len, BFLD_CARRAY))
+                {
+                    ret=FAIL;
+                    goto out;
+                }
+                break;
+            }
+            case EXJSONNumber:
+            {
+                long l;
+                d_val = exjson_object_get_number_n(root_object, i);
+                NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
+
+                if (IS_INT(fid))
+                {
+                    l = round_long(d_val);
+                    if (SUCCEED!=CBchg(p_ub, fid, 0, 
+                            (char *)&l, 0L, BFLD_LONG))
                     {
+                        NDRX_LOG(log_error, "Failed to set [%s] to [%ld]!", 
+                        name, l);
                         ret=FAIL;
                         goto out;
                     }
+                }
+                else if (SUCCEED!=CBchg(p_ub, fid, 0, (char *)&d_val, 0L, BFLD_DOUBLE))
+                {
+                    NDRX_LOG(log_error, "Failed to set [%s] to [%lf]!", 
+                            name, d_val);
+                    ret=FAIL;
+                    goto out;
+                }
+            }
                     break;
-                }
-                case EXJSONNumber:
+            case EXJSONBoolean:
+            {
+                bool_val = (short)exjson_object_get_boolean_n(root_object, i);
+                NDRX_LOG(log_debug, "Bool Value: [%hd]", bool_val);
+                if (SUCCEED!=CBchg(p_ub, fid, 0, (char *)&bool_val, 0L, BFLD_SHORT))
                 {
-                    long l;
-                    d_val = exjson_object_get_number_n(root_object, i);
-                    NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
-
-                    if (IS_INT(fid))
-                    {
-                        l = round_long(d_val);
-                        if (SUCCEED!=CBchg(p_ub, fid, 0, 
-                                (char *)&l, 0L, BFLD_LONG))
-                        {
-                            NDRX_LOG(log_error, "Failed to set [%s] to [%ld]!", 
-                            name, l);
-                            ret=FAIL;
-                            goto out;
-                        }
-                    }
-                    else if (SUCCEED!=CBchg(p_ub, fid, 0, (char *)&d_val, 0L, BFLD_DOUBLE))
-                    {
-                        NDRX_LOG(log_error, "Failed to set [%s] to [%lf]!", 
-                                name, d_val);
-                        ret=FAIL;
-                        goto out;
-                    }
+                    NDRX_LOG(log_error, "Failed to set [%s] to [%hd]!", 
+                            name, bool_val);
+                    ret=FAIL;
+                    goto out;
                 }
+            }
+            break;
+            /* Fielded buffer fields with more than one occurrance will go to array: 
+             * Stuff here is almost identicial to above!
+             */
+            case EXJSONArray:
+            {
+                if (NULL==(array_val = exjson_value_get_array(
+                        exjson_object_nget_value_n(root_object, i))))
+                {
+                    NDRX_LOG(log_error, "Failed to get array object!");
+                    ret=FAIL;
+                    goto out;
+                }
+                arr_cnt = exjson_array_get_count(array_val);
+
+                for (j = 0; j<arr_cnt; j++ )
+                {
+                    switch (f_type = exjson_value_get_type(
+                            exjson_array_get_value(array_val, j)))
+                    {
+                        case EXJSONString:
+                        {
+                            BFLDLEN str_len;
+                            s_ptr = str_val = (char *)exjson_array_get_string(array_val, j);
+                            NDRX_LOG(log_debug, 
+                                        "Array j=%d, Str Value: [%s]", j, str_val);
+
+                            /* If it is carray - parse hex... */
+                            if (IS_BIN(fid))
+                            {
+                                size_t st_len;
+                                if (NULL==atmi_base64_decode(str_val,
+                                        strlen(str_val),
+                                        &st_len,
+                                        bin_buf))
+                                {
+                                    NDRX_LOG(log_debug, "Failed to "
+                                            "decode base64!");
+                                    FAIL_OUT(ret);
+                                }
+                                str_len = st_len;
+                                s_ptr = bin_buf;
+                                NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                            }
+                            else
+                            {
+                                str_len = strlen(s_ptr);
+                            }
+
+                            if (SUCCEED!=CBchg(p_ub, fid, j, s_ptr, str_len, BFLD_CARRAY))
+                            {
+                                NDRX_LOG(log_error, "Failed to set [%s] to [%s]!", 
+                                        name, str_val);
+                                ret=FAIL;
+                                goto out;
+                            }
+                        }
                         break;
-                case EXJSONBoolean:
-                {
-                    bool_val = (short)exjson_object_get_boolean_n(root_object, i);
-                    NDRX_LOG(log_debug, "Bool Value: [%hd]", bool_val);
-                    if (SUCCEED!=CBchg(p_ub, fid, 0, (char *)&bool_val, 0L, BFLD_SHORT))
-                    {
-                        NDRX_LOG(log_error, "Failed to set [%s] to [%hd]!", 
-                                name, bool_val);
-                        ret=FAIL;
-                        goto out;
-                    }
-                }
-                break;
-                /* Fielded buffer fields with more than one occurrance will go to array: 
-                 * Stuff here is almost identicial to above!
-                 */
-                case EXJSONArray:
-                {
-                    if (NULL==(array_val = exjson_value_get_array(
-                            exjson_object_nget_value_n(root_object, i))))
-                    {
-                        NDRX_LOG(log_error, "Failed to get array object!");
-                        ret=FAIL;
-                        goto out;
-                    }
-                    arr_cnt = exjson_array_get_count(array_val);
-
-                    for (j = 0; j<arr_cnt; j++ )
-                    {
-                        switch (f_type = exjson_value_get_type(
-                                exjson_array_get_value(array_val, j)))
+                        case EXJSONNumber:
                         {
-                            case EXJSONString:
+                            long l;
+                            d_val = exjson_array_get_number(array_val, j);
+                            NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
+
+                            if (IS_INT(fid))
                             {
-                                BFLDLEN str_len;
-                                s_ptr = str_val = (char *)exjson_array_get_string(array_val, j);
-                                NDRX_LOG(log_debug, 
-                                            "Array j=%d, Str Value: [%s]", j, str_val);
-
-                                /* If it is carray - parse hex... */
-                                if (IS_BIN(fid))
+                                l = round_long(d_val);
+                                NDRX_LOG(log_debug, "Array j=%d, Long value: [%ld]", j, l);
+                                if (SUCCEED!=CBchg(p_ub, fid, j, 
+                                        (char *)&l, 0L, BFLD_LONG))
                                 {
-                                    size_t st_len;
-                                    if (NULL==atmi_base64_decode(str_val,
-                                            strlen(str_val),
-                                            &st_len,
-                                            bin_buf))
-                                    {
-                                        NDRX_LOG(log_debug, "Failed to "
-                                                "decode base64!");
-                                        FAIL_OUT(ret);
-                                    }
-                                    str_len = st_len;
-                                    s_ptr = bin_buf;
-                                    NDRX_LOG(log_error, "got binary len [%d]", str_len);
-                                }
-                                else
-                                {
-                                    str_len = strlen(s_ptr);
-                                }
-
-                                if (SUCCEED!=CBchg(p_ub, fid, j, s_ptr, str_len, BFLD_CARRAY))
-                                {
-                                    NDRX_LOG(log_error, "Failed to set [%s] to [%s]!", 
-                                            name, str_val);
-                                    ret=FAIL;
-                                    goto out;
+                                        NDRX_LOG(log_error, "Failed to set [%s] to [%ld]!", 
+                                                name, l);
+                                        ret=FAIL;
+                                        goto out;
                                 }
                             }
-                            break;
-                            case EXJSONNumber:
+                            else if (SUCCEED!=CBchg(p_ub, fid, j, 
+                                    (char *)&d_val, 0L, BFLD_DOUBLE))
                             {
-                                long l;
-                                d_val = exjson_array_get_number(array_val, j);
-                                NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
-
-                                if (IS_INT(fid))
-                                {
-                                    l = round_long(d_val);
-                                    NDRX_LOG(log_debug, "Array j=%d, Long value: [%ld]", j, l);
-                                    if (SUCCEED!=CBchg(p_ub, fid, j, 
-                                            (char *)&l, 0L, BFLD_LONG))
-                                    {
-                                            NDRX_LOG(log_error, "Failed to set [%s] to [%ld]!", 
-                                                    name, l);
-                                            ret=FAIL;
-                                            goto out;
-                                    }
-                                }
-                                else if (SUCCEED!=CBchg(p_ub, fid, j, 
-                                        (char *)&d_val, 0L, BFLD_DOUBLE))
-                                {
-                                    NDRX_LOG(log_error, "Failed to set [%s] to [%lf]!", 
-                                            name, d_val);
-                                    ret=FAIL;
-                                    goto out;
-                                }
+                                NDRX_LOG(log_error, "Failed to set [%s] to [%lf]!", 
+                                        name, d_val);
+                                ret=FAIL;
+                                goto out;
                             }
-                            break;
-                            case EXJSONBoolean:
-                            {
-                                bool_val = (short)exjson_array_get_boolean(array_val, j);
-                                NDRX_LOG(log_debug, "Array j=%d, Bool Value: [%hd]", j, bool_val);
-                                if (SUCCEED!=CBchg(p_ub, fid, j, (char *)&bool_val, 0L, BFLD_SHORT))
-                                {
-                                    NDRX_LOG(log_error, "Failed to set [%s] to [%hd]!", 
-                                            name, bool_val);
-                                    ret=FAIL;
-                                    goto out;
-                                }
-                            }
-                            default:
-                                NDRX_LOG(log_error, 
-                                            "Unsupported array elem "
-                                            "type: %d", f_type);							
-                            break;
                         }
+                        break;
+                        case EXJSONBoolean:
+                        {
+                            bool_val = (short)exjson_array_get_boolean(array_val, j);
+                            NDRX_LOG(log_debug, "Array j=%d, Bool Value: [%hd]", j, bool_val);
+                            if (SUCCEED!=CBchg(p_ub, fid, j, (char *)&bool_val, 0L, BFLD_SHORT))
+                            {
+                                NDRX_LOG(log_error, "Failed to set [%s] to [%hd]!", 
+                                        name, bool_val);
+                                ret=FAIL;
+                                goto out;
+                            }
+                        }
+                        default:
+                            NDRX_LOG(log_error, 
+                                        "Unsupported array elem "
+                                        "type: %d", f_type);							
+                        break;
                     }
+                }
 
-                }
-                break;
-                default:
-                {
-                        NDRX_LOG(log_error, "Unsupported type: %d", f_type);
-                }
-                break;
+            }
+            break;
+            default:
+            {
+                    NDRX_LOG(log_error, "Unsupported type: %d", f_type);
+            }
+            break;
 
         }
     }
@@ -472,8 +473,8 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
             {
                 if (EXJSONSuccess!=exjson_object_set_string(root_object, nm, s_ptr))
                 {
-                        NDRX_LOG(log_error, "Failed to set [%s] value to [%s]!",
-                                        nm, s_ptr);
+                    NDRX_LOG(log_error, "Failed to set [%s] value to [%s]!",
+                                    nm, s_ptr);
                 }
             }
         }
@@ -499,13 +500,130 @@ out:
 
     if (NULL!=serialized_string)
     {
-            exjson_free_serialized_string(serialized_string);
+        exjson_free_serialized_string(serialized_string);
     }
 
     if (NULL!=root_value)
     {
-            exjson_value_free(root_value);
+        exjson_value_free(root_value);
     }
+    return ret;
+}
+
+/**
+ * auto-buffer convert func. json->ubf
+ * @param buffer
+ * @return 
+ */
+public int typed_xcvt_json2ubf(buffer_obj_t **buffer)
+{
+    int ret = SUCCEED;
+    buffer_obj_t *tmp_b;
+    /* Allocate the max UBF buffer */
+    UBFH * tmp = NULL;
+    UBFH * newbuf_out = NULL; /* real output buffer */
+
+    if (NULL==(tmp = (UBFH *)tpalloc("UBF", NULL, ATMI_MSG_MAX_SIZE)))
+    {
+        NDRX_LOG(log_error, "failed to convert JSON->UBF. UBF buffer alloc fail!");
+        FAIL_OUT(ret);
+    }
+
+    /* Do the convert */
+    if (SUCCEED!=_tpjsontoubf(tmp, (*buffer)->buf))
+    {
+        tpfree((char *)tmp);
+        NDRX_LOG(log_error, "Failed to convert JSON->UBF!");
+        FAIL_OUT(ret);
+    }
+
+    /* Shrink the buffer (by reallocating) new! 
+     * we will do the shrink because, msg Q might not have settings set for
+     * max buffer size...
+     */
+    if (NULL==(newbuf_out = (UBFH *)tpalloc("UBF", NULL, Bused(tmp))))
+    {
+        tpfree((char *)tmp);
+        NDRX_LOG(log_error, "Failed to alloc output UBF %ld !", Bused(tmp));
+        FAIL_OUT(ret);
+    }
+
+    if (SUCCEED!=Bcpy(newbuf_out, tmp))
+    {
+        tpfree((char *)tmp);
+        tpfree((char *)newbuf_out);
+
+        NDRX_LOG(log_error, "Failed to copy tmp UBF to output: %s !", Bstrerror(Berror));
+        FAIL_OUT(ret);
+
+    }
+
+    tmp_b=find_buffer((char *)newbuf_out);
+    tmp_b->autoalloc = (*buffer)->autoalloc;
+
+    /* Kill the buffers */
+    tpfree((*buffer)->buf);
+    tpfree((char *)tmp);
+
+    /* finally return the buffer */
+    NDRX_LOG(log_info, "Returning new buffer %p", tmp_b->buf);
+    *buffer = tmp_b;
+out:
+    return ret;
+}
+
+
+/**
+ * auto-buffer convert func. ubf->json
+ * @param buffer
+ * @return 
+ */
+public int typed_xcvt_ubf2json(buffer_obj_t **buffer)
+{
+    int ret = SUCCEED;
+    buffer_obj_t *tmp_b;
+    
+    char * tmp = NULL;
+    char * newbuf_out = NULL; /* real output buffer */
+
+    if (NULL==(tmp = tpalloc("JSON", NULL, ATMI_MSG_MAX_SIZE)))
+    {
+        NDRX_LOG(log_error, "failed to convert UBF->JSON. JSON buffer alloc fail!");
+        FAIL_OUT(ret);
+    }
+
+    /* Do the convert */
+    if (SUCCEED!=_tpubftojson((UBFH *)(*buffer)->buf, tmp, ATMI_MSG_MAX_SIZE))
+    {
+        tpfree((char *)tmp);
+        NDRX_LOG(log_error, "Failed to convert UBF->JSON!");
+        FAIL_OUT(ret);
+    }
+
+    /* Shrink the buffer (by reallocating) new! 
+     * we will do the shrink because, msg Q might not have settings set for
+     * max buffer size...
+     */
+    if (NULL==(newbuf_out = tpalloc("JSON", NULL, strlen(tmp)+1)))
+    {
+        tpfree((char *)tmp);
+        NDRX_LOG(log_error, "Failed to alloc output JSON %ld !", strlen(tmp)+1);
+        FAIL_OUT(ret);
+    }
+
+    strcpy(newbuf_out, tmp);
+
+    tmp_b=find_buffer((char *)newbuf_out);
+    tmp_b->autoalloc = (*buffer)->autoalloc;
+
+    /* Kill the buffers */
+    tpfree((*buffer)->buf);
+    tpfree((char *)tmp);
+
+    /* finally return the buffer */
+    NDRX_LOG(log_info, "Returning new buffer %p", tmp_b->buf);
+    *buffer = tmp_b;
+out:
     return ret;
 }
 

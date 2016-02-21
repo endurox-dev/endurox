@@ -422,6 +422,9 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
         strncpy(entry->svc_nm, svc_nm, XATMI_SERVICE_NAME_LENGTH);
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH]=EOS;
         strncpy(entry->fn_nm, fn_nm, XATMI_SERVICE_NAME_LENGTH);
+        /* At this point we need to check the convert flags... */
+        entry->xcvtflags = xcvt_lookup(entry->fn_nm);
+        
         entry->fn_nm[XATMI_SERVICE_NAME_LENGTH]=EOS;
         entry->p_func = p_func;
         entry->is_admin = 0;
