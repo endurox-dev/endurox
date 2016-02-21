@@ -153,7 +153,12 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
 {
     int ret=SUCCEED;
     char *fn = "ndrxd_sem_open";
-    int arg;
+    union semun 
+    {
+        int val;
+        struct semid_ds *buf;
+        ushort *array;
+    } arg;
 
     NDRX_LOG(log_debug, "%s enter", fn);
     /**
@@ -182,7 +187,9 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
     }
     
     /* Reset semaphore... */
-    arg = 0;
+    /*arg = 0;*/
+    memset(&arg, 0, sizeof(arg));
+   
     if (semctl(sem->semid, 0, SETVAL, arg) == -1) 
     {
         NDRX_LOG(log_error, "%s: Failed to reset to 0, key[%x], semid: %d: %s",
