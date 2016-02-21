@@ -78,7 +78,7 @@ Note for Centos/RHEL 7 you need to give execute permissions for rc.local:
 
 ==== System level dependencies - for Gentoo Linux
 ---------------------------------------------------------------------
-emerge -av indent asciidoc dblatex libxml2 fop cmake dia \
+emerge -av indent asciidoc dblatex libxml2 cmake dia \
 	flex bison zlib openssl app-crypt/gpgme dev-vcs/git
 ---------------------------------------------------------------------
 
