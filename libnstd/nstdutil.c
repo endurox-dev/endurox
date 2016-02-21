@@ -166,7 +166,7 @@ char *nstdutil_decode_num(long tt, int slot, int level, int levels)
 #define DEC_K  ((long)1000)
 #define DEC_M  ((long)1000*1000)
 #define DEC_B  ((long)1000*1000*1000)
-#define DEC_T  ((long)1000*1000*1000*1000)
+#define DEC_T  ((long long)1000*1000*1000*1000)
 
     
     level++;

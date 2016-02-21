@@ -63,9 +63,9 @@ char *decode_msec(long t, int slot, int level, int levels)
 #define DEC_HOUR        ((long)1000*60*60)
 #define DEC_DAY         ((long)1000*60*60*24)
 #define DEC_WEEK        ((long)1000*60*60*24*7)
-#define DEC_MONTH       ((long)1000*60*60*24*7*4)
-#define DEC_YEAR        ((long)1000*60*60*24*365)
-#define DEC_MILLENIUM     ((long)1000*60*60*24*365*1000)
+#define DEC_MONTH       ((long long)1000*60*60*24*7*4)
+#define DEC_YEAR        ((long long)1000*60*60*24*365)
+#define DEC_MILLENIUM     ((long long)1000*60*60*24*365*1000)
     
     level++;
     
@@ -111,14 +111,14 @@ char *decode_msec(long t, int slot, int level, int levels)
     }
     else if ((double)t/DEC_YEAR < 1.0) /* less than year */
     {
-        sprintf(tmp, "%ldM", t/DEC_MONTH);
+        sprintf(tmp, "%lldM", t/DEC_MONTH);
         
         if (level<levels)
             next_t = t%DEC_MONTH;
     }
     else if ((double)t/DEC_MILLENIUM < 1.0) /* less than 1000 years */
     {
-        sprintf(tmp, "%ldY", t/DEC_YEAR);
+        sprintf(tmp, "%lldY", t/DEC_YEAR);
         
         if (level<levels)
             next_t = t%DEC_YEAR;

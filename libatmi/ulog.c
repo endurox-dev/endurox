@@ -109,7 +109,7 @@ public int userlog (char *data, ...)
     
     sprintf(pre, "%5ld:%08ld:%06ld%02ld:%-12.12s:",
             (long)pid, ldate, ltime,
-                    time_val.tv_usec/10000, __progname);
+                    (long)time_val.tv_usec/10000, __progname);
 
     va_start(ap, data);
     fputs(pre, output);
