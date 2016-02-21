@@ -311,7 +311,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
             break;
             default:
             {
-                    NDRX_LOG(log_error, "Unsupported type: %d", f_type);
+                NDRX_LOG(log_error, "Unsupported type: %d", f_type);
             }
             break;
 
@@ -494,8 +494,6 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
         FAIL_OUT(ret);
     }
 
-
-
 out:
 
     if (NULL!=serialized_string)
@@ -566,7 +564,7 @@ public int typed_xcvt_json2ubf(buffer_obj_t **buffer)
     tpfree((char *)tmp);
 
     /* finally return the buffer */
-    NDRX_LOG(log_info, "Returning new buffer %p", tmp_b->buf);
+    NDRX_LOG(log_info, "Returning new buffer %p", tmp_b);
     *buffer = tmp_b;
 out:
     return ret;

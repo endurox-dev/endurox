@@ -171,6 +171,11 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
                     call->rcode = TPESVCERR;
                     ret=FAIL;
                 }
+                else
+                {
+                    data = buffer_info->buf;
+                    /* Assume that length not used for self describing buffers */
+                }
             }
             
             if (FAIL!=ret)

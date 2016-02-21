@@ -1,6 +1,5 @@
 ## 
-## Enduro Execution platform's ATMI library/ies tests
-## Using Cgreen framework for tests.
+## Tests for JSON buffer testing
 ##
 ## @file CMakeLists.txt
 ## 
@@ -37,38 +36,27 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest)
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Sub Tests
-add_subdirectory (test001_basiccall)
-add_subdirectory (test002_basicforward)
-add_subdirectory (test003_basicconvers)
-add_subdirectory (test004_basicevent)
-add_subdirectory (test005_convconfload)
-add_subdirectory (test006_ulog)
-add_subdirectory (test007_advertise)
-add_subdirectory (test008_extensions)
-add_subdirectory (test009_srvdie)
-add_subdirectory (test010_strtracecond)
-add_subdirectory (test011_tout)
-add_subdirectory (test012_admqfull)
-add_subdirectory (test013_procnorsp)
-add_subdirectory (test015_threads)
-add_subdirectory (test017_srvthread)
-add_subdirectory (test018_tpacalltout)
-add_subdirectory (test021_xafull)
-add_subdirectory (test022_typedstring)
-add_subdirectory (test023_typedcarray)
-add_subdirectory (test024_json)
-add_subdirectory (test026_typedjson)
+############################# Test - executables ###############################
+add_executable (atmisv26 atmisv26.c)
+add_executable (atmiclt26 atmiclt26.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmisv26  atmisrv atmi ubf nstd m rt dl)
+target_link_libraries (atmiclt26 atmiclt atmi ubf nstd m rt dl)
+
+set_target_properties(atmisv26 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt26 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 ################################################################################
-# Master test case driver
-add_executable (atmiunit1 atmiunit1.c test_server.c)
-################################################################################
-# Master test case driver
-target_link_libraries (atmiunit1 ubf cgreen m nstd rt)
-set_target_properties(atmiunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-

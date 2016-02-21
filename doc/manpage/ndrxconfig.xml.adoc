@@ -204,6 +204,14 @@ DEBUG CONFIGURATION FILE SYNTAX
 	There are few internal params: param '-k' is just a random key
 	for shell scripts. Another internal param is Server ID which is automatically passed
 	to binary via '-i SERVER_ID'.
+        Enduro/X supports automatic buffer conversion for ATMI servers. 
+        Currently supported modes are 'JSON2UBF', 'UBF2JSON', these modes are activated 
+        by -x paramter in system options. These modes are passed for server functions 
+        being advertised. For example if we have service *functions* (not services) 
+        UBF1FUNC, UBF2FUNC and JSONFUNC and we want to ensure that these receive
+        converted messages even if caller to UBF service sends JSON and vice versa, then 
+        following options might be set to command line:
+        '-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON'.
 *ATMI_SERVER_APPLICATION_OPTIONS*::
 	Application specific command line options. This follows content after sys options as:
 	'system options -- app options'.

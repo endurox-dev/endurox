@@ -151,11 +151,11 @@ int parse_xcvt_arg(char *arg)
         /* Verify that function is correct */
         if (0==strcmp(cvtfunc, BUF_CVT_INCOMING_JSON2UBF_STR))
         {
-            flags!=SYS_SRV_CVT_JSON2UBF;
+            flags|=SYS_SRV_CVT_JSON2UBF;
         }
-        else if (0!=strcmp(cvtfunc, BUF_CVT_INCOMING_UBF2JSON_STR))
+        else if (0==strcmp(cvtfunc, BUF_CVT_INCOMING_UBF2JSON_STR))
         {
-            flags!=SYS_SRV_CVT_UBF2JSON;
+            flags|=SYS_SRV_CVT_UBF2JSON;
         }
         
         if (0==flags)
