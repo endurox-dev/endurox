@@ -62,6 +62,13 @@ extern int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
 #define ATMI_SRV_Q_ADJUST           2           /* Adjustment for Q nr */
     
 #define ATMI_SRVLIB_NOLONGJUMP     0x00000001 /* Do not use long jump   */
+
+#ifndef EPOLLEXCLUSIVE
+
+#define EPOLLEXCLUSIVE (1 << 28)
+
+#endif
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

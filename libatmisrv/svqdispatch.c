@@ -165,7 +165,7 @@ public int sv_open_queue(void)
 
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
-        ev.events = EPOLLIN | EPOLLERR;
+        ev.events = EPOLLIN | EPOLLERR | EPOLLEXCLUSIVE;
         ev.data.fd = G_server_conf.service_array[i]->q_descr;
         /*NDRX_LOG(log_debug, "fd %d == entry %d", ev.data.fd,  ev.data.u64);*/
         /*ev.data.u32 = i;*/
