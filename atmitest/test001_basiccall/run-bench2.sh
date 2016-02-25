@@ -59,22 +59,10 @@ export NDRX_TOUT=3
 function set_dom1 {
     echo "Setting domain 1"
     . ../dom1.sh
-    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1-bench.xml
-    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
-    export NDRX_LOG=$TESTDIR/ndrx-dom1.log
-    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
-}
-
-#
-# Domain 2 - here server will live
-#
-function set_dom2 {
-    echo "Setting domain 2"
-    . ../dom2.sh    
-    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2-bench.xml
-    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom2.log
-    export NDRX_LOG=$TESTDIR/ndrx-dom2.log
-    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom2.conf
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-bench2.xml
+    export NDRX_DMNLOG=$TESTDIR/ndrxd-bench2.log
+    export NDRX_LOG=$TESTDIR/ndrx-bench2.log
+    export NDRX_DEBUG_CONF=$TESTDIR/debug-bench2.conf
 }
 
 #
@@ -84,10 +72,6 @@ function go_out {
     echo "Test exiting with: $1"
     
     set_dom1;
-    xadmin stop -y
-    xadmin down -y
-
-    set_dom2;
     xadmin stop -y
     xadmin down -y
 
@@ -107,11 +91,7 @@ function print_domains {
     xadmin ppm
     xadmin psvc
     xadmin psc
-
-    set_dom2;
-    xadmin ppm
-    xadmin psvc
-    xadmin psc
+    xadmin pc
 
 }
 
@@ -122,57 +102,10 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
-set_dom2;
-xadmin down -y
-xadmin start -y || go_out 2
-
-#exit 0
-
-# Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 20
-
 print_domains;
 
-# Go to domain 1
-set_dom1;
-
-# Run the client test...
-echo "Will issue calls to clients:"
-sleep 1
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_1.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_2.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_3.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_4.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_5.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_6.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_7.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_8.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_9.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_10.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_11.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_12.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_13.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_14.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_15.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_16.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_17.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_18.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_19.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_20.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_21.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_22.log &
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_23.log &
-ps -ef | grep atmiclt1 | grep -v grep | wc
-(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1-dom1_24.log 
-
-#sleep 5 # let other to complete... (sync..)
-RETP=`ps -ef | grep atmiclt1 | grep -v grep`
-while [[ "X$RETP" != "X" ]]; do
-    RETP=`ps -ef | grep atmiclt1 | grep -v grep`
-done 
-
-RET=$?
-
+# Assume test will last 60 sec...
+sleep 60
 
 grep "Performance" atmiclt1-dom1*.log
 

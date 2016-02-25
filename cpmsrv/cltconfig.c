@@ -349,6 +349,9 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             nstdutil_str_env_subs(p_cltproc->stat.command_line);
             /* TODO: We should have length specifier here (so that we do not overrun the mem): */
             nstdutil_str_env_subs(p_cltproc->stat.env);
+            /* Expand the logfile path... */
+            nstdutil_str_env_subs(p_cltproc->stat.log_stdout);
+            nstdutil_str_env_subs(p_cltproc->stat.log_stderr);
             
             /* add to hash list */
             cpm_get_key(p_cltproc->key, p_cltproc->tag, p_cltproc->subsect);

@@ -1,0 +1,105 @@
+<?xml version="1.0" ?>
+<endurox>
+	<appconfig>
+		<!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
+		<!-- Sanity check time, sec -->
+		<sanity>15</sanity>
+		<!-- If process have been state changed to other than dead, exit or not running
+		but PID of program does not exists in system, then send internel message, then 
+		program have been stopped.
+		In Seconds.
+		-->
+		<checkpm>5</checkpm>
+		<!--  <sanity> timer, end -->
+
+		<!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
+		<!-- Do dead process restart every X seconds -->
+		<respawncheck>10</respawncheck>
+		<!-- Do process reset after 1 sec -->
+		<restart_min>1</restart_min>
+		<!-- If restart fails, then boot after +5 sec of previous wait time -->
+		<restart_step>10</restart_step>
+		<!-- If still not started, then max boot time is a 30 sec. -->
+		<restart_max>30</restart_max>
+		<!--  <sanity> timer, end -->
+
+		<!-- Time after attach when program will start do sanity & respawn checks,
+		starts counting after configuration load -->
+		<restart_to_check>20</restart_to_check>
+	</appconfig>
+	<defaults>
+		<min>1</min>
+		<max>1</max>
+		<autokill>1</autokill>
+		<!-- Do not need respawning! -->
+		<respawn>0</respawn>
+		<!-- The maximum time while process can hang in 'starting' state i.e.
+		have not completed initialization, sec -->
+		<start_max>20</start_max>
+		<!--
+		Ping server in every X seconds (minimum step is <sanity>).
+		-->
+		<pingtime>9</pingtime>
+		<!--
+		Max time in seconds in which server must respond.
+		The granularity is sanity time.
+		-->
+		<ping_max>40</ping_max>
+		<!--
+		Max time to wait until process should exit on shutdown
+		-->
+		<end_max>30</end_max>
+		<!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+		to process until it have been terminated. -->
+		<killtime>20</killtime>
+	</defaults>
+	<servers>
+            <server name="atmi.sv1">
+                    <srvid>10</srvid>
+                    <min>100</min>
+                    <max>100</max>
+                    <sysopt>-e ${TESTDIR}/atmisv.log -r</sysopt>
+            </server>
+            <server name="cpmsrv">
+                    <srvid>9999</srvid>
+                    <sysopt>-e ${TESTDIR}/cpmsrv.log -r -- -k10 -i5</sysopt>
+            </server>
+	</servers>
+        <clients>
+                <!--Test parameter passing to process -->
+                <client cmdline="./atmiclt1 s :1:8:">
+                    <exec tag="1" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="2" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="3" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="4" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="5" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="6" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="7" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="8" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="9" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="10" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="11" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="12" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="13" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="14" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="15" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="16" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="17" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="18" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="19" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="20" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="21" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="22" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="23" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="24" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="25" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="26" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="27" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="28" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="29" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                    <exec tag="30" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                </client>
+                <!-- start the benchmark... -->
+                <client cmdline="./start.sh" autostart="Y"> <exec tag="START" /> </client>
+        </clients>
+</endurox>

@@ -54,19 +54,17 @@
 		<killtime>20</killtime>
 	</defaults>
 	<servers>
-		<server name="atmi.sv1">
-			<srvid>10</srvid>
-			<min>10</min>
-			<max>10</max>
-			<sysopt>-e ${TESTDIR}/atmisv.log -r</sysopt>
-		</server>
-        
-        <server name="tpbridge">
-            <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-n1 -r -i 0.0.0.0 -p 44001 -tP -z30</appopt>
-        </server>
-        
+            <server name="atmi.sv1">
+                    <srvid>10</srvid>
+                    <min>10</min>
+                    <max>10</max>
+                    <sysopt>-e ${TESTDIR}/atmisv.log -r</sysopt>
+            </server>
+            <server name="tpbridge">
+                <max>1</max>
+                <srvid>101</srvid>
+                <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
+                <appopt>-n1 -r -i 0.0.0.0 -p 44001 -tP -z30</appopt>
+            </server>
 	</servers>
 </endurox>

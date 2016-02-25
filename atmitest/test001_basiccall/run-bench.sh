@@ -69,31 +69,36 @@ rm *.log
 (./atmi.sv1 -t10 -i 125 2>&1) > ./atmisv1.log &
 (./atmi.sv1 -t10 -i 125 2>&1) > ./atmisv1.log &
 sleep 1
-(./atmiclt1 2>&1) > ./atmiclt1_1.log &
-(./atmiclt1 2>&1) > ./atmiclt1_2.log &
-(./atmiclt1 2>&1) > ./atmiclt1_3.log &
-(./atmiclt1 2>&1) > ./atmiclt1_4.log &
-(./atmiclt1 2>&1) > ./atmiclt1_5.log &
-(./atmiclt1 2>&1) > ./atmiclt1_6.log &
-(./atmiclt1 2>&1) > ./atmiclt1_7.log &
-(./atmiclt1 2>&1) > ./atmiclt1_8.log &
-(./atmiclt1 2>&1) > ./atmiclt1_9.log &
-(./atmiclt1 2>&1) > ./atmiclt1_10.log &
-(./atmiclt1 2>&1) > ./atmiclt1_11.log &
-(./atmiclt1 2>&1) > ./atmiclt1_12.log &
-(./atmiclt1 2>&1) > ./atmiclt1_13.log &
-(./atmiclt1 2>&1) > ./atmiclt1_14.log &
-(./atmiclt1 2>&1) > ./atmiclt1_15.log &
-(./atmiclt1 2>&1) > ./atmiclt1_16.log &
-(./atmiclt1 2>&1) > ./atmiclt1_17.log &
-(./atmiclt1 2>&1) > ./atmiclt1_18.log &
-(./atmiclt1 2>&1) > ./atmiclt1_19.log &
-(./atmiclt1 2>&1) > ./atmiclt1_20.log &
-(./atmiclt1 2>&1) > ./atmiclt1_21.log &
-(./atmiclt1 2>&1) > ./atmiclt1_22.log &
-(./atmiclt1 2>&1) > ./atmiclt1_23.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_1.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_2.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_3.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_4.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_5.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_6.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_7.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_8.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_9.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_10.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_11.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_12.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_13.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_14.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_15.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_16.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_17.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_18.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_19.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_20.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_21.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_22.log &
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_23.log &
 ps -ef | grep atmiclt1 | grep -v grep | wc
-(./atmiclt1 2>&1) > ./atmiclt1_24.log 
+
+# Run off the tests...
+echo 1 > sync.log
+
+# keep the process for total sync...
+(./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_24.log 
 
 sleep 5 # let other to complete... (sync..)
 RETP=`ps -ef | grep atmiclt1 | grep -v grep`
