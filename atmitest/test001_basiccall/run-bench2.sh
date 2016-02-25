@@ -109,10 +109,11 @@ done=0
 
 while [[ $done -eq 0 ]]; do
     sleep 60
-    RES=`grep "Performance" bench2clt*`
+    RES=`grep "8KB Performance" bench2clt*`
     if [[ "X$RES" != "X" ]]; then
         # allow others to complete...
-        sleep 60
+        sleep 120
+        done=1
     fi
 done
 grep "Performance" bench2clt*
