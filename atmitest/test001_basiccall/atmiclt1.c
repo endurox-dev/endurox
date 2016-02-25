@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
 
     /* Do synchronization if needed...  */
-    if (argc>1 && argv[1][0]=='s')
+    if (argc>1 && (argv[1][0]=='s' || argv[1][0]=='S'))
     {
         printf("syncing...\n");
         do_sync();
@@ -97,6 +97,7 @@ int main(int argc, char** argv) {
     
     
     printf("syncing ok...\n");
+    fflush(stdout);
     
     if (argc>2)
     {
@@ -105,6 +106,7 @@ int main(int argc, char** argv) {
     
     
     printf("test mode [%s]\n", bench_mode);
+    fflush(stdout);
     
     if (strstr(bench_mode, ":0:"))
     {
@@ -253,6 +255,7 @@ int main(int argc, char** argv) {
                 d,
                 (d/1024)/1024, 
                 cps);
+        fflush(stdout);
     }
     /**************************************************************************/
     /* 8KB benchmark*/
@@ -294,9 +297,18 @@ int main(int argc, char** argv) {
                 d,
                 (d/1024)/1024, 
                 cps);
+        fflush(stdout);
     }
 out:
     tpterm();
+
+    if (argc>1 && argv[1][0]=='S')
+    {
+        printf("Test finished waiting for kill..");
+        fflush(stdout);
+        sleep(9999999);
+    }
+
     return ret;
 }
 

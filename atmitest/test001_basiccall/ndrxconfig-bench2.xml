@@ -67,8 +67,8 @@
 	</servers>
         <clients>
                 <!--Test parameter passing to process -->
-                <client cmdline="./atmiclt1 s :1:8:">
-                    <exec tag="1" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+                <client cmdline="./atmiclt1 S :1:8:">
+                    <exec tag="1" autostart="Y" stdout="bench2clt_1.log"/>
                     <exec tag="2" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="3" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="4" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
@@ -78,6 +78,7 @@
                     <exec tag="8" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="9" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="10" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+<!--
                     <exec tag="11" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="12" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="13" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
@@ -98,6 +99,7 @@
                     <exec tag="28" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="29" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
                     <exec tag="30" autostart="Y" log="bench2clt_${NDRX_CLTTAG}.log"/>
+-->
                 </client>
                 <!-- start the benchmark... -->
                 <client cmdline="./start.sh" autostart="Y"> <exec tag="START" /> </client>

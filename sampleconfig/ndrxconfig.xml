@@ -85,7 +85,7 @@
 			<srvid>300</srvid>
 			<min>1</min>
 			<max>1</max>
-			<sysopt>-e /tmp/TPEVSRV -r</sysopt>
+			<sysopt>-e /tmp/TPEVSRV -r -N -s@TPEVPOST </sysopt>
 		</server>
                 <!-- Default RM1 -->
 		<server name="tmsrv">
