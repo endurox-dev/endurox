@@ -11,4 +11,6 @@ Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for P
 
 - Binary builds (RPMs & DEBs) for various platforms are here: http://www.endurox.org/projects/endurox/files
 
+- Documentation available here: http://www.endurox.org/dokuwiki/doku.php
+
 PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to get Enduro/X running ;)
