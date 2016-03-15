@@ -1,0 +1,526 @@
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+   <title>Pscript Standard Library 3.0</title><link rel="stylesheet" href="pscript.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.62.4"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="d0e2"></a>Pscript Standard Library 3.0</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Alberto</span> <span class="surname">Demichelis</span></h3></div></div><div><p class="copyright">Copyright &copy; 2003-2015 Alberto Demichelis</p></div><div><div class="legalnotice"><p>
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+    </p><p>
+      The above copyright notice and this permission notice shall be included in
+      all copies or substantial portions of the Software.
+    </p><p>
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+      THE SOFTWARE.
+    </p></div></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#d0e24">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#d0e49">2. The Input/Output library</a></span></dt><dd><dl><dt><span class="sect1"><a href="#d0e56">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e59">Global symbols</a></span></dt><dt><span class="sect2"><a href="#d0e152">File class</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e473">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e476">Initialization</a></span></dt><dt><span class="sect2"><a href="#d0e526">File object</a></span></dt><dt><span class="sect2"><a href="#d0e647">Script loading and serialization</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#d0e841">3. The Blob library</a></span></dt><dd><dl><dt><span class="sect1"><a href="#d0e851">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e854">Global symbols</a></span></dt><dt><span class="sect2"><a href="#d0e947">The blob class</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e1314">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1317">Initialization</a></span></dt><dt><span class="sect2"><a href="#d0e1367">Blob object</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#d0e1530">4. The Math library</a></span></dt><dd><dl><dt><span class="sect1"><a href="#d0e1537">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1540">Global symbols</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e1877">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1880">Initialization</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#d0e1931">5. The System library</a></span></dt><dd><dl><dt><span class="sect1"><a href="#d0e1938">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1941">Global symbols</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e2119">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e2122">Initialization</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#d0e2173">6. The String library</a></span></dt><dd><dl><dt><span class="sect1"><a href="#d0e2180">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e2183">Global symbols</a></span></dt><dt><span class="sect2"><a href="#d0e2591">Regexp class</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e2699">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e2702">Initialization</a></span></dt><dt><span class="sect2"><a href="#d0e2752">Formatting</a></span></dt><dt><span class="sect2"><a href="#d0e2829">Regular Expessions</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#d0e3212">7. The Aux library</a></span></dt><dd><dl><dt><span class="sect1"><a href="#d0e3219">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e3222">Error handling</a></span></dt></dl></dd></dl></dd><dt><span class="index"><a href="#d0e3293">Index</a></span></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e24"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div><div></div></div><p>
+		The pscript standard libraries consist in a set of modules implemented in C++.
+		While are not essential for the language, they provide a set of useful services that are commonly
+		used by a wide range of applications(file I/O, regular expressions, etc...),
+		plus they offer a foundation for developing additional libraries.
+	</p><p>
+		All libraries are implemented through the pscript API and the ANSI C runtime library.
+		The modules are organized in the following way:
+		</p><div class="itemizedlist"><ul type="disc"><li><p> I/O : input and output </p></li><li><p> blob : binary buffers manipilation </p></li><li><p> math : basic mathematical routines </p></li><li><p> system : system access function </p></li><li><p> string : string formatting and manipulation </p></li></ul></div><p>
+		The libraries can be registered independently,except for the IO library that depends from the bloblib.
+	</p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e49"></a>Chapter&nbsp;2.&nbsp;The Input/Output library</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#d0e56">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e59">Global symbols</a></span></dt><dt><span class="sect2"><a href="#d0e152">File class</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e473">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e476">Initialization</a></span></dt><dt><span class="sect2"><a href="#d0e526">File object</a></span></dt><dt><span class="sect2"><a href="#d0e647">Script loading and serialization</a></span></dt></dl></dd></dl></div><a class="indexterm" name="d0e50"></a><p>
+			the input lib implements basic input/output routines.
+		</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e56"></a>Pscript API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e59"></a>Global symbols</h3></div></div><div></div></div><p><a class="indexterm" name="d0e63"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">dofile</b>(</code><var class="pdparam">path</var>, <var class="pdparam">[raiseerror]</var><code>)</code>;</p></div><p>
+					compiles a pscript script or loads a precompiled one and executes it.
+					returns the value returned by the script or null if no value is returned.
+					if the optional parameter 'raiseerror' is true, the compiler error handler is invoked
+					in case of a syntax error. If raiseerror is omitted or set to false, the compiler
+					error handler is not ivoked.
+					When pscript is compiled in unicode mode the function can handle different character ecodings,
+					UTF8 with and without prefix and UCS-2 prefixed(both big endian an little endian).
+					If the source stream is not prefixed UTF8 ecoding is used as default.
+					</p><p><a class="indexterm" name="d0e80"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">loadfile</b>(</code><var class="pdparam">path</var>, <var class="pdparam">[raiseerror]</var><code>)</code>;</p></div><p>
+					compiles a pscript script or loads a precompiled one an returns it as as function.
+					if the optional parameter 'raiseerror' is true, the compiler error handler is invoked
+					in case of a syntax error. If raiseerror is omitted or set to false, the compiler
+					error handler is not ivoked.
+					When pscript is compiled in unicode mode the function can handle different character ecodings,
+					UTF8 with and without prefix and UCS-2 prefixed(both big endian an little endian).
+					If the source stream is not prefixed UTF8 ecoding is used as default.
+					</p><p><a class="indexterm" name="d0e97"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">writeclosuretofile</b>(</code><var class="pdparam">destpath</var>, <var class="pdparam">closure</var><code>)</code>;</p></div><p>
+            serializes a closure to a bytecode file (destpath). The serialized file can be loaded 
+            using loadfile() and dofile().
+          </p><p><a class="indexterm" name="d0e114"></a><tt class="literal">stderr</tt></p><p>File object bound on the os <span class="emphasis"><em>standard error</em></span> stream</p><p><a class="indexterm" name="d0e127"></a><tt class="literal">stdin</tt></p><p>File object bound on the os <span class="emphasis"><em>standard input</em></span> stream</p><p><a class="indexterm" name="d0e140"></a><tt class="literal">stdout</tt></p><p>File object bound on the os <span class="emphasis"><em>standard output</em></span> stream</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e152"></a>File class</h3></div></div><div></div></div><p>
+					The file object implements a stream on a operating system file.
+          It's contructor imitate the behaviour of the C runtime function fopen for eg.
+ </p><pre class="programlisting">
+          
+local myfile = file("test.xxx","wb+");
+					
+        </pre><p>
+           creates a file with read/write access in the current directory.
+				</p><p><a class="indexterm" name="d0e161"></a><a class="indexterm" name="d0e164"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">close</b>(</code><code>)</code>;</p></div><p>closes the file</p><p><a class="indexterm" name="d0e179"></a><a class="indexterm" name="d0e182"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">eos</b>(</code><code>)</code>;</p></div><p>returns a non null value if the read/write pointer is at the end of the stream.</p><p><a class="indexterm" name="d0e197"></a><a class="indexterm" name="d0e200"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">flush</b>(</code><code>)</code>;</p></div><p>flushes the stream.return a value != null if succeded, otherwise returns null</p><p><a class="indexterm" name="d0e215"></a><a class="indexterm" name="d0e218"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">len</b>(</code><code>)</code>;</p></div><p>returns the lenght of the stream</p><p><a class="indexterm" name="d0e233"></a><a class="indexterm" name="d0e236"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">readblob</b>(</code><var class="pdparam">size</var><code>)</code>;</p></div><p>read n bytes from the stream and retuns them as blob</p><p><a class="indexterm" name="d0e253"></a><a class="indexterm" name="d0e256"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">readn</b>(</code><var class="pdparam">type</var><code>)</code>;</p></div><p>reads a number from the stream according to the type parameter. 
+					<i class="parameter"><tt>type</tt></i> can have the following values:
+					</p><table class="simplelist" border="0" summary="Simple list"><tr><td><tt class="literal">'i'</tt></td><td>32bits number</td><td>returns an integer</td></tr><tr><td><tt class="literal">'s'</tt></td><td>16bits signed integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'w'</tt></td><td>16bits unsigned integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'c'</tt></td><td>8bits signed integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'b'</tt></td><td>8bits unsigned integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'f'</tt></td><td>32bits float</td><td>returns an float</td></tr><tr><td><tt class="literal">'d'</tt></td><td>64bits float</td><td>returns an float</td></tr></table><p>
+				</p><p><a class="indexterm" name="d0e327"></a><a class="indexterm" name="d0e330"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">seek</b>(</code><var class="pdparam">seek</var>, <var class="pdparam">[origin]</var><code>)</code>;</p></div><p>
+					Moves the read/write pointer to a specified location.
+					<i class="parameter"><tt>offset</tt></i> indicates the number of bytes from <i class="parameter"><tt>origin</tt></i>.
+					<i class="parameter"><tt>origin</tt></i> can be <tt class="literal">'b'</tt> beginning of the stream,<tt class="literal">'c'</tt> current location or <tt class="literal">'e'</tt> end of the stream.
+					If origin is omitted the parameter is defaulted as 'b'(beginning of the stream).
+				</p><p><a class="indexterm" name="d0e367"></a><a class="indexterm" name="d0e370"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">tell</b>(</code><code>)</code>;</p></div><p>returns read/write pointer absolute position</p><p><a class="indexterm" name="d0e385"></a><a class="indexterm" name="d0e388"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">writeblob</b>(</code><var class="pdparam">blob</var><code>)</code>;</p></div><p>writes a blob in the stream</p><p><a class="indexterm" name="d0e405"></a><a class="indexterm" name="d0e408"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">writen</b>(</code><var class="pdparam">n</var>, <var class="pdparam">type</var><code>)</code>;</p></div><p>writes a number in the stream formatted according to the type parameter.
+				<i class="parameter"><tt>type</tt></i> can have the following values:
+					</p><table class="simplelist" border="0" summary="Simple list"><tr><td><tt class="literal">'l'</tt></td><td>processor dependent, 32bits on 32bits processors, 64bits on 64bits prcessors</td></tr><tr><td>returns an integer</td><td><tt class="literal">'i'</tt></td></tr><tr><td>32bits number</td><td><tt class="literal">'s'</tt></td></tr><tr><td>16bits signed integer</td><td><tt class="literal">'w'</tt></td></tr><tr><td>16bits unsigned integer</td><td><tt class="literal">'c'</tt></td></tr><tr><td>8bits signed integer</td><td><tt class="literal">'b'</tt></td></tr><tr><td>8bits unsigned integer</td><td><tt class="literal">'f'</tt></td></tr><tr><td>32bits float</td><td><tt class="literal">'d'</tt></td></tr><tr><td>64bits float</td><td>&nbsp;</td></tr></table><p>
+				</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e473"></a>C API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e476"></a>Initialization</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_register_iolib<a class="indexterm" name="d0e486"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_register_iolib</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					initialize and register the io library in the given VM. 
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+					The function aspects a table on top of the stack where to register the global
+					library functions.
+				</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e526"></a>File object</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_createfile<a class="indexterm" name="d0e536"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_createfile</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">PSFILE&nbsp;file</var>, <var class="pdparam">PSBool&nbsp;own</var><code>)</code>;</p></div><p>
+					creates a file object bound to the PSFILE passed as parameter
+					and pushes it in the stack
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSFILE&nbsp;file</tt></i></span></dt><dd><p>
+					the stream that will be rapresented by the file object
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSBool&nbsp;own</tt></i></span></dt><dd><p>
+					if different true the stream will be automatically closed
+					when the newly create file object is destroyed.
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_getfile<a class="indexterm" name="d0e595"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_getfile</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">PSInteger&nbsp;idx</var>, <var class="pdparam">PSFILE *&nbsp;file</var><code>)</code>;</p></div><p>
+					retrieve the pointer of a stream handle from an arbitrary
+					position in the stack.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger&nbsp;idx</tt></i></span></dt><dd><p>
+					and index in the stack
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSFILE *&nbsp;file</tt></i></span></dt><dd><p>
+					A pointer to a PSFILE handle that will store the result
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e647"></a>Script loading and serialization</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_loadfile<a class="indexterm" name="d0e657"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_loadfile</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">const PSChar *&nbsp;filename</var>, <var class="pdparam">PSBool&nbsp;printerror</var><code>)</code>;</p></div><p>
+					compiles a pscript script or loads a precompiled one an pushes it as closure in the stack.
+					When pscript is compiled in unicode mode the function can handle different character ecodings,
+					UTF8 with and without prefix and UCS-2 prefixed(both big endian an little endian).
+					If the source stream is not prefixed UTF8 ecoding is used as default.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;filename</tt></i></span></dt><dd><p>
+					path of the script that has to be loaded
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSBool&nbsp;printerror</tt></i></span></dt><dd><p>
+					if true the compiler error handler will be called if a error occurs.
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_dofile<a class="indexterm" name="d0e716"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_dofile</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">const PSChar *&nbsp;filename</var>, <var class="pdparam">PSBool&nbsp;retval</var>, <var class="pdparam">PSBool&nbsp;printerror</var><code>)</code>;</p></div><p>
+					Compiles a pscript script or loads a precompiled one and executes it.
+					Optionally pushes the return value of the executed script in the stack.
+					When pscript is compiled in unicode mode the function can handle different character ecodings,
+					UTF8 with and without prefix and UCS-2 prefixed(both big endian an little endian).
+					If the source stream is not prefixed UTF8 ecoding is used as default.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;filename</tt></i></span></dt><dd><p>
+					path of the script that has to be loaded
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSBool&nbsp;retval</tt></i></span></dt><dd><p>
+					if true the function will push the return value of the executed script
+					in the stack.
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSBool&nbsp;printerror</tt></i></span></dt><dd><p>
+					if true the compiler error handler will be called if a error occurs.
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+					the function aspects a table on top of the stack that will be used as 'this' for the
+					execution of the script. The 'this' parameter is left untouched in the stack.
+					
+				</p></dd><dt><span class="term">eg.</span></dt><dd><pre class="programlisting">
+ps_pushroottable(v); //push the root table(were the globals of the script will are stored)
+psstd_dofile(v, _SC("test.nut"), PSFalse, PSTrue);// also prints syntax errors if any 
+				</pre></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_writeclosuretofile<a class="indexterm" name="d0e797"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_writeclosuretofile</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">const PSChar *&nbsp;filename</var><code>)</code>;</p></div><p>
+					serializes the closure at the top position in the stack as bytecode in 
+					the file specified by the paremeter filename. If a file with the
+					same name already exists, it will be overwritten.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;filename</tt></i></span></dt><dd><p>
+					path of the script that has to be loaded
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd></dl></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e841"></a>Chapter&nbsp;3.&nbsp;The Blob library</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#d0e851">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e854">Global symbols</a></span></dt><dt><span class="sect2"><a href="#d0e947">The blob class</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e1314">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1317">Initialization</a></span></dt><dt><span class="sect2"><a href="#d0e1367">Blob object</a></span></dt></dl></dd></dl></div><a class="indexterm" name="d0e842"></a><p>
+			The blob library implements binary data manipulations routines. The library is
+			based on <tt class="literal">blob objects</tt> that rapresent a buffer of arbitrary
+			binary data.
+		</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e851"></a>Pscript API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e854"></a>Global symbols</h3></div></div><div></div></div><p><a class="indexterm" name="d0e858"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">blob</b>(</code><var class="pdparam">size</var><code>)</code>;</p></div><p>returns a new instance of a blob class of the specified size in bytes</p><p><a class="indexterm" name="d0e873"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">castf2i</b>(</code><var class="pdparam">f</var><code>)</code>;</p></div><p>casts a float to a int</p><p><a class="indexterm" name="d0e888"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">casti2f</b>(</code><var class="pdparam">n</var><code>)</code>;</p></div><p>casts a int to a float</p><p><a class="indexterm" name="d0e903"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">swap2</b>(</code><var class="pdparam">n</var><code>)</code>;</p></div><p>swap the byte order of a number (like it would be a 16bits integer)</p><p><a class="indexterm" name="d0e918"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">swap4</b>(</code><var class="pdparam">n</var><code>)</code>;</p></div><p>swap the byte order of an integer</p><p><a class="indexterm" name="d0e933"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">swapfloat</b>(</code><var class="pdparam">f</var><code>)</code>;</p></div><p>swaps the byteorder of a float</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e947"></a>The blob class</h3></div></div><div></div></div><p>
+					The blob object is a buffer of arbitrary binary data. The object behaves like
+					a file stream, it has a read/write pointer and it automatically grows if data
+					is written out of his boundary.<br>
+					A blob can also be accessed byte by byte through the <tt class="literal">[]</tt> operator.
+				</p><p><a class="indexterm" name="d0e958"></a><a class="indexterm" name="d0e961"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">eos</b>(</code><code>)</code>;</p></div><p>returns a non null value if the read/write pointer is at the end of the stream.</p><p><a class="indexterm" name="d0e976"></a><a class="indexterm" name="d0e979"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">flush</b>(</code><code>)</code>;</p></div><p>flushes the stream.return a value != null if succeded, otherwise returns null</p><p><a class="indexterm" name="d0e994"></a><a class="indexterm" name="d0e997"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">len</b>(</code><code>)</code>;</p></div><p>returns the lenght of the stream</p><p><a class="indexterm" name="d0e1012"></a><a class="indexterm" name="d0e1015"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">readblob</b>(</code><var class="pdparam">size</var><code>)</code>;</p></div><p>read n bytes from the stream and retuns them as blob</p><p><a class="indexterm" name="d0e1032"></a><a class="indexterm" name="d0e1035"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">readn</b>(</code><var class="pdparam">type</var><code>)</code>;</p></div><p>reads a number from the stream according to the type pameter. 
+					<i class="parameter"><tt>type</tt></i> can have the following values:
+					</p><table class="simplelist" border="0" summary="Simple list"><tr><td><tt class="literal">'l'</tt></td><td>processor dependent, 32bits on 32bits processors, 64bits on 64bits prcessors</td><td>returns an integer</td></tr><tr><td><tt class="literal">'i'</tt></td><td>32bits number</td><td>returns an integer</td></tr><tr><td><tt class="literal">'s'</tt></td><td>16bits signed integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'w'</tt></td><td>16bits unsigned integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'c'</tt></td><td>8bits signed integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'b'</tt></td><td>8bits unsigned integer</td><td>returns an integer</td></tr><tr><td><tt class="literal">'f'</tt></td><td>32bits float</td><td>returns an float</td></tr><tr><td><tt class="literal">'d'</tt></td><td>64bits float</td><td>returns an float</td></tr></table><p>
+				</p><p><a class="indexterm" name="d0e1113"></a><a class="indexterm" name="d0e1116"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">resize</b>(</code><var class="pdparam">size</var><code>)</code>;</p></div><p>resizes the blob to the specified <i class="parameter"><tt>size</tt></i></p><p><a class="indexterm" name="d0e1135"></a><a class="indexterm" name="d0e1138"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">seek</b>(</code><var class="pdparam">seek</var>, <var class="pdparam">[origin]</var><code>)</code>;</p></div><p>
+					Moves the read/write pointer to a specified location.
+					<i class="parameter"><tt>offset</tt></i> indicates the number of bytes from <i class="parameter"><tt>origin</tt></i>.
+					<i class="parameter"><tt>origin</tt></i> can be <tt class="literal">'b'</tt> beginning of the stream,<tt class="literal">'c'</tt> current location or <tt class="literal">'e'</tt> end of the stream.
+					If origin is omitted the parameter is defaulted as 'b'(beginning of the stream).
+				</p><p><a class="indexterm" name="d0e1175"></a><a class="indexterm" name="d0e1178"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">swap2</b>(</code><code>)</code>;</p></div><p>swaps the byte order of the blob content as it would be an array of <tt class="literal">16bits integers</tt></p><p><a class="indexterm" name="d0e1195"></a><a class="indexterm" name="d0e1198"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">swap4</b>(</code><code>)</code>;</p></div><p>swaps the byte order of the blob content as it would be an array of <tt class="literal">32bits integers</tt></p><p><a class="indexterm" name="d0e1215"></a><a class="indexterm" name="d0e1218"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">tell</b>(</code><code>)</code>;</p></div><p>returns read/write pointer absolute position</p><p><a class="indexterm" name="d0e1233"></a><a class="indexterm" name="d0e1236"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">writeblob</b>(</code><var class="pdparam">blob</var><code>)</code>;</p></div><p>writes a blob in the stream</p><p><a class="indexterm" name="d0e1253"></a><a class="indexterm" name="d0e1256"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">writen</b>(</code><var class="pdparam">n</var>, <var class="pdparam">type</var><code>)</code>;</p></div><p>writes a number in the stream formatted according to the type pameter.
+				<i class="parameter"><tt>type</tt></i> can have the following values:
+					</p><table class="simplelist" border="0" summary="Simple list"><tr><td><tt class="literal">'i'</tt></td><td>32bits number</td></tr><tr><td><tt class="literal">'s'</tt></td><td>16bits signed integer</td></tr><tr><td><tt class="literal">'w'</tt></td><td>16bits unsigned integer</td></tr><tr><td><tt class="literal">'c'</tt></td><td>8bits signed integer</td></tr><tr><td><tt class="literal">'b'</tt></td><td>8bits unsigned integer</td></tr><tr><td><tt class="literal">'f'</tt></td><td>32bits float</td></tr><tr><td><tt class="literal">'d'</tt></td><td>64bits float</td></tr></table><p>
+				</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e1314"></a>C API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e1317"></a>Initialization</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_register_bloblib<a class="indexterm" name="d0e1327"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_register_bloblib</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					initialize and register the blob library in the given VM.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+					The function aspects a table on top of the stack where to register the global
+					library functions.
+				</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e1367"></a>Blob object</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_getblob<a class="indexterm" name="d0e1377"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_getblob</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">PSInteger&nbsp;idx</var>, <var class="pdparam">PSUserPointer *&nbsp;ptr</var><code>)</code>;</p></div><p>
+					retrieve the pointer of a blob's payload from an arbitrary
+					position in the stack.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger&nbsp;idx</tt></i></span></dt><dd><p>
+					and index in the stack
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSUserPointer *&nbsp;ptr</tt></i></span></dt><dd><p>
+					A pointer to the userpointer that will point to the blob's payload
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_getblobsize<a class="indexterm" name="d0e1436"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSInteger&nbsp;<b class="fsfunc">psstd_getblobsize</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">PSInteger&nbsp;idx</var><code>)</code>;</p></div><p>
+					retrieve the size of a blob's payload from an arbitrary
+					position in the stack.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger&nbsp;idx</tt></i></span></dt><dd><p>
+					and index in the stack
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					the size of the blob at idx position
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_createblob<a class="indexterm" name="d0e1486"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSUserPointer&nbsp;<b class="fsfunc">psstd_createblob</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">PSInteger&nbsp;size</var><code>)</code>;</p></div><p>
+					creates a blob with the given payload size and pushes it in the stack.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger&nbsp;size</tt></i></span></dt><dd><p>
+					the size of the blob payload that has to be created
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					a pointer to the newly created blob payload
+				<br></p></dd></dl></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e1530"></a>Chapter&nbsp;4.&nbsp;The Math library</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#d0e1537">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1540">Global symbols</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e1877">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1880">Initialization</a></span></dt></dl></dd></dl></div><a class="indexterm" name="d0e1531"></a><p>
+			the math lib provides basic mathematic routines. The library mimics the
+			C runtime library implementation.
+		</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e1537"></a>Pscript API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e1540"></a>Global symbols</h3></div></div><div></div></div><p><a class="indexterm" name="d0e1544"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">abs</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the absolute value of <i class="parameter"><tt>x</tt></i> as integer</p><p><a class="indexterm" name="d0e1562"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">acos</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the arccosine of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1579"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">asin</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the arcsine of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1596"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">atan</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the arctangent of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1613"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">atan2</b>(</code><var class="pdparam">x</var>, <var class="pdparam">y</var><code>)</code>;</p></div><p>returns the arctangent of <i class="parameter"><tt>y/x</tt></i>.</p><p><a class="indexterm" name="d0e1633"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">ceil</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns a float value representing the smallest integer that is greater than or equal to <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1650"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">cos</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the cosine of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1667"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">exp</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the exponential value of the float parameter <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1684"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">fabs</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the absolute value of <i class="parameter"><tt>x</tt></i> as float</p><p><a class="indexterm" name="d0e1702"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">floor</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns a float value representing the largest integer that is less than or equal to <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1719"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">log</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the natural logarithm of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1736"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">log10</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the logarithm base-10 of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1753"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">pow</b>(</code><var class="pdparam">x</var>, <var class="pdparam">y</var><code>)</code>;</p></div><p>returns <i class="parameter"><tt>x</tt></i> raised to the power of <i class="parameter"><tt>y</tt></i>.</p><p><a class="indexterm" name="d0e1776"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">rand</b>(</code><code>)</code>;</p></div><p>returns a pseudorandom integer in the range 0 to RAND_MAX</p><p><a class="indexterm" name="d0e1789"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">sin</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the sine of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1806"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">psrt</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the psuare root of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1823"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">srand</b>(</code><var class="pdparam">seed</var><code>)</code>;</p></div><p>sets the starting point for generating a series of pseudorandom integers</p><p><a class="indexterm" name="d0e1838"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">tan</b>(</code><var class="pdparam">x</var><code>)</code>;</p></div><p>returns the tangent of <i class="parameter"><tt>x</tt></i></p><p><a class="indexterm" name="d0e1855"></a><tt class="literal">PI</tt></p><p>The numeric constant pi (3.141592) is the ratio of the circumference of a circle to its diameter</p><p><a class="indexterm" name="d0e1865"></a><tt class="literal">RAND_MAX</tt></p><p>the maximum value that can be returned by the <tt class="function">rand()</tt> function</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e1877"></a>C API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e1880"></a>Initialization</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_register_mathlib<a class="indexterm" name="d0e1890"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_register_mathlib</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					initialize and register the math library in the given VM.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+					The function aspects a table on top of the stack where to register the global
+					library functions.
+				</p></dd></dl></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e1931"></a>Chapter&nbsp;5.&nbsp;The System library</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#d0e1938">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e1941">Global symbols</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e2119">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e2122">Initialization</a></span></dt></dl></dd></dl></div><a class="indexterm" name="d0e1932"></a><p>
+			The system library exposes operating system facilities like environment variables,
+			date time manipulation etc..
+		</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e1938"></a>Pscript API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e1941"></a>Global symbols</h3></div></div><div></div></div><p><a class="indexterm" name="d0e1945"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">clock</b>(</code><code>)</code>;</p></div><p>returns a float representing the number of seconds elapsed since the start of the process</p><p><a class="indexterm" name="d0e1958"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">date</b>(</code><var class="pdparam">[time]</var>, <var class="pdparam">[format]</var><code>)</code>;</p></div><p>returns a table containing a date/time splitted in the slots:</p><p>
+						</p><table class="simplelist" border="0" summary="Simple list"><tr><td><tt class="literal">sec</tt></td><td>Seconds after minute (0 - 59).</td></tr><tr><td><tt class="literal">min</tt></td><td>Minutes after hour (0 - 59). </td></tr><tr><td><tt class="literal">hour</tt></td><td>Hours since midnight (0 - 23).</td></tr><tr><td><tt class="literal">day</tt></td><td>Day of month (1 - 31). </td></tr><tr><td><tt class="literal">month</tt></td><td>Month (0 - 11; January = 0). </td></tr><tr><td><tt class="literal">year</tt></td><td>Year (current year). </td></tr><tr><td><tt class="literal">wday</tt></td><td>Day of week (0 - 6; Sunday = 0).  </td></tr><tr><td><tt class="literal">yday</tt></td><td>Day of year (0 - 365; January 1 = 0). </td></tr></table><p>
+					</p><p>
+						if <i class="parameter"><tt>time</tt></i> is omitted the current time is used. <br>
+						if <i class="parameter"><tt>format</tt></i> can be 'l' local time or 'u' UTC time, if omitted is defaulted as 'l'(local time).
+					</p><p><a class="indexterm" name="d0e2029"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">getenv</b>(</code><var class="pdparam">varaname</var><code>)</code>;</p></div><p>Returns a string containing the value of the environment variable <i class="parameter"><tt>varname</tt></i></p><p><a class="indexterm" name="d0e2046"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">remove</b>(</code><var class="pdparam">path</var><code>)</code>;</p></div><p>deletes the file specified by <i class="parameter"><tt>path</tt></i></p><p><a class="indexterm" name="d0e2063"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">rename</b>(</code><var class="pdparam">oldname</var>, <var class="pdparam">newname</var><code>)</code>;</p></div><p>renames the file or directory specified by <i class="parameter"><tt>oldname</tt></i> to the name given by <i class="parameter"><tt>newname</tt></i></p><p><a class="indexterm" name="d0e2085"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">system</b>(</code><var class="pdparam">cmd</var><code>)</code>;</p></div><p>executes the string <i class="parameter"><tt>cmd</tt></i> through the os command interpreter.</p><p><a class="indexterm" name="d0e2103"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">time</b>(</code><code>)</code>;</p></div><p>returns the number of seconds elapsed since midnight 00:00:00, January 1, 1970. </p><p>the result of this function can be formatted through the faunction <tt class="function">date</tt></p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e2119"></a>C API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e2122"></a>Initialization</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_register_systemlib<a class="indexterm" name="d0e2132"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_register_systemlib</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					initialize and register the system library in the given VM.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+					The function aspects a table on top of the stack where to register the global
+					library functions.
+				</p></dd></dl></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e2173"></a>Chapter&nbsp;6.&nbsp;The String library</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#d0e2180">Pscript API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e2183">Global symbols</a></span></dt><dt><span class="sect2"><a href="#d0e2591">Regexp class</a></span></dt></dl></dd><dt><span class="sect1"><a href="#d0e2699">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e2702">Initialization</a></span></dt><dt><span class="sect2"><a href="#d0e2752">Formatting</a></span></dt><dt><span class="sect2"><a href="#d0e2829">Regular Expessions</a></span></dt></dl></dd></dl></div><a class="indexterm" name="d0e2174"></a><p>
+			the string lib implements string formatting and regular expression matching routines.
+		</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e2180"></a>Pscript API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e2183"></a>Global symbols</h3></div></div><div></div></div><p><a class="indexterm" name="d0e2187"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">format</b>(</code><var class="pdparam">formatstr</var>, <var class="pdparam">...</var><code>)</code>;</p></div><p>
+						</p><p>Returns a string formatted according <i class="parameter"><tt>formatstr</tt></i> and the optional parameters following it.
+				The format string follows the same rules as the <tt class="function">printf</tt> family of 
+				 standard C&nbsp;functions( the "*" is not supported).</p><p>
+						</p><p>
+							</p><pre class="programlisting">
+eg.
+ps&gt; print(format("%s %d 0x%02X\n","this is a test :",123,10));
+this is a test : 123 0x0A
+
+					</pre><p>
+						</p><p>
+					</p><p><a class="indexterm" name="d0e2219"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">lstrip</b>(</code><var class="pdparam">str</var><code>)</code>;</p></div><p>
+            Strips white-space-only characters that might appear at the beginning of the given string
+            and returns the new stripped string.
+          </p><p><a class="indexterm" name="d0e2234"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">regexp</b>(</code><var class="pdparam">pattern</var><code>)</code>;</p></div><p>
+							</p><p>
+					compiles a regular expression pattern and returns it as a new regexp class instance.
+					</p><p>
+										</p><table class="simplelist" border="0" summary="Simple list"><tr><td>
+												<tt class="literal">\</tt>
+											</td><td>Quote the next metacharacter</td></tr><tr><td>
+												<tt class="literal">^</tt>
+											</td><td>Match the beginning of the string</td></tr><tr><td>
+												<tt class="literal">.</tt>
+											</td><td>Match any character</td></tr><tr><td>
+												<tt class="literal">$</tt>
+											</td><td>Match the end of the string</td></tr><tr><td>
+												<tt class="literal">|</tt>
+											</td><td>Alternation</td></tr><tr><td>
+												<tt class="literal">(subexp)</tt>
+											</td><td>Grouping (creates a capture)</td></tr><tr><td>
+												<tt class="literal">(?:subexp)</tt>
+											</td><td>No Capture Grouping (no capture)</td></tr><tr><td>
+												<tt class="literal">[]</tt>
+											</td><td>Character class </td></tr></table><p>
+									</p><p>
+					</p><p><b>GREEDY CLOSURES.&nbsp;</b>
+										</p><table class="simplelist" border="0" summary="Simple list"><tr><td>
+												<tt class="literal">*</tt>
+											</td><td> Match 0 or more times                         </td></tr><tr><td>
+												<tt class="literal">+</tt>
+											</td><td> Match 1 or more times						  </td></tr><tr><td>
+												<tt class="literal">?</tt>
+											</td><td> Match 1 or 0 times							  </td></tr><tr><td>
+												<tt class="literal">{n}</tt>
+											</td><td>  Match exactly n times						  </td></tr><tr><td>
+												<tt class="literal">{n,}</tt>
+											</td><td>  Match at least n times						  </td></tr><tr><td>
+												<tt class="literal">{n,m}</tt>
+											</td><td>  Match at least n but not more than m times	  </td></tr></table><p>
+									</p><p>
+					</p><p><b>ESCAPE CHARACTERS.&nbsp;</b>
+										</p><table class="simplelist" border="0" summary="Simple list"><tr><td>
+												<tt class="literal">\t</tt>
+											</td><td>	tab                   (HT, TAB)</td></tr><tr><td>
+												<tt class="literal">\n</tt>
+											</td><td>	newline               (LF, NL) </td></tr><tr><td>
+												<tt class="literal">\r</tt>
+											</td><td>	return                (CR)	   </td></tr><tr><td>
+												<tt class="literal">\f</tt>
+											</td><td>	form feed             (FF)	   </td></tr></table><p>
+									</p><p>			
+					</p><p><b>PREDEFINED CLASSES.&nbsp;</b>
+										</p><table class="simplelist" border="0" summary="Simple list"><tr><td>
+												<tt class="literal">\l</tt>
+											</td><td>		lowercase next char			</td></tr><tr><td>
+												<tt class="literal">\u</tt>
+											</td><td>		uppercase next char			</td></tr><tr><td>
+												<tt class="literal">\a</tt>
+											</td><td>		letters						</td></tr><tr><td>
+												<tt class="literal">\A</tt>
+											</td><td>		non letters					</td></tr><tr><td>
+												<tt class="literal">\w</tt>
+											</td><td>		alphanumeric [_0-9a-zA-Z]	</td></tr><tr><td>
+												<tt class="literal">\W</tt>
+											</td><td>		non alphanumeric [^_0-9a-zA-Z]	</td></tr><tr><td>
+												<tt class="literal">\s</tt>
+											</td><td>		space						</td></tr><tr><td>
+												<tt class="literal">\S</tt>
+											</td><td>		non space					</td></tr><tr><td>
+												<tt class="literal">\d</tt>
+											</td><td>		digits						</td></tr><tr><td>
+												<tt class="literal">\D</tt>
+											</td><td>		non nondigits				</td></tr><tr><td>
+												<tt class="literal">\x</tt>
+											</td><td>		exadecimal digits			</td></tr><tr><td>
+												<tt class="literal">\X</tt>
+											</td><td>		non exadecimal digits		</td></tr><tr><td>
+												<tt class="literal">\c</tt>
+											</td><td>		control charactrs			</td></tr><tr><td>
+												<tt class="literal">\C</tt>
+											</td><td>		non control charactrs		</td></tr><tr><td>
+												<tt class="literal">\p</tt>
+											</td><td>		punctation					</td></tr><tr><td>
+												<tt class="literal">\P</tt>
+											</td><td>		non punctation				</td></tr><tr><td>
+												<tt class="literal">\b</tt>
+											</td><td>		word boundary				</td></tr><tr><td>
+												<tt class="literal">\B</tt>
+											</td><td>		non word boundary			</td></tr></table><p>
+									</p><p>
+				</p><p>
+						</p><p><a class="indexterm" name="d0e2534"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">rstrip</b>(</code><var class="pdparam">str</var><code>)</code>;</p></div><p>
+            Strips white-space-only characters that might appear at the end of the given string 
+            and returns the new stripped string.
+          </p><p><a class="indexterm" name="d0e2549"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">split</b>(</code><var class="pdparam">str</var>, <var class="pdparam">separators</var><code>)</code>;</p></div><p>
+            returns an array of strings split at each point where a separator character occurs in <tt class="literal">str</tt>. The separator is not returned as part of any array element.
+            the parameter <tt class="literal">separators</tt> is a string that specifies the characters as to be used for the splitting.
+          </p><p>
+            </p><pre class="programlisting">
+              
+eg.
+local a = split("1.2-3;4/5",".-/;");
+// the result will be  [1,2,3,4,5]
+
+					
+            </pre><p>
+          </p><p><a class="indexterm" name="d0e2577"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">strip</b>(</code><var class="pdparam">str</var><code>)</code>;</p></div><p>
+              Strips white-space-only characters that might appear at the beginning or end of the given string
+              and returns the new stripped string.
+            </p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e2591"></a>Regexp class</h3></div></div><div></div></div><p>
+					The regexp object rapresent a precompiled regular experssion pattern. The object is created
+					trough the function <tt class="function">regexp()</tt>.
+				</p><p><a class="indexterm" name="d0e2600"></a><a class="indexterm" name="d0e2603"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">capture</b>(</code><var class="pdparam">str</var>, <var class="pdparam">[start]</var><code>)</code>;</p></div><p>
+						</p><p>
+					returns an array of tables containing two indexs("begin" and "end")of 
+					the first match of the regular expression in the string <i class="parameter"><tt>str</tt></i>.
+					An array entry is created for each captured sub expressions. If no match occurs returns null.
+					The search starts from the index <i class="parameter"><tt>start</tt></i>
+					of the string, if <i class="parameter"><tt>start</tt></i> is omitted the search starts from the beginning of the string.
+					</p><p>
+					</p><p>
+						the first element of the returned array(index 0) always contains the complete match.
+					</p><p>
+				</p><pre class="programlisting"> 
+local ex = regexp(@"(\d+) ([a-zA-Z]+)(\p)");
+local string = "stuff 123 Test;";
+local res = ex.capture(string);
+foreach(i,val in res)
+{
+	print(format("match number[%02d] %s\n",
+			i,string.slice(val.begin,val.end))); //prints "Test"
+}
+
+...
+will print
+match number[00] 123 Test;
+match number[01] 123
+match number[02] Test
+match number[03] ;
+				
+				</pre><p>
+					</p><p><a class="indexterm" name="d0e2640"></a><a class="indexterm" name="d0e2643"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">match</b>(</code><var class="pdparam">str</var><code>)</code>;</p></div><p>
+						returns a true if the regular expression matches the string
+						<i class="parameter"><tt>str</tt></i>, otherwise returns false.
+					</p><p><a class="indexterm" name="d0e2663"></a><a class="indexterm" name="d0e2666"></a></p><div class="funcsynopsis"><p><code class="funcdef"><b class="fsfunc">search</b>(</code><var class="pdparam">str</var>, <var class="pdparam">[start]</var><code>)</code>;</p></div><p>
+						</p><p>
+					returns a table containing two indexs("begin" and "end") of the first match of the regular expression in
+					the string <i class="parameter"><tt>str</tt></i>, otherwise if no match occurs returns null. The search starts from the index <i class="parameter"><tt>start</tt></i>
+					of the string, if <i class="parameter"><tt>start</tt></i> is omitted the search starts from the beginning of the string.
+				</p><p>
+						</p><pre class="programlisting"> 
+local ex = regexp("[a-zA-Z]+");
+local string = "123 Test;";
+local res = ex.search(string);
+print(string.slice(res.begin,res.end)); //prints "Test"
+				
+				</pre><p>
+					</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e2699"></a>C API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e2702"></a>Initialization</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_register_stringlib<a class="indexterm" name="d0e2712"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_register_stringlib</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					initialize and register the string library in the given VM.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+					The function aspects a table on top of the stack where to register the global
+					library functions.
+				</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e2752"></a>Formatting</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_format<a class="indexterm" name="d0e2762"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRESULT&nbsp;<b class="fsfunc">psstd_format</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var>, <var class="pdparam">PSInteger&nbsp;nformatstringidx</var>, <var class="pdparam">PSInteger *&nbsp;outlen</var>, <var class="pdparam">PSChar **&nbsp;output</var><code>)</code>;</p></div><p>
+          
+            creates a new string formatted according to the object at positionnformatstringidx and the optional parameters following it.
+            The format string follows the same rules as the printf family of
+            standard C&nbsp;functions( the "*" is not supported).
+          
+        </p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+          the target VM
+        </p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger&nbsp;nformatstringidx</tt></i></span></dt><dd><p>
+          index in the stack of the format string
+        </p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger *&nbsp;outlen</tt></i></span></dt><dd><p>
+          a pointer to an integer that will be filled with the length of the newly created string
+        </p></dd><dt><span class="term"><i class="parameter"><tt>PSChar **&nbsp;output</tt></i></span></dt><dd><p>
+          a pointer to a string pointer that will receive the newly created string
+        </p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+          an PSRESULT
+        <br></p></dd><dt><span class="term">remarks:</span></dt><dd><p>
+          the newly created string is allocated in the scratchpad memory.
+        </p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e2829"></a>Regular Expessions</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_compile<a class="indexterm" name="d0e2839"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSRex *&nbsp;<b class="fsfunc">psstd_rex_compile</b>(</code><var class="pdparam">const PSChar *&nbsp;pattern</var>, <var class="pdparam">const PSChar **&nbsp;error</var><code>)</code>;</p></div><p>
+					compiles an expression and returns a pointer to the compiled version.
+					in case of failure returns NULL.The returned object has to be deleted
+					through the function psstd_rex_free().
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;pattern</tt></i></span></dt><dd><p>
+					a pointer to a zero terminated string containing the pattern that 
+					has to be compiled.
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar **&nbsp;error</tt></i></span></dt><dd><p>
+					a pointer to a string pointer that will be set with an error string
+					in case of failure.
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					a pointer to the compiled pattern
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_free<a class="indexterm" name="d0e2889"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">void&nbsp;<b class="fsfunc">psstd_rex_free</b>(</code><var class="pdparam">PSRex *&nbsp;exp</var><code>)</code>;</p></div><p>
+					deletes a expression structure created with psstd_rex_compile()
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>PSRex *&nbsp;exp</tt></i></span></dt><dd><p>
+					the expression structure that has to be deleted
+				</p></dd></dl></div></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_match<a class="indexterm" name="d0e2923"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSBool&nbsp;<b class="fsfunc">psstd_rex_match</b>(</code><var class="pdparam">PSRex *&nbsp;exp</var>, <var class="pdparam">const PSChar *&nbsp;text</var><code>)</code>;</p></div><p>
+					returns PSTrue if the string specified in the parameter text is an
+					exact match of the expression, otherwise returns PSFalse.
+
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>PSRex *&nbsp;exp</tt></i></span></dt><dd><p>
+					the compiled expression
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;text</tt></i></span></dt><dd><p>
+					the string that has to be tested
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					PSTrue if successful otherwise PSFalse
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_search<a class="indexterm" name="d0e2973"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSBool&nbsp;<b class="fsfunc">psstd_rex_search</b>(</code><var class="pdparam">PSRex *&nbsp;exp</var>, <var class="pdparam">const PSChar *&nbsp;text</var>, <var class="pdparam">const PSChar **&nbsp;out_begin</var>, <var class="pdparam">const PSChar **&nbsp;out_end</var><code>)</code>;</p></div><p>
+					searches the first match of the expressin in the string specified in the parameter text.
+					if the match is found returns PSTrue and the sets out_begin to the beginning of the
+					match and out_end at the end of the match; otherwise returns PSFalse.
+ 
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>PSRex *&nbsp;exp</tt></i></span></dt><dd><p>
+					the compiled expression
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;text</tt></i></span></dt><dd><p>
+					the string that has to be tested
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar **&nbsp;out_begin</tt></i></span></dt><dd><p>
+					a pointer to a string pointer that will be set with the beginning of the match
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar **&nbsp;out_end</tt></i></span></dt><dd><p>
+					a pointer to a string pointer that will be set with the end of the match
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					PSTrue if successful otherwise PSFalse
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_searchrange<a class="indexterm" name="d0e3041"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSBool&nbsp;<b class="fsfunc">psstd_rex_searchrange</b>(</code><var class="pdparam">PSRex *&nbsp;exp</var>, <var class="pdparam">const PSChar *&nbsp;text_begin</var>, <var class="pdparam">const PSChar *&nbsp;text_end</var>, <var class="pdparam">const PSChar **&nbsp;out_begin</var>, <var class="pdparam">const PSChar **&nbsp;out_end</var><code>)</code>;</p></div><p>
+					searches the first match of the expressin in the string delimited 
+					by the parameter text_begin and text_end.
+					if the match is found returns PSTrue and the sets out_begin to the beginning of the
+					match and out_end at the end of the match; otherwise returns PSFalse.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>PSRex *&nbsp;exp</tt></i></span></dt><dd><p>
+					the compiled expression
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;text_begin</tt></i></span></dt><dd><p>
+					a pointer to the beginnning of the string that has to be tested
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar *&nbsp;text_end</tt></i></span></dt><dd><p>
+					a pointer to the end of the string that has to be tested
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar **&nbsp;out_begin</tt></i></span></dt><dd><p>
+					a pointer to a string pointer that will be set with the beginning of the match
+				</p></dd><dt><span class="term"><i class="parameter"><tt>const PSChar **&nbsp;out_end</tt></i></span></dt><dd><p>
+					a pointer to a string pointer that will be set with the end of the match
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					an PSRESULT
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_getsubexpcount<a class="indexterm" name="d0e3118"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSInteger&nbsp;<b class="fsfunc">psstd_rex_getsubexpcount</b>(</code><var class="pdparam">PSRex *&nbsp;exp</var><code>)</code>;</p></div><p>
+					returns the number of sub expressions matched by the expression
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>PSRex *&nbsp;exp</tt></i></span></dt><dd><p>
+					the compiled expression
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					the number of sub expressions matched by the expression
+				<br></p></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_rex_getsubexp<a class="indexterm" name="d0e3159"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">PSInteger&nbsp;<b class="fsfunc">psstd_rex_getsubexp</b>(</code><var class="pdparam">PSRex *&nbsp;exp</var>, <var class="pdparam">PSInteger&nbsp;n</var>, <var class="pdparam">PSRexMatch *&nbsp;subexp</var><code>)</code>;</p></div><p>
+					retrieve the begin and and pointer to the length of the sub expression indexed
+					by n. The result is passed trhough the struct PSRexMatch.
+					
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>PSRex *&nbsp;exp</tt></i></span></dt><dd><p>
+					the compiled expression
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSInteger&nbsp;n</tt></i></span></dt><dd><p>
+					the index of the submatch(0 is the complete match)
+				</p></dd><dt><span class="term"><i class="parameter"><tt>PSRexMatch *&nbsp;subexp</tt></i></span></dt><dd><p>
+					a pointer to structure that will store the result
+				</p></dd></dl></div></dd><dt><span class="term">return:</span></dt><dd><p>
+					the function returns PSTrue if n is valid index otherwise PSFalse.
+				<br></p></dd></dl></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="d0e3212"></a>Chapter&nbsp;7.&nbsp;The Aux library</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#d0e3219">C API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#d0e3222">Error handling</a></span></dt></dl></dd></dl></div><a class="indexterm" name="d0e3213"></a><p>
+			The aux library implements default handlers for compiler and runtime errors and a stack dumping.
+		</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e3219"></a>C API</h2></div></div><div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="d0e3222"></a>Error handling</h3></div></div><div></div></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_seterrorhandlers<a class="indexterm" name="d0e3232"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">void&nbsp;<b class="fsfunc">psstd_seterrorhandlers</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					initialize compiler and runtime error handlers, the handlers
+					use the print function set through(ps_setprintfunc) to output
+					the error.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd></dl></div><div class="informaltable"><table border="1"><colgroup><col></colgroup><tbody><tr><td><tt class="function">psstd_printcallstack<a class="indexterm" name="d0e3266"></a></tt></td></tr></tbody></table></div><div class="funcsynopsis"><p><code class="funcdef">void&nbsp;<b class="fsfunc">psstd_printcallstack</b>(</code><var class="pdparam">HPSCRIPTVM&nbsp;v</var><code>)</code>;</p></div><p>
+					print the call stack and stack contents.the function
+					uses the print function set through(ps_setprintfunc) to output
+					the stack dump.
+				</p><div class="variablelist"><dl><dt><span class="term">parameters:</span></dt><dd><div class="variablelist"><dl><dt><span class="term"><i class="parameter"><tt>HPSCRIPTVM&nbsp;v</tt></i></span></dt><dd><p>
+					the target VM
+				</p></dd></dl></div></dd></dl></div></div></div></div><div class="index"><div class="titlepage"><div><div><h2 class="title"><a name="d0e3293"></a>Index</h2></div></div><div></div></div><div class="index"><div class="indexdiv"><h3></h3><dl><dt>, <a href="#d0e49">The Input/Output library</a>, <a href="#d0e841">The Blob library</a>, <a href="#d0e1530">The Math library</a>, <a href="#d0e1931">The System library</a>, <a href="#d0e2173">The String library</a>, <a href="#d0e3212">The Aux library</a></dt></dl></div><div class="indexdiv"><h3>A</h3><dl><dt>abs, <a href="#d0e1540">Global symbols</a></dt><dt>acos, <a href="#d0e1540">Global symbols</a></dt><dt>asin, <a href="#d0e1540">Global symbols</a></dt><dt>atan, <a href="#d0e1540">Global symbols</a></dt><dt>atan2, <a href="#d0e1540">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>B</h3><dl><dt>blob, <a href="#d0e854">Global symbols</a></dt><dd><dl><dt>eos, <a href="#d0e947">The blob class</a></dt><dt>flush, <a href="#d0e947">The blob class</a></dt><dt>len, <a href="#d0e947">The blob class</a></dt><dt>readblob, <a href="#d0e947">The blob class</a></dt><dt>readn, <a href="#d0e947">The blob class</a></dt><dt>resize, <a href="#d0e947">The blob class</a></dt><dt>seek, <a href="#d0e947">The blob class</a></dt><dt>swap2, <a href="#d0e947">The blob class</a></dt><dt>swap4, <a href="#d0e947">The blob class</a></dt><dt>tell, <a href="#d0e947">The blob class</a></dt><dt>writeblob, <a href="#d0e947">The blob class</a></dt><dt>writen, <a href="#d0e947">The blob class</a></dt></dl></dd></dl></div><div class="indexdiv"><h3>C</h3><dl><dt>capture, <a href="#d0e2591">Regexp class</a></dt><dt>castf2i, <a href="#d0e854">Global symbols</a></dt><dt>casti2f, <a href="#d0e854">Global symbols</a></dt><dt>ceil, <a href="#d0e1540">Global symbols</a></dt><dt>clock, <a href="#d0e1941">Global symbols</a></dt><dt>close, <a href="#d0e152">File class</a></dt><dt>cos, <a href="#d0e1540">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>D</h3><dl><dt>date, <a href="#d0e1941">Global symbols</a></dt><dt>dofile, <a href="#d0e59">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>E</h3><dl><dt>eos, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>exp, <a href="#d0e1540">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>F</h3><dl><dt>fabs, <a href="#d0e1540">Global symbols</a></dt><dt>file</dt><dd><dl><dt>close, <a href="#d0e152">File class</a></dt><dt>eos, <a href="#d0e152">File class</a></dt><dt>flush, <a href="#d0e152">File class</a></dt><dt>len, <a href="#d0e152">File class</a></dt><dt>readblob, <a href="#d0e152">File class</a></dt><dt>readn, <a href="#d0e152">File class</a></dt><dt>seek, <a href="#d0e152">File class</a></dt><dt>tell, <a href="#d0e152">File class</a></dt><dt>writeblob, <a href="#d0e152">File class</a></dt><dt>writen, <a href="#d0e152">File class</a></dt></dl></dd><dt>floor, <a href="#d0e1540">Global symbols</a></dt><dt>flush, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>format, <a href="#d0e2183">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>G</h3><dl><dt>getenv, <a href="#d0e1941">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>L</h3><dl><dt>len, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>loadfile, <a href="#d0e59">Global symbols</a></dt><dt>log, <a href="#d0e1540">Global symbols</a></dt><dt>log10, <a href="#d0e1540">Global symbols</a></dt><dt>lstrip, <a href="#d0e2183">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>M</h3><dl><dt>match, <a href="#d0e2591">Regexp class</a></dt></dl></div><div class="indexdiv"><h3>P</h3><dl><dt>PI, <a href="#d0e1540">Global symbols</a></dt><dt>pow, <a href="#d0e1540">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>R</h3><dl><dt>rand, <a href="#d0e1540">Global symbols</a></dt><dt>RAND_MAX, <a href="#d0e1540">Global symbols</a></dt><dt>readblob, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>readn, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>regexp, <a href="#d0e2183">Global symbols</a></dt><dd><dl><dt>capture, <a href="#d0e2591">Regexp class</a></dt><dt>match, <a href="#d0e2591">Regexp class</a></dt><dt>search, <a href="#d0e2591">Regexp class</a></dt></dl></dd><dt>remove, <a href="#d0e1941">Global symbols</a></dt><dt>rename, <a href="#d0e1941">Global symbols</a></dt><dt>resize, <a href="#d0e947">The blob class</a></dt><dt>rstrip, <a href="#d0e2183">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>S</h3><dl><dt>search, <a href="#d0e2591">Regexp class</a></dt><dt>seek, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>sin, <a href="#d0e1540">Global symbols</a></dt><dt>split, <a href="#d0e2183">Global symbols</a></dt><dt>psrt, <a href="#d0e1540">Global symbols</a></dt><dt>psstd_createblob, <a href="#d0e1367">Blob object</a></dt><dt>psstd_createfile, <a href="#d0e526">File object</a></dt><dt>psstd_dofile, <a href="#d0e647">Script loading and serialization</a></dt><dt>psstd_format, <a href="#d0e2752">Formatting</a></dt><dt>psstd_getblob, <a href="#d0e1367">Blob object</a></dt><dt>psstd_getblobsize, <a href="#d0e1367">Blob object</a></dt><dt>psstd_getfile, <a href="#d0e526">File object</a></dt><dt>psstd_loadfile, <a href="#d0e647">Script loading and serialization</a></dt><dt>psstd_printcallstack, <a href="#d0e3222">Error handling</a></dt><dt>psstd_register_bloblib, <a href="#d0e1317">Initialization</a></dt><dt>psstd_register_iolib, <a href="#d0e476">Initialization</a></dt><dt>psstd_register_mathlib, <a href="#d0e1880">Initialization</a></dt><dt>psstd_register_stringlib, <a href="#d0e2702">Initialization</a></dt><dt>psstd_register_systemlib, <a href="#d0e2122">Initialization</a></dt><dt>psstd_rex_compile, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_rex_free, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_rex_getsubexp, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_rex_getsubexpcount, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_rex_match, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_rex_search, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_rex_searchrange, <a href="#d0e2829">Regular Expessions</a></dt><dt>psstd_seterrorhandlers, <a href="#d0e3222">Error handling</a></dt><dt>psstd_writeclosuretofile, <a href="#d0e647">Script loading and serialization</a></dt><dt>srand, <a href="#d0e1540">Global symbols</a></dt><dt>stderr, <a href="#d0e59">Global symbols</a></dt><dt>stdin, <a href="#d0e59">Global symbols</a></dt><dt>stdout, <a href="#d0e59">Global symbols</a></dt><dt>strip, <a href="#d0e2183">Global symbols</a></dt><dt>swap2, <a href="#d0e854">Global symbols</a>, <a href="#d0e947">The blob class</a></dt><dt>swap4, <a href="#d0e854">Global symbols</a>, <a href="#d0e947">The blob class</a></dt><dt>swapfloat, <a href="#d0e854">Global symbols</a></dt><dt>system, <a href="#d0e1941">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>T</h3><dl><dt>tan, <a href="#d0e1540">Global symbols</a></dt><dt>tell, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>time, <a href="#d0e1941">Global symbols</a></dt></dl></div><div class="indexdiv"><h3>W</h3><dl><dt>writeblob, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt><dt>writeclosuretofile, <a href="#d0e59">Global symbols</a></dt><dt>writen, <a href="#d0e152">File class</a>, <a href="#d0e947">The blob class</a></dt></dl></div></div></div></div></body></html>
