@@ -46,7 +46,7 @@ SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flag
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Exectuables
-add_executable (pscript ps.c)
+add_executable (pscript ps.cpp)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (pscript psstdlib ps atmi atmiclt ubf nstd rt dl m )

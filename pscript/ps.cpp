@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <atmi.h>
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 #include <crtdbg.h>
@@ -67,7 +68,7 @@ void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
 void PrintVersionInfos()
 {
 	scfprintf(stdout,_SC("%s %s (%d bits)\n"),PSCRIPT_VERSION,PSCRIPT_COPYRIGHT,((int)(sizeof(PSInteger)*8)));
-	scfprintf(stdout,_SC("Enduro/X Platform Script"));
+	scfprintf(stdout,_SC("%s (C) 2016 ATR Baltic SIA\n"),NDRX_VERSION);
 }
 
 void PrintUsage()

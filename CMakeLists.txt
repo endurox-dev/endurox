@@ -96,9 +96,12 @@ add_subdirectory (mkfldhdr)
 add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
+add_subdirectory (libps) # Platform script
+add_subdirectory (libpsstdlib) # Platform script standard library
 add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (ud)
+add_subdirectory (pscript) # Platform script interpreter
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (bridge) # Cluster bridge server
