@@ -39,6 +39,8 @@ install (FILES
     ubf.h
     atmi.h
     xatmi.h
+    pscript.h
+    exparson.h
     DESTINATION include)
 
 install (FILES

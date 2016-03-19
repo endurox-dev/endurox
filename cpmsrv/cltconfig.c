@@ -187,6 +187,13 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             cltproc.stat.env[PATH_MAX] = EOS;
             xmlFree(p);
         }
+        else if (0==strcmp(attr->name, "wd"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+            strncpy(cltproc.stat.wd, p, PATH_MAX);
+            cltproc.stat.wd[PATH_MAX] = EOS;
+            xmlFree(p);
+        }
         else if (0==strcmp(attr->name, "stdout"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
@@ -278,6 +285,14 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p_cltproc->stat.env[PATH_MAX] = EOS;
                     xmlFree(p);
                 } 
+                else if (0==strcmp(attr->name, "wd"))
+                {
+                     /* Optional */
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    strncpy(p_cltproc->stat.wd, p, PATH_MAX);
+                    p_cltproc->stat.wd[PATH_MAX] = EOS;
+                    xmlFree(p);
+                }
                 else if (0==strcmp(attr->name, "stdout"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
@@ -349,6 +364,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             nstdutil_str_env_subs(p_cltproc->stat.command_line);
             /* TODO: We should have length specifier here (so that we do not overrun the mem): */
             nstdutil_str_env_subs(p_cltproc->stat.env);
+            nstdutil_str_env_subs(p_cltproc->stat.wd); /* working dir */
             /* Expand the logfile path... */
             nstdutil_str_env_subs(p_cltproc->stat.log_stdout);
             nstdutil_str_env_subs(p_cltproc->stat.log_stderr);

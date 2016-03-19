@@ -82,6 +82,7 @@ struct cpm_static_info
     char command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
     char log_stdout[PATH_MAX+1];
     char log_stderr[PATH_MAX+1];
+    char wd[PATH_MAX+1]; /* Working dir */
     char env[PATH_MAX+1];
     long flags;              /* flags of the process */
 };

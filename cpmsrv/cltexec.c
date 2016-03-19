@@ -337,6 +337,21 @@ public int cpm_exec(cpm_process_t *c)
             }
         }
         
+        /* Change working dir */
+        if (EOS!=c->stat.wd[0])
+        {
+            if (SUCCEED!=chdir(c->stat.wd))
+            {
+                int err = errno;
+                
+                NDRX_LOG(log_error, "Failed to change working diretory: %s - %s!\n", 
+                        c->stat.wd, strerror(err));
+                userlog("Failed to change working diretory: %s - %s!\n", 
+                        c->stat.wd, strerror(err));
+                exit(1);
+            }
+        }
+        
         /* make stdout go to file */
         if (EOS!=c->stat.log_stdout[0] &&
                 FAIL!=(fd_stdout = open(c->stat.log_stdout, 
