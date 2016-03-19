@@ -63,6 +63,7 @@ SYNOPSIS
 			stdout="CLT_STDOUT"
 			stderr="CLT_STDERR"
 			env="CLT_ENV" 
+                        wd="CLT_WD"
 			autostart="CLT_AUTOSTART">
 			
 				<exec tag="CLT_TAG_EXEC" 
@@ -71,6 +72,7 @@ SYNOPSIS
 					stdout="CLT_STDOUT_EXEC" 
 					stderr="CLT_STDERR_EXEC" 
 					env="CLT_ENV_EXEC" 
+					env="CLT_WD_EXEC" 
 					autostart="CLT_AUTOSTART_EXEC"/>
 				<exec tag="CLT_TAG_EXEC2" 
 					subsect="CLT_SUBSECT2_EXEC2" 
@@ -234,6 +236,8 @@ DEBUG CONFIGURATION FILE SYNTAX
 *CLT_ENV*::
 	Environment override file. See *ex_envover(5)* for syntax. Can be overriden by 'CLT_ENV_EXEC'
 	for each individual process. Optional attribute.
+*CLT_WD*::
+	Working directory for the process. Can be overriden by 'CLT_WD_EXEC'.
 *CLT_AUTOSTART*::
 	Should process be started automatically? 'Y' or 'y' means boot at start.
 	Can be overriden by 'CLT_AUTOSTART_EXEC' for each individual process. 
@@ -282,6 +286,15 @@ Sample configuration:
 			<appopt>-n2 -r -i 0.0.0.0 -p 4433 -tA</appopt>
 		</server>
 	</servers>
+	<clients>
+		<client cmdline="testbinary -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}" autostart="Y">
+			<exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log"/>
+			<exec tag="TAG2" subsect="SUBSECTION2" log="${APP_LOG}/testbin1-2.log"/>
+		</client>
+                <client cmdline="testenv.sh" env="environment.override1" log="env1.log">
+			<exec tag="TESTENV" autostart="Y"/>
+		</client>
+	</clients>
 </endurox>
 ---------------------------------------------------------------------
 
