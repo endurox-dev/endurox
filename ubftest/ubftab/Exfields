@@ -81,5 +81,25 @@ EX_CPMOUTPUT    101     string   -       CPM output
 EX_CPMTAG       102     string   -       Tag
 EX_CPMSUBSECT   103     string   -       Sub-section
 
+EX_CLTID        	150	string	-	client identifier for originating client
+
+# Persistant Queue:
+EX_QSPACE		200	char    -	q space
+EX_QNAME		201	char    -	q name
+EX_QFLAGS		202	long	-	indicates which of the values are set
+EX_QDEQ_TIME		203	long	-	absolute/relative  time for dequeuing
+EX_QPRIORITY		204	long	-	enqueue priority
+EX_QDIAGNOSTIC		205 	long	-	indicates reason for failure
+EX_QMSGID		206	char	-	id of message before which to queue
+EX_QCORRID		207	char	-	correlation id used to identify message
+EX_QREPLYQUEUE		208	char	-	queue name for reply message
+EX_QFAILUREQUEUe	209 	char	-	queue name for failure message
+EX_QURCODE		210 	long	-	application user-return code
+EX_QAPPKEY		211	long	-	application authentication client key
+EX_QDELIVERY_QOs	212	long    -	delivery quality of service
+EX_QREPLY_QOS		213 	long    -	reply message quality of service
+EX_QEXP_TIME		214 	long    -	expiration time
+EX_QCMD			215 	char    -	Queue command
+
 $#endif
 

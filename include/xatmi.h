@@ -225,6 +225,57 @@ extern "C" {
     
 #define tpadvertise(_SVCNM, _FNADDR) tpadvertise_full(_SVCNM, _FNADDR, #_FNADDR)
 
+/********************** Queue suport  *****************************************/
+#define TMQNAMELEN	15
+#define TMMSGIDLEN	32
+#define TMCORRIDLEN	32
+/* structure elements that are valid - set in flags */
+#define TPNOFLAGS	0x00000		
+#define	TPQCORRID	0x00001		/* set/get correlation id */		
+#define	TPQFAILUREQ	0x00002		/* set/get failure queue */		
+#define	TPQBEFOREMSGID	0x00004		/* enqueue before message id */		
+#define	TPQGETBYMSGIDOLD	0x00008	/* deprecated */		
+#define	TPQMSGID	0x00010		/* get msgid of enq/deq message */		
+#define	TPQPRIORITY	0x00020		/* set/get message priority */		
+#define	TPQTOP		0x00040		/* enqueue at queue top */		
+#define	TPQWAIT		0x00080		/* wait for dequeuing */		
+#define	TPQREPLYQ	0x00100		/* set/get reply queue */		
+#define	TPQTIME_ABS	0x00200		/* set absolute time */		
+#define	TPQTIME_REL	0x00400		/* set absolute time */		
+#define	TPQGETBYCORRIDOLD	0x00800	/* deprecated */		
+#define	TPQPEEK		0x01000		/* peek */		
+#define TPQDELIVERYQOS   0x02000         /* delivery quality of service */		
+#define TPQREPLYQOS     0x04000         /* reply message quality of service */		
+#define TPQEXPTIME_ABS  0x08000         /* absolute expiration time */		
+#define TPQEXPTIME_REL  0x10000         /* relative expiration time */		
+#define TPQEXPTIME_NONE 0x20000        	/* never expire */		
+#define	TPQGETBYMSGID	0x40008		/* dequeue by msgid */		
+#define	TPQGETBYCORRID	0x80800		/* dequeue by corrid */		
+		
+/* Valid flags for the quality of service fileds in the TPQCTLstructure */		
+#define TPQQOSDEFAULTPERSIST  0x00001   /* queue's default persistence policy */		
+#define TPQQOSPERSISTENT      0x00002   /* disk message */		
+#define TPQQOSNONPERSISTENT   0x00004   /* memory message */		
+
+#define QMEINVAL	-1
+#define QMEBADRMID	-2
+#define QMENOTOPEN	-3
+#define QMETRAN		-4
+#define QMEBADMSGID	-5
+#define QMESYSTEM	-6
+#define QMEOS		-7
+#define QMEABORTED	-8
+#define QMENOTA		QMEABORTED		
+#define QMEPROTO	-9
+#define QMEBADQUEUE	-10
+#define QMENOMSG	-11
+#define QMEINUSE	-12
+#define QMENOSPACE	-13
+#define QMERELEASE      -14
+#define QMEINVHANDLE    -15
+#define QMESHARE        -16
+
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -286,6 +337,26 @@ struct	tpinfo_t
 	long data;
 };
 typedef	struct	tpinfo_t TPINIT;
+
+/* Queue support structure: */
+struct tpqctl_t 
+{
+	long flags;		/* indicates which of the values are set */		
+	long deq_time;		/* absolute/relative  time for dequeuing */		
+	long priority;		/* enqueue priority */		
+	long diagnostic;	/* indicates reason for failure */		
+	char msgid[TMMSGIDLEN];	/* id of message before which to queue */		
+	char corrid[TMCORRIDLEN];/* correlation id used to identify message */		
+	char replyqueue[TMQNAMELEN+1];	/* queue name for reply message */		
+	char failurequeue[TMQNAMELEN+1];/* queue name for failure message */		
+	CLIENTID cltid;		/* client identifier for originating client */		
+	long urcode;		/* application user-return code */		
+	long appkey;		/* application authentication client key */		
+	long delivery_qos;      /* delivery quality of service  */		
+	long reply_qos;         /* reply message quality of service  */		
+	long exp_time;          /* expiration time  */		
+};		
+typedef struct tpqctl_t TPQCTL;		
 
 /*---------------------------Globals------------------------------------*/
 extern int (*G_tpsvrinit__)(int, char **);
@@ -353,6 +424,10 @@ extern int tpgetsrvid (void);
 extern int tpjsontoubf(UBFH *p_ub, char *buffer);
 extern int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 
+
+/* Queue support: */
+extern int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
+extern int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
 #if defined(__cplusplus)
 }
