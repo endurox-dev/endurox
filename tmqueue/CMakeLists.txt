@@ -50,11 +50,49 @@ ENDIF ($ENV{RELEASE_BUILD})
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
+############################# Libraries ########################################
+
+add_library (ndrxxaqdisk SHARED
+                qdisk_xa.c
+            )
+
+add_library (ndrxxaqdisks SHARED
+                qdisk_xa_s.c
+                qdisk_xa_common.c
+            )
+
+add_library (ndrxxaqdiskd SHARED
+                qdisk_xa_d.c
+                qdisk_xa_common.c
+            )
 ############################# Executables ######################################
-add_executable (tmqueue tmqueue.c tmqutil.c q_disk.c background.c tmqapi.c)
-target_link_libraries (tmqueue m atmisrv uuid nstd atmi ubf thpool rt dl pthread)
+add_executable (tmqueue tmqueue.c qspace.c tmqutil.c background.c tmqapi.c)
+target_link_libraries (tmqueue ndrxxaqdisk atmisrv uuid nstd atmi ubf 
+                        thpool rt dl pthread m)
 set_target_properties(tmqueue PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
+
+# Install libs
+install (TARGETS 
+    ndrxxaqdisk 
+    DESTINATION "${INSTALL_LIB_DIR}"
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries
+    )
+
+install (TARGETS 
+    ndrxxaqdiskd 
+    DESTINATION "${INSTALL_LIB_DIR}"
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries
+    )
+
+install (TARGETS 
+    ndrxxaqdisks 
+    DESTINATION "${INSTALL_LIB_DIR}"
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries
+    )
 
 # Install bin
 install (TARGETS 

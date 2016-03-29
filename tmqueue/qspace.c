@@ -1,7 +1,7 @@
 /* 
-** tmqueue - transaction logging & accounting
+** Memory based structures for Q.
 **
-** @file log.c
+** @file tmqueue.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -35,7 +35,6 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
-#include <stdarg.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -44,23 +43,30 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <Exfields.h>
-#include <nstdutil.h>
 
 #include <exnet.h>
 #include <ndrxdcmn.h>
 
 #include "tmqueue.h"
 #include "../libatmisrv/srv_int.h"
+#include "tperror.h"
 #include "userlog.h"
 #include <xa_cmn.h>
-#include <uthash.h>
-#include <unistd.h>
-#include <Exfields.h>
+#include "thpool.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-/*---------------------------Statics------------------------------------*/
-/*---------------------------Prototypes---------------------------------*/
 
+/* Handler for MSG Hash. */
+public tmq_memmsg_t *G_msgid_hash;
+
+/* Handler for Q hash */
+public tmq_qhash_t *G_qhash;
+/*---------------------------Statics------------------------------------*/
+/* Handler for Q config */
+
+
+
+/*---------------------------Prototypes---------------------------------*/

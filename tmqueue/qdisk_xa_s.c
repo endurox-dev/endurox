@@ -1,7 +1,7 @@
 /* 
-** Q util
+** Static driver
 **
-** @file xasrvutil.c
+** @file qdisk_xa_s.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,74 +29,32 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <memory.h>
+#include <math.h>
 #include <errno.h>
-#include <regex.h>
-#include <utlist.h>
 
-#include <ndebug.h>
 #include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
 #include <ubf.h>
-#include <Exfields.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <ntimer.h>
 
-#include <exnet.h>
-#include <ndrxdcmn.h>
-
-#include "tmqueue.h"
-#include "../libatmisrv/srv_int.h"
-#include <uuid/uuid.h>
-#include <xa_cmn.h>
+#include <xa.h>
 #include <atmi_int.h>
+#include "qdisk_xa_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation    */
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Generate new transaction id, native form (byte array)
- * Note this initializes the msgid.
- * @param xid
- */
-public void tmq_msgid(char *msgid)
+struct xa_switch_t *ndrx_get_xa_switch(void)
 {
-    uuid_t uuid_val;
-    short node_id = (short) G_atmi_env.our_nodeid;
-    short srv_id = (short) G_srv_id;
-   
-    memset(msgid, 0, TMMSGIDLEN);
-    
-    /* Do the locking, so that we get unique xids... */
-    MUTEX_LOCK_V(M_msgid_gen_lock);
-    uuid_generate(uuid_val);
-    MUTEX_UNLOCK_V(M_msgid_gen_lock);
-    
-    memcpy(msgid, uuid_val, sizeof(uuid_t));
-    /* Have an additional infos for transaction id... */
-    memcpy(msgid  
-            +sizeof(uuid_t)  
-            ,(char *)&(node_id), sizeof(short));
-    memcpy(msgid  
-            +sizeof(uuid_t) 
-            +sizeof(short)
-            ,(char *)&(srv_id), sizeof(short));    
-    
-    NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(uuid_t)+sizeof(short)+ sizeof(short));
+    return ndrx_get_xa_switch_int("ndrxqstatsw", "Loading Q Static XA driver");
 }
-
-
-
-/* Get msgidstr from msgid */
-
-/* Get msgid from msgidstr */
-
-
-

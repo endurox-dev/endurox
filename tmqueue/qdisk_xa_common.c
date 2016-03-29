@@ -1,7 +1,7 @@
 /* 
-** Q util
+** Load XA driver...
 **
-** @file xasrvutil.c
+** @file qdisk_xa_common.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,74 +29,76 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <regex.h>
-#include <utlist.h>
 
+#include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
-#include <ubf.h>
-#include <Exfields.h>
+#include <mqueue.h>
 
-#include <exnet.h>
-#include <ndrxdcmn.h>
+#include "atmi_shm.h"
 
-#include "tmqueue.h"
-#include "../libatmisrv/srv_int.h"
-#include <uuid/uuid.h>
-#include <xa_cmn.h>
-#include <atmi_int.h>
+#include <xa.h>
+#define __USE_GNU
+#include <dlfcn.h>
+#include "qdisk_xa_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation    */
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Generate new transaction id, native form (byte array)
- * Note this initializes the msgid.
- * @param xid
+/*
+ * The function is exported and dynamically retrieved after the module was
+ * fetched
  */
-public void tmq_msgid(char *msgid)
+struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
 {
-    uuid_t uuid_val;
-    short node_id = (short) G_atmi_env.our_nodeid;
-    short srv_id = (short) G_srv_id;
-   
-    memset(msgid, 0, TMMSGIDLEN);
+    struct xa_switch_t * sw = NULL;
+    void *handle = NULL;
+    int ret = SUCCEED;
+    NDRX_LOG(log_debug, "%s", descr);
     
-    /* Do the locking, so that we get unique xids... */
-    MUTEX_LOCK_V(M_msgid_gen_lock);
-    uuid_generate(uuid_val);
-    MUTEX_UNLOCK_V(M_msgid_gen_lock);
+    sw = (struct xa_switch_t * )dlsym( RTLD_DEFAULT, symbol );
+    if( sw == NULL )
+    {
+        NDRX_LOG(log_debug, "%s symbol not found in "
+                "process address space - loading .so!", symbol);
+        
+        /* Loading the symbol... */
+        handle = dlopen (G_atmi_env.xa_rmlib, RTLD_NOW);
+        if (!handle)
+        {
+            NDRX_LOG(log_error, "Failed to load XA Resource Manager lib [%s]: %s", 
+                G_atmi_env.xa_rmlib, dlerror());
+            FAIL_OUT(ret);
+        }
+        
+        /* reslove symbol now... */
+        if (NULL==(sw = (struct xa_switch_t * )dlsym( handle, symbol )))
+        {
+            NDRX_LOG(log_error, "Enduro/X Test XA switch `%s' handler "
+                    "not found!", symbol);
+            FAIL_OUT(ret);
+        }
+    }
     
-    memcpy(msgid, uuid_val, sizeof(uuid_t));
-    /* Have an additional infos for transaction id... */
-    memcpy(msgid  
-            +sizeof(uuid_t)  
-            ,(char *)&(node_id), sizeof(short));
-    memcpy(msgid  
-            +sizeof(uuid_t) 
-            +sizeof(short)
-            ,(char *)&(srv_id), sizeof(short));    
+out:
+    if (SUCCEED!=ret && NULL!=handle)
+    {
+        /* close the handle */
+        dlclose(handle);
+    }
+
     
-    NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(uuid_t)+sizeof(short)+ sizeof(short));
+    return sw;
 }
 
 
 
-/* Get msgidstr from msgid */
-
-/* Get msgid from msgidstr */
-
-
-
+#undef __USE_GNU

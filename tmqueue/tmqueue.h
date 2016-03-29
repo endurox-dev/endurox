@@ -39,7 +39,11 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
+#include <atmi.h>
+#include <utlist.h>
+#include <uthash.h>
 #include "thpool.h"
+    
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
@@ -48,10 +52,15 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
 #define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
+
+/* Basically we have a two forms of MSGID
+ * 1. Native, 32 byte binary byte array
+ * 2. String, Base64, 
+ *  */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-/*
+/**
  * TM config handler
  */
 typedef struct
@@ -66,6 +75,9 @@ typedef struct
     threadpool thpool;
 } tmqueue_cfg_t;
 
+/**
+ * Server thread struct
+ */
 struct thread_server
 {
     char *context_data; /* malloced by enduro/x */
@@ -75,14 +87,116 @@ struct thread_server
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
 
+/**
+ * Common command header
+ */
+typedef struct
+{
+    char magic[4];          /* File magic               */
+    short srvid;
+    short nodeid;
+    char qspace[TMQNAMELEN+1];
+    short command_code;     /* command code             */
+    char msgid[TMMSGIDLEN]; /* message_id               */
+} tmq_cmdheader_t;
 
+/** 
+ * Command: qmessage 
+ */
+typedef struct
+{
+    tmq_cmdheader_t hdr;
+    TPQCTL qctl;          /* Queued message        */
+    unsigned char status;   /* Status of the message */
+    long trycounter;        /* try counter           */
+    long long timestamp;    /* timestamp, YYYYMMDDHHMISSfff (with milliseconds) */
+    long long trytstamp;    /* Last try timestamp */
+    /* Message log (stored only in file)  */
+    long len;               /* msg len               */
+    char msg[0];            /* msg                   */
+} tmq_msg_t;
+
+/**
+ * Command: delmsg
+ */
+typedef struct
+{
+    tmq_cmdheader_t hdr;
+    
+} tmq_msg_del_t;
+
+/** 
+ * Command: updcounter
+ */
+typedef struct
+{
+    tmq_cmdheader_t hdr;
+    unsigned char status;   /* Status of the message */
+    long trycounter;        /* try counter           */
+    long long trytstamp;    /* Last try timestamp */
+} tmq_msg_upd_t;
+
+/**
+ * Data block
+ */
+union tmq_block {
+    tmq_msg_t msg;
+    tmq_msg_del_t del;
+    tmq_msg_upd_t upd;
+};  
+
+
+/**
+ * Memory based message.
+ */
+typedef struct tmq_memmsg tmq_memmsg_t;
+struct tmq_memmsg
+{
+    char msgid[TMMSGIDLEN+1]; /* we might store msgid in string format... */
+    tmq_msg_t msg;
+    /* We should have hash handler of message hash */
+    UT_hash_handle hh; /* makes this structure hashable        */
+    /* We should also have a linked list handler   */
+    tmq_memmsg_t *next;
+    tmq_memmsg_t *prev;
+};
+
+/**
+ * List of queues (for queued messages)
+ */
+typedef struct tmq_qhash tmq_qhash_t;
+struct tmq_qhash
+{
+    char qname[TMQNAMELEN+1];
+    tmq_memmsg_t *q;
+};
+
+
+/**
+ * Qeueue configuration.
+ * There will be special Q: "@DEFAULT" which contains the settings for default
+ * (unknown queue)
+ */
+typedef struct tmq_qconfig tmq_qconfig_t;
+struct tmq_qconfig
+{
+    char qname[TMQNAMELEN+1];
+    
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
+    int automatic; /* Is this automatic queue */
+    int retry_max; /* Retry count for sending */
+    int retry_incr_wsec; /* Increase wait seconds for each retry */
+    int initial_wait; /* How long to wait for initial sending  */
+};
+
+/*---------------------------Globals------------------------------------*/
 extern tmqueue_cfg_t G_tmqueue_cfg;
-
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
 /* Q api */
 extern int tmq_printqueue(UBFH *p_ub, int cd);
 extern int tmq_enqueue(UBFH *p_ub);
 extern int tmq_dequeue(UBFH *p_ub);
-
 
 /* Background API */
 extern int background_read_log(void);
