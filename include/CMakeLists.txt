@@ -41,6 +41,7 @@ install (FILES
     xatmi.h
     pscript.h
     exparson.h
+    xa.h
     DESTINATION include)
 
 install (FILES
