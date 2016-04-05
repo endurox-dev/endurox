@@ -832,3 +832,23 @@ public int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
     return _tpubftojson(p_ub, buffer, bufsize);
 }
 
+/**
+ * Enqueue transaction - STUB
+ */
+public int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags)
+{
+    NDRX_LOG(log_error, "tpenqueue - ATMI dummy");
+
+    return SUCCEED;
+}
+
+
+/**
+ * Dequeue transaction - STUB
+ */
+public int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
+{
+    NDRX_LOG(log_error, "tpenqueue - ATMI dummy");
+
+    return SUCCEED;
+}

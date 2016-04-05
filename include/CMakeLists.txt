@@ -44,6 +44,7 @@ install (FILES
     ndebug.h
     ndrstandard.h
     thlock.h
+    xa.h
     DESTINATION include)
 
 install (FILES
