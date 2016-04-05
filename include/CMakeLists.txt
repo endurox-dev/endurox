@@ -41,6 +41,9 @@ install (FILES
     xatmi.h
     pscript.h
     exparson.h
+    ndebug.h
+    ndrstandard.h
+    thlock.h
     DESTINATION include)
 
 install (FILES
