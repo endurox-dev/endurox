@@ -64,9 +64,17 @@ public tmq_memmsg_t *G_msgid_hash;
 
 /* Handler for Q hash */
 public tmq_qhash_t *G_qhash;
+
+/* Configuration section */
+public tmq_qconfig_t *G_qconfig; 
 /*---------------------------Statics------------------------------------*/
-/* Handler for Q config */
-
-
-
 /*---------------------------Prototypes---------------------------------*/
+/**
+ * Add/update queue definition
+ * @param qdef
+ * @return 
+ */
+public int tmq_addupd_queue(char *qdef)
+{
+    
+}

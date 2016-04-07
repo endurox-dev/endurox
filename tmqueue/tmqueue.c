@@ -285,9 +285,13 @@ int tpsvrinit(int argc, char **argv)
                 NDRX_LOG(log_debug, "QData directory "
                             "set to: [%s]", G_tmqueue_cfg.data_dir);
                 break;
-            case 'q': 
+            case 'm': /* My qspace.. */ 
                 strcpy(G_tmqueue_cfg.qspace, optarg);
                 NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
+                break;
+                
+            case 'q':
+                /* Add the queue */
                 break;
             case 's': 
                 G_tmqueue_cfg.scan_time = atoi(optarg);

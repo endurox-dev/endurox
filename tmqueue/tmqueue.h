@@ -183,10 +183,16 @@ struct tmq_qconfig
     char qname[TMQNAMELEN+1];
     
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
-    int automatic; /* Is this automatic queue */
+    int is_automatic; /* Is this automatic queue */
     int retry_max; /* Retry count for sending */
-    int retry_incr_wsec; /* Increase wait seconds for each retry */
+    
     int initial_wait; /* How long to wait for initial sending  */
+    int retry_step_wait; /* Increase wait seconds for each retry */
+    int retry_max_wait; /* Max time to wait for retry */
+    
+    int is_memory; /* is queue memory only */
+    
+    UT_hash_handle hh; /* makes this structure hashable        */
 };
 
 /*---------------------------Globals------------------------------------*/
