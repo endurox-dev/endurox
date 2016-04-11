@@ -247,6 +247,38 @@ public char *nstdutil_str_strip(char *haystack, char *needle)
     return haystack;
 }
 
+/**
+ * Check is string a integer
+ * @param str string to test
+ * @return TRUE/FALSE
+ */
+public int nstdutil_isint(char *str)
+{
+   if (*str == '-')
+   {
+      ++str;
+   }
+
+   if (!*str)
+   {
+      return FALSE;
+   }
+
+   while (*str)
+   {
+      if (!isdigit(*str))
+      {
+         return FALSE;
+      }
+      else
+      {
+         ++str;
+      }
+   }
+   
+   return TRUE;
+}
+
 
 /**
  * Returns the string mapped to long value

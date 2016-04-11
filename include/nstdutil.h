@@ -68,6 +68,8 @@ extern char * nstdutil_str_env_subs(char * str);
 extern char *nstdutil_decode_num(long tt, int slot, int level, int levels);
 extern char *nstdutil_str_strip(char *haystack, char *needle);
 
+public int nstdutil_isint(char *str);
+    
 /* Mapping functions: */
 extern char *dolongstrgmap(longstrmap_t *map, long val, long endval);
 extern char *docharstrgmap(longstrmap_t *map, char val, char endval);

@@ -57,6 +57,8 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
  * 1. Native, 32 byte binary byte array
  * 2. String, Base64, 
  *  */
+
+#define TMQ_DEFAULT_Q           "@" /* Symbol for default Q */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -183,14 +185,14 @@ struct tmq_qconfig
     char qname[TMQNAMELEN+1];
     
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
-    int is_automatic; /* Is this automatic queue */
-    int retry_max; /* Retry count for sending */
     
-    int initial_wait; /* How long to wait for initial sending  */
-    int retry_step_wait; /* Increase wait seconds for each retry */
-    int retry_max_wait; /* Max time to wait for retry */
-    
-    int is_memory; /* is queue memory only */
+    int autoq; /* Is this automatic queue */
+    int tries; /* Retry count for sending */
+    int waitinit; /* How long to wait for initial sending (sec) */
+    int waitretry; /* How long to wait between retries (sec) */
+    int waitretryinc; /* Wait increment between retries (sec) */
+    int waitretrymax; /* Max wait  (sec) */
+    int memonly; /* is queue memory only */
     
     UT_hash_handle hh; /* makes this structure hashable        */
 };
