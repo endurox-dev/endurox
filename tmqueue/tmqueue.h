@@ -182,7 +182,7 @@ struct tmq_qhash
 typedef struct tmq_qconfig tmq_qconfig_t;
 struct tmq_qconfig
 {
-    char qname[TMQNAMELEN+1];
+    char name[TMQNAMELEN+1];
     
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
     

@@ -57,6 +57,17 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TOKEN_SIZE          64 /* max key=value buffer size of qdef element */
+
+#define TMQ_QC_NAME             "name"
+#define TMQ_QC_SVCNM            "svcnm"
+#define TMQ_QC_TRIES            "tries"
+#define TMQ_QC_AUTOQ            "autoq"
+#define TMQ_QC_WAITINIT         "waitinit"
+#define TMQ_QC_WAITRETRY        "waitretry"
+#define TMQ_QC_WAITRETRYINC     "waitretryinc"
+#define TMQ_QC_WAITRETRYMAX     "waitretrymax"
+#define TMQ_QC_MEMONLY          "memonly"
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -68,7 +79,7 @@ public tmq_memmsg_t *G_msgid_hash;
 public tmq_qhash_t *G_qhash;
 
 /* Configuration section */
-public tmq_qconfig_t *G_qconfig; 
+public tmq_qconfig_t *G_qconf; 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -85,24 +96,29 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     NDRX_LOG(log_info, "loading q param: [%s] = [%s]", key, value);
     
     
-    if (0==strcmp(key, "name"))
+    if (0==strcmp(key, TMQ_QC_NAME))
     {
-        strncpy(qconf->qname, value, sizeof(qconf->qname)-1);
-        qconf->qname[sizeof(qconf->qname)-1] = EOS;
+        strncpy(qconf->name, value, sizeof(qconf->name)-1);
+        qconf->name[sizeof(qconf->name)-1] = EOS;
     }
-    else if (0==strcmp(key, "svc"))
+    else if (0==strcmp(key, TMQ_QC_SVCNM))
     {
         strncpy(qconf->svcnm, value, sizeof(qconf->svcnm)-1);
         qconf->svcnm[sizeof(qconf->svcnm)-1] = EOS;
     }
-    else if (0==strcmp(key, "auto"))
+    else if (0==strcmp(key, TMQ_QC_TRIES))
     {
-        if (value[0]=='y' || value[0]=='Y')
+        int ival = atoi(value);
+        if (!nstdutil_isint(value) || ival < 0)
         {
-            qconf->autoq = TRUE;
+            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
+                    value, key);
+            FAIL_OUT(ret);
         }
+        
+        qconf->tries = ival;
     }
-    else if (0==strcmp(key, "waitinit"))
+    else if (0==strcmp(key, TMQ_QC_AUTOQ))
     {
         int ival = atoi(value);
         if (!nstdutil_isint(value) || ival < 0)
@@ -115,7 +131,19 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         qconf->waitinit = ival;
         
     }
-    else if (0==strcmp(key, "waitretry"))
+    else if (0==strcmp(key, TMQ_QC_WAITINIT))
+    {
+        int ival = atoi(value);
+        if (!nstdutil_isint(value) || ival < 0)
+        {
+            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
+                    value, key);
+            FAIL_OUT(ret);
+        }
+        
+        qconf->waitinit = ival;
+    }
+    else if (0==strcmp(key, TMQ_QC_WAITRETRY))
     {
         int ival = atoi(value);
         if (!nstdutil_isint(value) || ival < 0)
@@ -127,7 +155,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         qconf->waitretry = ival;
     }
-    else if (0==strcmp(key, "waitretryinc"))
+    else if (0==strcmp(key, TMQ_QC_WAITRETRYINC))
     {
         int ival = atoi(value);
         if (!nstdutil_isint(value) || ival < 0)
@@ -139,7 +167,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         qconf->waitretryinc = ival;
     }
-    else if (0==strcmp(key, "waitretrymax"))
+    else if (0==strcmp(key, TMQ_QC_WAITRETRYMAX))
     {
         int ival = atoi(value);
         if (!nstdutil_isint(value) || ival < 0)
@@ -151,12 +179,17 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         qconf->waitretrymax = ival;
     }
-    else if (0==strcmp(key, "memonly"))
+    else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {
         if (value[0]=='y' || value[0]=='Y')
         {
             qconf->memonly = TRUE;
         }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Unknown Q config setting = [%s]", key);
+        FAIL_OUT(ret);
     }
     
 out:
@@ -165,24 +198,69 @@ out:
 }
 
 /**
- * Add/update queue definition
- * Syntax: -q name=VISA,svc=VISAIF,auto=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
+ * Get Q config by name
+ * @param name queue name
+ * @return NULL or ptr to q config.
+ */
+public tmq_qconfig_t * tmq_qconf_get(char *name)
+{
+    tmq_qconfig_t *ret = NULL;
+    
+    HASH_FIND_STR( G_qconf, name, ret);    
+    
+    return ret;
+}
+
+/**
+ * Remove queue probably then existing messages will fall back to default Q
+ * @param name
+ * @return 
+ */
+public int tmq_qconf_delete(char *name)
+{
+    int ret = SUCCEED;
+    tmq_qconfig_t *qconf;
+    
+    if (NULL!=(qconf=tmq_qconf_get(name)))
+    {
+        HASH_DEL( G_qconf, qconf);
+        free(qconf);
+    }
+    else
+    {
+        NDRX_LOG(log_warn, "[%s] - queue not found", name);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Add queue definition
+ * Syntax: -q qname=VISA,svc=VISAIF,auto=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
  * @param qdef
  * @return  SUCCEED/FAIL
  */
-public int tmq_addupd_queue(char *qdef)
+public int tmq_qconf_add(char *qconfstr)
 {
     tmq_qconfig_t * qconf = calloc(1, sizeof(tmq_qconfig_t));
+    tmq_qconfig_t * dflt;
     char * p;
     char * p2;
+    int got_default = FALSE;
     char buf[MAX_TOKEN_SIZE];
     int ret = SUCCEED;
     
-    NDRX_LOG(log_info, "Add new Q: [%s]", qdef);
+    NDRX_LOG(log_info, "Add new Q: [%s]", qconfstr);
     
     /* Try to load initial config from @ (TMQ_DEFAULT_Q) Q */
+    if (NULL!=(dflt=tmq_qconf_get(TMQ_DEFAULT_Q)))
+    {
+        memcpy(qconf, dflt, sizeof(*dflt));
+        got_default = TRUE;
+    }
     
-    p = strtok (qdef,",");
+    p = strtok (qconfstr,",");
     while (p != NULL)
     {
         NDRX_LOG(log_info, "Got pair [%s]", p);
@@ -197,7 +275,7 @@ public int tmq_addupd_queue(char *qdef)
             NDRX_LOG(log_error, "Invalid key=value token [%s] expected '='", buf);
             
             userlog("Error defining queue (%s) expected in '=' in token (%s)", 
-                    qdef, buf);
+                    qconfstr, buf);
             FAIL_OUT(ret);
         }
         *p2 = EOS;
@@ -207,7 +285,7 @@ public int tmq_addupd_queue(char *qdef)
         {
             NDRX_LOG(log_error, "Empty value for token [%s]", buf);
             userlog("Error defining queue (%s) invalid value for token (%s)", 
-                    qdef, buf);
+                    qconfstr, buf);
             FAIL_OUT(ret);
         }
         
@@ -225,7 +303,26 @@ public int tmq_addupd_queue(char *qdef)
         p = strtok (NULL, ",");
     }
     
+    /* Validate the config... */
+    
+    if (0==strcmp(qconf->name, TMQ_DEFAULT_Q) && got_default)
+    {
+        NDRX_LOG(log_error, "Missing [%s] param", TMQ_QC_NAME);
+        /* TODO: Return some diagnostics... => EX_QDIAGNOSTIC invalid qname */
+        FAIL_OUT(ret);
+    }
+    /* If autoq, then service must be set. */
+    
+    HASH_ADD_STR( G_qconf, name, qconf );
+    
 out:
+
+    /* kill the record if invalid. */
+    if (SUCCEED!=ret)
+    {
+        free(qconf);
+    }
+
     return ret;
 
 }
