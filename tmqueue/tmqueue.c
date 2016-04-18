@@ -292,6 +292,11 @@ int tpsvrinit(int argc, char **argv)
                 
             case 'q':
                 /* Add the queue */
+                if (SUCCEED!=tmq_qconf_addupd(optarg))
+                {
+                    NDRX_LOG(log_error, "Failed to define Q for: [%s]", optarg);
+                    FAIL_OUT(ret);
+                }
                 break;
             case 's': 
                 G_tmqueue_cfg.scan_time = atoi(optarg);

@@ -251,6 +251,7 @@ extern "C" {
 #define TPQEXPTIME_NONE 0x20000        	/* never expire */		
 #define	TPQGETBYMSGID	0x40008		/* dequeue by msgid */		
 #define	TPQGETBYCORRID	0x80800		/* dequeue by corrid */		
+#define TPQLOCKED       0x100000        /* internal locking of messages */
 		
 /* Valid flags for the quality of service fileds in the TPQCTLstructure */		
 #define TPQQOSDEFAULTPERSIST  0x00001   /* queue's default persistence policy */		

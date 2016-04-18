@@ -70,7 +70,7 @@ typedef struct
     long dflt_timeout; /* how long monitored transaction can be open        */
     char data_dir[PATH_MAX]; /* Where to write tx log files                 */
     int scan_time;      /* Number of seconds retries */
-    char qspace[XATMI_SERVICE_NAME_LENGTH+1];
+    char qspace[XATMI_SERVICE_NAME_LENGTH+1]; /* where the Q files live */
     
     int threadpoolsize; /* thread pool size */
     
@@ -97,7 +97,7 @@ typedef struct
     char magic[4];          /* File magic               */
     short srvid;
     short nodeid;
-    char qspace[TMQNAMELEN+1];
+    char qname[TMQNAMELEN+1];
     short command_code;     /* command code             */
     char msgid[TMMSGIDLEN]; /* message_id               */
 } tmq_cmdheader_t;
@@ -108,6 +108,7 @@ typedef struct
 typedef struct
 {
     tmq_cmdheader_t hdr;
+    /* we could probably use qctl.flags for in memory locking. */
     TPQCTL qctl;          /* Queued message        */
     unsigned char status;   /* Status of the message */
     long trycounter;        /* try counter           */
@@ -170,9 +171,9 @@ typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
+    UT_hash_handle hh; /* makes this structure hashable        */
     tmq_memmsg_t *q;
 };
-
 
 /**
  * Qeueue configuration.
@@ -182,7 +183,7 @@ struct tmq_qhash
 typedef struct tmq_qconfig tmq_qconfig_t;
 struct tmq_qconfig
 {
-    char name[TMQNAMELEN+1];
+    char qname[TMQNAMELEN+1];
     
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
     
@@ -213,6 +214,15 @@ extern void background_process_init(void);
 extern void background_lock(void);
 extern void background_unlock(void);
 
+/* Q space api: */
+public int tmq_qconf_addupd(char *qconfstr);
+public int tmq_qconf_delete(char *name);
+public tmq_qconfig_t * tmq_qconf_get(char *name);
+
+public tmq_qhash_t * tmq_qhash_get(char *qname);
+public tmq_qhash_t * tmq_qhash_new(char *qname);
+public int tmq_msg_add(tmq_msg_t *msg);
+        
 #ifdef	__cplusplus
 }
 #endif
