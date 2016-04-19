@@ -64,9 +64,9 @@ MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation    */
 /**
  * Generate new transaction id, native form (byte array)
  * Note this initializes the msgid.
- * @param xid
+ * @param msgid value to return
  */
-public void tmq_msgid(char *msgid)
+public void tmq_msgid_gen(char *msgid)
 {
     uuid_t uuid_val;
     short node_id = (short) G_atmi_env.our_nodeid;
@@ -92,11 +92,43 @@ public void tmq_msgid(char *msgid)
     NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(uuid_t)+sizeof(short)+ sizeof(short));
 }
 
+/**
+ * Generate serialized version of the string
+ * @param msgid_in, length defined by constant TMMSGIDLEN
+ * @param msgidstr_out
+ * @return msgidstr_out
+ */
+public char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
+{
+    size_t out_len;
+    
+    NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
+    
+    atmi_xa_base64_encode(msgid_in, strlen(msgid_in), &out_len, msgid_str_out);
+    msgid_str_out[out_len] = EOS;
+    
+    NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
+    
+    return msgid_str_out;
+}
 
-
-/* Get msgidstr from msgid */
-
-/* Get msgid from msgidstr */
-
-
-
+/**
+ * Get binary message id
+ * @param msgid_str_in, length defined by constant TMMSGIDLEN
+ * @param msgid_out
+ * @return msgid_out 
+ */
+public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
+{
+    size_t tot_len;
+    
+    NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
+    
+    memset(msgid_out, 0, TMMSGIDLEN);
+        
+    atmi_xa_base64_decode(msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
+    
+    NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
+    
+    return msgid_out;
+}

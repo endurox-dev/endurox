@@ -228,6 +228,7 @@ extern "C" {
 /********************** Queue suport  *****************************************/
 #define TMQNAMELEN	15
 #define TMMSGIDLEN	32
+#define TMMSGIDLEN_STR	45 /* TMMSGIDLEN * 1.4 (base64 overhead) */
 #define TMCORRIDLEN	32
 /* structure elements that are valid - set in flags */
 #define TPNOFLAGS	0x00000		

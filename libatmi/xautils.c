@@ -113,8 +113,6 @@ private unsigned char *b64_decode(const char *data,
                              char *decoded_data,
                              char *encoding_table);
 
-
-
 /**
  * XA Version of Base64 encode
  * @param data
@@ -123,7 +121,7 @@ private unsigned char *b64_decode(const char *data,
  * @param encoded_data
  * @return 
  */
-char * atmi_xa_base64_encode(const unsigned char *data,
+public char * atmi_xa_base64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data) 
@@ -140,7 +138,7 @@ char * atmi_xa_base64_encode(const unsigned char *data,
  * @param decoded_data
  * @return 
  */
-unsigned char *atmi_xa_base64_decode(const char *data,
+public unsigned char *atmi_xa_base64_decode(const char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data)

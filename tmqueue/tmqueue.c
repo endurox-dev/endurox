@@ -354,7 +354,18 @@ int tpsvrinit(int argc, char **argv)
         NDRX_LOG(log_error, "xa_open ok");
         ret = SUCCEED;
     }
-                    
+     
+    /*
+     * So QSPACE is Service name.
+     * Each tmqsrv will advertize:
+     * - <QSPACE> - For Auto queues, you can start multiple executables
+     *            - For manual queues (doing tpdequeue()) - only one space is possible
+     *            - processes does the queue mirroring in memory.
+     * - <QSPACE>-<NODE_ID>-<SRVID> - To this XA driver will send ACKs.
+     * 
+     * Also.. when we will recover from disk we will have to ensure the correct order
+     * of the enqueued messages. We can use time-stamp for doing ordering.
+     */
     sprintf(svcnm, NDRX_SVC_RM, G_atmi_env.xa_rmid);
     
     if (SUCCEED!=tpadvertise(svcnm, TMQUEUE))

@@ -442,7 +442,7 @@ public int tmq_msg_add(tmq_msg_t *msg)
     DL_APPEND(qhash->q, mmsg);
     
     /* Add the hash of IDs */
-    HASH_ADD_STR( G_msgid_hash, msg.hdr.msgid, mmsg);
+    HASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     
     /* Decide do we need to add the msg to disk?! 
      * Needs to send a command to XA sub-system to prepare msg/command to disk,

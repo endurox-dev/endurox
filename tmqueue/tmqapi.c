@@ -78,6 +78,13 @@ public int tmq_enqueue(UBFH *p_ub)
 {
     int ret = SUCCEED;
     
+    /* Add message to Q */
+    NDRX_LOG(log_debug, "Into tmq_enqueue()");
+    
+    /* Restore back the C structure */
+    
+    
+    
 out:
     return ret;
 }

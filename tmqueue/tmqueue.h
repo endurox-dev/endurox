@@ -155,7 +155,7 @@ union tmq_block {
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
-    char msgid[TMMSGIDLEN+1]; /* we might store msgid in string format... */
+    char msgid_str[TMMSGIDLEN_STR+1]; /* we might store msgid in string format... */
     tmq_msg_t msg;
     /* We should have hash handler of message hash */
     UT_hash_handle hh; /* makes this structure hashable        */
@@ -215,13 +215,18 @@ extern void background_lock(void);
 extern void background_unlock(void);
 
 /* Q space api: */
-public int tmq_qconf_addupd(char *qconfstr);
-public int tmq_qconf_delete(char *name);
-public tmq_qconfig_t * tmq_qconf_get(char *name);
+extern int tmq_qconf_addupd(char *qconfstr);
+extern int tmq_qconf_delete(char *name);
+extern tmq_qconfig_t * tmq_qconf_get(char *name);
 
-public tmq_qhash_t * tmq_qhash_get(char *qname);
-public tmq_qhash_t * tmq_qhash_new(char *qname);
-public int tmq_msg_add(tmq_msg_t *msg);
+extern tmq_qhash_t * tmq_qhash_get(char *qname);
+extern tmq_qhash_t * tmq_qhash_new(char *qname);
+extern int tmq_msg_add(tmq_msg_t *msg);
+    
+/* util */
+extern void tmq_msgid_gen(char *msgid);
+extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
+extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
         
 #ifdef	__cplusplus
 }

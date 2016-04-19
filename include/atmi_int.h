@@ -431,6 +431,17 @@ extern void br_dump_nodestack(char *stack, char *msg);
 extern int fill_reply_queue(char *nodestack, 
             char *org_reply_to, char *reply_to);
 
+/* Base64 encode/decode with file system valid output */
+extern char * atmi_xa_base64_encode(const unsigned char *data,
+                    size_t input_length,
+                    size_t *output_length,
+                    char *encoded_data);
+    
+extern unsigned char *atmi_xa_base64_decode(const char *data,
+                             size_t input_length,
+                             size_t *output_length,
+                             char *decoded_data);
+
 /* ATMI calls */
 extern int _tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,

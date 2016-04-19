@@ -71,6 +71,8 @@ add_library (atmi SHARED
                     ubf2exjson.c
                     newenv.c
                     typed_xcvt.c
+                    ubfutil.c
+                    qcommon.c
             )
 
 install (TARGETS 
