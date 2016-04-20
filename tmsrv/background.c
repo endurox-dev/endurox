@@ -97,7 +97,7 @@ public void background_unlock(void)
 public int background_read_log(void)
 {
     int ret=SUCCEED;
-    struct dirent **namelist;
+    struct dirent **namelist = NULL;
     int n;
     int len;
     char tranmask[256];
@@ -122,7 +122,11 @@ public int background_read_log(void)
        {
            if (0==strcmp(namelist[n]->d_name, ".") || 
                        0==strcmp(namelist[n]->d_name, ".."))
+           {
+               /* memory leak fixes... */
+               free(namelist[n]);
                continue;
+           }
 
            /* If it is transaction then parse & load */
            
@@ -141,15 +145,21 @@ public int background_read_log(void)
                {
                    NDRX_LOG(log_warn, "Faled to resume transaction: [%s]", 
                        fnamefull);
+                   free(namelist[n]); /* mem leak fixes */
                    FAIL_OUT(ret);
                }
            }
            free(namelist[n]);
        }
        free(namelist);
+       namelist = NULL;
     }
     
 out:
+    if (NULL!=namelist)
+    {
+       free(namelist);
+    }
     return ret;
 }
 
