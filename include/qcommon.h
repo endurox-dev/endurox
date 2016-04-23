@@ -1,5 +1,5 @@
 /* 
-** ATMI Level UBF utilities 
+** Persistent queue commons
 **
 ** @file nstdutil.h
 ** 
@@ -29,44 +29,30 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef UBFUTIL_H
-#define	UBFUTIL_H
+#ifndef QCOMMON_H
+#define	QCOMMON_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <stdint.h>
-
-#include "ubf.h"
+#include <ubf.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-    
-#define UBFUTIL_EXPORT      0x00000001  /* Export Field           */
-#define UBFUTIL_OPTIONAL    0x00000002  /* Field is opitional     */
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-   
-/**
- * map the c fields to UBF buffer and vice versa
- */
-typedef struct
-{
-    BFLDID fld;         /* UBF buffer field                             */
-    BFLDOCC occ;        /* UBF occurrence                               */
-    size_t offset;      /* offset to data field (pointer arithmetics)   */
-    BFLDLEN buf_size;   /* buffer size                                  */
-    short ftype;        /* user field type                              */
-} ubf_c_map_t;
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+    
+extern int tmq_tpqctl_to_ubf_req(UBFH *p_ub, TPQCTL *ctl, long *rules);
+extern int tmq_tpqctl_from_ubf_req(UBFH *p_ub, TPQCTL *ctl, long *rules);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* UBFUTIL_H */
+#endif	/* QCOMMON_H */
 

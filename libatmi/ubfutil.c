@@ -57,21 +57,25 @@
  * @param c_struct c struct
  * @return SUCCEED/FAIL
  */
-public int atmi_cvt_c_to_ubf(ubf_c_map_t *map, void *c_struct, UBFH *p_ub)
+public int atmi_cvt_c_to_ubf(ubf_c_map_t *map, void *c_struct, UBFH *p_ub, long *rules)
 {
     int ret = SUCCEED;
     
     while (BBADFLDID!=map->ftype)
     {
-        char *data_ptr = (char *)(c_struct+map->offset);
-        if (SUCCEED!=CBchg(p_ub, map->fld, map->occ, data_ptr, map->buf_size, 
-                map->ftype))
+        if (*rules & UBFUTIL_EXPORT)
         {
-            int be = Berror;
-            NDRX_LOG(log_error, "Failed to install field %d:[%s] to UBF buffer: %s", 
-                    Bfname(map->fld), Bstrerror(be));
-            FAIL_OUT(ret);
+            char *data_ptr = (char *)(c_struct+map->offset);
+            if (SUCCEED!=CBchg(p_ub, map->fld, map->occ, data_ptr, map->buf_size, 
+                    map->ftype))
+            {
+                int be = Berror;
+                NDRX_LOG(log_error, "Failed to install field %d:[%s] to UBF buffer: %s", 
+                        Bfname(map->fld), Bstrerror(be));
+                FAIL_OUT(ret);
+            }
         }
+        rules++;
         map++;
     }
 out:
@@ -85,31 +89,33 @@ out:
  * @param c_struct c struct
  * @return SUCCEED/FAIL
  */
-public int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct)
+public int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, long *rules)
 {
     int ret = SUCCEED;
     BFLDLEN len;
-    while (BBADFLDID!=map->ftype)
+    while (BBADFLDID!=map->fld)
     {
-        char *data_ptr = (char *)(c_struct+map->offset);
-        
-        len = map->buf_size; /* have the buffer size */
-                
-        if (SUCCEED!=CBget(p_ub, map->fld, map->occ, data_ptr, &len, map->ftype))
+        if (*rules & UBFUTIL_EXPORT)
         {
-            int be = Berror;
-            NDRX_LOG(log_error, "Failed to get field %d:[%s] from UBF buffer: %s", 
-                    Bfname(map->fld), Bstrerror(be));
-            
-            if (map->flags & UBFUTIL_BUFOPT)
+            char *data_ptr = (char *)(c_struct+map->offset);
+            len = map->buf_size; /* have the buffer size */
+            if (SUCCEED!=CBget(p_ub, map->fld, map->occ, data_ptr, &len, map->ftype))
             {
-                NDRX_LOG(log_warn, "Field %d:[%s] is optional - continue");
-            }
-            else
-            {
-                FAIL_OUT(ret);
+                int be = Berror;
+                NDRX_LOG(log_error, "Failed to get field %d:[%s] from UBF buffer: %s", 
+                        Bfname(map->fld), Bstrerror(be));
+
+                if (*rules & UBFUTIL_OPTIONAL)
+                {
+                    NDRX_LOG(log_warn, "Field %d:[%s] is optional - continue");
+                }
+                else
+                {
+                    FAIL_OUT(ret);
+                }
             }
         }
+        rules++;
         map++;
     }
     

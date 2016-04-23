@@ -72,14 +72,15 @@
 #define	EX_QDEQ_TIME	((BFLDID32)33554735)	/* number: 303	 type: long */
 #define	EX_QPRIORITY	((BFLDID32)33554736)	/* number: 304	 type: long */
 #define	EX_QDIAGNOSTIC	((BFLDID32)33554737)	/* number: 305	 type: long */
-#define	EX_QMSGID	((BFLDID32)67109170)	/* number: 306	 type: char */
+#define	EX_QMSGID	((BFLDID32)201326898)	/* number: 306	 type: carray */
 #define	EX_QCORRID	((BFLDID32)67109171)	/* number: 307	 type: char */
 #define	EX_QREPLYQUEUE	((BFLDID32)67109172)	/* number: 308	 type: char */
-#define	EX_QFAILUREQUEUe	((BFLDID32)67109173)	/* number: 309	 type: char */
+#define	EX_QFAILUREQUEUE	((BFLDID32)67109173)	/* number: 309	 type: char */
 #define	EX_QURCODE	((BFLDID32)33554742)	/* number: 310	 type: long */
 #define	EX_QAPPKEY	((BFLDID32)33554743)	/* number: 311	 type: long */
-#define	EX_QDELIVERY_QOs	((BFLDID32)33554744)	/* number: 312	 type: long */
+#define	EX_QDELIVERY_QOS	((BFLDID32)33554744)	/* number: 312	 type: long */
 #define	EX_QREPLY_QOS	((BFLDID32)33554745)	/* number: 313	 type: long */
 #define	EX_QEXP_TIME	((BFLDID32)33554746)	/* number: 314	 type: long */
 #define	EX_QCMD	((BFLDID32)67109179)	/* number: 315	 type: char */
+#define	EX_QDIAGMSG	((BFLDID32)167772476)	/* number: 316	 type: string */
 #endif

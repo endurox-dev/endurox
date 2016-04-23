@@ -39,7 +39,7 @@ extern "C" {
 
 #define NDRX_XID_SERIAL_BUFSIZE     48 /* Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /* Number of resource managers supported */
-#define TMTXFLAGS_IS_ABORT_ONLY           0x0001      /* transaction is marked as abort only */
+#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /* transaction is marked as abort only */
 
 #define ATMI_XA_TX_INFO_FIELDS      \
     short tmtxflags;                   /* See TMTXFLAGS_* */\
@@ -108,8 +108,8 @@ extern "C" {
 #define ATMI_MSG_MAX_SIZE   65536
 #define NDRX_MAX_Q_SIZE     128
 #define NDRX_MAX_ID_SIZE    96      /* pfx + binary name + server id + pid + nodeid */
-#define NDRX_MAX_KEY_SIZE   128     /* Key size for random key */
-
+#define NDRX_MAX_KEY_SIZE   128     /* Key size for random key                  */
+#define NDRX_QDIAG_MSG_SIZE 256     /* Q diagnostic message size               */
 /* List of configuration environment variables */
 #define CONF_NDRX_TOUT           "NDRX_TOUT"
 #define CONF_NDRX_ULOG           "NDRX_ULOG"
@@ -347,6 +347,7 @@ struct tpqctl_t
 	long deq_time;		/* absolute/relative  time for dequeuing */		
 	long priority;		/* enqueue priority */		
 	long diagnostic;	/* indicates reason for failure */		
+        char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
 	char msgid[TMMSGIDLEN];	/* id of message before which to queue */		
 	char corrid[TMCORRIDLEN];/* correlation id used to identify message */		
 	char replyqueue[TMQNAMELEN+1];	/* queue name for reply message */		
