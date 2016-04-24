@@ -50,7 +50,7 @@
 #include <exnet.h>
 #include <ndrxdcmn.h>
 
-#include "tmqueue.h"
+#include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>

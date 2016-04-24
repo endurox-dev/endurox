@@ -105,9 +105,9 @@ public int tmq_enqueue(UBFH *p_ub)
     memset(p_msg, 0, sizeof(tmq_msg_t));
     
     memcpy(p_msg->msg, data, len);
-    p_msg->len = len;
+    p_msg->len = len;    
     
-    /* TODO: DUMP the message got */
+    NDRX_DUMP(log_debug, "Got message for Q: ", p_msg->msg, p_msg->len);
     
     /* Restore back the C structure */
     if (SUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
@@ -118,6 +118,17 @@ public int tmq_enqueue(UBFH *p_ub)
     }
     
     /* Build up the message. */
+    tmq_setup_cmdheader_newmsg(&p_msg->hdr);
+    
+    /*
+     *  TODO: Setup of:
+     * unsigned char status;
+     * long trycounter;
+     * long long timestamp;
+     * long long trytstamp;
+     */
+    
+    p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
     
 out:
     return ret;

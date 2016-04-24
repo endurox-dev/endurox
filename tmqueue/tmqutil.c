@@ -47,7 +47,7 @@
 #include <exnet.h>
 #include <ndrxdcmn.h>
 
-#include "tmqueue.h"
+#include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
 #include <uuid/uuid.h>
 #include <xa_cmn.h>
@@ -58,8 +58,28 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation    */
+MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Setup queue header
+ * @param hdr header to setup
+ * @param qname queue name
+ */
+public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname)
+{
+    int ret = SUCCEED;
+    
+    strcpy(hdr->qname, qname);
+    hdr->command_code = TMQ_CMD_NEWMSG;
+    strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
+    hdr->nodeid = tpgetnodeid();
+    hdr->srvid = G_server_conf.srv_id;
+    tmq_msgid_gen(hdr->msgid);
+    
+out:
+    return ret;
+}
 
 /**
  * Generate new transaction id, native form (byte array)

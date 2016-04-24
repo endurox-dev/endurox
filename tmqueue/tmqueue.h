@@ -1,5 +1,5 @@
 /* 
-** Q for EnduroX
+** Q for EnduroX, shared header between XA driver and TMQ server
 **
 ** @file tmqueue.h
 ** 
@@ -45,49 +45,22 @@ extern "C" {
 #include "thpool.h"
     
 /*---------------------------Externs------------------------------------*/
-extern pthread_t G_bacground_thread;
-extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
-#define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
-#define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
-#define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
-#define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
 
 /* Basically we have a two forms of MSGID
  * 1. Native, 32 byte binary byte array
  * 2. String, Base64, 
- *  */
-
+ */
 #define TMQ_DEFAULT_Q           "@" /* Symbol for default Q */
+
+#define TMQ_MAGIC               "ETMQ" /* magic of tmq record      */
+#define TMQ_MAGIC_LEN           4      /* the len of message magic */
+
+#define TMQ_CMD_NEWMSG          'N'      /* Command code - new message */
+#define TMQ_CMD_UPD             'U'      /* Command code - update msg */
+#define TMQ_CMD_DEL             'D'      /* Command code - delete msg*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/**
- * TM config handler
- */
-typedef struct
-{
-    long dflt_timeout; /* how long monitored transaction can be open        */
-    char data_dir[PATH_MAX]; /* Where to write tx log files                 */
-    int scan_time;      /* Number of seconds retries */
-    char qspace[XATMI_SERVICE_NAME_LENGTH+1]; /* where the Q files live */
-    
-    int threadpoolsize; /* thread pool size */
-    
-    threadpool thpool;
-} tmqueue_cfg_t;
-
-/**
- * Server thread struct
- */
-struct thread_server
-{
-    char *context_data; /* malloced by enduro/x */
-    int cd;
-    char *buffer; /* buffer data, managed by enduro/x */
-};
-/* note we must malloc this struct too. */
-typedef struct thread_server thread_server_t;
 
 /**
  * Common command header
@@ -98,7 +71,7 @@ typedef struct
     short srvid;
     short nodeid;
     char qname[TMQNAMELEN+1];
-    short command_code;     /* command code             */
+    char command_code;     /* command code, see TMQ_CMD*             */
     char msgid[TMMSGIDLEN]; /* message_id               */
 } tmq_cmdheader_t;
 
@@ -116,7 +89,9 @@ typedef struct
     long long trytstamp;    /* Last try timestamp */
     /* Message log (stored only in file) */
     long len;               /* msg len */
-    char msg[0];            /* pointer to message */
+    char msg[0];            /* the memory segment for structure shall be large 
+                             * enough to handle the message len 
+                             * indexed by the array   */
 } tmq_msg_t;
 
 /**
@@ -147,88 +122,10 @@ union tmq_block {
     tmq_msg_del_t del;
     tmq_msg_upd_t upd;
 };  
-
-
-/**
- * Memory based message.
- */
-typedef struct tmq_memmsg tmq_memmsg_t;
-struct tmq_memmsg
-{
-    char msgid_str[TMMSGIDLEN_STR+1]; /* we might store msgid in string format... */
-    /* We should have hash handler of message hash */
-    UT_hash_handle hh; /* makes this structure hashable        */
-    /* We should also have a linked list handler   */
-    tmq_memmsg_t *next;
-    tmq_memmsg_t *prev;
-    
-    tmq_msg_t msg;
-};
-
-/**
- * List of queues (for queued messages)
- */
-typedef struct tmq_qhash tmq_qhash_t;
-struct tmq_qhash
-{
-    char qname[TMQNAMELEN+1];
-    UT_hash_handle hh; /* makes this structure hashable        */
-    tmq_memmsg_t *q;
-};
-
-/**
- * Qeueue configuration.
- * There will be special Q: "@DEFAULT" which contains the settings for default
- * (unknown queue)
- */
-typedef struct tmq_qconfig tmq_qconfig_t;
-struct tmq_qconfig
-{
-    char qname[TMQNAMELEN+1];
-    
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
-    
-    int autoq; /* Is this automatic queue */
-    int tries; /* Retry count for sending */
-    int waitinit; /* How long to wait for initial sending (sec) */
-    int waitretry; /* How long to wait between retries (sec) */
-    int waitretryinc; /* Wait increment between retries (sec) */
-    int waitretrymax; /* Max wait  (sec) */
-    int memonly; /* is queue memory only */
-    
-    UT_hash_handle hh; /* makes this structure hashable        */
-};
-
 /*---------------------------Globals------------------------------------*/
-extern tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-/* Q api */
-extern int tmq_printqueue(UBFH *p_ub, int cd);
-extern int tmq_enqueue(UBFH *p_ub);
-extern int tmq_dequeue(UBFH *p_ub);
 
-/* Background API */
-extern int background_read_log(void);
-extern void background_wakeup(void);
-extern void background_process_init(void);
-extern void background_lock(void);
-extern void background_unlock(void);
-
-/* Q space api: */
-extern int tmq_qconf_addupd(char *qconfstr);
-extern int tmq_qconf_delete(char *name);
-extern tmq_qconfig_t * tmq_qconf_get(char *name);
-
-extern tmq_qhash_t * tmq_qhash_get(char *qname);
-extern tmq_qhash_t * tmq_qhash_new(char *qname);
-extern int tmq_msg_add(tmq_msg_t *msg);
-    
-/* util */
-extern void tmq_msgid_gen(char *msgid);
-extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
-extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
-        
 #ifdef	__cplusplus
 }
 #endif

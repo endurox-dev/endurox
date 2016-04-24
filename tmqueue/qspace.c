@@ -47,7 +47,7 @@
 #include <exnet.h>
 #include <ndrxdcmn.h>
 
-#include "tmqueue.h"
+#include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
 #include "tperror.h"
 #include "userlog.h"
