@@ -1,5 +1,5 @@
 /* 
-** Enduro/X reserved fields
+** Enduro/X internal UBF field table
 **
 ** @file Exfields.h
 ** 
@@ -29,6 +29,10 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#ifndef __EXFIELDS_H
+#define __EXFIELDS_H
+/*	fname	bfldid            */
+/*	-----	-----            */
 #define	SRVCNM	((BFLDID32)167772261)	/* number: 101	 type: string */
 #define	EV_FLAGS	((BFLDID32)33554536)	/* number: 104	 type: long */
 #define	EV_MASK	((BFLDID32)167772265)	/* number: 105	 type: string */
@@ -57,3 +61,27 @@
 #define	TMTXTRYCNT	((BFLDID32)33554591)	/* number: 159	 type: long */
 #define	TMTXTRYMAXCNT	((BFLDID32)33554592)	/* number: 160	 type: long */
 #define	TMTXFLAGS	((BFLDID32)33554593)	/* number: 161	 type: long */
+#define	EX_CPMCOMMAND	((BFLDID32)167772360)	/* number: 200	 type: string */
+#define	EX_CPMOUTPUT	((BFLDID32)167772361)	/* number: 201	 type: string */
+#define	EX_CPMTAG	((BFLDID32)167772362)	/* number: 202	 type: string */
+#define	EX_CPMSUBSECT	((BFLDID32)167772363)	/* number: 203	 type: string */
+#define	EX_CLTID	((BFLDID32)167772410)	/* number: 250	 type: string */
+#define	EX_DATA	((BFLDID32)201326843)	/* number: 251	 type: carray */
+#define	EX_QSPACE	((BFLDID32)67109164)	/* number: 300	 type: char */
+#define	EX_QNAME	((BFLDID32)67109165)	/* number: 301	 type: char */
+#define	EX_QFLAGS	((BFLDID32)33554734)	/* number: 302	 type: long */
+#define	EX_QDEQ_TIME	((BFLDID32)33554735)	/* number: 303	 type: long */
+#define	EX_QPRIORITY	((BFLDID32)33554736)	/* number: 304	 type: long */
+#define	EX_QDIAGNOSTIC	((BFLDID32)33554737)	/* number: 305	 type: long */
+#define	EX_QMSGID	((BFLDID32)201326898)	/* number: 306	 type: carray */
+#define	EX_QCORRID	((BFLDID32)67109171)	/* number: 307	 type: char */
+#define	EX_QREPLYQUEUE	((BFLDID32)67109172)	/* number: 308	 type: char */
+#define	EX_QFAILUREQUEUE	((BFLDID32)67109173)	/* number: 309	 type: char */
+#define	EX_QURCODE	((BFLDID32)33554742)	/* number: 310	 type: long */
+#define	EX_QAPPKEY	((BFLDID32)33554743)	/* number: 311	 type: long */
+#define	EX_QDELIVERY_QOS	((BFLDID32)33554744)	/* number: 312	 type: long */
+#define	EX_QREPLY_QOS	((BFLDID32)33554745)	/* number: 313	 type: long */
+#define	EX_QEXP_TIME	((BFLDID32)33554746)	/* number: 314	 type: long */
+#define	EX_QCMD	((BFLDID32)67109179)	/* number: 315	 type: char */
+#define	EX_QDIAGMSG	((BFLDID32)167772476)	/* number: 316	 type: string */
+#endif

@@ -41,14 +41,15 @@ extern "C" {
 #include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define TMQ_DEFAULT_BUFSZ               1024 /* default buffer size     */            
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
-extern int tmq_tpqctl_to_ubf_req(UBFH *p_ub, TPQCTL *ctl, long *rules);
-extern int tmq_tpqctl_from_ubf_req(UBFH *p_ub, TPQCTL *ctl, long *rules);
+extern int tmq_tpqctl_to_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl);
+extern int tmq_tpqctl_from_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl);
 
 #ifdef	__cplusplus
 }

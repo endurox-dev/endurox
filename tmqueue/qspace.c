@@ -287,7 +287,6 @@ public int tmq_qconf_addupd(char *qconfstr)
             }
             
             strcpy(qconf->qname, buf);
-            
         }
         else
         {

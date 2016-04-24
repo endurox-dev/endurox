@@ -313,12 +313,15 @@ Ensure(test_cbgetalloc)
     free(d1);free(str1);
 }
 
+
+#define BGETALLOC_TEST_17      16384
+
 /**
  * Test Bgetalloc
  */
 Ensure(test_bgetalloc)
 {
-    char fb[1024];
+    char fb[BGETALLOC_TEST_17+1024];
     UBFH *p_ub = (UBFH *)fb;
     short *s1;
     long *l1;
@@ -327,6 +330,7 @@ Ensure(test_bgetalloc)
     double *d1;
     char *str1;
     char *carr1;
+    char test17[BGETALLOC_TEST_17]; /* have some random memory data. */
     BFLDLEN len=0;
 
     assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
@@ -389,6 +393,16 @@ Ensure(test_bgetalloc)
     assert_equal(Berror, BNOTPRES);
     assert_equal((str1=Bgetalloc(p_ub, T_STRING_FLD, 23, 0)), NULL);
     assert_equal(Berror, BNOTPRES);
+    
+    /* Test case for http://www.endurox.org/issues/17 */
+    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    len = BGETALLOC_TEST_17;
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, test17, len), SUCCEED);
+    assert_not_equal((carr1=Bgetalloc(p_ub, T_CARRAY_FLD, 0, &len)), NULL);
+    assert_equal(len, BGETALLOC_TEST_17);
+    assert_equal(memcmp(test17, carr1, BGETALLOC_TEST_17), 0);
+    free(carr1);
+    
 }
 
 /**

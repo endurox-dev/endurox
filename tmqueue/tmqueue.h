@@ -108,15 +108,15 @@ typedef struct
 typedef struct
 {
     tmq_cmdheader_t hdr;
-    /* we could probably use qctl.flags for in memory locking. */
-    TPQCTL qctl;          /* Queued message        */
+    TPQCTL qctl;            /* Queued message */
+    uint64_t lockthreadid;  /* Locked thread id */
     unsigned char status;   /* Status of the message */
-    long trycounter;        /* try counter           */
+    long trycounter;        /* try counter */
     long long timestamp;    /* timestamp, YYYYMMDDHHMISSfff (with milliseconds) */
     long long trytstamp;    /* Last try timestamp */
-    /* Message log (stored only in file)  */
-    long len;               /* msg len               */
-    char msg[0];            /* msg                   */
+    /* Message log (stored only in file) */
+    long len;               /* msg len */
+    char msg[0];            /* pointer to message */
 } tmq_msg_t;
 
 /**
@@ -156,12 +156,13 @@ typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
     char msgid_str[TMMSGIDLEN_STR+1]; /* we might store msgid in string format... */
-    tmq_msg_t msg;
     /* We should have hash handler of message hash */
     UT_hash_handle hh; /* makes this structure hashable        */
     /* We should also have a linked list handler   */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
+    
+    tmq_msg_t msg;
 };
 
 /**

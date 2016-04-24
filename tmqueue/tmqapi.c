@@ -56,7 +56,7 @@
 #include "tmqueue.h"
 #include "../libatmisrv/srv_int.h"
 #include "tperror.h"
-#include <xa_cmn.h>
+#include <qcommon.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -77,13 +77,47 @@
 public int tmq_enqueue(UBFH *p_ub)
 {
     int ret = SUCCEED;
-    
+    tmq_msg_t *p_msg = NULL;
+    char *data = NULL;
+    BFLDLEN len = 0;
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
     
+    if (NULL==(data = Bgetalloc(p_ub, EX_DATA, 0, &len)))
+    {
+        NDRX_LOG(log_error, "Missing EX_DATA!");
+        userlog("Missing EX_DATA!");
+        FAIL_OUT(ret);
+    }
+    
+    /*
+     * Get the message size in EX_DATA
+     */
+    p_msg = malloc(sizeof(tmq_msg_t)+len);
+    
+    if (NULL==p_msg)
+    {
+        NDRX_LOG(log_error, "Failed to malloc tmq_msg_t!");
+        userlog("Failed to malloc tmq_msg_t!");
+        FAIL_OUT(ret);
+    }
+    
+    memset(p_msg, 0, sizeof(tmq_msg_t));
+    
+    memcpy(p_msg->msg, data, len);
+    p_msg->len = len;
+    
+    /* TODO: DUMP the message got */
+    
     /* Restore back the C structure */
+    if (SUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
+    {
+        _TPset_error_msg(TPEINVAL,  "tmq_enqueue: failed convert ctl "
+                "to internal UBF buf!");
+        FAIL_OUT(ret);
+    }
     
-    
+    /* Build up the message. */
     
 out:
     return ret;
