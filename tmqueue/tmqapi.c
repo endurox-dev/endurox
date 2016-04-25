@@ -131,6 +131,11 @@ public int tmq_enqueue(UBFH *p_ub)
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
     
 out:
+    /* free up the temp memory */
+    if (NULL!=data)
+    {
+        free(data);
+    }
     return ret;
 }
 
