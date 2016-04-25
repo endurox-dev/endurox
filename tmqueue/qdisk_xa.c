@@ -91,6 +91,7 @@
 #include <unistd.h>
 
 #include "userlog.h"
+#include "tmqueue.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -143,6 +144,9 @@ public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
 public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
 
+
+private int read_tx_header(char *block, int len);
+
 struct xa_switch_t ndrxstatsw = 
 { 
     .name = "ndrxqstatsw",
@@ -192,6 +196,21 @@ private char *get_file_name(XID *xid, int rmid, char *folder)
 }
 
 /**
+ * Special Q file name
+ * @param fname
+ * @return 
+ */
+private char *get_file_name_final(char *fname)
+{
+    static char buf[2048];
+    
+    sprintf(buf, "%s/%s", M_folder_committed, fname);
+    NDRX_LOG(log_debug, "Folder built: %s", buf);
+    
+    return buf;
+}
+
+/**
  * Rename file from one folder to another...
  * @param xid
  * @param rmid
@@ -208,6 +227,37 @@ private int file_move(XID *xid, int rmid, char *from_folder, char *to_folder)
     
     strcpy(from_file, get_file_name(xid, rmid, from_folder));
     strcpy(to_file, get_file_name(xid, rmid, to_folder));
+    
+    if (SUCCEED!=rename(from_file, to_file))
+    {
+        NDRX_LOG(log_error, "Failed to rename: %s", strerror(errno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Final file move where the final is the exact file name
+ * @param xid
+ * @param rmid
+ * @param from_folder
+ * @param to_folder
+ * @return 
+ */
+private int file_move_final(XID *xid, int rmid, char *from_folder, char *filename)
+{
+    int ret = SUCCEED;
+    
+    char from_file[FILENAME_MAX+1] = {EOS};
+    char to_file[FILENAME_MAX+1] = {EOS};
+    
+    strcpy(from_file, get_file_name(xid, rmid, from_folder));
+    strcpy(to_file, get_file_name_final(to_file));
+    
+    NDRX_LOG(log_debug, "Rename [%s] -> [%s]", from_file, to_file);
     
     if (SUCCEED!=rename(from_file, to_file))
     {
@@ -376,7 +426,7 @@ public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags
     }
     
     /* Open file for write... */
-    if (NULL==(M_f = fopen(file, "wb")))
+    if (NULL==(M_f = fopen(file, "a+b")))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! xa_start_entry() - failed to open file: %s!", 
@@ -461,49 +511,102 @@ public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
     
 }
 
+/**
+ * Commit the transaction.
+ * For new transaction:
+ * - Rename to msgid_str
+ * 
+ * For update transactions:
+ * - Update the message on disk with update data + remove update command msg.
+ * 
+ * For delete transactions:
+ * - Remove file from disk + remove delete msg.
+ * 
+ * @param sw
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
 public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
+    union tmq_block block;
+    char msgid_str[TMMSGIDLEN_STR+1];    
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    /* TODO: Parse & rename to real file: */
-    if (SUCCEED!=file_move(xid, rmid, M_folder_prepared, M_folder_committed))
+    if (SUCCEED!=read_tx_header((char *)&block, sizeof(block)))
     {
+        NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
         return XAER_RMERR;
+    }
+    
+    /* Do the task... */
+    if (TMQ_CMD_NEWMSG == block.hdr.command_code)
+    {
+        if (SUCCEED!=file_move_final(xid, rmid, M_folder_prepared, 
+                tmq_msgid_serialize(block.hdr.msgid, msgid_str)))
+        {
+            return XAER_RMERR;
+        }
     }
     
     return XA_OK;
 }
 
 /**
- * Write some stuff to transaction!!!
- * TODO: Write operations to DB:
- * @param buf
+ * Reads the header block
+ * @param block
+ * @param p_len
  * @return 
  */
-public int __write_to_tx_file(char *buf)
+private int read_tx_header(char *block, int len)
+{
+    int act_read;
+    int ret = SUCCEED;
+    
+    if (len!=(act_read=fread(block, 1, len, M_f)))
+    {
+        int err = errno;
+        
+        NDRX_LOG(log_error, "ERROR! Filed to read tx file: req_read=%d, read=%d: %s",
+                len, act_read, strerror(err));
+        
+        userlog("ERROR! Filed to read tx file: req_read=%d, read=%d: %s",
+                len, act_read, strerror(err));
+        FAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Write data to transaction file
+ * @param block
+ * @param len
+ * @return 
+ */
+private int write_to_tx_file(char *block, int len)
 {
     int ret = SUCCEED;
     XID xid;
-    int len = strlen(buf);
-    
+    size_t ret_len;
     if (G_atmi_env.xa_sw->flags & TMREGISTER && !M_is_reg)
     {
         if (SUCCEED!=ax_reg(M_rmid, &xid, 0))
         {
             NDRX_LOG(log_error, "ERROR! xa_reg() failed!");
-            ret=FAIL;
-            goto out;
+            FAIL_OUT(ret);
         }
         
         if (XA_OK!=xa_start_entry(G_atmi_env.xa_sw, &xid, M_rmid, 0))
         {
             NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
-            ret=FAIL;
-            goto out;
+            FAIL_OUT(ret);
         }
         
         M_is_reg = TRUE;
@@ -512,15 +615,19 @@ public int __write_to_tx_file(char *buf)
     if (NULL==M_f)
     {
         NDRX_LOG(log_error, "ERROR! write with no tx file!!!");
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }
-    
-    if (fprintf(M_f, "%s", buf) < len)
+    /* Write th block */
+    if (len!=(ret_len=fwrite(block, 1, len, M_f)))
     {
-        NDRX_LOG(log_error, "TESTERROR! Failed to write to transaction!");
-        ret=FAIL;
-        goto out;
+        int err = errno;
+        NDRX_LOG(log_error, "ERROR! Filed to write to tx file: req_len=%d, written=%d: %s",
+                len, ret_len, strerror(err));
+        
+        userlog("ERROR! Filed to write to tx file: req_len=%d, written=%d: %s",
+                len, ret_len, strerror(err));
+        
+        FAIL_OUT(ret);
     }
     
 out:
@@ -535,6 +642,29 @@ out:
  * Read only commands:
  * - Query messages (find first & find next)
  */
+
+/**
+ * Write the message data to TX file
+ * @param msg message (the structure is projected on larger memory block to fit in the whole msg
+ * @return SUCCEED/FAIL
+ */
+public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
+{
+    int ret = SUCCEED;
+    char tmp[TMMSGIDLEN_STR+1];
+    
+    if (SUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len))
+    {
+        NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
+                tmq_msgid_serialize(msg->hdr.msgid, tmp));
+    }
+    
+    NDRX_LOG(log_info, "Message [%s] written ok to active TX file", 
+            tmq_msgid_serialize(msg->hdr.msgid, tmp));
+    
+out:
+    return ret;
+}
 
 /**
  * CURRENTLY NOT USED!!!

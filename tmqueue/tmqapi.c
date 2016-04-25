@@ -80,13 +80,22 @@ public int tmq_enqueue(UBFH *p_ub)
     tmq_msg_t *p_msg = NULL;
     char *data = NULL;
     BFLDLEN len = 0;
+    
+    TPQCTL qctl_out;
+    
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
+    
+    memset(&qctl_out, 0, sizeof(qctl_out));
     
     if (NULL==(data = Bgetalloc(p_ub, EX_DATA, 0, &len)))
     {
         NDRX_LOG(log_error, "Missing EX_DATA!");
         userlog("Missing EX_DATA!");
+        
+        strcpy(qctl_out.diagmsg, "Missing EX_DATA!");
+        qctl_out.diagnostic = QMEINVAL;
+        
         FAIL_OUT(ret);
     }
     
@@ -99,6 +108,10 @@ public int tmq_enqueue(UBFH *p_ub)
     {
         NDRX_LOG(log_error, "Failed to malloc tmq_msg_t!");
         userlog("Failed to malloc tmq_msg_t!");
+        
+        strcpy(qctl_out.diagmsg, "Failed to malloc tmq_msg_t!");
+        qctl_out.diagnostic = QMEOS;
+        
         FAIL_OUT(ret);
     }
     
@@ -109,26 +122,54 @@ public int tmq_enqueue(UBFH *p_ub)
     
     NDRX_DUMP(log_debug, "Got message for Q: ", p_msg->msg, p_msg->len);
     
+    if (SUCCEED!=Bget(p_ub, EX_QNAME, 0, p_msg->hdr.qname, 0))
+    {
+        NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_QNAME");
+        
+        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_QNAME!");
+        qctl_out.diagnostic = QMEINVAL;
+        
+        FAIL_OUT(ret);
+    }
+    
     /* Restore back the C structure */
     if (SUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
     {
-        _TPset_error_msg(TPEINVAL,  "tmq_enqueue: failed convert ctl "
+        NDRX_LOG(log_error, "tmq_enqueue: failed convert ctl "
                 "to internal UBF buf!");
+        userlog("tmq_enqueue: failed convert ctl "
+                "to internal UBF buf!");
+        
+        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed convert ctl "
+                "to internal UBF buf!");
+        qctl_out.diagnostic = QMESYSTEM;
+        
         FAIL_OUT(ret);
     }
     
     /* Build up the message. */
-    tmq_setup_cmdheader_newmsg(&p_msg->hdr);
+    tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
+            tpgetnodeid(), G_server_conf.srv_id);
     
-    /*
-     *  TODO: Setup of:
-     * unsigned char status;
-     * long trycounter;
-     * long long timestamp;
-     * long long trytstamp;
-     */
-    
+    memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
+    nstdutil_get_dt_local(&p_msg->timestamp_date, &p_msg->timestamp_time);
+    p_msg->status = TMQ_STATUS_ACTIVE;
+    
+    NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
+            p_msg->hdr.qname);
+    
+    if (SUCCEED!=tmq_msg_add(p_msg))
+    {
+        NDRX_LOG(log_error, "tmq_enqueue: failed to enqueue!");
+        userlog("tmq_enqueue: failed to enqueue!");
+        
+        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to enqueue!");
+        
+        qctl_out.diagnostic = QMESYSTEM;
+        
+        FAIL_OUT(ret);
+    }
     
 out:
     /* free up the temp memory */
@@ -136,6 +177,23 @@ out:
     {
         free(data);
     }
+
+    if (SUCCEED!=ret && NULL!=p_msg)
+    {
+        NDRX_LOG(log_warn, "About to free p_msg!");
+        free(p_msg);
+    }
+    
+    /* Setup response fields
+     * Not sure about existing ones (seems like they will stay in buffer)
+     * i.e. request fields
+     */
+    if (SUCCEED!=tmq_tpqctl_to_ubf_enqrsp(p_ub, &qctl_out))
+    {
+        NDRX_LOG(log_error, "tmq_enqueue: failed to generate response buffer!");
+        userlog("tmq_enqueue: failed to generate response buffer!");
+    }
+
     return ret;
 }
 

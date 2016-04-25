@@ -66,20 +66,22 @@ MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
  * @param hdr header to setup
  * @param qname queue name
  */
-public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname)
+public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
+        short srvid, short nodeid)
 {
     int ret = SUCCEED;
     
     strcpy(hdr->qname, qname);
     hdr->command_code = TMQ_CMD_NEWMSG;
     strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
-    hdr->nodeid = tpgetnodeid();
-    hdr->srvid = G_server_conf.srv_id;
+    hdr->nodeid = nodeid;
+    hdr->srvid = srvid;
     tmq_msgid_gen(hdr->msgid);
     
 out:
     return ret;
 }
+
 
 /**
  * Generate new transaction id, native form (byte array)

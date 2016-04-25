@@ -159,11 +159,6 @@ extern tmq_qhash_t * tmq_qhash_get(char *qname);
 extern tmq_qhash_t * tmq_qhash_new(char *qname);
 extern int tmq_msg_add(tmq_msg_t *msg);
     
-/* util */
-extern void tmq_msgid_gen(char *msgid);
-extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
-extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
-extern int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname);
 #ifdef	__cplusplus
 }
 #endif

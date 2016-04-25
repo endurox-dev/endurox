@@ -215,6 +215,16 @@ public tmq_qconfig_t * tmq_qconf_get(char *qname)
 }
 
 /**
+ * TODO: Return Q config with default
+ * @param qname
+ * @return 
+ */
+public tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
+{
+    return NULL; /* TODO:  */
+}
+
+/**
  * Remove queue probably then existing messages will fall back to default Q
  * @param name
  * @return 
@@ -448,6 +458,12 @@ public int tmq_msg_add(tmq_msg_t *msg)
      * if it is not memory only.
      * So next step todo is to write xa command handler & dumping commands to disk.
      */
+    /* TODO: check the config tmq_qconf_get_with_default() is it memory q only? */
+    if (SUCCEED!=tmq_storage_write_cmd_newmsg(&mmsg->msg))
+    {
+        NDRX_LOG(log_error, "Failed to add message to persistent store!");
+        FAIL_OUT(ret);
+    }
     
     NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue",
             msg->hdr.msgid, msg->hdr.qname);

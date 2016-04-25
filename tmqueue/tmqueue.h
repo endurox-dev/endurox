@@ -57,8 +57,16 @@ extern "C" {
 #define TMQ_MAGIC_LEN           4      /* the len of message magic */
 
 #define TMQ_CMD_NEWMSG          'N'      /* Command code - new message */
-#define TMQ_CMD_UPD             'U'      /* Command code - update msg */
-#define TMQ_CMD_DEL             'D'      /* Command code - delete msg*/
+#define TMQ_CMD_UPD             'U'      /* Command code - update msg  */
+#define TMQ_CMD_DEL             'D'      /* Command code - delete msg  */
+
+/**
+ * Status codes of the message
+ */
+#define TMQ_STATUS_ACTIVE       'A'      /* Message is active          */
+#define TMQ_STATUS_DONE         'D'      /* Message is done            */
+#define TMQ_STATUS_EXPIRED      'E'      /* Message is expired  or tries exceeded  */
+#define TMQ_STATUS_SUSPENDED    'S'      /* Message is suspended       */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -83,10 +91,12 @@ typedef struct
     tmq_cmdheader_t hdr;
     TPQCTL qctl;            /* Queued message */
     uint64_t lockthreadid;  /* Locked thread id */
-    unsigned char status;   /* Status of the message */
+    char status;            /* Status of the message */
     long trycounter;        /* try counter */
-    long long timestamp;    /* timestamp, YYYYMMDDHHMISSfff (with milliseconds) */
-    long long trytstamp;    /* Last try timestamp */
+    long timestamp_date;    /* timestamp, YYYYMMDD */
+    long timestamp_time;    /* timestamp, HHMMSS */
+    long trytstamp_date;    /* Last try timestamp, YYYYMMDD */
+    long trytstamp_time;    /* Last try timestamp, HHMMSS */
     /* Message log (stored only in file) */
     long len;               /* msg len */
     char msg[0];            /* the memory segment for structure shall be large 
@@ -118,6 +128,7 @@ typedef struct
  * Data block
  */
 union tmq_block {
+    tmq_cmdheader_t hdr;
     tmq_msg_t msg;
     tmq_msg_del_t del;
     tmq_msg_upd_t upd;
@@ -125,7 +136,18 @@ union tmq_block {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+ 
+/* util, shared between driver & daemon */
+extern int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
+        short srvid, short nodeid);
+extern void tmq_msgid_gen(char *msgid);
+extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
+extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 
+/* From storage driver: */
+extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
+   
+    
 #ifdef	__cplusplus
 }
 #endif
