@@ -16,7 +16,7 @@ extern "C" {
 #include <ubf.h>
 /*---------------------------Macros-------------------------------------*/
     
-#define NDRX_VERSION "Enduro/X v2.5.0 alpha"
+#define NDRX_VERSION "EnduroX v2.5.0 alpha"
     
 /*
  * flag bits for C language xatmi routines
