@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <pthread.h>
+#include <string.h>
 
 #include <sys/time.h>                   /* purely for dbg_timer()       */
 #include <sys/stat.h>
