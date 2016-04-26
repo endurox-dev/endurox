@@ -125,7 +125,7 @@ struct pm_node
     int autokill;           /* Kill the process if not started in time */
     int killreq;            /* process kill is requested (long startup, 
                              * no ping, long shutdown) */
-    __pid_t pid;            /* process PID                   */
+    pid_t pid;            /* process PID                   */
     long state_changed;     /* Timer for state changed       */
     pm_node_svc_t   *svcs;  /* list of services              */
     int flags;              /* Flags sent by server info     */
@@ -141,7 +141,7 @@ struct pm_node
 typedef struct pm_pidhash pm_pidhash_t;
 struct pm_pidhash
 {
-    __pid_t pid;            /* process PID          */
+    pid_t pid;            /* process PID          */
     pm_node_t *p_pm;
     pm_pidhash_t *prev;
     pm_pidhash_t *next;
@@ -268,7 +268,7 @@ extern int cmd_close_queue(void);
 /* Sanity & restart */
 extern int do_sanity_check(void);
 extern int self_notify(srv_status_t *status, int block);
-extern int remove_server_queues(char *process, __pid_t pid, int srv_id, char *rplyq);
+extern int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq);
 
 /* Restart */
 extern int do_restart_actions(void);

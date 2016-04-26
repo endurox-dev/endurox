@@ -229,7 +229,7 @@ public int build_advertise_list(void)
     int ret=SUCCEED;
     svc_entry_t *s_tmp, *s_el;
     svc_entry_fn_t *f_tmp, *f_el;
-    __pid_t mypid = getpid();
+    pid_t mypid = getpid();
 
     char *svn_nm_srch=NULL;
     char *svn_nm_add=NULL;

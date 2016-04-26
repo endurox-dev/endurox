@@ -508,7 +508,7 @@ typedef struct
     int srvid;
     char clopt[PATH_MAX];
     long state;             /* process state code */
-    __pid_t pid;            /* PID of the process */
+    pid_t pid;            /* PID of the process */
 } command_reply_pm_t;
 
 /**
@@ -536,7 +536,7 @@ typedef struct
     char binary_name[MAXTIDENT+1]; /* Name of the binary */
     int nodeid;           /* Other node id of the bridge                   */
     int srvid;
-    __pid_t pid;            /* PID of the process */
+    pid_t pid;            /* PID of the process */
     long state;             /* process state code */
     int svc_count;          /* count of services (for belloow array) */
     command_reply_psc_det_t svcdet[0];
@@ -563,7 +563,7 @@ typedef struct
     int num_term_sigs;      /* Number of times to send term sig, before -9 */
     long last_sig;          /* Time when signal was sent     */
     int autokill;           /* Kill the process if not started in time */
-    __pid_t pid;            /* process PID                   */
+    pid_t pid;            /* process PID                   */
     long state_changed;     /* Timer for state changed       */
     int flags;              /* Flags sent by server info     */
     short   nodeid;         /* other node id, if this is bridge */
@@ -666,7 +666,7 @@ typedef struct
 typedef struct
 {
    int srvid;              /* server id sending this info                   */
-   __pid_t  pid;           /* server's process id (for crosscheck alarming) */
+   pid_t  pid;           /* server's process id (for crosscheck alarming) */
    int state;              /* server's state (the same as for process       */
    int flags;              /* servers flags                                 */
    int nodeid;           /* Other node id of the bridge                   */

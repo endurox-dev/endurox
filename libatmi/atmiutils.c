@@ -416,7 +416,7 @@ restart:
  * @param proc_name
  * @return
  */
-public int is_process_running(__pid_t pid, char *proc_name)
+public int is_process_running(pid_t pid, char *proc_name)
 {
     char   proc_file[PATH_MAX];
     int     ret = FALSE;

@@ -414,7 +414,7 @@ extern int generic_q_send(char *queue, char *data, long len, long flags);
 extern int generic_q_send_2(char *queue, char *data, long len, long flags, long tout);
 extern int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
 extern long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
-extern int is_process_running(__pid_t pid, char *proc_name);
+extern int is_process_running(pid_t pid, char *proc_name);
 extern mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern mqd_t ndrx_mq_open(const char *name, int oflag);
 extern void ndrx_mq_fix_mass_send(int *cntr);

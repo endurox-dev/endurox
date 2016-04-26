@@ -119,7 +119,7 @@ out:
 int start_daemon_recover(void)
 {
     int ret=SUCCEED;
-    __pid_t pid;
+    pid_t pid;
     char    key[NDRX_MAX_KEY_SIZE+3+1];
     /* Log filename for ndrxd */
     char *ndrxd_logfile = getenv(CONF_NDRX_DMNLOG);

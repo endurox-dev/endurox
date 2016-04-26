@@ -195,10 +195,12 @@ private void ex_mq_notify_func(union sigval sv)
 	}
         
         
+/*
       	if (-1==syncfs(s->wakeup_pipe[WRITE]))
 	{
             NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
 	}
+*/
         
         /* Install handler back */
         
@@ -565,10 +567,27 @@ public int ex_epoll_create(int size)
         FAIL_OUT(ret);
     }
     
-    if (pipe2(set->wakeup_pipe, O_NONBLOCK) == -1)
+	/* O_NONBLOCK */
+    if (pipe(set->wakeup_pipe) == -1)
     {
-        ex_epoll_set_err(errno, "pipe2 failed");
-        NDRX_LOG(log_error, "pipe2 failed");
+        ex_epoll_set_err(errno, "pipe failed");
+        NDRX_LOG(log_error, "pipe failed");
+        FAIL_OUT(ret);
+    }
+
+    if (FAIL==fcntl(set->wakeup_pipe[READ], F_SETFL, 
+		fcntl(set->wakeup_pipe[READ], F_GETFL) | O_NONBLOCK))
+    {
+        ex_epoll_set_err(errno, "fcntl READ pipe set O_NONBLOCK failed");
+        NDRX_LOG(log_error, "fcntl READ pipe set O_NONBLOCK failed");
+        FAIL_OUT(ret);
+    }
+
+    if (FAIL==fcntl(set->wakeup_pipe[WRITE], F_SETFL, 
+		fcntl(set->wakeup_pipe[WRITE], F_GETFL) | O_NONBLOCK))
+    {
+        ex_epoll_set_err(errno, "fcntl WRITE pipe set O_NONBLOCK failed");
+        NDRX_LOG(log_error, "fcntl WRITE pipe set O_NONBLOCK failed");
         FAIL_OUT(ret);
     }
     
@@ -661,7 +680,7 @@ public int ex_epoll_close(int epfd)
     /* Kill message queue descriptor hash */
     HASH_ITER(hh, set->mqds, m, mtmp)
     {
-        ex_epoll_ctl(set->fd, EX_EPOLL_CTL_DEL, m->mqd, NULL);
+        ex_epoll_ctl_mq(set->fd, EX_EPOLL_CTL_DEL, m->mqd, NULL);
     }
     
     free(set);
@@ -748,7 +767,8 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
                 NDRX_LOG(log_info, "Got mqdes %d for pipe", m->mqd);
 
                 events[numevents-1].data.mqd = m->mqd;
-                events[numevents-1].events = set->fdtab[i].revents;
+		/* take from pipe */
+                events[numevents-1].events = set->fdtab[PIPE_POLL_IDX].revents;
                 events[numevents-1].is_mqd = TRUE;
             }
             else

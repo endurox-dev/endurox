@@ -93,7 +93,7 @@ public int is_ndrxd_running(void)
     int ret = FALSE;
     int queue_ok = FALSE;
     FILE *f = NULL;
-    __pid_t    pid;
+    pid_t    pid;
     char    pidbuf[64] = {EOS};
 
     /* Reset to default - not running! */
@@ -196,7 +196,7 @@ out:
 public int start_daemon_idle(void)
 {
     int ret=SUCCEED;
-    __pid_t pid;
+    pid_t pid;
     char    key[NDRX_MAX_KEY_SIZE+3+1];
     /* clone our self */
     pid = fork();

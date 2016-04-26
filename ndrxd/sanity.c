@@ -204,7 +204,7 @@ out:
  * @param process
  * @param p_pid
  */
-private void parse_q(char *qname, int is_server, char *process, __pid_t *p_pid, 
+private void parse_q(char *qname, int is_server, char *process, pid_t *p_pid, 
                     int *server_id, int is_xadmin)
 {   
     char buf[NDRX_MAX_Q_SIZE+1];
@@ -282,7 +282,7 @@ private int unlink_dead_queue(char *qname)
  * @param rplyq if null, then reply queue will be built from scratch.
  * @return 
  */
-public int remove_server_queues(char *process, __pid_t pid, int srv_id, char *rplyq)
+public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq)
 {
     char    q_str[NDRX_MAX_Q_SIZE+1];
     char    q_path[PATH_MAX+1];
@@ -346,7 +346,7 @@ public int remove_server_queues(char *process, __pid_t pid, int srv_id, char *rp
 private int check_server(char *qname)
 {
     char    process[NDRX_MAX_Q_SIZE+1];
-    __pid_t pid;
+    pid_t pid;
     int     srv_id;
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
@@ -393,13 +393,13 @@ out:
 private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
 {
     char    process[NDRX_MAX_Q_SIZE+1];
-    __pid_t pid;
+    pid_t pid;
     /* Used for cache, so that we do not check multi threaded process
      * multiple times... */
     static unsigned prev_nr_of_try;
     static int first = TRUE;
     static char prev_process[NDRX_MAX_Q_SIZE+1];
-    static __pid_t prev_pid;
+    static pid_t prev_pid;
     static int prev_was_unlink=FALSE;
     
     if (first)

@@ -293,7 +293,7 @@ out:
  */
 public int cpm_exec(cpm_process_t *c)
 {
-    __pid_t pid;
+    pid_t pid;
     char cmd_str[PATH_MAX];
     char *cmd[PATH_MAX]; /* splitted pointers.. */
     char separators[]   = " ,\t\n";

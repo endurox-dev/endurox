@@ -96,7 +96,7 @@ struct ex_epoll_event {
 /*---------------------------Prototypes---------------------------------*/
 
 extern int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
-extern int ex_epoll_ctl_mq(mqd_t epfd, int op, int fd, struct ex_epoll_event *event);
+extern int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);
 extern int ex_epoll_create(int size);
 extern int ex_epoll_close(int fd);
 extern int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout);

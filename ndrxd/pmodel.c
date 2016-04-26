@@ -552,7 +552,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             int *abort)
 {
     int ret=SUCCEED;
-    __pid_t pid;
+    pid_t pid;
 
     /* prepare args for execution... */
     char cmd_str[PATH_MAX];
