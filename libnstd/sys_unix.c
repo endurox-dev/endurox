@@ -33,6 +33,9 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
+
+#define _POSIX_PTHREAD_SEMANTICS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -269,7 +272,7 @@ public void * signal_process(void *arg)
     for (;;)
     {
         
-        NDRX_LOG(log_debug, "%s - before sigwait()");
+        NDRX_LOG(log_debug, "%s - before sigwait()", fn);
         if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
@@ -278,12 +281,11 @@ public void * signal_process(void *arg)
             FAIL_OUT(ret);    
         }
         
-        NDRX_LOG(log_debug, "%s - after sigwait()");
+        NDRX_LOG(log_debug, "%s - after sigwait()", fn);
         
         
         /* wait for main thread enter in poll */
         MUTEX_LOCK_V(M_sig_lock);
-        MUTEX_UNLOCK_V(M_sig_lock);
 
         /* Reregister for message notification */
         
@@ -321,14 +323,17 @@ public void * signal_process(void *arg)
             if (SUCCEED!=signal_install_notifications_all(s))
             {
                 NDRX_LOG(log_warn, "Failed to install notifs for set: %d", s->fd);
+/*
                 MUTEX_UNLOCK_V(M_psets_lock);
                 
                 M_signal_first = TRUE;
                 FAIL_OUT(ret);   
+*/
             }
         }
         
         MUTEX_UNLOCK_V(M_psets_lock);
+        MUTEX_UNLOCK_V(M_sig_lock);
         
         /* check all queues and pipe down the event... */
     }
@@ -355,7 +360,6 @@ private int signal_install_notifications_all(ex_epoll_set_t *s)
         {
             NDRX_LOG(log_warn, "mq_notify failed: %d (%s)", 
                     m->mqd, strerror(errno));
-            MUTEX_UNLOCK_V(M_psets_lock);
 
             FAIL_OUT(ret);
         }
