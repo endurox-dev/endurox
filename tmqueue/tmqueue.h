@@ -119,9 +119,9 @@ typedef struct
 typedef struct
 {
     tmq_cmdheader_t hdr;
-    unsigned char status;   /* Status of the message */
-    long trycounter;        /* try counter           */
-    long long trytstamp;    /* Last try timestamp */
+    char status;   /* Status of the message */
+    long trytstamp_date;    /* Last try timestamp, YYYYMMDD */
+    long trytstamp_time;    /* Last try timestamp, HHMMSS */
 } tmq_msg_upd_t;
 
 /**

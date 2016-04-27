@@ -553,6 +553,21 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             return XAER_RMERR;
         }
     }
+    else if (TMQ_CMD_UPD == block.hdr.command_code)
+    {
+        /* TODO: Read the message file, update, close, remove command file */
+    }
+    else if (TMQ_CMD_DEL == block.hdr.command_code)
+    {
+        /* TODO: Remove message file, remove command file */
+    }
+    else
+    {
+        NDRX_LOG(log_error, "ERROR! xa_commit_entry() - invalid command [%c]!",
+                block.hdr.command_code);
+        
+        return XAER_RMERR;
+    }
     
     return XA_OK;
 }
@@ -661,6 +676,29 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     
     NDRX_LOG(log_info, "Message [%s] written ok to active TX file", 
             tmq_msgid_serialize(msg->hdr.msgid, tmp));
+    
+out:
+    return ret;
+}
+
+/**
+ * Block command (universal, for update & delete commands)
+ * @param block
+ * @return 
+ */
+public int tmq_storage_write_block(union tmq_block *block)
+{
+    int ret = SUCCEED;
+    char tmp[TMMSGIDLEN_STR+1];
+    
+    if (SUCCEED!=write_to_tx_file((char *)block, sizeof(*block)))
+    {
+        NDRX_LOG(log_error, "tmq_storage_write_block() failed for msg %s", 
+                tmq_msgid_serialize(block->hdr.msgid, tmp));
+    }
+    
+    NDRX_LOG(log_info, "Block command [%s] for msg [%s] written ok to active TX file", 
+            block->hdr.command_code, tmq_msgid_serialize(block->hdr.msgid, tmp));
     
 out:
     return ret;
