@@ -79,6 +79,7 @@ typedef struct
     short srvid;
     short nodeid;
     char qname[TMQNAMELEN+1];
+    char qspace[XATMI_SERVICE_NAME_LENGTH+1];
     char command_code;     /* command code, see TMQ_CMD*             */
     char msgid[TMMSGIDLEN]; /* message_id               */
 } tmq_cmdheader_t;
@@ -120,8 +121,12 @@ typedef struct
 {
     tmq_cmdheader_t hdr;
     char status;   /* Status of the message */
+    long trycounter;        /* try counter */
+    
+    /* TODO Fix the data: */
     long trytstamp_date;    /* Last try timestamp, YYYYMMDD */
     long trytstamp_time;    /* Last try timestamp, HHMMSS */
+    
 } tmq_msg_upd_t;
 
 /**

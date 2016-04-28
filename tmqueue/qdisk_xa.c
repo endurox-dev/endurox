@@ -93,6 +93,8 @@
 #include "userlog.h"
 #include "tmqueue.h"
 #include "nstdutil.h"
+#include "Exfields.h"
+#include <qcommon.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -382,10 +384,40 @@ out:
 private int send_unlock_notif(tmq_cmdheader_t *p_hdr)
 {
     int ret = SUCCEED;
+    long rsplen;
+    char cmd = TMQ_CMD_NOTIFY;
+    char tmp[TMMSGIDLEN_STR+1];
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", "", 1024);
     
-    /* TODO:  */
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "Failed to allocate notif buffer");
+        FAIL_OUT(ret);
+    }
     
-out:
+    if (SUCCEED!=Bchg(p_ub, EX_QMSGID, 0, p_hdr->msgid, TMMSGIDLEN))
+    {
+        NDRX_LOG(log_error, "Failed to setup EX_QMSGID!");
+        FAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_info, "Calling QSPACE [%s] for msgid_str [%s] unlock",
+                p_hdr->qspace, tmq_msgid_serialize(p_hdr->msgid, tmp));
+    
+    ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
+    
+    if (FAIL == tpcall(p_hdr->qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "%s failed: %s", p_hdr->qspace, tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
     return ret;
 }
 
@@ -655,10 +687,10 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         {
             int err = errno;
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                    fname, strerror(errno));
+                    fname, strerror(err));
 
             userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                    fname, strerror(errno));
+                    fname, strerror(err));
             goto xa_err;
         }
         
@@ -667,6 +699,9 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
             goto xa_err;
         }
+        
+        fclose(f);
+        f = NULL;
 
         /* Do the task... */
         if (TMQ_CMD_NEWMSG == block.hdr.command_code)
@@ -684,7 +719,53 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         }
         else if (TMQ_CMD_UPD == block.hdr.command_code)
         {
+            tmq_msg_t msg_to_upd; /* Message to update */
+            int ret_len;
             /* TODO: Read the message file, update, close, remove command file */
+            
+            /* TODO: fname = message_file_full_path */
+            
+            if (NULL==(f = fopen(fname, "a+b")))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
+                        fname, strerror(err));
+
+                userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
+                        fname, strerror(err));
+                goto xa_err;
+            }
+            
+            if (SUCCEED!=read_tx_header(f, (char *)&msg_to_upd, sizeof(msg_to_upd)))
+            {
+                NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
+                goto xa_err;
+            }
+            
+            /* seek the start */
+            if (SUCCEED!=fseek (f, 0 , SEEK_SET ))
+            {
+                NDRX_LOG(log_error, "Seekset failed: %s", strerror(errno));
+                goto xa_err;
+            }
+            
+            msg_to_upd.status = block.upd.status;
+            msg_to_upd.trycounter = block.upd.trycounter;
+            
+            /* Write th block */
+            if (sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, sizeof(msg_to_upd), f)))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "ERROR! Filed to write to msg file [%s]: "
+                        "req_len=%d, written=%d: %s", fname,
+                        sizeof(msg_to_upd), ret_len, strerror(err));
+
+                userlog("ERROR! Filed to write to msg file[%s]: req_len=%d, "
+                        "written=%d: %s",
+                        fname, sizeof(msg_to_upd), ret_len, strerror(err));
+
+                goto xa_err;
+            }
         }
         else if (TMQ_CMD_DEL == block.hdr.command_code)
         {
@@ -699,8 +780,8 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             goto xa_err;
         }
         
-        fclose(f);
-        /* TODO: close the file */
+        
+        
     }
     
     return XA_OK;
@@ -760,10 +841,10 @@ private int write_to_tx_file(char *block, int len)
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
-                M_filename_active, strerror(errno));
+                M_filename_active, strerror(err));
         
         userlog( "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
-                M_filename_active, strerror(errno));
+                M_filename_active, strerror(err));
         FAIL_OUT(ret);
     }
     

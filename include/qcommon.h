@@ -41,7 +41,12 @@ extern "C" {
 #include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define TMQ_DEFAULT_BUFSZ               1024 /* default buffer size     */            
+#define TMQ_DEFAULT_BUFSZ               1024 /* default buffer size     */
+    
+/* Commands loaded into EX_QCMD: */
+#define TMQ_CMD_ENQUEUE         'E'      /* Enqueue                     */
+#define TMQ_CMD_DEQUEUE         'D'      /* Dequeue                     */
+#define TMQ_CMD_NOTIFY          'N'      /* Notify tmq for XA completion*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

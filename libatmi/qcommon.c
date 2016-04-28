@@ -198,6 +198,7 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
 {
     int ret = SUCCEED;
     long rsplen;
+    char cmd = TMQ_CMD_ENQUEUE;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ+len);
     
     
@@ -240,6 +241,14 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, data, len))
     {
         _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set data field: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    /* Setup the command in EX_QCMD */
+    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    {
+        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set cmd field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
