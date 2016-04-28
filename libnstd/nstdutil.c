@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "nstdutil.h"
 /*---------------------------Externs------------------------------------*/
@@ -334,4 +335,16 @@ public uint64_t ndrx_gettid(void)
     uint64_t threadId = 0;
     memcpy(&threadId, &ptid, _MIN(sizeof(threadId), sizeof(ptid)));
     return threadId;
+}
+
+/**
+ * Tests for file existance
+ * @param filename path + filename
+ * @return TRUE if exists / FALSE not exists
+ */
+public int nstdutil_file_exists(char *filename)
+{
+    struct stat st;
+    int result = stat(filename, &st);
+    return result == 0;
 }

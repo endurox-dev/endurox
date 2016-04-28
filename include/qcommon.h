@@ -51,6 +51,10 @@ extern "C" {
 extern int tmq_tpqctl_to_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl);
 extern int tmq_tpqctl_from_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl);
 
+extern int tmq_tpqctl_to_ubf_enqrsp(UBFH *p_ub, TPQCTL *ctl);
+extern int tmq_tpqctl_from_ubf_enqrsp(UBFH *p_ub, TPQCTL *ctl);
+
+    
 #ifdef	__cplusplus
 }
 #endif

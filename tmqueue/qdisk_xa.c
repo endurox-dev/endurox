@@ -92,22 +92,32 @@
 
 #include "userlog.h"
 #include "tmqueue.h"
+#include "nstdutil.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private int M_is_open = FALSE;
-private int M_is_reg = FALSE; /* Dynamic registration done? */
-private int M_rmid = FAIL;
-private FILE *M_f = NULL;
+private __thread int M_is_open = FALSE;
+private __thread int M_is_reg = FALSE; /* Dynamic registration done? */
+private __thread int M_rmid = FAIL;
+/*
+ * Due to fact that we might have multiple queued messages per resource manager
+ * we will name the transaction files by this scheme:
+ * - <XID_STR>-1|2|3|4|..|N
+ * we will start the processing from N back to 1 so that if we crash and retry
+ * the operation, we can handle all messages in system.
+ */
+private __thread char M_filename_base[PATH_MAX+1] = {EOS}; /* base name of the file */
+private __thread char M_filename_active[PATH_MAX+1] = {EOS}; /* active file name */
+private __thread char M_filename_prepared[PATH_MAX+1] = {EOS}; /* prepared file name */
 
 
-private char M_folder[PATH_MAX] = {EOS}; /* Where to store the q data */
-private char M_folder_active[PATH_MAX] = {EOS}; /* Active transactions */
-private char M_folder_prepared[PATH_MAX] = {EOS}; /* Prepared transactions */
-private char M_folder_committed[PATH_MAX] = {EOS}; /* Committed transactions */
+private __thread char M_folder[PATH_MAX] = {EOS}; /* Where to store the q data */
+private __thread char M_folder_active[PATH_MAX] = {EOS}; /* Active transactions */
+private __thread char M_folder_prepared[PATH_MAX] = {EOS}; /* Prepared transactions */
+private __thread char M_folder_committed[PATH_MAX] = {EOS}; /* Committed transactions */
 /*---------------------------Prototypes---------------------------------*/
 
 public int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -145,7 +155,7 @@ public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, i
 
 
 
-private int read_tx_header(char *block, int len);
+private int read_tx_header(FILE *f, char *block, int len);
 
 struct xa_switch_t ndrxstatsw = 
 { 
@@ -181,18 +191,93 @@ struct xa_switch_t ndrxdynsw =
     .xa_complete_entry = xa_complete_entry_dyn
 };
 
+
 /**
- * will use NDRX_TEST_RM_DIR env variable...
+ * Set filename base
+ * @param xid
+ * @param rmid
+ * @return 
  */
-private char *get_file_name(XID *xid, int rmid, char *folder)
+private char *set_filename_base(XID *xid, int rmid)
 {
-    static char buf[2048];
-    char xid_str[128];
+    atmi_xa_serialize_xid(xid, M_filename_base);
     
-    sprintf(buf, "%s/%s", folder, xid_str);
-    NDRX_LOG(log_debug, "Folder built: %s", buf);
+    NDRX_LOG(log_debug, "Base file name built [%s]", M_filename_base);
     
-    return buf;
+    return M_filename_base;
+}
+
+/**
+ * Set the real filename (this includes the number postfix.)
+ * We need to test file if existance in:
+ * - active
+ * - prepared folders
+ * 
+ * if file exists, we increment the counter. We start from 1.
+ * 
+ * @param xid
+ * @param rmid
+ * @param filename where to store the output file name
+ */
+private void set_filenames(void)
+{
+    int i;
+    
+    for (i=1;;i++)
+    {
+        sprintf(M_filename_active, "%s/%s-%d", M_folder_active, M_filename_base, i);
+        sprintf(M_filename_prepared, "%s/%s-%d", M_folder_prepared, M_filename_base, i);
+        
+        if (!nstdutil_file_exists(M_filename_active) && 
+                !nstdutil_file_exists(M_filename_prepared))
+        {
+            break;
+        }
+    }
+}
+
+/**
+ * Return max file number
+ * @return 0 (no files), >=1 got something
+ */
+private int get_filenames_max(void)
+{
+    int i=0;
+    char filename_active[PATH_MAX+1];
+    char filename_prepared[PATH_MAX+1];
+    
+    while(1)
+    {
+        sprintf(filename_active, "%s/%s-%d", M_folder_active, M_filename_base, i);
+        sprintf(filename_prepared, "%s/%s-%d", M_folder_prepared, M_filename_base, i);
+        
+        if (nstdutil_file_exists(filename_active) || 
+                nstdutil_file_exists(M_filename_prepared))
+        {
+            i++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    return i;
+}
+
+/**
+ * Get the full file name for `i' occurrence 
+ * @param i
+ * @param folder
+ * @return path to file
+ */
+private char *get_filename_i(int i, char *folder, int slot)
+{
+    static __thread char filename[2][PATH_MAX+1];
+    
+    sprintf(filename[slot], "%s/%s-%d", folder, M_filename_base, i);
+    
+    return filename[slot];
 }
 
 /**
@@ -202,7 +287,7 @@ private char *get_file_name(XID *xid, int rmid, char *folder)
  */
 private char *get_file_name_final(char *fname)
 {
-    static char buf[2048];
+    static char buf[PATH_MAX+1];
     
     sprintf(buf, "%s/%s", M_folder_committed, fname);
     NDRX_LOG(log_debug, "Folder built: %s", buf);
@@ -218,21 +303,18 @@ private char *get_file_name_final(char *fname)
  * @param to_folder
  * @return 
  */
-private int file_move(XID *xid, int rmid, char *from_folder, char *to_folder)
+private int file_move(int i, char *from_folder, char *to_folder)
 {
     int ret = SUCCEED;
-    
-    char from_file[FILENAME_MAX+1] = {EOS};
-    char to_file[FILENAME_MAX+1] = {EOS};
-    
-    strcpy(from_file, get_file_name(xid, rmid, from_folder));
-    strcpy(to_file, get_file_name(xid, rmid, to_folder));
-    
-    if (SUCCEED!=rename(from_file, to_file))
+        
+    if (SUCCEED!=rename(get_filename_i(i, from_folder, 0), 
+                get_filename_i(i, to_folder, 1)))
     {
-        NDRX_LOG(log_error, "Failed to rename: %s", strerror(errno));
-        ret=FAIL;
-        goto out;
+        NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
+                get_filename_i(i, from_folder, 0),
+                get_filename_i(i, to_folder, 1),
+                strerror(errno));
+        FAIL_OUT(ret);
     }
     
 out:
@@ -240,57 +322,68 @@ out:
 }
 
 /**
- * Final file move where the final is the exact file name
- * @param xid
- * @param rmid
- * @param from_folder
- * @param to_folder
- * @return 
+ * Move the file to committed storage
+ * @param from_filename source file name with path
+ * @param to_filename_only dest only filename
+ * @return SUCCEED/FAIL
  */
-private int file_move_final(XID *xid, int rmid, char *from_folder, char *filename)
+private int file_move_final(char *from_filename, char *to_filename_only)
 {
     int ret = SUCCEED;
     
-    char from_file[FILENAME_MAX+1] = {EOS};
-    char to_file[FILENAME_MAX+1] = {EOS};
+    char *to_filename = get_file_name_final(to_filename_only);
     
-    strcpy(from_file, get_file_name(xid, rmid, from_folder));
-    strcpy(to_file, get_file_name_final(to_file));
+    NDRX_LOG(log_debug, "Rename [%s] -> [%s]", from_filename, to_filename);
     
-    NDRX_LOG(log_debug, "Rename [%s] -> [%s]", from_file, to_file);
-    
-    if (SUCCEED!=rename(from_file, to_file))
+    if (SUCCEED!=rename(from_filename, to_filename))
     {
-        NDRX_LOG(log_error, "Failed to rename: %s", strerror(errno));
-        ret=FAIL;
-        goto out;
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
+                from_filename, to_filename, strerror(err));
+        userlog("Failed to rename [%s]->[%s]: %s", 
+                from_filename, to_filename, strerror(err));
+        FAIL_OUT(ret);
     }
     
 out:
     return ret;
 }
 
+
 /**
- * Unlink the transaction file
- * @param xid
- * @param rmid
- * @param folder
+ * Unlink the file
+ * @param filename full file name (with path)
  * @return 
  */
-private int file_unlink(XID *xid, int rmid, char *folder)
+private int file_unlink(char *filename)
 {
     int ret = SUCCEED;
     
-    char file[FILENAME_MAX+1] = {EOS};
-    
-    strcpy(file, get_file_name(xid, rmid, folder));
-    
-    if (SUCCEED!=unlink(file))
+    if (SUCCEED!=unlink(filename))
     {
-        NDRX_LOG(log_error, "Failed to unlink [%s]: %s", file, strerror(errno));
-        ret=FAIL;
-        goto out;
+        NDRX_LOG(log_error, "Failed to unlink [%s]: %s", 
+                filename, strerror(errno));
+        
+        FAIL_OUT(ret);
     }
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Send notification to tmqueue server so that we have finished this
+ * particular message & we can unlock that for further processing
+ * 
+ * @param p_hdr
+ * @return 
+ */
+private int send_unlock_notif(tmq_cmdheader_t *p_hdr)
+{
+    int ret = SUCCEED;
+    
+    /* TODO:  */
     
 out:
     return ret;
@@ -407,8 +500,7 @@ public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long 
 }
 
 /**
- * Open text file in RMID folder. Create file by TXID.
- * Check for file existance. If start & not exists - ok .
+ * Set the file name of transaciton file (the base)
  * If exists and join - ok. Otherwise fail.
  * @param xa_info
  * @param rmid
@@ -417,42 +509,29 @@ public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long 
  */
 public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    char *file = get_file_name(xid, rmid, "active");
+    set_filename_base(xid, rmid);
     
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_start_entry() - XA not open!");
         return XAER_RMERR;
     }
-    
-    /* Open file for write... */
-    if (NULL==(M_f = fopen(file, "a+b")))
-    {
-        int err = errno;
-        NDRX_LOG(log_error, "ERROR! xa_start_entry() - failed to open file: %s!", 
-                strerror(errno));
-        
-        userlog( "ERROR! xa_start_entry() - failed to open file: %s!", strerror(errno));
-        return XAER_RMERR;
-    }
-    
     return XA_OK;
 }
 
+/**
+ * XA call end entry. Nothing special to do here.
+ * @param sw
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
 public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_end_entry() - XA not open!");
-        return XAER_RMERR;
-    }
-    
-    if (NULL==M_f)
-    {
-        NDRX_LOG(log_error, "ERROR! xa_end_entry() - "
-                "transaction already closed: %s!", 
-                strerror(errno));
         return XAER_RMERR;
     }
     
@@ -469,42 +548,66 @@ public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
     }
     
 out:
-    if (M_f)
-    {
-        fclose(M_f);
-        M_f = NULL;
-    }
+
     return XA_OK;
 }
 
+/**
+ * Remove any transaction file (we might have multiple here
+ * @param sw
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
 public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
+    int i;
+    int names_max = get_filenames_max();
+    
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    if (SUCCEED!=file_unlink(xid, rmid, M_folder_active) && 
-            SUCCEED!=file_unlink(xid, rmid, M_folder_prepared))
+    for (i=names_max; i>=1; i--)
     {
-        return XAER_NOTA;
+        file_unlink(get_filename_i(i, M_folder_active, 0));
+        file_unlink(get_filename_i(i, M_folder_prepared, 0));
     }
     
     return XA_OK;
 }
 
+/**
+ * XA prepare entry call
+ * Basically we move all messages for active to prepared folder (still named by
+ * xid_str)
+ * 
+ * @param sw
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
 public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
+    int i;
+    int names_max = get_filenames_max();
+    
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_prepare_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    if (SUCCEED!=file_move(xid, rmid, M_folder_active, M_folder_prepared))
+    for (i=names_max; i>=1; i--)
     {
-        return XAER_RMERR;
+        if (SUCCEED!=file_move(i, M_folder_active, M_folder_prepared))
+        {
+            return XAER_RMERR;
+        }
     }
     
     return XA_OK;
@@ -531,45 +634,83 @@ public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
 public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     union tmq_block block;
-    char msgid_str[TMMSGIDLEN_STR+1];    
+    char msgid_str[TMMSGIDLEN_STR+1];
+    int i;
+    int names_max = get_filenames_max();
+    FILE *f = NULL;
+    char *fname;
+    
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    if (SUCCEED!=read_tx_header((char *)&block, sizeof(block)))
+    for (i=names_max; i>=1; i--)
     {
-        NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
-        return XAER_RMERR;
-    }
-    
-    /* Do the task... */
-    if (TMQ_CMD_NEWMSG == block.hdr.command_code)
-    {
-        if (SUCCEED!=file_move_final(xid, rmid, M_folder_prepared, 
-                tmq_msgid_serialize(block.hdr.msgid, msgid_str)))
-        {
-            return XAER_RMERR;
-        }
-    }
-    else if (TMQ_CMD_UPD == block.hdr.command_code)
-    {
-        /* TODO: Read the message file, update, close, remove command file */
-    }
-    else if (TMQ_CMD_DEL == block.hdr.command_code)
-    {
-        /* TODO: Remove message file, remove command file */
-    }
-    else
-    {
-        NDRX_LOG(log_error, "ERROR! xa_commit_entry() - invalid command [%c]!",
-                block.hdr.command_code);
         
-        return XAER_RMERR;
+        fname=get_filename_i(i, M_folder_prepared, 0);
+                
+        if (NULL==(f = fopen(fname, "a+b")))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
+                    fname, strerror(errno));
+
+            userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
+                    fname, strerror(errno));
+            goto xa_err;
+        }
+        
+        if (SUCCEED!=read_tx_header(f, (char *)&block, sizeof(block)))
+        {
+            NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
+            goto xa_err;
+        }
+
+        /* Do the task... */
+        if (TMQ_CMD_NEWMSG == block.hdr.command_code)
+        {
+            if (SUCCEED!=file_move_final(fname, 
+                    tmq_msgid_serialize(block.hdr.msgid, msgid_str)))
+            {
+                goto xa_err;
+            }
+            
+            if (SUCCEED!=send_unlock_notif(&block.hdr))
+            {
+                goto xa_err;
+            }
+        }
+        else if (TMQ_CMD_UPD == block.hdr.command_code)
+        {
+            /* TODO: Read the message file, update, close, remove command file */
+        }
+        else if (TMQ_CMD_DEL == block.hdr.command_code)
+        {
+            /* TODO: Remove message file, remove command file */
+        }
+        else
+        {
+            NDRX_LOG(log_error, "ERROR! xa_commit_entry() - invalid command [%c]!",
+                    block.hdr.command_code);
+
+            
+            goto xa_err;
+        }
+        
+        fclose(f);
+        /* TODO: close the file */
     }
     
     return XA_OK;
+    
+xa_err:
+    if (NULL!=f)
+    {
+        fclose(f);
+    }
+    return XAER_RMERR;
 }
 
 /**
@@ -578,12 +719,12 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
  * @param p_len
  * @return 
  */
-private int read_tx_header(char *block, int len)
+private int read_tx_header(FILE *f, char *block, int len)
 {
     int act_read;
     int ret = SUCCEED;
     
-    if (len!=(act_read=fread(block, 1, len, M_f)))
+    if (len!=(act_read=fread(block, 1, len, f)))
     {
         int err = errno;
         
@@ -603,13 +744,29 @@ out:
  * Write data to transaction file
  * @param block
  * @param len
- * @return 
+ * @return SUCCEED/FAIL
  */
 private int write_to_tx_file(char *block, int len)
 {
     int ret = SUCCEED;
     XID xid;
     size_t ret_len;
+    FILE *f = NULL;
+    
+    set_filenames();
+    
+    /* Open file for write... */
+    if (NULL==(f = fopen(M_filename_active, "a+b")))
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
+                M_filename_active, strerror(errno));
+        
+        userlog( "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
+                M_filename_active, strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
     if (G_atmi_env.xa_sw->flags & TMREGISTER && !M_is_reg)
     {
         if (SUCCEED!=ax_reg(M_rmid, &xid, 0))
@@ -627,13 +784,9 @@ private int write_to_tx_file(char *block, int len)
         M_is_reg = TRUE;
     }
     
-    if (NULL==M_f)
-    {
-        NDRX_LOG(log_error, "ERROR! write with no tx file!!!");
-        FAIL_OUT(ret);
-    }
+    
     /* Write th block */
-    if (len!=(ret_len=fwrite(block, 1, len, M_f)))
+    if (len!=(ret_len=fwrite(block, 1, len, f)))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! Filed to write to tx file: req_len=%d, written=%d: %s",
@@ -646,6 +799,12 @@ private int write_to_tx_file(char *block, int len)
     }
     
 out:
+
+    if (NULL!=f)
+    {
+        fclose(f);
+    }
+
     return ret;
 }
 
