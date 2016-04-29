@@ -94,10 +94,8 @@ typedef struct
     uint64_t lockthreadid;  /* Locked thread id */
     char status;            /* Status of the message */
     long trycounter;        /* try counter */
-    long timestamp_date;    /* timestamp, YYYYMMDD */
-    long timestamp_time;    /* timestamp, HHMMSS */
-    long trytstamp_date;    /* Last try timestamp, YYYYMMDD */
-    long trytstamp_time;    /* Last try timestamp, HHMMSS */
+    unsigned long long msgtstamp;
+    unsigned long long trytstamp;
     /* Message log (stored only in file) */
     long len;               /* msg len */
     char msg[0];            /* the memory segment for structure shall be large 
@@ -122,10 +120,7 @@ typedef struct
     tmq_cmdheader_t hdr;
     char status;   /* Status of the message */
     long trycounter;        /* try counter */
-    
-    /* TODO Fix the data: */
-    long trytstamp_date;    /* Last try timestamp, YYYYMMDD */
-    long trytstamp_time;    /* Last try timestamp, HHMMSS */
+    unsigned long long trytstamp;
     
 } tmq_msg_upd_t;
 

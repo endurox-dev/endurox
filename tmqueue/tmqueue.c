@@ -53,6 +53,7 @@
 #include "userlog.h"
 #include <xa_cmn.h>
 #include "thpool.h"
+#include "qcommon.h"
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 extern char *optarg;
@@ -135,7 +136,7 @@ void TMQUEUE_TH (void *ptr)
     
     switch(cmd)
     {
-        case NDRX_Q_ENQUEUE:
+        case TMQ_CMD_ENQUEUE:
             
             /* start new tran... */
             if (SUCCEED!=tmq_enqueue(p_ub))
@@ -144,7 +145,7 @@ void TMQUEUE_TH (void *ptr)
                 goto out;
             }
             break;
-        case NDRX_Q_DEQUEUE:
+        case TMQ_CMD_DEQUEUE:
             
             /* start new tran... */
             if (SUCCEED!=tmq_dequeue(p_ub))
@@ -153,7 +154,7 @@ void TMQUEUE_TH (void *ptr)
                 goto out;
             }
             break;
-        case NDRX_Q_PRINTQUEUE:
+        case TMQ_CMD_PRINT:
             
             /* request for printing active transactions */
             if (SUCCEED!=tmq_printqueue(p_ub, cd))

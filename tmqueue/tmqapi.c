@@ -56,6 +56,7 @@
 #include "tmqueue.h"
 #include "../libatmisrv/srv_int.h"
 #include "tperror.h"
+#include "nstdutil.h"
 #include <qcommon.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -153,7 +154,7 @@ public int tmq_enqueue(UBFH *p_ub)
     
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
-    nstdutil_get_dt_local(&p_msg->timestamp_date, &p_msg->timestamp_time);
+    p_msg->msgtstamp = nstdutil_utc_tstamp();
     p_msg->status = TMQ_STATUS_ACTIVE;
     
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",

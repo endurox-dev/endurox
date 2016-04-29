@@ -671,6 +671,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
     int names_max = get_filenames_max();
     FILE *f = NULL;
     char *fname;
+    char *fname_msg;
     
     if (!M_is_open)
     {
@@ -721,18 +722,17 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         {
             tmq_msg_t msg_to_upd; /* Message to update */
             int ret_len;
-            /* TODO: Read the message file, update, close, remove command file */
             
-            /* TODO: fname = message_file_full_path */
-            
-            if (NULL==(f = fopen(fname, "a+b")))
+            fname_msg = get_file_name_final(tmq_msgid_serialize(block.hdr.msgid, msgid_str));
+            NDRX_LOG(log_info, "Updating message file: [%s]", fname_msg);
+            if (NULL==(f = fopen(fname_msg, "a+b")))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                        fname, strerror(err));
+                        fname_msg, strerror(err));
 
                 userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                        fname, strerror(err));
+                        fname_msg, strerror(err));
                 goto xa_err;
             }
             
@@ -749,27 +749,73 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                 goto xa_err;
             }
             
+            /* Update the message data */
+            NDRX_LOG(log_debug, "%s: status [%c] -> [%c]", fname_msg, 
+                    msg_to_upd.status, block.upd.status);
             msg_to_upd.status = block.upd.status;
+            
+            NDRX_LOG(log_debug, "%s: trycounter [%l] -> [%l]", fname_msg, 
+                    msg_to_upd.trycounter, block.upd.trycounter);
             msg_to_upd.trycounter = block.upd.trycounter;
+            
+            NDRX_LOG(log_debug, "%s: trycounter [%lld] -> [%l]", fname_msg, 
+                    msg_to_upd.trycounter, block.upd.trycounter);
+            msg_to_upd.trytstamp = block.upd.trytstamp;
             
             /* Write th block */
             if (sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, sizeof(msg_to_upd), f)))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "ERROR! Filed to write to msg file [%s]: "
-                        "req_len=%d, written=%d: %s", fname,
+                        "req_len=%d, written=%d: %s", fname_msg,
                         sizeof(msg_to_upd), ret_len, strerror(err));
 
                 userlog("ERROR! Filed to write to msg file[%s]: req_len=%d, "
                         "written=%d: %s",
-                        fname, sizeof(msg_to_upd), ret_len, strerror(err));
+                        fname_msg, sizeof(msg_to_upd), ret_len, strerror(err));
 
                 goto xa_err;
             }
+            fclose(f);
+            f = NULL;
+            
+            /* remove the update file */
+            NDRX_LOG(log_info, "Removing update command file: [%s]", fname);
+            
+            if (SUCCEED!=unlink(fname))
+            {
+                NDRX_LOG(log_error, "Failed to remove update file [%s]: %s", 
+                        fname, strerror(errno));
+            }
+            
+            if (SUCCEED!=send_unlock_notif(&block.hdr))
+            {
+                goto xa_err;
+            }
+            
         }
         else if (TMQ_CMD_DEL == block.hdr.command_code)
         {
-            /* TODO: Remove message file, remove command file */
+            fname_msg = get_file_name_final(tmq_msgid_serialize(block.hdr.msgid, msgid_str));
+            NDRX_LOG(log_info, "Removing message file: [%s]", fname_msg);
+            
+            if (SUCCEED!=unlink(fname_msg))
+            {
+                NDRX_LOG(log_error, "Failed to remove update file [%s]: %s", 
+                        fname_msg, strerror(errno));
+            }
+            
+            NDRX_LOG(log_info, "Removing delete command file file: [%s]", fname);
+            
+            if (SUCCEED!=unlink(fname))
+            {
+                NDRX_LOG(log_error, "Failed to remove update file [%s]: %s", 
+                        fname, strerror(errno));
+            }
+            
+            /* no need for unlock notif here, it will be already wiped out from
+             * structures
+             */
         }
         else
         {
@@ -779,10 +825,9 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             
             goto xa_err;
         }
-        
-        
-        
     }
+    
+    NDRX_LOG(log_info, "Committed ok");
     
     return XA_OK;
     
@@ -791,6 +836,8 @@ xa_err:
     {
         fclose(f);
     }
+
+    NDRX_LOG(log_info, "Commit failed");
     return XAER_RMERR;
 }
 
@@ -865,7 +912,6 @@ private int write_to_tx_file(char *block, int len)
         M_is_reg = TRUE;
     }
     
-    
     /* Write th block */
     if (len!=(ret_len=fwrite(block, 1, len, f)))
     {
@@ -908,14 +954,47 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     int ret = SUCCEED;
     char tmp[TMMSGIDLEN_STR+1];
     
+    uint64_t lockt =  msg->lockthreadid;
+    
+    /* do not want to lock be written out to files: */
+    msg->lockthreadid = 0;
+    
     if (SUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
     }
     
+    msg->lockthreadid = lockt;
+    
     NDRX_LOG(log_info, "Message [%s] written ok to active TX file", 
             tmq_msgid_serialize(msg->hdr.msgid, tmp));
+    
+out:
+    return ret;
+}
+
+/**
+ * Update message
+ * @param msg
+ * @return 
+ */
+public int tmq_storage_write_cmd_upd(tmq_msg_t *msg)
+{
+    int ret = SUCCEED;
+    
+out:
+    return ret;
+}
+
+/**
+ * Delete message
+ * @param msg
+ * @return 
+ */
+public int tmq_storage_write_cmd_del(tmq_msg_t *msg)
+{
+    int ret = SUCCEED;
     
 out:
     return ret;

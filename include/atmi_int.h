@@ -130,12 +130,6 @@ extern "C" {
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
     
-/*
- * Q processing
- */
-#define NDRX_Q_ENQUEUE               'e'        /* Enqueue */
-#define NDRX_Q_DEQUEUE               'd'        /* Dequeue */
-#define NDRX_Q_PRINTQUEUE            'p'        /* Print Queue */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**

@@ -53,6 +53,8 @@
 
 /**
  * Return timstamp UTC, milliseconds since epoch date.
+ * This assumes that platform uses 64bit long long.
+ * Or we can drop the milliseconds if the platform does not handle that.
  */
 public unsigned long long nstdutil_utc_tstamp(void)
 {
@@ -61,9 +63,17 @@ public unsigned long long nstdutil_utc_tstamp(void)
 
     gettimeofday(&tv, NULL);
 
-    ret =
-        (unsigned long long)(tv.tv_sec) * 1000 +
-        (unsigned long long)(tv.tv_usec) / 1000;
+    /* so basically we need 6 byte storage or more */
+    if (sizeof(unsigned long long)>5) 
+    {
+        ret =
+            (unsigned long long)(tv.tv_sec) * 1000 +
+            (unsigned long long)(tv.tv_usec) / 1000;
+    }
+    else
+    {
+        ret = (unsigned long long)(tv.tv_sec);
+    }
     
     return ret;
 }

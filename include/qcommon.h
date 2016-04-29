@@ -47,6 +47,7 @@ extern "C" {
 #define TMQ_CMD_ENQUEUE         'E'      /* Enqueue                     */
 #define TMQ_CMD_DEQUEUE         'D'      /* Dequeue                     */
 #define TMQ_CMD_NOTIFY          'N'      /* Notify tmq for XA completion*/
+#define TMQ_CMD_PRINT           'P'      /* Print queue                 */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
