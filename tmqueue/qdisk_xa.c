@@ -803,6 +803,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                 goto xa_err;
             }
             
+#if 0
             /* Update the message data */
             NDRX_LOG(log_debug, "%s: status [%c] -> [%c]", fname_msg, 
                     msg_to_upd.status, block.upd.status);
@@ -815,7 +816,8 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             NDRX_LOG(log_debug, "%s: trycounter [%lld] -> [%l]", fname_msg, 
                     msg_to_upd.trycounter, block.upd.trycounter);
             msg_to_upd.trytstamp = block.upd.trytstamp;
-            
+#endif
+            UPD_MSG((&msg_to_upd), (&block.upd));
             /* Write th block */
             if (sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, sizeof(msg_to_upd), f)))
             {

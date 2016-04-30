@@ -87,6 +87,8 @@ public int tmq_enqueue(UBFH *p_ub)
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
     
+    /* TODO: Standard the transaction if not in txn */
+    
     memset(&qctl_out, 0, sizeof(qctl_out));
     
     if (NULL==(data = Bgetalloc(p_ub, EX_DATA, 0, &len)))
@@ -207,6 +209,10 @@ public int tmq_dequeue(UBFH *p_ub)
 {
     int ret = SUCCEED;
     
+    /* TODO: Search for not locked message, lock it, issue command to disk for
+     * delete & return the message to buffer (also needs to resize the buffer correctly)
+     */
+    
 out:
     return ret;
 }
@@ -219,14 +225,24 @@ out:
 public int tmq_notify(UBFH *p_ub)
 {
     int ret = SUCCEED;
+    union tmq_upd_block b;
+    BFLDLEN len = sizeof(b);
+     
+    if (SUCCEED!=Bget(p_ub, EX_DATA, 0, (char *)&b, &len))
+    {
+        NDRX_LOG(log_error, "Failed to get EX_DATA: %s", Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
     
-    
-    
+    if (SUCCEED!=tmq_unlock_msg(b))
+    {
+        NDRX_LOG(log_error, "Failed to unlock message...");
+        FAIL_OUT(ret);
+    }
     
 out:
     return ret;
 }
-
 
 /******************************************************************************/
 /*                         COMMAND LINE API                                   */

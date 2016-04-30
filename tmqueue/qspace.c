@@ -54,6 +54,7 @@
 #include <xa_cmn.h>
 #include "thpool.h"
 #include "nstdutil.h"
+#include "tmqueue.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TOKEN_SIZE          64 /* max key=value buffer size of qdef element */
@@ -77,8 +78,11 @@ public tmq_memmsg_t *G_msgid_hash;
 
 /* Handler for Q hash */
 public tmq_qhash_t *G_qhash;
-/* - think later about use. MUTEX_LOCKDECL(M_qhash_lock);  Operations with hash list            */
 
+/*
+ * Any public operations must be locked
+ */
+MUTEX_LOCKDECL(M_q_lock);
 
 /* Configuration section */
 public tmq_qconfig_t *G_qconf; 
@@ -205,7 +209,7 @@ out:
  * @param name queue name
  * @return NULL or ptr to q config.
  */
-public tmq_qconfig_t * tmq_qconf_get(char *qname)
+private tmq_qconfig_t * tmq_qconf_get(char *qname)
 {
     tmq_qconfig_t *ret = NULL;
     
@@ -219,7 +223,7 @@ public tmq_qconfig_t * tmq_qconf_get(char *qname)
  * @param qname qname
  * @return  NULL or ptr to config
  */
-public tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
+private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
 {
     
     tmq_qconfig_t * ret = tmq_qconf_get(qname);
@@ -243,7 +247,7 @@ public tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
  * @param name
  * @return 
  */
-public int tmq_qconf_delete(char *qname)
+private int tmq_qconf_delete(char *qname)
 {
     int ret = SUCCEED;
     tmq_qconfig_t *qconf;
@@ -287,6 +291,8 @@ public int tmq_qconf_addupd(char *qconfstr)
         NDRX_LOG(log_error, "Malloc failed for tmq_qconfig_t!");
         FAIL_OUT(ret);
     }
+    
+    MUTEX_LOCK_V(M_q_lock);
     
     p = strtok (qconfstr,",");
     
@@ -392,6 +398,7 @@ out:
         free(qconf);
     }
 
+    MUTEX_UNLOCK_V(M_q_lock);
     return ret;
 
 }
@@ -401,7 +408,7 @@ out:
  * @param qname
  * @return 
  */
-public tmq_qhash_t * tmq_qhash_get(char *qname)
+private tmq_qhash_t * tmq_qhash_get(char *qname)
 {
     tmq_qhash_t * ret = NULL;
    
@@ -415,7 +422,7 @@ public tmq_qhash_t * tmq_qhash_get(char *qname)
  * @param qname
  * @return 
  */
-public tmq_qhash_t * tmq_qhash_new(char *qname)
+private tmq_qhash_t * tmq_qhash_new(char *qname)
 {
     tmq_qhash_t * ret = calloc(1, sizeof(tmq_qhash_t));
     
@@ -441,9 +448,14 @@ public tmq_qhash_t * tmq_qhash_new(char *qname)
 public int tmq_msg_add(tmq_msg_t *msg)
 {
     int ret = SUCCEED;
-    tmq_qhash_t *qhash = tmq_qhash_get(msg->hdr.qname);
+    tmq_qhash_t *qhash;
     tmq_memmsg_t *mmsg = calloc(1, sizeof(tmq_memmsg_t));
-    tmq_qconfig_t * qconf = tmq_qconf_get_with_default(msg->hdr.qname);
+    tmq_qconfig_t * qconf;
+    
+    MUTEX_LOCK_V(M_q_lock);
+    
+    qhash = tmq_qhash_get(msg->hdr.qname);
+    qconf = tmq_qconf_get_with_default(msg->hdr.qname);
     
     if (NULL==mmsg)
     {
@@ -470,7 +482,7 @@ public int tmq_msg_add(tmq_msg_t *msg)
     }
     
     /* Add the message to end of the queue */
-    DL_APPEND(qhash->q, mmsg);
+    DL_APPEND(qhash->q, mmsg);    
     
     /* Add the hash of IDs */
     HASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
@@ -503,6 +515,8 @@ out:
         free(mmsg);
     }
 
+    MUTEX_UNLOCK_V(M_q_lock);
+
     return ret;
 }
 
@@ -515,6 +529,8 @@ public int tmq_msg_dequeue_fifo(char *qname, tmq_msg_t *msg)
 {
     int ret = SUCCEED;
     
+    MUTEX_LOCK_V(M_q_lock);
+    
     /* Find the non locked message in memory */
     
     /* Lock the message for current thread. 
@@ -524,5 +540,100 @@ public int tmq_msg_dequeue_fifo(char *qname, tmq_msg_t *msg)
      */
     
 out:
+    MUTEX_UNLOCK_V(M_q_lock);
     return ret;
 }
+
+/**
+ * Get message by msgid
+ * TODO: locking...
+ * @param msgid
+ * @return 
+ */
+private tmq_memmsg_t* tmq_get_msg_by_msgid(char *msgid_str)
+{
+    tmq_memmsg_t *ret;
+    
+    HASH_FIND_STR( G_msgid_hash, msgid_str, ret);
+    
+    return ret;
+}
+
+/**
+ * Remove mem message
+ * TODO: Needs semaphore locking.
+ * @param msg
+ */
+private void tmq_remove_msg(tmq_memmsg_t *mmsg)
+{
+    char msgid_str[TMMSGIDLEN_STR+1];   
+    tmq_msgid_serialize(mmsg->msg.hdr.msgid, msgid_str);
+    
+    tmq_qhash_t *qhash = tmq_qhash_get(mmsg->msg.hdr.qname);
+    
+    NDRX_LOG(log_info, "Removing msgid [%s] from [%s] q", msgid_str, mmsg->msg.hdr.qname);
+    if (NULL!=qhash)
+    {
+        /* Add the message to end of the queue */
+        DL_DELETE(qhash->q, mmsg);    
+    }
+    
+    /* Add the hash of IDs */
+    HASH_DEL( G_msgid_hash, mmsg);
+}
+
+/**
+ * Unlock message by updated block
+ * We can:
+ * - update content + unlock
+ * - or remove the message
+ * @param p_b
+ * @return 
+ */
+public int tmq_unlock_msg(union tmq_upd_block *b)
+{
+    int ret = SUCCEED;
+    char msgid_str[TMMSGIDLEN_STR+1];
+    tmq_memmsg_t* mmsg;
+    
+    tmq_msgid_serialize(b->hdr.msgid, msgid_str);
+    
+    NDRX_LOG(log_info, "Unlocking/updating: %s", msgid_str);
+    
+    MUTEX_LOCK_V(M_q_lock);
+    
+    mmsg = tmq_get_msg_by_msgid(msgid_str);
+    
+    if (NULL==mmsg)
+    {   
+        NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
+        FAIL_OUT(ret);
+    }
+    
+    switch (b->hdr.command_code)
+    {
+        case TMQ_STORCMD_DEL:
+            NDRX_LOG(log_info, "Removing message...");
+            tmq_remove_msg(mmsg);
+            mmsg = NULL;
+            break;
+        case TMQ_STORCMD_UPD:
+            UPD_MSG((&mmsg->msg), (&b->upd));
+            mmsg->msg.lockthreadid = 0;
+        /* And still we want unblock: */
+        case TMQ_STORCMD_NEWMSG:
+        case TMQ_STORCMD_UNLOCK:
+            NDRX_LOG(log_info, "Unlocking message...");
+            mmsg->msg.lockthreadid = 0;
+            break;
+        default:
+            NDRX_LOG(log_info, "Unknown command [%c]", b->hdr.command_code);
+            FAIL_OUT(ret);
+            break; 
+    }
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+

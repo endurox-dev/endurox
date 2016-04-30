@@ -138,10 +138,12 @@ struct tmq_qconfig
 extern tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
 /* Q api */
 extern int tmq_printqueue(UBFH *p_ub, int cd);
 extern int tmq_enqueue(UBFH *p_ub);
 extern int tmq_dequeue(UBFH *p_ub);
+extern int tmq_notify(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);
@@ -152,12 +154,8 @@ extern void background_unlock(void);
 
 /* Q space api: */
 extern int tmq_qconf_addupd(char *qconfstr);
-extern int tmq_qconf_delete(char *name);
-extern tmq_qconfig_t * tmq_qconf_get(char *name);
-
-extern tmq_qhash_t * tmq_qhash_get(char *qname);
-extern tmq_qhash_t * tmq_qhash_new(char *qname);
 extern int tmq_msg_add(tmq_msg_t *msg);
+extern int tmq_unlock_msg(union tmq_upd_block *b);
     
 #ifdef	__cplusplus
 }

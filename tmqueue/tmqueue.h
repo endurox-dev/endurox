@@ -126,6 +126,16 @@ typedef struct
     
 } tmq_msg_upd_t;
 
+#define UPD_MSG(DEST, SRC)  NDRX_LOG(log_debug, "status [%c] -> [%c]",\
+                    DEST->status, SRC->status);\
+            DEST->status = SRC->status;\
+            NDRX_LOG(log_debug, "%s: trycounter [%ld] -> [%ld]",\
+                    DEST->trycounter, SRC->trycounter);\
+            DEST->trycounter = SRC->trycounter;\
+            NDRX_LOG(log_debug, "%s: trycounter [%lld] -> [%ld]",\
+                    DEST->trycounter, SRC->trycounter);\
+            DEST->trytstamp = SRC->trytstamp;
+
 /**
  * Data block
  */
