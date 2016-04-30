@@ -158,6 +158,7 @@ public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, i
 
 
 private int read_tx_header(FILE *f, char *block, int len);
+private int read_tx_from_file(char *fname, char *block, int len);
 
 struct xa_switch_t ndrxstatsw = 
 { 
@@ -381,7 +382,7 @@ out:
  * @param p_hdr
  * @return 
  */
-private int send_unlock_notif(tmq_cmdheader_t *p_hdr)
+private int send_unlock_notif(union tmq_upd_block *p_upd)
 {
     int ret = SUCCEED;
     long rsplen;
@@ -395,20 +396,28 @@ private int send_unlock_notif(tmq_cmdheader_t *p_hdr)
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_QMSGID, 0, p_hdr->msgid, TMMSGIDLEN))
+    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, (char *)&p_upd, sizeof(*p_upd)))
+    {
+        NDRX_LOG(log_error, "Failed to setup EX_DATA!");
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to setup EX_QMSGID!");
         FAIL_OUT(ret);
     }
     
+    /* We need to send also internal command (what we are doing with the struct) */
+    
     NDRX_LOG(log_info, "Calling QSPACE [%s] for msgid_str [%s] unlock",
-                p_hdr->qspace, tmq_msgid_serialize(p_hdr->msgid, tmp));
+                p_upd->hdr.qspace, tmq_msgid_serialize(p_upd->hdr.msgid, tmp));
     
     ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
     
-    if (FAIL == tpcall(p_hdr->qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (FAIL == tpcall(p_upd->hdr.qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
-        NDRX_LOG(log_error, "%s failed: %s", p_hdr->qspace, tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s failed: %s", p_upd->hdr.qspace, tpstrerror(tperrno));
         FAIL_OUT(ret);
     }
     out:
@@ -419,6 +428,38 @@ private int send_unlock_notif(tmq_cmdheader_t *p_hdr)
     }
 
     return ret;
+}
+
+/**
+ * Send update notification to Q server
+ * @param p_upd
+ * @return 
+ */
+private int send_unlock_notif_upd(tmq_msg_upd_t *p_upd)
+{
+    union tmq_upd_block block;
+    
+    memset(&block, 0, sizeof(block));
+    
+    memcpy(&block.upd, p_upd, sizeof(*p_upd));
+    
+    return send_unlock_notif(&block);
+}
+
+/**
+ * Used for message commit/delete
+ * @param p_hdr
+ * @return 
+ */
+private int send_unlock_notif_hdr(tmq_cmdheader_t *p_hdr)
+{
+    union tmq_upd_block block;
+    
+    memset(&block, 0, sizeof(block));
+    
+    memcpy(&block.hdr, p_hdr, sizeof(*p_hdr));
+    
+    return send_unlock_notif(&block);
 }
 
 /**
@@ -594,19 +635,46 @@ out:
  */
 public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    int i;
+    int i, j;
     int names_max = get_filenames_max();
-    
+    char *fname;
+    union tmq_block b;
+    char *folders[2] = {M_folder_active, M_folder_prepared};
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
         return XAER_RMERR;
     }
     
+    /* send notification, that message is removed, but firstly we need to 
+     * understand what kind of message it was.
+     * - If new msg: send delete to server
+     * - If any otgher: send simple unlock
+     */
     for (i=names_max; i>=1; i--)
     {
-        file_unlink(get_filename_i(i, M_folder_active, 0));
-        file_unlink(get_filename_i(i, M_folder_prepared, 0));
+        for (j = 0; j<2; j++)
+        {
+            fname = get_filename_i(i, folders[j], 0);
+            if (nstdutil_file_exists(fname))
+            {
+                if (SUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b)))
+                {
+                    /* Send the notification */
+                    if (TMQ_STORCMD_NEWMSG == b.hdr.command_code)
+                    {
+                        b.hdr.command_code = TMQ_STORCMD_DEL;
+                    }
+                    else
+                    {
+                        b.hdr.command_code = TMQ_STORCMD_UNLOCK;
+                    }
+
+                    send_unlock_notif_hdr(&b.hdr);
+                }
+                file_unlink(fname);
+            }
+        }
     }
     
     return XA_OK;
@@ -683,29 +751,15 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
     {
         
         fname=get_filename_i(i, M_folder_prepared, 0);
-                
-        if (NULL==(f = fopen(fname, "a+b")))
-        {
-            int err = errno;
-            NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                    fname, strerror(err));
-
-            userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                    fname, strerror(err));
-            goto xa_err;
-        }
         
-        if (SUCCEED!=read_tx_header(f, (char *)&block, sizeof(block)))
+        if (SUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block)))
         {
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
             goto xa_err;
         }
-        
-        fclose(f);
-        f = NULL;
 
         /* Do the task... */
-        if (TMQ_CMD_NEWMSG == block.hdr.command_code)
+        if (TMQ_STORCMD_NEWMSG == block.hdr.command_code)
         {
             if (SUCCEED!=file_move_final(fname, 
                     tmq_msgid_serialize(block.hdr.msgid, msgid_str)))
@@ -713,12 +767,12 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                 goto xa_err;
             }
             
-            if (SUCCEED!=send_unlock_notif(&block.hdr))
+            if (SUCCEED!=send_unlock_notif_hdr(&block.hdr))
             {
                 goto xa_err;
             }
         }
-        else if (TMQ_CMD_UPD == block.hdr.command_code)
+        else if (TMQ_STORCMD_UPD == block.hdr.command_code)
         {
             tmq_msg_t msg_to_upd; /* Message to update */
             int ret_len;
@@ -788,13 +842,13 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                         fname, strerror(errno));
             }
             
-            if (SUCCEED!=send_unlock_notif(&block.hdr))
+            if (SUCCEED!=send_unlock_notif_upd(&block.upd))
             {
                 goto xa_err;
             }
             
         }
-        else if (TMQ_CMD_DEL == block.hdr.command_code)
+        else if (TMQ_STORCMD_DEL == block.hdr.command_code)
         {
             fname_msg = get_file_name_final(tmq_msgid_serialize(block.hdr.msgid, msgid_str));
             NDRX_LOG(log_info, "Removing message file: [%s]", fname_msg);
@@ -813,9 +867,12 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                         fname, strerror(errno));
             }
             
-            /* no need for unlock notif here, it will be already wiped out from
-             * structures
+            /* Remove the message (it must be marked for delete)
              */
+            if (SUCCEED!=send_unlock_notif_hdr(&block.hdr))
+            {
+                goto xa_err;
+            }
         }
         else
         {
@@ -865,6 +922,41 @@ private int read_tx_header(FILE *f, char *block, int len)
     }
     
 out:
+    return ret;
+}
+
+/**
+ * Read the block file file
+ * @param fname full path to file
+ * @param block buffer where to store the data block
+ * @param len length to read
+ * @return 
+ */
+private int read_tx_from_file(char *fname, char *block, int len)
+{
+    int ret = SUCCEED;
+    FILE *f = NULL;
+    
+    if (NULL==(f = fopen(fname, "a+b")))
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
+                fname, strerror(err));
+
+        userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
+                fname, strerror(err));
+        FAIL_OUT(ret);
+    }
+    
+    ret = read_tx_header(f, block, len);
+    
+out:
+
+    if (NULL!=f)
+    {
+        fclose(f);
+    }
+    
     return ret;
 }
 

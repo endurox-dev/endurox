@@ -211,6 +211,23 @@ out:
     return ret;
 }
 
+/**
+ * Unlock the message
+ * @param p_ub
+ * @return 
+ */
+public int tmq_notify(UBFH *p_ub)
+{
+    int ret = SUCCEED;
+    
+    
+    
+    
+out:
+    return ret;
+}
+
+
 /******************************************************************************/
 /*                         COMMAND LINE API                                   */
 /******************************************************************************/

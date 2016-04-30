@@ -72,7 +72,7 @@ public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
     int ret = SUCCEED;
     
     strcpy(hdr->qname, qname);
-    hdr->command_code = TMQ_CMD_NEWMSG;
+    hdr->command_code = TMQ_STORCMD_NEWMSG;
     strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
     hdr->nodeid = nodeid;
     hdr->srvid = srvid;

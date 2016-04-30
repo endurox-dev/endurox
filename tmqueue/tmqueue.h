@@ -56,9 +56,11 @@ extern "C" {
 #define TMQ_MAGIC               "ETMQ" /* magic of tmq record      */
 #define TMQ_MAGIC_LEN           4      /* the len of message magic */
 
-#define TMQ_CMD_NEWMSG          'N'      /* Command code - new message */
-#define TMQ_CMD_UPD             'U'      /* Command code - update msg  */
-#define TMQ_CMD_DEL             'D'      /* Command code - delete msg  */
+#define TMQ_STORCMD_NEWMSG          'N'      /* Command code - new message */
+#define TMQ_STORCMD_UPD             'U'      /* Command code - update msg  */
+#define TMQ_STORCMD_DEL             'D'      /* Command code - delete msg  */
+#define TMQ_STORCMD_UNLOCK          'L'      /* Command code - unlock msg  */
+    
 
 /**
  * Status codes of the message
@@ -132,7 +134,15 @@ union tmq_block {
     tmq_msg_t msg;
     tmq_msg_del_t del;
     tmq_msg_upd_t upd;
-};  
+};
+
+/**
+ * Update block (either update or delete)
+ */
+union tmq_upd_block {
+    tmq_cmdheader_t hdr;
+    tmq_msg_upd_t upd;
+};
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/

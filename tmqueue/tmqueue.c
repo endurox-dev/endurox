@@ -141,8 +141,7 @@ void TMQUEUE_TH (void *ptr)
             /* start new tran... */
             if (SUCCEED!=tmq_enqueue(p_ub))
             {
-                ret=FAIL;
-                goto out;
+                FAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_DEQUEUE:
@@ -150,8 +149,7 @@ void TMQUEUE_TH (void *ptr)
             /* start new tran... */
             if (SUCCEED!=tmq_dequeue(p_ub))
             {
-                ret=FAIL;
-                goto out;
+                FAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_PRINT:
@@ -159,8 +157,15 @@ void TMQUEUE_TH (void *ptr)
             /* request for printing active transactions */
             if (SUCCEED!=tmq_printqueue(p_ub, cd))
             {
-                ret=FAIL;
-                goto out;
+                FAIL_OUT(ret);
+            }
+            break;
+        case TMQ_CMD_NOTIFY:
+            
+            /* request for printing active transactions */
+            if (SUCCEED!=tmq_notify(p_ub))
+            {
+                FAIL_OUT(ret);
             }
             break;
         default:
@@ -170,18 +175,6 @@ void TMQUEUE_TH (void *ptr)
     }
     
 out:
-            
-    /* Approve the request if all ok */
-    if (SUCCEED==ret)
-    {
-        atmi_xa_approve(p_ub);
-    }
-
-    if (SUCCEED!=ret && XA_RDONLY==atmi_xa_get_reason())
-    {
-        NDRX_LOG(log_debug, "Marking READ ONLY = SUCCEED");
-        ret=SUCCEED;
-    }
 
     ndrx_debug_dump_UBF(log_info, "TMQUEUE return buffer:", p_ub);
 
