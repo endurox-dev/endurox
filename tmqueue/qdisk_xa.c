@@ -959,6 +959,9 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     /* do not want to lock be written out to files: */
     msg->lockthreadid = 0;
     
+    NDRX_DUMP(log_debug, "Writing new message to disk", 
+                (char *)msg, sizeof(*msg)+msg->len);
+    
     if (SUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
@@ -971,53 +974,31 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
             tmq_msgid_serialize(msg->hdr.msgid, tmp));
     
 out:
+
     return ret;
 }
 
 /**
- * Update message
- * @param msg
- * @return 
+ * Delete/Update message block write
+ * @param p_block ptr to union of commands
+ * @return SUCCEED/FAIL
  */
-public int tmq_storage_write_cmd_upd(tmq_msg_t *msg)
+public int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
 {
     int ret = SUCCEED;
+    char msgid_str[TMMSGIDLEN_STR+1];
     
-out:
-    return ret;
-}
-
-/**
- * Delete message
- * @param msg
- * @return 
- */
-public int tmq_storage_write_cmd_del(tmq_msg_t *msg)
-{
-    int ret = SUCCEED;
+    NDRX_LOG(log_info, "Writing command block: %s msg [%s]", descr, 
+            tmq_msgid_serialize(p_block->hdr.msgid, msgid_str) );
     
-out:
-    return ret;
-}
-
-/**
- * Block command (universal, for update & delete commands)
- * @param block
- * @return 
- */
-public int tmq_storage_write_block(union tmq_block *block)
-{
-    int ret = SUCCEED;
-    char tmp[TMMSGIDLEN_STR+1];
+    NDRX_DUMP(log_debug, "Writing command block to disk", 
+                (char *)p_block, sizeof(*p_block));
     
-    if (SUCCEED!=write_to_tx_file((char *)block, sizeof(*block)))
+    if (SUCCEED!=write_to_tx_file((char *)p_block, sizeof(*p_block)))
     {
-        NDRX_LOG(log_error, "tmq_storage_write_block() failed for msg %s", 
-                tmq_msgid_serialize(block->hdr.msgid, tmp));
+        NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
+                tmq_msgid_serialize(p_block->hdr.msgid, msgid_str));
     }
-    
-    NDRX_LOG(log_info, "Block command [%s] for msg [%s] written ok to active TX file", 
-            block->hdr.command_code, tmq_msgid_serialize(block->hdr.msgid, tmp));
     
 out:
     return ret;

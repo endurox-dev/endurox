@@ -209,19 +209,33 @@ public tmq_qconfig_t * tmq_qconf_get(char *qname)
 {
     tmq_qconfig_t *ret = NULL;
     
-    HASH_FIND_STR( G_qconf, qname, ret);    
+    HASH_FIND_STR( G_qconf, qname, ret);
     
     return ret;
 }
 
 /**
- * TODO: Return Q config with default
- * @param qname
- * @return 
+ * Return Q config with default if not found
+ * @param qname qname
+ * @return  NULL or ptr to config
  */
 public tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
 {
-    return NULL; /* TODO:  */
+    
+    tmq_qconfig_t * ret = tmq_qconf_get(qname);
+    
+    if  (NULL==ret)
+    {
+        NDRX_LOG(log_warn, "Q config [%s] not found, trying to default to [%s]", 
+                qname, TMQ_DEFAULT_Q);
+        if (NULL==(ret = tmq_qconf_get(TMQ_DEFAULT_Q)))
+        {
+            NDRX_LOG(log_error, "Default Q config [%s] not found!", TMQ_DEFAULT_Q);
+            userlog("Default Q config [%s] not found! Please add !", TMQ_DEFAULT_Q);
+        }
+    }
+            
+    return ret;
 }
 
 /**
@@ -429,11 +443,19 @@ public int tmq_msg_add(tmq_msg_t *msg)
     int ret = SUCCEED;
     tmq_qhash_t *qhash = tmq_qhash_get(msg->hdr.qname);
     tmq_memmsg_t *mmsg = calloc(1, sizeof(tmq_memmsg_t));
+    tmq_qconfig_t * qconf = tmq_qconf_get_with_default(msg->hdr.qname);
     
     if (NULL==mmsg)
     {
         NDRX_LOG(log_error, "Failed to alloc tmq_memmsg_t: %s", strerror(errno));
         userlog("Failed to alloc tmq_memmsg_t: %s", strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==qconf)
+    {
+        NDRX_LOG(log_error, "queue config not found! Cannot enqueue!");
+        userlog("queue config not found! Cannot enqueue!");
         FAIL_OUT(ret);
     }
     
@@ -458,11 +480,17 @@ public int tmq_msg_add(tmq_msg_t *msg)
      * if it is not memory only.
      * So next step todo is to write xa command handler & dumping commands to disk.
      */
-    /* TODO: check the config tmq_qconf_get_with_default() is it memory q only? */
-    if (SUCCEED!=tmq_storage_write_cmd_newmsg(&mmsg->msg))
+    if (!qconf->memonly)
     {
-        NDRX_LOG(log_error, "Failed to add message to persistent store!");
-        FAIL_OUT(ret);
+        if (SUCCEED!=tmq_storage_write_cmd_newmsg(&mmsg->msg))
+        {
+            NDRX_LOG(log_error, "Failed to add message to persistent store!");
+            FAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_info, "Mem only Q, not persisting.");   
     }
     
     NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue",

@@ -146,6 +146,7 @@ extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 
 /* From storage driver: */
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
+extern int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr);
    
     
 #ifdef	__cplusplus
