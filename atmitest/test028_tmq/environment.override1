@@ -1,7 +1,0 @@
-#!/bin/bash
-
-#
-# Set new env for process
-#
-
-export TEST025_ENV="___ENV_OVER__1"
