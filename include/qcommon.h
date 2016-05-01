@@ -60,7 +60,18 @@ extern int tmq_tpqctl_from_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl);
 extern int tmq_tpqctl_to_ubf_enqrsp(UBFH *p_ub, TPQCTL *ctl);
 extern int tmq_tpqctl_from_ubf_enqrsp(UBFH *p_ub, TPQCTL *ctl);
 
-    
+extern int tmq_tpqctl_to_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl);
+extern int tmq_tpqctl_from_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl);
+
+extern int tmq_tpqctl_to_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
+extern int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
+
+/* API: */
+extern int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl, 
+        char *data, long len, long flags);
+
+extern int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl, 
+        char **data, long *len, long flags);
 #ifdef	__cplusplus
 }
 #endif

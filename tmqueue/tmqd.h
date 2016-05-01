@@ -46,7 +46,6 @@ extern "C" {
 #include "tmqueue.h"
     
 /*---------------------------Externs------------------------------------*/
-/* TODO: Split the header: move part data to tmqd.h */
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
@@ -54,6 +53,7 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
 #define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
+#define TXTOUT_DFLT             30   /* Default XA transaction timeout      */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -63,7 +63,7 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 typedef struct
 {
     long dflt_timeout; /* how long monitored transaction can be open        */
-    char data_dir[PATH_MAX]; /* Where to write tx log files                 */
+    /*char data_dir[PATH_MAX];  Where to write tx log files  - NO NEED, handed by XA driver */
     int scan_time;      /* Number of seconds retries */
     char qspace[XATMI_SERVICE_NAME_LENGTH+1]; /* where the Q files live */
     
@@ -156,6 +156,7 @@ extern void background_unlock(void);
 extern int tmq_qconf_addupd(char *qconfstr);
 extern int tmq_msg_add(tmq_msg_t *msg);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
+extern tmq_msg_t * tmq_msg_dequeue_fifo(char *qname);
     
 #ifdef	__cplusplus
 }

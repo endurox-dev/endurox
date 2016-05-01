@@ -1,7 +1,7 @@
 /* 
-** Q util
+** TMQ test client.
 **
-** @file xasrvutil.c
+** @file atmiclt3.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,28 +29,16 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <regex.h>
-#include <utlist.h>
+#include <memory.h>
 
-#include <ndebug.h>
 #include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
 #include <ubf.h>
-#include <Exfields.h>
-
-#include <exnet.h>
-#include <ndrxdcmn.h>
-
-#include "tmqd.h"
-#include "../libatmisrv/srv_int.h"
-#include <xa_cmn.h>
-#include <atmi_int.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -59,43 +47,67 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Generate serialized version of the string
- * @param msgid_in, length defined by constant TMMSGIDLEN
- * @param msgidstr_out
- * @return msgidstr_out
+/*
+ * Do the test call to the server
  */
-public char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
-{
-    size_t out_len;
+int main(int argc, char** argv) {
+
+    int ret = SUCCEED;
+    char testbuf_ref[10] = {0,1,2,3,4,5,6,7,8,9};
+    long len;
+    TPQCTL qc;
+    char *buf = tpalloc("CARRAY", "", 10);
     
-    NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
+    /* alloc output buffer */
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
     
-    atmi_xa_base64_encode(msgid_in, strlen(msgid_in), &out_len, msgid_str_out);
-    msgid_str_out[out_len] = EOS;
+    /* enqueue the data buffer */
+    memset(&qc, 0, sizeof(qc));
+    if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+            sizeof(testbuf_ref), TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+        FAIL_OUT(ret);
+    }
     
-    NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
+    /* dequeue the data buffer + allocate the output buf. */
     
-    return msgid_str_out;
+    memset(&qc, 0, sizeof(qc));
+    
+    len = 10;
+    if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
+            &len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+        FAIL_OUT(ret);
+    }
+    
+    /* compare - should be equal */
+    if (0!=memcmp(testbuf_ref, buf, len))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Buffers not equal!");
+        NDRX_DUMP(log_error, "original buffer", testbuf_ref, sizeof(testbuf_ref));
+        NDRX_DUMP(log_error, "got form q", buf, len);
+        FAIL_OUT(ret);
+    }
+    
+    tpfree(buf);
+    
+    if (SUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
 }
 
-/**
- * Get binary message id
- * @param msgid_str_in, length defined by constant TMMSGIDLEN
- * @param msgid_out
- * @return msgid_out 
- */
-public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
-{
-    size_t tot_len;
-    
-    NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
-    
-    memset(msgid_out, 0, TMMSGIDLEN);
-        
-    atmi_xa_base64_decode(msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
-    
-    NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
-    
-    return msgid_out;
-}

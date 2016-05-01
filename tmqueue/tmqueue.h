@@ -159,7 +159,7 @@ union tmq_upd_block {
  
 /* util, shared between driver & daemon */
 extern int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
-        short srvid, short nodeid);
+        short srvid, short nodeid, char *qspace);
 extern void tmq_msgid_gen(char *msgid);
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);

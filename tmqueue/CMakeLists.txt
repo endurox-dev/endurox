@@ -53,15 +53,18 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 ############################# Libraries ########################################
 
 add_library (ndrxxaqdisk SHARED
+                tmqutil.c
                 qdisk_xa.c
             )
 
 add_library (ndrxxaqdisks SHARED
+                tmqutil.c
                 qdisk_xa_s.c
                 qdisk_xa_common.c
             )
 
 add_library (ndrxxaqdiskd SHARED
+                tmqutil.c
                 qdisk_xa_d.c
                 qdisk_xa_common.c
             )

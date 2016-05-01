@@ -50,7 +50,6 @@
 #include <ubf.h>
 #include <Exfields.h>
 
-#include <exnet.h>
 #include <ndrxdcmn.h>
 
 #include "tmqueue.h"
@@ -58,6 +57,8 @@
 #include "tperror.h"
 #include "nstdutil.h"
 #include <qcommon.h>
+#include "tmqd.h"
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -81,13 +82,26 @@ public int tmq_enqueue(UBFH *p_ub)
     tmq_msg_t *p_msg = NULL;
     char *data = NULL;
     BFLDLEN len = 0;
-    
     TPQCTL qctl_out;
+    int local_tx = FALSE;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
     
-    /* TODO: Standard the transaction if not in txn */
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_debug, "Not in global transaction, starting local...");
+        if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+        {
+            NDRX_LOG(log_error, "Failed to start global tx!");
+            userlog("Failed to start global tx!");
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Transaction started ok...");
+            local_tx = TRUE;
+        }
+    }
     
     memset(&qctl_out, 0, sizeof(qctl_out));
     
@@ -152,7 +166,7 @@ public int tmq_enqueue(UBFH *p_ub)
     
     /* Build up the message. */
     tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
-            tpgetnodeid(), G_server_conf.srv_id);
+            tpgetnodeid(), G_server_conf.srv_id, G_tmqueue_cfg.qspace);
     
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
@@ -186,7 +200,26 @@ out:
         NDRX_LOG(log_warn, "About to free p_msg!");
         free(p_msg);
     }
-    
+
+    if (local_tx)
+    {
+        if (SUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Aborting transaction");
+            tpabort(0);
+        } else
+        {
+            NDRX_LOG(log_info, "Committing transaction!");
+            if (SUCCEED!=tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Commit failed!");
+                userlog("Commit failed!");
+                strcpy(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                ret=FAIL;
+            }
+        }
+    }
+
     /* Setup response fields
      * Not sure about existing ones (seems like they will stay in buffer)
      * i.e. request fields
@@ -201,19 +234,119 @@ out:
 }
 
 /**
- * Local transaction branch abort command. Sent from Master TM
+ * Dequeue message
+ * TODO: Support TPQGETBYMSGID
+ * TODO: Support TPQGETBYCORRID
  * @param p_ub
  * @return 
  */
 public int tmq_dequeue(UBFH *p_ub)
 {
-    int ret = SUCCEED;
-    
-    /* TODO: Search for not locked message, lock it, issue command to disk for
+    /* Search for not locked message, lock it, issue command to disk for
      * delete & return the message to buffer (also needs to resize the buffer correctly)
      */
+    int ret = SUCCEED;
+    tmq_msg_t *p_msg = NULL;
+    TPQCTL qctl_out;
+    int local_tx = FALSE;
+    char qname[TMQNAMELEN+1];
+    long buf_realoc_size;
+    
+    /* Add message to Q */
+    NDRX_LOG(log_debug, "Into tmq_dequeue()");
+    
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_debug, "Not in global transaction, starting local...");
+        if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+        {
+            NDRX_LOG(log_error, "Failed to start global tx!");
+            userlog("Failed to start global tx!");
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Transaction started ok...");
+            local_tx = TRUE;
+        }
+    }
+    
+    memset(&qctl_out, 0, sizeof(qctl_out));
+    
+    if (SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0))
+    {
+        NDRX_LOG(log_error, "tmq_dequeue: failed to get EX_QNAME");
+        strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to get EX_QNAME!");
+        qctl_out.diagnostic = QMEINVAL;
+        
+        FAIL_OUT(ret);
+    }
+    
+    /* Get FB size (current) */
+    if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname)))
+    {
+        NDRX_LOG(log_error, "tmq_dequeue: not message in Q [%s]", qname);
+        strcpy(qctl_out.diagmsg, "tmq_dequeue: no message int Q!");
+        qctl_out.diagnostic = QMENOMSG;
+        
+        FAIL_OUT(ret);
+    }
+    
+    /* Use the original metadata */
+    memcpy(&qctl_out, &p_msg->qctl, sizeof(qctl_out));
+    
+    buf_realoc_size = Bused (p_ub) + p_msg->len + 1024;
+    
+    if (NULL==(p_ub = (UBFH *)tprealloc ((char *)p_ub, buf_realoc_size)))
+    {
+        NDRX_LOG(log_error, "Failed to allocate buffer to size: %ld", buf_realoc_size);
+        userlog("Failed to allocate buffer to size: %ld", buf_realoc_size);
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, p_msg->msg, p_msg->len))
+    {
+        NDRX_LOG(log_error, "failed to set EX_DATA!");
+        userlog("failed to set EX_DATA!");
+        
+        strcpy(qctl_out.diagmsg, "failed to set EX_DATA!");
+        qctl_out.diagnostic = QMEINVAL;
+        
+        FAIL_OUT(ret);
+    }
+    
     
 out:
+
+    if (local_tx)
+    {
+        if (SUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Aborting transaction");
+            tpabort(0);
+        } 
+        else
+        {
+            NDRX_LOG(log_info, "Committing transaction!");
+            if (SUCCEED!=tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Commit failed!");
+                userlog("Commit failed!");
+                strcpy(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                ret=FAIL;
+            }
+        }
+    }
+
+    /* Setup response fields
+     * Not sure about existing ones (seems like they will stay in buffer)
+     * i.e. request fields
+     */
+    if (SUCCEED!=tmq_tpqctl_to_ubf_enqrsp(p_ub, &qctl_out))
+    {
+        NDRX_LOG(log_error, "tmq_enqueue: failed to generate response buffer!");
+        userlog("tmq_enqueue: failed to generate response buffer!");
+    }
+
     return ret;
 }
 
@@ -234,7 +367,7 @@ public int tmq_notify(UBFH *p_ub)
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tmq_unlock_msg(b))
+    if (SUCCEED!=tmq_unlock_msg(&b))
     {
         NDRX_LOG(log_error, "Failed to unlock message...");
         FAIL_OUT(ret);

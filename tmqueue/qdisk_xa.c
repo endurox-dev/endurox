@@ -101,9 +101,18 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private __thread int M_is_open = FALSE;
+
+/* Shared between threads: */
+private int M_is_open = FALSE;
+private int M_rmid = FAIL;
+
+private char M_folder[PATH_MAX] = {EOS}; /* Where to store the q data */
+private char M_folder_active[PATH_MAX] = {EOS}; /* Active transactions */
+private char M_folder_prepared[PATH_MAX] = {EOS}; /* Prepared transactions */
+private char M_folder_committed[PATH_MAX] = {EOS}; /* Committed transactions */
+
+/* Per thread data: */
 private __thread int M_is_reg = FALSE; /* Dynamic registration done? */
-private __thread int M_rmid = FAIL;
 /*
  * Due to fact that we might have multiple queued messages per resource manager
  * we will name the transaction files by this scheme:
@@ -114,12 +123,6 @@ private __thread int M_rmid = FAIL;
 private __thread char M_filename_base[PATH_MAX+1] = {EOS}; /* base name of the file */
 private __thread char M_filename_active[PATH_MAX+1] = {EOS}; /* active file name */
 private __thread char M_filename_prepared[PATH_MAX+1] = {EOS}; /* prepared file name */
-
-
-private __thread char M_folder[PATH_MAX] = {EOS}; /* Where to store the q data */
-private __thread char M_folder_active[PATH_MAX] = {EOS}; /* Active transactions */
-private __thread char M_folder_prepared[PATH_MAX] = {EOS}; /* Prepared transactions */
-private __thread char M_folder_committed[PATH_MAX] = {EOS}; /* Committed transactions */
 /*---------------------------Prototypes---------------------------------*/
 
 public int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -155,12 +158,10 @@ public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rm
 public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-
-
 private int read_tx_header(FILE *f, char *block, int len);
 private int read_tx_from_file(char *fname, char *block, int len);
 
-struct xa_switch_t ndrxstatsw = 
+struct xa_switch_t ndrxqstatsw = 
 { 
     .name = "ndrxqstatsw",
     .flags = TMNOFLAGS,
@@ -177,7 +178,7 @@ struct xa_switch_t ndrxstatsw =
     .xa_complete_entry = xa_complete_entry_stat
 };
 
-struct xa_switch_t ndrxdynsw = 
+struct xa_switch_t ndrxqdynsw = 
 { 
     .name = "ndrxqdynsw",
     .flags = TMREGISTER,
@@ -415,7 +416,7 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
     
     ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
     
-    if (FAIL == tpcall(p_upd->hdr.qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (FAIL == tpcall(p_upd->hdr.qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
     {
         NDRX_LOG(log_error, "%s failed: %s", p_upd->hdr.qspace, tpstrerror(tperrno));
         FAIL_OUT(ret);
@@ -803,21 +804,8 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                 goto xa_err;
             }
             
-#if 0
-            /* Update the message data */
-            NDRX_LOG(log_debug, "%s: status [%c] -> [%c]", fname_msg, 
-                    msg_to_upd.status, block.upd.status);
-            msg_to_upd.status = block.upd.status;
-            
-            NDRX_LOG(log_debug, "%s: trycounter [%l] -> [%l]", fname_msg, 
-                    msg_to_upd.trycounter, block.upd.trycounter);
-            msg_to_upd.trycounter = block.upd.trycounter;
-            
-            NDRX_LOG(log_debug, "%s: trycounter [%lld] -> [%l]", fname_msg, 
-                    msg_to_upd.trycounter, block.upd.trycounter);
-            msg_to_upd.trytstamp = block.upd.trytstamp;
-#endif
             UPD_MSG((&msg_to_upd), (&block.upd));
+            
             /* Write th block */
             if (sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, sizeof(msg_to_upd), f)))
             {
@@ -1165,83 +1153,83 @@ public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, i
 /* Static entries */
 public int xa_open_entry_stat( char *xa_info, int rmid, long flags)
 {
-    return xa_open_entry(&ndrxstatsw, xa_info, rmid, flags);
+    return xa_open_entry(&ndrxqstatsw, xa_info, rmid, flags);
 }
 public int xa_close_entry_stat(char *xa_info, int rmid, long flags)
 {
-    return xa_close_entry(&ndrxstatsw, xa_info, rmid, flags);
+    return xa_close_entry(&ndrxqstatsw, xa_info, rmid, flags);
 }
 public int xa_start_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_start_entry(&ndrxstatsw, xid, rmid, flags);
+    return xa_start_entry(&ndrxqstatsw, xid, rmid, flags);
 }
 public int xa_end_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_end_entry(&ndrxstatsw, xid, rmid, flags);
+    return xa_end_entry(&ndrxqstatsw, xid, rmid, flags);
 }
 public int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_rollback_entry(&ndrxstatsw, xid, rmid, flags);
+    return xa_rollback_entry(&ndrxqstatsw, xid, rmid, flags);
 }
 public int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
+    return xa_prepare_entry(&ndrxqstatsw, xid, rmid, flags);
 }
 public int xa_commit_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_commit_entry(&ndrxstatsw, xid, rmid, flags);
+    return xa_commit_entry(&ndrxqstatsw, xid, rmid, flags);
 }
 public int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
 {
-    return xa_recover_entry(&ndrxstatsw, xid, count, rmid, flags);
+    return xa_recover_entry(&ndrxqstatsw, xid, count, rmid, flags);
 }
 public int xa_forget_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_forget_entry(&ndrxstatsw, xid, rmid, flags);
+    return xa_forget_entry(&ndrxqstatsw, xid, rmid, flags);
 }
 public int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
 {
-    return xa_complete_entry(&ndrxstatsw, handle, retval, rmid, flags);
+    return xa_complete_entry(&ndrxqstatsw, handle, retval, rmid, flags);
 }
 
 /* Dynamic entries */
 public int xa_open_entry_dyn( char *xa_info, int rmid, long flags)
 {
-    return xa_open_entry(&ndrxdynsw, xa_info, rmid, flags);
+    return xa_open_entry(&ndrxqdynsw, xa_info, rmid, flags);
 }
 public int xa_close_entry_dyn(char *xa_info, int rmid, long flags)
 {
-    return xa_close_entry(&ndrxdynsw, xa_info, rmid, flags);
+    return xa_close_entry(&ndrxqdynsw, xa_info, rmid, flags);
 }
 public int xa_start_entry_dyn(XID *xid, int rmid, long flags)
 {
-    return xa_start_entry(&ndrxdynsw, xid, rmid, flags);
+    return xa_start_entry(&ndrxqdynsw, xid, rmid, flags);
 }
 public int xa_end_entry_dyn(XID *xid, int rmid, long flags)
 {
-    return xa_end_entry(&ndrxdynsw, xid, rmid, flags);
+    return xa_end_entry(&ndrxqdynsw, xid, rmid, flags);
 }
 public int xa_rollback_entry_dyn(XID *xid, int rmid, long flags)
 {
-    return xa_rollback_entry(&ndrxdynsw, xid, rmid, flags);
+    return xa_rollback_entry(&ndrxqdynsw, xid, rmid, flags);
 }
 public int xa_prepare_entry_dyn(XID *xid, int rmid, long flags)
 {
-    return xa_prepare_entry(&ndrxdynsw, xid, rmid, flags);
+    return xa_prepare_entry(&ndrxqdynsw, xid, rmid, flags);
 }
 public int xa_commit_entry_dyn(XID *xid, int rmid, long flags)
 {
-    return xa_commit_entry(&ndrxdynsw, xid, rmid, flags);
+    return xa_commit_entry(&ndrxqdynsw, xid, rmid, flags);
 }
 public int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags)
 {
-    return xa_recover_entry(&ndrxdynsw, xid, count, rmid, flags);
+    return xa_recover_entry(&ndrxqdynsw, xid, count, rmid, flags);
 }
 public int xa_forget_entry_dyn(XID *xid, int rmid, long flags)
 {
-    return xa_forget_entry(&ndrxdynsw, xid, rmid, flags);
+    return xa_forget_entry(&ndrxqdynsw, xid, rmid, flags);
 }
 public int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags)
 {
-    return xa_complete_entry(&ndrxdynsw, handle, retval, rmid, flags);
+    return xa_complete_entry(&ndrxqdynsw, handle, retval, rmid, flags);
 }

@@ -46,6 +46,7 @@
 
 #include <exnet.h>
 #include <ndrxdcmn.h>
+#include <uuid/uuid.h>
 
 #include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
@@ -86,8 +87,66 @@ MUTEX_LOCKDECL(M_q_lock);
 
 /* Configuration section */
 public tmq_qconfig_t *G_qconf; 
+
+MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Setup queue header
+ * @param hdr header to setup
+ * @param qname queue name
+ */
+public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
+        short srvid, short nodeid, char *qspace)
+{
+    int ret = SUCCEED;
+    
+    strcpy(hdr->qspace, qspace);
+    strcpy(hdr->qname, qname);
+    hdr->command_code = TMQ_STORCMD_NEWMSG;
+    strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
+    hdr->nodeid = nodeid;
+    hdr->srvid = srvid;
+    
+    tmq_msgid_gen(hdr->msgid);
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Generate new transaction id, native form (byte array)
+ * Note this initializes the msgid.
+ * @param msgid value to return
+ */
+public void tmq_msgid_gen(char *msgid)
+{
+    uuid_t uuid_val;
+    short node_id = (short) G_atmi_env.our_nodeid;
+    short srv_id = (short) G_srv_id;
+   
+    memset(msgid, 0, TMMSGIDLEN);
+    
+    /* Do the locking, so that we get unique xids... */
+    MUTEX_LOCK_V(M_msgid_gen_lock);
+    uuid_generate(uuid_val);
+    MUTEX_UNLOCK_V(M_msgid_gen_lock);
+    
+    memcpy(msgid, uuid_val, sizeof(uuid_t));
+    /* Have an additional infos for transaction id... */
+    memcpy(msgid  
+            +sizeof(uuid_t)  
+            ,(char *)&(node_id), sizeof(short));
+    memcpy(msgid  
+            +sizeof(uuid_t) 
+            +sizeof(short)
+            ,(char *)&(srv_id), sizeof(short));    
+    
+    NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(uuid_t)+sizeof(short)+ sizeof(short));
+}
+
 
 /**
  * Load the key config parameter
@@ -522,13 +581,18 @@ out:
 
 /**
  * Get the fifo message from Q
- * @param msg
- * @return 
+ * @param qname queue to lookup.
+ * @return NULL (no msg), or ptr to msg
  */
-public int tmq_msg_dequeue_fifo(char *qname, tmq_msg_t *msg)
+public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname)
 {
-    int ret = SUCCEED;
+    tmq_qhash_t *qhash;
+    tmq_memmsg_t *node;
+    tmq_msg_t * ret = NULL;
+    union tmq_block block;
+    char msgid_str[TMMSGIDLEN_STR+1];
     
+    NDRX_LOG(log_debug, "FIFO dequeue for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
     
     /* Find the non locked message in memory */
@@ -538,6 +602,59 @@ public int tmq_msg_dequeue_fifo(char *qname, tmq_msg_t *msg)
      * - Increase counter
      * - Remove the message.
      */
+    if (NULL==(qhash = tmq_qhash_get(qname)))
+    {
+        NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
+        goto out;
+    }
+    
+    /* Start from first one & loop over the list while 
+     * - we get to the first non-locked message
+     * - or we get to the end with no msg, then return FAIL.
+     */
+    node = qhash->q;
+    
+    do
+    {
+        if (!node->msg.lockthreadid)
+        {
+            ret = &node->msg;
+            break;
+        }
+        node = node->next;
+    }
+    while (NULL!=node && node->next!=qhash->q->next);
+    
+    if (NULL==ret)
+    {
+        NDRX_LOG(log_warn, "Q [%s] is empty or all msgs locked", qname);
+        goto out;
+    }
+    
+    /* Write some stuff to log */
+    
+    tmq_msgid_serialize(ret->hdr.msgid, msgid_str);
+    NDRX_LOG(log_info, "Dequeued message: [%s]", msgid_str);
+    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
+    
+    /* Lock the message */
+    ret->lockthreadid = ndrx_gettid();
+    
+    /* Issue command for msg remove */
+    memset(&block, 0, sizeof(block));    
+    memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
+    
+    block.hdr.command_code = TMQ_STORCMD_DEL;
+    
+            
+    if (SUCCEED!=tmq_storage_write_cmd_block(&block, "Removing dequeued message"))
+    {
+        NDRX_LOG(log_error, "Failed to remove msg...");
+        /* unlock msg... */
+        ret->lockthreadid = 0;
+        ret = NULL;
+        goto out;
+    }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);

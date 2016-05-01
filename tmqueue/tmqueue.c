@@ -266,7 +266,9 @@ int tpsvrinit(int argc, char **argv)
     signed char c;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
-    int nodeid;
+    
+    
+    memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "l:s:p:")) != -1)
@@ -274,11 +276,6 @@ int tpsvrinit(int argc, char **argv)
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
         {
-            case 'd': 
-                strcpy(G_tmqueue_cfg.data_dir, optarg);
-                NDRX_LOG(log_debug, "QData directory "
-                            "set to: [%s]", G_tmqueue_cfg.data_dir);
-                break;
             case 'm': /* My qspace.. */ 
                 strcpy(G_tmqueue_cfg.qspace, optarg);
                 NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
@@ -298,10 +295,19 @@ int tpsvrinit(int argc, char **argv)
             case 'p': 
                 G_tmqueue_cfg.threadpoolsize = atol(optarg);
                 break;
+            case 't': 
+                G_tmqueue_cfg.dflt_timeout = atol(optarg);
+                break;
             default:
                 /*return FAIL;*/
                 break;
         }
+    }
+    
+    if (EOS==G_tmqueue_cfg.qspace[0])
+    {
+        NDRX_LOG(log_error, "qspace not set (-m <qspace name> flag)");
+        FAIL_OUT(ret);
     }
     
     /* Check the parameters & default them if needed */
@@ -315,17 +321,20 @@ int tpsvrinit(int argc, char **argv)
         G_tmqueue_cfg.threadpoolsize = THREADPOOL_DFLT;
     }
     
-    if (EOS==G_tmqueue_cfg.data_dir[0])
+    if (0>=G_tmqueue_cfg.dflt_timeout)
     {
-        userlog("TMQ log dir not set!");
-        NDRX_LOG(log_error, "TMQ log dir not set!");
-        FAIL_OUT(ret);
+        G_tmqueue_cfg.dflt_timeout = TXTOUT_DFLT;
     }
-    NDRX_LOG(log_debug, "Recovery scan time set to [%d]",
+    
+    NDRX_LOG(log_info, "Recovery scan time set to [%d]",
                             G_tmqueue_cfg.scan_time);
     
-    NDRX_LOG(log_debug, "Worker pool size [%d] threads",
+    NDRX_LOG(log_info, "Worker pool size [%d] threads",
                             G_tmqueue_cfg.threadpoolsize);
+    
+    NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
+            G_tmqueue_cfg.dflt_timeout );
+    
     
     NDRX_LOG(log_debug, "About to initialize XA!");
     if (SUCCEED!=atmi_xa_init()) /* will open next... */

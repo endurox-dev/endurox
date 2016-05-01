@@ -37,9 +37,6 @@ extern "C" {
 #endif
 
 
-extern TestSuite *atmi_basic_srvtests(void);
-
-
 #ifdef	__cplusplus
 }
 #endif

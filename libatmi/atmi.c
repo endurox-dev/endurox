@@ -761,7 +761,7 @@ out:
  * @param subtype
  * @return 
  */
-public long	tptypes (char *ptr, char *type, char *subtype)
+public long tptypes (char *ptr, char *type, char *subtype)
 {
     long ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -836,19 +836,41 @@ public int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
  * Enqueue transaction - STUB
  */
 public int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags)
-{
-    NDRX_LOG(log_error, "tpenqueue - ATMI dummy");
+{   
+    long ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
 
-    return SUCCEED;
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    ret=_tpenqueue (qspace, qname, ctl, data, len, flags);
+
+out:
+    return ret;
+
 }
-
 
 /**
  * Dequeue transaction - STUB
  */
 public int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
 {
-    NDRX_LOG(log_error, "tpenqueue - ATMI dummy");
+    long ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
 
-    return SUCCEED;
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    ret=_tpdequeue (*qspace, qname, ctl, data, len, flags);
+
+out:
+    return ret;
 }

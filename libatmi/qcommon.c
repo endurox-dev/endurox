@@ -120,6 +120,52 @@ static long M_tpqctl_enqrsp[] =
     UBFUTIL_EXPORT              /* 14 - EX_QDIAGMSG*/
 };
 
+
+/**
+ * dequeue request structure
+ */
+static long M_tpqctl_deqreq[] = 
+{
+    UBFUTIL_EXPORT,/* 0 - EX_QFLAGS*/
+    0,/* 1 - EX_QDEQ_TIME*/
+    0,/* 2 - EX_QPRIORITY*/
+    0,             /* 3 - EX_QDIAGNOSTIC*/
+    UBFUTIL_EXPORT,/* 4 - EX_QMSGID*/
+    UBFUTIL_EXPORT,/* 5 - EX_QCORRID*/
+    0,/* 6 - EX_QREPLYQUEUE*/
+    0,/* 7 - EX_QFAILUREQUEUE*/
+    0,/* 8 - EX_CLTID*/
+    0,/* 9 - EX_QURCODE*/
+    0,/* 10 - EX_QAPPKEY*/
+    0,/* 11 - EX_QDELIVERY_QOS*/
+    0,/* 12 - EX_QREPLY_QOS*/
+    0,/* 13 - EX_QEXP_TIME*/
+    0              /* 14 - EX_QDIAGMSG*/
+};
+
+/**
+ * Dequeue response structure
+ */
+static long M_tpqctl_deqrsp[] = 
+{
+    UBFUTIL_EXPORT,/* 0 - EX_QFLAGS*/
+    0,/* 1 - EX_QDEQ_TIME*/
+    UBFUTIL_EXPORT,/* 2 - EX_QPRIORITY*/
+    UBFUTIL_EXPORT,/* 3 - EX_QDIAGNOSTIC*/
+    UBFUTIL_EXPORT,/* 4 - EX_QMSGID*/
+    UBFUTIL_EXPORT,/* 5 - EX_QCORRID*/
+    UBFUTIL_EXPORT,/* 6 - EX_QREPLYQUEUE*/
+    UBFUTIL_EXPORT,/* 7 - EX_QFAILUREQUEUE*/
+    UBFUTIL_EXPORT,/* 8 - EX_CLTID*/
+    UBFUTIL_EXPORT,/* 9 - EX_QURCODE*/
+    UBFUTIL_EXPORT,/* 10 - EX_QAPPKEY*/
+    UBFUTIL_EXPORT,/* 11 - EX_QDELIVERY_QOS*/
+    UBFUTIL_EXPORT,/* 12 - EX_QREPLY_QOS*/
+    0,/* 13 - EX_QEXP_TIME*/
+    UBFUTIL_EXPORT              /* 14 - EX_QDIAGMSG*/
+};
+
+
 /**
  * Copy the TPQCTL data to buffer, request data
  * @param p_ub destination buffer
@@ -181,17 +227,78 @@ public int tmq_tpqctl_from_ubf_enqrsp(UBFH *p_ub, TPQCTL *ctl)
     return ret;
 }
 
+/**
+ * Copy the TPQCTL data to buffer, request data
+ * @param p_ub destination buffer
+ * @param ctl source struct
+ * @return SUCCEED/FAIL
+ */
+public int tmq_tpqctl_to_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl)
+{
+    int ret = SUCCEED;
+    
+    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, ctl, p_ub, M_tpqctl_deqreq);
+    
+    return ret;
+}
+
+/**
+ * Build the TPQCTL from UBF buffer, request data
+ * @param p_ub source buffer
+ * @param ctl destination strcture
+ * @return SUCCEED/FAIL
+ */
+public int tmq_tpqctl_from_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl)
+{
+    int ret = SUCCEED;
+    
+    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, p_ub, ctl, M_tpqctl_deqreq);
+    
+    return ret;
+}
+
+
+/**
+ * Copy the TPQCTL data to buffer, request data
+ * @param p_ub destination buffer
+ * @param ctl source struct
+ * @return SUCCEED/FAIL
+ */
+public int tmq_tpqctl_to_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
+{
+    int ret = SUCCEED;
+    
+    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, ctl, p_ub, M_tpqctl_deqrsp);
+    
+    return ret;
+}
+
+/**
+ * Build the TPQCTL from UBF buffer, request data
+ * @param p_ub source buffer
+ * @param ctl destination strcture
+ * @return SUCCEED/FAIL
+ */
+public int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
+{
+    int ret = SUCCEED;
+    
+    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, p_ub, ctl, M_tpqctl_deqrsp);
+    
+    return ret;
+}
+
 /**************************** API SECTION *************************************/
 
 /**
  * Internal version of message enqueue.
- * @param qspace
- * @param qname
- * @param ctl
- * @param data
- * @param len
- * @param flags
- * @return 
+ * @param qspace service name
+ * @param qname queue name
+ * @param ctl control data
+ * @param data data to enqueue
+ * @param len data len
+ * @param flags flags (for tpcall)
+ * @return SUCCEED/FAIL
  */
 public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags)
@@ -201,6 +308,12 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     char cmd = TMQ_CMD_ENQUEUE;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ+len);
     
+    
+    if (NULL==data)
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: data is null!");
+        FAIL_OUT(ret);
+    }
     
     if (NULL==qspace || EOS==*qspace)
     {
@@ -253,6 +366,13 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
         FAIL_OUT(ret);
     }
     
+    if (SUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
+    {
+        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set qname field: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
     /* do the call to queue system */
     if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
@@ -286,6 +406,157 @@ out:
     }
 
     NDRX_LOG(log_info, "_tpenqueue: return %d", ret);
+
+    return ret;    
+}
+
+/**
+ * Internal version of message dequeue.
+ * @param qspace service name
+ * @param qname queue name
+ * @param ctl control data
+ * @param data data to enqueue
+ * @param len data len
+ * @param flags flags (for tpcall)
+ * @return SUCCEED/FAIL
+ */
+public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl, 
+        char **data, long *len, long flags)
+{
+    int ret = SUCCEED;
+    long rsplen;
+    char cmd = TMQ_CMD_ENQUEUE;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
+    
+    if (NULL==qspace || EOS==*qspace)
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: empty or NULL qspace!");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==qname || EOS==*qname)
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: empty or NULL qname!");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==ctl)
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: NULL ctl!");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==data)
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: data is null!");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==len)
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: len is null!");
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=tptypes(*data, NULL, NULL))
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: data buffer not allocated by "
+                "tpalloc()");
+        FAIL_OUT(ret);
+    }
+    
+    /* Alloc the request buffer */
+    if (NULL == p_ub)
+    {
+        _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to allocate req buffer: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    /* Convert the structure to UBF */
+    if (SUCCEED!=tmq_tpqctl_to_ubf_deqreq(p_ub, ctl))
+    {
+        
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: failed convert ctl "
+                "to internal UBF buf!");
+        FAIL_OUT(ret);
+    }
+    
+    /* set the data field */
+    
+    if (SUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
+    {
+        _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to set qname field: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    /* Setup the command in EX_QCMD */
+    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    {
+        _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to set cmd field: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    /* do the call to queue system */
+    if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
+    {
+        int tpe = tperrno;
+        NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
+        if (TPESVCFAIL!=tpe)
+        {
+            FAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        BFLDLEN len_extra=0;
+        char *data_extra;
+        if (SUCCEED!=(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
+        {
+            _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA: %s", 
+                    Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+        
+        /* Test the dest buffer */
+        if (NULL==(*data = tprealloc(*data, len_extra)))
+        {
+            free(data_extra);
+            _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to realloc output buffer: %s", 
+                    Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+        
+        /* Copy off the data to dest */
+        memcpy(*data, data_extra, len_extra);
+        *len = len_extra;
+        free(data_extra);
+    }
+    
+    /* the call is ok (or app failed), convert back. */
+    if (SUCCEED!=tmq_tpqctl_from_ubf_deqrsp(p_ub, ctl))
+    {
+        
+        _TPset_error_msg(TPEINVAL,  "_tpdequeue: failed convert ctl "
+                "to internal UBF buf!");
+        FAIL_OUT(ret);
+    }
+    
+out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    if (ctl->diagnostic)
+    {
+        ret = TPEDIAGNOSTIC;
+    }
+
+    NDRX_LOG(log_info, "_tpdequeue: return %d", ret);
 
     return ret;    
 }
