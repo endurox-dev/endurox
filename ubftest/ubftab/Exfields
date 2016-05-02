@@ -83,6 +83,7 @@ EX_CPMSUBSECT   103     string   -       Sub-section
 
 EX_CLTID        	150	string	-	client identifier for originating client
 EX_DATA                 151     carray  -       unified data field
+EX_DATA_BUFTYP          152     short   -       ATMI buffer type ID
 
 # Persistant Queue:
 EX_QSPACE		    200	    string    -	q space

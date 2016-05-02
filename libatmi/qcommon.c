@@ -351,6 +351,7 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     }
     
     /* set the data field */
+    /* TODO: Use prepare_outgoing...! */
     if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, data, len))
     {
         _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set data field: %s", 
@@ -513,6 +514,8 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     {
         BFLDLEN len_extra=0;
         char *data_extra;
+        /* TODO: Use prepare_incoming...! */
+        
         if (NULL==(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
         {
             _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA: %s", 

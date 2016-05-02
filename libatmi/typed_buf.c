@@ -56,7 +56,7 @@ private buffer_obj_t * find_buffer_int(char *ptr);
  */
 public buffer_obj_t *G_buffers=NULL;
 
-MUTEX_LOCKDECL(M_spinlock); /* This will allow multiple reads */
+MUTEX_LOCKDECL(M_lock); /* This will allow multiple reads */
 
 /*
  * Buffer descriptors
@@ -111,13 +111,13 @@ private int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
  */
 public buffer_obj_t * find_buffer(char *ptr)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
     buffer_obj_t *ret;
     
     ret = find_buffer_int(ptr);
     
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     return ret;
     }
 }
@@ -191,7 +191,7 @@ private typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
 public char * _tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
     char *ret=NULL;
     int i=0;
@@ -246,7 +246,7 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     DL_APPEND(G_buffers, node);
 
 out:
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     return ret;
     }
 }
@@ -259,7 +259,7 @@ out:
  */
 public char * _tprealloc (char *buf, long len)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
     char *ret=NULL;
     buffer_obj_t * node;
@@ -292,7 +292,7 @@ public char * _tprealloc (char *buf, long len)
     node->size = len;
 
 out:
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     return ret;
     }
 }
@@ -302,7 +302,7 @@ out:
  */
 public void free_up_buffers(void)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
         
     buffer_obj_t *elt, *tmp;
@@ -317,7 +317,7 @@ public void free_up_buffers(void)
         free(elt);
     }
     
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     }
 }
 
@@ -325,9 +325,9 @@ public void free_up_buffers(void)
  * Remove the buffer
  * @param buf
  */
-public void	_tpfree (char *buf, buffer_obj_t *known_buffer)
+public void _tpfree (char *buf, buffer_obj_t *known_buffer)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
     buffer_obj_t *elt;
     typed_buffer_descr_t *buf_type = NULL;
@@ -351,7 +351,7 @@ public void	_tpfree (char *buf, buffer_obj_t *known_buffer)
         /* delete elt by it self */
         free(elt);
     }
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     }
 }
 
@@ -360,7 +360,7 @@ public void	_tpfree (char *buf, buffer_obj_t *known_buffer)
  */
 public void free_auto_buffers(void)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
         
     buffer_obj_t *elt, *tmp;
@@ -384,14 +384,12 @@ public void free_auto_buffers(void)
         }
     }
     
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     }
 }
 
-
 /**
  * Internal version of tptypes. Returns type info
- * NOTE: Currently buffer size in return not supported.
  * @param ptr
  * @param type
  * @param subtype
@@ -399,7 +397,7 @@ public void free_auto_buffers(void)
  */
 public long _tptypes (char *ptr, char *type, char *subtype)
 {
-    MUTEX_LOCK_V(M_spinlock);
+    MUTEX_LOCK_V(M_lock);
     {
     long ret=SUCCEED;
     
@@ -433,7 +431,7 @@ public long _tptypes (char *ptr, char *type, char *subtype)
     }
     
 out:
-    MUTEX_UNLOCK_V(M_spinlock);
+    MUTEX_UNLOCK_V(M_lock);
     return ret;
     }
 }

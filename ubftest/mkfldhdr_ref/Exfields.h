@@ -67,6 +67,7 @@
 #define	EX_CPMSUBSECT	((BFLDID32)167772363)	/* number: 203	 type: string */
 #define	EX_CLTID	((BFLDID32)167772410)	/* number: 250	 type: string */
 #define	EX_DATA	((BFLDID32)201326843)	/* number: 251	 type: carray */
+#define	EX_DATA_BUFTYP	((BFLDID32)252)	/* number: 252	 type: short */
 #define	EX_QSPACE	((BFLDID32)167772460)	/* number: 300	 type: string */
 #define	EX_QNAME	((BFLDID32)167772461)	/* number: 301	 type: string */
 #define	EX_QFLAGS	((BFLDID32)33554734)	/* number: 302	 type: long */

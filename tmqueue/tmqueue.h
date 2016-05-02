@@ -96,6 +96,7 @@ typedef struct
     uint64_t lockthreadid;  /* Locked thread id */
     char status;            /* Status of the message */
     long trycounter;        /* try counter */
+    short buftyp;           /* ATMI buffer type id */
     unsigned long long msgtstamp;
     unsigned long long trytstamp;
     /* Message log (stored only in file) */
