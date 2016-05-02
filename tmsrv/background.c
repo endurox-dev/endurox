@@ -229,6 +229,9 @@ public int background_loop(void)
             
             if (el->p_tl.trycount>=G_tmsrv_cfg.max_tries)
             {
+                /* Have some housekeep. */
+                free(el);
+
                 NDRX_LOG(log_debug, "Skipping...");
                 continue;
             }

@@ -197,7 +197,7 @@ void TMQUEUE (TPSVCINFO *p_svc)
     char btype[16];
     char stype[16];
     thread_server_t *thread_data = malloc(sizeof(thread_server_t));
-    
+      
     if (NULL==thread_data)
     {
         userlog("Failed to malloc memory - %s!", strerror(errno));

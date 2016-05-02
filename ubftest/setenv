@@ -30,4 +30,4 @@
 ## -----------------------------------------------------------------------------
 ##
 export FLDTBLDIR=`pwd`/ubftab
-export FIELDTBLS=test.fd
+export FIELDTBLS=test.fd,Exfields

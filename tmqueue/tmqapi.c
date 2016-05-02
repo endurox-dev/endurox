@@ -89,6 +89,8 @@ public int tmq_enqueue(UBFH *p_ub)
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
     
+    ndrx_debug_dump_UBF(log_info, "tmq_enqueue called with", p_ub);
+    
     if (!is_xa_open)
     {
         if (SUCCEED!=tpopen()) /* init the lib anyway... */
@@ -269,6 +271,8 @@ public int tmq_dequeue(UBFH *p_ub)
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
+    
+    ndrx_debug_dump_UBF(log_info, "tmq_dequeue called with", p_ub);
     
     if (!is_xa_open)
     {
