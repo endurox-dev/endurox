@@ -369,7 +369,7 @@ out:
 /**
  * Add queue definition. Support also update
  * We shall support Q update too...
- * Syntax: -q VISA,svc=VISAIF,auto=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
+ * Syntax: -q VISA,svcnm=VISAIF,autoq=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
  * @param qdef
  * @return  SUCCEED/FAIL
  */
@@ -483,8 +483,8 @@ public int tmq_qconf_addupd(char *qconfstr)
         FAIL_OUT(ret);
     }
     /* If autoq, then service must be set. */
-    
-    if (qupdate)
+
+    if (!qupdate)
     {
         HASH_ADD_STR( G_qconf, qname, qconf );
     }
@@ -574,7 +574,7 @@ public int tmq_msg_add(tmq_msg_t *msg)
     memcpy(&mmsg->msg, msg, sizeof(*msg));
     
     /* Get the entry for hash of queues: */
-    if (NULL==qhash && NULL==tmq_qhash_new(msg->hdr.qname))
+    if (NULL==qhash && NULL==(qhash=tmq_qhash_new(msg->hdr.qname)))
     {
         NDRX_LOG(log_error, "Failed to get/create qhash entry for Q [%s]", 
                 msg->hdr.qname);
