@@ -400,7 +400,7 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, (char *)&p_upd, sizeof(*p_upd)))
+    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, (char *)p_upd, sizeof(*p_upd)))
     {
         NDRX_LOG(log_error, "Failed to setup EX_DATA!");
         FAIL_OUT(ret);

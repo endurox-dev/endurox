@@ -572,7 +572,8 @@ public int tmq_msg_add(tmq_msg_t *msg)
         FAIL_OUT(ret);
     }
     
-    memcpy(&mmsg->msg, msg, sizeof(*msg));
+    /* memcpy(&mmsg->msg, msg, sizeof(*msg)); */
+    mmsg->msg = msg;
     
     /* Get the entry for hash of queues: */
     if (NULL==qhash && NULL==(qhash=tmq_qhash_new(msg->hdr.qname)))
@@ -586,6 +587,9 @@ public int tmq_msg_add(tmq_msg_t *msg)
     DL_APPEND(qhash->q, mmsg);    
     
     /* Add the hash of IDs */
+    tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str);
+    NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
+    strcpy(mmsg->msgid_str, msgid_str);
     HASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     
     /* Decide do we need to add the msg to disk?! 
@@ -595,7 +599,7 @@ public int tmq_msg_add(tmq_msg_t *msg)
      */
     if (!qconf->memonly)
     {
-        if (SUCCEED!=tmq_storage_write_cmd_newmsg(&mmsg->msg))
+        if (SUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
         {
             NDRX_LOG(log_error, "Failed to add message to persistent store!");
             FAIL_OUT(ret);
@@ -658,9 +662,9 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname)
     
     do
     {
-        if (!node->msg.lockthreadid)
+        if (!node->msg->lockthreadid)
         {
-            ret = &node->msg;
+            ret = node->msg;
             break;
         }
         node = node->next;
@@ -726,11 +730,11 @@ private tmq_memmsg_t* tmq_get_msg_by_msgid(char *msgid_str)
 private void tmq_remove_msg(tmq_memmsg_t *mmsg)
 {
     char msgid_str[TMMSGIDLEN_STR+1];   
-    tmq_msgid_serialize(mmsg->msg.hdr.msgid, msgid_str);
+    tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str);
     
-    tmq_qhash_t *qhash = tmq_qhash_get(mmsg->msg.hdr.qname);
+    tmq_qhash_t *qhash = tmq_qhash_get(mmsg->msg->hdr.qname);
     
-    NDRX_LOG(log_info, "Removing msgid [%s] from [%s] q", msgid_str, mmsg->msg.hdr.qname);
+    NDRX_LOG(log_info, "Removing msgid [%s] from [%s] q", msgid_str, mmsg->msg->hdr.qname);
     if (NULL!=qhash)
     {
         /* Add the message to end of the queue */
@@ -739,6 +743,8 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
     
     /* Add the hash of IDs */
     HASH_DEL( G_msgid_hash, mmsg);
+    free(mmsg->msg);
+    free(mmsg);
 }
 
 /**
@@ -777,13 +783,13 @@ public int tmq_unlock_msg(union tmq_upd_block *b)
             mmsg = NULL;
             break;
         case TMQ_STORCMD_UPD:
-            UPD_MSG((&mmsg->msg), (&b->upd));
-            mmsg->msg.lockthreadid = 0;
+            UPD_MSG((mmsg->msg), (&b->upd));
+            mmsg->msg->lockthreadid = 0;
         /* And still we want unblock: */
         case TMQ_STORCMD_NEWMSG:
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
-            mmsg->msg.lockthreadid = 0;
+            mmsg->msg->lockthreadid = 0;
             break;
         default:
             NDRX_LOG(log_info, "Unknown command [%c]", b->hdr.command_code);

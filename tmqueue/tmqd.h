@@ -97,7 +97,7 @@ struct tmq_memmsg
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
     
-    tmq_msg_t msg;
+    tmq_msg_t *msg;
 };
 
 /**
