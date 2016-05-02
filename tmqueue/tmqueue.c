@@ -271,7 +271,7 @@ int tpsvrinit(int argc, char **argv)
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "l:s:p:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -283,9 +283,10 @@ int tpsvrinit(int argc, char **argv)
                 
             case 'q':
                 /* Add the queue */
-                if (SUCCEED!=tmq_qconf_addupd(optarg))
+                NDRX_LOG(log_error, "Loading q config: [%s]", optarg);
+                if (SUCCEED!=tmq_reload_conf(optarg))
                 {
-                    NDRX_LOG(log_error, "Failed to define Q for: [%s]", optarg);
+                    NDRX_LOG(log_error, "Failed to read config for: [%s]", optarg);
                     FAIL_OUT(ret);
                 }
                 break;
@@ -336,26 +337,11 @@ int tpsvrinit(int argc, char **argv)
             G_tmqueue_cfg.dflt_timeout );
     
     
-    NDRX_LOG(log_debug, "About to initialize XA!");
-    if (SUCCEED!=atmi_xa_init()) /* will open next... */
-    {
-        NDRX_LOG(log_error, "Failed to initialize XA driver!");
-        FAIL_OUT(ret);
-    }
-    
     /* we should open the XA  */
-    
     NDRX_LOG(log_debug, "About to Open XA Entry!");
-    ret = atmi_xa_open_entry();
-    if( XA_OK != ret )
+    if (SUCCEED!=tpopen())
     {
-        userlog("xa_open failed error %d", ret);
-        NDRX_LOG(log_error, "xa_open failed");
-    }
-    else
-    {
-        NDRX_LOG(log_error, "xa_open ok");
-        ret = SUCCEED;
+        FAIL_OUT(ret);
     }
      
     /*
@@ -369,7 +355,7 @@ int tpsvrinit(int argc, char **argv)
      * Also.. when we will recover from disk we will have to ensure the correct order
      * of the enqueued messages. We can use time-stamp for doing ordering.
      */
-    sprintf(svcnm, NDRX_SVC_RM, G_atmi_env.xa_rmid);
+    sprintf(svcnm, NDRX_SVC_TMQ, tpgetnodeid(), tpgetsrvid());
     
     if (SUCCEED!=tpadvertise(svcnm, TMQUEUE))
     {
@@ -377,6 +363,11 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
+    if (SUCCEED!=tpadvertise(G_tmqueue_cfg.qspace, TMQUEUE))
+    {
+        NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
+        FAIL_OUT(ret);
+    }
     
     if (NULL==(G_tmqueue_cfg.thpool = thpool_init(G_tmqueue_cfg.threadpoolsize)))
     {
@@ -414,7 +405,7 @@ void tpsvrdone(void)
         thpool_wait(G_tmqueue_cfg.thpool);
         thpool_destroy(G_tmqueue_cfg.thpool);
     }
-    atmi_xa_close_entry();
+    tpclose();
     
 }
 

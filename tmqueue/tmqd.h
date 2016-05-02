@@ -153,6 +153,7 @@ extern void background_lock(void);
 extern void background_unlock(void);
 
 /* Q space api: */
+extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr);
 extern int tmq_msg_add(tmq_msg_t *msg);
 extern int tmq_unlock_msg(union tmq_upd_block *b);

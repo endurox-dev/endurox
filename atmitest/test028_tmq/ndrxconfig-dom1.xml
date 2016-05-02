@@ -57,15 +57,12 @@
             <server name="tmsrv">
                 <max>1</max>
                 <srvid>1</srvid>
-                <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
+                <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
             </server>
-            <server name="tmqsrv">
+            <server name="tmqueue">
                 <max>1</max>
                 <srvid>100</srvid>
-                <sysopt>-e ${TESTDIR}/TMQ.log -r -- -m MYSPACE 
-                -q @,svc=-,auto=n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=n
-                -q TEST1
-                </sysopt>
+                <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -m MYSPACE -q ./q.config</sysopt>
             </server>
 	</servers>
 </endurox>

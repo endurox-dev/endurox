@@ -65,6 +65,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+private __thread int is_xa_open = FALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /******************************************************************************/
@@ -88,6 +89,20 @@ public int tmq_enqueue(UBFH *p_ub)
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
     
+    if (!is_xa_open)
+    {
+        if (SUCCEED!=tpopen()) /* init the lib anyway... */
+        {
+            NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
+                    tpstrerror(tperrno));
+            userlog("Failed to tpopen() by worker thread: %s", tpstrerror(tperrno));
+        }
+        else
+        {
+            is_xa_open = TRUE;
+        }
+    }
+            
     if (!tpgetlev())
     {
         NDRX_LOG(log_debug, "Not in global transaction, starting local...");
@@ -254,6 +269,20 @@ public int tmq_dequeue(UBFH *p_ub)
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
+    
+    if (!is_xa_open)
+    {
+        if (SUCCEED!=tpopen()) /* init the lib anyway... */
+        {
+            NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
+                    tpstrerror(tperrno));
+            userlog("Failed to tpopen() by worker thread: %s", tpstrerror(tperrno));
+        }
+        else
+        {
+            is_xa_open = TRUE;
+        }
+    }
     
     if (!tpgetlev())
     {

@@ -191,7 +191,7 @@ public int tmq_tpqctl_from_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl)
 {
     int ret = SUCCEED;
     
-    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, p_ub, ctl, M_tpqctl_enqreq);
+    ret=atmi_cvt_ubf_to_c(M_tpqctl_map, p_ub, ctl, M_tpqctl_enqreq);
     
     return ret;
 }
@@ -222,7 +222,7 @@ public int tmq_tpqctl_from_ubf_enqrsp(UBFH *p_ub, TPQCTL *ctl)
 {
     int ret = SUCCEED;
     
-    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, p_ub, ctl, M_tpqctl_enqrsp);
+    ret=atmi_cvt_ubf_to_c(M_tpqctl_map, p_ub, ctl, M_tpqctl_enqrsp);
     
     return ret;
 }
@@ -252,7 +252,7 @@ public int tmq_tpqctl_from_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl)
 {
     int ret = SUCCEED;
     
-    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, p_ub, ctl, M_tpqctl_deqreq);
+    ret=atmi_cvt_ubf_to_c(M_tpqctl_map, p_ub, ctl, M_tpqctl_deqreq);
     
     return ret;
 }
@@ -283,7 +283,7 @@ public int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
 {
     int ret = SUCCEED;
     
-    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, p_ub, ctl, M_tpqctl_deqrsp);
+    ret=atmi_cvt_ubf_to_c(M_tpqctl_map, p_ub, ctl, M_tpqctl_deqrsp);
     
     return ret;
 }

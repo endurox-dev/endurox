@@ -19,11 +19,6 @@
 ** 
 ** If the command is delete, then we unlink the file.
 ** 
-** The file format will be following:
-** [message_id 32 bytes][command - [i]nc_counter]
-** [message_id 32 bytes][command - [u]nlink_msg]
-** [message_id 32 bytes][command - [d]data][..all the flags..][try_counter][data block]
-** 
 ** Once Queue record is completed (rolled back or committed) we shall send ACK
 ** of COMMAND BLOCK back to queue server via TPCALL command to QSPACE server.
 ** this will allow to synchornize internal status of the messages. 
@@ -379,7 +374,7 @@ out:
 /**
  * Send notification to tmqueue server so that we have finished this
  * particular message & we can unlock that for further processing
- * 
+ * TODO: Do not call Q space, but particular service.
  * @param p_hdr
  * @return 
  */
@@ -476,9 +471,10 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
     int ret = SUCCEED;
     if (M_is_open)
     {
-        NDRX_LOG(log_error, "ERROR! xa_open_entry() - already open!");
-        return XAER_RMERR;
+        NDRX_LOG(log_warn, "xa_open_entry() - already open!");
+        return XA_OK;
     }
+#define DIR_PERM 0755
     M_is_open = TRUE;
     M_rmid = rmid;
     
@@ -491,59 +487,71 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
     /* The xa_info is directory, where to store the data...*/
     strncpy(M_folder_active, xa_info, sizeof(M_folder_active)-8);
     M_folder_active[sizeof(M_folder_active)-7] = EOS;
-    strcat(M_folder, "active");
+    strcat(M_folder, "/active");
     
     strncpy(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
     M_folder_prepared[sizeof(M_folder_prepared)-9] = EOS;
-    strcat(M_folder_prepared, "prepared");
+    strcat(M_folder_prepared, "/prepared");
     
     strncpy(M_folder_committed, xa_info, sizeof(M_folder_committed)-11);
     M_folder_committed[sizeof(M_folder_committed)-10] = EOS;
-    strcat(M_folder_committed, "committed");
+    strcat(M_folder_committed, "/committed");
     
     /* Test the directories */
-    if (SUCCEED!=(ret=mkdir(M_folder)) && ret!=EEXIST )
+    if (SUCCEED!=(ret=mkdir(M_folder, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder, strerror(errno));
+                "[%s] - [%s]!", M_folder, strerror(err));
         
-        userlog("xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder, strerror(errno));
-        return XAER_RMERR;
+        if (err!=EEXIST)
+        {
+            userlog("xa_open_entry() Q driver: failed to create directory "
+                    "[%s] - [%s]!", M_folder, strerror(err));
+            return XAER_RMERR;
+        }
     }
     
-    if (SUCCEED!=(ret=mkdir(M_folder_active)) && ret!=EEXIST )
+    if (SUCCEED!=(ret=mkdir(M_folder_active, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_active, strerror(errno));
+                "[%s] - [%s]!", M_folder_active, strerror(err));
         
-        userlog("xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_active, strerror(errno));
-        return XAER_RMERR;
+        if (err!=EEXIST)
+        {
+            userlog("xa_open_entry() Q driver: failed to create directory "
+                    "[%s] - [%s]!", M_folder_active, strerror(err));
+            return XAER_RMERR;
+        }
     }
     
-    if (SUCCEED!=(ret=mkdir(M_folder_prepared)) && ret!=EEXIST )
+    if (SUCCEED!=(ret=mkdir(M_folder_prepared, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_prepared, strerror(errno));
+                "[%s] - [%s]!", M_folder_prepared, strerror(err));
         
-        userlog("xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_prepared, strerror(errno));
-        return XAER_RMERR;
+        if (err!=EEXIST)
+        {
+            userlog("xa_open_entry() Q driver: failed to create directory "
+                    "[%s] - [%s]!", M_folder_prepared, strerror(err));
+            return XAER_RMERR;
+        }
     }
     
-    if (SUCCEED!=(ret=mkdir(M_folder_committed)) && ret!=EEXIST )
+    if (SUCCEED!=(ret=mkdir(M_folder_committed, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_committed, strerror(errno));
+                "[%s] - [%s]!", M_folder_committed, strerror(err));
         
-        userlog("xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_committed, strerror(errno));
-        return XAER_RMERR;
+        if (err!=EEXIST)
+        {
+            userlog("xa_open_entry() Q driver: failed to create directory "
+                    "[%s] - [%s]!", M_folder_committed, strerror(err));
+            return XAER_RMERR;
+        }
     }
     
              
@@ -560,14 +568,6 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
 public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     NDRX_LOG(log_error, "xa_close_entry() called");
-    
-    if (!M_is_open)
-    {
-        /* Ignore this error...
-        NDRX_LOG(log_error, "TESTERROR!!! xa_close_entry() - already closed!");
-         */
-        return XAER_RMERR;
-    }
     
     M_is_open = FALSE;
     return XA_OK;

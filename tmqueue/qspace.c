@@ -186,16 +186,12 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     }
     else if (0==strcmp(key, TMQ_QC_AUTOQ))
     {
-        int ival = atoi(value);
-        if (!nstdutil_isint(value) || ival < 0)
+        qconf->autoq = FALSE;
+        
+        if (value[0]=='y' || value[0]=='Y')
         {
-            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
-                    value, key);
-            FAIL_OUT(ret);
+            qconf->autoq = TRUE;
         }
-        
-        qconf->waitinit = ival;
-        
     }
     else if (0==strcmp(key, TMQ_QC_WAITINIT))
     {
@@ -247,6 +243,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     }
     else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {
+        qconf->memonly = FALSE;
         if (value[0]=='y' || value[0]=='Y')
         {
             qconf->memonly = TRUE;
@@ -326,6 +323,50 @@ out:
 }
 
 /**
+ * Reload the config of queues
+ * @param cf
+ * @return 
+ */
+public int tmq_reload_conf(char *cf)
+{
+    FILE *f = NULL;
+    char *line = NULL;
+    size_t len = 0;
+    int ret = SUCCEED;
+    ssize_t read;
+    if (NULL==(f=fopen(cf, "r")))
+    {
+        NDRX_LOG(log_error, "Failed to open [%s]:%s", cf, strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    while (FAIL!=(read = getline(&line, &len, f))) 
+    {
+        nstdutil_str_strip(line, " \n\r\t");
+        
+        /* Ignore comments & newlines */
+        if ('#'==*line || EOS==*line)
+        {
+            continue;
+        }
+        
+        if (SUCCEED!=tmq_qconf_addupd(line))
+        {
+            FAIL_OUT(ret);
+        }
+    }
+    free(line);
+    
+    
+out:
+    
+    if (NULL!=f)
+    {
+        fclose(f);
+    }
+}
+
+/**
  * Add queue definition. Support also update
  * We shall support Q update too...
  * Syntax: -q VISA,svc=VISAIF,auto=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
@@ -389,7 +430,7 @@ public int tmq_qconf_addupd(char *qconfstr)
         FAIL_OUT(ret);
     }
     
-    p = strtok (qconfstr,",");
+    p = strtok (NULL, ","); /* continue... */
     
     while (p != NULL)
     {
