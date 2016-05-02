@@ -56,6 +56,10 @@ int main(int argc, char** argv) {
     char testbuf_ref[10] = {0,1,2,3,4,5,6,7,8,9};
     long len;
     TPQCTL qc;
+    int i;
+
+    for (i=0; i<100000; i++)
+    {
     char *buf = tpalloc("CARRAY", "", 10);
     
     /* alloc output buffer */
@@ -99,6 +103,7 @@ int main(int argc, char** argv) {
     }
     
     tpfree(buf);
+    }
     
     if (SUCCEED!=tpterm())
     {

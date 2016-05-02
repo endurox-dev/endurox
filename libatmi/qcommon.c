@@ -140,7 +140,7 @@ static long M_tpqctl_deqreq[] =
     0,/* 11 - EX_QDELIVERY_QOS*/
     0,/* 12 - EX_QREPLY_QOS*/
     0,/* 13 - EX_QEXP_TIME*/
-    0              /* 14 - EX_QDIAGMSG*/
+    0 /* 14 - EX_QDIAGMSG*/
 };
 
 /**
@@ -425,7 +425,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
 {
     int ret = SUCCEED;
     long rsplen;
-    char cmd = TMQ_CMD_ENQUEUE;
+    char cmd = TMQ_CMD_DEQUEUE;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
     
     if (NULL==qspace || EOS==*qspace)
@@ -458,7 +458,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tptypes(*data, NULL, NULL))
+    if (FAIL==tptypes(*data, NULL, NULL))
     {
         _TPset_error_msg(TPEINVAL,  "_tpdequeue: data buffer not allocated by "
                 "tpalloc()");
@@ -513,9 +513,9 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     {
         BFLDLEN len_extra=0;
         char *data_extra;
-        if (SUCCEED!=(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
+        if (NULL==(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
         {
-            _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA: %s", 
+            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA: %s", 
                     Bstrerror(Berror));
             FAIL_OUT(ret);
         }
@@ -524,7 +524,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
         if (NULL==(*data = tprealloc(*data, len_extra)))
         {
             free(data_extra);
-            _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to realloc output buffer: %s", 
+            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to realloc output buffer: %s", 
                     Bstrerror(Berror));
             FAIL_OUT(ret);
         }

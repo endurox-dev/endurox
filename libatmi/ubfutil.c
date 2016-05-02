@@ -103,7 +103,7 @@ public int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, long 
             {
                 int be = Berror;
                 NDRX_LOG(log_error, "Failed to get field %d:[%s] from UBF buffer: %s", 
-                        Bfname(map->fld), Bstrerror(be));
+                        map->fld, Bfname(map->fld), Bstrerror(be));
 
                 if (*rules & UBFUTIL_OPTIONAL)
                 {

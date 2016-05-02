@@ -869,7 +869,7 @@ public int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long 
         goto out;
     }
     
-    ret=_tpdequeue (*qspace, qname, ctl, data, len, flags);
+    ret=_tpdequeue (qspace, qname, ctl, data, len, flags);
 
 out:
     return ret;

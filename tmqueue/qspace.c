@@ -532,6 +532,8 @@ private tmq_qhash_t * tmq_qhash_new(char *qname)
         userlog("Failed to alloc tmq_qhash_t: %s", strerror(errno));
     }
     
+    strcpy(ret->qname, qname);
+    
     HASH_ADD_STR( G_qhash, qname, ret );
     
     return ret;

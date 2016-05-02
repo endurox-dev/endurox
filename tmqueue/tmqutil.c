@@ -71,7 +71,8 @@ public char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
     
     NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
     
-    atmi_xa_base64_encode(msgid_in, strlen(msgid_in), &out_len, msgid_str_out);
+    atmi_xa_base64_encode(msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
+
     msgid_str_out[out_len] = EOS;
     
     NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
@@ -99,3 +100,4 @@ public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
     
     return msgid_out;
 }
+

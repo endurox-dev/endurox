@@ -288,6 +288,7 @@ public int tmq_dequeue(UBFH *p_ub)
         }
     }
     
+    /* TODO: Read ctl (to have msgid search for, or corelator id) */
     if (!tpgetlev())
     {
         NDRX_LOG(log_debug, "Not in global transaction, starting local...");
@@ -374,7 +375,7 @@ out:
      * Not sure about existing ones (seems like they will stay in buffer)
      * i.e. request fields
      */
-    if (SUCCEED!=tmq_tpqctl_to_ubf_enqrsp(p_ub, &qctl_out))
+    if (SUCCEED!=tmq_tpqctl_to_ubf_deqrsp(p_ub, &qctl_out))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to generate response buffer!");
         userlog("tmq_enqueue: failed to generate response buffer!");
