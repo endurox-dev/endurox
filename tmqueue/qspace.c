@@ -551,6 +551,7 @@ public int tmq_msg_add(tmq_msg_t *msg)
     tmq_qhash_t *qhash;
     tmq_memmsg_t *mmsg = calloc(1, sizeof(tmq_memmsg_t));
     tmq_qconfig_t * qconf;
+    char msgid_str[TMMSGIDLEN_STR+1];
     
     MUTEX_LOCK_V(M_q_lock);
     
@@ -606,7 +607,7 @@ public int tmq_msg_add(tmq_msg_t *msg)
     }
     
     NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue",
-            msg->hdr.msgid, msg->hdr.qname);
+            tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname);
     
 out:
 

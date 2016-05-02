@@ -247,11 +247,11 @@ private int get_filenames_max(void)
     
     while(1)
     {
-        sprintf(filename_active, "%s/%s-%d", M_folder_active, M_filename_base, i);
-        sprintf(filename_prepared, "%s/%s-%d", M_folder_prepared, M_filename_base, i);
+        sprintf(filename_active, "%s/%s-%d", M_folder_active, M_filename_base, i+1);
+        sprintf(filename_prepared, "%s/%s-%d", M_folder_prepared, M_filename_base, i+1);
         
         if (nstdutil_file_exists(filename_active) || 
-                nstdutil_file_exists(M_filename_prepared))
+                nstdutil_file_exists(filename_prepared))
         {
             i++;
         }
@@ -261,6 +261,7 @@ private int get_filenames_max(void)
         }
     }
     
+    NDRX_LOG(log_info, "max file names %d", i);
     return i;
 }
 
@@ -305,13 +306,20 @@ private char *get_file_name_final(char *fname)
 private int file_move(int i, char *from_folder, char *to_folder)
 {
     int ret = SUCCEED;
+    char *f;
+    char *t;
+    
+
+    f = get_filename_i(i, from_folder, 0);
+    t = get_filename_i(i, to_folder, 1);
         
-    if (SUCCEED!=rename(get_filename_i(i, from_folder, 0), 
-                get_filename_i(i, to_folder, 1)))
+    NDRX_LOG(log_error, "Rename [%s]->[%s]", 
+                f,t);
+
+    if (SUCCEED!=rename(f, t))
     {
         NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
-                get_filename_i(i, from_folder, 0),
-                get_filename_i(i, to_folder, 1),
+                f,t,
                 strerror(errno));
         FAIL_OUT(ret);
     }
@@ -487,7 +495,7 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
     /* The xa_info is directory, where to store the data...*/
     strncpy(M_folder_active, xa_info, sizeof(M_folder_active)-8);
     M_folder_active[sizeof(M_folder_active)-7] = EOS;
-    strcat(M_folder, "/active");
+    strcat(M_folder_active, "/active");
     
     strncpy(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
     M_folder_prepared[sizeof(M_folder_prepared)-9] = EOS;
@@ -637,15 +645,18 @@ out:
 public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     int i, j;
-    int names_max = get_filenames_max();
+    int names_max;
     char *fname;
     union tmq_block b;
     char *folders[2] = {M_folder_active, M_folder_prepared};
+
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
         return XAER_RMERR;
     }
+    set_filename_base(xid, rmid);
+    names_max = get_filenames_max();
     
     /* send notification, that message is removed, but firstly we need to 
      * understand what kind of message it was.
@@ -695,13 +706,16 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
 public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     int i;
-    int names_max = get_filenames_max();
-    
+    int names_max;
+
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_prepare_entry() - XA not open!");
         return XAER_RMERR;
     }
+
+    set_filename_base(xid, rmid);
+    names_max = get_filenames_max();
     
     for (i=names_max; i>=1; i--)
     {
@@ -737,7 +751,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
     union tmq_block block;
     char msgid_str[TMMSGIDLEN_STR+1];
     int i;
-    int names_max = get_filenames_max();
+    int names_max;
     FILE *f = NULL;
     char *fname;
     char *fname_msg;
@@ -747,6 +761,9 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - XA not open!");
         return XAER_RMERR;
     }
+
+    set_filename_base(xid, rmid);
+    names_max = get_filenames_max();
     
     for (i=names_max; i>=1; i--)
     {
