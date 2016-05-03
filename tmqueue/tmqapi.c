@@ -166,6 +166,16 @@ public int tmq_enqueue(UBFH *p_ub)
         FAIL_OUT(ret);
     }
     
+    if (SUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
+    {
+        NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_DATA_BUFTYP");
+        
+        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_DATA_BUFTYP!");
+        qctl_out.diagnostic = QMEINVAL;
+        
+        FAIL_OUT(ret);
+    }
+    
     /* Restore back the C structure */
     if (SUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
     {
@@ -343,6 +353,16 @@ public int tmq_dequeue(UBFH *p_ub)
         userlog("failed to set EX_DATA!");
         
         strcpy(qctl_out.diagmsg, "failed to set EX_DATA!");
+        qctl_out.diagnostic = QMEINVAL;
+        
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
+    {
+        NDRX_LOG(log_error, "tmq_dequeue: failed to set EX_DATA_BUFTYP");
+        
+        strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to set EX_DATA_BUFTYP!");
         qctl_out.diagnostic = QMEINVAL;
         
         FAIL_OUT(ret);

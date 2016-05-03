@@ -94,15 +94,24 @@
 			<max>1</max>
 			<sysopt>-e /tmp/TM1 -r -- -t10 -l/tmp</sysopt>
 		</server>
-                <!-- RM2 -->
+         <!-- RM2 -->
 		<server name="tmsrv">
 			<srvid>350</srvid>
 			<min>1</min>
 			<max>1</max>
                         <env>/home/mvitolin/projects/endurox/setndrx.rm2</env>
-			<sysopt>-e /tmp/TM2 -r -- -t10 -l/tmp</sysopt>
+			<sysopt>-e /tmp/TM2 -r -- -t10 -l/tmp -- </sysopt>
+			<appopt>
+			<!-- IF we have a default Q, then accpet defaults... -->
+			-q @DEFAULT:,tries=10,tout=20,tryinc=4
+			-q VISA:svc=VISAIF,tries=10,tout=20,tryinc=4,trytimeinc=10
+			-q VISA:svc=VISAIF,tries=10,tout=20,tryinc=4,trytiminc=10
+			-q VISA:svc=VISAIF,tries=10,tout=20,tryinc=4
+			-q VISA:svc=VISAIF,tries=10,tout=20,tryinc=4
+			-q VISA:svc=VISAIF,tries=10,tout=20,tryinc=4
+			</appopt>
 		</server>
-		<server name="test">
+		<server name="atmi.sv1">
 			<srvid>1400</srvid>
 			<min>1</min>
 			<max>1</max>

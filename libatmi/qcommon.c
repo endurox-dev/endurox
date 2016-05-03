@@ -44,6 +44,7 @@
 #include <ubf.h>
 #include <ubfutil.h>
 #include <Exfields.h>
+#include <typed_buf.h>
 #include <qcommon.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -306,8 +307,12 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     int ret = SUCCEED;
     long rsplen;
     char cmd = TMQ_CMD_ENQUEUE;
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ+len);
-    
+    typed_buffer_descr_t *descr;
+    buffer_obj_t *buffer_info;
+    char tmp[ATMI_MSG_MAX_SIZE];
+    long tmp_len = ATMI_MSG_MAX_SIZE;
+    UBFH *p_ub = NULL;
+    short buftype;
     
     if (NULL==data)
     {
@@ -333,8 +338,41 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
         FAIL_OUT(ret);
     }
     
-    /* Alloc the request buffer */
-    if (NULL == p_ub)
+    if (FAIL==tptypes(data, NULL, NULL))
+    {
+        _TPset_error_msg(TPEINVAL,  "_tpenqueue: data buffer not allocated by "
+                "tpalloc()");
+        FAIL_OUT(ret);
+    }
+    
+
+    if (NULL==(buffer_info = find_buffer(data)))
+    {
+        _TPset_error_fmt(TPEINVAL, "Buffer not known to system!");
+        FAIL_OUT(ret);
+    }
+
+    if (NULL==(descr = &G_buf_descr[buffer_info->type_id]))
+    {
+        _TPset_error_fmt(TPEINVAL, "Invalid buffer id");
+        FAIL_OUT(ret);
+        
+    }
+    
+    buftype = buffer_info->type_id;
+    
+    /* prepare buffer for call */
+    if (SUCCEED!=descr->pf_prepare_outgoing(descr, data, len, tmp, &tmp_len, 0))
+    {
+        /* not good - error should be already set */
+        FAIL_OUT(ret);
+    }
+    
+    NDRX_DUMP(log_debug, "Buffer for sending data out", tmp, tmp_len);
+    
+    /* Alloc the FB */
+    
+    if (NULL == (p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ+tmp_len)))
     {
         _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to allocate req buffer: %s", 
                 Bstrerror(Berror));
@@ -350,11 +388,16 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
         FAIL_OUT(ret);
     }
     
-    /* set the data field */
-    /* TODO: Use prepare_outgoing...! */
-    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, data, len))
+    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, tmp, tmp_len))
     {
         _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set data field: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftype, 0L))
+    {
+        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set buftyp field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -427,6 +470,9 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     int ret = SUCCEED;
     long rsplen;
     char cmd = TMQ_CMD_DEQUEUE;
+    short buftyp;
+    typed_buffer_descr_t *descr;
+    
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
     
     if (NULL==qspace || EOS==*qspace)
@@ -513,8 +559,14 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     else
     {
         BFLDLEN len_extra=0;
-        char *data_extra;
-        /* TODO: Use prepare_incoming...! */
+        char *data_extra = NULL;
+        
+        if (SUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftyp, 0L))
+        {
+            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA_BUFTYP: %s", 
+                    Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
         
         if (NULL==(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
         {
@@ -523,18 +575,29 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
             FAIL_OUT(ret);
         }
         
-        /* Test the dest buffer */
-        if (NULL==(*data = tprealloc(*data, len_extra)))
+        if (!BUF_IS_TYPEID_VALID(buftyp))
         {
-            free(data_extra);
-            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to realloc output buffer: %s", 
-                    Bstrerror(Berror));
+            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: inalid buffer type id recieved %hd", 
+                    buftyp);
             FAIL_OUT(ret);
         }
         
-        /* Copy off the data to dest */
-        memcpy(*data, data_extra, len_extra);
-        *len = len_extra;
+        descr = &G_buf_descr[buftyp];
+
+        ret=descr->pf_prepare_incoming(descr,
+                        data_extra,
+                        len_extra,
+                        data,
+                        len,
+                        flags);
+        if (SUCCEED!=ret)
+        {
+            _TPset_error_fmt(TPEINVAL,  "_tpdequeue: Failed to prepare incoming buffer: %s", 
+                    Bstrerror(Berror));
+            
+            free(data_extra);
+            FAIL_OUT(ret);
+        }
         free(data_extra);
     }
     

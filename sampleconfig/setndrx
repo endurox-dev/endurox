@@ -74,6 +74,7 @@ export NDRX_LEV=5
 export PATH=$PATH:$NDRX_HOME/bin:/home/mvitolin/projects/endurox-go/src/gtest
 
 # UBFTAB
+export FLDTBLDIR=$NDRX_APPHOME/ubftest/ubftab
 export FIELDTBLS=Exfields,test.fd
 
 # XA SECTION

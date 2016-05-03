@@ -53,56 +53,69 @@
 int main(int argc, char** argv) {
 
     int ret = SUCCEED;
-    char testbuf_ref[10] = {0,1,2,3,4,5,6,7,8,9};
-    long len;
     TPQCTL qc;
     int i;
 
-    for (i=0; i<100000; i++)
+    /* Initial test... */
+    for (i=0; i<10000; i++)
     {
-    char *buf = tpalloc("CARRAY", "", 10);
-    
-    /* alloc output buffer */
-    if (NULL==buf)
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
-                tpstrerror(tperrno));
-        FAIL_OUT(ret);
-    }
-    
-    /* enqueue the data buffer */
-    memset(&qc, 0, sizeof(qc));
-    if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
-            sizeof(testbuf_ref), TPNOTRAN))
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
-                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-        FAIL_OUT(ret);
-    }
-    
-    /* dequeue the data buffer + allocate the output buf. */
-    
-    memset(&qc, 0, sizeof(qc));
-    
-    len = 10;
-    if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
-            &len, TPNOTRAN))
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
-                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-        FAIL_OUT(ret);
-    }
-    
-    /* compare - should be equal */
-    if (0!=memcmp(testbuf_ref, buf, len))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Buffers not equal!");
-        NDRX_DUMP(log_error, "original buffer", testbuf_ref, sizeof(testbuf_ref));
-        NDRX_DUMP(log_error, "got form q", buf, len);
-        FAIL_OUT(ret);
-    }
-    
-    tpfree(buf);
+        char *buf = tpalloc("CARRAY", "", 1);
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+                len, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            FAIL_OUT(ret);
+        }
+
+        /* dequeue the data buffer + allocate the output buf. */
+
+        memset(&qc, 0, sizeof(qc));
+
+        len = 10;
+        if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
+                &len, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            FAIL_OUT(ret);
+        }
+
+        /* compare - should be equal */
+        if (0!=memcmp(testbuf_ref, buf, len))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Buffers not equal!");
+            NDRX_DUMP(log_error, "original buffer", testbuf_ref, sizeof(testbuf_ref));
+            NDRX_DUMP(log_error, "got form q", buf, len);
+            FAIL_OUT(ret);
+        }
+
+        tpfree(buf);
+        tpfree(testbuf_ref);
     }
     
     if (SUCCEED!=tpterm())
