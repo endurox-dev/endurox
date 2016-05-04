@@ -307,6 +307,37 @@ private void base64_cleanup(void)
 #endif
 
 /*************************** XID manipulation *********************************/
+
+/**
+ * Extract info from xid.
+ * @param xid xid
+ * @param p_nodeid return nodeid
+ * @param p_srvid return serverid
+ */
+public void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
+{
+    
+    memcpy((char *)p_nodeid, xid->data + sizeof(uuid_t) + sizeof(unsigned char), 
+            sizeof(short));
+    
+    memcpy((char *)p_srvid, xid->data + sizeof(uuid_t) 
+            +sizeof(unsigned char) + sizeof(short), sizeof(short));
+}
+
+
+/**
+ * Return XID info for XID string
+ * @param xid_str
+ * @param p_nodeid
+ * @param p_srvid
+ */
+public void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid)
+{
+    XID xid;
+    memset(&xid, 0, sizeof(xid));
+    atmi_xa_xid_get_info(atmi_xa_deserialize_xid(xid_str, &xid), p_nodeid, p_srvid);
+}
+
 /**
  * Get `char *' representation of XID.
  * @param xid

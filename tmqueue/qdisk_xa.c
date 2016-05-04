@@ -91,6 +91,7 @@
 #include "Exfields.h"
 #include <qcommon.h>
 #include <dirent.h>
+#include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -1119,19 +1120,8 @@ out:
 private int tmq_get_msgid_from_filename(char *filename_in, char *msgid_out)
 {
     int ret = SUCCEED;
-    char *p;
-    char tmp[PATH_MAX+1];
     
-    strcpy(tmp, filename_in);
-    
-    if (NULL==(p = strchr(tmp, '-')))
-    {
-        NDRX_LOG(log_error, "Invalid file name [%s] must containt '-'", filename_in);
-        FAIL_OUT(ret);
-    }
-    *p = EOS;
-    
-    tmq_msgid_deserialize(tmp, msgid_out);
+    tmq_msgid_deserialize(filename_in, msgid_out);
     
 out:
     return ret;    
@@ -1177,28 +1167,32 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             }
 
             /* filter nodeid & serverid from the filename... */
-            if (SUCCEED!=tmq_get_msgid_from_filename(namelist[n]->d_name, msgid))
+            if (0==j) /*  For committed folder we can detect stuff from filename */
             {
-                FAIL_OUT(ret);
-            }
-            
-            tmq_msgid_get_info(msgid, &msg_nodeid, &msg_srvid);
-            
-            NDRX_LOG(log_info, "our nodeid/srvid %hd/%hd msg: %hd/%hd",
-                    nodeid, srvid, msg_nodeid, msg_srvid);
-            
-            if (nodeid!=msg_nodeid || srvid!=msg_srvid)
-            {
-                NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
-                    nodeid, srvid, msg_nodeid, msg_srvid);
-                free(namelist[n]);
-                continue;
+                /* early filter... */
+                if (SUCCEED!=tmq_get_msgid_from_filename(namelist[n]->d_name, msgid))
+                {
+                    FAIL_OUT(ret);
+                }
+                
+                tmq_msgid_get_info(msgid, &msg_nodeid, &msg_srvid);
+                
+                NDRX_LOG(log_info, "our nodeid/srvid %hd/%hd msg: %hd/%hd",
+                        nodeid, srvid, msg_nodeid, msg_srvid);
+
+                if (nodeid!=msg_nodeid || srvid!=msg_srvid)
+                {
+                    NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
+                        nodeid, srvid, msg_nodeid, msg_srvid);
+                    free(namelist[n]);
+                    continue;
+                }
             }
             
             sprintf(filename, "%s/%s", folders[j], namelist[n]->d_name);
             NDRX_LOG(log_warn, "Loading [%s]", filename);
 
-            if (SUCCEED!=(f=fopen(filename, "rb")))
+            if (NULL==(f=fopen(filename, "rb")))
             {
                 NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
                    filename, strerror(errno));
@@ -1218,6 +1212,22 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                 NDRX_LOG(log_error, "Failed to read [%s]: %s", 
                    filename, strerror(errno));
                 FAIL_OUT(ret);
+            }
+            
+            /* Late filter 
+             * Not sure what will happen if file will be processed/removed
+             * by other server if for example we boot up...read the folder
+             * but other server on same qspace/folder will remove the file
+             * So better use different folder for each server...!
+             */
+            if (nodeid!=p_block->hdr.nodeid || srvid!=p_block->hdr.srvid)
+            {
+                NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
+                    nodeid, srvid, p_block->hdr.nodeid, p_block->hdr.srvid);
+                free(namelist[n]);
+                free((char *)p_block);
+                p_block = NULL;
+                continue;
             }
             
             NDRX_DUMP(log_debug, "Got command block",  p_block, sizeof(*p_block));

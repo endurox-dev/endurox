@@ -111,8 +111,50 @@ set_dom1;
 xadmin psc
 xadmin psvc
 xadmin ppm
-(./atmiclt28 2>&1) > ./atmiclt-dom1.log
+
+echo "Running: basic test (enq + deq)"
+(./atmiclt28 basic 2>&1) > ./atmiclt-dom1.log
 RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Running: enqueue"
+(./atmiclt28 enq 2>&1) > ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+xadmin down -y
+xadmin start -y || go_out 1
+
+echo "Running: dequeue (abort)"
+(./atmiclt28 deqa 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Running: dequeue (commit)"
+(./atmiclt28 deqc 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+
+echo "Running: dequeue - empty"
+(./atmiclt28 deqe 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

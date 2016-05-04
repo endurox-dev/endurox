@@ -875,6 +875,7 @@ out:
     if (NULL!=*p_block)
     {
         free((char *)*p_block);
+        *p_block = NULL;
     }
     return ret;
 }

@@ -293,6 +293,8 @@ public int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
 
 /**
  * Internal version of message enqueue.
+ * TODO: forward ATMI error!
+ * 
  * @param qspace service name
  * @param qname queue name
  * @param ctl control data
@@ -417,6 +419,8 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
         FAIL_OUT(ret);
     }
     
+    ndrx_debug_dump_UBF(log_debug, "QSPACE enqueue request buffer", p_ub);
+    
     /* do the call to queue system */
     if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
@@ -427,6 +431,8 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
             FAIL_OUT(ret);
         }
     }
+    
+    ndrx_debug_dump_UBF(log_debug, "QSPACE enqueue response buffer", p_ub);
     
     /* the call is ok (or app failed), convert back. */
     if (SUCCEED!=tmq_tpqctl_from_ubf_enqrsp(p_ub, ctl))
@@ -456,6 +462,8 @@ out:
 
 /**
  * Internal version of message dequeue.
+ * TODO: forward ATMI error!
+ * 
  * @param qspace service name
  * @param qname queue name
  * @param ctl control data
@@ -547,6 +555,8 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     }
     
     /* do the call to queue system */
+    ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue request buffer", p_ub);
+    
     if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
@@ -555,11 +565,16 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
         {
             FAIL_OUT(ret);
         }
+        
+        ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue response buffer", p_ub);
+        
     }
     else
     {
         BFLDLEN len_extra=0;
         char *data_extra = NULL;
+        
+        ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue response buffer", p_ub);
         
         if (SUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftyp, 0L))
         {

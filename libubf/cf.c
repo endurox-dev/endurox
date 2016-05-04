@@ -289,13 +289,14 @@ public char * get_cbuf(int in_from_type, int in_to_type,
     dtype_str_t *dtype = &G_dtype_str_map[in_to_type];
 
     /*
-     * We allocated extra +1 for EOS,  no matter of face is it needed or not.
+     * We allocated extra +1 for EOS,  no matter of fact is it needed or not.
      * for simplicity.
      */
-    if (BFLD_CARRAY==in_from_type && BFLD_STRING==in_to_type ||
-            BFLD_STRING==in_from_type && BFLD_CARRAY==in_to_type)
+    /* Fixes Bgetalloc() 05/05/2016 mvitolin */
+    if ((BFLD_CARRAY==in_from_type || BFLD_STRING==in_from_type) &&
+            (BFLD_CARRAY==in_to_type || BFLD_STRING==in_to_type))
     {
-        UBF_LOG(log_debug, "Conv: carray->string - allocating buf, "
+        UBF_LOG(log_debug, "Conv: carray/string->carray/string - allocating buf, "
                                         "size: %d", in_len+1);
 
         if (CB_MODE_DEFAULT==mode)

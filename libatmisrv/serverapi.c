@@ -264,6 +264,7 @@ public void	tpext_configbrige
  * NOTE: buffer must be freed by caller!
  * + Server context is being reset. Assuming that next action by main thread
  * is tpcontinue()
+ * TODO: Support for XA transactional data transfer (disassoc from current & reassoc in thread)
  * @param data
  * @param flags
  * @return 

@@ -321,6 +321,8 @@ extern UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
 
 /* interface to ATMI lib/utils */
 extern char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out);
+extern void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid);
+extern void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid);
 extern XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out);
 extern int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
 extern void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
