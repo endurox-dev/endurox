@@ -64,11 +64,36 @@ public unsigned long long nstdutil_utc_tstamp(void)
     gettimeofday(&tv, NULL);
 
     /* so basically we need 6 byte storage or more */
-    if (sizeof(unsigned long long)>5) 
+    if (sizeof(unsigned long long)>=8) 
     {
         ret =
             (unsigned long long)(tv.tv_sec) * 1000 +
             (unsigned long long)(tv.tv_usec) / 1000;
+    }
+    else
+    {
+        ret = (unsigned long long)(tv.tv_sec);
+    }
+    
+    return ret;
+}
+
+/**
+ * Return timestamp in microseconds
+ * @return 
+ */
+public unsigned long long nstdutil_utc_tstamp_micro(void)
+{
+    struct timeval tv;
+    unsigned long long ret;
+
+    gettimeofday(&tv, NULL);
+    
+    if (sizeof(unsigned long long)>=8) 
+    {
+        ret =
+            (unsigned long long)(tv.tv_sec) * 1000000 +
+            (unsigned long long)(tv.tv_usec);
     }
     else
     {

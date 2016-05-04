@@ -160,15 +160,17 @@ union tmq_upd_block {
  
 /* util, shared between driver & daemon */
 extern int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
-        short srvid, short nodeid, char *qspace);
+        short nodeid, short srvid, char *qspace);
 extern void tmq_msgid_gen(char *msgid);
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
+extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
 
 /* From storage driver: */
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
 extern int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr);
-extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block));
+extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block), 
+        short nodeid, short srvid);
    
     
 #ifdef	__cplusplus

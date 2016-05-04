@@ -197,7 +197,7 @@ public int tmq_enqueue(UBFH *p_ub)
     
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
-    p_msg->msgtstamp = nstdutil_utc_tstamp();
+    p_msg->msgtstamp = nstdutil_utc_tstamp_micro();
     p_msg->status = TMQ_STATUS_ACTIVE;
     
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",

@@ -383,7 +383,6 @@ out:
 /**
  * Send notification to tmqueue server so that we have finished this
  * particular message & we can unlock that for further processing
- * TODO: Do not call Q space, but particular service.
  * @param p_hdr
  * @return 
  */
@@ -393,6 +392,7 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
     long rsplen;
     char cmd = TMQ_CMD_NOTIFY;
     char tmp[TMMSGIDLEN_STR+1];
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", 1024);
     
     if (NULL==p_ub)
@@ -420,9 +420,14 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
     
     ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
     
-    if (FAIL == tpcall(p_upd->hdr.qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
+    /*Call The TMQ- server */
+    sprintf(svcnm, NDRX_SVC_TMQ, (long)p_upd->hdr.nodeid, (int)p_upd->hdr.srvid);
+
+    NDRX_LOG(log_debug, "About to notify [%s]", svcnm);
+    
+    if (FAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
     {
-        NDRX_LOG(log_error, "%s failed: %s", p_upd->hdr.qspace, tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
         FAIL_OUT(ret);
     }
     out:
@@ -1106,12 +1111,40 @@ out:
 }
 
 /**
+ * Return msgid from filename
+ * @param filename_in
+ * @param msgid_out
+ * @return SUCCEED/FAIL
+ */
+private int tmq_get_msgid_from_filename(char *filename_in, char *msgid_out)
+{
+    int ret = SUCCEED;
+    char *p;
+    char tmp[PATH_MAX+1];
+    
+    strcpy(tmp, filename_in);
+    
+    if (NULL==(p = strchr(tmp, '-')))
+    {
+        NDRX_LOG(log_error, "Invalid file name [%s] must containt '-'", filename_in);
+        FAIL_OUT(ret);
+    }
+    *p = EOS;
+    
+    tmq_msgid_deserialize(tmp, msgid_out);
+    
+out:
+    return ret;    
+}
+
+/**
  * Restore messages from storage device.
  * TODO: File naming include 03d so that multiple tasks per file sorts alphabetically.
  * @param process_block callback function to process the data block
  * @return SUCCEED/FAIL
  */
-public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block))
+public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block),
+            short nodeid, short srvid)
 {
     int ret = SUCCEED;
     struct dirent **namelist = NULL;
@@ -1121,6 +1154,8 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
     FILE *f = NULL;
     char filename[PATH_MAX+1];
     char *folders[2] = {M_folder_committed, M_folder_prepared};
+    short msg_nodeid, msg_srvid;
+    char msgid[TMMSGIDLEN];
     
     for (j = 0; j < 2; j++)
     {
@@ -1141,6 +1176,25 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                 continue;
             }
 
+            /* filter nodeid & serverid from the filename... */
+            if (SUCCEED!=tmq_get_msgid_from_filename(namelist[n]->d_name, msgid))
+            {
+                FAIL_OUT(ret);
+            }
+            
+            tmq_msgid_get_info(msgid, &msg_nodeid, &msg_srvid);
+            
+            NDRX_LOG(log_info, "our nodeid/srvid %hd/%hd msg: %hd/%hd",
+                    nodeid, srvid, msg_nodeid, msg_srvid);
+            
+            if (nodeid!=msg_nodeid || srvid!=msg_srvid)
+            {
+                NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
+                    nodeid, srvid, msg_nodeid, msg_srvid);
+                free(namelist[n]);
+                continue;
+            }
+            
             sprintf(filename, "%s/%s", folders[j], namelist[n]->d_name);
             NDRX_LOG(log_warn, "Loading [%s]", filename);
 
@@ -1167,9 +1221,6 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             }
             
             NDRX_DUMP(log_debug, "Got command block",  p_block, sizeof(*p_block));
-            
-            
-            /* filter the block, maybe it is not for us - different server_id/node_id */
             
             /* if it is message, the re-alloc  */
             if (TMQ_STORCMD_NEWMSG==p_block->hdr.command_code)

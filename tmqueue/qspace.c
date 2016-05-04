@@ -98,7 +98,7 @@ MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
  * @param qname queue name
  */
 public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
-        short srvid, short nodeid, char *qspace)
+        short nodeid, short srvid, char *qspace)
 {
     int ret = SUCCEED;
     
@@ -880,7 +880,44 @@ out:
 }
 
 /**
+ * compare two Q entries, by time
+ * @param q1
+ * @param q2
+ * @return 
+ */
+private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
+{
+    return q1->msg->msgtstamp - q2->msg->msgtstamp;
+}
+
+
+/**
+ * Sort Qs
+ * @return SUCCEED/FAIL 
+ */
+public int tmq_sort_queues(void)
+{
+    int ret = SUCCEED;
+    tmq_qhash_t *q, *qtmp;
+    
+    MUTEX_LOCK_V(M_q_lock);
+    
+    /* iterate over Q hash & and sort them by Q time */
+    HASH_ITER(hh, G_qhash, q, qtmp)
+    {
+        DL_SORT(q->q, q_msg_sort);
+    }   
+    
+out:
+            
+    MUTEX_UNLOCK_V(M_q_lock);
+
+    return ret;
+}
+
+/**
  * Load the messages from QSPACE (after startup)...
+ * This does not need a lock, because it uses other globals
  * @param b
  * @return 
  */
@@ -888,15 +925,19 @@ public int tmq_load_msgs(void)
 {
     int ret = SUCCEED;
     
+    NDRX_LOG(log_info, "Reading messages from disk...");
     /* populate all queues - from XA source */
-    if (SUCCEED!=tmq_storage_get_blocks(process_block))
+    if (SUCCEED!=tmq_storage_get_blocks(process_block,  (short)tpgetnodeid(), 
+            (short)tpgetsrvid()))
     {
         FAIL_OUT(ret);
     }
     
     /* sort all queues (by submission time) */
+    tmq_sort_queues();
     
 out:
+    NDRX_LOG(log_info, "tmq_load_msgs return %d", ret);
     return ret;
 }
 

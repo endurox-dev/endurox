@@ -51,6 +51,7 @@
 #include "../libatmisrv/srv_int.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>
+#include <uuid/uuid.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,6 +59,25 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Extract info from msgid.
+ * 
+ * @param msgid_in
+ * @param p_nodeid
+ * @param p_srvid
+ */
+public void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
+{
+    *p_nodeid = 0;
+    *p_srvid = 0;
+    
+    memcpy((char *)p_nodeid, msgid+sizeof(uuid_t), sizeof(short));
+    memcpy((char *)p_srvid, msgid+sizeof(uuid_t)+sizeof(short), sizeof(short));
+    
+    NDRX_LOG(log_info, "Extracted nodeid=%hd srvid=%hd", 
+            *p_nodeid, *p_srvid);
+}
 
 /**
  * Generate serialized version of the string

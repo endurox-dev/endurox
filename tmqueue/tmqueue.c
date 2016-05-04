@@ -343,7 +343,13 @@ int tpsvrinit(int argc, char **argv)
     {
         FAIL_OUT(ret);
     }
-     
+    
+    /* Recover the messages from disk */
+    if (SUCCEED!=tmq_load_msgs())
+    {
+        FAIL_OUT(ret);
+    }
+    
     /*
      * So QSPACE is Service name.
      * Each tmqsrv will advertize:
@@ -368,6 +374,7 @@ int tpsvrinit(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
         FAIL_OUT(ret);
     }
+    
     
     if (NULL==(G_tmqueue_cfg.thpool = thpool_init(G_tmqueue_cfg.threadpoolsize)))
     {
