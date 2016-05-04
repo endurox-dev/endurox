@@ -547,7 +547,7 @@ private tmq_qhash_t * tmq_qhash_new(char *qname)
  * @param msg
  * @return 
  */
-public int tmq_msg_add(tmq_msg_t *msg)
+public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
 {
     int ret = SUCCEED;
     tmq_qhash_t *qhash;
@@ -601,10 +601,14 @@ public int tmq_msg_add(tmq_msg_t *msg)
      */
     if (!qconf->memonly)
     {
-        if (SUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
+        /* for recovery no need to put command as we read from command file */
+        if (!is_recovery)
         {
-            NDRX_LOG(log_error, "Failed to add message to persistent store!");
-            FAIL_OUT(ret);
+            if (SUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
+            {
+                NDRX_LOG(log_error, "Failed to add message to persistent store!");
+                FAIL_OUT(ret);
+            }
         }
     }
     else
@@ -801,6 +805,98 @@ public int tmq_unlock_msg(union tmq_upd_block *b)
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+
+/**
+ * 
+ * @param msgid
+ * @return 
+ */
+public int tmq_lock_msg(char *msgid)
+{
+    int ret = SUCCEED;
+    char msgid_str[TMMSGIDLEN_STR+1];
+    tmq_memmsg_t* mmsg;
+    
+    tmq_msgid_serialize(msgid, msgid_str);
+    
+    NDRX_LOG(log_info, "Locking: %s", msgid_str);
+    
+    MUTEX_LOCK_V(M_q_lock);
+    
+    mmsg = tmq_get_msg_by_msgid(msgid_str);
+    
+    if (NULL==mmsg)
+    {   
+        NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
+        FAIL_OUT(ret);
+    }
+    
+    /* Lock the message */
+    mmsg->msg->lockthreadid = ndrx_gettid();
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+
+/**
+ * Process message blocks on disk read (after cold startup)
+ * @param p_block
+ * @return 
+ */
+private int process_block(union tmq_block **p_block)
+{
+    int ret = SUCCEED;
+    
+    switch((*p_block)->hdr.command_code)
+    {
+        case TMQ_STORCMD_NEWMSG:
+            
+            if (SUCCEED!=tmq_msg_add((tmq_msg_t *)(*p_block), TRUE))
+            {
+                NDRX_LOG(log_error, "Failed to enqueue!");
+                FAIL_OUT(ret);
+            }
+            *p_block = NULL;
+            break;
+        default:
+            if (SUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
+            {
+                NDRX_LOG(log_error, "Failed to lock message!");
+                FAIL_OUT(ret);
+            }
+            break;
+    }
+    
+out:
+    /* free the mem if needed: */
+    if (NULL!=*p_block)
+    {
+        free((char *)*p_block);
+    }
+    return ret;
+}
+
+/**
+ * Load the messages from QSPACE (after startup)...
+ * @param b
+ * @return 
+ */
+public int tmq_load_msgs(void)
+{
+    int ret = SUCCEED;
+    
+    /* populate all queues - from XA source */
+    if (SUCCEED!=tmq_storage_get_blocks(process_block))
+    {
+        FAIL_OUT(ret);
+    }
+    
+    /* sort all queues (by submission time) */
+    
+out:
     return ret;
 }
 

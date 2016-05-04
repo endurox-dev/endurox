@@ -90,6 +90,7 @@
 #include "nstdutil.h"
 #include "Exfields.h"
 #include <qcommon.h>
+#include <dirent.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -153,7 +154,7 @@ public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rm
 public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-private int read_tx_header(FILE *f, char *block, int len);
+private int read_tx_block(FILE *f, char *block, int len);
 private int read_tx_from_file(char *fname, char *block, int len);
 
 struct xa_switch_t ndrxqstatsw = 
@@ -224,8 +225,8 @@ private void set_filenames(void)
     
     for (i=1;;i++)
     {
-        sprintf(M_filename_active, "%s/%s-%d", M_folder_active, M_filename_base, i);
-        sprintf(M_filename_prepared, "%s/%s-%d", M_folder_prepared, M_filename_base, i);
+        sprintf(M_filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i);
+        sprintf(M_filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
         
         if (!nstdutil_file_exists(M_filename_active) && 
                 !nstdutil_file_exists(M_filename_prepared))
@@ -247,8 +248,8 @@ private int get_filenames_max(void)
     
     while(1)
     {
-        sprintf(filename_active, "%s/%s-%d", M_folder_active, M_filename_base, i+1);
-        sprintf(filename_prepared, "%s/%s-%d", M_folder_prepared, M_filename_base, i+1);
+        sprintf(filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i+1);
+        sprintf(filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i+1);
         
         if (nstdutil_file_exists(filename_active) || 
                 nstdutil_file_exists(filename_prepared))
@@ -275,7 +276,7 @@ private char *get_filename_i(int i, char *folder, int slot)
 {
     static __thread char filename[2][PATH_MAX+1];
     
-    sprintf(filename[slot], "%s/%s-%d", folder, M_filename_base, i);
+    sprintf(filename[slot], "%s/%s-%03d", folder, M_filename_base, i);
     
     return filename[slot];
 }
@@ -808,7 +809,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                 goto xa_err;
             }
             
-            if (SUCCEED!=read_tx_header(f, (char *)&msg_to_upd, sizeof(msg_to_upd)))
+            if (SUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd)))
             {
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
                 goto xa_err;
@@ -911,7 +912,7 @@ xa_err:
  * @param p_len
  * @return 
  */
-private int read_tx_header(FILE *f, char *block, int len)
+private int read_tx_block(FILE *f, char *block, int len)
 {
     int act_read;
     int ret = SUCCEED;
@@ -955,7 +956,7 @@ private int read_tx_from_file(char *fname, char *block, int len)
         FAIL_OUT(ret);
     }
     
-    ret = read_tx_header(f, block, len);
+    ret = read_tx_block(f, block, len);
     
 out:
 
@@ -1100,6 +1101,134 @@ public int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
     }
     
 out:
+    return ret;
+
+}
+
+/**
+ * Restore messages from storage device.
+ * TODO: File naming include 03d so that multiple tasks per file sorts alphabetically.
+ * @param process_block callback function to process the data block
+ * @return SUCCEED/FAIL
+ */
+public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block))
+{
+    int ret = SUCCEED;
+    struct dirent **namelist = NULL;
+    int n;
+    int j;
+    union tmq_block *p_block = NULL;
+    FILE *f = NULL;
+    char filename[PATH_MAX+1];
+    char *folders[2] = {M_folder_committed, M_folder_prepared};
+    
+    for (j = 0; j < 2; j++)
+    {
+        n = scandir(folders[j], &namelist, 0, alphasort);
+        if (n < 0)
+        {
+           NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
+                   folders[j], strerror(errno));
+           FAIL_OUT(ret);
+        }
+        
+        while (n--)
+        {
+            if (0==strcmp(namelist[n]->d_name, ".") || 
+                0==strcmp(namelist[n]->d_name, ".."))
+            {
+                free(namelist[n]);
+                continue;
+            }
+
+            sprintf(filename, "%s/%s", folders[j], namelist[n]->d_name);
+            NDRX_LOG(log_warn, "Loading [%s]", filename);
+
+            if (SUCCEED!=(f=fopen(filename, "rb")))
+            {
+                NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
+                   filename, strerror(errno));
+                FAIL_OUT(ret);
+            }
+
+            /* Read header */            
+            if (NULL==(p_block = malloc(sizeof(*p_block))))
+            {
+                NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
+                   filename, strerror(errno));
+                FAIL_OUT(ret);
+            }
+
+            if (SUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block)))
+            {
+                NDRX_LOG(log_error, "Failed to read [%s]: %s", 
+                   filename, strerror(errno));
+                FAIL_OUT(ret);
+            }
+            
+            NDRX_DUMP(log_debug, "Got command block",  p_block, sizeof(*p_block));
+            
+            
+            /* filter the block, maybe it is not for us - different server_id/node_id */
+            
+            /* if it is message, the re-alloc  */
+            if (TMQ_STORCMD_NEWMSG==p_block->hdr.command_code)
+            {
+                if (NULL==(p_block = realloc(p_block, sizeof(tmq_msg_t) + p_block->msg.len)))
+                {
+                    NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
+                       (sizeof(tmq_msg_t) + p_block->msg.len), strerror(errno));
+                    FAIL_OUT(ret);
+                }
+                /* Read some more */
+                if (SUCCEED!=read_tx_block(f, p_block->msg.msg, p_block->msg.len))
+                {
+                    NDRX_LOG(log_error, "Failed to read [%s]: %s", 
+                       filename, strerror(errno));
+                    FAIL_OUT(ret);
+                }
+                
+                NDRX_DUMP(log_debug, "Read message from disk", 
+                        p_block->msg.msg, p_block->msg.len);
+            }
+            
+            fclose(f);
+            f=NULL;
+            
+            /* Process message block 
+             * It is up to caller to free the mem & make null
+             */
+            if (SUCCEED!=process_block(&p_block))
+            {
+                NDRX_LOG(log_error, "Failed to process block!");
+                FAIL_OUT(ret);
+            }
+
+            free(namelist[n]);
+        }
+        free(namelist);
+        namelist = NULL;
+    }
+    
+out:
+
+    if (NULL!=namelist)
+    {
+        free(namelist[n]);
+        free(namelist);
+        namelist = NULL;
+    }
+
+    if (NULL!=p_block)
+    {
+        free((char *)p_block);
+    }
+
+    /* close the resources */
+    if (NULL!=f)
+    {
+        fclose(f);
+    }
     return ret;
 }
 
