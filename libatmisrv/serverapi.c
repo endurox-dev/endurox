@@ -41,6 +41,7 @@
 #include <typed_buf.h>
 #include <atmi_int.h>
 #include "srv_int.h"
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {_TPunset_error();}
@@ -264,7 +265,8 @@ public void	tpext_configbrige
  * NOTE: buffer must be freed by caller!
  * + Server context is being reset. Assuming that next action by main thread
  * is tpcontinue()
- * TODO: Support for XA transactional data transfer (disassoc from current & reassoc in thread)
+ * WARNING! This suspends global tx!
+ * 
  * @param data
  * @param flags
  * @return 
@@ -278,6 +280,22 @@ public char * tpsrvgetctxdata (void)
     {
         _TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
         goto out;
+    }
+    
+    if (tpgetlev())
+    {
+        ret->is_in_global_tx = TRUE;
+        if (SUCCEED!=tpsuspend(&ret->tranid, 0))
+        {
+            userlog("Failed to suspend transaction: [%s]", tpstrerror(tperrno));
+            free((char *)ret);
+            ret = NULL;
+            goto out;
+        }
+    }
+    else
+    {
+        ret->is_in_global_tx = FALSE;
     }
     
     /* reset thread data */
@@ -322,6 +340,13 @@ public int tpsrvsetctxdata (char *data, long flags)
     
     /* Add the additional flags to the user. */
     G_last_call.sysflags |= flags;
+    
+
+    if (ctxdata->is_in_global_tx && SUCCEED!=tpresume(&ctxdata->tranid, 0))
+    {
+        userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
     
 out:
     return ret;

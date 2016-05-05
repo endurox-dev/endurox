@@ -224,7 +224,12 @@ void TMQUEUE (TPSVCINFO *p_svc)
     /* copy off the data */
     memcpy(thread_data->buffer, p_svc->data, size);
     thread_data->cd = p_svc->cd;
-    thread_data->context_data = tpsrvgetctxdata();
+    
+    if (NULL==(thread_data->context_data = tpsrvgetctxdata()))
+    {
+        NDRX_LOG(log_error, "Failed to get context data!");
+        FAIL_OUT(ret);
+    }
     
     /* submit the job to thread pool: */
     thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);

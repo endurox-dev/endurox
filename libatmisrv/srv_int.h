@@ -173,13 +173,15 @@ struct srv_conf
 typedef struct srv_conf srv_conf_t;
 
 
-/*
+/**
  * Server multi threading, context switching
  */
 struct server_ctx_info
 {
     tp_conversation_control_t G_accepted_connection;
-    tp_command_call_t        G_last_call;
+    tp_command_call_t         G_last_call;
+    int                       is_in_global_tx;  /* Running in global tx      */
+    TPTRANID                  tranid;           /* Transaction ID  (if used) */
 };
 typedef struct server_ctx_info server_ctx_info_t;
 

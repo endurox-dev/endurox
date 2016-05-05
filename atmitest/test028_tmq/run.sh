@@ -162,5 +162,12 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
+COUNT=`find ./QSPACE1 -type f | wc | awk '{print $1}'`
+
+if [[ "X$COUNT" != "X0" ]]; then
+	echo "QSPACE1 MUST BE EMPTY AFTER TEST!!!!"
+	RET=-2
+fi
+
 go_out $RET
 

@@ -250,7 +250,7 @@ out:
     if (SUCCEED==ret && SUCCEED!=tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to commit!");
-        FAIL_OUT(ret);
+        ret=FAIL;
     }
     else 
     {
