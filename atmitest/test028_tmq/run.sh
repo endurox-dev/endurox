@@ -51,7 +51,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
-export NDRX_TOUT=10
+export NDRX_TOUT=60
 
 #
 # Domain 1 - here client will live
@@ -139,6 +139,8 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+sleep 10
+
 echo "Running: dequeue (commit)"
 (./atmiclt28 deqc 2>&1) >> ./atmiclt-dom1.log
 RET=$?
@@ -146,7 +148,6 @@ RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
-
 
 echo "Running: dequeue - empty"
 (./atmiclt28 deqe 2>&1) >> ./atmiclt-dom1.log

@@ -251,7 +251,7 @@ private int get_filenames_max(void)
     {
         sprintf(filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i+1);
         sprintf(filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i+1);
-        
+        NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, filename_prepared);
         if (nstdutil_file_exists(filename_active) || 
                 nstdutil_file_exists(filename_prepared))
         {
@@ -368,6 +368,7 @@ private int file_unlink(char *filename)
 {
     int ret = SUCCEED;
     
+    NDRX_LOG(log_info, "Unlinking [%s]", filename);
     if (SUCCEED!=unlink(filename))
     {
         NDRX_LOG(log_error, "Failed to unlink [%s]: %s", 
@@ -656,14 +657,18 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     char *fname;
     union tmq_block b;
     char *folders[2] = {M_folder_active, M_folder_prepared};
+    char *fn = "xa_rollback_entry";
 
     if (!M_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
         return XAER_RMERR;
     }
+    
     set_filename_base(xid, rmid);
     names_max = get_filenames_max();
+    
+    NDRX_LOG(log_info, "%s: %d", fn, names_max);
     
     /* send notification, that message is removed, but firstly we need to 
      * understand what kind of message it was.
@@ -675,17 +680,24 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
         for (j = 0; j<2; j++)
         {
             fname = get_filename_i(i, folders[j], 0);
+            
+            
+            
             if (nstdutil_file_exists(fname))
             {
+                NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
                 if (SUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b)))
                 {
                     /* Send the notification */
                     if (TMQ_STORCMD_NEWMSG == b.hdr.command_code)
                     {
+                        NDRX_LOG(log_info, "%s: delete command...", fn);
                         b.hdr.command_code = TMQ_STORCMD_DEL;
                     }
                     else
                     {
+                        NDRX_LOG(log_info, "%s: unlock command...", fn);
+                        
                         b.hdr.command_code = TMQ_STORCMD_UNLOCK;
                     }
 
@@ -693,6 +705,11 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
                 }
                 file_unlink(fname);
             }
+            else
+            {
+                NDRX_LOG(log_debug, "%s: File [%s] does not exists", fn, fname);
+            }
+                
         }
     }
     
@@ -990,6 +1007,7 @@ private int write_to_tx_file(char *block, int len)
     set_filenames();
     
     /* Open file for write... */
+    NDRX_LOG(log_info, "Writting command file: [%s]", M_filename_active);
     if (NULL==(f = fopen(M_filename_active, "a+b")))
     {
         int err = errno;

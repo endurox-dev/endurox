@@ -56,6 +56,7 @@
 /**
  * Internal version to tpreturn.
  * This is
+ * TODO: If we are in thread, then disassoc of global txn must happen here!
  * @param rval
  * @param rcode
  * @param data
@@ -270,6 +271,14 @@ return_to_main:
             longjmp(G_server_conf.call_ret_env, return_status);
         }
     }
+    else
+    {
+        NDRX_LOG(log_debug, "Thread ending...");
+        if (G_atmi_xa_curtx.txinfo)
+        {
+            _tp_srv_disassoc_tx();
+        }
+    }
 
     return;
 }
@@ -426,6 +435,14 @@ out:
         {
             NDRX_LOG(log_debug, "%s longjmp to main()", fn);
             longjmp(G_server_conf.call_ret_env, return_status);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Thread ending...");
+        if (G_atmi_xa_curtx.txinfo)
+        {
+            _tp_srv_disassoc_tx();
         }
     }
 

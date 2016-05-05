@@ -62,6 +62,7 @@ int main(int argc, char** argv)
         NDRX_LOG(log_error, "usage: %s <test_case: basic|enq|deqa|deqc|deqe>", argv[0]);
         return FAIL;
     }
+    NDRX_LOG(log_error, "\n\n\n\n\n !!!!!!!!!!!!!! TEST CASE %s !!!!!!!! \n\n\n\n\n\n", argv[1]);
     
     if (SUCCEED!=tpopen())
     {
