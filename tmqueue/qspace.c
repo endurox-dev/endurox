@@ -668,12 +668,15 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname)
     
     do
     {
-        if (!node->msg->lockthreadid)
+        if (NULL!=node)
         {
-            ret = node->msg;
-            break;
+            if (!node->msg->lockthreadid)
+            {
+                ret = node->msg;
+                break;
+            }
+            node = node->next;
         }
-        node = node->next;
     }
     while (NULL!=node && node->next!=qhash->q->next);
     
