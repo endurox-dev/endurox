@@ -165,7 +165,8 @@ extern void tmq_msgid_gen(char *msgid);
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
-
+extern char * tmq_corid_serialize(char *corid_in, char *corid_str_out);
+    
 /* From storage driver: */
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
 extern int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr);

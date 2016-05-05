@@ -70,15 +70,27 @@
 #define TMQ_QC_WAITRETRYMAX     "waitretrymax"
 #define TMQ_QC_MEMONLY          "memonly"
 
+#define HASH_FIND_STR_H2(head,findstr,out)                                     \
+    HASH_FIND(h2,head,findstr,strlen(findstr),out)
+
+#define HASH_ADD_STR_H2(head,strfield,add)                                     \
+    HASH_ADD(h2,head,strfield,strlen(add->strfield),add)
+
+#define HASH_DEL_H2(head,delptr)                                               \
+    HASH_DELETE(h2,head,delptr)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 
 /* Handler for MSG Hash. */
-public tmq_memmsg_t *G_msgid_hash;
+public tmq_memmsg_t *G_msgid_hash = NULL;
+
+/* Handler for Correlator ID hash */
+public tmq_memmsg_t *G_corid_hash = NULL;
 
 /* Handler for Q hash */
-public tmq_qhash_t *G_qhash;
+public tmq_qhash_t *G_qhash = NULL;
 
 /*
  * Any public operations must be locked
@@ -86,11 +98,13 @@ public tmq_qhash_t *G_qhash;
 MUTEX_LOCKDECL(M_q_lock);
 
 /* Configuration section */
-public tmq_qconfig_t *G_qconf; 
+public tmq_qconfig_t *G_qconf = NULL; 
 
 MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+private tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
+private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
 
 /**
  * Setup queue header
@@ -554,6 +568,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     tmq_memmsg_t *mmsg = calloc(1, sizeof(tmq_memmsg_t));
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
+    char corid_str[TMCORRIDLEN_STR+1];
     
     MUTEX_LOCK_V(M_q_lock);
     
@@ -574,7 +589,19 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
         FAIL_OUT(ret);
     }
     
-    /* memcpy(&mmsg->msg, msg, sizeof(*msg)); */
+    if (msg->qctl.flags & TPQCORRID)
+    {
+        tmq_msgid_serialize(msg->qctl.corrid, corid_str);
+        NDRX_LOG(log_debug, "Correlator id: [%s]", corid_str);
+        
+        if (NULL!=tmq_get_msg_by_corid_str(corid_str))
+        {
+            NDRX_LOG(log_error, "Message with corid [%s] already exists!", corid_str);
+            userlog("Message with corid [%s] already exists!", corid_str);
+            FAIL_OUT(ret);
+        }
+    }
+    
     mmsg->msg = msg;
     
     /* Get the entry for hash of queues: */
@@ -589,10 +616,19 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     DL_APPEND(qhash->q, mmsg);    
     
     /* Add the hash of IDs */
-    tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str);
+    tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
     NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
+    
     strcpy(mmsg->msgid_str, msgid_str);
     HASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
+    
+    if (mmsg->msg->qctl.flags & TPQCORRID)
+    {
+        NDRX_LOG(log_debug, "Adding to G_corid_hash [%s]", corid_str);
+        
+        strcpy(mmsg->corid_str, corid_str);
+        HASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
+    }
     
     /* Decide do we need to add the msg to disk?! 
      * Needs to send a command to XA sub-system to prepare msg/command to disk,
@@ -717,12 +753,114 @@ out:
 }
 
 /**
- * Get message by msgid
- * TODO: locking...
+ * Dequeue message by msgid
  * @param msgid
  * @return 
  */
-private tmq_memmsg_t* tmq_get_msg_by_msgid(char *msgid_str)
+public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid)
+{
+    tmq_msg_t * ret = NULL;
+    union tmq_block block;
+    char msgid_str[TMMSGIDLEN_STR+1];
+    tmq_memmsg_t *mmsg;
+    
+    MUTEX_LOCK_V(M_q_lock);
+       
+    /* Write some stuff to log */
+    
+    tmq_msgid_serialize(msgid, msgid_str);
+    NDRX_LOG(log_info, "Dequeuing message by [%s]", msgid_str);
+    
+    if (NULL==(mmsg = tmq_get_msg_by_msgid_str(msgid_str)))
+    {
+        NDRX_LOG(log_error, "Message not found by msgid_str [%s]", msgid_str);
+        goto out;
+    }
+    
+    
+    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
+    
+    /* Lock the message */
+    ret = mmsg->msg;
+    ret->lockthreadid = ndrx_gettid();
+    
+    /* Issue command for msg remove */
+    memset(&block, 0, sizeof(block));    
+    memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
+    
+    block.hdr.command_code = TMQ_STORCMD_DEL;
+    
+    if (SUCCEED!=tmq_storage_write_cmd_block(&block, "Removing dequeued message"))
+    {
+        NDRX_LOG(log_error, "Failed to remove msg...");
+        /* unlock msg... */
+        ret->lockthreadid = 0;
+        ret = NULL;
+        goto out;
+    }
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+
+/**
+ * Dequeue message by corid
+ * @param msgid
+ * @return 
+ */
+public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid)
+{
+    tmq_msg_t * ret = NULL;
+    union tmq_block block;
+    char corid_str[TMCORRIDLEN_STR+1];
+    tmq_memmsg_t *mmsg;
+    
+    MUTEX_LOCK_V(M_q_lock);
+       
+    /* Write some stuff to log */
+    
+    tmq_msgid_serialize(corid, corid_str);
+    NDRX_LOG(log_info, "Dequeuing message by [%s]", corid_str);
+    
+    if (NULL==(mmsg = tmq_get_msg_by_corid_str(corid_str)))
+    {
+        NDRX_LOG(log_error, "Message not found by corid_str [%s]", corid_str);
+        goto out;
+    }
+    
+    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
+    
+    /* Lock the message */
+    ret = mmsg->msg;
+    ret->lockthreadid = ndrx_gettid();
+    
+    /* Issue command for msg remove */
+    memset(&block, 0, sizeof(block));    
+    memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
+    
+    block.hdr.command_code = TMQ_STORCMD_DEL;
+    
+    if (SUCCEED!=tmq_storage_write_cmd_block(&block, "Removing dequeued message"))
+    {
+        NDRX_LOG(log_error, "Failed to remove msg...");
+        /* unlock msg... */
+        ret->lockthreadid = 0;
+        ret = NULL;
+        goto out;
+    }
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+
+/**
+ * Get message by msgid
+ * @param msgid
+ * @return 
+ */
+private tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str)
 {
     tmq_memmsg_t *ret;
     
@@ -731,9 +869,43 @@ private tmq_memmsg_t* tmq_get_msg_by_msgid(char *msgid_str)
     return ret;
 }
 
+
+/**
+ * Get message by corid string version
+ * @param corid_str
+ * @return 
+ */
+private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str)
+{
+    tmq_memmsg_t *ret;
+    
+    HASH_FIND_STR_H2( G_corid_hash, corid_str, ret);
+    
+    return ret;
+}
+
+/**
+ * get message by correlator
+ * @param corid correlator (binary)
+ * @return ptr to memmsg if found or NULL
+ */
+private tmq_memmsg_t* tmq_get_msg_by_corid(char *corid)
+{
+    tmq_memmsg_t *ret;
+    char corid_str[TMCORRIDLEN_STR+1];
+    
+    tmq_corid_serialize(corid, corid_str);
+    
+    return tmq_get_msg_by_corid_str(corid_str);
+    
+    return ret;
+}
+
+
+
 /**
  * Remove mem message
- * TODO: Needs semaphore locking.
+ * 
  * @param msg
  */
 private void tmq_remove_msg(tmq_memmsg_t *mmsg)
@@ -752,6 +924,12 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
     
     /* Add the hash of IDs */
     HASH_DEL( G_msgid_hash, mmsg);
+    
+    if (TPQCORRID & mmsg->msg->qctl.flags)
+    {
+        HASH_DEL_H2( G_corid_hash, mmsg);
+    }
+    
     free(mmsg->msg);
     free(mmsg);
 }
@@ -776,7 +954,7 @@ public int tmq_unlock_msg(union tmq_upd_block *b)
     
     MUTEX_LOCK_V(M_q_lock);
     
-    mmsg = tmq_get_msg_by_msgid(msgid_str);
+    mmsg = tmq_get_msg_by_msgid_str(msgid_str);
     
     if (NULL==mmsg)
     {   
@@ -828,7 +1006,7 @@ public int tmq_lock_msg(char *msgid)
     
     MUTEX_LOCK_V(M_q_lock);
     
-    mmsg = tmq_get_msg_by_msgid(msgid_str);
+    mmsg = tmq_get_msg_by_msgid_str(msgid_str);
     
     if (NULL==mmsg)
     {   

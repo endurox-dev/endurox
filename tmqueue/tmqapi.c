@@ -262,8 +262,6 @@ out:
 
 /**
  * Dequeue message
- * TODO: Support TPQGETBYMSGID
- * TODO: Support TPQGETBYCORRID
  * @param p_ub
  * @return 
  */
@@ -274,7 +272,7 @@ public int tmq_dequeue(UBFH *p_ub)
      */
     int ret = SUCCEED;
     tmq_msg_t *p_msg = NULL;
-    TPQCTL qctl_out;
+    TPQCTL qctl_out, qctl_in;
     int local_tx = FALSE;
     char qname[TMQNAMELEN+1];
     long buf_realoc_size;
@@ -296,6 +294,15 @@ public int tmq_dequeue(UBFH *p_ub)
         {
             is_xa_open = TRUE;
         }
+    }
+    
+    memset(&qctl_in, 0, sizeof(qctl_in));
+    
+    if (SUCCEED!=tmq_tpqctl_from_ubf_deqreq(p_ub, &qctl_in))
+    {
+        NDRX_LOG(log_error, "tmq_dequeue: failed to read request qctl!");
+        userlog("tmq_dequeue: failed to read request qctl!");
+        FAIL_OUT(ret);
     }
     
     /* TODO: Read ctl (to have msgid search for, or corelator id) */
@@ -326,7 +333,38 @@ public int tmq_dequeue(UBFH *p_ub)
     }
     
     /* Get FB size (current) */
-    if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname)))
+    NDRX_LOG(log_warn, "qctl_req flags: %ld", qctl_in.flags);
+    if (qctl_in.flags & TPQGETBYMSGID)
+    {
+        if (NULL==(p_msg = tmq_msg_dequeue_by_msgid(qctl_in.msgid)))
+        {
+            char msgid_str[TMMSGIDLEN_STR+1];
+            
+            tmq_msgid_serialize(qctl_in.msgid, msgid_str);
+            
+            NDRX_LOG(log_error, "tmq_dequeue: not message found for given msgid [%s]", 
+                    msgid_str);
+            strcpy(qctl_out.diagmsg, "tmq_dequeue: not message found for given msgid");
+            qctl_out.diagnostic = QMENOMSG;
+            FAIL_OUT(ret);
+        }
+    }
+    else if (qctl_in.flags & TPQGETBYCORRID)
+    {
+        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid)))
+        {
+            char corid_str[TMCORRIDLEN_STR+1];
+            
+            tmq_corid_serialize(qctl_in.corrid, corid_str);
+            
+            NDRX_LOG(log_error, "tmq_dequeue: not message found for given msgid [%s]", 
+                    corid_str);
+            strcpy(qctl_out.diagmsg, "tmq_dequeue: not message found for given msgid");
+            qctl_out.diagnostic = QMENOMSG;
+            FAIL_OUT(ret);
+        }
+    }
+    else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname)))
     {
         NDRX_LOG(log_error, "tmq_dequeue: not message in Q [%s]", qname);
         strcpy(qctl_out.diagmsg, "tmq_dequeue: no message int Q!");
@@ -397,8 +435,8 @@ out:
      */
     if (SUCCEED!=tmq_tpqctl_to_ubf_deqrsp(p_ub, &qctl_out))
     {
-        NDRX_LOG(log_error, "tmq_enqueue: failed to generate response buffer!");
-        userlog("tmq_enqueue: failed to generate response buffer!");
+        NDRX_LOG(log_error, "tmq_dequeue: failed to generate response buffer!");
+        userlog("tmq_dequeue: failed to generate response buffer!");
     }
 
     return ret;

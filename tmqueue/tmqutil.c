@@ -121,3 +121,23 @@ public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
     return msgid_out;
 }
 
+/**
+ * Generate serialized version of the string
+ * @param msgid_in, length defined by constant TMMSGIDLEN
+ * @param msgidstr_out
+ * @return msgidstr_out
+ */
+public char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
+{
+    size_t out_len;
+    
+    NDRX_DUMP(log_debug, "Original CORID", corid_in, TMCORRIDLEN_STR);
+    
+    atmi_xa_base64_encode(corid_in, TMCORRIDLEN_STR, &out_len, corid_str_out);
+
+    corid_str_out[out_len] = EOS;
+    
+    NDRX_LOG(log_debug, "CORID after serialize: [%s]", corid_str_out);
+    
+    return corid_str_out;
+}

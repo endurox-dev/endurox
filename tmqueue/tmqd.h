@@ -91,8 +91,10 @@ typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
     char msgid_str[TMMSGIDLEN_STR+1]; /* we might store msgid in string format... */
+    char corid_str[TMCORRIDLEN_STR+1]; /* hash for correlator            */
     /* We should have hash handler of message hash */
-    UT_hash_handle hh; /* makes this structure hashable        */
+    UT_hash_handle hh; /* makes this structure hashable (for msgid)        */
+    UT_hash_handle h2; /* makes this structure hashable (for corid)        */
     /* We should also have a linked list handler   */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
@@ -158,6 +160,8 @@ extern int tmq_qconf_addupd(char *qconfstr);
 extern int tmq_msg_add(tmq_msg_t *msg, int is_recovery);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
 extern tmq_msg_t * tmq_msg_dequeue_fifo(char *qname);
+extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid);
+public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid);
 extern int tmq_load_msgs(void);
     
 #ifdef	__cplusplus

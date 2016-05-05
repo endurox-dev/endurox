@@ -232,6 +232,8 @@ extern "C" {
 #define TMMSGIDLEN	32
 #define TMMSGIDLEN_STR	45 /* TMMSGIDLEN * 1.4 (base64 overhead) */
 #define TMCORRIDLEN	32
+#define TMCORRIDLEN_STR	45 /* TMMSGIDLEN * 1.4 (base64 overhead) */
+    
 /* structure elements that are valid - set in flags */
 #define TPNOFLAGS	0x00000		
 #define	TPQCORRID	0x00001		/* set/get correlation id */		
