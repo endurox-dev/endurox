@@ -780,10 +780,10 @@ public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
         goto out;
     }
     
-    
+
+    /* Lock the message */
     NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
     
-    /* Lock the message */
     ret = mmsg->msg;
     ret->lockthreadid = ndrx_gettid();
     
@@ -836,10 +836,11 @@ public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
         goto out;
     }
     
-    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
-    
     /* Lock the message */
     ret = mmsg->msg;
+    
+    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
+    
     ret->lockthreadid = ndrx_gettid();
     
     /* Issue command for msg remove */
