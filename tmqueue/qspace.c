@@ -672,7 +672,7 @@ out:
  * @param qname queue to lookup.
  * @return NULL (no msg), or ptr to msg
  */
-public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname)
+public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags)
 {
     tmq_qhash_t *qhash;
     tmq_memmsg_t *node;
@@ -737,14 +737,17 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname)
     
     block.hdr.command_code = TMQ_STORCMD_DEL;
     
-            
-    if (SUCCEED!=tmq_storage_write_cmd_block(&block, "Removing dequeued message"))
-    {
-        NDRX_LOG(log_error, "Failed to remove msg...");
-        /* unlock msg... */
-        ret->lockthreadid = 0;
-        ret = NULL;
-        goto out;
+    if (!(flags & TPQPEEK))
+    {        
+        if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
+                "Removing dequeued message"))
+        {
+            NDRX_LOG(log_error, "Failed to remove msg...");
+            /* unlock msg... */
+            ret->lockthreadid = 0;
+            ret = NULL;
+            goto out;
+        }
     }
     
 out:
@@ -757,7 +760,7 @@ out:
  * @param msgid
  * @return 
  */
-public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid)
+public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
 {
     tmq_msg_t * ret = NULL;
     union tmq_block block;
@@ -790,13 +793,17 @@ public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid)
     
     block.hdr.command_code = TMQ_STORCMD_DEL;
     
-    if (SUCCEED!=tmq_storage_write_cmd_block(&block, "Removing dequeued message"))
+    if (!(flags & TPQPEEK))
     {
-        NDRX_LOG(log_error, "Failed to remove msg...");
-        /* unlock msg... */
-        ret->lockthreadid = 0;
-        ret = NULL;
-        goto out;
+        if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
+                "Removing dequeued message"))
+        {
+            NDRX_LOG(log_error, "Failed to remove msg...");
+            /* unlock msg... */
+            ret->lockthreadid = 0;
+            ret = NULL;
+            goto out;
+        }
     }
     
 out:
@@ -809,7 +816,7 @@ out:
  * @param msgid
  * @return 
  */
-public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid)
+public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
 {
     tmq_msg_t * ret = NULL;
     union tmq_block block;
@@ -839,15 +846,19 @@ public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid)
     memset(&block, 0, sizeof(block));    
     memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
     
-    block.hdr.command_code = TMQ_STORCMD_DEL;
-    
-    if (SUCCEED!=tmq_storage_write_cmd_block(&block, "Removing dequeued message"))
-    {
-        NDRX_LOG(log_error, "Failed to remove msg...");
-        /* unlock msg... */
-        ret->lockthreadid = 0;
-        ret = NULL;
-        goto out;
+    if (!(flags & TPQPEEK))   
+    {    
+        block.hdr.command_code = TMQ_STORCMD_DEL;
+
+        if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
+                "Removing dequeued message"))
+        {
+            NDRX_LOG(log_error, "Failed to remove msg...");
+            /* unlock msg... */
+            ret->lockthreadid = 0;
+            ret = NULL;
+            goto out;
+        }
     }
     
 out:
@@ -988,6 +999,39 @@ out:
     MUTEX_UNLOCK_V(M_q_lock);
     return ret;
 }
+
+/**
+ * Unlock memory message by msgid (used for PEEK)
+ * @param msgid
+ * @return 
+ */
+public int tmq_unlock_msg_by_msgid(char *msgid)
+{
+    int ret = SUCCEED;
+    char msgid_str[TMMSGIDLEN_STR+1];
+    tmq_memmsg_t* mmsg;
+    
+    tmq_msgid_serialize(msgid, msgid_str);
+    
+    NDRX_LOG(log_info, "Unlocking/updating: %s", msgid_str);
+    
+    MUTEX_LOCK_V(M_q_lock);
+    
+    mmsg = tmq_get_msg_by_msgid_str(msgid_str);
+    
+    if (NULL==mmsg)
+    {   
+        NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
+        FAIL_OUT(ret);
+    }
+    
+    mmsg->msg->lockthreadid = 0;
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+
 
 /**
  * 

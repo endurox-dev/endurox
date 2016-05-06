@@ -336,7 +336,7 @@ public int tmq_dequeue(UBFH *p_ub)
     NDRX_LOG(log_warn, "qctl_req flags: %ld", qctl_in.flags);
     if (qctl_in.flags & TPQGETBYMSGID)
     {
-        if (NULL==(p_msg = tmq_msg_dequeue_by_msgid(qctl_in.msgid)))
+        if (NULL==(p_msg = tmq_msg_dequeue_by_msgid(qctl_in.msgid, qctl_in.flags)))
         {
             char msgid_str[TMMSGIDLEN_STR+1];
             
@@ -351,7 +351,7 @@ public int tmq_dequeue(UBFH *p_ub)
     }
     else if (qctl_in.flags & TPQGETBYCORRID)
     {
-        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid)))
+        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid, qctl_in.flags)))
         {
             char corid_str[TMCORRIDLEN_STR+1];
             
@@ -364,7 +364,7 @@ public int tmq_dequeue(UBFH *p_ub)
             FAIL_OUT(ret);
         }
     }
-    else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname)))
+    else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname, qctl_in.flags)))
     {
         NDRX_LOG(log_error, "tmq_dequeue: not message in Q [%s]", qname);
         strcpy(qctl_out.diagmsg, "tmq_dequeue: no message int Q!");
@@ -393,6 +393,20 @@ public int tmq_dequeue(UBFH *p_ub)
         strcpy(qctl_out.diagmsg, "failed to set EX_DATA!");
         qctl_out.diagnostic = QMEINVAL;
         
+        /* Unlock msg if it was peek */
+        if (TPQPEEK & qctl_in.flags)
+        {
+            tmq_unlock_msg_by_msgid(p_msg->qctl.msgid);
+        }
+        
+        FAIL_OUT(ret);
+    }
+    
+    /* Unlock msg if it was peek */
+    if (TPQPEEK & qctl_in.flags && 
+            SUCCEED!=tmq_unlock_msg_by_msgid(p_msg->qctl.msgid))
+    {
+        NDRX_LOG(log_error, "Failed to unlock msg!");
         FAIL_OUT(ret);
     }
     
