@@ -69,7 +69,10 @@ typedef struct
     
     int threadpoolsize; /* thread pool size */
     
-    threadpool thpool;
+    threadpool thpool; /* threads for service */
+    
+    threadpool fwdthpool; /* threads for forwarder */
+    
 } tmqueue_cfg_t;
 
 /**
@@ -149,7 +152,7 @@ extern int tmq_notify(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);
-extern void forward_wakeup(void);
+extern void forward_shutdown_wake(void);
 extern void forward_process_init(void);
 extern void forward_lock(void);
 extern void forward_unlock(void);

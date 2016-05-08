@@ -127,7 +127,7 @@ private void thread_sleep(int sleep_sec)
 /**
  * Wake up the sleeping thread.
  */
-public void forward_wakeup(void)
+public void forward_shutdown_wake(void)
 {
     pthread_mutex_lock(&M_wait_mutex);
     pthread_cond_signal(&M_wait_cond);

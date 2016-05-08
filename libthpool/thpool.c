@@ -50,7 +50,7 @@ typedef struct bsem {
 /* Job */
 typedef struct job{
 	struct job*  prev;                   /* pointer to previous job   */
-	void*  (*function)(void* arg);       /* function pointer          */
+	void*  (*function)(void* arg, int *p_finish_off);/* function pointer          */
 	void*  arg;                          /* function's argument       */
 } job;
 
@@ -168,7 +168,7 @@ struct thpool_* thpool_init(int num_threads){
 
 
 /* Add work to the thread pool */
-int thpool_add_work(thpool_* thpool_p, void *(*function_p)(void*), void* arg_p){
+int thpool_add_work(thpool_* thpool_p, void *(*function_p)(void*, int *), void* arg_p){
 	job* newjob;
 
 	newjob=(struct job*)malloc(sizeof(struct job));
@@ -341,6 +341,7 @@ static void thread_hold () {
 static void* thread_do(struct thread* thread_p){
 	/* Set thread name for profiling and debuging */
 	char thread_name[128] = {0};
+        int finish_off = 0;
 	sprintf(thread_name, "thread-pool-%d", thread_p->id);
 	prctl(PR_SET_NAME, thread_name);
 
@@ -359,7 +360,7 @@ static void* thread_do(struct thread* thread_p){
 	thpool_p->num_threads_alive += 1;
 	pthread_mutex_unlock(&thpool_p->thcount_lock);
 
-	while(threads_keepalive){
+	while(threads_keepalive && !finish_off){
 
 		bsem_wait(thpool_p->jobqueue_p->has_jobs);
 
@@ -370,7 +371,7 @@ static void* thread_do(struct thread* thread_p){
 			pthread_mutex_unlock(&thpool_p->thcount_lock);
 			
 			/* Read job from queue and execute it */
-			void*(*func_buff)(void* arg);
+			void*(*func_buff)(void* arg, int *p_finish_off);
 			void*  arg_buff;
 			job* job_p;
 			pthread_mutex_lock(&thpool_p->jobqueue_p->rwmutex);
@@ -379,7 +380,7 @@ static void* thread_do(struct thread* thread_p){
 			if (job_p) {
 				func_buff = job_p->function;
 				arg_buff  = job_p->arg;
-				func_buff(arg_buff);
+				func_buff(arg_buff, &finish_off);
 				free(job_p);
 			}
 			

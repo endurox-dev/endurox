@@ -80,13 +80,13 @@ pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
 /*---------------------------Prototypes---------------------------------*/
 private int tx_tout_check(void);
-private void tm_chk_one_free_thread(void *ptr);
+private void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
 
 /**
  * Tmsrv service entry (working thread)
  * @param p_svc - data & len used only...!
  */
-void TPTMSRV_TH (void *ptr)
+void TPTMSRV_TH (void *ptr, int *p_finish_off)
 {
     /* Ok we should not handle the commands 
      * TPBEGIN...
@@ -602,7 +602,7 @@ private int tx_tout_check(void)
  * thread is free, before we are going to mail poll.
  * @param ptr
  */
-private void tm_chk_one_free_thread(void *ptr)
+private void tm_chk_one_free_thread(void *ptr, int *p_finish_off)
 {
     pthread_mutex_lock(&M_wait_th_mutex);
     pthread_cond_signal(&M_wait_th_cond);
