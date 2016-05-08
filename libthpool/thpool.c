@@ -331,6 +331,9 @@ static void thread_hold () {
 * 
 * In principle this is an endless loop. The only time this loop gets interuppted is once
 * thpool_destroy() is invoked or the program exits.
+* TODO: We need to add inidivitual thread shutdown mark here...
+* So that for each thread we can invoke "tpterm()" and thread func will tell that we are
+* About to exit. That will terminate the while() loop.
 * 
 * @param  thread        thread that will run this function
 * @return nothing

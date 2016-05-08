@@ -389,7 +389,7 @@ int tpsvrinit(int argc, char **argv)
     }
     
     /* Start the background processing */
-    background_process_init();
+    forward_process_init();
     
     
 out:
@@ -404,14 +404,14 @@ void tpsvrdone(void)
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
-    G_bacground_req_shutdown = TRUE;
+    G_forward_req_shutdown = TRUE;
     
     if (M_init_ok)
     {
-        background_wakeup();
+        forward_wakeup();
 
         /* Wait to complete */
-        pthread_join(G_bacground_thread, NULL);
+        pthread_join(G_forward_thread, NULL);
 
         /* Wait for threads to finish */
         thpool_wait(G_tmqueue_cfg.thpool);

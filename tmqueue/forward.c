@@ -1,7 +1,11 @@
 /* 
-** Queue background processing
+** Queue forward processing
+** We will have a separate thread pool for processing automatic queue .
+** the main forward thread will periodically scan the Q and submit the jobs to
+** the threads (if any will be free). 
+** During the shutdown we will issue for every pool thread 
 ** 
-** @file background.c
+** @file forward.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -59,15 +63,15 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public pthread_t G_bacground_thread;
-public int G_bacground_req_shutdown = FALSE;    /* Is shutdown request? */
+public pthread_t G_forward_thread;
+public int G_forward_req_shutdown = FALSE;    /* Is shutdown request? */
 
 
 private pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
 private pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
 
-MUTEX_LOCKDECL(M_background_lock); /* Background operations sync        */
+MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -75,80 +79,27 @@ MUTEX_LOCKDECL(M_background_lock); /* Background operations sync        */
 /**
  * Lock background operations
  */
-public void background_lock(void)
+public void forward_lock(void)
 {
-    MUTEX_LOCK_V(M_background_lock);
+    MUTEX_LOCK_V(M_forward_lock);
 }
 
 /**
  * Un-lock background operations
  */
-public void background_unlock(void)
+public void forward_unlock(void)
 {
-    MUTEX_UNLOCK_V(M_background_lock);
+    MUTEX_UNLOCK_V(M_forward_lock);
 }
 
 /**
  * Read the logfiles from the disk (if any we have there...)
  * @return 
  */
-public int background_read_q(void)
+public int forward_read_q(void)
 {
     int ret=SUCCEED;
     
-#if 0
-    struct dirent **namelist;
-    int n;
-    int len;
-    char tranmask[256];
-    char fnamefull[PATH_MAX+1];
-    atmi_xa_log_t *pp_tl = NULL;
-    
-    sprintf(tranmask, "TRN-%ld-%hd-%d-", tpgetnodeid(), G_atmi_env.xa_rmid, 
-            G_server_conf.srv_id);
-    len = strlen(tranmask);
-    /* List the files here. */
-    n = scandir(G_tmqueue_cfg.tlog_dir, &namelist, 0, alphasort);
-    if (n < 0)
-    {
-       NDRX_LOG(log_error, "Transaction directory [%s: %s", 
-               G_tmqueue_cfg.tlog_dir, strerror(errno));
-       ret=FAIL;
-       goto out;
-    }
-    else 
-    {
-       while (n--)
-       {
-           if (0==strcmp(namelist[n]->d_name, ".") || 
-                       0==strcmp(namelist[n]->d_name, ".."))
-               continue;
-
-           /* If it is transaction then parse & load */
-           
-           /*
-           NDRX_LOG(log_debug, "[%s] vs [%s] %d", 
-                       namelist[n]->d_name, tranmask, len);
-           */
-           
-           if (0==strncmp(namelist[n]->d_name, tranmask, len))
-           {
-               sprintf(fnamefull, "%s/%s", G_tmqueue_cfg.tlog_dir, namelist[n]->d_name);
-               NDRX_LOG(log_warn, "Resuming transaction: [%s]", 
-                       fnamefull);
-               if (SUCCEED!=tmq_load_logfile(fnamefull, 
-                       namelist[n]->d_name+len, &pp_tl))
-               {
-                   NDRX_LOG(log_warn, "Faled to resume transaction: [%s]", 
-                       fnamefull);
-                   FAIL_OUT(ret);
-               }
-           }
-           free(namelist[n]);
-       }
-       free(namelist);
-    }
-#endif
 out:
     return ret;
 }
@@ -176,7 +127,7 @@ private void thread_sleep(int sleep_sec)
 /**
  * Wake up the sleeping thread.
  */
-public void background_wakeup(void)
+public void forward_wakeup(void)
 {
     pthread_mutex_lock(&M_wait_mutex);
     pthread_cond_signal(&M_wait_cond);
@@ -188,7 +139,7 @@ public void background_wakeup(void)
  * Try to complete the transactions.
  * @return  SUCCEED/FAIL
  */
-public int background_loop(void)
+public int forward_loop(void)
 {
     int ret = SUCCEED;
     atmi_xa_log_list_t *tx_list;
@@ -198,16 +149,16 @@ public int background_loop(void)
     
     memset(&xai, 0, sizeof(xai));
     
-    while(!G_bacground_req_shutdown)
+    while(!G_forward_req_shutdown)
     {
         
-        background_lock();
+        forward_lock();
         
-        background_unlock();
+        forward_unlock();
         NDRX_LOG(log_debug, "background - sleep %d", 
                 G_tmqueue_cfg.scan_time);
         
-        if (!G_bacground_req_shutdown)
+        if (!G_forward_req_shutdown)
             thread_sleep(G_tmqueue_cfg.scan_time);
     }
     
@@ -219,7 +170,7 @@ out:
  * Background processing of the transactions (Complete them).
  * @return 
  */
-public void * background_process(void *arg)
+public void * forward_process(void *arg)
 {
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS START ********");
     
@@ -233,7 +184,7 @@ public void * background_process(void *arg)
     * - Use timers counters from the cli params. 
     */
     
-    background_loop();
+    forward_loop();
     
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS END **********");
 }
@@ -242,7 +193,7 @@ public void * background_process(void *arg)
  * Initialize background process
  * @return
  */
-public void background_process_init(void)
+public void forward_process_init(void)
 {
     struct sigaction        actions;
     
@@ -251,6 +202,6 @@ public void background_process_init(void)
     
     /* set some small stacks size, 1M should be fine! */
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
-    pthread_create(&G_bacground_thread, &pthread_custom_attr, 
-            background_process, NULL);  
+    pthread_create(&G_forward_thread, &pthread_custom_attr, 
+            forward_process, NULL);  
 }

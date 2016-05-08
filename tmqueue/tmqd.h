@@ -46,8 +46,8 @@ extern "C" {
 #include "tmqueue.h"
     
 /*---------------------------Externs------------------------------------*/
-extern pthread_t G_bacground_thread;
-extern int G_bacground_req_shutdown;    /* Is shutdown request? */
+extern pthread_t G_forward_thread;
+extern int G_forward_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
 #define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
@@ -149,10 +149,10 @@ extern int tmq_notify(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);
-extern void background_wakeup(void);
-extern void background_process_init(void);
-extern void background_lock(void);
-extern void background_unlock(void);
+extern void forward_wakeup(void);
+extern void forward_process_init(void);
+extern void forward_lock(void);
+extern void forward_unlock(void);
 
 /* Q space api: */
 extern int tmq_reload_conf(char *cf);
