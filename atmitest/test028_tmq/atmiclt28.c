@@ -275,7 +275,7 @@ int deq_q_test(int do_commit)
 {
     int ret = SUCCEED;
     TPQCTL qc;
-    int i;
+    int i, j;
     long len;
     UBFH *buf = NULL;
     if (SUCCEED!=tpbegin(90, 0))
@@ -331,27 +331,36 @@ int deq_q_test(int do_commit)
         
         tpfree((char *)buf);
         
-        memset(&qc, 0, sizeof(qc));
-        
-        buf = (UBFH *)tpalloc("UBF", "", 100);
-        
-        if (SUCCEED!=tpdequeue("MYSPACE", "TESTC", &qc, (char **)&buf, &len, 0))
+        /* Ad some peek tests... for FIFO */
+        for (j=0; j<2; j++)
         {
-            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
-                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            memset(&qc, 0, sizeof(qc));
+            
+            if (0==j)
+            {
+                qc.flags|=TPQPEEK;
+            }
+
+            buf = (UBFH *)tpalloc("UBF", "", 100);
+
+            if (SUCCEED!=tpdequeue("MYSPACE", "TESTC", &qc, (char **)&buf, &len, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                FAIL_OUT(ret);
+            }
+
+            ndrx_debug_dump_UBF(log_debug, "TESTC rcv buf", buf);
+
+            if (i!=Boccur(buf, T_STRING_FLD))
+            {
+                NDRX_LOG(log_error, "TESTERROR: invalid count for TESTC %d vs %d", 
+                        i, Boccur(buf, T_STRING_FLD));
+                FAIL_OUT(ret);
+            }
+
+            tpfree((char *)buf);
         }
-        
-        ndrx_debug_dump_UBF(log_debug, "TESTC rcv buf", buf);
-        
-        if (i!=Boccur(buf, T_STRING_FLD))
-        {
-            NDRX_LOG(log_error, "TESTERROR: invalid count for TESTC %d vs %d", 
-                    i, Boccur(buf, T_STRING_FLD));
-            FAIL_OUT(ret);
-        }
-        
-        tpfree((char *)buf);
         
     }
 
