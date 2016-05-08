@@ -195,7 +195,10 @@ public int tmq_enqueue(UBFH *p_ub)
     tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
             tpgetnodeid(), G_server_conf.srv_id, G_tmqueue_cfg.qspace);
     
+    /* Return the message id. */
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
+    memcpy(p_msg->qctl.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
+    
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
     p_msg->msgtstamp = nstdutil_utc_tstamp_micro();
     p_msg->status = TMQ_STATUS_ACTIVE;
@@ -305,7 +308,6 @@ public int tmq_dequeue(UBFH *p_ub)
         FAIL_OUT(ret);
     }
     
-    /* TODO: Read ctl (to have msgid search for, or corelator id) */
     if (!tpgetlev())
     {
         NDRX_LOG(log_debug, "Not in global transaction, starting local...");

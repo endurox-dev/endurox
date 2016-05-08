@@ -363,7 +363,7 @@ out:
         if (SUCCEED!=tpcommit(0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to commit!");
-            FAIL_OUT(ret);
+            ret=FAIL;
         }
     }
     else
@@ -482,13 +482,15 @@ int basic_q_msgid_test(void)
             
             if (0 == j)
             {
-                qc2.flags|=TPQGETBYMSGID | TPQPEEK;
+                qc2.flags|=(TPQGETBYMSGID | TPQPEEK);
             }
             else
             {
-                qc2.flags &= ~TPQPEEK;
+                /* Already reset to 0 by first dequeue */
+                qc2.flags|=TPQGETBYMSGID;
             }
             
+            NDRX_LOG(log_info, "Calling with flags: %ld", qc2.flags);
             if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
                     &len, TPNOTRAN))
             {
@@ -499,7 +501,7 @@ int basic_q_msgid_test(void)
 
             if (102!=buf[0])
             {
-                NDRX_LOG(log_error, "Got %d expected 102", buf[0]);
+                NDRX_LOG(log_error, "TESTERROR: Got %d expected 102", buf[0]);
                 FAIL_OUT(ret);
 
             }
@@ -512,11 +514,12 @@ int basic_q_msgid_test(void)
             
             if (0 == j)
             {
-                qc1.flags|=TPQGETBYMSGID | TPQPEEK;
+                qc1.flags|=(TPQGETBYMSGID | TPQPEEK);
             }
             else
             {
-                qc1.flags &= ~TPQPEEK;
+                /* Already reset to 0 by first dequeue */
+                qc1.flags |= TPQGETBYMSGID;
             }
             if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
                     &len, TPNOTRAN))
@@ -528,7 +531,7 @@ int basic_q_msgid_test(void)
 
             if (101!=buf[0])
             {
-                NDRX_LOG(log_error, "Got %d expected 101", buf[0]);
+                NDRX_LOG(log_error, "TESTERROR: Got %d expected 101", buf[0]);
                 FAIL_OUT(ret);
             }
         }

@@ -781,10 +781,11 @@ public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
     }
     
 
-    /* Lock the message */
-    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
-    
     ret = mmsg->msg;
+
+    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
+
+    /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
     
     /* Issue command for msg remove */

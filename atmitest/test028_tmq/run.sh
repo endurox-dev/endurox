@@ -157,6 +157,14 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Running: msgid/corid tests"
+(./atmiclt28 msgid 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
