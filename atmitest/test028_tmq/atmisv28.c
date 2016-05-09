@@ -37,76 +37,37 @@
 #include <ubf.h>
 #include <test.fd.h>
 
-void CONVSV (TPSVCINFO *p_svc)
+/**
+ * This service will add T_STRING
+ * @param p_svc
+ */
+void SVCOK (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
-    long revent;
-    static double d = 55.66;
-    int i;
     UBFH *p_ub = (UBFH *)p_svc->data;
-    char tmp[128];
-    NDRX_LOG(log_debug, "CONVSV got call");
-
-    /* Just print the buffer */
-    Bprint(p_ub);
-
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 6000))) /* allocate some stuff for more data to put in  */
+    
+    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "OK", 0L))
     {
-        ret=FAIL;
-        goto out;
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD!");
     }
 
-    d+=1;
+out:
+    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
 
-    for (i=0; i<100; i++)
-    {
-        sprintf(tmp, "SRV SND: %d", i);
-        if (FAIL==Badd(p_ub, T_STRING_FLD, (char *)tmp, 0))
-        {
-            ret=FAIL;
-            goto out;
-        }
-
-        if (p_svc->flags & TPSENDONLY)
-        {
-            NDRX_LOG(log_debug, "Doing some send!");
-            /* Lets send some data back to client */
-            if (FAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, 0L, &revent))
-            {
-                NDRX_LOG(log_error, "Failed to send to client!");
-            }
-        }
-    }
-
-    /* Now we will become as listeners, OK? */
-    if (FAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, TPRECVONLY, &revent))
-    {
-        NDRX_LOG(log_error, "Failed to send to client!");
-        goto out;
-    }
-
-    /* now wait for messages to come in! */
-    while (SUCCEED==tprecv(p_svc->cd, (char **)&p_ub, 0L, 0L, &revent))
-    {
-        NDRX_LOG(log_debug, "Sent MSG OK!");
-    }
-
-    /* Dump the buffer */
-    Bfprint(p_ub, stderr);
-
-    if (TPEEVENT==tperrno)
-    {
-        if (TPEV_SENDONLY==revent)
-        {
-            NDRX_LOG(log_debug, "We are senders - FINISH UP!");
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "Did not get TPEV_SENDONLY!!!");
-            ret=FAIL;
-        }
-    }
-
+/**
+ * Returns failure to caller
+ * @param p_svc
+ */
+void SVCFAIL (TPSVCINFO *p_svc)
+{
+    int ret=FAIL;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
 out:
     tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
                 0L,
@@ -122,7 +83,7 @@ int tpsvrinit(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("CONVSV", CONVSV))
+    if (SUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
     }

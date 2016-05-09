@@ -732,6 +732,8 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node)
         next_try = node->msg->trytstamp + 
                 ((unsigned long long)qconf->waitinit) * 
                 nstdutil_get_micro_resolution_for_sec();
+        
+        NDRX_LOG(log_debug, "First try, sleep %d sec", qconf->waitinit);
     }
     else 
     {
@@ -742,14 +744,25 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node)
             retry_inc = qconf->waitretrymax;
         }
         
+        NDRX_LOG(log_debug, "Try no %d, sleep %d sec", 
+                node->msg->trycounter, retry_inc);
+        
         next_try = node->msg->trytstamp + 
                 retry_inc * 
                 nstdutil_get_micro_resolution_for_sec();
     }
     
-    if (next_try>=nstdutil_utc_tstamp_micro())
+    NDRX_LOG(log_debug, "Next try at: %llu current clock: %llu",
+            next_try, nstdutil_utc_tstamp_micro());
+            
+    if (next_try<=nstdutil_utc_tstamp_micro())
     {
         NDRX_LOG(log_debug, "Message accepted for dequeue...");
+        ret=TRUE;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Message NOT accepted for dequeue...");
     }
     
 out:

@@ -51,7 +51,7 @@ int enq_q_test(void);
 int deq_q_test(int do_commit);
 int deqempty_q_test(void);
 int basic_q_msgid_test(void);
-
+int basic_autoq_ok(void);
 
 int main(int argc, char** argv)
 {
@@ -93,6 +93,11 @@ int main(int argc, char** argv)
     {
         return basic_q_msgid_test();
     }
+    else if (0==strcmp(argv[1], "autoqok"))
+    {
+        return basic_autoq_ok();
+    }
+    
     else
     {
         NDRX_LOG(log_error, "Invalid test case!");
@@ -560,3 +565,97 @@ out:
     return ret;
 }
 
+/**
+ * Sending to OK q
+ */
+int basic_autoq_ok(void)
+{
+
+    int ret = SUCCEED;
+    TPQCTL qc1;
+    UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+    UBFH *buf2 = (UBFH *)tpalloc("UBF", "", 1024);
+    long len = 0;
+    char *p;
+    
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, "HELLO FROM SENDER", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    /* enqueue the data buffer */
+    memset(&qc1, 0, sizeof(qc1));
+    
+    qc1.flags|=TPQREPLYQ;
+    
+    strcpy(qc1.replyqueue, "REPLYQ");
+    
+    if (SUCCEED!=tpenqueue("MYSPACE", "OKQ1", &qc1, (char *)buf, 0, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        FAIL_OUT(ret);
+    }
+    
+    sleep(2); /* should be enough */
+    
+    memset(&qc1, 0, sizeof(qc1));
+    
+    if (SUCCEED!=tpdequeue("MYSPACE", "REPLYQ", &qc1, (char **)&buf2, 
+            &len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        FAIL_OUT(ret);
+    }
+    
+    /* Verify that we have fields in place... */
+    if (NULL==(p = Bfind(buf2, T_STRING_2_FLD, 0, 0L)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_2_FLD %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(p, "HELLO FROM SENDER"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
+        FAIL_OUT(ret);
+    }
+    
+    /* Verify that we have fields in place... */
+    if (NULL==(p = Bfind(buf2, T_STRING_FLD, 0, 0L)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(p, "OK"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
+        FAIL_OUT(ret);
+    }
+
+    tpfree((char *)buf);
+    tpfree((char *)buf2);
+
+    if (SUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
