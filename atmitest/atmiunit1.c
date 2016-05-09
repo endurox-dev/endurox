@@ -247,7 +247,7 @@ Ensure(test027_pscript)
 Ensure(test028_tmq)
 {
     int ret;
-    ret=system_dbg("test027_pscript/run.sh");
+    ret=system_dbg("test028_tmq/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
