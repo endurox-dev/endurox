@@ -290,6 +290,8 @@ private tmq_qconfig_t * tmq_qconf_get(char *qname)
 
 /**
  * Return Q config with default if not found
+ * TODO: Think about copy off the contents of qconf for substituing service 
+ * to Q name.
  * @param qname qname
  * @return  NULL or ptr to config
  */
@@ -309,6 +311,42 @@ private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
         }
     }
             
+    return ret;
+}
+
+/**
+ * Get the static copy of Q data for extract (non-locked) use.
+ * @param qname
+ * @param qconf_out where to store/copy the q def data
+ * @return SUCCEED/FAIL
+ */
+public int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out)
+{
+    int ret = SUCCEED;
+    tmq_qconfig_t * tmp = NULL;
+    
+    MUTEX_LOCK_V(M_q_lock);
+    
+    tmp = tmq_qconf_get(qname);
+
+    if  (NULL==tmp)
+    {
+        NDRX_LOG(log_warn, "Q config [%s] not found, trying to default to [%s]", 
+                qname, TMQ_DEFAULT_Q);
+        if (NULL==(tmp = tmq_qconf_get(TMQ_DEFAULT_Q)))
+        {
+            NDRX_LOG(log_error, "Default Q config [%s] not found!", TMQ_DEFAULT_Q);
+            userlog("Default Q config [%s] not found! Please add !", TMQ_DEFAULT_Q);
+            FAIL_OUT(ret);
+        }
+        
+    }
+    
+    memcpy(qconf_out, tmp, sizeof(*qconf_out));
+        
+out:    
+    MUTEX_UNLOCK_V(M_q_lock);
+    
     return ret;
 }
 

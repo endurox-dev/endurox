@@ -56,6 +56,8 @@
 
 #include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
+#include "nstdutil.h"
+#include "userlog.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
@@ -72,6 +74,8 @@ public int G_forward_req_shutdown = FALSE;    /* Is shutdown request? */
 
 private pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
 private pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
+
+private __thread int M_is_xa_open = FALSE; /* Init flag for thread. */
 
 
 MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
@@ -188,12 +192,188 @@ out:
  */
 public void thread_process_forward (void *ptr, int *p_finish_off)
 {
+    int ret = SUCCEED;
     tmq_msg_t * msg = (tmq_msg_t *)ptr;
+    tmq_qconfig_t qconf;
+    char *call_buf = NULL;
+    long call_len = 0;
+    typed_buffer_descr_t *descr;
+    char msgid_str[TMMSGIDLEN_STR+1];
+    char *fn = "thread_process_forward";
+    int tperr;
+    union tmq_block cmd_block;
+    
+    
+    if (!M_is_xa_open)
+    {
+        if (SUCCEED!=tpopen()) /* init the lib anyway... */
+        {
+            NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
+                    tpstrerror(tperrno));
+            userlog("Failed to tpopen() by worker thread: %s", tpstrerror(tperrno));
+        }
+        else
+        {
+            M_is_xa_open = TRUE;
+        }
+    }
+
+    
+    tmq_msgid_serialize(msg->hdr.msgid, msgid_str); 
+
+    NDRX_LOG(log_info, "%s enter for msgid_str: [%s]", fn, msgid_str);
     
     /* Call the Service & and issue XA commands for update or delete
      *  + If message failed, forward to dead queue (if defined).
      */
+    if (SUCCEED!=tmq_qconf_get_with_default_static(msg->hdr.qname, &qconf))
+    {
+        /* might happen if we reconfigure on the fly. */
+        NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
+        FAIL_OUT(ret);
+    }
     
+    /* Alloc the buffer of the message type according to size (use prepare incoming?)
+     */
+    
+    descr = &G_buf_descr[msg->buftyp];
+
+    if (SUCCEED!=descr->pf_prepare_incoming(descr,
+                    msg->msg,
+                    msg->len,
+                    &call_buf,
+                    &call_len,
+                    0))
+    {
+        NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
+        FAIL_OUT(ret);
+    }
+
+    /* call the service */
+    NDRX_LOG(log_info, "Sending request to service: [%s]", qconf.svcnm);
+    
+    if (FAIL == tpcall(qconf.svcnm, call_buf, call_len, (char **)&call_buf, &call_len,0))
+    {
+        tperr = tperrno;
+        NDRX_LOG(log_error, "%s failed: %s", qconf.svcnm, tpstrerror(tperr));
+        FAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_info, "Service answer ok for %s", msgid_str);
+    
+out:
+
+    memset(&cmd_block, 0, sizeof(cmd_block));
+
+    memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
+
+    /* start the transaction */
+    if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+    {
+        userlog("Failed to start tran: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "Failed to start tran!");
+        /* unlock the message */
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+        
+        return;
+    }
+
+    /* 
+     * just unlock the message. Increase the cou
+     */
+    if (SUCCEED==ret)
+    {
+       /* Remove the message */
+        if (msg->qctl.flags & TPQREPLYQ)
+        {
+            TPQCTL ctl;
+            NDRX_LOG(log_warn, "TPQREPLYQ defined, sending answer buffer to "
+                    "[%s] q in [%s] namespace", 
+                    msg->qctl.replyqueue, msg->hdr.qspace);
+            
+            /* Send response to reply Q (load the data in FB with call details) */
+            memset(&ctl, 0, sizeof(ctl));
+                    
+            if (SUCCEED!=tpenqueue (msg->qctl.replyqueue, msg->hdr.qspace, &ctl, 
+                    call_buf, call_len, TPNOTRAN))
+            {
+                NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
+                        msg->qctl.replyqueue, tpstrerror(tperrno));
+            }
+        }
+        
+        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+        
+        if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+                "Removing completed message..."))
+        {
+            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                    msgid_str);
+        }
+        
+    }
+    else
+    {
+        /* Increase the counter */
+        msg->trycounter++;
+        NDRX_LOG(log_warn, "Message [%s] tries %ld, max: %ld", 
+                msg->trycounter, qconf.tries);
+        msg->trytstamp = nstdutil_utc_tstamp_micro();
+        
+        if (msg->trycounter>=qconf.tries)
+        {
+            NDRX_LOG(log_error, "Message [%s] expired");
+            
+            if (msg->qctl.flags & TPQFAILUREQ)
+            {
+                TPQCTL ctl;
+                NDRX_LOG(log_warn, "TPQFAILUREQ defined, sending answer buffer to "
+                    "[%s] q in [%s] namespace", 
+                    msg->qctl.failurequeue, msg->hdr.qspace);
+                
+
+                /* Send response to reply Q (load the data in FB with call details) */
+                memset(&ctl, 0, sizeof(ctl));
+
+                if (SUCCEED!=tpenqueue (msg->qctl.failurequeue, msg->hdr.qspace, &ctl, 
+                        call_buf, call_len, TPNOTRAN))
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
+                            msg->qctl.failurequeue, tpstrerror(tperrno));
+                }
+            }
+            cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+        
+            if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+                    "Removing expired message..."))
+            {
+                userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                        msgid_str);
+            }
+        }
+        else
+        {
+            /* We need to update the message */
+            UPD_MSG((&cmd_block.upd), msg);
+        
+            if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+                    "Update message command"))
+            {
+                userlog("Failed to issue update command to xa for msgid_str [%s]", 
+                        msgid_str);
+            }
+        }
+    }
+    
+    /* commit the transaction */
+    if (SUCCEED!=tpcommit(0))
+    {
+        userlog("Failed to commit: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "Failed to commit!");
+        tpabort(0);
+    }
+    
+    return;
 }
 
 /**
