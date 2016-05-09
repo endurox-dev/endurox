@@ -668,11 +668,62 @@ out:
 }
 
 /**
+ * Tests is auto message valid for dequeue (calculate the counters)
+ * @param node
+ * @return 
+ */
+private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node)
+{
+    tmq_qconfig_t *qconf;
+    int ret = FALSE;
+    int current_wait;
+    int retry_inc;
+    unsigned long long next_try;
+    
+    if (NULL!=(qconf=tmq_qconf_get_with_default(node->msg->hdr.qname)))
+    {
+        
+        NDRX_LOG(log_error, "Failed to get q config [%s]", 
+                node->msg->hdr.qname);
+        goto out;
+    }
+    
+    
+    if (0==node->msg->trycounter)
+    {
+        next_try = node->msg->trytstamp + 
+                ((unsigned long long)qconf->waitinit) * 
+                nstdutil_get_micro_resolution_for_sec();
+    }
+    else 
+    {
+        retry_inc = qconf->waitretry*node->msg->trycounter;
+    
+        if (retry_inc > qconf->waitretrymax)
+        {
+            retry_inc = qconf->waitretrymax;
+        }
+        
+        next_try = node->msg->trytstamp + 
+                retry_inc * 
+                nstdutil_get_micro_resolution_for_sec();
+    }
+    
+    if (next_try>=nstdutil_utc_tstamp_micro())
+    {
+        NDRX_LOG(log_debug, "Message accepted for dequeue...");
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Get the fifo message from Q
  * @param qname queue to lookup.
  * @return NULL (no msg), or ptr to msg
  */
-public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags)
+public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto)
 {
     tmq_qhash_t *qhash;
     tmq_memmsg_t *node;
@@ -706,7 +757,8 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags)
     {
         if (NULL!=node)
         {
-            if (!node->msg->lockthreadid)
+            if (!node->msg->lockthreadid && (!is_auto || 
+                    tmq_is_auto_valid_for_deq(node)))
             {
                 ret = node->msg;
                 break;
@@ -731,14 +783,14 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags)
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
     
-    /* Issue command for msg remove */
-    memset(&block, 0, sizeof(block));    
-    memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
-    
-    block.hdr.command_code = TMQ_STORCMD_DEL;
-    
-    if (!(flags & TPQPEEK))
-    {        
+    /* Is it must not be a peek and must not be an autoq */
+    if (!(flags & TPQPEEK) && !is_auto)
+    {   
+        /* Issue command for msg remove */
+        memset(&block, 0, sizeof(block));    
+        memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
+        block.hdr.command_code = TMQ_STORCMD_DEL;
+
         if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
                 "Removing dequeued message"))
         {

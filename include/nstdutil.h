@@ -64,6 +64,7 @@ struct charstrmap
 extern void nstdutil_get_dt_local(long *p_date, long *p_time);
 extern unsigned long long nstdutil_utc_tstamp(void);
 extern unsigned long long nstdutil_utc_tstamp_micro(void);
+extern unsigned long long nstdutil_get_micro_resolution_for_sec(void);
 extern char * nstdutil_str_env_subs(char * str);
 
 extern char *nstdutil_decode_num(long tt, int slot, int level, int levels);

@@ -159,6 +159,26 @@ void thpool_resume(threadpool);
 void thpool_destroy(threadpool);
 
 
+/**
+ * @brief Return number of free threads
+ * 
+ * This will wait for the currently active threads to finish and then 'kill'
+ * the whole threadpool to free up memory.
+ * 
+ * @example
+ * int main() {
+ *    int threads_free;
+ *    threadpool thpool1 = thpool_init(2);
+ *    ..
+ *    threads_free = thpool_freethreads_nr(thpool1);
+ *    ..
+ *    return 0;
+ * }
+ * 
+ * @param threadpool     the threadpool to analyse
+ * @return Number of free threads
+ */
+int thpool_freethreads_nr(threadpool);
 
 
 #endif

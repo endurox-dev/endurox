@@ -288,9 +288,10 @@ void thpool_resume(thpool_* thpool_p) {
 	threads_on_hold = 0;
 }
 
-
-
-
+/* ATR Baltic, return free threads */
+int thpool_freethreads_nr(thpool_* thpool_p) {
+	return thpool_p->num_threads_alive - thpool_p->num_threads_working;
+}
 
 /* ============================ THREAD ============================== */
 

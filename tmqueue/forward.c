@@ -132,9 +132,9 @@ public void forward_shutdown_wake(void)
  * 
  * @return 
  */
-private tmq_memmsg_t * get_next_msg(void)
+private tmq_msg_t * get_next_msg(void)
 {
-    tmq_memmsg_t * ret = NULL;
+    tmq_msg_t * ret = NULL;
     static fwd_qlist_t *list = NULL;    
     fwd_qlist_t *elt, *tmp;
     
@@ -159,20 +159,41 @@ private tmq_memmsg_t * get_next_msg(void)
         }
     }
     
-    /* Dequeue the message with try counter increase 
-     * We should tell the FIFO dequeuer that we are doing the auto.
-     * It shall increase the counter + do the delete the end if tries exceeded
-     * + move to dead queue (under the same transaction).
-     * So here we just dequeue the msg.
+    /*
+     * get the message
      */
-    if (NULL!=list && NULL!=list->cur)
+    while (NULL!=list && NULL!=list->cur)
     {
         /* OK, so we peek for a message */
-        if (NULL!=tmq_msg_dequeue_fifo(list->cur->qname, TPQPEEK))
+        if (NULL==(ret=tmq_msg_dequeue_fifo(list->cur->qname, 0, TRUE)))
         {
-            /* TODO: Start the transaction, read msg & pass it off to thread */
+            NDRX_LOG(log_debug, "Not messages for dequeue");
         }
+        else
+        {
+            NDRX_LOG(log_debug, "Dequeued message");
+            goto out;
+        }
+        list = list->next;
     }
+    
+out:
+    return ret;
+}
+
+/**
+ * Process of the message
+ * @param ptr
+ * @param p_finish_off
+ */
+public void thread_process_forward (void *ptr, int *p_finish_off)
+{
+    tmq_msg_t * msg = (tmq_msg_t *)ptr;
+    
+    /* Call the Service & and issue XA commands for update or delete
+     *  + If message failed, forward to dead queue (if defined).
+     */
+    
 }
 
 /**
@@ -183,7 +204,7 @@ private tmq_memmsg_t * get_next_msg(void)
 public int forward_loop(void)
 {
     int ret = SUCCEED;
-    
+    tmq_msg_t * msg = NULL;
     /*
      * We need to get the list of queues to monitor.
      * Note that list can be dynamic. So at some periods we need to refresh
@@ -192,18 +213,18 @@ public int forward_loop(void)
     while(!G_forward_req_shutdown)
     {
         
-#if 0
-        /* 1. TODO: Fix this off - move check to thlib: */
-        if (G_tmqueue_cfg.fwdthpool->num_threads_alive - 
-                G_tmqueue_cfg.fwdthpool->num_threads_working > 0)
+        if (thpool_freethreads_nr(G_tmqueue_cfg.fwdthpool) > 0)
         {
             /* 2. get the message from Q */
-            
-            
+            msg = get_next_msg();
         }
-#endif
         
         /* 3. run off the thread */
+        if (NULL!=msg)
+        {
+            /* Submit the job to thread */
+            thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+        }
         
         NDRX_LOG(log_debug, "background - sleep %d", 
                 G_tmqueue_cfg.scan_time);

@@ -104,6 +104,27 @@ public unsigned long long nstdutil_utc_tstamp_micro(void)
 }
 
 /**
+ * Get tick count in one second for current platform
+ * @return 
+ */
+public unsigned long long nstdutil_get_micro_resolution_for_sec(void)
+{
+    unsigned long long ret;    
+    
+    if (sizeof(unsigned long long)>=8) 
+    {
+        ret = 1000000;
+    }
+    else
+    {
+        ret = 1;
+    }
+    
+    return ret;
+}
+
+
+/**
  * Return date/time local 
  * @param p_date - ptr to store long date, format YYYYMMDD
  * @param p_time - ptr to store long time, format HHMISS

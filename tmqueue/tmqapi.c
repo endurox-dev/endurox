@@ -65,7 +65,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private __thread int is_xa_open = FALSE;
+private __thread int M_is_xa_open = FALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /******************************************************************************/
@@ -91,7 +91,7 @@ public int tmq_enqueue(UBFH *p_ub)
     
     ndrx_debug_dump_UBF(log_info, "tmq_enqueue called with", p_ub);
     
-    if (!is_xa_open)
+    if (!M_is_xa_open)
     {
         if (SUCCEED!=tpopen()) /* init the lib anyway... */
         {
@@ -101,7 +101,7 @@ public int tmq_enqueue(UBFH *p_ub)
         }
         else
         {
-            is_xa_open = TRUE;
+            M_is_xa_open = TRUE;
         }
     }
             
@@ -285,7 +285,7 @@ public int tmq_dequeue(UBFH *p_ub)
     
     ndrx_debug_dump_UBF(log_info, "tmq_dequeue called with", p_ub);
     
-    if (!is_xa_open)
+    if (!M_is_xa_open)
     {
         if (SUCCEED!=tpopen()) /* init the lib anyway... */
         {
@@ -295,7 +295,7 @@ public int tmq_dequeue(UBFH *p_ub)
         }
         else
         {
-            is_xa_open = TRUE;
+            M_is_xa_open = TRUE;
         }
     }
     
@@ -367,7 +367,7 @@ public int tmq_dequeue(UBFH *p_ub)
             FAIL_OUT(ret);
         }
     }
-    else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname, qctl_in.flags)))
+    else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname, qctl_in.flags, FALSE)))
     {
         NDRX_LOG(log_error, "tmq_dequeue: not message in Q [%s]", qname);
         strcpy(qctl_out.diagmsg, "tmq_dequeue: no message int Q!");
