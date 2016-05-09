@@ -62,6 +62,9 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+
+
 /*---------------------------Globals------------------------------------*/
 public pthread_t G_forward_thread;
 public int G_forward_req_shutdown = FALSE;    /* Is shutdown request? */
@@ -90,18 +93,6 @@ public void forward_lock(void)
 public void forward_unlock(void)
 {
     MUTEX_UNLOCK_V(M_forward_lock);
-}
-
-/**
- * Read the logfiles from the disk (if any we have there...)
- * @return 
- */
-public int forward_read_q(void)
-{
-    int ret=SUCCEED;
-    
-out:
-    return ret;
 }
 
 /**
@@ -135,6 +126,56 @@ public void forward_shutdown_wake(void)
 }
 
 /**
+ * Get next message to forward
+ * So basically we iterate over the all Qs, then regenerate the Q list and
+ * and iterate over again.
+ * 
+ * @return 
+ */
+private tmq_memmsg_t * get_next_msg(void)
+{
+    tmq_memmsg_t * ret = NULL;
+    static fwd_qlist_t *list = NULL;    
+    fwd_qlist_t *elt, *tmp;
+    
+    if (NULL==list || NULL == list->cur->next)
+    {
+        /* Deallocate the previous DL */
+        if (NULL!=list)
+        {
+            DL_FOREACH_SAFE(list,elt,tmp) 
+            {
+                DL_DELETE(list,elt);
+                free(elt);
+            }
+        }
+        
+        /* Generate new list */
+        list = tmq_get_fwd_list();
+        
+        if (NULL!=list)
+        {
+            list->cur = list;
+        }
+    }
+    
+    /* Dequeue the message with try counter increase 
+     * We should tell the FIFO dequeuer that we are doing the auto.
+     * It shall increase the counter + do the delete the end if tries exceeded
+     * + move to dead queue (under the same transaction).
+     * So here we just dequeue the msg.
+     */
+    if (NULL!=list && NULL!=list->cur)
+    {
+        /* OK, so we peek for a message */
+        if (NULL!=tmq_msg_dequeue_fifo(list->cur->qname, TPQPEEK))
+        {
+            /* TODO: Start the transaction, read msg & pass it off to thread */
+        }
+    }
+}
+
+/**
  * Continues transaction background loop..
  * Try to complete the transactions.
  * @return  SUCCEED/FAIL
@@ -142,19 +183,28 @@ public void forward_shutdown_wake(void)
 public int forward_loop(void)
 {
     int ret = SUCCEED;
-    atmi_xa_log_list_t *tx_list;
-    atmi_xa_log_list_t *el, *tmp;
-    atmi_xa_tx_info_t xai;
-    atmi_xa_log_t *p_tl;
     
-    memset(&xai, 0, sizeof(xai));
-    
+    /*
+     * We need to get the list of queues to monitor.
+     * Note that list can be dynamic. So at some periods we need to refresh
+     * the lists we monitor.
+     */
     while(!G_forward_req_shutdown)
     {
         
-        forward_lock();
+#if 0
+        /* 1. TODO: Fix this off - move check to thlib: */
+        if (G_tmqueue_cfg.fwdthpool->num_threads_alive - 
+                G_tmqueue_cfg.fwdthpool->num_threads_working > 0)
+        {
+            /* 2. get the message from Q */
+            
+            
+        }
+#endif
         
-        forward_unlock();
+        /* 3. run off the thread */
+        
         NDRX_LOG(log_debug, "background - sleep %d", 
                 G_tmqueue_cfg.scan_time);
         

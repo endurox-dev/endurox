@@ -705,3 +705,15 @@ public int	tpinit (TPINIT * init_data)
 out:
     return ret;
 }
+
+/**
+ * Shutdown the thread
+ * @param arg
+ * @param p_finish_off
+ */
+public void tp_thread_shutdown(void *ptr, int *p_finish_off)
+{
+    tpterm();
+    
+    *p_finish_off = TRUE;
+}

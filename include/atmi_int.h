@@ -446,10 +446,11 @@ extern char * _tpalloc (typed_buffer_descr_t *known_type,
 extern void free_auto_buffers(void);
 extern int tp_internal_init(atmi_lib_conf_t *init_data);
 extern int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
+extern void tp_thread_shutdown(void *ptr, int *p_finish_off);
 
-extern int	_tpsend (int cd, char *data, long len, long flags, long *revent,
+extern int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id);
-extern void	_tpfree (char *buf, buffer_obj_t *known_buffer);
+extern void _tpfree (char *buf, buffer_obj_t *known_buffer);
 extern void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
 extern int accept_connection(void);
@@ -464,7 +465,7 @@ extern int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags);
 
-extern int	tpacallex (char *svc, char *data, 
+extern int tpacallex (char *svc, char *data, 
         long len, long flags, char *extradata, int dest_node, int is_evpost);
 /* event API implementation */
 extern long _tpunsubscribe(long subscription, long flags);

@@ -1118,6 +1118,41 @@ private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
     return q1->msg->msgtstamp - q2->msg->msgtstamp;
 }
 
+/**
+ * Return list of auto queues
+ * @return NULL or list
+ */
+public fwd_qlist_t *tmq_get_fwd_list(void)
+{
+    fwd_qlist_t * ret = NULL;
+    fwd_qlist_t * tmp = NULL;
+    tmq_qhash_t *q, *qtmp;
+    tmq_qconfig_t *qconf;
+    MUTEX_LOCK_V(M_q_lock);
+    
+    HASH_ITER(hh, G_qhash, q, qtmp)
+    {
+        if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname)) && qconf->autoq)
+        {
+            if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
+            strcpy(tmp->qname, q->qname);
+            DL_APPEND(ret, tmp);
+        }
+        
+    }   
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
+
 
 /**
  * Sort Qs

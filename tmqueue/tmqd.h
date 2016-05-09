@@ -71,6 +71,7 @@ typedef struct
     
     threadpool thpool; /* threads for service */
     
+    int fwdpoolsize; /* forwarder thread pool size */
     threadpool fwdthpool; /* threads for forwarder */
     
 } tmqueue_cfg_t;
@@ -139,6 +140,20 @@ struct tmq_qconfig
     UT_hash_handle hh; /* makes this structure hashable        */
 };
 
+/**
+ * List of Qs to forward
+ */
+typedef struct fwd_qlist fwd_qlist_t;
+struct fwd_qlist
+{
+    char qname[TMQNAMELEN+1];
+    
+    fwd_qlist_t *next;
+    fwd_qlist_t *prev;
+    
+    fwd_qlist_t *cur; /* current iterator */
+};
+
 /*---------------------------Globals------------------------------------*/
 extern tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
@@ -156,6 +171,7 @@ extern void forward_shutdown_wake(void);
 extern void forward_process_init(void);
 extern void forward_lock(void);
 extern void forward_unlock(void);
+extern void thread_shutdown(void *ptr, int *p_finish_off);
 
 /* Q space api: */
 extern int tmq_reload_conf(char *cf);
@@ -167,6 +183,7 @@ extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags);
 extern tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
+extern fwd_qlist_t *tmq_get_fwd_list(void);
     
 #ifdef	__cplusplus
 }

@@ -301,6 +301,9 @@ int tpsvrinit(int argc, char **argv)
             case 'p': 
                 G_tmqueue_cfg.threadpoolsize = atol(optarg);
                 break;
+            case 'f': 
+                G_tmqueue_cfg.fwdpoolsize = atol(optarg);
+                break;
             case 't': 
                 G_tmqueue_cfg.dflt_timeout = atol(optarg);
                 break;
@@ -325,6 +328,11 @@ int tpsvrinit(int argc, char **argv)
     if (0>=G_tmqueue_cfg.threadpoolsize)
     {
         G_tmqueue_cfg.threadpoolsize = THREADPOOL_DFLT;
+    }
+    
+    if (0>=G_tmqueue_cfg.fwdpoolsize)
+    {
+        G_tmqueue_cfg.fwdpoolsize = THREADPOOL_DFLT;
     }
     
     if (0>=G_tmqueue_cfg.dflt_timeout)
@@ -380,11 +388,19 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
-    
+    /* service request handlers */
     if (NULL==(G_tmqueue_cfg.thpool = thpool_init(G_tmqueue_cfg.threadpoolsize)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.threadpoolsize);
+        FAIL_OUT(ret);
+    }
+    
+    /* q forward handlers */
+    if (NULL==(G_tmqueue_cfg.fwdthpool = thpool_init(G_tmqueue_cfg.fwdpoolsize)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize fwd thread pool (cnt: %d)!", 
+                G_tmqueue_cfg.fwdpoolsize);
         FAIL_OUT(ret);
     }
     
@@ -401,6 +417,7 @@ out:
  */
 void tpsvrdone(void)
 {
+    int i;
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
@@ -413,9 +430,24 @@ void tpsvrdone(void)
         /* Wait to complete */
         pthread_join(G_forward_thread, NULL);
 
+        /* Terminate the threads (request) */
+        for (i=0; i<G_tmqueue_cfg.threadpoolsize; i++)
+        {
+            thpool_add_work(G_tmqueue_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+        }
+        
+        /* forwarder */
+        for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
+        {
+            thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tp_thread_shutdown, NULL);
+        }
+        
         /* Wait for threads to finish */
         thpool_wait(G_tmqueue_cfg.thpool);
         thpool_destroy(G_tmqueue_cfg.thpool);
+        
+        thpool_wait(G_tmqueue_cfg.fwdthpool);
+        thpool_destroy(G_tmqueue_cfg.fwdthpool);
     }
     tpclose();
     

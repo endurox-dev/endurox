@@ -508,6 +508,7 @@ out:
  */
 void tpsvrdone(void)
 {
+    int i;
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
@@ -517,6 +518,12 @@ void tpsvrdone(void)
     {
         background_wakeup();
 
+        /* Terminate the threads */
+        for (i=0; i<G_tmsrv_cfg.threadpoolsize; i++)
+        {
+            thpool_add_work(G_tmsrv_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+        }
+        
         /* Wait to complete */
         pthread_join(G_bacground_thread, NULL);
 
