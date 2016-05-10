@@ -139,10 +139,10 @@ public void forward_shutdown_wake(void)
 private tmq_msg_t * get_next_msg(void)
 {
     tmq_msg_t * ret = NULL;
-    static fwd_qlist_t *list = NULL;    
+    static __thread fwd_qlist_t *list = NULL;     /* Single threaded but anyway */
     fwd_qlist_t *elt, *tmp;
     
-    if (NULL==list || NULL == list->cur->next)
+    if (NULL==list || NULL == list->cur)
     {
         /* Deallocate the previous DL */
         if (NULL!=list)

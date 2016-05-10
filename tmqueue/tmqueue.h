@@ -130,11 +130,11 @@ typedef struct
 #define UPD_MSG(DEST, SRC)  NDRX_LOG(log_debug, "status [%c] -> [%c]",\
                     DEST->status, SRC->status);\
             DEST->status = SRC->status;\
-            NDRX_LOG(log_debug, "%s: trycounter [%ld] -> [%ld]",\
+            NDRX_LOG(log_debug, "trycounter [%ld] -> [%ld]",\
                     DEST->trycounter, SRC->trycounter);\
             DEST->trycounter = SRC->trycounter;\
-            NDRX_LOG(log_debug, "%s: trycounter [%lld] -> [%ld]",\
-                    DEST->trycounter, SRC->trycounter);\
+            NDRX_LOG(log_debug, "trycounter [%llu] -> [%llu]",\
+                    DEST->trytstamp, SRC->trytstamp);\
             DEST->trytstamp = SRC->trytstamp;
 
 /**
