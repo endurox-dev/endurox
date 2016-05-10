@@ -140,9 +140,10 @@ private tmq_msg_t * get_next_msg(void)
 {
     tmq_msg_t * ret = NULL;
     static __thread fwd_qlist_t *list = NULL;     /* Single threaded but anyway */
+    static __thread fwd_qlist_t *cur = NULL;     /* Single threaded but anyway */
     fwd_qlist_t *elt, *tmp;
     
-    if (NULL==list || NULL == list->cur)
+    if (NULL==list || NULL == cur)
     {
         /* Deallocate the previous DL */
         if (NULL!=list)
@@ -159,17 +160,17 @@ private tmq_msg_t * get_next_msg(void)
         
         if (NULL!=list)
         {
-            list->cur = list;
+            cur = list;
         }
     }
     
     /*
      * get the message
      */
-    while (NULL!=list && NULL!=list->cur)
+    while (NULL!=cur)
     {
         /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue_fifo(list->cur->qname, 0, TRUE)))
+        if (NULL==(ret=tmq_msg_dequeue_fifo(cur->qname, 0, TRUE)))
         {
             NDRX_LOG(log_debug, "Not messages for dequeue");
         }
@@ -178,7 +179,7 @@ private tmq_msg_t * get_next_msg(void)
             NDRX_LOG(log_debug, "Dequeued message");
             goto out;
         }
-        list = list->next;
+        cur = cur->next;
     }
     
 out:
@@ -202,7 +203,6 @@ public void thread_process_forward (void *ptr, int *p_finish_off)
     char *fn = "thread_process_forward";
     int tperr;
     union tmq_block cmd_block;
-    
     
     if (!M_is_xa_open)
     {

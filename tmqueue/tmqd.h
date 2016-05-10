@@ -150,8 +150,6 @@ struct fwd_qlist
     
     fwd_qlist_t *next;
     fwd_qlist_t *prev;
-    
-    fwd_qlist_t *cur; /* current iterator */
 };
 
 /*---------------------------Globals------------------------------------*/

@@ -808,7 +808,7 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto)
     {
         if (NULL!=node)
         {
-            NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %ld is_auto: %d",
+            NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %llu is_auto: %d",
                     tmq_msgid_serialize(node->msg->hdr.msgid, msgid_str),
                     node->msg->lockthreadid,
                     is_auto

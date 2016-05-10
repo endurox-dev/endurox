@@ -51,7 +51,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
-export NDRX_TOUT=60
+export NDRX_TOUT=90
 
 #
 # Domain 1 - here client will live

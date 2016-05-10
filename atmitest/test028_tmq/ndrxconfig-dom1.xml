@@ -60,7 +60,8 @@
                 <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
             </server>
             <server name="atmisv28">
-                <max>1</max>
+                <max>3</max>
+                <max>3</max>
                 <srvid>20</srvid>
                 <sysopt>-e ${TESTDIR}/atmisv28-dom1.log -r</sysopt>
             </server>
