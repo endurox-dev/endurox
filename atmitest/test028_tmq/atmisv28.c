@@ -85,8 +85,14 @@ int tpsvrinit(int argc, char **argv)
 
     if (SUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
-        NDRX_LOG(log_error, "Failed to initialize CONVSV!");
+        NDRX_LOG(log_error, "Failed to initialize SVCOK!");
     }
+    
+    if (SUCCEED!=tpadvertise("SVCFAIL", SVCFAIL))
+    {
+        NDRX_LOG(log_error, "Failed to initialize SVCFAIL!");
+    }
+    
 }
 
 /**

@@ -175,7 +175,11 @@ extern "C" {
 #define TPEEVENT	22
 #define	TPEMATCH	23
 #define TPEDIAGNOSTIC	24
-#define TPEMIB		25
+#define TPEMIB		25    
+#define TPERFU26        26 /* reserved for future use */
+#define TPERFU27	27 /* reserved for future use */
+#define TPERFU28	28 /* reserved for future use */
+#define TPERFU29	29 /* reserved for future use */
 #define TPINITFAIL	30
 #define TPMAXVAL	31	/* max error */
 

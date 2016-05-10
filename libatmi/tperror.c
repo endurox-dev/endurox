@@ -91,6 +91,12 @@ struct err_msg
     {TP_ERROR(TPEHEURISTIC)}, /* 21 */
     {TP_ERROR(TPEEVENT)}, /* 22 */
     {TP_ERROR(TPEMATCH)}, /* 23 */
+    {TP_ERROR(TPEDIAGNOSTIC)}, /* 24 */
+    {TP_ERROR(TPEMIB)}, /* 25 */
+    {TP_ERROR(TPERFU26)}, /* 26 */
+    {TP_ERROR(TPERFU27)}, /* 27 */
+    {TP_ERROR(TPERFU28)}, /* 28 */
+    {TP_ERROR(TPERFU29)}, /* 29 */
     {TP_ERROR(TPINITFAIL)}, /* 30 */
     {TP_ERROR(TPMAXVAL)} /* 31 - maximum error message */
 };

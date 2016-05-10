@@ -46,6 +46,8 @@
 #include <Exfields.h>
 #include <typed_buf.h>
 #include <qcommon.h>
+
+#include "tperror.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define OFSZ(s,e)   OFFSET(s,e), ELEM_SIZE(s,e)
@@ -315,6 +317,9 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     long tmp_len = ATMI_MSG_MAX_SIZE;
     UBFH *p_ub = NULL;
     short buftype;
+    atmi_error_t errbuf;
+    
+    memset(&errbuf, 0, sizeof(errbuf));
     
     if (NULL==data)
     {
@@ -376,7 +381,7 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     
     if (NULL == (p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ+tmp_len)))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to allocate req buffer: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to allocate req buffer: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -385,21 +390,21 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     if (SUCCEED!=tmq_tpqctl_to_ubf_enqreq(p_ub, ctl))
     {
         
-        _TPset_error_msg(TPEINVAL,  "_tpenqueue: failed convert ctl "
+        _TPset_error_fmt(TPEINVAL,  "_tpenqueue: failed convert ctl "
                 "to internal UBF buf!");
         FAIL_OUT(ret);
     }
     
     if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, tmp, tmp_len))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set data field: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set data field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
     
     if (SUCCEED!=Bchg(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftype, 0L))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set buftyp field: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set buftyp field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -407,14 +412,14 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     /* Setup the command in EX_QCMD */
     if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set cmd field: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set cmd field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
     
     if (SUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpenqueue: Failed to set qname field: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set qname field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -425,10 +430,17 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
+        
+        _TPsave_error(&errbuf);/* save the error */
+        
         NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
         if (TPESVCFAIL!=tpe)
         {
             FAIL_OUT(ret);
+        }
+        else
+        {
+            ret=FAIL;
         }
     }
     
@@ -450,10 +462,22 @@ out:
         tpfree((char *)p_ub);
     }
 
-    if (ctl->diagnostic)
+        /* restore the error if have */
+    if (errbuf.atmi_error)
     {
-        ret = TPEDIAGNOSTIC;
+        if (ctl->diagnostic)
+        {
+            errbuf.atmi_error = TPEDIAGNOSTIC;
+            strcpy(errbuf.atmi_error_msg_buf, "error details in TPQCTL diag fields");
+        }
+        
+        _TPrestore_error(&errbuf);
     }
+    else
+    {
+        ctl->diagnostic = FALSE;
+    }
+
 
     NDRX_LOG(log_info, "_tpenqueue: return %d", ret);
 
@@ -480,8 +504,10 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     char cmd = TMQ_CMD_DEQUEUE;
     short buftyp;
     typed_buffer_descr_t *descr;
-    
+    atmi_error_t errbuf;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
+    
+    memset(&errbuf, 0, sizeof(errbuf));
     
     if (NULL==qspace || EOS==*qspace)
     {
@@ -523,7 +549,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     /* Alloc the request buffer */
     if (NULL == p_ub)
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to allocate req buffer: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to allocate req buffer: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -532,7 +558,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     if (SUCCEED!=tmq_tpqctl_to_ubf_deqreq(p_ub, ctl))
     {
         
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: failed convert ctl "
+        _TPset_error_fmt(TPEINVAL,  "_tpdequeue: failed convert ctl "
                 "to internal UBF buf!");
         FAIL_OUT(ret);
     }
@@ -541,7 +567,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     
     if (SUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to set qname field: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to set qname field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -549,7 +575,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     /* Setup the command in EX_QCMD */
     if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpdequeue: Failed to set cmd field: %s", 
+        _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to set cmd field: %s", 
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }
@@ -560,10 +586,17 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
+            
+        _TPsave_error(&errbuf);/* save the error */
+                
         NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
         if (TPESVCFAIL!=tpe)
         {
             FAIL_OUT(ret);
+        }
+        else
+        {
+            ret=FAIL;
         }
         
         ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue response buffer", p_ub);
@@ -632,10 +665,18 @@ out:
         tpfree((char *)p_ub);
     }
 
-    if (ctl->diagnostic)
+    /* restore the error if have */
+    if (errbuf.atmi_error)
     {
-        ret = TPEDIAGNOSTIC;
+        if (ctl->diagnostic)
+        {
+            errbuf.atmi_error = TPEDIAGNOSTIC;
+            strcpy(errbuf.atmi_error_msg_buf, "error details in TPQCTL diag fields");
+        }
+        
+        _TPrestore_error(&errbuf);
     }
+
 
     NDRX_LOG(log_info, "_tpdequeue: return %d", ret);
 

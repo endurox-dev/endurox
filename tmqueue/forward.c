@@ -294,7 +294,7 @@ out:
             /* Send response to reply Q (load the data in FB with call details) */
             memset(&ctl, 0, sizeof(ctl));
                     
-            if (SUCCEED!=tpenqueue (msg->qctl.replyqueue, msg->hdr.qspace, &ctl, 
+            if (SUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
                     call_buf, call_len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
@@ -317,7 +317,7 @@ out:
         /* Increase the counter */
         msg->trycounter++;
         NDRX_LOG(log_warn, "Message [%s] tries %ld, max: %ld", 
-                msg->trycounter, qconf.tries);
+                msgid_str, msg->trycounter, qconf.tries);
         msg->trytstamp = nstdutil_utc_tstamp_micro();
         
         if (msg->trycounter>=qconf.tries)
@@ -335,7 +335,7 @@ out:
                 /* Send response to reply Q (load the data in FB with call details) */
                 memset(&ctl, 0, sizeof(ctl));
 
-                if (SUCCEED!=tpenqueue (msg->qctl.failurequeue, msg->hdr.qspace, &ctl, 
+                if (SUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         call_buf, call_len, TPNOTRAN))
                 {
                     NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
@@ -356,6 +356,8 @@ out:
             /* We need to update the message */
             UPD_MSG((&cmd_block.upd), msg);
         
+            cmd_block.hdr.command_code = TMQ_STORCMD_UPD;
+            
             if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
                     "Update message command"))
             {
@@ -384,7 +386,7 @@ out:
 public int forward_loop(void)
 {
     int ret = SUCCEED;
-    tmq_msg_t * msg = NULL;
+    tmq_msg_t * msg;
     /*
      * We need to get the list of queues to monitor.
      * Note that list can be dynamic. So at some periods we need to refresh
@@ -392,6 +394,7 @@ public int forward_loop(void)
      */
     while(!G_forward_req_shutdown)
     {
+        msg = NULL;
         
         if (thpool_freethreads_nr(G_tmqueue_cfg.fwdthpool) > 0)
         {
@@ -405,12 +408,17 @@ public int forward_loop(void)
             /* Submit the job to thread */
             thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
         }
-        
-        NDRX_LOG(log_debug, "background - sleep %d", 
-                G_tmqueue_cfg.scan_time);
-        
-        if (!G_forward_req_shutdown)
-            thread_sleep(G_tmqueue_cfg.scan_time);
+        else
+        {
+            /* sleep only when did not have a message 
+             * So that if we have batch, we try to use all resources...
+             */
+            NDRX_LOG(log_debug, "background - sleep %d", 
+                    G_tmqueue_cfg.scan_time);
+            
+            if (!G_forward_req_shutdown)
+                thread_sleep(G_tmqueue_cfg.scan_time);
+        }
     }
     
 out:

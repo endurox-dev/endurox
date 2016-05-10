@@ -181,6 +181,14 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Running: Auto queue dead + reply q"
+(./atmiclt28 autodeadq 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"

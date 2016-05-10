@@ -345,9 +345,9 @@ public int tmq_dequeue(UBFH *p_ub)
             
             tmq_msgid_serialize(qctl_in.msgid, msgid_str);
             
-            NDRX_LOG(log_error, "tmq_dequeue: not message found for given msgid [%s]", 
+            NDRX_LOG(log_error, "tmq_dequeue: no message found for given msgid [%s]", 
                     msgid_str);
-            strcpy(qctl_out.diagmsg, "tmq_dequeue: not message found for given msgid");
+            strcpy(qctl_out.diagmsg, "tmq_dequeue: no message found for given msgid");
             qctl_out.diagnostic = QMENOMSG;
             FAIL_OUT(ret);
         }
@@ -360,16 +360,16 @@ public int tmq_dequeue(UBFH *p_ub)
             
             tmq_corid_serialize(qctl_in.corrid, corid_str);
             
-            NDRX_LOG(log_error, "tmq_dequeue: not message found for given msgid [%s]", 
+            NDRX_LOG(log_error, "tmq_dequeue: no message found for given msgid [%s]", 
                     corid_str);
-            strcpy(qctl_out.diagmsg, "tmq_dequeue: not message found for given msgid");
+            strcpy(qctl_out.diagmsg, "tmq_dequeue: no message found for given msgid");
             qctl_out.diagnostic = QMENOMSG;
             FAIL_OUT(ret);
         }
     }
     else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname, qctl_in.flags, FALSE)))
     {
-        NDRX_LOG(log_error, "tmq_dequeue: not message in Q [%s]", qname);
+        NDRX_LOG(log_error, "tmq_dequeue: no message in Q [%s]", qname);
         strcpy(qctl_out.diagmsg, "tmq_dequeue: no message in Q!");
         qctl_out.diagnostic = QMENOMSG;
         

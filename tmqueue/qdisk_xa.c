@@ -289,10 +289,10 @@ private char *get_filename_i(int i, char *folder, int slot)
  */
 private char *get_file_name_final(char *fname)
 {
-    static char buf[PATH_MAX+1];
+    static __thread char buf[PATH_MAX+1];
     
     sprintf(buf, "%s/%s", M_folder_committed, fname);
-    NDRX_LOG(log_debug, "Folder built: %s", buf);
+    NDRX_LOG(log_debug, "Filename built: %s", buf);
     
     return buf;
 }
