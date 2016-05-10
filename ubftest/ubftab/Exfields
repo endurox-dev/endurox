@@ -93,9 +93,9 @@ EX_QDEQ_TIME		203	    long	-	absolute/relative  time for dequeuing
 EX_QPRIORITY		204	    long	-	enqueue priority
 EX_QDIAGNOSTIC		205 	long	-	indicates reason for failure
 EX_QMSGID		    206	    carray	-	id of message before which to queue, binary
-EX_QCORRID		    207	    char	-	correlation id used to identify message
-EX_QREPLYQUEUE		208	    char	-	queue name for reply message
-EX_QFAILUREQUEUE	209 	char	-	queue name for failure message
+EX_QCORRID		    207	    carray	-	correlation id used to identify message
+EX_QREPLYQUEUE		208	    string	-	queue name for reply message
+EX_QFAILUREQUEUE	209 	    string	-	queue name for failure message
 EX_QURCODE		    210 	long	-	application user-return code
 EX_QAPPKEY		    211	    long	-	application authentication client key
 EX_QDELIVERY_QOS	212	    long    -	delivery quality of service

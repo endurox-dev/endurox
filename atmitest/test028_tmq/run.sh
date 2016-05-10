@@ -157,8 +157,16 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-echo "Running: msgid/corid tests"
+echo "Running: msgid tests"
 (./atmiclt28 msgid 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Running: corid tests"
+(./atmiclt28 corid 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then

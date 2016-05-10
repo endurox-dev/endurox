@@ -75,9 +75,9 @@
 #define	EX_QPRIORITY	((BFLDID32)33554736)	/* number: 304	 type: long */
 #define	EX_QDIAGNOSTIC	((BFLDID32)33554737)	/* number: 305	 type: long */
 #define	EX_QMSGID	((BFLDID32)201326898)	/* number: 306	 type: carray */
-#define	EX_QCORRID	((BFLDID32)67109171)	/* number: 307	 type: char */
-#define	EX_QREPLYQUEUE	((BFLDID32)67109172)	/* number: 308	 type: char */
-#define	EX_QFAILUREQUEUE	((BFLDID32)67109173)	/* number: 309	 type: char */
+#define	EX_QCORRID	((BFLDID32)201326899)	/* number: 307	 type: carray */
+#define	EX_QREPLYQUEUE	((BFLDID32)167772468)	/* number: 308	 type: string */
+#define	EX_QFAILUREQUEUE	((BFLDID32)167772469)	/* number: 309	 type: string */
 #define	EX_QURCODE	((BFLDID32)33554742)	/* number: 310	 type: long */
 #define	EX_QAPPKEY	((BFLDID32)33554743)	/* number: 311	 type: long */
 #define	EX_QDELIVERY_QOS	((BFLDID32)33554744)	/* number: 312	 type: long */

@@ -51,7 +51,9 @@ int enq_q_test(void);
 int deq_q_test(int do_commit);
 int deqempty_q_test(void);
 int basic_q_msgid_test(void);
+int basic_q_corid_test(void);
 int basic_autoq_ok(void);
+
 
 int main(int argc, char** argv)
 {
@@ -92,6 +94,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "msgid"))
     {
         return basic_q_msgid_test();
+    }
+    else if (0==strcmp(argv[1], "corid"))
+    {
+        return basic_q_corid_test();
     }
     else if (0==strcmp(argv[1], "autoqok"))
     {
@@ -566,6 +572,153 @@ out:
 }
 
 /**
+ * Test message get by corid
+ */
+int basic_q_corid_test(void)
+{
+
+    int ret = SUCCEED;
+    TPQCTL qc1, qc2;
+    int i, j;
+
+    /* Initial test... */
+    for (i=0; i<1000; i++)
+    {
+        char *buf = tpalloc("CARRAY", "", 1);
+        char *testbuf_ref = tpalloc("CARRAY", "", 1);
+        long len=1;
+        
+        /* alloc output buffer */
+        if (NULL==buf || NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+
+        testbuf_ref[0]=101;
+        
+        /* enqueue the data buffer */
+        memset(&qc1, 0, sizeof(qc1));
+        qc1.corrid[0] = 1;
+        qc1.corrid[1] = 2;
+        qc1.flags|=TPQCORRID;
+        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc1, testbuf_ref, 
+                len, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            FAIL_OUT(ret);
+        }
+        
+        testbuf_ref[0]=102;
+        
+        /* enqueue the data buffer */
+        memset(&qc2, 0, sizeof(qc2));
+        
+        qc2.corrid[0] = 3;
+        qc2.corrid[1] = 4;
+        qc2.flags|=TPQCORRID;
+        
+        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc2, testbuf_ref, 
+                len, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc2.diagnostic, qc2.diagmsg);
+            FAIL_OUT(ret);
+        }
+
+        /* dequeue the data buffer + allocate the output buf. */
+        /* Have some test with peek... */
+        for (j=0; j<2; j++)
+        {
+            len = 1;
+            buf[0] = 0;
+            
+            memset(&qc2, 0, sizeof(qc2));
+        
+            qc2.corrid[0] = 3;
+            qc2.corrid[1] = 4;
+            
+            if (0 == j)
+            {
+                qc2.flags|=(TPQGETBYCORRID | TPQPEEK);
+            }
+            else
+            {
+                /* Already reset to 0 by first dequeue */
+                qc2.flags|=TPQGETBYCORRID;
+            }
+            
+            NDRX_LOG(log_info, "Calling with flags: %ld", qc2.flags);
+            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
+                    &len, TPNOTRAN))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                FAIL_OUT(ret);
+            }
+
+            if (102!=buf[0])
+            {
+                NDRX_LOG(log_error, "TESTERROR: Got %d expected 102", buf[0]);
+                FAIL_OUT(ret);
+
+            }
+        }
+        
+        for (j=0; j<2; j++)
+        {
+            len = 1;
+            buf[0] = 0;
+            
+            memset(&qc1, 0, sizeof(qc1));
+        
+            qc1.corrid[0] = 1;
+            qc1.corrid[1] = 2;
+            
+            if (0 == j)
+            {
+                qc1.flags|=(TPQGETBYCORRID | TPQPEEK);
+            }
+            else
+            {
+                /* Already reset to 0 by first dequeue */
+                qc1.flags |= TPQGETBYCORRID;
+            }
+            
+            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
+                    &len, TPNOTRAN))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                FAIL_OUT(ret);
+            }
+
+            if (101!=buf[0])
+            {
+                NDRX_LOG(log_error, "TESTERROR: Got %d expected 101", buf[0]);
+                FAIL_OUT(ret);
+            }
+        }
+        
+        tpfree(buf);
+        tpfree(testbuf_ref);
+    }
+    
+    if (SUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
  * Sending to OK q
  */
 int basic_autoq_ok(void)
@@ -606,7 +759,7 @@ int basic_autoq_ok(void)
         FAIL_OUT(ret);
     }
     
-    sleep(2); /* should be enough */
+    sleep(5); /* should be enough */
     
     memset(&qc1, 0, sizeof(qc1));
     

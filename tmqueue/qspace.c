@@ -718,7 +718,7 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node)
     int retry_inc;
     unsigned long long next_try;
     
-    if (NULL!=(qconf=tmq_qconf_get_with_default(node->msg->hdr.qname)))
+    if (NULL==(qconf=tmq_qconf_get_with_default(node->msg->hdr.qname)))
     {
         
         NDRX_LOG(log_error, "Failed to get q config [%s]", 
@@ -875,7 +875,7 @@ public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
     /* Write some stuff to log */
     
     tmq_msgid_serialize(msgid, msgid_str);
-    NDRX_LOG(log_info, "Dequeuing message by [%s]", msgid_str);
+    NDRX_LOG(log_info, "MSGID: Dequeuing message by [%s]", msgid_str);
     
     if (NULL==(mmsg = tmq_get_msg_by_msgid_str(msgid_str)))
     {
@@ -932,7 +932,7 @@ public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
     /* Write some stuff to log */
     
     tmq_msgid_serialize(corid, corid_str);
-    NDRX_LOG(log_info, "Dequeuing message by [%s]", corid_str);
+    NDRX_LOG(log_info, "CORID: Dequeuing message by [%s]", corid_str);
     
     if (NULL==(mmsg = tmq_get_msg_by_corid_str(corid_str)))
     {
