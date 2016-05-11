@@ -90,6 +90,27 @@ function go_out {
     exit $1
 }
 
+
+#
+# Test Q space for empty condition
+#
+function test_empty_qspace {
+	echo "Testing Qspace empty"
+    
+	COUNT=`find ./QSPACE1 -type f | wc | awk '{print $1}'`
+
+	if [[ "X$COUNT" != "X0" ]]; then
+		echo "QSPACE1 MUST BE EMPTY AFTER TEST!!!!"
+		go_out 2
+	fi
+
+    # clean-up the logs for debbuging at the error.
+    # for f in `ls *.log`; do
+    #     echo > $f
+    # done
+
+}
+
 rm *dom*.log
 
 # Where to store TM logs
@@ -120,6 +141,8 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+test_empty_qspace;
+
 echo "Running: enqueue"
 (./atmiclt28 enq 2>&1) > ./atmiclt-dom1.log
 RET=$?
@@ -149,6 +172,8 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+test_empty_qspace;
+
 echo "Running: dequeue - empty"
 (./atmiclt28 deqe 2>&1) >> ./atmiclt-dom1.log
 RET=$?
@@ -156,6 +181,8 @@ RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
+
+test_empty_qspace;
 
 echo "Running: msgid tests"
 (./atmiclt28 msgid 2>&1) >> ./atmiclt-dom1.log
@@ -165,6 +192,8 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+test_empty_qspace;
+
 echo "Running: corid tests"
 (./atmiclt28 corid 2>&1) >> ./atmiclt-dom1.log
 RET=$?
@@ -172,6 +201,8 @@ RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
+
+test_empty_qspace;
 
 echo "Running: Auto queue ok + reply q"
 (./atmiclt28 autoqok 2>&1) >> ./atmiclt-dom1.log
@@ -181,6 +212,8 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+test_empty_qspace;
+
 echo "Running: Auto queue dead + reply q"
 (./atmiclt28 autodeadq 2>&1) >> ./atmiclt-dom1.log
 RET=$?
@@ -189,18 +222,15 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+test_empty_qspace;
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
 	RET=-2
 fi
 
-COUNT=`find ./QSPACE1 -type f | wc | awk '{print $1}'`
 
-if [[ "X$COUNT" != "X0" ]]; then
-	echo "QSPACE1 MUST BE EMPTY AFTER TEST!!!!"
-	RET=-2
-fi
 
 go_out $RET
 

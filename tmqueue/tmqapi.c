@@ -193,7 +193,7 @@ public int tmq_enqueue(UBFH *p_ub)
     
     /* Build up the message. */
     tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
-            tpgetnodeid(), G_server_conf.srv_id, G_tmqueue_cfg.qspace);
+            tpgetnodeid(), G_server_conf.srv_id, G_tmqueue_cfg.qspace, p_msg->qctl.flags);
     
     /* Return the message id. */
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);

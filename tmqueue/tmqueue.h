@@ -69,6 +69,10 @@ extern "C" {
 #define TMQ_STATUS_DONE         'D'      /* Message is done            */
 #define TMQ_STATUS_EXPIRED      'E'      /* Message is expired  or tries exceeded  */
 #define TMQ_STATUS_SUSPENDED    'S'      /* Message is suspended       */
+    
+    
+#define TMQ_SYS_ASYNC_CPLT    0x00000001    /* Complete message in async mode */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -77,13 +81,14 @@ extern "C" {
  */
 typedef struct
 {
-    char magic[4];          /* File magic               */
+    char magic[4];          /* File magic                            */
     short srvid;
     short nodeid;
     char qname[TMQNAMELEN+1];
     char qspace[XATMI_SERVICE_NAME_LENGTH+1];
     char command_code;     /* command code, see TMQ_CMD*             */
-    char msgid[TMMSGIDLEN]; /* message_id               */
+    char msgid[TMMSGIDLEN]; /* message_id                            */
+    long flags;             /* Copy of message flags                 */
 } tmq_cmdheader_t;
 
 /** 
@@ -160,7 +165,7 @@ union tmq_upd_block {
  
 /* util, shared between driver & daemon */
 extern int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
-        short nodeid, short srvid, char *qspace);
+        short nodeid, short srvid, char *qspace, long flags);
 extern void tmq_msgid_gen(char *msgid);
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);

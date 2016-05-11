@@ -266,6 +266,8 @@ out:
     memset(&cmd_block, 0, sizeof(cmd_block));
 
     memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
+    
+    cmd_block.hdr.flags|=TPQASYNC; /* async complete to avoid deadlocks... */
 
     /* start the transaction */
     if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))

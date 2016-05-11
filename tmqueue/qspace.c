@@ -112,7 +112,7 @@ private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
  * @param qname queue name
  */
 public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
-        short nodeid, short srvid, char *qspace)
+        short nodeid, short srvid, char *qspace, long flags)
 {
     int ret = SUCCEED;
     
@@ -122,6 +122,7 @@ public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
     strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
     hdr->nodeid = nodeid;
     hdr->srvid = srvid;
+    hdr->flags = flags;
     
     tmq_msgid_gen(hdr->msgid);
     

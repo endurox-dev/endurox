@@ -426,8 +426,16 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
     sprintf(svcnm, NDRX_SVC_TMQ, (long)p_upd->hdr.nodeid, (int)p_upd->hdr.srvid);
 
     NDRX_LOG(log_debug, "About to notify [%s]", svcnm);
-    
-    if (FAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
+            
+    if (p_upd->hdr.flags & TPQASYNC)
+    {
+        if (FAIL == tpacall(svcnm, (char *)p_ub, 0L, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+    }
+    else if (FAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
     {
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
         FAIL_OUT(ret);
