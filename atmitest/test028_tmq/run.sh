@@ -214,8 +214,18 @@ fi
 
 test_empty_qspace;
 
-echo "Running: Auto queue dead + reply q"
+echo "Running: Auto queue dead"
 (./atmiclt28 autodeadq 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+echo "Running: raindom fail for auto"
+(./atmiclt28 rndfail 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then

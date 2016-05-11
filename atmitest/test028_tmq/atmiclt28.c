@@ -53,6 +53,7 @@ int deqempty_q_test(void);
 int basic_q_msgid_test(void);
 int basic_q_corid_test(void);
 int basic_autoq_ok(void);
+int basic_rndfail(void);
 
 
 int main(int argc, char** argv)
@@ -106,6 +107,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "autodeadq"))
     {
         return basic_autoq_deadq();
+    }
+    else if (0==strcmp(argv[1], "rndfail"))
+    {
+        return basic_rndfail();
     }
     else
     {
@@ -908,6 +913,113 @@ int basic_autoq_deadq(void)
             FAIL_OUT(ret);
         }
 
+        tpfree((char *)buf2);
+    }
+
+    if (SUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Sending to OK q
+ */
+int basic_rndfail(void)
+{
+    int ret = SUCCEED;
+    TPQCTL qc1;
+    long len = 0;
+    char *p;
+    int i;
+    char strbuf[128];
+    
+    
+    for (i=0; i<100; i++)
+    {
+        UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+
+        sprintf(strbuf, "HELLO FROM SENDER");
+        
+        if (SUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
+                    Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQREPLYQ;
+
+        strcpy(qc1.replyqueue, "REPLYQ");
+
+        if (SUCCEED!=tpenqueue("MYSPACE", "RFQ", &qc1, (char *)buf, 0, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            FAIL_OUT(ret);
+        }
+        tpfree((char *)buf);
+    }
+    sleep(90); /* should be enough */
+    
+    for (i=0; i<100; i++)
+    {
+        UBFH *buf2 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        NDRX_LOG(log_warn, "LOOP: %d", i);
+        
+        if (SUCCEED!=tpdequeue("MYSPACE", "REPLYQ", &qc1, (char **)&buf2, 
+                &len, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            FAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (NULL==(p = Bfind(buf2, T_STRING_2_FLD, 0, 0L)))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_2_FLD %s", 
+                    Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+
+        sprintf(strbuf, "HELLO FROM SENDER");
+        
+        if (0!=strcmp(p, strbuf))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
+            FAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (NULL==(p = Bfind(buf2, T_STRING_FLD, 0, 0L)))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+
+        if (0!=strcmp(p, "OK"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
+            FAIL_OUT(ret);
+        }
         tpfree((char *)buf2);
     }
 

@@ -60,6 +60,37 @@ out:
 }
 
 /**
+ * Fail 'randomly'
+ * @param p_svc
+ */
+void FAILRND (TPSVCINFO *p_svc)
+{
+    int ret=SUCCEED;
+    static int cnt = 0;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    cnt++;
+    
+    if (1 == (cnt % 2) )
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "OK", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD!");
+    }
+
+out:
+    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
  * Returns failure to caller
  * @param p_svc
  */
@@ -81,17 +112,27 @@ out:
  */
 int tpsvrinit(int argc, char **argv)
 {
+    int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (SUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
-        NDRX_LOG(log_error, "Failed to initialize SVCOK!");
+        NDRX_LOG(log_error, "TESTERROR: Failed to initialize SVCOK!");
+        FAIL_OUT(ret);
+    }
+    else if (SUCCEED!=tpadvertise("SVCFAIL", SVCFAIL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to initialize SVCFAIL!");
+        FAIL_OUT(ret);
+    }
+    else if (SUCCEED!=tpadvertise("FAILRND", FAILRND))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to initialize FAILRND!");
+        FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tpadvertise("SVCFAIL", SVCFAIL))
-    {
-        NDRX_LOG(log_error, "Failed to initialize SVCFAIL!");
-    }
+out:
+    return ret;
     
 }
 
