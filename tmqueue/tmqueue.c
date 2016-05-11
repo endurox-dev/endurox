@@ -404,6 +404,8 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
+    /* TODO: We need a POOL for release/update command processing. */
+    
     /* Start the background processing */
     forward_process_init();
     
