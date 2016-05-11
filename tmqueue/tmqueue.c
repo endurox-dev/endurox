@@ -259,7 +259,82 @@ out:
                 0L,
                 0L);
     }
+}
 
+
+/**
+ * Entry point for service (main thread)
+ * @param p_svc
+ */
+void TMQUEUE_NOTIF (TPSVCINFO *p_svc)
+{
+    int ret=SUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
+    long size;
+    char btype[16];
+    char stype[16];
+    thread_server_t *thread_data = malloc(sizeof(thread_server_t));
+      
+    if (NULL==thread_data)
+    {
+        userlog("Failed to malloc memory - %s!", strerror(errno));
+        NDRX_LOG(log_error, "Failed to malloc memory");
+        FAIL_OUT(ret);
+    }
+    
+    if (0==(size = tptypes (p_svc->data, btype, stype)))
+    {
+        NDRX_LOG(log_error, "Zero buffer received!");
+        userlog("Zero buffer received!");
+        FAIL_OUT(ret);
+    }
+    
+    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
+    thread_data->buffer =  tpalloc(btype, NULL, size);
+    
+    if (NULL==thread_data->buffer)
+    {
+        NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
+        FAIL_OUT(ret);
+    }
+    
+    /* copy off the data */
+    memcpy(thread_data->buffer, p_svc->data, size);
+    thread_data->cd = p_svc->cd;
+    
+    if (NULL==(thread_data->context_data = tpsrvgetctxdata()))
+    {
+        NDRX_LOG(log_error, "Failed to get context data!");
+        FAIL_OUT(ret);
+    }
+    
+    thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
+    
+out:
+    if (SUCCEED==ret)
+    {
+        /* serve next.. 
+         * At this point we should know that at least one thread is free
+         */
+        pthread_mutex_lock(&M_wait_th_mutex);
+        
+        /* submit the job to verify free thread */
+        
+        thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tm_chk_one_free_thread, NULL);
+        pthread_cond_wait(&M_wait_th_cond, &M_wait_th_mutex);
+        pthread_mutex_unlock(&M_wait_th_mutex);
+        
+        tpcontinue();
+    }
+    else
+    {
+        /* return error back */
+        tpreturn(  TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+    }
 }
 
 /*
@@ -301,6 +376,9 @@ int tpsvrinit(int argc, char **argv)
             case 'p': 
                 G_tmqueue_cfg.threadpoolsize = atol(optarg);
                 break;
+            case 'u': 
+                G_tmqueue_cfg.notifpoolsize = atol(optarg);
+                break;
             case 'f': 
                 G_tmqueue_cfg.fwdpoolsize = atol(optarg);
                 break;
@@ -330,6 +408,11 @@ int tpsvrinit(int argc, char **argv)
         G_tmqueue_cfg.threadpoolsize = THREADPOOL_DFLT;
     }
     
+    if (0>=G_tmqueue_cfg.notifpoolsize)
+    {
+        G_tmqueue_cfg.notifpoolsize = THREADPOOL_DFLT;
+    }
+    
     if (0>=G_tmqueue_cfg.fwdpoolsize)
     {
         G_tmqueue_cfg.fwdpoolsize = THREADPOOL_DFLT;
@@ -345,6 +428,12 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_info, "Worker pool size [%d] threads",
                             G_tmqueue_cfg.threadpoolsize);
+    
+    NDRX_LOG(log_info, "Worker  notify-loop-back pool size [%d] threads",
+                            G_tmqueue_cfg.notifpoolsize);
+    
+    NDRX_LOG(log_info, "Forward pool size [%d] threads",
+                            G_tmqueue_cfg.fwdpoolsize);
     
     NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
             G_tmqueue_cfg.dflt_timeout );
@@ -381,6 +470,7 @@ int tpsvrinit(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
         FAIL_OUT(ret);
     }
+
     
     if (SUCCEED!=tpadvertise(G_tmqueue_cfg.qspace, TMQUEUE))
     {
@@ -388,11 +478,28 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
+    /* Notification loopback: */
+    sprintf(svcnm, NDRX_SVC_TMQNTF, tpgetnodeid(), tpgetsrvid());
+    
+    if (SUCCEED!=tpadvertise(svcnm, TMQUEUE_NOTIF))
+    {
+        NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
+        FAIL_OUT(ret);
+    }
+    
+    
     /* service request handlers */
     if (NULL==(G_tmqueue_cfg.thpool = thpool_init(G_tmqueue_cfg.threadpoolsize)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.threadpoolsize);
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==(G_tmqueue_cfg.notifthpool = thpool_init(G_tmqueue_cfg.notifpoolsize)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize udpate thread pool (cnt: %d)!", 
+                G_tmqueue_cfg.notifpoolsize);
         FAIL_OUT(ret);
     }
     
@@ -403,6 +510,9 @@ int tpsvrinit(int argc, char **argv)
                 G_tmqueue_cfg.fwdpoolsize);
         FAIL_OUT(ret);
     }
+    
+    
+    
     
     /* TODO: We need a POOL for release/update command processing. */
     
@@ -438,11 +548,18 @@ void tpsvrdone(void)
             thpool_add_work(G_tmqueue_cfg.thpool, (void *)tp_thread_shutdown, NULL);
         }
         
+        /* update threads */
+        for (i=0; i<G_tmqueue_cfg.notifpoolsize; i++)
+        {
+            thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tp_thread_shutdown, NULL);
+        }
+        
         /* forwarder */
         for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
         {
             thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tp_thread_shutdown, NULL);
         }
+        
         
         /* Wait for threads to finish */
         thpool_wait(G_tmqueue_cfg.thpool);

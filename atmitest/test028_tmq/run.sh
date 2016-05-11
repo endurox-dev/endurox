@@ -105,9 +105,9 @@ function test_empty_qspace {
 	fi
 
     # clean-up the logs for debbuging at the error.
-    # for f in `ls *.log`; do
-    #     echo > $f
-    # done
+    for f in `ls *.log`; do
+         echo > $f
+    done
 
 }
 

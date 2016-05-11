@@ -267,7 +267,9 @@ out:
 
     memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
     
-    cmd_block.hdr.flags|=TPQASYNC; /* async complete to avoid deadlocks... */
+   /* cmd_block.hdr.flags|=TPQASYNC; async complete to avoid deadlocks... 
+    * No need for this: we have seperate thread pool for notify events.
+    */
 
     /* start the transaction */
     if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))

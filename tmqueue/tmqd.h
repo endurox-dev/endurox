@@ -69,7 +69,11 @@ typedef struct
     
     int threadpoolsize; /* thread pool size */
     
+    
     threadpool thpool; /* threads for service */
+    
+    int notifpoolsize; /* Notify thread pool size */
+    threadpool notifthpool; /* Notify (loop back) threads for service (callbacks from TMSRV) */
     
     int fwdpoolsize; /* forwarder thread pool size */
     threadpool fwdthpool; /* threads for forwarder */

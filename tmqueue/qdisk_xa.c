@@ -423,7 +423,7 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
     ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
     
     /*Call The TMQ- server */
-    sprintf(svcnm, NDRX_SVC_TMQ, (long)p_upd->hdr.nodeid, (int)p_upd->hdr.srvid);
+    sprintf(svcnm, NDRX_SVC_TMQNTF, (long)p_upd->hdr.nodeid, (int)p_upd->hdr.srvid);
 
     NDRX_LOG(log_debug, "About to notify [%s]", svcnm);
             
