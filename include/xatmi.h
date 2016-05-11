@@ -76,7 +76,6 @@ extern "C" {
 #define NDRX_SVC_TM_I     "@TM-%d-%d-%d"        /* Node_id,resource_id,instance/srvid */
     
 #define NDRX_SVC_TMQ       "@TMQ-%ld-%d"           /* Node_id,srvid */
-#define NDRX_SVC_TMQNTF    "@TMQN-%ld-%d"        /* Notif, Node_id,srvid */
     
 #define NDRX_SVC_CPM      "@CPMSVC"             /* Client Process Monitor svc */
 

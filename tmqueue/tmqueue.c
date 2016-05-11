@@ -64,13 +64,11 @@ extern char *optarg;
 public tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
 private int M_init_ok = FALSE;
-/* Wait for one free thread: */
-pthread_mutex_t M_wait_th_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
 /*---------------------------Prototypes---------------------------------*/
 private int tx_tout_check(void);
 private void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
+private void tm_chk_one_free_thread_notif(void *ptr, int *p_finish_off);
 
 /**
  * Tmqueue service entry (working thread)
@@ -197,7 +195,8 @@ void TMQUEUE (TPSVCINFO *p_svc)
     char btype[16];
     char stype[16];
     thread_server_t *thread_data = malloc(sizeof(thread_server_t));
-      
+    char cmd = EOS;
+    
     if (NULL==thread_data)
     {
         userlog("Failed to malloc memory - %s!", strerror(errno));
@@ -231,99 +230,28 @@ void TMQUEUE (TPSVCINFO *p_svc)
         FAIL_OUT(ret);
     }
     
-    /* submit the job to thread pool: */
-    thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
-    
-out:
-    if (SUCCEED==ret)
+    if (Bget(p_ub, EX_QCMD, 0, (char *)&cmd, 0L))
     {
-        /* serve next.. 
-         * At this point we should know that at least one thread is free
-         */
-        pthread_mutex_lock(&M_wait_th_mutex);
-        
-        /* submit the job to verify free thread */
-        
-        thpool_add_work(G_tmqueue_cfg.thpool, (void*)tm_chk_one_free_thread, NULL);
-        pthread_cond_wait(&M_wait_th_cond, &M_wait_th_mutex);
-        pthread_mutex_unlock(&M_wait_th_mutex);
-        
-        tpcontinue();
+        NDRX_LOG(log_error, "Failed to read command code!");
+        ret=FAIL;
+        goto out;
+    }
+    
+    
+    /* submit the job to thread pool: */
+    if (cmd==TMQ_CMD_NOTIFY)
+    {
+        thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     else
     {
-        /* return error back */
-        tpreturn(  TPFAIL,
-                0L,
-                (char *)p_ub,
-                0L,
-                0L);
+        thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
-}
-
-
-/**
- * Entry point for service (main thread)
- * @param p_svc
- */
-void TMQUEUE_NOTIF (TPSVCINFO *p_svc)
-{
-    int ret=SUCCEED;
-    UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
-    long size;
-    char btype[16];
-    char stype[16];
-    thread_server_t *thread_data = malloc(sizeof(thread_server_t));
-      
-    if (NULL==thread_data)
-    {
-        userlog("Failed to malloc memory - %s!", strerror(errno));
-        NDRX_LOG(log_error, "Failed to malloc memory");
-        FAIL_OUT(ret);
-    }
-    
-    if (0==(size = tptypes (p_svc->data, btype, stype)))
-    {
-        NDRX_LOG(log_error, "Zero buffer received!");
-        userlog("Zero buffer received!");
-        FAIL_OUT(ret);
-    }
-    
-    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
-    thread_data->buffer =  tpalloc(btype, NULL, size);
-    
-    if (NULL==thread_data->buffer)
-    {
-        NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
-        FAIL_OUT(ret);
-    }
-    
-    /* copy off the data */
-    memcpy(thread_data->buffer, p_svc->data, size);
-    thread_data->cd = p_svc->cd;
-    
-    if (NULL==(thread_data->context_data = tpsrvgetctxdata()))
-    {
-        NDRX_LOG(log_error, "Failed to get context data!");
-        FAIL_OUT(ret);
-    }
-    
-    thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     
 out:
     if (SUCCEED==ret)
     {
-        /* serve next.. 
-         * At this point we should know that at least one thread is free
-         */
-        pthread_mutex_lock(&M_wait_th_mutex);
-        
-        /* submit the job to verify free thread */
-        
-        thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tm_chk_one_free_thread, NULL);
-        pthread_cond_wait(&M_wait_th_cond, &M_wait_th_mutex);
-        pthread_mutex_unlock(&M_wait_th_mutex);
-        
+        /* serve next.. */ 
         tpcontinue();
     }
     else
@@ -471,22 +399,11 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
 
-    
     if (SUCCEED!=tpadvertise(G_tmqueue_cfg.qspace, TMQUEUE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
         FAIL_OUT(ret);
     }
-    
-    /* Notification loopback: */
-    sprintf(svcnm, NDRX_SVC_TMQNTF, tpgetnodeid(), tpgetsrvid());
-    
-    if (SUCCEED!=tpadvertise(svcnm, TMQUEUE_NOTIF))
-    {
-        NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
-        FAIL_OUT(ret);
-    }
-    
     
     /* service request handlers */
     if (NULL==(G_tmqueue_cfg.thpool = thpool_init(G_tmqueue_cfg.threadpoolsize)))
@@ -511,14 +428,8 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
-    
-    
-    
-    /* TODO: We need a POOL for release/update command processing. */
-    
     /* Start the background processing */
     forward_process_init();
-    
     
 out:
     return ret;
@@ -570,16 +481,4 @@ void tpsvrdone(void)
     }
     tpclose();
     
-}
-
-/**
- * Just run down one task via pool, to ensure that at least one
- * thread is free, before we are going to mail poll.
- * @param ptr
- */
-private void tm_chk_one_free_thread(void *ptr, int *p_finish_off)
-{
-    pthread_mutex_lock(&M_wait_th_mutex);
-    pthread_cond_signal(&M_wait_th_cond);
-    pthread_mutex_unlock(&M_wait_th_mutex);
 }
