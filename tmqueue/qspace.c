@@ -652,7 +652,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     }
     
     /* Add the message to end of the queue */
-    DL_APPEND(qhash->q, mmsg);    
+    CDL_PREPEND(qhash->q, mmsg);    
     
     /* Add the hash of IDs */
     tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
@@ -823,7 +823,7 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto)
             node = node->next;
         }
     }
-    while (NULL!=node && node->next!=qhash->q->next);
+    while (NULL!=node && node!=qhash->q);
     
     if (NULL==ret)
     {
@@ -1041,7 +1041,7 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
     if (NULL!=qhash)
     {
         /* Add the message to end of the queue */
-        DL_DELETE(qhash->q, mmsg);    
+        CDL_DELETE(qhash->q, mmsg);    
     }
     
     /* Add the hash of IDs */
@@ -1277,7 +1277,7 @@ public int tmq_sort_queues(void)
     /* iterate over Q hash & and sort them by Q time */
     HASH_ITER(hh, G_qhash, q, qtmp)
     {
-        DL_SORT(q->q, q_msg_sort);
+        CDL_SORT(q->q, q_msg_sort);
     }   
     
 out:

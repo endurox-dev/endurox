@@ -242,22 +242,22 @@ extern "C" {
 #define TPNOFLAGS	0x00000		
 #define	TPQCORRID	0x00001		/* set/get correlation id */		
 #define	TPQFAILUREQ	0x00002		/* set/get failure queue */		
-#define	TPQBEFOREMSGID	0x00004		/* enqueue before message id */		
-#define	TPQGETBYMSGIDOLD	0x00008	/* deprecated */		
+#define	TPQBEFOREMSGID	0x00004		/* RFU, enqueue before message id */		
+#define	TPQGETBYMSGIDOLD	0x00008	/* RFU, deprecated */		
 #define	TPQMSGID	0x00010		/* get msgid of enq/deq message */		
 #define	TPQPRIORITY	0x00020		/* set/get message priority */		
-#define	TPQTOP		0x00040		/* enqueue at queue top */		
-#define	TPQWAIT		0x00080		/* wait for dequeuing */		
+#define	TPQTOP		0x00040		/* RFU, enqueue at queue top */		
+#define	TPQWAIT		0x00080		/* RFU, wait for dequeuing */		
 #define	TPQREPLYQ	0x00100		/* set/get reply queue */		
-#define	TPQTIME_ABS	0x00200		/* set absolute time */		
-#define	TPQTIME_REL	0x00400		/* set absolute time */		
+#define	TPQTIME_ABS	0x00200		/* RFU, set absolute time */		
+#define	TPQTIME_REL	0x00400		/* RFU, set absolute time */		
 #define	TPQGETBYCORRIDOLD	0x00800	/* deprecated */		
 #define	TPQPEEK		0x01000		/* peek */		
-#define TPQDELIVERYQOS   0x02000         /* delivery quality of service */		
-#define TPQREPLYQOS     0x04000         /* reply message quality of service */		
-#define TPQEXPTIME_ABS  0x08000         /* absolute expiration time */		
-#define TPQEXPTIME_REL  0x10000         /* relative expiration time */		
-#define TPQEXPTIME_NONE 0x20000        	/* never expire */		
+#define TPQDELIVERYQOS   0x02000         /* RFU, delivery quality of service */		
+#define TPQREPLYQOS     0x04000         /* RFU, reply message quality of service */		
+#define TPQEXPTIME_ABS  0x08000         /* RFU, absolute expiration time */		
+#define TPQEXPTIME_REL  0x10000         /* RFU, relative expiration time */		
+#define TPQEXPTIME_NONE 0x20000        	/* RFU, never expire */		
 #define	TPQGETBYMSGID	0x40008		/* dequeue by msgid */		
 #define	TPQGETBYCORRID	0x80800		/* dequeue by corrid */		
 #define TPQASYNC        0x100000    /* Async complete */
