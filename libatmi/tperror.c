@@ -87,6 +87,7 @@ struct err_msg
     {TP_ERROR(TPERMERR)}, /* 16 */
     {TP_ERROR(TPEITYPE)}, /* 17 */
     {TP_ERROR(TPEOTYPE)}, /* 18 */
+    {TP_ERROR(TPERELEASE)}, /* 19 */
     {TP_ERROR(TPEHAZARD)}, /* 20 */
     {TP_ERROR(TPEHEURISTIC)}, /* 21 */
     {TP_ERROR(TPEEVENT)}, /* 22 */

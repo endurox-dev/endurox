@@ -235,6 +235,8 @@ private void set_filenames(void)
             break;
         }
     }
+    NDRX_LOG(log_info, "Filenames set to: [%s] [%s]", 
+                M_filename_active, M_filename_prepared);
 }
 
 /**
@@ -689,8 +691,6 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
         {
             fname = get_filename_i(i, folders[j], 0);
             
-            
-            
             if (nstdutil_file_exists(fname))
             {
                 NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
@@ -1011,6 +1011,26 @@ private int write_to_tx_file(char *block, int len)
     XID xid;
     size_t ret_len;
     FILE *f = NULL;
+    int ax_ret;
+    
+    if (G_atmi_env.xa_sw->flags & TMREGISTER && !M_is_reg)
+    {
+        ax_ret = ax_reg(M_rmid, &xid, 0);
+                
+        if (TM_JOIN!=ax_ret && TM_OK!=ax_ret)
+        {
+            NDRX_LOG(log_error, "ERROR! xa_reg() failed!");
+            FAIL_OUT(ret);
+        }
+        
+        if (XA_OK!=xa_start_entry(G_atmi_env.xa_sw, &xid, M_rmid, 0))
+        {
+            NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
+            FAIL_OUT(ret);
+        }
+        
+        M_is_reg = TRUE;
+    }
     
     set_filenames();
     
@@ -1025,23 +1045,6 @@ private int write_to_tx_file(char *block, int len)
         userlog( "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
                 M_filename_active, strerror(err));
         FAIL_OUT(ret);
-    }
-    
-    if (G_atmi_env.xa_sw->flags & TMREGISTER && !M_is_reg)
-    {
-        if (SUCCEED!=ax_reg(M_rmid, &xid, 0))
-        {
-            NDRX_LOG(log_error, "ERROR! xa_reg() failed!");
-            FAIL_OUT(ret);
-        }
-        
-        if (XA_OK!=xa_start_entry(G_atmi_env.xa_sw, &xid, M_rmid, 0))
-        {
-            NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
-            FAIL_OUT(ret);
-        }
-        
-        M_is_reg = TRUE;
     }
     
     /* Write th block */
