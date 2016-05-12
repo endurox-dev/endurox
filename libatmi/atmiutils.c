@@ -953,7 +953,10 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
     /* We assume shm is OK! */
     for (i=0; i<G_max_svcs; i++)
     {
-        if (EOS!=svcinfo[i].service[0])
+        /* we might have in old service in SHM (with no actual servers) thus 
+         * skip such.
+         */
+        if (EOS!=svcinfo[i].service[0] && (svcinfo[i].srvs || svcinfo[i].csrvs) )
         {
             /* Check filter, if ok - add to list! */
             if (p_filter(svcinfo[i].service))
