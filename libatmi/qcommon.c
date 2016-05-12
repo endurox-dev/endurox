@@ -318,6 +318,7 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     UBFH *p_ub = NULL;
     short buftype;
     atmi_error_t errbuf;
+    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
     
     memset(&errbuf, 0, sizeof(errbuf));
     
@@ -427,7 +428,8 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     ndrx_debug_dump_UBF(log_debug, "QSPACE enqueue request buffer", p_ub);
     
     /* do the call to queue system */
-    if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
+    sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+    if (FAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
         
@@ -506,6 +508,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     typed_buffer_descr_t *descr;
     atmi_error_t errbuf;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
+    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
     
     memset(&errbuf, 0, sizeof(errbuf));
     
@@ -583,7 +586,9 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     /* do the call to queue system */
     ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue request buffer", p_ub);
     
-    if (FAIL == tpcall(qspace, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
+    sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+    
+    if (FAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
             

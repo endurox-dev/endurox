@@ -367,7 +367,7 @@ public int tmq_dequeue(UBFH *p_ub)
             FAIL_OUT(ret);
         }
     }
-    else if (NULL==(p_msg = tmq_msg_dequeue_fifo(qname, qctl_in.flags, FALSE)))
+    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, FALSE)))
     {
         NDRX_LOG(log_error, "tmq_dequeue: no message in Q [%s]", qname);
         strcpy(qctl_out.diagmsg, "tmq_dequeue: no message in Q!");

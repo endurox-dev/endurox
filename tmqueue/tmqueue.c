@@ -275,7 +275,6 @@ int tpsvrinit(int argc, char **argv)
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
     
-    
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
     /* Parse command line  */
@@ -286,7 +285,9 @@ int tpsvrinit(int argc, char **argv)
         {
             case 'm': /* My qspace.. */ 
                 strcpy(G_tmqueue_cfg.qspace, optarg);
+                sprintf(G_tmqueue_cfg.qspacesvc, NDRX_SVC_QSPACE, optarg);
                 NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
+                NDRX_LOG(log_debug, "Qspace svc set to: [%s]", G_tmqueue_cfg.qspacesvc);
                 break;
                 
             case 'q':
@@ -399,7 +400,7 @@ int tpsvrinit(int argc, char **argv)
         FAIL_OUT(ret);
     }
 
-    if (SUCCEED!=tpadvertise(G_tmqueue_cfg.qspace, TMQUEUE))
+    if (SUCCEED!=tpadvertise(G_tmqueue_cfg.qspacesvc, TMQUEUE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
         FAIL_OUT(ret);

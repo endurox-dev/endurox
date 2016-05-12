@@ -69,6 +69,7 @@
 #define TMQ_QC_WAITRETRYINC     "waitretryinc"
 #define TMQ_QC_WAITRETRYMAX     "waitretrymax"
 #define TMQ_QC_MEMONLY          "memonly"
+#define TMQ_QC_MODE             "mode"
 
 #define HASH_FIND_STR_H2(head,findstr,out)                                     \
     HASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -264,6 +265,24 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
             qconf->memonly = TRUE;
         }
     }
+    else if (0==strcmp(key, TMQ_QC_MODE))
+    {
+        if (0==strcmp(value, "fifo") || 0==strcmp(value, "FIFO"))
+        {
+            qconf->mode = TMQ_MODE_FIFO;
+        }
+        else if (0==strcmp(value, "lifo") || 0==strcmp(value, "LIFO") )
+        {
+            qconf->mode = TMQ_MODE_FIFO;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Not supported Q mode (must be fifo or lifo)", 
+                    value, key);
+            FAIL_OUT(ret);
+        }
+    }
+    
     else
     {
         NDRX_LOG(log_error, "Unknown Q config setting = [%s]", key);
@@ -463,6 +482,7 @@ public int tmq_qconf_addupd(char *qconfstr)
             qconf= calloc(1, sizeof(tmq_qconfig_t));
                     
             /* Try to load initial config from @ (TMQ_DEFAULT_Q) Q */
+            qconf->mode = TMQ_MODE_FIFO; /* default to FIFO... */
             if (NULL!=(dflt=tmq_qconf_get(TMQ_DEFAULT_Q)))
             {
                 memcpy(qconf, dflt, sizeof(*dflt));
@@ -711,21 +731,11 @@ out:
  * @param node
  * @return 
  */
-private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node)
+private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
 {
-    tmq_qconfig_t *qconf;
     int ret = FALSE;
-    int current_wait;
     int retry_inc;
     unsigned long long next_try;
-    
-    if (NULL==(qconf=tmq_qconf_get_with_default(node->msg->hdr.qname)))
-    {
-        
-        NDRX_LOG(log_error, "Failed to get q config [%s]", 
-                node->msg->hdr.qname);
-        goto out;
-    }
     
     
     if (0==node->msg->trycounter)
@@ -775,13 +785,14 @@ out:
  * @param qname queue to lookup.
  * @return NULL (no msg), or ptr to msg
  */
-public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto)
+public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
 {
     tmq_qhash_t *qhash;
     tmq_memmsg_t *node;
     tmq_msg_t * ret = NULL;
     union tmq_block block;
     char msgid_str[TMMSGIDLEN_STR+1];
+    tmq_qconfig_t *qconf;
     
     NDRX_LOG(log_debug, "FIFO dequeue for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
@@ -796,6 +807,14 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto)
     if (NULL==(qhash = tmq_qhash_get(qname)))
     {
         NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
+        goto out;
+    }
+    
+    if (NULL==(qconf=tmq_qconf_get_with_default(qname)))
+    {
+        
+        NDRX_LOG(log_error, "Failed to get q config [%s]", 
+                node->msg->hdr.qname);
         goto out;
     }
     
@@ -815,12 +834,22 @@ public tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto)
                     is_auto
                     );
             if (!node->msg->lockthreadid && (!is_auto || 
-                    tmq_is_auto_valid_for_deq(node)))
+                    tmq_is_auto_valid_for_deq(node, qconf)))
             {
                 ret = node->msg;
                 break;
             }
-            node = node->next;
+            if (TMQ_MODE_LIFO == qconf->mode)
+            {
+                /* LIFO mode */
+                node = node->prev;
+            }
+            else
+            {
+                /* default to FIFO */
+                node = node->next;
+            }
+            
         }
     }
     while (NULL!=node && node!=qhash->q);

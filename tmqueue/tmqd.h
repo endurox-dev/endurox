@@ -54,6 +54,9 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
 #define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
 #define TXTOUT_DFLT             30   /* Default XA transaction timeout      */
+
+#define TMQ_MODE_FIFO           'F' /* fifo q mode */
+#define TMQ_MODE_LIFO           'L' /* lifo q mode */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -66,6 +69,7 @@ typedef struct
     /*char data_dir[PATH_MAX];  Where to write tx log files  - NO NEED, handed by XA driver */
     int scan_time;      /* Number of seconds retries */
     char qspace[XATMI_SERVICE_NAME_LENGTH+1]; /* where the Q files live */
+    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
     
     int threadpoolsize; /* thread pool size */
     
@@ -140,6 +144,7 @@ struct tmq_qconfig
     int waitretryinc; /* Wait increment between retries (sec) */
     int waitretrymax; /* Max wait  (sec) */
     int memonly; /* is queue memory only */
+    char mode; /* queue mode fifo/lifo*/
     
     UT_hash_handle hh; /* makes this structure hashable        */
 };
@@ -180,7 +185,7 @@ extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr);
 extern int tmq_msg_add(tmq_msg_t *msg, int is_recovery);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
-extern tmq_msg_t * tmq_msg_dequeue_fifo(char *qname, long flags, int is_auto);
+extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags);
 extern tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags);
 extern int tmq_unlock_msg_by_msgid(char *msgid);

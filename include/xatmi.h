@@ -75,7 +75,9 @@ extern "C" {
 #define NDRX_SVC_TM       "@TM-%d-%d"           /* Node_idresource_id */
 #define NDRX_SVC_TM_I     "@TM-%d-%d-%d"        /* Node_id,resource_id,instance/srvid */
     
-#define NDRX_SVC_TMQ       "@TMQ-%ld-%d"           /* Node_id,srvid */
+#define NDRX_SVC_TMQ       "@TMQ-%ld-%d"        /* Node_id,srvid */
+/* QSPACE service format */
+#define NDRX_SVC_QSPACE    "@QSP%s"            /* Q space format string (for service) */
     
 #define NDRX_SVC_CPM      "@CPMSVC"             /* Client Process Monitor svc */
 

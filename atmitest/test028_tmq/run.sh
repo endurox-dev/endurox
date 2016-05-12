@@ -234,6 +234,39 @@ fi
 
 test_empty_qspace;
 
+echo "LIFO tests..."
+
+echo "Running: enqueue (LIFO)"
+(./atmiclt28 lenq 2>&1) > ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+xadmin down -y
+xadmin start -y || go_out 1
+
+echo "Running: dequeue (abort) (LIFO)"
+(./atmiclt28 ldeqa 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+sleep 10
+
+echo "Running: dequeue (commit) (LIFO)"
+(./atmiclt28 ldeqc 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"

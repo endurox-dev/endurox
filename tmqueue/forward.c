@@ -170,7 +170,7 @@ private tmq_msg_t * get_next_msg(void)
     while (NULL!=cur)
     {
         /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue_fifo(cur->qname, 0, TRUE)))
+        if (NULL==(ret=tmq_msg_dequeue(cur->qname, 0, TRUE)))
         {
             NDRX_LOG(log_debug, "Not messages for dequeue");
         }

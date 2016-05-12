@@ -47,8 +47,8 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 int basic_q_test(void);
-int enq_q_test(void);
-int deq_q_test(int do_commit);
+int enq_q_test(char *q1, char *q2, char *q3);
+int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
 int deqempty_q_test(void);
 int basic_q_msgid_test(void);
 int basic_q_corid_test(void);
@@ -78,15 +78,27 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "enq"))
     {
-        return enq_q_test();
+        return enq_q_test("TESTA", "TESTB", "TESTC");
+    }
+    else if (0==strcmp(argv[1], "lenq"))
+    {
+        return enq_q_test("LTESTA", "LTESTB", "LTESTC");
     }
     else if (0==strcmp(argv[1], "deqa"))
     {
-        return deq_q_test(FALSE);
+        return deq_q_test(FALSE, FALSE, "TESTA", "TESTB", "TESTC");
     }
     else if (0==strcmp(argv[1], "deqc"))
     {
-        return deq_q_test(TRUE);
+        return deq_q_test(TRUE, FALSE, "TESTA", "TESTB", "TESTC");
+    }
+    else if (0==strcmp(argv[1], "ldeqa"))
+    {
+        return deq_q_test(FALSE, FALSE, "LTESTA", "LTESTB", "LTESTC");
+    }
+    else if (0==strcmp(argv[1], "ldeqc"))
+    {
+        return deq_q_test(TRUE, FALSE, "LTESTA", "LTESTB", "LTESTC");
     }
     else if (0==strcmp(argv[1], "deqe"))
     {
@@ -213,7 +225,7 @@ out:
  * In The same order we shall get the dequeued messages.
  * @return 
  */
-int enq_q_test(void)
+int enq_q_test(char *q1, char *q2, char *q3)
 {
     int ret = SUCCEED;
     TPQCTL qc;
@@ -241,7 +253,7 @@ int enq_q_test(void)
         /* Have a number in FB! */
         memset(&qc, 0, sizeof(qc));
         
-        if (SUCCEED!=tpenqueue("MYSPACE", "TESTA", &qc, (char *)buf, 0, 0))
+        if (SUCCEED!=tpenqueue("MYSPACE", q1, &qc, (char *)buf, 0, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
@@ -250,7 +262,7 @@ int enq_q_test(void)
         
         memset(&qc, 0, sizeof(qc));
         
-        if (SUCCEED!=tpenqueue("MYSPACE", "TESTB", &qc, (char *)buf, 0, 0))
+        if (SUCCEED!=tpenqueue("MYSPACE", q2, &qc, (char *)buf, 0, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
@@ -259,7 +271,7 @@ int enq_q_test(void)
         
         memset(&qc, 0, sizeof(qc));
         
-        if (SUCCEED!=tpenqueue("MYSPACE", "TESTC", &qc, (char *)buf, 0, 0))
+        if (SUCCEED!=tpenqueue("MYSPACE", q3, &qc, (char *)buf, 0, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
@@ -290,7 +302,7 @@ out:
  * In The same order we shall get the dequeued messages.
  * @return 
  */
-int deq_q_test(int do_commit)
+int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
 {
     int ret = SUCCEED;
     TPQCTL qc;
@@ -303,15 +315,24 @@ int deq_q_test(int do_commit)
         FAIL_OUT(ret);
     } 
     
+    if (lifo)
+    {
+        i = 300;
+    }
+    else
+    {
+        i = 1;
+    }
+    
     /* run into one single global tx, ok?  */
     /* Initial test... */
-    for (i=1; i<=300; i++)
+    for (; (lifo?i>=1:i<=300); (lifo?i--:i++))
     {
         /* Have a number in FB! */
         memset(&qc, 0, sizeof(qc));
         
         buf = (UBFH *)tpalloc("UBF", "", 100);
-        if (SUCCEED!=tpdequeue("MYSPACE", "TESTA", &qc, (char **)&buf, &len, 0))
+        if (SUCCEED!=tpdequeue("MYSPACE", q1, &qc, (char **)&buf, &len, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
@@ -332,7 +353,7 @@ int deq_q_test(int do_commit)
         
         buf = (UBFH *)tpalloc("UBF", "", 100);
         
-        if (SUCCEED!=tpdequeue("MYSPACE", "TESTB", &qc, (char **)&buf, &len, 0))
+        if (SUCCEED!=tpdequeue("MYSPACE", q2, &qc, (char **)&buf, &len, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
@@ -362,7 +383,7 @@ int deq_q_test(int do_commit)
 
             buf = (UBFH *)tpalloc("UBF", "", 100);
 
-            if (SUCCEED!=tpdequeue("MYSPACE", "TESTC", &qc, (char **)&buf, &len, 0))
+            if (SUCCEED!=tpdequeue("MYSPACE", q3, &qc, (char **)&buf, &len, 0))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
