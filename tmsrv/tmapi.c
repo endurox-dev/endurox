@@ -518,6 +518,7 @@ public int tm_tpprinttrans(UBFH *p_ub, int cd)
             NDRX_LOG(log_debug,"sent ok");
         }
         
+        LL_DELETE(tx_list, el);
         free(el);
     }
     

@@ -1281,6 +1281,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only)
                 ret = NULL;
                 goto out;
             }
+            NDRX_LOG(log_debug, "tmq_get_qlist: %s", q->qname);
             strcpy(tmp->qname, q->qname);
             DL_APPEND(ret, tmp);
         }

@@ -164,6 +164,7 @@ clean_logs;
 
 # List the queues (should be something..)
 xadmin mqlq
+exit 1
 
 echo "Running: dequeue (abort)"
 (./atmiclt28 deqa 2>&1) >> ./atmiclt-dom1.log

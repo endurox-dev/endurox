@@ -587,6 +587,7 @@ private void tx_tout_check_th(void *ptr)
                 tm_drive(&xai, p_tl, XA_OP_ROLLBACK, FAIL);
             }
         }
+        LL_DELETE(tx_list,el);
         free(el);
     }
 out:    

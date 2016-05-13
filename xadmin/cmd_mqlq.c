@@ -99,7 +99,7 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     FIX_SVC_NM_DIRECT(qspace, 9);
     FIX_SVC_NM_DIRECT(qname, 9);
     
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s\n",nodeid, srvid, qspace, qname);
+    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s",nodeid, srvid, qspace, qname);
     
     printf("\n");
     
@@ -255,6 +255,7 @@ public int cmd_mqlq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 
         call_tmq(el->svcnm);
         /* Have some housekeep. */
+        LL_DELETE(list,el);
         free(el);
     }
     

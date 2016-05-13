@@ -230,6 +230,7 @@ public int background_loop(void)
             if (el->p_tl.trycount>=G_tmsrv_cfg.max_tries)
             {
                 /* Have some housekeep. */
+                LL_DELETE(tx_list, el);
                 free(el);
 
                 NDRX_LOG(log_debug, "Skipping...");
@@ -252,6 +253,7 @@ public int background_loop(void)
                         "processed by foreground...");
             }
             /* Have some housekeep. */
+            LL_DELETE(tx_list, el);
             free(el);
         }
         

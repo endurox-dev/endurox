@@ -511,11 +511,12 @@ public int tmq_printqueue(UBFH *p_ub, int cd)
     }
     else
     {
-        NDRX_LOG(log_info, "%s: Queues found");
+        NDRX_LOG(log_info, "%s: Queues found", fn);
     }
     
     DL_FOREACH_SAFE(list,el,tmp)
     {
+        NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, list->qname);
         if (SUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QNAME, 0, list->qname, 0L) ||
             SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
@@ -539,6 +540,7 @@ public int tmq_printqueue(UBFH *p_ub, int cd)
             NDRX_LOG(log_debug,"sent ok");
         }
         
+        DL_DELETE(list, el);
         free((char *)el);
     }
     
