@@ -171,7 +171,9 @@ extern tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Prototypes---------------------------------*/
 
 /* Q api */
-extern int tmq_printqueue(UBFH *p_ub, int cd);
+extern int tmq_mqlq(UBFH *p_ub, int cd);
+extern int tmq_mqlc(UBFH *p_ub, int cd);
+
 extern int tmq_enqueue(UBFH *p_ub);
 extern int tmq_dequeue(UBFH *p_ub);
 extern int tmq_notify(UBFH *p_ub);
@@ -196,6 +198,7 @@ extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
+extern int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf);
     
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);

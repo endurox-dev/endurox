@@ -273,7 +273,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         }
         else if (0==strcmp(value, "lifo") || 0==strcmp(value, "LIFO") )
         {
-            qconf->mode = TMQ_MODE_FIFO;
+            qconf->mode = TMQ_MODE_LIFO;
         }
         else
         {
@@ -313,9 +313,10 @@ private tmq_qconfig_t * tmq_qconf_get(char *qname)
  * TODO: Think about copy off the contents of qconf for substituing service 
  * to Q name.
  * @param qname qname
+ * @param p_is_defaulted returns 1 if queue uses defaults Q
  * @return  NULL or ptr to config
  */
-private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
+private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
 {
     
     tmq_qconfig_t * ret = tmq_qconf_get(qname);
@@ -329,10 +330,51 @@ private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname)
             NDRX_LOG(log_error, "Default Q config [%s] not found!", TMQ_DEFAULT_Q);
             userlog("Default Q config [%s] not found! Please add !", TMQ_DEFAULT_Q);
         }
+        else if (NULL!=p_is_defaulted)
+        {
+            *p_is_defaulted = TRUE;
+        }
     }
             
     return ret;
 }
+
+
+/**
+ * Return string version of Q config
+ * @param qname
+ * @param p_is_defaulted
+ * @return 
+ */
+public int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
+{
+    tmq_qconfig_t * qdef = NULL;
+    int ret = SUCCEED;
+    
+    MUTEX_LOCK_V(M_q_lock);
+    if (NULL==(qdef=tmq_qconf_get_with_default(qname, p_is_defaulted)))
+    {
+        FAIL_OUT(ret);
+    }
+    
+    sprintf(out_buf, "%s,svcnm=%s,autoq=%s,waitinit=%d,waitretry=%d,"
+                        "waitretryinc=%d,waitretrymax=%d,memonly=%s,mode=%s",
+            qdef->qname, 
+            qdef->svcnm, 
+            (qdef->autoq?"y":"n"),
+            qdef->waitinit,
+            qdef->waitretry,
+            qdef->waitretryinc,
+            qdef->waitretrymax,
+            (qdef->memonly?"y":"n"),
+            qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo");
+
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+
+    return ret;
+}
+
 
 /**
  * Get the static copy of Q data for extract (non-locked) use.
@@ -632,7 +674,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     MUTEX_LOCK_V(M_q_lock);
     
     qhash = tmq_qhash_get(msg->hdr.qname);
-    qconf = tmq_qconf_get_with_default(msg->hdr.qname);
+    qconf = tmq_qconf_get_with_default(msg->hdr.qname, NULL);
     
     if (NULL==mmsg)
     {
@@ -810,7 +852,7 @@ public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
         goto out;
     }
     
-    if (NULL==(qconf=tmq_qconf_get_with_default(qname)))
+    if (NULL==(qconf=tmq_qconf_get_with_default(qname, NULL)))
     {
         
         NDRX_LOG(log_error, "Failed to get q config [%s]", 
@@ -1270,7 +1312,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only)
     
     HASH_ITER(hh, G_qhash, q, qtmp)
     {
-        if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname)) && 
+        if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname, NULL)) && 
                 (auto_only && qconf->autoq || !auto_only))
         {
             if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))

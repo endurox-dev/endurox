@@ -1,7 +1,7 @@
 /* 
-** List persistent queues
+** List queue configuration
 **
-** @file cmd_mqlq.c
+** @file cmd_mqlc.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -62,13 +62,12 @@
  */
 private void print_hdr(void)
 {
-    fprintf(stderr, "Nd SRVID QSPACE    QNAME     #QUEU #LOCK #SUCC #FAIL\n");
-    fprintf(stderr, "-- ----- --------- --------- ----- ----- ----- -----\n");
+    fprintf(stderr, "Nd SRVID QSPACE    QNAME     FLAGS QDEF\n");
+    fprintf(stderr, "-- ----- --------- --------- ----- --------------------\n");
 }
 
-
 /**
- * List transactions in progress
+ * List queue definitions
  * We will run in conversation mode.
  * @param svcnm
  * @return SUCCEED/FAIL
@@ -81,20 +80,16 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     short srvid;
     char qspace[XATMI_SERVICE_NAME_LENGTH+1];
     char qname[TMQNAMELEN+1];
-    long msgs;
-    long locked;
-    long succ;
-    long fail;
-            
+    char qdef[TMQ_QDEF_MAX];
+    char strflags[128];
+    
     if (
             SUCCEED!=Bget(p_ub, EX_QSPACE, 0, qspace, 0L) ||
             SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L) ||
             SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
             SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNUMMSG, 0, (char *)&msgs, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNUMLOCKED, 0, (char *)&locked, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNUMSUCCEED, 0, (char *)&succ, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNUMFAIL, 0, (char *)&fail, 0L)
+            SUCCEED!=CBget(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
+            SUCCEED!=Bget(p_ub, EX_QSTRFLAGS, 0, strflags, 0L)
         )
     {
         fprintf(stderr, "Protocol error - TMQ did not return data, see logs!\n");
@@ -106,15 +101,13 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     FIX_SVC_NM_DIRECT(qspace, 9);
     FIX_SVC_NM_DIRECT(qname, 9);
     
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %-5.5s %-5.5s %-5.5s",
+    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %s",
             nodeid, 
             srvid, 
             qspace, 
             qname,
-            nstdutil_decode_num(msgs, 0, 0, 1), 
-            nstdutil_decode_num(locked, 1, 0, 1),
-            nstdutil_decode_num(succ, 1, 0, 2),
-            nstdutil_decode_num(fail, 1, 0, 2)
+            strflags,
+            qdef
             );
     
     printf("\n");
@@ -136,7 +129,7 @@ private int call_tmq(char *svcnm)
     int recv_continue = 1;
     int tp_errno;
     int rcv_count = 0;
-    char cmd = TMQ_CMD_MQLQ;
+    char cmd = TMQ_CMD_MQLC;
     
     /* Setup the call buffer... */
     if (NULL==p_ub)
@@ -213,42 +206,13 @@ out:
 }
 
 /**
- * Filter the service names, return TRUE for those which matches individual TMs
- * @param svcnm
- * @return TRUE/FALSE
- */
-public int mqfilter(char *svcnm)
-{
-    int i, len;
-    int cnt = 0;
-    
-    if (0==strncmp(svcnm, "@TMQ", 4))
-    {
-        /* Now it should have 3x dashes inside */
-        len = strlen(svcnm);
-        for (i=0; i<len; i++)
-        {
-            if ('-'==svcnm[i])
-            {
-                cnt++;
-            }
-        }
-    }
-    
-    if (2==cnt)
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/**
  * List queues
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqlq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+public int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = SUCCEED;
     atmi_svc_list_t *el, *tmp, *list;

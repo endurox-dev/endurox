@@ -181,6 +181,8 @@ extern int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 
 /* persistent queues: */
 extern int cmd_mqlq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int mqfilter(char *svcnm);
 
 #ifdef	__cplusplus
 }

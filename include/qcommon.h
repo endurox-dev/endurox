@@ -47,7 +47,10 @@ extern "C" {
 #define TMQ_CMD_ENQUEUE         'E'      /* Enqueue                     */
 #define TMQ_CMD_DEQUEUE         'D'      /* Dequeue                     */
 #define TMQ_CMD_NOTIFY          'N'      /* Notify tmq for XA completion*/
-#define TMQ_CMD_PRINT           'P'      /* Print queue                 */
+#define TMQ_CMD_MQLQ           'P'      /* Print queue                 */
+#define TMQ_CMD_MQLC      'C'      /* List configuration of q     */
+    
+#define TMQ_QDEF_MAX            512      /* max buffer size for Q def   */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

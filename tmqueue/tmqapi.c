@@ -495,7 +495,7 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int tmq_printqueue(UBFH *p_ub, int cd)
+public int tmq_mqlq(UBFH *p_ub, int cd)
 {
     int ret = SUCCEED;
     long revent;
@@ -549,6 +549,81 @@ public int tmq_printqueue(UBFH *p_ub, int cd)
         else
         {
             NDRX_LOG(log_debug,"sent ok");
+        }
+        
+        DL_DELETE(list, el);
+        free((char *)el);
+    }
+    
+out:
+
+    return ret;
+}
+
+/**
+ * List queue definitions/config (return the defaulted flag if so)
+ * @param p_ub
+ * @param cd - call descriptor
+ * @return 
+ */
+public int tmq_mqlc(UBFH *p_ub, int cd)
+{
+    int ret = SUCCEED;
+    long revent;
+    fwd_qlist_t *el, *tmp, *list;
+    short nodeid = tpgetnodeid();
+    short srvid = tpgetsrvid();
+    char *fn = "tmq_printqueue";
+    char qdef[TMQ_QDEF_MAX];
+    char flags[128];
+    int is_default = FALSE;
+    /* Get list of queues */
+    
+    if (NULL==(list = tmq_get_qlist(FALSE)))
+    {
+        NDRX_LOG(log_info, "%s: No queues found", fn);
+    }
+    else
+    {
+        NDRX_LOG(log_info, "%s: Queues found", fn);
+    }
+    
+    DL_FOREACH_SAFE(list,el,tmp)
+    {
+        if (SUCCEED==tmq_build_q_def(el->qname, &is_default, qdef))
+        {
+            NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
+            
+            if (is_default)
+            {
+                strcpy(flags, "D");
+            }
+
+            if (SUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+                SUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
+                SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+                SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+                SUCCEED!=CBchg(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
+                SUCCEED!=Bchg(p_ub, EX_QSTRFLAGS, 0, flags, 0L)
+                    )
+            {
+                NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+            if (FAIL == tpsend(cd,
+                                (char *)p_ub,
+                                0L,
+                                0,
+                                &revent))
+            {
+                NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                                    tpstrerror(tperrno), revent);
+                FAIL_OUT(ret);
+            }
+            else
+            {
+                NDRX_LOG(log_debug,"sent ok");
+            }
         }
         
         DL_DELETE(list, el);
