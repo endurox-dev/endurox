@@ -1260,7 +1260,7 @@ private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
  * Return list of auto queues
  * @return NULL or list
  */
-public fwd_qlist_t *tmq_get_fwd_list(void)
+public fwd_qlist_t *tmq_get_qlist(int auto_only)
 {
     fwd_qlist_t * ret = NULL;
     fwd_qlist_t * tmp = NULL;
@@ -1270,7 +1270,8 @@ public fwd_qlist_t *tmq_get_fwd_list(void)
     
     HASH_ITER(hh, G_qhash, q, qtmp)
     {
-        if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname)) && qconf->autoq)
+        if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname)) && 
+                (auto_only && qconf->autoq || !auto_only))
         {
             if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))
             {
@@ -1341,4 +1342,10 @@ out:
     NDRX_LOG(log_info, "tmq_load_msgs return %d", ret);
     return ret;
 }
+
+
+
+/******************************************************************************/
+/*                         COMMAND LINE SUPPORT                               */
+/******************************************************************************/
 

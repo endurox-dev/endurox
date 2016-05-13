@@ -162,6 +162,9 @@ xadmin down -y
 xadmin start -y || go_out 1
 clean_logs;
 
+# List the queues (should be something..)
+xadmin mqlq
+
 echo "Running: dequeue (abort)"
 (./atmiclt28 deqa 2>&1) >> ./atmiclt-dom1.log
 RET=$?

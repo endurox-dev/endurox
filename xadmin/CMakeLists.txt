@@ -55,7 +55,7 @@ add_executable (xadmin xadmin.c exec.c config.c
 		cmd_at.c cmd_reload.c cmd_unadv.c cmd_ppm.c
                 cmd_shm_psvc.c cmd_shm_psrv.c cmd_readv.c cmd_pq.c cmd_pqa.c
                 cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
-                cmd_scbp.c)
+                cmd_scbp.c cmd_mqlq.c)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (xadmin m nstd rt atmi ubf dl)

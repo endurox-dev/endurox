@@ -190,7 +190,7 @@ extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags);
 extern tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
-extern fwd_qlist_t *tmq_get_fwd_list(void);
+extern fwd_qlist_t *tmq_get_qlist(int auto_only);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
     
 #ifdef	__cplusplus

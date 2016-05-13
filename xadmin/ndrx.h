@@ -64,6 +64,13 @@ extern char *G_cmd_argv[MAX_ARGS];
         }\
         else\
             strcpy(Xbuf, Xsrc);
+
+#define FIX_SVC_NM_DIRECT(Xbuf, Xlen) \
+        if (strlen(Xbuf) > Xlen)\
+        {\
+            Xbuf[Xlen-1] = '+';\
+            Xbuf[Xlen] = EOS;\
+        }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -170,6 +177,10 @@ extern int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 extern int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+
+/* persistent queues: */
+extern int cmd_mqlq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

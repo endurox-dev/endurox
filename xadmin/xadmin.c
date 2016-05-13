@@ -158,7 +158,8 @@ cmd_mapping_t M_command_map[] =
     {"sc",        cmd_sc,FAIL,   2,  3,  1, "Stop client\n"
                                     "\t\tArgs: sc -t <Tag> [-s <Subsection (default -)]"},
     {"bc",        cmd_bc,FAIL,   2,  3,  1, "Boot(start) client\n"
-                                    "\t\tArgs: bc -t <Tag> [-s <Subsection (default -)]"}
+                                    "\t\tArgs: bc -t <Tag> [-s <Subsection (default -)]"},
+    {"mqlq",      cmd_mqlq,FAIL,   1,  1,  1, "List persistent queues"}
 };
 
 /**

@@ -81,9 +81,12 @@ EX_CPMOUTPUT    101     string   -       CPM output
 EX_CPMTAG       102     string   -       Tag
 EX_CPMSUBSECT   103     string   -       Sub-section
 
+# Generic fields
 EX_CLTID        	150	string	-	client identifier for originating client
 EX_DATA                 151     carray  -       unified data field
 EX_DATA_BUFTYP          152     short   -       ATMI buffer type ID
+EX_TSTAMP1_STR          153     string   -      Time stamp, yyyyMMddHHmmssSSS
+EX_TSTAMP2_STR          154     string   -      Time stamp, yyyyMMddHHmmssSSS
 
 # Persistant Queue:
 EX_QSPACE		    200	    string    -	q space
@@ -103,6 +106,11 @@ EX_QREPLY_QOS		213 	long    -	reply message quality of service
 EX_QEXP_TIME		214 	long    -	expiration time
 EX_QCMD			    215 	char    -	Queue command
 EX_QDIAGMSG		    216 	string	-	diagnostic message
+EX_QNUMMSG		    217 	long	-	Number of messages in q
+EX_QNUMLOCKED		    218 	long	-	Number of locked messages in q
+EX_QNUMSUCCEED		    219 	long	-	Number of succeed messages, for autoq
+EX_QNUMFAIL		    220 	long	-	Number of failed messages for autoq
+EX_QSTRFLAGS		    221 	string	-	String based flags
 
 $#endif
 

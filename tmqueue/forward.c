@@ -156,7 +156,7 @@ private tmq_msg_t * get_next_msg(void)
         }
         
         /* Generate new list */
-        list = tmq_get_fwd_list();
+        list = tmq_get_qlist(TRUE);
         
         if (NULL!=list)
         {
