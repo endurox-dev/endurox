@@ -516,11 +516,22 @@ public int tmq_printqueue(UBFH *p_ub, int cd)
     
     DL_FOREACH_SAFE(list,el,tmp)
     {
-        NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, list->qname);
+        long msgs = 0;
+        long locked = 0;
+    
+        tmq_get_q_stats(el->qname, &msgs, &locked);
+                
+        NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
+        
         if (SUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNAME, 0, list->qname, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
             SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L))
+            SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QNUMMSG, 0, (char *)&msgs, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QNUMLOCKED, 0, (char *)&locked, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QNUMSUCCEED, 0, (char *)&el->succ, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QNUMFAIL, 0, (char *)&el->fail, 0L)
+                )
         {
             NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
             FAIL_OUT(ret);

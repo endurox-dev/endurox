@@ -1283,6 +1283,8 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only)
             }
             NDRX_LOG(log_debug, "tmq_get_qlist: %s", q->qname);
             strcpy(tmp->qname, q->qname);
+            tmp->succ = q->succ;
+            tmp->fail = q->fail;
             DL_APPEND(ret, tmp);
         }
         
@@ -1344,7 +1346,66 @@ out:
     return ret;
 }
 
+/**
+ * Update queue statistics
+ * @param qname
+ * @param msgs_diff
+ * @param succ_diff
+ * @param fail_diff
+ * @return 
+ */
+public int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff)
+{
+    tmq_qhash_t  *q;
+    MUTEX_LOCK_V(M_q_lock);
+    
+    if (NULL!=(q = tmq_qhash_get(qname)))
+    {
+        q->succ += succ_diff;
+        q->fail += fail_diff;
+    }
+    
+out:
+            
+    MUTEX_UNLOCK_V(M_q_lock);
+}
 
+/**
+ * Return infos about enqueued messages.
+ * @param qname
+ * @param p_msgs
+ * @param p_locked
+ * @return 
+ */
+public void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
+{
+    tmq_qhash_t  *q;        
+    tmq_memmsg_t *node;
+    MUTEX_LOCK_V(M_q_lock);
+    
+    if (NULL!=(q = tmq_qhash_get(qname)))
+    {
+        node = q->q;
+        
+        do
+        {
+            if (NULL!=node)
+            {
+                *p_msgs = *p_msgs +1 ;
+                if (node->msg->lockthreadid)
+                {
+                    *p_locked = *p_locked +1 ;
+                }
+            }
+            /* default to FIFO */
+            node = node->next;
+
+        }
+        while (NULL!=node && node!=q->q);
+    }
+    
+    MUTEX_UNLOCK_V(M_q_lock);
+}
 
 /******************************************************************************/
 /*                         COMMAND LINE SUPPORT                               */

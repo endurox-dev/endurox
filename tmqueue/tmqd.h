@@ -121,6 +121,8 @@ typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
+    long succ; /* Succeeded auto messages */
+    long fail; /* failed auto messages */
     UT_hash_handle hh; /* makes this structure hashable        */
     tmq_memmsg_t *q;
 };
@@ -156,6 +158,8 @@ typedef struct fwd_qlist fwd_qlist_t;
 struct fwd_qlist
 {
     char qname[TMQNAMELEN+1];
+    long succ; /* Succeeded auto messages */
+    long fail; /* failed auto messages */
     
     fwd_qlist_t *next;
     fwd_qlist_t *prev;
@@ -192,6 +196,9 @@ extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
+    
+extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
+extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
     
 #ifdef	__cplusplus
 }

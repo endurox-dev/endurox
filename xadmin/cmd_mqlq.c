@@ -62,8 +62,8 @@
  */
 private void print_hdr(void)
 {
-    fprintf(stderr, "Nd SRVID QSPACE    QNAME     FLAGS #Queued #Locked #Succeed #Fail\n");
-    fprintf(stderr, "-- ----- --------- --------- ----- ------- ------- -------- -----\n");
+    fprintf(stderr, "Nd SRVID QSPACE    QNAME     #QUEU #LOCK #SUCC #FAIL\n");
+    fprintf(stderr, "-- ----- --------- --------- ----- ----- ----- -----\n");
 }
 
 
@@ -81,13 +81,20 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     short srvid;
     char qspace[XATMI_SERVICE_NAME_LENGTH+1];
     char qname[TMQNAMELEN+1];
-    
+    long msgs;
+    long locked;
+    long succ;
+    long fail;
+            
     if (
             SUCCEED!=Bget(p_ub, EX_QSPACE, 0, qspace, 0L) ||
             SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L) ||
             SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L)
-        
+            SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QNUMMSG, 0, (char *)&msgs, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QNUMLOCKED, 0, (char *)&locked, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QNUMSUCCEED, 0, (char *)&succ, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QNUMFAIL, 0, (char *)&fail, 0L)
         )
     {
         fprintf(stderr, "Protocol error - TMQ did not return data, see logs!\n");
@@ -99,7 +106,16 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     FIX_SVC_NM_DIRECT(qspace, 9);
     FIX_SVC_NM_DIRECT(qname, 9);
     
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s",nodeid, srvid, qspace, qname);
+    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %-5.5s %-5.5s %-5.5s",
+            nodeid, 
+            srvid, 
+            qspace, 
+            qname,
+            nstdutil_decode_num(msgs, 0, 0, 1), 
+            nstdutil_decode_num(locked, 1, 0, 1),
+            nstdutil_decode_num(succ, 1, 0, 2),
+            nstdutil_decode_num(fail, 1, 0, 2)
+            );
     
     printf("\n");
     

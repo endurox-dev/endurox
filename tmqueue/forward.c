@@ -306,6 +306,8 @@ out:
             }
         }
         
+        tmq_update_q_stats(msg->hdr.qname, 1, 0);
+        
         cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
         if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
@@ -314,7 +316,6 @@ out:
             userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
                     msgid_str);
         }
-        
     }
     else
     {
@@ -346,6 +347,9 @@ out:
                             msg->qctl.failurequeue, tpstrerror(tperrno));
                 }
             }
+            
+            tmq_update_q_stats(msg->hdr.qname, 0, 1);
+            
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
             if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 

@@ -68,6 +68,8 @@
 #define	EX_CLTID	((BFLDID32)167772410)	/* number: 250	 type: string */
 #define	EX_DATA	((BFLDID32)201326843)	/* number: 251	 type: carray */
 #define	EX_DATA_BUFTYP	((BFLDID32)252)	/* number: 252	 type: short */
+#define	EX_TSTAMP1_STR	((BFLDID32)167772413)	/* number: 253	 type: string */
+#define	EX_TSTAMP2_STR	((BFLDID32)167772414)	/* number: 254	 type: string */
 #define	EX_QSPACE	((BFLDID32)167772460)	/* number: 300	 type: string */
 #define	EX_QNAME	((BFLDID32)167772461)	/* number: 301	 type: string */
 #define	EX_QFLAGS	((BFLDID32)33554734)	/* number: 302	 type: long */
@@ -85,4 +87,9 @@
 #define	EX_QEXP_TIME	((BFLDID32)33554746)	/* number: 314	 type: long */
 #define	EX_QCMD	((BFLDID32)67109179)	/* number: 315	 type: char */
 #define	EX_QDIAGMSG	((BFLDID32)167772476)	/* number: 316	 type: string */
+#define	EX_QNUMMSG	((BFLDID32)33554749)	/* number: 317	 type: long */
+#define	EX_QNUMLOCKED	((BFLDID32)33554750)	/* number: 318	 type: long */
+#define	EX_QNUMSUCCEED	((BFLDID32)33554751)	/* number: 319	 type: long */
+#define	EX_QNUMFAIL	((BFLDID32)33554752)	/* number: 320	 type: long */
+#define	EX_QSTRFLAGS	((BFLDID32)167772481)	/* number: 321	 type: string */
 #endif
