@@ -70,6 +70,7 @@ typedef struct
     int scan_time;      /* Number of seconds retries */
     char qspace[XATMI_SERVICE_NAME_LENGTH+1]; /* where the Q files live */
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
+    char qconfig[PATH_MAX+1]; /* Queue config file  */
     
     int threadpoolsize; /* thread pool size */
     
@@ -174,6 +175,9 @@ extern tmqueue_cfg_t G_tmqueue_cfg;
 extern int tmq_mqlq(UBFH *p_ub, int cd);
 extern int tmq_mqlc(UBFH *p_ub, int cd);
 extern int tmq_mqlm(UBFH *p_ub, int cd);
+
+extern int tmq_mqrc(UBFH *p_ub);
+extern int tmq_mqch(UBFH *p_ub);
 
 
 extern int tmq_enqueue(UBFH *p_ub);

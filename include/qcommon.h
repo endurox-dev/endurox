@@ -50,6 +50,8 @@ extern "C" {
 #define TMQ_CMD_MQLQ            'P'       /* Print queue                */
 #define TMQ_CMD_MQLC            'C'       /* List configuration of q    */
 #define TMQ_CMD_MQLM            'M'       /* List messages              */
+#define TMQ_CMD_MQRC            'R'       /* Reload config              */
+#define TMQ_CMD_MQCH            'H'       /* Change Q  config (runtime) */
     
 #define TMQ_QDEF_MAX            512      /* max buffer size for Q def   */
 /*---------------------------Enums--------------------------------------*/

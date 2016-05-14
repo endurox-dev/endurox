@@ -182,6 +182,21 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
                 FAIL_OUT(ret);
             }
             break;
+        case TMQ_CMD_MQRC:
+            
+            if (SUCCEED!=tmq_mqrc(p_ub))
+            {
+                FAIL_OUT(ret);
+            }
+            
+            break;
+        case TMQ_CMD_MQCH:
+            
+            if (SUCCEED!=tmq_mqch(p_ub))
+            {
+                FAIL_OUT(ret);
+            }
+            break;
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
             ret=FAIL;
@@ -308,10 +323,11 @@ int tpsvrinit(int argc, char **argv)
                 
             case 'q':
                 /* Add the queue */
-                NDRX_LOG(log_error, "Loading q config: [%s]", optarg);
-                if (SUCCEED!=tmq_reload_conf(optarg))
+                strcpy(G_tmqueue_cfg.qconfig, optarg);
+                NDRX_LOG(log_error, "Loading q config: [%s]", G_tmqueue_cfg.qconfig);
+                if (SUCCEED!=tmq_reload_conf(G_tmqueue_cfg.qconfig))
                 {
-                    NDRX_LOG(log_error, "Failed to read config for: [%s]", optarg);
+                    NDRX_LOG(log_error, "Failed to read config for: [%s]", G_tmqueue_cfg.qconfig);
                     FAIL_OUT(ret);
                 }
                 break;

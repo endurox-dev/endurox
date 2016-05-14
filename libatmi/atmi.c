@@ -181,7 +181,7 @@ out:
  * @return SUCCEED/FAIL
  */
 public int tpcall (char *svc, char *idata, long ilen,
-                char * *odata, long *olen, long flags)
+                char **odata, long *olen, long flags)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;

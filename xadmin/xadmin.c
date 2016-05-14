@@ -161,6 +161,7 @@ cmd_mapping_t M_command_map[] =
                                     "\t\tArgs: bc -t <Tag> [-s <Subsection (default -)]"},
     {"mqlq",      cmd_mqlq,FAIL,   1,  1,  1, "List persistent queues (dynamic)"},
     {"mqlc",      cmd_mqlc,FAIL,   1,  1,  1, "List persistent queue configuration"},
+    {"mqrc",      cmd_mqrc,FAIL,   1,  1,  1, "Reload TMQ config"},
     {"mqlm",      cmd_mqlm,FAIL,   3,  3,  1, "List messages in q\n"
                                     "\t\tArgs: lm -s <QSpace> -q <QName>"},
     {"mqdm",      cmd_mqdm,FAIL,   4,  4,  1, "Dump/peek messages to stdout\n"

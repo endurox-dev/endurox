@@ -167,6 +167,14 @@ clean_logs;
 # CLI TESTS
 #
 ################################################################################
+#reload config
+xadmin mqrc
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 # List the queues (should be something..)
 xadmin mqlq
 # List q config

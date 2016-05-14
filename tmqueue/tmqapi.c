@@ -716,3 +716,41 @@ out:
 
     return ret;
 }
+
+/**
+ * Reload config
+ * @param p_ub
+ * @return 
+ */
+public int tmq_mqrc(UBFH *p_ub)
+{
+    int ret = SUCCEED;
+    
+    ret = tmq_reload_conf(G_tmqueue_cfg.qconfig);
+    
+out:
+    return ret;
+}
+
+/**
+ * Change config
+ * @param p_ub
+ * @return 
+ */
+public int tmq_mqch(UBFH *p_ub)
+{
+    int ret = SUCCEED;
+    char conf[512];
+    BFLDLEN len = sizeof(conf);
+    
+    if (SUCCEED!=CBget(p_ub, EX_DATA, 0, conf, &len, BFLD_STRING))
+    {
+        NDRX_LOG(log_error, "Failed to get EX_DATA!");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tmq_qconf_addupd(conf);
+    
+out:
+    return ret;
+}

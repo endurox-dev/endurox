@@ -448,6 +448,7 @@ public int tmq_reload_conf(char *cf)
     size_t len = 0;
     int ret = SUCCEED;
     ssize_t read;
+    
     if (NULL==(f=fopen(cf, "r")))
     {
         NDRX_LOG(log_error, "Failed to open [%s]:%s", cf, strerror(errno));
@@ -473,7 +474,7 @@ public int tmq_reload_conf(char *cf)
     
     
 out:
-    
+
     if (NULL!=f)
     {
         fclose(f);
