@@ -442,6 +442,9 @@ extern int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 extern int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
 extern int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
+extern int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags);
+extern int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
+
 #if defined(__cplusplus)
 }
 #endif

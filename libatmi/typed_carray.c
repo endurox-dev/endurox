@@ -135,7 +135,7 @@ public int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          */
         if (outbufobj->type_id!=BUF_TYPE_CARRAY)
         {
-            NDRX_LOG(log_warn, "User buffer %s is different, "
+            NDRX_LOG(log_warn, "User buffer %d is different, "
                     "free it up and re-allocate as CARRAY", G_buf_descr[outbufobj->type_id]);
             _tpfree(*odata, outbufobj);
             *odata=NULL;

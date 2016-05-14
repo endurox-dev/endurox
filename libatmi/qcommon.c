@@ -291,6 +291,49 @@ public int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
     return ret;
 }
 
+
+/**
+ * Generate serialized version of the string
+ * @param msgid_in, length defined by constant TMMSGIDLEN
+ * @param msgidstr_out
+ * @return msgidstr_out
+ */
+public char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
+{
+    size_t out_len;
+    
+    NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
+    
+    atmi_xa_base64_encode(msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
+
+    msgid_str_out[out_len] = EOS;
+    
+    NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
+    
+    return msgid_str_out;
+}
+
+/**
+ * Get binary message id
+ * @param msgid_str_in, length defined by constant TMMSGIDLEN
+ * @param msgid_out
+ * @return msgid_out 
+ */
+public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
+{
+    size_t tot_len;
+    
+    NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
+    
+    memset(msgid_out, 0, TMMSGIDLEN);
+        
+    atmi_xa_base64_decode(msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
+    
+    NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
+    
+    return msgid_out;
+}
+
 /**************************** API SECTION *************************************/
 
 /**
@@ -305,7 +348,7 @@ public int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
  * @param flags flags (for tpcall)
  * @return SUCCEED/FAIL
  */
-public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl, 
+public int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags)
 {
     int ret = SUCCEED;
@@ -328,7 +371,7 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
         FAIL_OUT(ret);
     }
     
-    if (NULL==qspace || EOS==*qspace)
+    if (NULL==qspace || EOS==*qspace && !nodeid && !srvid)
     {
         _TPset_error_msg(TPEINVAL,  "_tpenqueue: empty or NULL qspace!");
         FAIL_OUT(ret);
@@ -428,7 +471,15 @@ public int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl,
     ndrx_debug_dump_UBF(log_debug, "QSPACE enqueue request buffer", p_ub);
     
     /* do the call to queue system */
-    sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+    if (EOS!=*qspace)
+    {
+        sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+    }
+    else
+    {
+        sprintf(qspacesvc, NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
+    }
+    
     if (FAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
@@ -498,7 +549,7 @@ out:
  * @param flags flags (for tpcall)
  * @return SUCCEED/FAIL
  */
-public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl, 
+public int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char **data, long *len, long flags)
 {
     int ret = SUCCEED;
@@ -512,7 +563,7 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     
     memset(&errbuf, 0, sizeof(errbuf));
     
-    if (NULL==qspace || EOS==*qspace)
+    if (NULL==qspace || EOS==*qspace && !nodeid && !srvid)
     {
         _TPset_error_msg(TPEINVAL,  "_tpdequeue: empty or NULL qspace!");
         FAIL_OUT(ret);
@@ -586,7 +637,14 @@ public int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl,
     /* do the call to queue system */
     ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue request buffer", p_ub);
     
-    sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+    if (EOS!=*qspace)
+    {
+        sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+    }
+    else
+    {
+        sprintf(qspacesvc, NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
+    }
     
     if (FAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {

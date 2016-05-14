@@ -833,7 +833,7 @@ public int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
 }
 
 /**
- * Enqueue transaction - STUB
+ * Enqueue message
  */
 public int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags)
 {   
@@ -847,7 +847,7 @@ public int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long l
         goto out;
     }
     
-    ret=_tpenqueue (qspace, qname, ctl, data, len, flags);
+    ret=_tpenqueue (qspace, 0, 0, qname, ctl, data, len, flags);
 
 out:
     return ret;
@@ -855,7 +855,7 @@ out:
 }
 
 /**
- * Dequeue transaction - STUB
+ * Dequeue message
  */
 public int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
 {
@@ -869,8 +869,52 @@ public int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long 
         goto out;
     }
     
-    ret=_tpdequeue (qspace, qname, ctl, data, len, flags);
+    ret=_tpdequeue (qspace, 0, 0, qname, ctl, data, len, flags);
 
 out:
     return ret;
 }
+
+/**
+ * Enqueue message
+ */
+public int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags)
+{   
+    long ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    ret=_tpenqueue ("", nodeid, srvid, qname, ctl, data, len, flags);
+
+out:
+    return ret;
+
+}
+
+/**
+ * Dequeue message
+ */
+public int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
+{
+    long ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    ret=_tpdequeue ("", nodeid, srvid, qname, ctl, data, len, flags);
+
+out:
+    return ret;
+}
+

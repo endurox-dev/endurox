@@ -75,6 +75,7 @@ extern char *__progname;    /* glibc specifc! */
 /*---------------------------Globals------------------------------------*/
 ndrx_debug_t G_ubf_debug;
 ndrx_debug_t G_ndrx_debug;
+ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = TRUE;
 static __thread long M_threadnr = 0; /* Current thread nr */
@@ -118,10 +119,20 @@ public void ndrx_init_debug(void)
     
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
+    memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
+    
     /* Initialize with defaults.. */
     G_ndrx_debug.dbg_f_ptr = stderr;
     G_ubf_debug.dbg_f_ptr = stderr;
-    G_ubf_debug.pid = G_ndrx_debug.pid = getpid();
+    G_stdout_debug.dbg_f_ptr = stdout;
+    
+    G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
+    
+    /* static coinf */
+    G_stdout_debug.buf_lines = 1;
+    G_stdout_debug.buffer_size = 1;
+    G_stdout_debug.level = log_debug;
+    
     /* default bufsz  */
     G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
 

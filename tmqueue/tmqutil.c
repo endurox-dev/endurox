@@ -85,48 +85,6 @@ public void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
  * @param msgidstr_out
  * @return msgidstr_out
  */
-public char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
-{
-    size_t out_len;
-    
-    NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
-    
-    atmi_xa_base64_encode(msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
-
-    msgid_str_out[out_len] = EOS;
-    
-    NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
-    
-    return msgid_str_out;
-}
-
-/**
- * Get binary message id
- * @param msgid_str_in, length defined by constant TMMSGIDLEN
- * @param msgid_out
- * @return msgid_out 
- */
-public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
-{
-    size_t tot_len;
-    
-    NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
-    
-    memset(msgid_out, 0, TMMSGIDLEN);
-        
-    atmi_xa_base64_decode(msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
-    
-    NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
-    
-    return msgid_out;
-}
-
-/**
- * Generate serialized version of the string
- * @param msgid_in, length defined by constant TMMSGIDLEN
- * @param msgidstr_out
- * @return msgidstr_out
- */
 public char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
 {
     size_t out_len;

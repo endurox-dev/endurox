@@ -48,12 +48,14 @@
 #include "xa_cmn.h"
 #include <ndrx.h>
 #include <qcommon.h>
+#include <nclopt.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+private char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -62,8 +64,8 @@
  */
 private void print_hdr(void)
 {
-    fprintf(stderr, "Nd SRVID QSPACE    QNAME     FLAGS QDEF\n");
-    fprintf(stderr, "-- ----- --------- --------- ----- --------------------\n");
+    fprintf(stderr, "Nd SRVID MSGID (STR/Base64 mod)                       TSTAMP (UTC)      TRIES L\n");
+    fprintf(stderr, "-- ----- -------------------------------------------- ----------------- ----- -\n");
 }
 
 /**
@@ -78,18 +80,22 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     
     short nodeid;
     short srvid;
-    char qspace[XATMI_SERVICE_NAME_LENGTH+1];
-    char qname[TMQNAMELEN+1];
-    char qdef[TMQ_QDEF_MAX];
-    char strflags[128];
+    
+    char msgid_str[TMMSGIDLEN_STR+1];
+    
+    char tstamp1[20];
+    char tstamp2[20];
+    long tires;
+    short is_locked;
     
     if (
-            SUCCEED!=Bget(p_ub, EX_QSPACE, 0, qspace, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L) ||
             SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
             SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-            SUCCEED!=CBget(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
-            SUCCEED!=Bget(p_ub, EX_QSTRFLAGS, 0, strflags, 0L)
+            SUCCEED!=Bget(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
+            SUCCEED!=Bget(p_ub, EX_TSTAMP1_STR, 0, tstamp1, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_TSTAMP2_STR, 0, tstamp2, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QMSGTRIES, 0, (char *)&tires, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
         )
     {
         fprintf(stderr, "Protocol error - TMQ did not return data, see logs!\n");
@@ -97,17 +103,14 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
                 Bstrerror(Berror));
         FAIL_OUT(ret);
     }    
-    
-    FIX_SVC_NM_DIRECT(qspace, 9);
-    FIX_SVC_NM_DIRECT(qname, 9);
-    
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %s",
+       
+    fprintf(stdout, "%-2d %-5d %-44.44s %-17.17s %-5.5s %s",
             nodeid, 
             srvid, 
-            qspace, 
-            qname,
-            strflags,
-            qdef
+            msgid_str,
+            tstamp1+2, 
+            nstdutil_decode_num(tires, 0, 0, 1),
+            is_locked?"Y":"N"
             );
     
     printf("\n");
@@ -120,7 +123,7 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-private int call_tmq(char *svcnm)
+private int call_tmq(char *svcnm, char *qname)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", 1024);
     int ret=SUCCEED;
@@ -129,7 +132,7 @@ private int call_tmq(char *svcnm)
     int recv_continue = 1;
     int tp_errno;
     int rcv_count = 0;
-    char cmd = TMQ_CMD_MQLC;
+    char cmd = TMQ_CMD_MQLM;
     
     /* Setup the call buffer... */
     if (NULL==p_ub)
@@ -141,6 +144,12 @@ private int call_tmq(char *svcnm)
     if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to install command code");
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to install qname");
         FAIL_OUT(ret);
     }
     
@@ -206,16 +215,58 @@ out:
 }
 
 /**
- * List queues
+ * Filter the service names, return TRUE for those which matches individual TMs
+ * @param svcnm
+ * @return TRUE/FALSE
+ */
+private int mqfilter_qspace(char *svcnm)
+{
+    int i, len;
+    int cnt = 0;
+    char tmp[XATMI_SERVICE_NAME_LENGTH+1];
+    
+    
+    sprintf(tmp, NDRX_SVC_QSPACE, M_qspace);
+    
+    
+    if (0==strcmp(svcnm, tmp))
+    {
+        return TRUE;
+    }
+    
+    return FALSE;
+}
+
+
+/**
+ * List messages in q
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+public int cmd_mqlm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = SUCCEED;
     atmi_svc_list_t *el, *tmp, *list;
+    char qname[TMQNAMELEN+1];
+    
+    ncloptmap_t clopt[] =
+    {
+        {'s', BFLD_STRING, M_qspace, sizeof(M_qspace)-3, 
+                                NCLOPT_MAND|NCLOPT_HAVE_VALUE, "Qspace name"},
+        {'q', BFLD_STRING, qname, sizeof(qname), 
+                                NCLOPT_MAND|NCLOPT_HAVE_VALUE, "Queue name"},
+        {0}
+    };
+    
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    {
+        fprintf(stderr, "Invalid options, see `help'.");
+        FAIL_OUT(ret);
+    }
+    
     
     /* we need to init TP subsystem... */
     if (SUCCEED!=tpinit(NULL))
@@ -226,14 +277,14 @@ public int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     
     print_hdr();
     
-    list = ndrx_get_svc_list(mqfilter);
+    list = ndrx_get_svc_list(mqfilter_qspace);
     
     LL_FOREACH_SAFE(list,el,tmp)
     {
         
         NDRX_LOG(log_info, "About to call service: [%s]\n", el->svcnm);
 
-        call_tmq(el->svcnm);
+        call_tmq(el->svcnm, qname);
         /* Have some housekeep. */
         LL_DELETE(list,el);
         free(el);

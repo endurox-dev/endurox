@@ -147,7 +147,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          */
         if (outbufobj->type_id!=BUF_TYPE_UBF)
         {
-            NDRX_LOG(log_warn, "User buffer %s is different, "
+            NDRX_LOG(log_warn, "User buffer %d is different, "
                     "free it up and re-allocate as UBF", G_buf_descr[outbufobj->type_id]);
             _tpfree(*odata, outbufobj);
             *odata=NULL;
@@ -231,7 +231,7 @@ out:
  * @param len
  * @return
  */
-public char	* UBF_tpalloc (typed_buffer_descr_t *descr, long len)
+public char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
 {
     char *ret=NULL;
     char fn[] = "UBF_tpalloc";

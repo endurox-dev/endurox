@@ -92,4 +92,7 @@
 #define	EX_QNUMSUCCEED	((BFLDID32)33554751)	/* number: 319	 type: long */
 #define	EX_QNUMFAIL	((BFLDID32)33554752)	/* number: 320	 type: long */
 #define	EX_QSTRFLAGS	((BFLDID32)167772481)	/* number: 321	 type: string */
+#define	EX_QMSGTRIES	((BFLDID32)33554754)	/* number: 322	 type: long */
+#define	EX_QMSGLOCKED	((BFLDID32)323)	/* number: 323	 type: short */
+#define	EX_QMSGIDSTR	((BFLDID32)167772484)	/* number: 324	 type: string */
 #endif

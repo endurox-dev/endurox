@@ -47,8 +47,9 @@ extern "C" {
 #define TMQ_CMD_ENQUEUE         'E'      /* Enqueue                     */
 #define TMQ_CMD_DEQUEUE         'D'      /* Dequeue                     */
 #define TMQ_CMD_NOTIFY          'N'      /* Notify tmq for XA completion*/
-#define TMQ_CMD_MQLQ           'P'      /* Print queue                 */
-#define TMQ_CMD_MQLC      'C'      /* List configuration of q     */
+#define TMQ_CMD_MQLQ            'P'       /* Print queue                */
+#define TMQ_CMD_MQLC            'C'       /* List configuration of q    */
+#define TMQ_CMD_MQLM            'M'       /* List messages              */
     
 #define TMQ_QDEF_MAX            512      /* max buffer size for Q def   */
 /*---------------------------Enums--------------------------------------*/
@@ -69,11 +70,14 @@ extern int tmq_tpqctl_from_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl);
 extern int tmq_tpqctl_to_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
 extern int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
 
+extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
+extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
+
 /* API: */
-extern int _tpenqueue (char *qspace, char *qname, TPQCTL *ctl, 
+extern int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags);
 
-extern int _tpdequeue (char *qspace, char *qname, TPQCTL *ctl, 
+extern int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char **data, long *len, long flags);
 #ifdef	__cplusplus
 }

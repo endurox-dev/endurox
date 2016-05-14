@@ -94,11 +94,11 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "ldeqa"))
     {
-        return deq_q_test(FALSE, FALSE, "LTESTA", "LTESTB", "LTESTC");
+        return deq_q_test(FALSE, TRUE, "LTESTA", "LTESTB", "LTESTC");
     }
     else if (0==strcmp(argv[1], "ldeqc"))
     {
-        return deq_q_test(TRUE, FALSE, "LTESTA", "LTESTB", "LTESTC");
+        return deq_q_test(TRUE, TRUE, "LTESTA", "LTESTB", "LTESTC");
     }
     else if (0==strcmp(argv[1], "deqe"))
     {

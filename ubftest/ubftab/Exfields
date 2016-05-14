@@ -111,6 +111,9 @@ EX_QNUMLOCKED		    218 	long	-	Number of locked messages in q
 EX_QNUMSUCCEED		    219 	long	-	Number of succeed messages, for autoq
 EX_QNUMFAIL		    220 	long	-	Number of failed messages for autoq
 EX_QSTRFLAGS		    221 	string	-	String based flags
+EX_QMSGTRIES		    222 	long	-	Number of tries for auto message
+EX_QMSGLOCKED		    223 	short	-	Is message locked?
+EX_QMSGIDSTR		    224	        string	-	String version of msgid
 
 $#endif
 

@@ -174,6 +174,14 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
                 FAIL_OUT(ret);
             }
             break;
+        case TMQ_CMD_MQLM:
+            
+            /* request for printing active transactions */
+            if (SUCCEED!=tmq_mqlm(p_ub, cd))
+            {
+                FAIL_OUT(ret);
+            }
+            break;
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
             ret=FAIL;

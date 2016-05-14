@@ -160,7 +160,11 @@ cmd_mapping_t M_command_map[] =
     {"bc",        cmd_bc,FAIL,   2,  3,  1, "Boot(start) client\n"
                                     "\t\tArgs: bc -t <Tag> [-s <Subsection (default -)]"},
     {"mqlq",      cmd_mqlq,FAIL,   1,  1,  1, "List persistent queues (dynamic)"},
-    {"mqlc",      cmd_mqlc,FAIL,   1,  1,  1, "List persistent queue configuration"}
+    {"mqlc",      cmd_mqlc,FAIL,   1,  1,  1, "List persistent queue configuration"},
+    {"mqlm",      cmd_mqlm,FAIL,   3,  3,  1, "List messages in q\n"
+                                    "\t\tArgs: lm -s <QSpace> -q <QName>"},
+    {"mqdm",      cmd_mqdm,FAIL,   4,  4,  1, "Dump/peek messages to stdout\n"
+                                    "\t\tArgs: lm -n <Cluster node id> -i <Server ID> -m <Message ID>"},
 };
 
 /**

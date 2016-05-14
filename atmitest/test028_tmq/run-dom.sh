@@ -162,10 +162,25 @@ xadmin down -y
 xadmin start -y || go_out 1
 clean_logs;
 
+################################################################################
+#
+# CLI TESTS
+#
+################################################################################
 # List the queues (should be something..)
 xadmin mqlq
 # List q config
 xadmin mqlc
+# List messages in q
+xadmin mqlm -s MYSPACE -q TESTC 
+
+#Dump the first message to stdout:
+
+MSGID=`xadmin mqlm -s MYSPACE -q TESTC  | tail -n1  | awk '{print($3)}'`
+
+echo "Dumping message [$MSGID]"
+xadmin mqdm -n 1 -i 100 -m $MSGID
+################################################################################
 
 echo "Running: dequeue (abort)"
 (./atmiclt28 deqa 2>&1) >> ./atmiclt-dom1.log

@@ -1,11 +1,5 @@
 /* 
 ** Tmqueue server - transaction monitor
-** After that log transaction to hash & to disk for tracking the stuff...
-** TODO: We should have similar control like "TP_COMMIT_CONTROL" -
-** either return after stuff logged or after really commit completed.
-** Error handling:
-** - System errors we will track via ATMI interface error functions
-** - XA errors will be tracked via XA error interface
 **
 ** @file tmqapi.c
 ** 
@@ -627,6 +621,94 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
         }
         
         DL_DELETE(list, el);
+        free((char *)el);
+    }
+    
+out:
+
+    return ret;
+}
+
+/**
+ * List messages in queue
+ * @param p_ub
+ * @param cd
+ * @return 
+ */
+public int tmq_mqlm(UBFH *p_ub, int cd)
+{
+    int ret = SUCCEED;
+    long revent;
+    tmq_memmsg_t *el, *tmp, *list;
+    short nodeid = tpgetnodeid();
+    short srvid = tpgetsrvid();
+    char *fn = "tmq_mqlm";
+    char qname[TMQNAMELEN+1];
+    short is_locked;
+    char msgid_str[TMMSGIDLEN_STR+1];
+
+    /* Get list of queues */
+    
+    if (SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to get qname");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==(list = tmq_get_msglist(qname)))
+    {
+        NDRX_LOG(log_info, "%s: no messages in q", fn);
+    }
+    else
+    {
+        NDRX_LOG(log_info, "%s: messages found", fn);
+    }
+    
+    DL_FOREACH_SAFE(list,el,tmp)
+    {
+        if (el->msg->lockthreadid)
+        {
+            is_locked = TRUE;
+        }
+        else
+        {
+            is_locked = FALSE;
+        }
+        
+        tmq_msgid_serialize(el->msg->hdr.msgid, msgid_str);
+        
+        if (SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+            SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
+            SUCCEED!=Bchg(p_ub, EX_TSTAMP1_STR, 0, 
+                    nstdutil_get_tstamp_from_micro(0, el->msg->msgtstamp), 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_TSTAMP2_STR, 0, 
+                nstdutil_get_tstamp_from_micro(1, el->msg->trytstamp), 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QMSGTRIES, 0, (char *)&el->msg->trycounter, 0L) ||
+            SUCCEED!=Bchg(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
+                )
+        {
+            NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+        
+        if (FAIL == tpsend(cd,
+                            (char *)p_ub,
+                            0L,
+                            0,
+                            &revent))
+        {
+            NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                                tpstrerror(tperrno), revent);
+            FAIL_OUT(ret);
+        }
+        else
+        {
+            NDRX_LOG(log_debug,"sent ok");
+        }
+        
+        DL_DELETE(list, el);
+        free((char *)el->msg);
         free((char *)el);
     }
     

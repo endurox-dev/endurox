@@ -1337,6 +1337,70 @@ out:
     return ret;
 }
 
+/**
+ * Return list of messages in the q
+ * @return NULL or list
+ */
+public tmq_memmsg_t *tmq_get_msglist(char *qname)
+{
+    tmq_qhash_t *qhash;
+    tmq_memmsg_t *node;
+    tmq_memmsg_t * ret = NULL;
+    tmq_memmsg_t * tmp = NULL;
+    tmq_msg_t * msg = NULL;
+    
+    NDRX_LOG(log_debug, "tmq_get_msglist listing for [%s]", qname);
+    MUTEX_LOCK_V(M_q_lock);
+    
+    if (NULL==(qhash = tmq_qhash_get(qname)))
+    {
+        NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
+        goto out;
+    }
+    
+    /* Start from first one & loop over the list while 
+     * - we get to the first non-locked message
+     * - or we get to the end with no msg, then return FAIL.
+     */
+    node = qhash->q;
+    
+    do
+    {
+        if (NULL!=node)
+        {
+            if (NULL==(tmp = calloc(1, sizeof(tmq_memmsg_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
+            
+            if (NULL==(msg = malloc(sizeof(tmq_msg_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
+            
+            memcpy(msg, node->msg, sizeof(tmq_msg_t));
+            tmp->msg = msg;
+            
+            DL_APPEND(ret, tmp);
+            
+            /* default to FIFO */
+            node = node->next;
+        }
+    }
+    while (NULL!=node && node!=qhash->q);
+    
+out:
+    MUTEX_UNLOCK_V(M_q_lock);
+    return ret;
+}
 
 /**
  * Sort Qs

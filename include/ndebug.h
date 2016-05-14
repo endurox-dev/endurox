@@ -80,6 +80,7 @@ typedef struct
 
 #define UBF_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level) {__ndrx_debug_dump__(&G_ndrx_debug, lev, "UBF ", __FILE__, __LINE__, __func__, comment, ptr, len);}}
 #define NDRX_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level) {__ndrx_debug_dump__(&G_ubf_debug, lev, "NDRX ", __FILE__, __LINE__, __func__, comment, ptr, len);}}
+#define STDOUT_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_stdout_debug.level) {__ndrx_debug_dump__(&G_stdout_debug, lev, "UBF ", __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define UBF_DUMP_DIFF(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level) {__ndrx_debug_dump__(&G_ndrx_debug, lev, "UBF ", __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 #define NDRX_DUMP_DIFF(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level) {__ndrx_debug_dump__(&G_ubf_debug, lev, "NDRX", __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
@@ -89,6 +90,7 @@ typedef struct
 /*---------------------------Externs------------------------------------*/
 extern ndrx_debug_t G_ubf_debug;
 extern ndrx_debug_t G_ndrx_debug;
+extern ndrx_debug_t G_stdout_debug;
 extern volatile int G_ndrx_debug_first;
 /*---------------------------Macros-------------------------------------*/
 

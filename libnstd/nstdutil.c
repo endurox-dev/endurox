@@ -104,6 +104,28 @@ public unsigned long long nstdutil_utc_tstamp_micro(void)
 }
 
 /**
+ * Return YYYY-MM-DD HH:MI:SS timestamp from micro seconds based timestamp.
+ * @param ts
+ * @return 
+ */
+public char * nstdutil_get_tstamp_from_micro(int slot, unsigned long long ts)
+{
+    time_t t;
+    struct tm utc;
+    static __thread char buf[20][20];
+    if (sizeof(unsigned long long)>=8) 
+    {
+        ts = ts / 1000000;
+    }
+    
+    t = ts;
+    gmtime_r(&t, &utc);
+    strftime(buf[slot], sizeof(buf[slot]), "%Y-%m-%d %H:%M:%S", &utc);
+    
+    return buf[slot];
+}
+
+/**
  * Get tick count in one second for current platform
  * @return 
  */
@@ -131,17 +153,17 @@ public unsigned long long nstdutil_get_micro_resolution_for_sec(void)
  */
 public void nstdutil_get_dt_local(long *p_date, long *p_time)
 {
-        struct tm       *p_tm;
-        long            lret;
-        struct timeval  timeval;
-        struct timezone timezone_val;
+    struct tm       *p_tm;
+    long            lret;
+    struct timeval  timeval;
+    struct timezone timezone_val;
 
-        gettimeofday (&timeval, &timezone_val);
-        p_tm = localtime(&timeval.tv_sec);
-        *p_time = 10000L*p_tm->tm_hour+100*p_tm->tm_min+1*p_tm->tm_sec;
-        *p_date = 10000L*(1900 + p_tm->tm_year)+100*(1+p_tm->tm_mon)+1*(p_tm->tm_mday);
+    gettimeofday (&timeval, &timezone_val);
+    p_tm = localtime(&timeval.tv_sec);
+    *p_time = 10000L*p_tm->tm_hour+100*p_tm->tm_min+1*p_tm->tm_sec;
+    *p_date = 10000L*(1900 + p_tm->tm_year)+100*(1+p_tm->tm_mon)+1*(p_tm->tm_mday);
 
-        return;
+    return;
 }
 
 /**
@@ -216,7 +238,7 @@ public char * nstdutil_str_env_subs(char * str)
  */
 char *nstdutil_decode_num(long tt, int slot, int level, int levels)
 {
-    static char text[20][128];
+    static __thread char text[20][128];
     char tmp[128];
     long next_t=0;
     long t = tt;
