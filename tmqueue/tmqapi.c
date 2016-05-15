@@ -60,6 +60,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 private __thread int M_is_xa_open = FALSE;
+MUTEX_LOCKDECL(M_tstamp_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /******************************************************************************/
@@ -79,6 +80,11 @@ public int tmq_enqueue(UBFH *p_ub)
     BFLDLEN len = 0;
     TPQCTL qctl_out;
     int local_tx = FALSE;
+    
+    /* To guarentee unique order in same Q space...: */
+    static long t_sec = 0;
+    static long t_usec = 0;
+    static int t_cntr = 0;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
@@ -194,7 +200,25 @@ public int tmq_enqueue(UBFH *p_ub)
     memcpy(p_msg->qctl.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
     
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
-    p_msg->msgtstamp = nstdutil_utc_tstamp_micro();
+
+    
+    nstdutil_utc_tstamp2(&p_msg->msgtstamp, &p_msg->msgtstamp_usec);
+    
+    MUTEX_LOCK_V(M_tstamp_lock);
+    
+    if (p_msg->msgtstamp == t_sec && p_msg->msgtstamp_usec == t_usec)
+    {
+        t_cntr++;
+    }
+    else
+    {
+        t_sec = p_msg->msgtstamp;
+        t_usec = p_msg->msgtstamp_usec;
+        t_cntr = 0;
+    }
+    MUTEX_UNLOCK_V(M_tstamp_lock);
+    
+    p_msg->msgtstamp_cntr = t_cntr;
     p_msg->status = TMQ_STATUS_ACTIVE;
     
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
@@ -685,9 +709,9 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
             SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
             SUCCEED!=Bchg(p_ub, EX_TSTAMP1_STR, 0, 
-                nstdutil_get_tstamp_from_micro(0, el->msg->msgtstamp), 0L) ||
+                nstdutil_get_strtstamp2(0, el->msg->msgtstamp, el->msg->msgtstamp_usec), 0L) ||
             SUCCEED!=Bchg(p_ub, EX_TSTAMP2_STR, 0, 
-                nstdutil_get_tstamp_from_micro(1, el->msg->trytstamp), 0L) ||
+                nstdutil_get_strtstamp2(1, el->msg->trytstamp, el->msg->trytstamp_usec), 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGTRIES, 0, (char *)&el->msg->trycounter, 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
                 )

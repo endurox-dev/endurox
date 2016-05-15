@@ -779,13 +779,12 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
     int ret = FALSE;
     int retry_inc;
     unsigned long long next_try;
-    
+    long utc_sec, utc_usec;
     
     if (0==node->msg->trycounter)
     {
         next_try = node->msg->trytstamp + 
-                ((unsigned long long)qconf->waitinit) * 
-                nstdutil_get_micro_resolution_for_sec();
+                ((unsigned long long)qconf->waitinit);
         
         NDRX_LOG(log_debug, "First try, sleep %d sec", qconf->waitinit);
     }
@@ -802,14 +801,14 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
                 node->msg->trycounter, retry_inc);
         
         next_try = node->msg->trytstamp + 
-                retry_inc * 
-                nstdutil_get_micro_resolution_for_sec();
+                retry_inc;
     }
     
-    NDRX_LOG(log_debug, "Next try at: %llu current clock: %llu",
-            next_try, nstdutil_utc_tstamp_micro());
+    nstdutil_utc_tstamp2(&utc_sec, &utc_usec);
+    NDRX_LOG(log_debug, "Next try at: %ld current clock: %ld",
+            next_try, utc_sec);
             
-    if (next_try<=nstdutil_utc_tstamp_micro())
+    if (next_try<=utc_sec)
     {
         NDRX_LOG(log_debug, "Message accepted for dequeue...");
         ret=TRUE;
@@ -1305,14 +1304,17 @@ out:
 }
 
 /**
- * compare two Q entries, by time
+ * compare two Q entries, by time + counter
  * @param q1
  * @param q2
  * @return 
  */
 private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
 {
-    return q1->msg->msgtstamp - q2->msg->msgtstamp;
+    
+    return nstdutil_compare3(q1->msg->msgtstamp, q1->msg->msgtstamp_usec, q1->msg->msgtstamp_cntr, 
+            q2->msg->msgtstamp, q2->msg->msgtstamp_usec, q2->msg->msgtstamp_cntr);
+    
 }
 
 /**

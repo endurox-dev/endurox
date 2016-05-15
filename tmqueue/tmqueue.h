@@ -102,8 +102,12 @@ typedef struct
     char status;            /* Status of the message */
     long trycounter;        /* try counter */
     short buftyp;           /* ATMI buffer type id */
-    unsigned long long msgtstamp;
-    unsigned long long trytstamp;
+    long msgtstamp;         /* epoch up to second */
+    long msgtstamp_usec;    /* 1/10^6 sec */
+    int msgtstamp_cntr;     /* Message counter for same time interval */
+    long trytstamp;         /* epoch up to second */
+    long trytstamp_usec;    /* 1/10^6 sec */
+    
     /* Message log (stored only in file) */
     long len;               /* msg len */
     char msg[0];            /* the memory segment for structure shall be large 
@@ -128,7 +132,8 @@ typedef struct
     tmq_cmdheader_t hdr;
     char status;   /* Status of the message */
     long trycounter;        /* try counter */
-    unsigned long long trytstamp;
+    long trytstamp;
+    long trytstamp_usec;
     
 } tmq_msg_upd_t;
 
@@ -138,9 +143,12 @@ typedef struct
             NDRX_LOG(log_debug, "trycounter [%ld] -> [%ld]",\
                     DEST->trycounter, SRC->trycounter);\
             DEST->trycounter = SRC->trycounter;\
-            NDRX_LOG(log_debug, "trycounter [%llu] -> [%llu]",\
+            NDRX_LOG(log_debug, "trycounter [%ld] -> [%ld]",\
                     DEST->trytstamp, SRC->trytstamp);\
-            DEST->trytstamp = SRC->trytstamp;
+            DEST->trytstamp = SRC->trytstamp;\
+            NDRX_LOG(log_debug, "trycounter_usec [%ld] -> [%ld]",\
+                    DEST->trytstamp, SRC->trytstamp);\
+            DEST->trytstamp_usec = SRC->trytstamp_usec;
 
 /**
  * Data block

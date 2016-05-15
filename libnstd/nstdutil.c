@@ -50,6 +50,68 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Compre 3 segmeneted number
+ * @param a1
+ * @param a2
+ * @param a3
+ * @param b1
+ * @param b2
+ * @param b3
+ * @return 
+ */
+public int nstdutil_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
+{
+    
+    long res1 =  a1 - b1;
+    long res2 =  a2 - b2;
+    long res3 =  a3 - b3;
+    
+    
+    if (res1!=0)
+        return (int)res1;
+    
+    if (res2!=0)
+        return (int)res2;
+    
+    return (int)res3;
+    
+}
+
+
+/**
+ * Return timestamp split in two fields
+ * @param t
+ * @param tusec
+ */
+public void nstdutil_utc_tstamp2(long *t, long *tusec)
+{
+    struct timeval tv;
+    
+    gettimeofday(&tv, NULL);
+    
+    *t = tv.tv_sec;
+    *tusec = tv.tv_usec;
+}
+
+/**
+ * Return YYYY-MM-DD HH:MI:SS timestamp from two field epoch
+ * @param ts
+ * @return 
+ */
+public char * nstdutil_get_strtstamp2(int slot, long t, long tusec)
+{
+    time_t tfmt;
+    struct tm utc;
+    static __thread char buf[20][20];
+    
+    tfmt = t;
+    gmtime_r(&tfmt, &utc);
+    strftime(buf[slot], sizeof(buf[slot]), "%Y-%m-%d %H:%M:%S", &utc);
+    
+    return buf[slot];
+}
+
 
 /**
  * Return timstamp UTC, milliseconds since epoch date.
@@ -108,7 +170,7 @@ public unsigned long long nstdutil_utc_tstamp_micro(void)
  * @param ts
  * @return 
  */
-public char * nstdutil_get_tstamp_from_micro(int slot, unsigned long long ts)
+public char * nstdutil_get_strtstamp_from_micro(int slot, unsigned long long ts)
 {
     time_t t;
     struct tm utc;

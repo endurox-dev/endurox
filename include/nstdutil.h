@@ -64,9 +64,12 @@ struct charstrmap
 extern void nstdutil_get_dt_local(long *p_date, long *p_time);
 extern unsigned long long nstdutil_utc_tstamp(void);
 extern unsigned long long nstdutil_utc_tstamp_micro(void);
-extern char * nstdutil_get_tstamp_from_micro(int slot, unsigned long long ts);
+extern char * nstdutil_get_strtstamp_from_micro(int slot, unsigned long long ts);
 extern unsigned long long nstdutil_get_micro_resolution_for_sec(void);
 extern char * nstdutil_str_env_subs(char * str);
+extern void nstdutil_utc_tstamp2(long *t, long *tusec);
+extern char * nstdutil_get_strtstamp2(int slot, long t, long tusec);
+extern int nstdutil_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
 
 extern char *nstdutil_decode_num(long tt, int slot, int level, int levels);
 extern char *nstdutil_str_strip(char *haystack, char *needle);
