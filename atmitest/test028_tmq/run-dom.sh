@@ -126,6 +126,8 @@ mkdir RM1
 rm -rf ./QSPACE1
 mkdir QSPACE1
 
+cp q.conf.tpl q.conf
+
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
@@ -168,6 +170,10 @@ clean_logs;
 #
 ################################################################################
 #reload config
+
+echo "Testing [xadmin mqrc]"
+
+echo "BINQ2,svcnm=-,autoq=n,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1,mode=fifo" >> q.conf
 xadmin mqrc
 RET=$?
 
@@ -175,25 +181,147 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-# List the queues (should be something..)
-xadmin mqlq
+if [ "X`xadmin mqlc | grep BINQ2 | grep fifo`" ==  "X" ]; then
+    echo "Missing BINQ2 not defined!"
+    go_out 1
+fi
+
+
 # List q config
 xadmin mqlc
+
+echo "Testing [xadmin mqlc]"
+#
+# Test the config, we shall see "LTESTA" with lifo mode...
+#
+if [ "X`xadmin mqlc | grep LTESTA | grep lifo`" ==  "X" ]; then
+    echo "Missing LTESTA lifo Q"
+    go_out 1
+fi
+
+# List the queues (should be something..)
+xadmin mqlq
+
+echo "Testing [xadmin mqlq]"
+if [ "X`xadmin mqlq | grep TESTB | grep 300`" ==  "X" ]; then
+    echo "Missing TESTB and 300"
+    go_out 1
+fi
+
 # List messages in q
 xadmin mqlm -s MYSPACE -q TESTC 
 
 #Dump the first message to stdout:
 
+echo "Testing [xadmin mqlm]"
+
 MSGID=`xadmin mqlm -s MYSPACE -q TESTC  | tail -n1  | awk '{print($3)}'`
+
+if [ "X$MSGID" ==  "X" ]; then
+    echo "Missing message mqlm"
+    go_out 1
+fi
 
 echo "Dumping message [$MSGID]"
 xadmin mqdm -n 1 -i 100 -m $MSGID
 
+echo "Testing [xadmin mqdm] UBF buffer"
 
-xadmin mqch -n 1 -i 100 -q MEMQ,svcnm=FAILRND,autoq=y,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1,memonly=y
-# List q config
+if [ "X`xadmin mqdm -n 1 -i 100 -m $MSGID | grep 'TEST HELLO'`" ==  "X" ]; then
+    echo "Missing 'TEST HELLO' in mqdm"
+    go_out 1
+fi
+
+#
+# Carray tests..
+#
+
+echo "Adding carray message to BINQ"
+(./atmiclt28 carr 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+xadmin mqlm -s MYSPACE -q BINQ
+
+MSGID=`xadmin mqlm -s MYSPACE -q BINQ  | tail -n1  | awk '{print($3)}'`
+
+echo "Testing [xadmin mqdm] CARRY buffer - $MSGID"
+xadmin mqdm -n 1 -i 100 -m $MSGID
+
+# Test the dump output in shell
+if [ "X`xadmin mqdm -n 1 -i 100 -m $MSGID | grep '00 01 02 03 04 05 06 07'`" ==  "X" ]; then
+    echo "Missing '00 01 02 03 04 05 06 07' in mqdm for CARRAY"
+    go_out 1
+fi
+
+echo "Testing [xadmin mqrm]"
+
+xadmin mqrm -n 1 -i 100 -m $MSGID
+
+echo "****************************************"
+xadmin mqlm -s MYSPACE -q BINQ
+echo "****************************************"
+
+xadmin mqlm -s MYSPACE -q BINQ | wc
+
+if [ "X`xadmin mqlm -s MYSPACE -q BINQ | wc | awk '{print($1)}'`" !=  "X0" ]; then
+    echo "Message not removed from BINQ"
+    go_out 1
+fi
+
+echo "Testing [xadmin mqch]"
+xadmin mqch -n 1 -i 100 -q MEMQ,svcnm=-,autoq=n,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1
 xadmin mqlc
 
+# List q config
+
+if [ "X`xadmin mqlc | grep MEMQ`" ==  "X" ]; then
+    echo "Missing 'MEMQ' in mqch output"
+    go_out 1
+fi
+
+echo "Testing [xadmin mqmv]"
+
+echo "Adding carray message to BINQ"
+(./atmiclt28 carr 2>&1) >> ./atmiclt-dom1.log
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Move the message to another Q"
+MSGID=`xadmin mqlm -s MYSPACE -q BINQ  | tail -n1  | awk '{print($3)}'`
+
+xadmin mqmv -n 1 -i 100 -m $MSGID -s MYSPACE -q BINQ2
+
+MSGID=`xadmin mqlm -s MYSPACE -q BINQ2  | tail -n1  | awk '{print($3)}'`
+
+xadmin mqdm -n 1 -i 100 -m $MSGID
+
+if [ "X`xadmin mqdm -n 1 -i 100 -m $MSGID | grep '00 01 02 03 04 05 06 07'`" ==  "X" ]; then
+    echo "Missing '00 01 02 03 04 05 06 07' in mqdm for CARRAY"
+    go_out 1
+fi
+
+if [ "X`xadmin mqdm -n 1 -i 100 -m $MSGID | grep 'TESTREPLY'`" ==  "X" ]; then
+    echo "Missing 'TESTREPLY' in mqdm for mqmv"
+    go_out 1
+fi
+
+if [ "X`xadmin mqdm -n 1 -i 100 -m $MSGID | grep 'TESTFAIL'`" ==  "X" ]; then
+    echo "Missing 'TESTFAIL' in mqdm for mqmv"
+    go_out 1
+fi
+
+# remove off the message...
+xadmin mqrm -n 1 -i 100 -m $MSGID
+
+################################################################################
+#
+# Continue with system tests...
+#
 ################################################################################
 
 echo "Running: dequeue (abort)"
@@ -290,7 +418,22 @@ xadmin down -y
 xadmin start -y || go_out 1
 clean_logs;
 
-#find ./QSPACE1 -type f
+xadmin mqlc
+xadmin mqlq
+
+xadmin mqlm -s MYSPACE -q LTESTA
+
+FIRST=`xadmin mqlm -s MYSPACE -q LTESTA  | head -n1  | awk '{print($3)}'`
+
+echo "First message in Q"
+xadmin mqdm -n 1 -i 100 -m $FIRST
+
+
+LAST=`xadmin mqlm -s MYSPACE -q LTESTA  | tail -n1  | awk '{print($3)}'`
+
+echo "Last message in Q"
+xadmin mqdm -n 1 -i 100 -m $LAST
+
 echo "Running: dequeue (abort) (LIFO)"
 (./atmiclt28 ldeqa 2>&1) >> ./atmiclt-dom1.log
 RET=$?

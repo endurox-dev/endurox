@@ -259,11 +259,13 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     }
     else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {
+        /* CURRENTLY NOT SUPPORTED.
         qconf->memonly = FALSE;
         if (value[0]=='y' || value[0]=='Y')
         {
             qconf->memonly = TRUE;
         }
+        */
     }
     else if (0==strcmp(key, TMQ_QC_MODE))
     {
@@ -282,7 +284,6 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
             FAIL_OUT(ret);
         }
     }
-    
     else
     {
         NDRX_LOG(log_error, "Unknown Q config setting = [%s]", key);
@@ -358,7 +359,7 @@ public int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
     }
     
     sprintf(out_buf, "%s,svcnm=%s,autoq=%s,waitinit=%d,waitretry=%d,"
-                        "waitretryinc=%d,waitretrymax=%d,memonly=%s,mode=%s",
+                        "waitretryinc=%d,waitretrymax=%d,mode=%s",
             qdef->qname, 
             qdef->svcnm, 
             (qdef->autoq?"y":"n"),
@@ -366,7 +367,6 @@ public int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
             qdef->waitretry,
             qdef->waitretryinc,
             qdef->waitretrymax,
-            (qdef->memonly?"y":"n"),
             qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo");
 
 out:
@@ -831,13 +831,15 @@ out:
 public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
 {
     tmq_qhash_t *qhash;
-    tmq_memmsg_t *node;
+    tmq_memmsg_t *node = NULL;
+    tmq_memmsg_t *start = NULL;
     tmq_msg_t * ret = NULL;
     union tmq_block block;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_qconfig_t *qconf;
     
-    NDRX_LOG(log_debug, "FIFO dequeue for [%s]", qname);
+    
+    NDRX_LOG(log_debug, "FIFO/LIFO dequeue for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
     
     /* Find the non locked message in memory */
@@ -860,13 +862,28 @@ public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
                 node->msg->hdr.qname);
         goto out;
     }
+    NDRX_LOG(log_debug, "mode: %s", TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
     /* Start from first one & loop over the list while 
      * - we get to the first non-locked message
      * - or we get to the end with no msg, then return FAIL.
      */
-    node = qhash->q;
-    
+    if (TMQ_MODE_LIFO == qconf->mode)
+    {
+        /* LIFO mode */
+        if (NULL!=qhash->q)
+        {
+            node = qhash->q->prev;
+            start = qhash->q->prev;
+        }
+    }
+    else
+    {
+        /* FIFO */
+        node = qhash->q;
+        start = qhash->q;
+    }
+            
     do
     {
         if (NULL!=node)
@@ -892,10 +909,9 @@ public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
                 /* default to FIFO */
                 node = node->next;
             }
-            
         }
     }
-    while (NULL!=node && node!=qhash->q);
+    while (NULL!=node && node!=start);
     
     if (NULL==ret)
     {

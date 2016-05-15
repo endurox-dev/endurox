@@ -159,19 +159,19 @@ cmd_mapping_t M_command_map[] =
                                     "\t\targs: sc -t <Tag> [-s <Subsection (default -)]"},
     {"bc",        cmd_bc,FAIL,   2,  3,  1, "Boot(start) client\n"
                                     "\t\targs: bc -t <Tag> [-s <Subsection (default -)]"},
-    {"mqlq",      cmd_mqlq,FAIL,   1,  1,  1, "List persistent queues (dynamic)"},
     {"mqlc",      cmd_mqlc,FAIL,   1,  1,  1, "List persistent queue configuration"},
+    {"mqlq",      cmd_mqlq,FAIL,   1,  1,  1, "List persistent queues (active/dynamic)"},
     {"mqrc",      cmd_mqrc,FAIL,   1,  1,  1, "Reload TMQ config"},
     {"mqlm",      cmd_mqlm,FAIL,   3,  3,  1, "List messages in q\n"
                                     "\t\targs: mqlm -s <QSpace> -q <QName>"},
     {"mqdm",      cmd_mqdm,FAIL,   4,  4,  1, "Dump/peek messages to stdout\n"
                                     "\t\targs: mqdm -n <Cluster node id> -i <Server ID> -m <Message ID>"},
-    {"mqch",      cmd_mqch,FAIL,   4,  4,  1, "Dump/peek messages to stdout\n"
+    {"mqch",      cmd_mqch,FAIL,   4,  4,  1, "Change queue config (runtime only)\n"
                                     "\t\targs: mqch -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>"},
-    {"mqrm",      cmd_mqdm,FAIL,   4,  4,  1, "Remove message from Q space\n"
+    {"mqrm",      cmd_mqrm,FAIL,   4,  4,  1, "Remove message from Q space\n"
                                     "\t\targs: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>"},
     {"mqmv",      cmd_mqmv,FAIL,   6,  6,  1, "Move message to different qspace/qname\n"
-                                    "\t\targs: mqrm -n <Source cluster node id> -i <Source server ID> "
+                                    "\t\targs: mqrm -n <Source cluster node id> -i <Source server ID>\n"
                                     "\t\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>"}
 };
 

@@ -54,6 +54,7 @@ int basic_q_msgid_test(void);
 int basic_q_corid_test(void);
 int basic_autoq_ok(void);
 int basic_rndfail(void);
+int basic_enqcarray(void);
 
 
 int main(int argc, char** argv)
@@ -123,6 +124,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "rndfail"))
     {
         return basic_rndfail();
+    }
+    else if (0==strcmp(argv[1], "carr"))
+    {
+        return basic_enqcarray();
     }
     else
     {
@@ -960,7 +965,6 @@ int basic_rndfail(void)
     int i;
     char strbuf[128];
     
-    
     for (i=0; i<100; i++)
     {
         UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
@@ -1043,6 +1047,63 @@ int basic_rndfail(void)
         }
         tpfree((char *)buf2);
     }
+
+    if (SUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Add some binary data to Q
+ */
+int basic_enqcarray(void)
+{
+    int ret = SUCCEED;
+    TPQCTL qc1;
+    long len = 0;
+    char *buf = tpalloc("CARRAY", "", 8);
+    
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    buf[0] = 0;
+    buf[1] = 1;
+    buf[2] = 2;
+    buf[3] = 3;
+    buf[4] = 4;
+    buf[5] = 5;
+    buf[6] = 6;
+    buf[7] = 7;
+    
+    len = 8;
+    
+    /* enqueue the data buffer */
+    memset(&qc1, 0, sizeof(qc1));
+    
+    qc1.flags|=TPQREPLYQ;
+    strcpy(qc1.replyqueue, "TESTREPLY");
+    
+    qc1.flags|=TPQFAILUREQ;
+    strcpy(qc1.failurequeue, "TESTFAIL");
+
+    if (SUCCEED!=tpenqueue("MYSPACE", "BINQ", &qc1, buf, len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        FAIL_OUT(ret);
+    }
+    
+    tpfree((char *)buf);
 
     if (SUCCEED!=tpterm())
     {
