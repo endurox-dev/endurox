@@ -499,7 +499,7 @@ public int tmq_mqlq(UBFH *p_ub, int cd)
     char *fn = "tmq_printqueue";
     /* Get list of queues */
     
-    if (NULL==(list = tmq_get_qlist(FALSE)))
+    if (NULL==(list = tmq_get_qlist(FALSE, TRUE)))
     {
         NDRX_LOG(log_info, "%s: No queues found", fn);
     }
@@ -567,13 +567,13 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
     fwd_qlist_t *el, *tmp, *list;
     short nodeid = tpgetnodeid();
     short srvid = tpgetsrvid();
-    char *fn = "tmq_printqueue";
+    char *fn = "tmq_mqlc";
     char qdef[TMQ_QDEF_MAX];
     char flags[128];
     int is_default = FALSE;
     /* Get list of queues */
     
-    if (NULL==(list = tmq_get_qlist(FALSE)))
+    if (NULL==(list = tmq_get_qlist(FALSE, TRUE)))
     {
         NDRX_LOG(log_info, "%s: No queues found", fn);
     }
@@ -584,14 +584,18 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
     
     DL_FOREACH_SAFE(list,el,tmp)
     {
+        is_default = FALSE;
         if (SUCCEED==tmq_build_q_def(el->qname, &is_default, qdef))
         {
             NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
             
+            flags[0] = EOS;
+            
             if (is_default)
             {
-                strcpy(flags, "D");
+                strcat(flags, "D");
             }
+            
 
             if (SUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
                 SUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
@@ -599,7 +603,7 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
                 SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
                 SUCCEED!=CBchg(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
                 SUCCEED!=Bchg(p_ub, EX_QSTRFLAGS, 0, flags, 0L)
-                    )
+                )
             {
                 NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
                 FAIL_OUT(ret);
@@ -681,7 +685,7 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
             SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
             SUCCEED!=Bchg(p_ub, EX_TSTAMP1_STR, 0, 
-                    nstdutil_get_tstamp_from_micro(0, el->msg->msgtstamp), 0L) ||
+                nstdutil_get_tstamp_from_micro(0, el->msg->msgtstamp), 0L) ||
             SUCCEED!=Bchg(p_ub, EX_TSTAMP2_STR, 0, 
                 nstdutil_get_tstamp_from_micro(1, el->msg->trytstamp), 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGTRIES, 0, (char *)&el->msg->trycounter, 0L) ||

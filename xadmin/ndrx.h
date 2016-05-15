@@ -185,6 +185,10 @@ extern int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 extern int cmd_mqlm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_mqrc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_mqrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 extern int mqfilter(char *svcnm);
 
 #ifdef	__cplusplus

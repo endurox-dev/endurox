@@ -202,7 +202,7 @@ extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags);
 extern tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
-extern fwd_qlist_t *tmq_get_qlist(int auto_only);
+extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
 extern int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf);
 extern tmq_memmsg_t *tmq_get_msglist(char *qname);

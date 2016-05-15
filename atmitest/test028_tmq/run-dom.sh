@@ -188,6 +188,12 @@ MSGID=`xadmin mqlm -s MYSPACE -q TESTC  | tail -n1  | awk '{print($3)}'`
 
 echo "Dumping message [$MSGID]"
 xadmin mqdm -n 1 -i 100 -m $MSGID
+
+
+xadmin mqch -n 1 -i 100 -q MEMQ,svcnm=FAILRND,autoq=y,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1,memonly=y
+# List q config
+xadmin mqlc
+
 ################################################################################
 
 echo "Running: dequeue (abort)"

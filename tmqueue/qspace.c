@@ -1303,12 +1303,16 @@ private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
  * Return list of auto queues
  * @return NULL or list
  */
-public fwd_qlist_t *tmq_get_qlist(int auto_only)
+public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
 {
     fwd_qlist_t * ret = NULL;
     fwd_qlist_t * tmp = NULL;
+    
     tmq_qhash_t *q, *qtmp;
     tmq_qconfig_t *qconf;
+    
+    tmq_qconfig_t *qc, *qctmp;
+    
     MUTEX_LOCK_V(M_q_lock);
     
     HASH_ITER(hh, G_qhash, q, qtmp)
@@ -1331,7 +1335,32 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only)
             DL_APPEND(ret, tmp);
         }
         
-    }   
+    }
+    
+    /* If we need to include definitions
+     * Then iterate over qdefs and change which are not in the G_qhash
+     * Those add to return DL
+     */
+    if (incl_def)
+    {
+        HASH_ITER(hh, G_qconf, qc, qctmp)
+        {
+            if (NULL==tmq_qhash_get(qc->qname))
+            {
+                if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))
+                {
+                    int err = errno;
+                    NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                    userlog("Failed to alloc: %s", strerror(err));
+                    ret = NULL;
+                    goto out;
+                }
+                NDRX_LOG(log_debug, "tmq_get_qlist: %s", qc->qname);
+                strcpy(tmp->qname, qc->qname);
+                DL_APPEND(ret, tmp);
+            }
+        }
+    }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);

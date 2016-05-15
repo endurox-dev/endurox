@@ -156,7 +156,7 @@ private tmq_msg_t * get_next_msg(void)
         }
         
         /* Generate new list */
-        list = tmq_get_qlist(TRUE);
+        list = tmq_get_qlist(TRUE, FALSE);
         
         if (NULL!=list)
         {
@@ -337,8 +337,10 @@ out:
                     msg->qctl.failurequeue, msg->hdr.qspace);
                 
 
-                /* Send response to reply Q (load the data in FB with call details) */
-                memset(&ctl, 0, sizeof(ctl));
+                /* Send response to reply Q (load the data in FB with call details) 
+                 * 
+                /* Keep the original flags... */
+                memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
                 if (SUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         call_buf, call_len, TPNOTRAN))
