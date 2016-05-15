@@ -134,6 +134,19 @@ COMMANDS
 *sc* -t <process tag> [-s <sub section>]::
 	Stop client process. This sends command to Client Process Monitor server ('cpmsrv').
 
+*mqlc*::
+	List queue configuration. This broadcasts the requests of config listing to all 
+	'tmqueue' servers. If flags column contains 'D' flag, then it means that queue
+	was dynamically defined and QDEF string contains values from default queue.
+*mqlq*::
+	List actual queues allocated on system. Similarly as for 'mqlc' this requests
+	the information from all 'tmqueue' servers. '#LOCK' column contains the number
+	of active non committed messages in Q. '#SUCC' and '#FAIL' column contains number
+	of processed messages for automatic queues (messages are sent to destination services
+	automatically by 'tmqueue' server.
+*mqrc*::
+	This command requests all queue servers to reload the configuration file.
+	
 EXIT STATUS
 -----------
 *0*::
