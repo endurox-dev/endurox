@@ -1,0 +1,52 @@
+Persistent Queues Overview
+==========================
+Madras Vitolins
+v1.0, 2016-05:
+	Initial draft
+:doctype: book
+
+Persistent queues
+-----------------
+EnduroX system is built on kernel based real-time IPC queues. Which by definition are not persistent.
+When server is restarted, memory data is lost, thus the data in message queues are lost. In some of
+the application scenarios persistent messaging is required. Thus EnduroX offers standard ATMI calls
+such as 'tpenqueue()' and 'tpdequeue()', also system supports automatic queues, where messages
+are automatically forwarded to configured service.
+
+Messages are stored in file system. To ensure transactional operation, file move/rename is
+employed which by it self (in the terms of one file system) is transactional.
+
+The queues are grouped into queue spaces. Queue space grouping element of multiple queue servers.
+Queue space basically is service name for backing 'tmqueue' server's services. Each queue server
+can stores it's data in specified file system folders. The 'tmqueue' server works in tandem with
+'tmsrv' to ensure the compatibility with global transaction processing.
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Internet resources
+- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
+- [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
+
+[glossary]
+Glossary
+--------
+This section lists
+
+[glossary]
+ATMI::
+  Application Transaction Monitor Interface
+
+UBF::
+  Unified Buffer Format it is similar API as Tuxedo's FML
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////
