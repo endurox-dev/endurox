@@ -148,8 +148,12 @@ COMMANDS
 	This command requests all queue servers to reload the configuration file.
 *mqlm* -s <QSpace> -q <QName>::
 	List messages in queue. '-s' is queue space name (set by 'tmqueue' '-m' paramemter).
-    The output lists the message ID in modified base64 version ('/' changed to '_').
-    
+	The output lists the message ID in modified base64 version ('/' changed to '_').
+*mqdm* -n <Cluster node id> -i <Server ID> -m <Message ID>::
+	Dump/peek message to stdout. The values from '-n' (node id), '-i' (srvid), '-m'(message id)
+	can be taken from 'mqlm' command. This command prints to stdout, the 'TQCTL' structure in form
+	of UBF buffer and the message it self. If message is UBF, then UBF dump is made, otherwise
+	hexdump of message is printed.
 	
 EXIT STATUS
 -----------
