@@ -19,7 +19,7 @@ DESCRIPTION
 Which is servers as communication interface between EnduroX ATMI local daemon
 and administrator. 'xadmin' can receive commands as parameter to 'xadmin'. It
 can read command from pipe (stdin). And it can work in interactive mode. In this
-case 'xadmin' is started with no paramters.
+case 'xadmin' is started with no parameters.
 
 'xadmin' is responsible to start idle instance of 'ndrxd'. After that 'xadmin'
 sends commands to 'ndrxd' and prints the response from daemon to the stdout in
@@ -53,7 +53,7 @@ COMMANDS
 *stop* [-y] [-c]|[-s <server>] [-i <srvid>]::
 	Stop application domain. '-y' means do not ask for confirmation. '-s' means
 	ATMI servers binary name to be stopped, instead of whole application domain.
-	'-i' means stop specific server instance. '-c' flag will shutdown 'ndrxd' deamon,
+	'-i' means stop specific server instance. '-c' flag will shutdown 'ndrxd' daemon,
 	otherwise daemon keeps running.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
 	Reload application domain - restart server instance by instance.
@@ -118,12 +118,12 @@ COMMANDS
 *committrans*::
 	Alias for 'commit'.
 *pe*::
-	Print Envrionment variables of 'ndrxd' process.
+	Print Environment variables of 'ndrxd' process.
 *printenv*::
 	Alias for 'pe'.
 *set* ENV_NAME=ENV VALUE::
 	Set environment value. The value of env variable is parsed as command line arguments.
-        Prior sending to 'ndrxd' they are contactinated with spaces in between.
+        Prior sending to 'ndrxd' they are contact with spaces in between.
 *unset* ENV_NAME::
         Unset environment variable
 *pc*::
@@ -146,6 +146,10 @@ COMMANDS
 	automatically by 'tmqueue' server.
 *mqrc*::
 	This command requests all queue servers to reload the configuration file.
+*mqlm* -s <QSpace> -q <QName>::
+	List messages in queue. '-s' is queue space name (set by 'tmqueue' '-m' paramemter).
+    The output lists the message ID in modified base64 version ('/' changed to '_').
+    
 	
 EXIT STATUS
 -----------
