@@ -31,6 +31,20 @@
 ## -----------------------------------------------------------------------------
 ##
 
+export TESTNO="028"
+export TESTNAME_SHORT="tmq"
+export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
+
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+        # Do nothing 
+        echo > /dev/null
+else
+        # started from parent folder
+        pushd .
+        echo "Doing cd"
+        cd $TESTNAME
+fi;
 
 #
 # Dynamic tests
