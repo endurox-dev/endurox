@@ -54,16 +54,16 @@ mode.
 
 Every instance of 'tmsrv' will advertise following list of services
 
-* @TM-<Resource Manager ID>
-* @TM-<Cluster Node ID>-<Resource Manager ID>
-* @TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>
+1. @TM-<Resource Manager ID>
+2. @TM-<Cluster Node ID>-<Resource Manager ID>
+3. @TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>
 
 For example for Resource Manager ID '1', Cluster Node ID '6', Enduro/X Server ID '10'
 services will look like:
 
-* @TM-1
-* @TM-6-1
-* @TM-6-1-10
+1. @TM-1
+2. @TM-6-1
+3. @TM-6-1-10
 
 Currently 1. format is used for starting the transaction, and accepting prepare/commit/abort
 calls from master TM of the transaction. Service Nr 3. is used by transaction initiator for
