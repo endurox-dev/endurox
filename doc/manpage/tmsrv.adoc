@@ -53,12 +53,14 @@ prepare/commit/aborts of other RMs. These other TMs will be selected in load bal
 mode.
 
 Every instance of 'tmsrv' will advertise following list of services
+
 * @TM-<Resource Manager ID>
 * @TM-<Cluster Node ID>-<Resource Manager ID>
 * @TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>
 
 For example for Resource Manager ID '1', Cluster Node ID '6', Enduro/X Server ID '10'
 services will look like:
+
 * @TM-1
 * @TM-6-1
 * @TM-6-1-10
