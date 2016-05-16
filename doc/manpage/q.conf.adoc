@@ -1,0 +1,86 @@
+Q.CONF(5)
+=========
+:doctype: manpage
+
+
+NAME
+----
+q.conf - persistent, Transactional Message Queue (TMQ) configuration file
+
+
+SYNOPSIS
+--------
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretryinc=<RETRY_WAIT_INC>,waitretrymax=<WAIT_MAX>,mode=<MODE>
+
+
+DESCRIPTION
+-----------
+'q.conf' defines the message queues for 'tmqueue'. The filename is passed to 'tmqueue' in 
+application '-q' parameter. This file can be shared between multiple 'tmqueue' servers.
+It is recommended to define default queue (special name is '@'). So that during operations if
+specific queue is not found, then settings are taken from default queue. The queue definitions
+also might not be complete. If so, then defaults are used for other parameters. It is recommended
+to define default queue first. So that it can be using for other queue missing parameter defaulting.
+
+Whitespace/empty lines are ignored. File may contains comments which are started at the beginning of the
+line with '#' symbol.
+
+
+DEBUG CONFIGURATION FILE SYNTAX
+-------------------------------
+
+*QUEUE_NAME>*::
+	Queue name. For default queue use '@' symbol. Max name length is 15 symbols.
+*SERVICE_NAME*::
+	Service name to forward the message to. This is used for automatic queues. For manual queues
+	you may put some dummy value into. 
+*AUTOMATIC_Q*::
+	'y' - automatic queue. 'n' - not automatic.
+*TRIES*::
+	Number of tires to send the message to 'SERVICE_NAME' service. I.e retry will be done in case
+	if call returns the error. Parameter is used by automatic queues.
+*INIT_WAIT*::
+	Number of seconds to be waited before starting to send the message to service. Node that
+	the minimum wait time is defined by tmqueue '-s' scan time flag which makes the periodic sleeps
+	before scanning the messages to be sent. This is setting used by automatic queues.
+*RETRY_WAIT_INC*::
+	Increase number of seconds to wait for next retry of forwarding message to service.
+	This setting is used only by automatic queues.
+*WAIT_MAX*::
+	Maximum number of seconds to wait after taking in account 'RETRY_WAIT_INC'.
+*MODE*::
+	Queue mode, can be 'fifo' or 'lifo'. This setting affects 'tpdequeue()'.
+
+
+EXAMPLE
+-------
+Sample configuration:
+---------------------------------------------------------------------
+#
+# @(#) EnduroX Persistent Queue Configuration
+#
+@,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+# This will take other settings from default:
+TESTA,svcnm=-,autoq=n,waitinit=5
+
+# Automatic queue: Will try to send messages to TESTSVC
+LTESTB,svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=0,memonly=n,mode=lifo
+---------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*
+
+AUTHOR
+------
+EnduroX is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Madars Vitolins
+
