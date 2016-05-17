@@ -45,10 +45,89 @@ file is issued to disk for message file removal. Once the dequeue transaction is
 completes the operation, by removing the command file, message file and sending notification back
 to 'tmqueue', that command 'REMOVE' is completed. At this point 'tmqueue' server removes the message
 completely from memory.
+5. In case if queue is defined as 'automatic', the 'forward' threads from 'tmqueue' server
+begins sending the message to destination ATMI service. If service call fails, the call is 
+retried configured number of times. If call succeeds and reply queue is sent, then message is submitted
+to reply queue. If message fails (number of attempts exceeded) and failure queue is defined,
+the forwarder thread will submit the message to failure queue. 'TPQCTL' flags in this scenario is
+preserved.
 
 Schematically internals of the 'tmqueue' and API works can be displayed as follows:
 
 image:tmqinternals.png[caption="Figure 1: ", title="tmqueue internals", alt="tmqueue"]
+
+
+How to use EnduroX persistent queues
+------------------------------------
+This section gives some oversight how to use persistent queues. There are two type 
+of usages possible. One is that process submits the message to the queue and another
+process manually dequeues the message, that is depicted here:
+
+[dia, tpenqueue_tpdequeue.dia, tpenqueue_tpdequeue.png, x300]
+-------------------------------
+-------------------------------
+
+And another use is that process does 'tpenqueue()' to automatic queue, and message is automatically
+forwarded to destination service. The schematics looks like this:
+
+[dia, tpenqueue_auto.dia, tpenqueue_auto.png, x300]
+-------------------------------
+-------------------------------
+
+For 'tpenqueue()' and 'tpdequeue()' passed in buffers must be allocated with 'tpalloc()'.
+For UBF, STRING and JSON buffers, the actual buffer length on enqueue doesn't matter, it is
+detected from data data inside. For array buffer, it does play a role. When doing
+'tpdequeue()', the the buffer type might be changed, if message have a different data
+type.
+
+
+'tmqueue' ATMI server configuration
+-----------------------------------
+To configure queue sub-system, you need to start at-least one instance of 'tmqueue' server and
+one instance of 'tmsrv'. They both must run in the same XA environment. For running just pure
+ATMI client, following 'ndrxconfig.xml' shall be done:
+
+---------------------------------------------------------------------
+...
+        <servers>
+            <server name="tmsrv">
+                <max>1</max>
+                <srvid>1</srvid>
+                <sysopt>-e /opt/app1/log/tmsrv.log -r -- -t1 -l/opt/app1/var/RM1</sysopt>
+            </server>
+            <server name="tmqueue">
+                <max>1</max>
+                <srvid>100</srvid>
+                <sysopt>-e /opt/app1/log/tmqueue.log -r -- -m MYSPACE -q /opt/app1/conf/q.conf -s1</sysopt>
+            </server>
+        </servers>
+...
+---------------------------------------------------------------------
+
+
+
+Queue configuration
+-------------------
+We will configure three queues here. The default queue (recommended), one manual queue
+and one automatic queue.
+
+
+Sample ATMI client for enqueue & dequeue
+----------------------------------------
+This section contains C code for ATMI client which enqueues the message to Q and the 
+dequeues it.
+
+
+Managing the runtime
+--------------------
+This section contains overview of the 'xadmin' commands available for queue
+management.
+
+
+Further study
+-------------
+For more use cases the 'atmitests/test028_tmq' can be analyzed. It contains tests for supported
+use cases.
 
 
 :numbered!:
