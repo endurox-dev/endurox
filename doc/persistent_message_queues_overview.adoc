@@ -21,6 +21,33 @@ Queue space basically is service name for backing 'tmqueue' server. Each queue s
 can stores it's data in specified file system folders. The 'tmqueue' server works in tandem with
 'tmsrv' to ensure the compatibility with global transaction processing.
 
+How the persistent queues work?
+-------------------------------
+The persistent queues in EnduroX application server are provided by special ATMI server, named
+"tmqueue". To start using these queus, firstly you have to configure the 'tmqueue' and paired
+'tmsrv'. 
+
+The queue processing can be devided in following steps:
+
+1. 'tmqueue' advertizes queue space services
+2. Caller invokes 'tpenqueue()' ATMI API call. This calls the 'tmqueue' server with passed in buffer
+data and other flags.
+3. 'tmqueue' server recieves the request, saves lookups the queue, and creates the linked list in
+memory where to store the message. In the same time message is written to disk in 'active' folder.
+Initially message is marked as locked, the message becomes dequeueable at the point when XA 
+transaction is committed. At the commit point, the 'tmsrv' with loaded EnduroX queue driver,
+completes the message (moves it to 'committed' folder). At the smae point 'tmsrv' sends the notification
+to 'tmqueue' to unlock the message. NOTE: It is not possible to enqueue and dequeue same message
+in single transaction.
+4. When message is unlocked, it is available for 'tpdequeue()'. Where the application invokes this function
+and, it calls the 'tmqueue()' for the message. If message is found it again becomes locked, and command
+file is issued to disk for message file removal. Once the dequeue transaction is committed, the XA driver
+completes the operation, by removing the command file, message file and sending notification back
+to 'tmqueue', that command 'REMOVE' is completed. At this point 'tmqueue' server removes the message
+completely from memory.
+
+
+
 :numbered!:
 
 [bibliography]
