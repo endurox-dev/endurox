@@ -1,5 +1,5 @@
-Persistent Queues Overview
-==========================
+Persistent Message Queues Overview
+==================================
 Madras Vitolins
 v1.0, 2016-05:
 	Initial draft
