@@ -46,6 +46,8 @@ completes the operation, by removing the command file, message file and sending 
 to 'tmqueue', that command 'REMOVE' is completed. At this point 'tmqueue' server removes the message
 completely from memory.
 
+Schematically internals of the 'tmqueue' and API works can be displayed as follows:
+>>>TODO<<<
 
 
 :numbered!:
