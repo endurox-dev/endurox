@@ -47,7 +47,8 @@ to 'tmqueue', that command 'REMOVE' is completed. At this point 'tmqueue' server
 completely from memory.
 
 Schematically internals of the 'tmqueue' and API works can be displayed as follows:
->>>TODO<<<
+
+image:tmqinternals.png[caption="Figure 1: ", title="tmqueue internals", alt="tmqueue"]
 
 
 :numbered!:
