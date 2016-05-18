@@ -85,7 +85,8 @@ type.
 -----------------------------------
 To configure queue sub-system, you need to start at-least one instance of 'tmqueue' server and
 one instance of 'tmsrv'. They both must run in the same XA environment. For running just pure
-ATMI client, following 'ndrxconfig.xml' shall be done:
+ATMI client, following entries to 'ndrxconfig.xml' shall be done (serverid and count (min/max) 
+can be changed):
 
 ---------------------------------------------------------------------
 ...
@@ -104,7 +105,25 @@ ATMI client, following 'ndrxconfig.xml' shall be done:
 ...
 ---------------------------------------------------------------------
 
+From above example it could be seen, that there are no setup for folder where to store
+the queue data. Queue folder is setup in in XA open string, thus it goes to
+'NDRX_XA_OPEN_STR' and 'NDRX_XA_CLOSE' environment variables.
 
+For example if we are going to store the message data into '/opt/app1/var/MYSPACE' folder, then
+XA config looks like this:
+
+---------------------------------------------------------------------
+export NDRX_XA_RES_ID=1
+export NDRX_XA_OPEN_STR="/opt/app1/var/MYSPACE"
+export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+# Static registration:
+export NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+export NDRX_XA_RMLIB=libndrxxaqdisk.so
+export NDRX_XA_LAZY_INIT=1
+
+---------------------------------------------------------------------
+
+It will use static registration XA driver.
 
 Queue configuration
 -------------------
