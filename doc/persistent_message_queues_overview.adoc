@@ -445,7 +445,9 @@ Nd SRVID QSPACE    QNAME     #QUEU #LOCK #ENQ  #DEQ  #SUCC #FAIL
 NDRX> 
 ---------------------------------------------------------------------
 
-So after a while, message did fail, it was dequeued and remove. To remove message from q, it can be 
+So after a while, message did fail, it was dequeued and remove.
+
+To remove message from q, it can be 
 done by 'mqrm' command, for example:
 
 ---------------------------------------------------------------------
@@ -461,17 +463,17 @@ Nd SRVID QSPACE    QNAME     #QUEU #LOCK #ENQ  #DEQ  #SUCC #FAIL
 1  2010  MYSPACE   @         0     0     0     0     0     0   
 ---------------------------------------------------------------------
 
-So after removal only 13 messages left only queue.
+So after removal only 13 messages have left in queue.
 
 
 Runtime queue reconfiguration
 -----------------------------
 If new queues needs to be defined or parameters of existing queues needs to be changed,
-you may use 'mqrc' (reload config) command. This sends request to all 'tmqueue' to re-read
+you may use 'mqrc' (reload config) command. This sends request to all 'tmqueue' server to re-read
 the config.
 
 Meanwhile you may define new queue during the runtime (with out changing the config) or update existing one.
-Lets say we want to change 'MYQ2' to manual. You may do this in following way by using
+Lets say we want to change 'MYQ2' to manual queue. You may do this in following way by using
 'mqch' (change) command:
 
 ---------------------------------------------------------------------
@@ -492,8 +494,8 @@ Nd SRVID QSPACE    QNAME     FLAGS QDEF
 
 Further study
 -------------
-For more use cases the 'atmitests/test028_tmq' can be analyzed. It contains tests for supported
-use cases.
+For more use cases the 'atmitests/test028_tmq' can be analyzed. It contains test cases for supported
+EnduroX duarble queue functionality.
 
 
 :numbered!:
