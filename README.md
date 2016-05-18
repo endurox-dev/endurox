@@ -14,3 +14,7 @@ Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for P
 - Documentation available here: http://www.endurox.org/dokuwiki/doku.php
 
 PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to get EnduroX running ;)
+
+# Releases
+
+- Version 2.5.1 released on 18/05/2016. Support for transactional persistent message queues. Provides APIs: tpenqueue(), tpdequeue(), command line management tools. See doc/persistent_message_queues_overview.adoc, doc/manpage/tmqueue.adoc, doc/manpage/xadmin.adoc, doc/manpage/q.config.adoc. Use cases can be seen under atmitests/test028_tmq
