@@ -435,9 +435,6 @@ defined. so it will fail. But anyway lets try. To move message, we can use 'mqmv
 NDRX> mqmv -n 1 -i2010 -m UcnU2PgOTEqgG1RymbwFdwEA2gcAAAAAAAAAAAAAAAA= -s MYSPACE -q MYQ2
 ndrxd PID (from PID file): 27208
 Committed
-
-NDRX> mqlq
-
 NDRX> mqlq
 ndrxd PID (from PID file): 27208
 Nd SRVID QSPACE    QNAME     #QUEU #LOCK #ENQ  #DEQ  #SUCC #FAIL
