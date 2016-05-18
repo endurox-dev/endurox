@@ -358,11 +358,12 @@ public int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
         FAIL_OUT(ret);
     }
     
-    sprintf(out_buf, "%s,svcnm=%s,autoq=%s,waitinit=%d,waitretry=%d,"
+    sprintf(out_buf, "%s,svcnm=%s,autoq=%s,tries=%d,waitinit=%d,waitretry=%d,"
                         "waitretryinc=%d,waitretrymax=%d,mode=%s",
             qdef->qname, 
             qdef->svcnm, 
             (qdef->autoq?"y":"n"),
+            qdef->tries,
             qdef->waitinit,
             qdef->waitretry,
             qdef->waitretryinc,
@@ -754,6 +755,8 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
         NDRX_LOG(log_info, "Mem only Q, not persisting.");   
     }
     
+    qhash->numenq++;
+    
     NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue",
             tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname);
     
@@ -1125,8 +1128,11 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
     tmq_qhash_t *qhash = tmq_qhash_get(mmsg->msg->hdr.qname);
     
     NDRX_LOG(log_info, "Removing msgid [%s] from [%s] q", msgid_str, mmsg->msg->hdr.qname);
+    
     if (NULL!=qhash)
     {
+        qhash->numdeq++;
+        
         /* Add the message to end of the queue */
         CDL_DELETE(qhash->q, mmsg);    
     }
@@ -1350,6 +1356,10 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
             strcpy(tmp->qname, q->qname);
             tmp->succ = q->succ;
             tmp->fail = q->fail;
+            
+            tmp->numenq = q->numenq;
+            tmp->numdeq = q->numdeq;
+            
             DL_APPEND(ret, tmp);
         }
         
@@ -1550,9 +1560,9 @@ public void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
                 {
                     *p_locked = *p_locked +1 ;
                 }
+                /* default to FIFO */
+                node = node->next;
             }
-            /* default to FIFO */
-            node = node->next;
 
         }
         while (NULL!=node && node!=q->q);

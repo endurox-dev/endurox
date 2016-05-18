@@ -62,8 +62,8 @@
  */
 private void print_hdr(void)
 {
-    fprintf(stderr, "Nd SRVID QSPACE    QNAME     #QUEU #LOCK #SUCC #FAIL\n");
-    fprintf(stderr, "-- ----- --------- --------- ----- ----- ----- -----\n");
+    fprintf(stderr, "Nd SRVID QSPACE    QNAME     #QUEU #LOCK #ENQ  #DEQ  #SUCC #FAIL\n");
+    fprintf(stderr, "-- ----- --------- --------- ----- ----- ----- ----- ----- -----\n");
 }
 
 
@@ -85,6 +85,9 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     long locked;
     long succ;
     long fail;
+    
+    long numenq;
+    long numdeq;
             
     if (
             SUCCEED!=Bget(p_ub, EX_QSPACE, 0, qspace, 0L) ||
@@ -94,7 +97,10 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
             SUCCEED!=Bget(p_ub, EX_QNUMMSG, 0, (char *)&msgs, 0L) ||
             SUCCEED!=Bget(p_ub, EX_QNUMLOCKED, 0, (char *)&locked, 0L) ||
             SUCCEED!=Bget(p_ub, EX_QNUMSUCCEED, 0, (char *)&succ, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNUMFAIL, 0, (char *)&fail, 0L)
+            SUCCEED!=Bget(p_ub, EX_QNUMFAIL, 0, (char *)&fail, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QNUMENQ, 0, (char *)&numenq, 0L) ||
+            SUCCEED!=Bget(p_ub, EX_QNUMDEQ, 0, (char *)&numdeq, 0L)
+            
         )
     {
         fprintf(stderr, "Protocol error - TMQ did not return data, see logs!\n");
@@ -106,15 +112,19 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     FIX_SVC_NM_DIRECT(qspace, 9);
     FIX_SVC_NM_DIRECT(qname, 9);
     
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %-5.5s %-5.5s %-5.5s",
+    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %-5.5s %-5.5s %-5.5s %-5.5s %-5.5s",
             nodeid, 
             srvid, 
             qspace, 
             qname,
             nstdutil_decode_num(msgs, 0, 0, 1), 
             nstdutil_decode_num(locked, 1, 0, 1),
-            nstdutil_decode_num(succ, 1, 0, 2),
-            nstdutil_decode_num(fail, 1, 0, 2)
+            
+            nstdutil_decode_num(numenq, 2, 0, 2),
+            nstdutil_decode_num(numdeq, 3, 0, 2),
+            
+            nstdutil_decode_num(succ, 4, 0, 2),
+            nstdutil_decode_num(fail, 5, 0, 2)
             );
     
     printf("\n");

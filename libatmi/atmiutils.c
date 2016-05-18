@@ -950,6 +950,12 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     int i;
     
+    if (NULL==svcinfo)
+    {
+        NDRX_LOG(log_error, "shm_svcinfo memory is NULL!");
+        return NULL; /* Nothing todo. */
+    }
+    
     /* We assume shm is OK! */
     for (i=0; i<G_max_svcs; i++)
     {

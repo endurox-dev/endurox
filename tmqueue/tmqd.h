@@ -124,6 +124,10 @@ struct tmq_qhash
     char qname[TMQNAMELEN+1];
     long succ; /* Succeeded auto messages */
     long fail; /* failed auto messages */
+    
+    long numenq; /* Enqueued messages (even locked)                   */
+    long numdeq; /* Dequeued messages (removed, including aborts)     */
+    
     UT_hash_handle hh; /* makes this structure hashable        */
     tmq_memmsg_t *q;
 };
@@ -161,6 +165,9 @@ struct fwd_qlist
     char qname[TMQNAMELEN+1];
     long succ; /* Succeeded auto messages */
     long fail; /* failed auto messages */
+    
+    long numenq; /* Succeeded auto messages */
+    long numdeq; /* failed auto messages */
     
     fwd_qlist_t *next;
     fwd_qlist_t *prev;

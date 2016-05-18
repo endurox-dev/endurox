@@ -114,6 +114,8 @@ EX_QSTRFLAGS		    221 	string	-	String based flags
 EX_QMSGTRIES		    222 	long	-	Number of tries for auto message
 EX_QMSGLOCKED		    223 	short	-	Is message locked?
 EX_QMSGIDSTR		    224	        string	-	String version of msgid
+EX_QNUMENQ		    225 	long	-	Number of enqueues
+EX_QNUMDEQ		    226 	long	-	Number of dequeues
 
 $#endif
 
