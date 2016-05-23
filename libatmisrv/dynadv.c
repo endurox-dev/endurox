@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <sys/epoll.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -45,6 +44,7 @@
 #include "tperror.h"
 #include <atmi_int.h>
 #include <atmi_shm.h>
+#include <sys_unix.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -169,11 +169,11 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         NDRX_LOG(log_error, "Q File descriptor: %d - removing from polling struct", 
                 ent->q_descr);
         
-        if (FAIL==epoll_ctl(G_server_conf.epollfd, EPOLL_CTL_DEL,
+        if (FAIL==ex_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                             ent->q_descr, NULL))
         {
-            _TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
-                    ent->q_descr, strerror(errno));
+            _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed to remove fd %d from epollfd: %s", 
+                    ent->q_descr, ex_poll_strerror(ex_epoll_errno()));
             ret=FAIL;
             goto out;
         }
@@ -299,7 +299,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     int ret=SUCCEED;
     int pos, service;
     svc_entry_fn_t *entry_chk=NULL;
-    struct epoll_event ev;
+    struct ex_epoll_event ev;
     int sz;
     
     for (pos=0; pos<G_server_conf.adv_service_count; pos++)
@@ -411,13 +411,14 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     G_server_conf.adv_service_count++;
     
     memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
+    ev.events = EX_EPOLL_FLAGS;
     ev.data.fd = entry_new->q_descr;
     
-    if (FAIL==epoll_ctl(G_server_conf.epollfd, EPOLL_CTL_ADD,
+    if (FAIL==ex_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             entry_new->q_descr, &ev))
     {
-        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", strerror(errno));
+        _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed: %s", 
+                ex_poll_strerror(ex_epoll_errno()));
         ret=FAIL;
         goto out;
     }

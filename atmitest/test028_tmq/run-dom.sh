@@ -140,6 +140,8 @@ xadmin psc
 xadmin psvc
 xadmin ppm
 
+set | grep NDRX
+
 echo "Running: basic test (enq + deq)"
 (./atmiclt28 basic 2>&1) > ./atmiclt-dom1.log
 RET=$?

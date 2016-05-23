@@ -38,7 +38,11 @@ cmake_minimum_required(VERSION 2.6)
 include_directories (. ../include)
 
 # Generate library from our source files
-add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c sys_linux.c)
+else()
+        add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c sys_unix.c)
+endif()
 
 install (TARGETS 
     nstd 

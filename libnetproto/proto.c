@@ -46,7 +46,6 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/epoll.h>
 #include <atmi.h>
 
 #include <stdio.h>

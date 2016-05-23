@@ -38,11 +38,11 @@ extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <mqueue.h>
-#include <sys/epoll.h>
 #include <atmi.h>
 #include <setjmp.h>
 #include <ndrxdcmn.h>
 #include <uthash.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 extern long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -152,8 +152,8 @@ struct srv_conf
     int nodeid; /* Other node id of the bridge */
     int (*p_qmsg)(char *buf, int len, char msg_type); /* Q message processor for bridge */
     /**************** POLLING *****************/
-    struct epoll_event *events;
-	int epollfd;
+    struct ex_epoll_event *events;
+    int epollfd;
     /* Information from calst call */
     char last_caller_address[NDRX_MAX_Q_SIZE+1];
     call_basic_info_t last_call;

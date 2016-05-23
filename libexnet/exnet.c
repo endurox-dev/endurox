@@ -40,14 +40,21 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/epoll.h>
-#include <atmi.h>
 
+#include <ndrstandard.h>
+
+#ifdef EX_OS_LINUX
+
+#include <sys/epoll.h>
+
+#endif
+
+#include <poll.h>
+
+#include <atmi.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <exnet.h>
-#include <ndrstandard.h>
 #include <ndebug.h>
 #include <utlist.h>
 
@@ -56,6 +63,17 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define DBUF_SZ	(sizeof(net->d) - net->dl)	/* Buffer size to recv in 	*/
+
+#ifdef EX_OS_LINUX
+
+#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+
+#else
+
+#define POLL_FLAGS POLLIN
+
+#endif
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -630,7 +648,7 @@ private int open_socket(exnetcon_t *net)
 
 	/* Add stuff for polling */
 	if (SUCCEED!=tpext_addpollerfd(net->sock,
-		EPOLLET | EPOLLIN | EPOLLHUP,
+		POLL_FLAGS,
 		(void *)net, exnet_poll_cb))
 	{
 	    NDRX_LOG(log_error, "tpext_addpollerfd failed!");

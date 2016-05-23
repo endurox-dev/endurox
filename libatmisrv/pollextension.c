@@ -94,7 +94,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     int ret=SUCCEED;
     pollextension_rec_t * pollext = NULL;
     pollextension_rec_t * existing = NULL;
-    struct epoll_event ev;
+    struct ex_epoll_event ev;
     
     if (NULL==G_server_conf.service_array)
     {
@@ -123,13 +123,13 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     }    
     
     /* We are good to go! Add epoll stuff here */
-    ev.events = events;
+    ev.events = events; /* hmmm what to do? */
     ev.data.fd = fd;
     
-    if (FAIL==epoll_ctl(G_server_conf.epollfd, EPOLL_CTL_ADD,
+    if (FAIL==ex_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             fd, &ev))
     {
-        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", strerror(errno));
+        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ex_poll_strerror(ex_epoll_errno()));
         ret=FAIL;
         goto out;
     }
@@ -184,11 +184,11 @@ public int _tpext_delpollerfd(int fd)
     }
 
     /* OK, stuff found, remove from Epoll */
-    if (FAIL==epoll_ctl(G_server_conf.epollfd, EPOLL_CTL_DEL,
+    if (FAIL==ex_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                         fd, NULL))
     {
         _TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
-                fd, strerror(errno));
+                fd, ex_poll_strerror(ex_epoll_errno()));
         ret=FAIL;
         goto out;
     }

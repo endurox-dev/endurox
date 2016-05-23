@@ -41,7 +41,6 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/epoll.h>
 #include <atmi.h>
 
 #include <stdio.h>
@@ -50,8 +49,30 @@
 #include <exnet.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
+
+#ifdef EX_OS_LINUX
+
+#include <sys/epoll.h>
+
+#else
+
+#include <poll.h>
+
+#endif
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#ifdef EX_OS_LINUX
+
+#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+
+#else
+
+#define POLL_FLAGS POLLIN
+
+#endif
+
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -156,7 +177,7 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
     /* Install poller extension? */
     if (SUCCEED!=tpext_addpollerfd(client->sock,
-        EPOLLET | EPOLLIN | EPOLLHUP,
+        POLL_FLAGS,
         client, exnet_poll_cb))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
@@ -216,7 +237,7 @@ public int exnet_bind(exnetcon_t *net)
     
     /* Install poller extension? */
     if (SUCCEED!=tpext_addpollerfd(net->sock,
-        EPOLLET | EPOLLIN | EPOLLHUP,
+        POLL_FLAGS,
         net, exnetsvpollevent))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
