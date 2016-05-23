@@ -40,17 +40,36 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <ndrstandard.h>
+
+#ifdef EX_OS_LINUX
+
 #include <sys/epoll.h>
+
+#else
+
+#include <poll.h>
+
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ndebug.h>
 #include <atmi.h>
-#include <ndrstandard.h>
 #include <ubf.h>
 #include <test.fd.h>
 
 
+#ifdef EX_OS_LINUX
+
+#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+
+#else
+
+#define POLL_FLAGS (POLLIN)
+
+#endif
 
 void TESTSVFN (TPSVCINFO *p_svc);
 
@@ -163,9 +182,6 @@ int periodical_cb(void)
     
     if (first)
     {
-        NDRX_LOG(log_debug, "Try to connect somewhere, and "
-                        "check will we get Event!");
-        
         /* Example from: http://stackoverflow.com/questions/2597608/c-socket-connection-timeout */
         u_short port;                /* user specified port number */
         char *addr;                  /* will be a pointer to the address */
@@ -173,6 +189,9 @@ int periodical_cb(void)
         short int sock = -1;         /* file descriptor for the network socket */
         fd_set fdset;
         struct timeval tv;
+
+        NDRX_LOG(log_debug, "Try to connect somewhere, and "
+                        "check will we get Event!");
 
         port = 22;
         addr = "127.0.0.1";
@@ -187,7 +206,7 @@ int periodical_cb(void)
         connect(sock, (struct sockaddr *)&address, sizeof(address));
         
         if (SUCCEED!=tpext_addpollerfd(sock, 
-                EPOLLET | EPOLLIN | EPOLLHUP,
+                POLL_FLAGS,
                 (void *)test_ptr, poll_connect_22))
         {
             NDRX_LOG(log_error, "TESTERROR: tpext_addpollerfd failed!");

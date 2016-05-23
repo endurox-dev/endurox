@@ -36,7 +36,6 @@
 #include <mqueue.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <sys/epoll.h>
 #include <setjmp.h>
 
 #include <ndrstandard.h>
@@ -72,7 +71,7 @@ public int sv_open_queue(void)
     int ret=SUCCEED;
     int i;
     svc_entry_fn_t *entry;
-    struct epoll_event ev;
+    struct ex_epoll_event ev;
     int use_sem = FALSE;
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
@@ -139,18 +138,18 @@ public int sv_open_queue(void)
     }
     
     /* Register for (e-)polling */
-    G_server_conf.epollfd = epoll_create(G_server_conf.max_events);
+    G_server_conf.epollfd = ex_epoll_create(G_server_conf.max_events);
     if (FAIL==G_server_conf.epollfd)
     {
-        _TPset_error_fmt(TPEOS, "epoll_create(%d) fail: %s",
+        _TPset_error_fmt(TPEOS, "ex_epoll_create(%d) fail: %s",
                                 G_server_conf.adv_service_count,
-                                strerror(errno));
+                                ex_poll_strerror(ex_epoll_errno()));
         ret=FAIL;
         goto out;
     }
 
     /* allocate events */
-    G_server_conf.events = (struct epoll_event *)calloc(sizeof(struct epoll_event),
+    G_server_conf.events = (struct ex_epoll_event *)calloc(sizeof(struct ex_epoll_event),
                                             G_server_conf.max_events);
     if (NULL==G_server_conf.events)
     {
@@ -165,15 +164,13 @@ public int sv_open_queue(void)
 
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
-        ev.events = EPOLLIN | EPOLLERR | EPOLLEXCLUSIVE;
+        ev.events = EX_EPOLL_FLAGS;
         ev.data.fd = G_server_conf.service_array[i]->q_descr;
-        /*NDRX_LOG(log_debug, "fd %d == entry %d", ev.data.fd,  ev.data.u64);*/
-        /*ev.data.u32 = i;*/
-        /*ev.data.ptr = G_server_conf.service_array;*/
-        if (FAIL==epoll_ctl(G_server_conf.epollfd, EPOLL_CTL_ADD,
+        
+        if (FAIL==ex_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
-            _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", strerror(errno));
+            _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed: %s", ex_poll_strerror(ex_epoll_errno()));
             ret=FAIL;
             goto out;
         }
@@ -901,7 +898,7 @@ public int sv_wait_for_request(void)
             }
         }
         
-        nfds = epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
+        nfds = ex_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout);
         
         /* Print stuff if there is no timeout set or there is some value out there */
@@ -915,7 +912,8 @@ public int sv_wait_for_request(void)
         if (FAIL==nfds)
         {
             int err = errno;
-            _TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", strerror(err));
+            _TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
+                    ex_poll_strerror(ex_epoll_errno()));
             
             if (EINTR==err)
             {
