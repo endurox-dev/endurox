@@ -89,65 +89,64 @@ private ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flags, 
  */
 public int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int appflags)
 {
-	int ret=SUCCEED;
-	int allow_size = DATA_BUF_MAX-net->len_pfx;
-	int sent = 0;
-	char d[DATA_BUF_MAX];	/* Data buffer				   */
-	int size_to_send;
+    int ret=SUCCEED;
+    int allow_size = DATA_BUF_MAX-net->len_pfx;
+    int sent = 0;
+    char d[DATA_BUF_MAX];	/* Data buffer				   */
+    int size_to_send;
     int tmp_s;
-    
-	/* check the sizes are that supported? */
-	if (len>allow_size)
-	{
-		NDRX_LOG(log_error, "Buffer too large for sending! "
-				"requested: %d, allowed: %d", len, allow_size);
-		ret=FAIL;
-		goto out;
-	}
 
-	/* Prepare the buffer */
-	memcpy(d+net->len_pfx, buf, len);
+    /* check the sizes are that supported? */
+    if (len>allow_size)
+    {
+        NDRX_LOG(log_error, "Buffer too large for sending! "
+                        "requested: %d, allowed: %d", len, allow_size);
+        ret=FAIL;
+        goto out;
+    }
 
-	if (2==net->len_pfx)
-	{
-		/* Install the length prefix. */
-		d[0] = (len >> 8) & 0xff;
-		d[1] = (len) & 0xff;
-	}
+    /* Prepare the buffer */
+    memcpy(d+net->len_pfx, buf, len);
 
-	size_to_send = len+net->len_pfx;
+    if (2==net->len_pfx)
+    {
+        /* Install the length prefix. */
+        d[0] = (len >> 8) & 0xff;
+        d[1] = (len) & 0xff;
+    }
 
+    size_to_send = len+net->len_pfx;
 
-	/* Do sending in loop... */
-	do
-	{
-		NDRX_LOG(log_debug, "Sending, len: %d", size_to_send-sent);
-		if (!(appflags & APPFLAGS_MASK))
-		{
-			NDRX_DUMP(log_debug, "Sending, msg ", d+sent, size_to_send-sent);
-		}
-		else
-		{
-			NDRX_LOG(log_debug, "*** MSG DUMP IS MASKED ***");
-		}
-		tmp_s = send(net->sock, d+sent, size_to_send-sent, flags);
-        
-		if (FAIL==tmp_s)
-		{
-			NDRX_LOG(log_error, "send failure: %s",
-					strerror(errno));
-			close_socket(net);
-			ret=FAIL;
-			goto out;
-		}
-		else
-		{
+    /* Do sending in loop... */
+    do
+    {
+        NDRX_LOG(log_debug, "Sending, len: %d", size_to_send-sent);
+        if (!(appflags & APPFLAGS_MASK))
+        {
+            NDRX_DUMP(log_debug, "Sending, msg ", d+sent, size_to_send-sent);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "*** MSG DUMP IS MASKED ***");
+        }
+        tmp_s = send(net->sock, d+sent, size_to_send-sent, flags);
+
+        if (FAIL==tmp_s)
+        {
+            NDRX_LOG(log_error, "send failure: %s",
+                            strerror(errno));
+            close_socket(net);
+            ret=FAIL;
+            goto out;
+        }
+        else
+        {
             NDRX_LOG(log_debug, "Sent %d bytes", tmp_s);
-			/* We should have sent something */
-			sent+=tmp_s;
-		}
+                        /* We should have sent something */
+            sent+=tmp_s;
+        }
 
-	} while (sent < size_to_send);
+    } while (sent < size_to_send);
 
 out:
 	return ret;
@@ -159,48 +158,35 @@ out:
  */
 private  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flags, int appflags)
 {
-	ssize_t ret;
+    ssize_t ret;
 
-	/* Reset recv err */
-	net->recv_tout =0;
+    /* Reset recv err */
+    net->recv_tout =0;
 
-	ret = recv (net->sock, __buf, __n, flags);
+    ret = recv (net->sock, __buf, __n, flags);
 
-	if (0==ret)
-	{
-		NDRX_LOG(log_error, "Disconnect received!");
-		close_socket(net);
-		ret=FAIL;
-		goto out;
-	}
-	else if (FAIL==ret)
-	{
-		if (EAGAIN==errno || EWOULDBLOCK==errno)
-		{
-			NDRX_LOG(log_error, "Still no data (waiting...)");
-		}
+    if (0==ret)
+    {
+        NDRX_LOG(log_error, "Disconnect received!");
+        close_socket(net);
+        ret=FAIL;
+        goto out;
+    }
+    else if (FAIL==ret)
+    {
+        if (EAGAIN==errno || EWOULDBLOCK==errno)
+        {
+                NDRX_LOG(log_error, "Still no data (waiting...)");
+        }
         else
         {
             NDRX_LOG(log_error, "recv failure: %s", strerror(errno));
             close_socket(net);
         }
-        
-#if 0
-        /* We will operate in non-blocked mode. 
-         * Thus time-outs will be detected in check loop.
-         * We must keep maximum throughput. Single connection cannot block all other
-         * traffic.
-         */
-		if ( net->recv_tout && !(appflags & APPFLAGS_TOUT_OK) )
-		{
-			/* If time-out not acceptable, then close the socket... */
-			close_socket(net);
-		}
-#endif
 
-		ret=FAIL;
-		goto out;
-	}
+        ret=FAIL;
+        goto out;
+    }
     else
     {
         
@@ -214,14 +200,14 @@ out:
  */
 private int get_full_len(exnetcon_t *net)
 {
-	int  pfx_len, msg_len;
+    int  pfx_len, msg_len;
 
-	pfx_len = ( (net->d[0] & 0xff) << 8 | (0xff & net->d[1]));
+    pfx_len = ( (net->d[0] & 0xff) << 8 | (0xff & net->d[1]));
 
-	msg_len = pfx_len+net->len_pfx;
-	NDRX_LOG(log_debug, "pfx_len=%d msg_len=%d", pfx_len, msg_len);
+    msg_len = pfx_len+net->len_pfx;
+    NDRX_LOG(log_debug, "pfx_len=%d msg_len=%d", pfx_len, msg_len);
 
-	return msg_len;
+    return msg_len;
 }
 
 /**
@@ -229,35 +215,35 @@ private int get_full_len(exnetcon_t *net)
  */
 private int cut_out_msg(exnetcon_t *net, int full_msg, char *buf, int *len, int appflags)
 {
-	int ret=SUCCEED;
-	int len_with_out_pfx = full_msg-net->len_pfx;
-	/* 1. check the sizes 			*/
-	NDRX_LOG(log_debug, "Msg len with out pfx: %d, userbuf: %d",
-			len_with_out_pfx, *len);
-	if (*len < len_with_out_pfx)
-	{
-		NDRX_LOG(log_error, "User buffer to small: %d < %d",
-				*len, len_with_out_pfx);
-		ret=FAIL;
-		goto out;
-	}
+    int ret=SUCCEED;
+    int len_with_out_pfx = full_msg-net->len_pfx;
+    /* 1. check the sizes 			*/
+    NDRX_LOG(log_debug, "Msg len with out pfx: %d, userbuf: %d",
+                    len_with_out_pfx, *len);
+    if (*len < len_with_out_pfx)
+    {
+            NDRX_LOG(log_error, "User buffer to small: %d < %d",
+                            *len, len_with_out_pfx);
+            ret=FAIL;
+            goto out;
+    }
 
-	/* 2. copy data to user buffer 		*/
-	NDRX_LOG(log_debug, "Got message, len: %d", full_msg);
-    
-	if (!(appflags & APPFLAGS_MASK))
-	{
-		NDRX_DUMP(log_debug, "Got message: ", net->d, full_msg);
-	}
+    /* 2. copy data to user buffer 		*/
+    NDRX_LOG(log_debug, "Got message, len: %d", full_msg);
 
-	memcpy(buf, net->d+net->len_pfx, len_with_out_pfx);
-	*len = len_with_out_pfx;
+    if (!(appflags & APPFLAGS_MASK))
+    {
+            NDRX_DUMP(log_debug, "Got message: ", net->d, full_msg);
+    }
 
-	/* 3. reduce the internal buffer 	*/
-	memmove(net->d, net->d+full_msg, net->dl - full_msg);
-	net->dl -= full_msg;
+    memcpy(buf, net->d+net->len_pfx, len_with_out_pfx);
+    *len = len_with_out_pfx;
 
-	NDRX_LOG(log_info, "net->dl = %d after cut", net->dl);
+    /* 3. reduce the internal buffer 	*/
+    memmove(net->d, net->d+full_msg, net->dl - full_msg);
+    net->dl -= full_msg;
+
+    NDRX_LOG(log_info, "net->dl = %d after cut", net->dl);
     
     if (0==*len)
     {
@@ -266,7 +252,7 @@ private int cut_out_msg(exnetcon_t *net, int full_msg, char *buf, int *len, int 
     }
 
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -376,65 +362,39 @@ out:
  */
 public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
 {
-	int ret;
-	int so_error=0;
-	socklen_t len = sizeof so_error;
+    int ret;
+    int so_error=0;
+    socklen_t len = sizeof so_error;
     exnetcon_t *net = (exnetcon_t *)ptr1;   /* Get the connection ptr... */
-   	char buf[DATA_BUF_MAX];
+    char buf[DATA_BUF_MAX];
     int buflen = DATA_BUF_MAX;
-        
-	/* Receive the event of the socket */
-	if (SUCCEED!=getsockopt(net->sock, SOL_SOCKET, SO_ERROR, &so_error, &len))
-	{
-		NDRX_LOG(log_error, "Failed go get getsockopt: %s",
-				strerror(errno));
-		ret=FAIL;
-		goto out;
-	}
 
-	if (0==so_error && !net->is_connected && events)
-	{
-		int arg;
-		net->is_connected = TRUE;
-		NDRX_LOG(log_warn, "Connection is now open!");
+    /* Receive the event of the socket */
+    if (SUCCEED!=getsockopt(net->sock, SOL_SOCKET, SO_ERROR, &so_error, &len))
+    {
+        NDRX_LOG(log_error, "Failed go get getsockopt: %s",
+                        strerror(errno));
+        ret=FAIL;
+        goto out;
+    }
 
-#if 0
-        /* This should be set only for sending!?!? & unset after msg is sent */
-        
-        /* We operate on non-blocked sockets...! */
-		/* Set socket in blocked mode */
-		arg = fcntl(net->sock, F_GETFL, NULL);
+    if (0==so_error && !net->is_connected && events)
+    {
+        int arg;
+        net->is_connected = TRUE;
+        NDRX_LOG(log_warn, "Connection is now open!");
 
-		if (FAIL==arg)
-		{
-			NDRX_LOG(log_error, "net->sock fcntl, GETFL failed: %s",
-					strerror(errno));
-			ret=FAIL;
-			goto out;
-		}
+        /* Call custom callback, if there is such */
+        if (NULL!=net->p_connected && SUCCEED!=net->p_connected(net))
+        {
+                NDRX_LOG(log_error, "Connected notification "
+                                "callback failed!");
+                ret=FAIL;
+                goto out;
+        }
 
-		/* Invert the blocker... */
-		arg &= (~O_NONBLOCK);
+    }
 
-		if (FAIL==fcntl(net->sock, F_SETFL, arg))
-		{
-			NDRX_LOG(log_error, "net->sock fcntl, GETFL failed: %s",
-					strerror(errno));
-			ret=FAIL;
-			goto out;
-		}
-#endif
-
-		/* Call custom callback, if there is such */
-		if (NULL!=net->p_connected && SUCCEED!=net->p_connected(net))
-		{
-			NDRX_LOG(log_error, "Connected notification "
-					"callback failed!");
-			ret=FAIL;
-			goto out;
-		}
-
-	}
     if (0==so_error && !net->is_connected && 
             n_timer_get_delta_sec(&net->connect_time) > net->rcvtimeout)
     {
@@ -443,26 +403,26 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         close_socket(net);
         goto out;
     }
-	else if (0!=so_error)
-	{
-		if (!net->is_connected)
-		{
-			NDRX_LOG(log_error, "Failed to connect to server: %s",
-					strerror(so_error));
-		}
-		else
-		{
-			NDRX_LOG(log_error, "Socket client failed: %s",
-					strerror(so_error));
-		}
+    else if (0!=so_error)
+    {
+        if (!net->is_connected)
+        {
+            NDRX_LOG(log_error, "Failed to connect to server: %s",
+                            strerror(so_error));
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Socket client failed: %s",
+                            strerror(so_error));
+        }
 
-		if (EINPROGRESS!=errno)
-		{
-			close_socket(net);
-			/* Do not send fail to NDRX */
-			goto out;
-		}
-	}
+        if (EINPROGRESS!=errno)
+        {
+            close_socket(net);
+            /* Do not send fail to NDRX */
+            goto out;
+        }
+    }
     else
     {
         /* We are connected, send zero lenght message, ok */
@@ -482,9 +442,13 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         }
     }
 
-	/* Hmm try to receive something? */
-	if (events & EPOLLIN)
-	{
+    /* Hmm try to receive something? */
+#ifdef EX_OS_LINUX
+    if (events & EPOLLIN)
+#else
+    if (events & POLLIN)
+#endif
+    {
         /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); */
         while(SUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
         {
@@ -499,7 +463,7 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
                 break;
             }
         }
-	}
+    }
 
 out:
 	return SUCCEED;
@@ -510,40 +474,40 @@ out:
  */
 private int close_socket(exnetcon_t *net)
 {
-	int ret=SUCCEED;
+    int ret=SUCCEED;
 
-	NDRX_LOG(log_warn, "Closing socket...");
-	net->dl = 0; /* Reset buffered bytes */
-	if (FAIL!=net->sock)
-	{
-		net->is_connected=FALSE;
+    NDRX_LOG(log_warn, "Closing socket...");
+    net->dl = 0; /* Reset buffered bytes */
+    if (FAIL!=net->sock)
+    {
+        net->is_connected=FALSE;
 
-		/* Remove from polling structures */
-		if (SUCCEED!=tpext_delpollerfd(net->sock))
-		{
-			NDRX_LOG(log_error, "Failed to remove polling extension: %s",
-						tpstrerror(tperrno));
-		}
+        /* Remove from polling structures */
+        if (SUCCEED!=tpext_delpollerfd(net->sock))
+        {
+            NDRX_LOG(log_error, "Failed to remove polling extension: %s",
+                                tpstrerror(tperrno));
+        }
 
-		/* Close it */
-		if (SUCCEED!=close(net->sock))
-		{
-			NDRX_LOG(log_error, "Failed to close socket: %s",
-						strerror(errno));
-			ret=FAIL;
-			goto out;
-		}
-	}
+        /* Close it */
+        if (SUCCEED!=close(net->sock))
+        {
+            NDRX_LOG(log_error, "Failed to close socket: %s",
+                                    strerror(errno));
+            ret=FAIL;
+            goto out;
+        }
+    }
 
 out:
-	net->sock=FAIL;
+    net->sock=FAIL;
 
-	if (NULL!=net->p_disconnected && SUCCEED!=net->p_disconnected(net))
-	{
-		NDRX_LOG(log_error, "Disconnected notification "
-				"callback failed!");
-		ret=FAIL;
-	}
+    if (NULL!=net->p_disconnected && SUCCEED!=net->p_disconnected(net))
+    {
+            NDRX_LOG(log_error, "Disconnected notification "
+                            "callback failed!");
+            ret=FAIL;
+    }
 
     /* Remove it from linked list, if it is incoming connection. */
     if (net->is_incoming)
@@ -553,7 +517,7 @@ out:
         exnet_remove_incoming(net);
     }
 
-	return ret;
+    return ret;
 }
 
 /**
@@ -569,13 +533,13 @@ public int exnet_configure_client_sock(exnetcon_t *net)
     int result;
     
     /* We want to poll the stuff */
-	if (FAIL==fcntl(net->sock, F_SETFL, O_NONBLOCK))
-	{
-		NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
-					strerror(errno));
-		ret=FAIL;
-		goto out;
-	}
+    if (FAIL==fcntl(net->sock, F_SETFL, O_NONBLOCK))
+    {
+            NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
+                                    strerror(errno));
+            ret=FAIL;
+            goto out;
+    }
 
     if (result = setsockopt(net->sock,            /* socket affected */
                             IPPROTO_TCP,     /* set option at TCP level */
@@ -585,22 +549,22 @@ public int exnet_configure_client_sock(exnetcon_t *net)
                             sizeof(int)))    /* length of option value */
     {
 
-		NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
-					strerror(errno));
-		ret=FAIL;
-		goto out;
-	}
+        NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
+                                strerror(errno));
+        ret=FAIL;
+        goto out;
+    }
 
-	memset(&tv, 0, sizeof(tv));
-	tv.tv_sec = net->rcvtimeout;
-	NDRX_LOG(log_debug, "Setting SO_RCVTIMEO=%d", tv.tv_sec);
-	if (SUCCEED!=setsockopt(net->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)))
-	{
-		NDRX_LOG(log_error, "setsockopt() failed for fd=%d: %s",
-				net->sock, strerror(errno));
-		ret=FAIL;
-		goto out;
-	}
+    memset(&tv, 0, sizeof(tv));
+    tv.tv_sec = net->rcvtimeout;
+    NDRX_LOG(log_debug, "Setting SO_RCVTIMEO=%d", tv.tv_sec);
+    if (SUCCEED!=setsockopt(net->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)))
+    {
+            NDRX_LOG(log_error, "setsockopt() failed for fd=%d: %s",
+                            net->sock, strerror(errno));
+            ret=FAIL;
+            goto out;
+    }
     
 out:
     return ret;
@@ -611,20 +575,20 @@ out:
  */
 private int open_socket(exnetcon_t *net)
 {
-	int ret=SUCCEED;
-	/* Try to connect! */
-	net->is_connected=FALSE;
-	
-	net->sock = socket(AF_INET, SOCK_STREAM, 0);
+    int ret=SUCCEED;
+    /* Try to connect! */
+    net->is_connected=FALSE;
 
-	/* Create socket for listening */
-	if (FAIL==net->sock)
-	{
-		NDRX_LOG(log_error, "Failed to create socket: %s",
-					strerror(errno));
-		ret=FAIL;
-		goto out;
-	}
+    net->sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    /* Create socket for listening */
+    if (FAIL==net->sock)
+    {
+        NDRX_LOG(log_error, "Failed to create socket: %s",
+                                strerror(errno));
+        ret=FAIL;
+        goto out;
+    }
     
     /* Configure socket */
     if (SUCCEED!=exnet_configure_client_sock(net))
@@ -632,32 +596,32 @@ private int open_socket(exnetcon_t *net)
         FAIL_OUT(ret);
     }
 
-	NDRX_LOG(log_debug, "Trying to connect to: %s:%d", net->addr, net->port);
-	if (SUCCEED!=connect(net->sock, (struct sockaddr *)&net->address, sizeof(net->address)))
-	{
-		NDRX_LOG(log_error, "connect() failed for fd=%d: %d/%s",
-				net->sock, errno, strerror(errno));
-		if (EINPROGRESS!=errno)
-		{
-			ret=FAIL;
-			goto out;
-		}
-	}
+    NDRX_LOG(log_debug, "Trying to connect to: %s:%d", net->addr, net->port);
+    if (SUCCEED!=connect(net->sock, (struct sockaddr *)&net->address, sizeof(net->address)))
+    {
+        NDRX_LOG(log_error, "connect() failed for fd=%d: %d/%s",
+                        net->sock, errno, strerror(errno));
+        if (EINPROGRESS!=errno)
+        {
+                ret=FAIL;
+                goto out;
+        }
+    }
     /* Take the time on what we try to connect. */
     n_timer_reset(&net->connect_time);
 
-	/* Add stuff for polling */
-	if (SUCCEED!=tpext_addpollerfd(net->sock,
-		POLL_FLAGS,
-		(void *)net, exnet_poll_cb))
-	{
-	    NDRX_LOG(log_error, "tpext_addpollerfd failed!");
-	    ret=FAIL;
-	    goto out;
-	}
+    /* Add stuff for polling */
+    if (SUCCEED!=tpext_addpollerfd(net->sock,
+            POLL_FLAGS,
+            (void *)net, exnet_poll_cb))
+    {
+        NDRX_LOG(log_error, "tpext_addpollerfd failed!");
+        ret=FAIL;
+        goto out;
+    }
     
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -667,10 +631,10 @@ out:
  */
 public int exnet_periodic(void)
 {
-	int ret=SUCCEED;
+    int ret=SUCCEED;
     exnetcon_t *head = extnet_get_con_head();
     exnetcon_t *net;
-    
+
     DL_FOREACH(head, net)
     {
         /* Only on connections... */
@@ -695,7 +659,7 @@ public int exnet_periodic(void)
     }
 
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -707,14 +671,14 @@ out:
 public int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net))
 {
-	int ret=SUCCEED;
+    int ret=SUCCEED;
 
-	net->p_process_msg = p_process_msg;
-	net->p_connected = p_connected;
-	net->p_disconnected = p_disconnected;
+    net->p_process_msg = p_process_msg;
+    net->p_connected = p_connected;
+    net->p_disconnected = p_disconnected;
 
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -723,16 +687,16 @@ out:
 public int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
         int len_pfx, int is_server, int backlog, int max_cons, int periodic_zero)
 {
-	int ret=SUCCEED;
+    int ret=SUCCEED;
 
-	net->port = port;
-	strcpy(net->addr, addr);
-       
-	net->address.sin_family = AF_INET;
-	net->address.sin_addr.s_addr = inet_addr(net->addr); /* assign the address */
-	net->address.sin_port = htons(net->port);          /* translate int2port num */
-	net->len_pfx = len_pfx;
-	net->rcvtimeout = rcvtimeout;
+    net->port = port;
+    strcpy(net->addr, addr);
+
+    net->address.sin_family = AF_INET;
+    net->address.sin_addr.s_addr = inet_addr(net->addr); /* assign the address */
+    net->address.sin_port = htons(net->port);          /* translate int2port num */
+    net->len_pfx = len_pfx;
+    net->rcvtimeout = rcvtimeout;
     /* server settings: */
     net->backlog = backlog;
     net->max_cons = max_cons;
@@ -752,7 +716,7 @@ public int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short po
     exnet_add_con(net);
     
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -768,17 +732,17 @@ public int exnet_is_connected(exnetcon_t *net)
  */
 public int exnet_close_shut(exnetcon_t *net)
 {
-	if (FAIL!=net->sock)
-	{
-		if (SUCCEED!=shutdown(net->sock, SHUT_RDWR))
-		{
-			NDRX_LOG(log_info, "Failed to shutdown socket: %s",
-					strerror(errno));
-		}
-		close_socket(net);
-	}
+    if (FAIL!=net->sock)
+    {
+        if (SUCCEED!=shutdown(net->sock, SHUT_RDWR))
+        {
+            NDRX_LOG(log_info, "Failed to shutdown socket: %s",
+                            strerror(errno));
+        }
+        close_socket(net);
+    }
 
-	return SUCCEED;
+    return SUCCEED;
 }
 
 /**
@@ -787,21 +751,21 @@ public int exnet_close_shut(exnetcon_t *net)
  */
 public int exnet_set_timeout(exnetcon_t *net, int timeout)
 {
-	int ret=SUCCEED;
-	struct timeval tv;
+    int ret=SUCCEED;
+    struct timeval tv;
 
-	memset(&tv, 0, sizeof(tv));
-	tv.tv_sec = timeout;
+    memset(&tv, 0, sizeof(tv));
+    tv.tv_sec = timeout;
 
-	if (SUCCEED!=setsockopt(net->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)))
-	{
-		NDRX_LOG(log_error, "setsockopt() failed for fd=%d: %s",
-				net->sock, strerror(errno));
-		FAIL_OUT(ret);
-	}
+    if (SUCCEED!=setsockopt(net->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)))
+    {
+        NDRX_LOG(log_error, "setsockopt() failed for fd=%d: %s",
+                        net->sock, strerror(errno));
+        FAIL_OUT(ret);
+    }
 
 out:
-	return ret;
+    return ret;
 }
 
 /**

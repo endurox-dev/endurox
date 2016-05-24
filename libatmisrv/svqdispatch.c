@@ -854,6 +854,7 @@ public int sv_wait_for_request(void)
     int tout;
     pollextension_rec_t *ext;
     int evfd;
+    mqd_t evmqd;
     n_timer_t   dbg_time;   /* Generally this is used for debug. */
     n_timer_t   periodic_cb;
     command_call_t *p_adm_cmd = (command_call_t *)msg_buf;
@@ -947,12 +948,19 @@ public int sv_wait_for_request(void)
          */
         for (n = 0; n < nfds; n++)
         {
+            int is_mq_only = FAIL;
             evfd = G_server_conf.events[n].data.fd;
+            evmqd = G_server_conf.events[n].data.mqd;
             NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d",
                         n, G_server_conf.events[n].data.u32, evfd);
             
+#ifndef EX_OS_LINUX 
+            /* for non linux, we need to distinguish between fd & mq */
+            is_mq_only = G_server_conf.events[n].is_mqd;
+#endif
+            
             /* Check poller extension */
-            if (NULL!=G_pollext)
+            if (NULL!=G_pollext && (FAIL==is_mq_only || FALSE==is_mq_only) )
             {
                 ext=ext_find_poller(evfd);
                 
@@ -974,8 +982,14 @@ public int sv_wait_for_request(void)
                 }
             }
             
-            if (FAIL==(len=mq_receive (evfd,
-            (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
+            /* ignore fds  */
+            if (FALSE==is_mq_only)
+            {
+                continue;
+            }
+            
+            if (FAIL==(len=mq_receive (evmqd,
+                (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
             {
                 if (EAGAIN==errno)
                 {
@@ -1005,14 +1019,14 @@ public int sv_wait_for_request(void)
                 G_server_conf.last_call.no=FAIL;
                 for (j=0; j<G_server_conf.adv_service_count; j++)
                 {
-                    if (evfd==G_server_conf.service_array[j]->q_descr)
+                    if (evmqd==G_server_conf.service_array[j]->q_descr)
                     {
                         G_server_conf.last_call.no = j;
                         break;
                     }
                 }
                 NDRX_LOG(log_debug, "Got request on logical channel %d, fd: %d",
-                            G_server_conf.last_call.no, evfd);
+                            G_server_conf.last_call.no, evmqd);
                 
                 if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no && 
                         ATMI_COMMAND_EVPOST!=p_adm_cmd->command_id)
@@ -1047,7 +1061,7 @@ public int sv_wait_for_request(void)
                     if (FAIL==G_server_conf.last_call.no)
                     {
                         _TPset_error_fmt(TPESYSTEM, "No service entry for call descriptor %d",
-                                    evfd);
+                                    evmqd);
                         ret=FAIL;
                         goto out;
                     }
