@@ -88,6 +88,7 @@ struct ex_epoll_event {
 extern int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
 extern int ex_epoll_ctl_mq(mqd_t epfd, int op, int fd, struct ex_epoll_event *event);
 extern int ex_epoll_create(int size);
+extern int ex_epoll_close(int fd);
 extern int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout);
 extern int ex_epoll_errno(void);
 extern char * ex_poll_strerror(int err);

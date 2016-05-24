@@ -383,6 +383,18 @@ public void un_initialize(void)
 
     /* Now detach shared memory block */
     ndrxd_shm_close_all();
+
+    /* close poller */
+    if (G_server_conf.epollfd > 0)
+    {
+        ex_epoll_close(G_server_conf.epollfd);
+        G_server_conf.epollfd = 0;
+    }
+
+    if (NULL != G_server_conf.events)
+    {
+        free((char *)G_server_conf.events);
+    }
     
     /* close XA if was open.. */
     atmi_xa_uninit();

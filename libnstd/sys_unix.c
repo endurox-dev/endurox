@@ -89,7 +89,7 @@ struct ex_epoll_mqds
     mqd_t md;
     UT_hash_handle hh;         /* makes this structure hashable */
 };
-typedef struct ex_epoll_fds ex_epoll_fds_t;
+typedef struct ex_epoll_mqds ex_epoll_mqds_t;
 
 /*
  * Our internal 'epoll' set
@@ -97,9 +97,21 @@ typedef struct ex_epoll_fds ex_epoll_fds_t;
 struct ex_epoll_set
 {
     int fd;
+    
+    ex_epoll_fds_t *fds; /* hash of file descriptors for monitoring */
+    ex_epoll_mqds_t *mqds; /* hash of message queues for monitoring */
+    
+    int nrfds; /* number of FDs in poll */
+    struct pollfd *fdtab; /* poll() structure, pre-allocated*/
+    
+    int wakeup_pipe[2]; /* wakeup pipe from notification thread */
+    
     UT_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct ex_epoll_set ex_epoll_set_t;
+
+
+public ex_epoll_set_t *M_psets = NULL; /* poll sets  */
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
@@ -146,6 +158,14 @@ public int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *ev
  * @return 
  */
 public int ex_epoll_create(int size)
+{
+    return FAIL;
+}
+
+/**
+ * Close the epoll set
+ */
+public int ex_epoll_close(int fd)
 {
     return FAIL;
 }

@@ -99,6 +99,14 @@ public int ex_epoll_create(int size)
 }
 
 /**
+ * Close Epoll set.
+ */
+public int ex_epoll_close(int fd)
+{
+    return close(fd);
+}
+
+/**
  * Wrapper for epoll_wait
  * @param epfd
  * @param events
