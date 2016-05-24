@@ -210,11 +210,57 @@ private ex_epoll_set_t* pset_find(int fd)
  */
 public int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
 {
+    ex_epoll_set_t* set = NULL;
+    ex_epoll_fds_t * tmp = NULL;
+    int ret = SUCCEED;
+    
     EX_EPOLL_API_ENTRY;
     
-    ex_epoll_set_err(ENOSYS, "Not yet supported.");
+    if (NULL==(set = pset_find(epfd)))
+    {
+        ex_epoll_set_err(ENOSYS, "ex_epoll set %d not found", epfd);
+        FAIL_OUT(ret);
+    }
+   
     
-    return FAIL;
+    if (EX_EPOLL_CTL_ADD == op)
+    {
+        NDRX_LOG(log_info, "Add operation on ex_epoll set %d, fd %d", epfd, fd);
+        /* test & add to FD hash */
+        if (NULL!=fd_find(set, epfd))
+        {
+            ex_epoll_set_err(EINVAL, "fd %d already exists in ex_epoll set fd %d", 
+                    fd, set->fd);
+            FAIL_OUT(ret);
+        }
+        
+        if (NULL==(tmp = calloc(1, sizeof(*tmp))))
+        {
+            ex_epoll_set_err(errno, "Failed to alloc FD hash entry");
+            FAIL_OUT(ret);
+        }
+        
+        tmp->fd = fd;
+        HASH_ADD_INT(set->fds, fd, tmp);
+        
+        /* resize/realloc events list, add fd */
+        
+        set->nrfds++;
+        
+        if (NULL==(set->fdtab=realloc(set->fdtab, sizeof(struct pollfd)*set->nrfds)))
+        {
+            ex_epoll_set_err(errno, "Failed to realloc %d/%d", 
+                    set->nrfds, sizeof(struct pollfd)*set->nrfds));
+            FAIL_OUT(ret);
+        }
+        
+        
+        //TODO: ... set->fdtab[set->fdtab]
+        
+    }
+    
+out:
+    return ret;
 }
 
 /**
@@ -274,12 +320,14 @@ public int ex_epoll_create(int size)
         FAIL_OUT(ret);
     }
     
-    if (NULL==(set->pollfd = calloc(1, sizeof(struct pollfd))))
+    set->nrfds = 1; /* initially only pipe wait */
+        
+    if (NULL==(set->pollfd = calloc(set->nrfds, sizeof(struct pollfd))))
     {
         ex_epoll_set_err(errno, "calloc for pollfd failed");
         FAIL_OUT(ret);
     }
-    
+
     /* So wait for events here in the pip form Q thread */
     set->fdtab[PIPE_POLL_IDX].fd = set->wakeup_pipe[READ];
     set->fdtab[PIPE_POLL_IDX].events = POLLIN;
