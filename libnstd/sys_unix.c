@@ -1,7 +1,7 @@
 /* 
 ** Unix Abstraction Layer (UAL)
 ** NOTE: Thread shall not modify the ex_epoll sets. That must be managed from
-** one thread
+** one thread only
 ** 
 ** @file ndebug.c
 ** 
