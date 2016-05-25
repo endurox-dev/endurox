@@ -189,65 +189,6 @@ private int M_signal_first = TRUE; /* is first init for signal thread */
 private ex_epoll_mqds_t* mqd_find(ex_epoll_set_t *pset, mqd_t mqd);
 private int signal_install_notifications_all(ex_epoll_set_t *s);
 
-
-/**
- * Check for exsitance of mqd in  hash
- * @param mqd
- * @return 
- */
-private ex_pipe_mqd_hash_t * mqd_chk(mqd_t mqd)
-{
-    ex_pipe_mqd_hash_t * ret = NULL;
-    
-    HASH_FIND_MQD(M_pipe_h,&mqd, ret);
-    
-    return ret;
-}
-
-/**
- * Add descriptor to hash
- * @param mqd
- * @return 
- */
-private int mqd_add(mqd_t mqd)
-{
-    int ret = SUCCEED;
-    
-    ex_pipe_mqd_hash_t * ent;
-    
-    if (NULL!=(ent = calloc(1, sizeof(ex_pipe_mqd_hash_t))))
-    {
-        HASH_ADD_MQD(M_pipe_h,mqd,ent);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
-        FAIL_OUT(ret);
-    }
-    
-out:
-
-    return ret;
-}
-
-/**
- * Remove Q descriptor for hash
- * @param mqd
- * @return 
- */
-private void mqd_del(mqd_t mqd)
-{
-    ex_pipe_mqd_hash_t * d =  mqd_chk(mqd);
-    
-    if (NULL!=d)
-    {
-        
-    }
-}
-
-
-
-
 /**
  * Process signal thread
  * TODO: We need a hash of events in PIPE! To avoid duplicate events to pipe...
