@@ -165,13 +165,14 @@ private int M_signal_first = TRUE; /* is first init for signal thread */
 
 /*---------------------------Prototypes---------------------------------*/
 private ex_epoll_mqds_t* mqd_find(ex_epoll_set_t *pset, mqd_t mqd);
-
+private int signal_install_notifications_all(ex_epoll_set_t *s);
 
 static void
 handler(int sig)
 {
     /* Just interrupt sigsuspend() */
 }
+
 /**
  * Process signal thread
  * TODO: We need a hash of events in PIPE! To avoid duplicate events to pipe...
@@ -179,45 +180,6 @@ handler(int sig)
  */
 public void * signal_process(void *arg)
 {
-#if 0
-    struct sigevent sev;
-    sigset_t blockMask, emptyMask;
-    struct sigaction sa;
-    int ret = SUCCEED;
-    char *fn = "signal_process";
-
-
-    NDRX_LOG(log_debug, "%s - enter", fn);
-    /* Block the notification signal and establish a handler for it */
-    
-    sigemptyset(&blockMask);
-    sigaddset(&blockMask, NOTIFY_SIG);
-    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
-    {
-        M_signal_first = TRUE;
-        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
-    }
-
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sa.sa_handler = handler;
-    if (sigaction(NOTIFY_SIG, &sa, NULL) == -1)
-    {
-        M_signal_first = TRUE;
-        NDRX_LOG(log_always, "%s: sigaction failed: %s", fn, strerror(errno));
-    }
-
-    sigemptyset(&emptyMask);
-
-    for (;;)
-    {
-        ex_epoll_set_t *s, *stmp;
-        ex_epoll_mqds_t* m, *mtmp;
-        NDRX_LOG(log_debug, "%s - before sigsuspend()");
-        sigsuspend(&emptyMask);         /* Wait for notification signal */
-        NDRX_LOG(log_debug, "%s - after sigsuspend()");
-        
-#endif
     sigset_t blockMask;
     char *fn = "signal_process";
     int ret = SUCCEED;
@@ -245,7 +207,6 @@ public void * signal_process(void *arg)
         }
         
         NDRX_LOG(log_debug, "%s - after sigwait()");
-        
 
         /* Reregister for message notification */
         
@@ -276,21 +237,17 @@ public void * signal_process(void *arg)
                         NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
                     }
                     
-                    /* put back the signal */
-                    if (FAIL==(ret=mq_notify(m->mqd, &m->sev)) && EBUSY == errno)
-                    {
-                        ret = SUCCEED;
-                    }
-                    else if (SUCCEED!=ret)
-                    {
-                        NDRX_LOG(log_warn, "mq_notify failed: %d (%s)", 
-                                m->mqd, strerror(errno));
-                        MUTEX_UNLOCK_V(M_psets_lock);
-
-                        M_signal_first = TRUE;
-                        FAIL_OUT(ret);
-                    }
                 }
+            }
+            
+            /* Install all notifs */
+            if (SUCCEED!=signal_install_notifications_all(s))
+            {
+                NDRX_LOG(log_warn, "Failed to install notifs for set: %d", s->fd);
+                MUTEX_UNLOCK_V(M_psets_lock);
+                
+                M_signal_first = TRUE;
+                FAIL_OUT(ret);   
             }
         }
         
@@ -302,7 +259,33 @@ public void * signal_process(void *arg)
 out:
     return;
 }
+    
+/**
+ * Install notifications for all Qs
+ */
+private int signal_install_notifications_all(ex_epoll_set_t *s)
+{
+    int ret = SUCCEED;
+    ex_epoll_mqds_t* m, *mtmp;
+    
+    HASH_ITER(hh, s->mqds, m, mtmp)
+    {
+        if (FAIL==(ret=mq_notify(m->mqd, &m->sev)) && EBUSY == errno)
+        {
+            ret = SUCCEED;
+        }
+        else if (SUCCEED!=ret)
+        {
+            NDRX_LOG(log_warn, "mq_notify failed: %d (%s)", 
+                    m->mqd, strerror(errno));
+            MUTEX_UNLOCK_V(M_psets_lock);
 
+            FAIL_OUT(ret);
+        }
+    }
+out:
+    return ret;
+}
 /**
  * Initialize signal process
  * @return
@@ -903,6 +886,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
     char *fn = "ex_epoll_wait";
     int i;
     int retpoll;
+    int try;
     ex_epoll_mqds_t* m, *mtmp;
     
     EX_EPOLL_API_ENTRY;
@@ -937,48 +921,88 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
      * but svqdispatch will get eagain.. no problem
      */
     NDRX_LOG(log_debug, "Checking early messages...");
-    for (i=0; i<2; i++)
-    {
-    MUTEX_LOCK_V(M_psets_lock);
-    HASH_ITER(hh, set->mqds, m, mtmp)
-    {
-        struct mq_attr att;
-        
-        /* read the attributes of the Q */
-        if (SUCCEED!= mq_getattr(m->mqd, &att))
-        {
-            ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);
-            NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
-            FAIL_OUT(ret);
-        }
-        
-        if (att.mq_curmsgs > 0)
-        {
-            if (numevents < maxevents )
-            {
-                numevents++;
-                
-                NDRX_LOG(log_info, "Got mqdes %d for pipe", m->mqd);
-
-                events[numevents-1].data.mqd = m->mqd;
-		/* take from pipe */
-                events[numevents-1].events = set->fdtab[PIPE_POLL_IDX].revents;
-                events[numevents-1].is_mqd = TRUE;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    MUTEX_UNLOCK_V(M_psets_lock);
     
-    if (numevents)
+    for (try = 0; try<2; try++)
     {
-        NDRX_LOG(log_info, "Found %d events before polling "
-                "(messages in Q) returning...", numevents);
-        goto out;
+        MUTEX_LOCK_V(M_psets_lock);
+        HASH_ITER(hh, set->mqds, m, mtmp)
+        {
+            struct mq_attr att;
+
+            /* read the attributes of the Q */
+            if (SUCCEED!= mq_getattr(m->mqd, &att))
+            {
+                ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);
+                NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
+                FAIL_OUT(ret);
+            }
+
+            if (att.mq_curmsgs > 0)
+            {
+                if (numevents < maxevents )
+                {
+                    numevents++;
+
+                    NDRX_LOG(log_info, "Got mqdes %d for pipe", m->mqd);
+
+                    events[numevents-1].data.mqd = m->mqd;
+                    /* take from pipe */
+                    events[numevents-1].events = set->fdtab[PIPE_POLL_IDX].revents;
+                    events[numevents-1].is_mqd = TRUE;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        MUTEX_UNLOCK_V(M_psets_lock);
+
+        if (numevents)
+        {
+            NDRX_LOG(log_info, "Found %d events before polling "
+                    "(messages in Q) returning...", numevents);
+            goto out;
+        }
+        
+#ifdef EX_POLL_SIGNALLED
+
+        if (0==try)
+        {
+            /* Only at try 0, we ensure that all notifs are set.
+             * This is due to fact that we might face following scenario:
+             * 1) we download all messages
+             * 1.1) ERROR: some message comes in and it is not notified...
+             * 2) We set notif handler
+             * Shut to avoid this:
+             * 1) download all messages
+             * 2) set notif handler
+             * 3) FIX: if any message comes in it will be downloaded by next
+             * 4) again download all messages
+             * 
+             * If any new message comes in it will be handled by signal thread
+             * + thread will ensure that notifications are set.
+             */
+            MUTEX_LOCK_V(M_psets_lock);
+
+            /* put the handlers back for all queues..., for signalled tech 
+             * Put them anyway.. (if we slipped something...)
+             */
+
+            if (SUCCEED!=signal_install_notifications_all(set))
+            {
+                ex_epoll_set_err(EOS, "Failed to install notifs!");
+                NDRX_LOG(log_error, "Failed to install notifs!");
+                MUTEX_UNLOCK_V(M_psets_lock);
+                FAIL_OUT(ret);
+            }
+
+            MUTEX_UNLOCK_V(M_psets_lock);
+        }
+#endif
     }
+    
+    
     
     for (i=0; i<set->nrfds; i++)
     {
@@ -990,33 +1014,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
     NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - about to poll(nrfds=%d)",
                         fn, epfd, events, maxevents, timeout, set->nrfds);
     
-    
-#ifdef EX_POLL_SIGNALLED
-    
-    MUTEX_LOCK_V(M_psets_lock);
-    
-    /* put the handlers back for all queues..., for signalled tech 
-     * Put them anyway.. (if we slipped something...)
-     */
-    HASH_ITER(hh, set->mqds, m, mtmp)
-    {
-        if (FAIL==(ret=mq_notify(m->mqd, &m->sev)) && EBUSY == errno)
-        {
-            ret = SUCCEED;
-        }
-        else if (SUCCEED!=ret)
-        {
-            NDRX_LOG(log_warn, "mq_notify failed: %d (%s)", 
-                    m->mqd, strerror(errno));
-            MUTEX_UNLOCK_V(M_psets_lock);
-
-            FAIL_OUT(ret);
-        }
-    }
-    MUTEX_UNLOCK_V(M_psets_lock);
-#endif
-    }
-    
+   
     
     retpoll = poll( set->fdtab, set->nrfds, timeout);
     
