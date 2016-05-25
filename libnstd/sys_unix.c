@@ -2,6 +2,9 @@
 ** Unix Abstraction Layer (UAL)
 ** NOTE: Thread shall not modify the ex_epoll sets. That must be managed from
 ** one thread only
+** NOTE: Only one POLL set actually is supported. This is due to
+** Notificatio thread locking while we are not polling (to void mqds in pipe)
+** which we have already processed.
 ** 
 ** @file ndebug.c
 ** 
@@ -183,6 +186,7 @@ private char __thread M_last_err_msg[1024];  /* Last error message */
 
 
 private pthread_t M_signal_thread; /* Signalled thread */
+private pthread_t M_signal_watchdog_thread; /* Signalled thread, watchdog */
 private int M_signal_first = TRUE; /* is first init for signal thread */
 
 /*---------------------------Prototypes---------------------------------*/
@@ -191,62 +195,79 @@ private int signal_install_notifications_all(ex_epoll_set_t *s);
 
 
 /**
- * Check for exsitance of mqd in  hash
- * @param mqd
+ * Handle event
  * @return 
  */
-private ex_pipe_mqd_hash_t * mqd_chk(mqd_t mqd)
-{
-    ex_pipe_mqd_hash_t * ret = NULL;
-    
-    HASH_FIND_MQD(M_pipe_h,&mqd, ret);
-    
-    return ret;
-}
-
-/**
- * Add descriptor to hash
- * @param mqd
- * @return 
- */
-private int mqd_add(mqd_t mqd)
+private int signal_handle_event(void)
 {
     int ret = SUCCEED;
     
-    ex_pipe_mqd_hash_t * ent;
+    ex_epoll_set_t *s, *stmp;
+    ex_epoll_mqds_t* m, *mtmp;
     
-    if (NULL!=(ent = calloc(1, sizeof(ex_pipe_mqd_hash_t))))
-    {
-        HASH_ADD_MQD(M_pipe_h,mqd,ent);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
-        FAIL_OUT(ret);
-    }
-    
-out:
+    /* wait for main thread enter in poll */
+    MUTEX_LOCK_V(M_sig_lock);
 
-    return ret;
+    /* Reregister for message notification */
+
+    MUTEX_LOCK_V(M_psets_lock);
+
+    HASH_ITER(hh, M_psets, s, stmp)
+    {
+        HASH_ITER(hh, s->mqds, m, mtmp)
+        {
+            struct mq_attr att;
+
+            /* read the attributes of the Q */
+            if (SUCCEED!= mq_getattr(m->mqd, &att))
+            {
+                NDRX_LOG(log_warn, "Failed to get attribs of Q: %d (%s)",  
+                        m->mqd, strerror(errno));
+                MUTEX_UNLOCK_V(M_psets_lock);
+
+                M_signal_first = TRUE;
+                FAIL_OUT(ret);
+            }
+
+            if (att.mq_curmsgs > 0)
+            {
+                if (FAIL==write (s->wakeup_pipe[WRITE], (char *)&m->mqd, 
+                        sizeof(m->mqd)))
+                {
+                    NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
+                }
+
+            }
+        }
+
+        /* Install all notifs */
+        if (SUCCEED!=signal_install_notifications_all(s))
+        {
+            NDRX_LOG(log_warn, "Failed to install notifs for set: %d", s->fd);
+        }
+    }
+
+    MUTEX_UNLOCK_V(M_psets_lock);
+    MUTEX_UNLOCK_V(M_sig_lock);
+        
+out:
+        return ret;
 }
 
 /**
- * Remove Q descriptor for hash
- * @param mqd
+ * Watchdog for events...
+ * @param arg
  * @return 
  */
-private void mqd_del(mqd_t mqd)
+public void * signal_process_watchdog(void *arg)
 {
-    ex_pipe_mqd_hash_t * d =  mqd_chk(mqd);
-    
-    if (NULL!=d)
+    for(;;)
     {
-        
+        NDRX_LOG(log_debug, "Watchdog enter...")
+        sleep(1);
+        signal_handle_event();
     }
 }
-
-
-
 
 /**
  * Process signal thread
@@ -258,9 +279,8 @@ public void * signal_process(void *arg)
     sigset_t blockMask;
     char *fn = "signal_process";
     int ret = SUCCEED;
-    int si, sig;
-    ex_epoll_set_t *s, *stmp;
-    ex_epoll_mqds_t* m, *mtmp;
+    int sig;
+    
 
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -283,59 +303,8 @@ public void * signal_process(void *arg)
         
         NDRX_LOG(log_debug, "%s - after sigwait()", fn);
         
-        
-        /* wait for main thread enter in poll */
-        MUTEX_LOCK_V(M_sig_lock);
-
-        /* Reregister for message notification */
-        
-        MUTEX_LOCK_V(M_psets_lock);
-
-        HASH_ITER(hh, M_psets, s, stmp)
-        {
-            HASH_ITER(hh, s->mqds, m, mtmp)
-            {
-                struct mq_attr att;
-
-                /* read the attributes of the Q */
-                if (SUCCEED!= mq_getattr(m->mqd, &att))
-                {
-                    NDRX_LOG(log_warn, "Failed to get attribs of Q: %d (%s)",  
-                            m->mqd, strerror(errno));
-                    MUTEX_UNLOCK_V(M_psets_lock);
-                    
-                    M_signal_first = TRUE;
-                    FAIL_OUT(ret);
-                }
-                
-                if (att.mq_curmsgs > 0)
-                {
-                    if (FAIL==write (s->wakeup_pipe[WRITE], (char *)&m->mqd, 
-                            sizeof(m->mqd)))
-                    {
-                        NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
-                    }
-                    
-                }
-            }
-            
-            /* Install all notifs */
-            if (SUCCEED!=signal_install_notifications_all(s))
-            {
-                NDRX_LOG(log_warn, "Failed to install notifs for set: %d", s->fd);
-/*
-                MUTEX_UNLOCK_V(M_psets_lock);
-                
-                M_signal_first = TRUE;
-                FAIL_OUT(ret);   
-*/
-            }
-        }
-        
-        MUTEX_UNLOCK_V(M_psets_lock);
-        MUTEX_UNLOCK_V(M_sig_lock);
-        
         /* check all queues and pipe down the event... */
+        signal_handle_event();
     }
     
 out:
@@ -394,10 +363,18 @@ public void signal_process_init(void)
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
     
+    pthread_attr_t pthread_custom_attr_dog;
+    pthread_attr_init(&pthread_custom_attr_dog);
+    
     /* set some small stacks size, 1M should be fine! */
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             signal_process, NULL);
+    
+    pthread_attr_setstacksize(&pthread_custom_attr_dog, 2048*1024);
+    pthread_create(&M_signal_watchdog_thread, &pthread_custom_attr_dog, 
+            signal_process_watchdog, NULL);
+            
 }
 
 
@@ -971,9 +948,6 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
     int retpoll;
     int try;
     ex_epoll_mqds_t* m, *mtmp;
-    
-    EX_EPOLL_API_ENTRY;
-    
     
     EX_EPOLL_API_ENTRY;
     
