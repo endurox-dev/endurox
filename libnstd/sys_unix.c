@@ -141,9 +141,28 @@ struct ex_epoll_set
 };
 typedef struct ex_epoll_set ex_epoll_set_t;
 
+/*
+ * Hash list of File descriptors we monitor..
+ */
+struct ex_pipe_mqd_hash
+{
+    mqd_t mqd;
+    
+    UT_hash_handle hh;         /* makes this structure hashable */
+};
+typedef struct ex_pipe_mqd_hash ex_pipe_mqd_hash_t;
 
-public ex_epoll_set_t *M_psets = NULL; /* poll sets  */
+private ex_epoll_set_t *M_psets = NULL; /* poll sets  */
+private ex_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
+
+
 MUTEX_LOCKDECL(M_psets_lock);
+
+MUTEX_LOCKDECL(M_pipelist_lock);
+
+
+MUTEX_LOCKDECL(M_sig_lock);
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
@@ -167,11 +186,64 @@ private int M_signal_first = TRUE; /* is first init for signal thread */
 private ex_epoll_mqds_t* mqd_find(ex_epoll_set_t *pset, mqd_t mqd);
 private int signal_install_notifications_all(ex_epoll_set_t *s);
 
-static void
-handler(int sig)
+
+/**
+ * Check for exsitance of mqd in  hash
+ * @param mqd
+ * @return 
+ */
+private ex_pipe_mqd_hash_t * mqd_chk(mqd_t mqd)
 {
-    /* Just interrupt sigsuspend() */
+    ex_pipe_mqd_hash_t * ret = NULL;
+    
+    HASH_FIND_MQD(M_pipe_h,&mqd, ret);
+    
+    return ret;
 }
+
+/**
+ * Add descriptor to hash
+ * @param mqd
+ * @return 
+ */
+private int mqd_add(mqd_t mqd)
+{
+    int ret = SUCCEED;
+    
+    ex_pipe_mqd_hash_t * ent;
+    
+    if (NULL!=(ent = calloc(1, sizeof(ex_pipe_mqd_hash_t))))
+    {
+        HASH_ADD_MQD(M_pipe_h,mqd,ent);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+out:
+
+    return ret;
+}
+
+/**
+ * Remove Q descriptor for hash
+ * @param mqd
+ * @return 
+ */
+private void mqd_del(mqd_t mqd)
+{
+    ex_pipe_mqd_hash_t * d =  mqd_chk(mqd);
+    
+    if (NULL!=d)
+    {
+        
+    }
+}
+
+
+
 
 /**
  * Process signal thread
@@ -207,6 +279,11 @@ public void * signal_process(void *arg)
         }
         
         NDRX_LOG(log_debug, "%s - after sigwait()");
+        
+        
+        /* wait for main thread enter in poll */
+        MUTEX_LOCK_V(M_sig_lock);
+        MUTEX_UNLOCK_V(M_sig_lock);
 
         /* Reregister for message notification */
         
@@ -306,6 +383,8 @@ public void signal_process_init(void)
     {
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }
+    
+    MUTEX_LOCK_V(M_sig_lock); /* Do not process events... */
     
     
     pthread_attr_t pthread_custom_attr;
@@ -1014,9 +1093,15 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
     NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - about to poll(nrfds=%d)",
                         fn, epfd, events, maxevents, timeout, set->nrfds);
     
-   
+#ifdef EX_POLL_SIGNALLED
+    MUTEX_UNLOCK_V(M_sig_lock);
+#endif
     
     retpoll = poll( set->fdtab, set->nrfds, timeout);
+    
+#ifdef EX_POLL_SIGNALLED
+    MUTEX_LOCK_V(M_sig_lock);
+#endif
     
     for (i=0; i<set->nrfds; i++)
     {
