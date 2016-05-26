@@ -954,7 +954,7 @@ public int sv_wait_for_request(void)
             NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d",
                         n, G_server_conf.events[n].data.u32, evfd);
             
-#ifndef EX_OS_LINUX 
+#ifndef EX_USE_EPOLL
             /* for non linux, we need to distinguish between fd & mq */
             is_mq_only = G_server_conf.events[n].is_mqd;
 #endif

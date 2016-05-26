@@ -43,7 +43,7 @@
 
 #include <ndrstandard.h>
 
-#ifdef EX_OS_LINUX
+#ifdef EX_USE_EPOLL
 
 #include <sys/epoll.h>
 
@@ -64,7 +64,7 @@
 /*---------------------------Macros-------------------------------------*/
 #define DBUF_SZ	(sizeof(net->d) - net->dl)	/* Buffer size to recv in 	*/
 
-#ifdef EX_OS_LINUX
+#ifdef EX_USE_EPOLL
 
 #define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
 
@@ -443,7 +443,7 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     }
 
     /* Hmm try to receive something? */
-#ifdef EX_OS_LINUX
+#ifdef EX_USE_EPOLL
     if (events & EPOLLIN)
 #else
     if (events & POLLIN)

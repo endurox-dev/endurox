@@ -41,8 +41,8 @@ extern "C" {
 #include <atmi.h>
 #include <mqueue.h>
 #include <ndrstandard.h>
-/* gcc only: */
-#ifdef EX_OS_LINUX
+
+#ifdef EX_USE_EPOLL
 #include <sys/epoll.h>
 #else
 #include <poll.h>
@@ -52,7 +52,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#ifdef EX_OS_LINUX
+#ifdef EX_USE_EPOLL
 
 #define EX_EPOLL_CTL_ADD        EPOLL_CTL_ADD
 #define EX_EPOLL_CTL_DEL        EPOLL_CTL_DEL
@@ -86,7 +86,7 @@ struct ex_epoll_event {
         /* The structure generally is the same as for linux epoll_wait
          * This bellow is extension for non linux version.
          */
-        #ifndef EX_OS_LINUX
+        #ifndef EX_USE_EPOLL
         int         is_mqd;      /* Set to TRUE, if call is for message q */
         #endif
 };

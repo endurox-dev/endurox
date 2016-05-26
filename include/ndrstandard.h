@@ -36,6 +36,7 @@
 extern "C" {
 #endif
     
+#include <config.h>
 #include <stdint.h>
 
     
@@ -76,18 +77,6 @@ typedef int         bool;
 #endif
 
 #define ELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
-
-/* Have own linux define, so that we can test unix behaviour on linux */
-#ifdef __linux__1
-
-#define EX_OS_LINUX
-
-#else
-
-#define EX_OS_UNIX
-
-#endif
-
 
 #ifdef	__cplusplus
 }

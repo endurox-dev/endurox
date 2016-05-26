@@ -43,7 +43,7 @@
 
 #include <ndrstandard.h>
 
-#ifdef EX_OS_LINUX
+#ifdef EX_USE_EPOLL
 
 #include <sys/epoll.h>
 
@@ -61,7 +61,7 @@
 #include <test.fd.h>
 
 
-#ifdef EX_OS_LINUX
+#ifdef EX_USE_EPOLL
 
 #define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
 
