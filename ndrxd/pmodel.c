@@ -678,7 +678,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
             
             /* Check for process name & pid */
-            if (is_process_running(pid, p_pm->binary_name))
+            if (ex_sys_is_process_running(pid, p_pm->binary_name))
             {
                 /*Should be set at info: p_pm->state = NDRXD_PM_RUNNING;*/
                 NDRX_LOG(log_debug, "binary %s, srvid %d started with pid %d",

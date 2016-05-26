@@ -1,7 +1,7 @@
 /* 
-** `pqa' print queues, all
+** Generic unix abstractions 
 **
-** @file cmd_pqa.c
+** @file sys_linux.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,25 +29,31 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#include <string.h>
+
+/*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <time.h>
+
+#include <unistd.h>
+#include <stdarg.h>
+#include <ctype.h>
 #include <memory.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <errno.h>
+#include <signal.h>
+#include <limits.h>
+#include <pthread.h>
+#include <string.h>
+
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include <nstdutil.h>
+#include <limits.h>
 
-#include <ndrx.h>
-#include <ndrxdcmn.h>
-#include <atmi_int.h>
-#include <gencall.h>
-
-#include <ntimer.h>
-#include <nclopt.h>
 #include <sys_unix.h>
-#include <utlist.h>
+#include <sys/epoll.h>
+
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -56,83 +62,50 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-
 /**
- * Print header
+ * Checks weither process is running or not...
+ * @param pid
+ * @param proc_name
  * @return
  */
-private void print_hdr(void)
+public int ex_sys_is_process_running(pid_t pid, char *proc_name)
 {
-    fprintf(stderr, "Msg queued Q name\n");
-    fprintf(stderr, "---------- ---------------------------------"
-                    "------------------------------------\n");
-}
-
-/**
- * Get service listings
- * @param p_cmd_map
- * @param argc
- * @param argv
- * @return SUCCEED
- */
-public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
-{
-    int ret=SUCCEED;
-    int n;
-    short print_all = FALSE;
-    struct mq_attr att;
-    char q[512];
-    mq_list_t* qlist = NULL;
-    mq_list_t* elt = NULL;
-    ncloptmap_t clopt[] =
-    {
-        {'a', BFLD_SHORT, (void *)&print_all, 0, 
-                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Print all"},
-        {0}
-    };
+    FILE *fp=NULL;
+    char cmd[128];
+    char path[PATH_MAX];
+    int ret = FALSE;
     
-    /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    sprintf(cmd, "ps -p %d -o comm=", pid);
+    
+    NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
+    
+    /* Open the command for reading. */
+    fp = popen(cmd, "r");
+    if (fp == NULL)
     {
-        fprintf(stderr, "Invalid options, see `help'.");
-        FAIL_OUT(ret);
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
     }
     
-    /* Print header at first step! */
-    print_hdr();
-    
-    qlist = ex_sys_mqueue_list_make(G_config.qpath, &ret);
-    
-    if (SUCCEED!=ret)
+    /* Check the process name in output... */
+    while (fgets(path, sizeof(path)-1, fp) != NULL)
     {
-        NDRX_LOG(log_error, "posix queue listing failed!");
-        FAIL_OUT(ret);
-    }
-    
-    LL_FOREACH(qlist,elt)
-    {
-        if (!print_all)
+        if (strstr(path, proc_name))
         {
-            /* if not print all, then skip this queue */
-            if (0!=strncmp(elt->qname, 
-                    G_config.qprefix, strlen(G_config.qprefix)))
-            {
-                continue;
-            }
+            ret=TRUE;
+            goto out;
         }
-        if (SUCCEED!=ndrx_get_q_attr(elt->qname, &att))
-        {
-            /* skip this one... */
-            continue;
-        }
-
-        fprintf(stdout, "%-10d %s\n", (int)att.mq_curmsgs, elt->qname);
     }
 
 out:
-    if (NULL!=qlist)
+    /* close */
+    if (fp!=NULL)
     {
-        ex_sys_mqueue_list_free(qlist);
+        pclose(fp);
     }
+
+    NDRX_LOG(log_debug, "process %s status: %s", proc_name, 
+            ret?"running":"not running");
     return ret;
+    
 }

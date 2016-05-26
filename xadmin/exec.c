@@ -139,7 +139,7 @@ public int is_ndrxd_running(void)
 
     pid = atoi(pidbuf);
 
-    if (is_process_running(pid, "ndrxd"))
+    if (ex_sys_is_process_running(pid, "ndrxd"))
     {
         if (FAIL!=G_config.ndrxd_q)
         {

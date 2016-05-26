@@ -1,7 +1,7 @@
 /* 
-** Epoll Abstraction Layer (EAL)
+** Solaris Abstraction Layer (SAL)
 **
-** @file sys_epoll.c
+** @file sys_linux.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -33,7 +33,7 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+
 
 #include <unistd.h>
 #include <stdarg.h>
@@ -44,6 +44,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -52,6 +53,8 @@
 
 #include <sys_unix.h>
 #include <sys/epoll.h>
+
+#include <utlist.h>
 
 
 /*---------------------------Externs------------------------------------*/
@@ -63,78 +66,78 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Wrapper for epoll_ctl, for standard file descriptors
- * @param epfd
- * @param op
- * @param fd
- * @param event
- * @return 
+ * Return the list of queues (build the list according to /tmp/.MQD files.
+ * e.g ".MQPn00b,srv,admin,atmi.sv1,123,2229" translates as
+ * "/n00b,srv,admin,atmi.sv1,123,2229")
+ * the qpath must point to /tmp
  */
-public int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
+public mq_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
 {
-    return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
-}
+    mq_list_t* ret = NULL;
+    struct dirent **namelist;
+    int n;
+    mq_list_t* tmp;
+    int len;
+    
+    *return_status = SUCCEED;
+    
+    n = scandir(qpath, &namelist, 0, alphasort);
+    if (n < 0)
+    {
+        NDRX_LOG(log_error, "Failed to open queue directory: %s", 
+                strerror(errno));
+        goto exit_fail;
+    }
+    else 
+    {
+        while (n--)
+        {
+            if (0==strcmp(namelist[n]->d_name, ".") || 
+                        0==strcmp(namelist[n]->d_name, "..") ||
+                        0!=strncmp(namelist[n]->d_name, ".MQP"))
+                continue;
+            
+            len = strlen(namelist[n]->d_name) -3 /*.MQP*/ + 1 /* EOS */;
+            
+            if (NULL==(tmp = calloc(1, sizeof(mq_list_t))))
+            {
+                NDRX_LOG(log_always, "alloc of mq_list_t (%d) failed: %s", 
+                        sizeof(mq_list_t), strerror(errno));
+                
+                
+                goto exit_fail;
+            }
+            
+            if (NULL==(tmp->qname = malloc(len)))
+            {
+                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
+                        len, strerror(errno));
+                free(tmp);
+                goto exit_fail;
+            }
+            
+            strcpy(tmp->qname, "/");
+            strcat(tmp->qname, namelist[n]->d_name+4); /* strip off .MQP */
+            
+            /* Add to LL */
+            LL_APPEND(ret, tmp);
+            
+            free(namelist[n]);
+        }
+        free(namelist);
+    }
+    
+    return ret;
+    
+exit_fail:
 
-/**
- * epoll_ctl for Posix queue descriptors
- * @param epfd
- * @param op
- * @param fd
- * @param event
- * @return 
- */
-public int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event)
-{
-    return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
-}
+    *return_status = FAIL;
 
-/**
- * Wrapper for epoll_create
- * @param size
- * @return 
- */
-public int ex_epoll_create(int size)
-{
-    return epoll_create(size);
-}
+    if (NULL!=ret)
+    {
+        ex_sys_mqueue_list_free(ret);
+        ret = NULL;
+    }
 
-/**
- * Close Epoll set.
- */
-public int ex_epoll_close(int fd)
-{
-    return close(fd);
+    return ret;   
 }
-
-/**
- * Wrapper for epoll_wait
- * @param epfd
- * @param events
- * @param maxevents
- * @param timeout
- * @return 
- */
-public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout)
-{
-    return epoll_wait(epfd, (struct epoll_event *) events, maxevents, timeout);
-}
-
-/**
- * Return errno for ex_poll() operation
- * @return 
- */
-public int ex_epoll_errno(void)
-{
-    return errno;
-}
-
-/**
- * Wrapper for strerror
- * @param err
- * @return 
- */
-public char * ex_poll_strerror(int err)
-{
-    return strerror(err);
-}
-

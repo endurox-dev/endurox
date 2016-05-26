@@ -1,12 +1,12 @@
 /* 
-** Unix Abstraction Layer (UAL)
+** Poll Abstraction Layer (PAL)
 ** NOTE: Thread shall not modify the ex_epoll sets. That must be managed from
 ** one thread only
 ** NOTE: Only one POLL set actually is supported. This is due to
 ** Notificatio thread locking while we are not polling (to void mqds in pipe)
 ** which we have already processed.
 ** 
-** @file ndebug.c
+** @file sys_poll.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -37,8 +37,7 @@
 
 /*---------------------------Includes-----------------------------------*/
 
-#define _POSIX_PTHREAD_SEMANTICS
-
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

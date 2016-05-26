@@ -411,61 +411,6 @@ restart:
 }
 
 /**
- * Checks weither process is running or not...
- * @param pid
- * @param proc_name
- * @return
- */
-public int is_process_running(pid_t pid, char *proc_name)
-{
-    char   proc_file[PATH_MAX];
-    int     ret = FALSE;
-    char    cmdline[2048] = {EOS};
-    int len;
-    int fd=FAIL;
-    int i;
-    /* Check for correctness - is it ndrxd */
-    sprintf(proc_file, "/proc/%d/cmdline", pid);
-    
-    fd = open(proc_file, O_RDONLY);
-    if (FAIL==fd)
-    {
-        NDRX_LOG(log_error, "Failed to open process file: [%s]: %s",
-                proc_file, strerror(errno));
-        goto out;
-    }
-    
-    len = read(fd, cmdline, sizeof(cmdline));
-    if (FAIL==len)
-    {
-        NDRX_LOG(log_error, "Failed to read from fd %d: [%s]: %s",
-                fd, proc_file, strerror(errno));
-        goto out;
-    }
-    
-    len--;
-    for (i=0; i<len; i++)
-        if (0x00==cmdline[i])
-            cmdline[i]=' ';
-    
-    
-    /* compare process name */
-    NDRX_LOG(6, "pid: %d, cmd line: [%s]", pid, cmdline);
-    if (NULL!=strstr(cmdline, proc_name))
-    {
-        ret=TRUE;
-    }
-
-
-out:
-    if (FAIL!=fd)
-        close(fd);	
-
-    return ret;
-}
-
-
-/**
  * Initialize generic structure (used for network send.)
  * @param call
  */

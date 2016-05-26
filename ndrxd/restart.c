@@ -49,6 +49,7 @@
 #include <signal.h>
 
 #include "userlog.h"
+#include "sys_unix.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -65,12 +66,12 @@ private int request_info(char *qname);
 public int do_restart_actions(void)
 {
     int ret=SUCCEED;
-    DIR *dp;
-    struct dirent *ep;
+    mq_list_t* qlist = NULL;
+    mq_list_t* elt = NULL;
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
     
-    /* TODO: Load app config */
+    /* Load app config */
     if (SUCCEED!=(ret = load_active_config(&G_app_config, &G_process_model,
             &G_process_model_hash, &G_process_model_pid_hash)))
     {
@@ -79,7 +80,7 @@ public int do_restart_actions(void)
         goto out;
     }
 
-    sprintf(server_prefix, NDRX_ADMIN_FMT_PFX, G_sys_config.qprefix+1);
+    sprintf(server_prefix, NDRX_ADMIN_FMT_PFX, G_sys_config.qprefix);
     server_prefix_len=strlen(server_prefix);
     NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                         server_prefix_len);
@@ -87,6 +88,8 @@ public int do_restart_actions(void)
     NDRX_LOG(log_warn, "Scanning process queues for info gathering");
 
     /* Do the directory listing here... and perform the check! */
+    
+#if 0
     dp = opendir (G_sys_config.qpath);
 
     if (dp != NULL)
@@ -95,6 +98,7 @@ public int do_restart_actions(void)
         {
             if (0==strcmp(ep->d_name, ".") || 0==strcmp(ep->d_name, ".."))
                 continue;
+            
             if (0==strncmp(ep->d_name, server_prefix, server_prefix_len)) 
             {
                 NDRX_LOG(log_warn, "Requesting info from: [%s]",
@@ -115,11 +119,39 @@ public int do_restart_actions(void)
         ret=FAIL;
         goto out;
     }
+#endif
     
+    qlist = ex_sys_mqueue_list_make(G_sys_config.qpath, &ret);
+
+    if (SUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "posix queue listing failed!");
+        FAIL_OUT(ret);
+    }
+
+    LL_FOREACH(qlist,elt)
+    {
+        if (0==strncmp(elt->qname, server_prefix, server_prefix_len)) 
+        {
+            NDRX_LOG(log_warn, "Requesting info from: [%s]", elt->qname);
+            ret=request_info(elt->qname);
+        }
+        
+        /* Check the status of above run */
+        if (SUCCEED!=ret)
+            goto out;
+    }
+
     /* Reset wait timer for learning */
     n_timer_reset(&(G_sys_config.time_from_restart));
 
 out:
+
+    if (NULL!=qlist)
+    {
+        ex_sys_mqueue_list_free(qlist);
+    }
+
     return ret;
 }
 

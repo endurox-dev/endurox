@@ -54,6 +54,7 @@
 #include <bridge_int.h>
 
 #include "userlog.h"
+#include "sys_unix.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -76,8 +77,6 @@ public int do_sanity_check(void)
     int ret=SUCCEED;
     static n_timer_t timer;
     static int first = TRUE;    
-    DIR *dp;
-    struct dirent *ep;
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
     static char    client_prefix[NDRX_MAX_Q_SIZE+1];
@@ -85,11 +84,12 @@ public int do_sanity_check(void)
     static char    xadmin_prefix[NDRX_MAX_Q_SIZE+1];
     static int     xadmin_prefix_len;
     int wasrun = FALSE;
-    /* sorted dir read: */
-    struct dirent **namelist;
+    
+    mq_list_t* qlist = NULL;
+    mq_list_t* elt = NULL;
+    
     int n;
     static unsigned nr_of_try = 0;
-    /* /sorted dir read: */
 
     nr_of_try++;
     
@@ -101,17 +101,17 @@ public int do_sanity_check(void)
     {
         n_timer_reset(&timer);
         /* Initialise q prefixes, +1 for skipping initial / */
-        sprintf(client_prefix, NDRX_CLT_QREPLY_PFX, G_sys_config.qprefix+1);
+        sprintf(client_prefix, NDRX_CLT_QREPLY_PFX, G_sys_config.qprefix);
         client_prefix_len=strlen(client_prefix);
         NDRX_LOG(log_debug, "client_prefix=[%s]/%d", client_prefix, 
                             client_prefix_len);
         
-        sprintf(xadmin_prefix, NDRX_NDRXCLT_PFX, G_sys_config.qprefix+1);
+        sprintf(xadmin_prefix, NDRX_NDRXCLT_PFX, G_sys_config.qprefix);
         xadmin_prefix_len=strlen(xadmin_prefix);
         NDRX_LOG(log_debug, "xadmin_prefix=[%s]/%d", xadmin_prefix, 
                             xadmin_prefix_len);
         
-        sprintf(server_prefix, NDRX_SVR_QREPLY_PFX, G_sys_config.qprefix+1);
+        sprintf(server_prefix, NDRX_SVR_QREPLY_PFX, G_sys_config.qprefix);
         server_prefix_len=strlen(server_prefix);
         NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                             server_prefix_len);
@@ -123,7 +123,7 @@ public int do_sanity_check(void)
     {
         wasrun = TRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
-        
+#if 0
         /* Do the directory listing here... and perform the check! */
          n = scandir(G_sys_config.qpath, &namelist, 0, alphasort);
         if (n < 0)
@@ -163,8 +163,37 @@ public int do_sanity_check(void)
             }
             free(namelist);
         }
+#endif
          
-        
+        qlist = ex_sys_mqueue_list_make(G_sys_config.qpath, &ret);
+
+        if (SUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "posix queue listing failed!");
+            FAIL_OUT(ret);
+        }
+
+        LL_FOREACH(qlist,elt)
+        {
+            NDRX_LOG(6, "Checking... [%s]", elt->qname);
+            if (0==strncmp(elt->qname, client_prefix, 
+                    client_prefix_len))
+            {
+                check_client(elt->qname, FALSE, nr_of_try);
+            }
+            else if (0==strncmp(elt->qname, xadmin_prefix, 
+                    xadmin_prefix_len)) 
+            {
+                check_client(elt->qname, TRUE, nr_of_try);
+            } 
+            /* TODO: We might want to monitor admin queues too! */
+            else if (0==strncmp(elt->qname, server_prefix, 
+                    server_prefix_len)) 
+            {
+                check_server(elt->qname);
+            }
+        }
+
         /* Will check programs with long startup they will get killed if, 
          * not started in time! */
         /* NOTE: THIS IS FIRST PROCESS WHICH INCREMENTS COUNTERS IN PM! */
@@ -190,6 +219,11 @@ public int do_sanity_check(void)
     }
     
 out:
+
+    if (NULL!=qlist)
+    {
+        ex_sys_mqueue_list_free(qlist);
+    }
 
     /* Reset timer on run */
     if (wasrun)
@@ -355,7 +389,7 @@ private int check_server(char *qname)
     
     parse_q(qname, TRUE, process, &pid, &srv_id, FALSE);
     
-    if (!is_process_running(pid, process))
+    if (!ex_sys_is_process_running(pid, process))
     {      
         /* And finally we send to our selves notification that pid is dead
          * so that system takes care of it's removal! */
@@ -430,7 +464,7 @@ private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
     strcpy(prev_process, process);
     prev_nr_of_try = nr_of_try;
     
-    if (!is_process_running(pid, process))
+    if (!ex_sys_is_process_running(pid, process))
     {
         unlink_dead_queue(qname);
         prev_was_unlink = TRUE;
@@ -588,7 +622,7 @@ private int check_dead_processes(void)
             p_pm->state<=NDRXD_PM_MAX_RUNNING &&
                 p_pm->state_changed > G_app_config->checkpm)
         {
-            if (!is_process_running(p_pm->pid, p_pm->binary_name))
+            if (!ex_sys_is_process_running(p_pm->pid, p_pm->binary_name))
             {
                 NDRX_LOG(log_warn, "Pid %d/%s in state %d is actually dead",
                         p_pm->pid, p_pm->binary_name, p_pm->state);

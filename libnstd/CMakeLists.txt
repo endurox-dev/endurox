@@ -45,9 +45,15 @@ else ()
 endif ()
 
 # Select the OS specifics:
+if (${CMAKE_OS_NAME} MATCHES "LINUX")
+    SET(NSTD_SYS "sys_linux.c")
+elseif (${CMAKE_OS_NAME} MATCHES "SUNOS")
+    SET(NSTD_SYS "sys_genunix.c sys_solaris.c")
+endif ()
 
 
-add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c ${NSTD_POLLER})
+add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c ${NSTD_POLLER} ${NSTD_SYS}
+                            sys_common.c)
 
 install (TARGETS 
     nstd 

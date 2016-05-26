@@ -71,6 +71,10 @@ extern "C" {
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+/**
+ * (E)poll data
+ */
 typedef union ex_epoll_data {
         void    *ptr;
         int      fd;
@@ -79,6 +83,9 @@ typedef union ex_epoll_data {
         mqd_t    mqd;
 } ex_epoll_data_t;
 
+/**
+ * (E)poll event
+ */
 struct ex_epoll_event {
         uint32_t     events;    /* Epoll events */
         ex_epoll_data_t data;      /* User data variable */
@@ -91,10 +98,22 @@ struct ex_epoll_event {
         #endif
 };
 
+
+/**
+ * List of posix queues
+ */
+typedef struct mq_list mq_list_t;
+struct mq_list
+{
+    char *qname;
+    mq_list_t *next;
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/* poll ops */
 extern int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
 extern int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);
 extern int ex_epoll_create(int size);
@@ -103,6 +122,10 @@ extern int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
 extern int ex_epoll_errno(void);
 extern char * ex_poll_strerror(int err);
 
+extern int ex_sys_is_process_running(pid_t pid, char *proc_name);
+extern mq_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status);
+extern void ex_sys_mqueue_list_free(mq_list_t* list);
+    
 #ifdef	__cplusplus
 }
 #endif
