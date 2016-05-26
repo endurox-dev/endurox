@@ -147,15 +147,6 @@ struct ex_epoll_set
 };
 typedef struct ex_epoll_set ex_epoll_set_t;
 
-/*
- * Hash list of File descriptors we monitor..
- */
-struct ex_pipe_mqd_hash
-{
-    mqd_t mqd;
-    
-    UT_hash_handle hh;         /* makes this structure hashable */
-};
 typedef struct ex_pipe_mqd_hash ex_pipe_mqd_hash_t;
 
 private ex_epoll_set_t *M_psets = NULL; /* poll sets  */
@@ -163,12 +154,6 @@ private ex_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
 
 
 MUTEX_LOCKDECL(M_psets_lock);
-
-MUTEX_LOCKDECL(M_pipelist_lock);
-
-
-MUTEX_LOCKDECL(M_sig_lock);
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
@@ -186,7 +171,6 @@ private char __thread M_last_err_msg[1024];  /* Last error message */
 
 
 private pthread_t M_signal_thread; /* Signalled thread */
-private pthread_t M_signal_watchdog_thread; /* Signalled thread, watchdog */
 private int M_signal_first = TRUE; /* is first init for signal thread */
 
 /*---------------------------Prototypes---------------------------------*/
@@ -205,9 +189,6 @@ private int signal_handle_event(void)
     ex_epoll_set_t *s, *stmp;
     ex_epoll_mqds_t* m, *mtmp;
     
-    /* wait for main thread enter in poll */
-    MUTEX_LOCK_V(M_sig_lock);
-
     /* Reregister for message notification */
 
     MUTEX_LOCK_V(M_psets_lock);
@@ -248,25 +229,9 @@ private int signal_handle_event(void)
     }
 
     MUTEX_UNLOCK_V(M_psets_lock);
-    MUTEX_UNLOCK_V(M_sig_lock);
         
 out:
         return ret;
-}
-
-/**
- * Watchdog for events...
- * @param arg
- * @return 
- */
-public void * signal_process_watchdog(void *arg)
-{
-    for(;;)
-    {
-        NDRX_LOG(log_debug, "Watchdog enter...")
-        sleep(1);
-        signal_handle_event();
-    }
 }
 
 /**
@@ -274,7 +239,7 @@ public void * signal_process_watchdog(void *arg)
  * TODO: We need a hash of events in PIPE! To avoid duplicate events to pipe...
  * @return 
  */
-public void * signal_process(void *arg)
+private void * signal_process(void *arg)
 {
     sigset_t blockMask;
     char *fn = "signal_process";
@@ -340,7 +305,7 @@ out:
  * Initialize signal process
  * @return
  */
-public void signal_process_init(void)
+private void signal_process_init(void)
 {
     sigset_t blockMask;
     char *fn = "signal_process_init";
@@ -357,9 +322,6 @@ public void signal_process_init(void)
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }
     
-    MUTEX_LOCK_V(M_sig_lock); /* Do not process events... */
-    
-    
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
     
@@ -371,10 +333,6 @@ public void signal_process_init(void)
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             signal_process, NULL);
     
-    pthread_attr_setstacksize(&pthread_custom_attr_dog, 2048*1024);
-    pthread_create(&M_signal_watchdog_thread, &pthread_custom_attr_dog, 
-            signal_process_watchdog, NULL);
-            
 }
 
 
@@ -1071,15 +1029,8 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
     NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - about to poll(nrfds=%d)",
                         fn, epfd, events, maxevents, timeout, set->nrfds);
     
-#ifdef EX_POLL_SIGNALLED
-    MUTEX_UNLOCK_V(M_sig_lock);
-#endif
     
     retpoll = poll( set->fdtab, set->nrfds, timeout);
-    
-#ifdef EX_POLL_SIGNALLED
-    MUTEX_LOCK_V(M_sig_lock);
-#endif
     
     for (i=0; i<set->nrfds; i++)
     {
