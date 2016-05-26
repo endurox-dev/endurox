@@ -37,12 +37,17 @@ cmake_minimum_required(VERSION 2.6)
 # Make sure the compiler can find include files from our Hello library. 
 include_directories (. ../include)
 
-# Generate library from our source files
-#if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#        add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c sys_linux.c)
-#else()
-        add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c sys_unix.c)
-#endif()
+# Set the poller
+if (${CMAKE_OS_NAME} MATCHES "LINUX")
+    SET(NSTD_POLLER "sys_epoll.c")
+else ()
+    SET(NSTD_POLLER "sys_poll.c")
+endif ()
+
+# Select the OS specifics:
+
+
+add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c ${NSTD_POLLER})
 
 install (TARGETS 
     nstd 

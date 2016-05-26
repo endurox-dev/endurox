@@ -12,11 +12,10 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdint.h>
 #include <ubf.h>
 /*---------------------------Macros-------------------------------------*/
-    
-#define NDRX_VERSION "EnduroX v2.5.1"
     
 /*
  * flag bits for C language xatmi routines

@@ -33,7 +33,61 @@
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
 set(VERSION "2.5.1")
+set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
+
+
+################################################################################
+# OS Confiugration
+################################################################################
+
+
+EXEC_PROGRAM(uname ARGS -a OUTPUT_VARIABLE _TMP_CMAKE_OS_NAME)
+string(REGEX MATCH "^[a-zA-Z0-9-]*" _TMP_CMAKE_OS_NAME_EXTR ${_TMP_CMAKE_OS_NAME})
+string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
+
+message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
+
+if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
+	ADD_DEFINITIONS(-DEX_OS_LINUX)
+elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+	ADD_DEFINITIONS(-DEX_OS_AIX)
+elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
+	ADD_DEFINITIONS(-DEX_OS_HPUX)
+elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
+	ADD_DEFINITIONS(-DEX_OS_SUNOS)
+elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
+	ADD_DEFINITIONS(-DEX_OS_FREEBSD)
+# Unkonwn OS:
+else()
+	message( FATAL_ERROR "Unsupported OS" )
+endif()
+
+
+################################################################################
+# "Configure"
+################################################################################
+
+# In this file we are doing all of our 'configure' checks. Things like checking
+# for headers, functions, libraries, types and size of types.
+INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckCXXSourceCompiles.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
+
+# To check for an include file you do this:
+CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
+
+# To check the size of a primitive type:
+CHECK_TYPE_SIZE("int"   SIZEOF_INT)
+
+# Output the project version
+set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
+
+configure_file ("${PROJECT_SOURCE_DIR}/include/config.h.in"
+                "${PROJECT_BINARY_DIR}/include/config.h" )
 
 ################################################################################
 # Build configuration
