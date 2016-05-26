@@ -51,7 +51,6 @@
 #include <limits.h>
 
 #include <sys_unix.h>
-#include <sys/epoll.h>
 
 
 /*---------------------------Externs------------------------------------*/

@@ -551,10 +551,10 @@ private int process_command_buffer(int *p_have_next)
  */
 public int un_init(void)
 {
-    if (G_config.ndrxd_q != FAIL)
+    if (G_config.ndrxd_q != (mqd_t)FAIL)
         mq_close(G_config.ndrxd_q);
 
-    if (G_config.reply_queue != FAIL)
+    if (G_config.reply_queue != (mqd_t)FAIL)
     {
         mq_close(G_config.reply_queue);
         mq_unlink(G_config.reply_queue_str);

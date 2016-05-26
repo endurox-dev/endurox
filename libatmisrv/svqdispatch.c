@@ -109,7 +109,7 @@ public int sv_open_queue(void)
         /*
          * Check are we ok or failed?
          */
-        if (FAIL==entry->q_descr)
+        if ((mqd_t)FAIL==entry->q_descr)
         {
             /* Release semaphore! */
             if (use_sem) 
@@ -165,7 +165,11 @@ public int sv_open_queue(void)
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
         ev.events = EX_EPOLL_FLAGS;
+#ifdef EX_USE_EPOLL
         ev.data.fd = G_server_conf.service_array[i]->q_descr;
+#else
+        ev.data.mqd = G_server_conf.service_array[i]->q_descr;
+#endif
         
         if (FAIL==ex_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))

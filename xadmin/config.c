@@ -61,8 +61,8 @@ public int load_env_config(void)
     int ret=SUCCEED;
 
     memset(&G_config, 0, sizeof(G_config));
-    G_config.ndrxd_q = FAIL;
-    G_config.reply_queue = FAIL;
+    G_config.ndrxd_q = (mqd_t)FAIL;
+    G_config.reply_queue = (mqd_t)FAIL;
     
     /* Common configuration loading... */   
     if (SUCCEED!=ndrx_load_common_env())
@@ -109,7 +109,8 @@ public int load_env_config(void)
     NDRX_LOG(log_debug, "About to open reply queue: [%s]",
                                         G_config.reply_queue_str);
     /* Open new queue... */
-    if (FAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str, O_RDWR | O_CREAT,
+    if ((mqd_t)FAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
+                                        O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",

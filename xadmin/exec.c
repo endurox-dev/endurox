@@ -100,10 +100,10 @@ public int is_ndrxd_running(void)
     G_config.ndrxd_stat = NDRXD_STAT_NOT_STARTED;
 
     /* Check queue first  */
-    if (FAIL==G_config.ndrxd_q)
+    if ((mqd_t)FAIL==G_config.ndrxd_q)
         G_config.ndrxd_q = ndrx_mq_open (G_config.ndrxd_q_str, O_WRONLY);
 
-    if (FAIL==G_config.ndrxd_q)
+    if ((mqd_t)FAIL==G_config.ndrxd_q)
     {
         NDRX_LOG(log_warn, "Failed to open admin queue [%s]: %s",
                 G_config.ndrxd_q_str, strerror(errno));
@@ -141,7 +141,7 @@ public int is_ndrxd_running(void)
 
     if (ex_sys_is_process_running(pid, "ndrxd"))
     {
-        if (FAIL!=G_config.ndrxd_q)
+        if ((mqd_t)FAIL!=G_config.ndrxd_q)
         {
             ret=TRUE;
             G_config.ndrxd_stat = NDRXD_STAT_RUNNING;
@@ -165,10 +165,10 @@ out:
     if (!ret)
     {
         fprintf(stderr, "EnduroX back-end (ndrxd) is not running\n");
-        if (FAIL!=G_config.ndrxd_q)
+        if ((mqd_t)FAIL!=G_config.ndrxd_q)
         {
             mq_close(G_config.ndrxd_q);
-            G_config.ndrxd_q = FAIL;
+            G_config.ndrxd_q = (mqd_t)FAIL;
             
             if (system("ndrxd_chkdown.sh"))
             {

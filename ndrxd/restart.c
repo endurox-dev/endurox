@@ -89,38 +89,6 @@ public int do_restart_actions(void)
 
     /* Do the directory listing here... and perform the check! */
     
-#if 0
-    dp = opendir (G_sys_config.qpath);
-
-    if (dp != NULL)
-    {
-        while (ep = readdir (dp))
-        {
-            if (0==strcmp(ep->d_name, ".") || 0==strcmp(ep->d_name, ".."))
-                continue;
-            
-            if (0==strncmp(ep->d_name, server_prefix, server_prefix_len)) 
-            {
-                NDRX_LOG(log_warn, "Requesting info from: [%s]",
-                        ep->d_name);
-                ret=request_info(ep->d_name);
-            }
-            
-            /* Check the status of above run */
-            if (SUCCEED!=ret)
-                goto out;
-        }
-        (void) closedir (dp);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Failed to open queue directory: %s", 
-                strerror(errno));
-        ret=FAIL;
-        goto out;
-    }
-#endif
-    
     qlist = ex_sys_mqueue_list_make(G_sys_config.qpath, &ret);
 
     if (SUCCEED!=ret)
@@ -161,12 +129,8 @@ out:
 private int request_info(char *qname)
 {
     int ret=SUCCEED;
-    char    q_str[NDRX_MAX_Q_SIZE+1];
     command_call_t call;
     memset(&call, 0, sizeof(call));
-    
-    strcpy(q_str, "/");
-    strcat(q_str, qname);
     
     if (SUCCEED!=(cmd_generic_call(NDRXD_COM_SRVINFO_RQ, NDRXD_SRC_ADMIN,
                 NDRXD_CALL_TYPE_GENERIC,
@@ -174,7 +138,7 @@ private int request_info(char *qname)
                 G_command_state.listenq_str,
                 G_command_state.listenq,
                 FAIL,
-                q_str,
+                qname,
                 0, NULL,
                 NULL,
                 NULL,
@@ -182,7 +146,7 @@ private int request_info(char *qname)
                 FALSE)))
     {
         /* Will ignore any error */
-        NDRX_LOG(log_error, "Failed to call: [%s]", q_str);
+        NDRX_LOG(log_error, "Failed to call: [%s]", qname);
     }
     
 out:

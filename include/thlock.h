@@ -55,17 +55,17 @@ extern "C" {
 
 #define MUTEX_UNLOCK MUTEX_UNLOCK_V(__mutexlock);
 
-/* *** SPIN LOCKS *** */
+/* *** EX_SPIN LOCKS *** */
 
 /* data type used for external controlled locking. */
-#define SPIN_LOCKDECL(X) static volatile int X = 0;
+#define EX_SPIN_LOCKDECL(X) static volatile int X = 0;
 
 /**
  * Create spinlock
  * @param X - volatile int, locking variable
  * Must be first thing of the block!
  */
-#define SPIN_LOCK_V(X) \
+#define EX_SPIN_LOCK_V(X) \
 	int __count = 0;\
 	while(!__sync_bool_compare_and_swap(&X, 0, 1))\
 	{\
@@ -81,17 +81,17 @@ extern "C" {
  * @param X - volatile int, locking variable
  * Must be defined at the end of the locking block.
  */
-#define SPIN_UNLOCK_V(X)\
+#define EX_SPIN_UNLOCK_V(X)\
 	__sync_synchronize();\
 	X = 0;\
 
 /* Use default __spinlock variable */
-#define SPIN_LOCK \
+#define EX_SPIN_LOCK \
 		static volatile int __spinlock = 0;\
-		SPIN_LOCK_V(__spinlock);
+		EX_SPIN_LOCK_V(__spinlock);
 
 /* Use default __spinlock variable */
-#define SPIN_UNLOCK SPIN_UNLOCK_V(__spinlock);
+#define EX_SPIN_UNLOCK EX_SPIN_UNLOCK_V(__spinlock);
 	
 
 /*---------------------------Enums--------------------------------------*/

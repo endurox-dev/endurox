@@ -169,7 +169,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         NDRX_LOG(log_error, "Q File descriptor: %d - removing from polling struct", 
                 ent->q_descr);
         
-        if (FAIL==ex_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
+        if (FAIL==ex_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                             ent->q_descr, NULL))
         {
             _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed to remove fd %d from epollfd: %s", 
@@ -366,7 +366,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     /*
      * Check are we ok or failed?
      */
-    if (FAIL==entry_new->q_descr)
+    if ((mqd_t)FAIL==entry_new->q_descr)
     {
         /* Release semaphore! */
          if (G_shm_srv) ndrx_unlock_svc_op();
@@ -412,7 +412,11 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     
     memset(&ev, 0, sizeof(ev));
     ev.events = EX_EPOLL_FLAGS;
+#ifdef EX_USE_EPOLL
     ev.data.fd = entry_new->q_descr;
+#else
+    ev.data.mqd = entry_new->q_descr;
+#endif
     
     if (FAIL==ex_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             entry_new->q_descr, &ev))

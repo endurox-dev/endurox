@@ -280,7 +280,7 @@ public int generic_q_send(char *queue, char *data, long len, long flags)
 public int generic_q_send_2(char *queue, char *data, long len, long flags, long tout)
 {
     int ret=SUCCEED;
-    mqd_t q_descr=FAIL;
+    mqd_t q_descr=(mqd_t)FAIL;
     int use_tout;
     struct timespec abs_timeout;
     long add_flags = 0;
@@ -298,13 +298,13 @@ public int generic_q_send_2(char *queue, char *data, long len, long flags, long 
 restart_open:
     q_descr = ndrx_mq_open (queue, O_WRONLY | add_flags);
 
-    if (FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
+    if ((mqd_t)FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
     {
         NDRX_LOG(log_warn, "Got signal interrupt, restarting mq_open");
         goto restart_open;
     }
     
-    if (FAIL==q_descr)
+    if ((mqd_t)FAIL==q_descr)
     {
         NDRX_LOG(log_error, "Failed to open queue [%s] with error: %s",
                                         queue, strerror(errno));
@@ -479,7 +479,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         strcpy(call->reply_queue, reply_q);
         call->caller_nodeid = G_atmi_env.our_nodeid;
 
-        if (FAIL!=admin_queue)
+        if ((mqd_t)FAIL!=admin_queue)
         {
             NDRX_LOG(log_error, "Sending data to [%s], fd=%d, call flags=0x%x", 
                                 admin_q_str, admin_queue, call->flags);
@@ -855,10 +855,10 @@ out:
 public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
 {
     int ret=SUCCEED;
-    mqd_t q_descr=FAIL;
+    mqd_t q_descr=(mqd_t)FAIL;
     
     /* read the stats of the queue */
-    if (FAIL==(q_descr = ndrx_mq_open(q, 0)))
+    if ((mqd_t)FAIL==(q_descr = ndrx_mq_open(q, 0)))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: [%s], err: %s", 
                 q, strerror(errno));
@@ -875,7 +875,7 @@ public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
     
 out:
     
-    if (FAIL!=q_descr)
+    if ((mqd_t)FAIL!=q_descr)
     {
         mq_close(q_descr);
     }

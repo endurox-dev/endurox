@@ -107,7 +107,7 @@ public int remove_service_q(char *svc)
 {
     int ret=SUCCEED;
     char q_str[NDRX_MAX_Q_SIZE+1];
-    mqd_t qd=FAIL;
+    mqd_t qd=(mqd_t)FAIL;
     char msg_buf[ATMI_MSG_MAX_SIZE];
     int len;
     unsigned prio;
@@ -118,7 +118,7 @@ public int remove_service_q(char *svc)
     sprintf(q_str, NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
     
     /* Run in non-blocked mode */
-    if (FAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
+    if ((mqd_t)FAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
                                         q_str, strerror(errno));
@@ -156,7 +156,7 @@ public int remove_service_q(char *svc)
     }
     
 out:
-    if (FAIL!=qd)
+    if ((mqd_t)FAIL!=qd)
     {
         if (SUCCEED!=mq_close(qd))
         {

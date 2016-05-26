@@ -52,7 +52,6 @@
 #include <limits.h>
 
 #include <sys_unix.h>
-#include <sys/epoll.h>
 
 #include <utlist.h>
 
@@ -94,7 +93,7 @@ public mq_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
         {
             if (0==strcmp(namelist[n]->d_name, ".") || 
                         0==strcmp(namelist[n]->d_name, "..") ||
-                        0!=strncmp(namelist[n]->d_name, ".MQP"))
+                        0!=strncmp(namelist[n]->d_name, ".MQP", 4))
                 continue;
             
             len = strlen(namelist[n]->d_name) -3 /*.MQP*/ + 1 /* EOS */;

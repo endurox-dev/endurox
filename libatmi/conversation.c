@@ -226,7 +226,7 @@ public int accept_connection(void)
                     G_atmi_conf.my_id); /* In accepted connection we put their id */
     
     /* TODO: Firstly we should open the queue on which to listen right? */
-    if (FAIL==(conv->my_listen_q =
+    if ((mqd_t)FAIL==(conv->my_listen_q =
                     open_conv_q(conv->my_listen_q_str, &conv->my_q_attr)))
     {
         NDRX_LOG(log_error, "%s: Failed to open listen queue", fn);
@@ -255,7 +255,7 @@ public int accept_connection(void)
     
     NDRX_LOG(log_debug, "Connecting to: [%s]", their_qstr);
     
-    if (FAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
+    if ((mqd_t)FAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
     {
         NDRX_LOG(log_error, "%s: Cannot connect to reply queue [%s] - "
                                         "cannot accept connection!", 
@@ -462,12 +462,12 @@ private int conv_get_cd(long flags)
  */
 private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
 {
-    mqd_t ret=FAIL;
+    mqd_t ret=(mqd_t)FAIL;
     char fn[] = "open_conv_q";
 
     ret = ndrx_mq_open_at (q, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR, NULL);
 
-    if (FAIL==ret)
+    if ((mqd_t)FAIL==ret)
     {
         _TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s", fn, q, strerror(errno));
         goto out;
@@ -483,7 +483,7 @@ private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
         /* unlink the queue */
         mq_unlink(q);
 
-        ret=FAIL;
+        ret=(mqd_t)FAIL;
         goto out;
     }
 
@@ -500,12 +500,12 @@ out:
  */
 private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
 {
-    mqd_t ret=FAIL;
+    mqd_t ret=(mqd_t)FAIL;
     char fn[] = "open_reply_q";
 
     ret = ndrx_mq_open_at (q, O_RDWR, S_IWUSR | S_IRUSR, NULL);
 
-    if (FAIL==ret)
+    if ((mqd_t)FAIL==ret)
     {
         _TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s", fn, q, strerror(errno));
         goto out;
@@ -523,7 +523,7 @@ private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
         /* unlink the queue */
         mq_unlink(q);
 #endif
-        ret=FAIL;
+        ret=(mqd_t)FAIL;
         goto out;
     }
     
@@ -720,7 +720,7 @@ public int	_tpconnect (char *svc, char *data, long len, long flags)
     strcpy(call->reply_to, reply_qstr);
 
     /* TODO: Firstly we should open the queue on which to listen right? */
-    if (FAIL==(conv->my_listen_q =
+    if ((mqd_t)FAIL==(conv->my_listen_q =
                     open_conv_q(reply_qstr, &conv->my_q_attr)))
     {
         NDRX_LOG(log_error, "%s: Failed to open listen queue", fn);
@@ -823,7 +823,7 @@ public int	_tpconnect (char *svc, char *data, long len, long flags)
     NDRX_LOG(log_debug, "Got reply queue for conversation: [%s] - trying to open [%s]",
                                     conv->reply_q_str, their_qstr);
     
-    if (FAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
+    if ((mqd_t)FAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
     {
         NDRX_LOG(log_error, "Cannot establish connection - failed to "
                                     "open reply queue [%s]", conv->reply_q_str);
