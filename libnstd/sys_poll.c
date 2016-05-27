@@ -312,13 +312,13 @@ out:
     return ret;
 }
 /**
- * Initialize signal process
+ * Initialize polling lib
  * @return
  */
-private void signal_process_init(void)
+public void ex_epoll_sys_init(void)
 {
     sigset_t blockMask;
-    char *fn = "signal_process_init";
+    char *fn = "ex_epoll_sys_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -345,7 +345,49 @@ private void signal_process_init(void)
     
 }
 
+/**
+ * Un-initialize polling lib
+ * @return
+ */
+public void ex_epoll_sys_uninit(void)
+{
+    sigset_t blockMask;
+    char *fn = "ex_epoll_sys_uninit";
 
+    NDRX_LOG(log_debug, "%s - enter", fn);
+    
+
+    NDRX_LOG(log_debug, "About to cancel signal thread");
+    
+    /* TODO: have a counter for number of sets, so that we can do 
+     * un-init...
+     */
+    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+    else
+    {
+        void * res = SUCCEED;
+        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        {
+            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
+                    strerror(errno));
+        }
+
+        if (res == PTHREAD_CANCELED)
+        {
+            NDRX_LOG(log_info, "Signal thread canceled ok!")
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Signal thread failed to cancel "
+                    "(should not happen!!)");
+        }
+    }
+    
+    NDRX_LOG(log_debug, "finished ok");
+}
 
 /**
  * Message queue notification function
@@ -691,13 +733,6 @@ public int ex_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ex_epoll_event *e
             FAIL_OUT(ret);
         }
         
-        /* un-register notification for mqd */
-        if (FAIL==mq_notify(mqd, NULL))
-        {
-            NDRX_LOG(log_error, "mq_notify(%d, NULL) failed with: %s", mqd, 
-                    strerror(errno));
-        }        
-        
         /* Remove fd from set->fdtab & from hash */
         HASH_DEL(set->mqds, tmp);
         free((char *)tmp);
@@ -737,7 +772,7 @@ public int ex_epoll_create(int size)
     if (M_signal_first)
     {
         M_signal_first = FALSE;
-        signal_process_init();
+        ex_epoll_sys_init();
         usleep(10000);
     }
 #endif
@@ -894,36 +929,6 @@ public int ex_epoll_close(int epfd)
     HASH_DEL(M_psets, set);
     MUTEX_UNLOCK_V(M_psets_lock);
     
-    NDRX_LOG(log_debug, "About to cancel signal thread");
-    
-    /* TODO: have a counter for number of sets, so that we can do 
-     * un-init...
-     */
-    if (SUCCEED!=pthread_cancel(M_signal_thread))
-    {
-        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
-    }
-    else
-    {
-        void * res = SUCCEED;
-        if (SUCCEED!=pthread_join(M_signal_thread, &res))
-        {
-            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
-                    strerror(errno));
-        }
-
-        if (res == PTHREAD_CANCELED)
-        {
-            NDRX_LOG(log_info, "Signal thread canceled ok!")
-        }
-        else
-        {
-            NDRX_LOG(log_info, "Signal thread failed to cancel "
-                    "(should not happen!!)");
-        }
-    }
-    
-    NDRX_LOG(log_debug, "finished ok");
     
 out:
     return FAIL;

@@ -114,6 +114,8 @@ struct mq_list
 /*---------------------------Prototypes---------------------------------*/
 
 /* poll ops */
+extern void ex_epoll_sys_init(void);
+extern void ex_epoll_sys_uninit(void);
 extern char * ex_epoll_mode(void);
 extern int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
 extern int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);

@@ -385,6 +385,11 @@ int ndrx_main(int argc, char** argv)
     }
     
     /*
+     * Initialize polling subsystem
+     */
+    ex_epoll_sys_init();
+    
+    /*
      * Initialize services
      */
     if (SUCCEED!=tpsvrinit(argc, argv))
@@ -446,6 +451,11 @@ out:
     /* finish up. */
     tpsvrdone();
 
+    /*
+     * un-initalize polling sub-system
+     */
+    ex_epoll_sys_init();
+    
     un_initialize();
     /*
      * Print error message on exit. 
@@ -459,13 +469,3 @@ out:
 
     return ret;
 }
-#if 0
-/*
- * EnduroX server main entry point
- */
-int main(int argc, char** argv)
-{
-    return ndrx_main(argc, argv);
-}
-#endif
-

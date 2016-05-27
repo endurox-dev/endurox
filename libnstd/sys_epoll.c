@@ -62,6 +62,21 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Nothing to init for epoll()
+ */
+public void ex_epoll_sys_init(void)
+{
+	return;
+}
+
+/**
+ * Nothing to un-init for epoll()
+ */
+public void ex_epoll_sys_uninit(void)
+{
+	return;
+}
 
 /**
  * Return the compiled poll mode
