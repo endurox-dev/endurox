@@ -148,7 +148,7 @@ public int check_child_exit(void)
             }
             else
             {
-                NDRX_LOG(log_error, "Process abonormal shutdown!");
+                NDRX_LOG(log_error, "Process abnormal shutdown!");
                 status->srvinfo.state = NDRXD_PM_DIED;
             }
 #if 0
