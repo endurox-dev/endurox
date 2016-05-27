@@ -39,7 +39,11 @@ include_directories (. ../include)
 
 # Set the poller
 if (${CMAKE_OS_NAME} MATCHES "LINUX")
-    SET(NSTD_POLLER "sys_epoll.c")
+        IF(DEFINE_FORCEPOLL)
+                SET(NSTD_POLLER "sys_poll.c")
+        ELSE (DEFINE_FORCEPOLL)
+                SET(NSTD_POLLER "sys_epoll.c")
+        ENDIF(DEFINE_FORCEPOLL)
 else ()
     SET(NSTD_POLLER "sys_poll.c")
 endif ()

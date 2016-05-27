@@ -62,6 +62,17 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Return the compiled poll mode
+ * @return 
+ */
+public char * ex_epoll_mode(void)
+{
+    static char *mode = "epoll";
+    
+    return mode;
+}
 /**
  * Wrapper for epoll_ctl, for standard file descriptors
  * @param epfd

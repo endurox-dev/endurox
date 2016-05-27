@@ -385,6 +385,7 @@ public void un_initialize(void)
     ndrxd_shm_close_all();
 
     /* close poller */
+    NDRX_LOG(log_debug, "epollfd = %d", G_server_conf.epollfd);
     if (G_server_conf.epollfd > 0)
     {
         ex_epoll_close(G_server_conf.epollfd);

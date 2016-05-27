@@ -178,6 +178,17 @@ private int signal_install_notifications_all(ex_epoll_set_t *s);
 
 
 /**
+ * Return the compiled poll mode
+ * @return 
+ */
+public char * ex_epoll_mode(void)
+{
+    static char *mode = "poll";
+    
+    return mode;
+}
+
+/**
  * Handle event
  * @return 
  */
@@ -837,8 +848,11 @@ public int ex_epoll_close(int epfd)
     ex_epoll_fds_t* f, *ftmp;
     ex_epoll_mqds_t* m, *mtmp;
     
-    
+    NDRX_LOG(log_debug, "ex_epoll_close(%d) enter", epfd);
+            
     MUTEX_LOCK_V(M_psets_lock);
+    
+    NDRX_LOG(log_debug, "ex_epoll_close(%d) enter (after lock", epfd);
     
     if (NULL==(set = pset_find(epfd)))
     {
@@ -850,6 +864,7 @@ public int ex_epoll_close(int epfd)
         
         FAIL_OUT(ret);
     }
+    MUTEX_UNLOCK_V(M_psets_lock);
     
     if (set->wakeup_pipe[READ])
     {
@@ -874,10 +889,43 @@ public int ex_epoll_close(int epfd)
         ex_epoll_ctl_mq(set->fd, EX_EPOLL_CTL_DEL, m->mqd, NULL);
     }
     
+    MUTEX_LOCK_V(M_psets_lock);
     free(set);
+    HASH_DEL(M_psets, set);
+    MUTEX_UNLOCK_V(M_psets_lock);
+    
+    NDRX_LOG(log_debug, "About to cancel signal thread");
+    
+    /* TODO: have a counter for number of sets, so that we can do 
+     * un-init...
+     */
+    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+    else
+    {
+        void * res = SUCCEED;
+        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        {
+            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
+                    strerror(errno));
+        }
+
+        if (res == PTHREAD_CANCELED)
+        {
+            NDRX_LOG(log_info, "Signal thread canceled ok!")
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Signal thread failed to cancel "
+                    "(should not happen!!)");
+        }
+    }
+    
+    NDRX_LOG(log_debug, "finished ok");
     
 out:
-    MUTEX_UNLOCK_V(M_psets_lock); /*  <<< release the lock */
     return FAIL;
 }
 

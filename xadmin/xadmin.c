@@ -42,6 +42,7 @@
 #include <ndrxdcmn.h>
 #include <gencall.h>
 #include <errno.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 #define         CMD_MAX         PATH_MAX
 #define         MAX_ARG_LEN     500
@@ -643,7 +644,8 @@ int main(int argc, char** argv) {
     /* Print the copyright notice: */
     if (is_tty())
     {
-        fprintf(stderr, "%s, build %s %s\n\n", NDRX_VERSION, __DATE__, __TIME__);
+        fprintf(stderr, "%s, build %s %s using %s\n\n", NDRX_VERSION, 
+                    __DATE__, __TIME__, ex_epoll_mode());
         fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");
         fprintf(stderr, "Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.\n\n");
         fprintf(stderr, "This software is released under one of the following licenses:\n");
