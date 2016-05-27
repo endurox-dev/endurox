@@ -699,7 +699,7 @@ public int ex_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ex_epoll_event *e
         }        
         
         /* Remove fd from set->fdtab & from hash */
-        HASH_DEL(set->fds, tmp);
+        HASH_DEL(set->mqds, tmp);
         free((char *)tmp);
     }
     else
