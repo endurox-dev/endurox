@@ -644,8 +644,8 @@ int main(int argc, char** argv) {
     /* Print the copyright notice: */
     if (is_tty())
     {
-        fprintf(stderr, "%s, build %s %s using %s\n\n", NDRX_VERSION, 
-                    __DATE__, __TIME__, ex_epoll_mode());
+        fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, 
+                    __DATE__, __TIME__, ex_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);
         fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");
         fprintf(stderr, "Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.\n\n");
         fprintf(stderr, "This software is released under one of the following licenses:\n");

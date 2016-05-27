@@ -66,8 +66,8 @@ private int request_info(char *qname);
 public int do_restart_actions(void)
 {
     int ret=SUCCEED;
-    mq_list_t* qlist = NULL;
-    mq_list_t* elt = NULL;
+    string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
     
@@ -117,7 +117,7 @@ out:
 
     if (NULL!=qlist)
     {
-        ex_sys_mqueue_list_free(qlist);
+        ex_string_list_free(qlist);
     }
 
     return ret;

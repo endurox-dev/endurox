@@ -102,11 +102,11 @@ struct ex_epoll_event {
 /**
  * List of posix queues
  */
-typedef struct mq_list mq_list_t;
+typedef struct mq_list string_list_t;
 struct mq_list
 {
     char *qname;
-    mq_list_t *next;
+    string_list_t *next;
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -124,8 +124,8 @@ extern int ex_epoll_errno(void);
 extern char * ex_poll_strerror(int err);
 
 extern int ex_sys_is_process_running(pid_t pid, char *proc_name);
-extern mq_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status);
-extern void ex_sys_mqueue_list_free(mq_list_t* list);
+extern string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status);
+extern void ex_string_list_free(string_list_t* list);
     
 #ifdef	__cplusplus
 }

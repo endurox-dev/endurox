@@ -587,7 +587,7 @@ public int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
 
 out:
 
-    MUTEX_LOCK_V(M_psets_lock);
+    MUTEX_UNLOCK_V(M_psets_lock);
 
     NDRX_LOG(log_info, "%s return %d", fn, ret);
 
@@ -1139,8 +1139,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
                 
                 events[numevents-1].data.fd =set->fdtab[i].fd;
                 events[numevents-1].events = set->fdtab[i].revents;
-                events[numevents-1].is_mqd = TRUE;
-                
+                events[numevents-1].is_mqd = FALSE;
             }
             else
             {

@@ -66,9 +66,9 @@
 /**
  * Free the list of message queues
  */
-public void ex_sys_mqueue_list_free(mq_list_t* list)
+public void ex_string_list_free(string_list_t* list)
 {
-    mq_list_t *elt, *tmp;
+    string_list_t *elt, *tmp;
     
     if (NULL!=list)
     {

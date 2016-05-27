@@ -13,7 +13,7 @@
 #define SIZEOF_INT @SIZEOF_INT@
 
 #define NDRX_VERSION   "@NDRX_VERSION_STR@"
-#define NDRX_BUILD_OS_VER "@CMAKE_OS_NAME@"
+#define NDRX_BUILD_OS_NAME "@CMAKE_OS_NAME@"
 
 /* PThread mode for Solaris */
 #define _POSIX_PTHREAD_SEMANTICS

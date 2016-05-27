@@ -85,8 +85,8 @@ public int do_sanity_check(void)
     static int     xadmin_prefix_len;
     int wasrun = FALSE;
     
-    mq_list_t* qlist = NULL;
-    mq_list_t* elt = NULL;
+    string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
     
     int n;
     static unsigned nr_of_try = 0;
@@ -222,7 +222,7 @@ out:
 
     if (NULL!=qlist)
     {
-        ex_sys_mqueue_list_free(qlist);
+        ex_string_list_free(qlist);
     }
 
     /* Reset timer on run */
