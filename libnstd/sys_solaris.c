@@ -70,12 +70,12 @@
  * "/n00b,srv,admin,atmi.sv1,123,2229")
  * the qpath must point to /tmp
  */
-public mq_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
+public string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
 {
-    mq_list_t* ret = NULL;
+    string_list_t* ret = NULL;
     struct dirent **namelist;
     int n;
-    mq_list_t* tmp;
+    string_list_t* tmp;
     int len;
     
     *return_status = SUCCEED;
@@ -98,10 +98,10 @@ public mq_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
             
             len = strlen(namelist[n]->d_name) -3 /*.MQP*/ + 1 /* EOS */;
             
-            if (NULL==(tmp = calloc(1, sizeof(mq_list_t))))
+            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
             {
-                NDRX_LOG(log_always, "alloc of mq_list_t (%d) failed: %s", 
-                        sizeof(mq_list_t), strerror(errno));
+                NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
+                        sizeof(string_list_t), strerror(errno));
                 
                 
                 goto exit_fail;
@@ -134,7 +134,7 @@ exit_fail:
 
     if (NULL!=ret)
     {
-        ex_sys_mqueue_list_free(ret);
+        ex_string_list_free(ret);
         ret = NULL;
     }
 

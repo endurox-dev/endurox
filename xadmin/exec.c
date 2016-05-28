@@ -170,7 +170,7 @@ out:
             mq_close(G_config.ndrxd_q);
             G_config.ndrxd_q = (mqd_t)FAIL;
             
-            if (system("ndrxd_chkdown.sh"))
+            if (ex_chk_ndrxd())
             {
                 /* Not sure this is safer, but we will remove that queue on behalf of user!
                  * if process is not running.

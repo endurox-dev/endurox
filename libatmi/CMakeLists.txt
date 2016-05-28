@@ -73,6 +73,7 @@ add_library (atmi SHARED
                     typed_xcvt.c
                     ubfutil.c
                     qcommon.c
+                    sysutil.c
             )
 
 install (TARGETS 

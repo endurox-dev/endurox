@@ -84,3 +84,114 @@ public void ex_string_list_free(string_list_t* list)
         }
     }
 }
+
+
+/**
+ * List processes by filters
+ * @param filter1
+ * @param filter2
+ * @param filter3
+ * @return 
+ */
+public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4)
+{
+    FILE *fp=NULL;
+    char cmd[128];
+    char path[PATH_MAX];
+    int ok = 0;
+    int i;
+    string_list_t* tmp;
+    string_list_t* ret = NULL;
+    char *filter[4] = {filter1, filter2, filter3, filter4};
+    
+    sprintf(cmd, "ps -ef");
+    
+    NDRX_LOG(log_debug, "Listing processes [%s] f1=[%s] f2=[%s] f3=[%s] f4=[%s]", 
+            cmd, filter1, filter2, filter3, filter4);
+    
+    /* Open the command for reading. */
+    fp = popen(cmd, "r");
+    if (fp == NULL)
+    {
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
+    }
+    
+    /* Check the process name in output... */
+    while (fgets(path, sizeof(path)-1, fp) != NULL)
+    {
+        NDRX_LOG(log_debug, "Got line [%s]", path);
+        
+        for (i = 0; i<4; i++)
+        {
+            if (EOS!=filter[i][0] && strstr(path, filter[i]))
+            {
+                NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]);
+                ok++;
+            }
+            else if (EOS==filter[i][0])
+            {
+                NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]);
+                ok++;
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "filter%d [%s] - fail", i, filter[i]);
+            }
+        }
+        
+        if (4==i)
+        {
+            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+            {
+                NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
+                        sizeof(string_list_t), strerror(errno));
+                ex_string_list_free(ret);
+                ret = NULL;
+                goto out;
+            }
+            
+            if (NULL==(tmp->qname = malloc(strlen(path)+1)))
+            {
+                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
+                        strlen(path)+1, strerror(errno));
+                free(tmp);
+                ex_string_list_free(ret);
+                ret =  NULL;
+                goto out;
+            }
+            
+            strcpy(tmp->qname, path);
+        }
+    }
+
+out:
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+
+    return ret;
+    
+}
+
+/**
+ * Get current system username
+ */
+public char *ex_sys_get_cur_username(void)
+{
+    static __thread char username[256] = {EOS};
+    
+    if (EOS==username[0])
+    {
+        if (SUCCEED!=getlogin_r(username, sizeof(username)))
+        {
+            NDRX_LOG(log_error, "Failed to get username: %s", strerror(errno));
+        }
+    }
+    
+    return username; 
+}
+
+
