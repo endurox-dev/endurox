@@ -49,6 +49,7 @@
 #include <unistd.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define KILL_SLEEP_SECS 2
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -272,7 +273,6 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
     char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
     int max_signals = 2;
     int was_any = FALSE;
-#define KILL_SLEEP_SECS 2
     NDRX_LOG(log_warn, "****** Forcing system down ******");
     
     
@@ -468,3 +468,52 @@ out:
 }
 
 
+/**
+ * Kill process by mask.
+ * @param m
+ * @return 
+ */
+public int ex_killall(char *mask)
+{
+    string_list_t* plist = NULL;
+    string_list_t* elt = NULL;
+    int signals[] = {SIGTERM, SIGKILL};
+    pid_t pid;
+    int was_any = FALSE;
+    int i;
+    
+    int ret = FAIL;
+    
+    plist = ex_sys_ps_list(mask, "", "", "");
+    
+    for (i=0; i<2; i++)
+    {
+        LL_FOREACH(plist,elt)
+        {
+            /* Parse out process name & pid */
+            NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
+            
+            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid) && pid!=getpid())
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d "
+                         "pid=[%d]", signals[i], pid);
+                 
+                 if (SUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 was_any = TRUE;
+                 ret = SUCCEED;
+            }
+        }
+        if (0==i && was_any)
+        {
+            sleep(KILL_SLEEP_SECS);
+        }
+    }
+    
+    ex_string_list_free(plist);
+    
+    return ret;
+}
