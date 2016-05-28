@@ -193,7 +193,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
 
                     /* todo: Call in async: Do we need to pass there original flags? */
                     if (FAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
-                                    elt->flags, elt->my_id, FAIL, TRUE)))
+                                    elt->flags | TPNOREPLY, elt->my_id, FAIL, TRUE)))
                     {
                         NDRX_LOG(log_error, "Failed to call service [%s/%s]: %s"
                                 " - unsubscribing %ld",
@@ -261,7 +261,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                 
                 if (FAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
-                        0, G_last_call.extradata, nodeid, TPCALL_BRCALL)))
+                        TPNOREPLY, G_last_call.extradata, nodeid, TPCALL_BRCALL)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
                                     nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));

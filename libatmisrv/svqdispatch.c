@@ -677,6 +677,10 @@ public int sv_server_request(char *buf, int len)
             break;
         default:
             NDRX_LOG(log_error, "Unknown command ID: %hd", gen_command->command_id);
+            
+            /* Dump the message to log... */
+            NDRX_DUMP(log_error, "Command content", buf,  len);
+            
             ret=FAIL;
             goto out;
             break;
