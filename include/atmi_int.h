@@ -485,7 +485,7 @@ extern int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 /* ATMI level process management: */
 extern int ex_chk_server(char *procname, short srvid);
 extern int ex_chk_ndrxd(void);
-extern int ex_down_sys(void);
+extern int ex_down_sys(char *qprefix, char *qpath, int is_force);
 
 #ifdef	__cplusplus
 }

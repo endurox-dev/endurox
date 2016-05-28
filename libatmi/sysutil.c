@@ -44,6 +44,9 @@
 #include <ubf.h>
 #include <ubfutil.h>
 #include <sys_unix.h>
+#include <utlist.h>
+#include <atmi_shm.h>
+#include <unistd.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -113,11 +116,354 @@ public int ex_chk_ndrxd(void)
 }
 
 /**
+ * Prase client queue
+ * @param pfx
+ * @param proc
+ * @param pid
+ * @param th
+ * @return 
+ */
+public int ex_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th)
+{
+    char tmp[NDRX_MAX_Q_SIZE+1];
+    char *token;
+    int ret = SUCCEED;
+    
+    pfx[0] = EOS;
+    proc[0] = EOS;
+    *pid = 0;
+    *th = 0;
+
+    if (NULL==strstr(q, NDRX_CLT_QREPLY_CHK))
+    {
+        NDRX_LOG(log_debug, "[%s] - not client Q", q);
+        ret = FAIL;
+        goto out;
+    }
+            
+    strcpy(tmp, q);
+    
+    /* get the first token */
+    token = strtok(tmp, NDRX_FMT_SEP_STR);
+
+    if (NULL!=token)
+    {
+        strcpy(pfx, token);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "missing pfx")
+        FAIL_OUT(ret);
+    }
+    
+    
+    token = strtok(NULL, NDRX_FMT_SEP_STR);
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing clt")
+        FAIL_OUT(ret);
+    }
+    
+    token = strtok(NULL, NDRX_FMT_SEP_STR);
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing reply")
+        FAIL_OUT(ret);
+    }
+    
+    token = strtok(NULL, NDRX_FMT_SEP_STR);
+    
+    if (NULL!=token)
+    {
+        strcpy(proc, token);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "missing proc name")
+        FAIL_OUT(ret);
+    }
+    
+    token = strtok(NULL, NDRX_FMT_SEP_STR);
+    
+    if (NULL!=token)
+    {
+        *pid=atoi(token);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "missing proc pid")
+        FAIL_OUT(ret);
+    }
+    
+    token = strtok(NULL, NDRX_FMT_SEP_STR);
+    
+    if (NULL!=token)
+    {
+        *th=atol(token);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "missing proc th")
+        FAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Parse pid from PS output
+ * @param psout
+ * @param pid
+ * @return 
+ */
+public int ex_get_pid_from_ps(char *psout, pid_t *pid)
+{
+    char tmp[PATH_MAX+1];
+    char *token;
+    int ret = SUCCEED;
+    
+    strcpy(tmp, psout);
+    /* get the first token */
+    token = strtok(tmp, "\t ");
+
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing first ps -ef column")
+        FAIL_OUT(ret);
+    }
+    
+    token = strtok(NULL, "\t ");
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing pid in ps -ef output")
+        FAIL_OUT(ret);
+    }   
+    else
+    {
+        *pid = atoi(token);
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Kill the system running (the xadmin dies last...)
  */
-public int ex_down_sys(void)
+public int ex_down_sys(char *qprefix, char *qpath, int is_force)
 {
     int ret = SUCCEED;
+    int signals[] = {SIGTERM, SIGKILL};
+    int i;
+    string_list_t* qlist = NULL;
+    string_list_t* srvlist = NULL;
+    string_list_t* xadminlist = NULL;
+    string_list_t* elt = NULL;
+    char pfx[NDRX_MAX_Q_SIZE+1];
+    char proc[NDRX_MAX_Q_SIZE+1];
+    pid_t pid;
+    long th;
+    char test_string2[NDRX_MAX_KEY_SIZE+4];
+    char srvinfo[NDRX_MAX_SHM_SIZE];
+    char svcinfo[NDRX_MAX_SHM_SIZE];
+    char brinfo[NDRX_MAX_SHM_SIZE];
+    char *shm[] = {srvinfo, svcinfo, brinfo};
+    char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
+    int max_signals = 2;
+    int was_any = FALSE;
+#define KILL_SLEEP_SECS 2
+    NDRX_LOG(log_warn, "****** Forcing system down ******");
+    
+    
+    sprintf(srvinfo, NDRX_SHM_SRVINFO, qprefix);
+    sprintf(svcinfo, NDRX_SHM_SVCINFO, qprefix);
+    sprintf(brinfo,  NDRX_SHM_BRINFO,  qprefix);
+    
+     
+    sprintf(test_string2, "-k %s", G_atmi_env.rnd_key);
+    
+    NDRX_LOG(log_warn, "Removing all client processes..");
+    
+    if (is_force)
+    {
+        signals[0] = SIGKILL;
+    }
+    
+    /* list all queues */
+    qlist = ex_sys_mqueue_list_make(qpath, &ret);
+    
+    if (SUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "posix queue listing failed... continue...!");
+        ret = SUCCEED;
+        qlist = NULL;
+    }
+    
+    for (i=0; i<max_signals; i++)
+    {
+        LL_FOREACH(qlist,elt)
+        {
+            NDRX_LOG(log_debug, "Testing q [%s]", elt->qname);
+            
+            /* if not print all, then skip this queue */
+            if (0!=strncmp(elt->qname, 
+                    qprefix, strlen(qprefix)))
+            {
+                continue;
+            }
+            
+            /* Parse out process name & pid */
+            NDRX_LOG(log_warn, "processing q: [%s]", elt->qname);
+            
+            if (SUCCEED==ex_parse_clt_q(elt->qname, pfx, proc, &pid, &th) &&
+                    0!=strcmp(proc, "xadmin"))
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d pfx=[%s] proc=[%s] "
+                         "pid=[%d] th=[%ld]", signals[i], pfx, proc, pid, th);
+                 if (SUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 was_any = TRUE;
+            }
+        }
+        
+        if (0==i && was_any)
+        {
+            sleep(KILL_SLEEP_SECS);
+        }
+    }
+    
+    /* kill all servers */
+    NDRX_LOG(log_warn, "Removing server processes...");
+    
+    was_any = FALSE;
+    srvlist = ex_sys_ps_list(ex_sys_get_cur_username(), test_string2, "", "");
+    
+    for (i=0; i<max_signals; i++)
+    {
+        LL_FOREACH(srvlist,elt)
+        {
+            /* Parse out process name & pid */
+            NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
+            
+            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid))
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d "
+                         "pid=[%d]", signals[i], pid);
+                 
+                 if (SUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 was_any = TRUE;
+            }
+        }
+        if (0==i && was_any)
+        {
+            sleep(KILL_SLEEP_SECS);
+        }
+    }
+
+    /* remove all xadmins... */
+    NDRX_LOG(log_warn, "Removing other xadmins...");
+    was_any = FALSE;
+    xadminlist = ex_sys_ps_list(ex_sys_get_cur_username(), "xadmin", "", "");
+    
+    for (i=0; i<max_signals; i++)
+    {
+        LL_FOREACH(xadminlist,elt)
+        {
+            /* Parse out process name & pid */
+            NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
+            
+            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid) && pid!=getpid())
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d "
+                         "pid=[%d]", signals[i], pid);
+                 
+                 if (SUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 
+                 was_any = TRUE;
+            }
+        }
+        
+        if (0==i && was_any)
+        {
+            sleep(KILL_SLEEP_SECS);
+        }
+    }
+    
+    /* Remove all queues */
+    NDRX_LOG(log_warn, "Removing queues...");
+    
+    LL_FOREACH(qlist,elt)
+    {
+        /* if not print all, then skip this queue */
+        if (0!=strncmp(elt->qname, 
+                qprefix, strlen(qprefix)))
+        {
+            continue;
+        }
+
+        /* Parse out process name & pid */
+        NDRX_LOG(log_warn, "Removing q: [%s]", elt->qname);
+
+        if (SUCCEED!=mq_unlink(elt->qname))
+        {
+            NDRX_LOG(log_error, "failed to remove q [%s]: %s",
+                    elt->qname, strerror(errno));
+        }
+    }
+    
+    NDRX_LOG(log_warn, "Removing shared memory...");
+    
+    for (i=0; i<N_DIM(shm); i++)
+    {
+        NDRX_LOG(log_warn, "Unlinking [%s]", shm[i]);
+        
+        if (SUCCEED!=shm_unlink(shm[i]))
+        {
+            NDRX_LOG(log_warn, "shm_unlink [%s] failed: %s (ignore)...", 
+                    shm[i], strerror(errno));
+        }
+    }
+    
+    NDRX_LOG(log_warn, "Removing semaphores...");
+    
+    ndrxd_sem_delete_with_init(qprefix);
+    
+    NDRX_LOG(log_warn, "Removing ndrxd pid file");
+    
+    if (NULL!=ndrxd_pid_file && EOS!=ndrxd_pid_file[0])
+    {
+        if (SUCCEED!=unlink(ndrxd_pid_file))
+        {
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", 
+                    ndrxd_pid_file, strerror(errno));
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Missing ndrxd PID file...");
+    }
+    
+    NDRX_LOG(log_warn, "****** Done ******");
+    
+out:
+
+    ex_string_list_free(qlist);
+    ex_string_list_free(srvlist);
+    ex_string_list_free(xadminlist);
+    
+    
     return ret;
 }
 

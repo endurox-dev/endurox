@@ -73,7 +73,7 @@ public int ndrxd_sem_init(char *q_prefix)
     
     /* Service queue ops */
     G_sem_svcop.key = G_atmi_env.ipckey + SEM_SVC_OPS;
-    NDRX_LOG(log_debug, "Using service semaphore key: [%p]", 
+    NDRX_LOG(log_debug, "Using service semaphore key: [%d]", 
             G_sem_svcop.key);
     
     M_init = TRUE;
@@ -249,10 +249,10 @@ public int ndrxd_sem_close_all(void)
  * Remove semaphores...
  * @param sem
  */
-private void remove_sem(ndrx_sem_t *sem)
+private void remove_sem(ndrx_sem_t *sem, int force)
 {
     /* Close that one... */
-    if (sem->attached)
+    if (sem->attached || force)
     {
         NDRX_LOG(log_error, "Removing semid: %d", sem->semid);
         if (SUCCEED!= semctl(sem->semid, 0, IPC_RMID))
@@ -263,6 +263,7 @@ private void remove_sem(ndrx_sem_t *sem)
     }
     sem->attached=FALSE;
 }
+
 /**
  * Does delete all semaphore blocks.
  */
@@ -270,7 +271,7 @@ public int ndrxd_sem_delete(void)
 {
     if (M_init)
     {
-        remove_sem(&G_sem_svcop);
+        remove_sem(&G_sem_svcop, FALSE);
     }
     else
     {
@@ -279,6 +280,19 @@ public int ndrxd_sem_delete(void)
     }
 
     return SUCCEED;
+}
+
+/**
+ * Does delete all semaphore blocks.
+ */
+public void ndrxd_sem_delete_with_init(char *q_prefix)
+{
+    if (!M_init)
+    {
+        ndrxd_sem_init(q_prefix);
+    }
+    
+    remove_sem(&G_sem_svcop, TRUE);
 }
 
 

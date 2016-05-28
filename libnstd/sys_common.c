@@ -98,7 +98,7 @@ public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter
     FILE *fp=NULL;
     char cmd[128];
     char path[PATH_MAX];
-    int ok = 0;
+    int ok;
     int i;
     string_list_t* tmp;
     string_list_t* ret = NULL;
@@ -120,30 +120,39 @@ public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter
     /* Check the process name in output... */
     while (fgets(path, sizeof(path)-1, fp) != NULL)
     {
-        NDRX_LOG(log_debug, "Got line [%s]", path);
+     /*   NDRX_LOG(log_debug, "Got line [%s]", path); - causes locks... */
+        ok = 0;
         
         for (i = 0; i<4; i++)
         {
             if (EOS!=filter[i][0] && strstr(path, filter[i]))
             {
-                NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]);
+                /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
                 ok++;
             }
             else if (EOS==filter[i][0])
             {
-                NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]);
+                /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
                 ok++;
             }
             else
             {
-                NDRX_LOG(log_debug, "filter%d [%s] - fail", i, filter[i]);
+                /* NDRX_LOG(log_debug, "filter%d [%s] - fail", i, filter[i]); */
             }
         }
         
-        if (4==i)
+        if (4==ok)
         {
             if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
             {
+                
+                /* close */
+                if (fp!=NULL)
+                {
+                    fp = NULL;
+                    pclose(fp);
+                }
+
                 NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
                         sizeof(string_list_t), strerror(errno));
                 ex_string_list_free(ret);
@@ -153,6 +162,13 @@ public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter
             
             if (NULL==(tmp->qname = malloc(strlen(path)+1)))
             {
+                /* close */
+                if (fp!=NULL)
+                {
+                    fp = NULL;
+                    pclose(fp);
+                }
+                
                 NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
                         strlen(path)+1, strerror(errno));
                 free(tmp);
@@ -162,6 +178,8 @@ public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter
             }
             
             strcpy(tmp->qname, path);
+            
+            LL_APPEND(ret, tmp);
         }
     }
 

@@ -1,5 +1,5 @@
 /* 
-** `psc' command implementation
+** `down' command implementation
 **
 ** @file cmd_fdown.c
 ** 
@@ -42,6 +42,7 @@
 #include <ndrxdcmn.h>
 #include <atmi_int.h>
 #include <gencall.h>
+#include <nclopt.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -59,6 +60,7 @@
  */
 public int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
+    int ret = SUCCEED;
 
     if (!chk_confirm_clopt("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
                     "THE APP SESSION?", argc, argv))
@@ -67,16 +69,13 @@ public int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     }
     else
     {
-        pid_t pid;
-        char cmd[128];
-        /* get the process id */
-        pid = getpid(); /* assume never fails... */
-
         /* quit automatically, as all resources are being removed! */
         *p_have_next = FALSE;
-        /* we should pass our PID too... */
-        sprintf(cmd, "fdown.sh %d", pid);
         
-        return system(cmd);
+        ex_down_sys(G_config.qprefix, G_config.qpath, FALSE);
+        ex_down_sys(G_config.qprefix, G_config.qpath, TRUE); /* second loop with TRUE... */
     }
+    
+out:
+    return ret;
 }

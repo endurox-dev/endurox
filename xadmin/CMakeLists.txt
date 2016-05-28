@@ -68,7 +68,6 @@ install (TARGETS
 
 # Install bin, scripts
 install (PROGRAMS 
-    fdown.sh
     tmadmin
     tmboot
     tmshutdown
