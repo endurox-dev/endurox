@@ -206,7 +206,10 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     {
                         numdisp++;
 			/* free up connectoin descriptor */
-                        tpcancel(err);
+                        if (err)
+                        {
+                                tpcancel(err);
+                        }
                     }
                 }
                 else
@@ -261,7 +264,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                 
                 if (FAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
-                        TPNOREPLY, G_last_call.extradata, nodeid, TPCALL_BRCALL)))
+                        0, G_last_call.extradata, nodeid, TPCALL_BRCALL)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
                                     nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));
