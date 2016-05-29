@@ -353,7 +353,7 @@ public int build_process_model(conf_server_node_t *p_server_conf,
             p_pm->reqstate = NDRXD_PM_NOT_STARTED;
             
             /* This must autostart! */
-            if (cnt<p_conf->min)
+            if (p_conf->min > cnt)
             {
                 p_pm->autostart=TRUE;
             }
