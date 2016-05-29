@@ -129,7 +129,7 @@ mkdir QSPACE1
 cp q.conf.tpl q.conf
 
 set_dom1;
-xadmin down -y
+xadmin stop -y
 xadmin start -y || go_out 1
 
 # Go to domain 1
@@ -162,7 +162,7 @@ fi
 
 #find ./QSPACE1 -type f
 
-xadmin down -y
+xadmin stop -y
 xadmin start -y || go_out 1
 clean_logs;
 
@@ -416,7 +416,7 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-xadmin down -y
+xadmin stop -y
 xadmin start -y || go_out 1
 clean_logs;
 
