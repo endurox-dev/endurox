@@ -35,3 +35,5 @@ export NDRX_IPCKEY=56000
 export NDRX_RNDK="IBvyyg8"
 export NDRX_QPREFIX=/dom3
 export NDRX_NODEID=3
+export NDRX_DPID=/tmp/ndrxd-dom3.pid
+

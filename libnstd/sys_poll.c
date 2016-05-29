@@ -291,16 +291,13 @@ private int signal_install_notifications_all(ex_epoll_set_t *s)
     
     HASH_ITER(hh, s->mqds, m, mtmp)
     {
-        if (FAIL==(ret=mq_notify(m->mqd, &m->sev)) && EBUSY == errno)
+        if (FAIL==mq_notify(m->mqd, &m->sev))
         {
-            ret = SUCCEED;
-        }
-        else if (SUCCEED!=ret)
-        {
-            NDRX_LOG(log_warn, "mq_notify failed: %d (%s)", 
+	    if (EBUSY!=errno)
+	    {
+                NDRX_LOG(log_warn, "mq_notify failed: %d (%s) - nothing to do", 
                     m->mqd, strerror(errno));
-
-            FAIL_OUT(ret);
+	    }
         }
     }
 out:

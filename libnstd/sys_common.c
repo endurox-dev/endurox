@@ -53,6 +53,8 @@
 #include <sys_unix.h>
 
 #include <utlist.h>
+#include <pwd.h>
+
 
 
 /*---------------------------Externs------------------------------------*/
@@ -199,6 +201,7 @@ out:
  */
 public char *ex_sys_get_cur_username(void)
 {
+/*
     static __thread char username[256] = {EOS};
     
     if (EOS==username[0])
@@ -210,6 +213,17 @@ public char *ex_sys_get_cur_username(void)
     }
     
     return username; 
+*/
+
+  uid_t uid = geteuid();
+  struct passwd *pw = getpwuid(uid);
+  if (pw)
+  {
+    return pw->pw_name;
+  }
+
+  return "";
+
 }
 
 
