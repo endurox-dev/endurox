@@ -317,7 +317,7 @@ public void ex_epoll_sys_init(void)
     char *fn = "ex_epoll_sys_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
-    if (M_signal_first)
+    if (!M_signal_first)
     {
 	NDRX_LOG(log_warn, "Already init done for poll()");
 	return;
@@ -343,7 +343,7 @@ public void ex_epoll_sys_init(void)
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             signal_process, NULL);
-    M_signal_first = TRUE;
+    M_signal_first = FALSE;
     
 }
 
