@@ -188,7 +188,7 @@ extern int tmq_mqch(UBFH *p_ub);
 
 
 extern int tmq_enqueue(UBFH *p_ub);
-extern int tmq_dequeue(UBFH *p_ub);
+extern int tmq_dequeue(UBFH **pp_ub);
 extern int tmq_notify(UBFH *p_ub);
 
 /* Background API */

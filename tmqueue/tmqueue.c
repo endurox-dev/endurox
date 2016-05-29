@@ -145,7 +145,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_DEQUEUE:
             
             /* start new tran... */
-            if (SUCCEED!=tmq_dequeue(p_ub))
+            if (SUCCEED!=tmq_dequeue(&p_ub))
             {
                 FAIL_OUT(ret);
             }
