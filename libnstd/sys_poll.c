@@ -293,10 +293,11 @@ private int signal_install_notifications_all(ex_epoll_set_t *s)
     {
         if (FAIL==mq_notify(m->mqd, &m->sev))
         {
-	    if (EBUSY!=errno)
+            int err = errno;
+	    if (EBUSY!=err)
 	    {
                 NDRX_LOG(log_warn, "mq_notify failed: %d (%s) - nothing to do", 
-                    m->mqd, strerror(errno));
+                    m->mqd, strerror(err));
 	    }
         }
     }
@@ -1087,6 +1088,19 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
                 while (numevents < maxevents && 
                         FAIL!=(ret=read(set->wakeup_pipe[READ], (char *)&mqdes, sizeof(mqdes))))
                 {
+		    struct mq_attr att;
+	   /* read the attributes of the Q */
+	  /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
+            if (SUCCEED!= mq_getattr(mqdes, &att))
+            {
+                /*ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
+                NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
+          /*      FAIL_OUT(ret);*/
+            }
+		else if (att.mq_curmsgs > 0)
+		{
+
+
                     numevents++;
                     
                     NDRX_LOG(log_info, "Got mqdes %d for pipe", mqdes);
@@ -1094,6 +1108,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
                     events[numevents-1].data.mqd = mqdes;
                     events[numevents-1].events = set->fdtab[i].revents;
                     events[numevents-1].is_mqd = TRUE;
+		}
                     
                 }
                 

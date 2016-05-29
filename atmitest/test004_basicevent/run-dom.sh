@@ -194,4 +194,3 @@ if [ "X`grep TPENOENT tpevsrv-dom1.log`" != "X" ]; then
 fi
 
 go_out $RET
-
