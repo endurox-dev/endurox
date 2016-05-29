@@ -46,9 +46,9 @@ fi;
 
 . ../testenv.sh
 
-killall atmisv4_1ST 2>/dev/null
-killall atmisv4_2ND 2>/dev/null
-killall tpevsrv 2>/dev/null
+xadmin killall atmisv4_1ST 2>/dev/null
+xadmin killall atmisv4_2ND 2>/dev/null
+xadmin killall tpevsrv 2>/dev/null
 
 # Start event server
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
@@ -76,11 +76,9 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-killall atmisv4_1ST 2>/dev/null
-killall atmisv4_2ND 2>/dev/null
-killall tpevsrv 2>/dev/null
-
-#killall atmiclt1
+xadmin killall atmisv4_1ST 2>/dev/null
+xadmin killall atmisv4_2ND 2>/dev/null
+xadmin killall tpevsrv 2>/dev/null
 
 popd 2>/dev/null
 

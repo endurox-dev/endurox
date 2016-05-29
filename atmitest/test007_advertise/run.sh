@@ -128,9 +128,5 @@ fi
 
 
 
-#killall atmiclt
-
-#xadmin stop -c -y || exit 2
-
 go_out 0
 

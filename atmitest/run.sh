@@ -29,12 +29,16 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
-ls -l /dev/mqueue
-if [ $? -ne 0 ]; then
-	echo "Have you mounted /dev/mqueue? Run:"
-	echo "# mkdir /dev/mqueue"
-        echo "# mount -t mqueue none /dev/mqueue"
-	exit 1
+OS=`uname`
+
+if [[ "$OS" == "Linux" ]]; then
+	ls -l /dev/mqueue
+	if [ $? -ne 0 ]; then
+		echo "Have you mounted /dev/mqueue? Run:"
+		echo "# mkdir /dev/mqueue"
+        	echo "# mount -t mqueue none /dev/mqueue"
+		exit 1
+	fi
 fi
 
 (./atmiunit1 2>&1) > test.out
