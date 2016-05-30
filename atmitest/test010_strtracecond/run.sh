@@ -1,6 +1,7 @@
 #!/bin/bash
 ## 
 ## @(#) Test010, Test semaphore for startup, so that if process is killed other processes can continue to work!
+## TODO: Only for epoll() version. For unix load balancer we will need different one..
 ##
 ## @file run.sh
 ## 
@@ -80,16 +81,7 @@ function go_out {
     popd 2>/dev/null
     exit $1
 }
-FF=""
-function test_svcok {
-    #####################
-    FF="${NDRX_QPATH}${NDRX_QPREFIX},svc,SVCOK"
-    # Have some debug...
-    ls -l $FF
-    ls -l ${NDRX_QPATH}
-    #####################
-    test -f $FF
-}
+
 rm *.log
 
 xadmin down -y
@@ -99,7 +91,7 @@ xadmin start -y &
 sleep 3
 #ps -ef | grep atmisv
 
-xadmin killall -9 atmisv_$TESTNO
+xadmin killall atmisv_$TESTNO
 # Wait for respawn, now it should be respawned...
 sleep 5
 
@@ -107,9 +99,9 @@ sleep 5
 xadmin start -i 2411 & 
 sleep 1
 
-test_svcok;
+xadmin pqa
 # Now we should not have queue with "SVCOK", as server is locked on bad server
-if [ $? -eq 0 ]; then
+if [[ "X`xadmin pqa | grep SVCOK`" != "X" ]]; then
     echo "SVCOK must not be advertised!!!"
     go_out 1
 fi
@@ -121,15 +113,17 @@ sleep 1
 # Put it in shutdown state!
 xadmin stop -i 1341
 
-# Now we should not have queue with "SVCOK", as server is locked on bad server
+# Now we should not have removed queue with "SVCOK", as server is locked on bad server
 if [ "X`xadmin psc | grep SVCOK`" == "X" ]; then
 	echo "SVCOK must be advertised!!!"
 	go_out 2
 fi
 
-test_svcok;
-# Now we should not have queue with "SVCOK", as server is locked on bad server
-if [ $? -ne 0 ]; then
+sleep 5 
+
+xadmin pqa
+# Now SVC OK must be advertized
+if [[ "X`xadmin pqa | grep SVCOK`" == "X" ]]; then
     echo "SVC Must be advertised!"
     go_out 1
 fi
