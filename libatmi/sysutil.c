@@ -493,7 +493,7 @@ public int ex_killall(char *mask)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid) && pid!=getpid())
+            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
