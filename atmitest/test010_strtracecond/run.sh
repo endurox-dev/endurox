@@ -99,7 +99,7 @@ xadmin start -y &
 sleep 3
 #ps -ef | grep atmisv
 
-killall -9 atmisv_$TESTNO
+xadmin killall -9 atmisv_$TESTNO
 # Wait for respawn, now it should be respawned...
 sleep 5
 

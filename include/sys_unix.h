@@ -114,6 +114,8 @@ struct mq_list
 /*---------------------------Prototypes---------------------------------*/
 
 /* poll ops */
+extern void ex_epoll_sys_init(void);
+extern void ex_epoll_sys_uninit(void);
 extern char * ex_epoll_mode(void);
 extern int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
 extern int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);
@@ -127,6 +129,9 @@ extern int ex_sys_is_process_running(pid_t pid, char *proc_name);
 extern string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status);
 extern void ex_string_list_free(string_list_t* list);
     
+
+extern char *ex_sys_get_cur_username(void);
+extern string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
 #ifdef	__cplusplus
 }
 #endif

@@ -108,7 +108,7 @@ function go_out {
     xadmin down -y
 
     # If some alive stuff left...
-    killall -9 atmiclt4
+    xadmin killall atmiclt4
 
     popd 2>/dev/null
     exit $1
@@ -143,15 +143,28 @@ set | grep FIELD
 
 set_dom1;
 xadmin down -y
-xadmin start -y || go_out 1
 
 set_dom2;
 xadmin down -y
-xadmin start -y || go_out 2
 
 set_dom3;
 xadmin down -y
+
+set_dom1;
+#xadmin down -y
+xadmin start -y || go_out 1
+
+
+set_dom2;
+#xadmin down -y
+#xadmin start -y || go_out 2
+xadmin start -y 
+
+set_dom3;
+#xadmin down -y
 xadmin start -y || go_out 3
+
+ps -ef | grep tpev
 
 # Let domains to connect between them selves
 sleep 50
@@ -181,4 +194,3 @@ if [ "X`grep TPENOENT tpevsrv-dom1.log`" != "X" ]; then
 fi
 
 go_out $RET
-

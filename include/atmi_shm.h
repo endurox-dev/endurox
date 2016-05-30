@@ -94,6 +94,7 @@ extern int ndrx_sem_attach(ndrx_sem_t *sem);
 extern int ndrxd_sem_open_all(void);
 extern int ndrxd_sem_close_all(void);
 extern int ndrxd_sem_delete(void);
+extern void ndrxd_sem_delete_with_init(char *q_prefix);
 extern int ndrxd_sem_is_attached(ndrx_sem_t *sem);
 extern int ndrx_sem_attach_all(void);
 extern int ndrx_lock_svc_op(void);

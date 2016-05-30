@@ -1,7 +1,7 @@
 /* 
-** `down' command implementation
+** Enduro/X version of killall - kills by 9 all match strstr processes
 **
-** @file cmd_fdown.c
+** @file cmd_startstop.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -52,28 +52,35 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Force shutdown all app domain & resource cleanup.
+ * Kill all
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-public int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
-
-    if (!chk_confirm_clopt("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
-                    "THE APP SESSION?", argc, argv))
+    int ret=SUCCEED;
+    int i;
+    
+    if (argc>=2)
     {
-        return FAIL;
+        for (i=1; i<argc; i++)
+        {
+            printf("Killing [%s] ... ", argv[i]);
+            if (SUCCEED==ex_killall(argv[i]))
+            {
+                printf("Signaled/killed\n");
+            }
+            else
+            {
+                printf("Failed\n");
+            }
+        }
     }
     else
     {
-        /* quit automatically, as all resources are being removed! */
-        *p_have_next = FALSE;
-        
-        ex_down_sys(G_config.qprefix, G_config.qpath, FALSE);
-        ex_down_sys(G_config.qprefix, G_config.qpath, TRUE); /* second loop with TRUE... */
+        FAIL_OUT(ret);
     }
     
 out:

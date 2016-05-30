@@ -57,6 +57,7 @@ extern "C" {
  * Posix Queue processing path prefixes
  */
 #define NDRX_FMT_SEP      ','                   /* Seperator in qnames */
+#define NDRX_FMT_SEP_STR  ","                   /* Seperator in qnames */
 #define NDRX_NDRXD        "%s,sys,bg,ndrxd"
 #define NDRX_NDRXCLT      "%s,sys,bg,xadmin,%d"
 #define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin," /* Prefix for sanity check */
@@ -88,6 +89,7 @@ extern "C" {
 /* this may end up in "112233-" if client is not properly initialized */
 #define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld"
 #define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /* Prefix for sanity check */
+#define NDRX_CLT_QREPLY_CHK   ",clt,reply," /* (verify that it is reply q) */
 
 #define NDRX_ADMIN_SVC     "%s-%d"
 

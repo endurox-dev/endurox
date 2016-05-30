@@ -91,11 +91,3 @@ install (TARGETS
     ndrxd 
     DESTINATION bin)
 
-# Install bin, scripts
-
-install (PROGRAMS 
-    ndrxd_chkdown.sh
-    ckserver.sh
-    DESTINATION bin)
-
-

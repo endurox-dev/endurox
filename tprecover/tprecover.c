@@ -95,7 +95,7 @@ out:
 public int poll_timer(void)
 {
     int ret=SUCCEED;
-    if (!system("ndrxd_chkdown.sh"))
+    if (!ex_chk_ndrxd())
     {
         NDRX_LOG(log_error, "ndrxd process missing - respawn!");
         if (SUCCEED!=start_daemon_recover())

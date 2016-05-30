@@ -173,7 +173,9 @@ cmd_mapping_t M_command_map[] =
                                     "\t\targs: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>"},
     {"mqmv",      cmd_mqmv,FAIL,   6,  6,  1, "Move message to different qspace/qname\n"
                                     "\t\targs: mqmv -n <Source cluster node id> -i <Source server ID>\n"
-                                    "\t\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>"}
+                                    "\t\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>"},
+    {"killall",   cmd_killall,FAIL, 1,  999,  0, "Kill all processes (in ps -ef) matching the name\n"
+                                    "\t\targs: killall <name1> <name2> ... <nameN>\n"}
 };
 
 /**

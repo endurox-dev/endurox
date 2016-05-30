@@ -215,9 +215,6 @@ private int signal_handle_event(void)
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d (%s)",  
                         m->mqd, strerror(errno));
                 MUTEX_UNLOCK_V(M_psets_lock);
-
-                M_signal_first = TRUE;
-                FAIL_OUT(ret);
             }
 
             if (att.mq_curmsgs > 0)
@@ -272,8 +269,6 @@ private void * signal_process(void *arg)
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
-            M_signal_first = TRUE;
-            FAIL_OUT(ret);    
         }
         
         NDRX_LOG(log_debug, "%s - after sigwait()", fn);
@@ -296,31 +291,35 @@ private int signal_install_notifications_all(ex_epoll_set_t *s)
     
     HASH_ITER(hh, s->mqds, m, mtmp)
     {
-        if (FAIL==(ret=mq_notify(m->mqd, &m->sev)) && EBUSY == errno)
+        if (FAIL==mq_notify(m->mqd, &m->sev))
         {
-            ret = SUCCEED;
-        }
-        else if (SUCCEED!=ret)
-        {
-            NDRX_LOG(log_warn, "mq_notify failed: %d (%s)", 
-                    m->mqd, strerror(errno));
-
-            FAIL_OUT(ret);
+            int err = errno;
+	    if (EBUSY!=err)
+	    {
+                NDRX_LOG(log_warn, "mq_notify failed: %d (%s) - nothing to do", 
+                    m->mqd, strerror(err));
+	    }
         }
     }
 out:
     return ret;
 }
 /**
- * Initialize signal process
+ * Initialize polling lib
+ * not thread safe.
  * @return
  */
-private void signal_process_init(void)
+public void ex_epoll_sys_init(void)
 {
     sigset_t blockMask;
-    char *fn = "signal_process_init";
+    char *fn = "ex_epoll_sys_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
+    if (!M_signal_first)
+    {
+	NDRX_LOG(log_warn, "Already init done for poll()");
+	return;
+    }
     
     /* Block the notification signal (do not need it here...) */
     
@@ -342,10 +341,53 @@ private void signal_process_init(void)
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             signal_process, NULL);
+    M_signal_first = FALSE;
     
 }
 
+/**
+ * Un-initialize polling lib
+ * @return
+ */
+public void ex_epoll_sys_uninit(void)
+{
+    sigset_t blockMask;
+    char *fn = "ex_epoll_sys_uninit";
 
+    NDRX_LOG(log_debug, "%s - enter", fn);
+    
+
+    NDRX_LOG(log_debug, "About to cancel signal thread");
+    
+    /* TODO: have a counter for number of sets, so that we can do 
+     * un-init...
+     */
+    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+    else
+    {
+        void * res = SUCCEED;
+        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        {
+            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
+                    strerror(errno));
+        }
+
+        if (res == PTHREAD_CANCELED)
+        {
+            NDRX_LOG(log_info, "Signal thread canceled ok!")
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Signal thread failed to cancel "
+                    "(should not happen!!)");
+        }
+    }
+    
+    NDRX_LOG(log_debug, "finished ok");
+}
 
 /**
  * Message queue notification function
@@ -691,13 +733,6 @@ public int ex_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ex_epoll_event *e
             FAIL_OUT(ret);
         }
         
-        /* un-register notification for mqd */
-        if (FAIL==mq_notify(mqd, NULL))
-        {
-            NDRX_LOG(log_error, "mq_notify(%d, NULL) failed with: %s", mqd, 
-                    strerror(errno));
-        }        
-        
         /* Remove fd from set->fdtab & from hash */
         HASH_DEL(set->mqds, tmp);
         free((char *)tmp);
@@ -732,15 +767,6 @@ public int ex_epoll_create(int size)
     ex_epoll_set_t *set;
     
     EX_EPOLL_API_ENTRY;
-    
-#ifdef EX_POLL_SIGNALLED
-    if (M_signal_first)
-    {
-        M_signal_first = FALSE;
-        signal_process_init();
-        usleep(10000);
-    }
-#endif
     
     while (NULL!=(set=pset_find(i)) && i < EX_POLL_SETS_MAX)
     {
@@ -894,36 +920,6 @@ public int ex_epoll_close(int epfd)
     HASH_DEL(M_psets, set);
     MUTEX_UNLOCK_V(M_psets_lock);
     
-    NDRX_LOG(log_debug, "About to cancel signal thread");
-    
-    /* TODO: have a counter for number of sets, so that we can do 
-     * un-init...
-     */
-    if (SUCCEED!=pthread_cancel(M_signal_thread))
-    {
-        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
-    }
-    else
-    {
-        void * res = SUCCEED;
-        if (SUCCEED!=pthread_join(M_signal_thread, &res))
-        {
-            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
-                    strerror(errno));
-        }
-
-        if (res == PTHREAD_CANCELED)
-        {
-            NDRX_LOG(log_info, "Signal thread canceled ok!")
-        }
-        else
-        {
-            NDRX_LOG(log_info, "Signal thread failed to cancel "
-                    "(should not happen!!)");
-        }
-    }
-    
-    NDRX_LOG(log_debug, "finished ok");
     
 out:
     return FAIL;
@@ -1092,6 +1088,19 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
                 while (numevents < maxevents && 
                         FAIL!=(ret=read(set->wakeup_pipe[READ], (char *)&mqdes, sizeof(mqdes))))
                 {
+		    struct mq_attr att;
+	   /* read the attributes of the Q */
+	  /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
+            if (SUCCEED!= mq_getattr(mqdes, &att))
+            {
+                /*ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
+                NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
+          /*      FAIL_OUT(ret);*/
+            }
+		else if (att.mq_curmsgs > 0)
+		{
+
+
                     numevents++;
                     
                     NDRX_LOG(log_info, "Got mqdes %d for pipe", mqdes);
@@ -1099,6 +1108,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
                     events[numevents-1].data.mqd = mqdes;
                     events[numevents-1].events = set->fdtab[i].revents;
                     events[numevents-1].is_mqd = TRUE;
+		}
                     
                 }
                 

@@ -35,4 +35,5 @@ export NDRX_IPCKEY=55000
 export NDRX_RNDK="nZ22K8K7kewKo"
 export NDRX_QPREFIX=/dom2
 export NDRX_NODEID=2
+export NDRX_DPID=/tmp/ndrxd-dom2.pid
 

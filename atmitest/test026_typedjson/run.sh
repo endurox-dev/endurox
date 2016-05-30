@@ -48,12 +48,12 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 
-killall atmisv26 2>/dev/null
-killall atmiclt26 2>/dev/null
-killall tpevsrv 2>/dev/null
+# clean up the env for processing...
+xadmin down -y
+xadmin killall atmi
 
 # Start subscribers
-(./atmisv26 -t 4 -i 100 2 -xTEST26_UBF2JSON:UBF2JSON -xTEST26_JSON2UBF:JSON2UBF >&1) > ./atmisv26.log &
+(./atmisv26 -t 4 -i 100 -xTEST26_UBF2JSON:UBF2JSON -xTEST26_JSON2UBF:JSON2UBF -- >&1) > ./atmisv26.log &
 sleep 1
 # Post the event
 (./atmiclt26 2>&1) > ./atmiclt26.log

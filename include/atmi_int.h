@@ -482,6 +482,12 @@ extern unsigned char *atmi_base64_decode(const char *data, size_t input_length,
 extern int _tpjsontoubf(UBFH *p_ub, char *buffer);
 extern int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 
+/* ATMI level process management: */
+extern int ex_chk_server(char *procname, short srvid);
+extern int ex_chk_ndrxd(void);
+extern int ex_down_sys(char *qprefix, char *qpath, int is_force);
+extern int ex_killall(char *mask);
+
 #ifdef	__cplusplus
 }
 #endif

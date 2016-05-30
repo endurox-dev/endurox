@@ -29,6 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,7 +160,7 @@ public int check_child_exit(void)
 #endif
             /*
             NDRX_LOG(log_warn, "Sending notification"); */
-            self_notify(status, TRUE);
+            self_notify(status, FALSE);
             /*
             remove_startfail_process(pm_pid->p_pm);
              */
@@ -203,11 +204,11 @@ void sign_chld_handler(int sig)
 {
     /* let main programm to check for childs..., otherwise things like __lll_lock_wait_private
      * causes lockups.
-     *
+     */
     NDRX_LOG(log_warn, "Got sigchld...");
+    signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
      
     check_child_exit();
-     */
     /* DO in new thread? */
     pthread_t thread;
     pthread_attr_t pthread_custom_attr;
@@ -352,7 +353,7 @@ public int build_process_model(conf_server_node_t *p_server_conf,
             p_pm->reqstate = NDRXD_PM_NOT_STARTED;
             
             /* This must autostart! */
-            if (cnt<p_conf->min)
+            if (p_conf->min > cnt)
             {
                 p_pm->autostart=TRUE;
             }

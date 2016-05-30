@@ -286,7 +286,7 @@ out:
  * @param p_ub
  * @return 
  */
-public int tmq_dequeue(UBFH *p_ub)
+public int tmq_dequeue(UBFH **pp_ub)
 {
     /* Search for not locked message, lock it, issue command to disk for
      * delete & return the message to buffer (also needs to resize the buffer correctly)
@@ -301,7 +301,7 @@ public int tmq_dequeue(UBFH *p_ub)
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
     
-    ndrx_debug_dump_UBF(log_info, "tmq_dequeue called with", p_ub);
+    ndrx_debug_dump_UBF(log_info, "tmq_dequeue called with", *pp_ub);
     
     if (!M_is_xa_open)
     {
@@ -319,7 +319,7 @@ public int tmq_dequeue(UBFH *p_ub)
     
     memset(&qctl_in, 0, sizeof(qctl_in));
     
-    if (SUCCEED!=tmq_tpqctl_from_ubf_deqreq(p_ub, &qctl_in))
+    if (SUCCEED!=tmq_tpqctl_from_ubf_deqreq(*pp_ub, &qctl_in))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to read request qctl!");
         userlog("tmq_dequeue: failed to read request qctl!");
@@ -343,7 +343,7 @@ public int tmq_dequeue(UBFH *p_ub)
     
     memset(&qctl_out, 0, sizeof(qctl_out));
     
-    if (SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0))
+    if (SUCCEED!=Bget(*pp_ub, EX_QNAME, 0, qname, 0))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to get EX_QNAME");
         strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to get EX_QNAME!");
@@ -397,16 +397,16 @@ public int tmq_dequeue(UBFH *p_ub)
     /* Use the original metadata */
     memcpy(&qctl_out, &p_msg->qctl, sizeof(qctl_out));
     
-    buf_realoc_size = Bused (p_ub) + p_msg->len + 1024;
+    buf_realoc_size = Bused (*pp_ub) + p_msg->len + 1024;
     
-    if (NULL==(p_ub = (UBFH *)tprealloc ((char *)p_ub, buf_realoc_size)))
+    if (NULL==(*pp_ub = (UBFH *)tprealloc ((char *)*pp_ub, buf_realoc_size)))
     {
         NDRX_LOG(log_error, "Failed to allocate buffer to size: %ld", buf_realoc_size);
         userlog("Failed to allocate buffer to size: %ld", buf_realoc_size);
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, p_msg->msg, p_msg->len))
+    if (SUCCEED!=Bchg(*pp_ub, EX_DATA, 0, p_msg->msg, p_msg->len))
     {
         NDRX_LOG(log_error, "failed to set EX_DATA!");
         userlog("failed to set EX_DATA!");
@@ -431,7 +431,7 @@ public int tmq_dequeue(UBFH *p_ub)
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
+    if (SUCCEED!=Bchg(*pp_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to set EX_DATA_BUFTYP");
         
@@ -468,7 +468,7 @@ out:
      * Not sure about existing ones (seems like they will stay in buffer)
      * i.e. request fields
      */
-    if (SUCCEED!=tmq_tpqctl_to_ubf_deqrsp(p_ub, &qctl_out))
+    if (SUCCEED!=tmq_tpqctl_to_ubf_deqrsp(*pp_ub, &qctl_out))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to generate response buffer!");
         userlog("tmq_dequeue: failed to generate response buffer!");

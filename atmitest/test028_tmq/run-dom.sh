@@ -129,7 +129,7 @@ mkdir QSPACE1
 cp q.conf.tpl q.conf
 
 set_dom1;
-xadmin down -y
+xadmin stop -y
 xadmin start -y || go_out 1
 
 # Go to domain 1
@@ -162,7 +162,7 @@ fi
 
 #find ./QSPACE1 -type f
 
-xadmin down -y
+xadmin stop -y
 xadmin start -y || go_out 1
 clean_logs;
 
@@ -217,7 +217,7 @@ xadmin mqlm -s MYSPACE -q TESTC
 
 echo "Testing [xadmin mqlm]"
 
-MSGID=`xadmin mqlm -s MYSPACE -q TESTC  | tail -n1  | awk '{print($3)}'`
+MSGID=`xadmin mqlm -s MYSPACE -q TESTC  | tail -1  | awk '{print($3)}'`
 
 if [ "X$MSGID" ==  "X" ]; then
     echo "Missing message mqlm"
@@ -248,7 +248,7 @@ fi
 
 xadmin mqlm -s MYSPACE -q BINQ
 
-MSGID=`xadmin mqlm -s MYSPACE -q BINQ  | tail -n1  | awk '{print($3)}'`
+MSGID=`xadmin mqlm -s MYSPACE -q BINQ  | tail -1  | awk '{print($3)}'`
 
 echo "Testing [xadmin mqdm] CARRY buffer - $MSGID"
 xadmin mqdm -n 1 -i 100 -m $MSGID
@@ -294,11 +294,11 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 echo "Move the message to another Q"
-MSGID=`xadmin mqlm -s MYSPACE -q BINQ  | tail -n1  | awk '{print($3)}'`
+MSGID=`xadmin mqlm -s MYSPACE -q BINQ  | tail -1  | awk '{print($3)}'`
 
 xadmin mqmv -n 1 -i 100 -m $MSGID -s MYSPACE -q BINQ2
 
-MSGID=`xadmin mqlm -s MYSPACE -q BINQ2  | tail -n1  | awk '{print($3)}'`
+MSGID=`xadmin mqlm -s MYSPACE -q BINQ2  | tail -1  | awk '{print($3)}'`
 
 xadmin mqdm -n 1 -i 100 -m $MSGID
 
@@ -416,7 +416,7 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-xadmin down -y
+xadmin stop -y
 xadmin start -y || go_out 1
 clean_logs;
 
@@ -425,13 +425,13 @@ xadmin mqlq
 
 xadmin mqlm -s MYSPACE -q LTESTA
 
-FIRST=`xadmin mqlm -s MYSPACE -q LTESTA  | head -n1  | awk '{print($3)}'`
+FIRST=`xadmin mqlm -s MYSPACE -q LTESTA  | head -1  | awk '{print($3)}'`
 
 echo "First message in Q"
 xadmin mqdm -n 1 -i 100 -m $FIRST
 
 
-LAST=`xadmin mqlm -s MYSPACE -q LTESTA  | tail -n1  | awk '{print($3)}'`
+LAST=`xadmin mqlm -s MYSPACE -q LTESTA  | tail -1  | awk '{print($3)}'`
 
 echo "Last message in Q"
 xadmin mqdm -n 1 -i 100 -m $LAST

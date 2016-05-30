@@ -190,6 +190,7 @@ extern int cmd_mqrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 extern int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 extern int mqfilter(char *svcnm);
+extern int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }
