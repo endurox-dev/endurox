@@ -301,6 +301,8 @@ public int cpm_callback_timer(void)
             cpm_exec(c);
         }
     }
+    /* handle any signal */
+    sign_chld_handler(SIGCHLD);
     
 out:
     return SUCCEED;

@@ -116,7 +116,7 @@ if [[ "X$OUT" == "X" ]]; then
 fi
 
 # Test for automatic restarts...
-CNT=`wc -l testbin1-1.log`
+CNT=`wc testbin1-1.log | awk '{print $1}'`
 echo "Process restarts: $CNT"
 if [[ ( "$CNT" < 2 ) ]]; then 
         echo "TESTERROR! Automatic process reboots does not work!"
@@ -128,19 +128,19 @@ for i in `seq 1 $PROC_COUNT`; do
         xadmin bc -t WHILE -s $i
 done
 
-sleep 4
+sleep 10
 
 # have some sync (wait for startup to complete, print the output)
 xadmin pc
 
-CNT=`xadmin pc | grep "WHILE" | grep "running pid" | wc -l`
+CNT=`xadmin pc | grep "WHILE" | grep "running pid" | wc | awk '{print $1}'`
 echo "xadmin procs: $CNT"
 if [[ ( "$CNT" != $PROC_COUNT ) ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to xadmin pc)!"
         go_out 6
 fi
 
-CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc -l`
+CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "ps -ef procs: $CNT"
 if [[ ( "$CNT" != $PROC_COUNT ) ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to ps -ef )!"
@@ -161,13 +161,13 @@ fi
 > ignore.log
 
 xadmin bc -t IGNORE
-sleep 2
+sleep 10
 
 # Stop the cpmsrv (will do automatic process shutdown)...
 xadmin stop -s cpmsrv
 
 # We should have 0 now
-CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc -l`
+CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "ps -ef procs: $CNT"
 if [[ ( "$CNT" != 0 ) ]]; then 
         echo "TESTERROR! not all whileproc.sh stopped!"
@@ -188,7 +188,7 @@ if [[ "X$OUT" == "X" ]]; then
 fi
 
 # process must be killed
-CNT=`ps -ef | grep ignore.sh | grep -v grep | wc -l`
+CNT=`ps -ef | grep ignore.sh | grep -v grep | wc | awk '{print $1}'`
 echo "ps -ef procs: $CNT"
 if [[ ( "$CNT" != 0 ) ]]; then 
         echo "TESTERROR! ignore.sh not stopped!"

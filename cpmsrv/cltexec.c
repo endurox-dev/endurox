@@ -70,6 +70,8 @@ public void sign_chld_handler(int sig)
 
     memset(&rusage, 0, sizeof(rusage));
 
+    signal(SIGCHLD, sign_chld_handler);
+
     if (0!=(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
     {
         /* - no debug please... Can cause lockups...
