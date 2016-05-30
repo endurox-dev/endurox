@@ -85,7 +85,28 @@ extern char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                                 BFLDLEN * len);
 extern char * _Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
-public int _Bfprint (UBFH *p_ub, FILE * outf);
+extern int _Bfprint (UBFH *p_ub, FILE * outf);
+
+extern int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
+                                BFLDOCC *occ, char *buf, BFLDLEN *len,
+                                char **d_ptr);
+extern int _Bproj (UBFH * p_ub, BFLDID * fldlist,
+                                    int mode, int *processed);
+
+extern int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+                                    BFLDID * fldlist);
+extern int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len);
+extern BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype);
+extern int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
+                                   BFLDOCC *occ, char *buf, BFLDLEN *len);
+extern int _Bextread (UBFH * p_ub, FILE *inf);
+extern void _Bboolpr (char * tree, FILE *outf);
+extern int _Bread  (UBFH * p_ub, FILE * inf);
+extern int _Bwrite (UBFH *p_ub, FILE * outf);
+extern int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+extern int _Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
 #ifdef	__cplusplus
 }
 #endif

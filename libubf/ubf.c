@@ -358,7 +358,7 @@ public char * Bfname (BFLDID bfldid)
 
 	if (SUCCEED!=prepare_type_tables())
 	{
-		return BBADFLDID;
+        goto out;
 	}
 
 	/* Now try to find the data! */
@@ -366,12 +366,14 @@ public char * Bfname (BFLDID bfldid)
 	if (NULL==p_fld)
 	{
 		_Fset_error(BBADFLD);
+        goto out;
 	}
 	else
 	{
 		return p_fld->fldname;
 	}
     
+out:
     return NULL;
 }
 

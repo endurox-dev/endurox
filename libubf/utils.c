@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>

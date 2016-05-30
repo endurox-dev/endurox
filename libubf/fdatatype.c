@@ -544,8 +544,8 @@ int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 
 
 /******************************************************************************/
-/* Bellow functions dump the value depending on it's type
- * this is part of dtype_ext1->p_dump_data
+/* Bellow functions dump the value depending on it's type                     */
+/* this is part of dtype_ext1->p_dump_data                                    */
 /******************************************************************************/
 
 void dump_short (struct dtype_ext1 *t, char *text, char *data, int *len)
@@ -638,9 +638,9 @@ void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len)
 }
 
 /******************************************************************************/
-/* Bellow functions returns temporary buffer space that could be used by
- * calls like CBfind.
- * this is part of dtype_ext1->p_tbuf
+/* Bellow functions returns temporary buffer space that could be used by      */
+/* calls like CBfind.                                                         */
+/* this is part of dtype_ext1->p_tbuf                                         */
 /******************************************************************************/
 
 char *tbuf_short (struct dtype_ext1 *t, int len)
@@ -752,8 +752,8 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
 }
 
 /******************************************************************************/
-/* Bellow functions are designed for buffer allocation for conversation space.
- * User is responsible to free it up
+/* Bellow functions are designed for buffer allocation for conversation space.*/
+/* User is responsible to free it up                                          */
 /******************************************************************************/
 
 /**
@@ -784,8 +784,8 @@ char *tallocdlft (struct dtype_ext1 *t, int *len)
 }
 
 /******************************************************************************/
-/* Bellow functions are designed to compare two values of the data type
- * part of dtype_ext1->p_cmp
+/* Bellow functions are designed to compare two values of the data type       */
+/* part of dtype_ext1->p_cmp                                                  */
 /******************************************************************************/
 
 int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)

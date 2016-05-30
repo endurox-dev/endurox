@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include "ndebug.h"
 #include "expr.h"
+
+extern int yylex (void);
 %}
 
 %union {

@@ -47,7 +47,9 @@
 #include <expr.tab.h>
 #include <uthash.h>
 /*---------------------------Externs------------------------------------*/
-extern void _free_parsers(void);
+/* make llvm silent.. */
+extern void yy_scan_string (char *yy_str  );
+extern void _free_parser(void);
 /*---------------------------Macros-------------------------------------*/
 #define FREE_UP_UB_BUF(v) \
 if (v->dyn_alloc && NULL!=v->strval)\
@@ -1031,17 +1033,17 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
             goto out;
         }
 	
-        if ((VALUE_TYPE_STRING==lval.value_type &&
-            VALUE_TYPE_STRING==rval.value_type
+        if (( (VALUE_TYPE_STRING==lval.value_type &&
+            VALUE_TYPE_STRING==rval.value_type)
             ||
-            VALUE_TYPE_FLD_STR==lval.value_type &&
-            VALUE_TYPE_FLD_STR==rval.value_type
+            (VALUE_TYPE_FLD_STR==lval.value_type &&
+            VALUE_TYPE_FLD_STR==rval.value_type)
             ||
-            VALUE_TYPE_STRING==lval.value_type &&
-            VALUE_TYPE_FLD_STR==rval.value_type
+            (VALUE_TYPE_STRING==lval.value_type &&
+            VALUE_TYPE_FLD_STR==rval.value_type)
             ||
-            VALUE_TYPE_FLD_STR==lval.value_type &&
-            VALUE_TYPE_STRING==rval.value_type) &&
+            (VALUE_TYPE_FLD_STR==lval.value_type &&
+            VALUE_TYPE_STRING==rval.value_type)) &&
                 !(type==NODE_TYPE_ADDOP || type==NODE_TYPE_MULTOP) /* do not run math ops */
                 )
         {
@@ -1072,7 +1074,7 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
             /* If both strings are not floats, then do the long cmp */
             else
 #endif      /* mode (%) we will process as long. */
-            if (!is_lval_float && !is_rval_float || (NODE_TYPE_MULTOP==type && MULOP_MOD==sub_type))
+            if ((!is_lval_float && !is_rval_float) || (NODE_TYPE_MULTOP==type && MULOP_MOD==sub_type))
             {
                 ret=op_equal_long_cmp(type, sub_type, &lval, &rval, v);
             }
@@ -1644,7 +1646,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
             {
                 v->value_type=VALUE_TYPE_LONG;
 
-                if (l.boolval && !r.boolval || !l.boolval && r.boolval)
+                if ((l.boolval && !r.boolval) || (!l.boolval && r.boolval))
                         v->boolval=TRUE;
                 else
                         v->boolval=FALSE;
