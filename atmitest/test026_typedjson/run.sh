@@ -50,7 +50,6 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 
 # clean up the env for processing...
 xadmin down -y
-xadmin killall atmi
 
 # Start subscribers
 (./atmisv26 -t 4 -i 100 -xTEST26_UBF2JSON:UBF2JSON -xTEST26_JSON2UBF:JSON2UBF -- >&1) > ./atmisv26.log &
