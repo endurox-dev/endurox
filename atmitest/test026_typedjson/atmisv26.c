@@ -58,7 +58,7 @@ void TEST26_UBF2JSON(TPSVCINFO *p_svc)
     
     if (0!=strcmp(type, "JSON"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Buffer not JSON!");
+        NDRX_LOG(log_error, "TESTERROR: Buffer not JSON, but [%s]!", type);
         FAIL_OUT(ret);
     }
     
@@ -97,14 +97,14 @@ void TEST26_JSON2UBF(TPSVCINFO *p_svc)
     
     if (FAIL==tptypes((char *)buf, type, NULL))
     {
-        NDRX_LOG(log_error, "TESTERROR: TEST26_UBF2JSON cannot "
+        NDRX_LOG(log_error, "TESTERROR: TEST26_JSON2UBF cannot "
                 "determine buffer type");
         FAIL_OUT(ret);
     }
     
     if (0!=strcmp(type, "UBF"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Buffer not JSON!");
+        NDRX_LOG(log_error, "TESTERROR: Buffer not UBF buf: %s!", type);
         FAIL_OUT(ret);
     }
     
