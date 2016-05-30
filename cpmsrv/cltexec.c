@@ -355,7 +355,7 @@ public int cpm_exec(cpm_process_t *c)
         /* make stdout go to file */
         if (EOS!=c->stat.log_stdout[0] &&
                 FAIL!=(fd_stdout = open(c->stat.log_stdout, 
-                O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)))
+               /* O_RDWR | O_CREAT  |*/ O_APPEND, S_IRUSR | S_IWUSR)))
         {
             dup2(fd_stdout, 1); 
             close(fd_stdout);
@@ -363,7 +363,7 @@ public int cpm_exec(cpm_process_t *c)
         
         if (EOS!=c->stat.log_stderr[0] &&
                 FAIL!=(fd_stderr = open(c->stat.log_stderr, 
-                O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)))
+                /*O_RDWR | O_CREAT | */O_APPEND, S_IRUSR | S_IWUSR)))
         {
             dup2(fd_stderr, 2);   /* make stderr go to file */
             close(fd_stderr);
