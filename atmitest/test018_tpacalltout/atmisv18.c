@@ -75,7 +75,7 @@ void ECHO(TPSVCINFO *p_svc)
 
     UBFH *p_ub = (UBFH *)p_svc->data;
     
-    sleep(2);
+    sleep(5);
     
     /* Return OK */
     tpreturn (TPSUCCESS, 0L, (char *)p_ub, 0L, 0L);

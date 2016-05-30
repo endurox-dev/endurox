@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
         goto out;
     }
     
-    sleep(2);
+    sleep(10);
     if (SUCCEED!=(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
     {
         NDRX_LOG(log_error, "TESTERROR Normal reply fails!!!");

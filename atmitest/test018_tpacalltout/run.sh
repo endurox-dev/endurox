@@ -76,7 +76,7 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-killall atmi.sv18 2>/dev/null
+xadmin killall atmi.sv18 2>/dev/null
 
 killall atmiclt18
 
