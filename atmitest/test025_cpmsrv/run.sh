@@ -74,7 +74,7 @@ function go_out {
     xadmin down -y
 
     # If some alive stuff left...
-    killall -25 atmiclt_$TESTNO
+    xadmin killall atmi
 
     popd 2>/dev/null
     exit $1
@@ -88,18 +88,18 @@ xadmin start -y || go_out 1
 xadmin bc -t TESTENV
 xadmin bc -t TESTENV2
 
-sleep 4
+sleep 10
 
 xadmin pc
 
 # Test for section/subsection passing
-OUT=`grep -E '.t TAG1 .s SUBSECTION1' testbin1-1.log`
+OUT=`grep '\-t TAG1 \-s SUBSECTION1' testbin1-1.log`
 if [[ "X$OUT" == "X" ]]; then
         echo "TESTERROR! invalid testbin1-1.log content!"
         go_out 1
 fi
 
-OUT=`grep -E '.t TAG2 .s SUBSECTION2' testbin1-2.log`
+OUT=`grep '\-t TAG2 \-s SUBSECTION2' testbin1-2.log`
 if [[ "X$OUT" == "X" ]]; then
         echo "TESTERROR! invalid testbin1-2.log content!"
         go_out 2
@@ -136,7 +136,7 @@ sleep 4
 # have some sync (wait for startup to complete, print the output)
 xadmin pc
 
-CNT=`xadmin pc | grep -E "WHILE.*running pid" | wc -l`
+CNT=`xadmin pc | grep "WHILE" | grep "running pid" | wc -l`
 echo "xadmin procs: $CNT"
 if [[ ( "$CNT" != $PROC_COUNT ) ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to xadmin pc)!"
