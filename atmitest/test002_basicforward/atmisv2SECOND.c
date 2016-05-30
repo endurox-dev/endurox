@@ -86,6 +86,7 @@ int tpsvrinit(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to initialize TEST2_2ND_AL (alias)!");
     }
+    return SUCCEED;
 }
 
 /**
