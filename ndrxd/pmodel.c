@@ -160,7 +160,7 @@ public int check_child_exit(void)
 #endif
             /*
             NDRX_LOG(log_warn, "Sending notification"); */
-            self_notify(status, TRUE);
+            self_notify(status, FALSE);
             /*
             remove_startfail_process(pm_pid->p_pm);
              */
