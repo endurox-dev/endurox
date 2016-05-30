@@ -73,9 +73,6 @@ function go_out {
     xadmin stop -y
     xadmin down -y
 
-    # If some alive stuff left...
-    xadmin killall atmi
-
     popd 2>/dev/null
     exit $1
 }
