@@ -105,7 +105,7 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         }
 
         while (BBADFLDID!=*p_bfldid &&
-                (bfldid != *p_bfldid || bfldid == *p_bfldid && (iocc<occ || occ<-1)) &&
+                ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
                 bfldid >= *p_bfldid)
         {
             /*

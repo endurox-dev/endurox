@@ -338,6 +338,8 @@ int tpsvrinit(int argc, char **argv)
 	    }
     }
 #endif
+
+    return SUCCEED;
 }
 
 /**

@@ -508,7 +508,7 @@ static unsigned int str_hash_from_key_fn( void *k )
     int c;
     char *str = (char *)k;
 
-    while (c = *str++)
+    while ((c = (int)*str++))
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash;

@@ -40,6 +40,8 @@
 #include <ndebug.h>
 #include <Exfields.h>
 #include <xa_cmn.h>
+#include <tperror.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {_TPunset_error(); \

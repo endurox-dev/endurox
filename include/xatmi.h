@@ -374,6 +374,7 @@ typedef struct tpqctl_t TPQCTL;
 
 /*---------------------------Globals------------------------------------*/
 extern int (*G_tpsvrinit__)(int, char **);
+extern int tpsvrinit(int, char **);/* provided by external lib */
 extern void (*G_tpsvrdone__)(void);
 /*---------------------------Prototypes---------------------------------*/
 

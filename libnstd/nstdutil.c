@@ -39,6 +39,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <ctype.h>
+#include <pthread.h>
 
 #include "nstdutil.h"
 /*---------------------------Externs------------------------------------*/

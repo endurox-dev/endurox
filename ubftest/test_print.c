@@ -622,7 +622,7 @@ Ensure(test_bextread_minus)
     assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), SUCCEED);
 
     /* Compare buffers now should be equal */
-    memcmp(p_ub, p_ub2, sizeof(fb));
+    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
 }
 
 /**
@@ -671,7 +671,7 @@ Ensure(test_bextread_plus)
     assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "CDE", 0, BFLD_STRING), SUCCEED);
 
     /* Compare buffers now should be equal */
-    memcmp(p_ub, p_ub2, sizeof(fb));
+    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
 }
 
 
@@ -739,7 +739,7 @@ Ensure(test_bextread_eq)
     assert_equal(CBchg(p_ub2, T_CARRAY_2_FLD, 0, "EFGH", 0, BFLD_STRING), SUCCEED);
 
     /* Compare buffers now should be equal */
-    memcmp(p_ub, p_ub2, sizeof(fb));
+    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
 }
 
 /**

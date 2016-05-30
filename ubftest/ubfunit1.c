@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <cgreen/cgreen.h>
 #include <ubf.h>
 #include <ndrstandard.h>

@@ -36,7 +36,6 @@ set(VERSION "2.5.1")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
-
 ################################################################################
 # OS Confiugration
 ################################################################################
@@ -54,9 +53,12 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
 	ADD_DEFINITIONS(-DEX_OS_LINUX)
 
         # Enable poll only
-        IF(NOT DEFINED DEFINE_FORCEPOLL)
+        IF(DEFINE_FORCEPOLL)
+            message("Linux - Using poll()")
+        ELSE()
+            message("Linux - Using epoll()")
         	ADD_DEFINITIONS(-DEX_USE_EPOLL)
-        ENDIF(NOT DEFINED DEFINE_FORCEPOLL)
+        ENDIF()
 
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 	ADD_DEFINITIONS(-DEX_OS_AIX)

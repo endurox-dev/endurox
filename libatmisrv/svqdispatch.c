@@ -959,13 +959,15 @@ public int sv_wait_for_request(void)
             int is_mq_only = FAIL;
             evfd = G_server_conf.events[n].data.fd;
             evmqd = G_server_conf.events[n].data.mqd;
-            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d",
-                        n, G_server_conf.events[n].data.u32, evfd);
-            
+
 #ifndef EX_USE_EPOLL
+            NDRX_LOG(log_debug, "not epoll()");
             /* for non linux, we need to distinguish between fd & mq */
             is_mq_only = G_server_conf.events[n].is_mqd;
 #endif
+
+            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, is_mq_only: %d, G_pollext=%p",
+                        n, G_server_conf.events[n].data.u32, evfd, is_mq_only, G_pollext);
             
             /* Check poller extension */
             if (NULL!=G_pollext && (FAIL==is_mq_only || FALSE==is_mq_only) )

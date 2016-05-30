@@ -380,7 +380,7 @@ Ensure(test_Bchg_string_org)
         string[1] = c-1;
     }
     /* Put trailing EOS */
-    string[sizeof(string)] = 0;
+    string[sizeof(string)-1] = 0;
 
     len=sizeof(test_val);
     /* short-to-string */
@@ -475,7 +475,7 @@ Ensure(test_Bchg_carray_org)
         string[1] = c-1;
     }
     /* Put trailing EOS */
-    string[sizeof(string)] = 0;
+    string[sizeof(string)-1] = 0;
 
     /* short-to-carray */
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);

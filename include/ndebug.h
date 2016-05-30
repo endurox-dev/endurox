@@ -119,6 +119,10 @@ extern void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, 
 extern void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *comment, void *ptr, long len);
 
+extern void ndrx_dbg_lock(void);
+extern void ndrx_dbg_unlock(void);
+extern void ndrx_init_debug(void);
+
 #ifdef	__cplusplus
 }
 #endif

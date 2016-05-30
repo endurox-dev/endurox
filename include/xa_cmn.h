@@ -348,11 +348,11 @@ extern int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds);
 /* API sections */
 extern int _tpopen(void);
 extern int _tpclose(void);
-extern _tpbegin(unsigned long timeout, long flags);
-extern _tpcommit(long flags);
-extern _tpabort(long flags);
-extern int  _tpsuspend (TPTRANID *tranid, long flags);
-extern int  _tpresume (TPTRANID *tranid, long flags);
+extern int _tpbegin(unsigned long timeout, long flags);
+extern int _tpcommit(long flags);
+extern int _tpabort(long flags);
+extern int _tpsuspend (TPTRANID *tranid, long flags);
+extern int _tpresume (TPTRANID *tranid, long flags);
 
 extern int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);
 extern int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,

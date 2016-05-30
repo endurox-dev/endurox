@@ -40,6 +40,7 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 
+extern void load_find_test_data(UBFH *p_ub);
 
 void load_get_test_data(UBFH *p_ub)
 {
