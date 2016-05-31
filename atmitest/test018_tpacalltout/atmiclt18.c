@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     cd[2] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
     
     /* wait for tout */
-    sleep(6);
+    sleep(10);
     
     for (i = 0; i<3; i++)
     {
