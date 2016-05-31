@@ -54,7 +54,7 @@
 /*
  * This is Oracle specific: the xa_switch_t struct supplied is named xaoswd
  * for XA dynamic registration
- 
+ */
 
 /**
  * API entry of loading the driver

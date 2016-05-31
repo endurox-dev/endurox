@@ -481,6 +481,25 @@ extern unsigned char *atmi_base64_decode(const char *data, size_t input_length,
 
 extern int _tpjsontoubf(UBFH *p_ub, char *buffer);
 extern int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+extern int _tpcall (char *svc, char *idata, long ilen,
+                char * *odata, long *olen, long flags,
+                char *extradata, int dest_node, int ex_flags);
+extern int _tpgetrply (int *cd,
+                       int cd_exp,
+                       char * *data ,
+                       long *len, long flags,
+                       TPTRANID *p_tranid);
+extern int _tpcancel (int cd);
+extern int _tpterm (void);
+extern int _tpconnect (char *svc, char *data, long len, long flags);
+extern int _tprecv (int cd, char * *data, 
+                        long *len, long flags, long *revent,
+                        short *command_id);
+extern int _tpdiscon (int cd);
+extern int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+        char *data, long len, long flags);
+extern int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+        char **data, long *len, long flags);
 
 /* ATMI level process management: */
 extern int ex_chk_server(char *procname, short srvid);

@@ -45,6 +45,7 @@
 #include <typed_string.h>
 #include <typed_json.h>
 #include <typed_carray.h>
+#include <tperror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -151,13 +152,13 @@ private typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
 
     while (FAIL!=p->type_id)
     {
-        if (NULL!=p->type && 0==strcmp(p->type, type) || 
-                        NULL!=p->alias && 0==strcmp(p->alias, type) ||
+        if ((NULL!=p->type && 0==strcmp(p->type, type)) || 
+                        (NULL!=p->alias && 0==strcmp(p->alias, type)) ||
                         p->type == type /*NULL buffer*/)
         {
             /* check subtype (if used) */
-            if (NULL!=p->subtype && (NULL==subtype || EOS==subtype[0]) ||
-                        NULL==p->subtype && NULL!=subtype && EOS!=subtype[0])
+            if ((NULL!=p->subtype && (NULL==subtype || EOS==subtype[0])) ||
+                        (NULL==p->subtype && NULL!=subtype && EOS!=subtype[0]))
             {
                 /* search for next */
             } /* Assume empty string subtype as empty/null */

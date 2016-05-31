@@ -41,6 +41,7 @@
 #include <atmi.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <nstdutil.h>
 
 #include "cpmsrv.h"
 /*---------------------------Externs------------------------------------*/
@@ -173,42 +174,42 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     
     for (attr=cur->properties; attr; attr = attr->next)
     {
-        if (0==strcmp(attr->name, "cmdline"))
+        if (0==strcmp((char *)attr->name, "cmdline"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.command_line, p, PATH_MAX);
             cltproc.stat.command_line[PATH_MAX] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp(attr->name, "env"))
+        else if (0==strcmp((char *)attr->name, "env"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.env, p, PATH_MAX);
             cltproc.stat.env[PATH_MAX] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp(attr->name, "wd"))
+        else if (0==strcmp((char *)attr->name, "wd"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.wd, p, PATH_MAX);
             cltproc.stat.wd[PATH_MAX] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp(attr->name, "stdout"))
+        else if (0==strcmp((char *)attr->name, "stdout"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.log_stdout, p, PATH_MAX);
             cltproc.stat.log_stdout[PATH_MAX] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp(attr->name, "stderr"))
+        else if (0==strcmp((char *)attr->name, "stderr"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.log_stderr, p, PATH_MAX);
             cltproc.stat.log_stderr[PATH_MAX] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp(attr->name, "log"))
+        else if (0==strcmp((char *)attr->name, "log"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             /* Install both: */
@@ -219,7 +220,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             cltproc.stat.log_stderr[PATH_MAX] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp(attr->name, "autostart"))
+        else if (0==strcmp((char *)attr->name, "autostart"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             
@@ -245,7 +246,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
     for (; cur; cur=cur->next)
     {
-        if (0==strcmp("exec", cur->name))
+        if (0==strcmp("exec", (char *)cur->name))
          {
            /* Copy stuff from root elem to heap */
             
@@ -262,14 +263,14 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             /* Now override the config: */
             for (attr=cur->properties; attr; attr = attr->next)
             {
-                if (0==strcmp(attr->name, "tag"))
+                if (0==strcmp((char *)attr->name, "tag"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->tag, p, CPM_TAG_LEN);
                     p_cltproc->tag[CPM_TAG_LEN] = EOS;
                     xmlFree(p);
                 }
-                else if (0==strcmp(attr->name, "subsect"))
+                else if (0==strcmp((char *)attr->name, "subsect"))
                 {
                     /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
@@ -277,7 +278,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p_cltproc->subsect[CPM_SUBSECT_LEN] = EOS;
                     xmlFree(p);
                 }
-                else if (0==strcmp(attr->name, "env"))
+                else if (0==strcmp((char *)attr->name, "env"))
                 {
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
@@ -285,7 +286,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p_cltproc->stat.env[PATH_MAX] = EOS;
                     xmlFree(p);
                 } 
-                else if (0==strcmp(attr->name, "wd"))
+                else if (0==strcmp((char *)attr->name, "wd"))
                 {
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
@@ -293,21 +294,21 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p_cltproc->stat.wd[PATH_MAX] = EOS;
                     xmlFree(p);
                 }
-                else if (0==strcmp(attr->name, "stdout"))
+                else if (0==strcmp((char *)attr->name, "stdout"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.log_stdout, p, PATH_MAX);
                     p_cltproc->stat.log_stdout[PATH_MAX] = EOS;
                     xmlFree(p);
                 }
-                else if (0==strcmp(attr->name, "stderr"))
+                else if (0==strcmp((char *)attr->name, "stderr"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.log_stderr, p, PATH_MAX);
                     p_cltproc->stat.log_stderr[PATH_MAX] = EOS;
                     xmlFree(p);
                 }
-                else if (0==strcmp(attr->name, "log"))
+                else if (0==strcmp((char *)attr->name, "log"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     /* Install both: */
@@ -318,7 +319,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p_cltproc->stat.log_stderr[PATH_MAX] = EOS;
                     xmlFree(p);
                 }
-                else if (0==strcmp(attr->name, "autostart"))
+                else if (0==strcmp((char *)attr->name, "autostart"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
 

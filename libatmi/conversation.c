@@ -47,6 +47,8 @@
 #include "../libatmisrv/srv_int.h"
 #include <thlock.h>
 #include <xa_cmn.h>
+#include <tperror.h>
+#include <atmi_shm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CONV_TARGET_FLAGS(X)     \
@@ -632,7 +634,7 @@ out:
  * @param flags
  * @return
  */
-public int	_tpconnect (char *svc, char *data, long len, long flags)
+public int _tpconnect (char *svc, char *data, long len, long flags)
 {
     int ret=SUCCEED;
     int cd;
@@ -797,7 +799,7 @@ public int	_tpconnect (char *svc, char *data, long len, long flags)
      */
     memset(buf, 0, sizeof(buf));
 
-    if (SUCCEED!=_tprecv(cd, &buf, &data_len, 0L, &revent, &command_id))
+    if (SUCCEED!=_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
         /* We should have */
         if (ATMI_COMMAND_CONNRPLY!=command_id)
@@ -859,7 +861,7 @@ out:
  * @param revent
  * @return
  */
-public int	_tprecv (int cd, char * *data, 
+public int _tprecv (int cd, char * *data, 
                         long *len, long flags, long *revent,
                         short *command_id)
 {
@@ -1333,7 +1335,7 @@ out:
  * @param cd
  * @return SUCCEED/FAIL
  */
-public int	_tpdiscon (int cd)
+public int _tpdiscon (int cd)
 {
     int ret=SUCCEED;
     long revent;

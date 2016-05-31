@@ -50,6 +50,7 @@
 #include "ndrxd.h"
 #include <thlock.h>
 #include <xa_cmn.h>
+#include <atmi_shm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -591,8 +592,8 @@ public int _tpgetrply (int *cd,
          * or we did get fail in blocked mode with TPETIME, then we should
          * look up the table for which really we did get the time-out.
          */
-        if (flags & TPNOBLOCK && GEN_QUEUE_ERR_NO_DATA==rply_len || 
-                FAIL==rply_len && TPETIME==tperrno)
+        if ((flags & TPNOBLOCK && GEN_QUEUE_ERR_NO_DATA==rply_len) || 
+                (FAIL==rply_len && TPETIME==tperrno))
         {
             if (flags & TPGETANY)
             {
@@ -827,7 +828,7 @@ out:
  * @param
  * @return
  */
-public int	_tpcancel (int cd)
+public int _tpcancel (int cd)
 {
     int ret=SUCCEED;
     char fn[]="_tpcancel";

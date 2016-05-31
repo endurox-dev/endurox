@@ -122,6 +122,7 @@ extern void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const
 extern void ndrx_dbg_lock(void);
 extern void ndrx_dbg_unlock(void);
 extern void ndrx_init_debug(void);
+extern void ndrx_dbg_setthread(long threadnr);
 
 #ifdef	__cplusplus
 }

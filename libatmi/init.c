@@ -48,8 +48,10 @@
 #include <atmi.h>
 #include <atmi_int.h>
 #include <mqueue.h>
-
-#include "atmi_shm.h"
+#include <userlog.h>
+#include <tperror.h>
+#include <xa_cmn.h>
+#include <atmi_shm.h>
 /*---------------------------Externs------------------------------------*/
 extern const char * __progname;
 /*---------------------------Macros-------------------------------------*/

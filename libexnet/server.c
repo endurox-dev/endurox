@@ -105,7 +105,7 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     char * ip_ptr;
     exnetcon_t *client = NULL;
     char *fn = "exnetsvpollevent";
-    int clilen = sizeof(clt_address);
+    socklen_t clilen = sizeof(clt_address);
     
     NDRX_LOG(log_debug, "%s - enter", fn);
     

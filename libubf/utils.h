@@ -49,7 +49,6 @@ extern "C" {
 /*---------------------------Prototypes---------------------------------*/
     
 extern int get_nonprintable_char_tmpspace(char *str, int len);
-extern void build_printable_string(char *out, char *in, int in_len);
 extern int normalize_string(char *str, int *out_len);
 #ifdef	__cplusplus
 }

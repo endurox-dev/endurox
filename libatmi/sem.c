@@ -61,6 +61,8 @@ public ndrx_sem_t G_sem_svcop;              /* Service operations       */
 private int M_init = FALSE;                 /* no init yet done */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern int ndrx_lock(ndrx_sem_t *sem, char *msg);
+extern int ndrx_unlock(ndrx_sem_t *sem, char *msg);
 
 /**
  * Initialise prefix part, that is needed for shm...
@@ -393,8 +395,10 @@ public int ndrx_unlock(ndrx_sem_t *sem, char *msg)
     if (SUCCEED!=semop(sem->semid, sem->sem, 1))
     {
         NDRX_LOG(log_debug, "%s: failed: %s", msg, strerror(errno));
+        return FAIL;
     }
     NDRX_LOG(log_warn, "%s semaphore un-locked", msg);
     
+    return SUCCEED;
 }
 

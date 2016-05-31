@@ -129,6 +129,7 @@ typedef char UBF_CHAR;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub);
+extern void build_printable_string(char *out, char *in, int in_len);
 
 #ifdef	__cplusplus
 }

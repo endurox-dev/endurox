@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -58,9 +59,11 @@ extern char *optarg;
 public cpmsrv_config_t G_config;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-public int cpm_pc(UBFH *p_ub, int cd);
-public int cpm_sc(UBFH *p_ub, int cd);
-public int cpm_callback_timer(void);
+private int cpm_callback_timer(void);
+private int cpm_bc(UBFH *p_ub, int cd);
+private int cpm_sc(UBFH *p_ub, int cd);
+private int cpm_pc(UBFH *p_ub, int cd);
+
 /**
  * Client Process Monitor, main thread entry 
  * @param p_svc
@@ -263,7 +266,7 @@ void tpsvrdone(void)
  * We need a timer here cause SIGCHILD causes poller interrupts.
  * @return 
  */
-public int cpm_callback_timer(void)
+private int cpm_callback_timer(void)
 {
     int ret = SUCCEED;
     cpm_process_t *c = NULL;
@@ -314,7 +317,7 @@ out:
  * @param cd
  * @return 
  */
-public int cpm_bc(UBFH *p_ub, int cd)
+private int cpm_bc(UBFH *p_ub, int cd)
 {
     int ret = SUCCEED;
     
@@ -374,7 +377,7 @@ out:
  * @param cd
  * @return 
  */
-public int cpm_sc(UBFH *p_ub, int cd)
+private int cpm_sc(UBFH *p_ub, int cd)
 {
     int ret = SUCCEED;
     
@@ -442,7 +445,7 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int cpm_pc(UBFH *p_ub, int cd)
+private int cpm_pc(UBFH *p_ub, int cd)
 {
     int ret = SUCCEED;
     long revent;

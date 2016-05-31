@@ -34,14 +34,14 @@
 ** -----------------------------------------------------------------------------
 */
 #include <string.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <mqueue.h>
 #include <errno.h>
-#include <time.h>
 #include <sys/param.h>
-
+#include <unistd.h>
 
 #include <atmi.h>
 #include <ndrstandard.h>
@@ -50,6 +50,7 @@
 #include <ndrxdcmn.h>
 #include <utlist.h>
 #include <atmi_shm.h>
+#include <tperror.h>
 
 #include "gencall.h"
 #include "userlog.h"
@@ -233,8 +234,8 @@ public int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 restart:
 
     SET_TOUT_VALUE;
-    if (!use_tout && FAIL==mq_send(q_descr, data, len, 0) ||
-         use_tout && FAIL==mq_timedsend(q_descr, data, len, 0, &abs_timeout))
+    if ((!use_tout && FAIL==mq_send(q_descr, data, len, 0)) ||
+         (use_tout && FAIL==mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -332,8 +333,8 @@ restart_send:
 
     NDRX_LOG(6, "use timeout: %d config: %d", 
                 use_tout, G_atmi_env.time_out);
-    if (!use_tout && FAIL==mq_send(q_descr, data, len, 0) ||
-         use_tout && FAIL==mq_timedsend(q_descr, data, len, 0, &abs_timeout))
+    if ((!use_tout && FAIL==mq_send(q_descr, data, len, 0)) ||
+         (use_tout && FAIL==mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
@@ -382,8 +383,8 @@ public long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *
 restart:
     SET_TOUT_VALUE;
     NDRX_LOG(6, "use timeout: %d config: %d", use_tout, G_atmi_env.time_out);
-    if (!use_tout && FAIL==(ret=mq_receive (q_descr, (char *)buf, buf_max, prio)) ||
-         use_tout && FAIL==(ret=mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout)))
+    if ((!use_tout && FAIL==(ret=mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
+         (use_tout && FAIL==(ret=mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -458,7 +459,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     unsigned prio = 0;
     char    msg_buffer_max[ATMI_MSG_MAX_SIZE];
     
-    size_t  reply_len;
+    long  reply_len;
 
     NDRX_LOG(log_debug, "gencall command: %d, reply_only=%d, need_reply=%d call flags=0x%x",
                         ndrxd_cmd, reply_only, need_reply, call->flags);

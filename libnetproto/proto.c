@@ -1263,7 +1263,7 @@ public int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *pr
     while (FAIL!=cv->command)
     {
 
-        if (msg_type == cv->msg_type && command == cv->command
+        if ((msg_type == cv->msg_type && command == cv->command)
                 || 'A' == msg_type /* Accept any ATMI - common structure! */)
         {
             NDRX_LOG(log_debug, "Found conv table for: %c/%d/%s", 
@@ -1665,7 +1665,7 @@ private xmsg_t * classify_netcall (char *ex_buf, long ex_len)
     /* OK, we should pick up the table and start to conv. */
     while (FAIL!=cv->command)
     {
-        if (msg->msg_type == cv->msg_type && msg->command_id == cv->command
+        if ((msg->msg_type == cv->msg_type && msg->command_id == cv->command)
                 || 'A' == msg->msg_type /* Accept any ATMI - common structure! */)
         {
             NDRX_LOG(log_debug, "Found conv table for: %c/%d/%s", 

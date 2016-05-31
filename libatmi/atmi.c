@@ -212,7 +212,7 @@ public int tpcall (char *svc, char *idata, long ilen,
         goto out;
     }
         
-    ret=_tpcall (svc, idata, ilen, odata, olen, flags, NULL, NULL, 0);
+    ret=_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0);
     
 out:
     return ret;
@@ -260,7 +260,7 @@ public int tpgetrply (int *cd, char **data, long *len, long flags)
     }
 
     if (flags & TPGETANY)
-        ret=_tpgetrply (cd, FAIL, data, len, flags);
+        ret=_tpgetrply (cd, FAIL, data, len, flags, NULL);
     else if (*cd <= 0 )
     {
         _TPset_error_msg(TPEINVAL, "*cd <= 0");
@@ -268,10 +268,8 @@ public int tpgetrply (int *cd, char **data, long *len, long flags)
         goto out;
     }
     else
-        ret=_tpgetrply (cd, *cd, data, len, flags);
+        ret=_tpgetrply (cd, *cd, data, len, flags, NULL);
         
-      
-
 out:
     return ret;
 }

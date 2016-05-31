@@ -57,6 +57,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <atmi_shm.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -429,7 +430,7 @@ static unsigned int ndrx_hash_fn( void *k )
     int c;
     char *str = (char *)k;
 
-    while (c = *str++)
+    while ((c = *str++))
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash;
@@ -625,7 +626,7 @@ public int _ndrx_shm_get_svc(char *svc, int *pos)
      * So if there was overflow, then loop until the start item.
      */
     while ((svcinfo[try].flags & NDRXD_SVCINFO_INIT)
-            && (!overflow || overflow && try < start))
+            && (!overflow || (overflow && try < start)))
     {
         if (0==strcmp(svcinfo[try].service, svc))
         {
@@ -679,7 +680,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
         svcinfo[pos].flags = flags | NDRXD_SVCINFO_INIT;
         
         /* If this is cluster & entry exits or count<=0, then do not increment. */
-        if (!is_bridge || 0==svcinfo[pos].cnodes[nodeid-1].srvs && count>0)
+        if (!is_bridge || (0==svcinfo[pos].cnodes[nodeid-1].srvs && count>0))
         {
             svcinfo[pos].srvs++;
             

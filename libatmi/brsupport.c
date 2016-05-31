@@ -43,8 +43,9 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi_int.h>
-#include <ndrxdcmn.h>
+#include <atmi_shm.h>
 
+#include <ndrxdcmn.h>
 #include "gencall.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

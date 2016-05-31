@@ -85,6 +85,7 @@ public renderer_descr_t M_renderer_tab[] =
  * Function for retrieving next file name
  */
 char *(*M_get_next) (int *ret);
+private int generate_files(void);
 
 
 /**
@@ -290,7 +291,7 @@ char *get_file_name(char *fname)
  * Do the hard work - generate header files!
  * @return SUCCEED/FAIL
  */
-int generate_files(void)
+private int generate_files(void)
 {
     int ret=SUCCEED;
     char *fname;

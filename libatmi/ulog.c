@@ -41,6 +41,7 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 extern const char * __progname;
 /*---------------------------Macros-------------------------------------*/

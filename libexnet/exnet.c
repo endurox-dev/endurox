@@ -541,12 +541,12 @@ public int exnet_configure_client_sock(exnetcon_t *net)
             goto out;
     }
 
-    if (result = setsockopt(net->sock,            /* socket affected */
+    if (FAIL==(result = setsockopt(net->sock,            /* socket affected */
                             IPPROTO_TCP,     /* set option at TCP level */
                             TCP_NODELAY,     /* name of option */
                             (char *) &flag,  /* the cast is historical
                                                     cruft */
-                            sizeof(int)))    /* length of option value */
+                            sizeof(int))))    /* length of option value */
     {
 
         NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
