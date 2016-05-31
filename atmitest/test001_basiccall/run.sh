@@ -47,6 +47,7 @@ fi;
 . ../testenv.sh
 # client timeout
 export NDRX_TOUT=2
+export NDRX_DEBUG_CONF=/home/mvitolin/projects/endurox/atmitest/test001_basiccall/debug-bench.conf
 
 (./atmi.sv1 -t10 -i 123 2>&1) > ./atmisv1.log &
 sleep 1

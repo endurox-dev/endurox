@@ -290,7 +290,7 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
     /* Call the server */
     ret = cmd_generic_call(NDRXD_COM_BRREFERSH_RQ, NDRXD_SRC_ADMIN,
             NDRXD_CALL_TYPE_BRIDGESVCS,
-            p_refresh, send_size,
+            (command_call_t *)p_refresh, send_size,
             G_command_state.listenq_str,
             G_command_state.listenq,
             FAIL,

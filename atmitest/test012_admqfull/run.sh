@@ -107,6 +107,8 @@ trap exit_timeout SIGALRM
 
 rm *.log
 
+xadmin killall atmisv
+xadmin killall ndrxd
 xadmin down -y
 xadmin start -y
 # Why?
@@ -131,7 +133,7 @@ echo "Before running kill -9"
 date
 xadmin psc
 
-killall -9 atmisv_$TESTNO
+xadmin killall atmisv_$TESTNO
 
 echo "After runing kill -9"
 date

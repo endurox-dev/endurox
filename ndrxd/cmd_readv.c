@@ -72,7 +72,7 @@ public int readv_request(int srvid, char *svc)
     /* Call the server */
     ret = cmd_generic_call(NDRXD_COM_NXDREADV_RQ, NDRXD_SRC_ADMIN,
         NDRXD_CALL_TYPE_GENERIC,
-        &call_srv, sizeof(call_srv),
+        (command_call_t *)&call_srv, sizeof(call_srv),
         G_command_state.listenq_str,
         G_command_state.listenq,
         FAIL,
@@ -124,7 +124,7 @@ public int cmd_xadreadv (command_call_t * call, char *data, size_t len, int cont
     /* Call the server */
     ret = cmd_generic_call(NDRXD_COM_NXDREADV_RQ, NDRXD_SRC_ADMIN,
             NDRXD_CALL_TYPE_GENERIC,
-            &call_srv, sizeof(call_srv),
+            (command_call_t *)&call_srv, sizeof(call_srv),
             G_command_state.listenq_str,
             G_command_state.listenq,
             FAIL,
