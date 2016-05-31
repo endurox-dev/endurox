@@ -107,7 +107,7 @@ private char * b64_encode(const unsigned char *data,
                     char *encoding_table);
 
 
-private unsigned char *b64_decode(const char *data,
+private unsigned char *b64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -121,7 +121,7 @@ private unsigned char *b64_decode(const char *data,
  * @param encoded_data
  * @return 
  */
-public char * atmi_xa_base64_encode(const unsigned char *data,
+public char * atmi_xa_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data) 
@@ -138,7 +138,7 @@ public char * atmi_xa_base64_encode(const unsigned char *data,
  * @param decoded_data
  * @return 
  */
-public unsigned char *atmi_xa_base64_decode(const char *data,
+public unsigned char *atmi_xa_base64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data)
@@ -148,7 +148,7 @@ public unsigned char *atmi_xa_base64_decode(const char *data,
             decoding_table_xa =  build_decoding_table(encoding_table_xa);
     }
     
-    return b64_decode(data, input_length, output_length, 
+    return b64_decode((unsigned char *)data, input_length, output_length, 
             decoded_data, decoding_table_xa);
 }
 
@@ -161,7 +161,7 @@ public unsigned char *atmi_xa_base64_decode(const char *data,
  * @param encoded_data
  * @return 
  */
-char * atmi_base64_encode(const unsigned char *data,
+char * atmi_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data) 
@@ -188,7 +188,7 @@ unsigned char *atmi_base64_decode(const char *data,
             decoding_table_normal =  build_decoding_table(encoding_table_normal);
     }
     
-    return b64_decode(data, input_length, output_length, 
+    return b64_decode((unsigned char *)data, input_length, output_length, 
             decoded_data, decoding_table_normal);
 }
 
@@ -242,7 +242,7 @@ private char * b64_encode(const unsigned char *data,
  * @param output_length
  * @return 
  */
-private unsigned char *b64_decode(const char *data,
+private unsigned char *b64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -279,7 +279,7 @@ private unsigned char *b64_decode(const char *data,
         if (j < *output_length) decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
     }
 
-    return decoded_data;
+    return (unsigned char *)decoded_data;
 }
 
 /**
@@ -335,7 +335,7 @@ public void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_sr
 {
     XID xid;
     memset(&xid, 0, sizeof(xid));
-    atmi_xa_xid_get_info(atmi_xa_deserialize_xid(xid_str, &xid), p_nodeid, p_srvid);
+    atmi_xa_xid_get_info(atmi_xa_deserialize_xid((unsigned char *)xid_str, &xid), p_nodeid, p_srvid);
 }
 
 /**
@@ -398,7 +398,7 @@ public XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
     NDRX_LOG(log_debug, "atmi_xa_deserialize_xid - enter");
     NDRX_LOG(log_debug, "Serialized xid: [%s]", xid_str);    
     
-    atmi_xa_base64_decode(xid_str, strlen(xid_str), &tot_len, tmp);
+    atmi_xa_base64_decode(xid_str, strlen((char *)xid_str), &tot_len, (char *)tmp);
     
     NDRX_LOG(log_debug, "xid deserialization total len: %d", tot_len);
     NDRX_DUMP(log_debug, "XID data for deserialization", tmp, tot_len);
@@ -999,7 +999,7 @@ public XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
     static XID __thread xid; /* handler for new XID */
     unsigned char rmid = (unsigned char)G_atmi_env.xa_rmid; /* max 255...! */
     memset(&xid, 0, sizeof(xid));
-    atmi_xa_deserialize_xid(p_xai->tmxid, &xid);
+    atmi_xa_deserialize_xid((unsigned char *)p_xai->tmxid, &xid);
     
     /* set current branch id - do we need this actually? 
      * How about byte order?

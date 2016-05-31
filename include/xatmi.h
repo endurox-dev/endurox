@@ -424,6 +424,10 @@ extern int * _exget_tperrno_addr (void);
 extern long * _exget_tpurcode_addr (void);
 /*extern void tpsvrdone (void);*/
 extern int tpinit(TPINIT *tpinfo);
+
+/* in external application: */
+extern void tpsvrdone(void);
+
 /* Poller & timer extension: */
 extern int tpext_addpollerfd(int fd, uint32_t events, 
         void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));

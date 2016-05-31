@@ -197,7 +197,10 @@ extern int sv_wait_for_request(void);
 extern int unadvertse_to_ndrxd(char *srvcnm);
 
 /* Server specific functions: */
-extern void	_tpreturn (int rval, long rcode, char *data, long len, long flags);
+extern void _tpreturn (int rval, long rcode, char *data, long len, long flags);
+extern void _tpforward (char *svc, char *data,
+                long len, long flags);
+extern void _tpcontinue (void);
 
 /* ndrd api */
 extern int advertse_to_ndrxd(svc_entry_fn_t *entry);
@@ -205,6 +208,7 @@ extern int advertse_to_ndrxd(svc_entry_fn_t *entry);
 extern int report_to_ndrxd(void);
 /* Return list of connected bridge nodes. */
 extern int ndrxd_get_bridges(char *nodes_out);
+extern int pingrsp_to_ndrxd(command_srvping_t *ping);
     
 /* Advertise & unadvertise */
 extern int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy);
@@ -226,7 +230,13 @@ extern int process_admin_req(char *buf, long len, int *shutdown_req);
 
 /* auto buffer convert: */
 extern long xcvt_lookup(char *fn_nm);
-    
+
+extern int build_advertise_list(void);
+extern int initialize_atmi_library(void);
+extern void un_initialize(void);
+
+extern int array_remove_element(void *arr, int elem, int len, int sz);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -43,6 +43,7 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <Exfields.h>
+#include <atmi_shm.h>
 
 #include "tpevsv.h"
 /*---------------------------Externs------------------------------------*/
@@ -180,8 +181,8 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
             }
 
             /* If filter matched, or no filter, then call the service */
-            if (EOS!=elt->filter[0] && 
-                       descr->pf_test(descr, p_svc->data, p_svc->len, elt->filter) ||
+            if ((EOS!=elt->filter[0] && 
+                       descr->pf_test(descr, p_svc->data, p_svc->len, elt->filter)) ||
                 EOS==elt->filter[0])
             {
                 NDRX_LOG(log_debug, "Dispatching event");

@@ -33,12 +33,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <unistd.h>
 
 #include <atmi.h>
 #include <ubf.h>
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -46,15 +48,17 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-int basic_q_test(void);
-int enq_q_test(char *q1, char *q2, char *q3);
-int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
-int deqempty_q_test(void);
-int basic_q_msgid_test(void);
-int basic_q_corid_test(void);
-int basic_autoq_ok(void);
-int basic_rndfail(void);
-int basic_enqcarray(void);
+private int basic_q_test(void);
+private int enq_q_test(char *q1, char *q2, char *q3);
+private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
+private int deqempty_q_test(void);
+private int basic_q_msgid_test(void);
+private int basic_q_corid_test(void);
+private int basic_autoq_ok(void);
+private int basic_rndfail(void);
+private int basic_enqcarray(void);
+private int basic_autoq_deadq(void);
+private int basic_rndfail(void);
 
 
 int main(int argc, char** argv)
@@ -145,7 +149,7 @@ out:
 /**
  * Do the test call to the server
  */
-int basic_q_test(void)
+private int basic_q_test(void)
 {
 
     int ret = SUCCEED;
@@ -230,7 +234,7 @@ out:
  * In The same order we shall get the dequeued messages.
  * @return 
  */
-int enq_q_test(char *q1, char *q2, char *q3)
+private int enq_q_test(char *q1, char *q2, char *q3)
 {
     int ret = SUCCEED;
     TPQCTL qc;
@@ -307,7 +311,7 @@ out:
  * In The same order we shall get the dequeued messages.
  * @return 
  */
-int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
+private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
 {
     int ret = SUCCEED;
     TPQCTL qc;
@@ -433,7 +437,7 @@ out:
  * Ensure that queues are empty.
  * @return 
  */
-int deqempty_q_test(void)
+private int deqempty_q_test(void)
 {
     int ret = SUCCEED;
     TPQCTL qc;
@@ -481,7 +485,7 @@ out:
 /**
  * Test message get by msgid
  */
-int basic_q_msgid_test(void)
+private int basic_q_msgid_test(void)
 {
 
     int ret = SUCCEED;
@@ -608,7 +612,7 @@ out:
 /**
  * Test message get by corid
  */
-int basic_q_corid_test(void)
+private int basic_q_corid_test(void)
 {
 
     int ret = SUCCEED;
@@ -755,7 +759,7 @@ out:
 /**
  * Sending to OK q
  */
-int basic_autoq_ok(void)
+private int basic_autoq_ok(void)
 {
     int ret = SUCCEED;
     TPQCTL qc1;
@@ -862,7 +866,7 @@ out:
 /**
  * Test deadq
  */
-int basic_autoq_deadq(void)
+private int basic_autoq_deadq(void)
 {
     int ret = SUCCEED;
     TPQCTL qc1;
@@ -956,7 +960,7 @@ out:
 /**
  * Sending to OK q
  */
-int basic_rndfail(void)
+private int basic_rndfail(void)
 {
     int ret = SUCCEED;
     TPQCTL qc1;
@@ -1063,7 +1067,7 @@ out:
 /**
  * Add some binary data to Q
  */
-int basic_enqcarray(void)
+    private int basic_enqcarray(void)
 {
     int ret = SUCCEED;
     TPQCTL qc1;

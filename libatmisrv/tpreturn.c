@@ -43,9 +43,10 @@
 #include <atmi_int.h>
 #include <srv_int.h>
 #include <gencall.h>
+#include <atmi_shm.h>
 
-#include "xa_cmn.h"
-#include "userlog.h"
+#include <xa_cmn.h>
+#include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/

@@ -64,12 +64,14 @@
  * Strip whitespace from string.
  * @param pp
  */
-private void strip_whitespace(char **pp)
+private char * strip_whitespace(char *pp)
 {
-    while (' '==*pp[0] || '\t'==*pp[0])
+    while (' '==pp[0] || '\t'==pp[0])
     {
-        *pp++;
+        pp++;
     }
+    
+    return pp;
 }
 
 /**
@@ -112,7 +114,7 @@ public int load_new_env(char *file)
         
         
         /* strip leading white space */
-        strip_whitespace(&p);
+        p = strip_whitespace(p);
         
         /* Check isn't it comment */
         if ('#' == line[0] || EOS == line[0])
@@ -126,7 +128,7 @@ public int load_new_env(char *file)
         }
         
         /* strip leading white space (one more time) */
-        strip_whitespace(&p);
+        p = strip_whitespace(p);
         
         /* now find equal sign... */
         e = strchr(p, '=');

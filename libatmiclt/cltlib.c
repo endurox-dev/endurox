@@ -31,7 +31,7 @@
 
 #include <ndrstandard.h>
 #include <atmi.h>
-
+#include <tperror.h>
 /**
  * Currently do nothing, just for build
  */

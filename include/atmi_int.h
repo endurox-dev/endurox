@@ -414,6 +414,7 @@ extern int generic_q_send(char *queue, char *data, long len, long flags);
 extern int generic_q_send_2(char *queue, char *data, long len, long flags, long tout);
 extern int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
 extern long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
+
 extern mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern mqd_t ndrx_mq_open(const char *name, int oflag);
 extern void ndrx_mq_fix_mass_send(int *cntr);
@@ -424,12 +425,12 @@ extern int fill_reply_queue(char *nodestack,
             char *org_reply_to, char *reply_to);
 
 /* Base64 encode/decode with file system valid output */
-extern char * atmi_xa_base64_encode(const unsigned char *data,
+extern char * atmi_xa_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data);
     
-extern unsigned char *atmi_xa_base64_decode(const char *data,
+extern unsigned char *atmi_xa_base64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data);
@@ -474,7 +475,7 @@ extern void	tpext_configbrige
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 extern int _get_evpost_sendq(char *send_q, char *extradata);
 
-extern char * atmi_base64_encode(const unsigned char *data, size_t input_length, 
+extern char * atmi_base64_encode(unsigned char *data, size_t input_length, 
         size_t *output_length, char *encoded_data);
 extern unsigned char *atmi_base64_decode(const char *data, size_t input_length, 
         size_t *output_length, char *decoded_data);

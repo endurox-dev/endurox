@@ -304,7 +304,7 @@ public char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
     
     NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
     
-    atmi_xa_base64_encode(msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
+    atmi_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
 
     msgid_str_out[out_len] = EOS;
     
@@ -327,7 +327,7 @@ public char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
     
     memset(msgid_out, 0, TMMSGIDLEN);
         
-    atmi_xa_base64_decode(msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
+    atmi_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
     
     NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
     
@@ -371,7 +371,7 @@ public int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQ
         FAIL_OUT(ret);
     }
     
-    if (NULL==qspace || EOS==*qspace && !nodeid && !srvid)
+    if (NULL==qspace || (EOS==*qspace && !nodeid && !srvid))
     {
         _TPset_error_msg(TPEINVAL,  "_tpenqueue: empty or NULL qspace!");
         FAIL_OUT(ret);
@@ -563,7 +563,7 @@ public int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQ
     
     memset(&errbuf, 0, sizeof(errbuf));
     
-    if (NULL==qspace || EOS==*qspace && !nodeid && !srvid)
+    if (NULL==qspace || (EOS==*qspace && !nodeid && !srvid))
     {
         _TPset_error_msg(TPEINVAL,  "_tpdequeue: empty or NULL qspace!");
         FAIL_OUT(ret);

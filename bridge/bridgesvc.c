@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -91,7 +92,7 @@ public int br_connected(exnetcon_t *net)
         /* Send command call to ndrxd */
         ret=cmd_generic_call(NDRXD_COM_BRCON_RQ, NDRXD_SRC_BRIDGE,
                         NDRXD_CALL_TYPE_BRIDGEINFO,
-                        &gencall, sizeof(bridge_info_t),
+                        (command_call_t *)&gencall, sizeof(bridge_info_t),
                         G_atmi_conf.reply_q_str,
                         G_atmi_conf.reply_q,
                         FAIL,   /* do not keep open ndrxd q open */
@@ -124,7 +125,7 @@ public int br_disconnected(exnetcon_t *net)
     /* Send command call to ndrxd */
     ret=cmd_generic_call(NDRXD_COM_BRDISCON_RQ, NDRXD_SRC_BRIDGE,
                     NDRXD_CALL_TYPE_BRIDGEINFO,
-                    &gencall, sizeof(bridge_info_t),
+                    (command_call_t *)&gencall, sizeof(bridge_info_t),
                     G_atmi_conf.reply_q_str,
                     G_atmi_conf.reply_q,
                     FAIL,   /* do not keep open ndrxd q open */

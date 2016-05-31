@@ -37,7 +37,7 @@
 #include <ubf.h>
 #include <test.fd.h>
 #include <string.h>
-
+#include <unistd.h>
 /*
  * Service does not return anything...
  */

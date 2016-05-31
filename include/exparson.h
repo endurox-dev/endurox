@@ -136,6 +136,7 @@ const char  * exjson_object_get_name (const EXJSON_Object *object, size_t index)
  * exjson_object_set_value does not copy passed value so it shouldn't be freed afterwards. */
 EXJSON_Status exjson_object_set_value(EXJSON_Object *object, const char *name, EXJSON_Value *value);
 EXJSON_Status exjson_object_set_string(EXJSON_Object *object, const char *name, const char *string);
+EXJSON_Status exjson_object_set_array(EXJSON_Object *object, const char *name, EXJSON_Array *array);
 EXJSON_Status exjson_object_set_number(EXJSON_Object *object, const char *name, double number);
 EXJSON_Status exjson_object_set_boolean(EXJSON_Object *object, const char *name, int boolean);
 EXJSON_Status exjson_object_set_null(EXJSON_Object *object, const char *name);

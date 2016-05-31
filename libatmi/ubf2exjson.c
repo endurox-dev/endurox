@@ -417,7 +417,7 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
                 NDRX_LOG(log_debug, "Field is binary... "
                                             "convert to b64");
 
-                if (NULL==atmi_base64_encode(strval, flen, 
+                if (NULL==atmi_base64_encode((unsigned char *)strval, flen, 
                             &outlen, b64_buf))
                 {
                     NDRX_LOG(log_error, "Failed to convert to b64!");

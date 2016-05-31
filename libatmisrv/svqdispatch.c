@@ -50,6 +50,8 @@
 #include <ntimer.h>
 #include <atmi_shm.h>
 #include <gencall.h>
+#include <tperror.h>
+#include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /* THIS IS HOOK FOR TESTING!! */
 public void (*___G_test_delayed_startup)(void) = NULL;
@@ -706,17 +708,22 @@ public int sv_server_request(char *buf, int len)
             G_shm_srv->min_rsp_msec[service]=result;
         }
 
+#if 0
+        - not actual.
         /* Fix issues with strange minuses... */
         if (G_shm_srv->min_rsp_msec[service] < 0)
             G_shm_srv->min_rsp_msec[service] = 0;
+#endif
         
         /* max */
         if (result>G_shm_srv->max_rsp_msec[service])
             G_shm_srv->max_rsp_msec[service]=result;
-
+#if 0
+        - not actual.
         /* Fix issues with strange minuses... */
         if (G_shm_srv->max_rsp_msec[service] < 0)
             G_shm_srv->max_rsp_msec[service] = 0;
+#endif
         
         G_shm_srv->last_rsp_msec[service]=result;
 

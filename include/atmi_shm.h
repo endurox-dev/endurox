@@ -72,6 +72,9 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int shm_init(char *q_prefix, int max_servers, int max_svcs);
+extern int ndrxd_shm_open_all(void);
+extern int ndrxd_shm_close_all(void);
+extern int ndrxd_shm_delete(void);
 extern int ndrx_shm_attach(ndrx_shm_t *shm);
 extern int ndrx_shm_attach_all(int lev);
 extern int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge);

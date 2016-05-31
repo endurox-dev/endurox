@@ -36,6 +36,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <dlfcn.h>
+#include <sys/mman.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>

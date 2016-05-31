@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -45,6 +46,7 @@
 #include "tperror.h"
 #include <atmi_int.h>
 #include <atmi_shm.h>
+#include <xa_cmn.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

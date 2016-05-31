@@ -38,6 +38,7 @@
 #include <utlist.h>
 #include <string.h>
 #include <unistd.h>
+#include <tperror.h>
 
 #include "srv_int.h"
 #include "userlog.h"

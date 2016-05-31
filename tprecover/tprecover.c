@@ -59,7 +59,7 @@ extern char *optarg;
 static long M_restarts = 0;
 static long M_check = FAIL;
 /*---------------------------Prototypes---------------------------------*/
-
+int start_daemon_recover(void);
 
 /**
  * Monitor ndrxd & recover it if needed.

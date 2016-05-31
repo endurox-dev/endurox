@@ -136,7 +136,7 @@ public int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     
     
     /* Check the buffer & do the actions */
-    if (FAIL==(blen==tptypes(buf, typ, NULL)))
+    if (FAIL==(blen=tptypes(buf, typ, NULL)))
     {
         NDRX_LOG(log_error, "Failed to detect buffer type");
         FAIL_OUT(ret);

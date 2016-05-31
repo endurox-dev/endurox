@@ -105,6 +105,7 @@ extern volatile int G_ndrx_debug_first;
 /*---------------------------Prototypes---------------------------------*/
 /* Real externals... */
 extern void ndrx_dbg_init(char *module, char *config_key);
+extern void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level);
 extern int debug_get_ndrx_level(void);
 extern int debug_get_ubf_level(void);
 extern ndrx_debug_t * debug_get_ndrx_ptr(void);

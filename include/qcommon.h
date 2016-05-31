@@ -73,7 +73,7 @@ extern int tmq_tpqctl_to_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
 extern int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
 
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
-extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
+extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 
 /* API: */
 extern int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 

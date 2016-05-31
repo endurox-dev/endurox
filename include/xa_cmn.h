@@ -327,6 +327,8 @@ extern XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out);
 extern int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
 extern void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
 extern int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms);
+extern int atmi_xa_is_current_rm_known(char *tmknownrms);
+extern void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo);
 
 extern UBFH * atmi_xa_alloc_tm_call(char cmd);
 extern int atmi_xa_set_curtx_from_tm(UBFH *p_ub);
@@ -358,6 +360,7 @@ extern int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_
 extern int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,
                     int *p_is_known);
 extern int _tp_srv_disassoc_tx(void);
+extern int _tp_srv_tell_tx_fail(void);
 
 /* State driving */
 extern rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 

@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <memory.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndrxd.h>
@@ -400,6 +401,8 @@ int main_uninit(void)
 
     /* Remove pid file */
     unlink_pid_file();
+    
+    return SUCCEED;
 }
 
 /*

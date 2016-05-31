@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
