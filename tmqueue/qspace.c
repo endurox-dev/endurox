@@ -46,7 +46,7 @@
 
 #include <exnet.h>
 #include <ndrxdcmn.h>
-#include <uuid/uuid.h>
+#include <exuuid.h>
 
 #include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
@@ -139,7 +139,7 @@ out:
  */
 public void tmq_msgid_gen(char *msgid)
 {
-    uuid_t uuid_val;
+    exuuid_t uuid_val;
     short node_id = (short) G_atmi_env.our_nodeid;
     short srv_id = (short) G_srv_id;
    
@@ -147,20 +147,20 @@ public void tmq_msgid_gen(char *msgid)
     
     /* Do the locking, so that we get unique xids... */
     MUTEX_LOCK_V(M_msgid_gen_lock);
-    uuid_generate(uuid_val);
+    exuuid_generate(uuid_val);
     MUTEX_UNLOCK_V(M_msgid_gen_lock);
     
-    memcpy(msgid, uuid_val, sizeof(uuid_t));
+    memcpy(msgid, uuid_val, sizeof(exuuid_t));
     /* Have an additional infos for transaction id... */
     memcpy(msgid  
-            +sizeof(uuid_t)  
+            +sizeof(exuuid_t)  
             ,(char *)&(node_id), sizeof(short));
     memcpy(msgid  
-            +sizeof(uuid_t) 
+            +sizeof(exuuid_t) 
             +sizeof(short)
             ,(char *)&(srv_id), sizeof(short));    
     
-    NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(uuid_t)+sizeof(short)+ sizeof(short));
+    NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(exuuid_t)+sizeof(short)+ sizeof(short));
 }
 
 

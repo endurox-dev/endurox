@@ -70,7 +70,7 @@ add_library (ndrxxaqdiskd SHARED
             )
 ############################# Executables ######################################
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c)
-target_link_libraries (tmqueue ndrxxaqdisk atmisrv uuid nstd atmi ubf 
+target_link_libraries (tmqueue ndrxxaqdisk atmisrv exuuid nstd atmi ubf 
                         thpool rt dl pthread m)
 set_target_properties(tmqueue PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

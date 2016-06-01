@@ -49,7 +49,7 @@
 
 #include "tmsrv.h"
 #include "../libatmisrv/srv_int.h"
-#include <uuid/uuid.h>
+#include <exuuid.h>
 #include <xa_cmn.h>
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
@@ -67,7 +67,7 @@ MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
  */
 public void atmi_xa_new_xid(XID *xid)
 {
-    uuid_t uuid_val;
+    exuuid_t uuid_val;
     unsigned char rmid =  (unsigned char)G_atmi_env.xa_rmid;
     short node_id = (short) G_atmi_env.our_nodeid;
     short srv_id = (short) G_srv_id;
@@ -81,19 +81,19 @@ public void atmi_xa_new_xid(XID *xid)
      */
     
     xid->formatID = NDRX_XID_FORMAT_ID;
-    xid->gtrid_length = sizeof(uuid_t);
+    xid->gtrid_length = sizeof(exuuid_t);
     xid->bqual_length = sizeof(unsigned char) + sizeof(short) + sizeof(short);
     memset(xid->data, 0, XIDDATASIZE); /* this is not necessary, but... */
-    uuid_generate(uuid_val);
-    memcpy(xid->data, uuid_val, sizeof(uuid_t));
-    memcpy(xid->data + sizeof(uuid_t), &G_atmi_env.xa_rmid, sizeof(unsigned char));
+    exuuid_generate(uuid_val);
+    memcpy(xid->data, uuid_val, sizeof(exuuid_t));
+    memcpy(xid->data + sizeof(exuuid_t), &G_atmi_env.xa_rmid, sizeof(unsigned char));
     /* Have an additional infos for transaction id... */
     memcpy(xid->data  
-            +sizeof(uuid_t)  
+            +sizeof(exuuid_t)  
             +sizeof(unsigned char)
             ,(char *)&(node_id), sizeof(short));
     memcpy(xid->data  
-            +sizeof(uuid_t) 
+            +sizeof(exuuid_t) 
             +sizeof(unsigned char)
             +sizeof(short)
             ,(char *)&(srv_id), sizeof(short));
