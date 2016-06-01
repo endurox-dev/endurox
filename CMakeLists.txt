@@ -83,9 +83,13 @@ endif()
 INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckCSourceCompiles.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckCXXSourceCompiles.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
+
+
+CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __progname[0];}" HAVE_PROGNAME)
 
 # To check for an include file you do this:
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)

@@ -42,8 +42,8 @@
 #include <ndebug.h>
 #include <atmi.h>
 #include <nstdutil.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
-extern const char * __progname;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -110,7 +110,7 @@ public int userlog (char *data, ...)
     
     sprintf(pre, "%5ld:%08ld:%06ld%02ld:%-12.12s:",
             (long)pid, ldate, ltime,
-                    (long)time_val.tv_usec/10000, __progname);
+                    (long)time_val.tv_usec/10000, EX_PROGNAME);
 
     va_start(ap, data);
     fputs(pre, output);

@@ -11,6 +11,8 @@
 
 #cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@
 
+#cmakedefine HAVE_PROGNAME @HAVE_PROGNAME@
+
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_INT @SIZEOF_INT@
 

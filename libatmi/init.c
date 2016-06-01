@@ -52,8 +52,8 @@
 #include <tperror.h>
 #include <xa_cmn.h>
 #include <atmi_shm.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
-extern const char * __progname;
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
 /*---------------------------Enums--------------------------------------*/
@@ -609,10 +609,6 @@ public int	tpinit (TPINIT * init_data)
     char *p;
     char read_clt_name[MAXTIDENT+1]={EOS};
     static pid_t pid;
-#if 0
-    moved to __progname
-    FILE *f;
-#endif
 
     if (G_atmi_is_init)
     {
@@ -658,7 +654,7 @@ public int	tpinit (TPINIT * init_data)
     /* Get the PID of the process */
     pid = getpid();
     
-    strcpy(read_clt_name, __progname);
+    strcpy(read_clt_name, EX_PROGNAME);
     
     /* Get new context id. Threading support only for clients... */
     conf.contextid = ndrx_ctxid_op(FALSE, FAIL);

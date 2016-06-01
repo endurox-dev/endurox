@@ -36,6 +36,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>
@@ -66,6 +67,23 @@ extern "C" {
 #define EX_EPOLL_CTL_DEL        2
     
 #define EX_EPOLL_FLAGS          POLLIN
+
+#endif
+    
+/**
+ * Configure the program name.
+ * On same platforms/gcc versions we have __progname external
+ * On other systems we will do lookup by ps function
+ */    
+#ifdef HAVE_PROGNAME
+    
+extern const char * __progname;
+
+#define EX_PROGNAME __progname
+    
+#else
+
+#define EX_PROGNAME ex_sys_get_proc_name()
 
 #endif
 
@@ -124,7 +142,8 @@ extern int ex_epoll_close(int fd);
 extern int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout);
 extern int ex_epoll_errno(void);
 extern char * ex_poll_strerror(int err);
-
+extern char * ex_sys_get_proc_name(void);
+    
 extern int ex_sys_is_process_running(pid_t pid, char *proc_name);
 extern string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status);
 extern void ex_string_list_free(string_list_t* list);

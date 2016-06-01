@@ -1,7 +1,7 @@
 /* 
 ** Generic unix abstractions 
 **
-** @file sys_linux.c
+** @file sys_genunix.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -52,8 +52,6 @@
 
 #include <sys_unix.h>
 
-
-F
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -108,3 +106,89 @@ out:
             ret?"running":"not running");
     return ret;
 }
+
+/**
+ * Get the process name
+ * @param pid
+ * @param proc_name
+ * @return
+ */
+public char * ex_sys_get_proc_name(void)
+{
+    static char out[PATH_MAX] = "unknown";
+    FILE *fp=NULL;
+    char path[PATH_MAX];
+    char cmd[128] = {EOS};
+    int ret = SUCCEED;
+    static int first = TRUE;
+    char *p = NULL;
+    int err;
+    int l;
+    
+    if (first)
+    {
+        sprintf(cmd, "ps -p %d -o comm=", getpid());
+
+        NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
+
+        /* Open the command for reading. */
+        fp = popen(cmd, "r");
+        if (fp == NULL)
+        {
+            NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+            goto out;
+        }
+
+        /* Check the process name in output... */
+        if (fgets(path, sizeof(path)-1, fp) == NULL)
+        {
+            err = errno;
+            ret=FAIL;
+            goto out;
+        }
+
+        if (NULL==(p = strrchr(path, '/')))
+        {
+            p = path;
+        }
+out:
+        /* close */
+        if (fp != NULL)
+        {
+            pclose(fp);
+        }
+
+        if (SUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Failed to get proc name: %s", strerror(err));
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "ps returns: [%s]", p);
+            l = strlen(p);
+            
+            if (l>0 && '\n'==p[l-1])
+            {
+                p[l-1] = EOS;
+                l--;
+            }
+            
+            if (l>0 && '\r'==p[l-1])
+            {
+                p[l-1] = EOS;
+                l--;
+            }
+
+            if (EOS!=*p)
+            {
+                strcpy(out, p);
+            }
+
+            NDRX_LOG(log_debug, "current process name [%s]", out);
+        }
+        first = FALSE;
+    }
+    
+    return out;
+}
+
