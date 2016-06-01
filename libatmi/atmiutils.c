@@ -77,7 +77,7 @@ extern int G_max_svcs;
     }\
     else \
     {\
-    use_tout=1;\
+        use_tout=1;\
     }
 /* This prints info about q descriptor X */
 #define PRINT_Q_INFO(X)             { struct mq_attr __attr;\
@@ -461,8 +461,9 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     
     long  reply_len;
 
-    NDRX_LOG(log_debug, "gencall command: %d, reply_only=%d, need_reply=%d call flags=0x%x",
-                        ndrxd_cmd, reply_only, need_reply, call->flags);
+    NDRX_LOG(log_debug, "gencall command: %d, reply_only=%d, need_reply=%d "
+            "call flags=0x%x, getcall flags=%d",
+            ndrxd_cmd, reply_only, need_reply, call->flags, flags);
     
     if (NULL!=rply_buf_out && NULL==rply_buf_out_len)
     {

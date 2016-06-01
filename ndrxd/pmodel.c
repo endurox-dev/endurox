@@ -773,9 +773,9 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     sprintf(srv_queue, NDRX_ADMIN_FMT, G_sys_config.qprefix, 
             p_pm->binary_name, p_pm->srvid, p_pm->pid);
     NDRX_LOG(log_debug, "%s: calling up: [%s]", fn, srv_queue);
+    
     /* Then get listing... */
-    /* TODO: Support for timeout! */
-    if (SUCCEED!=(ret=cmd_generic_call(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_ADMIN,
+    if (SUCCEED!=(ret=cmd_generic_call_2(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_ADMIN,
                     NDRXD_CALL_TYPE_GENERIC,
                     &call, sizeof(call),
                     G_command_state.listenq_str,
@@ -786,7 +786,9 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                     NULL,
                     NULL,
                     NULL,
-                    FALSE)))
+                    FALSE,
+                    FALSE,
+                    NULL, NULL, TPNOTIME, NULL)))
     {
         /*goto out; Ignore this condition, just get the status of binary... */
     }
