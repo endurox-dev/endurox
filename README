@@ -4,4 +4,5 @@ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 
 - To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
 - To disable documentation building add '-DDEFINE_DISABLEDOC=ON'
-- To to enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
+- To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
+- To disable platform script building use '-DDEFINE_DISABLEPSCRIPT=ON'

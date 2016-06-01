@@ -37,7 +37,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+/* Missing on AIX */
+#ifdef HAVE_GETOPTS_H
 #include <getopt.h>
+#endif
 
 #include <nstdutil.h>
 #include <nclopt.h>

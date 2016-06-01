@@ -29,13 +29,17 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+
+#ifdef HAVE_GETOPTS_H
 #include <getopt.h>
+#endif
 
 #include <ndebug.h>
 #include <atmi.h>

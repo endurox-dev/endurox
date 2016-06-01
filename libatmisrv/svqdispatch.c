@@ -42,6 +42,7 @@
 #include <ndebug.h>
 #include <utlist.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "srv_int.h"
 #include "xa_cmn.h"

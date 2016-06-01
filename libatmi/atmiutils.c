@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <atmi.h>
 #include <ndrstandard.h>

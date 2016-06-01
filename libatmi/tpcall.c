@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <mqueue.h>
+#include <fcntl.h>
 
 #include <atmi.h>
 #include <ndebug.h>

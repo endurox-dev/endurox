@@ -1,5 +1,5 @@
 /* 
-** Generic unix abstractions 
+** AIX Abstraction Layer (AAL)
 **
 ** @file sys_linux.c
 ** 
@@ -33,7 +33,7 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+
 
 #include <unistd.h>
 #include <stdarg.h>
@@ -44,6 +44,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -52,8 +53,9 @@
 
 #include <sys_unix.h>
 
+#include <utlist.h>
 
-F
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -63,48 +65,78 @@ F
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Checks weither process is running or not...
- * @param pid
- * @param proc_name
- * @return
+ * Return the list of queues (build the list according to /tmp/.MQD files.
+ * e.g ".MQPn00b,srv,admin,atmi.sv1,123,2229" translates as
+ * "/n00b,srv,admin,atmi.sv1,123,2229")
+ * the qpath must point to /tmp
  */
-public int ex_sys_is_process_running(pid_t pid, char *proc_name)
+public string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
 {
-    FILE *fp=NULL;
-    char cmd[128];
-    char path[PATH_MAX];
-    int ret = FALSE;
+    string_list_t* ret = NULL;
+    struct dirent **namelist;
+    int n;
+    string_list_t* tmp;
+    int len;
     
-    sprintf(cmd, "ps -p %d -o comm=", pid);
+    *return_status = SUCCEED;
     
-    NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
-    
-    /* Open the command for reading. */
-    fp = popen(cmd, "r");
-    if (fp == NULL)
+    n = scandir(qpath, &namelist, 0, alphasort);
+    if (n < 0)
     {
-        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
-        goto out;
+        NDRX_LOG(log_error, "Failed to open queue directory: %s", 
+                strerror(errno));
+        goto exit_fail;
     }
-    
-    /* Check the process name in output... */
-    while (fgets(path, sizeof(path)-1, fp) != NULL)
+    else 
     {
-        if (strstr(path, proc_name))
+        while (n--)
         {
-            ret=TRUE;
-            goto out;
+            if (0==strcmp(namelist[n]->d_name, ".") || 
+                        0==strcmp(namelist[n]->d_name, "..") ||
+                        0!=strncmp(namelist[n]->d_name, ".MQP", 4))
+                continue;
+            
+            len = strlen(namelist[n]->d_name) -3 /*.MQP*/ + 1 /* EOS */;
+            
+            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+            {
+                NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
+                        sizeof(string_list_t), strerror(errno));
+                
+                
+                goto exit_fail;
+            }
+            
+            if (NULL==(tmp->qname = malloc(len)))
+            {
+                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
+                        len, strerror(errno));
+                free(tmp);
+                goto exit_fail;
+            }
+            
+            strcpy(tmp->qname, "/");
+            strcat(tmp->qname, namelist[n]->d_name+4); /* strip off .MQP */
+            
+            /* Add to LL */
+            LL_APPEND(ret, tmp);
+            
+            free(namelist[n]);
         }
+        free(namelist);
     }
-
-out:
-    /* close */
-    if (fp!=NULL)
-    {
-        pclose(fp);
-    }
-
-    NDRX_LOG(log_debug, "process %s status: %s", proc_name, 
-            ret?"running":"not running");
+    
     return ret;
+    
+exit_fail:
+
+    *return_status = FAIL;
+
+    if (NULL!=ret)
+    {
+        ex_string_list_free(ret);
+        ret = NULL;
+    }
+
+    return ret;   
 }

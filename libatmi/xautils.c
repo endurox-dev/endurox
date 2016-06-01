@@ -54,7 +54,7 @@
 #include <sys/stat.h>
 #include <sys/ipc.h>
 #include <xa_cmn.h>
-#include <uuid/uuid.h>
+#include <exuuid.h>
 
 #include <tperror.h>
 #include <Exfields.h>
@@ -317,10 +317,10 @@ private void base64_cleanup(void)
 public void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
 {
     
-    memcpy((char *)p_nodeid, xid->data + sizeof(uuid_t) + sizeof(unsigned char), 
+    memcpy((char *)p_nodeid, xid->data + sizeof(exuuid_t) + sizeof(unsigned char), 
             sizeof(short));
     
-    memcpy((char *)p_srvid, xid->data + sizeof(uuid_t) 
+    memcpy((char *)p_srvid, xid->data + sizeof(exuuid_t) 
             +sizeof(unsigned char) + sizeof(short), sizeof(short));
 }
 
@@ -1004,7 +1004,7 @@ public XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
     /* set current branch id - do we need this actually? 
      * How about byte order?
      */
-    memcpy(xid.data + sizeof(uuid_t), &rmid, sizeof(unsigned char));
+    memcpy(xid.data + sizeof(exuuid_t), &rmid, sizeof(unsigned char));
     
     return &xid;
 }   

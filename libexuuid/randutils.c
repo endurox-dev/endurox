@@ -13,7 +13,9 @@
 #include <string.h>
 #include <sys/time.h>
 
+#ifdef DO_JRAND_MIX
 #include <sys/syscall.h>
+#endif
 
 #include "randutils.h"
 

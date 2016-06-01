@@ -54,6 +54,9 @@ if (${CMAKE_OS_NAME} MATCHES "LINUX")
 elseif (${CMAKE_OS_NAME} MATCHES "SUNOS")
     SET(NSTD_SYS "sys_genunix.c")
     SET(NSTD_SYS_2 "sys_solaris.c")
+elseif (${CMAKE_OS_NAME} MATCHES "AIX")
+    SET(NSTD_SYS "sys_genunix.c")
+    SET(NSTD_SYS_2 "sys_aix.c")
 endif ()
 
 

@@ -69,16 +69,16 @@ typedef struct jobqueue{
 
 
 /* Thread */
-typedef struct thread{
+typedef struct poolthread{
 	int       id;                        /* friendly id               */
 	pthread_t pthread;                   /* pointer to actual thread  */
 	struct thpool_* thpool_p;            /* access to thpool          */
-} thread;
+} poolthread;
 
 
 /* Threadpool */
 typedef struct thpool_{
-	thread**   threads;                  /* pointer to threads        */
+	poolthread**   threads;                  /* pointer to threads        */
 	volatile int num_threads_alive;      /* threads currently alive   */
 	volatile int num_threads_working;    /* threads currently working */
 	pthread_mutex_t  thcount_lock;       /* used for thread count etc */
@@ -92,10 +92,10 @@ typedef struct thpool_{
 /* ========================== PROTOTYPES ============================ */
 
 
-static void  thread_init(thpool_* thpool_p, struct thread** thread_p, int id);
-static void* thread_do(struct thread* thread_p);
-static void  thread_hold();
-static void  thread_destroy(struct thread* thread_p);
+static void  poolthread_init(thpool_* thpool_p, struct poolthread** poolthread_p, int id);
+static void* poolthread_do(struct poolthread* poolthread_p);
+static void  poolthread_hold();
+static void  poolthread_destroy(struct poolthread* poolthread_p);
 
 static int   jobqueue_init(thpool_* thpool_p);
 static void  jobqueue_clear(thpool_* thpool_p);
@@ -144,7 +144,7 @@ struct thpool_* thpool_init(int num_threads){
 	}
 
 	/* Make threads in pool */
-	thpool_p->threads = (struct thread**)malloc(num_threads * sizeof(struct thread));
+	thpool_p->threads = (struct poolthread**)malloc(num_threads * sizeof(struct poolthread));
 	if (thpool_p->threads == NULL){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for threads\n");
 		jobqueue_destroy(thpool_p);
@@ -158,7 +158,7 @@ struct thpool_* thpool_init(int num_threads){
 	/* Thread init */
 	int n;
 	for (n=0; n<num_threads; n++){
-		thread_init(thpool_p, &thpool_p->threads[n], n);
+		poolthread_init(thpool_p, &thpool_p->threads[n], n);
 		if (THPOOL_DEBUG)
 			printf("THPOOL_DEBUG: Created thread %d in pool \n", n);
 	}
@@ -270,7 +270,7 @@ void thpool_destroy(thpool_* thpool_p){
 	/* Deallocs */
 	int n;
 	for (n=0; n < threads_total; n++){
-		thread_destroy(thpool_p->threads[n]);
+		poolthread_destroy(thpool_p->threads[n]);
 	}
 	free(thpool_p->threads);
 	free(thpool_p);
@@ -305,25 +305,25 @@ int thpool_freethreads_nr(thpool_* thpool_p) {
  * @param id            id to be given to the thread
  * 
  */
-static void thread_init (thpool_* thpool_p, struct thread** thread_p, int id){
+static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p, int id){
 	
-	*thread_p = (struct thread*)malloc(sizeof(struct thread));
-	if (thread_p == NULL){
+	*poolthread_p = (struct poolthread*)malloc(sizeof(struct poolthread));
+	if (poolthread_p == NULL){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for thread\n");
 		exit(1);
 	}
 
-	(*thread_p)->thpool_p = thpool_p;
-	(*thread_p)->id       = id;
+	(*poolthread_p)->thpool_p = thpool_p;
+	(*poolthread_p)->id       = id;
 
-	pthread_create(&(*thread_p)->pthread, NULL, (void *)thread_do, (*thread_p));
-	pthread_detach((*thread_p)->pthread);
+	pthread_create(&(*poolthread_p)->pthread, NULL, (void *)poolthread_do, (*poolthread_p));
+	pthread_detach((*poolthread_p)->pthread);
 	
 }
 
 
 /* Sets the calling thread on hold */
-static void thread_hold () {
+static void poolthread_hold () {
 	threads_on_hold = 1;
 	while (threads_on_hold){
 		sleep(1);
@@ -342,23 +342,23 @@ static void thread_hold () {
 * @param  thread        thread that will run this function
 * @return nothing
 */
-static void* thread_do(struct thread* thread_p){
+static void* poolthread_do(struct poolthread* poolthread_p){
 	/* Set thread name for profiling and debuging */
-	char thread_name[128] = {0};
+	char poolthread_name[128] = {0};
         int finish_off = 0;
-	sprintf(thread_name, "thread-pool-%d", thread_p->id);
+	sprintf(poolthread_name, "thread-pool-%d", poolthread_p->id);
 #ifdef EX_OS_LINUX
-	prctl(PR_SET_NAME, thread_name);
+	prctl(PR_SET_NAME, poolthread_name);
 #endif
 
 	/* Assure all threads have been created before starting serving */
-	thpool_* thpool_p = thread_p->thpool_p;
+	thpool_* thpool_p = poolthread_p->thpool_p;
 	
 	/* Register signal handler */
 	struct sigaction act;
-	act.sa_handler = thread_hold;
+	act.sa_handler = poolthread_hold;
 	if (sigaction(SIGUSR1, &act, NULL) == -1) {
-		fprintf(stderr, "thread_do(): cannot handle SIGUSR1");
+		fprintf(stderr, "poolthread_do(): cannot handle SIGUSR1");
 	}
 	
 	/* Mark thread as alive (initialized) */
@@ -405,8 +405,8 @@ static void* thread_do(struct thread* thread_p){
 
 
 /* Frees a thread  */
-static void thread_destroy (thread* thread_p){
-	free(thread_p);
+static void poolthread_destroy (poolthread* poolthread_p){
+	free(poolthread_p);
 }
 
 

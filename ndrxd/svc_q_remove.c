@@ -40,6 +40,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <utlist.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <ndrxd.h>

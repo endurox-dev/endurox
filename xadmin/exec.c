@@ -38,9 +38,9 @@
 #include <sys/param.h>
 #include <mqueue.h>
 #include <sys/resource.h>
-#include <wait.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>

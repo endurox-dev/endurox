@@ -89,6 +89,7 @@ INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 
 # To check for an include file you do this:
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
+CHECK_INCLUDE_FILE("getopts.h"       HAVE_GETOPTS_H)
 
 # To check the size of a primitive type:
 CHECK_TYPE_SIZE("int"   SIZEOF_INT)
@@ -130,12 +131,18 @@ mark_as_advanced(INSTALL_LIB_DIR)
 MESSAGE( STATUS "INSTALL_LIB_DIR: " ${INSTALL_LIB_DIR} )
 
 ################################################################################
+# Options
+################################################################################
+
 # Option to disable gpg-me (gpg-me enabled by default)
+
 OPTION(DEFINE_DISABLEGPGME "Use GPG-ME encryption" OFF)
  
 IF(DEFINE_DISABLEGPGME)
     ADD_DEFINITIONS(-DDISABLEGPGME)
 ENDIF(DEFINE_DISABLEGPGME)
+
+OPTION(DEFINE_DISABLEPSCRIPT "Disable Platform Script" OFF)
 ###############################################################################
 
 ################################################################################
@@ -161,12 +168,21 @@ add_subdirectory (mkfldhdr)
 add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
-add_subdirectory (libps) # Platform script
-add_subdirectory (libpsstdlib) # Platform script standard library
+
+IF (NOT DEFINE_DISABLEPSCRIPT)
+	add_subdirectory (libps) # Platform script
+	add_subdirectory (libpsstdlib) # Platform script standard library
+ENDIF()
+
+
 add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (ud)
-add_subdirectory (pscript) # Platform script interpreter
+
+IF (NOT DEFINE_DISABLEPSCRIPT)
+	add_subdirectory (pscript) # Platform script interpreter
+ENDIF()
+
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (bridge) # Cluster bridge server

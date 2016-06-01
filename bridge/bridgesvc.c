@@ -42,7 +42,10 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+
+#ifdef HAVE_GETOPTS_H
 #include <getopt.h>
+#endif
 
 #include <ndebug.h>
 #include <atmi.h>

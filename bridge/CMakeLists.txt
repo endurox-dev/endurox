@@ -61,6 +61,9 @@ IF(DEFINE_DISABLEGPGME)
                          clock.c
                          brutils.c
                         )
+
+	SET(EX_LIB_GPGME "")
+
 ELSE (DEFINE_DISABLEGPGME)
 	add_executable (tpbridge bridgesvc.c
                          queue.c
@@ -69,8 +72,12 @@ ELSE (DEFINE_DISABLEGPGME)
                          brutils.c
 			 gpgme_encrypt.c
                         )
+
+	SET(EX_LIB_GPGME "gpgme")
 ENDIF (DEFINE_DISABLEGPGME)
-target_link_libraries (tpbridge m atmisrv nstd atmi ubf rt gpgme exnet netproto dl)
+
+target_link_libraries (tpbridge m atmisrv nstd atmi ubf rt ${EX_LIB_GPGME} exnet netproto dl)
+
 set_target_properties(tpbridge PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

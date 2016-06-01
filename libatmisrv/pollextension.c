@@ -138,7 +138,10 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     pollext->p_pollevent = p_pollevent;
     pollext->fd = fd;
     pollext->ptr1 = ptr1;
+/*
+    Does not build on AIX!
     pollext->events = events;
+*/
     
     DL_APPEND(G_pollext, pollext);
     NDRX_LOG(log_debug, "Function 0x%lx fd=%d successfully added "

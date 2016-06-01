@@ -63,7 +63,11 @@ add_subdirectory (test022_typedstring)
 add_subdirectory (test023_typedcarray)
 add_subdirectory (test024_json)
 add_subdirectory (test026_typedjson)
-add_subdirectory (test027_pscript)
+
+IF (NOT DEFINE_DISABLEPSCRIPT)
+	add_subdirectory (test027_pscript)
+ENDIF()
+
 add_subdirectory (test028_tmq)
 
 ################################################################################

@@ -41,11 +41,11 @@
 #include <atmi.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #include <sys/param.h>
 #include <mqueue.h>
 #include <sys/resource.h>
-#include <wait.h>
 #include <sys/wait.h>
 
 

@@ -37,7 +37,6 @@
 #include <utlist.h>
 #include <errno.h>
 #include <sys/resource.h>
-#include <wait.h>
 #include <sys/wait.h>
 #include <unistd.h>
 

@@ -29,6 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -533,6 +534,7 @@ public int load_config(void)
     
     static struct stat prev_attr;
     static struct stat attr;
+
     static int first = TRUE;
     
     /* Test for the file time stamp changes */
@@ -554,7 +556,7 @@ public int load_config(void)
         FAIL_OUT(ret);
     }
     
-    if (0!=memcmp(&attr.st_mtim, &prev_attr.st_mtim, sizeof(attr.st_mtim)))
+    if (0!=memcmp(&attr.st_mtime, &prev_attr.st_mtime, sizeof(attr.st_mtime)))
     {
         prev_attr = attr;
     }

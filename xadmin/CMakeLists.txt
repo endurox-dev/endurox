@@ -59,7 +59,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (xadmin m nstd rt atmi ubf dl)
+target_link_libraries (xadmin m nstd rt atmi ubf dl pthread)
 
 # Install bin
 install (TARGETS 
