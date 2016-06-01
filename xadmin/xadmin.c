@@ -634,8 +634,6 @@ int main(int argc, char** argv) {
     M_argc = argc;
     M_argv = argv;
 
-    signal(SIGCHLD, sign_chld_handler);
-
     if (FAIL==ndrx_init())
     {
         ret=FAIL;
@@ -643,6 +641,8 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Failed to initialize!\n");
         goto out;
     }
+
+    signal(SIGCHLD, sign_chld_handler);
     
     /* Print the copyright notice: */
     if (is_tty())

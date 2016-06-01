@@ -52,9 +52,9 @@
 #include <ndebug.h>
 #include <nstdutil.h>
 #include <limits.h>
+#include <sys_unix.h>
 
 /*---------------------------Externs------------------------------------*/
-extern char *__progname;    /* glibc specifc! */
 /*---------------------------Macros-------------------------------------*/
 
 #define BUFFER_CONTROL(dbg_p)\
@@ -161,7 +161,7 @@ public void ndrx_init_debug(void)
             
             tok=strtok_r (buf,"\t ", &saveptr);
 
-            if ('*'==tok[0] || 0==strcmp(tok, __progname))
+            if ('*'==tok[0] || 0==strcmp(tok, EX_PROGNAME))
             {
                 int do_break = ('*'!=tok[0]);
                 do

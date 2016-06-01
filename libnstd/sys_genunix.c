@@ -108,7 +108,10 @@ out:
 }
 
 /**
- * Get the process name
+ * Get the process name. No debug please, at it gets locked
+ * because mostly it is firstly called from debug lib, if we call debug
+ * again it will lock against semaphore.
+ *
  * @param pid
  * @param proc_name
  * @return
@@ -128,14 +131,16 @@ public char * ex_sys_get_proc_name(void)
     if (first)
     {
         sprintf(cmd, "ps -p %d -o comm=", getpid());
-
+/* avoid recursive lookup by debug config
         NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
+*/
 
         /* Open the command for reading. */
         fp = popen(cmd, "r");
         if (fp == NULL)
         {
-            NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+            first = FALSE; /* avoid recursive lookup by debug lib*/
+ /*           NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));*/
             goto out;
         }
 
@@ -160,11 +165,11 @@ out:
 
         if (SUCCEED!=ret)
         {
-            NDRX_LOG(log_error, "Failed to get proc name: %s", strerror(err));
+            first = FALSE;
+/*            NDRX_LOG(log_error, "Failed to get proc name: %s", strerror(err));*/
         }
         else
         {
-            NDRX_LOG(log_debug, "ps returns: [%s]", p);
             l = strlen(p);
             
             if (l>0 && '\n'==p[l-1])
@@ -184,9 +189,10 @@ out:
                 strcpy(out, p);
             }
 
-            NDRX_LOG(log_debug, "current process name [%s]", out);
+            first = FALSE;
+
+/*            NDRX_LOG(log_debug, "current process name [%s]", out);*/
         }
-        first = FALSE;
     }
     
     return out;

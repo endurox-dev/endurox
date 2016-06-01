@@ -47,7 +47,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_executable (ud ud.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (ud ubf m atmi atmiclt nstd rt dl)
+target_link_libraries (ud ubf m atmi atmiclt nstd rt dl pthread)
 set_target_properties(ud PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 

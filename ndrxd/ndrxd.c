@@ -199,20 +199,23 @@ int main_init(int argc, char** argv)
     int ret=SUCCEED;
     char *p;
 
-    
-    
-    /* We will ignore all stuff requesting shutdown! */
-    signal(SIGHUP, SIG_IGN);
-    signal(SIGTERM, SIG_IGN);
-    signal(SIGINT, SIG_IGN);
-    signal(SIGCHLD, sign_chld_handler);
-    
+    /* common env loader will init the debug lib
+     * which might call `ps' for process name
+     * by popen(). which causes problems with
+     * SIGCHLD handlers. Thus handle them after libinit
+     */
     if (SUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
         ret=FAIL;
         goto out;
     }
+
+    /* We will ignore all stuff requesting shutdown! */
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
+    signal(SIGINT, SIG_IGN);
+    signal(SIGCHLD, sign_chld_handler);
 
     /********* Grab the configuration params  *********/
     G_sys_config.qprefix = getenv(CONF_NDRX_QPREFIX);
