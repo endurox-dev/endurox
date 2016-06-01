@@ -37,7 +37,7 @@
 #include <regex.h>
 #include <utlist.h>
 
-#ifdef HAVE_GETOPTS_H
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 

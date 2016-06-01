@@ -89,7 +89,7 @@ INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 
 # To check for an include file you do this:
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
-CHECK_INCLUDE_FILE("getopts.h"       HAVE_GETOPTS_H)
+CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
 
 # To check the size of a primitive type:
 CHECK_TYPE_SIZE("int"   SIZEOF_INT)
