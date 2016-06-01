@@ -50,7 +50,7 @@ rm *.log
 
 (./atmisv2FIRST -t 4 -i 1 2>&1) > ./atmisv2FIRST.log &
 (./atmisv2SECOND -i 1 2>&1) > ./atmisv2SECOND.log &
-sleep 1
+sleep 2
 (./atmiclt2 2>&1) > ./atmiclt2.log
 
 RET=$?
