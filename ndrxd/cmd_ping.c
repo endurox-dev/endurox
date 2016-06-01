@@ -78,7 +78,7 @@ public int srv_send_ping (pm_node_t *p_pm)
     /* Call the server */
     if (SUCCEED!=(ret = cmd_generic_callfl(NDRXD_COM_SRVPING_RQ, NDRXD_SRC_ADMIN,
             NDRXD_CALL_TYPE_GENERIC,
-            &ping, sizeof(ping),
+            (command_call_t *)&ping, sizeof(ping),
             G_command_state.listenq_str,
             G_command_state.listenq,
             FAIL,

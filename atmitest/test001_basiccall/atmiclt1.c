@@ -64,6 +64,8 @@ int do_sync (void)
         /* sleep for 0.01 sec */
         usleep(10000);
     }
+    
+    return SUCCEED;
 }
 
 /*

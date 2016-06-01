@@ -37,11 +37,13 @@
 #include <errno.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrx.h>
 #include <atmi.h>
+#include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/

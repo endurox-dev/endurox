@@ -35,7 +35,7 @@
 #include <memory.h>
 #include <libxml/xmlreader.h>
 #include <errno.h>
-
+#include <unistd.h>
 #include <ndrstandard.h>
 #include <userlog.h>
 #include <atmi.h>

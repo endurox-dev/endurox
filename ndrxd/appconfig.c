@@ -249,7 +249,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 xmlFree(p);
             }
             /* Load Environment override */
-            else if (0==strcmp("env", cur->name))
+            else if (0==strcmp("env", (char *)cur->name))
             {
                 p = (char *)xmlNodeGetContent(cur);
                 strncpy(config->default_env, p, sizeof(config->default_env));
@@ -575,7 +575,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
     for (attr=cur->properties; attr; attr = attr->next)
     {
-        if (0==strcmp(attr->name, "name"))
+        if (0==strcmp((char *)attr->name, "name"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(srvnm, p, MAXTIDENT);
@@ -596,31 +596,31 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
     for (; cur; cur=cur->next)
     {
-        if (0==strcmp("srvid", cur->name))
+        if (0==strcmp("srvid", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->srvid = atoi(p);
             xmlFree(p);
         }
-        else if (0==strcmp("min", cur->name))
+        else if (0==strcmp("min", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->min = atoi(p);
             xmlFree(p);
         }
-        else if (0==strcmp("max", cur->name))
+        else if (0==strcmp("max", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->max = atoi(p);
             xmlFree(p);
         }
-        else if (0==strcmp("autokill", cur->name))
+        else if (0==strcmp("autokill", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->autokill = atoi(p);
             xmlFree(p);
         }
-        else if (0==strcmp("sleep_after", cur->name))
+        else if (0==strcmp("sleep_after", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->sleep_after = atoi(p);
@@ -675,7 +675,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->exportsvcs);
             xmlFree(p);
         }
-        else if (0==strcmp("sysopt", cur->name))
+        else if (0==strcmp("sysopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             strncpy(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT));
@@ -685,7 +685,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->SYSOPT[sizeof(p_srvnode->SYSOPT)-1] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp("appopt", cur->name))
+        else if (0==strcmp("appopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             strncpy(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT));
@@ -695,7 +695,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EOS;
             xmlFree(p);
         }
-        else if (0==strcmp("env", cur->name))
+        else if (0==strcmp("env", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
             strncpy(p_srvnode->env, p, sizeof(p_srvnode->env));

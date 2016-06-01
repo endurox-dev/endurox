@@ -290,6 +290,8 @@ public void * background_process(void *arg)
     background_loop();
     
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS END **********");
+    
+    return NULL;
 }
 
 /**

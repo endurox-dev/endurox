@@ -171,6 +171,8 @@ public int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
                 decode_flags(ppm_info->flags)
                 );
     }
+    
+    return SUCCEED;
 }
 
 /**

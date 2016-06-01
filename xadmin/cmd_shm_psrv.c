@@ -83,6 +83,8 @@ public int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len)
                 shm_psrv_info->last_reply_q
                 );
     }
+    
+    return SUCCEED;
 }
 
 /**

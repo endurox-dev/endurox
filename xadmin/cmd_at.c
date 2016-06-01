@@ -97,4 +97,6 @@ public int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                             p_have_next,
                             G_call_args,
                             FALSE);
+    
+    return ret;
 }

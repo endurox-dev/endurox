@@ -337,9 +337,8 @@ out:
                     msg->qctl.failurequeue, msg->hdr.qspace);
                 
 
-                /* Send response to reply Q (load the data in FB with call details) 
-                 * 
-                /* Keep the original flags... */
+                /* Send response to reply Q (load the data in FB with call details)
+                 * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
                 if (SUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
@@ -456,6 +455,8 @@ public void * forward_process(void *arg)
     forward_loop();
     
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS END **********");
+    
+    return NULL;
 }
 
 /**

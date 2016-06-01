@@ -95,6 +95,8 @@ public int psc_rsp_process(command_reply_t *reply, size_t reply_len)
                    (psc_info->svcdet[i].status?"BUSY":"AVAIL"));
         }
     }
+    
+    return SUCCEED;
 }
 
 /**

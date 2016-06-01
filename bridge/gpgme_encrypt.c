@@ -112,7 +112,7 @@ int gpga_gerrno(void)
  */
 char * gpga_strerr(int aerrno, int gerrno)
 {
-	return M_aerrmsg;
+    return M_aerrmsg;
 }
 
 /**
@@ -120,9 +120,11 @@ char * gpga_strerr(int aerrno, int gerrno)
  */
 static int gpga_reset_err(void)
 {
-	M_aerrno = 0;
-	M_aerrno_gpg = 0;
-	M_aerrmsg[0] = '\0';
+    M_aerrno = 0;
+    M_aerrno_gpg = 0;
+    M_aerrmsg[0] = '\0';
+    
+    return SUCCEED;
 }
 
 /**

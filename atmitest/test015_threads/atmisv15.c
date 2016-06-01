@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ndebug.h>
+#include <unistd.h>
 #include <atmi.h>
 #include <ndrstandard.h>
 #include <ubf.h>
@@ -264,40 +265,51 @@ out:
  */
 int tpsvrinit(int argc, char **argv)
 {
+    int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (SUCCEED!=tpadvertise("TIMEOUTSV", TIMEOUTSV))
     {
         NDRX_LOG(log_error, "Failed to initialize TIMEOUTSV!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (second)!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("NULLSV", NULLSV))
     {
         NDRX_LOG(log_error, "Failed to initialize NULLSV!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("ECHO", ECHO))
     {
         NDRX_LOG(log_error, "Failed to initialize ECHO!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("RETSOMEDATA", RETSOMEDATA))
     {
         NDRX_LOG(log_error, "Failed to initialize RETSOMEDATA!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("UNIXINFO", UNIXINFO))
     {
         NDRX_LOG(log_error, "Failed to initialize UNIXINFO!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("UNIX2", UNIX2))
     {
         NDRX_LOG(log_error, "Failed to initialize UNIX2!");
+        ret=FAIL;
     }
+    
+    return ret;
 }
 
 /**

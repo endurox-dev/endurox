@@ -480,6 +480,8 @@ out:
     {
         fclose(f);
     }
+
+    return ret;
 }
 
 /**
@@ -1342,7 +1344,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
     HASH_ITER(hh, G_qhash, q, qtmp)
     {
         if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname, NULL)) && 
-                (auto_only && qconf->autoq || !auto_only))
+                ((auto_only && qconf->autoq) || !auto_only))
         {
             if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))
             {
@@ -1532,6 +1534,8 @@ public int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff)
 out:
             
     MUTEX_UNLOCK_V(M_q_lock);
+
+    return SUCCEED;
 }
 
 /**

@@ -120,6 +120,8 @@ public int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
             CONF_NDRX_NODEID_COUNT,
             CONF_NDRX_NODEID_COUNT, gen_clstr_map(shm_psvc_info));
     }
+    
+    return SUCCEED;
 }
 
 /**

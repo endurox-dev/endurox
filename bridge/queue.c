@@ -53,7 +53,6 @@
 
 #include <exnet.h>
 #include <ndrxdcmn.h>
-
 #include "bridge.h"
 #include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
@@ -187,6 +186,8 @@ private int br_process_error(char *buf, int len, int err, in_msg_t* from_q, int 
             free(from_q);
         }
     }
+    
+    return SUCCEED;
 }
 
 /**

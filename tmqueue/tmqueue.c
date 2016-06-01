@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>

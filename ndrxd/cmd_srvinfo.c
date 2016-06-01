@@ -40,6 +40,7 @@
 #include <userlog.h>
 #include <ndrxd.h>
 #include <ndrxdcmn.h>
+#include <atmi_shm.h>
 
 #include <bridge_int.h>
 
@@ -189,8 +190,8 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
         /* OK, now populate the stuff stuff, hmm we migth update 
          * if there is already entry (if we request this on runtime?!?!)
          */
-        pm_node_svc_t *svc_info = malloc(sizeof(pm_node_svc_t));
-        memset(svc_info, 0, sizeof(svc_info));
+        pm_node_svc_t *svc_info = (pm_node_svc_t *)malloc(sizeof(pm_node_svc_t));
+        memset((char *)svc_info, 0, sizeof(svc_info));
         if (NULL==svc_info)
         {
             NDRXD_set_error_fmt(NDRXD_EOS, "Failed to allocate pm_node_svc_t(%d)!",

@@ -233,7 +233,7 @@ public int tm_tpbegin(UBFH *p_ub)
     XID xid; /* handler for new XID */
     atmi_xa_tx_info_t xai;
     int do_rollback=FALSE;
-    unsigned char xid_str[NDRX_XID_SERIAL_BUFSIZE];
+    char xid_str[NDRX_XID_SERIAL_BUFSIZE];
     long txtout;
     long tmflags;
     NDRX_LOG(log_debug, "tm_tpbegin() called");

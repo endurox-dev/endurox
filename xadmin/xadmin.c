@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -276,7 +277,7 @@ private int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     for (i=0; i<N_DIM(M_command_map); i++)
     {
         p = &M_command_map[i];
-        if (argc>1 && 0==strcmp(p->cmd, argv[1]) || 1==argc)
+        if ((argc>1 && 0==strcmp(p->cmd, argv[1])) || 1==argc)
         {
             printf("%s\t%s\n", p->cmd, p->help);
         }

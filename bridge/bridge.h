@@ -79,6 +79,7 @@ extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
 
 extern int br_calc_clock_diff(command_call_t *call);
 extern int br_send_clock(void);
+extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
 

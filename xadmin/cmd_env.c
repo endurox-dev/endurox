@@ -65,6 +65,8 @@ public int pe_rsp_process(command_reply_t *reply, size_t reply_len)
         command_reply_pe_t * pe_info = (command_reply_pe_t*)reply;
         fprintf(stdout, "%s\n", pe_info->env);
     }
+    
+    return SUCCEED;
 }
 
 /**

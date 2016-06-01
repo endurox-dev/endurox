@@ -46,6 +46,7 @@
 #include <userlog.h>
 
 #include <exnet.h>
+#include <exproto.h>
 #include <ndrxdcmn.h>
 
 #include "bridge.h"

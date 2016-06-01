@@ -40,12 +40,14 @@
 #include <sys/resource.h>
 #include <wait.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
 
 #include "ndrx.h"
 #include <atmi_int.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/

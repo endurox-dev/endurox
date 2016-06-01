@@ -119,16 +119,21 @@ out:
  */
 int tpsvrinit(int argc, char **argv)
 {
+    int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (SUCCEED!=tpadvertise("DOADV", DOADV))
     {
         NDRX_LOG(log_error, "Failed to initialize DOADV!");
+        ret=FAIL;
     }
     else if (SUCCEED!=tpadvertise("UNADV", UNADV))
     {
         NDRX_LOG(log_error, "Failed to initialize UNADV (first)!");
+        ret=FAIL;
     }
+    
+    return ret;
 }
 
 /**

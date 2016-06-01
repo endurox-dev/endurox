@@ -31,6 +31,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ndebug.h>
 #include <atmi.h>
 #include <ndrstandard.h>
@@ -196,12 +197,16 @@ out:
  */
 int tpsvrinit(int argc, char **argv)
 {
+    int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (SUCCEED!=tpadvertise("CONVSV", CONVSV))
     {
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
+        ret=FAIL;
     }
+    
+    return ret;
 }
 
 /**

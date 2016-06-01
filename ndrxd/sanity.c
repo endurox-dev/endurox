@@ -497,6 +497,8 @@ private int send_kill(pm_node_t *p_pm, int sig, int delta)
         NDRX_LOG(log_error, "Failed to kill PID %d with error: %s",
                 p_pm->pid, strerror(errno));
     }
+    
+    return SUCCEED;
 }
 
 /**
@@ -658,5 +660,5 @@ out:
  */
 private int check_svc_shm(void)
 {
-    
+    return SUCCEED;
 }

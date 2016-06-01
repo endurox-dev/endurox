@@ -39,6 +39,7 @@
 #include <sys/resource.h>
 #include <wait.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -50,6 +51,9 @@
 #include <cmd_processor.h>
 #include <pthread.h>
 #include <nstdutil.h>
+#include <bridge_int.h>
+#include <atmi_shm.h>
+#include <sys_unix.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -138,7 +142,7 @@ public int check_child_exit(void)
 #endif
             status->srvinfo.pid = chldpid;
 
-            if (WIFEXITED(stat_loc) && (0 == stat_loc & 0xff))
+            if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
             {
                 NDRX_LOG(log_error, "Process normal shutdown!");
                 status->srvinfo.state = NDRXD_PM_EXIT;
@@ -866,9 +870,9 @@ public int app_startup(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if (EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name) ||
+            if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    EOS==call->binary_name[0] && p_pm->autostart) /* or If full shutdown requested */
+                    (EOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
             {
                 start_process(call, p_pm, p_startup_progress, 
                         p_processes_started, FALSE, &abort);
@@ -936,7 +940,7 @@ public int app_shutdown(command_startstop_t *call,
         DL_REVFOREACH(G_process_model, p_pm, i)
         {
                 /* if particular binary shutdown requested (probably we could add some index!?) */
-            if (EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name) ||
+            if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     EOS==call->binary_name[0]) /* or If full shutdown requested */
             {
                 stop_process(call, p_pm, p_shutdown_progress, 
@@ -1062,9 +1066,9 @@ public int app_sreload(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if (EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name) ||
+            if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    EOS==call->binary_name[0] && p_pm->autostart) /* or If full shutdown requested */
+                    (EOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 

@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <unistd.h>
 
 #include <atmi.h>
 #include <ubf.h>

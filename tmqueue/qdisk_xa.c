@@ -73,6 +73,8 @@
 #include <memory.h>
 #include <math.h>
 #include <errno.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include <atmi.h>
 #include <ubf.h>
@@ -90,8 +92,8 @@
 #include "nstdutil.h"
 #include "Exfields.h"
 #include <qcommon.h>
-#include <dirent.h>
 #include <xa_cmn.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/

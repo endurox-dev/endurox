@@ -211,12 +211,16 @@ out:
  */
 int tpsvrinit(int argc, char **argv)
 {
+    int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
+        ret=FAIL;
     }
+    
+    return ret;
 }
 
 /**

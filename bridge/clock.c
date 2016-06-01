@@ -96,7 +96,7 @@ public int br_send_clock(void)
     memset(&ourtime, 0, sizeof(ourtime));
     
     cmd_generic_init(NDRXD_COM_BRCLOCK_RQ, NDRXD_SRC_BRIDGE, NDRXD_CALL_TYPE_BRBCLOCK,
-                            &ourtime, G_atmi_conf.reply_q_str);
+                            (command_call_t *)&ourtime, G_atmi_conf.reply_q_str);
     n_timer_reset(&ourtime.time);
     
     ret=br_send_to_net((char*)&ourtime, sizeof(ourtime), BR_NET_CALL_MSG_TYPE_NDRXD, 

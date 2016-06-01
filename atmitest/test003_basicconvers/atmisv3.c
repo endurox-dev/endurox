@@ -120,12 +120,17 @@ out:
  */
 int tpsvrinit(int argc, char **argv)
 {
+    int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (SUCCEED!=tpadvertise("CONVSV", CONVSV))
     {
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
+        ret=FAIL;
     }
+    
+    
+    return ret;
 }
 
 /**

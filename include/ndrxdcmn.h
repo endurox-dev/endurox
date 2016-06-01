@@ -686,6 +686,8 @@ typedef struct
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/* ATMI helpers here (to avoid header recursion): */
 extern int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
@@ -714,6 +716,21 @@ extern int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
                             int *rply_buf_out_len,          /* if above is set, then must not be null */
                             int flags,
                             int (*p_rply_request)(char *buf, long len));
+
+extern int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
+                            command_call_t *call, size_t call_size,
+                            char *reply_q,
+                            mqd_t reply_queue, /* listen for answer on this! */
+                            mqd_t admin_queue, /* this might be FAIL! */
+                            char *admin_q_str, /* should be set! */
+                            int argc, char **argv,
+                            int *p_have_next,
+                            int (*p_rsp_process)(command_reply_t *reply, size_t reply_len),
+                            void (*p_put_output)(char *text),
+                            int need_reply,
+                            int flags);
+extern void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
+                            command_call_t *call, char *reply_q);
 #ifdef	__cplusplus
 }
 #endif

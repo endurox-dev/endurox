@@ -45,6 +45,7 @@
 #include <ndrxdcmn.h>
 #include <atmi.h>
 #include <cmd_processor.h>
+#include <bridge_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -105,7 +106,7 @@ public int cmd_srvadv (command_call_t * call, char *data, size_t len, int contex
             ret=FAIL;
             goto out;
         }
-        memset(new_svc, 0, sizeof(new_svc));
+        memset((char *)new_svc, 0, sizeof(new_svc));
 
         /* Fill up details */
         strcpy(new_svc->svc.svc_nm, adv->svc_nm);
@@ -117,7 +118,7 @@ public int cmd_srvadv (command_call_t * call, char *data, size_t len, int contex
         DL_APPEND(p_pm->svcs, new_svc);
         
         /* add stuff to bridge service hash */
-        if (SUCCEED!=brd_add_svc_to_hash(new_svc))
+        if (SUCCEED!=brd_add_svc_to_hash(new_svc->svc.svc_nm))
         {
             ret=FAIL;
             goto out;

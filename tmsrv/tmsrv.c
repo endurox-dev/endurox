@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -603,6 +604,8 @@ private int tx_tout_check(void)
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
     /* return SUCCEED; */
+    
+    return SUCCEED;
 }
 
 /**

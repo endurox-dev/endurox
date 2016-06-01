@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
+#include <unistd.h>
 
 #include <atmi.h>
 #include <ubf.h>

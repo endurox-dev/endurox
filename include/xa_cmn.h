@@ -369,6 +369,7 @@ extern rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage,
                                                     char next_rmstatus);
 extern int xa_status_get_op(short txstage, char rmstatus);
 extern txstage_descriptor_t* xa_stage_get_descr(short txstage);
+extern int xa_txstage2tperrno(short txstage, int master_op);
 
 #ifdef	__cplusplus
 }

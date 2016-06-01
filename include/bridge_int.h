@@ -111,7 +111,7 @@ extern void brd_end_diff(void);
 extern void brd_begin_diff(void);
 extern void brd_send_periodrefresh(void);
 extern int brd_lock_and_update_shm(int nodeid, char *svc_nm, int count, char mode);
-
+extern int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc);
 extern int brd_del_bridge(int nodeid);
 
 #ifdef	__cplusplus

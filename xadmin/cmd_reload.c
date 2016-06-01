@@ -82,6 +82,8 @@ public int reload_rsp_process(command_reply_t *reply, size_t reply_len)
     {
         printf("OK\n");
     }
+    
+    return SUCCEED;
 }
 
 /**

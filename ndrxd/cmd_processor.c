@@ -41,6 +41,7 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <mqueue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -49,6 +50,8 @@
 
 #include <cmd_processor.h>
 #include <signal.h>
+#include <userlog.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define QUEUE_WAIT              1           /* Wait one second on queue, move to param? */

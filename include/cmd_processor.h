@@ -68,6 +68,26 @@ extern int simple_command_reply(command_call_t * call,
                         mod_param_t *mod_params),
                         long userfld1, int error_code, char *error_msg);
 
+extern int app_shutdown(command_startstop_t *call,
+        /* have some progress feedback */
+        void (*p_shutdown_progress)(command_call_t *call, pm_node_t *pm, int calltype),
+        long *p_processes_shutdown);
+
+extern int app_sreload(command_startstop_t *call,
+        void (*p_startup_progress)(command_startstop_t *call, pm_node_t *pm, int calltype),
+        void (*p_shutdown_progress)(command_call_t *call, pm_node_t *pm, int calltype),
+        long *p_processes_started);
+extern int do_respawn_check(void);
+extern int srv_send_ping (pm_node_t *p_pm);
+extern void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
+        long rcode, char *reply_to_q);
+
+extern int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
+            void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
+            long *p_processes_started,
+            int no_wait,
+            int *abort);
+
 /* cmd_config.c: */
 extern int cmd_config_load(command_call_t * call, char *data, size_t len, int context);
 

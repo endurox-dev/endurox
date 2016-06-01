@@ -100,7 +100,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         for (i=0; i<NDRX_MAX_RMS; i++)
         {
             /* Skipt not joined... */
-            if (!p_tl->rmstatus[i].rmstatus || FAIL!=rmid && i+1!=rmid)
+            if (!p_tl->rmstatus[i].rmstatus || (FAIL!=rmid && i+1!=rmid))
                 continue;
 
             NDRX_LOG(log_info, "RMID: %hd status %c", 

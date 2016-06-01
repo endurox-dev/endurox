@@ -40,6 +40,7 @@
 #include <userlog.h>
 #include <ndrxd.h>
 #include <ndrxdcmn.h>
+#include <atmi_shm.h>
 
 #include "cmd_processor.h"
 /*---------------------------Externs------------------------------------*/
@@ -234,7 +235,7 @@ public int cmd_stop (command_call_t * call, char *data, size_t len, int context)
     command_startstop_t *stop = (command_startstop_t *)call;
     long processes_shutdown=0;
     
-    ret = app_shutdown(call, shutdown_progress, &processes_shutdown);
+    ret = app_shutdown(stop, shutdown_progress, &processes_shutdown);
 
     if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
             processes_shutdown, 0, NULL))

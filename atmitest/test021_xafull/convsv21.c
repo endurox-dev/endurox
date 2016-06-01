@@ -37,6 +37,9 @@
 #include <ubf.h>
 #include <test.fd.h>
 
+
+extern int __write_to_tx_file(char *buf);
+
 void CONVSV (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
