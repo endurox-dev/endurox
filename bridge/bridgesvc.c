@@ -99,7 +99,7 @@ public int br_connected(exnetcon_t *net)
                         (command_call_t *)&gencall, sizeof(bridge_info_t),
                         G_atmi_conf.reply_q_str,
                         G_atmi_conf.reply_q,
-                        FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                         G_atmi_conf.ndrxd_q_str,
                         0, NULL,
                         NULL,
@@ -132,7 +132,7 @@ public int br_disconnected(exnetcon_t *net)
                     (command_call_t *)&gencall, sizeof(bridge_info_t),
                     G_atmi_conf.reply_q_str,
                     G_atmi_conf.reply_q,
-                    FAIL,   /* do not keep open ndrxd q open */
+                    (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                     G_atmi_conf.ndrxd_q_str,
                     0, NULL,
                     NULL,

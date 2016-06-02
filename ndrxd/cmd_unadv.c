@@ -82,7 +82,7 @@ public int cmd_xadunadv (command_call_t * call, char *data, size_t len, int cont
             (command_call_t *)&call_srv, sizeof(call_srv),
             G_command_state.listenq_str,
             G_command_state.listenq,
-            FAIL,
+            (mqd_t)FAIL,
             get_srv_admin_q(p_pm),
             0, NULL,
             NULL,

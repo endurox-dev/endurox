@@ -294,7 +294,7 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
             (command_call_t *)p_refresh, send_size,
             G_command_state.listenq_str,
             G_command_state.listenq,
-            FAIL,
+            (mqd_t)FAIL,
             get_srv_admin_q(srv),
             0, NULL,
             NULL,

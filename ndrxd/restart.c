@@ -137,7 +137,7 @@ private int request_info(char *qname)
                 &call, sizeof(call),
                 G_command_state.listenq_str,
                 G_command_state.listenq,
-                FAIL,
+                (mqd_t)FAIL,
                 qname,
                 0, NULL,
                 NULL,

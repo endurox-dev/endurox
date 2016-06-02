@@ -106,7 +106,7 @@ public int report_to_ndrxd(void)
                         (command_call_t *)status, send_size,
                         G_atmi_conf.reply_q_str,
                         G_atmi_conf.reply_q,
-                        FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                         G_atmi_conf.ndrxd_q_str,
                         0, NULL,
                         NULL,
@@ -143,7 +143,7 @@ public int unadvertse_to_ndrxd(char *svcname)
                         (command_call_t *)unadv, send_size,
                         G_atmi_conf.reply_q_str,
                         G_atmi_conf.reply_q,
-                        FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                         G_atmi_conf.ndrxd_q_str,
                         0, NULL,
                         NULL,
@@ -196,7 +196,7 @@ public int advertse_to_ndrxd(svc_entry_fn_t *entry)
                         (command_call_t *)adv, send_size,
                         G_atmi_conf.reply_q_str,
                         G_atmi_conf.reply_q,
-                        FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                         G_atmi_conf.ndrxd_q_str,
                         0, NULL,
                         NULL,
@@ -290,7 +290,7 @@ public int ndrxd_get_bridges(char *nodes_out)
                         &req, send_size,
                         entry->listen_q,
                         entry->q_descr,
-                        FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                         G_atmi_conf.ndrxd_q_str,
                         0, NULL,
                         NULL,
@@ -351,7 +351,7 @@ public int pingrsp_to_ndrxd(command_srvping_t *ping)
                         (command_call_t *)ping, sizeof(*ping),
                         G_atmi_conf.reply_q_str,
                         G_atmi_conf.reply_q,
-                        FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
                         G_atmi_conf.ndrxd_q_str,
                         0, NULL,
                         NULL,

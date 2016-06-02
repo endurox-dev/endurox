@@ -107,7 +107,7 @@ public mqd_t ex_mq_open_with_registry(const char *name, int oflag, mode_t mode, 
             }
             else
             {
-                ret=FAIL;
+                ret=(mqd_t)FAIL;
                 errno = err;
                 NDRX_LOG(log_error, "Removing queue...");
                 if (SUCCEED!=mq_unlink(name))
