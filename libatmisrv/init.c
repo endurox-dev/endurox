@@ -362,7 +362,7 @@ public void un_initialize(void)
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
         /* just close it, no error check */
-        if(SUCCEED!=mq_close(G_server_conf.service_array[i]->q_descr))
+        if(SUCCEED!=ex_mq_close(G_server_conf.service_array[i]->q_descr))
         {
 
             NDRX_LOG(log_error, "Failed to close q descr %d: %d/%s",
@@ -374,7 +374,7 @@ public void un_initialize(void)
             NDRX_LOG(log_debug, "Removing queue: %s",
                                 G_server_conf.service_array[i]->listen_q);
 
-            if (SUCCEED!=mq_unlink(G_server_conf.service_array[i]->listen_q))
+            if (SUCCEED!=ex_mq_unlink(G_server_conf.service_array[i]->listen_q))
             {
                 NDRX_LOG(log_error, "Failed to remove queue %s: %d/%s",
                                         G_server_conf.service_array[i]->listen_q,

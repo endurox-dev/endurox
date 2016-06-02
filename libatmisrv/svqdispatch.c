@@ -106,7 +106,7 @@ public int sv_open_queue(void)
         }
         
         /* Open the queue */
-        entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
+        entry->q_descr = ndrx_ex_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
                 O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
         
         /*
@@ -1006,7 +1006,7 @@ public int sv_wait_for_request(void)
                 continue;
             }
             
-            if (FAIL==(len=mq_receive (evmqd,
+            if (FAIL==(len=ex_mq_receive (evmqd,
                 (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
             {
                 if (EAGAIN==errno)
@@ -1021,7 +1021,7 @@ public int sv_wait_for_request(void)
                 else
                 {
                     ret=FAIL;
-                    _TPset_error_fmt(TPEOS, "mq_receive failed: %s", strerror(errno));
+                    _TPset_error_fmt(TPEOS, "ex_mq_receive failed: %s", strerror(errno));
                 }
             }
             else

@@ -416,8 +416,8 @@ extern int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
 extern long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
 extern int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
 
-extern mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
-extern mqd_t ndrx_mq_open(const char *name, int oflag);
+extern mqd_t ndrx_ex_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
+extern mqd_t ndrx_ex_mq_open(const char *name, int oflag);
 extern void ndrx_mq_fix_mass_send(int *cntr);
 extern int ndrx_q_setblock(mqd_t q_descr, int blocked);
 

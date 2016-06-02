@@ -158,7 +158,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_NOTIFY:
             
             /* request for printing active transactions */
-            if (SUCCEED!=tmq_notify(p_ub))
+            if (SUCCEED!=tex_mq_notify(p_ub))
             {
                 FAIL_OUT(ret);
             }

@@ -177,11 +177,11 @@ private int cmd_open_queue(void)
     int ret=SUCCEED;
 
     /* Unlink previous admin queue (if have such) - ignore any error */
-    mq_unlink(G_command_state.listenq_str);
+    ex_mq_unlink(G_command_state.listenq_str);
     NDRX_LOG(log_debug, "About to open deamon queue: [%s]",
                                         G_command_state.listenq_str);
     /* Open new queue (non blocked, so  that we do not get deadlock on batch deaths! */
-    if ((mqd_t)FAIL==(G_command_state.listenq = ndrx_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
+    if ((mqd_t)FAIL==(G_command_state.listenq = ndrx_ex_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
@@ -206,14 +206,14 @@ public int cmd_close_queue(void)
 {
     int ret=SUCCEED;
 
-    if (SUCCEED!=mq_close(G_command_state.listenq))
+    if (SUCCEED!=ex_mq_close(G_command_state.listenq))
     {
         NDRX_LOG(log_error, "Failed to close: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
     }
 
     /* Unlink previous admin queue (if have such) - ignore any error */
-    if (SUCCEED!=mq_unlink(G_command_state.listenq_str))
+    if (SUCCEED!=ex_mq_unlink(G_command_state.listenq_str))
     {
             NDRX_LOG(log_error, "Failed to unlink: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
@@ -252,9 +252,9 @@ public int get_cmdq_attr(struct mq_attr *attr)
 {
     int ret=SUCCEED;
     
-    if (FAIL==mq_getattr(G_command_state.listenq, attr))
+    if (FAIL==ex_mq_getattr(G_command_state.listenq, attr))
     {
-        NDRX_LOG(log_error, "Failed to mq_getattr on cmd q: %s", 
+        NDRX_LOG(log_error, "Failed to ex_mq_getattr on cmd q: %s", 
                 strerror(errno));
         ret=FAIL;
     }
@@ -323,7 +323,7 @@ public int command_wait_and_run(int *finished, int *abort)
     /* Change to blocked, if not already! */
     ndrx_q_setblock(G_command_state.listenq, TRUE);
     
-    if (FAIL==(data_len = mq_timedreceive (G_command_state.listenq,
+    if (FAIL==(data_len = ex_mq_timedreceive (G_command_state.listenq,
                     msg_buffer_max, buf_max, &prio, &abs_timeout)))
     {
         error = errno;
@@ -340,7 +340,7 @@ public int command_wait_and_run(int *finished, int *abort)
 
     if (FAIL==data_len && EINTR==error)
     {
-        NDRX_LOG(log_warn, "mq_timedreceive got interrupted!");
+        NDRX_LOG(log_warn, "ex_mq_timedreceive got interrupted!");
         ret=SUCCEED;
         goto out;
     }
@@ -356,7 +356,7 @@ public int command_wait_and_run(int *finished, int *abort)
                                 "issuing re-init",
                                 G_command_state.listenq_str, error, strerror(error));
 
-        mq_close(G_command_state.listenq);
+        ex_mq_close(G_command_state.listenq);
 
         if (FAIL==cmd_open_queue())
         {

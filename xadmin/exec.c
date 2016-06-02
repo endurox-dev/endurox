@@ -103,7 +103,7 @@ public int is_ndrxd_running(void)
 
     /* Check queue first  */
     if ((mqd_t)FAIL==G_config.ndrxd_q)
-        G_config.ndrxd_q = ndrx_mq_open (G_config.ndrxd_q_str, O_WRONLY);
+        G_config.ndrxd_q = ndrx_ex_mq_open (G_config.ndrxd_q_str, O_WRONLY);
 
     if ((mqd_t)FAIL==G_config.ndrxd_q)
     {
@@ -169,7 +169,7 @@ out:
         fprintf(stderr, "EnduroX back-end (ndrxd) is not running\n");
         if ((mqd_t)FAIL!=G_config.ndrxd_q)
         {
-            mq_close(G_config.ndrxd_q);
+            ex_mq_close(G_config.ndrxd_q);
             G_config.ndrxd_q = (mqd_t)FAIL;
             
             if (ex_chk_ndrxd())
@@ -184,7 +184,7 @@ out:
             {
                 /* remove resources as ndrxd is not running */
                 fprintf(stderr, "ndrxd is not running - system cleanup\n");
-                mq_unlink(G_config.ndrxd_q_str);
+                ex_mq_unlink(G_config.ndrxd_q_str);
             }
         }
     }

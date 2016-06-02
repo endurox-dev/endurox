@@ -107,11 +107,11 @@ public int load_env_config(void)
     sprintf(G_config.reply_queue_str, NDRX_NDRXCLT, G_config.qprefix, getpid());
 
     /* Unlink previous admin queue (if have such) - ignore any error */
-    mq_unlink(G_config.reply_queue_str);
+    ex_mq_unlink(G_config.reply_queue_str);
     NDRX_LOG(log_debug, "About to open reply queue: [%s]",
                                         G_config.reply_queue_str);
     /* Open new queue... */
-    if ((mqd_t)FAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
+    if ((mqd_t)FAIL==(G_config.reply_queue = ndrx_ex_mq_open_at(G_config.reply_queue_str,
                                         O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {

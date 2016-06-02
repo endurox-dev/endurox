@@ -83,7 +83,7 @@ extern int G_max_svcs;
 /* This prints info about q descriptor X */
 #define PRINT_Q_INFO(X)             { struct mq_attr __attr;\
             memset((char *)&__attr, 0, sizeof(__attr));\
-            mq_getattr(X, &__attr);\
+            ex_mq_getattr(X, &__attr);\
             NDRX_LOG(log_error, "mq_flags=%ld mq_maxmsg=%ld mq_msgsize=%ld mq_curmsgs=%ld",\
                                 __attr.mq_flags, __attr.mq_maxmsg, __attr.mq_msgsize, __attr.mq_curmsgs);}
 /*---------------------------Enums--------------------------------------*/
@@ -128,7 +128,7 @@ public int ndrx_q_setblock(mqd_t q_descr, int blocked)
     struct mq_attr old;
     int change = FALSE;
     
-    if (SUCCEED!= mq_getattr(q_descr, &old))
+    if (SUCCEED!= ex_mq_getattr(q_descr, &old))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d, err: %s", 
                 q_descr, strerror(errno));
@@ -155,7 +155,7 @@ public int ndrx_q_setblock(mqd_t q_descr, int blocked)
     
     if (change)
     {
-        if (FAIL==mq_setattr(q_descr, &new,
+        if (FAIL==ex_mq_setattr(q_descr, &new,
                             &old))
         {
             NDRX_LOG(log_error, "Failed to set attribs for qd %d: %s", 
@@ -176,7 +176,7 @@ out:
  * @param attr
  * @return
  */
-public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
+public mqd_t ndrx_ex_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
 {
     struct mq_attr attr_int;
     struct mq_attr * p_at;
@@ -199,7 +199,7 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq
 
     /*NDRX_LOG(log_debug, "mq_maxmsg: %d mq_msgsize: %d",
                                        p_at->mq_maxmsg, p_at->mq_msgsize);*/
-    return mq_open(name, oflag, mode, p_at);
+    return ex_mq_open(name, oflag, mode, p_at);
 }
 
 /**
@@ -208,10 +208,10 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq
  * @param oflag
  * @return
  */
-public mqd_t ndrx_mq_open(const char *name, int oflag)
+public mqd_t ndrx_ex_mq_open(const char *name, int oflag)
 {
     
-    return ndrx_mq_open_at(name, oflag, 0, NULL);
+    return ndrx_ex_mq_open_at(name, oflag, 0, NULL);
 }
 
 /**
@@ -235,12 +235,12 @@ public int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 restart:
 
     SET_TOUT_VALUE;
-    if ((!use_tout && FAIL==mq_send(q_descr, data, len, 0)) ||
-         (use_tout && FAIL==mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if ((!use_tout && FAIL==ex_mq_send(q_descr, data, len, 0)) ||
+         (use_tout && FAIL==ex_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting mq_send");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_send");
             goto restart;
         }
         else if (EAGAIN==errno)
@@ -298,11 +298,11 @@ public int generic_q_send_2(char *queue, char *data, long len, long flags, long 
     /* open the queue */
     /* Restart until we do not get the signal */
 restart_open:
-    q_descr = ndrx_mq_open (queue, O_WRONLY | add_flags);
+    q_descr = ndrx_ex_mq_open (queue, O_WRONLY | add_flags);
 
     if ((mqd_t)FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
     {
-        NDRX_LOG(log_warn, "Got signal interrupt, restarting mq_open");
+        NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_open");
         goto restart_open;
     }
     
@@ -334,13 +334,13 @@ restart_send:
 
     NDRX_LOG(6, "use timeout: %d config: %d", 
                 use_tout, G_atmi_env.time_out);
-    if ((!use_tout && FAIL==mq_send(q_descr, data, len, 0)) ||
-         (use_tout && FAIL==mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if ((!use_tout && FAIL==ex_mq_send(q_descr, data, len, 0)) ||
+         (use_tout && FAIL==ex_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting mq_send");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_send");
             goto restart_send;
         }
         else if (EAGAIN==errno)
@@ -353,11 +353,11 @@ restart_send:
 
 restart_close:
     /* Generally we ingore close */
-    if (FAIL==mq_close(q_descr))
+    if (FAIL==ex_mq_close(q_descr))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting mq_close");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_close");
             goto restart_close;
         }
     }
@@ -384,12 +384,12 @@ public long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *
 restart:
     SET_TOUT_VALUE;
     NDRX_LOG(6, "use timeout: %d config: %d", use_tout, G_atmi_env.time_out);
-    if ((!use_tout && FAIL==(ret=mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
-         (use_tout && FAIL==(ret=mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
+    if ((!use_tout && FAIL==(ret=ex_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
+         (use_tout && FAIL==(ret=ex_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting mq_receive");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_receive");
             goto restart;
         }
         /* save the errno, so that no one changes */
@@ -406,7 +406,7 @@ restart:
             CONV_ERROR_CODE(ret, err);
 
             ret=FAIL;
-            _TPset_error_fmt(err, "mq_receive failed: %s", strerror(errno));
+            _TPset_error_fmt(err, "ex_mq_receive failed: %s", strerror(errno));
         }
     }
     return ret;
@@ -861,7 +861,7 @@ public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
     mqd_t q_descr=(mqd_t)FAIL;
     
     /* read the stats of the queue */
-    if ((mqd_t)FAIL==(q_descr = ndrx_mq_open(q, 0)))
+    if ((mqd_t)FAIL==(q_descr = ndrx_ex_mq_open(q, 0)))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: [%s], err: %s", 
                 q, strerror(errno));
@@ -869,7 +869,7 @@ public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
     }
 
     /* read the attributes of the Q */
-    if (SUCCEED!= mq_getattr(q_descr, p_att))
+    if (SUCCEED!= ex_mq_getattr(q_descr, p_att))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d, err: %s", 
                 q_descr, strerror(errno));
@@ -880,7 +880,7 @@ out:
     
     if ((mqd_t)FAIL!=q_descr)
     {
-        mq_close(q_descr);
+        ex_mq_close(q_descr);
     }
 
     return ret;

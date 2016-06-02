@@ -210,7 +210,7 @@ private int signal_handle_event(void)
             struct mq_attr att;
 
             /* read the attributes of the Q */
-            if (SUCCEED!= mq_getattr(m->mqd, &att))
+            if (SUCCEED!= ex_mq_getattr(m->mqd, &att))
             {
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d (%s)",  
                         m->mqd, strerror(errno));
@@ -291,12 +291,12 @@ private int signal_install_notifications_all(ex_epoll_set_t *s)
     
     HASH_ITER(hh, s->mqds, m, mtmp)
     {
-        if (FAIL==mq_notify(m->mqd, &m->sev))
+        if (FAIL==ex_mq_notify(m->mqd, &m->sev))
         {
             int err = errno;
 	    if (EBUSY!=err)
 	    {
-                NDRX_LOG(log_warn, "mq_notify failed: %d (%s) - nothing to do", 
+                NDRX_LOG(log_warn, "ex_mq_notify failed: %d (%s) - nothing to do", 
                     m->mqd, strerror(err));
 	    }
         }
@@ -395,14 +395,14 @@ public void ex_epoll_sys_uninit(void)
  * TODO: we need to lock the ex_epoll sets as we do the lookup in thread.
  * @param sv
  */
-private void ex_mq_notify_func(union sigval sv)
+private void ex_ex_mq_notify_func(union sigval sv)
 {
     mqd_t mqdes = *((mqd_t *) sv.sival_ptr);
 
     ex_epoll_set_t *s, *stmp;
     ex_epoll_mqds_t* mqd_h;
 
-    NDRX_LOG(log_debug, "ex_mq_notify_func() called mqd %d\n", mqdes);
+    NDRX_LOG(log_debug, "ex_ex_mq_notify_func() called mqd %d\n", mqdes);
 
     MUTEX_LOCK_V(M_psets_lock);
 
@@ -430,7 +430,7 @@ private void ex_mq_notify_func(union sigval sv)
 
     /* Install handler back */
 
-    if (FAIL==mq_notify(mqdes, &mqd_h->sev))
+    if (FAIL==ex_mq_notify(mqdes, &mqd_h->sev))
     {
         NDRX_LOG(log_error, "Failed to register notification for mqd %d (%s)!!!", 
                 mqdes, strerror(errno));
@@ -702,11 +702,11 @@ public int ex_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ex_epoll_event *e
 #else
         
         tmp->sev.sigev_notify = SIGEV_THREAD;
-        tmp->sev.sigev_notify_function = ex_mq_notify_func;
+        tmp->sev.sigev_notify_function = ex_ex_mq_notify_func;
         tmp->sev.sigev_notify_attributes = NULL;
         tmp->sev.sigev_value.sival_ptr = &tmp->mqd;
         
-        if (FAIL==mq_notify(mqd, &tmp->sev))
+        if (FAIL==ex_mq_notify(mqd, &tmp->sev))
         {
             ex_epoll_set_err(errno, "Failed to register notification for mqd %d", mqd);
             FAIL_OUT(ret);
@@ -988,7 +988,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
             struct mq_attr att;
 
             /* read the attributes of the Q */
-            if (SUCCEED!= mq_getattr(m->mqd, &att))
+            if (SUCCEED!= ex_mq_getattr(m->mqd, &att))
             {
                 ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
@@ -1091,7 +1091,7 @@ public int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents,
 		    struct mq_attr att;
 	   /* read the attributes of the Q */
 	  /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
-            if (SUCCEED!= mq_getattr(mqdes, &att))
+            if (SUCCEED!= ex_mq_getattr(mqdes, &att))
             {
                 /*ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);

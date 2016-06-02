@@ -482,7 +482,7 @@ out:
  * @param p_ub
  * @return 
  */
-public int tmq_notify(UBFH *p_ub)
+public int tex_mq_notify(UBFH *p_ub)
 {
     int ret = SUCCEED;
     union tmq_upd_block b;

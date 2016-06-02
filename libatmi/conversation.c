@@ -116,7 +116,7 @@ private int setup_queue_attrs(struct mq_attr *p_q_attr,
 
     if (change_flags)
     {
-        if (FAIL==mq_setattr(listen_q, &new,
+        if (FAIL==ex_mq_setattr(listen_q, &new,
                             p_q_attr))
         {
             _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
@@ -282,7 +282,7 @@ out:
     /* Close down the queue if we fail but queue was opened! */
     if (SUCCEED!=ret && q_opened)
     {
-        if (FAIL==mq_close(conv->my_listen_q))
+        if (FAIL==ex_mq_close(conv->my_listen_q))
         {
             NDRX_LOG(log_warn, "Failed to close %s:%s",
                         conv->my_listen_q_str, strerror(errno));
@@ -343,22 +343,22 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     NDRX_LOG(log_debug, "%s: Closing [%s]", fn, conv->my_listen_q_str);
 
     /* close down the queue */
-    if (SUCCEED!=mq_close(conv->my_listen_q))
+    if (SUCCEED!=ex_mq_close(conv->my_listen_q))
     {
-        NDRX_LOG(log_warn, "%s: Failed to mq_close [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ex_mq_close [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to mq_close [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_close [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
        /* ret=FAIL;
         goto out; */
     }
     
     /* Remove the queue */
-    if (killq && SUCCEED!=mq_unlink(conv->my_listen_q_str))
+    if (killq && SUCCEED!=ex_mq_unlink(conv->my_listen_q_str))
     {
-        NDRX_LOG(log_warn, "%s: Failed to mq_unlink [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ex_mq_unlink [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to mq_unlink [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_unlink [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
         /* ret=FAIL;
         goto out; */
@@ -369,11 +369,11 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     NDRX_LOG(log_debug, "%s: Closing [%s]", fn, conv->reply_q_str);
 
     /* close down the queue */
-    if (SUCCEED!=mq_close(conv->reply_q))
+    if (SUCCEED!=ex_mq_close(conv->reply_q))
     {
-        NDRX_LOG(log_warn, "%s: Failed to mq_close [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ex_mq_close [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to mq_close [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_close [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
        /* ret=FAIL;
         goto out; */
@@ -381,11 +381,11 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     
     /* Remove the queue */
     NDRX_LOG(log_warn, "UNLINKING: %s %d", conv->reply_q_str, killq);
-    if (killq && SUCCEED!=mq_unlink(conv->reply_q_str))
+    if (killq && SUCCEED!=ex_mq_unlink(conv->reply_q_str))
     {
-        NDRX_LOG(log_warn, "%s: Failed to mq_unlink [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ex_mq_unlink [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to mq_unlink [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_unlink [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
         /* ret=FAIL;
         goto out; */
@@ -468,7 +468,7 @@ private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
     mqd_t ret=(mqd_t)FAIL;
     char fn[] = "open_conv_q";
 
-    ret = ndrx_mq_open_at (q, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR, NULL);
+    ret = ndrx_ex_mq_open_at (q, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR, NULL);
 
     if ((mqd_t)FAIL==ret)
     {
@@ -477,14 +477,14 @@ private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
     }
 
         /* read queue attributes */
-    if (FAIL==mq_getattr(ret, q_attr))
+    if (FAIL==ex_mq_getattr(ret, q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                                 fn, q, ret, strerror(errno));
         /* close queue */
-        mq_close(ret);
+        ex_mq_close(ret);
         /* unlink the queue */
-        mq_unlink(q);
+        ex_mq_unlink(q);
 
         ret=(mqd_t)FAIL;
         goto out;
@@ -506,7 +506,7 @@ private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
     mqd_t ret=(mqd_t)FAIL;
     char fn[] = "open_reply_q";
 
-    ret = ndrx_mq_open_at (q, O_RDWR, S_IWUSR | S_IRUSR, NULL);
+    ret = ndrx_ex_mq_open_at (q, O_RDWR, S_IWUSR | S_IRUSR, NULL);
 
     if ((mqd_t)FAIL==ret)
     {
@@ -515,16 +515,16 @@ private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
     }
 
     /* read queue attributes */
-    if (FAIL==mq_getattr(ret, q_attr))
+    if (FAIL==ex_mq_getattr(ret, q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                                 fn, q, ret, strerror(errno));
 #if 0
         /* We cannot remove their Q!!! */
         /* close queue */
-        mq_close(ret);
+        ex_mq_close(ret);
         /* unlink the queue */
-        mq_unlink(q);
+        ex_mq_unlink(q);
 #endif
         ret=(mqd_t)FAIL;
         goto out;

@@ -181,9 +181,9 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         }
         
         /* Now close the FD */
-        if (SUCCEED!=mq_close(ent->q_descr))
+        if (SUCCEED!=ex_mq_close(ent->q_descr))
         {
-            _TPset_error_fmt(TPEOS, "mq_close failed to close fd %d: %s", 
+            _TPset_error_fmt(TPEOS, "ex_mq_close failed to close fd %d: %s", 
                     ent->q_descr, strerror(errno));
             ret=FAIL;
             goto out;
@@ -363,7 +363,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     }
 
     /* Open the queue */
-    entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, O_RDWR | O_CREAT | O_NONBLOCK, 
+    entry_new->q_descr = ndrx_ex_mq_open_at (entry_new->listen_q, O_RDWR | O_CREAT | O_NONBLOCK, 
                                             S_IWUSR | S_IRUSR, NULL);
     /*
      * Check are we ok or failed?

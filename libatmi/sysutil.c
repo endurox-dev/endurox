@@ -417,7 +417,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
         /* Parse out process name & pid */
         NDRX_LOG(log_warn, "Removing q: [%s]", elt->qname);
 
-        if (SUCCEED!=mq_unlink(elt->qname))
+        if (SUCCEED!=ex_mq_unlink(elt->qname))
         {
             NDRX_LOG(log_error, "failed to remove q [%s]: %s",
                     elt->qname, strerror(errno));
