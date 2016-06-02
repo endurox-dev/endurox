@@ -151,6 +151,7 @@ extern void ex_string_list_free(string_list_t* list);
 
 extern char *ex_sys_get_cur_username(void);
 extern string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
+extern string_list_t* ex_sys_folder_list(char *path, int *return_status);
 #ifdef	__cplusplus
 }
 #endif

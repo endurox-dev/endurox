@@ -13,6 +13,9 @@
 
 #cmakedefine HAVE_PROGNAME @HAVE_PROGNAME@
 
+/* Use FS based registry for mq */
+#cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
+
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_INT @SIZEOF_INT@
 

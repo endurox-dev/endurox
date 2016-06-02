@@ -1,7 +1,7 @@
 /* 
 ** AIX Abstraction Layer (AAL)
 **
-** @file sys_linux.c
+** @file sys_aix.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -50,9 +50,7 @@
 #include <ndebug.h>
 #include <nstdutil.h>
 #include <limits.h>
-
 #include <sys_unix.h>
-
 #include <utlist.h>
 
 
@@ -65,78 +63,10 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Return the list of queues (build the list according to /tmp/.MQD files.
- * e.g ".MQPn00b,srv,admin,atmi.sv1,123,2229" translates as
- * "/n00b,srv,admin,atmi.sv1,123,2229")
- * the qpath must point to /tmp
+ * Return list of message queues (actually it is list of named pipes
+ * as work around for missing posix queue listing functions.
  */
 public string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
 {
-    string_list_t* ret = NULL;
-    struct dirent **namelist;
-    int n;
-    string_list_t* tmp;
-    int len;
-    
-    *return_status = SUCCEED;
-    
-    n = scandir(qpath, &namelist, 0, alphasort);
-    if (n < 0)
-    {
-        NDRX_LOG(log_error, "Failed to open queue directory: %s", 
-                strerror(errno));
-        goto exit_fail;
-    }
-    else 
-    {
-        while (n--)
-        {
-            if (0==strcmp(namelist[n]->d_name, ".") || 
-                        0==strcmp(namelist[n]->d_name, "..") ||
-                        0!=strncmp(namelist[n]->d_name, ".MQP", 4))
-                continue;
-            
-            len = strlen(namelist[n]->d_name) -3 /*.MQP*/ + 1 /* EOS */;
-            
-            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
-            {
-                NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
-                        sizeof(string_list_t), strerror(errno));
-                
-                
-                goto exit_fail;
-            }
-            
-            if (NULL==(tmp->qname = malloc(len)))
-            {
-                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
-                        len, strerror(errno));
-                free(tmp);
-                goto exit_fail;
-            }
-            
-            strcpy(tmp->qname, "/");
-            strcat(tmp->qname, namelist[n]->d_name+4); /* strip off .MQP */
-            
-            /* Add to LL */
-            LL_APPEND(ret, tmp);
-            
-            free(namelist[n]);
-        }
-        free(namelist);
-    }
-    
-    return ret;
-    
-exit_fail:
-
-    *return_status = FAIL;
-
-    if (NULL!=ret)
-    {
-        ex_string_list_free(ret);
-        ret = NULL;
-    }
-
-    return ret;   
+    return ex_sys_folder_list(qpath, return_status);
 }

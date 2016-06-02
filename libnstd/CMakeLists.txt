@@ -53,17 +53,19 @@ if (${CMAKE_OS_NAME} MATCHES "LINUX")
     #SET(NSTD_SYS "sys_linux.c")
     SET(NSTD_SYS "sys_genunix.c")
     SET(NSTD_SYS_2 "sys_aix.c")
+    SET(NSTD_SYS_3 "sys_posixq.c")
 elseif (${CMAKE_OS_NAME} MATCHES "SUNOS")
     SET(NSTD_SYS "sys_genunix.c")
     SET(NSTD_SYS_2 "sys_solaris.c")
 elseif (${CMAKE_OS_NAME} MATCHES "AIX")
     SET(NSTD_SYS "sys_genunix.c")
     SET(NSTD_SYS_2 "sys_aix.c")
+    SET(NSTD_SYS_3 "sys_posixq.c")
 endif ()
 
 
 add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c ${NSTD_POLLER} ${NSTD_SYS}
-                            sys_common.c ${NSTD_SYS_2})
+                            sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3})
 
 install (TARGETS 
     nstd 

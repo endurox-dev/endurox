@@ -46,11 +46,27 @@ extern "C" {
 #define  ex_mq_close        mq_close
 #define  ex_mq_getattr      mq_getattr
 #define  ex_mq_notify       mq_notify
-#define  ex_mq_open         mq_open
 #define  ex_mq_receive      mq_receive
 #define  ex_mq_send         mq_send
 #define  ex_mq_setattr      mq_setattr
+    
+#if USE_FS_REGISTRY
+
+extern mqd_t ex_mq_open_with_registry(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
+extern int ex_mq_unlink_with_registry (const char *name);
+
+#define  ex_mq_open         ex_mq_open_with_registry
+#define  ex_mq_unlink       ex_mq_unlink_with_registry
+
+#else
+    
+#define  ex_mq_open         mq_open
 #define  ex_mq_unlink       mq_unlink
+    
+    
+#endif
+    
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

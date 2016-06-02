@@ -44,6 +44,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -201,29 +202,89 @@ out:
  */
 public char *ex_sys_get_cur_username(void)
 {
-/*
-    static __thread char username[256] = {EOS};
-    
-    if (EOS==username[0])
+    uid_t uid = geteuid();
+    struct passwd *pw = getpwuid(uid);
+    if (pw)
     {
-        if (SUCCEED!=getlogin_r(username, sizeof(username)))
+        return pw->pw_name;
+    }
+
+    return "";
+}
+
+/**
+ * List the contents of the folder
+ */
+public string_list_t* ex_sys_folder_list(char *path, int *return_status)
+{
+    string_list_t* ret = NULL;
+    struct dirent **namelist;
+    int n;
+    string_list_t* tmp;
+    int len;
+    
+    *return_status = SUCCEED;
+    
+    n = scandir(path, &namelist, 0, alphasort);
+    if (n < 0)
+    {
+        NDRX_LOG(log_error, "Failed to open queue directory: %s", 
+                strerror(errno));
+        goto exit_fail;
+    }
+    else 
+    {
+        while (n--)
         {
-            NDRX_LOG(log_error, "Failed to get username: %s", strerror(errno));
+            if (0==strcmp(namelist[n]->d_name, ".") || 
+                        0==strcmp(namelist[n]->d_name, ".."))
+                continue;
+            
+            len = 1 /* / */ + strlen(namelist[n]->d_name) + 1 /* EOS */;
+            
+            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+            {
+                NDRX_LOG(log_always, "alloc of mq_list_t (%d) failed: %s", 
+                        sizeof(string_list_t), strerror(errno));
+                
+                
+                goto exit_fail;
+            }
+            
+            if (NULL==(tmp->qname = malloc(len)))
+            {
+                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
+                        len, strerror(errno));
+                free(tmp);
+                goto exit_fail;
+            }
+            
+            
+            strcpy(tmp->qname, "/");
+            strcat(tmp->qname, namelist[n]->d_name);
+            
+            /* Add to LL */
+            LL_APPEND(ret, tmp);
+            
+            free(namelist[n]);
         }
+        free(namelist);
     }
     
-    return username; 
-*/
+    return ret;
+    
+exit_fail:
 
-  uid_t uid = geteuid();
-  struct passwd *pw = getpwuid(uid);
-  if (pw)
-  {
-    return pw->pw_name;
-  }
+    *return_status = FAIL;
 
-  return "";
+    if (NULL!=ret)
+    {
+        ex_string_list_free(ret);
+        ret = NULL;
+    }
 
+    return ret;   
 }
+
 
 
