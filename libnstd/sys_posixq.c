@@ -1,7 +1,7 @@
 /* 
-** Epoll Abstraction Layer (EAL)
+** Posix queues support
 **
-** @file sys_epoll.c
+** @file sys_posixq.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -50,10 +50,6 @@
 #include <nstdutil.h>
 #include <limits.h>
 
-#include <sys_unix.h>
-#include <sys/epoll.h>
-
-
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -61,106 +57,4 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Nothing to init for epoll()
- */
-public inline void ex_epoll_sys_init(void)
-{
-	return;
-}
-
-/**
- * Nothing to un-init for epoll()
- */
-public inline void ex_epoll_sys_uninit(void)
-{
-	return;
-}
-
-/**
- * Return the compiled poll mode
- * @return 
- */
-public inline char * ex_epoll_mode(void)
-{
-    static char *mode = "epoll";
-    
-    return mode;
-}
-/**
- * Wrapper for epoll_ctl, for standard file descriptors
- * @param epfd
- * @param op
- * @param fd
- * @param event
- * @return 
- */
-public inline int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
-{
-    return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
-}
-
-/**
- * epoll_ctl for Posix queue descriptors
- * @param epfd
- * @param op
- * @param fd
- * @param event
- * @return 
- */
-public inline int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event)
-{
-    return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
-}
-
-/**
- * Wrapper for epoll_create
- * @param size
- * @return 
- */
-public inline int ex_epoll_create(int size)
-{
-    return epoll_create(size);
-}
-
-/**
- * Close Epoll set.
- */
-public inline int ex_epoll_close(int fd)
-{
-    return close(fd);
-}
-
-/**
- * Wrapper for epoll_wait
- * @param epfd
- * @param events
- * @param maxevents
- * @param timeout
- * @return 
- */
-public inline int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout)
-{
-    return epoll_wait(epfd, (struct epoll_event *) events, maxevents, timeout);
-}
-
-/**
- * Return errno for ex_poll() operation
- * @return 
- */
-public inline int ex_epoll_errno(void)
-{
-    return errno;
-}
-
-/**
- * Wrapper for strerror
- * @param err
- * @return 
- */
-public inline char * ex_poll_strerror(int err)
-{
-    return strerror(err);
-}
 
