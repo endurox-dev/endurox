@@ -182,6 +182,7 @@ public int check_child_exit(void)
     }
 
     pthread_mutex_unlock(&M_mutex);
+    signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
     
     return ret;
 }
@@ -210,7 +211,7 @@ void sign_chld_handler(int sig)
      * causes lockups.
      */
     NDRX_LOG(log_warn, "Got sigchld...");
-    signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
+   /* signal(SIGCHLD, sign_chld_handler);  reset back handler... causes loops on aix.. */
      
     check_child_exit();
     /* DO in new thread? */
