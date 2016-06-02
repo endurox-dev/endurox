@@ -40,7 +40,7 @@ extern "C" {
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <ndrstandard.h>
 
 #ifdef EX_USE_EPOLL

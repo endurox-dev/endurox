@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <xa.h>
 #include <atmi.h>
 #include <ndrxdcmn.h>

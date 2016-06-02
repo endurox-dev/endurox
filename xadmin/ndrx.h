@@ -39,7 +39,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <sys/param.h>
 #include <atmi.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <signal.h>
 
 #include <ndrxdcmn.h>

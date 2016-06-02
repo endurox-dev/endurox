@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <errno.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>

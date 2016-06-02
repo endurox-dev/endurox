@@ -33,7 +33,7 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <setjmp.h>

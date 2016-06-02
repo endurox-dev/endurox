@@ -34,9 +34,9 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <sys/param.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>

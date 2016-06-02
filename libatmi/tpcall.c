@@ -38,7 +38,7 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <fcntl.h>
 
 #include <atmi.h>

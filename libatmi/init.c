@@ -38,7 +38,7 @@
 #include <semaphore.h>
 #include <memory.h>
 #include <unistd.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <errno.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
@@ -47,7 +47,7 @@
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <userlog.h>
 #include <tperror.h>
 #include <xa_cmn.h>

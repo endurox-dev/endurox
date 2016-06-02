@@ -41,7 +41,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>

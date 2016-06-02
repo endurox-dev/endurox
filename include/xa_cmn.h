@@ -38,7 +38,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdint.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <xa.h>
     
 #include <ndrxdcmn.h>

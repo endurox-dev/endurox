@@ -37,7 +37,7 @@
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 
 #include "atmi_shm.h"
 

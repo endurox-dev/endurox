@@ -39,7 +39,7 @@
 
 /* Mqueue: */
 #include <fcntl.h>           /* For O_* constants */
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 

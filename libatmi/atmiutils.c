@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <errno.h>
 #include <sys/param.h>
 #include <unistd.h>

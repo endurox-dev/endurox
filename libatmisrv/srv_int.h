@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <atmi.h>
 #include <setjmp.h>
 #include <ndrxdcmn.h>
