@@ -278,7 +278,7 @@ private void * signal_process(void *arg)
     }
     
 out:
-    return;
+    return NULL;
 }
     
 /**
