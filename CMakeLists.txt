@@ -62,10 +62,9 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
 
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 	ADD_DEFINITIONS(-DEX_OS_AIX)
-        ADD_DEFINITIONS(-DUSE_FS_REGISTRY)
         # For AIX we do not have other options that use file system
         # base queue registry.
-        set(USE_FS_REGISTRY, "ON")
+        set(USE_FS_REGISTRY "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
 	ADD_DEFINITIONS(-DEX_OS_HPUX)
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")

@@ -113,6 +113,7 @@ public int check_child_exit(void)
     struct rusage rusage;
     int ret=FALSE;
     char buf[ATMI_MSG_MAX_SIZE];
+    int i;
     srv_status_t *status = (srv_status_t *)buf;
 
     memset(buf, 0, sizeof(buf));
@@ -120,6 +121,10 @@ public int check_child_exit(void)
 
     pthread_mutex_lock(&M_mutex);
 
+#ifdef EX_OS_AIX
+    for (i=0; i<2; i++)
+    {
+#endif
     while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
     {
         NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
@@ -129,16 +134,6 @@ public int check_child_exit(void)
             NDRX_LOG(log_warn, "Process is stopped - ignore..");
             continue;
         }
-#if 0
-        pm_pid = pid_hash_get(G_process_model_pid_hash, chldpid);
-        if (NULL!=pm_pid)
-            p_pm = pm_pid->p_pm;
-
-        /* Mark stuf as dead,
-         * Probably better would be to send all details to queue, so that main trhead sorts this out! */
-        if (NULL!=pm_pid)
-        {
-#endif
             status->srvinfo.pid = chldpid;
 
             if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
@@ -156,33 +151,16 @@ public int check_child_exit(void)
                 NDRX_LOG(log_error, "Process abnormal shutdown!");
                 status->srvinfo.state = NDRXD_PM_DIED;
             }
-#if 0
-            delete_from_pid_hash(G_process_model_pid_hash, pm_pid);
-            /* TODO: Remove other lists & nodes (svcs, etc...) */
-
-            /* TODO: Put notification in ndrxd queue, so that it get something! */
-#endif
-            /*
-            NDRX_LOG(log_warn, "Sending notification"); */
+            /* NDRX_LOG(log_warn, "Sending notification"); */
             self_notify(status, FALSE);
-            /*
-            remove_startfail_process(pm_pid->p_pm);
-             */
-#if 0
-            ret=TRUE;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "pid %d not found in pidhash!", chldpid);
-        }
-#endif
-        /* Remove from PIDHASH, will be removed by self..
-        delete_from_pid_hash(G_process_model_pid_hash, chldpid);
-         */
     }
+#ifdef EX_OS_AIX
+    /* for aix restet handler back*/
+    signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
+    }
+#endif
 
     pthread_mutex_unlock(&M_mutex);
-    signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
     
     return ret;
 }
@@ -211,7 +189,12 @@ void sign_chld_handler(int sig)
      * causes lockups.
      */
     NDRX_LOG(log_warn, "Got sigchld...");
-   /* signal(SIGCHLD, sign_chld_handler);  reset back handler... causes loops on aix.. */
+
+#ifdef EX_OS_SUNOS
+    signal(SIGCHLD, sign_chld_handler);  /*reset back handler... causes loops on aix.. */
+#elif EX_OS_AIX
+    signal(SIGCHLD, NULL);  /* remove handler for aix, causes uneeded repeated calls.  */
+#endif
      
     check_child_exit();
     /* DO in new thread? */
