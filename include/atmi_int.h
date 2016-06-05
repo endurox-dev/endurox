@@ -508,6 +508,7 @@ extern int ex_chk_server(char *procname, short srvid);
 extern int ex_chk_ndrxd(void);
 extern int ex_down_sys(char *qprefix, char *qpath, int is_force);
 extern int ex_killall(char *mask);
+extern int ex_q_exists(char *qpath);
 
 #ifdef	__cplusplus
 }

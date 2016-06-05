@@ -123,47 +123,6 @@ public int do_sanity_check(void)
     {
         wasrun = TRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
-#if 0
-        /* Do the directory listing here... and perform the check! */
-         n = scandir(G_sys_config.qpath, &namelist, 0, alphasort);
-        if (n < 0)
-        {
-            NDRX_LOG(log_error, "Failed to open queue directory: %s", 
-                    strerror(errno));
-            ret=FAIL;
-            goto out;
-        }
-        else 
-        {
-            while (n--)
-            {
-                if (0==strcmp(namelist[n]->d_name, ".") || 
-                            0==strcmp(namelist[n]->d_name, ".."))
-                    continue;
-
-                /* TODO: Call checking functions */
-                NDRX_LOG(6, "Checking... [%s]", namelist[n]->d_name);
-                if (0==strncmp(namelist[n]->d_name, client_prefix, 
-                        client_prefix_len))
-                {
-                    ret=check_client(namelist[n]->d_name, FALSE, nr_of_try);
-                }
-                else if (0==strncmp(namelist[n]->d_name, xadmin_prefix, 
-                        xadmin_prefix_len)) 
-                {
-                    ret=check_client(namelist[n]->d_name, TRUE, nr_of_try);
-                } /* TODO: We might want to monitor admin queues too! */
-                else if (0==strncmp(namelist[n]->d_name, server_prefix, 
-                        server_prefix_len)) 
-                {
-                    ret=check_server(namelist[n]->d_name);
-                }
-                
-                free(namelist[n]);
-            }
-            free(namelist);
-        }
-#endif
          
         qlist = ex_sys_mqueue_list_make(G_sys_config.qpath, &ret);
 
@@ -319,22 +278,18 @@ private int unlink_dead_queue(char *qname)
 public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq)
 {
     char    q_str[NDRX_MAX_Q_SIZE+1];
-    char    q_path[PATH_MAX+1];
-    struct  stat sb;
     int     rplyq_unlink = FALSE;
     char    *p;
 
     if (NULL==rplyq)
     {
         sprintf(q_str, NDRX_SVR_QREPLY, G_sys_config.qprefix, process, srv_id, pid);
-        strcpy(q_path, G_sys_config.qpath);
-        /* Note - admin_q_str already contains / in front! */
-        strcat(q_path, q_str);
+        
         p = q_str;
-        if (stat(p, &sb) == FAIL) 
+        if (!ex_q_exists(q_str)) 
         {
             NDRX_LOG(log_info, "Seems like reply queue [%s] does not"
-                    " exists - nothing to do: %s", q_path, strerror(errno));
+                    " exists - nothing to do: %s", q_str, strerror(errno));
         }
         else
         {
@@ -353,16 +308,13 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
     }
 
     sprintf(q_str, NDRX_ADMIN_FMT, G_sys_config.qprefix, process, srv_id, pid);
-    strcpy(q_path, G_sys_config.qpath);
     /* Note - admin_q_str already contains / in front! */
-    strcat(q_path, q_str);
-
     /*If exists admin queue, but process does not exists, then remove admin q too! */
 
-    if (stat(q_path, &sb) == FAIL) 
+    if (!ex_q_exists(q_str))
     {
         NDRX_LOG(log_info, "Seems like admin queue [%s] does not"
-                " exists - nothing to do: %s", q_path, strerror(errno));
+                " exists - nothing to do: %s", q_str, strerror(errno));
     }
     else
     {

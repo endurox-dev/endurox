@@ -518,3 +518,21 @@ public int ex_killall(char *mask)
     
     return ret;
 }
+
+/**
+ * Checks for queue existance
+ * @param qpath
+ * @return TRUE/FALSE
+ */
+public int ex_q_exists(char *qpath)
+{
+    mqd_t tmp = ex_mq_open(qpath, O_RDONLY, O_NONBLOCK, NULL);
+    
+    if ((mqd_t)FAIL!=tmp)
+    {
+        ex_mq_close(tmp);
+        return TRUE;
+    }
+    
+    return FALSE;
+}
