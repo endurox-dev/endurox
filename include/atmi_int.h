@@ -275,6 +275,8 @@ struct atmi_lib_env
     struct xa_switch_t * xa_sw; /* handler to XA switch */
     /* </XA Protocol configuration> */
     
+    int     nrsems; /* number of sempahores for poll() mode of service mem */
+    
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 

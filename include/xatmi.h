@@ -146,6 +146,9 @@ extern "C" {
 #define CONF_NDRX_XA_RMLIB       "NDRX_XA_RMLIB"    /* RM library               */
 #define CONF_NDRX_XA_LAZY_INIT   "NDRX_XA_LAZY_INIT"/* 0 - load libs on 
                                                       init, 1 - load at use     */
+#define CONF_NDRX_NRSEMS         "NDRX_NRSEMS"      /* Number of semaphores used for
+                                                       service shared memory (for poll() mode)*/
+#define CONF_NDRX_NRSEMS_DFLT           30          /* default number of semphoares  */
                                                       
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

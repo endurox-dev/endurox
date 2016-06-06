@@ -385,6 +385,25 @@ public int ndrx_load_common_env(void)
     
     /* </XA Protocol configuration> */
     
+    if (NULL!=(p=getenv(CONF_NDRX_NRSEMS)))
+    {
+        G_atmi_env.nrsems = atoi(p);
+        
+        if (!G_atmi_env.nrsems)
+        {
+            G_atmi_env.nrsems = CONF_NDRX_NRSEMS_DFLT;
+        }
+        
+    }
+    else
+    {
+        G_atmi_env.nrsems = CONF_NDRX_NRSEMS_DFLT;
+    }
+    
+    NDRX_LOG(log_debug, "[%s]: Number of services shared memory semaphores "
+                "set to: %d (used only for poll() mode) (default: %d)", 
+                CONF_NDRX_XA_RMLIB, G_atmi_env.nrsems, CONF_NDRX_NRSEMS_DFLT);
+    
 out:
     return ret;
 }

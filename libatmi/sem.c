@@ -29,6 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +59,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 public ndrx_sem_t G_sem_svcop;              /* Service operations       */
-private int M_init = FALSE;                 /* no init yet done */
+private int M_init = FALSE;                 /* no init yet done         */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int ndrx_lock(ndrx_sem_t *sem, char *msg);
