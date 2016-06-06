@@ -188,7 +188,7 @@ void sign_chld_handler(int sig)
     /* let main programm to check for childs..., otherwise things like __lll_lock_wait_private
      * causes lockups.
      */
-    NDRX_LOG(log_warn, "Got sigchld...");
+    /*NDRX_LOG(log_warn, "Got sigchld..."); this debug causes lockups with main code */
 
 #ifdef EX_OS_SUNOS
     signal(SIGCHLD, sign_chld_handler);  /*reset back handler... causes loops on aix.. */
