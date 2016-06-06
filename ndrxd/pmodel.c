@@ -196,7 +196,9 @@ void sign_chld_handler(int sig)
     signal(SIGCHLD, NULL);  /* remove handler for aix, causes uneeded repeated calls.  */
 #endif
      
-    check_child_exit();
+/*
+    check_child_exit(); - do in thread.
+*/
     /* DO in new thread? */
     pthread_t thread;
     pthread_attr_t pthread_custom_attr;
