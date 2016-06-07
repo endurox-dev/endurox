@@ -115,7 +115,7 @@ public int ndrx_sem_attach(ndrx_sem_t *sem)
     }
     
     /* Attach to semaphore block */
-    sem->semid = semget(sem->key, 0, IPC_EXCL);
+    sem->semid = semget(sem->key, G_atmi_env.nrsems, IPC_EXCL);
 
     if (FAIL==sem->semid) 
     {
@@ -408,12 +408,12 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
     
     if (SUCCEED==ret)
     {
-        NDRX_LOG(log_warn, "%s/%d: semaphore locked... (%d)", msg, sem_num, 
-                errno_int, strerror(errno_int));
+        NDRX_LOG(log_warn, "%s/%d/%d: semaphore locked... ", msg, sem->semid, sem_num);
     }
     else
     {
-        NDRX_LOG(log_warn, "%s/%d: failed to lock (%d): %s", msg, sem_num, errno_int,
+        NDRX_LOG(log_warn, "%s/%d/%d: failed to lock (%d): %s", msg, sem->semid, 
+                sem_num, errno_int,
                 strerror(errno_int));
     }
     
@@ -428,23 +428,22 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
  */
 public int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num)
 {
-    struct sembuf semOp[2];
+    struct sembuf semOp[1];
        
     semOp[0].sem_num = sem_num;
-    semOp[1].sem_num = sem_num;
     semOp[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
-    semOp[1].sem_flg = SEM_UNDO; /* Release semaphore on exit */
-    
     semOp[0].sem_op = -1; /* Decrement to unlock */
-    semOp[1].sem_op = 1; /* Add 1 to lock it*/
     
     
     if (SUCCEED!=semop(sem->semid, semOp, 1))
     {
-        NDRX_LOG(log_debug, "%s: failed: %s", msg, strerror(errno));
+        NDRX_LOG(log_debug, "%s/%d%/d: failed: %s", msg, 
+                sem->semid, sem_num, strerror(errno));
         return FAIL;
     }
-    NDRX_LOG(log_warn, "%s semaphore un-locked", msg);
+    
+    NDRX_LOG(log_warn, "%s/%d/%d semaphore un-locked", 
+            msg, sem->semid, sem_num);
     
     return SUCCEED;
 }

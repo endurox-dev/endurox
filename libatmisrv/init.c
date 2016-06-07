@@ -310,6 +310,7 @@ out:
 public int initialize_atmi_library(void)
 {
     int ret=SUCCEED;
+    int sem_fail = FALSE;
     atmi_lib_conf_t conf;
     pid_t pid = getpid();
     memset(&conf, 0, sizeof(conf));
@@ -329,20 +330,13 @@ public int initialize_atmi_library(void)
     {
         goto out;
     }
-
-    /* Set SHM */
+    
+    /* Try to open shm... */
     G_shm_srv = ndrxd_shm_getsrv(G_srv_id);
     /* Mark stuff as used! */
     if (NULL!=G_shm_srv)
     {
-        G_shm_srv->srvid = G_srv_id;
-        /* Attach to semaphores */
-        if (SUCCEED!=ndrx_sem_attach_all())
-        {
-            NDRX_LOG(log_error, "Failed to attache to semaphores!!");
-            ret=FAIL;
-            goto out;
-        }
+        G_shm_srv->srvid = G_srv_id;  
     }
 out:
     return ret;

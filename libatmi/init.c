@@ -559,6 +559,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     int ret=SUCCEED;
     char fn[]="tp_internal_init";
     static int first = TRUE;
+    int sem_fail = FALSE;
     /* we connect to semaphore  */
     /* Check that if we are client (in server staging, then close current queues) */
     if (G_atmi_is_init && G_atmi_conf.is_client)
@@ -624,22 +625,46 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     {
         if (first)
         {
+            /* Init semaphores first. */
+            ndrxd_sem_init(G_atmi_conf.q_prefix);
+            
+            /* Try to attach to semaphore array */
+            if (SUCCEED!=ndrx_sem_attach_all())
+            {
+                NDRX_LOG(log_error, "Failed to attache to semaphores!!");
+                sem_fail = TRUE;
+                /*ret=FAIL;
+                goto out;*/
+            }
+            
             /* Attach to client shared memory? */
             if (SUCCEED==shm_init(G_atmi_conf.q_prefix, 
                         G_atmi_env.max_servers, G_atmi_env.max_svcs))
             {
                 if (init_data->is_client)
                 {
-                    ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR);
+                    if (SUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR) &&
+                            sem_fail)
+                    {
+                        NDRX_LOG(log_error, "SHM ok, but sem fail -"
+                                " cannot operate in this mode!");
+                        FAIL_OUT(ret);
+                    }
                 }
                 else
                 {
                     /* In case of server we attach to both shared memory blocks */
-                    ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | 
-                                        NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR);
+                    if (SUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | 
+                                        NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR) &&
+                            sem_fail)
+                    
+                    {
+                        NDRX_LOG(log_error, "SHM ok, but sem fail -"
+                                " cannot operate in this mode!");
+                        FAIL_OUT(ret);
+                    }
                 }
             }
-            ndrxd_sem_init(G_atmi_conf.q_prefix);
             
             first = FALSE;
         }

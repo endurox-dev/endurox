@@ -461,13 +461,13 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         goto out;
     }
     
-    #ifndef EX_USE_EPOLL
+#ifndef EX_USE_EPOLL
     if (SUCCEED!=ndrx_lock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         FAIL_OUT(ret);
     }
-    #endif
+#endif
     
     /* Get the service entry */
     ret = _ndrx_shm_get_svc(svc, &pos);
@@ -698,7 +698,8 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     if (SUCCEED!=ndrx_lock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
-        FAIL_OUT(ret);
+        ret=FAIL;
+        goto lock_fail;
     }
 #endif
     
@@ -873,7 +874,8 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
         NDRX_LOG(log_debug, "Total clustered services: %d", 
                 SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered);
     }
-    
+out:
+
 #ifndef EX_USE_EPOLL
     if (SUCCEED!=ndrx_unlock_svc_nm(svc))
     {
@@ -881,7 +883,8 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     }
 #endif
     
-out:
+lock_fail:
+
     return ret;
 }
 

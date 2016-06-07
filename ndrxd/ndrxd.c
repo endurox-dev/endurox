@@ -309,7 +309,15 @@ int main_init(int argc, char** argv)
         NDRX_LOG(log_error, "Using QPath [%s]", G_sys_config.qpath);
     }
 
-    /* Initialise shared memory */
+    
+    /* semaphores must go first!: */
+    if (SUCCEED!=ndrxd_sem_init(G_sys_config.qprefix))
+    {
+        ret=FAIL;
+        NDRX_LOG(log_error, "Failed to initialise share memory lib");
+        goto out;
+    }
+    /* and then shm: initialise shared memory */
     if (SUCCEED!=shm_init(G_sys_config.qprefix,
                             G_atmi_env.max_servers, G_atmi_env.max_svcs))
     {
@@ -317,26 +325,10 @@ int main_init(int argc, char** argv)
         NDRX_LOG(log_error, "Failed to initialise share memory lib");
         goto out;
     }
-
-    if (SUCCEED!=ndrxd_sem_init(G_sys_config.qprefix))
-    {
-        ret=FAIL;
-        NDRX_LOG(log_error, "Failed to initialise share memory lib");
-        goto out;
-    }
+    
     /* Open shared memory */
     if (G_sys_config.restarting)
     {
-        if (SUCCEED!=ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR))
-        {
-            ret=FAIL;
-            NDRX_LOG(log_error, "Failed to attach to shared memory segments");
-            goto out;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Attached to share memory");
-        }
         
         if (SUCCEED!=ndrx_sem_attach_all())
         {
@@ -349,20 +341,32 @@ int main_init(int argc, char** argv)
             NDRX_LOG(log_error, "Attached to semaphores OK");
         }
         
+        if (SUCCEED!=ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR))
+        {
+            ret=FAIL;
+            NDRX_LOG(log_error, "Failed to attach to shared memory segments");
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Attached to share memory");
+        }
+        
     }
     else 
     {
-        if (SUCCEED!=ndrxd_shm_open_all())
-        {
-            ret=FAIL;
-            NDRX_LOG(log_error, "Failed to open shared memory segments!");
-            goto out;
-        }
-        
+        /* Semaphores are first */
         if (SUCCEED!=ndrxd_sem_open_all())
         {
             ret=FAIL;
             NDRX_LOG(log_error, "Failed to open semaphores!");
+            goto out;
+        }
+        
+        if (SUCCEED!=ndrxd_shm_open_all())
+        {
+            ret=FAIL;
+            NDRX_LOG(log_error, "Failed to open shared memory segments!");
             goto out;
         }
     }
