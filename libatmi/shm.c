@@ -440,7 +440,7 @@ public unsigned int ndrx_hash_fn( void *k )
 /**
  * Returns true if service is available.
  * @param svc
- * @return 
+ * @return TRUE/FALSE/FAIL (on fail proceed because no SHM)
  */
 public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
 {
@@ -1018,6 +1018,14 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
     int pos = FAIL;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
 
+#ifndef EX_USE_EPOLL
+    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    {
+        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
+        return;
+    }
+#endif
+    
     *last=FALSE;
     if (_ndrx_shm_get_svc(svc, &pos))
     {
@@ -1044,6 +1052,14 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
             NDRX_LOG(log_debug, "Service [%s] not present in shm");
             *last=TRUE;
     }
+    
+#ifndef EX_USE_EPOLL
+    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
+    {
+        NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
+        return;
+    }
+#endif
     
 }
 
