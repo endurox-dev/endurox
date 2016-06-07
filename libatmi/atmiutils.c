@@ -910,10 +910,11 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
         /* we might have in old service in SHM (with no actual servers) thus 
          * skip such.
          */
-        if (EOS!=svcinfo[i].service[0] && (svcinfo[i].srvs || svcinfo[i].csrvs) )
+        if (EOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0] && 
+                (SHM_SVCINFO_INDEX(svcinfo, i)->srvs || SHM_SVCINFO_INDEX(svcinfo, i)->csrvs) )
         {
             /* Check filter, if ok - add to list! */
-            if (p_filter(svcinfo[i].service))
+            if (p_filter(SHM_SVCINFO_INDEX(svcinfo, i)->service))
             {
                 if (NULL==(tmp = calloc(1, sizeof(atmi_svc_list_t))))
                 {
@@ -925,7 +926,7 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
                     
                     goto out;
                 }
-                strcpy(tmp->svcnm, svcinfo[i].service);
+                strcpy(tmp->svcnm, SHM_SVCINFO_INDEX(svcinfo, i)->service);
                 LL_APPEND(ret, tmp);
             }   
         }

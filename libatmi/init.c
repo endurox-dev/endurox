@@ -385,6 +385,14 @@ public int ndrx_load_common_env(void)
     
     /* </XA Protocol configuration> */
     
+    
+    /* <poll() mode configuration> */
+    
+    /* Number of semaphores used for shared memory protection: 
+     * - for epoll() mode only 1 needed
+     * - for poll() more is better as it will be balanced for every
+     *   service/shared memory access (due to round robin sending to service)
+     */
     if (NULL!=(p=getenv(CONF_NDRX_NRSEMS)))
     {
         G_atmi_env.nrsems = atoi(p);
@@ -400,9 +408,37 @@ public int ndrx_load_common_env(void)
         G_atmi_env.nrsems = CONF_NDRX_NRSEMS_DFLT;
     }
     
+    if (G_atmi_env.nrsems < 2)
+    {
+        G_atmi_env.nrsems = 2;
+    }
+    
     NDRX_LOG(log_debug, "[%s]: Number of services shared memory semaphores "
                 "set to: %d (used only for poll() mode) (default: %d)", 
-                CONF_NDRX_XA_RMLIB, G_atmi_env.nrsems, CONF_NDRX_NRSEMS_DFLT);
+                CONF_NDRX_NRSEMS, G_atmi_env.nrsems, CONF_NDRX_NRSEMS_DFLT);
+    
+    /* Max servers per service: */
+    if (NULL!=(p=getenv(CONF_NDRX_MAXSVCSRVS)))
+    {
+        G_atmi_env.maxsvcsrvs = atoi(p);
+        
+        if (!G_atmi_env.maxsvcsrvs)
+        {
+            G_atmi_env.maxsvcsrvs = CONF_NDRX_MAXSVCSRVS_DFLT;
+        }
+        
+    }
+    else
+    {
+        G_atmi_env.maxsvcsrvs = CONF_NDRX_MAXSVCSRVS_DFLT;
+    }
+    
+    
+    NDRX_LOG(log_debug, "[%s]: Max number of local servers per service "
+                "set to: %d (used only for poll() mode) (default: %d)", 
+                CONF_NDRX_MAXSVCSRVS, G_atmi_env.maxsvcsrvs, CONF_NDRX_MAXSVCSRVS_DFLT);
+    
+    /* </poll() mode configuration> */
     
 out:
     return ret;

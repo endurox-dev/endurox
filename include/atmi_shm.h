@@ -103,6 +103,10 @@ extern int ndrxd_sem_is_attached(ndrx_sem_t *sem);
 extern int ndrx_sem_attach_all(void);
 extern int ndrx_lock_svc_op(void);
 extern int ndrx_unlock_svc_op(void);
+extern unsigned int ndrx_hash_fn( void *k );
+
+extern int ndrx_lock_svc_nm(char *svcnm);
+extern int ndrx_unlock_svc_nm(char *svcnm);
 
 #ifdef	__cplusplus
 }

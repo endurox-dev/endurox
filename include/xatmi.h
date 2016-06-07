@@ -149,6 +149,8 @@ extern "C" {
 #define CONF_NDRX_NRSEMS         "NDRX_NRSEMS"      /* Number of semaphores used for
                                                        service shared memory (for poll() mode)*/
 #define CONF_NDRX_NRSEMS_DFLT           30          /* default number of semphoares  */
+#define CONF_NDRX_MAXSVCSRVS     "NDRX_MAXSVCSRVS"  /* Max servers per service (only for poll() mode) */
+#define CONF_NDRX_MAXSVCSRVS_DFLT       30          /* default for NDRX_MAXSVCSRVS param */
                                                       
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

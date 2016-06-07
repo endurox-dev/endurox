@@ -103,9 +103,9 @@ public int shm_init(char *q_prefix, int max_servers, int max_svcs)
     NDRX_LOG(log_debug, "G_srvinfo.size = %d (%d * %d)",
                     G_srvinfo.size, sizeof(shm_srvinfo_t), max_servers);
     
-    G_svcinfo.size = sizeof(shm_svcinfo_t)*max_svcs;
+    G_svcinfo.size = SHM_SVCINFO_SIZEOF *max_svcs;
     NDRX_LOG(log_debug, "G_svcinfo.size = %d (%d * %d)",
-                    G_svcinfo.size, sizeof(shm_svcinfo_t), max_svcs);
+                    G_svcinfo.size, SHM_SVCINFO_SIZEOF, max_svcs);
    
     G_brinfo.size = sizeof(int)*CONF_NDRX_NODEID_COUNT;
     NDRX_LOG(log_debug, "G_brinfo.size = %d (%d * %d)",
@@ -424,7 +424,7 @@ out:
 /**
  * Make key out of string. Gen
  */
-static unsigned int ndrx_hash_fn( void *k )
+public unsigned int ndrx_hash_fn( void *k )
 {
     unsigned int hash = 5381;
     int c;
@@ -463,25 +463,27 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     /* Get the service entry */
     ret = _ndrx_shm_get_svc(svc, &pos);
     
-    if (ret && svcinfo[pos].srvs<=0)
+    if (ret && SHM_SVCINFO_INDEX(svcinfo, pos)->srvs<=0)
     {
         NDRX_LOG(log_error, "Service %s not available, count of servers: %d",
-                                  svc, svcinfo[pos].srvs);
+                                  svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs);
         ret=FAIL;
     }
     
     /* Now use the random to chose the service to send to */
-    if (svcinfo[pos].srvs==svcinfo[pos].csrvs && svcinfo[pos].srvs>0)
+    if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs==SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs 
+            && SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>0)
     {
         use_cluster=TRUE;
     }
-    else if (0==svcinfo[pos].csrvs)
+    else if (0==SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs)
     {
         use_cluster=FALSE;
     }
     
     NDRX_LOG(log_debug, "use_cluster=%d srvs=%d csrvs=%d", 
-            use_cluster, svcinfo[pos].srvs, svcinfo[pos].csrvs);
+            use_cluster, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
+            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
     
     if (FAIL==use_cluster)
     {
@@ -518,15 +520,16 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     }
  
     NDRX_LOG(log_debug, "use_cluster=%d srvs=%d csrvs=%d", 
-        use_cluster, svcinfo[pos].srvs, svcinfo[pos].csrvs);
+        use_cluster, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
+            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
 
 
     /* So we are using cluster, */
     if (TRUE==use_cluster)
     {
         
-        int csrvs = svcinfo[pos].csrvs;
-        int cluster_node = rand()%svcinfo[pos].csrvs+1;
+        int csrvs = SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
+        int cluster_node = rand()%SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs+1;
         int i;
         int chosen_node = FAIL;
         int got_node = 0;
@@ -544,15 +547,15 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         
         cluster_node = rand()%csrvs+1;
         NDRX_LOG(log_debug, "rnd: cluster_node=%d, cnode_max_id=%d", 
-                cluster_node, svcinfo[pos].cnodes_max_id);
+                cluster_node, SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id);
         
         /* If cluster was modified (while we do not create read/write semaphores...!) */
         while (try<2)
         {
             /* First try, search the random server */
-            for (i=0; i<svcinfo[pos].cnodes_max_id; i++)
+            for (i=0; i<SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id; i++)
             {
-                if (svcinfo[pos].cnodes[i].srvs)
+                if (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[i].srvs)
                 {
                     got_node++;
                     if (1==try)
@@ -625,10 +628,10 @@ public int _ndrx_shm_get_svc(char *svc, int *pos)
      *
      * So if there was overflow, then loop until the start item.
      */
-    while ((svcinfo[try].flags & NDRXD_SVCINFO_INIT)
+    while ((SHM_SVCINFO_INDEX(svcinfo, try)->flags & NDRXD_SVCINFO_INIT)
             && (!overflow || (overflow && try < start)))
     {
-        if (0==strcmp(svcinfo[try].service, svc))
+        if (0==strcmp(SHM_SVCINFO_INDEX(svcinfo, try)->service, svc))
         {
             ret=TRUE;
             *pos=try;
@@ -675,24 +678,24 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     if (_ndrx_shm_get_svc(svc, &pos))
     {
         NDRX_LOG(log_debug, "Updating flags for [%s] from %d to %d",
-                svc, svcinfo[pos].flags, flags);
+                svc, SHM_SVCINFO_INDEX(svcinfo, pos)->flags, flags);
         /* service have been found at position, update flags */
-        svcinfo[pos].flags = flags | NDRXD_SVCINFO_INIT;
+        SHM_SVCINFO_INDEX(svcinfo, pos)->flags = flags | NDRXD_SVCINFO_INIT;
         
         /* If this is cluster & entry exits or count<=0, then do not increment. */
-        if (!is_bridge || (0==svcinfo[pos].cnodes[nodeid-1].srvs && count>0))
+        if (!is_bridge || (0==SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs && count>0))
         {
-            svcinfo[pos].srvs++;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
             if (is_bridge)
             {
-                svcinfo[pos].csrvs++;
+                SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs++;
             }
             
         }
     }
     /* It is OK, if there is no entry, we just start from scratch! */
-    else if (!(svcinfo[pos].flags & NDRXD_SVCINFO_INIT))
+    else if (!(SHM_SVCINFO_INDEX(svcinfo, pos)->flags & NDRXD_SVCINFO_INIT))
     {
         is_new=TRUE;
         if (is_bridge && 0==count)
@@ -703,17 +706,17 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
         }
         else
         {
-            strcpy(svcinfo[pos].service, svc);
+            strcpy(SHM_SVCINFO_INDEX(svcinfo, pos)->service, svc);
             /* Basically just override the init flag */
-            svcinfo[pos].flags = flags | NDRXD_SVCINFO_INIT;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->flags = flags | NDRXD_SVCINFO_INIT;
             NDRX_LOG(log_debug, "Svc [%s] not found in shm, "
                         "installed with flags %d",
-                        svcinfo[pos].service, svcinfo[pos].flags);
-            svcinfo[pos].srvs++;
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->service, SHM_SVCINFO_INDEX(svcinfo, pos)->flags);
+            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
             if (is_bridge)
             {
-                svcinfo[pos].csrvs++;
+                SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs++;
             }
         }
     }
@@ -729,12 +732,12 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     /* we are ok & extra bridge processing */
     if (is_bridge)
     {
-        int was_installed = (svcinfo[pos].cnodes[nodeid-1].srvs > 0);
+        int was_installed = (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs > 0);
         /* our index starts with 0 */
         if (BRIDGE_REFRESH_MODE_FULL==mode)
         {
             /* Install fresh stuff */
-            svcinfo[pos].cnodes[nodeid-1].srvs = count;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs = count;
             /* Add real count */
             NDRX_LOG(log_debug, "SHM Service refresh: [%s] Bridge: [%d]"
                     " Count: [%d]",
@@ -742,29 +745,29 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
         }
         else
         {
-            svcinfo[pos].cnodes[nodeid-1].srvs+=count;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs+=count;
             
             /* If there was dropped update..! */
-            if (svcinfo[pos].cnodes[nodeid-1].srvs<0)
+            if (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs<0)
             {
-                svcinfo[pos].cnodes[nodeid-1].srvs=0;
+                SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs=0;
             }
             NDRX_LOG(log_debug, "SHM Service update: [%s] Bridge: "
                     "[%d] Diff: %d final count: [%d], cluster nodes: [%d]",
-                    svc, nodeid, count, svcinfo[pos].cnodes[nodeid-1].srvs, 
-                    svcinfo[pos].csrvs);
+                    svc, nodeid, count, SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs, 
+                    SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
         }
         
         /* Note is being removed. */
-        if (svcinfo[pos].cnodes[nodeid-1].srvs<=0 && was_installed)
+        if (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs<=0 && was_installed)
         {
             /* Reduce cluster nodes */
-            svcinfo[pos].csrvs--;
-            svcinfo[pos].srvs--;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs--;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
         }
         
         /* Might want to install due to bridge updates */
-        if (0==svcinfo[pos].csrvs && 0==svcinfo[pos].srvs)
+        if (0==SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs && 0==SHM_SVCINFO_INDEX(svcinfo, pos)->srvs)
         {
             NDRX_LOG(log_debug, 
                     "Bridge %d caused to remove svc [%s] from shm",
@@ -778,8 +781,8 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
              * So we will just reset key fields, but flags & svc stays the same.  
              */
             
-            memset(&svcinfo[pos].cnodes, 0, sizeof(svcinfo[pos].cnodes));
-            svcinfo[pos].totclustered = 0;
+            memset(&SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes, 0, sizeof(SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes));
+            SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
             
             goto out;
         }
@@ -788,19 +791,19 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
          * If service is removed, we might want to re-scan the list
          * and rebuild cnodes_max_id for better hint to clients.
          */
-        if (nodeid > svcinfo[pos].cnodes_max_id)
+        if (nodeid > SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id)
         {
-            svcinfo[pos].cnodes_max_id = nodeid;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id = nodeid;
         }
         
         /* Rebuild totals of cluster... */
-        svcinfo[pos].totclustered = 0;
-        for (i=0; i<svcinfo[pos].cnodes_max_id; i++)
+        SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
+        for (i=0; i<SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id; i++)
         {
-            svcinfo[pos].totclustered+=svcinfo[pos].cnodes[i].srvs;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered+=SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[i].srvs;
         }
         NDRX_LOG(log_debug, "Total clustered services: %d", 
-                svcinfo[pos].totclustered);
+                SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered);
     }
     
 out:
@@ -846,12 +849,12 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last)
     *last=FALSE;
     if (_ndrx_shm_get_svc(svc, &pos))
     {
-        if (svcinfo[pos].srvs>1)
+        if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
         {
             NDRX_LOG(log_debug, "Decreasing count of servers for "
                                 "[%s] from %d to %d",
-                                svc, svcinfo[pos].srvs, svcinfo[pos].srvs-1);
-            svcinfo[pos].srvs--;
+                                svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
+            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
         }
         else
         {
@@ -865,10 +868,10 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last)
             /* Once service was added to system, we do not remove it
              * automatically, unless we resolve problems with linear hash. 
              */
-            memset(&svcinfo[pos].cnodes, 0, sizeof(svcinfo[pos].cnodes));
-            svcinfo[pos].totclustered = 0;
-            svcinfo[pos].csrvs = 0;
-            svcinfo[pos].srvs = 0;
+            memset(&SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes, 0, sizeof(SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes));
+            SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs = 0;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs = 0;
             
             *last=TRUE;
         }
@@ -890,12 +893,13 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
     *last=FALSE;
     if (_ndrx_shm_get_svc(svc, &pos))
     {
-        if (svcinfo[pos].srvs>1)
+        if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
         {
             NDRX_LOG(log_debug, "Decreasing count of servers for "
                                 "[%s] from %d to %d",
-                                svc, svcinfo[pos].srvs, svcinfo[pos].srvs-1);
-            svcinfo[pos].srvs--;
+                                svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
+                    SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
+            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
         }
         else
         {
@@ -903,7 +907,7 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
                                 "[%s]",
                                 svc);
             /* Clean up memory block. */
-            memset(&svcinfo[pos], 0, sizeof(svcinfo[pos]));
+            memset(SHM_SVCINFO_INDEX(svcinfo, pos), 0, SHM_SVCINFO_SIZEOF);
             *last=TRUE;
         }
     }

@@ -277,6 +277,8 @@ struct atmi_lib_env
     
     int     nrsems; /* number of sempahores for poll() mode of service mem */
     
+    int     maxsvcsrvs; /* Max servers per service (only for poll() mode) */
+    
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 

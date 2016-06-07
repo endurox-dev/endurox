@@ -182,7 +182,7 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
     */
 
     /* creating the semaphore object --  sem_open() */
-    sem->semid = semget(sem->key, 1, 0660|IPC_CREAT);
+    sem->semid = semget(sem->key, G_atmi_env.nrsems, 0660|IPC_CREAT);
 
     if (FAIL==sem->semid) 
     {
@@ -355,6 +355,29 @@ public int ndrx_lock_svc_op(void)
 public int ndrx_unlock_svc_op(void)
 {
     return ndrx_unlock(&G_sem_svcop, "SVCOP", SEM_SVC_GLOBAL_NUM);
+}
+
+/**
+ * Lock the access to specific service in shared mem
+ * Only for poll() mode
+ * @param svcnm service name
+ * @return 
+ */
+public int ndrx_lock_svc_nm(char *svcnm)
+{
+    int semnum = 1 + (G_atmi_env.nrsems-1) % ndrx_hash_fn(svcnm);
+    return ndrx_lock(&G_sem_svcop, svcnm, semnum);
+}
+
+/**
+ * Unlock the access to service
+ * @param svcnm
+ * @return 
+ */
+    public int ndrx_unlock_svc_nm(char *svcnm)
+{
+    int semnum = 1 + (G_atmi_env.nrsems-1) % ndrx_hash_fn(svcnm);
+    return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
 }
 
 /**

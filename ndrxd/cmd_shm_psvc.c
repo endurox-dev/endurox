@@ -134,9 +134,9 @@ public int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int cont
     /* We assume shm is OK! */
     for (i=0; i<G_max_svcs; i++)
     {
-        if (EOS!=svcinfo[i].service[0])
+        if (EOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
         {
-            shm_psvc_progress(call, &svcinfo[i], i);
+            shm_psvc_progress(call, SHM_SVCINFO_INDEX(svcinfo, i), i);
         }
     }
 
