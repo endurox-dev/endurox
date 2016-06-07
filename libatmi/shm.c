@@ -452,14 +452,6 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     
     *is_bridge=FALSE;
     
-#ifndef EX_USE_EPOLL
-    if (SUCCEED!=ndrx_lock_svc_nm(svc))
-    {
-        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
-        FAIL_OUT(ret);
-    }
-#endif
-    
     /* Initially we stick to the local service */
     sprintf(send_q, NDRX_SVC_QFMT, G_atmi_conf.q_prefix, svc);
     
@@ -468,6 +460,14 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         ret=FAIL;
         goto out;
     }
+    
+    #ifndef EX_USE_EPOLL
+    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    {
+        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
+        FAIL_OUT(ret);
+    }
+    #endif
     
     /* Get the service entry */
     ret = _ndrx_shm_get_svc(svc, &pos);
