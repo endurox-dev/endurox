@@ -65,7 +65,7 @@ typedef struct
 {
     key_t key;            /* Key for semaphore... */
     int semid;
-    struct sembuf sem[2]; /* sembuf defined in sys/sem.h */
+    /*struct sembuf sem[2];  sembuf defined in sys/sem.h */
     short attached;                     /* Is attached?                 */
 } ndrx_sem_t;
 /*---------------------------Globals------------------------------------*/

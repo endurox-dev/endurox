@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
+#include <sys/sem.h>
 
 #include <atmi.h>
 #include <atmi_shm.h>
@@ -55,6 +56,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define SEM_SVC_OPS             0   /* Semaphore for shared memory management */
+#define SEM_SVC_GLOBAL_NUM      0   /* Semaphore array for global svc managmenet */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -63,8 +65,8 @@ private int M_init = FALSE;                 /* no init yet done         */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern int ndrx_lock(ndrx_sem_t *sem, char *msg);
-extern int ndrx_unlock(ndrx_sem_t *sem, char *msg);
+extern int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num);
+extern int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num);
 
 /**
  * Initialise prefix part, that is needed for shm...
@@ -122,12 +124,12 @@ public int ndrx_sem_attach(ndrx_sem_t *sem)
         ret=FAIL;
         goto out;
     }
-    
+#if 0
     sem->sem[0].sem_num = 0;
     sem->sem[1].sem_num = 0;
     sem->sem[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
     sem->sem[1].sem_flg = SEM_UNDO; /* Release semaphore on exit */
-    
+#endif
     NDRX_LOG(log_debug, "sem: [%d] attached", sem->semid);
 
 out:
@@ -204,11 +206,13 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
     
     sem->attached = TRUE;
     
+#if 0
     /* These never change so leave them outside the loop */
     sem->sem[0].sem_num = 0;
     sem->sem[1].sem_num = 0;
     sem->sem[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
     sem->sem[1].sem_flg = SEM_UNDO; /* Release semaphore on exit */
+#endif
     NDRX_LOG(log_warn, "Semaphore for key %x open, id: %d", 
             sem->key, sem->semid);
 out:
@@ -341,7 +345,7 @@ out:
  */
 public int ndrx_lock_svc_op(void)
 {
-    return ndrx_lock(&G_sem_svcop, "SVCOP");
+    return ndrx_lock(&G_sem_svcop, "SVCOP", SEM_SVC_GLOBAL_NUM);
 }
 
 /**
@@ -350,7 +354,7 @@ public int ndrx_lock_svc_op(void)
  */
 public int ndrx_unlock_svc_op(void)
 {
-    return ndrx_unlock(&G_sem_svcop, "SVCOP");
+    return ndrx_unlock(&G_sem_svcop, "SVCOP", SEM_SVC_GLOBAL_NUM);
 }
 
 /**
@@ -359,15 +363,21 @@ public int ndrx_unlock_svc_op(void)
  * @param msg
  * @return 
  */
-public int ndrx_lock(ndrx_sem_t *sem, char *msg)
+public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
 {
     int ret=SUCCEED;
     int errno_int;
+    struct sembuf semOp[2];
+       
+    semOp[0].sem_num = sem_num;
+    semOp[1].sem_num = sem_num;
+    semOp[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
+    semOp[1].sem_flg = SEM_UNDO; /* Release semaphore on exit */
     
-    sem->sem[0].sem_op = 0; /* Wait for zero */
-    sem->sem[1].sem_op = 1; /* Add 1 to lock it*/
+    semOp[0].sem_op = 0; /* Wait for zero */
+    semOp[1].sem_op = 1; /* Add 1 to lock it*/
     
-    while(FAIL==(ret=semop(sem->semid, sem->sem, 2)) && (EINTR==errno || EAGAIN==errno))
+    while(FAIL==(ret=semop(sem->semid, semOp, 2)) && (EINTR==errno || EAGAIN==errno))
     {
         NDRX_LOG(log_warn, "%s: Interrupted while waiting for semaphore!!", msg);
     };
@@ -391,10 +401,20 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg)
  * @param msg
  * @return 
  */
-public int ndrx_unlock(ndrx_sem_t *sem, char *msg)
+public int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num)
 {
-    sem->sem[0].sem_op = -1; /* Decrement to unlock */
-    if (SUCCEED!=semop(sem->semid, sem->sem, 1))
+    struct sembuf semOp[2];
+       
+    semOp[0].sem_num = sem_num;
+    semOp[1].sem_num = sem_num;
+    semOp[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
+    semOp[1].sem_flg = SEM_UNDO; /* Release semaphore on exit */
+    
+    semOp[0].sem_op = -1; /* Decrement to unlock */
+    semOp[1].sem_op = 1; /* Add 1 to lock it*/
+    
+    
+    if (SUCCEED!=semop(sem->semid, semOp, 1))
     {
         NDRX_LOG(log_debug, "%s: failed: %s", msg, strerror(errno));
         return FAIL;
