@@ -13,6 +13,19 @@
 
 #cmakedefine HAVE_PROGNAME @HAVE_PROGNAME@
 
+#cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
+
+#cmakedefine EX_OS_LINUX @EX_OS_LINUX@
+
+#cmakedefine EX_OS_AIX @EX_OS_AIX@
+
+#cmakedefine EX_OS_HPUX @EX_OS_HPUX@
+
+#cmakedefine EX_OS_SUNOS @EX_OS_SUNOS@
+
+#cmakedefine EX_OS_FREEBSD @EX_OS_FREEBSD@
+
+
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 

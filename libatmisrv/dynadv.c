@@ -31,6 +31,7 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -382,7 +383,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Register stuff in shared memory! */
     if (G_shm_srv)
     {
-        ndrx_shm_install_svc(entry_new->svc_nm, 0);
+        ndrx_shm_install_svc(entry_new->svc_nm, 0, G_server_conf.srv_id);
     }
     
     /* Release semaphore! */

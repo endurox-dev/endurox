@@ -29,6 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,6 +81,19 @@ public void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
     shm_psvc_info->totclustered = p_shm->totclustered;
     shm_psvc_info->cnodes_max_id = p_shm->cnodes_max_id;
     memcpy(shm_psvc_info->cnodes, p_shm->cnodes, sizeof(p_shm->cnodes));
+    
+    shm_psvc_info->srvids[0] = 0;
+
+#ifndef EX_USE_EPOLL
+    /* copy the number of elements */
+    i = shm_psvc_info->srvs - shm_psvc_info->csrvs;
+    if (i > CONF_NDRX_MAX_SRVIDS_XADMIN)
+    {
+        i = CONF_NDRX_MAX_SRVIDS_XADMIN;
+    }
+    memcpy(shm_psvc_info->srvids, p_shm->srvids, i*2);
+#endif
+    
     /*
     for (i=0; i< CONF_NDRX_NODEID_COUNT; i++)
     {

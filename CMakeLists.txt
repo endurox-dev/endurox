@@ -50,27 +50,25 @@ message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
 
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
-	ADD_DEFINITIONS(-DEX_OS_LINUX)
-
+        set(EX_OS_LINUX "1")
         # Enable poll only
         IF(DEFINE_FORCEPOLL)
             message("Linux - Using poll()")
         ELSE()
             message("Linux - Using epoll()")
-        	ADD_DEFINITIONS(-DEX_USE_EPOLL)
+            set(EX_USE_EPOLL "1")
         ENDIF()
-
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
-	ADD_DEFINITIONS(-DEX_OS_AIX)
+	set(EX_OS_AIX "1")
         # For AIX we do not have other options that use file system
         # base queue registry.
         set(USE_FS_REGISTRY "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
-	ADD_DEFINITIONS(-DEX_OS_HPUX)
+	set(EX_OS_HPUX "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
-	ADD_DEFINITIONS(-DEX_OS_SUNOS)
+	set(EX_OS_SUNOS "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
-	ADD_DEFINITIONS(-DEX_OS_FREEBSD)
+	set(EX_OS_FREEBSD "1")
 # Unkonwn OS:
 else()
 	message( FATAL_ERROR "Unsupported OS" )

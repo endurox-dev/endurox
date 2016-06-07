@@ -501,7 +501,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
                 goto out;
             }
             
-            ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last);
+            ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->srvid);
 
             if (last)
             {

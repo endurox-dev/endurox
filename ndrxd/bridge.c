@@ -383,7 +383,7 @@ public int brd_discconnected(int nodeid)
         {
             /* Remove from shm */
             ndrx_shm_install_svc_br(r->svc_nm, 0, 
-                        TRUE, nodeid, 0, BRIDGE_REFRESH_MODE_FULL);
+                        TRUE, nodeid, 0, BRIDGE_REFRESH_MODE_FULL, 0);
             
             /* Delete from hash */
             HASH_DEL(cur->theyr_services, r);

@@ -116,7 +116,7 @@ public int brd_lock_and_update_shm(int nodeid, char *svc_nm, int count, char mod
     }
 
     ret=ndrx_shm_install_svc_br(svc_nm, 0, 
-                TRUE, nodeid, count, mode);
+                TRUE, nodeid, count, mode, 0);
 
 
     /* Remove the lock! */

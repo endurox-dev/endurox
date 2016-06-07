@@ -365,7 +365,7 @@ public int ndrx_unlock_svc_op(void)
  */
 public int ndrx_lock_svc_nm(char *svcnm)
 {
-    int semnum = 1 + (G_atmi_env.nrsems-1) % ndrx_hash_fn(svcnm);
+    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
     return ndrx_lock(&G_sem_svcop, svcnm, semnum);
 }
 
@@ -374,9 +374,9 @@ public int ndrx_lock_svc_nm(char *svcnm)
  * @param svcnm
  * @return 
  */
-    public int ndrx_unlock_svc_nm(char *svcnm)
+public int ndrx_unlock_svc_nm(char *svcnm)
 {
-    int semnum = 1 + (G_atmi_env.nrsems-1) % ndrx_hash_fn(svcnm);
+    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
     return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
 }
 
@@ -408,11 +408,13 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
     
     if (SUCCEED==ret)
     {
-        NDRX_LOG(log_warn, "%s: semaphore locked... (%d)", msg, errno_int);
+        NDRX_LOG(log_warn, "%s/%d: semaphore locked... (%d)", msg, sem_num, 
+                errno_int, strerror(errno_int));
     }
     else
     {
-        NDRX_LOG(log_warn, "%s: failed to lock (%d): %s", msg, strerror(errno_int));
+        NDRX_LOG(log_warn, "%s/%d: failed to lock (%d): %s", msg, sem_num, errno_int,
+                strerror(errno_int));
     }
     
     return ret;

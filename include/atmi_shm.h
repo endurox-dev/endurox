@@ -79,10 +79,10 @@ extern int ndrx_shm_attach(ndrx_shm_t *shm);
 extern int ndrx_shm_attach_all(int lev);
 extern int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge);
 extern int _ndrx_shm_get_svc(char *svc, int *pos);
-extern int ndrx_shm_install_svc(char *svc, int flags);
+extern int ndrx_shm_install_svc(char *svc, int flags, short srvid);
 extern int ndrx_shm_install_svc_br(char *svc, int flags, 
-                int is_bridge, int nodeid, int count, char mode);
-extern void ndrxd_shm_uninstall_svc(char *svc, int *last);
+                int is_bridge, int nodeid, int count, char mode, short srvid);
+extern void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid);
 extern shm_srvinfo_t* ndrxd_shm_getsrv(int srvid);
 extern void ndrxd_shm_resetsrv(int srvid);
 

@@ -217,6 +217,8 @@ extern "C" {
 #define CONF_NDRX_NODEID_MAX     33             /* Max Node ID                */
 /* Total count of cluster nodes */
 #define CONF_NDRX_NODEID_COUNT (CONF_NDRX_NODEID_MAX-CONF_NDRX_NODEID_MIN)
+#define CONF_NDRX_MAX_SRVIDS_XADMIN         512    /* max number of server IDs for 
+                                                    xadmin printing in poll mode */
     
 /* Max calls at the same tame
  * This is  used by Call Descritptor check 

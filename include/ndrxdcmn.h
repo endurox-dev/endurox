@@ -351,7 +351,7 @@ struct shm_svcinfo
     short rrsrv;                        /* round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    short srvcs[0];                     /* number of servers for service (only poll() mode) */
+    short srvids[0];                     /*  Servers id's offering this service */
 };
 
 
@@ -599,6 +599,7 @@ typedef struct
     int totclustered;                   /* Total clustered nodes                */
     int cnodes_max_id;                  /* Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
+    short srvids[CONF_NDRX_MAX_SRVIDS_XADMIN];     /* Server ID (fixed number xadmin output) */
     
 } command_reply_shm_psvc_t;
 

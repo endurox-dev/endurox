@@ -119,6 +119,17 @@ public int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
             shm_psvc_info->cnodes_max_id, 
             CONF_NDRX_NODEID_COUNT,
             CONF_NDRX_NODEID_COUNT, gen_clstr_map(shm_psvc_info));
+        
+        /* This is poll mode, provide info about individual serves: */
+        if (shm_psvc_info->srvids[0])
+        {
+            fprintf(stdout, "\t\t\t\t\t\tSRVIDS: ");
+            for (i=0; i<shm_psvc_info->srvs-shm_psvc_info->csrvs; i++)
+            {
+                fprintf(stdout, "%hd ", shm_psvc_info->srvids[i]);
+            }
+            fprintf(stdout, "\n");
+        }
     }
     
     return SUCCEED;

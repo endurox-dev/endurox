@@ -30,6 +30,7 @@
 */
 
 /* Stuff for sockets testing: */
+#include <config.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>

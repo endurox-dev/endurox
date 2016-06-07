@@ -31,6 +31,7 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys_mqueue.h>
@@ -127,7 +128,7 @@ public int sv_open_queue(void)
         /* Register stuff in shared memory! */
         if (use_sem)
         {
-            ndrx_shm_install_svc(entry->svc_nm, 0);
+            ndrx_shm_install_svc(entry->svc_nm, 0, G_server_conf.srv_id);
         }
 
         /* Release semaphore! */
