@@ -96,7 +96,7 @@ public inline char * ndrx_epoll_mode(void)
  * @param event
  * @return 
  */
-public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
+public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
 {
     return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
 }
@@ -109,7 +109,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event
  * @param event
  * @return 
  */
-public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event)
+public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
 {
     return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
 }
@@ -140,13 +140,13 @@ public inline int ndrx_epoll_close(int fd)
  * @param timeout
  * @return 
  */
-public inline int ndrx_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout)
+public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
 {
     return epoll_wait(epfd, (struct epoll_event *) events, maxevents, timeout);
 }
 
 /**
- * Return errno for ex_poll() operation
+ * Return errno for ndrx_poll() operation
  * @return 
  */
 public inline int ndrx_epoll_errno(void)
