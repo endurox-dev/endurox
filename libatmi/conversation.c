@@ -345,9 +345,9 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     /* close down the queue */
     if (SUCCEED!=ndrx_mq_close(conv->my_listen_q))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ex_mq_close [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_close [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_close [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_close [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
        /* ret=FAIL;
         goto out; */
@@ -356,9 +356,9 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     /* Remove the queue */
     if (killq && SUCCEED!=ndrx_mq_unlink(conv->my_listen_q_str))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ex_mq_unlink [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_unlink [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
         /* ret=FAIL;
         goto out; */
@@ -371,9 +371,9 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     /* close down the queue */
     if (SUCCEED!=ndrx_mq_close(conv->reply_q))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ex_mq_close [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_close [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_close [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_close [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
        /* ret=FAIL;
         goto out; */
@@ -383,9 +383,9 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     NDRX_LOG(log_warn, "UNLINKING: %s %d", conv->reply_q_str, killq);
     if (killq && SUCCEED!=ndrx_mq_unlink(conv->reply_q_str))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ex_mq_unlink [%s]: %s",
+        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
-        _TPset_error_fmt(TPEOS, "%s: Failed to ex_mq_unlink [%s]: %s",
+        _TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
         /* ret=FAIL;
         goto out; */

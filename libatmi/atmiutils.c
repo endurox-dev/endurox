@@ -240,7 +240,7 @@ restart:
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_send");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_send");
             goto restart;
         }
         else if (EAGAIN==errno)
@@ -302,7 +302,7 @@ restart_open:
 
     if ((mqd_t)FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
     {
-        NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_open");
+        NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_open");
         goto restart_open;
     }
     
@@ -340,7 +340,7 @@ restart_send:
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_send");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_send");
             goto restart_send;
         }
         else if (EAGAIN==errno)
@@ -357,7 +357,7 @@ restart_close:
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_close");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_close");
             goto restart_close;
         }
     }
@@ -389,7 +389,7 @@ restart:
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
-            NDRX_LOG(log_warn, "Got signal interrupt, restarting ex_mq_receive");
+            NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_receive");
             goto restart;
         }
         /* save the errno, so that no one changes */
@@ -406,7 +406,7 @@ restart:
             CONV_ERROR_CODE(ret, err);
 
             ret=FAIL;
-            _TPset_error_fmt(err, "ex_mq_receive failed: %s", strerror(errno));
+            _TPset_error_fmt(err, "ndrx_mq_receive failed: %s", strerror(errno));
         }
     }
     return ret;
