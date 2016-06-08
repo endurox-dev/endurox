@@ -417,7 +417,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
         /* Parse out process name & pid */
         NDRX_LOG(log_warn, "Removing q: [%s]", elt->qname);
 
-        if (SUCCEED!=ex_mq_unlink(elt->qname))
+        if (SUCCEED!=ndrx_mq_unlink(elt->qname))
         {
             NDRX_LOG(log_error, "failed to remove q [%s]: %s",
                     elt->qname, strerror(errno));
@@ -526,11 +526,11 @@ public int ndrx_killall(char *mask)
  */
 public int ndrx_q_exists(char *qpath)
 {
-    mqd_t tmp = ex_mq_open(qpath, O_RDONLY, O_NONBLOCK, NULL);
+    mqd_t tmp = ndrx_mq_open(qpath, O_RDONLY, O_NONBLOCK, NULL);
     
     if ((mqd_t)FAIL!=tmp)
     {
-        ex_mq_close(tmp);
+        ndrx_mq_close(tmp);
         return TRUE;
     }
     

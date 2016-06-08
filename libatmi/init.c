@@ -479,7 +479,7 @@ public int _tpterm (void)
     /* Shutdown client queues */
     if (0!=G_atmi_conf.reply_q)
     {
-        if (FAIL==ex_mq_close(G_atmi_conf.reply_q))
+        if (FAIL==ndrx_mq_close(G_atmi_conf.reply_q))
         {
             NDRX_LOG(log_warn, "Failed to close [%s]: %s",
                                 G_atmi_conf.reply_q_str, strerror(errno));
@@ -495,7 +495,7 @@ public int _tpterm (void)
     if (EOS!=G_atmi_conf.reply_q_str[0])
     {
         NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_conf.reply_q_str);
-        if (FAIL==ex_mq_unlink(G_atmi_conf.reply_q_str))
+        if (FAIL==ndrx_mq_unlink(G_atmi_conf.reply_q_str))
         {
             NDRX_LOG(log_warn, "Failed to unlink [%s]: %s",
                                 G_atmi_conf.reply_q_str, strerror(errno));
@@ -537,7 +537,7 @@ public int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
     
     G_atmi_conf.reply_q = reply_q;
     strcpy(G_atmi_conf.reply_q_str, reply_q_str);
-    if (FAIL==ex_mq_getattr(reply_q, &G_atmi_conf.q_attr))
+    if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_conf.q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
                             fn, reply_q, strerror(errno));
@@ -578,7 +578,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
                                 "shutting down old session");
         }
 
-        if (FAIL==ex_mq_close(G_atmi_conf.reply_q))
+        if (FAIL==ndrx_mq_close(G_atmi_conf.reply_q))
         {
             NDRX_LOG(log_warn, "Failed to close [%s]: %s",
                                 G_atmi_conf.reply_q_str, strerror(errno));
@@ -586,7 +586,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
 
         NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_conf.reply_q_str);
         
-        if (FAIL==ex_mq_unlink(G_atmi_conf.reply_q_str))
+        if (FAIL==ndrx_mq_unlink(G_atmi_conf.reply_q_str))
         {
             NDRX_LOG(log_warn, "Failed to unlink [%s]: %s",
                                 G_atmi_conf.reply_q_str, strerror(errno));
@@ -608,7 +608,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     memset(&G_accepted_connection, 0, sizeof(G_accepted_connection));
 
     /* read queue attributes -  only if Q was open...*/
-    if (init_data->reply_q && FAIL==ex_mq_getattr(init_data->reply_q, &G_atmi_conf.q_attr))
+    if (init_data->reply_q && FAIL==ndrx_mq_getattr(init_data->reply_q, &G_atmi_conf.q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                             fn, init_data->reply_q_str, init_data->reply_q, strerror(errno));
@@ -762,7 +762,7 @@ public int	tpinit (TPINIT * init_data)
                 read_clt_name, pid, conf.contextid); /* no client name if no provided */
 
     /* at first try to un-link existing queue */
-    ex_mq_unlink(reply_q);
+    ndrx_mq_unlink(reply_q);
 
     strcpy(conf.reply_q_str, reply_q);
     /* now try to open the queue, by default we will have blocked access */

@@ -129,14 +129,14 @@ public int remove_service_q(char *svc)
     
     /* Unlink the queue, the actual queue will live out throught next session! 
      * i.e. all users should close it to dispose it! As by manpage! */
-    if (SUCCEED!=ex_mq_unlink(q_str))
+    if (SUCCEED!=ndrx_mq_unlink(q_str))
     {
         NDRX_LOG(log_error, "Failed to unlink q [%s]: %s", 
                 q_str, strerror(errno));
     }
     
     /* Read all messages from Q & reply with dummy/FAIL stuff back! */
-    while ((len=ex_mq_receive (qd,
+    while ((len=ndrx_mq_receive (qd,
         (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)) > 0)
     {
         NDRX_LOG(log_warn, "Got message, size: %d", len);
@@ -159,7 +159,7 @@ public int remove_service_q(char *svc)
 out:
     if ((mqd_t)FAIL!=qd)
     {
-        if (SUCCEED!=ex_mq_close(qd))
+        if (SUCCEED!=ndrx_mq_close(qd))
         {
             NDRX_LOG(log_warn, "Failed to close q: %d - %s", qd, 
                     strerror(errno));

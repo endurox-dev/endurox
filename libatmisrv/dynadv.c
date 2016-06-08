@@ -182,7 +182,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         }
         
         /* Now close the FD */
-        if (SUCCEED!=ex_mq_close(ent->q_descr))
+        if (SUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             _TPset_error_fmt(TPEOS, "ex_mq_close failed to close fd %d: %s", 
                     ent->q_descr, strerror(errno));

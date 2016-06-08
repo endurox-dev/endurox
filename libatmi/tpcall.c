@@ -567,7 +567,7 @@ public int _tpgetrply (int *cd,
     
     if (change_flags)
     {
-        if (FAIL==ex_mq_setattr(G_atmi_conf.reply_q, &new,
+        if (FAIL==ndrx_mq_setattr(G_atmi_conf.reply_q, &new,
                             &G_atmi_conf.q_attr))
         {
             _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",

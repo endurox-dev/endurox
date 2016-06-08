@@ -1007,7 +1007,7 @@ public int sv_wait_for_request(void)
                 continue;
             }
             
-            if (FAIL==(len=ex_mq_receive (evmqd,
+            if (FAIL==(len=ndrx_mq_receive (evmqd,
                 (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
             {
                 if (EAGAIN==errno)

@@ -257,7 +257,7 @@ private int unlink_dead_queue(char *qname)
     }
     
     NDRX_LOG(log_warn, "Unlinking queue [%s]", p);
-    if (SUCCEED!=ex_mq_unlink(p))
+    if (SUCCEED!=ndrx_mq_unlink(p))
     {
         NDRX_LOG(log_error, "Failed to unlink dead queue [%s]: %s", 
                 p, strerror(errno));

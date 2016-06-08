@@ -107,7 +107,7 @@ public int load_env_config(void)
     sprintf(G_config.reply_queue_str, NDRX_NDRXCLT, G_config.qprefix, getpid());
 
     /* Unlink previous admin queue (if have such) - ignore any error */
-    ex_mq_unlink(G_config.reply_queue_str);
+    ndrx_mq_unlink(G_config.reply_queue_str);
     NDRX_LOG(log_debug, "About to open reply queue: [%s]",
                                         G_config.reply_queue_str);
     /* Open new queue... */

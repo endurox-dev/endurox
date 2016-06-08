@@ -210,7 +210,7 @@ private int signal_handle_event(void)
             struct mq_attr att;
 
             /* read the attributes of the Q */
-            if (SUCCEED!= ex_mq_getattr(m->mqd, &att))
+            if (SUCCEED!= ndrx_mq_getattr(m->mqd, &att))
             {
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d (%s)",  
                         m->mqd, strerror(errno));
@@ -291,7 +291,7 @@ private int signal_install_notifications_all(ndrx_epoll_set_t *s)
     
     HASH_ITER(hh, s->mqds, m, mtmp)
     {
-        if (FAIL==ex_mq_notify(m->mqd, &m->sev))
+        if (FAIL==ndrx_mq_notify(m->mqd, &m->sev))
         {
             int err = errno;
 	    if (EBUSY!=err)
@@ -430,7 +430,7 @@ private void ex_ex_mq_notify_func(union sigval sv)
 
     /* Install handler back */
 
-    if (FAIL==ex_mq_notify(mqdes, &mqd_h->sev))
+    if (FAIL==ndrx_mq_notify(mqdes, &mqd_h->sev))
     {
         NDRX_LOG(log_error, "Failed to register notification for mqd %d (%s)!!!", 
                 mqdes, strerror(errno));
@@ -706,7 +706,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ex_epoll_event 
         tmp->sev.sigev_notify_attributes = NULL;
         tmp->sev.sigev_value.sival_ptr = &tmp->mqd;
         
-        if (FAIL==ex_mq_notify(mqd, &tmp->sev))
+        if (FAIL==ndrx_mq_notify(mqd, &tmp->sev))
         {
             ex_epoll_set_err(errno, "Failed to register notification for mqd %d", mqd);
             FAIL_OUT(ret);
@@ -988,7 +988,7 @@ public int ndrx_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevent
             struct mq_attr att;
 
             /* read the attributes of the Q */
-            if (SUCCEED!= ex_mq_getattr(m->mqd, &att))
+            if (SUCCEED!= ndrx_mq_getattr(m->mqd, &att))
             {
                 ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
@@ -1091,7 +1091,7 @@ public int ndrx_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevent
 		    struct mq_attr att;
 	   /* read the attributes of the Q */
 	  /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
-            if (SUCCEED!= ex_mq_getattr(mqdes, &att))
+            if (SUCCEED!= ndrx_mq_getattr(mqdes, &att))
             {
                 /*ex_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
