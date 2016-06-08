@@ -159,7 +159,7 @@ public inline int ndrx_epoll_errno(void)
  * @param err
  * @return 
  */
-public inline char * ex_poll_strerror(int err)
+public inline char * ndrx_poll_strerror(int err)
 {
     return strerror(err);
 }

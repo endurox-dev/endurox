@@ -766,7 +766,7 @@ public int	tpinit (TPINIT * init_data)
 
     strcpy(conf.reply_q_str, reply_q);
     /* now try to open the queue, by default we will have blocked access */
-    conf.reply_q = ndrx_ex_mq_open_at(reply_q, O_RDONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
+    conf.reply_q = ndrx_mq_open_at(reply_q, O_RDONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
     if ((mqd_t)FAIL==conf.reply_q)
     {
         _TPset_error_fmt(TPEOS, "Failed to open queue [%s] errno: %s", 

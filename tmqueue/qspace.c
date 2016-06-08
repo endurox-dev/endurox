@@ -458,7 +458,7 @@ public int tmq_reload_conf(char *cf)
     
     while (FAIL!=(read = getline(&line, &len, f))) 
     {
-        ndrx_sutl_str_strip(line, " \n\r\t");
+        ndrx_str_strip(line, " \n\r\t");
         
         /* Ignore comments & newlines */
         if ('#'==*line || EOS==*line)

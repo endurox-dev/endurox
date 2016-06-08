@@ -152,7 +152,7 @@ struct srv_conf
     int nodeid; /* Other node id of the bridge */
     int (*p_qmsg)(char *buf, int len, char msg_type); /* Q message processor for bridge */
     /**************** POLLING *****************/
-    struct ex_epoll_event *events;
+    struct ndrx_epoll_event *events;
     int epollfd;
     /* Information from calst call */
     char last_caller_address[NDRX_MAX_Q_SIZE+1];

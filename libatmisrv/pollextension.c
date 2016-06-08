@@ -94,7 +94,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     int ret=SUCCEED;
     pollextension_rec_t * pollext = NULL;
     pollextension_rec_t * existing = NULL;
-    struct ex_epoll_event ev;
+    struct ndrx_epoll_event ev;
     
     if (NULL==G_server_conf.service_array)
     {
@@ -129,7 +129,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     if (FAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             fd, &ev))
     {
-        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ex_poll_strerror(ndrx_epoll_errno()));
+        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }
@@ -191,7 +191,7 @@ public int _tpext_delpollerfd(int fd)
                         fd, NULL))
     {
         _TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
-                fd, ex_poll_strerror(ndrx_epoll_errno()));
+                fd, ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }

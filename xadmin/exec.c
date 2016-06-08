@@ -103,7 +103,7 @@ public int is_ndrxd_running(void)
 
     /* Check queue first  */
     if ((mqd_t)FAIL==G_config.ndrxd_q)
-        G_config.ndrxd_q = ndrx_ex_mq_open (G_config.ndrxd_q_str, O_WRONLY);
+        G_config.ndrxd_q = ndrx_mq_open_at_wrp (G_config.ndrxd_q_str, O_WRONLY);
 
     if ((mqd_t)FAIL==G_config.ndrxd_q)
     {

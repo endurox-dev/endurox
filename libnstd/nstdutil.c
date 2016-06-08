@@ -357,7 +357,7 @@ char *ndrx_decode_num(long tt, int slot, int level, int levels)
  * @param needle - chars to strip
  * @return 
  */
-public char *ndrx_sutl_str_strip(char *haystack, char *needle)
+public char *ndrx_str_strip(char *haystack, char *needle)
 {
     char *dest;
     char *src;

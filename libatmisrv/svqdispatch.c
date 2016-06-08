@@ -75,7 +75,7 @@ public int sv_open_queue(void)
     int ret=SUCCEED;
     int i;
     svc_entry_fn_t *entry;
-    struct ex_epoll_event ev;
+    struct ndrx_epoll_event ev;
     int use_sem = FALSE;
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
@@ -107,7 +107,7 @@ public int sv_open_queue(void)
         }
         
         /* Open the queue */
-        entry->q_descr = ndrx_ex_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
+        entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
                 O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
         
         /*
@@ -145,15 +145,15 @@ public int sv_open_queue(void)
     G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
     if (FAIL==G_server_conf.epollfd)
     {
-        _TPset_error_fmt(TPEOS, "ex_epoll_create(%d) fail: %s",
+        _TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
                                 G_server_conf.adv_service_count,
-                                ex_poll_strerror(ndrx_epoll_errno()));
+                                ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }
 
     /* allocate events */
-    G_server_conf.events = (struct ex_epoll_event *)calloc(sizeof(struct ex_epoll_event),
+    G_server_conf.events = (struct ndrx_epoll_event *)calloc(sizeof(struct ndrx_epoll_event),
                                             G_server_conf.max_events);
     if (NULL==G_server_conf.events)
     {
@@ -178,7 +178,7 @@ public int sv_open_queue(void)
         if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
-            _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed: %s", ex_poll_strerror(ndrx_epoll_errno()));
+            _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
             ret=FAIL;
             goto out;
         }
@@ -931,7 +931,7 @@ public int sv_wait_for_request(void)
         {
             int err = errno;
             _TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
-                    ex_poll_strerror(ndrx_epoll_errno()));
+                    ndrx_poll_strerror(ndrx_epoll_errno()));
             
             if (EINTR==err)
             {
@@ -1022,7 +1022,7 @@ public int sv_wait_for_request(void)
                 else
                 {
                     ret=FAIL;
-                    _TPset_error_fmt(TPEOS, "ex_mq_receive failed: %s", strerror(errno));
+                    _TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", strerror(errno));
                 }
             }
             else

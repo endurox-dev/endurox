@@ -468,7 +468,7 @@ private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
     mqd_t ret=(mqd_t)FAIL;
     char fn[] = "open_conv_q";
 
-    ret = ndrx_ex_mq_open_at (q, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR, NULL);
+    ret = ndrx_mq_open_at (q, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR, NULL);
 
     if ((mqd_t)FAIL==ret)
     {
@@ -506,7 +506,7 @@ private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
     mqd_t ret=(mqd_t)FAIL;
     char fn[] = "open_reply_q";
 
-    ret = ndrx_ex_mq_open_at (q, O_RDWR, S_IWUSR | S_IRUSR, NULL);
+    ret = ndrx_mq_open_at (q, O_RDWR, S_IWUSR | S_IRUSR, NULL);
 
     if ((mqd_t)FAIL==ret)
     {

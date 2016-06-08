@@ -176,7 +176,7 @@ out:
  * @param attr
  * @return
  */
-public mqd_t ndrx_ex_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
+public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
 {
     struct mq_attr attr_int;
     struct mq_attr * p_at;
@@ -208,10 +208,10 @@ public mqd_t ndrx_ex_mq_open_at(const char *name, int oflag, mode_t mode, struct
  * @param oflag
  * @return
  */
-public mqd_t ndrx_ex_mq_open(const char *name, int oflag)
+public mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
 {
     
-    return ndrx_ex_mq_open_at(name, oflag, 0, NULL);
+    return ndrx_mq_open_at(name, oflag, 0, NULL);
 }
 
 /**
@@ -298,7 +298,7 @@ public int generic_q_send_2(char *queue, char *data, long len, long flags, long 
     /* open the queue */
     /* Restart until we do not get the signal */
 restart_open:
-    q_descr = ndrx_ex_mq_open (queue, O_WRONLY | add_flags);
+    q_descr = ndrx_mq_open_at_wrp (queue, O_WRONLY | add_flags);
 
     if ((mqd_t)FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
     {
@@ -861,7 +861,7 @@ public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
     mqd_t q_descr=(mqd_t)FAIL;
     
     /* read the stats of the queue */
-    if ((mqd_t)FAIL==(q_descr = ndrx_ex_mq_open(q, 0)))
+    if ((mqd_t)FAIL==(q_descr = ndrx_mq_open_at_wrp(q, 0)))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: [%s], err: %s", 
                 q, strerror(errno));

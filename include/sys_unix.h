@@ -93,20 +93,20 @@ extern const char * __progname;
 /**
  * (E)poll data
  */
-typedef union ex_epoll_data {
+typedef union ndrx_epoll_data {
         void    *ptr;
         int      fd;
         uint32_t u32;
         uint64_t u64;
         mqd_t    mqd;
-} ex_epoll_data_t;
+} ndrx_epoll_data_t;
 
 /**
  * (E)poll event
  */
-struct ex_epoll_event {
+struct ndrx_epoll_event {
         uint32_t     events;    /* Epoll events */
-        ex_epoll_data_t data;      /* User data variable */
+        ndrx_epoll_data_t data;      /* User data variable */
         
         /* The structure generally is the same as for linux epoll_wait
          * This bellow is extension for non linux version.
@@ -135,11 +135,11 @@ struct mq_list
 extern void ndrx_epoll_sys_init(void);
 extern void ndrx_epoll_sys_uninit(void);
 extern char * ndrx_epoll_mode(void);
-extern int ndrx_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
-extern int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);
+extern int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event);
+extern int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event);
 extern int ndrx_epoll_create(int size);
 extern int ndrx_epoll_close(int fd);
-extern int ndrx_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout);
+extern int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout);
 extern int ndrx_epoll_errno(void);
 extern char * ndrx_poll_strerror(int err);
 extern char * ndrx_sys_get_proc_name(void);

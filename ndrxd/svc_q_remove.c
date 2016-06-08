@@ -119,7 +119,7 @@ public int remove_service_q(char *svc)
     sprintf(q_str, NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
     
     /* Run in non-blocked mode */
-    if ((mqd_t)FAIL==(qd = ndrx_ex_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
+    if ((mqd_t)FAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
                                         q_str, strerror(errno));

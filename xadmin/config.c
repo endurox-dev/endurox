@@ -111,7 +111,7 @@ public int load_env_config(void)
     NDRX_LOG(log_debug, "About to open reply queue: [%s]",
                                         G_config.reply_queue_str);
     /* Open new queue... */
-    if ((mqd_t)FAIL==(G_config.reply_queue = ndrx_ex_mq_open_at(G_config.reply_queue_str,
+    if ((mqd_t)FAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
                                         O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {

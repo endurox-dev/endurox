@@ -298,7 +298,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             else if (0==strcmp((char*)cur->name, "exportsvcs"))
             {
                 p = (char *)xmlNodeGetContent(cur);
-                ndrx_sutl_str_strip(p, " \t"); /* strip spaces & tabs */
+                ndrx_str_strip(p, " \t"); /* strip spaces & tabs */
                 if (strlen(p)>=sizeof(config->default_exportsvcs))
                 {
                     NDRX_LOG(log_warn, "Trimming default exportsvcs");
@@ -664,7 +664,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp((char*)cur->name, "exportsvcs"))
         {
             p = (char *)xmlNodeGetContent(cur);
-            ndrx_sutl_str_strip(p, " \t");
+            ndrx_str_strip(p, " \t");
             if (strlen(p)>=sizeof(p_srvnode->exportsvcs)-3)
             {
                 NDRX_LOG(log_warn, "Trimming server exportsvcs");

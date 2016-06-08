@@ -175,8 +175,8 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                             ent->q_descr, NULL))
         {
-            _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed to remove fd %d from epollfd: %s", 
-                    ent->q_descr, ex_poll_strerror(ndrx_epoll_errno()));
+            _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed to remove fd %d from epollfd: %s", 
+                    ent->q_descr, ndrx_poll_strerror(ndrx_epoll_errno()));
             ret=FAIL;
             goto out;
         }
@@ -184,7 +184,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         /* Now close the FD */
         if (SUCCEED!=ndrx_mq_close(ent->q_descr))
         {
-            _TPset_error_fmt(TPEOS, "ex_mq_close failed to close fd %d: %s", 
+            _TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
                     ent->q_descr, strerror(errno));
             ret=FAIL;
             goto out;
@@ -302,7 +302,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     int ret=SUCCEED;
     int pos, service;
     svc_entry_fn_t *entry_chk=NULL;
-    struct ex_epoll_event ev;
+    struct ndrx_epoll_event ev;
     int sz;
     
     for (pos=0; pos<G_server_conf.adv_service_count; pos++)
@@ -364,7 +364,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     }
 
     /* Open the queue */
-    entry_new->q_descr = ndrx_ex_mq_open_at (entry_new->listen_q, O_RDWR | O_CREAT | O_NONBLOCK, 
+    entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, O_RDWR | O_CREAT | O_NONBLOCK, 
                                             S_IWUSR | S_IRUSR, NULL);
     /*
      * Check are we ok or failed?
@@ -424,8 +424,8 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             entry_new->q_descr, &ev))
     {
-        _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed: %s", 
-                ex_poll_strerror(ndrx_epoll_errno()));
+        _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
+                ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }

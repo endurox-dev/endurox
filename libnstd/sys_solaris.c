@@ -70,7 +70,7 @@
  * "/n00b,srv,admin,atmi.sv1,123,2229")
  * the qpath must point to /tmp
  */
-public string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
+public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
     string_list_t* ret = NULL;
     struct dirent **namelist;
@@ -134,7 +134,7 @@ exit_fail:
 
     if (NULL!=ret)
     {
-        ex_string_list_free(ret);
+        ndrx_string_list_free(ret);
         ret = NULL;
     }
 

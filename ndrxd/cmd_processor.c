@@ -181,7 +181,7 @@ private int cmd_open_queue(void)
     NDRX_LOG(log_debug, "About to open deamon queue: [%s]",
                                         G_command_state.listenq_str);
     /* Open new queue (non blocked, so  that we do not get deadlock on batch deaths! */
-    if ((mqd_t)FAIL==(G_command_state.listenq = ndrx_ex_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
+    if ((mqd_t)FAIL==(G_command_state.listenq = ndrx_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
