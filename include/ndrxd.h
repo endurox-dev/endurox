@@ -245,7 +245,7 @@ extern int get_cmdq_attr(struct mq_attr *attr);
 /* pmodel */
 extern int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid);
 extern pm_node_t * get_pm_from_srvid(int srvid);
-extern int remove_service_q(char *svc);
+extern int remove_service_q(char *svc, short srvid);
 extern char * get_srv_admin_q(pm_node_t * p_pm);
 
 /* Configuration */

@@ -131,9 +131,14 @@ private int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry
             memcpy(entry, svc_fn, sizeof(svc_entry_fn_t));
             /* Set service name */
             strcpy(entry->svc_nm, svn_nm_add);
-
+            
             /* Set queue on which to listen */
+#ifndef EX_USE_EPOLL
+            sprintf(entry->listen_q, NDRX_SVC_QFMT_SRVID, G_server_conf.q_prefix, 
+                    entry->svc_nm, (short)G_server_conf.srv_id);
+#else
             sprintf(entry->listen_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, entry->svc_nm);
+#endif
 
             /* Add to list! */
             DL_APPEND(G_server_conf.service_list, entry);

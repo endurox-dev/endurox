@@ -502,11 +502,15 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
             }
             
             ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->srvid);
-
+#ifndef EX_USE_EPOLL
+            /* for poll() queues must be always removed. */
+            remove_service_q(elt->svc.svc_nm, p_pm->srvid);
+#else
             if (last)
             {
-                remove_service_q(elt->svc.svc_nm);
+                remove_service_q(elt->svc.svc_nm, p_pm->srvid);
             }
+#endif
             
             /* Remove the lock! */
             ndrx_unlock_svc_op();

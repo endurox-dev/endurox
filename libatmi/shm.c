@@ -450,6 +450,7 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     int use_cluster = FAIL;
     static int first = TRUE;
     shm_svcinfo_t *psvcinfo = NULL;
+    int chosen_node = FAIL;
     
     *is_bridge=FALSE;
     
@@ -552,7 +553,6 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         int csrvs = psvcinfo->csrvs;
         int cluster_node = rand()%psvcinfo->csrvs+1;
         int i;
-        int chosen_node = FAIL;
         int got_node = 0;
         int try = 0;
         
@@ -607,7 +607,9 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         
         if (FAIL!=chosen_node)
         {
+#ifdef EX_USE_EPOLL /* only for epoll(). For poll we do recursive call for service selection */
             sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, chosen_node);
+#endif
             *is_bridge=TRUE;
         }
         else
@@ -643,6 +645,18 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
         FAIL_OUT(ret);
     }
+    
+    if (is_bridge && 0!=strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN))
+    {
+        char tmpsvc[MAXTIDENT+1];
+        
+        sprintf(tmpsvc, NDRX_SVC_BRIDGE, chosen_node);
+        
+        NDRX_LOG(log_debug, "Recursive service lookup: [%s]", tmpsvc);
+        ret = ndrx_shm_get_svc(tmpsvc, send_q, is_bridge);
+        *is_bridge = TRUE;
+    }
+    
 #endif
     
 out:

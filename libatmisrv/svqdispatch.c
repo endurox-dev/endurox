@@ -107,6 +107,16 @@ public int sv_open_queue(void)
         }
         
         /* Open the queue */
+#ifndef EX_USE_EPOLL
+        /* for poll mode, we must ensure that queue does not exists before start
+         */
+        if (SUCCEED!=ndrx_mq_unlink(entry->listen_q))
+        {
+            NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
+                    ndrx_poll_strerror(ndrx_epoll_errno()))
+        }
+#endif
+        
         entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
                 O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
         

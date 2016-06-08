@@ -104,7 +104,7 @@ private removed_svcs_t * find_removed_entry(char *svc)
  * @param svc
  * @return 
  */
-public int remove_service_q(char *svc)
+public int remove_service_q(char *svc, short srvid)
 {
     int ret=SUCCEED;
     char q_str[NDRX_MAX_Q_SIZE+1];
@@ -114,9 +114,13 @@ public int remove_service_q(char *svc)
     unsigned prio;
     tp_command_generic_t *gen_command;
     char *fn = "remove_service_q";
-    NDRX_LOG(log_debug, "%s - Enter, svc = [%s]", fn, svc);
+    NDRX_LOG(log_debug, "%s - Enter, svc = [%s], srvid = %hd", fn, svc, srvid);
      
+#ifndef EX_USE_EPOLL
+    sprintf(q_str, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, svc, srvid);
+#else
     sprintf(q_str, NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
+#endif
     
     /* Run in non-blocked mode */
     if ((mqd_t)FAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
