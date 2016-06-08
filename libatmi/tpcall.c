@@ -374,7 +374,7 @@ public int _tpacall (char *svc, char *data,
             goto out;
         }
     }
-    else if (FALSE==ndrx_shm_get_svc(svc, send_q, &is_bridge))
+    else if (SUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);

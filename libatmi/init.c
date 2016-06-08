@@ -216,6 +216,41 @@ public int ndrx_load_common_env(void)
                             G_atmi_env.msgsize_max);
     }
     
+    p = getenv(CONF_NDRX_QPREFIX);
+    if (NULL==p)
+    {
+        /* Write to ULOG? */
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
+        ret=FAIL;
+        goto out;
+    }
+    else
+    {
+        strncpy(G_atmi_env.qprefix, p, sizeof(G_atmi_env.qprefix)-1);
+        G_atmi_env.qprefix[sizeof(G_atmi_env.qprefix)-1] = EOS;
+        
+        NDRX_LOG(log_debug, "Posix queue prefix set to: [%s]",
+                            G_atmi_env.qprefix);
+    }
+    
+    p = getenv(CONF_NDRX_QPATH);
+    if (NULL==p)
+    {
+        /* Write to ULOG? */
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPATH);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_QPATH);
+        ret=FAIL;
+        goto out;
+    }
+    else
+    {
+        strncpy(G_atmi_env.qpath, p, sizeof(G_atmi_env.qpath)-1);
+        G_atmi_env.qpath[sizeof(G_atmi_env.qpath)-1] = EOS;
+        
+        NDRX_LOG(log_debug, "Posix queue queue path set to: [%s]",
+                            G_atmi_env.qpath);
+    }
     
     p = getenv(CONF_NDRX_IPCKEY);
     if (NULL==p)

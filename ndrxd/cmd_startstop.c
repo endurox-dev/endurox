@@ -158,6 +158,10 @@ public int cmd_notify (command_call_t * call, char *data, size_t len, int contex
     if (NULL!=pm_pid)
     {
         int srvid = pm_pid->p_pm->srvid;
+        
+        userlog("Server process [%s], srvid %hd, pid %d died", 
+                pm_pid->p_pm->conf->binary_name, pm_status->srvinfo.srvid, pm_pid->pid);
+                
         /* If we wanted it to stop, but it died, then let it be in exit status
          * which will not try to restart it!
          */
@@ -181,6 +185,7 @@ public int cmd_notify (command_call_t * call, char *data, size_t len, int contex
 
         /* reset shared memory! */
         ndrxd_shm_resetsrv(srvid);
+        
     }
     else
     {

@@ -418,6 +418,8 @@ private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
     
     if (!ndrx_sys_is_process_running(pid, process))
     {
+        userlog("Client process [%s], pid %d died", process, pid);
+        
         unlink_dead_queue(qname);
         prev_was_unlink = TRUE;
     }

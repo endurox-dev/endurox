@@ -228,8 +228,8 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
     n = scandir(path, &namelist, 0, alphasort);
     if (n < 0)
     {
-        NDRX_LOG(log_error, "Failed to open queue directory: %s", 
-                strerror(errno));
+        NDRX_LOG(log_error, "Failed to open queue directory [%s]: %s", 
+                path, strerror(errno));
         goto exit_fail;
     }
     else 

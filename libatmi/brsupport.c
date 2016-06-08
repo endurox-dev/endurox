@@ -108,7 +108,19 @@ public int fill_reply_queue(char *nodestack,
             nodeid = nodestack[i];
             if (ndrx_shm_bridge_is_connected(nodeid))
             {
-                sprintf(reply_to, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, nodeid);
+                /* get the bridge service first... */
+                int is_bridge;
+                char tmpsvc[MAXTIDENT+1];
+                
+                sprintf(tmpsvc, NDRX_SVC_BRIDGE, nodeid);
+                
+                if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, reply_to, &is_bridge))
+                {
+                    NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
+                            tmpsvc);
+                    FAIL_OUT(ret);
+                }
+                
                 nodestack[i] = EOS;
                 br_dump_nodestack(nodestack, "Node stack after bridge select");
                 break;

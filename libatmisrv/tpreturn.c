@@ -381,7 +381,7 @@ public void _tpforward (char *svc, char *data,
     }
 
     /* Check is service available? */
-    if (FALSE==ndrx_shm_get_svc(call->name, send_q, &is_bridge))
+    if (SUCCEED!=ndrx_shm_get_svc(call->name, send_q, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 call->name);

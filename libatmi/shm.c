@@ -459,18 +459,11 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     
     if (!ndrxd_shm_is_attached(&G_svcinfo))
     {
-        ret=FAIL;
-        goto out;
-    }
-    
-    if (!ndrxd_shm_is_attached(&G_svcinfo))
-    {
 #ifndef EX_USE_EPOLL
         /* TODO: lookup first service in cache: */
-        ndrx_get_cached_svc_q(send_q);
+        ret = ndrx_get_cached_svc_q(send_q);
 #endif
-        ret=FAIL;
-        goto out;
+        goto out; /* do not fail, try locally */
     }
     
 #ifndef EX_USE_EPOLL
@@ -482,15 +475,19 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
 #endif
     
     /* Get the service entry */
-    ret = _ndrx_shm_get_svc(svc, &pos);
+    if (!_ndrx_shm_get_svc(svc, &pos))
+    {
+        NDRX_LOG(log_error, "Service %s not found in shm", svc);
+        FAIL_OUT(ret);
+    }
     
     psvcinfo = SHM_SVCINFO_INDEX(svcinfo, pos);
             
-    if (ret && psvcinfo->srvs<=0)
+    if (psvcinfo->srvs<=0)
     {
         NDRX_LOG(log_error, "Service %s not available, count of servers: %d",
                                   svc, psvcinfo->srvs);
-        ret=FAIL;
+        FAIL_OUT(ret);
     }
     
     /* Now use the random to chose the service to send to */
@@ -646,13 +643,13 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         FAIL_OUT(ret);
     }
     
-    if (is_bridge && 0!=strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN))
+    if (*is_bridge && 0!=strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN))
     {
         char tmpsvc[MAXTIDENT+1];
         
         sprintf(tmpsvc, NDRX_SVC_BRIDGE, chosen_node);
         
-        NDRX_LOG(log_debug, "Recursive service lookup: [%s]", tmpsvc);
+        NDRX_LOG(log_debug, "Recursive service lookup: [%s] ret %d", tmpsvc, ret);
         ret = ndrx_shm_get_svc(tmpsvc, send_q, is_bridge);
         *is_bridge = TRUE;
     }
@@ -660,6 +657,8 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
 #endif
     
 out:
+    NDRX_LOG(log_debug, "ndrx_shm_get_svc returns %d", ret);
+
     return ret;
 }
 

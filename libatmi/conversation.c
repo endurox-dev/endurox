@@ -658,7 +658,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     NDRX_LOG(log_debug, "%s: called", fn);
 
     /* Check service availability */
-    if (FALSE==ndrx_shm_get_svc(svc, send_qstr, &is_bridge))
+    if (SUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);

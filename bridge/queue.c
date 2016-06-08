@@ -55,6 +55,7 @@
 #include <ndrxdcmn.h>
 #include "bridge.h"
 #include "../libatmisrv/srv_int.h"
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -214,6 +215,7 @@ public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from
 {
     int ret=SUCCEED;
     char svc_q[NDRX_MAX_Q_SIZE+1];
+    int is_bridge = FALSE;
     
     if (ATMI_COMMAND_EVPOST==call->command_id)
     {
@@ -226,7 +228,17 @@ public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from
     }
     else
     {
-        sprintf(svc_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, call->name);
+        /* Resolve the service in SHM 
+         *   sprintf(svc_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, call->name); */
+                                                                                
+        if (SUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge))
+        {
+            NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
+                    call->name);
+            userlog("Failed to get local service [%s] for bridge call!", call->name);
+            br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
+            FAIL_OUT(ret);
+        }
     }
     
     NDRX_LOG(log_debug, "Calling service: %s", svc_q);

@@ -29,6 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -39,6 +40,7 @@
 #include <sys/mman.h>
 
 #include <ndrstandard.h>
+#include <uthash.h>
 #include <ndebug.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
@@ -53,8 +55,24 @@
 #define KILL_SLEEP_SECS 2
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * List of queues (for queued messages)
+ */
+typedef struct qcache_hash qcache_hash_t;
+struct qcache_hash
+{
+    char svcq[NDRX_MAX_Q_SIZE+1]; /* hash by this */
+    char svcq_full[NDRX_MAX_Q_SIZE+1]; /* full queue name */
+    
+    UT_hash_handle hh; /* makes this structure hashable        */
+};
+
+MUTEX_LOCKDECL(M_q_cache_lock); /* lock the queue cache */
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+private qcache_hash_t *M_qcache = NULL; /* queue cache for non shm mode. */
 
 /**
  * Check is server running
@@ -538,12 +556,136 @@ public int ndrx_q_exists(char *qpath)
 }
 
 /**
- * Return cached queue (usable in poll mode).
- * TODO: 
+ * Check service in cache. If found but cannot open, then remove from cache
  * @param q
+ * @return SUCCEED (found & replaced)/FAIL
+ */
+private int chk_cached_svc(char *svcq, char *svcq_full)
+{
+    qcache_hash_t * ret = NULL;
+   
+    MUTEX_LOCK_V(M_q_cache_lock);
+    
+    HASH_FIND_STR( M_qcache, svcq, ret);
+    
+    if (NULL==ret)
+    {
+        NDRX_LOG(log_debug, "Service q [%s] not in cache", svcq);
+        goto out;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Service q [%s] found in cache, testing...", svcq);
+        if (ndrx_q_exists(svcq))
+        {
+            NDRX_LOG(log_debug, "cached queue exists ok");
+        }
+        else
+        {
+            NDRX_LOG(log_warn, "Cached queue [%s] does not exists", svcq);
+            HASH_DEL(M_qcache, ret);
+            free(ret);
+            ret=NULL;
+        }
+    }
+    
+out:
+    MUTEX_UNLOCK_V(M_q_cache_lock);
+    
+    if (NULL==ret)
+        return FAIL;
+    else
+        return SUCCEED;
+}
+
+/**
+ * Add add full queue mapping to cache
+ * @param q
+ * @param fullq
  * @return 
+ */
+private int add_cached_svc(char *svcq, char *svcq_full)
+{
+    qcache_hash_t * ret = calloc(1, sizeof(qcache_hash_t));
+    
+    MUTEX_LOCK_V(M_q_cache_lock);
+    
+    if (NULL==ret)
+    {
+        NDRX_LOG(log_error, "Failed to alloc qcache_hash_t: %s", strerror(errno));
+        userlog("Failed to alloc qcache_hash_t: %s", strerror(errno));
+    }
+    
+    strcpy(ret->svcq, svcq);
+    strcpy(ret->svcq_full, svcq_full);
+    
+    HASH_ADD_STR( M_qcache, svcq, ret );
+    
+    MUTEX_UNLOCK_V(M_q_cache_lock);
+    
+    if (NULL!=ret)
+        return SUCCEED;
+    else
+        return FAIL;
+}
+
+/**
+ * Return cached queue (usable in poll mode).
+ * @param q
+ * @return SUCCEED/FAIL
  */
 public int ndrx_get_cached_svc_q(char *q)
 {
-    return SUCCEED;
+    int ret=SUCCEED;
+    int found = FALSE;
+    string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
+    char svcq[NDRX_MAX_Q_SIZE+1];
+    
+    strcpy(svcq, q);
+    
+    if (SUCCEED==chk_cached_svc(svcq, q))
+    {
+        NDRX_LOG(log_info, "Got cached service: [%s]", q);
+        return SUCCEED;
+    }
+    
+    
+    qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
+    
+    if (SUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "posix queue listing failed!");
+        FAIL_OUT(ret);
+    }
+    
+    strcat(q, NDRX_FMT_SEP_STR);
+    
+    LL_FOREACH(qlist,elt)
+    {
+        /* if not print all, then skip this queue */
+        if (0==strncmp(elt->qname,  q, strlen(q)))
+        {
+            strcpy(q, elt->qname);
+            NDRX_LOG(log_debug, "Non shm mode, found Q: [%s]", q);
+            found = TRUE;
+            break;
+        }
+    }
+    
+    if (!found)
+    {
+        NDRX_LOG(log_error, "No servers for [%s] according to Q list", q);
+        FAIL_OUT(ret);
+    }
+    
+    /* save the server in cache... */
+    add_cached_svc(svcq, q);
+    
+out:
+    if (NULL!=qlist)
+    {
+        ndrx_string_list_free(qlist);
+    }
+    return ret;
 }
