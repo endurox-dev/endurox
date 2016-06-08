@@ -80,7 +80,8 @@ static char M_qpath[PATH_MAX] = {EOS};
  * - Firstly open the queue,
  * - The open fifo file
  */
-public mqd_t ex_mq_open_with_registry(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
+public mqd_t ndrx_mq_open_with_registry(const char *name, int oflag, 
+        mode_t mode, struct mq_attr *attr)
 {
     mqd_t ret;
     char regpath[PATH_MAX];
@@ -127,7 +128,7 @@ public mqd_t ex_mq_open_with_registry(const char *name, int oflag, mode_t mode, 
  * - Remove the queue
  * - Then remove fifo file
  */
-public int ex_mq_unlink_with_registry (const char *name)
+public int ndrx_mq_unlink_with_registry (const char *name)
 {   
     char regpath[PATH_MAX];
     int ret, err;

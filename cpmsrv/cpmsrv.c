@@ -276,20 +276,20 @@ private int cpm_callback_timer(void)
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     static int first = TRUE;
-    static n_timer_t t;
+    static ndrx_timer_t t;
     
     if (first)
     {
         first = FALSE;
-        n_timer_reset(&t);
+        ndrx_timer_reset(&t);
     }
     
-    if (n_timer_get_delta_sec(&t) < G_config.chk_interval)
+    if (ndrx_timer_get_delta_sec(&t) < G_config.chk_interval)
     {
         goto out;
     }
     
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     
     
     NDRX_LOG(log_debug, "cpm_callback_timer() enter");

@@ -62,7 +62,7 @@
  * @param b3
  * @return 
  */
-public int nstdutil_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
+public int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
 {
     
     long res1 =  a1 - b1;
@@ -86,7 +86,7 @@ public int nstdutil_compare3(long a1, long a2, long a3, long b1, long b2, long b
  * @param t
  * @param tusec
  */
-public void nstdutil_utc_tstamp2(long *t, long *tusec)
+public void ndrx_utc_tstamp2(long *t, long *tusec)
 {
     struct timeval tv;
     
@@ -101,7 +101,7 @@ public void nstdutil_utc_tstamp2(long *t, long *tusec)
  * @param ts
  * @return 
  */
-public char * nstdutil_get_strtstamp2(int slot, long t, long tusec)
+public char * ndrx_get_strtstamp2(int slot, long t, long tusec)
 {
     time_t tfmt;
     struct tm utc;
@@ -120,7 +120,7 @@ public char * nstdutil_get_strtstamp2(int slot, long t, long tusec)
  * This assumes that platform uses 64bit long long.
  * Or we can drop the milliseconds if the platform does not handle that.
  */
-public unsigned long long nstdutil_utc_tstamp(void)
+public unsigned long long ndrx_utc_tstamp(void)
 {
     struct timeval tv;
     unsigned long long ret;
@@ -146,7 +146,7 @@ public unsigned long long nstdutil_utc_tstamp(void)
  * Return timestamp in microseconds
  * @return 
  */
-public unsigned long long nstdutil_utc_tstamp_micro(void)
+public unsigned long long ndrx_utc_tstamp_micro(void)
 {
     struct timeval tv;
     unsigned long long ret;
@@ -172,7 +172,7 @@ public unsigned long long nstdutil_utc_tstamp_micro(void)
  * @param ts
  * @return 
  */
-public char * nstdutil_get_strtstamp_from_micro(int slot, unsigned long long ts)
+public char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
 {
     time_t t;
     struct tm utc;
@@ -193,7 +193,7 @@ public char * nstdutil_get_strtstamp_from_micro(int slot, unsigned long long ts)
  * Get tick count in one second for current platform
  * @return 
  */
-public unsigned long long nstdutil_get_micro_resolution_for_sec(void)
+public unsigned long long ndrx_get_micro_resolution_for_sec(void)
 {
     unsigned long long ret;    
     
@@ -215,7 +215,7 @@ public unsigned long long nstdutil_get_micro_resolution_for_sec(void)
  * @param p_date - ptr to store long date, format YYYYMMDD
  * @param p_time - ptr to store long time, format HHMISS
  */
-public void nstdutil_get_dt_local(long *p_date, long *p_time)
+public void ndrx_get_dt_local(long *p_date, long *p_time)
 {
     struct tm       *p_tm;
     long            lret;
@@ -235,7 +235,7 @@ public void nstdutil_get_dt_local(long *p_date, long *p_time)
  * @param str
  * @return 
  */
-public char * nstdutil_str_env_subs(char * str)
+public char * ndrx_str_env_subs(char * str)
 {
     char *p;
     char *next = str;
@@ -300,7 +300,7 @@ public char * nstdutil_str_env_subs(char * str)
  * @param slot
  * @return 
  */
-char *nstdutil_decode_num(long tt, int slot, int level, int levels)
+char *ndrx_decode_num(long tt, int slot, int level, int levels)
 {
     static __thread char text[20][128];
     char tmp[128];
@@ -346,7 +346,7 @@ char *nstdutil_decode_num(long tt, int slot, int level, int levels)
         strcat(text[slot], tmp);
     
     if (next_t)
-        nstdutil_decode_num(next_t, slot, level, levels);
+        ndrx_decode_num(next_t, slot, level, levels);
     
     return text[slot];
 }
@@ -357,7 +357,7 @@ char *nstdutil_decode_num(long tt, int slot, int level, int levels)
  * @param needle - chars to strip
  * @return 
  */
-public char *nstdutil_str_strip(char *haystack, char *needle)
+public char *ndrx_sutl_str_strip(char *haystack, char *needle)
 {
     char *dest;
     char *src;
@@ -395,7 +395,7 @@ public char *nstdutil_str_strip(char *haystack, char *needle)
  * @param str string to test
  * @return TRUE/FALSE
  */
-public int nstdutil_isint(char *str)
+public int ndrx_isint(char *str)
 {
    if (*str == '-')
    {
@@ -430,7 +430,7 @@ public int nstdutil_isint(char *str)
  * @param endval - List end/default value
  * @return ptr to maping str
  */
-public char *dolongstrgmap(longstrmap_t *map, long val, long endval)
+public char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
 {
     do 
     {
@@ -452,7 +452,7 @@ public char *dolongstrgmap(longstrmap_t *map, long val, long endval)
  * @param endval - List end/default value
  * @return ptr to maping str
  */
-public char *docharstrgmap(longstrmap_t *map, char val, char endval)
+public char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
 {
     do 
     {
@@ -484,7 +484,7 @@ public uint64_t ndrx_gettid(void)
  * @param filename path + filename
  * @return TRUE if exists / FALSE not exists
  */
-public int nstdutil_file_exists(char *filename)
+public int ndrx_file_exists(char *filename)
 {
     struct stat st;
     int result = stat(filename, &st);

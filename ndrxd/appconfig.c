@@ -258,7 +258,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 config->default_env[sizeof(config->default_env)-1] = EOS;
                 
                 /* process env */
-                nstdutil_str_env_subs(config->default_env);
+                ndrx_str_env_subs(config->default_env);
                 
                 xmlFree(p);
             }
@@ -298,7 +298,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             else if (0==strcmp((char*)cur->name, "exportsvcs"))
             {
                 p = (char *)xmlNodeGetContent(cur);
-                nstdutil_str_strip(p, " \t"); /* strip spaces & tabs */
+                ndrx_sutl_str_strip(p, " \t"); /* strip spaces & tabs */
                 if (strlen(p)>=sizeof(config->default_exportsvcs))
                 {
                     NDRX_LOG(log_warn, "Trimming default exportsvcs");
@@ -664,7 +664,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp((char*)cur->name, "exportsvcs"))
         {
             p = (char *)xmlNodeGetContent(cur);
-            nstdutil_str_strip(p, " \t");
+            ndrx_sutl_str_strip(p, " \t");
             if (strlen(p)>=sizeof(p_srvnode->exportsvcs)-3)
             {
                 NDRX_LOG(log_warn, "Trimming server exportsvcs");
@@ -680,7 +680,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p = (char *)xmlNodeGetContent(cur);
             strncpy(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT));
             /* process env */
-            nstdutil_str_env_subs(p_srvnode->SYSOPT);
+            ndrx_str_env_subs(p_srvnode->SYSOPT);
             /* Ensure that we terminate... */
             p_srvnode->SYSOPT[sizeof(p_srvnode->SYSOPT)-1] = EOS;
             xmlFree(p);
@@ -690,7 +690,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p = (char *)xmlNodeGetContent(cur);
             strncpy(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT));
             /* process env */
-            nstdutil_str_env_subs(p_srvnode->SYSOPT);
+            ndrx_str_env_subs(p_srvnode->SYSOPT);
             /* Ensure that we terminate... */
             p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EOS;
             xmlFree(p);
@@ -704,7 +704,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->env[sizeof(p_srvnode->env)-1] = EOS;
 
             /* process env */
-            nstdutil_str_env_subs(p_srvnode->env);
+            ndrx_str_env_subs(p_srvnode->env);
 
             xmlFree(p);
         }

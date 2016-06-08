@@ -87,11 +87,11 @@ public int psc_rsp_process(command_reply_t *reply, size_t reply_len)
            fprintf(stdout, "%-2d %-12.12s %-12.12s %-9.9s %-5d %-5.5s %-5.5s %-8.8s %-8.8s %-5.5s\n",
                    psc_info->nodeid,
                    svc, fun, binary, psc_info->srvid, 
-                   nstdutil_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 
-                   nstdutil_decode_num(psc_info->svcdet[i].fail, 1, 0, 1),
+                   ndrx_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 
+                   ndrx_decode_num(psc_info->svcdet[i].fail, 1, 0, 1),
                    /*decode_msec(psc_info->svcdet[i].min, 0, 0, 2), - not very interesting */
-                   decode_msec(psc_info->svcdet[i].max, 0, 0, 2),
-                   decode_msec(psc_info->svcdet[i].last, 1, 0, 2),
+                   ndrx_decode_msec(psc_info->svcdet[i].max, 0, 0, 2),
+                   ndrx_decode_msec(psc_info->svcdet[i].last, 1, 0, 2),
                    (psc_info->svcdet[i].status?"BUSY":"AVAIL"));
         }
     }

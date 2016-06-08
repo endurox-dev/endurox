@@ -191,7 +191,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     else if (0==strcmp(key, TMQ_QC_TRIES))
     {
         int ival = atoi(value);
-        if (!nstdutil_isint(value) || ival < 0)
+        if (!ndrx_isint(value) || ival < 0)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
@@ -212,7 +212,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     else if (0==strcmp(key, TMQ_QC_WAITINIT))
     {
         int ival = atoi(value);
-        if (!nstdutil_isint(value) || ival < 0)
+        if (!ndrx_isint(value) || ival < 0)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
@@ -224,7 +224,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     else if (0==strcmp(key, TMQ_QC_WAITRETRY))
     {
         int ival = atoi(value);
-        if (!nstdutil_isint(value) || ival < 0)
+        if (!ndrx_isint(value) || ival < 0)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
@@ -236,7 +236,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     else if (0==strcmp(key, TMQ_QC_WAITRETRYINC))
     {
         int ival = atoi(value);
-        if (!nstdutil_isint(value) || ival < 0)
+        if (!ndrx_isint(value) || ival < 0)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
@@ -248,7 +248,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     else if (0==strcmp(key, TMQ_QC_WAITRETRYMAX))
     {
         int ival = atoi(value);
-        if (!nstdutil_isint(value) || ival < 0)
+        if (!ndrx_isint(value) || ival < 0)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
@@ -458,7 +458,7 @@ public int tmq_reload_conf(char *cf)
     
     while (FAIL!=(read = getline(&line, &len, f))) 
     {
-        nstdutil_str_strip(line, " \n\r\t");
+        ndrx_sutl_str_strip(line, " \n\r\t");
         
         /* Ignore comments & newlines */
         if ('#'==*line || EOS==*line)
@@ -809,7 +809,7 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
                 retry_inc;
     }
     
-    nstdutil_utc_tstamp2(&utc_sec, &utc_usec);
+    ndrx_utc_tstamp2(&utc_sec, &utc_usec);
     NDRX_LOG(log_debug, "Next try at: %ld current clock: %ld",
             next_try, utc_sec);
             
@@ -1320,7 +1320,7 @@ out:
 private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
 {
     
-    return nstdutil_compare3(q1->msg->msgtstamp, q1->msg->msgtstamp_usec, q1->msg->msgtstamp_cntr, 
+    return ndrx_compare3(q1->msg->msgtstamp, q1->msg->msgtstamp_usec, q1->msg->msgtstamp_cntr, 
             q2->msg->msgtstamp, q2->msg->msgtstamp_usec, q2->msg->msgtstamp_cntr);
     
 }

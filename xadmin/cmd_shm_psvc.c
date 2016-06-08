@@ -113,7 +113,7 @@ public int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
         fprintf(stdout, "%-6d %-12.12s %-4.4s %-5d %-5d %-5d %-4d %-*.*s\n", 
             shm_psvc_info->slot, 
             svc,
-            nstdutil_decode_num(shm_psvc_info->srvs, 0, 0, 1),
+            ndrx_decode_num(shm_psvc_info->srvs, 0, 0, 1),
             shm_psvc_info->flags,
             shm_psvc_info->csrvs, shm_psvc_info->totclustered,
             shm_psvc_info->cnodes_max_id, 

@@ -72,8 +72,8 @@ public int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         /* quit automatically, as all resources are being removed! */
         *p_have_next = FALSE;
         
-        ex_down_sys(G_config.qprefix, G_config.qpath, FALSE);
-        ex_down_sys(G_config.qprefix, G_config.qpath, TRUE); /* second loop with TRUE... */
+        ndrx_down_sys(G_config.qprefix, G_config.qpath, FALSE);
+        ndrx_down_sys(G_config.qprefix, G_config.qpath, TRUE); /* second loop with TRUE... */
     }
     
 out:

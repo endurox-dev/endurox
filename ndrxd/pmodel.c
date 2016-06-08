@@ -598,7 +598,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /*  Override environment, if there is such thing */
         if (EOS!=p_pm->conf->env[0])
         {
-            if (SUCCEED!=load_new_env(p_pm->conf->env))
+            if (SUCCEED!=ndrx_load_new_env(p_pm->conf->env))
             {
                 fprintf(stderr, "Failed to load custom env from: %s!\n", 
                         p_pm->conf->env);
@@ -620,7 +620,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     else if (FAIL!=pid)
     {
-        n_timer_t timer;
+        ndrx_timer_t timer;
         int finished = FALSE;
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
@@ -644,7 +644,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             /* this is parent for child - sleep some seconds, then check for PID... */
             /* TODO: Replace sleep with wait call from service - wait for message? */
             /*usleep(250000);  250 milli seconds */
-            n_timer_reset(&timer);
+            ndrx_timer_reset(&timer);
 
             do
             {
@@ -652,24 +652,24 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 /* do command processing for now */
                 command_wait_and_run(&finished, abort);
                 /* check the status? */
-            } while (n_timer_get_delta(&timer) < G_app_config->srvstartwait && 
+            } while (ndrx_timer_get_delta(&timer) < G_app_config->srvstartwait && 
                             NDRXD_PM_STARTING==p_pm->state && !(*abort));
             
             if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
             {
-                n_timer_t sleep_timer;
-                n_timer_reset(&sleep_timer);
+                ndrx_timer_t sleep_timer;
+                ndrx_timer_reset(&sleep_timer);
                 
                 do
                 {
                     NDRX_LOG(log_debug, "In process after start sleep...");
                     command_wait_and_run(&finished, abort);
-                } while (n_timer_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
+                } while (ndrx_timer_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
                 
             }
             
             /* Check for process name & pid */
-            if (ex_sys_is_process_running(pid, p_pm->binary_name))
+            if (ndrx_sys_is_process_running(pid, p_pm->binary_name))
             {
                 /*Should be set at info: p_pm->state = NDRXD_PM_RUNNING;*/
                 NDRX_LOG(log_debug, "binary %s, srvid %d started with pid %d",
@@ -716,7 +716,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 {
     int ret=SUCCEED;
     command_call_t call;
-    n_timer_t timer;
+    ndrx_timer_t timer;
     int finished = FALSE;
     char srv_queue[NDRX_MAX_Q_SIZE+1];
     char fn[] = "stop_process";
@@ -778,7 +778,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /*goto out; Ignore this condition, just get the status of binary... */
     }
 
-    n_timer_reset(&timer);
+    ndrx_timer_reset(&timer);
     do
     {
         NDRX_LOG(log_debug, "Waiting for response from srv... state: %d",
@@ -786,7 +786,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* do command processing for now */
         command_wait_and_run(&finished, abort);
         /* check the status? */
-    } while (n_timer_get_delta(&timer) < G_app_config->srvstopwait &&
+    } while (ndrx_timer_get_delta(&timer) < G_app_config->srvstopwait &&
                     !PM_NOT_RUNNING(p_pm->state) &&
                     !(*abort));
 

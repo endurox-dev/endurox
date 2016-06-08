@@ -71,7 +71,7 @@
  * @param proc_name
  * @return
  */
-public int ex_sys_is_process_running(pid_t pid, char *proc_name)
+public int ndrx_sys_is_process_running(pid_t pid, char *proc_name)
 {
     char   proc_file[PATH_MAX];
     int     ret = FALSE;
@@ -122,7 +122,7 @@ out:
 /**
  * Return list of message queues
  */
-public string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
+public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
-    return ex_sys_folder_list(qpath, return_status);
+    return ndrx_sys_folder_list(qpath, return_status);
 }

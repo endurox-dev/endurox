@@ -273,7 +273,7 @@ public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int 
     {
         /* This is new message */
         net->recv_tout = 0; /* Just in case reset... */
-        n_timer_reset(&net->rcv_timer);
+        ndrx_timer_reset(&net->rcv_timer);
     }
     
     while (SUCCEED==ret)
@@ -320,7 +320,7 @@ out:
     /* If message is not complete & there is timeout condition, 
      * then close conn & fail
      */
-    if (n_timer_get_delta_sec(&net->rcv_timer) >=net->rcvtimeout )
+    if (ndrx_timer_get_delta_sec(&net->rcv_timer) >=net->rcvtimeout )
     {
         NDRX_LOG(log_error, "This is time-out => closing socket !");
         close_socket(net);
@@ -397,10 +397,10 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     }
 
     if (0==so_error && !net->is_connected && 
-            n_timer_get_delta_sec(&net->connect_time) > net->rcvtimeout)
+            ndrx_timer_get_delta_sec(&net->connect_time) > net->rcvtimeout)
     {
         NDRX_LOG(log_error, "Cannot establish connection to server in "
-                "time: %ld secs", n_timer_get_delta_sec(&net->connect_time));
+                "time: %ld secs", ndrx_timer_get_delta_sec(&net->connect_time));
         close_socket(net);
         goto out;
     }
@@ -428,7 +428,7 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     {
         /* We are connected, send zero lenght message, ok */
         if (net->periodic_zero && 
-                n_timer_get_delta_sec(&net->last_zero) > net->periodic_zero)
+                ndrx_timer_get_delta_sec(&net->last_zero) > net->periodic_zero)
         {
             NDRX_LOG(log_debug, "About to issue zero length "
                     "message on fd %d", net->sock);
@@ -438,7 +438,7 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
             }
             else
             {
-                n_timer_reset(&net->last_zero);
+                ndrx_timer_reset(&net->last_zero);
             }
         }
     }
@@ -609,7 +609,7 @@ private int open_socket(exnetcon_t *net)
         }
     }
     /* Take the time on what we try to connect. */
-    n_timer_reset(&net->connect_time);
+    ndrx_timer_reset(&net->connect_time);
 
     /* Add stuff for polling */
     if (SUCCEED!=tpext_addpollerfd(net->sock,

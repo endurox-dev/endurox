@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     char buf[1024];
     char test_buf_carray[8192];
     char test_buf_small[1024];
-    n_timer_t timer;
+    ndrx_timer_t timer;
     int call_num = MAX_ASYNC_CALLS *4;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
             goto out;
         }
 
-        n_timer_reset(&timer);
+        ndrx_timer_reset(&timer);
 
         /* Do the loop call! */
         for (i=0; i<call_num; i++) /* Test the cd loop */
@@ -246,14 +246,14 @@ int main(int argc, char** argv) {
             }
         }
 
-        d = (double)(sizeof(test_buf_small)*(call_num))/(double)n_timer_get_delta_sec(&timer);
+        d = (double)(sizeof(test_buf_small)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
 
-        cps = (double)(call_num)/(double)n_timer_get_delta_sec(&timer);
+        cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
 
         printf("1KB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, "
                 "calls/sec = %lf\n", 
                 (int)(sizeof(test_buf_small)*(call_num)), 
-                (long)n_timer_get_delta_sec(&timer),  
+                (long)ndrx_timer_get_delta_sec(&timer),  
                 d,
                 (d/1024)/1024, 
                 cps);
@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
             goto out;
         }
 
-        n_timer_reset(&timer);
+        ndrx_timer_reset(&timer);
 
         /* Do the loop call! */
         for (i=0; i<call_num; i++) /* Test the cd loop */
@@ -289,13 +289,13 @@ int main(int argc, char** argv) {
             }
         }
 
-        d = (double)(sizeof(test_buf_carray)*(call_num))/(double)n_timer_get_delta_sec(&timer);
+        d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
 
-        cps = (double)(call_num)/(double)n_timer_get_delta_sec(&timer);
+        cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
 
         printf("8KB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
                 (int)(sizeof(test_buf_carray)*(call_num)), 
-                (long)n_timer_get_delta_sec(&timer),  
+                (long)ndrx_timer_get_delta_sec(&timer),  
                 d,
                 (d/1024)/1024, 
                 cps);

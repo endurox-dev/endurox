@@ -66,7 +66,7 @@
  * @param proc_name
  * @return
  */
-public int ex_sys_is_process_running(pid_t pid, char *proc_name)
+public int ndrx_sys_is_process_running(pid_t pid, char *proc_name)
 {
     FILE *fp=NULL;
     char cmd[128];
@@ -116,7 +116,7 @@ out:
  * @param proc_name
  * @return
  */
-public char * ex_sys_get_proc_name(void)
+public char * ndrx_sys_get_proc_name(void)
 {
     static char out[PATH_MAX] = "unknown";
     FILE *fp=NULL;

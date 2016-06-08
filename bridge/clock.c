@@ -65,14 +65,14 @@
 public int br_calc_clock_diff(command_call_t *call)
 {
     int ret=SUCCEED;
-    n_timer_t our_time;
+    ndrx_timer_t our_time;
     cmd_br_time_sync_t *their_time = (cmd_br_time_sync_t *)call;
     
     /* So we have their time let timer lib, to get diff */
-    n_timer_reset(&our_time);
+    ndrx_timer_reset(&our_time);
     
     
-    G_bridge_cfg.timediff = n_timer_diff(&their_time->time, &our_time);
+    G_bridge_cfg.timediff = ndrx_timer_diff(&their_time->time, &our_time);
     NDRX_LOG(log_warn, "Monotonic clock time correction between us "
             "and node %d is: %ld msec", 
             call->caller_nodeid, G_bridge_cfg.timediff);
@@ -97,7 +97,7 @@ public int br_send_clock(void)
     
     cmd_generic_init(NDRXD_COM_BRCLOCK_RQ, NDRXD_SRC_BRIDGE, NDRXD_CALL_TYPE_BRBCLOCK,
                             (command_call_t *)&ourtime, G_atmi_conf.reply_q_str);
-    n_timer_reset(&ourtime.time);
+    ndrx_timer_reset(&ourtime.time);
     
     ret=br_send_to_net((char*)&ourtime, sizeof(ourtime), BR_NET_CALL_MSG_TYPE_NDRXD, 
             ourtime.call.command);
@@ -117,18 +117,18 @@ public void br_clock_adj(tp_command_call_t *call, int is_out)
 {
     N_TIMER_DUMP(log_info, "Call timer: ", call->timer);    
 #if CLOCK_DEBUG
-    n_timer_t our_time;
-    n_timer_reset(&our_time);
+    ndrx_timer_t our_time;
+    ndrx_timer_reset(&our_time);
     NDRX_LOG(log_debug, "Original call age: %ld ms", 
-            n_timer_diff(&call->timer, &our_time));
+            ndrx_timer_diff(&call->timer, &our_time));
 #endif
     if (is_out)
     {
-        n_timer_plus(&call->timer, G_bridge_cfg.timediff);
+        ndrx_timer_plus(&call->timer, G_bridge_cfg.timediff);
     }
     else
     {
-        n_timer_minus(&call->timer, G_bridge_cfg.timediff);
+        ndrx_timer_minus(&call->timer, G_bridge_cfg.timediff);
     }
         
     NDRX_LOG(log_debug, "Clock diff: %ld ms", G_bridge_cfg.timediff);
@@ -136,7 +136,7 @@ public void br_clock_adj(tp_command_call_t *call, int is_out)
     
 #if CLOCK_DEBUG
     NDRX_LOG(log_debug, "New call age: %ld ms", 
-            n_timer_diff(&call->timer, &our_time));
+            ndrx_timer_diff(&call->timer, &our_time));
     NDRX_LOG(log_debug, "Clock based call age (according to tstamp): %d", 
             time(NULL) - call->timestamp);
 #endif

@@ -101,7 +101,7 @@ public int cpm_killall(void)
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     int is_any_running;
-    n_timer_t t;
+    ndrx_timer_t t;
     
     /******************** SIGINT ****************************************/
     NDRX_LOG(log_warn, "Terminating all with SIGINT");
@@ -115,7 +115,7 @@ public int cpm_killall(void)
     }
     
     is_any_running = FALSE;
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     do
     {
         sign_chld_handler(0);
@@ -134,7 +134,7 @@ public int cpm_killall(void)
             usleep(CLT_STEP_INTERVAL_ALL);
         }
     }
-    while (is_any_running && n_timer_get_delta_sec(&t) < G_config.kill_interval);
+    while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
     
     
     /******************** SIGTERM ****************************************/
@@ -150,7 +150,7 @@ public int cpm_killall(void)
     
 
     is_any_running = FALSE;
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     do
     {
         sign_chld_handler(0);
@@ -170,7 +170,7 @@ public int cpm_killall(void)
         }
         
     }
-    while (is_any_running && n_timer_get_delta_sec(&t) < G_config.kill_interval);
+    while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
     
     
     /******************** SIGKILL ****************************************/
@@ -186,7 +186,7 @@ public int cpm_killall(void)
     
 
     is_any_running = FALSE;
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     do
     {
         sign_chld_handler(0);
@@ -206,7 +206,7 @@ public int cpm_killall(void)
         }
         
     }
-    while (is_any_running && n_timer_get_delta_sec(&t) < G_config.kill_interval);
+    while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
     
     return SUCCEED;
 }
@@ -222,12 +222,12 @@ public int cpm_killall(void)
 public int cpm_kill(cpm_process_t *c)
 {
     int ret = SUCCEED;
-    n_timer_t t;
+    ndrx_timer_t t;
     NDRX_LOG(log_warn, "Stopping %s/%s - %s", c->tag, c->subsect, c->stat.command_line);
             
     /* INT interval */
     kill(c->dyn.pid, SIGINT);
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     do
     {
         sign_chld_handler(0);
@@ -236,7 +236,7 @@ public int cpm_kill(cpm_process_t *c)
             usleep(CLT_STEP_INTERVAL);
         }
     } while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            n_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -246,7 +246,7 @@ public int cpm_kill(cpm_process_t *c)
     
     /* TERM interval */
     kill(c->dyn.pid, SIGTERM);
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     do
     {
         sign_chld_handler(0);
@@ -255,7 +255,7 @@ public int cpm_kill(cpm_process_t *c)
             usleep(CLT_STEP_INTERVAL);
         }
     } while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            n_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -265,7 +265,7 @@ public int cpm_kill(cpm_process_t *c)
     
     /* KILL interval */
     kill(c->dyn.pid, SIGKILL);
-    n_timer_reset(&t);
+    ndrx_timer_reset(&t);
     do
     {
         sign_chld_handler(0);
@@ -276,7 +276,7 @@ public int cpm_kill(cpm_process_t *c)
         }
     }
     while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            n_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -332,7 +332,7 @@ public int cpm_exec(cpm_process_t *c)
         /*  Override environment, if there is such thing */
         if (EOS!=c->stat.env[0])
         {
-            if (SUCCEED!=load_new_env(c->stat.env))
+            if (SUCCEED!=ndrx_load_new_env(c->stat.env))
             {
                 userlog("Failed to load custom env from: %s!\n", c->stat.env);
                 exit(1);

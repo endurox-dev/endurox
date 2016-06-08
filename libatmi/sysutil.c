@@ -59,7 +59,7 @@
 /**
  * Check is server running
  */
-public int ex_chk_server(char *procname, short srvid)
+public int ndrx_chk_server(char *procname, short srvid)
 {
     int ret = FALSE;
     char test_string3[NDRX_MAX_KEY_SIZE+4];
@@ -69,7 +69,7 @@ public int ex_chk_server(char *procname, short srvid)
     sprintf(test_string3, "-k %s", G_atmi_env.rnd_key);
     sprintf(test_string4, "-i %hd", srvid);
     
-    list =  ex_sys_ps_list(ex_sys_get_cur_username(), procname, test_string3, test_string4);
+    list =  ndrx_sys_ps_list(ndrx_sys_get_cur_username(), procname, test_string3, test_string4);
     
     if (NULL!=list)
     {
@@ -82,7 +82,7 @@ public int ex_chk_server(char *procname, short srvid)
     }
     
     
-    ex_string_list_free(list);
+    ndrx_string_list_free(list);
    
     return ret;
 }
@@ -91,7 +91,7 @@ public int ex_chk_server(char *procname, short srvid)
 /**
  * Check is `ndrxd' daemon running
  */
-public int ex_chk_ndrxd(void)
+public int ndrx_chk_ndrxd(void)
 {
     int ret = FALSE;
     char test_string3[NDRX_MAX_KEY_SIZE+4];
@@ -99,7 +99,7 @@ public int ex_chk_ndrxd(void)
      
     sprintf(test_string3, "-k %s", G_atmi_env.rnd_key);
     
-    list =  ex_sys_ps_list(ex_sys_get_cur_username(), "ndrxd", test_string3, "");
+    list =  ndrx_sys_ps_list(ndrx_sys_get_cur_username(), "ndrxd", test_string3, "");
     
     if (NULL!=list)
     {
@@ -112,7 +112,7 @@ public int ex_chk_ndrxd(void)
     }
     
     
-    ex_string_list_free(list);
+    ndrx_string_list_free(list);
     
     return ret;
 }
@@ -125,7 +125,7 @@ public int ex_chk_ndrxd(void)
  * @param th
  * @return 
  */
-public int ex_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th)
+public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th)
 {
     char tmp[NDRX_MAX_Q_SIZE+1];
     char *token;
@@ -219,7 +219,7 @@ out:
  * @param pid
  * @return 
  */
-public int ex_get_pid_from_ps(char *psout, pid_t *pid)
+public int ndrx_get_pid_from_ps(char *psout, pid_t *pid)
 {
     char tmp[PATH_MAX+1];
     char *token;
@@ -253,7 +253,7 @@ out:
 /**
  * Kill the system running (the xadmin dies last...)
  */
-public int ex_down_sys(char *qprefix, char *qpath, int is_force)
+public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
 {
     int ret = SUCCEED;
     int signals[] = {SIGTERM, SIGKILL};
@@ -292,7 +292,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
     }
     
     /* list all queues */
-    qlist = ex_sys_mqueue_list_make(qpath, &ret);
+    qlist = ndrx_sys_mqueue_list_make(qpath, &ret);
     
     if (SUCCEED!=ret)
     {
@@ -317,7 +317,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing q: [%s]", elt->qname);
             
-            if (SUCCEED==ex_parse_clt_q(elt->qname, pfx, proc, &pid, &th) &&
+            if (SUCCEED==ndrx_parse_clt_q(elt->qname, pfx, proc, &pid, &th) &&
                     0!=strcmp(proc, "xadmin"))
             {
                  NDRX_LOG(log_error, "! killing  sig=%d pfx=[%s] proc=[%s] "
@@ -341,7 +341,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
     NDRX_LOG(log_warn, "Removing server processes...");
     
     was_any = FALSE;
-    srvlist = ex_sys_ps_list(ex_sys_get_cur_username(), test_string2, "", "");
+    srvlist = ndrx_sys_ps_list(ndrx_sys_get_cur_username(), test_string2, "", "");
     
     for (i=0; i<max_signals; i++)
     {
@@ -350,7 +350,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid))
+            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid))
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
@@ -372,7 +372,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
     /* remove all xadmins... */
     NDRX_LOG(log_warn, "Removing other xadmins...");
     was_any = FALSE;
-    xadminlist = ex_sys_ps_list(ex_sys_get_cur_username(), "xadmin", "", "");
+    xadminlist = ndrx_sys_ps_list(ndrx_sys_get_cur_username(), "xadmin", "", "");
     
     for (i=0; i<max_signals; i++)
     {
@@ -381,7 +381,7 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid) && pid!=getpid())
+            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid) && pid!=getpid())
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
@@ -460,9 +460,9 @@ public int ex_down_sys(char *qprefix, char *qpath, int is_force)
     
 out:
 
-    ex_string_list_free(qlist);
-    ex_string_list_free(srvlist);
-    ex_string_list_free(xadminlist);
+    ndrx_string_list_free(qlist);
+    ndrx_string_list_free(srvlist);
+    ndrx_string_list_free(xadminlist);
     
     
     return ret;
@@ -474,7 +474,7 @@ out:
  * @param m
  * @return 
  */
-public int ex_killall(char *mask)
+public int ndrx_killall(char *mask)
 {
     string_list_t* plist = NULL;
     string_list_t* elt = NULL;
@@ -485,7 +485,7 @@ public int ex_killall(char *mask)
     
     int ret = FAIL;
     
-    plist = ex_sys_ps_list(mask, "", "", "");
+    plist = ndrx_sys_ps_list(mask, "", "", "");
     
     for (i=0; i<2; i++)
     {
@@ -494,7 +494,7 @@ public int ex_killall(char *mask)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ex_get_pid_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
+            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
@@ -514,7 +514,7 @@ public int ex_killall(char *mask)
         }
     }
     
-    ex_string_list_free(plist);
+    ndrx_string_list_free(plist);
     
     return ret;
 }
@@ -524,7 +524,7 @@ public int ex_killall(char *mask)
  * @param qpath
  * @return TRUE/FALSE
  */
-public int ex_q_exists(char *qpath)
+public int ndrx_q_exists(char *qpath)
 {
     mqd_t tmp = ex_mq_open(qpath, O_RDONLY, O_NONBLOCK, NULL);
     
@@ -535,4 +535,15 @@ public int ex_q_exists(char *qpath)
     }
     
     return FALSE;
+}
+
+/**
+ * Return cached queue (usable in poll mode).
+ * TODO: 
+ * @param q
+ * @return 
+ */
+public int ndrx_get_cached_svc_q(char *q)
+{
+    return SUCCEED;
 }

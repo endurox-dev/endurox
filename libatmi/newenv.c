@@ -79,7 +79,7 @@ private char * strip_whitespace(char *pp)
  * @param p_pm
  * @return 
  */
-public int load_new_env(char *file)
+public int ndrx_load_new_env(char *file)
 {
     int ret=SUCCEED;
     FILE *f;

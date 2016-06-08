@@ -109,7 +109,7 @@ struct svc_entry_fn
     char listen_q[FILENAME_MAX+1]; /* queue on which to listen */
     int is_admin;
     mqd_t q_descr; /* queue descriptor */
-    n_timer_t qopen_time;
+    ndrx_timer_t qopen_time;
     long xcvtflags; /* Conversion function */
 };
 

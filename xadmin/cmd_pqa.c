@@ -101,7 +101,7 @@ public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     /* Print header at first step! */
     print_hdr();
     
-    qlist = ex_sys_mqueue_list_make(G_config.qpath, &ret);
+    qlist = ndrx_sys_mqueue_list_make(G_config.qpath, &ret);
     
     if (SUCCEED!=ret)
     {
@@ -132,7 +132,7 @@ public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
 out:
     if (NULL!=qlist)
     {
-        ex_string_list_free(qlist);
+        ndrx_string_list_free(qlist);
     }
     return ret;
 }

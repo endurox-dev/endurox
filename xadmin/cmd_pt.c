@@ -138,7 +138,7 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
             "Group count: %d, timeout: %ld, time left: %ld, tries: %ld of %ld\n"
             "Known participants:\n",
             tmxid, tmnodeid, tmrmid, tmsrvid, tmtxstage, 
-            dolongstrgmap(M_txstatemap, tmtxstage, FAIL),
+            ndrx_dolongstrgmap(M_txstatemap, tmtxstage, FAIL),
             svcnm, tmxid,
             occ, tmtxtout, tmtxtout_left, trycount, max_tries);
     
@@ -160,7 +160,7 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
         else
         {
             printf("\tgrpno: %hd, status: %c-%s, errorcode: %ld, reason: %hd\n",
-                    tmtxrmid, tmtxrmstatus, docharstrgmap(M_rmstatus, tmtxrmstatus, 0), 
+                    tmtxrmid, tmtxrmstatus, ndrx_docharstrgmap(M_rmstatus, tmtxrmstatus, 0), 
                     tmtxrmerrcode, tmtxrmreason);
         }
     }

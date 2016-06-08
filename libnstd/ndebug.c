@@ -220,7 +220,7 @@ public void ndrx_init_debug(void)
     /* open debug file.. */
     if (EOS!=filename[0])
     {
-        nstdutil_str_env_subs(filename);
+        ndrx_str_env_subs(filename);
         if (!(G_ndrx_debug.dbg_f_ptr = fopen(filename, "a")))
         {
                 fprintf(stderr,"Failed to open %s\n",filename);
@@ -487,7 +487,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char
         line_print = (char *)file;
     
     gettimeofday( &time_val, &time_zone );
-    nstdutil_get_dt_local(&ldate, &ltime);
+    ndrx_get_dt_local(&ldate, &ltime);
     
     sprintf(line_start, "%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         mod, lev, (int)dbg_ptr->pid, M_threadnr, ldate, ltime, 

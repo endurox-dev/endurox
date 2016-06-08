@@ -321,7 +321,7 @@ struct tp_command_call
     time_t timestamp; /* provide time stamp of the call */
     unsigned callseq;
     /* call timer so that we do not operate with timed-out calls. */
-    n_timer_t timer;    
+    ndrx_timer_t timer;    
     
     /* <XA section begin> */
     ATMI_XA_TX_INFO_FIELDS;
@@ -508,11 +508,12 @@ extern int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQ
         char **data, long *len, long flags);
 
 /* ATMI level process management: */
-extern int ex_chk_server(char *procname, short srvid);
-extern int ex_chk_ndrxd(void);
-extern int ex_down_sys(char *qprefix, char *qpath, int is_force);
-extern int ex_killall(char *mask);
-extern int ex_q_exists(char *qpath);
+extern int ndrx_chk_server(char *procname, short srvid);
+extern int ndrx_chk_ndrxd(void);
+extern int ndrx_down_sys(char *qprefix, char *qpath, int is_force);
+extern int ndrx_killall(char *mask);
+extern int ndrx_q_exists(char *qpath);
+extern int ndrx_get_cached_svc_q(char *q);
 
 #ifdef	__cplusplus
 }

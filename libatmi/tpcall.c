@@ -148,7 +148,7 @@ MUTEX_LOCK;
     int ret = SUCCEED;
     static int first = TRUE;
     /* initialize timers... */
-    static n_timer_t start = {0};
+    static ndrx_timer_t start = {0};
     int i;
     if (first)
     {
@@ -159,7 +159,7 @@ MUTEX_LOCK;
 #endif
     
     /* Check that it is time for scan... */
-    if (n_timer_get_delta(&start) >=1000)
+    if (ndrx_timer_get_delta(&start) >=1000)
     {
         /* we should scan the stuff. */
         if (0 < cd)
@@ -184,7 +184,7 @@ MUTEX_LOCK;
             }
         }
         /* if all ok, schedule after 1 sec. */
-        n_timer_reset(&start);
+        ndrx_timer_reset(&start);
     } /* if check time... */
     
 out:
@@ -482,7 +482,7 @@ public int _tpacall (char *svc, char *data,
     call->timestamp = timestamp;
     
     /* Reset call timer */
-    n_timer_reset(&call->timer);
+    ndrx_timer_reset(&call->timer);
     
     strcpy(call->my_id, G_atmi_conf.my_id); /* Setup my_id */
     NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d", 

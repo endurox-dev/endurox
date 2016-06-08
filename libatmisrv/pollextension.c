@@ -126,10 +126,10 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     ev.events = events; /* hmmm what to do? */
     ev.data.fd = fd;
     
-    if (FAIL==ex_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
+    if (FAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             fd, &ev))
     {
-        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ex_poll_strerror(ex_epoll_errno()));
+        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ex_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }
@@ -187,11 +187,11 @@ public int _tpext_delpollerfd(int fd)
     }
 
     /* OK, stuff found, remove from Epoll */
-    if (FAIL==ex_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
+    if (FAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                         fd, NULL))
     {
         _TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
-                fd, ex_poll_strerror(ex_epoll_errno()));
+                fd, ex_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }

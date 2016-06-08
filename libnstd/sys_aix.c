@@ -66,7 +66,7 @@
  * Return list of message queues (actually it is list of named pipes
  * as work around for missing posix queue listing functions.
  */
-public string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status)
+public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
-    return ex_sys_folder_list(qpath, return_status);
+    return ndrx_sys_folder_list(qpath, return_status);
 }

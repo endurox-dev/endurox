@@ -760,7 +760,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
         atmi_xa_cpy_xai_to_call(call, G_atmi_xa_curtx.txinfo);   
     }
     /* Reset call timer...! */
-    n_timer_reset(&call->timer);
+    ndrx_timer_reset(&call->timer);
 
     NDRX_LOG(log_debug, "Sending request to: %s", send_qstr);
 

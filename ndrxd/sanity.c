@@ -75,7 +75,7 @@ private int check_dead_processes(void);
 public int do_sanity_check(void)
 {
     int ret=SUCCEED;
-    static n_timer_t timer;
+    static ndrx_timer_t timer;
     static int first = TRUE;    
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
@@ -99,7 +99,7 @@ public int do_sanity_check(void)
     
     if (first)
     {
-        n_timer_reset(&timer);
+        ndrx_timer_reset(&timer);
         /* Initialise q prefixes, +1 for skipping initial / */
         sprintf(client_prefix, NDRX_CLT_QREPLY_PFX, G_sys_config.qprefix);
         client_prefix_len=strlen(client_prefix);
@@ -119,12 +119,12 @@ public int do_sanity_check(void)
         first=FALSE;
     }
      
-    if (n_timer_get_delta_sec(&timer)>=G_app_config->sanity)
+    if (ndrx_timer_get_delta_sec(&timer)>=G_app_config->sanity)
     {
         wasrun = TRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
          
-        qlist = ex_sys_mqueue_list_make(G_sys_config.qpath, &ret);
+        qlist = ndrx_sys_mqueue_list_make(G_sys_config.qpath, &ret);
 
         if (SUCCEED!=ret)
         {
@@ -181,12 +181,12 @@ out:
 
     if (NULL!=qlist)
     {
-        ex_string_list_free(qlist);
+        ndrx_string_list_free(qlist);
     }
 
     /* Reset timer on run */
     if (wasrun)
-        n_timer_reset(&timer);
+        ndrx_timer_reset(&timer);
 
     return ret;
 }
@@ -286,7 +286,7 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
         sprintf(q_str, NDRX_SVR_QREPLY, G_sys_config.qprefix, process, srv_id, pid);
         
         p = q_str;
-        if (!ex_q_exists(q_str)) 
+        if (!ndrx_q_exists(q_str)) 
         {
             NDRX_LOG(log_info, "Seems like reply queue [%s] does not"
                     " exists - nothing to do: %s", q_str, strerror(errno));
@@ -311,7 +311,7 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
     /* Note - admin_q_str already contains / in front! */
     /*If exists admin queue, but process does not exists, then remove admin q too! */
 
-    if (!ex_q_exists(q_str))
+    if (!ndrx_q_exists(q_str))
     {
         NDRX_LOG(log_info, "Seems like admin queue [%s] does not"
                 " exists - nothing to do: %s", q_str, strerror(errno));
@@ -341,7 +341,7 @@ private int check_server(char *qname)
     
     parse_q(qname, TRUE, process, &pid, &srv_id, FALSE);
     
-    if (!ex_sys_is_process_running(pid, process))
+    if (!ndrx_sys_is_process_running(pid, process))
     {      
         /* And finally we send to our selves notification that pid is dead
          * so that system takes care of it's removal! */
@@ -416,7 +416,7 @@ private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
     strcpy(prev_process, process);
     prev_nr_of_try = nr_of_try;
     
-    if (!ex_sys_is_process_running(pid, process))
+    if (!ndrx_sys_is_process_running(pid, process))
     {
         unlink_dead_queue(qname);
         prev_was_unlink = TRUE;
@@ -576,7 +576,7 @@ private int check_dead_processes(void)
             p_pm->state<=NDRXD_PM_MAX_RUNNING &&
                 p_pm->state_changed > G_app_config->checkpm)
         {
-            if (!ex_sys_is_process_running(p_pm->pid, p_pm->binary_name))
+            if (!ndrx_sys_is_process_running(p_pm->pid, p_pm->binary_name))
             {
                 NDRX_LOG(log_warn, "Pid %d/%s in state %d is actually dead",
                         p_pm->pid, p_pm->binary_name, p_pm->state);

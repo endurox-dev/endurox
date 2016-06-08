@@ -65,7 +65,7 @@
 /**
  * Nothing to init for epoll()
  */
-public inline void ex_epoll_sys_init(void)
+public inline void ndrx_epoll_sys_init(void)
 {
 	return;
 }
@@ -73,7 +73,7 @@ public inline void ex_epoll_sys_init(void)
 /**
  * Nothing to un-init for epoll()
  */
-public inline void ex_epoll_sys_uninit(void)
+public inline void ndrx_epoll_sys_uninit(void)
 {
 	return;
 }
@@ -82,7 +82,7 @@ public inline void ex_epoll_sys_uninit(void)
  * Return the compiled poll mode
  * @return 
  */
-public inline char * ex_epoll_mode(void)
+public inline char * ndrx_epoll_mode(void)
 {
     static char *mode = "epoll";
     
@@ -96,7 +96,7 @@ public inline char * ex_epoll_mode(void)
  * @param event
  * @return 
  */
-public inline int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
+public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event)
 {
     return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
 }
@@ -109,7 +109,7 @@ public inline int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *
  * @param event
  * @return 
  */
-public inline int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event)
+public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event)
 {
     return epoll_ctl(epfd, op, fd, (struct epoll_event *) event);
 }
@@ -119,7 +119,7 @@ public inline int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_ev
  * @param size
  * @return 
  */
-public inline int ex_epoll_create(int size)
+public inline int ndrx_epoll_create(int size)
 {
     return epoll_create(size);
 }
@@ -127,7 +127,7 @@ public inline int ex_epoll_create(int size)
 /**
  * Close Epoll set.
  */
-public inline int ex_epoll_close(int fd)
+public inline int ndrx_epoll_close(int fd)
 {
     return close(fd);
 }
@@ -140,7 +140,7 @@ public inline int ex_epoll_close(int fd)
  * @param timeout
  * @return 
  */
-public inline int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout)
+public inline int ndrx_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout)
 {
     return epoll_wait(epfd, (struct epoll_event *) events, maxevents, timeout);
 }
@@ -149,7 +149,7 @@ public inline int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int max
  * Return errno for ex_poll() operation
  * @return 
  */
-public inline int ex_epoll_errno(void)
+public inline int ndrx_epoll_errno(void)
 {
     return errno;
 }

@@ -93,7 +93,7 @@ private int br_add_to_q(char *buf, int len, int pack_type)
     msg->len = len;
     memcpy(msg->buffer, buf, len);
     
-    n_timer_reset(&msg->trytime);
+    ndrx_timer_reset(&msg->trytime);
     
     DL_APPEND(M_in_q, msg);
     
@@ -377,7 +377,7 @@ public int br_run_queue(void)
     DL_FOREACH_SAFE(M_in_q, elt, tmp)
     {
         /* Check the time-out */
-        if (n_timer_get_delta_sec(&elt->trytime) >=G_atmi_env.time_out)
+        if (ndrx_timer_get_delta_sec(&elt->trytime) >=G_atmi_env.time_out)
         {
             NDRX_LOG(log_warn, "Dropping message of type %d due to "
                     "time-out condition!", elt->pack_type);

@@ -136,18 +136,18 @@ public int sv_open_queue(void)
         /* ###################### CRITICAL SECTION, END ########################## */
         
         /* Save the time when stuff is open! */
-        n_timer_reset(&entry->qopen_time);
+        ndrx_timer_reset(&entry->qopen_time);
 
         NDRX_LOG(log_debug, "Got file descriptor: %d", entry->q_descr);
     }
     
     /* Register for (e-)polling */
-    G_server_conf.epollfd = ex_epoll_create(G_server_conf.max_events);
+    G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
     if (FAIL==G_server_conf.epollfd)
     {
         _TPset_error_fmt(TPEOS, "ex_epoll_create(%d) fail: %s",
                                 G_server_conf.adv_service_count,
-                                ex_poll_strerror(ex_epoll_errno()));
+                                ex_poll_strerror(ndrx_epoll_errno()));
         ret=FAIL;
         goto out;
     }
@@ -175,10 +175,10 @@ public int sv_open_queue(void)
         ev.data.mqd = G_server_conf.service_array[i]->q_descr;
 #endif
         
-        if (FAIL==ex_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
+        if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
-            _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed: %s", ex_poll_strerror(ex_epoll_errno()));
+            _TPset_error_fmt(TPEOS, "ex_epoll_ctl failed: %s", ex_poll_strerror(ndrx_epoll_errno()));
             ret=FAIL;
             goto out;
         }
@@ -207,7 +207,7 @@ public int sv_serve_call(int *service, int *status)
     *status=SUCCEED;
     G_atmisrv_reply_type = 0;
     
-    call_age = n_timer_get_delta_sec(&call->timer);
+    call_age = ndrx_timer_get_delta_sec(&call->timer);
 
     NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d callseq: %u, "
 			"svc: %s, flags: %ld call age: %ld data_len: %ld",
@@ -435,7 +435,7 @@ public int sv_serve_connect(int *service, int *status)
     NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %u",
                                         call->cd, call->timestamp, call->callseq);
     
-    call_age = n_timer_get_delta_sec(&call->timer);
+    call_age = ndrx_timer_get_delta_sec(&call->timer);
     
     if (G_atmi_env.time_out>0 && call_age >= G_atmi_env.time_out && 
             !(call->flags & TPNOTIME))
@@ -622,9 +622,9 @@ public int sv_server_request(char *buf, int len)
     int ret=SUCCEED;
 
     tp_command_generic_t *gen_command = (tp_command_generic_t *)G_server_conf.last_call.buf_ptr;
-    n_timer_t timer;
+    ndrx_timer_t timer;
     /* take time */
-    n_timer_reset(&timer);
+    ndrx_timer_reset(&timer);
     int service = FAIL;
     int status;
     
@@ -693,7 +693,7 @@ public int sv_server_request(char *buf, int len)
     /* Update stats, if ptr available */
     if (FAIL!=service && G_shm_srv)
     {
-        unsigned result = n_timer_get_delta(&timer);
+        unsigned result = ndrx_timer_get_delta(&timer);
 
         /* reset back to avail. */
         G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
@@ -872,8 +872,8 @@ public int sv_wait_for_request(void)
     pollextension_rec_t *ext;
     int evfd;
     mqd_t evmqd;
-    n_timer_t   dbg_time;   /* Generally this is used for debug. */
-    n_timer_t   periodic_cb;
+    ndrx_timer_t   dbg_time;   /* Generally this is used for debug. */
+    ndrx_timer_t   periodic_cb;
     command_call_t *p_adm_cmd = (command_call_t *)msg_buf;
     tp_command_call_t *call =  (tp_command_call_t*)msg_buf;
     
@@ -886,8 +886,8 @@ public int sv_wait_for_request(void)
         tout=FAIL; /* Timeout disabled */
     }
     
-    n_timer_reset(&dbg_time);
-    n_timer_reset(&periodic_cb);
+    ndrx_timer_reset(&dbg_time);
+    ndrx_timer_reset(&periodic_cb);
     
     /* THIS IS MAIN SERVER LOOP! */
     while(SUCCEED==ret && !G_shutdown_req)
@@ -906,17 +906,17 @@ public int sv_wait_for_request(void)
          * so we just put timer there if tout used, and no timer if no tout use.
          * If tout used, then 60 sec will be ok for dbug
          */
-        if (FAIL==tout || n_timer_get_delta_sec(&dbg_time) >= 60)
+        if (FAIL==tout || ndrx_timer_get_delta_sec(&dbg_time) >= 60)
         {
             NDRX_LOG(log_debug, "About to poll - timeout=%d millisec", 
                                                 tout);
             if (FAIL!=tout)
             {
-                n_timer_reset(&dbg_time);
+                ndrx_timer_reset(&dbg_time);
             }
         }
         
-        nfds = ex_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
+        nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout);
         
         /* Print stuff if there is no timeout set or there is some value out there */
@@ -931,7 +931,7 @@ public int sv_wait_for_request(void)
         {
             int err = errno;
             _TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
-                    ex_poll_strerror(ex_epoll_errno()));
+                    ex_poll_strerror(ndrx_epoll_errno()));
             
             if (EINTR==err)
             {
@@ -944,7 +944,7 @@ public int sv_wait_for_request(void)
         /* We should use timer here because, if there are service requests at
          * constant time (less than poll time), then callback will be never called! */
         else if (FAIL!=tout && 
-                n_timer_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
+                ndrx_timer_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
         {
             if (NULL!=G_server_conf.p_periodcb &&
                     SUCCEED!=(ret=G_server_conf.p_periodcb()))
@@ -954,7 +954,7 @@ public int sv_wait_for_request(void)
                 goto out;
             }
             
-            n_timer_reset(&periodic_cb);
+            ndrx_timer_reset(&periodic_cb);
         }
         
         /*

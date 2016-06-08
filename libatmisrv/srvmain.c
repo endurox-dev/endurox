@@ -388,7 +388,7 @@ int ndrx_main(int argc, char** argv)
     /*
      * Initialize polling subsystem
      */
-    ex_epoll_sys_init();
+    ndrx_epoll_sys_init();
     
     /*
      * Initialize services
@@ -455,7 +455,7 @@ out:
     /*
      * un-initalize polling sub-system
      */
-    ex_epoll_sys_init();
+    ndrx_epoll_sys_init();
     
     un_initialize();
     /*

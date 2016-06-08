@@ -29,13 +29,14 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 
+#include <ndrstandard.h>
 #include <ntimer.h>
-
 #include "ndebug.h"
 #include <time.h>
 /*---------------------------Externs------------------------------------*/
@@ -53,7 +54,7 @@
  * @param slot
  * @return 
  */
-char *decode_msec(long t, int slot, int level, int levels)
+public char *ndrx_decode_msec(long t, int slot, int level, int levels)
 {
     static char text[20][128];
     char tmp[128];
@@ -130,7 +131,7 @@ char *decode_msec(long t, int slot, int level, int levels)
         strcat(text[slot], tmp);
     
     if (next_t)
-        decode_msec(next_t, slot, level, levels);
+        ndrx_decode_msec(next_t, slot, level, levels);
     
     return text[slot];
 }
@@ -141,7 +142,7 @@ char *decode_msec(long t, int slot, int level, int levels)
  * @param slot
  * @return 
  */
-char *n_timer_decode(n_timer_t *timer, int slot)
+char *ndrx_timer_decode(ndrx_timer_t *timer, int slot)
 {
     static char *na="N/A";
     
@@ -150,14 +151,14 @@ char *n_timer_decode(n_timer_t *timer, int slot)
         return na;
     }
     
-    return decode_msec(n_timer_get_delta(timer), slot, 0, 2);
+    return ndrx_decode_msec(ndrx_timer_get_delta(timer), slot, 0, 2);
 }
 
 /**
  * Reset timer
  * @param timer
  */
-void n_timer_reset(n_timer_t *timer)
+void ndrx_timer_reset(ndrx_timer_t *timer)
 {
     clock_gettime(CLOCK_MONOTONIC, &timer->t);
 }
@@ -168,7 +169,7 @@ void n_timer_reset(n_timer_t *timer)
  * @param timer2
  * @return diff in milliseconds
  */
-long n_timer_diff(n_timer_t *t1, n_timer_t *t2)
+long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2)
 {
     long t1r = t1->t.tv_sec*1000 + t1->t.tv_nsec/1000000; /* Convert to milliseconds */
     long t2r = t2->t.tv_sec*1000 + t2->t.tv_nsec/1000000; /* Convert to milliseconds */
@@ -181,7 +182,7 @@ long n_timer_diff(n_timer_t *t1, n_timer_t *t2)
  * @param timer
  * @return time spent in milliseconds
  */
-long n_timer_get_delta(n_timer_t *timer)
+long ndrx_timer_get_delta(ndrx_timer_t *timer)
 {
     struct timespec t;
     long ret;
@@ -200,9 +201,9 @@ long n_timer_get_delta(n_timer_t *timer)
  * @param timer
  * @return time spent in seconds
  */
-long n_timer_get_delta_sec(n_timer_t *timer)
+long ndrx_timer_get_delta_sec(ndrx_timer_t *timer)
 {
-    return (n_timer_get_delta(timer)/1000);
+    return (ndrx_timer_get_delta(timer)/1000);
 }
 
 /**
@@ -212,11 +213,11 @@ long n_timer_get_delta_sec(n_timer_t *timer)
  * @param msec
  * @return 
  */
-void n_timer_plus(n_timer_t *timer, long msec)
+void ndrx_timer_plus(ndrx_timer_t *timer, long msec)
 {
     if (msec < 0)
     {
-        n_timer_minus(timer, msec * -1);
+        ndrx_timer_minus(timer, msec * -1);
     }
     else 
     {
@@ -240,11 +241,11 @@ void n_timer_plus(n_timer_t *timer, long msec)
  * @param msec
  * @return 
  */
-void n_timer_minus(n_timer_t *timer, long msec)
+void ndrx_timer_minus(ndrx_timer_t *timer, long msec)
 {
     if (msec < 0)
     {
-        n_timer_plus(timer, msec * -1);
+        ndrx_timer_plus(timer, msec * -1);
     }
     else
     {

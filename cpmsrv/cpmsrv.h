@@ -149,7 +149,7 @@ extern int cpm_killall(void);
 extern cpm_process_t * cpm_start_all(void);
 extern int cpm_exec(cpm_process_t *c);
 extern void cpm_set_cur_time(cpm_process_t *p_cltproc);
-extern int load_new_env(char *file);
+extern int ndrx_load_new_env(char *file);
 #ifdef	__cplusplus
 }
 #endif

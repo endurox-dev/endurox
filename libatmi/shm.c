@@ -449,6 +449,7 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     int use_cluster = FAIL;
     static int first = TRUE;
+    shm_svcinfo_t *psvcinfo = NULL;
     
     *is_bridge=FALSE;
     
@@ -457,6 +458,16 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     
     if (!ndrxd_shm_is_attached(&G_svcinfo))
     {
+        ret=FAIL;
+        goto out;
+    }
+    
+    if (!ndrxd_shm_is_attached(&G_svcinfo))
+    {
+#ifndef EX_USE_EPOLL
+        /* TODO: lookup first service in cache: */
+        ndrx_get_cached_svc_q(send_q);
+#endif
         ret=FAIL;
         goto out;
     }
@@ -472,27 +483,29 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     /* Get the service entry */
     ret = _ndrx_shm_get_svc(svc, &pos);
     
-    if (ret && SHM_SVCINFO_INDEX(svcinfo, pos)->srvs<=0)
+    psvcinfo = SHM_SVCINFO_INDEX(svcinfo, pos);
+            
+    if (ret && psvcinfo->srvs<=0)
     {
         NDRX_LOG(log_error, "Service %s not available, count of servers: %d",
-                                  svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs);
+                                  svc, psvcinfo->srvs);
         ret=FAIL;
     }
     
     /* Now use the random to chose the service to send to */
-    if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs==SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs 
-            && SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>0)
+    if (psvcinfo->srvs==psvcinfo->csrvs 
+            && psvcinfo->srvs>0)
     {
         use_cluster=TRUE;
     }
-    else if (0==SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs)
+    else if (0==psvcinfo->csrvs)
     {
         use_cluster=FALSE;
     }
     
     NDRX_LOG(log_debug, "use_cluster=%d srvs=%d csrvs=%d", 
-            use_cluster, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
-            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
+            use_cluster, psvcinfo->srvs, 
+            psvcinfo->csrvs);
     
     if (FAIL==use_cluster)
     {
@@ -529,16 +542,15 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     }
  
     NDRX_LOG(log_debug, "use_cluster=%d srvs=%d csrvs=%d", 
-        use_cluster, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
-            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
+        use_cluster, psvcinfo->srvs, 
+            psvcinfo->csrvs);
 
 
     /* So we are using cluster, */
     if (TRUE==use_cluster)
     {
-        
-        int csrvs = SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
-        int cluster_node = rand()%SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs+1;
+        int csrvs = psvcinfo->csrvs;
+        int cluster_node = rand()%psvcinfo->csrvs+1;
         int i;
         int chosen_node = FAIL;
         int got_node = 0;
@@ -556,15 +568,15 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         
         cluster_node = rand()%csrvs+1;
         NDRX_LOG(log_debug, "rnd: cluster_node=%d, cnode_max_id=%d", 
-                cluster_node, SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id);
+                cluster_node, psvcinfo->cnodes_max_id);
         
         /* If cluster was modified (while we do not create read/write semaphores...!) */
         while (try<2)
         {
             /* First try, search the random server */
-            for (i=0; i<SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id; i++)
+            for (i=0; i<psvcinfo->cnodes_max_id; i++)
             {
-                if (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[i].srvs)
+                if (psvcinfo->cnodes[i].srvs)
                 {
                     got_node++;
                     if (1==try)
@@ -605,8 +617,27 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
             ret=FAIL;
         }
     }
-    
 #ifndef EX_USE_EPOLL
+    else
+    {
+        short srvid;
+        
+        psvcinfo->rrsrv++;
+        if (psvcinfo->rrsrv < 0 || /* just in case... */
+                psvcinfo->rrsrv >= (psvcinfo->srvs - psvcinfo->csrvs))
+        {
+            psvcinfo->rrsrv = 0;
+        }
+        
+        srvid = psvcinfo->srvids[psvcinfo->rrsrv];
+        
+        sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_conf.q_prefix, svc, srvid);
+        
+        NDRX_LOG(log_debug, "Choosing local service by round-robin mode, "
+                "rr: %d, srvid: %d, q: [%s]", psvcinfo->rrsrv, srvid, send_q);
+    }
+
+
     if (SUCCEED!=ndrx_unlock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);

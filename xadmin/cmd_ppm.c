@@ -162,12 +162,12 @@ public int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
                 get_status_descr(ppm_info->state),
                 get_status_descr(ppm_info->reqstate),
                 ppm_info->autostart,
-                nstdutil_decode_num(ppm_info->exec_seq_try, 0, 0, 1), 
-                nstdutil_decode_num(ppm_info->last_startup, 1, 0, 1), 
-                nstdutil_decode_num(ppm_info->num_term_sigs, 2, 0, 1), 
-                nstdutil_decode_num(ppm_info->last_sig, 3, 0, 1), 
+                ndrx_decode_num(ppm_info->exec_seq_try, 0, 0, 1), 
+                ndrx_decode_num(ppm_info->last_startup, 1, 0, 1), 
+                ndrx_decode_num(ppm_info->num_term_sigs, 2, 0, 1), 
+                ndrx_decode_num(ppm_info->last_sig, 3, 0, 1), 
                 ppm_info->autokill, 
-                nstdutil_decode_num(ppm_info->state_changed, 4, 0, 1), 
+                ndrx_decode_num(ppm_info->state_changed, 4, 0, 1), 
                 decode_flags(ppm_info->flags)
                 );
     }

@@ -62,7 +62,7 @@ struct in_msg
     int pack_type;
     char buffer[ATMI_MSG_MAX_SIZE];
     int len;
-    n_timer_t trytime;  /* Time in Q */
+    ndrx_timer_t trytime;  /* Time in Q */
     in_msg_t *prev, *next;
 };
 /*---------------------------Globals------------------------------------*/

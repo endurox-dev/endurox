@@ -61,32 +61,32 @@ struct charstrmap
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern void nstdutil_get_dt_local(long *p_date, long *p_time);
-extern unsigned long long nstdutil_utc_tstamp(void);
-extern unsigned long long nstdutil_utc_tstamp_micro(void);
-extern char * nstdutil_get_strtstamp_from_micro(int slot, unsigned long long ts);
-extern unsigned long long nstdutil_get_micro_resolution_for_sec(void);
-extern char * nstdutil_str_env_subs(char * str);
-extern void nstdutil_utc_tstamp2(long *t, long *tusec);
-extern char * nstdutil_get_strtstamp2(int slot, long t, long tusec);
-extern int nstdutil_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
+extern void ndrx_get_dt_local(long *p_date, long *p_time);
+extern unsigned long long ndrx_utc_tstamp(void);
+extern unsigned long long ndrx_utc_tstamp_micro(void);
+extern char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts);
+extern unsigned long long ndrx_get_micro_resolution_for_sec(void);
+extern char * ndrx_str_env_subs(char * str);
+extern void ndrx_utc_tstamp2(long *t, long *tusec);
+extern char * ndrx_get_strtstamp2(int slot, long t, long tusec);
+extern int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
 
-extern char *nstdutil_decode_num(long tt, int slot, int level, int levels);
-extern char *nstdutil_str_strip(char *haystack, char *needle);
+extern char *ndrx_decode_num(long tt, int slot, int level, int levels);
+extern char *ndrx_str_strip(char *haystack, char *needle);
 
-extern int nstdutil_isint(char *str);
+extern int ndrx_isint(char *str);
 
-extern int nstdutil_file_exists(char *filename);
+extern int ndrx_file_exists(char *filename);
 
 /* Mapping functions: */
-extern char *dolongstrgmap(longstrmap_t *map, long val, long endval);
-extern char *docharstrgmap(longstrmap_t *map, char val, char endval);
+extern char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
+extern char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval);
 
 /* Threading functions */
 extern uint64_t ndrx_gettid(void);
 
 /* New env */
-extern int load_new_env(char *file);
+extern int ndrx_load_new_env(char *file);
 
 #ifdef	__cplusplus
 }

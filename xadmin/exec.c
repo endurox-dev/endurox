@@ -141,7 +141,7 @@ public int is_ndrxd_running(void)
 
     pid = atoi(pidbuf);
 
-    if (ex_sys_is_process_running(pid, "ndrxd"))
+    if (ndrx_sys_is_process_running(pid, "ndrxd"))
     {
         if ((mqd_t)FAIL!=G_config.ndrxd_q)
         {
@@ -172,7 +172,7 @@ out:
             ex_mq_close(G_config.ndrxd_q);
             G_config.ndrxd_q = (mqd_t)FAIL;
             
-            if (ex_chk_ndrxd())
+            if (ndrx_chk_ndrxd())
             {
                 /* Not sure this is safer, but we will remove that queue on behalf of user!
                  * if process is not running.

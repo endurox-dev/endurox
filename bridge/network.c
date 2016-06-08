@@ -275,7 +275,7 @@ public int br_process_msg(exnetcon_t *net, char *buf, int len)
             NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
                     extra_debug->timer.t.tv_sec,
                     extra_debug->timer.t.tv_nsec,
-                    n_timer_get_delta_sec(&extra_debug->timer) );
+                    ndrx_timer_get_delta_sec(&extra_debug->timer) );
 
             NDRX_LOG(log_debug, "callseq  %hd",   extra_debug->callseq);
             NDRX_LOG(log_debug, "cd       %d",    extra_debug->cd);

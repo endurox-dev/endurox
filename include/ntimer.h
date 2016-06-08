@@ -56,19 +56,18 @@ typedef struct
 {
     /*struct timeval  timeval;*/
     struct timespec t;
-} n_timer_t;
+} ndrx_timer_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-void n_timer_reset(n_timer_t *timer);
-long n_timer_get_delta(n_timer_t *timer);
-long n_timer_get_delta_sec(n_timer_t *timer);
-char *decode_msec(long t, int slot, int level, int levels);
-char *n_timer_decode(n_timer_t *timer, int slot);
-long n_timer_diff(n_timer_t *t1, n_timer_t *t2);
-
-void n_timer_minus(n_timer_t *timer, long msec);
-void n_timer_plus(n_timer_t *timer, long msec);
+extern void ndrx_timer_reset(ndrx_timer_t *timer);
+extern long ndrx_timer_get_delta(ndrx_timer_t *timer);
+extern long ndrx_timer_get_delta_sec(ndrx_timer_t *timer);
+extern char *ndrx_decode_msec(long t, int slot, int level, int levels);
+extern char *ndrx_timer_decode(ndrx_timer_t *timer, int slot);
+extern long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2);
+extern void ndrx_timer_minus(ndrx_timer_t *timer, long msec);
+extern void ndrx_timer_plus(ndrx_timer_t *timer, long msec);
 #ifdef	__cplusplus
 }
 #endif

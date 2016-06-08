@@ -363,13 +363,13 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             }
             
             /* format the command line (final) */
-            nstdutil_str_env_subs(p_cltproc->stat.command_line);
+            ndrx_str_env_subs(p_cltproc->stat.command_line);
             /* TODO: We should have length specifier here (so that we do not overrun the mem): */
-            nstdutil_str_env_subs(p_cltproc->stat.env);
-            nstdutil_str_env_subs(p_cltproc->stat.wd); /* working dir */
+            ndrx_str_env_subs(p_cltproc->stat.env);
+            ndrx_str_env_subs(p_cltproc->stat.wd); /* working dir */
             /* Expand the logfile path... */
-            nstdutil_str_env_subs(p_cltproc->stat.log_stdout);
-            nstdutil_str_env_subs(p_cltproc->stat.log_stderr);
+            ndrx_str_env_subs(p_cltproc->stat.log_stdout);
+            ndrx_str_env_subs(p_cltproc->stat.log_stderr);
             
             /* add to hash list */
             cpm_get_key(p_cltproc->key, p_cltproc->tag, p_cltproc->subsect);

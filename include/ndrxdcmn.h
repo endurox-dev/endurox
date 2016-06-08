@@ -415,7 +415,7 @@ typedef struct
     int srvid;
     char svc_nm[MAXTIDENT+1];       /* Service name */
     char fn_nm[MAXTIDENT+1];        /* Function name */
-    n_timer_t   qopen_time;         /* Timer when q was open */
+    ndrx_timer_t   qopen_time;         /* Timer when q was open */
 
 } command_dynadvertise_t;
 
@@ -492,7 +492,7 @@ typedef struct
 {
     /* Clock sync */
     command_call_t call;
-    n_timer_t time;
+    ndrx_timer_t time;
 } cmd_br_time_sync_t;
 
 /**
@@ -669,7 +669,7 @@ typedef struct
 {
     char svc_nm[MAXTIDENT+1];       /* Service name */
     char fn_nm[MAXTIDENT+1];        /* Function name */
-    n_timer_t   qopen_time;         /* Timer when q was open */
+    ndrx_timer_t   qopen_time;         /* Timer when q was open */
 } svc_inf_t;
 
 /**

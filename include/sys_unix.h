@@ -83,7 +83,7 @@ extern const char * __progname;
     
 #else
 
-#define EX_PROGNAME ex_sys_get_proc_name()
+#define EX_PROGNAME ndrx_sys_get_proc_name()
 
 #endif
 
@@ -132,26 +132,26 @@ struct mq_list
 /*---------------------------Prototypes---------------------------------*/
 
 /* poll ops */
-extern void ex_epoll_sys_init(void);
-extern void ex_epoll_sys_uninit(void);
-extern char * ex_epoll_mode(void);
-extern int ex_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
-extern int ex_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);
-extern int ex_epoll_create(int size);
-extern int ex_epoll_close(int fd);
-extern int ex_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout);
-extern int ex_epoll_errno(void);
-extern char * ex_poll_strerror(int err);
-extern char * ex_sys_get_proc_name(void);
+extern void ndrx_epoll_sys_init(void);
+extern void ndrx_epoll_sys_uninit(void);
+extern char * ndrx_epoll_mode(void);
+extern int ndrx_epoll_ctl(int epfd, int op, int fd, struct ex_epoll_event *event);
+extern int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ex_epoll_event *event);
+extern int ndrx_epoll_create(int size);
+extern int ndrx_epoll_close(int fd);
+extern int ndrx_epoll_wait(int epfd, struct ex_epoll_event *events, int maxevents, int timeout);
+extern int ndrx_epoll_errno(void);
+extern char * ndrx_poll_strerror(int err);
+extern char * ndrx_sys_get_proc_name(void);
     
-extern int ex_sys_is_process_running(pid_t pid, char *proc_name);
-extern string_list_t* ex_sys_mqueue_list_make(char *qpath, int *return_status);
-extern void ex_string_list_free(string_list_t* list);
+extern int ndrx_sys_is_process_running(pid_t pid, char *proc_name);
+extern string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
+extern void ndrx_string_list_free(string_list_t* list);
     
 
-extern char *ex_sys_get_cur_username(void);
-extern string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
-extern string_list_t* ex_sys_folder_list(char *path, int *return_status);
+extern char *ndrx_sys_get_cur_username(void);
+extern string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
+extern string_list_t* ndrx_sys_folder_list(char *path, int *return_status);
 #ifdef	__cplusplus
 }
 #endif

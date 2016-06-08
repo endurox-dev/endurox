@@ -202,7 +202,7 @@ public int tmq_enqueue(UBFH *p_ub)
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
 
     
-    nstdutil_utc_tstamp2(&p_msg->msgtstamp, &p_msg->msgtstamp_usec);
+    ndrx_utc_tstamp2(&p_msg->msgtstamp, &p_msg->msgtstamp_usec);
     
     MUTEX_LOCK_V(M_tstamp_lock);
     
@@ -711,9 +711,9 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
             SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
             SUCCEED!=Bchg(p_ub, EX_TSTAMP1_STR, 0, 
-                nstdutil_get_strtstamp2(0, el->msg->msgtstamp, el->msg->msgtstamp_usec), 0L) ||
+                ndrx_get_strtstamp2(0, el->msg->msgtstamp, el->msg->msgtstamp_usec), 0L) ||
             SUCCEED!=Bchg(p_ub, EX_TSTAMP2_STR, 0, 
-                nstdutil_get_strtstamp2(1, el->msg->trytstamp, el->msg->trytstamp_usec), 0L) ||
+                ndrx_get_strtstamp2(1, el->msg->trytstamp, el->msg->trytstamp_usec), 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGTRIES, 0, (char *)&el->msg->trycounter, 0L) ||
             SUCCEED!=Bchg(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
                 )

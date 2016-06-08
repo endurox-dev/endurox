@@ -173,11 +173,11 @@ public int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
     tmp->tmrmid = xai->tmrmid;
     strcpy(tmp->tmxid, xai->tmxid);
     
-    tmp->t_start = nstdutil_utc_tstamp();
-    tmp->t_update = nstdutil_utc_tstamp();
+    tmp->t_start = ndrx_utc_tstamp();
+    tmp->t_update = ndrx_utc_tstamp();
     tmp->txtout = txtout;
     
-    n_timer_reset(&tmp->ttimer);
+    ndrx_timer_reset(&tmp->ttimer);
     
     MUTEX_LOCK_V(M_tx_hash_lock);
     HASH_ADD_STR( M_tx_hash, tmxid, tmp);
@@ -496,7 +496,7 @@ private int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fm
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
     
-    if (fprintf(p_tl->f, "%lld:%c:%s\n", nstdutil_utc_tstamp(), command, msg)<0)
+    if (fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg)<0)
     {
         ret=FAIL;
         goto out;
@@ -907,7 +907,7 @@ public int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl)
     int ret = SUCCEED;
     long tspent;
     short i;
-    tspent = p_tl->txtout - n_timer_get_delta_sec(&p_tl->ttimer);    
+    tspent = p_tl->txtout - ndrx_timer_get_delta_sec(&p_tl->ttimer);    
     
     if (tspent<0)
         tspent = 0;

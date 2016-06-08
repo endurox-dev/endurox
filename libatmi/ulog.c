@@ -75,7 +75,7 @@ public int userlog (char *data, ...)
 
     gettimeofday( &time_val, NULL );
     
-    nstdutil_get_dt_local(&ldate, &ltime);
+    ndrx_get_dt_local(&ldate, &ltime);
     
     if (first)
     {

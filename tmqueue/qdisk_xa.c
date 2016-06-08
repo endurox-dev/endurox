@@ -231,8 +231,8 @@ private void set_filenames(void)
         sprintf(M_filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i);
         sprintf(M_filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
         
-        if (!nstdutil_file_exists(M_filename_active) && 
-                !nstdutil_file_exists(M_filename_prepared))
+        if (!ndrx_file_exists(M_filename_active) && 
+                !ndrx_file_exists(M_filename_prepared))
         {
             break;
         }
@@ -256,8 +256,8 @@ private int get_filenames_max(void)
         sprintf(filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i+1);
         sprintf(filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i+1);
         NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, filename_prepared);
-        if (nstdutil_file_exists(filename_active) || 
-                nstdutil_file_exists(filename_prepared))
+        if (ndrx_file_exists(filename_active) || 
+                ndrx_file_exists(filename_prepared))
         {
             i++;
         }
@@ -693,7 +693,7 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
         {
             fname = get_filename_i(i, folders[j], 0);
             
-            if (nstdutil_file_exists(fname))
+            if (ndrx_file_exists(fname))
             {
                 NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
                 if (SUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b)))

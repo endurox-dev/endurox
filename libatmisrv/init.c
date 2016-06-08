@@ -384,7 +384,7 @@ public void un_initialize(void)
     NDRX_LOG(log_debug, "epollfd = %d", G_server_conf.epollfd);
     if (G_server_conf.epollfd > 0)
     {
-        ex_epoll_close(G_server_conf.epollfd);
+        ndrx_epoll_close(G_server_conf.epollfd);
         G_server_conf.epollfd = 0;
     }
 

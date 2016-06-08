@@ -109,7 +109,7 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
             srvid, 
             msgid_str,
             tstamp1+2, 
-            nstdutil_decode_num(tires, 0, 0, 1),
+            ndrx_decode_num(tires, 0, 0, 1),
             is_locked?"Y":"N"
             );
     

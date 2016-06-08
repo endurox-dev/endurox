@@ -117,14 +117,14 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
             srvid, 
             qspace, 
             qname,
-            nstdutil_decode_num(msgs, 0, 0, 1), 
-            nstdutil_decode_num(locked, 1, 0, 1),
+            ndrx_decode_num(msgs, 0, 0, 1), 
+            ndrx_decode_num(locked, 1, 0, 1),
             
-            nstdutil_decode_num(numenq, 2, 0, 2),
-            nstdutil_decode_num(numdeq, 3, 0, 2),
+            ndrx_decode_num(numenq, 2, 0, 2),
+            ndrx_decode_num(numdeq, 3, 0, 2),
             
-            nstdutil_decode_num(succ, 4, 0, 2),
-            nstdutil_decode_num(fail, 5, 0, 2)
+            ndrx_decode_num(succ, 4, 0, 2),
+            ndrx_decode_num(fail, 5, 0, 2)
             );
     
     printf("\n");

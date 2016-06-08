@@ -68,7 +68,7 @@ public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         for (i=1; i<argc; i++)
         {
             printf("Killing [%s] ... ", argv[i]);
-            if (SUCCEED==ex_killall(argv[i]))
+            if (SUCCEED==ndrx_killall(argv[i]))
             {
                 printf("Signaled/killed\n");
             }

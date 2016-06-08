@@ -69,7 +69,7 @@
 /**
  * Free the list of message queues
  */
-public void ex_string_list_free(string_list_t* list)
+public void ndrx_string_list_free(string_list_t* list)
 {
     string_list_t *elt, *tmp;
     
@@ -96,7 +96,7 @@ public void ex_string_list_free(string_list_t* list)
  * @param filter3
  * @return 
  */
-public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4)
+public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4)
 {
     FILE *fp=NULL;
     char cmd[128];
@@ -158,7 +158,7 @@ public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter
 
                 NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
                         sizeof(string_list_t), strerror(errno));
-                ex_string_list_free(ret);
+                ndrx_string_list_free(ret);
                 ret = NULL;
                 goto out;
             }
@@ -175,7 +175,7 @@ public string_list_t * ex_sys_ps_list(char *filter1, char *filter2, char *filter
                 NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
                         strlen(path)+1, strerror(errno));
                 free(tmp);
-                ex_string_list_free(ret);
+                ndrx_string_list_free(ret);
                 ret =  NULL;
                 goto out;
             }
@@ -200,7 +200,7 @@ out:
 /**
  * Get current system username
  */
-public char *ex_sys_get_cur_username(void)
+public char *ndrx_sys_get_cur_username(void)
 {
     uid_t uid = geteuid();
     struct passwd *pw = getpwuid(uid);
@@ -215,7 +215,7 @@ public char *ex_sys_get_cur_username(void)
 /**
  * List the contents of the folder
  */
-public string_list_t* ex_sys_folder_list(char *path, int *return_status)
+public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
 {
     string_list_t* ret = NULL;
     struct dirent **namelist;
@@ -279,7 +279,7 @@ exit_fail:
 
     if (NULL!=ret)
     {
-        ex_string_list_free(ret);
+        ndrx_string_list_free(ret);
         ret = NULL;
     }
 

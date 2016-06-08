@@ -323,7 +323,7 @@ out:
         msg->trycounter++;
         NDRX_LOG(log_warn, "Message [%s] tries %ld, max: %ld", 
                 msgid_str, msg->trycounter, qconf.tries);
-        nstdutil_utc_tstamp2(&msg->trytstamp, &msg->trytstamp_usec);
+        ndrx_utc_tstamp2(&msg->trytstamp, &msg->trytstamp_usec);
         
         if (msg->trycounter>=qconf.tries)
         {
