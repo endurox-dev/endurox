@@ -190,6 +190,9 @@ extern srv_conf_t G_server_conf;
 extern shm_srvinfo_t *G_shm_srv;
 extern pollextension_rec_t *G_pollext;
 extern int G_shutdown_req;
+extern int G_shutdown_nr_wait;   /* Number of self shutdown messages to wait */
+extern int G_shutdown_nr_got;    /* Number of self shutdown messages got  */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int sv_open_queue(void);
@@ -226,7 +229,8 @@ extern int _tpext_addperiodcb(int secs, int (*p_periodcb)(void));
 extern int _tpext_delperiodcb(void);
 extern int _tpext_addb4pollcb(int (*p_b4pollcb)(void));
 extern int _tpext_delb4pollcb(void);
-extern int process_admin_req(char *buf, long len, int *shutdown_req);
+extern int process_admin_req(char *buf, long len, 
+        int *shutdown_req);
 
 /* auto buffer convert: */
 extern long xcvt_lookup(char *fn_nm);

@@ -62,6 +62,11 @@ public void (*___G_test_delayed_startup)(void) = NULL;
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 public int G_shutdown_req = 0;
+
+/* Only for poll() mode: */
+public int G_shutdown_nr_wait = 0;   /* Number of self shutdown messages to wait */
+public int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  */
+
 public int G_atmisrv_reply_type = 0; /* Used no-long-jump systems  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -679,6 +684,15 @@ public int sv_server_request(char *buf, int len)
             /* We have connection for converstation */
             ret=sv_serve_connect(&service, &status);
             break;
+        case ATMI_COMMAND_SELF_SD:
+            
+            G_shutdown_nr_got++;
+            
+            NDRX_LOG(log_warn, "Got shutdown req %d of %d", 
+                    G_shutdown_nr_got, G_shutdown_nr_wait);
+            goto out;
+            
+            break;
         case ATMI_COMMAND_CONNRPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
@@ -719,23 +733,10 @@ public int sv_server_request(char *buf, int len)
         {
             G_shm_srv->min_rsp_msec[service]=result;
         }
-
-#if 0
-        - not actual.
-        /* Fix issues with strange minuses... */
-        if (G_shm_srv->min_rsp_msec[service] < 0)
-            G_shm_srv->min_rsp_msec[service] = 0;
-#endif
         
         /* max */
         if (result>G_shm_srv->max_rsp_msec[service])
             G_shm_srv->max_rsp_msec[service]=result;
-#if 0
-        - not actual.
-        /* Fix issues with strange minuses... */
-        if (G_shm_srv->max_rsp_msec[service] < 0)
-            G_shm_srv->max_rsp_msec[service] = 0;
-#endif
         
         G_shm_srv->last_rsp_msec[service]=result;
 
@@ -797,15 +798,46 @@ out:
 public int process_admin_req(char *buf, long len, int *shutdown_req)
 {
     int ret=SUCCEED;
+    tp_command_generic_t shut_msg; /* shutdown msg */
+    int i;
 
     command_call_t * call = (command_call_t *)buf;
 
     /* So what, do shutdown, right? */
     if (NDRXD_COM_SRVSTOP_RQ==call->command)
     {
+        
         NDRX_LOG(log_warn, "Shutdown requested by [%s]", 
                                         call->reply_queue);
         *shutdown_req=TRUE;
+#ifndef EX_USE_EPOLL
+        /* TODO: We shall send request to all open service queues
+         * to do the shutdown. This is only for poll() mode.
+         */
+        memset(&shut_msg, 0, sizeof(shut_msg));
+        
+        shut_msg.command_id = ATMI_COMMAND_SELF_SD;
+        
+        /* Send over all open service queues: */
+        
+        for (i=ATMI_SRV_Q_ADJUST; i<G_server_conf.adv_service_count; i++)
+        {
+            if (SUCCEED!=generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
+                    (char *)&shut_msg, sizeof(shut_msg), 0))
+            {
+                NDRX_LOG(log_debug, "Failed to send self notification to %s q",
+                        G_server_conf.service_array[i]->listen_q);
+            }
+            else
+            {
+                G_shutdown_nr_wait++;
+            }
+        }/* for */
+        
+        NDRX_LOG(log_warn, "Send %d self notifications to "
+                "service queues for shutdown...", G_shutdown_nr_wait);
+#endif
+        
     }
     else if (NDRXD_COM_SRVINFO_RQ==call->command)
     {
@@ -900,8 +932,10 @@ public int sv_wait_for_request(void)
     ndrx_timer_reset(&periodic_cb);
     
     /* THIS IS MAIN SERVER LOOP! */
-    while(SUCCEED==ret && !G_shutdown_req)
-	{
+    while(SUCCEED==ret && (!G_shutdown_req || 
+            /* if shutdown request then wait for all queued jobs to finish. */
+            G_shutdown_nr_got <  G_shutdown_nr_wait))
+    {
         /* Support for periodical invocation of custom function! */
         
         /* Invoke before poll function */

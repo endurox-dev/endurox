@@ -67,7 +67,7 @@ extern "C" {
 #define ATMI_COMMAND_CONVACK    9
 #define ATMI_COMMAND_SHUTDOWN   10
 #define ATMI_COMMAND_EVPOST     11
-#define ATMI_COMMAND_ADMIN      12      /* For future use */
+#define ATMI_COMMAND_SELF_SD    12      /* Self shutdown */
 
 /* Call states */
 #define CALL_NOT_ISSUED         0

@@ -935,8 +935,9 @@ out:
  * ---It will be removed from pmodel, but it must be shutdown, otherwise it is error.
  * @return
  */
-public int test_config(int reload, command_call_t * call, void (*p_reload_error)(command_call_t * call,
-                int srvid, char *old_bin, char *new_bin, int error))
+public int test_config(int reload, command_call_t * call, 
+        void (*p_reload_error)(command_call_t * call, int srvid, 
+        char *old_bin, char *new_bin, int error))
 {
     int ret=SUCCEED;
     int new_error=FALSE;
