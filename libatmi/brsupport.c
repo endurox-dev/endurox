@@ -109,6 +109,7 @@ public int fill_reply_queue(char *nodestack,
             if (ndrx_shm_bridge_is_connected(nodeid))
             {
                 /* get the bridge service first... */
+#ifndef EX_USE_EPOLL
                 int is_bridge;
                 char tmpsvc[MAXTIDENT+1];
                 
@@ -120,6 +121,10 @@ public int fill_reply_queue(char *nodestack,
                             tmpsvc);
                     FAIL_OUT(ret);
                 }
+#else
+                /* epoll mode direct call: */
+                sprintf(reply_to, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, nodeid);
+#endif
                 
                 nodestack[i] = EOS;
                 br_dump_nodestack(nodestack, "Node stack after bridge select");

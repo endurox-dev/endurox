@@ -359,7 +359,24 @@ public int _tpacall (char *svc, char *data,
     if (ex_flags & TPCALL_BRCALL)
     {
         /* If this is a bridge call, then format the bridge Q */
+#ifdef EX_USE_EPOLL
         sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, dest_node);
+#else
+        {
+            int tmp_is_bridge;
+            char tmpsvc[MAXTIDENT+1];
+            
+            sprintf(tmpsvc, NDRX_SVC_BRIDGE, dest_node);
+
+            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
+            {
+                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
+                        tmpsvc);
+                FAIL_OUT(ret);
+            }
+        }
+#endif
+        
         is_bridge=TRUE;
     }
     else if (ex_flags & TPCALL_EVPOST)
@@ -918,8 +935,24 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
         NDRX_LOG(log_debug, "Server is located on different server, "
                 "our nodeid=%d their=%d",
                 G_atmi_env.our_nodeid, nodeid);
-        
+#ifdef EX_USE_EPOLL
         sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, nodeid);
+#else
+        /* poll() mode: */
+        {
+            int is_bridge;
+            char tmpsvc[MAXTIDENT+1];
+
+            sprintf(tmpsvc, NDRX_SVC_BRIDGE, nodeid);
+
+            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &is_bridge))
+            {
+                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
+                        tmpsvc);
+                FAIL_OUT(ret);
+            }
+        }
+#endif
     }
     else
     {

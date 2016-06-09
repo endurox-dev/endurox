@@ -247,8 +247,26 @@ public int accept_connection(void)
     {
         br_dump_nodestack(G_last_call.callstack, "Incoming conversation from bridge,"
                                            "using first node from node stack");
+#ifdef EX_USE_EPOLL
         sprintf(their_qstr, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, 
                 (int)G_last_call.callstack[0]);
+#else
+        /* poll() mode: */
+        {
+            int is_bridge;
+            char tmpsvc[MAXTIDENT+1];
+
+            sprintf(tmpsvc, NDRX_SVC_BRIDGE, (int)G_last_call.callstack[0]);
+
+            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge))
+            {
+                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
+                        tmpsvc);
+                FAIL_OUT(ret);
+            }
+        }
+#endif
+        
     }
     else
     {
