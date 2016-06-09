@@ -348,7 +348,12 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
      */
     service = G_server_conf.adv_service_count - ATMI_SRV_Q_ADJUST;
     
+#ifdef EX_USE_EPOLL
     sprintf(entry_new->listen_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, entry_new->svc_nm);
+#else
+    sprintf(entry_new->listen_q, NDRX_SVC_QFMT_SRVID, 
+            G_server_conf.q_prefix, entry_new->svc_nm, (short)G_server_conf.srv_id);
+#endif
     
     /* We are good to go, open q? */
     
