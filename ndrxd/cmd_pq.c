@@ -167,6 +167,9 @@ public int pq_run_santiy(int run_hist)
         /* now write at POS 0, latest reading of service */
         sprintf(q, NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
         
+        /* TODO: For poll mode, we need a list of servers, so that we can 
+         * request stats for all servers:
+         */
         if (SUCCEED!=ndrx_get_q_attr(q, &att))
         {
             /* skip this one... */
