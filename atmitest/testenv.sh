@@ -31,11 +31,11 @@
 ##
 export NDRX_QPREFIX=/mccp
 
-# Clean up q Space
-rm -rf /dev/mqueue/*
-
 # Load UBF, we assume that we are inside of test dir!
 . ../../sampleconfig/setndrx
 . ../../ubftest/setenv
 unset NDRX_DEBUG_CONF
 export FLDTBLDIR=../../ubftest/ubftab
+
+# Clean up q Space (remove all queues matching the symbol)
+xadmin qrmall ,
