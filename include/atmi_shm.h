@@ -78,6 +78,7 @@ extern int ndrxd_shm_delete(void);
 extern int ndrx_shm_attach(ndrx_shm_t *shm);
 extern int ndrx_shm_attach_all(int lev);
 extern int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge);
+extern int ndrx_shm_get_srvs(char *svc, char **srvlist, int *len); /* poll() only */
 extern int _ndrx_shm_get_svc(char *svc, int *pos);
 extern int ndrx_shm_install_svc(char *svc, int flags, short srvid);
 extern int ndrx_shm_install_svc_br(char *svc, int flags, 

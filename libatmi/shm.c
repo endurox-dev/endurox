@@ -662,6 +662,82 @@ out:
     return ret;
 }
 
+
+/**
+ * Returns list of servers providing the service (it does the malloc)
+ * for poll() mode only.
+ * @param svc
+ * @param srvlist
+ * @return 
+ */
+public int ndrx_shm_get_srvs(char *svc, char **srvlist, int *len)
+{
+    int ret=SUCCEED;
+    int pos=FAIL;
+    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
+    shm_svcinfo_t *psvcinfo = NULL;
+    int local_count;
+    
+    *len = 0;
+    
+    if (!ndrxd_shm_is_attached(&G_svcinfo))
+    {
+        ret=FAIL;
+        goto out; /* do not fail, try locally */
+    }
+    
+    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    {
+        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
+        FAIL_OUT(ret);
+    }
+    
+    /* Get the service entry */
+    if (!_ndrx_shm_get_svc(svc, &pos))
+    {
+        NDRX_LOG(log_error, "Service %s not found in shm", svc);
+        FAIL_OUT(ret);
+    }
+    
+    psvcinfo = SHM_SVCINFO_INDEX(svcinfo, pos);
+            
+    
+    
+    local_count = psvcinfo->srvs - psvcinfo->csrvs;
+    
+    if (local_count<=0)
+    {
+        NDRX_LOG(log_error, "Service %s not available, count of servers: %d",
+                                  svc, psvcinfo->srvs);
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==(*srvlist = malloc(sizeof(short) *local_count )))
+    {
+        NDRX_LOG(log_error, "malloc fail: %s", strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    memcpy(*srvlist, psvcinfo->srvids, sizeof(short) *local_count);
+    *len = local_count;
+    
+out:
+
+    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
+    {
+        NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
+    }
+
+not_locked:
+    
+    NDRX_LOG(log_debug, "ndrx_shm_get_srvs: srvlist %p, ret %d, len %d",
+        *srvlist, ret, *len);
+
+    return ret;
+}
+
+
+
 /**
  * Search over the memory for service.
  * This is internal version and not meant be used outside of this file.

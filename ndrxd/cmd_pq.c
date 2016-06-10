@@ -149,6 +149,9 @@ public int pq_run_santiy(int run_hist)
     char q[NDRX_MAX_Q_SIZE+1];
     struct mq_attr att;
     int avg;
+    int curmsgs;
+    short *srvlist = NULL;
+    int len;
     /* the services are here: G_bridge_svc_hash - we must loop around 
      * and get every local queue stats, if queue fails to open, then assume 0
      * before that we must shift the array...
@@ -163,20 +166,42 @@ public int pq_run_santiy(int run_hist)
                 cur->pq_info[i]=cur->pq_info[i-1];
             }
         }
-        
+#ifdef EX_USE_EPOLL
         /* now write at POS 0, latest reading of service */
         sprintf(q, NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
         
-        /* TODO: For poll mode, we need a list of servers, so that we can 
-         * request stats for all servers:
-         */
         if (SUCCEED!=ndrx_get_q_attr(q, &att))
         {
-            /* skip this one... */
-            continue;
+            curmsgs = 0; /* assume 0 */
+        }
+        else
+        {
+            curmsgs = att.mq_curmsgs;
+        }
+#else
+        /* For poll mode, we need a list of servers, so that we can 
+         * request stats for all servers:
+         */
+        curmsgs = 0;
+        if (SUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
+        {
+            for (i=0; i<len; i++)
+            {
+                sprintf(q, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
+                        cur->svc_nm, srvlist[i]);
+                
+                if (SUCCEED==ndrx_get_q_attr(q, &att))
+                {
+                    curmsgs+= att.mq_curmsgs;
+                }
+            }
+            
+            free(srvlist);
         }
         
-        cur->pq_info[1] = att.mq_curmsgs;
+#endif
+        
+        cur->pq_info[1] = curmsgs;
         
         /* Now calculate the average */
         avg = 0;
