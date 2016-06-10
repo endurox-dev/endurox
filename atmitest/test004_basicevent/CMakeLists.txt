@@ -54,9 +54,9 @@ add_executable (atmiclt4 atmiclt4.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmisv4_1ST m ubf nstd atmi atmisrv rt dl)
-target_link_libraries (atmisv4_2ND m ubf nstd atmi atmisrv rt dl)
-target_link_libraries (atmiclt4 m ubf nstd atmi atmiclt rt dl)
+target_link_libraries (atmisv4_1ST m ubf nstd atmi atmisrv rt dl pthread)
+target_link_libraries (atmisv4_2ND m ubf nstd atmi atmisrv rt dl pthread)
+target_link_libraries (atmiclt4 m ubf nstd atmi atmiclt rt dl pthread)
 
 set_target_properties(atmisv4_1ST PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmisv4_2ND PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

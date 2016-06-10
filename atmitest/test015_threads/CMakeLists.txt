@@ -55,7 +55,7 @@ add_executable (atmiclt15 atmiclt15.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv15 m ubf nstd atmi atmisrv rt dl)
+target_link_libraries (atmi.sv15 m ubf nstd atmi atmisrv rt dl pthread)
 target_link_libraries (atmiclt15 m ubf pthread nstd atmi atmiclt rt dl)
 
 set_target_properties(atmi.sv15 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
