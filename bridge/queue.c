@@ -353,6 +353,13 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
             case ATMI_COMMAND_TPFORWARD:
                 /* not used */
                 break;
+            case ATMI_COMMAND_SELF_SD:
+                G_shutdown_nr_got++;
+            
+                NDRX_LOG(log_warn, "Got shutdown req %d of %d", 
+                        G_shutdown_nr_got, G_shutdown_nr_wait);
+
+                break;
         }
         
     }
