@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <uthash.h>
