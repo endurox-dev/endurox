@@ -60,16 +60,15 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
 /**
  * Checks weither process is running or not...
  * @param pid
  * @param proc_name
  * @return
  */
-public int ndrx_sys_is_process_running(pid_t pid, char *proc_name)
+public int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name)
 {
-    int ret = FALSE;
-#if 0
     /* CAUSES STALL ON AIX. */
     FILE *fp=NULL;
     char cmd[128];
@@ -104,7 +103,22 @@ out:
     {
         pclose(fp);
     }
-#endif
+
+    NDRX_LOG(log_debug, "process %s status: %s", proc_name, 
+            ret?"running":"not running");
+    return ret;
+}
+
+
+/**
+ * Checks weither process is running or not...
+ * @param pid
+ * @param proc_name
+ * @return
+ */
+public int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name)
+{
+    int ret = FALSE;
     
     if (kill(pid, 0) == 0)
     {
@@ -136,7 +150,7 @@ out:
  * @param proc_name
  * @return
  */
-public char * ndrx_sys_get_proc_name(void)
+public char * ndrx_sys_get_proc_name_by_ps(void)
 {
     static char out[PATH_MAX] = "unknown";
     FILE *fp=NULL;

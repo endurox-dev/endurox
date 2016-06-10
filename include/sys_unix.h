@@ -69,7 +69,9 @@ extern "C" {
 #define EX_EPOLL_FLAGS          POLLIN
 
 #endif
-    
+/******************************************************************************/
+/***************************** PROGNAME ***************************************/
+/******************************************************************************/
 /**
  * Configure the program name.
  * On same platforms/gcc versions we have __progname external
@@ -83,9 +85,32 @@ extern const char * __progname;
     
 #else
 
-#define EX_PROGNAME ndrx_sys_get_proc_name()
+/* the worst option: to use ps, it generates sigchild...
+ * and for libraries that is not good.
+ */
+#define EX_PROGNAME ndrx_sys_get_proc_name_by_ps()
 
 #endif
+
+/******************************************************************************/
+/***************************** PROCESS TESTING ********************************/
+/******************************************************************************/
+/**
+ * The best option is linux procfs, we generally fallback to kill -0
+ * but better would be to use OS options for providing pid + procname testing 
+ * for existence. Because OS might reuse the PID.
+ */
+#ifdef EX_OS_LINUX
+
+#define ndrx_sys_is_process_running ndrx_sys_is_process_running_procfs
+
+#else
+
+#define ndrx_sys_is_process_running ndrx_sys_is_process_running_by_kill
+
+#endif
+ 
+/******************************************************************************/
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -142,16 +167,24 @@ extern int ndrx_epoll_close(int fd);
 extern int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout);
 extern int ndrx_epoll_errno(void);
 extern char * ndrx_poll_strerror(int err);
-extern char * ndrx_sys_get_proc_name(void);
-    
-extern int ndrx_sys_is_process_running(pid_t pid, char *proc_name);
-extern string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
+
 extern void ndrx_string_list_free(string_list_t* list);
-    
 
 extern char *ndrx_sys_get_cur_username(void);
 extern string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
 extern string_list_t* ndrx_sys_folder_list(char *path, int *return_status);
+
+/* gen unix: */
+extern char * ndrx_sys_get_proc_name_by_ps(void);
+extern int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);
+extern int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
+
+/* sys_linux.c: */
+extern int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name);
+
+/* provided by: sys_<platform>.c */
+extern string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
+
 #ifdef	__cplusplus
 }
 #endif

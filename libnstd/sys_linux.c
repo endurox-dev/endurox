@@ -71,7 +71,7 @@
  * @param proc_name
  * @return
  */
-public int ndrx_sys_is_process_running(pid_t pid, char *proc_name)
+public int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name)
 {
     char   proc_file[PATH_MAX];
     int     ret = FALSE;
