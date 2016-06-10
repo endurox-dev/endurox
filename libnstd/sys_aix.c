@@ -82,18 +82,19 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 public char * ndrx_sys_get_proc_name_getprocs(void)
 {
     static char out[PATH_MAX] = "unknown";
-    struct procentry64 p;
-    struct fdsinfo64 f;
+    struct procentry64 pr;
+/*    struct fdsinfo64 f;*/
     char *p;
     int l;
+    static int first = TRUE;
     
     if (first)
     {
         pid_t self = getpid();
         
-        if (SUCCEED==getprocs64(&p, 1, &f, 1, &self, 1))
+        if (FAIL!=getprocs64(&pr, (int)sizeof(pr), NULL, 0, &self, 1))
         {
-            p = pinfo[i].pi_comm;
+            p = pr.pi_comm;
             
             l = strlen(p);
             
@@ -113,8 +114,11 @@ public char * ndrx_sys_get_proc_name_getprocs(void)
             {
                 strcpy(out, p);
             }
-
-            
+        }
+        else
+        {
+            NDRX_LOG(log_error, "getprocs64 failed: %s",
+                strerror(errno));
         }
         first = FALSE;
     }    
