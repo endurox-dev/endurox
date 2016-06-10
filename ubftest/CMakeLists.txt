@@ -55,5 +55,5 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
 				test_print.c test_macro.c test_readwrite.c test_mkfldhdr.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (ubfunit1 ubf cgreen m nstd rt)
+target_link_libraries (ubfunit1 ubf cgreen m nstd rt pthread)
 set_target_properties(ubfunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
