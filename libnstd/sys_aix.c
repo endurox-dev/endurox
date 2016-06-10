@@ -46,6 +46,10 @@
 #include <string.h>
 #include <dirent.h>
 
+#include <procinfo.h>
+#include <sys/types.h>
+
+
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <nstdutil.h>
@@ -69,4 +73,50 @@
 public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
     return ndrx_sys_folder_list(qpath, return_status);
+}
+
+/**
+ * Get by process name by getprocss() aix call
+ * @return 
+ */
+public char * ndrx_sys_get_proc_name_getprocs(void)
+{
+    static char out[PATH_MAX] = "unknown";
+    struct procentry64 p;
+    struct fdsinfo64 f;
+    char *p;
+    int l;
+    
+    if (first)
+    {
+        pid_t self = getpid();
+        
+        if (SUCCEED==getprocs64(&p, 1, &f, 1, &self, 1))
+        {
+            p = pinfo[i].pi_comm;
+            
+            l = strlen(p);
+            
+            if (l>0 && '\n'==p[l-1])
+            {
+                p[l-1] = EOS;
+                l--;
+            }
+            
+            if (l>0 && '\r'==p[l-1])
+            {
+                p[l-1] = EOS;
+                l--;
+            }
+
+            if (EOS!=*p)
+            {
+                strcpy(out, p);
+            }
+
+            
+        }
+        first = FALSE;
+    }    
+    return out;
 }

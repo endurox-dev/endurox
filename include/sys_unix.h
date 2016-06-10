@@ -82,7 +82,12 @@ extern "C" {
 extern const char * __progname;
 
 #define EX_PROGNAME __progname
-    
+
+
+#elif EX_OS_AIX
+
+#define EX_PROGNAME ndrx_sys_get_proc_name_getprocs()
+
 #else
 
 /* the worst option: to use ps, it generates sigchild...
@@ -181,6 +186,9 @@ extern int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
 
 /* sys_linux.c: */
 extern int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name);
+
+/* sys_aix.c: */
+extern char * ndrx_sys_get_proc_name_getprocs(void);
 
 /* provided by: sys_<platform>.c */
 extern string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
