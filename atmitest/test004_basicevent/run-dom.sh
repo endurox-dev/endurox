@@ -167,7 +167,7 @@ xadmin start -y || go_out 3
 ps -ef | grep tpev
 
 # Let domains to connect between them selves
-sleep 50
+sleep 60
 
 print_domains;
 

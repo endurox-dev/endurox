@@ -153,7 +153,7 @@ xadmin start -y || go_out 3
 
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 50
+sleep 60
 
 print_domains;
 
