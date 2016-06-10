@@ -48,6 +48,9 @@ fi;
 
 (./atmisv005 -i 12005 2>&1) > ./atmisv005.log &
 sleep 1
+
+xadmin pqa -a
+
 (./atmiclt005 2>&1) > ./atmiclt005.log
 
 RET=$?
