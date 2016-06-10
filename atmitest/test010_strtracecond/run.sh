@@ -108,7 +108,7 @@ fi
 
 BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
 echo "BAD_PID=$BAD_PID"
-xadmin kill $BAD_PID
+kill -9 $BAD_PID
 sleep 1
 # Put it in shutdown state!
 xadmin stop -i 1341
