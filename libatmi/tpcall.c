@@ -146,20 +146,17 @@ MUTEX_LOCK;
      * time-out condition
      */
     int ret = SUCCEED;
-    static int first = TRUE;
+    static __thread int first = TRUE;
     /* initialize timers... */
-    static ndrx_timer_t start = {0};
+    static __thread ndrx_timer_t start;
     int i;
-    if (first)
-    {
-        first = FALSE;
-    }
+
 #ifdef CALL_TOUT_DEBUG
     call_dump_descriptors();
 #endif
     
     /* Check that it is time for scan... */
-    if (ndrx_timer_get_delta(&start) >=1000)
+    if (first || ndrx_timer_get_delta(&start) >=1000)
     {
         /* we should scan the stuff. */
         if (0 < cd)
@@ -185,6 +182,7 @@ MUTEX_LOCK;
         }
         /* if all ok, schedule after 1 sec. */
         ndrx_timer_reset(&start);
+        first = FALSE; /* only when all ok... */
     } /* if check time... */
     
 out:
