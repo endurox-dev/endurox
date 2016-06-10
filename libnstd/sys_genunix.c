@@ -68,6 +68,9 @@
  */
 public int ndrx_sys_is_process_running(pid_t pid, char *proc_name)
 {
+    int ret = FALSE;
+#if 0
+    /* CAUSES STALL ON AIX. */
     FILE *fp=NULL;
     char cmd[128];
     char path[PATH_MAX];
@@ -100,6 +103,23 @@ out:
     if (fp!=NULL)
     {
         pclose(fp);
+    }
+#endif
+    
+    if (kill(pid, 0) == 0)
+    {
+        /* process is running or a zombie */
+        ret = TRUE;
+    }
+    else if (errno == ESRCH)
+    {
+        /* no such process with the given pid is running */
+        ret = FALSE;
+    }
+    else
+    {
+       NDRX_LOG(log_error, "Failed to test processes: %s", strerror(errno));
+       ret = FALSE; /* some other error, assume process running... */ 
     }
 
     NDRX_LOG(log_debug, "process %s status: %s", proc_name, 
