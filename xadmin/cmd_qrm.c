@@ -44,6 +44,7 @@
 #include <gencall.h>
 #include <nclopt.h>
 #include <sys_unix.h>
+#include <utlist.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -64,24 +65,28 @@ public int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     int ret=SUCCEED;
     int i;
     string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
     
     if (argc>=2)
     {
         if (NULL!=(qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret)))
         {
-            for (i=1; i<argc; i++)
+            LL_FOREACH(qlist,elt)
             {
-                if (0==strcmp(qlist->qname, argv[i]))
+                for (i=1; i<argc; i++)
                 {
-                    printf("Removing [%s] ...", qlist->qname);
-                
-                    if (SUCCEED==ndrx_mq_unlink(qlist->qname))
+                    if (0==strcmp(elt->qname, argv[i]))
                     {
-                        printf("SUCCEED\n");
-                    }
-                    else
-                    {
-                        printf("FAIL\n");
+                        printf("Removing [%s] ...", elt->qname);
+
+                        if (SUCCEED==ndrx_mq_unlink(elt->qname))
+                        {
+                            printf("SUCCEED\n");
+                        }
+                        else
+                        {
+                            printf("FAIL\n");
+                        }
                     }
                 }
             }
@@ -111,25 +116,29 @@ public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     int ret=SUCCEED;
     int i;
     string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
     
     if (argc>=2)
     {
         if (NULL!=(qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret)))
         {
-            for (i=1; i<argc; i++)
+            LL_FOREACH(qlist,elt)
             {
-                if (NULL!=strstr(qlist->qname, argv[i]))
+                for (i=1; i<argc; i++)
                 {
-                    printf("Removing [%s] ...", qlist->qname);
-             
+                    if (NULL!=strstr(qlist->qname, argv[i]))
+                    {
+                        printf("Removing [%s] ...", qlist->qname);
 
-                    if (SUCCEED==ndrx_mq_unlink(qlist->qname))
-                    {
-                        printf("SUCCEED\n");
-                    }
-                    else
-                    {
-                        printf("FAIL\n");
+
+                        if (SUCCEED==ndrx_mq_unlink(qlist->qname))
+                        {
+                            printf("SUCCEED\n");
+                        }
+                        else
+                        {
+                            printf("FAIL\n");
+                        }
                     }
                 }
             }
