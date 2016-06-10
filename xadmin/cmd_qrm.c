@@ -1,7 +1,7 @@
 /* 
-** Enduro/X version of killall - kills by 9 all match strstr processes
+** Remove all matched queues
 **
-** @file cmd_killall.c
+** @file cmd_qrm.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -43,6 +43,7 @@
 #include <atmi_int.h>
 #include <gencall.h>
 #include <nclopt.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -52,29 +53,37 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Kill all
+ * Remove specific q
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+public int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=SUCCEED;
     int i;
+    string_list_t* qlist = NULL;
     
     if (argc>=2)
     {
-        for (i=1; i<argc; i++)
+        if (NULL!=(qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret)))
         {
-            printf("Killing [%s] ... ", argv[i]);
-            if (SUCCEED==ndrx_killall(argv[i]))
+            for (i=1; i<argc; i++)
             {
-                printf("Signaled/killed\n");
-            }
-            else
-            {
-                printf("Failed\n");
+                if (0==strcmp(qlist->qname, argv[i]))
+                {
+                    printf("Removing [%s] ...", qlist->qname);
+                
+                    if (SUCCEED==ndrx_mq_unlink(qlist->qname))
+                    {
+                        printf("SUCCEED\n");
+                    }
+                    else
+                    {
+                        printf("FAIL\n");
+                    }
+                }
             }
         }
     }
@@ -84,5 +93,55 @@ public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     
 out:
+
+    ndrx_string_list_free(qlist);
+    return ret;
+}
+
+
+/**
+ * Remove all queues
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    int ret=SUCCEED;
+    int i;
+    string_list_t* qlist = NULL;
+    
+    if (argc>=2)
+    {
+        if (NULL!=(qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret)))
+        {
+            for (i=1; i<argc; i++)
+            {
+                if (NULL!=strstr(qlist->qname, argv[i]))
+                {
+                    printf("Removing [%s] ...", qlist->qname);
+             
+
+                    if (SUCCEED==ndrx_mq_unlink(qlist->qname))
+                    {
+                        printf("SUCCEED\n");
+                    }
+                    else
+                    {
+                        printf("FAIL\n");
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        FAIL_OUT(ret);
+    }
+    
+out:
+
+    ndrx_string_list_free(qlist);
     return ret;
 }

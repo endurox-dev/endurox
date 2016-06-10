@@ -192,6 +192,10 @@ extern int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 extern int mqfilter(char *svcnm);
 extern int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+/* posix queues: */
+extern int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 #ifdef	__cplusplus
 }
 #endif

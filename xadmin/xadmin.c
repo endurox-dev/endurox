@@ -176,7 +176,11 @@ cmd_mapping_t M_command_map[] =
                                     "\t\targs: mqmv -n <Source cluster node id> -i <Source server ID>\n"
                                     "\t\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>"},
     {"killall",   cmd_killall,FAIL, 1,  999,  0, "Kill all processes (in ps -ef) matching the name\n"
-                                    "\t\targs: killall <name1> <name2> ... <nameN>\n"}
+                                    "\t\targs: killall <name1> <name2> ... <nameN>\n"},
+    {"qrm",   cmd_qrm,FAIL, 1,  999,  0, "Remove specific queue \n"
+                                    "\t\targs: qrm <qname1> <qname2> ... <qnameN>\n"},
+    {"qrmall",   cmd_qrmall,FAIL, 1,  999,  0, "Remove queue matching the substring \n"
+                                    "\t\targs: qrmall <substr1> <substr2> ... <substrN>\n"}
 };
 
 /**
