@@ -126,12 +126,12 @@ public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
             {
                 for (i=1; i<argc; i++)
                 {
-                    if (NULL!=strstr(qlist->qname, argv[i]))
+                    if (NULL!=strstr(elt->qname, argv[i]))
                     {
-                        printf("Removing [%s] ...", qlist->qname);
+                        printf("Removing [%s] ...", elt->qname);
 
 
-                        if (SUCCEED==ndrx_mq_unlink(qlist->qname))
+                        if (SUCCEED==ndrx_mq_unlink(elt->qname))
                         {
                             printf("SUCCEED\n");
                         }
