@@ -78,7 +78,7 @@ fi
 
 xadmin killall atmi.sv18 2>/dev/null
 
-killall atmiclt18
+xadmin killall atmiclt18
 
 popd 2>/dev/null
 

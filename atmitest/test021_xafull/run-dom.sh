@@ -132,7 +132,7 @@ function go_out {
     xadmin down -y
 
     # If some alive stuff left...
-    killall -9 atmiclt21
+    xadmin killall atmiclt21
 
     popd 2>/dev/null
     exit $1
