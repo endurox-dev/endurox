@@ -48,6 +48,7 @@
 #include <userlog.h>
 #include <ndrxd.h>
 #include <ndrxdcmn.h>
+#include <atmi_shm.h>
 
 #include "cmd_processor.h"
 #include <bridge_int.h>

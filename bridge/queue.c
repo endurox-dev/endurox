@@ -45,6 +45,7 @@
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
+#include <atmi_shm.h>
 #include <typed_buf.h>
 #include <ndrstandard.h>
 #include <ubf.h>

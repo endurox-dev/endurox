@@ -670,7 +670,7 @@ out:
  * @param srvlist
  * @return 
  */
-public int ndrx_shm_get_srvs(char *svc, char **srvlist, int *len)
+public int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
 {
     int ret=SUCCEED;
     int pos=FAIL;
