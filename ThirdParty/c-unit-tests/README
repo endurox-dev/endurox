@@ -1,7 +1,0 @@
-To get cgreen installing libs in system directories when doing:
-$ cmake ../cgreen
-
-do it with additional defines:
-$ cmake ../cgreen -DLIB_INSTALL_DIR=/usr/lib -DINCLUDE_INSTALL_DIR=/usr/include
-
-This will make libs & include be prefixed only with /usr
