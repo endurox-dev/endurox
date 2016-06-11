@@ -6,3 +6,4 @@ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 - To disable documentation building add '-DDEFINE_DISABLEDOC=ON'
 - To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
 - To disable platform script building use '-DDEFINE_DISABLEPSCRIPT=ON'
+- To do release build, use '-DDEFINE_RELEASEBUILD=ON'

@@ -50,6 +50,19 @@ message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
 message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
 
 OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
+OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
+
+# Enable release only if specified.
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF (DEFINE_RELEASEBUILD)
+	MESSAGE( RELEASE_BUILD )
+	SET(CMAKE_BUILD_TYPE release)
+        SET(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}")
+ELSE ()
+	MESSAGE( DEBUG_BUILD )
+	SET(CMAKE_BUILD_TYPE debug)
+        SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
+ENDIF ()
 
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_OS_LINUX "1")
@@ -114,21 +127,6 @@ set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
 
 configure_file ("${PROJECT_SOURCE_DIR}/include/config.h.in"
                 "${PROJECT_BINARY_DIR}/include/config.h" )
-
-################################################################################
-# Build configuration
-################################################################################
-# Enable release only if specified.
-# By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
-	MESSAGE( RELEASE_BUILD )
-	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}")
-ELSE ($ENV{RELEASE_BUILD})
-	MESSAGE( DEBUG_BUILD )
-	SET(CMAKE_BUILD_TYPE debug)
-        #SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
-ENDIF ($ENV{RELEASE_BUILD})
 
 ################################################################################
 # Install dir config
