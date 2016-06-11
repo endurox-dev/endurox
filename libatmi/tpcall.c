@@ -150,13 +150,16 @@ MUTEX_LOCK;
     /* initialize timers... */
     static __thread ndrx_timer_t start;
     int i;
+    long delta = 0;
 
 #ifdef CALL_TOUT_DEBUG
     call_dump_descriptors();
 #endif
     
     /* Check that it is time for scan... */
-    if (first || ndrx_timer_get_delta(&start) >=1000)
+    if (first || (delta=ndrx_timer_get_delta(&start)) >=1000 || 
+                /* incase of overflow: */
+                delta < 0)
     {
         /* we should scan the stuff. */
         if (0 < cd)
