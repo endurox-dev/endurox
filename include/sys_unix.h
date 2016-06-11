@@ -109,6 +109,11 @@ extern const char * __progname;
 
 #define ndrx_sys_is_process_running ndrx_sys_is_process_running_procfs
 
+#elif EX_OS_CYGWIN
+
+/* Same as for linux */
+#define ndrx_sys_is_process_running ndrx_sys_is_process_running_procfs
+
 #else
 
 #define ndrx_sys_is_process_running ndrx_sys_is_process_running_by_kill
