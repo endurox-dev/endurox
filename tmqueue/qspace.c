@@ -669,6 +669,7 @@ private tmq_qhash_t * tmq_qhash_new(char *qname)
 public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
 {
     int ret = SUCCEED;
+    int is_locked = FALSE;
     tmq_qhash_t *qhash;
     tmq_memmsg_t *mmsg = calloc(1, sizeof(tmq_memmsg_t));
     tmq_qconfig_t * qconf;
@@ -676,6 +677,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     char corid_str[TMCORRIDLEN_STR+1];
     
     MUTEX_LOCK_V(M_q_lock);
+    is_locked = TRUE;
     
     qhash = tmq_qhash_get(msg->hdr.qname);
     qconf = tmq_qconf_get_with_default(msg->hdr.qname, NULL);
@@ -734,6 +736,11 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
         strcpy(mmsg->corid_str, corid_str);
         HASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
     }
+    /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
+     * us and that might cause stall.
+     */
+    MUTEX_UNLOCK_V(M_q_lock);
+    is_locked = FALSE;
     
     /* Decide do we need to add the msg to disk?! 
      * Needs to send a command to XA sub-system to prepare msg/command to disk,
@@ -763,13 +770,20 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
             tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname);
     
 out:
-
+                
+    /* NOT SURE IS THIS GOOD as this might cause segmentation fault.
+     * as added to mem, but failed to write to disk.
+     */
     if (SUCCEED!=ret && mmsg!=NULL)
     {
         free(mmsg);
     }
 
-    MUTEX_UNLOCK_V(M_q_lock);
+    if (is_locked)
+    {
+        MUTEX_UNLOCK_V(M_q_lock);
+    }
+
 
     return ret;
 }
