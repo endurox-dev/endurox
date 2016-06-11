@@ -20,7 +20,7 @@ typedef struct {
 #define CGREEN_SEPARATOR "__"
 #define spec_name(contextName, testName) CgreenSpec__##contextName##__##testName##__
 
-//This gives better error messages at the cost of duplication
+/*This gives better error messages at the cost of duplication*/
 #define ENSURE_VA_NUM_ARGS(...) ENSURE_VA_NUM_ARGS_IMPL_((__VA_ARGS__, _CALLED_WITH_TOO_MANY_ARGUMENTS,  WithContextAndSpecificationName,  WithSpecificationName))
 #define ENSURE_VA_NUM_ARGS_IMPL_(tuple) ENSURE_VA_NUM_ARGS_IMPL tuple
 
@@ -28,7 +28,7 @@ typedef struct {
 
 #define ENSURE_macro_dispatcher(func, ...)   ENSURE_macro_dispatcher_(func, ENSURE_VA_NUM_ARGS(__VA_ARGS__))
 
-// these levels of indirecton are a work-around for variadic macro deficiencies in Visual C++ 2012 and prior
+/* these levels of indirecton are a work-around for variadic macro deficiencies in Visual C++ 2012 and prior */
 #define ENSURE_macro_dispatcher_(func, nargs)           ENSURE_macro_dispatcher__(func, nargs)
 #define ENSURE_macro_dispatcher__(func, nargs)           ENSURE_macro_dispatcher___(func, nargs)
 #define ENSURE_macro_dispatcher___(func, nargs)          func ## nargs

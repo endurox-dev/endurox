@@ -26,14 +26,14 @@
 
 #define MOCK_macro_dispatcher(func, ...)   MOCK_macro_dispatcher_(func, MOCK_VA_NUM_ARGS(__VA_ARGS__))
 
-// the three levels of indirection are a work-around for broken variadic macro support in Visual C++
+/* the three levels of indirection are a work-around for broken variadic macro support in Visual C++ */
 #define MOCK_macro_dispatcher_(func, nargs)           MOCK_macro_dispatcher__(func, nargs)
 #define MOCK_macro_dispatcher__(func, nargs)           MOCK_macro_dispatcher___(func, nargs)
 #define MOCK_macro_dispatcher___(func, nargs)          func ## nargs
 
 #define PP_NARG(...) MOCK_macro_dispatcher(mock, __VA_ARGS__)
 
-//mock1 works for 1 or 0
+/*mock1 works for 1 or 0 */
 #define mock1(test_reporter, function_name, mock_file, mock_line, arguments_string, ...)\
   mock_(test_reporter, function_name, mock_file, mock_line, arguments_string, __VA_ARGS__)
 

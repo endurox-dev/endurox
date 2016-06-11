@@ -47,7 +47,6 @@ fi;
 . ../testenv.sh
 # client timeout
 export NDRX_TOUT=2
-export NDRX_DEBUG_CONF=`pwd`/debug-bench.conf
 
 (./atmi.sv1 -t10 -i 123 2>&1) > ./atmisv1.log &
 sleep 1

@@ -106,8 +106,9 @@ void send_cgreen_message(int messaging, int result) {
     message->type = queues[messaging].tag;
     message->result = result;
     cgreen_pipe_write(queues[messaging].writepipe, message, sizeof(CgreenMessage));
-    // give the parent a chance to read so that failures are more likely to be output
-    // before the child crashes
+    /* give the parent a chance to read so that failures are more likely to be output
+     * before the child crashes
+     */
     sched_yield();
 
     free(message);

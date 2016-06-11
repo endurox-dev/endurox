@@ -46,6 +46,8 @@ string(REGEX MATCH "^[a-zA-Z0-9-]*" _TMP_CMAKE_OS_NAME_EXTR ${_TMP_CMAKE_OS_NAME
 string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
 
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
+message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
+message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
 
 OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
 
@@ -59,6 +61,14 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
             set(EX_USE_EPOLL "1")
         ENDIF()
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+# Configure the compiler, we support XLC too..
+
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+		set ( CMAKE_C_FLAGS "-pthread -maix64 ${CMAKE_C_FLAGS}")
+	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
+		set ( CMAKE_C_FLAGS "-bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99")
+	endif()
+
 	set(EX_OS_AIX "1")
         # For AIX we do not have other options that use file system
         # base queue registry.
@@ -113,11 +123,11 @@ configure_file ("${PROJECT_SOURCE_DIR}/include/config.h.in"
 IF ($ENV{RELEASE_BUILD})
 	MESSAGE( RELEASE_BUILD )
 	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS -O2)
+        SET(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}")
 ELSE ($ENV{RELEASE_BUILD})
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
-        SET(CMAKE_C_FLAGS -ggdb)
+        #SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
 ENDIF ($ENV{RELEASE_BUILD})
 
 ################################################################################

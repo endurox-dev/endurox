@@ -3,7 +3,7 @@
 #include <cgreen/mocks.h>
 #include <cgreen/parameters.h>
 #include <inttypes.h>
-// TODO: report PC-Lint bug about undeserved 451
+/* TODO: report PC-Lint bug about undeserved 451*/
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,8 +157,9 @@ intptr_t mock_(TestReporter* test_reporter, const char *function, const char *mo
         if (!is_parameter(constraint)) continue;
 
         if (!constraint_is_for_parameter_in(constraint, parameters)) {
-            // if expectation parameter name isn't in parameter_names,
-            // fail test and skip applying constraints unlikely to match
+            /* if expectation parameter name isn't in parameter_names,
+             * fail test and skip applying constraints unlikely to match
+             */
             report_mock_parameter_name_not_found(test_reporter, expectation, constraint->parameter_name);
             destroy_expectation_if_time_to_die(expectation);
             destroy_cgreen_vector(actual_values);
@@ -168,8 +169,9 @@ intptr_t mock_(TestReporter* test_reporter, const char *function, const char *mo
         }
     }
 
-    // if read-only constraints aren't matching, content-setting ones might corrupt memory
-    // apply read-only ones first, and if they don't fail, then do the deeper constraints
+    /* if read-only constraints aren't matching, content-setting ones might corrupt memory
+     * apply read-only ones first, and if they don't fail, then do the deeper constraints
+     */
     failures_before_read_only_constraints_executed = test_reporter->failures;
 
     for (i = 0; i < cgreen_vector_size(parameter_names); i++) {
@@ -180,8 +182,9 @@ intptr_t mock_(TestReporter* test_reporter, const char *function, const char *mo
 
     failures_after_read_only_constraints_executed = test_reporter->failures;
 
-    // FIXME: this comparison doesn't work because only parent processes' pass/fail counts are updated,
-    //        and even then only once they read from the pipe
+    /* FIXME: this comparison doesn't work because only parent processes' pass/fail counts are updated,
+            and even then only once they read from the pipe
+     */
     if (failures_before_read_only_constraints_executed == failures_after_read_only_constraints_executed) {
         for (i = 0; i < cgreen_vector_size(parameter_names); i++) {
             const char* parameter_name = (const char*)cgreen_vector_get(parameter_names, i);
@@ -507,14 +510,14 @@ static void destroy_expectation(RecordedExpectation *expectation) {
 
 static void ensure_successfully_mocked_calls_list_exists(void) {
     if (successfully_mocked_calls == NULL) {
-        // successfully_mocked_calls are __func__, so there's nothing to destroy
+        /* successfully_mocked_calls are __func__, so there's nothing to destroy */
         successfully_mocked_calls = create_cgreen_vector(NULL);
     }
 }
 
 static void ensure_learned_mock_calls_list_exists(void) {
     if (learned_mock_calls == NULL) {
-        // learned_mock_calls are __func__, so there's nothing to destroy
+        /* learned_mock_calls are __func__, so there's nothing to destroy */
         learned_mock_calls = create_cgreen_vector(NULL);
     }
 }
@@ -689,7 +692,7 @@ bool have_never_call_expectation_for(const char* function) {
 }
 
 #ifdef __cplusplus
-} // namespace cgreen
+} /* namespace cgreen */
 #endif
 
 /* vim: set ts=4 sw=4 et cindent: */

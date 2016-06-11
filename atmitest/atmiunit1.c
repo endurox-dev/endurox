@@ -53,6 +53,13 @@ int system_dbg(char *cmd)
 	return ret;
 }
 
+Ensure(test000_system)
+{
+    int ret;
+    ret=system_dbg("test000_system/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 Ensure(test001_basiccall)
 {
     int ret;
@@ -257,6 +264,7 @@ Ensure(test028_tmq)
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
+    add_test(suite, test000_system);
     add_test(suite, test001_basiccall);
     add_test(suite, test002_basicforward);
     add_test(suite, test003_basicconvers);

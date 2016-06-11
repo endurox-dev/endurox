@@ -258,7 +258,7 @@ void run_the_test_code(TestSuite *suite, CgreenTest *spec, TestReporter *reporte
         die_in(per_test_timeout_value());
     }
 
-    // for historical reasons the suite can have a setup
+    /* for historical reasons the suite can have a setup*/
     if(has_setup(suite)) {
         (*suite->setup)();
     } else {
@@ -268,7 +268,7 @@ void run_the_test_code(TestSuite *suite, CgreenTest *spec, TestReporter *reporte
     }
 
     run(spec);
-    // for historical reasons the suite can have a teardown
+    /* for historical reasons the suite can have a teardown*/
     if (suite->teardown != &do_nothing) {
         (*suite->teardown)();
     } else {
@@ -289,7 +289,7 @@ void die(const char *message, ...) {
 }
 
 #ifdef __cplusplus
-} // namespace cgreen
+} /* namespace cgreen */
 #endif
 
 /* vim: set ts=4 sw=4 et cindent: */

@@ -74,7 +74,7 @@ void die_in(unsigned int seconds) {
 }
 
 void run_specified_test_if_child(TestSuite *suite, TestReporter *reporter){
-    //not needed for systems that support fork()
+    /*not needed for systems that support fork()*/
     (void)suite;
     (void)reporter;
 }
@@ -92,7 +92,7 @@ static void allow_ctrl_c(void) {
 }
 
 #ifdef __cplusplus
-} // namespace cgreen
+} /* namespace cgreen */
 #endif
 
 /* vim: set ts=4 sw=4 et cindent: */

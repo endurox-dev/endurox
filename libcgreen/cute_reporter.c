@@ -11,8 +11,8 @@ namespace cgreen {
 
 typedef struct {
     Printer *printer;
-    int error_count;    // For status within the test case process
-    int previous_error; // For status outside the test case process
+    int error_count;    /* For status within the test case process */
+    int previous_error; /* For status outside the test case process */
 } CuteMemo;
 
 static void cute_reporter_suite_started(TestReporter *reporter,

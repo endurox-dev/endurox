@@ -42,6 +42,7 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Sub Tests
+add_subdirectory (test000_system)
 add_subdirectory (test001_basiccall)
 add_subdirectory (test002_basicforward)
 add_subdirectory (test003_basicconvers)

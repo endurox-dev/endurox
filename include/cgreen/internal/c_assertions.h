@@ -10,7 +10,7 @@
 
 #define assert_that_constraint(actual, constraint) assert_that_(__FILE__, __LINE__, #actual, (intptr_t)actual, constraint)
 
-// this isn't declared in assertions.h because you can't have overloads for an extern "C"-declared function, so it seems
+/* this isn't declared in assertions.h because you can't have overloads for an extern "C"-declared function, so it seems */
 void assert_that_(const char *file, int line, const char *actual_string, intptr_t actual, Constraint *constraint);
 
 #endif
