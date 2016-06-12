@@ -1015,7 +1015,7 @@ private int write_to_tx_file(char *block, int len)
     FILE *f = NULL;
     int ax_ret;
     
-    if (G_atmi_env.xa_sw->flags & TMREGISTER && !M_is_reg)
+    if (ndrx_get_G_atmi_env()->xa_sw->flags & TMREGISTER && !M_is_reg)
     {
         ax_ret = ax_reg(M_rmid, &xid, 0);
                 
@@ -1025,7 +1025,7 @@ private int write_to_tx_file(char *block, int len)
             FAIL_OUT(ret);
         }
         
-        if (XA_OK!=xa_start_entry(G_atmi_env.xa_sw, &xid, M_rmid, 0))
+        if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, M_rmid, 0))
         {
             NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
             FAIL_OUT(ret);

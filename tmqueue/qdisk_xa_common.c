@@ -71,11 +71,11 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
                 "process address space - loading .so!", symbol);
         
         /* Loading the symbol... */
-        handle = dlopen (G_atmi_env.xa_rmlib, RTLD_NOW);
+        handle = dlopen (ndrx_get_G_atmi_env()->xa_rmlib, RTLD_NOW);
         if (!handle)
         {
             NDRX_LOG(log_error, "Failed to load XA Resource Manager lib [%s]: %s", 
-                G_atmi_env.xa_rmlib, dlerror());
+                ndrx_get_G_atmi_env()->xa_rmlib, dlerror());
             FAIL_OUT(ret);
         }
         
