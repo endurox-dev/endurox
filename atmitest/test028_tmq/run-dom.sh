@@ -462,6 +462,11 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
+if [ "X`grep TPETIME *.log`" != "X" ]; then
+	echo "There must be no timeouts during tests!"
+	RET=-2
+fi
+
 
 
 go_out $RET

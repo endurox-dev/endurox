@@ -25,6 +25,8 @@
 
 #cmakedefine EX_OS_FREEBSD @EX_OS_FREEBSD@
 
+#cmakedefine EX_OS_CYGWIN @EX_OS_CYGWIN@
+
 
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
