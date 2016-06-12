@@ -520,7 +520,9 @@ extern int ndrx_get_cached_svc_q(char *q);
 
 /* Access to symbols: */
 
-extern tp_command_call_t *ndrx_get_last_call(void);
+extern tp_command_call_t *ndrx_get_G_last_call(void);
+extern atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
+extern atmi_lib_env_t *ndrx_get_G_atmi_env(void);
 
 #ifdef	__cplusplus
 }

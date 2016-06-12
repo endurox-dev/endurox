@@ -371,6 +371,9 @@ extern int xa_status_get_op(short txstage, char rmstatus);
 extern txstage_descriptor_t* xa_stage_get_descr(short txstage);
 extern int xa_txstage2tperrno(short txstage, int master_op);
 
+
+extern atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void);
+
 #ifdef	__cplusplus
 }
 #endif

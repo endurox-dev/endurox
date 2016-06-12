@@ -78,7 +78,7 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EOS};
     
     /* client with out last call is acceptable...! */
-    if (G_atmi_conf.is_client && !ndrx_get_last_call()->cd)
+    if (G_atmi_conf.is_client && !ndrx_get_G_last_call()->cd)
     {
         /* this is client */
         NDRX_LOG(log_debug, "tpreturn is not available for clients!!!");
@@ -86,10 +86,10 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
         return; /* <<<< RETURN */
     }
 
-    if (ndrx_get_last_call()->flags & TPNOREPLY)
+    if (ndrx_get_G_last_call()->flags & TPNOREPLY)
     {
         NDRX_LOG(log_debug, "No reply expected - return to main()!, "
-                "flags; %ld", ndrx_get_last_call()->flags);
+                "flags; %ld", ndrx_get_G_last_call()->flags);
         goto return_to_main;
     }
 
@@ -98,13 +98,13 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     close_open_client_connections(); /* disconnect any calls when we are clients */
 
     /* Set descriptor */
-    call->cd = ndrx_get_last_call()->cd;
+    call->cd = ndrx_get_G_last_call()->cd;
 
     if (CONV_IN_CONVERSATION==G_accepted_connection.status)
         call->cd-=MAX_CONNECTIONS;
 
-    call->timestamp = ndrx_get_last_call()->timestamp;
-    call->callseq = ndrx_get_last_call()->callseq;
+    call->timestamp = ndrx_get_G_last_call()->timestamp;
+    call->callseq = ndrx_get_G_last_call()->callseq;
     call->data_len = 0;
     call->sysflags = 0; /* reset the flags. */
     
@@ -114,7 +114,7 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     strcpy(call->reply_to, G_atmi_conf.reply_q_str);
     */
     /* Save original reply to path, so that bridge knows what to next */
-    strcpy(call->reply_to, ndrx_get_last_call()->reply_to);
+    strcpy(call->reply_to, ndrx_get_G_last_call()->reply_to);
     
     /* Mark as service failure. */
     if (TPSUCCESS!=rval)
@@ -127,20 +127,20 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     - moved to tmisabortonly.
             
     /* If we have global transaction & failed. Then set abort only flag */
-    if (G_atmi_xa_curtx.txinfo && G_atmi_xa_curtx.txinfo->tmisabortonly)
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo && ndrx_get_G_atmi_xa_curtx()->txinfo->tmisabortonly)
     {
         call->sysflags|=SYS_XA_ABORT_ONLY;
     }
 #endif
     
     /* work out the XA data */
-    if (G_atmi_xa_curtx.txinfo)
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
         /* Update the list  
-        strcpy(call->tmknownrms, G_atmi_xa_curtx.txinfo->tmknownrms);
-        strcpy(call->tmxid, G_atmi_xa_curtx.txinfo->tmxid);
+        strcpy(call->tmknownrms, ndrx_get_G_atmi_xa_curtx()->txinfo->tmknownrms);
+        strcpy(call->tmxid, ndrx_get_G_atmi_xa_curtx()->txinfo->tmxid);
          * */
-        XA_TX_COPY(call, G_atmi_xa_curtx.txinfo);
+        XA_TX_COPY(call, ndrx_get_G_atmi_xa_curtx()->txinfo);
     }
     
     /* prepare reply buffer */
@@ -158,16 +158,16 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
         else
         {
             /* Convert back, if convert flags was set */
-            if (SYS_SRV_CVT_ANY_SET(ndrx_get_last_call()->sysflags))
+            if (SYS_SRV_CVT_ANY_SET(ndrx_get_G_last_call()->sysflags))
             {
                 NDRX_LOG(log_debug, "about reverse xcvt...");
                 /* Convert buffer back.. */
-                if (SUCCEED!=typed_xcvt(&buffer_info, ndrx_get_last_call()->sysflags, TRUE))
+                if (SUCCEED!=typed_xcvt(&buffer_info, ndrx_get_G_last_call()->sysflags, TRUE))
                 {
                     NDRX_LOG(log_debug, "Failed to convert buffer back to "
-                            "callers format: %llx", ndrx_get_last_call()->sysflags);
+                            "callers format: %llx", ndrx_get_G_last_call()->sysflags);
                     userlog("Failed to convert buffer back to "
-                            "callers format: %llx", ndrx_get_last_call()->sysflags);
+                            "callers format: %llx", ndrx_get_G_last_call()->sysflags);
                     /* set reply fail FLAG */
                     call->sysflags |=SYS_FLAG_REPLY_ERROR;
                     call->rcode = TPESVCERR;
@@ -211,11 +211,11 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     call->command_id = ATMI_COMMAND_TPREPLY;
     
     /* keep the timer from last call. */
-    call->timer = ndrx_get_last_call()->timer;
+    call->timer = ndrx_get_G_last_call()->timer;
     
     /* Get the reply order... */
-    strcpy(call->callstack, ndrx_get_last_call()->callstack);
-    if (SUCCEED!=fill_reply_queue(call->callstack, ndrx_get_last_call()->reply_to, reply_to))
+    strcpy(call->callstack, ndrx_get_G_last_call()->callstack);
+    if (SUCCEED!=fill_reply_queue(call->callstack, ndrx_get_G_last_call()->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
         goto return_to_main;
@@ -255,7 +255,7 @@ return_to_main:
     }
 
     /* server thread, no long jump... (thread should kill it self.)*/
-    if (!(ndrx_get_last_call()->sysflags & SYS_SRV_THREAD))
+    if (!(ndrx_get_G_last_call()->sysflags & SYS_SRV_THREAD))
     {        
         return_status|=RETURN_TYPE_TPRETURN;
          if (FAIL==ret)
@@ -275,7 +275,7 @@ return_to_main:
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
-        if (G_atmi_xa_curtx.txinfo)
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
             _tp_srv_disassoc_tx();
         }
@@ -341,22 +341,22 @@ public void _tpforward (char *svc, char *data,
     data_len+=sizeof(tp_command_call_t);
 
     call->buffer_type_id = (short)buffer_info->type_id; /* < caused core dumps! */
-    strcpy(call->reply_to, ndrx_get_last_call()->reply_to); /* <<< main difference from call! */
+    strcpy(call->reply_to, ndrx_get_G_last_call()->reply_to); /* <<< main difference from call! */
     call->command_id = ATMI_COMMAND_TPCALL;
 
     strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EOS;
     call->flags = flags;
-    call->cd = ndrx_get_last_call()->cd; /* <<< another difference from call! */
-    call->timestamp = ndrx_get_last_call()->timestamp;
-    call->callseq = ndrx_get_last_call()->callseq;
-    strcpy(call->callstack, ndrx_get_last_call()->callstack);
+    call->cd = ndrx_get_G_last_call()->cd; /* <<< another difference from call! */
+    call->timestamp = ndrx_get_G_last_call()->timestamp;
+    call->callseq = ndrx_get_G_last_call()->callseq;
+    strcpy(call->callstack, ndrx_get_G_last_call()->callstack);
     
     /* work out the XA data */
-    if (G_atmi_xa_curtx.txinfo)
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
         /* Copy TX data */
-        XA_TX_COPY(call, G_atmi_xa_curtx.txinfo);
+        XA_TX_COPY(call, ndrx_get_G_atmi_xa_curtx()->txinfo);
     }
     
 #if 0
@@ -365,14 +365,14 @@ public void _tpforward (char *svc, char *data,
      * On the other side, receiver should mark it's global tx too
      * as abort only.
      */
-    if (G_atmi_xa_curtx.txinfo && G_atmi_xa_curtx.txinfo->tmisabortonly)
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo && ndrx_get_G_atmi_xa_curtx()->txinfo->tmisabortonly)
     {
         call->sysflags|=SYS_XA_ABORT_ONLY;
     }
 #endif
     
     /* Want to keep original call time... */
-    memcpy(&call->timer, &ndrx_get_last_call()->timer, sizeof(call->timer));
+    memcpy(&call->timer, &ndrx_get_G_last_call()->timer, sizeof(call->timer));
     
     /* Hmm we can free up the data? - do it here because we still need buffer_info!*/
     if (NULL!=data)
@@ -389,7 +389,7 @@ public void _tpforward (char *svc, char *data,
         _TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
                 fn, call->name);
                 /* we should reply back, that call failed, so that client does not wait */
-        reply_with_failure(flags, ndrx_get_last_call(), NULL, NULL, TPESVCERR);
+        reply_with_failure(flags, ndrx_get_G_last_call(), NULL, NULL, TPESVCERR);
         goto out;
     }
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
@@ -414,14 +414,14 @@ public void _tpforward (char *svc, char *data,
         ret=FAIL;
 
         /* we should reply back, that call failed, so that client does not wait */
-        reply_with_failure(flags, ndrx_get_last_call(), NULL, NULL, TPESVCERR);
+        reply_with_failure(flags, ndrx_get_G_last_call(), NULL, NULL, TPESVCERR);
     }
 
 out:
     NDRX_LOG(log_debug, "%s return %d (information only)", fn, ret);
 
     /* server thread, no long jump... (thread should kill it self.)*/
-    if (!(ndrx_get_last_call()->sysflags & SYS_SRV_THREAD))
+    if (!(ndrx_get_G_last_call()->sysflags & SYS_SRV_THREAD))
     {
         return_status|=RETURN_TYPE_TPFORWARD;
         if (FAIL==ret)
@@ -441,7 +441,7 @@ out:
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
-        if (G_atmi_xa_curtx.txinfo)
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
             _tp_srv_disassoc_tx();
         }

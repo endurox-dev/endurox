@@ -918,10 +918,41 @@ out:
     return ret;
 }
 
+/* Internal API: */
 
-/* get the global symbol: */
-public tp_command_call_t *ndrx_get_last_call(void)
+/**
+ * For AIX we have issues with global variable exports
+ * But functions work..
+ * @return 
+ */
+public tp_command_call_t *ndrx_get_G_last_call(void)
 {
-	return &G_last_call;
+    return &G_last_call;
 }
 
+/**
+ * Access to atmi lib conf
+ * @return 
+ */
+public atmi_lib_conf_t *ndrx_get_G_atmi_conf(void)
+{
+    return &G_atmi_conf;
+}
+
+/**
+ * Access to to atmi lib env globals
+ * @return 
+ */
+public atmi_lib_env_t *ndrx_get_G_atmi_env(void)
+{
+    return &G_atmi_env;
+}
+
+/**
+ * Get current ATMI transaction object
+ * @return 
+ */
+public atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void)
+{
+    return &G_atmi_xa_curtx;
+}

@@ -104,10 +104,10 @@ public int report_to_ndrxd(void)
     ret=cmd_generic_call(NDRXD_COM_SVCINFO_RQ, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)status, send_size,
-                        G_atmi_conf.reply_q_str,
-                        G_atmi_conf.reply_q,
+                        ndrx_get_G_atmi_conf()->reply_q_str,
+                        ndrx_get_G_atmi_conf()->reply_q,
                         (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        G_atmi_conf.ndrxd_q_str,
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
@@ -141,10 +141,10 @@ public int unadvertse_to_ndrxd(char *svcname)
     ret=cmd_generic_call(NDRXD_COM_SRVUNADV_RQ, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)unadv, send_size,
-                        G_atmi_conf.reply_q_str,
-                        G_atmi_conf.reply_q,
+                        ndrx_get_G_atmi_conf()->reply_q_str,
+                        ndrx_get_G_atmi_conf()->reply_q,
                         (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        G_atmi_conf.ndrxd_q_str,
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
@@ -161,7 +161,7 @@ public int unadvertse_to_ndrxd(char *svcname)
         else
         {
           _TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
-                        NDRXD_COM_SRVUNADV_RQ, G_atmi_conf.ndrxd_q_str);  
+                        NDRXD_COM_SRVUNADV_RQ, ndrx_get_G_atmi_conf()->ndrxd_q_str);  
         }
     }
 
@@ -194,10 +194,10 @@ public int advertse_to_ndrxd(svc_entry_fn_t *entry)
     ret=cmd_generic_call(NDRXD_COM_SRVADV_RQ, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)adv, send_size,
-                        G_atmi_conf.reply_q_str,
-                        G_atmi_conf.reply_q,
+                        ndrx_get_G_atmi_conf()->reply_q_str,
+                        ndrx_get_G_atmi_conf()->reply_q,
                         (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        G_atmi_conf.ndrxd_q_str,
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
@@ -214,7 +214,7 @@ public int advertse_to_ndrxd(svc_entry_fn_t *entry)
         else
         {
           _TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
-                        NDRXD_COM_SRVUNADV_RQ, G_atmi_conf.ndrxd_q_str);  
+                        NDRXD_COM_SRVUNADV_RQ, ndrx_get_G_atmi_conf()->ndrxd_q_str);  
         }
     }
 
@@ -247,7 +247,7 @@ private int get_bridges_rply_request(char *buf, long len)
         ret = process_admin_req(buf, len, &G_shutdown_req);
     }
     
-    if (ndrx_timer_get_delta_sec(&M_getbrs_timer) > G_atmi_env.time_out)
+    if (ndrx_timer_get_delta_sec(&M_getbrs_timer) > ndrx_get_G_atmi_env()->time_out)
     {
         NDRX_LOG(log_error, "Did not get reply from ndrxd int time for "
                 "bridge listing - FAIL!");
@@ -291,7 +291,7 @@ public int ndrxd_get_bridges(char *nodes_out)
                         entry->listen_q,
                         entry->q_descr,
                         (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        G_atmi_conf.ndrxd_q_str,
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
@@ -313,7 +313,7 @@ public int ndrxd_get_bridges(char *nodes_out)
         else
         {
           _TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
-                        NDRXD_COM_SRVUNADV_RQ, G_atmi_conf.ndrxd_q_str);  
+                        NDRXD_COM_SRVUNADV_RQ, ndrx_get_G_atmi_conf()->ndrxd_q_str);  
         }
     }
     else
@@ -349,10 +349,10 @@ public int pingrsp_to_ndrxd(command_srvping_t *ping)
     ret=cmd_generic_call(NDRXD_COM_SRVPING_RP, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)ping, sizeof(*ping),
-                        G_atmi_conf.reply_q_str,
-                        G_atmi_conf.reply_q,
+                        ndrx_get_G_atmi_conf()->reply_q_str,
+                        ndrx_get_G_atmi_conf()->reply_q,
                         (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        G_atmi_conf.ndrxd_q_str,
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,

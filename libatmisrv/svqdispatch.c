@@ -229,11 +229,11 @@ public int sv_serve_call(int *service, int *status)
                     	call->cd, call->timestamp, call->callseq, 
 			call->name, call->flags, call_age, call->data_len);
     
-    if (G_atmi_env.time_out>0 && call_age >= G_atmi_env.time_out && 
+    if (ndrx_get_G_atmi_env()->time_out>0 && call_age >= ndrx_get_G_atmi_env()->time_out && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, timeout = %d s", call_age, G_atmi_env.time_out);
+                "call age = %ld s, timeout = %d s", call_age, ndrx_get_G_atmi_env()->time_out);
         *status=FAIL;
         goto out;
     }
@@ -298,7 +298,7 @@ public int sv_serve_call(int *service, int *status)
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         
-        memcpy(ndrx_get_last_call(), call, sizeof(tp_command_call_t));
+        memcpy(ndrx_get_G_last_call(), call, sizeof(tp_command_call_t));
                              /* save last call info to ATMI library
                               * (this does excludes data by default) */
         
@@ -320,10 +320,10 @@ public int sv_serve_call(int *service, int *status)
         /* If we run in abort only mode and do some forwards & etc.
          * Then we should keep the abort status.
          Moved to tmisabortonly! flag field.
-        if (G_atmi_xa_curtx.txinfo && (ndrx_get_last_call()->sysflags & SYS_XA_ABORT_ONLY))
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo && (ndrx_get_last_call()->sysflags & SYS_XA_ABORT_ONLY))
         {
             NDRX_LOG(log_warn, "Marking current global tx as ABORT_ONLY");
-            G_atmi_xa_curtx.txinfo->tmisabortonly = TRUE;
+            ndrx_get_G_atmi_xa_curtx()->txinfo->tmisabortonly = TRUE;
         }
          * */
         
@@ -344,15 +344,15 @@ public int sv_serve_call(int *service, int *status)
              * Mark that buffer is converted...
              * So that later we can convert back...
              */
-            ndrx_get_last_call()->sysflags|= G_server_conf.service_array[no]->xcvtflags;
+            ndrx_get_G_last_call()->sysflags|= G_server_conf.service_array[no]->xcvtflags;
             call->sysflags |= G_server_conf.service_array[no]->xcvtflags;
             
             if (SUCCEED!=typed_xcvt(&outbufobj, call->sysflags, FALSE))
             {
                 NDRX_LOG(log_debug, "Failed to convert buffer service "
-                            "format: %llx", ndrx_get_last_call()->sysflags);
+                            "format: %llx", ndrx_get_G_last_call()->sysflags);
                 userlog("Failed to convert buffer service "
-                            "format: %llx", ndrx_get_last_call()->sysflags);
+                            "format: %llx", ndrx_get_G_last_call()->sysflags);
                 *status=FAIL;
                 generate_rply = TRUE;
                 goto out;
@@ -418,7 +418,8 @@ out:
     if (generate_rply)
     {
         /* Reply back with failure... */
-        ndrx_reply_with_failure(call, TPNOBLOCK, TPESVCERR, G_atmi_conf.reply_q_str);
+        ndrx_reply_with_failure(call, TPNOBLOCK, TPESVCERR, 
+                ndrx_get_G_atmi_conf()->reply_q_str);
     }
 
     /* free_up_buffers(); - services assumes that memory is alloced for all the time
@@ -454,11 +455,11 @@ public int sv_serve_connect(int *service, int *status)
     
     call_age = ndrx_timer_get_delta_sec(&call->timer);
     
-    if (G_atmi_env.time_out>0 && call_age >= G_atmi_env.time_out && 
+    if (ndrx_get_G_atmi_env()->time_out>0 && call_age >= ndrx_get_G_atmi_env()->time_out && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, timeout = %d s", call_age, G_atmi_env.time_out);
+                "call age = %ld s, timeout = %d s", call_age, ndrx_get_G_atmi_env()->time_out);
         *status=FAIL;
         goto out;
     }
@@ -510,7 +511,7 @@ public int sv_serve_connect(int *service, int *status)
         strcpy(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
-        *ndrx_get_last_call() = *call; /* save last call info to ATMI library
+        *ndrx_get_G_last_call() = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
 
         /* Because we are in conversation, we should make a special cd
@@ -518,7 +519,7 @@ public int sv_serve_connect(int *service, int *status)
          * This will be cd + MAX, meaning, that we have called.
          */
         svcinfo.cd+=MAX_CONNECTIONS;
-        ndrx_get_last_call()->cd+=MAX_CONNECTIONS;
+        ndrx_get_G_last_call()->cd+=MAX_CONNECTIONS;
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
                                                call->cd, svcinfo.cd, MAX_CONNECTIONS);
 
@@ -532,7 +533,7 @@ public int sv_serve_connect(int *service, int *status)
             ret=FAIL;
 
             /* Try hardly to send SVCFAIL/ERR response back! */
-            reply_with_failure(0, ndrx_get_last_call(), NULL, NULL, TPESVCERR);
+            reply_with_failure(0, ndrx_get_G_last_call(), NULL, NULL, TPESVCERR);
             
             goto out;
         }
@@ -553,10 +554,10 @@ public int sv_serve_connect(int *service, int *status)
         /* If we run in abort only mode and do some forwards & etc.
          * Then we should keep the abort status.
          Moved to tmisabortonly! flag field.
-        if (G_atmi_xa_curtx.txinfo && (ndrx_get_last_call()->sysflags & SYS_XA_ABORT_ONLY))
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo && (ndrx_get_last_call()->sysflags & SYS_XA_ABORT_ONLY))
         {
             NDRX_LOG(log_warn, "Marking current global tx as ABORT_ONLY");
-            G_atmi_xa_curtx.txinfo->tmisabortonly = TRUE;
+            ndrx_get_G_atmi_xa_curtx()->txinfo->tmisabortonly = TRUE;
         }
          */
  
@@ -780,7 +781,7 @@ public int sv_server_request(char *buf, int len)
         }
         
         /* If we were in global tx, then we have to disassociate us from tx...*/
-        if (G_atmi_xa_curtx.txinfo)
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
             _tp_srv_disassoc_tx();
         }

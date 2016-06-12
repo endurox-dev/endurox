@@ -453,7 +453,10 @@ public int _tpacall (char *svc, char *data,
     call->flags = flags;
     
     if (NULL!=extradata)
+    {
         strcpy(call->extradata, extradata);
+        NDRX_LOG(log_error, "YOPT set to: [%s]", call->extradata);
+    }
 
     timestamp = time(NULL);
     

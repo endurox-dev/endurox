@@ -97,10 +97,10 @@ public int br_connected(exnetcon_t *net)
         ret=cmd_generic_call(NDRXD_COM_BRCON_RQ, NDRXD_SRC_BRIDGE,
                         NDRXD_CALL_TYPE_BRIDGEINFO,
                         (command_call_t *)&gencall, sizeof(bridge_info_t),
-                        G_atmi_conf.reply_q_str,
-                        G_atmi_conf.reply_q,
+                        ndrx_get_G_atmi_conf()->reply_q_str,
+                        ndrx_get_G_atmi_conf()->reply_q,
                         (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        G_atmi_conf.ndrxd_q_str,
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
@@ -130,10 +130,10 @@ public int br_disconnected(exnetcon_t *net)
     ret=cmd_generic_call(NDRXD_COM_BRDISCON_RQ, NDRXD_SRC_BRIDGE,
                     NDRXD_CALL_TYPE_BRIDGEINFO,
                     (command_call_t *)&gencall, sizeof(bridge_info_t),
-                    G_atmi_conf.reply_q_str,
-                    G_atmi_conf.reply_q,
+                    ndrx_get_G_atmi_conf()->reply_q_str,
+                    ndrx_get_G_atmi_conf()->reply_q,
                     (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                    G_atmi_conf.ndrxd_q_str,
+                    ndrx_get_G_atmi_conf()->ndrxd_q_str,
                     0, NULL,
                     NULL,
                     NULL,
@@ -180,7 +180,7 @@ tpsvrinit(int argc, char **argv)
     int is_server = FAIL;
     char addr[EXNET_ADDR_LEN] = {EOS};
     short port=FAIL;
-    int rcvtimeout = G_atmi_env.time_out;
+    int rcvtimeout = ndrx_get_G_atmi_env()->time_out;
     int backlog = 100;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */

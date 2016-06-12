@@ -157,20 +157,20 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
         }
     }
 
-    NDRX_LOG(log_debug, "Posting event [%s] to system", ndrx_get_last_call()->extradata);
+    NDRX_LOG(log_debug, "Posting event [%s] to system", ndrx_get_G_last_call()->extradata);
     
     /* Delete the stuff out */
     DL_FOREACH_SAFE(M_subscribers,elt,tmp)
     {
         /* Get type */
         typed_buffer_descr_t *descr;
-        descr = &G_buf_descr[ndrx_get_last_call()->buffer_type_id];
+        descr = &G_buf_descr[ndrx_get_G_last_call()->buffer_type_id];
 
         NDRX_LOG(log_debug, "Checking Nr: %d, event [%s]",
                                 elt->subscriberNr, elt->eventexpr);
 
         /* Check do we have event match? */
-        if (SUCCEED==regexec(&elt->re, ndrx_get_last_call()->extradata, (size_t) 0, NULL, 0))
+        if (SUCCEED==regexec(&elt->re, ndrx_get_G_last_call()->extradata, (size_t) 0, NULL, 0))
         {
             NDRX_LOG(log_debug, "Event matched");
             
@@ -265,7 +265,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                 
                 if (FAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
-                        0, ndrx_get_last_call()->extradata, nodeid, TPCALL_BRCALL)))
+                        0, ndrx_get_G_last_call()->extradata, nodeid, TPCALL_BRCALL)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
                                     nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));
@@ -351,9 +351,9 @@ void TPEVUNSUBS (TPSVCINFO *p_svc)
         goto out;
     }
     NDRX_LOG(log_debug, "About to remove subscription: %ld, my_id: %s",
-                                        subscriberNr, ndrx_get_last_call()->my_id);
+                                        subscriberNr, ndrx_get_G_last_call()->my_id);
    /* Delete the subscriptions */
-   deleted=remove_by_my_id(subscriberNr, ndrx_get_last_call()->my_id);
+   deleted=remove_by_my_id(subscriberNr, ndrx_get_G_last_call()->my_id);
     
 out:
     tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
@@ -395,7 +395,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
 
     memset((char *)p_ee, 0, sizeof(event_entry_t));
 
-    strcpy(p_ee->my_id, ndrx_get_last_call()->my_id);
+    strcpy(p_ee->my_id, ndrx_get_G_last_call()->my_id);
     len=sizeof(p_ee->eventexpr);
     if (Bpres(p_ub, EV_MASK, 0) && FAIL==Bget(p_ub, EV_MASK, 0,
                             p_ee->eventexpr, &len))
