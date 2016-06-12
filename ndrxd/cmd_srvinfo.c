@@ -82,7 +82,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
                             srvinfo->srvinfo.srvid, srvinfo->srvinfo.state);
     
     srvid=srvinfo->srvinfo.srvid;
-    if (srvid>=0 && srvid<G_atmi_env.max_servers)
+    if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers)
     {
         p_pm = G_process_model_hash[srvid];
     }

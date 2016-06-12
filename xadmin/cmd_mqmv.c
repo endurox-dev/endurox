@@ -125,7 +125,7 @@ public int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         FAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tpbegin(G_atmi_env.time_out, 0))
+    if (SUCCEED!=tpbegin(ndrx_get_G_atmi_env()->time_out, 0))
     {
         fprintf(stderr, "Failed to start XA transaction: %s\n", tpstrerror(tperrno));
         FAIL_OUT(ret);

@@ -704,7 +704,7 @@ private void brd_clear_diff(void)
  */
 public void brd_begin_diff(void)
 {
-    if (!G_atmi_env.is_clustered)
+    if (!ndrx_get_G_atmi_env()->is_clustered)
         return;
     
     M_build_diff = TRUE;
@@ -724,7 +724,7 @@ public void brd_end_diff(void)
     int first = TRUE;
     
     /* Nothing to do. */
-    if (!G_atmi_env.is_clustered)
+    if (!ndrx_get_G_atmi_env()->is_clustered)
         return;
     
     M_build_diff = FALSE;
@@ -784,7 +784,7 @@ public void brd_send_periodrefresh(void)
     bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
     
     /* Nothing to do. */
-    if (!G_atmi_env.is_clustered || 0==G_app_config->brrefresh)
+    if (!ndrx_get_G_atmi_env()->is_clustered || 0==G_app_config->brrefresh)
         return;
     
     /* Reset the buffer otherwise it keeps growing!!! */

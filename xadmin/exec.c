@@ -207,7 +207,7 @@ public int start_daemon_idle(void)
     {
         FILE *f;
         /* this is child - start EnduroX back-end*/
-        sprintf(key, NDRX_KEY_FMT, G_atmi_env.rnd_key);
+        sprintf(key, NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
 
         /* Open log file */

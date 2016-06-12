@@ -101,7 +101,7 @@ public int cmd_xadreadv (command_call_t * call, char *data, size_t len, int cont
     
     memset(&call_srv, 0, sizeof(call_srv));
     
-    if (readv_xa->srvid<0 || readv_xa->srvid>=G_atmi_env.max_servers)
+    if (readv_xa->srvid<0 || readv_xa->srvid>=ndrx_get_G_atmi_env()->max_servers)
     {
         NDRXD_set_error_fmt(NDRXD_EINVPARAM, "Invalid server id %d",
                                     readv_xa->srvid);

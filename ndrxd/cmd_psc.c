@@ -81,7 +81,7 @@ public void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t
     strcpy(psc_info->binary_name, p_pm->binary_name);
     psc_info->srvid = p_pm->srvid;
     psc_info->state = p_pm->state;
-    psc_info->nodeid = G_atmi_env.our_nodeid;
+    psc_info->nodeid = ndrx_get_G_atmi_env()->our_nodeid;
     /* Now build up stats? */
     
     /* Prepare service details... */

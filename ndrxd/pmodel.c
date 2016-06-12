@@ -220,7 +220,7 @@ void sign_chld_handler(int sig)
  */
 public int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
 {
-    int hash_key = p_pm->pid % G_atmi_env.max_servers;
+    int hash_key = p_pm->pid % ndrx_get_G_atmi_env()->max_servers;
     int ret=SUCCEED;
     pm_pidhash_t *pm_pid  = malloc(sizeof(pm_pidhash_t));
     memset(pm_pid, 0, sizeof(pm_pidhash_t));
@@ -255,7 +255,7 @@ public int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid)
 
     if (NULL!=pm_pid)
     {
-        int hash_key = pm_pid->pid % G_atmi_env.max_servers;
+        int hash_key = pm_pid->pid % ndrx_get_G_atmi_env()->max_servers;
 
         if (NULL!=pm_pid)
         {
@@ -287,7 +287,7 @@ private int pid_hash_cmp(pm_pidhash_t *a, pm_pidhash_t *b)
 public pm_pidhash_t *pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid)
 {
     /* Get the linear array key */
-    int hash_key = pid % G_atmi_env.max_servers; /* Simple mod based hash */
+    int hash_key = pid % ndrx_get_G_atmi_env()->max_servers; /* Simple mod based hash */
     pm_pidhash_t *ret=NULL;
     pm_pidhash_t tmp;
     
@@ -349,10 +349,10 @@ public int build_process_model(conf_server_node_t *p_server_conf,
             }
             p_pm->autokill = p_conf->autokill;
             
-            sprintf(p_pm->clopt, "-k %s -i %d %s", G_atmi_env.rnd_key, p_pm->srvid, p_conf->clopt);
+            sprintf(p_pm->clopt, "-k %s -i %d %s", ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
 
             /* now check the hash table for server instance entry */
-            if (p_pm->srvid < 1 || p_pm->srvid>G_atmi_env.max_servers)
+            if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
             {
                 /* Invalid srvid  */
                 NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "Invalid server id `%d'", p_pm->srvid);
@@ -389,7 +389,7 @@ out:
  */
 public pm_node_t * get_pm_from_srvid(int srvid)
 {
-    if (srvid>=0 && srvid<G_atmi_env.max_servers)
+    if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers)
     {
         return G_process_model_hash[srvid];
     }
@@ -837,7 +837,7 @@ public int app_startup(command_startstop_t *call,
     if (FAIL!=call->srvid)
     {
         /* Check the servid... */
-        if (call->srvid>=0 && call->srvid<G_atmi_env.max_servers)
+        if (call->srvid>=0 && call->srvid<ndrx_get_G_atmi_env()->max_servers)
         {
             pm_node_t *p_pm_srvid = G_process_model_hash[call->srvid];
 
@@ -906,7 +906,7 @@ public int app_shutdown(command_startstop_t *call,
     if (FAIL!=call->srvid)
     {
         /* Check the servid... */
-        if (call->srvid>=0 && call->srvid<G_atmi_env.max_servers)
+        if (call->srvid>=0 && call->srvid<ndrx_get_G_atmi_env()->max_servers)
         {
             pm_node_t *p_pm_srvid = G_process_model_hash[call->srvid];
             
@@ -1017,7 +1017,7 @@ public int app_sreload(command_startstop_t *call,
     if (FAIL!=call->srvid)
     {
         /* Check the servid... */
-        if (call->srvid>=0 && call->srvid<G_atmi_env.max_servers)
+        if (call->srvid>=0 && call->srvid<ndrx_get_G_atmi_env()->max_servers)
         {
             pm_node_t *p_pm_srvid = G_process_model_hash[call->srvid];
 

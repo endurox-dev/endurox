@@ -243,14 +243,14 @@ int main_init(int argc, char** argv)
     if (NULL!=p)
     {
         /* Override MAX Q size */
-        G_atmi_env.msg_max = atol(p);
+        ndrx_get_G_atmi_env()->msg_max = atol(p);
         NDRX_LOG(log_debug, "NDRXD Max Q size to: %d (override)",
-                            G_atmi_env.msg_max);
+                            ndrx_get_G_atmi_env()->msg_max);
     }
     else
     {
         NDRX_LOG(log_debug, "NDRXD Max Q size to: %d (default)",
-                            G_atmi_env.msg_max);
+                            ndrx_get_G_atmi_env()->msg_max);
     }
 
     /* Command wait param */
@@ -319,7 +319,8 @@ int main_init(int argc, char** argv)
     }
     /* and then shm: initialise shared memory */
     if (SUCCEED!=shm_init(G_sys_config.qprefix,
-                            G_atmi_env.max_servers, G_atmi_env.max_svcs))
+                            ndrx_get_G_atmi_env()->max_servers,
+                            ndrx_get_G_atmi_env()->max_svcs))
     {
         ret=FAIL;
         NDRX_LOG(log_error, "Failed to initialise share memory lib");

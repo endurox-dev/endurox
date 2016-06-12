@@ -69,7 +69,7 @@ public int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     
     if (argc>=2)
     {
-        if (NULL!=(qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret)))
+        if (NULL!=(qlist = ndrx_sys_mqueue_list_make(ndrx_get_G_atmi_env()->qpath, &ret)))
         {
             LL_FOREACH(qlist,elt)
             {
@@ -120,7 +120,7 @@ public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     
     if (argc>=2)
     {
-        if (NULL!=(qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret)))
+        if (NULL!=(qlist = ndrx_sys_mqueue_list_make(ndrx_get_G_atmi_env()->qpath, &ret)))
         {
             LL_FOREACH(qlist,elt)
             {

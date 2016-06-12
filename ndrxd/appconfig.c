@@ -167,8 +167,8 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
     NDRX_LOG(log_debug, "building process model");
 
     /* Allocate hash, OK? */
-    NDRX_LOG(log_debug, "G_sys_config.max_servers = %d", G_atmi_env.max_servers);
-    *process_model_hash = (pm_node_t **)calloc(G_atmi_env.max_servers, sizeof(pm_node_t *));
+    NDRX_LOG(log_debug, "G_sys_config.max_servers = %d", ndrx_get_G_atmi_env()->max_servers);
+    *process_model_hash = (pm_node_t **)calloc(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_node_t *));
 
     if (NULL==*process_model_hash)
     {
@@ -177,12 +177,12 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
         goto out;
     }
 
-    *process_model_pid_hash = (pm_pidhash_t **)calloc(G_atmi_env.max_servers, sizeof(pm_pidhash_t *));
+    *process_model_pid_hash = (pm_pidhash_t **)calloc(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_pidhash_t *));
 
     if (NULL==*process_model_pid_hash)
     {
         NDRXD_set_error_fmt(NDRXD_EOS, "Failed to allocate *process_model_pid_hash - %d bytes",
-                                G_atmi_env.max_servers * sizeof(pm_pidhash_t *) );
+                                ndrx_get_G_atmi_env()->max_servers * sizeof(pm_pidhash_t *) );
         ret = FAIL;
         goto out;
     }
