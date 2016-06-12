@@ -299,8 +299,8 @@ public char * tpsrvgetctxdata (void)
     }
     
     /* reset thread data */
-    memcpy(&ret->G_last_call, &G_last_call, sizeof(G_last_call));
-    memset(&G_last_call, 0, sizeof(G_last_call));
+    memcpy(&ret->G_last_call, ndrx_get_last_call(), sizeof(ret->G_last_call));
+    memset(ndrx_get_last_call(), 0, sizeof(ret->G_last_call));
     
     memcpy(&ret->G_accepted_connection, &G_accepted_connection, sizeof(G_accepted_connection));
     memset(&G_accepted_connection, 0, sizeof(G_accepted_connection));
@@ -334,7 +334,7 @@ public int tpsrvsetctxdata (char *data, long flags)
         }
     }
 #endif
-    memcpy(&G_last_call, &ctxdata->G_last_call, sizeof(G_last_call));
+    memcpy(ndrx_get_last_call(), &ctxdata->G_last_call, sizeof(ctxdata->G_last_call));
     memcpy(&G_accepted_connection, &ctxdata->G_accepted_connection, 
                 sizeof(G_accepted_connection));
     

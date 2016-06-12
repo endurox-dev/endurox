@@ -518,6 +518,10 @@ extern int ndrx_killall(char *mask);
 extern int ndrx_q_exists(char *qpath);
 extern int ndrx_get_cached_svc_q(char *q);
 
+/* Access to symbols: */
+
+extern tp_command_call_t *ndrx_get_last_call(void);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -918,3 +918,10 @@ out:
     return ret;
 }
 
+
+/* get the global symbol: */
+public tp_command_call_t *ndrx_get_last_call(void)
+{
+	return &G_last_call;
+}
+

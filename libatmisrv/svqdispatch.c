@@ -297,7 +297,9 @@ public int sv_serve_call(int *service, int *status)
         strcpy(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
-        G_last_call = *call; /* save last call info to ATMI library
+        
+        memcpy(ndrx_get_last_call(), call, sizeof(tp_command_call_t));
+                             /* save last call info to ATMI library
                               * (this does excludes data by default) */
         
         /* Register global tx */
@@ -318,7 +320,7 @@ public int sv_serve_call(int *service, int *status)
         /* If we run in abort only mode and do some forwards & etc.
          * Then we should keep the abort status.
          Moved to tmisabortonly! flag field.
-        if (G_atmi_xa_curtx.txinfo && (G_last_call.sysflags & SYS_XA_ABORT_ONLY))
+        if (G_atmi_xa_curtx.txinfo && (ndrx_get_last_call()->sysflags & SYS_XA_ABORT_ONLY))
         {
             NDRX_LOG(log_warn, "Marking current global tx as ABORT_ONLY");
             G_atmi_xa_curtx.txinfo->tmisabortonly = TRUE;
@@ -342,15 +344,15 @@ public int sv_serve_call(int *service, int *status)
              * Mark that buffer is converted...
              * So that later we can convert back...
              */
-            G_last_call.sysflags|= G_server_conf.service_array[no]->xcvtflags;
+            ndrx_get_last_call()->sysflags|= G_server_conf.service_array[no]->xcvtflags;
             call->sysflags |= G_server_conf.service_array[no]->xcvtflags;
             
             if (SUCCEED!=typed_xcvt(&outbufobj, call->sysflags, FALSE))
             {
                 NDRX_LOG(log_debug, "Failed to convert buffer service "
-                            "format: %llx", G_last_call.sysflags);
+                            "format: %llx", ndrx_get_last_call()->sysflags);
                 userlog("Failed to convert buffer service "
-                            "format: %llx", G_last_call.sysflags);
+                            "format: %llx", ndrx_get_last_call()->sysflags);
                 *status=FAIL;
                 generate_rply = TRUE;
                 goto out;
@@ -508,7 +510,7 @@ public int sv_serve_connect(int *service, int *status)
         strcpy(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
-        G_last_call = *call; /* save last call info to ATMI library
+        *ndrx_get_last_call() = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
 
         /* Because we are in conversation, we should make a special cd
@@ -516,7 +518,7 @@ public int sv_serve_connect(int *service, int *status)
          * This will be cd + MAX, meaning, that we have called.
          */
         svcinfo.cd+=MAX_CONNECTIONS;
-        G_last_call.cd+=MAX_CONNECTIONS;
+        ndrx_get_last_call()->cd+=MAX_CONNECTIONS;
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
                                                call->cd, svcinfo.cd, MAX_CONNECTIONS);
 
@@ -530,7 +532,7 @@ public int sv_serve_connect(int *service, int *status)
             ret=FAIL;
 
             /* Try hardly to send SVCFAIL/ERR response back! */
-            reply_with_failure(0, &G_last_call, NULL, NULL, TPESVCERR);
+            reply_with_failure(0, ndrx_get_last_call(), NULL, NULL, TPESVCERR);
             
             goto out;
         }
@@ -551,7 +553,7 @@ public int sv_serve_connect(int *service, int *status)
         /* If we run in abort only mode and do some forwards & etc.
          * Then we should keep the abort status.
          Moved to tmisabortonly! flag field.
-        if (G_atmi_xa_curtx.txinfo && (G_last_call.sysflags & SYS_XA_ABORT_ONLY))
+        if (G_atmi_xa_curtx.txinfo && (ndrx_get_last_call()->sysflags & SYS_XA_ABORT_ONLY))
         {
             NDRX_LOG(log_warn, "Marking current global tx as ABORT_ONLY");
             G_atmi_xa_curtx.txinfo->tmisabortonly = TRUE;
