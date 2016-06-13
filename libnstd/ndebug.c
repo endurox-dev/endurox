@@ -32,6 +32,7 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -73,11 +74,11 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-ndrx_debug_t G_ubf_debug;
-ndrx_debug_t G_ndrx_debug;
-ndrx_debug_t G_stdout_debug;
+NDRX_API ndrx_debug_t G_ubf_debug;
+NDRX_API ndrx_debug_t G_ndrx_debug;
+NDRX_API ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
-volatile int G_ndrx_debug_first = TRUE;
+NDRX_API volatile int G_ndrx_debug_first = TRUE;
 static __thread long M_threadnr = 0; /* Current thread nr */
 MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
 /*---------------------------Prototypes---------------------------------*/
@@ -86,7 +87,7 @@ MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
  * Initialize operating thread number.
  * note default is zero.
  */
-public void ndrx_dbg_setthread(long threadnr)
+public NDRX_API void ndrx_dbg_setthread(long threadnr)
 {
     M_threadnr = threadnr;
 }
@@ -94,7 +95,7 @@ public void ndrx_dbg_setthread(long threadnr)
 /**
  * Lock the debug output
  */
-public void ndrx_dbg_lock(void)
+public NDRX_API void ndrx_dbg_lock(void)
 {
     MUTEX_LOCK_V(M_dbglock);
 }
@@ -102,7 +103,7 @@ public void ndrx_dbg_lock(void)
 /**
  * Unlock the debug output
  */
-public void ndrx_dbg_unlock(void)
+public NDRX_API void ndrx_dbg_unlock(void)
 {
     MUTEX_UNLOCK_V(M_dbglock);
 }
@@ -110,7 +111,7 @@ public void ndrx_dbg_unlock(void)
 /**
  * This initializes debug out form ndebug.conf
  */
-public void ndrx_init_debug(void)
+public NDRX_API void ndrx_init_debug(void)
 {
     char *cfg_file = getenv("NDRX_DEBUG_CONF");
     FILE *f;
@@ -249,7 +250,7 @@ public void ndrx_init_debug(void)
  * Return current NDRX debug level.
  * @return - debug level..
  */
-public ndrx_debug_t * debug_get_ndrx_ptr(void)
+public NDRX_API ndrx_debug_t * debug_get_ndrx_ptr(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return &G_ndrx_debug;
@@ -259,7 +260,7 @@ public ndrx_debug_t * debug_get_ndrx_ptr(void)
  * Return current UBF debug level.
  * @return
  */
-public ndrx_debug_t * debug_get_ubf_ptr(void)
+public NDRX_API ndrx_debug_t * debug_get_ubf_ptr(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return &G_ubf_debug;
@@ -269,7 +270,7 @@ public ndrx_debug_t * debug_get_ubf_ptr(void)
  * Return current NDRX debug level.
  * @return - debug level..
  */
-public int debug_get_ndrx_level(void)
+public NDRX_API int debug_get_ndrx_level(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return G_ndrx_debug.level;
@@ -279,7 +280,7 @@ public int debug_get_ndrx_level(void)
  * Return current UBF debug level.
  * @return 
  */
-public int debug_get_ubf_level(void)
+public NDRX_API int debug_get_ubf_level(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return G_ubf_debug.level;
@@ -297,7 +298,7 @@ public int debug_get_ubf_level(void)
  * @param ptr2 - buffer2
  * @param len - buffer size
  */
-public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+public NDRX_API void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *comment, void *ptr, void *ptr2, long len)
 {
     
@@ -408,7 +409,7 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, 
  * @param ptr - buffer1
  * @param len - buffer size
  */
-public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+public NDRX_API void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *comment, void *ptr, long len)
 {
     int i;
@@ -469,7 +470,7 @@ public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const
  * @param fmt - format
  * @param ... - varargs
  */
-public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+public NDRX_API void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *fmt, ...)
 {
     va_list ap;
@@ -507,7 +508,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char
  * Set debug level. Override one set in debug.conf
  * @param level
  */
-public void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level)
+public NDRX_API void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level)
 {
     NDRX_DBG_INIT_ENTRY;
     if (level < 0)
@@ -524,7 +525,7 @@ public void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level)
  * Debug buffer is set to default 0, can be overriden by <KEY>+DBGBUF
  * @param module - module form which debug is initialized
  */
-public void ndrx_dbg_init(char *module, char *config_key)
+public NDRX_API void ndrx_dbg_init(char *module, char *config_key)
 {
    NDRX_DBG_INIT_ENTRY;
 }

@@ -36,6 +36,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdio.h>
 #include <limits.h>
 #include <thlock.h>
@@ -88,10 +89,10 @@ typedef struct
 #define NDRX_DBG_SETTHREAD(X) ndrx_dbg_setthread(X)
     
 /*---------------------------Externs------------------------------------*/
-extern ndrx_debug_t G_ubf_debug;
-extern ndrx_debug_t G_ndrx_debug;
-extern ndrx_debug_t G_stdout_debug;
-extern volatile int G_ndrx_debug_first;
+extern NDRX_API ndrx_debug_t G_ubf_debug;
+extern NDRX_API ndrx_debug_t G_ndrx_debug;
+extern NDRX_API ndrx_debug_t G_stdout_debug;
+extern NDRX_API volatile int G_ndrx_debug_first;
 /*---------------------------Macros-------------------------------------*/
 
 /* Standard replacements for system errors */
@@ -111,7 +112,7 @@ extern int debug_get_ubf_level(void);
 extern ndrx_debug_t * debug_get_ndrx_ptr(void);
 extern ndrx_debug_t * debug_get_ubf_ptr(void);
 
-extern void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+extern NDRX_API void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *fmt, ...);
 
 extern void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
@@ -120,10 +121,10 @@ extern void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, 
 extern void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *comment, void *ptr, long len);
 
-extern void ndrx_dbg_lock(void);
-extern void ndrx_dbg_unlock(void);
-extern void ndrx_init_debug(void);
-extern void ndrx_dbg_setthread(long threadnr);
+extern NDRX_API void ndrx_dbg_lock(void);
+extern NDRX_API void ndrx_dbg_unlock(void);
+extern NDRX_API void ndrx_init_debug(void);
+extern NDRX_API void ndrx_dbg_setthread(long threadnr);
 
 #ifdef	__cplusplus
 }

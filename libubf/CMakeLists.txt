@@ -74,6 +74,8 @@ add_library (ubf SHARED
 		${FLEX_EXPRSCANNER_OUTPUTS}
 	)
 
+target_link_libraries(ubf nstd)
+
 install (TARGETS 
     ubf 
     DESTINATION "${INSTALL_LIB_DIR}"

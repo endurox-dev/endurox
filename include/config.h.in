@@ -43,4 +43,20 @@
 /* PThread mode for Solaris */
 #define _POSIX_PTHREAD_SEMANTICS
 
+#if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
+
+#if defined(atmi_EXPORTS) || defined(atmiclt_EXPORTS) || defined(atmisrv_EXPORTS) || defined(atmisrvinteg_EXPORTS) || defined(atmisrvnomain_EXPORTS) || defined(exnet_EXPORTS) || defined(ndrxxaorad_EXPORTS) || defined(ndrxxaoras_EXPORTS) || defined(ndrxxaqdisk_EXPORTS) || defined(ndrxxaqdiskd_EXPORTS) || defined(ndrxxaqdisks_EXPORTS) || defined(netproto_EXPORTS) || defined(nstd_EXPORTS) || defined(ubf_EXPORTS)
+        /* We are building this library */
+#      define NDRX_API __declspec(dllexport)
+#else
+        /* We are using this library */
+#       define NDRX_API __declspec(dllimport)
+#endif
+
+#else
+
+#       define NDRX_API
+
+#endif
+
 #endif
