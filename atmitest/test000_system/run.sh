@@ -30,7 +30,7 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
-TESTNAME="test000_typedjson"
+TESTNAME="test000_system"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
