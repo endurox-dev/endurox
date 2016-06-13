@@ -52,12 +52,13 @@ void *M_ptrs[3] = {NULL, NULL, NULL};
 void* t1(void *arg)
 {    
         M_ptrs[1] = &M_field;
-
+	sleep(1);
 }
 
 void* t2(void *arg)
 {   
         M_ptrs[2] = &M_field;
+	sleep(1);
 }
 
 int main( int argc , char **argv )
