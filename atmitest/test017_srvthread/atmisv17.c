@@ -43,6 +43,7 @@
 #include <ubf.h>
 #include <test.fd.h>
 #include <string.h>
+#include <thpool.h>
 
 struct thread_server
 {
@@ -52,8 +53,11 @@ struct thread_server
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
 
+
+threadpool M_thpool; /* threads for service */
+
 /* threaded function... */
-void _TH_TESTSVFN (void *ptr)
+void _TH_TESTSVFN (void *ptr, int *p_finish_off)
 {
     int ret=SUCCEED;
     double d;
@@ -105,31 +109,9 @@ void _TH_TESTSVFN (void *ptr)
     }
     
     if (FAIL==ret)
-        NDRX_LOG(log_debug, "ALARM!!! WE GOT FAIL TESTERR!!!!!");
-    /* I want that some thread come into system! 
-    nanosleep((struct timespec[]){{0, 900000000}}, NULL); 
-     */
-#if 0
-    for (i=0; i<10000000000; i++)
-    {
-        
-        i++;
-        if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&i, 0))
-        {
-            ret=FAIL;
-            goto out;
-        }
-        
-        if (FAIL==Bdel(p_ub, T_DOUBLE_FLD, Boccur(p_ub, T_DOUBLE_FLD)-1))
-        {
-            ret=FAIL;
-            goto out;
-        }
-    }
-#endif
-    /*
-    Bfprint(p_ub, stderr);
-    */
+        NDRX_LOG(log_debug, "ALARM!!! WE GOT FAIL TESTERROR!!!!!");
+
+    
 out:
     tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
                 0L,
@@ -184,11 +166,15 @@ void TESTSVFN (TPSVCINFO *p_svc)
     
     thread_data->context_data = tpsrvgetctxdata();
     
+    /*
     if (SUCCEED!=pthread_create (&thread, &attr, (void *) &_TH_TESTSVFN, thread_data))
     {
         ret=FAIL;
         goto out;
     }
+     */
+    thpool_add_work(M_thpool, (void*)_TH_TESTSVFN, (void *)thread_data);
+    
     
 out:
     if (SUCCEED==ret)
@@ -214,12 +200,21 @@ int tpsvrinit(int argc, char **argv)
     int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
+        /* service request handlers */
+    if (NULL==(M_thpool = thpool_init(10)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: 10)!");
+        FAIL_OUT(ret);
+    }
+
+    
     if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
         ret=FAIL;
     }
     
+out:    
     return ret;
 }
 
