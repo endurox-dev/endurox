@@ -118,13 +118,14 @@ fi
 # Test for automatic restarts...
 CNT=`wc testbin1-1.log | awk '{print $1}'`
 echo "Process restarts: $CNT"
-if [[ ( "$CNT" < 2 ) ]]; then 
+if [[ "$CNT" -lt "2" ]]; then 
         echo "TESTERROR! Automatic process reboots does not work!"
         go_out 5
 fi
 
 # Start some tons of processes
-for i in `seq 1 $PROC_COUNT`; do
+#for i in `seq 1 $PROC_COUNT`; do
+for ((i=1;i<=100;i++)); do
         xadmin bc -t WHILE -s $i
 done
 
@@ -135,14 +136,14 @@ xadmin pc
 
 CNT=`xadmin pc | grep "WHILE" | grep "running pid" | wc | awk '{print $1}'`
 echo "xadmin procs: $CNT"
-if [[ ( "$CNT" != $PROC_COUNT ) ]]; then 
+if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to xadmin pc)!"
         go_out 6
 fi
 
 CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "ps -ef procs: $CNT"
-if [[ ( "$CNT" != $PROC_COUNT ) ]]; then 
+if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to ps -ef )!"
         go_out 7
 fi
@@ -169,7 +170,7 @@ xadmin stop -s cpmsrv
 # We should have 0 now
 CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "ps -ef procs: $CNT"
-if [[ ( "$CNT" != 0 ) ]]; then 
+if [[ "$CNT" -ne "0" ]]; then 
         echo "TESTERROR! not all whileproc.sh stopped!"
         go_out 8
 fi
@@ -190,7 +191,7 @@ fi
 # process must be killed
 CNT=`ps -ef | grep ignore.sh | grep -v grep | wc | awk '{print $1}'`
 echo "ps -ef procs: $CNT"
-if [[ ( "$CNT" != 0 ) ]]; then 
+if [[ "$CNT" -ne "0" ]]; then 
         echo "TESTERROR! ignore.sh not stopped!"
         go_out 11
 fi

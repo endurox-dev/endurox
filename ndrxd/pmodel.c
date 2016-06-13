@@ -122,8 +122,8 @@ public int check_child_exit(void)
     pthread_mutex_lock(&M_mutex);
 
 #ifdef EX_OS_AIX
-    for (i=0; i<2; i++)
-    {
+    /*for (i=0; i<2; i++)
+    {*/
 #endif
     while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
     {
@@ -157,7 +157,7 @@ public int check_child_exit(void)
 #ifdef EX_OS_AIX
     /* for aix restet handler back*/
     signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
-    }
+   /* }*/
 #endif
 
     pthread_mutex_unlock(&M_mutex);
