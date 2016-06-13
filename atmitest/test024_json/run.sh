@@ -46,7 +46,7 @@ fi;
 
 . ../testenv.sh
 
-killall atmiclt24 2>/dev/null
+xadmin killall atmiclt24 2>/dev/null
 
 (./atmiclt24 2>&1) > ./atmiclt24.log
 
@@ -58,7 +58,7 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-killall atmiclt24 2>/dev/null
+xadmin killall atmiclt24 2>/dev/null
 
 popd 2>/dev/null
 

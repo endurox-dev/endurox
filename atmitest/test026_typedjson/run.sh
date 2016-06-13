@@ -65,8 +65,8 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-killall atmisv26 2>/dev/null
-killall atmiclt26 2>/dev/null
+xadmin killall atmisv26 2>/dev/null
+xadmin killall atmiclt26 2>/dev/null
 
 popd 2>/dev/null
 
