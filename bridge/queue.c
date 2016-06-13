@@ -199,7 +199,7 @@ public int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q)
 {
     int ret=SUCCEED;
     
-    if (SUCCEED!=(ret=generic_q_send(ndrx_get_G_atmi_conf()->ndrxd_q_str, 
+    if (SUCCEED!=(ret=generic_q_send(G_atmi_conf.ndrxd_q_str, 
             (char *)call, len, TPNOBLOCK)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
@@ -397,8 +397,10 @@ public int br_run_queue(void)
     
     DL_FOREACH_SAFE(M_in_q, elt, tmp)
     {
-        /* Check the time-out */
-        if (ndrx_timer_get_delta_sec(&elt->trytime) >=ndrx_get_G_atmi_env()->time_out)
+        /* Check the time-out
+         * TODO: Support for TPNOTIME!!!!
+         */
+        if (ndrx_timer_get_delta_sec(&elt->trytime) >=G_atmi_env.time_out)
         {
             NDRX_LOG(log_warn, "Dropping message of type %d due to "
                     "time-out condition!", elt->pack_type);
