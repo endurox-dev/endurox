@@ -766,8 +766,8 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     
     qhash->numenq++;
     
-    NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue",
-            tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname);
+    NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue (DEBUG: locked %ld)",
+            tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname, mmsg->msg->lockthreadid);
     
 out:
                 
