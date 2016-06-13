@@ -79,7 +79,8 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		set ( CMAKE_C_FLAGS "-pthread -maix64 ${CMAKE_C_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
-		set ( CMAKE_C_FLAGS "-bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99")
+#set(CMAKE_XL_CreateExportList "" CACHE INTERNAL "No explicit CreateExportList")
+		set ( CMAKE_C_FLAGS " -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99")
 	endif()
 
 	set(EX_OS_AIX "1")
@@ -123,6 +124,10 @@ CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
 
 # To check the size of a primitive type:
 CHECK_TYPE_SIZE("int"   SIZEOF_INT)
+
+IF (DEFINE_DISABLEPSCRIPT)
+	set(NDRX_DISABLEPSCRIPT "1")
+ENDIF()
 
 # Output the project version
 set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")

@@ -27,6 +27,9 @@
 
 #cmakedefine EX_OS_CYGWIN @EX_OS_CYGWIN@
 
+/* Defined if pscript is off */
+#cmakedefine NDRX_DISABLEPSCRIPT @NDRX_DISABLEPSCRIPT@
+
 
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
