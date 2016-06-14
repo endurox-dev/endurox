@@ -1091,9 +1091,10 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     int ret = SUCCEED;
     char tmp[TMMSGIDLEN_STR+1];
     
+    /*
     uint64_t lockt =  msg->lockthreadid;
     
-    /* do not want to lock be written out to files: 
+     do not want to lock be written out to files: 
     msg->lockthreadid = 0;
     NO NO NO !!!! We still need a lock!
     */
@@ -1106,8 +1107,9 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
     }
-    
+    /*
     msg->lockthreadid = lockt;
+     */
     
     NDRX_LOG(log_info, "Message [%s] written ok to active TX file", 
             tmq_msgid_serialize(msg->hdr.msgid, tmp));
@@ -1281,6 +1283,8 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                        filename, strerror(errno));
                     FAIL_OUT(ret);
                 }
+                /* unlock the message */
+                p_block->msg.lockthreadid = 0;
                 
                 NDRX_DUMP(log_debug, "Read message from disk", 
                         p_block->msg.msg, p_block->msg.len);
