@@ -336,6 +336,8 @@ fi
 
 sleep 10
 
+clean_logs;
+
 echo "Running: dequeue (commit)"
 (./atmiclt28 deqc 2>&1) >> ./atmiclt-dom1.log
 RET=$?

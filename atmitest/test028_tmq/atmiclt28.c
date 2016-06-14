@@ -1003,7 +1003,7 @@ private int basic_rndfail(void)
         }
         tpfree((char *)buf);
     }
-    sleep(90); /* should be enough */
+    sleep(360); /* should be enough */
     
     for (i=0; i<100; i++)
     {
