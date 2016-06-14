@@ -90,7 +90,7 @@ function go_out {
 # Time-out processing.
 ###################################
 #Time to wait for stuck processes before killing them                           
-export ALARMTIME=160
+export ALARMTIME=300
 
 PARENTPID=$$
 
@@ -140,7 +140,7 @@ date
 xadmin psc
 
 # Wait for respawn, now it should be respawned...
-sleep 90
+sleep 160
 
 echo "After sleeping of kill -9"
 date
