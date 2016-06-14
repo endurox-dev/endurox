@@ -294,11 +294,10 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test023_typedcarray);
     add_test(suite, test024_json);
     add_test(suite, test025_cpmsrv);
-    /* do not run, if pscript disabled */
-#ifndef NDRX_DISABLEPSCRIPT
     add_test(suite, test026_typedjson);
-#endif
+#ifndef NDRX_DISABLEPSCRIPT
     add_test(suite, test027_pscript);
+#endif
     add_test(suite, test028_tmq);
     
     return suite;
