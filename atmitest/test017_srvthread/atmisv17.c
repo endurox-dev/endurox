@@ -119,9 +119,6 @@ out:
                 0L,
                 0L);
 
-   /* this is not the end of the life - do tpterm for this thread...! */
-    tpterm();
-    NDRX_LOG(log_debug, "Thread is done - terminating...!");
 }
 
 

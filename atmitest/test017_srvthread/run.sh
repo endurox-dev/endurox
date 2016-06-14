@@ -53,6 +53,8 @@ ulimit -c unlimited
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 echo "Debug config set to: [$NDRX_DEBUG_CONF]"
 rm *.log
+# Kill any open resourcess....
+xadmin down -y
 
 # We need nr of copies as nr of srvthread, 
 # as if on thread is doing timout testing
