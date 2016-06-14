@@ -1093,8 +1093,10 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     
     uint64_t lockt =  msg->lockthreadid;
     
-    /* do not want to lock be written out to files: */
+    /* do not want to lock be written out to files: 
     msg->lockthreadid = 0;
+    NO NO NO !!!! We still need a lock!
+    */
     
     NDRX_DUMP(log_debug, "Writing new message to disk", 
                 (char *)msg, sizeof(*msg)+msg->len);
