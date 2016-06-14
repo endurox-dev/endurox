@@ -168,7 +168,8 @@ out:
  */
 void handle_sigchld(int sig)
 {
-      while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+    signal(SIGCHLD, handle_sigchld);
 }
 
 /*
@@ -178,7 +179,6 @@ int tpsvrinit(int argc, char **argv)
 {
     int ret=SUCCEED;
     signed char c;
-    struct sigaction sa;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
     /* Parse command line  */
@@ -199,17 +199,7 @@ int tpsvrinit(int argc, char **argv)
         }
     }
 
-    sa.sa_handler = &handle_sigchld;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
-
-    /* register signal handler if ndrxd dies - no zombies! */
-    if (sigaction(SIGCHLD, &sa, 0) == -1)
-    {
-        NDRX_LOG(log_error, "sigaction failed [%s]", 
-                strerror(errno));
-        FAIL_OUT(ret);
-    }
+    signal(SIGCHLD, handle_sigchld);
 
     /* Register timer check.... */
     if (SUCCEED!=tpext_addperiodcb((int)M_check, poll_timer))
