@@ -111,15 +111,28 @@ private void * check_child_exit(void *arg)
     pid_t chldpid;
     int stat_loc;
     struct rusage rusage;
+    sigset_t blockMask;
+    int sig;
+    
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
 
     memset(buf, 0, sizeof(buf));
     /* memset(&rusage, 0, sizeof(rusage)); */
     
+        
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
     NDRX_LOG(log_debug, "check_child_exit - enter...");
     for (;;)
     {
+        if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        {
+            NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
+
+        }        
+        
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
             if (chldpid>0)
@@ -153,7 +166,7 @@ private void * check_child_exit(void *arg)
             }
         }
         NDRX_LOG(6, "wait: %s", strerror(errno));
-        sleep(1);
+        /* sleep(1); */
     }
    
     NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
