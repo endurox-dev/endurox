@@ -215,7 +215,6 @@ int main_init(int argc, char** argv)
     signal(SIGHUP, SIG_IGN);
     signal(SIGTERM, SIG_IGN);
     signal(SIGINT, SIG_IGN);
-    signal(SIGCHLD, sign_chld_handler);
 
     /********* Grab the configuration params  *********/
     G_sys_config.qprefix = getenv(CONF_NDRX_QPREFIX);
@@ -372,6 +371,8 @@ int main_init(int argc, char** argv)
         }
     }
     
+    ndrxd_sigchld_init();
+    
 #if 0
     /* Do the initialization... */
     if (FAIL==load_config(M_config_file))
@@ -393,6 +394,9 @@ out:
  */
 int main_uninit(void)
 {
+    /* Remove signal handling thread */
+    ndrxd_sigchld_uninit();
+    
     /* Remove semaphores */
     ndrxd_sem_close_all();
     /* Remove semaphores */

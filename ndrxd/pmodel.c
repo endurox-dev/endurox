@@ -59,7 +59,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-pthread_mutex_t         M_mutex = PTHREAD_MUTEX_INITIALIZER;
+private pthread_t M_signal_thread; /* Signalled thread */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -106,111 +106,135 @@ out:
  * We will let mainthread to do all internal struct related work!
  * @return Got child exit
  */
-public int check_child_exit(void)
+private void * check_child_exit(void *arg)
 {
     pid_t chldpid;
     int stat_loc;
     struct rusage rusage;
-    int ret=FALSE;
     char buf[ATMI_MSG_MAX_SIZE];
-    int i;
     srv_status_t *status = (srv_status_t *)buf;
 
     memset(buf, 0, sizeof(buf));
-    memset(&rusage, 0, sizeof(rusage));
-
-    pthread_mutex_lock(&M_mutex);
-
-#ifdef EX_OS_AIX
-    /*for (i=0; i<2; i++)
-    {*/
-#endif
-    while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
-    {
-        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
-                                           chldpid, stat_loc);
-        if (WIFSTOPPED(stat_loc))
-        {
-            NDRX_LOG(log_warn, "Process is stopped - ignore..");
-            continue;
-        }
-            status->srvinfo.pid = chldpid;
-
-            if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
-            {
-                NDRX_LOG(log_error, "Process normal shutdown!");
-                status->srvinfo.state = NDRXD_PM_EXIT;
-            }
-            else if (WIFEXITED(stat_loc) && TPEXIT_ENOENT == WEXITSTATUS(stat_loc))
-            {
-                NDRX_LOG(log_error, "Binary not found!");
-                status->srvinfo.state = NDRXD_PM_ENOENT;
-            }
-            else
-            {
-                NDRX_LOG(log_error, "Process abnormal shutdown!");
-                status->srvinfo.state = NDRXD_PM_DIED;
-            }
-            /* NDRX_LOG(log_warn, "Sending notification"); */
-            self_notify(status, FALSE);
-    }
-#ifdef EX_OS_AIX
-    /* for aix restet handler back*/
-    signal(SIGCHLD, sign_chld_handler); /* reset back handler... */
-   /* }*/
-#endif
-
-    pthread_mutex_unlock(&M_mutex);
+    /* memset(&rusage, 0, sizeof(rusage)); */
     
-    return ret;
-}
+    NDRX_LOG(log_debug, "check_child_exit - enter...");
+    for (;;)
+    {
+        while ((chldpid = wait(&stat_loc)) >= 0)
+        {
+            if (chldpid>0)
+            {
+                NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
+                                                   chldpid, stat_loc);
+                if (WIFSTOPPED(stat_loc))
+                {
+                    NDRX_LOG(log_warn, "Process is stopped - ignore..");
+                    continue;
+                }
+                status->srvinfo.pid = chldpid;
 
-/**
- * Thread main entry...
- * @param arg
- * @return
- */
-void *sigthread_enter(void *arg)
-{
-    NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
-    check_child_exit();
-    NDRX_LOG(log_error, "***********SIGNAL THREAD EXIT***********");
-    /*pthread_exit(NULL);*/
+                if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
+                {
+                    NDRX_LOG(log_error, "Process normal shutdown!");
+                    status->srvinfo.state = NDRXD_PM_EXIT;
+                }
+                else if (WIFEXITED(stat_loc) && TPEXIT_ENOENT == WEXITSTATUS(stat_loc))
+                {
+                    NDRX_LOG(log_error, "Binary not found!");
+                    status->srvinfo.state = NDRXD_PM_ENOENT;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Process abnormal shutdown!");
+                    status->srvinfo.state = NDRXD_PM_DIED;
+                }
+                /* NDRX_LOG(log_warn, "Sending notification"); */
+                self_notify(status, FALSE);
+            }
+        }
+        NDRX_LOG(6, "wait: %s", strerror(errno));
+        sleep(1);
+    }
+   
+    NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
     return NULL;
 }
 
 /**
- * NDRXD process got sigchld
+ * Initialize polling lib
+ * not thread safe.
  * @return
  */
-void sign_chld_handler(int sig)
+public void ndrxd_sigchld_init(void)
 {
-    /* let main programm to check for childs..., otherwise things like __lll_lock_wait_private
-     * causes lockups.
-     */
-    /*NDRX_LOG(log_warn, "Got sigchld..."); this debug causes lockups with main code */
-
-#ifdef EX_OS_SUNOS
-    signal(SIGCHLD, sign_chld_handler);  /*reset back handler... causes loops on aix.. */
-#elif EX_OS_AIX
-    signal(SIGCHLD, NULL);  /* remove handler for aix, causes uneeded repeated calls.  */
-#endif
-     
-/*
-    check_child_exit(); - do in thread.
-*/
-    /* DO in new thread? */
-    pthread_t thread;
+    sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
+    pthread_attr_t pthread_custom_attr_dog;
+    char *fn = "ndrxd_sigchld_init";
 
+    NDRX_LOG(log_debug, "%s - enter", fn);
+    
+    /* Block the notification signal (do not need it here...) */
+    
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
+    }
+    
+    
     pthread_attr_init(&pthread_custom_attr);
-    /* clean up resources after exit.. */
-    pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
+    pthread_attr_init(&pthread_custom_attr_dog);
+    
     /* set some small stacks size, 1M should be fine! */
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
-    pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
-    /*pthread_detach(thread);*/
-    /* Return from signal handler */
+    pthread_create(&M_signal_thread, &pthread_custom_attr, 
+            check_child_exit, NULL);
+}
+
+/**
+ * Un-initialize sigchild monitor thread
+ * @return
+ */
+public void ndrxd_sigchld_uninit(void)
+{
+    char *fn = "ndrxd_sigchld_uninit";
+
+    NDRX_LOG(log_debug, "%s - enter", fn);
+    
+
+    NDRX_LOG(log_debug, "About to cancel signal thread");
+    
+    /* TODO: have a counter for number of sets, so that we can do 
+     * un-init...
+     */
+    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+    else
+    {
+        void * res = SUCCEED;
+        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        {
+            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
+                    strerror(errno));
+        }
+
+        if (res == PTHREAD_CANCELED)
+        {
+            NDRX_LOG(log_info, "Signal thread canceled ok!")
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Signal thread failed to cancel "
+                    "(should not happen!!)");
+        }
+    }
+    
+    NDRX_LOG(log_debug, "finished ok");
 }
 
 /**

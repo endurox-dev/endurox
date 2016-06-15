@@ -312,6 +312,8 @@ out:
 public void ndrx_epoll_sys_init(void)
 {
     sigset_t blockMask;
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_t pthread_custom_attr_dog;
     char *fn = "ndrx_epoll_sys_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
@@ -331,10 +333,8 @@ public void ndrx_epoll_sys_init(void)
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }
     
-    pthread_attr_t pthread_custom_attr;
-    pthread_attr_init(&pthread_custom_attr);
     
-    pthread_attr_t pthread_custom_attr_dog;
+    pthread_attr_init(&pthread_custom_attr);
     pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
@@ -351,7 +351,6 @@ public void ndrx_epoll_sys_init(void)
  */
 public void ndrx_epoll_sys_uninit(void)
 {
-    sigset_t blockMask;
     char *fn = "ndrx_epoll_sys_uninit";
 
     NDRX_LOG(log_debug, "%s - enter", fn);

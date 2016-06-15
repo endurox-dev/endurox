@@ -259,10 +259,11 @@ extern int build_process_model(conf_server_node_t *p_server_conf,
                                 pm_node_t **p_pm_model, /* proces model linked list */
                                 pm_node_t **p_pm_hash/* Hash table models */);
 extern int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm);
+extern void ndrxd_sigchld_init(void);
+extern void ndrxd_sigchld_uninit(void);
 extern pm_pidhash_t * pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid);
 extern int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid);
 extern void sign_chld_handler(int sig);
-extern int check_child_exit(void);
 extern int cmd_close_queue(void);
 
 /* Sanity & restart */
