@@ -54,6 +54,9 @@ add_library (ndrxxaorad SHARED
                         oracle_common.c
    	        )
 
+target_link_libraries(ndrxxaoras atmi ubf nstd)
+target_link_libraries(ndrxxaorad atmi ubf nstd)
+
 
 # Install bin
 install (TARGETS 

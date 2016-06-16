@@ -60,30 +60,30 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern void _TPset_error(int error_code);
-extern void _TPset_error_msg(int error_code, char *msg);
-extern void _TPset_error_fmt(int error_code, const char *fmt, ...);
-public void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...);
-extern void _TPunset_error(void);
-extern int _TPis_error(void);
-extern void _TPappend_error_msg(char *msg);
-extern void _TPoverride_code(int error_code);
+extern NDRX_API void _TPset_error(int error_code);
+extern NDRX_API void _TPset_error_msg(int error_code, char *msg);
+extern NDRX_API void _TPset_error_fmt(int error_code, const char *fmt, ...);
+extern NDRX_API void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...);
+extern NDRX_API void _TPunset_error(void);
+extern NDRX_API int _TPis_error(void);
+extern NDRX_API void _TPappend_error_msg(char *msg);
+extern NDRX_API void _TPoverride_code(int error_code);
 
-extern void _TPsave_error(atmi_error_t *p_err);
-extern void _TPrestore_error(atmi_error_t *p_err);
+extern NDRX_API void _TPsave_error(atmi_error_t *p_err);
+extern NDRX_API void _TPrestore_error(atmi_error_t *p_err);
 
 /* xa error handling */
-extern void atmi_xa_set_error(UBFH *p_ub, short error_code, short reason);
-extern void atmi_xa_set_error_msg(UBFH *p_ub, short error_code, short reason, char *msg);
-extern void atmi_xa_set_error_fmt(UBFH *p_ub, short error_code, short reason, const char *fmt, ...);
-extern void atmi_xa_override_error(UBFH *p_ub, short error_code);
-extern void atmi_xa_unset_error(UBFH *p_ub);
-extern int atmi_xa_is_error(UBFH *p_ub);
-extern void atmi_xa_error_msg(UBFH *p_ub, char *msg);
-extern void atmi_xa2tperr(UBFH *p_ub);
-extern char *atmi_xa_geterrstr(int code);
-extern void atmi_xa_approve(UBFH *p_ub);
-extern short atmi_xa_get_reason(void);
+extern NDRX_API void atmi_xa_set_error(UBFH *p_ub, short error_code, short reason);
+extern NDRX_API void atmi_xa_set_error_msg(UBFH *p_ub, short error_code, short reason, char *msg);
+extern NDRX_API void atmi_xa_set_error_fmt(UBFH *p_ub, short error_code, short reason, const char *fmt, ...);
+extern NDRX_API void atmi_xa_override_error(UBFH *p_ub, short error_code);
+extern NDRX_API void atmi_xa_unset_error(UBFH *p_ub);
+extern NDRX_API int atmi_xa_is_error(UBFH *p_ub);
+extern NDRX_API void atmi_xa_error_msg(UBFH *p_ub, char *msg);
+extern NDRX_API void atmi_xa2tperr(UBFH *p_ub);
+extern NDRX_API char *atmi_xa_geterrstr(int code);
+extern NDRX_API void atmi_xa_approve(UBFH *p_ub);
+extern NDRX_API short atmi_xa_get_reason(void);
 #ifdef	__cplusplus
 }
 #endif

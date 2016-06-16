@@ -242,6 +242,8 @@ extern "C" {
     
 #define tpadvertise(_SVCNM, _FNADDR) tpadvertise_full(_SVCNM, _FNADDR, #_FNADDR)
 
+#define NDRX_INTEGRA(X)		__##X##__ /* integration mode*/
+
 /********************** Queue suport  *****************************************/
 #define TMQNAMELEN	15
 #define TMMSGIDLEN	32
@@ -381,83 +383,85 @@ struct tpqctl_t
 typedef struct tpqctl_t TPQCTL;		
 
 /*---------------------------Globals------------------------------------*/
-extern int (*G_tpsvrinit__)(int, char **);
-extern int tpsvrinit(int, char **);/* provided by external lib */
-extern void (*G_tpsvrdone__)(void);
+extern NDRX_API int (*G_tpsvrinit__)(int, char **);
+extern NDRX_API void (*G_tpsvrdone__)(void);
 /*---------------------------Prototypes---------------------------------*/
 
 /*
  * xatmi communication api
  */
-extern int tpacall(char *svc, char *data, long len, long flags);
-extern int tpadvertise_full (char *, void (*)(TPSVCINFO *), char *);
-extern char *tpalloc(char *type, char *subtype, long size);
-extern int tpcall(char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
-extern int tpcancel(int cd);
-extern int tpconnect(char *svc, char *data, long len, long flags);
-extern int tpdiscon(int cd);
-extern void tpfree(char *ptr);
-extern int tpgetrply(int *cd, char **data, long *len, long flags);
-extern char *tprealloc(char *ptr, long size);
-extern int tprecv(int cd, char **data, long *len, long flags, long *revent);
-extern void tpreturn(int rval, long rcode, char *data, long len, long flags);
-extern int tpsend(int cd, char *data, long len, long flags, long *revent);
-extern void tpservice(TPSVCINFO *svcinfo);
-extern long tptypes(char *ptr, char *type, char *subtype);
-extern int tpunadvertise(char *svcname);
+extern NDRX_API int tpacall(char *svc, char *data, long len, long flags);
+extern NDRX_API int tpadvertise_full (char *, void (*)(TPSVCINFO *), char *);
+extern NDRX_API char *tpalloc(char *type, char *subtype, long size);
+extern NDRX_API int tpcall(char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
+extern NDRX_API int tpcancel(int cd);
+extern NDRX_API int tpconnect(char *svc, char *data, long len, long flags);
+extern NDRX_API int tpdiscon(int cd);
+extern NDRX_API void tpfree(char *ptr);
+extern NDRX_API int tpgetrply(int *cd, char **data, long *len, long flags);
+extern NDRX_API char *tprealloc(char *ptr, long size);
+extern NDRX_API int tprecv(int cd, char **data, long *len, long flags, long *revent);
+extern NDRX_API void tpreturn(int rval, long rcode, char *data, long len, long flags);
+extern NDRX_API int tpsend(int cd, char *data, long len, long flags, long *revent);
+extern NDRX_API void tpservice(TPSVCINFO *svcinfo);
+extern NDRX_API long tptypes(char *ptr, char *type, char *subtype);
+extern NDRX_API int tpunadvertise(char *svcname);
 
 /* 
  * Extension functions
  */
-extern void tpforward (char *svc, char *data, long len, long flags);
-extern int tpabort (long flags);
-extern int tpbegin (unsigned long timeout, long flags);
-extern int tpcommit (long flags);
-extern int tpconvert (char *strrep, char *binrep, long flags);
-extern int tpsuspend (TPTRANID *tranid, long flags);
-extern int tpresume (TPTRANID *tranid, long flags);
-extern int tpopen (void);
-extern int tpclose (void);
-extern int tpgetlev (void);
-extern char * tpstrerror (int err);
-extern char * tpsrvgetctxdata (void); 
-extern int tpsrvsetctxdata (char *data, long flags);
-extern void tpsrvcontinue(void);
-extern void tpcontinue (void);
-extern long tpgetnodeid(void);
-extern long tpsubscribe (char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
-extern int tpunsubscribe (long subscription, long flags);
-extern int tppost (char *eventname, char *data, long len, long flags);
-extern int * _exget_tperrno_addr (void);
-extern long * _exget_tpurcode_addr (void);
-/*extern void tpsvrdone (void);*/
-extern int tpinit(TPINIT *tpinfo);
+extern NDRX_API void tpforward (char *svc, char *data, long len, long flags);
+extern NDRX_API int tpabort (long flags);
+extern NDRX_API int tpbegin (unsigned long timeout, long flags);
+extern NDRX_API int tpcommit (long flags);
+extern NDRX_API int tpconvert (char *strrep, char *binrep, long flags);
+extern NDRX_API int tpsuspend (TPTRANID *tranid, long flags);
+extern NDRX_API int tpresume (TPTRANID *tranid, long flags);
+extern NDRX_API int tpopen (void);
+extern NDRX_API int tpclose (void);
+extern NDRX_API int tpgetlev (void);
+extern NDRX_API char * tpstrerror (int err);
+extern NDRX_API char * tpsrvgetctxdata (void); 
+extern NDRX_API int tpsrvsetctxdata (char *data, long flags);
+extern NDRX_API void tpsrvcontinue(void);
+extern NDRX_API void tpcontinue (void);
+extern NDRX_API long tpgetnodeid(void);
+extern NDRX_API long tpsubscribe (char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
+extern NDRX_API int tpunsubscribe (long subscription, long flags);
+extern NDRX_API int tppost (char *eventname, char *data, long len, long flags);
+extern NDRX_API int * _exget_tperrno_addr (void);
+extern NDRX_API long * _exget_tpurcode_addr (void);
+/*extern NDRX_API void tpsvrdone (void);*/
+extern NDRX_API int tpinit(TPINIT *tpinfo);
 
 /* in external application: */
-extern void tpsvrdone(void);
+extern NDRX_API void tpsvrdone(void);
+extern NDRX_API int tpsvrinit (int argc, char **argv);
 
 /* Poller & timer extension: */
-extern int tpext_addpollerfd(int fd, uint32_t events, 
+extern NDRX_API int tpext_addpollerfd(int fd, uint32_t events, 
         void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
-extern int tpext_delpollerfd(int fd);
-extern int tpext_addperiodcb(int secs, int (*p_periodcb)(void));
-extern int tpext_delperiodcb(void);
-extern int tpext_addb4pollcb(int (*p_b4pollcb)(void));
-extern int tpext_delb4pollcb(void);
-extern int tpterm (void);
-extern int tpgetsrvid (void);
+extern NDRX_API int tpext_delpollerfd(int fd);
+extern NDRX_API int tpext_addperiodcb(int secs, int (*p_periodcb)(void));
+extern NDRX_API int tpext_delperiodcb(void);
+extern NDRX_API int tpext_addb4pollcb(int (*p_b4pollcb)(void));
+extern NDRX_API int tpext_delb4pollcb(void);
+extern NDRX_API int tpterm (void);
+extern NDRX_API int tpgetsrvid (void);
 
 /* JSON<->ubf buffer support */
-extern int tpjsontoubf(UBFH *p_ub, char *buffer);
-extern int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+extern NDRX_API int tpjsontoubf(UBFH *p_ub, char *buffer);
+extern NDRX_API int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 
 
 /* Queue support: */
-extern int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
-extern int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
+extern NDRX_API int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
+extern NDRX_API int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
-extern int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags);
-extern int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
+extern NDRX_API int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags);
+extern NDRX_API int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
+
+extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnomain */
 
 #if defined(__cplusplus)
 }

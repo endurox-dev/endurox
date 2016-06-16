@@ -128,8 +128,8 @@ typedef char UBF_CHAR;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub);
-extern void build_printable_string(char *out, char *in, int in_len);
+extern NDRX_API void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub);
+extern NDRX_API void build_printable_string(char *out, char *in, int in_len);
 
 #ifdef	__cplusplus
 }

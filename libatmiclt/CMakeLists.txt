@@ -50,6 +50,8 @@ add_library (atmiclt SHARED
 					 cltlib.c
 	)
 
+target_link_libraries(atmiclt atmi ubf nstd)
+
 install (TARGETS 
     atmiclt 
     DESTINATION "${INSTALL_LIB_DIR}"

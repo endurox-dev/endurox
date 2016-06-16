@@ -299,80 +299,80 @@ typedef struct txstate2tperrno txstate2tperrno_t;
 
 
 /*---------------------------Globals------------------------------------*/
-extern atmi_xa_curtx_t __thread G_atmi_xa_curtx;
+extern NDRX_API atmi_xa_curtx_t __thread G_atmi_xa_curtx;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
     
 /* ATMI XA lib */
-extern int atmi_xa_init(void);
-extern void atmi_xa_uninit(void);
-extern int atmi_xa_open_entry(void);
-extern int atmi_xa_close_entry(void);
-extern int atmi_xa_start_entry(XID *xid, long flags);
-extern int atmi_xa_end_entry(XID *xid);
-extern int atmi_xa_rollback_entry(XID *xid, long flags);
-extern int atmi_xa_prepare_entry(XID *xid, long flags);
-extern int atmi_xa_commit_entry(XID *xid, long flags);
-extern UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
+extern NDRX_API int atmi_xa_init(void);
+extern NDRX_API void atmi_xa_uninit(void);
+extern NDRX_API int atmi_xa_open_entry(void);
+extern NDRX_API int atmi_xa_close_entry(void);
+extern NDRX_API int atmi_xa_start_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_end_entry(XID *xid);
+extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_prepare_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
+extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
                     atmi_xa_tx_info_t *p_xai);
-extern UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
+extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub);
 
 /* interface to ATMI lib/utils */
-extern char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out);
-extern void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid);
-extern void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid);
-extern XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out);
-extern int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
-extern int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms);
-extern int atmi_xa_is_current_rm_known(char *tmknownrms);
-extern void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo);
+extern NDRX_API char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out);
+extern NDRX_API void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid);
+extern NDRX_API void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid);
+extern NDRX_API XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out);
+extern NDRX_API int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
+extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
+extern NDRX_API int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms);
+extern NDRX_API int atmi_xa_is_current_rm_known(char *tmknownrms);
+extern NDRX_API void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo);
 
-extern UBFH * atmi_xa_alloc_tm_call(char cmd);
-extern int atmi_xa_set_curtx_from_tm(UBFH *p_ub);
-extern int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai);
-extern int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai);
-extern void atmi_xa_reset_curtx(void);
-extern void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
-extern int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai);
-extern void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai);
+extern NDRX_API UBFH * atmi_xa_alloc_tm_call(char cmd);
+extern NDRX_API int atmi_xa_set_curtx_from_tm(UBFH *p_ub);
+extern NDRX_API int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai);
+extern NDRX_API int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai);
+extern NDRX_API void atmi_xa_reset_curtx(void);
+extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
+extern NDRX_API int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
+extern NDRX_API XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai);
+extern NDRX_API void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai);
 
 /* CD registration with transaction: */
-extern int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int cd);
-extern atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int cd);
-extern int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds);
-extern void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int cd);
-extern int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds);
+extern NDRX_API int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int cd);
+extern NDRX_API atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int cd);
+extern NDRX_API int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds);
+extern NDRX_API void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int cd);
+extern NDRX_API int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds);
 
 /* API sections */
-extern int _tpopen(void);
-extern int _tpclose(void);
-extern int _tpbegin(unsigned long timeout, long flags);
-extern int _tpcommit(long flags);
-extern int _tpabort(long flags);
-extern int _tpsuspend (TPTRANID *tranid, long flags);
-extern int _tpresume (TPTRANID *tranid, long flags);
+extern NDRX_API int _tpopen(void);
+extern NDRX_API int _tpclose(void);
+extern NDRX_API int _tpbegin(unsigned long timeout, long flags);
+extern NDRX_API int _tpcommit(long flags);
+extern NDRX_API int _tpabort(long flags);
+extern NDRX_API int _tpsuspend (TPTRANID *tranid, long flags);
+extern NDRX_API int _tpresume (TPTRANID *tranid, long flags);
 
-extern int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);
-extern int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,
+extern NDRX_API int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);
+extern NDRX_API int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,
                     int *p_is_known);
-extern int _tp_srv_disassoc_tx(void);
-extern int _tp_srv_tell_tx_fail(void);
+extern NDRX_API int _tp_srv_disassoc_tx(void);
+extern NDRX_API int _tp_srv_tell_tx_fail(void);
 
 /* State driving */
-extern rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
+extern NDRX_API rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
                                                     int op, int op_retcode);
-extern rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
+extern NDRX_API rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
                                                     char next_rmstatus);
-extern int xa_status_get_op(short txstage, char rmstatus);
-extern txstage_descriptor_t* xa_stage_get_descr(short txstage);
-extern int xa_txstage2tperrno(short txstage, int master_op);
+extern NDRX_API int xa_status_get_op(short txstage, char rmstatus);
+extern NDRX_API txstage_descriptor_t* xa_stage_get_descr(short txstage);
+extern NDRX_API int xa_txstage2tperrno(short txstage, int master_op);
 
 
-extern atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void);
+extern NDRX_API atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void);
 
 #ifdef	__cplusplus
 }

@@ -56,8 +56,6 @@
 #include "gencall.h"
 #include "userlog.h"
 /*---------------------------Externs------------------------------------*/
-extern ndrx_shm_t G_svcinfo;
-extern int G_max_svcs;
 /*---------------------------Macros-------------------------------------*/
 #define SLEEP_ON_FULL_Q             170000   /* Sleep 150 ms every batch..... */
 

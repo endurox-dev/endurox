@@ -49,6 +49,8 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 add_library (exnet SHARED
    	        exnet.c server.c contrack.c)
 
+target_link_libraries(exnet atmisrv atmi nstd)
+
 install (TARGETS 
     exnet 
     DESTINATION "${INSTALL_LIB_DIR}"

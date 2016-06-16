@@ -70,37 +70,37 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-extern buffer_obj_t *G_buffers;
-extern typed_buffer_descr_t G_buf_descr[];
+extern NDRX_API buffer_obj_t *G_buffers;
+extern NDRX_API typed_buffer_descr_t G_buf_descr[];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-/*extern typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype);*/
-extern char * _tprealloc (char *buf, long len);
-extern char * _tpalloc (typed_buffer_descr_t *known_type,
+/*extern NDRX_API typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype);*/
+extern NDRX_API char * _tprealloc (char *buf, long len);
+extern NDRX_API char * _tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
-extern buffer_obj_t * find_buffer(char *ptr);
-/*extern void free_up_buffers(void);*/
+extern NDRX_API buffer_obj_t * find_buffer(char *ptr);
+/*extern NDRX_API void free_up_buffers(void);*/
 
 /* UBF support */
-extern int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags);
-extern int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, long rcv_len, char **odata, long *olen, long flags);
-extern char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
-extern char	* UBF_tpalloc (typed_buffer_descr_t *descr, long len);
-extern void UBF_tpfree(typed_buffer_descr_t *descr, char *buf);
-extern int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
+extern NDRX_API int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags);
+extern NDRX_API int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, long rcv_len, char **odata, long *olen, long flags);
+extern NDRX_API char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
+extern NDRX_API char	* UBF_tpalloc (typed_buffer_descr_t *descr, long len);
+extern NDRX_API void UBF_tpfree(typed_buffer_descr_t *descr, char *buf);
+extern NDRX_API int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
     
 /* Type buffer support */
-extern char * TPINIT_tpalloc (typed_buffer_descr_t *descr, long len);
-extern void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
+extern NDRX_API char * TPINIT_tpalloc (typed_buffer_descr_t *descr, long len);
+extern NDRX_API void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 /* Type null buffer */
-extern char * TPNULL_tpalloc (typed_buffer_descr_t *descr, long len);
-extern void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
+extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, long len);
+extern NDRX_API void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
 
 /* Automatic buffer convert: */
-extern int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse);
+extern NDRX_API int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse);
 
-extern int typed_xcvt_json2ubf(buffer_obj_t **buffer);
-extern int typed_xcvt_ubf2json(buffer_obj_t **buffer);
+extern NDRX_API int typed_xcvt_json2ubf(buffer_obj_t **buffer);
+extern NDRX_API int typed_xcvt_ubf2json(buffer_obj_t **buffer);
     
 #ifdef	__cplusplus
 }

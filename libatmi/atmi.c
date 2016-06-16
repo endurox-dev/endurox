@@ -582,7 +582,7 @@ out:
  * @param revent
  * @return
  */
-public int	tpdiscon (int cd)
+public int tpdiscon (int cd)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -599,28 +599,6 @@ public int	tpdiscon (int cd)
 out:
     return ret;
 }
-
-/**
- * TODO
- */
-public void	tpsvrdone (void)
-{
-    NDRX_LOG(log_error, "tpsvrdone - ATMI dummy");
-}
-
-#if 0
-/**
- * TODO
- * @param
- * @param
- * @return
- */
-public int	tpsvrinit (int argc, char **argv)
-{
-    NDRX_LOG(log_error, "tpsvrinit - ATMI dummy");
-    return SUCCEED;
-}
-#endif
 
 /**
  * API version of tppost

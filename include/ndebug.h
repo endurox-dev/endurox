@@ -105,20 +105,20 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /* Real externals... */
-extern void ndrx_dbg_init(char *module, char *config_key);
-extern void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level);
-extern int debug_get_ndrx_level(void);
-extern int debug_get_ubf_level(void);
-extern ndrx_debug_t * debug_get_ndrx_ptr(void);
-extern ndrx_debug_t * debug_get_ubf_ptr(void);
+extern NDRX_API void ndrx_dbg_init(char *module, char *config_key);
+extern NDRX_API void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level);
+extern NDRX_API int debug_get_ndrx_level(void);
+extern NDRX_API int debug_get_ubf_level(void);
+extern NDRX_API ndrx_debug_t * debug_get_ndrx_ptr(void);
+extern NDRX_API ndrx_debug_t * debug_get_ubf_ptr(void);
 
 extern NDRX_API void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *fmt, ...);
 
-extern void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+extern NDRX_API void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *comment, void *ptr, void *ptr2, long len);
 
-extern void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+extern NDRX_API void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
         long line, const char *func, char *comment, void *ptr, long len);
 
 extern NDRX_API void ndrx_dbg_lock(void);

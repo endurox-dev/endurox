@@ -50,7 +50,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmisv_008 atmisv.c)
+add_executable (atmisv_008 atmisv.c ../../libatmisrv/rawmain.c)
 ################################################################################
 ############################# Test - executables ###############################
 
@@ -62,7 +62,7 @@ endif ()
 
 
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmisv_008 m ubf nstd atmi atmisrv rt dl pthread
+target_link_libraries (atmisv_008 m ubf nstd atmi atmisrvnomain rt dl pthread
 		${TEST008_EXTRA_LIB1} ${TEST008_EXTRA_LIB2})
 
 set_target_properties(atmisv_008 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

@@ -473,7 +473,7 @@ out:
 /*
  * Do initialization
  */
-int tpsvrinit(int argc, char **argv)
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=SUCCEED;
 
@@ -509,5 +509,10 @@ int tpsvrinit(int argc, char **argv)
 
 out:
     return ret;
+}
+
+void NDRX_INTEGRA(tpsvrdone) (void)
+{
+
 }
 

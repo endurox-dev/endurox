@@ -42,6 +42,7 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ubf.h>
+#include <ubf_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IS_NOT_PRINTABLE(X) !(isprint(X) && !iscntrl(X))

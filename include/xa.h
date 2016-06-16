@@ -17,6 +17,7 @@
 #ifndef XA_H
 #define XA_H
 
+#include <config.h>
 /*
  * Transaction branch identification: XID and NULLXID:
  */
@@ -47,11 +48,11 @@ typedef struct xid_t XID;
 /**
  * Dynamically register a resource manager with a transaction manager
  */
-extern int ax_reg(int rmid, XID *xid, long flags);
+extern NDRX_API int ax_reg(int rmid, XID *xid, long flags);
 /**
  * Dynamically unregister a resource manager with a transaction manager
  */
-extern int ax_unreg(int rmid, long flags);
+extern NDRX_API int ax_unreg(int rmid, long flags);
 
 
 

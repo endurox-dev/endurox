@@ -44,7 +44,9 @@
 #include <limits.h>
 #include <pthread.h>
 #include <string.h>
-#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -52,7 +54,6 @@
 #include <limits.h>
 
 #include <sys_unix.h>
-#include <sys/epoll.h>
 
 #include <utlist.h>
 

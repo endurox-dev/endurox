@@ -83,6 +83,14 @@ add_library (atmisrvinteg SHARED
                 integra.c
    	    )
 
+add_library (atmisrvdum SHARED
+		dum.c)
+
+target_link_libraries(atmisrvdum nstd) # just for cywing build, anyway we need to use integration mode...
+target_link_libraries(atmisrv atmisrvdum atmi ubf nstd)
+target_link_libraries(atmisrvnomain atmisrvdum atmi ubf nstd)
+target_link_libraries(atmisrvinteg atmi ubf nstd)
+
 install (TARGETS 
     atmisrv 
     atmisrvnomain

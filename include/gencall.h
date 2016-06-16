@@ -63,7 +63,7 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
+extern NDRX_API int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -75,7 +75,7 @@ extern int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             void (*p_put_output)(char *text),
                             int need_reply);
 
-extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
+extern NDRX_API int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -86,7 +86,7 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
                             gencall_args_t *arglist/* this is list of process */,
                             int reply_only);
 
-extern int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
+extern NDRX_API int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -99,7 +99,7 @@ extern int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             int need_reply,
                             int flags);
 
-extern int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
+extern NDRX_API int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -116,17 +116,17 @@ extern int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
                             int flags,
                             int (*p_rply_request)(char *buf, long len));
 
-extern void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
+extern NDRX_API void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, char *reply_q);
 
-extern int reply_with_failure(long flags, tp_command_call_t *last_call,
+extern NDRX_API int reply_with_failure(long flags, tp_command_call_t *last_call,
             char *buf, int *len, long rcode);
 
-extern int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
+extern NDRX_API int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
 
-extern atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm));
+extern NDRX_API atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm));
 
-extern void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
+extern NDRX_API void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
         long rcode, char *reply_to_q);
 
 #ifdef	__cplusplus

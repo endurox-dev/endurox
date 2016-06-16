@@ -79,7 +79,7 @@ extern "C" {
  */    
 #ifdef HAVE_PROGNAME
     
-extern const char * __progname;
+extern NDRX_API const char * __progname;
 
 #define EX_PROGNAME __progname
 
@@ -167,36 +167,36 @@ struct mq_list
 /*---------------------------Prototypes---------------------------------*/
 
 /* poll ops */
-extern void ndrx_epoll_sys_init(void);
-extern void ndrx_epoll_sys_uninit(void);
-extern char * ndrx_epoll_mode(void);
-extern int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event);
-extern int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event);
-extern int ndrx_epoll_create(int size);
-extern int ndrx_epoll_close(int fd);
-extern int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout);
-extern int ndrx_epoll_errno(void);
-extern char * ndrx_poll_strerror(int err);
+extern NDRX_API void ndrx_epoll_sys_init(void);
+extern NDRX_API void ndrx_epoll_sys_uninit(void);
+extern NDRX_API char * ndrx_epoll_mode(void);
+extern NDRX_API int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event);
+extern NDRX_API int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event);
+extern NDRX_API int ndrx_epoll_create(int size);
+extern NDRX_API int ndrx_epoll_close(int fd);
+extern NDRX_API int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout);
+extern NDRX_API int ndrx_epoll_errno(void);
+extern NDRX_API char * ndrx_poll_strerror(int err);
 
-extern void ndrx_string_list_free(string_list_t* list);
+extern NDRX_API void ndrx_string_list_free(string_list_t* list);
 
-extern char *ndrx_sys_get_cur_username(void);
-extern string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
-extern string_list_t* ndrx_sys_folder_list(char *path, int *return_status);
+extern NDRX_API char *ndrx_sys_get_cur_username(void);
+extern NDRX_API string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
+extern NDRX_API string_list_t* ndrx_sys_folder_list(char *path, int *return_status);
 
 /* gen unix: */
-extern char * ndrx_sys_get_proc_name_by_ps(void);
-extern int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);
-extern int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
+extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);
+extern NDRX_API int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);
+extern NDRX_API int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
 
 /* sys_linux.c: */
-extern int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name);
+extern NDRX_API int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name);
 
 /* sys_aix.c: */
-extern char * ndrx_sys_get_proc_name_getprocs(void);
+extern NDRX_API char * ndrx_sys_get_proc_name_getprocs(void);
 
 /* provided by: sys_<platform>.c */
-extern string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
+extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
 
 #ifdef	__cplusplus
 }

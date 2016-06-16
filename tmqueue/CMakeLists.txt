@@ -69,9 +69,15 @@ add_library (ndrxxaqdiskd SHARED
                 qdisk_xa_common.c
             )
 ############################# Executables ######################################
-add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c)
-target_link_libraries (tmqueue ndrxxaqdisk atmisrv exuuid nstd atmi ubf 
+add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
+                        ../libatmisrv/rawmain.c)
+target_link_libraries (tmqueue ndrxxaqdisk atmisrvnomain exuuid nstd atmi ubf 
                         thpool rt dl pthread m)
+
+target_link_libraries (ndrxxaqdisk nstd atmi ubf)
+target_link_libraries (ndrxxaqdisks nstd atmi ubf)
+target_link_libraries (ndrxxaqdiskd nstd atmi ubf)
+
 set_target_properties(tmqueue PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

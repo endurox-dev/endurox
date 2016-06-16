@@ -54,8 +54,8 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ###############################
-add_executable (cpmsrv cpmsrv.c cltconfig.c cltexec.c)
-target_link_libraries (cpmsrv atmisrv atmi ubf nstd pthread xml2 rt dl m)
+add_executable (cpmsrv cpmsrv.c cltconfig.c cltexec.c ../libatmisrv/rawmain_integra.c)
+target_link_libraries (cpmsrv atmisrvinteg atmi ubf nstd pthread xml2 rt dl m)
 set_target_properties(cpmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

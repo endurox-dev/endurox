@@ -403,126 +403,127 @@ struct atmi_svc_list
 #define MAX_CALL_DATA_SIZE (ATMI_MSG_MAX_SIZE-sizeof(tp_command_call_t))
 
 /*---------------------------Globals------------------------------------*/
-extern __thread atmi_lib_conf_t G_atmi_conf; /* global access to server configuration */
-extern atmi_lib_env_t G_atmi_env; /* global access to env configuration */
-extern __thread int G_atmi_is_init;
-extern __thread tp_command_call_t G_last_call; /* this is used by server, __thread not needed */
-extern __thread call_descriptor_state_t G_call_state[]; /* call descriptor states */
-extern __thread tp_conversation_control_t G_tp_conversation_status[];
-extern __thread tp_conversation_control_t G_accepted_connection;
-extern __thread long M_svc_return_code;
-extern int G_srv_id;
+extern NDRX_API __thread atmi_lib_conf_t G_atmi_conf; /* global access to server configuration */
+extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
+extern NDRX_API __thread int G_atmi_is_init;
+extern NDRX_API __thread tp_command_call_t G_last_call; /* this is used by server, __thread not needed */
+extern NDRX_API __thread call_descriptor_state_t G_call_state[]; /* call descriptor states */
+extern NDRX_API __thread tp_conversation_control_t G_tp_conversation_status[];
+extern NDRX_API __thread tp_conversation_control_t G_accepted_connection;
+extern NDRX_API __thread long M_svc_return_code;
+extern NDRX_API int G_srv_id;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 /* Utilities */
-extern int ndrx_load_common_env(void);
-extern int generic_q_send(char *queue, char *data, long len, long flags);
-extern int generic_q_send_2(char *queue, char *data, long len, long flags, long tout);
-extern int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
-extern long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
-extern int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
+extern NDRX_API int ndrx_load_common_env(void);
+extern NDRX_API int ndrx_load_new_env(char *file);
+extern NDRX_API int generic_q_send(char *queue, char *data, long len, long flags);
+extern NDRX_API int generic_q_send_2(char *queue, char *data, long len, long flags, long tout);
+extern NDRX_API int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
+extern NDRX_API long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
+extern NDRX_API int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
 
-extern mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
-extern mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag);
-extern void ndrx_mq_fix_mass_send(int *cntr);
-extern int ndrx_q_setblock(mqd_t q_descr, int blocked);
+extern NDRX_API mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
+extern NDRX_API mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag);
+extern NDRX_API void ndrx_mq_fix_mass_send(int *cntr);
+extern NDRX_API int ndrx_q_setblock(mqd_t q_descr, int blocked);
 
-extern void br_dump_nodestack(char *stack, char *msg);
-extern int fill_reply_queue(char *nodestack, 
+extern NDRX_API void br_dump_nodestack(char *stack, char *msg);
+extern NDRX_API int fill_reply_queue(char *nodestack, 
             char *org_reply_to, char *reply_to);
 
 /* Base64 encode/decode with file system valid output */
-extern char * atmi_xa_base64_encode(unsigned char *data,
+extern NDRX_API char * atmi_xa_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data);
     
-extern unsigned char *atmi_xa_base64_decode(unsigned char *data,
+extern NDRX_API unsigned char *atmi_xa_base64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data);
 
 /* ATMI calls */
-extern int _tpacall (char *svc, char *data,
+extern NDRX_API int _tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
                 TPTRANID *p_tran);
-extern char * _tprealloc (char *buf, long len);
-extern long	_tptypes (char *ptr, char *type, char *subtype);
-extern char * _tpalloc (typed_buffer_descr_t *known_type,
+extern NDRX_API char * _tprealloc (char *buf, long len);
+extern NDRX_API long	_tptypes (char *ptr, char *type, char *subtype);
+extern NDRX_API char * _tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
-extern void free_auto_buffers(void);
-extern int tp_internal_init(atmi_lib_conf_t *init_data);
-extern int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
-extern void tp_thread_shutdown(void *ptr, int *p_finish_off);
+extern NDRX_API void free_auto_buffers(void);
+extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
+extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
+extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 
-extern int _tpsend (int cd, char *data, long len, long flags, long *revent,
+extern NDRX_API int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id);
-extern void _tpfree (char *buf, buffer_obj_t *known_buffer);
-extern void cancel_if_expected(tp_command_call_t *call);
+extern NDRX_API void _tpfree (char *buf, buffer_obj_t *known_buffer);
+extern NDRX_API void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
-extern int accept_connection(void);
-extern int svc_fail_to_start(void);
-extern int normal_connection_shutdown(tp_conversation_control_t *conv, int killq);
-extern int close_open_client_connections(void);
-extern int have_open_connection(void);
-extern int get_ack(tp_conversation_control_t *conv, long flags);
+extern NDRX_API int accept_connection(void);
+extern NDRX_API int svc_fail_to_start(void);
+extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, int killq);
+extern NDRX_API int close_open_client_connections(void);
+extern NDRX_API int have_open_connection(void);
+extern NDRX_API int get_ack(tp_conversation_control_t *conv, long flags);
 
 /* Extended version of tpcall, accepts extradata (31+1) symbols */
-extern int tpcallex (char *svc, char *idata, long ilen,
+extern NDRX_API int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags);
 
-extern int tpacallex (char *svc, char *data, 
+extern NDRX_API int tpacallex (char *svc, char *data, 
         long len, long flags, char *extradata, int dest_node, int is_evpost);
 /* event API implementation */
-extern long _tpunsubscribe(long subscription, long flags);
-extern long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
-extern int _tppost(char *eventname, char *data, long len, long flags);
-extern void	tpext_configbrige 
+extern NDRX_API long _tpunsubscribe(long subscription, long flags);
+extern NDRX_API long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
+extern NDRX_API int _tppost(char *eventname, char *data, long len, long flags);
+extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
-extern int _get_evpost_sendq(char *send_q, char *extradata);
+extern NDRX_API int _get_evpost_sendq(char *send_q, char *extradata);
 
-extern char * atmi_base64_encode(unsigned char *data, size_t input_length, 
+extern NDRX_API char * atmi_base64_encode(unsigned char *data, size_t input_length, 
         size_t *output_length, char *encoded_data);
-extern unsigned char *atmi_base64_decode(const char *data, size_t input_length, 
+extern NDRX_API unsigned char *atmi_base64_decode(const char *data, size_t input_length, 
         size_t *output_length, char *decoded_data);
 
-extern int _tpjsontoubf(UBFH *p_ub, char *buffer);
-extern int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
-extern int _tpcall (char *svc, char *idata, long ilen,
+extern NDRX_API int _tpjsontoubf(UBFH *p_ub, char *buffer);
+extern NDRX_API int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+extern NDRX_API int _tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags);
-extern int _tpgetrply (int *cd,
+extern NDRX_API int _tpgetrply (int *cd,
                        int cd_exp,
                        char * *data ,
                        long *len, long flags,
                        TPTRANID *p_tranid);
-extern int _tpcancel (int cd);
-extern int _tpterm (void);
-extern int _tpconnect (char *svc, char *data, long len, long flags);
-extern int _tprecv (int cd, char * *data, 
+extern NDRX_API int _tpcancel (int cd);
+extern NDRX_API int _tpterm (void);
+extern NDRX_API int _tpconnect (char *svc, char *data, long len, long flags);
+extern NDRX_API int _tprecv (int cd, char * *data, 
                         long *len, long flags, long *revent,
                         short *command_id);
-extern int _tpdiscon (int cd);
-extern int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+extern NDRX_API int _tpdiscon (int cd);
+extern NDRX_API int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags);
-extern int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+extern NDRX_API int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char **data, long *len, long flags);
 
 /* ATMI level process management: */
-extern int ndrx_chk_server(char *procname, short srvid);
-extern int ndrx_chk_ndrxd(void);
-extern int ndrx_down_sys(char *qprefix, char *qpath, int is_force);
-extern int ndrx_killall(char *mask);
-extern int ndrx_q_exists(char *qpath);
-extern int ndrx_get_cached_svc_q(char *q);
+extern NDRX_API int ndrx_chk_server(char *procname, short srvid);
+extern NDRX_API int ndrx_chk_ndrxd(void);
+extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force);
+extern NDRX_API int ndrx_killall(char *mask);
+extern NDRX_API int ndrx_q_exists(char *qpath);
+extern NDRX_API int ndrx_get_cached_svc_q(char *q);
 
 /* Access to symbols: */
 
-extern tp_command_call_t *ndrx_get_G_last_call(void);
-extern atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
-extern atmi_lib_env_t *ndrx_get_G_atmi_env(void);
+extern NDRX_API tp_command_call_t *ndrx_get_G_last_call(void);
+extern NDRX_API atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
+extern NDRX_API atmi_lib_env_t *ndrx_get_G_atmi_env(void);
 
 #ifdef	__cplusplus
 }

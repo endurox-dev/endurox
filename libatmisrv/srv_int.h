@@ -34,7 +34,7 @@
 #define	SRV_INT_H
 
 #ifdef	__cplusplus
-extern "C" {
+extern NDRX_API "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <sys_mqueue.h>
@@ -44,8 +44,8 @@ extern "C" {
 #include <uthash.h>
 #include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
-extern long G_libatmisrv_flags; /* present in integra.c or standard.c */
-extern int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
+extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
+extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
 /*---------------------------Macros-------------------------------------*/
 #define MIN_SVC_LIST_LEN        30
 #define SVN_LIST_REALLOC        15
@@ -186,60 +186,61 @@ struct server_ctx_info
 typedef struct server_ctx_info server_ctx_info_t;
 
 /*---------------------------Globals------------------------------------*/
-extern srv_conf_t G_server_conf;
-extern shm_srvinfo_t *G_shm_srv;
-extern pollextension_rec_t *G_pollext;
-extern int G_shutdown_req;
-extern int G_shutdown_nr_wait;   /* Number of self shutdown messages to wait */
-extern int G_shutdown_nr_got;    /* Number of self shutdown messages got  */
+extern NDRX_API srv_conf_t G_server_conf;
+extern NDRX_API shm_srvinfo_t *G_shm_srv;
+extern NDRX_API pollextension_rec_t *G_pollext;
+extern NDRX_API int G_shutdown_req;
+extern NDRX_API int G_shutdown_nr_wait;   /* Number of self shutdown messages to wait */
+extern NDRX_API int G_shutdown_nr_got;    /* Number of self shutdown messages got  */
+extern NDRX_API void (*___G_test_delayed_startup)(void);
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern int sv_open_queue(void);
-extern int sv_wait_for_request(void);
-extern int unadvertse_to_ndrxd(char *srvcnm);
+extern NDRX_API int sv_open_queue(void);
+extern NDRX_API int sv_wait_for_request(void);
+extern NDRX_API int unadvertse_to_ndrxd(char *srvcnm);
 
 /* Server specific functions: */
-extern void _tpreturn (int rval, long rcode, char *data, long len, long flags);
-extern void _tpforward (char *svc, char *data,
+extern NDRX_API void _tpreturn (int rval, long rcode, char *data, long len, long flags);
+extern NDRX_API void _tpforward (char *svc, char *data,
                 long len, long flags);
-extern void _tpcontinue (void);
+extern NDRX_API void _tpcontinue (void);
 
 /* ndrd api */
-extern int advertse_to_ndrxd(svc_entry_fn_t *entry);
-extern int advertse_to_ndrxd(svc_entry_fn_t *entry);
-extern int report_to_ndrxd(void);
+extern NDRX_API int advertse_to_ndrxd(svc_entry_fn_t *entry);
+extern NDRX_API int advertse_to_ndrxd(svc_entry_fn_t *entry);
+extern NDRX_API int report_to_ndrxd(void);
 /* Return list of connected bridge nodes. */
-extern int ndrxd_get_bridges(char *nodes_out);
-extern int pingrsp_to_ndrxd(command_srvping_t *ping);
+extern NDRX_API int ndrxd_get_bridges(char *nodes_out);
+extern NDRX_API int pingrsp_to_ndrxd(command_srvping_t *ping);
     
 /* Advertise & unadvertise */
-extern int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy);
-extern int	dynamic_advertise(svc_entry_fn_t *entry_new, 
+extern NDRX_API int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy);
+extern NDRX_API int	dynamic_advertise(svc_entry_fn_t *entry_new, 
                     char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
 /* We want to re-advertise the stuff, this could be used for race conditions! */
-extern int dynamic_readvertise(char *svcname);
+extern NDRX_API int dynamic_readvertise(char *svcname);
 
 /* Polling extension */
-extern pollextension_rec_t * ext_find_poller(int fd);
-extern int _tpext_addpollerfd(int fd, uint32_t events, 
+extern NDRX_API pollextension_rec_t * ext_find_poller(int fd);
+extern NDRX_API int _tpext_addpollerfd(int fd, uint32_t events, 
         void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
-extern int _tpext_delpollerfd(int fd);
-extern int _tpext_addperiodcb(int secs, int (*p_periodcb)(void));
-extern int _tpext_delperiodcb(void);
-extern int _tpext_addb4pollcb(int (*p_b4pollcb)(void));
-extern int _tpext_delb4pollcb(void);
-extern int process_admin_req(char *buf, long len, 
+extern NDRX_API int _tpext_delpollerfd(int fd);
+extern NDRX_API int _tpext_addperiodcb(int secs, int (*p_periodcb)(void));
+extern NDRX_API int _tpext_delperiodcb(void);
+extern NDRX_API int _tpext_addb4pollcb(int (*p_b4pollcb)(void));
+extern NDRX_API int _tpext_delb4pollcb(void);
+extern NDRX_API int process_admin_req(char *buf, long len, 
         int *shutdown_req);
 
 /* auto buffer convert: */
-extern long xcvt_lookup(char *fn_nm);
+extern NDRX_API long xcvt_lookup(char *fn_nm);
 
-extern int build_advertise_list(void);
-extern int initialize_atmi_library(void);
-extern void un_initialize(void);
+extern NDRX_API int build_advertise_list(void);
+extern NDRX_API int initialize_atmi_library(void);
+extern NDRX_API void un_initialize(void);
 
-extern int array_remove_element(void *arr, int elem, int len, int sz);
+extern NDRX_API int array_remove_element(void *arr, int elem, int len, int sz);
 
 #ifdef	__cplusplus
 }

@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdio.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -113,76 +114,76 @@ typedef struct Bnext_state Bnext_state_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern int * _Bget_Ferror_addr (void);
-extern int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
-extern int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype);
-extern int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype);
-extern int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype);
-extern int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ);
-extern int Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
-extern int Bproj (UBFH * p_ub, BFLDID * fldlist);
-extern int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src, BFLDID * fldlist);
-extern BFLDID Bfldid (char *fldnm);
-extern char * Bfname (BFLDID bfldid);
-extern int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src);
-extern int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
-extern int Binit (UBFH * p_ub, BFLDLEN len);
-extern int Bnext (UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len);
-extern int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN * buflen);
-extern char * Bboolco (char * expr);
-extern char * Bfind (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * p_len);
-extern int Bboolev (UBFH * p_ub, char *tree);
-extern double Bfloatev (UBFH * p_ub, char *tree);
-extern int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
-extern void B_error (char *str);
-extern char * Bstrerror (int err);
-extern BFLDID Bmkfldid (int fldtype, BFLDID bfldid);
-extern BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid);
-extern long Bused (UBFH *p_ub);
-extern int Bfldtype (BFLDID bfldid);
-extern int Bdelall (UBFH *p_ub, BFLDID bfldid);
-extern int Bdelete (UBFH *p_ub, BFLDID *fldlist);
-extern BFLDOCC Bfldno (BFLDID bfldid);
-extern long Bunused (UBFH *p_ub);
-extern long Bsizeof (UBFH *p_ub);
-extern char * Btype (BFLDID bfldid);
-extern int Bfree (UBFH *p_ub);
-extern UBFH * Balloc (BFLDOCC f, BFLDLEN v);
-extern UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v);
-extern int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src);
-extern int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src);
-extern char * CBfind (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype);
-extern char * CBgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, int usrtype, BFLDLEN *extralen);
-extern BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
+extern NDRX_API int * _Bget_Ferror_addr (void);
+extern NDRX_API int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+extern NDRX_API int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype);
+extern NDRX_API int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype);
+extern NDRX_API int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype);
+extern NDRX_API int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ);
+extern NDRX_API int Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+extern NDRX_API int Bproj (UBFH * p_ub, BFLDID * fldlist);
+extern NDRX_API int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src, BFLDID * fldlist);
+extern NDRX_API BFLDID Bfldid (char *fldnm);
+extern NDRX_API char * Bfname (BFLDID bfldid);
+extern NDRX_API int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src);
+extern NDRX_API int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
+extern NDRX_API int Binit (UBFH * p_ub, BFLDLEN len);
+extern NDRX_API int Bnext (UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len);
+extern NDRX_API int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN * buflen);
+extern NDRX_API char * Bboolco (char * expr);
+extern NDRX_API char * Bfind (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * p_len);
+extern NDRX_API int Bboolev (UBFH * p_ub, char *tree);
+extern NDRX_API double Bfloatev (UBFH * p_ub, char *tree);
+extern NDRX_API int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
+extern NDRX_API void B_error (char *str);
+extern NDRX_API char * Bstrerror (int err);
+extern NDRX_API BFLDID Bmkfldid (int fldtype, BFLDID bfldid);
+extern NDRX_API BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid);
+extern NDRX_API long Bused (UBFH *p_ub);
+extern NDRX_API int Bfldtype (BFLDID bfldid);
+extern NDRX_API int Bdelall (UBFH *p_ub, BFLDID bfldid);
+extern NDRX_API int Bdelete (UBFH *p_ub, BFLDID *fldlist);
+extern NDRX_API BFLDOCC Bfldno (BFLDID bfldid);
+extern NDRX_API long Bunused (UBFH *p_ub);
+extern NDRX_API long Bsizeof (UBFH *p_ub);
+extern NDRX_API char * Btype (BFLDID bfldid);
+extern NDRX_API int Bfree (UBFH *p_ub);
+extern NDRX_API UBFH * Balloc (BFLDOCC f, BFLDLEN v);
+extern NDRX_API UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v);
+extern NDRX_API int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern NDRX_API int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern NDRX_API char * CBfind (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype);
+extern NDRX_API char * CBgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, int usrtype, BFLDLEN *extralen);
+extern NDRX_API BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
                                         char * buf, BFLDLEN len, int usrtype);
-extern BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
+extern NDRX_API BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
                                         char * buf, BFLDLEN len);
-extern char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
-extern char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
+extern NDRX_API char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
+extern NDRX_API char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                     BFLDOCC *occ, BFLDLEN *len);
-extern int Bgetlast (UBFH *p_ub, BFLDID bfldid,
+extern NDRX_API int Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len);
-extern int Bprint (UBFH *p_ub);
-extern int Bfprint (UBFH *p_ub, FILE * outf);
-extern char * Btypcvt (BFLDLEN * to_len, int to_type,
+extern NDRX_API int Bprint (UBFH *p_ub);
+extern NDRX_API int Bfprint (UBFH *p_ub, FILE * outf);
+extern NDRX_API char * Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
-extern int Bextread (UBFH * p_ub, FILE *inf);
-extern void Bboolpr (char * tree, FILE *outf);
-extern int Bread (UBFH * p_ub, FILE * inf);
-extern int Bwrite (UBFH *p_ub, FILE * outf);
-extern void Btreefree (char *tree);
+extern NDRX_API int Bextread (UBFH * p_ub, FILE *inf);
+extern NDRX_API void Bboolpr (char * tree, FILE *outf);
+extern NDRX_API int Bread (UBFH * p_ub, FILE * inf);
+extern NDRX_API int Bwrite (UBFH *p_ub, FILE * outf);
+extern NDRX_API void Btreefree (char *tree);
 /* Callback function that can be used from expressions */
-extern int Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
-extern int Badds (UBFH *p_ub, BFLDID bfldid, char *buf);
-extern int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
-extern int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
-extern char * Bgetsa (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
-extern char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
-extern int Bisubf (UBFH *p_ub);
-extern int Bindex (UBFH * p_ub, BFLDOCC occ);
-extern BFLDOCC Bunindex (UBFH * p_ub);
-extern long Bidxused (UBFH * p_ub);
-extern int Brstrindex (UBFH * p_ub, BFLDOCC occ);
+extern NDRX_API int Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+extern NDRX_API int Badds (UBFH *p_ub, BFLDID bfldid, char *buf);
+extern NDRX_API int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
+extern NDRX_API int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
+extern NDRX_API char * Bgetsa (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
+extern NDRX_API char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+extern NDRX_API int Bisubf (UBFH *p_ub);
+extern NDRX_API int Bindex (UBFH * p_ub, BFLDOCC occ);
+extern NDRX_API BFLDOCC Bunindex (UBFH * p_ub);
+extern NDRX_API long Bidxused (UBFH * p_ub);
+extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
 #if defined(__cplusplus)
 }

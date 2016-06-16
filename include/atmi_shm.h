@@ -69,45 +69,49 @@ typedef struct
     short attached;                     /* Is attached?                 */
 } ndrx_sem_t;
 /*---------------------------Globals------------------------------------*/
+extern NDRX_API int G_max_svcs;
+extern NDRX_API ndrx_shm_t G_svcinfo;
+extern NDRX_API int G_max_servers;
+extern NDRX_API ndrx_shm_t G_srvinfo;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern int shm_init(char *q_prefix, int max_servers, int max_svcs);
-extern int ndrxd_shm_open_all(void);
-extern int ndrxd_shm_close_all(void);
-extern int ndrxd_shm_delete(void);
-extern int ndrx_shm_attach(ndrx_shm_t *shm);
-extern int ndrx_shm_attach_all(int lev);
-extern int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge);
-extern int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len); /* poll() only */
-extern int _ndrx_shm_get_svc(char *svc, int *pos);
-extern int ndrx_shm_install_svc(char *svc, int flags, short srvid);
-extern int ndrx_shm_install_svc_br(char *svc, int flags, 
+extern NDRX_API int shm_init(char *q_prefix, int max_servers, int max_svcs);
+extern NDRX_API int ndrxd_shm_open_all(void);
+extern NDRX_API int ndrxd_shm_close_all(void);
+extern NDRX_API int ndrxd_shm_delete(void);
+extern NDRX_API int ndrx_shm_attach(ndrx_shm_t *shm);
+extern NDRX_API int ndrx_shm_attach_all(int lev);
+extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge);
+extern NDRX_API int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len); /* poll() only */
+extern NDRX_API int _ndrx_shm_get_svc(char *svc, int *pos);
+extern NDRX_API int ndrx_shm_install_svc(char *svc, int flags, short srvid);
+extern NDRX_API int ndrx_shm_install_svc_br(char *svc, int flags, 
                 int is_bridge, int nodeid, int count, char mode, short srvid);
-extern void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid);
-extern shm_srvinfo_t* ndrxd_shm_getsrv(int srvid);
-extern void ndrxd_shm_resetsrv(int srvid);
+extern NDRX_API void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid);
+extern NDRX_API shm_srvinfo_t* ndrxd_shm_getsrv(int srvid);
+extern NDRX_API void ndrxd_shm_resetsrv(int srvid);
 
-extern int ndrx_shm_birdge_set_flags(int nodeid, int flags, int op_end);
-extern int ndrx_shm_bridge_disco(int nodeid);
-extern int ndrx_shm_bridge_connected(int nodeid);
-extern int ndrx_shm_bridge_is_connected(int nodeid);
-extern int ndrx_shm_birdge_getnodesconnected(char *outputbuf);
+extern NDRX_API int ndrx_shm_birdge_set_flags(int nodeid, int flags, int op_end);
+extern NDRX_API int ndrx_shm_bridge_disco(int nodeid);
+extern NDRX_API int ndrx_shm_bridge_connected(int nodeid);
+extern NDRX_API int ndrx_shm_bridge_is_connected(int nodeid);
+extern NDRX_API int ndrx_shm_birdge_getnodesconnected(char *outputbuf);
 
 /* Semaphore driving: */
-extern int ndrxd_sem_init(char *q_prefix);
-extern int ndrx_sem_attach(ndrx_sem_t *sem);
-extern int ndrxd_sem_open_all(void);
-extern int ndrxd_sem_close_all(void);
-extern int ndrxd_sem_delete(void);
-extern void ndrxd_sem_delete_with_init(char *q_prefix);
-extern int ndrxd_sem_is_attached(ndrx_sem_t *sem);
-extern int ndrx_sem_attach_all(void);
-extern int ndrx_lock_svc_op(void);
-extern int ndrx_unlock_svc_op(void);
-extern unsigned int ndrx_hash_fn( void *k );
+extern NDRX_API int ndrxd_sem_init(char *q_prefix);
+extern NDRX_API int ndrx_sem_attach(ndrx_sem_t *sem);
+extern NDRX_API int ndrxd_sem_open_all(void);
+extern NDRX_API int ndrxd_sem_close_all(void);
+extern NDRX_API int ndrxd_sem_delete(void);
+extern NDRX_API void ndrxd_sem_delete_with_init(char *q_prefix);
+extern NDRX_API int ndrxd_sem_is_attached(ndrx_sem_t *sem);
+extern NDRX_API int ndrx_sem_attach_all(void);
+extern NDRX_API int ndrx_lock_svc_op(void);
+extern NDRX_API int ndrx_unlock_svc_op(void);
+extern NDRX_API unsigned int ndrx_hash_fn( void *k );
 
-extern int ndrx_lock_svc_nm(char *svcnm);
-extern int ndrx_unlock_svc_nm(char *svcnm);
+extern NDRX_API int ndrx_lock_svc_nm(char *svcnm);
+extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm);
 
 #ifdef	__cplusplus
 }

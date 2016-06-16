@@ -56,16 +56,16 @@ struct ft_node
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern UBF_field_def_t * _fldnmhash_get(char *key);
-extern UBF_field_def_t * _bfldidhash_get(BFLDID id);
-extern int prepare_type_tables(void);
+extern NDRX_API UBF_field_def_t * _fldnmhash_get(char *key);
+extern NDRX_API UBF_field_def_t * _bfldidhash_get(BFLDID id);
+extern NDRX_API int prepare_type_tables(void);
 /* Internal version of Bfname (for debug, etc..) */
-extern char * _Bfname_int (BFLDID bfldid);
-extern BFLDID _Bfldid_int (char *fldnm);
+extern NDRX_API char * _Bfname_int (BFLDID bfldid);
+extern NDRX_API BFLDID _Bfldid_int (char *fldnm);
 
-extern int _ubf_loader_init(void);
+extern NDRX_API int _ubf_loader_init(void);
 
-extern int _ubf_load_def_file(FILE *fp,
+extern NDRX_API int _ubf_load_def_file(FILE *fp,
                 int (*put_text_line) (char *text), /* callback for putting text line */
                 int (*put_def_line) (UBF_field_def_t *def),  /* callback for writting defintion */
                 int (*put_got_base_line) (char *base), /* Callback for base line */

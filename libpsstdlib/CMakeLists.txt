@@ -58,6 +58,8 @@ add_library (psstdlib SHARED
         psstdaux.cpp
             )
 
+target_link_libraries(psstdlib ps)
+
 install (TARGETS 
     psstdlib
     DESTINATION "${INSTALL_LIB_DIR}"

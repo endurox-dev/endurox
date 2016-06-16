@@ -37,7 +37,9 @@
 extern "C" {
 #endif
 
-extern int userlog (char *, ...);
+#include <config.h>
+
+extern NDRX_API int userlog (char *, ...);
 
 #if defined(__cplusplus)
 }

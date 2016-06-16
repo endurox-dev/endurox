@@ -183,8 +183,8 @@ struct UBF_field_def
 };
 
 /*---------------------------Globals------------------------------------*/
-extern dtype_str_t G_dtype_str_map[];
-extern dtype_ext1_t G_dtype_ext1_map[];
+extern NDRX_API dtype_str_t G_dtype_str_map[];
+extern NDRX_API dtype_ext1_t G_dtype_ext1_map[];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
