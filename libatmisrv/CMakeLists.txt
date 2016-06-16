@@ -93,6 +93,7 @@ target_link_libraries(atmisrvinteg atmi ubf nstd)
 
 install (TARGETS 
     atmisrv 
+    atmisrvdum
     atmisrvnomain
     atmisrvinteg
     DESTINATION "${INSTALL_LIB_DIR}"
