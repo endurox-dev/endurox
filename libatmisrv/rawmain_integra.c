@@ -50,5 +50,5 @@ extern int NDRX_INTEGRA(tpsvrinit) (int argc, char **argv);
 int main(int argc, char** argv) 
 {
     return ndrx_main_integra(argc, argv, 
-            NDRX_INTEGRA(tpsvrinit), NDRX_INTEGRA(tpsvrdone));
+            NDRX_INTEGRA(tpsvrinit), NDRX_INTEGRA(tpsvrdone), 0);
 }

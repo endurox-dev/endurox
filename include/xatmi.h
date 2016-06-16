@@ -463,7 +463,7 @@ extern NDRX_API int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL 
 
 extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnomain */
 extern NDRX_API int ndrx_main_integra(int argc, char** argv, int in_tpsvrinit(int, char **), 
-            void (*in_tpsvrdone)(void));
+            void (*in_tpsvrdone)(void), long flags);
 
 #if defined(__cplusplus)
 }

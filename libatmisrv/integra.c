@@ -50,7 +50,8 @@
 /*---------------------------Globals------------------------------------*/
 int (*G_tpsvrinit__)(int, char **) = NULL;
 void (*G_tpsvrdone__)(void) = NULL;
-public long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; /* No jump please */
+/* No jump please (default for integra) */
+public long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -105,11 +106,12 @@ void tpsvrdone(void)
  * Forward the call to NDRX
  */
 int ndrx_main_integra(int argc, char** argv, int in_tpsvrinit(int, char **), 
-            void (*in_tpsvrdone)(void)) 
+            void (*in_tpsvrdone)(void), long flags) 
 {
 
     G_tpsvrinit__ =  in_tpsvrinit;
     G_tpsvrdone__ =  in_tpsvrdone;
+    G_libatmisrv_flags = flags;
 
     return ndrx_main(argc, argv);
 }
