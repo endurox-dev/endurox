@@ -175,7 +175,7 @@ void handle_sigchld(int sig)
 /*
  * Do initialization
  */
-int tpsvrinit(int argc, char **argv)
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=SUCCEED;
     signed char c;
@@ -219,3 +219,7 @@ out:
     return ret;
 }
 
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    /* just for build... */
+}

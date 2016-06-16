@@ -70,8 +70,8 @@ add_library (ndrxxaqdiskd SHARED
             )
 ############################# Executables ######################################
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
-                        ../libatmisrv/rawmain.c)
-target_link_libraries (tmqueue ndrxxaqdisk atmisrvnomain exuuid nstd atmi ubf 
+                        ../libatmisrv/rawmain_integra.c)
+target_link_libraries (tmqueue ndrxxaqdisk atmisrvinteg exuuid nstd atmi ubf 
                         thpool rt dl pthread m)
 
 target_link_libraries (ndrxxaqdisk nstd atmi ubf)
