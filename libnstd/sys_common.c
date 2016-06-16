@@ -238,7 +238,10 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
         {
             if (0==strcmp(namelist[n]->d_name, ".") || 
                         0==strcmp(namelist[n]->d_name, ".."))
+            {
+                free(namelist[n]);
                 continue;
+            }
             
             len = 1 /* / */ + strlen(namelist[n]->d_name) + 1 /* EOS */;
             
