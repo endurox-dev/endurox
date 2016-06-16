@@ -192,7 +192,7 @@ out:
 /*
  * Do initialization
  */
-int tpsvrinit(int argc, char **argv)
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = SUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
@@ -218,7 +218,7 @@ out:
 /**
  * Do de-initialization
  */
-void tpsvrdone(void)
+void NDRX_INTEGRA(tpsvrdone)(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
 }

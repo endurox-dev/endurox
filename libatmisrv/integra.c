@@ -99,3 +99,18 @@ void tpsvrdone(void)
         NDRX_LOG(log_warn, "G_tpsvrdone__ null, not calling");
     }
 }
+
+
+/**
+ * Forward the call to NDRX
+ */
+int ndrx_main_integra(int argc, char** argv, int in_tpsvrinit(int, char **), 
+            void (*in_tpsvrdone)(void)) 
+{
+
+    G_tpsvrinit__ =  in_tpsvrinit;
+    G_tpsvrdone__ =  in_tpsvrdone;
+
+    return ndrx_main(argc, argv);
+}
+

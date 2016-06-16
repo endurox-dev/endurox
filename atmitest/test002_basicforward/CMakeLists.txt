@@ -50,8 +50,8 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmisv2FIRST atmisv2FIRST.c ../../libatmisrv/rawmain.c)
-add_executable (atmisv2SECOND atmisv2SECOND.c ../../libatmisrv/rawmain.c)
+add_executable (atmisv2FIRST atmisv2FIRST.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmisv2SECOND atmisv2SECOND.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt2 atmiclt2.c)
 ################################################################################
 ############################# Test - executables ###############################

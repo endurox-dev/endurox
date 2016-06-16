@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <tperror.h>
 
+#include <atmi.h>
 #include "srv_int.h"
 #include "userlog.h"
 #include <atmi_int.h>
@@ -470,3 +471,5 @@ out:
 
     return ret;
 }
+
+

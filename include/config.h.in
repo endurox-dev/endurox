@@ -48,17 +48,14 @@
 #if defined(atmi_EXPORTS) || defined(atmiclt_EXPORTS) || defined(atmisrv_EXPORTS) || defined(atmisrvinteg_EXPORTS) || defined(atmisrvnomain_EXPORTS) || defined(exnet_EXPORTS) || defined(ndrxxaorad_EXPORTS) || defined(ndrxxaoras_EXPORTS) || defined(ndrxxaqdisk_EXPORTS) || defined(ndrxxaqdiskd_EXPORTS) || defined(ndrxxaqdisks_EXPORTS) || defined(netproto_EXPORTS) || defined(nstd_EXPORTS) || defined(ubf_EXPORTS)
         /* We are building this library */
 #      define NDRX_API __declspec(dllexport)
-#      define NDRX_API_EXT __declspec(dllimport) /* linking to external binary */
 #else
         /* We are using this library */
 #       define NDRX_API __declspec(dllimport)
-#       define NDRX_API_EXT __declspec(dllexport) /* external binary exports the func */
 #endif
 
 #else
 
 #       define NDRX_API
-#       define NDRX_API_EXT
 
 #endif
 

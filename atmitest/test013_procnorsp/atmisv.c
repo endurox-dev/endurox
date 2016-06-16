@@ -75,7 +75,7 @@ out:
 /*
  * Do initialization
  */
-int tpsvrinit(int argc, char **argv)
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
  
     FILE *f;
@@ -134,7 +134,7 @@ int tpsvrinit(int argc, char **argv)
 /**
  * Do de-initialization
  */
-void tpsvrdone(void)
+void NDRX_INTEGRA(tpsvrdone)(void)
 {
     /* Will sleep for long time here */
     if (M_long_shut)

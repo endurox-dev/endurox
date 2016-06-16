@@ -47,12 +47,8 @@ extern int NDRX_INTEGRA(tpsvrinit) (int argc, char **argv);
 /*
  * Forward the call to NDRX
  */
-int main(int argc, char** argv) {
-
-    G_tpsvrinit__ =  NDRX_INTEGRA(tpsvrinit);
-    G_tpsvrdone__ =  NDRX_INTEGRA(tpsvrdone);
-
-
-    return ndrx_main(argc, argv);
+int main(int argc, char** argv) 
+{
+    return ndrx_main_integra(argc, argv, 
+            NDRX_INTEGRA(tpsvrinit), NDRX_INTEGRA(tpsvrdone));
 }
-
