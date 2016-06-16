@@ -77,7 +77,7 @@ add_library (atmi SHARED
                     sysutil.c
             )
 
-target_link_libraries(atmi ubf nstd)
+target_link_libraries(atmi ubf nstd dl)
 
 install (TARGETS 
     atmi 

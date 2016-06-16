@@ -51,7 +51,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Executables ###############################
 add_executable (tprecover tprecover.c ../libatmisrv/rawmain.c)
-target_link_libraries (tprecover m pthread ubf nstd atmi atmisrvnomain rt dl)
+target_link_libraries (tprecover atmisrvnomain atmi ubf nstd rt dl m pthread)
 set_target_properties(tprecover PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

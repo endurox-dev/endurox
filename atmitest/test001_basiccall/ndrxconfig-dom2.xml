@@ -56,7 +56,7 @@
 	<servers>
 		<server name="atmi.sv1">
 			<srvid>10</srvid>
-			<sysopt>-e ${TESTDIR}/atmisv.log -r</sysopt>
+			<sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
 		</server>
         
         <server name="tpbridge">
