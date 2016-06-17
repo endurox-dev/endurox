@@ -108,11 +108,11 @@ extern "C" {
 #define Fielded32 Bisubf
 
 #ifndef FBFR32
-#define FBFR32 FBFR
+#define FBFR32 UBFH
 #endif
 
-#define FLDLEN32 FLDLEN
-#define FLDOCC32 FLDOCC
+#define FLDLEN32 BFLDLEN
+#define FLDOCC32 BFLDOCC
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
