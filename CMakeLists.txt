@@ -51,6 +51,7 @@ message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
 
 OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
+OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -63,6 +64,12 @@ ELSE ()
 	SET(CMAKE_BUILD_TYPE debug)
         SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
+
+# Use emulated message queue
+IF(DEFINE_FORCEEMQ)
+    message("Using emulated message queue")
+    set(EX_USE_EMQ "1")
+ENDIF()
 
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_OS_LINUX "1")

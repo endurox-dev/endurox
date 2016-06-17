@@ -37,10 +37,34 @@ extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <config.h>
+
+#ifdef EX_USE_EMQ
+
+/* use queue emulation: */
+#include <sys_emqueue.h>
+
+#else
+
 #include <mqueue.h>
+
+#endif
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#ifdef EX_USE_EMQ
+
+#define  ndrx_mq_timedreceive emq_timedreceive
+#define  ndrx_mq_timedsend    emq_timedsend
+#define  ndrx_mq_close        emq_close
+#define  ndrx_mq_getattr      emq_getattr
+#define  ndrx_mq_notify       emq_notify
+#define  ndrx_mq_receive      emq_receive
+#define  ndrx_mq_send         emq_send
+#define  ndrx_mq_setattr      emq_setattr
+
+#else
+
 #define  ndrx_mq_timedreceive mq_timedreceive
 #define  ndrx_mq_timedsend    mq_timedsend
 #define  ndrx_mq_close        mq_close
@@ -49,6 +73,8 @@ extern "C" {
 #define  ndrx_mq_receive      mq_receive
 #define  ndrx_mq_send         mq_send
 #define  ndrx_mq_setattr      mq_setattr
+
+#endif
     
 #if USE_FS_REGISTRY
 
@@ -60,8 +86,17 @@ extern int ndrx_mq_unlink_with_registry (const char *name);
 
 #else
     
+#ifdef EX_USE_EMQ
+
+#define  ndrx_mq_open         emq_open
+#define  ndrx_mq_unlink       emq_unlink
+
+#else
+
 #define  ndrx_mq_open         mq_open
 #define  ndrx_mq_unlink       mq_unlink
+
+#endif
     
     
 #endif

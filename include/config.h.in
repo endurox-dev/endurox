@@ -27,6 +27,9 @@
 
 #cmakedefine EX_OS_CYGWIN @EX_OS_CYGWIN@
 
+/* Use emulated message queue: */
+#cmakedefine EX_USE_EMQ @EX_USE_EMQ@
+
 /* Defined if pscript is off */
 #cmakedefine NDRX_DISABLEPSCRIPT @NDRX_DISABLEPSCRIPT@
 

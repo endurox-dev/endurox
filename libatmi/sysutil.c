@@ -48,6 +48,7 @@
 #include <ubf.h>
 #include <ubfutil.h>
 #include <sys_unix.h>
+#include <sys_mqueue.h>
 #include <utlist.h>
 #include <atmi_shm.h>
 #include <unistd.h>

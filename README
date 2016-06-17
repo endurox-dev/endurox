@@ -7,3 +7,4 @@ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 - To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
 - To disable platform script building use '-DDEFINE_DISABLEPSCRIPT=ON'
 - To do release build, use '-DDEFINE_RELEASEBUILD=ON'
+- To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON'

@@ -67,6 +67,7 @@ endif ()
 
 
 add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c 
+                            sys_emqueue.c
                             sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
                             sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3})
 
