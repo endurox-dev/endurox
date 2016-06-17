@@ -36,7 +36,7 @@ struct mq_attr defattr = { 0, 128, 1024, 0 };
 
 char *get_path(const char *path)
 {
-    __thread static char x[512];
+    static __thread char x[512];
     
     strcpy(x, "/tmp/");
     strcat(x, path);
