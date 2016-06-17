@@ -277,10 +277,14 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test009_srvdie);
     add_test(suite, test010_strtracecond);
     add_test(suite, test011_tout);
+
+#ifndef EX_OS_CYGWIN
 #ifdef SYS64BIT
     /* We should skip this on non 64bit machines! */
     add_test(suite, test012_admqfull);
 #endif
+#endif
+
     add_test(suite, test001_basiccall_dom);
     add_test(suite, test002_basicforward_dom);
     add_test(suite, test003_basicconvers_dom);
