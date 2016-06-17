@@ -79,6 +79,15 @@ add_library (atmi SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmi ubf nstd dl)
+elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+    # 
+    # linking lib against pthread for XL C on aix, otherwise we get error like: 
+    #  ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
+    #        The branch at address 0x154 is not followed by a rec
+    # Or
+    # ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
+    #   The branch at address 0x154 is not followed by a rec
+    target_link_libraries(atmi pthread)
 endif()
 
 install (TARGETS 

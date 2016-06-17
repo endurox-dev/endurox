@@ -91,6 +91,10 @@ if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmisrv atmisrvdum atmi ubf nstd)
     target_link_libraries(atmisrvnomain atmisrvdum atmi ubf nstd)
     target_link_libraries(atmisrvinteg atmi ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+    target_link_libraries(atmisrv pthread)
+    target_link_libraries(atmisrvnomain pthread)
+    target_link_libraries(atmisrvinteg pthread)
 endif()
 
 install (TARGETS 
