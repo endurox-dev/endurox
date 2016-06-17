@@ -96,7 +96,11 @@ add_library (xadrv_d SHARED
                 xabackend_d.c
                 xabackend_common.c
             )
-target_link_libraries(xadrv atmi ubf nstd)
-target_link_libraries(xadrv_s atmi ubf nstd)
-target_link_libraries(xadrv_d atmi ubf nstd)
+
+
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(xadrv atmi ubf nstd)
+    target_link_libraries(xadrv_s atmi ubf nstd)
+    target_link_libraries(xadrv_d atmi ubf nstd)
+endif()
 ################################################################################

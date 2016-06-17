@@ -58,7 +58,9 @@ add_library (psstdlib SHARED
         psstdaux.cpp
             )
 
-target_link_libraries(psstdlib ps)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(psstdlib ps)
+endif()
 
 install (TARGETS 
     psstdlib

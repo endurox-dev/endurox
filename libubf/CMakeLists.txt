@@ -74,7 +74,9 @@ add_library (ubf SHARED
 		${FLEX_EXPRSCANNER_OUTPUTS}
 	)
 
-target_link_libraries(ubf nstd)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(ubf nstd)
+endif()
 
 install (TARGETS 
     ubf 

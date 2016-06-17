@@ -54,8 +54,10 @@ add_library (ndrxxaorad SHARED
                         oracle_common.c
    	        )
 
-target_link_libraries(ndrxxaoras atmi ubf nstd)
-target_link_libraries(ndrxxaorad atmi ubf nstd)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(ndrxxaoras atmi ubf nstd)
+    target_link_libraries(ndrxxaorad atmi ubf nstd)
+endif()
 
 
 # Install bin

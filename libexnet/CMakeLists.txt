@@ -49,7 +49,9 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 add_library (exnet SHARED
    	        exnet.c server.c contrack.c)
 
-target_link_libraries(exnet atmisrv atmi nstd)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(exnet atmisrvinteg atmi nstd)
+endif()
 
 install (TARGETS 
     exnet 

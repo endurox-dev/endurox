@@ -77,7 +77,9 @@ add_library (atmi SHARED
                     sysutil.c
             )
 
-target_link_libraries(atmi ubf nstd dl)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(atmi ubf nstd dl)
+endif()
 
 install (TARGETS 
     atmi 

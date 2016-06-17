@@ -49,7 +49,9 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 add_library (netproto SHARED
    	        proto.c)
 
-target_link_libraries(netproto nstd ubf)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(netproto nstd ubf)
+endif()
 
 install (TARGETS 
     netproto 
