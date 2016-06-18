@@ -32,6 +32,7 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -98,6 +99,8 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     
     if (NULL==G_server_conf.service_array)
     {
+	NDRX_LOG(log_error, "YOPT binary name: [%s]", G_server_conf.service_array);
+	NDRX_LOG(log_error, "YOPT2 qpfx: [%s]", G_server_conf.q_prefix);
         _TPset_error_fmt(TPEPROTO, "Cannot add custom poller at init stage!");
         ret=FAIL;
         goto out;
