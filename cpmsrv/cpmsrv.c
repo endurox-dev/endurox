@@ -251,17 +251,6 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     
     NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
     
-#if 0
-    /* Mark config as not refreshed */
-    HASH_ITER(hh, G_clt_config, c, ct)
-    {
-        if (CLT_STATE_STARTED==c->dyn.cur_state)
-        {
-            /* Try to boot the process... */
-            cpm_kill(c);
-        }
-    }
-#endif
     cpm_killall();
 }
 

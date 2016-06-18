@@ -70,7 +70,7 @@ public void sign_chld_handler(int sig)
 
     memset(&rusage, 0, sizeof(rusage));
 
-    if (0!=(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
+    while (0!=(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
     {
         /* - no debug please... Can cause lockups...
         NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
@@ -102,89 +102,27 @@ public int cpm_killall(void)
     cpm_process_t *ct = NULL;
     int is_any_running;
     ndrx_timer_t t;
+    char *sig_str[3]={"SIGINT","SIGTERM", "SIGKILL"};
+    int sig[3]={SIGINT,SIGTERM, SIGKILL};
+    int i;
     
-    /******************** SIGINT ****************************************/
-    NDRX_LOG(log_warn, "Terminating all with SIGINT");
-    
-    HASH_ITER(hh, G_clt_config, c, ct)
+    for (i=0; i<3; i++)
     {
-        if (CLT_STATE_STARTED==c->dyn.cur_state)
-        {
-            kill(c->dyn.pid, SIGINT);
-        }
-    }
-    
-    is_any_running = FALSE;
-    ndrx_timer_reset(&t);
-    do
-    {
-        sign_chld_handler(0);
-        
-        HASH_ITER(hh, G_clt_config, c, ct)
-        {
-            if (CLT_STATE_STARTED==c->dyn.cur_state)
-            {
-                is_any_running = TRUE;
-                break;
-            }
-        }
-        
-        if (is_any_running)
-        {
-            usleep(CLT_STEP_INTERVAL_ALL);
-        }
-    }
-    while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
-    
-    
-    /******************** SIGTERM ****************************************/
-    NDRX_LOG(log_warn, "Terminating all with SIGTERM");
-    
-    HASH_ITER(hh, G_clt_config, c, ct)
-    {
-        if (CLT_STATE_STARTED==c->dyn.cur_state)
-        {
-            kill(c->dyn.pid, SIGTERM);
-        }
-    }
-    
 
-    is_any_running = FALSE;
-    ndrx_timer_reset(&t);
-    do
-    {
-        sign_chld_handler(0);
-        
-        HASH_ITER(hh, G_clt_config, c, ct)
-        {
-            if (CLT_STATE_STARTED==c->dyn.cur_state)
-            {
-                is_any_running = TRUE;
-                break;
-            }
-        }
-        
-        if (is_any_running)
-        {
-            usleep(CLT_STEP_INTERVAL_ALL);
-        }
-        
-    }
-    while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
-    
-    
-    /******************** SIGKILL ****************************************/
-    NDRX_LOG(log_warn, "Terminating all with SIGKILL");
+    NDRX_LOG(log_warn, "Terminating all with %s", sig_str[i]);
     
     HASH_ITER(hh, G_clt_config, c, ct)
     {
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
-            kill(c->dyn.pid, SIGKILL);
+            NDRX_LOG(log_warn, "Killing: %s/%s/%d with %s",
+		c->tag, c->subsect, c->dyn.pid, sig_str[i]);
+            kill(c->dyn.pid, sig[i]);
         }
     }
     
-
+if (i<2) /*no wait for killl... */
+{
     is_any_running = FALSE;
     ndrx_timer_reset(&t);
     do
@@ -204,9 +142,10 @@ public int cpm_killall(void)
         {
             usleep(CLT_STEP_INTERVAL_ALL);
         }
-        
     }
     while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+}
+    }
     
     return SUCCEED;
 }
