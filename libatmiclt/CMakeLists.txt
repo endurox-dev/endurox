@@ -50,7 +50,9 @@ add_library (atmiclt SHARED
 					 cltlib.c
 	)
 
-target_link_libraries(atmiclt atmi ubf nstd)
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(atmiclt atmi ubf nstd)
+endif()
 
 install (TARGETS 
     atmiclt 

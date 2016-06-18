@@ -356,7 +356,8 @@ err:
 }
 
 
-ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
+ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
+        const struct timespec *__abs_timeout)
 {
     int             n;
     long            index;
@@ -392,7 +393,19 @@ ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
         /* wait for a message to be placed onto queue */
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
-            pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
+        {
+            if (NULL==__abs_timeout) {
+                pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
+            } else {
+                /* wait some time...  */
+                if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
+                        __abs_timeout))
+                {
+                    errno = ETIMEDOUT;
+                    goto err;
+                }
+            }
+        }
         emqhdr->emqh_nwait--;
     }
 
@@ -425,7 +438,8 @@ err:
     return(-1);
 }
 
-int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
+int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio, 
+        const struct timespec *__abs_timeout)
 {
     int              n;
     long             index, freeindex;
@@ -472,8 +486,21 @@ int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
             goto err;
         }
         /* wait for room for one message on the queue */
-        while (attr->mq_curmsgs >= attr->mq_maxmsg)
-            pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
+        while (attr->mq_curmsgs >= attr->mq_maxmsg) {
+            
+            if (NULL==__abs_timeout) {
+                pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
+            }
+            else {
+                /* wait some time...  */
+                if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
+                        __abs_timeout))
+                {
+                    errno = ETIMEDOUT;
+                    goto err;
+                }
+            }
+        }
     }
     /* nmsghdr will point to new message */
     if ( (freeindex = emqhdr->emqh_free) == 0) {
@@ -520,19 +547,17 @@ err:
 /**
  * TODO implement.
  */
-int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
-        const struct timespec *__abs_timeout)
+int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
 {
-    return emq_send(emqd, ptr, len, prio);
+    return emq_timedsend(emqd, ptr, len, prio, NULL);
 }
     
 /**
  * TODO: implement.
  */
-ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
-        const struct timespec *__restrict __abs_timeout)
+ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
 {
-    return emq_receive(emqd, ptr, maxlen, priop);
+    return emq_timedreceive(emqd, ptr, maxlen, priop, NULL);
 }
 
 
