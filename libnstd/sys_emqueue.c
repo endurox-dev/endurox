@@ -11,10 +11,13 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+
+#include <ndrstandard.h>
 #if defined(WIN32)
 #   include <io.h>
 #endif
 #include "sys_emqueue.h"
+#include "ndebug.h"
 
 #include <stddef.h>
 #include <errno.h>
@@ -22,7 +25,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/mman.h>
-
+#include <thlock.h>
+#include <limits.h>
+#include <atmi.h>
+#include <uthash.h>
 #if defined(WIN32)
 #   define S_IXUSR  0000100
 #   define sleep(a) Sleep((a)*1000)
@@ -34,11 +40,121 @@
 struct mq_attr defattr = { 0, 128, 1024, 0 };
 
 
-char *get_path(const char *path)
+/* TODO add func for check/add/delete hashsed mqd_t */
+
+struct qd_hash
+{
+    void *qd;
+    UT_hash_handle hh; /* makes this structure hashable        */
+};
+typedef struct qd_hash qd_hash_t;
+
+
+MUTEX_LOCKDECL(M_lock);
+qd_hash_t *M_qd_hash = NULL;
+/**
+ * Add queue descriptor to hash
+ * @param q
+ * @return 
+ */
+private int qd_hash_add(mqd_t q)
+{
+    int ret = SUCCEED;
+    qd_hash_t * el = calloc(1, sizeof(qd_hash_t));
+    
+    NDRX_LOG(log_debug, "Registering %p as mqd_t", q);
+    if (NULL==el)
+    {
+        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    el->qd  = (void *)q;
+    
+    MUTEX_LOCK_V(M_lock);
+    
+    HASH_ADD_PTR(M_qd_hash, qd, el);
+    NDRX_LOG(log_error, "added...");
+    
+    MUTEX_UNLOCK_V(M_lock);
+    
+out:
+
+    return ret;
+}
+
+/**
+ * Check is 
+ * @param q
+ * @return 
+ */
+private int qd_hash_chk(mqd_t qd)
+{
+    qd_hash_t *ret = NULL;
+    MUTEX_LOCK_V(M_lock);
+    
+    HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
+    
+    MUTEX_UNLOCK_V(M_lock);
+    
+    if (NULL!=ret)
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+/**
+ * Check is 
+ * @param q
+ * @return 
+ */
+private void qd_hash_del(mqd_t qd)
+{
+    qd_hash_t *ret = NULL;
+    
+    NDRX_LOG(log_debug, "Unregistering %p as mqd_t", ret);
+    
+    MUTEX_LOCK_V(M_lock);
+    HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
+    
+    if (NULL!=ret)
+    {
+        HASH_DEL(M_qd_hash, ret);
+        free(ret);
+    }
+    
+    MUTEX_UNLOCK_V(M_lock);
+}
+
+
+/**
+ * Get he queue path
+ * @param path
+ * @return 
+ */
+static char *get_path(const char *path)
 {
     static __thread char x[512];
+    static int first = 1;
+    static char q_path[PATH_MAX]={EOS};
     
-    strcpy(x, "/tmp/");
+    if (first)
+    {
+        char *p;
+        if (NULL!=(p=getenv(CONF_NDRX_QPATH)))
+        {
+            strcpy(q_path, p);
+        }
+        
+        first = 0;
+    }
+    
+    
+    strcpy(x, q_path);
     strcat(x, path);
     
     return x;
@@ -74,6 +190,8 @@ int emq_close(mqd_t emqd)
 
     emqinfo->emqi_magic = 0;          /* just in case */
     free(emqinfo);
+    qd_hash_del(emqd);
+    
     return(0);
 }
 
@@ -84,6 +202,12 @@ int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     struct mq_attr *attr;
     struct emq_info *emqinfo;
 
+    if (!qd_hash_chk((mqd_t) emqd)) {
+        NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
+        errno = EBADF;
+        return(-1);
+    }
+    
     emqinfo = emqd;
     if (emqinfo->emqi_magic != EMQI_MAGIC) {
         errno = EBADF;
@@ -112,6 +236,12 @@ int emq_notify(mqd_t emqd, const struct sigevent *notification)
     pid_t           pid;
     struct emq_hdr  *emqhdr;
     struct emq_info *emqinfo;
+    
+    if (!qd_hash_chk((mqd_t) emqd)) {
+        NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
+        errno = EBADF;
+        return(-1);
+    }
 
     emqinfo = emqd;
     if (emqinfo->emqi_magic != EMQI_MAGIC) {
@@ -279,6 +409,10 @@ again:
 #endif
                 goto err;
             close(fd);
+            if (SUCCEED!=qd_hash_add((mqd_t) emqinfo)) {
+                NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
+                errno = ENOMEM;
+            }
             return((mqd_t) emqinfo);
     }
 exists:
@@ -329,6 +463,12 @@ exists:
     emqinfo->emqi_hdr = (struct emq_hdr *) mptr;
     emqinfo->emqi_magic = EMQI_MAGIC;
     emqinfo->emqi_flags = nonblock;
+    
+    if (SUCCEED!=qd_hash_add((mqd_t) emqinfo)) {
+        NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
+        errno = ENOMEM;
+    }
+    
     return((mqd_t) emqinfo);
 pthreaderr:
     errno = i;
@@ -367,6 +507,12 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
     struct mq_attr *attr;
     struct msg_hdr *msghdr;
     struct emq_info *emqinfo;
+    
+    if (!qd_hash_chk((mqd_t) emqd)) {
+        NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
+        errno = EBADF;
+        return(-1);
+    }
 
     emqinfo = emqd;
     if (emqinfo->emqi_magic != EMQI_MAGIC) {
@@ -450,6 +596,12 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
     struct msg_hdr  *msghdr, *nmsghdr, *pmsghdr;
     struct emq_info  *emqinfo;
 
+    if (!qd_hash_chk((mqd_t) emqd)) {
+        NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
+        errno = EBADF;
+        return(-1);
+    }
+    
     emqinfo = emqd;
     if (emqinfo->emqi_magic != EMQI_MAGIC) {
         errno = EBADF;
@@ -568,6 +720,12 @@ int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqs
     struct mq_attr *attr;
     struct emq_info *emqinfo;
 
+    if (!qd_hash_chk((mqd_t) emqd)) {
+        NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
+        errno = EBADF;
+        return(-1);
+    }
+    
     emqinfo = emqd;
     if (emqinfo->emqi_magic != EMQI_MAGIC) {
         errno = EBADF;
