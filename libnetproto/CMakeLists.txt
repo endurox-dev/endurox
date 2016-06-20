@@ -51,6 +51,8 @@ add_library (netproto SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(netproto nstd ubf)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(netproto nstd ubf)
 endif()
 
 install (TARGETS 

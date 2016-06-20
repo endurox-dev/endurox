@@ -57,6 +57,9 @@ add_library (ndrxxaorad SHARED
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(ndrxxaoras atmi ubf nstd)
     target_link_libraries(ndrxxaorad atmi ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(ndrxxaoras atmi ubf nstd)
+    target_link_libraries(ndrxxaorad atmi ubf nstd)
 endif()
 
 

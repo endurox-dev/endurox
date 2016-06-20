@@ -71,6 +71,7 @@ IF(DEFINE_FORCEEMQ)
     set(EX_USE_EMQ "1")
 ENDIF()
 
+SET(RT_LIB "rt")
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_OS_LINUX "1")
         # Enable poll only
@@ -101,6 +102,9 @@ elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
 	set(EX_OS_FREEBSD "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
 	set(EX_OS_CYGWIN "1")
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+        SET(RT_LIB "")
+	set(EX_OS_DARWIN "1")
 # Unkonwn OS:
 else()
 	message( FATAL_ERROR "Unsupported OS" )

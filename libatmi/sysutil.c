@@ -39,6 +39,7 @@
 #include <dlfcn.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <ndrstandard.h>
 #include <uthash.h>

@@ -72,9 +72,13 @@ add_library (ndrxxaqdiskd SHARED
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
                         ../libatmisrv/rawmain_integra.c)
 target_link_libraries (tmqueue ndrxxaqdisk atmisrvinteg exuuid nstd atmi ubf 
-                        thpool rt dl pthread m)
+                        thpool ${RT_LIB} dl pthread m)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries (ndrxxaqdisk nstd atmi ubf)
+    target_link_libraries (ndrxxaqdisks nstd atmi ubf)
+    target_link_libraries (ndrxxaqdiskd nstd atmi ubf)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries (ndrxxaqdisk nstd atmi ubf)
     target_link_libraries (ndrxxaqdisks nstd atmi ubf)
     target_link_libraries (ndrxxaqdiskd nstd atmi ubf)

@@ -51,6 +51,8 @@ add_library (exnet SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(exnet atmisrvinteg atmi nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(exnet atmisrvinteg atmi nstd)
 endif()
 
 install (TARGETS 

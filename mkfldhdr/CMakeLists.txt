@@ -45,7 +45,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_executable (mkfldhdr mkfldhdr.c clang.c golang.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (mkfldhdr ubf m nstd rt pthread)
+target_link_libraries (mkfldhdr ubf m nstd ${RT_LIB} pthread)
 
 install (TARGETS 
     mkfldhdr 
