@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>

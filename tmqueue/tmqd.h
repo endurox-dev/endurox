@@ -61,7 +61,7 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * TM config handler
+ * TM ndrx_config.handler
  */
 typedef struct
 {

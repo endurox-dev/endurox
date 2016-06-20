@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 
 #ifdef EX_USE_EMQ
 

@@ -29,7 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#include <config.h>
+#include <ndrx_config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>

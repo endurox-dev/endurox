@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-#include <config.h>
+#include <ndrx_config.h>
 
 extern NDRX_API int userlog (char *, ...);
 

@@ -45,7 +45,7 @@ install (FILES
     ndrstandard.h
     thlock.h
     xa.h
-    config.h
+    ndrx_config.h
     DESTINATION include)
 
 install (FILES

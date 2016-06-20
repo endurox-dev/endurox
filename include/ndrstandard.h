@@ -36,7 +36,7 @@
 extern "C" {
 #endif
     
-#include <config.h>
+#include <ndrx_config.h>
 #include <stdint.h>
 
     

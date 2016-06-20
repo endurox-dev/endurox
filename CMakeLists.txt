@@ -138,8 +138,8 @@ ENDIF()
 # Output the project version
 set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
 
-configure_file ("${PROJECT_SOURCE_DIR}/include/config.h.in"
-                "${PROJECT_BINARY_DIR}/include/config.h" )
+configure_file ("${PROJECT_SOURCE_DIR}/include/ndrx_config.h.in"
+                "${PROJECT_BINARY_DIR}/include/ndrx_config.h" )
 
 ################################################################################
 # Install dir config

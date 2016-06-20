@@ -45,7 +45,7 @@
 #include <pthread.h>
 #include <string.h>
 
-#include <config.h>
+#include <ndrx_config.h>
 #include <atmi.h>
 #include <ndrstandard.h>
 #include <ndebug.h>

@@ -37,7 +37,7 @@
 extern NDRX_API "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 #include <sys_mqueue.h>
 #include <atmi.h>
 #include <setjmp.h>

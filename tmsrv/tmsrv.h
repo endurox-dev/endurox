@@ -56,7 +56,7 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Typedefs-----------------------------------*/
 
 /*
- * TM config handler
+ * TM ndrx_config.handler
  */
 typedef struct
 {

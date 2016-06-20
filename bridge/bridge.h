@@ -42,7 +42,7 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*
- * Bridge config handler
+ * Bridge ndrx_config.handler
  */
 typedef struct
 {

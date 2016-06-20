@@ -5,8 +5,8 @@
 #ifndef UTIL_LINUX_C_H
 #define UTIL_LINUX_C_H
 
-/* #ifdef HAVE_CONFIG_H */
-#include "config.h"
+/* #ifdef HAVE_NDRX_CONFIG.H */
+#include "ndrx_config.h"
 /* #endif */
 
 #include <limits.h>
