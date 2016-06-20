@@ -70,7 +70,11 @@ function set_dom1 {
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 # Used from parent
     export NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
+
     export NDRX_XA_RMLIB=libndrxxaqdisk.so
+if [ "$(uname)" == "Darwin" ]; then
+    export NDRX_XA_RMLIB=libndrxxaqdisk.dylib
+fi
     export NDRX_XA_LAZY_INIT=0
 }
 

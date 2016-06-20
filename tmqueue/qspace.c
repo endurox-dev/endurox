@@ -504,12 +504,6 @@ public int tmq_qconf_addupd(char *qconfstr)
     
     NDRX_LOG(log_info, "Add new Q: [%s]", qconfstr);
     
-    if (NULL==qconf)
-    {
-        NDRX_LOG(log_error, "Malloc failed for tmq_qconfig_t!");
-        FAIL_OUT(ret);
-    }
-    
     MUTEX_LOCK_V(M_q_lock);
     
     p = strtok (qconfstr,",");

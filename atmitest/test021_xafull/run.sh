@@ -47,9 +47,20 @@ fi;
 
 echo "Doing static registration tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.so
+
+if [ "$(uname)" == "Darwin" ]; then
+        export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.dylib
+fi
+
+
 ./run-dom.sh || exit $?
 
 echo "Doing dynamic registration tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_d.so
+
+if [ "$(uname)" == "Darwin" ]; then
+        export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_d.dylib
+fi
+
 ./run-dom.sh || exit $?
 

@@ -127,14 +127,24 @@ private void * check_child_exit(void *arg)
     NDRX_LOG(log_debug, "check_child_exit - enter...");
     for (;;)
     {
+	int got_something = 0;
+
+/* seems not working on darwin ... thus just wait for pid.
+ * if we do not have any childs, then sleep for 1 sec.
+ */
+#ifndef EX_OS_DARWIN
+        NDRX_LOG(log_debug, "about to sigwait()");
         if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
+#endif
         
+        NDRX_LOG(log_debug, "about to wait()");
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
+            got_something++;
             if (chldpid>0)
             {
                 NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
@@ -165,8 +175,13 @@ private void * check_child_exit(void *arg)
                 self_notify(status, FALSE);
             }
         }
+#if EX_OS_DARWIN
         NDRX_LOG(6, "wait: %s", strerror(errno));
-        /* sleep(1); */
+        if (!got_something)
+        {
+            sleep(1);
+        }
+#endif
     }
    
     NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));

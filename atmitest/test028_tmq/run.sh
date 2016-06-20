@@ -51,6 +51,11 @@ fi;
 #
 echo "Dynamic XA driver tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.so
+
+if [ "$(uname)" == "Darwin" ]; then
+	export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.dylib
+fi
+
 ./run-dom.sh
 RET=$?
 
@@ -64,6 +69,11 @@ fi
 #
 echo "Static XA driver tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.so
+
+if [ "$(uname)" == "Darwin" ]; then
+	export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.dylib
+fi
+
 ./run-dom.sh
 RET=$?
 
