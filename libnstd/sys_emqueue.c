@@ -120,7 +120,7 @@ private void qd_hash_del(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
     
-    NDRX_LOG(log_debug, "Unregistering %p as mqd_t", ret);
+    NDRX_LOG(log_debug, "Unregistering %p as mqd_t", qd);
     
     MUTEX_LOCK_V(M_lock);
     HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
