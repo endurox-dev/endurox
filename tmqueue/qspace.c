@@ -118,7 +118,7 @@ public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
     int ret = SUCCEED;
     
     strcpy(hdr->qspace, qspace);
-    strcpy(hdr->qname, qname);
+   /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
     hdr->command_code = TMQ_STORCMD_NEWMSG;
     strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
     hdr->nodeid = nodeid;
