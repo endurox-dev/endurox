@@ -175,6 +175,41 @@ private int M_signal_first = TRUE; /* is first init for signal thread */
 /*---------------------------Prototypes---------------------------------*/
 private ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd);
 private int signal_install_notifications_all(ndrx_epoll_set_t *s);
+private void slipSigHandler (int sig);
+
+
+private void *sigthread_enter(void *arg)
+{
+    NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
+    signal_handle_event();
+    NDRX_LOG(log_error, "***********SIGNAL THREAD EXIT***********");
+    return NULL;
+}
+
+
+private void slipSigHandler (int sig)
+{
+   /* we sill start of new thread to check the queues... */
+    /* let main programm to check for childs..., otherwise things like __lll_lock_wait_private
+     * causes lockups.
+     *
+    NDRX_LOG(log_warn, "Got sigchld...");
+     
+    check_child_exit();
+     */
+    /* DO in new thread? */
+    pthread_t thread;
+    pthread_attr_t pthread_custom_attr;
+
+    pthread_attr_init(&pthread_custom_attr);
+    /* clean up resources after exit.. */
+    pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
+    /* set some small stacks size, 1M should be fine! */
+    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
+    /*pthread_detach(thread);*/
+    /* Return from signal handler */
+}
 
 
 /**
@@ -312,6 +347,7 @@ out:
 public void ndrx_epoll_sys_init(void)
 {
     sigset_t blockMask;
+    struct sigaction sa; /* Seem on AIX signal might slip.. */
     pthread_attr_t pthread_custom_attr;
     pthread_attr_t pthread_custom_attr_dog;
     char *fn = "ndrx_epoll_sys_init";
@@ -322,6 +358,12 @@ public void ndrx_epoll_sys_init(void)
 	NDRX_LOG(log_warn, "Already init done for poll()");
 	return;
     }
+
+    sa.sa_handler = slipSigHandler;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sigaction (NOTIFY_SIG, &sa, 0);
+
     
     /* Block the notification signal (do not need it here...) */
     

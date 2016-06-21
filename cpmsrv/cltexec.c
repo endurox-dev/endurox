@@ -92,7 +92,7 @@ public void sign_chld_handler(int sig)
         
     }
 
-    signal(SIGCHLD, sign_chld_handler);
+    /*signal(SIGCHLD, sign_chld_handler);*/
 }
 
 
