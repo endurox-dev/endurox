@@ -165,6 +165,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=SUCCEED;
     signed char c;
+    struct sigaction sa;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* Get the env */
@@ -206,7 +207,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_config.chk_interval = CLT_KILL_INTERVAL_DEFAULT;
     }
     
-    signal(SIGCHLD, sign_chld_handler);
+    sa.sa_handler = sign_chld_handler;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction (SIGCHLD, &sa, 0);
+
+    /* signal(SIGCHLD, sign_chld_handler); */
     
     /* Load initial config */
     if (SUCCEED!=load_config())
@@ -297,8 +303,8 @@ private int cpm_callback_timer(void)
             cpm_exec(c);
         }
     }
-    /* handle any signal */
-    sign_chld_handler(SIGCHLD);
+    /* handle any signal 
+    sign_chld_handler(SIGCHLD); */
     
 out:
     return SUCCEED;
