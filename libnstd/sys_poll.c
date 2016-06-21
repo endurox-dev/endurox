@@ -176,6 +176,7 @@ private int M_signal_first = TRUE; /* is first init for signal thread */
 private ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd);
 private int signal_install_notifications_all(ndrx_epoll_set_t *s);
 private void slipSigHandler (int sig);
+private int signal_handle_event(void);
 
 
 private void *sigthread_enter(void *arg)
@@ -189,15 +190,6 @@ private void *sigthread_enter(void *arg)
 
 private void slipSigHandler (int sig)
 {
-   /* we sill start of new thread to check the queues... */
-    /* let main programm to check for childs..., otherwise things like __lll_lock_wait_private
-     * causes lockups.
-     *
-    NDRX_LOG(log_warn, "Got sigchld...");
-     
-    check_child_exit();
-     */
-    /* DO in new thread? */
     pthread_t thread;
     pthread_attr_t pthread_custom_attr;
 
@@ -207,8 +199,6 @@ private void slipSigHandler (int sig)
     /* set some small stacks size, 1M should be fine! */
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
     pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
-    /*pthread_detach(thread);*/
-    /* Return from signal handler */
 }
 
 
