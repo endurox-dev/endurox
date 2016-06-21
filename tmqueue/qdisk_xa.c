@@ -831,7 +831,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             
             fname_msg = get_file_name_final(tmq_msgid_serialize(block.hdr.msgid, msgid_str));
             NDRX_LOG(log_info, "Updating message file: [%s]", fname_msg);
-            if (NULL==(f = fopen(fname_msg, "a+b")))
+            if (NULL==(f = fopen(fname_msg, "r+b")))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
@@ -978,7 +978,7 @@ private int read_tx_from_file(char *fname, char *block, int len)
     int ret = SUCCEED;
     FILE *f = NULL;
     
-    if (NULL==(f = fopen(fname, "a+b")))
+    if (NULL==(f = fopen(fname, "r+b")))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
