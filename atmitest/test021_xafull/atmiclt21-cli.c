@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     for (i=0; i<100; i++)
     {
 
-        if (SUCCEED!=tpbegin(30, 0))
+        if (SUCCEED!=tpbegin(60, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
