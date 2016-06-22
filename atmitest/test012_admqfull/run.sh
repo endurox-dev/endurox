@@ -123,8 +123,8 @@ xadmin start -y
 xadmin psc
 CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
-if [[ $CNT -ne 1000 ]]; then
-	echo "Service count != 1000! (1)"
+if [[ $CNT -ne 500 ]]; then
+	echo "Service count != 500! (1)"
 	go_out 1	
 fi
 # Count should be around 1K
@@ -140,7 +140,7 @@ date
 xadmin psc
 
 # Wait for respawn, now it should be respawned...
-sleep 300
+sleep 100
 
 echo "After sleeping of kill -9"
 date
@@ -151,8 +151,8 @@ xadmin psc
 # ALARM: THIS SHOULD NOT HANG & should be all servers booted.
 CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
-if [[ $CNT -ne 1000 ]]; then
-	echo "Service count != 1000! (2)"
+if [[ $CNT -ne 500 ]]; then
+	echo "Service count != 500! (2)"
 	go_out 2
 fi
 # Count should be around 1K
