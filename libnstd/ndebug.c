@@ -492,7 +492,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char
     
     sprintf(line_start, "%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         mod, lev, (int)dbg_ptr->pid, M_threadnr, ldate, ltime, 
-        (int)(time_val.tv_usec/10000), line_print, line);
+        (int)(time_val.tv_usec/1000), line_print, line);
     
     va_start(ap, fmt);    
     fputs(line_start, dbg_ptr->dbg_f_ptr);

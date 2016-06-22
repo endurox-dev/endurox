@@ -75,6 +75,8 @@ __thread tp_conversation_control_t G_accepted_connection;
 /* List of context slots... */
 long M_contexts[MAX_CONTEXTS];
 
+MUTEX_LOCKDECL(M_env_lock);
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -136,6 +138,13 @@ public int ndrx_load_common_env(void)
     int ret=SUCCEED;
     char *p;
     
+    MUTEX_LOCK_V(M_env_lock);
+    if (G_is_env_loaded)
+    {
+        NDRX_LOG(log_debug, "env already loaded...");
+        goto out;
+    }
+
     /* Read MAX servers */
     p = getenv(CONF_NDRX_SRVMAX);
     if (NULL==p)
@@ -475,7 +484,10 @@ public int ndrx_load_common_env(void)
     
     /* </poll() mode configuration> */
     
+   NDRX_LOG(log_debug, "env loaded ok");
+   G_is_env_loaded = TRUE;
 out:
+    MUTEX_UNLOCK_V(M_env_lock);
     return ret;
 }
 /**
@@ -736,20 +748,11 @@ public int	tpinit (TPINIT * init_data)
     conf.is_client = 1;
     
     /* Load common environment for client - this should be synced...*/
+    if (SUCCEED!=ndrx_load_common_env())
     {
-        MUTEX_LOCK;
-        if (!G_is_env_loaded)
-        {
-            if (SUCCEED!=ndrx_load_common_env())
-            {
-                NDRX_LOG(log_error, "Failed to load common env");
-                MUTEX_UNLOCK; /* hang fix during multiple failed inits. */
-                ret=FAIL;
-                goto out;
-            }
-            G_is_env_loaded = 1;
-        }
-        MUTEX_UNLOCK;
+        NDRX_LOG(log_error, "Failed to load common env");
+        ret=FAIL;
+        goto out;
     }
     
     /* Load the queue prefix */
