@@ -150,21 +150,6 @@ $ cd /home/user1
 $ git clone https://github.com/endurox-dev/endurox endurox
 ---------------------------------------------------------------------
 
-=== Install Third Party dependencies (shipped with Enduro/X source)
-
-Enduro/X have dependency on CGreen unit testing package. Version '1.0.0-beta2'
-is used for system development.
-
-==== C-Green unit testing framework
----------------------------------------------------------------------
-$ cd /home/user1/endurox/ThirdParty/c-unit-tests
-$ tar -xzvf cgreen-svn-561-20141228.tar.gz
-$ cd cgreen
-$ cmake ../cgreen -DLIB_INSTALL_DIR=/usr/lib -DINCLUDE_INSTALL_DIR=/usr/include
-$ make
-$ sudo make install 
----------------------------------------------------------------------
-
 ==== AsciiDoc Integration with Dia
 Also Enduro/X includes documentation in sources, thus additional config is needed
 so that `Dia` package can build illustrations needed for manuals.

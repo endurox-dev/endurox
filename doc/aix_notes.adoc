@@ -194,6 +194,7 @@ Enduro/X basically consists of two parts:
 Each of these two sub-systems have own units tests.
 
 === UBF/FML Unit testing
+
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/sampleconfig
 $ source setndrx
@@ -226,6 +227,7 @@ ATMI testing might take some time. Also ensure that you have few Gigabytes of fr
 disk space, as logging requires some space. Also for AIX there are small default limits
 of max file size. It is recommended to increase it to some 10 GB or so.
 To run the ATMI tests do following:
+
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/atmitest
 $ nohup ./run.sh &
@@ -244,6 +246,27 @@ Running "main"...
 Completed "main": 21 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
+== Trouble shooting
+
+You may expirience issues with libxml2 version between freeware and AIX system provided.
+The error looks like:
+
+---------------------------------------------------------------------
+bash-4.3$ ./cpmsrv 
+exec(): 0509-036 Cannot load program ./cpmsrv because of the following errors:
+        0509-150   Dependent module /opt/freeware/lib/libxml2.a(libxml2.shr_64.o) could not be loaded.
+        0509-152   Member libxml2.shr_64.o is not found in archive 
+---------------------------------------------------------------------
+
+It seems that linker is using /ccs/lib/libxml2.a but at runtime picks up
+/opt/freeware/lib/libxml2.a. One way to solve this is to replace freeware version
+with system provided file. That could be done in following way:
+
+---------------------------------------------------------------------
+# cd /opt/freeware/lib
+# mv libxml2.a backup.libxml2.a
+# ln -s /usr/ccs/lib/libxml2.a .
+---------------------------------------------------------------------
 
 == Conclusions
 At finish you have a configured system which is read to process the transactions
