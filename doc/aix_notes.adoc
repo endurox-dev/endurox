@@ -19,7 +19,7 @@ and does not use GPG-ME encryption for bridges.
 For AIX there is not managmenet tools for Posix queues (like '/dev/mqueue' file system for Linux).
 Thus Enduor/X have implemented wrappers for 'mq_open()' call that makes empty files on file system
 in 'NDRX_QPATH' environment folder. This is kind of registry of queues opened by Enduro/X. Thus for
-performance reasons, it is recommended to mount a memory based partition where middleware can store
+performance reasons, it is recommended to mount a memory based partition where middle-ware can store
 these files.
 
 == Installation process
@@ -88,6 +88,7 @@ last step in the package install block.
 # rpm -i bison-3.0.4-1.aix5.1.ppc.rpm  m4-1.4.17-1.aix5.1.ppc.rpm libsigsegv-2.10-1.aix5.2.ppc.rpm  
 # rpm -i --nodeps libxml2-2.9.3-1.aix5.1.ppc.rpm libxml2-devel-2.9.3-1.aix5.1.ppc.rpm    
 # rpm -i mktemp-1.7-1.aix5.1.ppc.rpm
+# rpm -U --nodeps xz-*
 # rpm -i gcc-4.8.3-1.aix7.1.ppc.rpm gcc-c++-4.8.3-1.aix7.1.ppc.rpm gcc-cpp-4.8.3-1.aix7.1.ppc.rpm  libgcc-4.8.3-1.aix7.1.ppc.rpm libstdc++-devel-4.8.3-1.aix7.1.ppc.rpm  gmp-6.1.0-1.aix5.1.ppc.rpm  mpfr-3.1.4-1.aix5.1.ppc.rpm libmpc-1.0.3-1.aix5.1.ppc.rpm libstdc++-4.8.3-1.aix7.1.ppc.rpm 
 ---------------------------------------------------------------------
 
@@ -231,28 +232,22 @@ To run the ATMI tests do following:
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/atmitest
 $ nohup ./run.sh &
-$ tail -f /home/user1/endurox/atmitest
+$ tail -f /home/user1/endurox/atmitest/test.out
 ...
-Setting domain 2
-Server executable = tpbridge    Id = 101 :      Shutdown succeeded.
-Server executable = convsv21    Id = 50 :       Shutdown succeeded.
-Server executable = atmi.sv21   Id = 30 :       Shutdown succeeded.
-Server executable = tmsrv       Id = 10 :       Shutdown succeeded.
-Shutdown finished. 4 processes stopped.
-atmiclt21: no process found
-************ FINISHED TEST: [test021_xafull/run.sh] with 0 ************
-Running "main"...
-Running "main"...
-Completed "main": 21 passes, 0 failures, 0 exceptions.
+************ FINISHED TEST: [test028_tmq/run.sh] with 0 ************
+Completed "atmi_test_all": 28 passes, 0 failures, 0 exceptions.
+Completed "main": 28 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
 == Trouble shooting
 
-You may expirience issues with libxml2 version between freeware and AIX system provided.
+=== Problems with libxml2
+
+You may experience issues with libxml2 version between free-ware and AIX system provided.
 The error looks like:
 
 ---------------------------------------------------------------------
-bash-4.3$ ./cpmsrv 
+$ ./cpmsrv 
 exec(): 0509-036 Cannot load program ./cpmsrv because of the following errors:
         0509-150   Dependent module /opt/freeware/lib/libxml2.a(libxml2.shr_64.o) could not be loaded.
         0509-152   Member libxml2.shr_64.o is not found in archive 
@@ -267,6 +262,40 @@ with system provided file. That could be done in following way:
 # mv libxml2.a backup.libxml2.a
 # ln -s /usr/ccs/lib/libxml2.a .
 ---------------------------------------------------------------------
+
+
+=== Rebuilding with other compiler
+
+To switch the compilers, it is recommended to clean up CMake cached files before
+doing configuration for other compiler, for example (switching from xlC to GCC):
+
+---------------------------------------------------------------------
+
+$ rm -rf CMakeCache.txt Makefile CMakeFiles/
+$ export OBJECT_MODE=64
+$ export CC=gcc
+$ gcc
+gcc: fatal error: no input files
+compilation terminated.
+$ export CXX=g++
+$ export CFLAGS=-maix64
+$ export CXXFLAGS=-maix64
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-- The C compiler identification is GNU 4.8.3
+-- The CXX compiler identification is GNU 4.8.3
+-- Check for working C compiler: /usr/bin/gcc
+-- Check for working C compiler: /usr/bin/gcc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/g++
+-- Check for working CXX compiler: /usr/bin/g++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+...
+---------------------------------------------------------------------
+
 
 == Conclusions
 At finish you have a configured system which is read to process the transactions
