@@ -634,7 +634,7 @@ public int tm_committrans(UBFH *p_ub)
         atmi_xa_set_error_fmt(p_ub, TPEINVAL, 0, 
                 "Transaction not in PREPARED stage!");
         /* we shall unlock the transaction here! */
-        tms_log_get_entry();
+        tms_unlock_entry(p_tl);
         FAIL_OUT(ret);
     }
     
