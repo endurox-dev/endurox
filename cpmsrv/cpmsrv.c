@@ -166,6 +166,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret=SUCCEED;
     signed char c;
     struct sigaction sa;
+    sigset_t wanted; 
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* Get the env */
@@ -206,11 +207,26 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         G_config.chk_interval = CLT_KILL_INTERVAL_DEFAULT;
     }
+
+    /* < seems with out this, sigaction on linux does not work... >*/
+    sigemptyset(&wanted); 
+
+    sigaddset(&wanted, SIGCHLD); 
+    if (SUCCEED!=pthread_sigmask(SIG_UNBLOCK, &wanted, NULL) )
+    {
+        NDRX_LOG(log_error, "pthread_sigmask failed for SIGCHLD: %s", strerror(errno));
+        FAIL_OUT(ret);
+    }
+    /* </ seems with out this, sigaction on linux does not work... >*/
     
     sa.sa_handler = sign_chld_handler;
     sigemptyset (&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
-    sigaction (SIGCHLD, &sa, 0);
+    if (FAIL==sigaction (SIGCHLD, &sa, 0))
+    {
+        NDRX_LOG(log_error, "sigaction failed for SIGCHLD: %s", strerror(errno));
+        FAIL_OUT(ret);
+    }
 
     /* signal(SIGCHLD, sign_chld_handler); */
     
