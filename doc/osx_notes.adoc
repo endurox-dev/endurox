@@ -1,0 +1,157 @@
+Building Enduro/X On OSX Platform
+=================================
+Madars Vitolins
+v1.0, 2016-06:
+	Initial draft
+:doctype: book
+
+About manual
+------------
+This manual describes how to build 'Enduro/X' on fresh installed OS X. Document is based
+on operatin system version 10.11 (El Capitan).
+
+
+== Overview
+Enduro/X normally use Operating System provided Posix kernel queues, however OS X does not have
+this subsystem, however Enduro/X provides queue emulation via POSIX Threads functionality. This
+includes process shared semaphores and memory mapped files. Enduro/X CMake scripts will automatically
+do the configuration and enable this functionality.
+
+In the result queues will we listed on file system. The recommendation is to use seperate folder this
+for example "/tmp/mq".
+
+This document covers only core fucntionality of the Enduro/X building. That's mean that building of:
+. documentation;
+. gpg-me;
+is out of the scope.
+
+== Installation process
+
+=== Packages to be installed
+
+. Apple Xcode (https://developer.apple.com/xcode/) install from Appstore or other sources
+. Git source code version control system
+. CMake (https://cmake.org/install/)
+
+=== Getting the source code
+For test purposes we will parepare new user for which Enduro/X will built.
+
+---------------------------------------------------------------------
+# useradd -m user1
+# su - user1
+$ cd /home/user1
+$ git clone https://github.com/endurox-dev/endurox endurox
+---------------------------------------------------------------------
+
+=== Enduro/X basic Environment configuration for HOME directory
+This code bellow creates 'ndrx_home' executable file which loads basic environment, 
+so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
+This also assumes that you are going to install to '$HOME/endurox/dist' folder.
+
+
+NOTE: If we install the libaries in dist/lib64, OS X will still try for to get the the
+shared libraries for origin build folders. Thus it is recommended to configure environment file
+bit more advanced, to enable OS X library loader to search orgin lib folders firstly.
+
+NOTE: For test cases like 021 (XA Testing) and 028 (TMQUEUE) tests, the scripts uses
+'DYLD_FALLBACK_LIBRARY_PATH' environment variable. Hoever testing scripts are using '/bin/bash',
+which means that by enabled SIP (System Integrity Protection), the variable is dropped. Thus 
+pass all ATMI tests, you have to disable SIP.
+
+---------------------------------------------------------------------
+cat << EOF > $HOME/ndrx_home
+#!/bin/bash
+
+# Where app domain lives
+export NDRX_APPHOME=/home/user1/endurox
+# Where NDRX runtime lives
+export NDRX_HOME=/home/user1/endurox/dist/bin
+# Debug config too
+export NDRX_DEBUG_CONF=/home/user1/endurox/sampleconfig/debug.conf
+
+# NDRX config too.
+export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
+
+# Access for binaries
+export PATH=$PATH:/$HOME/endurox/dist/bin
+
+# LIBPATH for .so 
+export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib
+
+# UBF/FML field tables
+export export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+
+EOF
+
+$ chmod +x $HOME/ndrx_home
+---------------------------------------------------------------------
+
+=== Building the code
+---------------------------------------------------------------------
+$ cd /home/user1/endurox
+# If you want to have install folder to /home/user1/endurox/dist
+# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/ .
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ make 
+$ make install
+---------------------------------------------------------------------
+
+== Unit Testing
+
+Enduro/X basically consists of two parts:
+. XATMI runtime;
+. UBF/FML buffer processing. 
+Each of these two sub-systems have own units tests.
+
+=== UBF/FML Unit testing
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/ubftest
+$ ./ubfunit1 2>/dev/null
+Running "main"...
+Completed "main": 5751 passes, 0 failures, 0 exceptions.
+---------------------------------------------------------------------
+
+=== XATMI Unit testing
+ATMI testing might take some time. Also ensure that you have few Gigabytes of free 
+disk space, as logging requires some space. To run the ATMI tests do following:
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/atmitest
+$ nohup ./run.sh &
+$ tail -f /home/user1/endurox/atmitest
+...
+Setting domain 2
+Server executable = tpbridge    Id = 101 :      Shutdown succeeded.
+Server executable = convsv21    Id = 50 :       Shutdown succeeded.
+Server executable = atmi.sv21   Id = 30 :       Shutdown succeeded.
+Server executable = tmsrv       Id = 10 :       Shutdown succeeded.
+Shutdown finished. 4 processes stopped.
+atmiclt21: no process found
+************ FINISHED TEST: [test021_xafull/run.sh] with 0 ************
+Running "main"...
+Running "main"...
+Completed "main": 21 passes, 0 failures, 0 exceptions.
+---------------------------------------------------------------------
+
+
+== Conclusions
+At finish you have a configured system which is read to process the transactions
+by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
+to other same architecture machine and run it there with out need of building.
+This process is described in <<BINARY_INSTALL>> guide.
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Resources
+- [[[BINARY_INSTALL]]] See Enduro/X 'binary_install' manual.
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////

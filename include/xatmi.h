@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 #include <stdint.h>
 #include <ubf.h>
 /*---------------------------Macros-------------------------------------*/
@@ -226,7 +226,19 @@ extern "C" {
 /* Max calls at the same tame
  * This is  used by Call Descritptor check 
  */
+#ifdef EX_OS_DARWIN
+
+/* fails to build on libatmi/init.c with 
+ * - ld error: section __DATA/__thread_bss extends beyond end of file
+ * thus reduce the array.
+ */
+#define MAX_ASYNC_CALLS      1000
+
+#else
+
 #define MAX_ASYNC_CALLS      16384
+
+#endif
 
 /* Bigger connection count may slowdown whole system. */
 #define MAX_CONNECTIONS      5

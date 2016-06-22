@@ -92,6 +92,12 @@ function set_dom1 {
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_DRIVERLIB=$TESTDIR/$NDRX_XA_DRIVERLIB_FILENAME
     export NDRX_XA_RMLIB=$TESTDIR/libxadrv.so
+
+    if [ "$(uname)" == "Darwin" ]; then
+        export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:`pwd`
+        export NDRX_XA_RMLIB=$TESTDIR/libxadrv.dylib
+    fi
+
     export NDRX_XA_LAZY_INIT=0
 
 }
@@ -113,6 +119,12 @@ function set_dom2 {
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_DRIVERLIB=$TESTDIR/$NDRX_XA_DRIVERLIB_FILENAME
     export NDRX_XA_RMLIB=$TESTDIR/libxadrv.so
+
+    if [ "$(uname)" == "Darwin" ]; then
+        export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:`pwd`
+        export NDRX_XA_RMLIB=$TESTDIR/libxadrv.dylib
+    fi
+
     export NDRX_XA_LAZY_INIT=0
 
 }

@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 #include <stdio.h>
 #include <limits.h>
 #include <thlock.h>

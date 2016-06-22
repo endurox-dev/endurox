@@ -42,6 +42,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <sys/param.h>
 #include <sys_mqueue.h>
@@ -70,7 +71,7 @@ public void sign_chld_handler(int sig)
 
     memset(&rusage, 0, sizeof(rusage));
 
-    while (0!=(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
+    while (0<(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
     {
         /* - no debug please... Can cause lockups...
         NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
@@ -91,7 +92,7 @@ public void sign_chld_handler(int sig)
         
     }
 
-    signal(SIGCHLD, sign_chld_handler);
+    /*signal(SIGCHLD, sign_chld_handler);*/
 }
 
 
@@ -147,6 +148,7 @@ if (i<2) /*no wait for killl... */
 }
     }
     
+    NDRX_LOG(log_debug, "cpm_killall done");
     return SUCCEED;
 }
 

@@ -132,10 +132,10 @@ public atmi_xa_log_t * tms_log_get_entry(char *tmxid)
         }
         else
         {
+            r->lockthreadid = ndrx_gettid();
             NDRX_LOG(log_info, "Transaction [%s] locked for thread_id: %lu",
                     tmxid,
                     r->lockthreadid);
-            r->lockthreadid = ndrx_gettid();
         }
     }
     

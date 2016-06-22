@@ -29,7 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#include <config.h>
+#include <ndrx_config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,6 +102,49 @@ out:
 }
 
 /**
+ * Handle the dead child detected either by sigwait or signal.
+ * @param chldpid
+ * @param stat_loc
+ */
+private void handle_child(pid_t chldpid, int stat_loc)
+{
+    char buf[ATMI_MSG_MAX_SIZE];
+    srv_status_t *status = (srv_status_t *)buf;
+
+    memset(buf, 0, sizeof(buf));
+    
+    if (chldpid>0)
+    {
+        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
+                                           chldpid, stat_loc);
+        if (WIFSTOPPED(stat_loc))
+        {
+            NDRX_LOG(log_warn, "Process is stopped - ignore..");
+            return;
+        }
+        status->srvinfo.pid = chldpid;
+
+        if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
+        {
+            NDRX_LOG(log_error, "Process normal shutdown!");
+            status->srvinfo.state = NDRXD_PM_EXIT;
+        }
+        else if (WIFEXITED(stat_loc) && TPEXIT_ENOENT == WEXITSTATUS(stat_loc))
+        {
+            NDRX_LOG(log_error, "Binary not found!");
+            status->srvinfo.state = NDRXD_PM_ENOENT;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Process abnormal shutdown!");
+            status->srvinfo.state = NDRXD_PM_DIED;
+        }
+        /* NDRX_LOG(log_warn, "Sending notification"); */
+        self_notify(status, FALSE);
+    }
+}
+
+/**
  * Checks for child exit.
  * We will let mainthread to do all internal struct related work!
  * @return Got child exit
@@ -110,15 +153,8 @@ private void * check_child_exit(void *arg)
 {
     pid_t chldpid;
     int stat_loc;
-    struct rusage rusage;
     sigset_t blockMask;
     int sig;
-    
-    char buf[ATMI_MSG_MAX_SIZE];
-    srv_status_t *status = (srv_status_t *)buf;
-
-    memset(buf, 0, sizeof(buf));
-    /* memset(&rusage, 0, sizeof(rusage)); */
     
         
     sigemptyset(&blockMask);
@@ -127,50 +163,96 @@ private void * check_child_exit(void *arg)
     NDRX_LOG(log_debug, "check_child_exit - enter...");
     for (;;)
     {
+	int got_something = 0;
+
+/* seems not working on darwin ... thus just wait for pid.
+ * if we do not have any childs, then sleep for 1 sec.
+ */
+#ifndef EX_OS_DARWIN
+        NDRX_LOG(log_debug, "about to sigwait()");
         if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
+#endif
         
+        NDRX_LOG(log_debug, "about to wait()");
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
-            if (chldpid>0)
-            {
-                NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
-                                                   chldpid, stat_loc);
-                if (WIFSTOPPED(stat_loc))
-                {
-                    NDRX_LOG(log_warn, "Process is stopped - ignore..");
-                    continue;
-                }
-                status->srvinfo.pid = chldpid;
-
-                if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
-                {
-                    NDRX_LOG(log_error, "Process normal shutdown!");
-                    status->srvinfo.state = NDRXD_PM_EXIT;
-                }
-                else if (WIFEXITED(stat_loc) && TPEXIT_ENOENT == WEXITSTATUS(stat_loc))
-                {
-                    NDRX_LOG(log_error, "Binary not found!");
-                    status->srvinfo.state = NDRXD_PM_ENOENT;
-                }
-                else
-                {
-                    NDRX_LOG(log_error, "Process abnormal shutdown!");
-                    status->srvinfo.state = NDRXD_PM_DIED;
-                }
-                /* NDRX_LOG(log_warn, "Sending notification"); */
-                self_notify(status, FALSE);
-            }
+            got_something++;
+            handle_child(chldpid, stat_loc);
         }
+#if EX_OS_DARWIN
         NDRX_LOG(6, "wait: %s", strerror(errno));
-        /* sleep(1); */
+        if (!got_something)
+        {
+            sleep(1);
+        }
+#endif
     }
    
     NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
     return NULL;
+}
+
+
+/**
+ * Checks for child exit.
+ * We will let mainthread to do all internal struct related work!
+ * @return Got child exit
+ */
+public int thread_check_child_exit(void)
+{
+    pid_t chldpid;
+    int stat_loc;
+    struct rusage rusage;
+    int ret=FALSE;
+    char buf[ATMI_MSG_MAX_SIZE];
+    srv_status_t *status = (srv_status_t *)buf;
+
+    memset(buf, 0, sizeof(buf));
+    memset(&rusage, 0, sizeof(rusage));
+
+    while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
+    {
+        handle_child(chldpid, stat_loc);
+    }
+    
+    return ret;
+}
+
+/**
+ * Thread main entry...
+ * @param arg
+ * @return
+ */
+private void *sigthread_enter(void *arg)
+{
+    NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
+    thread_check_child_exit();
+    NDRX_LOG(log_error, "***********SIGNAL THREAD EXIT***********");
+    
+    return NULL;
+}
+
+/**
+ * NDRXD process got sigchld (handling the signal if OS have slipped the thing) out
+ * of the mask.
+ * @return
+ */
+void sign_chld_handler(int sig)
+{
+    pthread_t thread;
+    pthread_attr_t pthread_custom_attr;
+
+    pthread_attr_init(&pthread_custom_attr);
+    /* clean up resources after exit.. */
+    pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
+    /* set some small stacks size, 1M should be fine! */
+    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
+
 }
 
 /**
@@ -183,9 +265,19 @@ public void ndrxd_sigchld_init(void)
     sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
     pthread_attr_t pthread_custom_attr_dog;
+    struct sigaction sa; /* Seem on AIX signal might slip.. */
     char *fn = "ndrxd_sigchld_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
+    
+    /* our friend AIX, might just ignore the SIG_BLOCK and raise signal
+     * Thus we will handle the stuff in as it was in Enduro/X 2.5
+     */
+    
+    sa.sa_handler = sign_chld_handler;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sigaction (SIGCHLD, &sa, 0);
     
     /* Block the notification signal (do not need it here...) */
     
@@ -196,7 +288,6 @@ public void ndrxd_sigchld_init(void)
     {
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }
-    
     
     pthread_attr_init(&pthread_custom_attr);
     pthread_attr_init(&pthread_custom_attr_dog);

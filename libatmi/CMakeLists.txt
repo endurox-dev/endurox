@@ -79,6 +79,8 @@ add_library (atmi SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmi ubf nstd dl)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(atmi ubf nstd dl)
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
     # 
     # linking lib against pthread for XL C on aix, otherwise we get error like: 

@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include <memory.h>
 
+#include <ndrx_config.h>
+#include <sys_unix.h>
 #include <ndrstandard.h>
 #include <ntimer.h>
 #include "ndebug.h"

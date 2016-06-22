@@ -63,6 +63,8 @@ elseif (${CMAKE_OS_NAME} STREQUAL "SUNOS")
 elseif (${CMAKE_OS_NAME} STREQUAL "AIX")
     SET(NSTD_SYS "sys_aix.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
+elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    SET(NSTD_SYS "sys_darwin.c")
 endif ()
 
 

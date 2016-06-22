@@ -76,6 +76,8 @@ add_library (ubf SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
     # for XL tls
     target_link_libraries(ubf pthread)

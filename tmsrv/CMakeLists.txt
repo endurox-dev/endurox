@@ -53,7 +53,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 ############################# Executables ######################################
 add_executable (tmsrv tmsrv.c xasrvutil.c log.c local.c background.c tmapi.c
                     statedrv.c ../libatmisrv/rawmain_integra.c)
-target_link_libraries (tmsrv m atmisrvinteg exuuid nstd atmi ubf thpool rt dl pthread)
+target_link_libraries (tmsrv m atmisrvinteg exuuid nstd atmi ubf thpool ${RT_LIB} dl pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

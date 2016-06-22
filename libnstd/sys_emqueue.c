@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include <ndrstandard.h>
 #if defined(WIN32)
@@ -91,6 +92,9 @@ out:
 private int qd_hash_chk(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
+    
+    NDRX_LOG(log_debug, "checking qd %p", qd);
+    
     MUTEX_LOCK_V(M_lock);
     
     HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
@@ -116,7 +120,7 @@ private void qd_hash_del(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
     
-    NDRX_LOG(log_debug, "Unregistering %p as mqd_t", ret);
+    NDRX_LOG(log_debug, "Unregistering %p as mqd_t", qd);
     
     MUTEX_LOCK_V(M_lock);
     HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
@@ -540,6 +544,7 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
         {
+            NDRX_LOG(log_debug, "queue empty on %p", emqd);
             if (NULL==__abs_timeout) {
                 pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
             } else {
@@ -547,6 +552,7 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
                 if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
                         __abs_timeout))
                 {
+                    NDRX_LOG(log_debug, "%p timed out", emqd);
                     errno = ETIMEDOUT;
                     goto err;
                 }
@@ -556,7 +562,7 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
     }
 
     if ( (index = emqhdr->emqh_head) == 0) {
-        fprintf(stderr, "emq_receive: curmsgs = %ld; head = 0",attr->mq_curmsgs);
+        NDRX_LOG(log_error, "emq_timedreceive: curmsgs = %ld; head = 0",attr->mq_curmsgs);
         abort();
     }
 
@@ -577,10 +583,14 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
     attr->mq_curmsgs--;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
+    
+    NDRX_LOG(log_debug, "emq_timedreceive - got something len=%d", len);
     return(len);
 
 err:
     pthread_mutex_unlock(&emqhdr->emqh_lock);
+
+    NDRX_LOG(log_debug, "emq_timedreceive - failed");
     return(-1);
 }
 
@@ -640,8 +650,21 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
         /* wait for room for one message on the queue */
         while (attr->mq_curmsgs >= attr->mq_maxmsg) {
             
+            NDRX_LOG(log_warn, "waiting on q %p", emqd);
             if (NULL==__abs_timeout) {
+                /* Seems  we might get stalled, if
+                 * the queue is full and there is tons of senders..
+                 * Thuse better use wait with timeout.
                 pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
+                 */
+                struct timespec abs_timeout;
+                struct timeval  timeval;
+                gettimeofday (&timeval, NULL);
+                abs_timeout.tv_sec = timeval.tv_sec+2; /* wait two secc */
+                abs_timeout.tv_nsec = timeval.tv_usec*1000;
+                        
+                pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
+                        &abs_timeout);
             }
             else {
                 /* wait some time...  */
@@ -652,6 +675,7 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
                     goto err;
                 }
             }
+            NDRX_LOG(log_warn, "%p - accessed ok", emqd);
         }
     }
     /* nmsghdr will point to new message */

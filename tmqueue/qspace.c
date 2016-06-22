@@ -118,7 +118,7 @@ public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
     int ret = SUCCEED;
     
     strcpy(hdr->qspace, qspace);
-    strcpy(hdr->qname, qname);
+   /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
     hdr->command_code = TMQ_STORCMD_NEWMSG;
     strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
     hdr->nodeid = nodeid;
@@ -503,12 +503,6 @@ public int tmq_qconf_addupd(char *qconfstr)
     int ret = SUCCEED;
     
     NDRX_LOG(log_info, "Add new Q: [%s]", qconfstr);
-    
-    if (NULL==qconf)
-    {
-        NDRX_LOG(log_error, "Malloc failed for tmq_qconfig_t!");
-        FAIL_OUT(ret);
-    }
     
     MUTEX_LOCK_V(M_q_lock);
     

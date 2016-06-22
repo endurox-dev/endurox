@@ -32,7 +32,7 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

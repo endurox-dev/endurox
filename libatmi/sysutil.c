@@ -29,7 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#include <config.h>
+#include <ndrx_config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -39,6 +39,7 @@
 #include <dlfcn.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <ndrstandard.h>
 #include <uthash.h>

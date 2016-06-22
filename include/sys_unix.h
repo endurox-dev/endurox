@@ -36,12 +36,19 @@
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <config.h>
+#include <ndrx_config.h>
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>
 #include <sys_mqueue.h>
 #include <ndrstandard.h>
+
+#ifdef EX_OS_DARWIN
+#include <sys/types.h>
+#include <sys/_types/_timespec.h>
+#include <mach/mach.h>
+#include <mach/clock.h>
+#endif
 
 #ifdef EX_USE_EPOLL
 #include <sys/epoll.h>
@@ -67,6 +74,19 @@ extern "C" {
 #define EX_EPOLL_CTL_DEL        2
     
 #define EX_EPOLL_FLAGS          POLLIN
+
+#endif
+
+#ifdef EX_OS_DARWIN
+
+/* The opengroup spec isn't clear on the mapping from REALTIME to CALENDAR
+ being appropriate or not.
+ http://pubs.opengroup.org/onlinepubs/009695299/basedefs/time.h.html */
+
+/* XXX only supports a single timer */
+#define TIMER_ABSTIME -1
+#define CLOCK_REALTIME CALENDAR_CLOCK
+#define CLOCK_MONOTONIC SYSTEM_CLOCK
 
 #endif
 /******************************************************************************/
@@ -162,9 +182,16 @@ struct mq_list
     string_list_t *next;
 };
 
+#ifdef EX_OS_DARWIN
+typedef int clockid_t;
+#endif
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+#ifdef EX_OS_DARWIN
+extern int clock_gettime(clockid_t clk_id, struct timespec *tp);
+#endif
 
 /* poll ops */
 extern NDRX_API void ndrx_epoll_sys_init(void);

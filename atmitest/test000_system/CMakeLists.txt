@@ -52,7 +52,7 @@ add_executable (atmiclt0 atmiclt0.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmiclt0  atmiclt atmi ubf nstd m rt dl pthread)
+target_link_libraries (atmiclt0  atmiclt atmi ubf nstd m ${RT_LIB} dl pthread)
 
 set_target_properties(atmiclt0 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

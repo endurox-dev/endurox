@@ -52,6 +52,8 @@ add_library (atmiclt SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmiclt atmi ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(atmiclt atmi ubf nstd)
 endif()
 
 install (TARGETS 

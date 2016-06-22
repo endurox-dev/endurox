@@ -76,6 +76,6 @@ add_subdirectory (test028_tmq)
 add_executable (atmiunit1 atmiunit1.c)
 ################################################################################
 # Master test case driver
-target_link_libraries (atmiunit1 ubf cgreen m nstd rt pthread)
+target_link_libraries (atmiunit1 ubf cgreen m nstd ${RT_LIB} pthread)
 set_target_properties(atmiunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

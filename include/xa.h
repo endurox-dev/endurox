@@ -17,7 +17,7 @@
 #ifndef XA_H
 #define XA_H
 
-#include <config.h>
+#include <ndrx_config.h>
 /*
  * Transaction branch identification: XID and NULLXID:
  */

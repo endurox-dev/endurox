@@ -44,6 +44,7 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <stdint.h>
 #include <ntimer.h>
+#include <sys/sem.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
