@@ -297,6 +297,14 @@ $ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=
 ---------------------------------------------------------------------
 
 
+=== Thread local storage issues
+
+On AIX 6.1 there with gcc version 4.8.3 works on with __thread flag. However, it looks like
+On AIX 7.1 with the same gcc version __thread local storage is not working. The symptoms are that
+varous test cases fail, for example test028 (tmqueue). While this happens it is recommended
+to use xlC compiler.
+
+
 == Conclusions
 At finish you have a configured system which is read to process the transactions
 by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
