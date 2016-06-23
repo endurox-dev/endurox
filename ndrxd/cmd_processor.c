@@ -322,7 +322,13 @@ public int command_wait_and_run(int *finished, int *abort)
     
     /* Change to blocked, if not already! */
     ndrx_q_setblock(G_command_state.listenq, TRUE);
-    
+    /* For OSX we need a special case here, we try to access to 
+     * the queue for serveral minutes. If we get trylock rejected for
+     * configured number of time, we shall close the queue and open it again
+     * That would mean that somebody have got the queue lock and died for 
+     * some reason (killed). In that secnario, robust mutexes might help
+     * but OSX do no have such....
+     */ 
     if (FAIL==(data_len = ndrx_mq_timedreceive (G_command_state.listenq,
                     msg_buffer_max, buf_max, &prio, &abs_timeout)))
     {
