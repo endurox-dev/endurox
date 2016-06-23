@@ -69,34 +69,27 @@ private pthread_t M_signal_thread; /* Signalled thread */
 public int self_notify(srv_status_t *status, int block)
 {
     int ret=SUCCEED;
-    int i, offset=0;
     size_t  send_size = sizeof(srv_status_t);
 
     NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
                         send_size, status->svc_count);
-    
-    /* Change to blocked, if not already! 
-     * We switch to non blocked, because if Q is full, we will get deadlock!
+    /* we want new q/open + close here,
+     * so that we do not interference with our maint queue blocked/non blocked flags.
      */
-    if (SUCCEED!=ndrx_q_setblock(G_command_state.listenq, block))
-    {
-        ret=FAIL;
-        goto out;
-    }
-    
-    ret=cmd_generic_call(NDRXD_COM_PMNTIFY_RQ, NDRXD_SRC_NDRXD,
+    ret=cmd_generic_callfl(NDRXD_COM_PMNTIFY_RQ, NDRXD_SRC_NDRXD,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)status, send_size,
                         G_command_state.listenq_str,
-                        G_command_state.listenq,
-                        G_command_state.listenq,
+                        (mqd_t)FAIL,
+                        (mqd_t)FAIL,
                         G_command_state.listenq_str,
                         0, 
                         NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE);
+                        FALSE, TPNOBLOCK);
+    
 out:
     return ret;
 }
