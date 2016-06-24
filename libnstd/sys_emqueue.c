@@ -195,6 +195,8 @@ int emq_close(mqd_t emqd)
     emqinfo->emqi_magic = 0;          /* just in case */
     free(emqinfo);
     qd_hash_del(emqd);
+
+    NDRX_LOG(log_debug, "into: emq_close ret 0");
     
     return(0);
 }
@@ -206,6 +208,7 @@ int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     struct mq_attr *attr;
     struct emq_info *emqinfo;
 
+    NDRX_LOG(log_debug, "into: emq_getattr");
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
@@ -230,6 +233,7 @@ int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     emqstat->mq_curmsgs = attr->mq_curmsgs;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
+    NDRX_LOG(log_debug, "into: emq_getattr ret 0");
     return(0);
 }
 
@@ -310,6 +314,9 @@ mqd_t emq_open(const char *pathname, int oflag, ...)
     nonblock = oflag & O_NONBLOCK;
     oflag &= ~O_NONBLOCK;
     emqinfo = NULL;
+    NDRX_LOG(log_debug, "into: emq_open");
+
+
 again:
     if (oflag & O_CREAT) {
         va_start(ap, oflag); /* init ap to final named argument */
@@ -417,6 +424,7 @@ again:
                 NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
                 errno = ENOMEM;
             }
+            NDRX_LOG(log_debug, "into: emq_open ret ok");
             return((mqd_t) emqinfo);
     }
 exists:
@@ -474,6 +482,7 @@ exists:
     }
     
     return((mqd_t) emqinfo);
+    NDRX_LOG(log_debug, "into: emq_open ret ok");
 pthreaderr:
     errno = i;
 err:
@@ -496,6 +505,7 @@ err:
         free(emqinfo);
     close(fd);
     errno = save_errno;
+    NDRX_LOG(log_debug, "into: emq_open ret -1");
     return((mqd_t) -1);
 }
 
@@ -511,6 +521,10 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
     struct mq_attr *attr;
     struct msg_hdr *msghdr;
     struct emq_info *emqinfo;
+    int try =0;
+
+retry:
+    NDRX_LOG(log_debug, "into: emq_timedreceive");
     
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
@@ -523,6 +537,7 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
         errno = EBADF;
         return(-1);
     }
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     emqhdr = emqinfo->emqi_hdr;        /* struct pointer */
     mptr = (char *) emqhdr;          /* byte pointer */
     attr = &emqhdr->emqh_attr;
@@ -530,20 +545,31 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
         errno = n;
         return(-1);
     }
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
 
     if (maxlen < (size_t)attr->mq_msgsize) {
         errno = EMSGSIZE;
         goto err;
     }
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     if (attr->mq_curmsgs == 0) {            /* queue is empty */
         if (emqinfo->emqi_flags & O_NONBLOCK) {
             errno = EAGAIN;
             goto err;
         }
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
         /* wait for a message to be placed onto queue */
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
         {
+            if (try>10)
+            {
+                try = 0;
+                NDRX_LOG(log_warn, "Doing retry...");
+                emqhdr->emqh_nwait--;
+                pthread_mutex_unlock(&emqhdr->emqh_lock);
+                goto retry;
+            }
             NDRX_LOG(log_debug, "queue empty on %p", emqd);
             if (NULL==__abs_timeout) {
                 pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
@@ -558,14 +584,17 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
                 }
             }
         }
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
         emqhdr->emqh_nwait--;
     }
 
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     if ( (index = emqhdr->emqh_head) == 0) {
         NDRX_LOG(log_error, "emq_timedreceive: curmsgs = %ld; head = 0",attr->mq_curmsgs);
         abort();
     }
 
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     msghdr = (struct msg_hdr *) &mptr[index];
     emqhdr->emqh_head = msghdr->msg_next;     /* new head of list */
     len = msghdr->msg_len;
@@ -573,15 +602,21 @@ ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *pri
     if (priop != NULL)
         *priop = msghdr->msg_prio;
 
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     /* just-read message goes to front of free list */
     msghdr->msg_next = emqhdr->emqh_free;
     emqhdr->emqh_free = index;
 
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     /* wake up anyone blocked in emq_send waiting for room */
     if (attr->mq_curmsgs == attr->mq_maxmsg)
-        pthread_cond_signal(&emqhdr->emqh_wait);
+    {
+    /*    pthread_cond_signal(&emqhdr->emqh_wait); */
+        pthread_cond_broadcast(&emqhdr->emqh_wait);
+    }
     attr->mq_curmsgs--;
 
+    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     pthread_mutex_unlock(&emqhdr->emqh_lock);
     
     NDRX_LOG(log_debug, "emq_timedreceive - got something len=%d", len);
@@ -605,6 +640,10 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
     struct mq_attr  *attr;
     struct msg_hdr  *msghdr, *nmsghdr, *pmsghdr;
     struct emq_info  *emqinfo;
+    int try = 0;
+
+retry:
+    NDRX_LOG(log_debug, "into: emq_timedsend");
 
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
@@ -650,13 +689,29 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
         /* wait for room for one message on the queue */
         while (attr->mq_curmsgs >= attr->mq_maxmsg) {
             
+            try++;
+            if (try>10)
+            {
+                try = 0;
+                /* This stuff we need for Darwin. For some reason
+                 * it hangs on mutex it is always retruning
+                 * and sender cannot get access to Q anymore.
+                 * Thus forcibly we will close the mutex and re-enter
+                 * again... (with out this test case 012 fails)
+                 */
+                NDRX_LOG(log_warn, "Doing retry...");
+                pthread_mutex_unlock(&emqhdr->emqh_lock);
+                goto retry;
+            }
             NDRX_LOG(log_warn, "waiting on q %p", emqd);
             if (NULL==__abs_timeout) {
                 /* Seems  we might get stalled, if
                  * the queue is full and there is tons of senders..
-                 * Thuse better use wait with timeout.
+                 * Thuse better use wait with timeout. */
                 pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
-                 */
+#if 0
+                NDRX_LOG(log_debug, "w/o time-out");
+                usleep(2000);
                 struct timespec abs_timeout;
                 struct timeval  timeval;
                 gettimeofday (&timeval, NULL);
@@ -665,15 +720,34 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
                         
                 pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
                         &abs_timeout);
+#endif
             }
             else {
                 /* wait some time...  */
+                struct timespec abs_timeout;
+                struct timeval  timeval;
+                NDRX_LOG(log_debug, "timed wait...");
+                gettimeofday (&timeval, NULL);
+                abs_timeout.tv_sec = timeval.tv_sec+2; /* wait two secc */
+                abs_timeout.tv_nsec = timeval.tv_usec*1000;
+
+                if (timeval.tv_sec > __abs_timeout->tv_sec ||
+                      (timeval.tv_sec == __abs_timeout->tv_sec && 
+				timeval.tv_usec*1000 > __abs_timeout->tv_nsec))
+                {
+                    NDRX_LOG(log_error, "Call already expired...");
+                    errno = ETIMEDOUT;
+                    goto err;
+                }
+
                 if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
                         __abs_timeout))
                 {
                     errno = ETIMEDOUT;
                     goto err;
                 }
+                abs_timeout.tv_sec = timeval.tv_sec+2; /* wait two secc */
+                abs_timeout.tv_nsec = timeval.tv_usec*1000;
             }
             NDRX_LOG(log_warn, "%p - accessed ok", emqd);
         }
@@ -709,14 +783,19 @@ int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
     }
     /* wake up anyone blocked in emq_receive waiting for a message */ 
     if (attr->mq_curmsgs == 0)
-        pthread_cond_signal(&emqhdr->emqh_wait);
+    {
+    /*    pthread_cond_signal(&emqhdr->emqh_wait); */
+        pthread_cond_broadcast(&emqhdr->emqh_wait);
+    }
     attr->mq_curmsgs++;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
+    NDRX_LOG(log_debug, "into: emq_timedsend - return 0");
     return(0);
 
 err:
     pthread_mutex_unlock(&emqhdr->emqh_lock);
+    NDRX_LOG(log_debug, "into: emq_timedsend - return -1");
     return(-1);
 }
 
@@ -743,6 +822,8 @@ int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqs
     struct emq_hdr  *emqhdr;
     struct mq_attr *attr;
     struct emq_info *emqinfo;
+
+    NDRX_LOG(log_debug, "into: emq_setattr");
 
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
@@ -775,12 +856,18 @@ int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqs
         emqinfo->emqi_flags &= ~O_NONBLOCK;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
+    NDRX_LOG(log_debug, "into: emq_setattr - return 0");
     return(0);
 }
 
 int emq_unlink(const char *pathname)
 {
+    NDRX_LOG(log_debug, "into: emq_unlink");
     if (unlink(get_path(pathname)) == -1)
+    {
+        NDRX_LOG(log_debug, "into: emq_unlink ret -1");
         return(-1);
+    }
+    NDRX_LOG(log_debug, "into: emq_unlink ret 0");
     return(0);
 }
