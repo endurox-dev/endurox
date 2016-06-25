@@ -5,7 +5,7 @@ Platform provides X/Open XATMI and XA APIs for C/C++ applications. EnduroX can b
 
 EnduroX provides SOA architecture for C/C++ applications and allows to cluster application in fault tolerant way over multiple physical servers. EnduroX provides Oracle(R) Tuxedo(R) FML/FML32 library emulation, including boolean expressions. Other Tuxedo specific APIs are supported, such as tpforward() and work with distributed transactions (tpbegin(), tpcommit(), etc.).
 
-Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues).
+Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues). Starting with Enduro/X Version 3.1.2 IBM AIX (6.1 and 7.1), Oracle Solaris 11, MAC OS X (experimental) nad Cygwin (experimental) support is added. 
 
 - Build and installation guides are located at: http://www.endurox.org
 
@@ -18,3 +18,4 @@ PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to g
 # Releases
 
 - Version 2.5.1 released on 18/05/2016. Support for transactional persistent message queues. Provides APIs: tpenqueue(), tpdequeue() and command line management tools. See doc/persistent_message_queues_overview.adoc, doc/manpage/tmqueue.adoc, doc/manpage/xadmin.adoc, doc/manpage/q.config.adoc. Use cases can be seen under atmitests/test028_tmq
+- Version 3.2.1 released on 25/06/2016. Added support for other Unix systems. Currently at production grade supported OSes are IBM AIX and Oracle Solaris. MAC OS X and Cygwin versions are considered as experimental.
