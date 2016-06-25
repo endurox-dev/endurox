@@ -1,6 +1,6 @@
 Building Enduro/X On OSX Platform
 =================================
-Madars Vitolins
+user1 Vitolins
 v1.0, 2016-06:
 	Initial draft
 :doctype: book
@@ -48,8 +48,18 @@ For test purposes we will parepare new user for which Enduro/X will built.
 ---------------------------------------------------------------------
 # useradd -m user1
 # su - user1
-$ cd /home/user1
+$ cd /Users/user1
 $ git clone https://github.com/endurox-dev/endurox endurox
+---------------------------------------------------------------------
+
+To work with CMake, you need to put the 'cmake' binary into the path. You may do that by
+
+---------------------------------------------------------------------
+$ cat << EOF >> ~/.bashrc
+export PATH=$PATH:/Applications/CMake.app/Contents/bin
+EOF
+
+$ chmod +x .bashrc
 ---------------------------------------------------------------------
 
 === Enduro/X basic Environment configuration for HOME directory
@@ -57,10 +67,9 @@ This code bellow creates 'ndrx_home' executable file which loads basic environme
 so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
 This also assumes that you are going to install to '$HOME/endurox/dist' folder.
 
-
 NOTE: If we install the libaries in dist/lib64, OS X will still try for to get the the
 shared libraries for origin build folders. Thus it is recommended to configure environment file
-bit more advanced, to enable OS X library loader to search orgin lib folders firstly.
+bit more advanced, to enable OS X library loader to search original (build) lib folders firstly.
 
 NOTE: For test cases like 021 (XA Testing) and 028 (TMQUEUE) tests, the scripts uses
 'DYLD_FALLBACK_LIBRARY_PATH' environment variable. Hoever testing scripts are using '/bin/bash',
@@ -71,24 +80,26 @@ pass all ATMI tests, you have to disable SIP.
 cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
+echo "Loading ndrx_home ..."
 # Where app domain lives
-export NDRX_APPHOME=/home/user1/endurox
+export NDRX_APPHOME=/Users/user1/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=/home/user1/endurox/dist/bin
+export NDRX_HOME=/Users/user1/endurox/dist/bin
 # Debug config too
-export NDRX_DEBUG_CONF=/home/user1/endurox/sampleconfig/debug.conf
-
+export NDRX_DEBUG_CONF=/Users/user1/endurox/sampleconfig/debug.conf
 # NDRX config too.
-export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
+export NDRX_CONFIG=/Users/user1/endurox/sampleconfig/ndrxconfig.xml
 
-# Access for binaries
-export PATH=$PATH:/$HOME/endurox/dist/bin
+# For PY testing...
+export PATH=$PATH:/Users/user1/endurox/py/tuxmodule-python2/test:/Users/user1/endurox:/Users/user1/endurox/dist/bin
 
-# LIBPATH for .so 
-export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib
+export FLDTBLDIR=/Users/user1/endurox/ubftest/ubftab
 
-# UBF/FML field tables
-export export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpsstdlib libps libexnet libatmisrv libatmiclt tmqueue; do
+
+	export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:/Users/user1/endurox/$f
+	echo $f
+done
 
 EOF
 
@@ -96,11 +107,12 @@ $ chmod +x $HOME/ndrx_home
 ---------------------------------------------------------------------
 
 === Building the code
+
+This install the binary version to /Users/user1/endurox:
+
 ---------------------------------------------------------------------
-$ cd /home/user1/endurox
-# If you want to have install folder to /home/user1/endurox/dist
-# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/ .
-$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cd /Users/user1/endurox
+$ cmake -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -114,31 +126,41 @@ Each of these two sub-systems have own units tests.
 
 === UBF/FML Unit testing
 ---------------------------------------------------------------------
-$ cd /home/user1/endurox/ubftest
+$ cd /Users/user1/endurox/ubftest
 $ ./ubfunit1 2>/dev/null
-Running "main"...
-Completed "main": 5751 passes, 0 failures, 0 exceptions.
+Running "main" (76 tests)...
+Completed "ubf_basic_tests": 198 passes, 0 failures, 0 exceptions.
+Completed "ubf_Badd_tests": 225 passes, 0 failures, 0 exceptions.
+Completed "ubf_genbuf_tests": 334 passes, 0 failures, 0 exceptions.
+Completed "ubf_cfchg_tests": 2058 passes, 0 failures, 0 exceptions.
+Completed "ubf_cfget_tests": 2232 passes, 0 failures, 0 exceptions.
+Completed "ubf_fdel_tests": 2303 passes, 0 failures, 0 exceptions.
+Completed "ubf_expr_tests": 3106 passes, 0 failures, 0 exceptions.
+Completed "ubf_fnext_tests": 3184 passes, 0 failures, 0 exceptions.
+Completed "ubf_fproj_tests": 3548 passes, 0 failures, 0 exceptions.
+Completed "ubf_mem_tests": 4438 passes, 0 failures, 0 exceptions.
+Completed "ubf_fupdate_tests": 4613 passes, 0 failures, 0 exceptions.
+Completed "ubf_fconcat_tests": 4768 passes, 0 failures, 0 exceptions.
+Completed "ubf_find_tests": 5020 passes, 0 failures, 0 exceptions.
+Completed "ubf_get_tests": 5247 passes, 0 failures, 0 exceptions.
+Completed "ubf_print_tests": 5655 passes, 0 failures, 0 exceptions.
+Completed "ubf_macro_tests": 5666 passes, 0 failures, 0 exceptions.
+Completed "ubf_readwrite_tests": 5764 passes, 0 failures, 0 exceptions.
+Completed "ubf_mkfldhdr_tests": 5770 passes, 0 failures, 0 exceptions.
+Completed "main": 5770 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
 === XATMI Unit testing
 ATMI testing might take some time. Also ensure that you have few Gigabytes of free 
 disk space, as logging requires some space. To run the ATMI tests do following:
 ---------------------------------------------------------------------
-$ cd /home/user1/endurox/atmitest
+$ cd /Users/user1/endurox/atmitest
 $ nohup ./run.sh &
-$ tail -f /home/user1/endurox/atmitest
+$ tail -f /Users/user1/endurox/atmitest
 ...
-Setting domain 2
-Server executable = tpbridge    Id = 101 :      Shutdown succeeded.
-Server executable = convsv21    Id = 50 :       Shutdown succeeded.
-Server executable = atmi.sv21   Id = 30 :       Shutdown succeeded.
-Server executable = tmsrv       Id = 10 :       Shutdown succeeded.
-Shutdown finished. 4 processes stopped.
-atmiclt21: no process found
-************ FINISHED TEST: [test021_xafull/run.sh] with 0 ************
-Running "main"...
-Running "main"...
-Completed "main": 21 passes, 0 failures, 0 exceptions.
+************ FINISHED TEST: [test028_tmq/run.sh] with 0 ************
+Completed "atmi_test_all": 28 passes, 0 failure, 0 exceptions.
+Completed "main": 28 passes, 0 failure, 0 exceptions.
 ---------------------------------------------------------------------
 
 
@@ -146,7 +168,6 @@ Completed "main": 21 passes, 0 failures, 0 exceptions.
 At finish you have a configured system which is read to process the transactions
 by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
 to other same architecture machine and run it there with out need of building.
-This process is described in <<BINARY_INSTALL>> guide.
 
 :numbered!:
 

@@ -7,7 +7,7 @@ v1.0, 2016-06:
 
 About manual
 ------------
-This manual describes how to build 'Enduro/X' on installed IBM AIX Platform. Document is based
+This manual describes how to build 'Enduro/X' on IBM AIX Platform. Document is based
 on AIX 7.1. Compilers supported are GNU GCC and IBM xlC.
 
 == Overview
@@ -16,8 +16,8 @@ This manual includes basic installation of Enduro/X which does not include build
 documentation, does not include platform script (as there is issues with c++ headers),
 and does not use GPG-ME encryption for bridges.
 
-For AIX there is not managmenet tools for Posix queues (like '/dev/mqueue' file system for Linux).
-Thus Enduor/X have implemented wrappers for 'mq_open()' call that makes empty files on file system
+For AIX there is not management tools for Posix queues (like '/dev/mqueue' file system for Linux).
+Thus Enduro/X have implemented wrappers for 'mq_open()' call that makes empty files on file system
 in 'NDRX_QPATH' environment folder. This is kind of registry of queues opened by Enduro/X. Thus for
 performance reasons, it is recommended to mount a memory based partition where middle-ware can store
 these files.
@@ -27,13 +27,13 @@ these files.
 The installation process will install required pen source packages from 'http://www.perzl.org/aix/'.
 you may install packages with different approach. This is just a sample process for getting
 build system working on under AIX. For getting Enduro/X to work basically we need following packages:
- For getting Enduro/X to work basically we need following packages:
 
 . git
 . cmake
 . flex
 . bison
 . libxml2
+. gcc (if try GNU Compiler Chain)
  
 
 === Packages to be installed
@@ -92,12 +92,12 @@ last step in the package install block.
 # rpm -i gcc-4.8.3-1.aix7.1.ppc.rpm gcc-c++-4.8.3-1.aix7.1.ppc.rpm gcc-cpp-4.8.3-1.aix7.1.ppc.rpm  libgcc-4.8.3-1.aix7.1.ppc.rpm libstdc++-devel-4.8.3-1.aix7.1.ppc.rpm  gmp-6.1.0-1.aix5.1.ppc.rpm  mpfr-3.1.4-1.aix5.1.ppc.rpm libmpc-1.0.3-1.aix5.1.ppc.rpm libstdc++-4.8.3-1.aix7.1.ppc.rpm 
 ---------------------------------------------------------------------
 
-NOTE the versions of pacakges for you might change. For some packages we do not 
-need such large depencency list, thus we add '--nodeps' for some.
+NOTE the versions of packages for you might change. For some packages we do not 
+need such large dependency list, thus we add '--nodeps' for some.
 
 === Getting the source code
-For test purposes we will parepare new user for which Enduro/X will built (this adds the 
-in the path the /opt/freeware/bin and xlC verison 13 compiler. You may modify that of your needs.
+For test purposes we will prepare new user for which Enduro/X will built (this adds the 
+in the path the /opt/freeware/bin and xlC version 13 compiler. You may modify that of your needs.
 
 ---------------------------------------------------------------------
 # useradd -m user1
@@ -142,7 +142,7 @@ export PATH=$PATH:/$HOME/endurox/dist/bin
 export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib64
 
 # UBF/FML field tables
-export export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
 ###############################################################
 # For AIX we do not have a tools for Posix queue listings, thus
@@ -172,7 +172,7 @@ $ make install
 === Building the code with GCC
 
 If you previously have installed gcc (C/C++) compiler open source package.
-Then you can build Enduro/X with GCC compiler. To preapre for GCC build, do following steps:
+Then you can build Enduro/X with GCC compiler. To prepare for GCC build, do following steps:
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox

@@ -43,8 +43,6 @@
 struct mq_attr defattr = { 0, 128, 1024, 0 };
 
 
-/* TODO add func for check/add/delete hashsed mqd_t */
-
 struct qd_hash
 {
     void *qd;
@@ -605,7 +603,6 @@ retry:
         errno = EBADF;
         return(-1);
     }
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     emqhdr = emqinfo->emqi_hdr;        /* struct pointer */
     mptr = (char *) emqhdr;          /* byte pointer */
     attr = &emqhdr->emqh_attr;
@@ -613,19 +610,16 @@ retry:
         errno = n;
         return(-1);
     }
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
 
     if (maxlen < (size_t)attr->mq_msgsize) {
         errno = EMSGSIZE;
         goto err;
     }
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     if (attr->mq_curmsgs == 0) {            /* queue is empty */
         if (emqinfo->emqi_flags & O_NONBLOCK) {
             errno = EAGAIN;
             goto err;
         }
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
         /* wait for a message to be placed onto queue */
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
@@ -662,17 +656,14 @@ retry:
                 }
             }
         }
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
         emqhdr->emqh_nwait--;
     }
 
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     if ( (index = emqhdr->emqh_head) == 0) {
         NDRX_LOG(log_error, "emq_timedreceive: curmsgs = %ld; head = 0",attr->mq_curmsgs);
         abort();
     }
 
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     msghdr = (struct msg_hdr *) &mptr[index];
     emqhdr->emqh_head = msghdr->msg_next;     /* new head of list */
     len = msghdr->msg_len;
@@ -680,12 +671,10 @@ retry:
     if (priop != NULL)
         *priop = msghdr->msg_prio;
 
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     /* just-read message goes to front of free list */
     msghdr->msg_next = emqhdr->emqh_free;
     emqhdr->emqh_free = index;
 
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     /* wake up anyone blocked in emq_send waiting for room */
     if (attr->mq_curmsgs == attr->mq_maxmsg)
     {
@@ -694,7 +683,6 @@ retry:
     }
     attr->mq_curmsgs--;
 
-    NDRX_LOG(log_debug, "emq_timedreceive YOPT %p", emqd);
     pthread_mutex_unlock(&emqhdr->emqh_lock);
     
     NDRX_LOG(log_debug, "emq_timedreceive - got something len=%d", len);

@@ -166,7 +166,13 @@ COMMANDS
     from 'TPQCTL' which are returned by 'tpdequeue()' call are preserved in new 'tpenqueue()' call.
     Note that for this call 'xadmin' must be in invalid XA environment, so that
     distributed transaction can be performed.
-	
+*killall* <name1> [<name2> ... <nameN>]:
+	Kill all processes given by 'ps -ef'. The command does match the name in the line. If substring
+	is found, then process is killed.
+*qrm*	<qname1> [<qname2> ... <qnameN>]:
+	Remove specific Posix queue.
+*qrmall* <substr1> [<substr2> ... <substrN>]:
+		Remove queue matching the substring.
 
 EXIT STATUS
 -----------

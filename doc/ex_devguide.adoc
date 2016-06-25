@@ -45,7 +45,7 @@ EnduroX libraries
 -----------------
 
 The framework is composed by following internal libraries and it's dependencies:
-[dia, module_dependency.dia, module_dependency.png, x450]
+[dia, module_dependency.dia, module_dependency.png, x300]
 -------------------------------
 -------------------------------
 
@@ -58,17 +58,21 @@ greatly supports system development. This allows to build one queue - multiple s
 architecture (even for ATMI server processes waiting on different queues). However, this
 this feature limits platform to be working on Linux only.
 
->>> TODO Picture of EPOLL() MODE <<<
+[dia, epoll_message_dispatch_mode.dia, epoll_message_dispatch_mode.png, x300]
+-------------------------------
+-------------------------------
 
 Starting from Enduro/X version 3, there is support for other Posix compatible Operating
 Systems. Where possible Posix queues are used. If no Queueu support built in, for example
 Apple OSX, then emulated posix queues are used. For these platforms, the caller processes
 does choose the queue where to send the message in round-robin mode. For each service
 shared memory contains list of server IDs providing the service. In round robin mode
-the server id is selected, and caller sends the service to queue (e.g. 'dom2,svc,RUNTX,30'
-where '30' is server id.).
+the server id is selected, and caller sends the service to queue (e.g. 'dom1,svc,TESTSVC,102'
+where '102' is server id.).
 
->>> TODO Picture of POSIX POLL() MODE <<<
+[dia, poll_message_dispatch_mode.dia, poll_message_dispatch_mode.png, x450]
+-------------------------------
+-------------------------------
 
 For other unix support, mq_notify() call for each open queue is installed, by employing
 SIGUSR2. Signal handling is done in seperate thread. The main ATMI server thread is doing

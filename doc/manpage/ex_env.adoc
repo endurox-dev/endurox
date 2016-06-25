@@ -40,7 +40,7 @@ Mandatory Env. Variables
 	The less is number, then less shared memory is used. However for
 	performance reason, number should be much bigger (3-4 times) than
 	actual estimated service count. Biggern number might speed up linear
-	hashing, i.e. it will be less likeley that hash will collide.
+	hashing, i.e. it will be less likely that hash will collide.
 *NDRX_SRVMAX*='MAX_SERVERS'::
 	Maximum number of servers that will be supported. This affects the
 	'-i' flag. Server ID. The max server id will be MAX_SERVERS-1.
@@ -101,12 +101,25 @@ Mandatory Env. Variables
 *NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
 	Set to '1' if XA sub-system should be initialized on first transactions. 
         If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
+*NDRX_NRSEMS*='NDRX_NRSEMS'::
+	Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
+	The minimum is recommended something about 7. Every service name in shared memory is hashed 
+	and semaphore protecting the service is calculated by modulus of NRSEMS. This affects 
+    'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
+    by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
+    protection. Default value is 30.
+*NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
+    Max number of servers can advertise same service. This is used only in 'poll()' mode.
+	The number affects the size of shared memory used for services. Bigger number causes
+	more memory to be used for service registry. If the number of servers goes over this number
+	for one service, the service entry will be ignored.
 *PATH='PATH'*::
-	This is not EnduroX specific env variable. But EnduroX distro bin directory should be included in system PATH env. variable.
+	This is not EnduroX specific env variable. But EnduroX distribution bin 
+	directory should be included in system PATH env. variable.
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
 	This is directory where .fd files are located. I.e. UBF field definitions.
 *FIELDTBLS*='COMMA_SEPERATED_LIST_OF_FIELD_FILES'::
-	This is comma seperated list of field files found in FLDTBLDIR.
+	This is comma separated list of field files found in FLDTBLDIR.
 
 EXAMPLE
 -------

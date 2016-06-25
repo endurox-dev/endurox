@@ -58,11 +58,9 @@ The distribution package contains following list of resources:
 | buildclient| Wrapper script for client process build. Basically it links binary with required EnduroX libraries
 | buildserver| Wrapper script for building server executables.
 Basically it links developers object files with libatmisrv.so which contains main() entry of the process
-| ckserver.sh| Internal shell script for checking is some server process down, part of `ndrxd' process.
 | fdown.sh| Internal shell script forced shutdown of the transaction monitor. Part of `ndrx' admin utility
 | mkfldhdr | Generates C header files for UBF buffers
 | ndrxd | EnduroX deamon. This process is central point of the application which does the Application Transaction Monitoring
-| ndrxd_chkdown.sh | Internal shell script which assists admin utility (xadmin) for checking for ndrxd to be down
 | tmadmin | Alias for xadmin
 | tpbridge | Special ATMI server which drives the connectivity for cluster purposes.
 It allows to connect one EnduroX instance to another EnduroX instance

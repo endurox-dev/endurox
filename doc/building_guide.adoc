@@ -87,7 +87,7 @@ emerge -av indent asciidoc dblatex libxml2 cmake dia \
 apt-get install indent asciidoc dblatex libxml2-dev fop \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
-	libgpgme11-dev uuid-dev libxml2-dev git
+	libgpgme11-dev libxml2-dev git
 ---------------------------------------------------------------------
 	
 ==== System level dependencies - for Ubuntu 14.04
@@ -95,7 +95,7 @@ apt-get install indent asciidoc dblatex libxml2-dev fop \
 $ apt-get install indent asciidoc dblatex libxml2-dev fop \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
-	libgpgme11-dev uuid-dev libxml2-dev git
+	libgpgme11-dev libxml2-dev git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
@@ -113,7 +113,7 @@ $ su - root
 Now install system depenencies  
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc libuuid-devel \
+# yum install git cmake asciidoc \
 	openssl openssl-devel \
 	gpgme-devel dia libxml2-devel
 # exit
@@ -127,7 +127,7 @@ Now install system depenencies
 
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc libuuid-devel openssl openssl-devel \
+# yum install git cmake asciidoc openssl openssl-devel \
 	gpgme-devel redhat-lsb dblatex libxml2-devel
 ---------------------------------------------------------------------
 
