@@ -97,11 +97,10 @@ export NDRX_DEBUG_CONF=/Users/user1/endurox/sampleconfig/debug.conf
 # NDRX config too.
 export NDRX_CONFIG=/Users/user1/endurox/sampleconfig/ndrxconfig.xml
 
-# For PY testing...
-export PATH=$PATH:/Users/user1/endurox/py/tuxmodule-python2/test:/Users/user1/endurox:/Users/user1/endurox/dist/bin
-
+export PATH=$PATH:/Users/user1/endurox/dist/bin
 export FLDTBLDIR=/Users/user1/endurox/ubftest/ubftab
 
+# For testing firstly use original folder where dynamic libraries were built:
 for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpsstdlib libps libexnet libatmisrv libatmiclt tmqueue; do
 
 	export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:/Users/user1/endurox/$f
