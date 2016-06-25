@@ -71,6 +71,15 @@ export NDRX_MSGMAX=50
 export NDRX_DQMAX=50
 
 
+# Default process count for Q full tests
+export TEST_PROCS       500
+
+# OSX hangs at 500 procs running, thus reduce test to 200
+if [ "$(uname)" == "Darwin" ]; then
+    export TEST_PROCS=200
+fi
+
+echo "Running tests with: $TEST_PROCS processes...."
 ##################################
 
 #
@@ -123,8 +132,8 @@ xadmin start -y
 xadmin psc
 CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
-if [[ $CNT -ne 500 ]]; then
-	echo "Service count != 500! (1)"
+if [[ $CNT -ne $TEST_PROCS ]]; then
+	echo "Service count != $TEST_PROCS! (1)"
 	go_out 1	
 fi
 # Count should be around 1K
@@ -151,7 +160,7 @@ xadmin psc
 # ALARM: THIS SHOULD NOT HANG & should be all servers booted.
 CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
-if [[ $CNT -ne 500 ]]; then
+if [[ $CNT -ne $TEST_PROCS ]]; then
 	echo "Service count != 500! (2)"
 	go_out 2
 fi

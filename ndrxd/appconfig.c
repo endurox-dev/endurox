@@ -544,6 +544,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     int ret=SUCCEED;
     xmlAttrPtr attr;
     char srvnm[MAXTIDENT+1]={EOS};
+    char tmp[128];
 #if 0
     
     int srvid = FAIL;
@@ -605,13 +606,21 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("min", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            p_srvnode->min = atoi(p);
+            
+            strcpy(tmp, p);
+            ndrx_str_env_subs(tmp);
+
+            p_srvnode->min = atoi(tmp);
             xmlFree(p);
         }
         else if (0==strcmp("max", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            p_srvnode->max = atoi(p);
+            
+            strcpy(tmp, p);
+            ndrx_str_env_subs(tmp);
+            
+            p_srvnode->max = atoi(tmp);
             xmlFree(p);
         }
         else if (0==strcmp("autokill", (char *)cur->name))

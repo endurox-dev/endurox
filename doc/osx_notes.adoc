@@ -8,7 +8,16 @@ v1.0, 2016-06:
 About manual
 ------------
 This manual describes how to build 'Enduro/X' on fresh installed OS X. Document is based
-on operatin system version 10.11 (El Capitan).
+on operating system version 10.11 (El Capitan). Generally version is considered as development
+time only and experimental for production use for low queue and message density setups.
+This is due to fact, that MAC OS X does not provide Posix queue API and emulation is in use.
+During the porting Enduro/X to OSX it have been monitored that system can freeze. How ever
+the emulated queues on GNU/Linux works good. So there might be a bug in OSX Posix thread
+mutex routines. Also OSX does not support robust mutexes which means, that if some process
+get the lock for emulated queue and process is being killed, then lock is never released
+and if this queue is 'ndrxd' main q, then system is stalled. In future release this might
+be fixed with advancing 'tprecover' to do pings to 'ndrxd' and doing kill and reboot the
+'ndrxd' in learning mode.
 
 
 == Overview
@@ -17,7 +26,7 @@ this subsystem, however Enduro/X provides queue emulation via POSIX Threads func
 includes process shared semaphores and memory mapped files. Enduro/X CMake scripts will automatically
 do the configuration and enable this functionality.
 
-In the result queues will we listed on file system. The recommendation is to use seperate folder this
+In the result queues will we listed on file system. The recommendation is to use separate folder this
 for example "/tmp/mq".
 
 This document covers only core fucntionality of the Enduro/X building. That's mean that building of:

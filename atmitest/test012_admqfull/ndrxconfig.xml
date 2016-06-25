@@ -49,8 +49,8 @@
         <!-- This will be bad one, killed.. -->
 		<server name="atmisv_012">
 			<srvid>1000</srvid>
-                	<min>500</min>
-                	<max>500</max>
+                	<min>${TEST_PROCS}</min>
+                	<max>${TEST_PROCS}</max>
 			<sysopt>-e ${TESTDIR}/atmisv1.log -r</sysopt>
 		</server>
 	</servers>
