@@ -41,9 +41,7 @@ export NDRX_ULOG=/tmp
 export NDRX_QPREFIX=/n00b
 export NDRX_SVCMAX=20000
 export NDRX_SRVMAX=10000
-export NDRX_QPATH=/tmp/mq
-rm -rf /tmp/mq
-mkdir /tmp/mq
+export NDRX_QPATH=/dev/mqueue
 export NDRX_SHMPATH=/dev/shm
 # Milli seconds to wait for command
 export NDRX_CMDWAIT=1

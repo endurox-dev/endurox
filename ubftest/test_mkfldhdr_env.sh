@@ -47,7 +47,7 @@ ret=$?
 
 if [ $ret -eq 0 ]; then
 	# Compare each file by file
-	LIST=`ls -lC1 $DIR`
+	LIST=`ls -1 $DIR`
 	for f in $LIST; do
 		echo "Comparing $DIR/$f with mkfldhdr_ref/$f" >&2
 		diff $DIR/$f mkfldhdr_ref/$f
