@@ -54,7 +54,6 @@ $ sudo -s
 # dscl . -create /Users/user1 PrimaryGroupID 20
 # dscl . -create /Users/user1 NFSHomeDirectory /Users/user1
 # dscl . -passwd /Users/user1 password 
-# dscl . -append /Groups/admin GroupMembership user1
 # su - user1
 $ cd /Users/user1
 $ git clone https://github.com/endurox-dev/endurox endurox
