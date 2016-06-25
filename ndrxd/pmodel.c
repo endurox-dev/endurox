@@ -39,6 +39,7 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>

@@ -605,6 +605,11 @@ public int ndrx_init(void)
     int ret=SUCCEED;
     int i;
 
+#ifdef EX_USE_EMQ
+    /* We need to get lock in */
+    emq_set_lock_timeout(10);
+#endif
+
     if (SUCCEED!=(ret = load_env_config()))
     {
         goto out;

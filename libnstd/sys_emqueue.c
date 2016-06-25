@@ -26,10 +26,12 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <signal.h>
 #include <thlock.h>
 #include <limits.h>
 #include <atmi.h>
 #include <uthash.h>
+#include <ntimer.h>
 #if defined(WIN32)
 #   define S_IXUSR  0000100
 #   define sleep(a) Sleep((a)*1000)
@@ -53,6 +55,8 @@ typedef struct qd_hash qd_hash_t;
 
 MUTEX_LOCKDECL(M_lock);
 qd_hash_t *M_qd_hash = NULL;
+
+private int M_lock_secs = 0; /* Lock timeout... */
 /**
  * Add queue descriptor to hash
  * @param q
@@ -164,6 +168,70 @@ static char *get_path(const char *path)
     return x;
 }
 
+/**
+ * Set the timeout for lock. If expired then return fail.
+ */
+public void emq_set_lock_timeout(int secs)
+{
+    M_lock_secs = secs;
+    NDRX_LOG(log_debug, "Setting lock timeout to: %d", M_lock_secs);
+}
+
+/**
+ * Try lock and fail not success.
+ * This is needed for ndrxd so that it does not stall when some process claimed
+ * lock and was killed for some reason. Thus we detect such cases and return fail
+ * later ndrxd can re-open the listening q. Any stalled processes might be killed
+ * by pings (i.e. when not responding to pings). Thus system will self-heal.
+ * 
+ * if we could have robust posix locks, that could be solved. But on OSX we do not
+ * have such.
+ * 
+ * @param emqhdr
+ * @return 
+ */
+private int emq_try_lock(struct emq_hdr  *emqhdr)
+{
+    int ret = SUCCEED;
+    ndrx_timer_t t;
+    int e=FAIL;
+    
+    if (0==M_lock_secs)
+    {
+        ret = pthread_mutex_lock(&emqhdr->emqh_lock);
+        goto out;
+    }
+    
+    ndrx_timer_reset(&t);
+    
+    while (ndrx_timer_get_delta_sec(&t) < M_lock_secs)
+    {
+        if(SUCCEED!=(e=pthread_mutex_trylock(&emqhdr->emqh_lock)))
+        {
+            usleep(5000);
+        }
+        else
+        {
+            break; /* locked ok... */
+        }
+    }
+    
+    if (SUCCEED!=e)
+    {
+        NDRX_LOG(log_error, "Lock stalled (%d / %d), returning error!",
+                    M_lock_secs, ndrx_timer_get_delta_sec(&t));
+        ret=EINPROGRESS;
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Locked ok");
+        
+    }
+    
+out:
+    return ret;
+}
+
 int emq_close(mqd_t emqd)
 {
     long            msgsize, filesize;
@@ -222,7 +290,7 @@ int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     }
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0) {
+    if ( (n = emq_try_lock(emqhdr)) != 0) {
         errno = n;
         return(-1);
     }
@@ -257,7 +325,7 @@ int emq_notify(mqd_t emqd, const struct sigevent *notification)
         return(-1);
     }
     emqhdr = emqinfo->emqi_hdr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0) {
+    if ( (n = emq_try_lock(emqhdr)) != 0) {
         errno = n;
         return(-1);
     }
@@ -541,7 +609,7 @@ retry:
     emqhdr = emqinfo->emqi_hdr;        /* struct pointer */
     mptr = (char *) emqhdr;          /* byte pointer */
     attr = &emqhdr->emqh_attr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0) {
+    if ( (n = emq_try_lock(emqhdr)) != 0) {
         errno = n;
         return(-1);
     }
@@ -562,17 +630,27 @@ retry:
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
         {
-            if (try>10)
+            try++;
+            if (try>3)
             {
                 try = 0;
                 NDRX_LOG(log_warn, "Doing retry...");
                 emqhdr->emqh_nwait--;
                 pthread_mutex_unlock(&emqhdr->emqh_lock);
+                usleep(2000);
                 goto retry;
             }
             NDRX_LOG(log_debug, "queue empty on %p", emqd);
             if (NULL==__abs_timeout) {
-                pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
+                NDRX_LOG(log_debug, "w/o time-out");
+                struct timespec abs_timeout;
+                struct timeval  timeval;
+                gettimeofday (&timeval, NULL);
+                abs_timeout.tv_sec = timeval.tv_sec+2; /* wait two secc */
+                abs_timeout.tv_nsec = timeval.tv_usec*1000;
+                        
+                pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
+                        &abs_timeout);
             } else {
                 /* wait some time...  */
                 if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
@@ -611,8 +689,8 @@ retry:
     /* wake up anyone blocked in emq_send waiting for room */
     if (attr->mq_curmsgs == attr->mq_maxmsg)
     {
-    /*    pthread_cond_signal(&emqhdr->emqh_wait); */
-        pthread_cond_broadcast(&emqhdr->emqh_wait);
+        pthread_cond_signal(&emqhdr->emqh_wait); 
+        /* pthread_cond_broadcast(&emqhdr->emqh_wait); */
     }
     attr->mq_curmsgs--;
 
@@ -659,7 +737,7 @@ retry:
     emqhdr = emqinfo->emqi_hdr;        /* struct pointer */
     mptr = (char *) emqhdr;          /* byte pointer */
     attr = &emqhdr->emqh_attr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0) {
+    if ( (n = emq_try_lock(emqhdr)) != 0) {
         errno = n;
         return(-1);
     }
@@ -690,7 +768,7 @@ retry:
         while (attr->mq_curmsgs >= attr->mq_maxmsg) {
             
             try++;
-            if (try>10)
+            if (try>3)
             {
                 try = 0;
                 /* This stuff we need for Darwin. For some reason
@@ -701,17 +779,18 @@ retry:
                  */
                 NDRX_LOG(log_warn, "Doing retry...");
                 pthread_mutex_unlock(&emqhdr->emqh_lock);
+                usleep(2000);
                 goto retry;
             }
             NDRX_LOG(log_warn, "waiting on q %p", emqd);
             if (NULL==__abs_timeout) {
+#if 0
                 /* Seems  we might get stalled, if
                  * the queue is full and there is tons of senders..
                  * Thuse better use wait with timeout. */
                 pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
-#if 0
+#endif
                 NDRX_LOG(log_debug, "w/o time-out");
-                usleep(2000);
                 struct timespec abs_timeout;
                 struct timeval  timeval;
                 gettimeofday (&timeval, NULL);
@@ -720,7 +799,6 @@ retry:
                         
                 pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
                         &abs_timeout);
-#endif
             }
             else {
                 /* wait some time...  */
@@ -784,8 +862,8 @@ retry:
     /* wake up anyone blocked in emq_receive waiting for a message */ 
     if (attr->mq_curmsgs == 0)
     {
-    /*    pthread_cond_signal(&emqhdr->emqh_wait); */
-        pthread_cond_broadcast(&emqhdr->emqh_wait);
+        pthread_cond_signal(&emqhdr->emqh_wait); 
+        /* pthread_cond_broadcast(&emqhdr->emqh_wait); */
     }
     attr->mq_curmsgs++;
 
@@ -838,7 +916,7 @@ int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqs
     }
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0) {
+    if ( (n = emq_try_lock(emqhdr)) != 0) {
         errno = n;
         return(-1);
     }

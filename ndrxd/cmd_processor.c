@@ -362,7 +362,10 @@ public int command_wait_and_run(int *finished, int *abort)
                                 "issuing re-init",
                                 G_command_state.listenq_str, error, strerror(error));
 
+/*
         ndrx_mq_close(G_command_state.listenq);
+*/
+        cmd_close_queue();
 
         if (FAIL==cmd_open_queue())
         {

@@ -58,8 +58,10 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_scbp.c cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c)
 
+set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
 # Link the executable to the UBF library & others...
-target_link_libraries (xadmin m nstd ${RT_LIB} atmi ubf dl pthread)
+target_link_libraries (xadmin atmi nstd ubf dl m ${RT_LIB} pthread)
 
 # Install bin
 install (TARGETS 

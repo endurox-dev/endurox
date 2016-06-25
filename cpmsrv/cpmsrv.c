@@ -49,7 +49,7 @@
 #include <ubf.h>
 #include <Exfields.h>
 #include <nclopt.h>
-
+#include <signal.h>
 #include "cpmsrv.h"
 #include "userlog.h"
   

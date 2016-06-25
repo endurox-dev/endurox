@@ -90,6 +90,8 @@ out:
 
 /**
  * Periodic poll callback.
+ * TODO: We might want to run pings here to ndrxd. If ping fails several times
+ * we kill the ndrxd and restart it...!
  * @return 
  */
 public int poll_timer(void)

@@ -51,6 +51,7 @@
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 /*---------------------------Macros-------------------------------------*/
+#define NDRX_Q_TRYLOCK_TIME 10  /* time in which we must get the q lock */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -198,6 +199,15 @@ int main_init(int argc, char** argv)
 {
     int ret=SUCCEED;
     char *p;
+    
+#if 0
+    
+#ifdef EX_USE_EMQ
+    /* We need to get lock in */
+    emq_set_lock_timeout(NDRX_Q_TRYLOCK_TIME);
+#endif
+    
+#endif
 
     /* common env loader will init the debug lib
      * which might call `ps' for process name
