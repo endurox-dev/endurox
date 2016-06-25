@@ -46,7 +46,15 @@ is out of the scope.
 For test purposes we will parepare new user for which Enduro/X will built.
 
 ---------------------------------------------------------------------
-# useradd -m user1
+$ sudo -s
+# dscl . -create /Users/user1
+# dscl . -create /Users/user1 UserShell /bin/bash
+# dscl . -create /Users/user1 RealName "Test User" 
+# dscl . -create /Users/user1 UniqueID "510"
+# dscl . -create /Users/user1 PrimaryGroupID 20
+# dscl . -create /Users/user1 NFSHomeDirectory /Users/user1
+# dscl . -passwd /Users/user1 password 
+# dscl . -append /Groups/admin GroupMembership user1
 # su - user1
 $ cd /Users/user1
 $ git clone https://github.com/endurox-dev/endurox endurox
