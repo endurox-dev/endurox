@@ -247,9 +247,12 @@ public int ndrx_get_pid_from_ps(char *psout, pid_t *pid)
     int ret = SUCCEED;
     
     strcpy(tmp, psout);
+
     /* get the first token */
     token = strtok(tmp, "\t ");
 
+/* for free bsd PID is on first column... */
+#ifndef EX_OS_FREEBSD
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing first ps -ef column")
@@ -257,6 +260,7 @@ public int ndrx_get_pid_from_ps(char *psout, pid_t *pid)
     }
     
     token = strtok(NULL, "\t ");
+#endif
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing pid in ps -ef output")

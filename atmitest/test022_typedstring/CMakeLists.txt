@@ -53,8 +53,8 @@ add_executable (atmiclt22 atmiclt22.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmisv22  atmisrvinteg atmi ubf nstd m ${RT_LIB} dl pthread)
-target_link_libraries (atmiclt22 atmiclt atmi ubf nstd m ${RT_LIB} dl pthread)
+target_link_libraries (atmisv22  atmisrvinteg atmi ubf nstd m ${RT_LIB} pthread)
+target_link_libraries (atmiclt22 atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 
 set_target_properties(atmisv22 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt22 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

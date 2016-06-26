@@ -50,6 +50,11 @@ endif ()
 
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 
+# Use emulated queues (if forced).
+IF(DEFINE_FORCEEMQ)
+    SET(NSTD_SYS_3 "sys_emqueue.c")
+ENDIF()
+
 # Select the OS specifics:
 if (${CMAKE_OS_NAME} STREQUAL "LINUX")
     SET(NSTD_SYS "sys_linux.c")
@@ -63,13 +68,16 @@ elseif (${CMAKE_OS_NAME} STREQUAL "SUNOS")
 elseif (${CMAKE_OS_NAME} STREQUAL "AIX")
     SET(NSTD_SYS "sys_aix.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
+elseif (${CMAKE_OS_NAME} STREQUAL "FREEBSD")
+    SET(NSTD_SYS "sys_freebsd.c")
+    SET(NSTD_SYS_2 "sys_posixq.c")
 elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
     SET(NSTD_SYS "sys_darwin.c")
+    SET(NSTD_SYS_3 "sys_emqueue.c")
 endif ()
 
 
 add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c 
-                            sys_emqueue.c
                             sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
                             sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3})
 

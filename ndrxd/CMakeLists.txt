@@ -82,7 +82,7 @@ add_executable (ndrxd   ndrxd.c
                         cmd_env.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (ndrxd m nstd atmi ubf atmiclt ${RT_LIB} xml2 pthread)
+target_link_libraries (ndrxd m nstd atmi ubf atmiclt ${RT_LIB} ${LIBXML2_LIBRARIES} pthread)
 set_target_properties(ndrxd PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 

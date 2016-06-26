@@ -49,7 +49,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_executable (pscript ps.cpp)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (pscript psstdlib ps atmi atmiclt ubf nstd ${RT_LIB} dl m )
+target_link_libraries (pscript psstdlib ps atmi atmiclt ubf nstd ${RT_LIB} m )
 set_target_properties(pscript PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 

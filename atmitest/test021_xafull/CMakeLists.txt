@@ -62,15 +62,15 @@ add_executable (atmiclt21-cli atmiclt21-cli.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv21 m ubf nstd atmi atmisrvinteg ${RT_LIB} dl xadrv pthread)
-target_link_libraries (atmiclt21 m ubf nstd atmi atmiclt ${RT_LIB} dl xadrv pthread)
+target_link_libraries (atmi.sv21 m ubf nstd atmi atmisrvinteg ${RT_LIB} xadrv pthread)
+target_link_libraries (atmiclt21 m ubf nstd atmi atmiclt ${RT_LIB} xadrv pthread)
 
 # Conversations test
-target_link_libraries (convsv21 m ubf nstd atmi atmisrvinteg ${RT_LIB} dl xadrv pthread)
-target_link_libraries (convclt21 m ubf nstd atmi atmiclt ${RT_LIB} dl xadrv pthread)
+target_link_libraries (convsv21 m ubf nstd atmi atmisrvinteg ${RT_LIB} xadrv pthread)
+target_link_libraries (convclt21 m ubf nstd atmi atmiclt ${RT_LIB} xadrv pthread)
 
 # shell testing
-target_link_libraries (atmiclt21-cli m ubf nstd atmi atmiclt ${RT_LIB} dl xadrv pthread)
+target_link_libraries (atmiclt21-cli m ubf nstd atmi atmiclt ${RT_LIB} xadrv pthread)
 
 set_target_properties(atmi.sv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

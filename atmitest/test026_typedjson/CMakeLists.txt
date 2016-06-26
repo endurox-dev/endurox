@@ -53,8 +53,8 @@ add_executable (atmiclt26 atmiclt26.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmisv26  atmisrvinteg atmi ubf nstd m ${RT_LIB} dl)
-target_link_libraries (atmiclt26 atmiclt atmi ubf nstd m ${RT_LIB} dl)
+target_link_libraries (atmisv26  atmisrvinteg atmi ubf nstd m ${RT_LIB})
+target_link_libraries (atmiclt26 atmiclt atmi ubf nstd m ${RT_LIB})
 
 set_target_properties(atmisv26 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt26 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

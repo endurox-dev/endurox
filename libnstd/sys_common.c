@@ -107,7 +107,11 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
     string_list_t* ret = NULL;
     char *filter[4] = {filter1, filter2, filter3, filter4};
     
+#ifdef EX_OS_FREEBSD
+    sprintf(cmd, "ps");
+#else
     sprintf(cmd, "ps -ef");
+#endif
     
     NDRX_LOG(log_debug, "Listing processes [%s] f1=[%s] f2=[%s] f3=[%s] f4=[%s]", 
             cmd, filter1, filter2, filter3, filter4);
