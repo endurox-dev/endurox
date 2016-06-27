@@ -415,9 +415,17 @@ public pm_pidhash_t *pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid)
     
     tmp.pid=pid;
     
-    DL_SEARCH(pid_hash[hash_key], ret, &tmp, pid_hash_cmp);
-    NDRX_LOG(log_debug, "Search for pid %d to hash with key %d, result: 0x%lx",
+    if (NULL!=pid_hash && NULL!=pid_hash[hash_key])
+    {
+        DL_SEARCH(pid_hash[hash_key], ret, &tmp, pid_hash_cmp);
+        NDRX_LOG(log_debug, "Search for pid %d to hash with key %d, result: 0x%lx",
                             tmp.pid, hash_key, ret);
+    }
+    else
+    {
+       NDRX_LOG(log_warn, "Empty PID hashes. Cannot process pid %d", pid);
+    }
+
     return ret;
 }
 

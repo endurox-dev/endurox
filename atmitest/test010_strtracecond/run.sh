@@ -89,7 +89,6 @@ xadmin start -y &
 
 # Enter the both servers in respawn state
 sleep 3
-#ps -ef | grep atmisv
 
 xadmin killall atmisv_$TESTNO
 # Wait for respawn, now it should be respawned...
@@ -106,7 +105,12 @@ if [[ "X`xadmin pqa | grep SVCOK`" != "X" ]]; then
     go_out 1
 fi
 
-BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
+if [ "$(uname)" == "FreeBSD" ]; then
+	BAD_PID=`ps | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $1}'`
+else
+	BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
+fi
+
 echo "BAD_PID=$BAD_PID"
 kill -9 $BAD_PID
 sleep 1
