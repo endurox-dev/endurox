@@ -1,5 +1,5 @@
 /* 
-** EnduroX cluster procotol.
+** EnduroX cluster protocol.
 ** TLV will be simple strucutre:
 ** Tag: 2 bytes
 ** Length: 2 bytes
@@ -94,7 +94,8 @@
 typedef struct cproto cproto_t;
 typedef struct xmsg xmsg_t;
 
-struct cproto {
+struct cproto
+{
     int     tableid;            /* table id. */
     long    tag;                /* TLV tag */
     char*   cname;              /* c field name */
@@ -114,7 +115,8 @@ struct cproto {
 };
 
 /* Table used to define network messages. */
-struct xmsg{
+struct xmsg
+{
     char    msg_type;
     int     command;            /* Id of the command... */    
     char    *descr;             /* Descr of the message */
@@ -122,6 +124,14 @@ struct xmsg{
     int     tabcnt;
     cproto_t    *tab[4];        /* Recursive/linear tables for sub buffers. */
 };
+
+/* protocol table info */
+struct ptinfo
+{
+    int idx;
+    int dim;
+};
+typedef struct ptinfo ptinfo_t;
 
 /*---------------------------Globals------------------------------------*/
 
@@ -148,7 +158,7 @@ static char *M_type[] = {
  * we need a NR of elements in table so that we can perform binary search for descriptor.
  */
 
-#define TNC      1  /* net call */
+#define TNC      0  /* net call */
 /* Converter for cmd_br_net_call_t */
 static cproto_t M_cmd_br_net_call_x[] = 
 {
@@ -162,7 +172,7 @@ static cproto_t M_cmd_br_net_call_x[] =
 };
 
 /* Converter for stnadard ndrxd header. */
-#define TSH     2 /* standard hearder */
+#define TSH     1 /* standard hearder */
 static cproto_t M_stdhdr_x[] = 
 {
     {TSH, 0x1037, "command_id",    OFSZ(command_call_t,command_id),     EXF_SHORT, XFLD, 1, 4},
@@ -173,7 +183,7 @@ static cproto_t M_stdhdr_x[] =
 };
 
 /* Converter for command_call_t */
-#define TCC     3 /* Command call */
+#define TCC     2 /* Command call */
 static cproto_t M_command_call_x[] = 
 {
     {TCC, 0x1055,  "stdhdr",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_stdhdr_x},
@@ -188,7 +198,7 @@ static cproto_t M_command_call_x[] =
 };
 
 /* Convert for cmd_br_time_sync_t */
-#define TST     4   /* time sync table */
+#define TST     3   /* time sync table */
 static cproto_t M_cmd_br_time_sync_x[] = 
 {
     {TST, 0x10A5,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
@@ -197,7 +207,7 @@ static cproto_t M_cmd_br_time_sync_x[] =
 };
 
 /* Convert for bridge_refresh_svc_t */
-#define TRS     5 /* Refresh services */     
+#define TRS     4 /* Refresh services */     
 static cproto_t Mbridge_refresh_svc_x[] = 
 {
     {TRS, 0x10B9,  "mode",       OFSZ(bridge_refresh_svc_t,mode),    EXF_CHAR,    XFLD, 1, 6},
@@ -207,7 +217,7 @@ static cproto_t Mbridge_refresh_svc_x[] =
 };
 
 /* Convert for bridge_refresh_t */
-#define TBR     6 /* bridege refresh */
+#define TBR     5 /* bridege refresh */
 static cproto_t M_bridge_refresh_x[] = 
 {
     {TBR, 0x10D7,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
@@ -218,6 +228,7 @@ static cproto_t M_bridge_refresh_x[] =
                             OFFSET(bridge_refresh_t,count), sizeof(bridge_refresh_svc_t)},
     {TBR, FAIL}
 };
+
 /******************** STUFF FOR UBF *******************************************/
 /* Internal structure for driving UBF fields. */
 typedef struct proto_ufb_fld proto_ufb_fld_t;
@@ -254,7 +265,7 @@ static short M_ubf_proto_tag_map[] =
 #define UBF_TAG_BFLDLEN    0x1109
 
 /* Helper driver table for UBF buffer. */
-#define TUF         7 /* ubf field */
+#define TUF         6 /* ubf field */
 static cproto_t M_ubf_field[] = 
 {
     {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
@@ -273,7 +284,7 @@ static cproto_t M_ubf_field[] =
 };
 
 /* Converter for  tp_command_call_t */
-#define TTC        8 /* tpcall */
+#define TTC        7 /* tpcall */
 static cproto_t M_tp_command_call_x[] = 
 {
     {TTC, 0x1159,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
@@ -305,6 +316,22 @@ static cproto_t M_tp_command_call_x[] =
     /* Is transaction marked as abort only? */
     {TTC, 0x1235,  "tmtxflags", OFSZ(tp_command_call_t, tmtxflags), EXF_SHORT,   XFLD, 1, 1},
     {TTC, FAIL}
+};
+
+
+/**
+ * Get the number of elements in array.
+ */
+static ptinfo_t M_ptinfo[] = 
+{
+    {TNC, N_DIM(M_cmd_br_net_call_x)},
+    {TSH, N_DIM(M_stdhdr_x)},
+    {TCC, N_DIM(M_command_call_x)},
+    {TST, N_DIM(M_cmd_br_time_sync_x)},
+    {TRS, N_DIM(Mbridge_refresh_svc_x)},
+    {TBR, N_DIM(M_bridge_refresh_x)},
+    {TUF, N_DIM(M_ubf_field)},
+    {TTC, N_DIM(M_tp_command_call_x)}
 };
 
 /* Message conversion tables */
@@ -1324,6 +1351,7 @@ out:
  */
 private cproto_t * get_descr_from_tag(cproto_t *cur, short tag)
 {
+    /*
     while (FAIL!=cur->tag && cur->tag!=tag)
     {
         cur++;
@@ -1335,6 +1363,43 @@ private cproto_t * get_descr_from_tag(cproto_t *cur, short tag)
     }
     
     return cur;
+     */
+    
+    
+    
+    
+   int first, last, middle;
+   int search = tag;
+   int n = M_ptinfo[cur->tableid].dim-1; /* skip the FAIL (last) */
+ 
+   first = 0;
+   last = n - 1;
+   middle = (first+last)/2;
+ 
+   while (first <= last)
+   {
+      if (cur[middle].tag < search)
+      {
+         first = middle + 1;    
+      }
+      else if (cur[middle].tag == search)
+      {
+          return &cur[middle];
+      }
+      else
+      {
+         last = middle - 1;
+      }
+      
+      middle = (first + last)/2;
+   }
+   if (first > last)
+   {
+      NDRX_LOG(log_debug, "tag %x not found in table %d.\n", 
+              search, cur->tableid);
+   }
+   
+   return NULL;   
 }
 
 /**
