@@ -7,23 +7,17 @@ v1.0, 2016-06:
 
 About manual
 ------------
-This manual describes how to build 'Enduro/X' Oracle Solaris platform. Document is based
-on Solaris 11 on x86 machine. Compiler used to Enduro/X is GCC.
+This manual describes how to build 'Enduro/X' FreeBSD platform. Document is based
+on FreeBSD 10.3 on amd64 machine. Default FreeBSD c/c++ compiler is used.
 
 == Overview
 
 This manual includes basic installation of Enduro/X which does not include building of
 documentation and does not use GPG-ME encryption for bridges.
 
-For Solaris Posix queues actually are virtual files in /tmp directory with '.MQD' prefix.
-Enduro/X for queue management uses these files.
-
 == Installation process
 
-The installation process will install required pen source packages from 'http://www.opencsw.org'.
-you may install packages with different approach. This is just a sample process for getting
-build system working on under Solaris. For getting Enduro/X to work basically we need following packages:
- For getting Enduro/X to work basically we need following packages:
+For getting Enduro/X to work basically we need following packages:
 
 . git
 . cmake
@@ -44,7 +38,7 @@ and install open source packages to local machine:
 
 === Configuring the system
 Queue file system must be mounted when OS starts. Firstly we need a folder '/mnt/mqueue' where
-the queues are mount. And seconldy we will add the automatic mount at system startup in '/etc/fstab'.
+the queues are mount. And secondly we will add the automatic mount at system startup in '/etc/fstab'.
 
 ---------------------------------------------------------------------
 # mkdir /mnt/mqueue
@@ -70,14 +64,14 @@ EOF
 # sysctl -f /etc/sysctl.conf
 ---------------------------------------------------------------------
 
-Also we need to get '/bin/bash' working:
+Enduor/X testing framework uses '/bin/bash' in scripting, thus we must
+get it working:
 ---------------------------------------------------------------------
 # ln -s /usr/local/bin/bash /bin/bash
 ---------------------------------------------------------------------
 
 === Getting the source code
-For test purposes we will parepare new user for which Enduro/X will built (this adds the 
-in the path the /opt/csw/bin. You may modify that of your needs.
+For test purposes we will parepare new user for which Enduro/X will built.
 
 ---------------------------------------------------------------------
 # adduser 
@@ -152,10 +146,7 @@ EOF
 $ chmod +x $HOME/ndrx_home
 ---------------------------------------------------------------------
 
-=== Building the code with GCC
-
-It is assumed that gcc is default compiler on the system (i.e. Oracle Studio not installed), 
-thus following cmake will pick up gcc by default:
+=== Building the code
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
