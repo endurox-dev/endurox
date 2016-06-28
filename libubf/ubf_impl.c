@@ -74,117 +74,117 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             int *last_occ,
                             get_fld_loc_info_t *last_start)
 {
-        UBF_header_t *hdr = (UBF_header_t *)p_ub;
-        BFLDID   *p_bfldid = &hdr->bfldid;
-        char *p = (char *)&hdr->bfldid;
-        dtype_str_t *dtype=NULL;
-        int iocc=FAIL;
-        int type;
-        int step;
-        char * ret=NULL;
-        *fld_dtype=NULL;
-        int stat = SUCCEED;
-        char fn[] = "get_fld_loc";
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+    BFLDID   *p_bfldid = &hdr->bfldid;
+    char *p = (char *)&hdr->bfldid;
+    dtype_str_t *dtype=NULL;
+    int iocc=FAIL;
+    int type;
+    int step;
+    char * ret=NULL;
+    *fld_dtype=NULL;
+    int stat = SUCCEED;
+    char fn[] = "get_fld_loc";
 
-        *last_occ = FAIL;
+    *last_occ = FAIL;
+    /*
+     * Roll the field till the
+     */
+    if (NULL!=last_start)
+    {
+        p_bfldid = (BFLDID *)last_start->last_checked;
+        p = (char *)last_start->last_checked;
+    }
+
+    if (bfldid == *p_bfldid)
+    {
+        iocc++;
+        /* Save last matched position */
+        if (NULL!=last_matched)
+            *last_matched = p;
+    }
+
+    while (BBADFLDID!=*p_bfldid &&
+            ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
+            bfldid >= *p_bfldid)
+    {
         /*
-         * Roll the field till the
+         * Update the start of the new field
+         * This keeps us in track what was last normal field check.
+         * This is useful for Update function. As we know buffers are in osrted
+         * order and any new fields that are find by Bnext in case of update
+         * should be appended starting for current position in buffer.
          */
-        if (NULL!=last_start)
+        if (NULL!=last_start && *last_start->last_checked!=*p_bfldid)
         {
-            p_bfldid = (BFLDID *)last_start->last_checked;
-            p = (char *)last_start->last_checked;
+            last_start->last_checked = p_bfldid;
         }
-        
+
+        /* Got to next position */
+        /* Get type */
+        type = (*p_bfldid>>EFFECTIVE_BITS);
+
+        /* Check data type alignity */
+        if (IS_TYPE_INVALID(type))
+        {
+            _Fset_error_fmt(BALIGNERR, "%s: Found invalid data type in buffer %d", 
+                                        fn, type);
+            stat=FAIL;
+            goto out;
+        }
+
+        /* Get type descriptor */
+        dtype = &G_dtype_str_map[type];
+        step = dtype->p_next(dtype, p, NULL);
+        p+=step;
+        /* Align error */
+        if (CHECK_ALIGN(p, p_ub, hdr))
+        {
+            _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                                        fn, p);
+            goto out;
+            stat=FAIL;
+        }
+        p_bfldid = (BFLDID *)p;
+
         if (bfldid == *p_bfldid)
         {
-                iocc++;
-                /* Save last matched position */
-                if (NULL!=last_matched)
-                    *last_matched = p;
+            iocc++;
+            /* Save last matched position */
+            if (NULL!=last_matched)
+                *last_matched = p;
         }
+    }
 
-        while (BBADFLDID!=*p_bfldid &&
-                ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
-                bfldid >= *p_bfldid)
+    /*
+     * Check that we found correct field!?!
+     * if not then responding with NULL!
+     */
+    if (BBADFLDID!=*p_bfldid && bfldid ==*p_bfldid && iocc==occ)
+    {
+        type = (*p_bfldid>>EFFECTIVE_BITS);
+        /* Check data type alignity */
+        if (IS_TYPE_INVALID(type))
         {
-            /*
-             * Update the start of the new field
-             * This keeps us in track what was last normal field check.
-             * This is useful for Update function. As we know buffers are in osrted
-             * order and any new fields that are find by Bnext in case of update
-             * should be appended starting for current position in buffer.
-             */
-            if (NULL!=last_start && *last_start->last_checked!=*p_bfldid)
-            {
-                last_start->last_checked = p_bfldid;
-            }
-
-            /* Got to next position */
-            /* Get type */
-            type = (*p_bfldid>>EFFECTIVE_BITS);
-
-            /* Check data type alignity */
-            if (IS_TYPE_INVALID(type))
-            {
-                stat=FAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Found invalid data type in buffer %d", 
-                                            fn, type);
-                break; /* <<<<< BREAK!!! */
-            }
-
-            /* Get type descriptor */
+            
+            _Fset_error_fmt(BALIGNERR, "Found invalid data type in buffer %d", type);
+            stat=FAIL;
+            goto out;
+        }
+        else
+        {
             dtype = &G_dtype_str_map[type];
-            step = dtype->p_next(dtype, p, NULL);
-            p+=step;
-            /* Align error */
-            if (CHECK_ALIGN(p, p_ub, hdr))
-            {
-                stat=FAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
-                                            fn, p);
-                break; /* <<<< BREAK!!! */
-            }
-            p_bfldid = (BFLDID *)p;
-
-            if (bfldid == *p_bfldid)
-            {
-                iocc++;
-                /* Save last matched position */
-                if (NULL!=last_matched)
-                    *last_matched = p;
-            }
+            *fld_dtype=dtype;
+            ret=(char *)p_bfldid;
         }
+    }
 
-        /*
-         * Check that we found correct field!?!
-         * if not then responding with NULL!
-         */
-        if (SUCCEED==stat && BBADFLDID!=*p_bfldid && bfldid ==*p_bfldid && iocc==occ)
-        {
-            type = (*p_bfldid>>EFFECTIVE_BITS);
-            /* Check data type alignity */
-            if (IS_TYPE_INVALID(type))
-            {
-                stat=FAIL;
-                _Fset_error_fmt(BALIGNERR, "Found invalid data type in buffer %d", type);
-            }
-            else
-            {
-                dtype = &G_dtype_str_map[type];
-                *fld_dtype=dtype;
-                ret=(char *)p_bfldid;
-            }
-        }
-
-        if (SUCCEED==stat)
-        {
-            *last_occ = iocc;
-            /* set up last checked, it could be even next element! */
-            *last_checked=(char *)p_bfldid;
-        }
-
-        return ret;
+    *last_occ = iocc;
+    /* set up last checked, it could be even next element! */
+    *last_checked=(char *)p_bfldid;
+    
+out:
+    return ret;
 }
 
 /**
@@ -229,47 +229,45 @@ public int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
     {
         /* Null buffer */
         _Fset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
-        ret=FAIL;
+        FAIL_OUT(ret);
     }
     else if (0!=strncmp(hdr->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
         _Fset_error_msg(BNOTFLD, "Invalid FB magic");
-        ret=FAIL;
+        FAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && BBADFLDID==bfldid)
     {
         /* Invalid arguments? */
         _Fset_error_msg(BBADFLD, "bfldid == BBADFLDID");
-        ret=FAIL;
+        FAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && IS_TYPE_INVALID(bfldid>>EFFECTIVE_BITS))
     {   /* Invalid field id */
         _Fset_error_msg(BBADFLD, "Invalid bfldid (type not correct)");
-        ret=FAIL;
+        FAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && occ < -1)
     {
         _Fset_error_msg(BEINVAL, "occ < -1");
-        ret=FAIL;
+        FAIL_OUT(ret);
     }
     /* Validate the buffer. Last 4 bytes must be empty! */
-    if (SUCCEED==ret)
+    /* Get the end of the buffer */
+    p = (char *)p_ub;
+    p+=hdr->bytes_used;
+    p-= sizeof(BFLDID);
+
+    last=(BFLDID *)(p);
+    if (*last!=BBADFLDID)
     {
-        /* Get the end of the buffer */
-        p = (char *)p_ub;
-        p+=hdr->bytes_used;
-        p-= sizeof(BFLDID);
-
-        last=(BFLDID *)(p);
-        if (*last!=BBADFLDID)
-        {
-            _Fset_error_fmt(BALIGNERR, "last %d bytes of buffer not equal to "
-                                        "%p (got %p)",
-                                        sizeof(BFLDID), BBADFLDID, *last);
-            ret=FAIL;
-        }
+        _Fset_error_fmt(BALIGNERR, "last %d bytes of buffer not equal to "
+                                    "%p (got %p)",
+                                    sizeof(BFLDID), BBADFLDID, *last);
+        FAIL_OUT(ret);
     }
-
+   
+out:
     return ret;
 }
 
@@ -331,97 +329,93 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
 /*******************************************************************************/
 
     UBF_LOG(log_debug, "Badd: bfldid: %x", bfldid);
+    
+    int ntype = (bfldid>>EFFECTIVE_BITS);
+    dtype_str_t *ndtype = &G_dtype_str_map[ntype];
+    /* Move memory around (i.e. prepare free space to put data in) */
+    int new_dat_size=ndtype->p_get_data_size(ndtype, buf, len, &actual_data_size);
 
-    if (SUCCEED==ret)
+    /* Check required buffer size */
+    if (!have_buffer_size(p_ub, new_dat_size, TRUE))
     {
-        int ntype = (bfldid>>EFFECTIVE_BITS);
-        dtype_str_t *ndtype = &G_dtype_str_map[ntype];
-        /* Move memory around (i.e. prepare free space to put data in) */
-        int new_dat_size=ndtype->p_get_data_size(ndtype, buf, len, &actual_data_size);
-
-        /* Check required buffer size */
-        if (SUCCEED==ret && !have_buffer_size(p_ub, new_dat_size, TRUE))
-        {
-            UBF_LOG(log_warn, "Badd failed - out of buffer memory!");
-            return FAIL; /* <<<<< RETURN HERE! */
-        }
-
-        /* Allow to continue - better performance for concat */
-        if (NULL!=last_start)
-        {
-            p_bfldid = last_start->last_checked;
-            p = (char *)last_start->last_checked;
-        }
-
-        /* Seek position where we should insert the data... */
-        while (BBADFLDID!=*p_bfldid && bfldid >= *p_bfldid)
-        {
-            /*
-             * Save the point from which we can continue (suitable for Bconcat)
-             */
-            if (NULL!=last_start && *last_start->last_checked!=*p_bfldid)
-            {
-                last_start->last_checked = p_bfldid;
-            }
-
-            /* Got to next position */
-            /* Get type */
-            int type = (*p_bfldid>>EFFECTIVE_BITS);
-            if (IS_TYPE_INVALID(type))
-            {
-                ret=FAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Unknown data type referenced %d",
-                                            fn, type);
-                break; /* <<<< BREAK!!! */
-            }
-            /* Get type descriptor */
-            dtype_str_t *dtype = &G_dtype_str_map[type];
-            int step = dtype->p_next(dtype, p, NULL);
-
-            /* Move to next... */
-            p+=step;
-            /* Align error */
-            if (CHECK_ALIGN(p, p_ub, hdr))
-            {
-                ret=FAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
-                                            fn, p);
-                break;
-            }
-            p_bfldid = (BFLDID *)p;
-        }
-
-        if (SUCCEED==ret && BBADFLDID==*p_bfldid)
-        {
-            /* Copy data here! */
-            ret = ndtype->p_put_data(ndtype, p, bfldid, buf, len);
-            if (SUCCEED==ret)
-            {
-                hdr->bytes_used+=new_dat_size;
-            }
-        }
-        else if (SUCCEED==ret)
-        {
-            //last = (char *)(hdr+(hdr->bytes_used)-1);
-            last = (char *)hdr;
-            last+=(hdr->bytes_used-1);
-
-            /* Get the size to be moved */
-            move_size = (last-p+1);
-            /* Get some free space here!
-             * So from last element we take off current position,
-             * so we get lenght. to which we should move.
-             */
-            memmove(p+new_dat_size, p, move_size);
-            /* Put the data in! */
-            ret=ndtype->p_put_data(ndtype, p, bfldid, buf, len);
-            if (SUCCEED==ret)
-            {
-                /* Update the pointer of last bit! */
-                hdr->bytes_used+=new_dat_size;
-            }
-        }
+        UBF_LOG(log_warn, "Badd failed - out of buffer memory!");
+        FAIL_OUT(ret);
     }
+
+    /* Allow to continue - better performance for concat */
+    if (NULL!=last_start)
+    {
+        p_bfldid = last_start->last_checked;
+        p = (char *)last_start->last_checked;
+    }
+
+    /* Seek position where we should insert the data... */
+    while (BBADFLDID!=*p_bfldid && bfldid >= *p_bfldid)
+    {
+        /*
+         * Save the point from which we can continue (suitable for Bconcat)
+         */
+        if (NULL!=last_start && *last_start->last_checked!=*p_bfldid)
+        {
+            last_start->last_checked = p_bfldid;
+        }
+
+        /* Got to next position */
+        /* Get type */
+        int type = (*p_bfldid>>EFFECTIVE_BITS);
+        if (IS_TYPE_INVALID(type))
+        {
+            _Fset_error_fmt(BALIGNERR, "%s: Unknown data type referenced %d",
+                                        fn, type);
+            FAIL_OUT(ret);
+        }
+        /* Get type descriptor */
+        dtype_str_t *dtype = &G_dtype_str_map[type];
+        int step = dtype->p_next(dtype, p, NULL);
+
+        /* Move to next... */
+        p+=step;
+        /* Align error */
+        if (CHECK_ALIGN(p, p_ub, hdr))
+        {
+            _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                                        fn, p);
+            FAIL_OUT(ret);
+        }
+        p_bfldid = (BFLDID *)p;
+    }
+
+    if (BBADFLDID==*p_bfldid)
+    {
+        /* Copy data here! */
+        if (SUCCEED!=ndtype->p_put_data(ndtype, p, bfldid, buf, len))
+        {
+            FAIL_OUT(ret);
+        }
+        
+        hdr->bytes_used+=new_dat_size;
+    }
+    else
+    {
+        last = (char *)hdr;
+        last+=(hdr->bytes_used-1);
+
+        /* Get the size to be moved */
+        move_size = (last-p+1);
+        /* Get some free space here!
+         * So from last element we take off current position,
+         * so we get lenght. to which we should move.
+         */
+        memmove(p+new_dat_size, p, move_size);
+        /* Put the data in! */
+        if (SUCCEED!=ndtype->p_put_data(ndtype, p, bfldid, buf, len))
+        {
+            FAIL_OUT(ret);
+        }
+        /* Update the pointer of last bit! */
+        hdr->bytes_used+=new_dat_size;
+    }
+out:
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
     __dbg_olduse = (__p_ub_copy->buf_len - __p_ub_copy->bytes_used);
@@ -461,7 +455,7 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
     free(__p_ub_copy);
 #endif
 /*******************************************************************************/
-	return ret;
+    return ret;
 }
 
 /**
@@ -559,51 +553,47 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         if (FAIL==target_elem_size)
         {
             _Fset_error_msg(BEINVAL, "Failed to get data size - corrupted data?");
-            ret=FAIL;
+            FAIL_OUT(ret);
         }
 
-        if (SUCCEED==ret)
+        /* how much we are going to add */
+        must_have_size = target_elem_size - existing_size;
+        if ( must_have_size>0 && !have_buffer_size(p_ub, must_have_size, TRUE))
         {
-            /* how much we are going to add */
-            must_have_size = target_elem_size - existing_size;
-            if ( must_have_size>0 && !have_buffer_size(p_ub, must_have_size, TRUE))
+            FAIL_OUT(ret);
+        }
+
+        if (must_have_size!=0)
+        { 
+            int real_move = must_have_size;
+            if (real_move < 0 )
+                real_move = -real_move;
+            /* Free up space in memory if required (i.e. do the move) */
+            last = (char *)hdr;
+            last+=(hdr->bytes_used-1);
+            move_size = (last-(p+existing_size)+1);
+
+            UBF_LOG(log_debug, "Bchg: memmove: %d bytes "
+                            "from addr %p to addr %p", real_move,
+                             p+existing_size, p+existing_size+must_have_size);
+
+            /* Free up, or make more memory to be used! */
+            memmove(p+existing_size + must_have_size, p+existing_size, move_size);
+            hdr->bytes_used+=must_have_size;
+
+            /* Reset last bytes to 0 */
+            if (must_have_size < 0)
             {
-                ret=FAIL;
+                /* Reset trailing stuff to 0 - this should be tested! */
+                memset(p+existing_size + must_have_size+move_size, 0, real_move);
             }
+        }
 
-            if (SUCCEED==ret && must_have_size!=0)
-            { 
-                int real_move = must_have_size;
-                if (real_move < 0 )
-                    real_move = -real_move;
-                /* Free up space in memory if required (i.e. do the move) */
-                last = (char *)hdr;
-                last+=(hdr->bytes_used-1);
-                move_size = (last-(p+existing_size)+1);
-
-                UBF_LOG(log_debug, "Bchg: memmove: %d bytes "
-                                "from addr %p to addr %p", real_move,
-                                 p+existing_size, p+existing_size+must_have_size);
-
-                /* Free up, or make more memory to be used! */
-                memmove(p+existing_size + must_have_size, p+existing_size, move_size);
-                hdr->bytes_used+=must_have_size;
-
-                /* Reset last bytes to 0 */
-                if (must_have_size < 0)
-                {
-                    /* Reset trailing stuff to 0 - this should be tested! */
-                    memset(p+existing_size + must_have_size+move_size, 0, real_move);
-                }
-            }
-
-            /* Put the actual data there, buffer sizes already resized above */
-            if (SUCCEED==ret && SUCCEED!=dtype->p_put_data(dtype, p, bfldid, buf, len))
-            {
-                _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
-                ret=FAIL;
-            }
-
+        /* Put the actual data there, buffer sizes already resized above */
+        if (SUCCEED!=dtype->p_put_data(dtype, p, bfldid, buf, len))
+        {
+            _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
+            FAIL_OUT(ret);
         }
     }
     else
@@ -642,62 +632,55 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         if (FAIL==target_elem_size)
         {
             _Fset_error_msg(BEINVAL, "Failed to get data size - corrupted data?");
-            ret=FAIL;
+            FAIL_OUT(ret);
         }
 
-        if (SUCCEED==ret)
-        {
             must_have_size=empty_elem_tot_size+target_elem_size;
             UBF_LOG(log_debug, "About to add data %d bytes",
                                             must_have_size);
-        }
-        if (SUCCEED==ret && !have_buffer_size(p_ub, must_have_size, TRUE))
+        
+        if (!have_buffer_size(p_ub, must_have_size, TRUE))
         {
-            ret=FAIL;
+            FAIL_OUT(ret);
         }
-        else if (SUCCEED==ret)
+        
+        /* Free up space in memory if required (i.e. do the move) */
+        last = (char *)hdr;
+        last+=(hdr->bytes_used-1);
+        /* Get the size to be moved */
+        move_size = (last-p+1); /* <<< p is incorrect here! */
+        /* Get some free space here!
+         * So from last element we take off current position,
+         * so we get lenght. to which we should move.
+         */
+        if (move_size > 0)
         {
-            /* Free up space in memory if required (i.e. do the move) */
-            last = (char *)hdr;
-            last+=(hdr->bytes_used-1);
-            /* Get the size to be moved */
-            move_size = (last-p+1); /* <<< p is incorrect here! */
-            /* Get some free space here!
-             * So from last element we take off current position,
-             * so we get lenght. to which we should move.
-             */
-            if (move_size > 0)
-            {
-                UBF_LOG(log_debug, "Bchg: memmove: %d bytes "
-                                "from addr %p to addr %p", move_size,
-                                p, p+must_have_size);
-                memmove(p+must_have_size, p, move_size);
-            }
+            UBF_LOG(log_debug, "Bchg: memmove: %d bytes "
+                            "from addr %p to addr %p", move_size,
+                            p, p+must_have_size);
+            memmove(p+must_have_size, p, move_size);
+        }
 
-            /* We have space, so now produce empty nodes */
-            for (i=0; i<missing_occ; i++)
-            {
-                ext1_map->p_put_empty(ext1_map, p, bfldid);
-                p+=elem_empty_size;
-            }
-            /* Now load the data by itself - do not check the
-             * result it should work out OK.
-             */
-            if (SUCCEED==ret
-                    && SUCCEED!=dtype->p_put_data(dtype, p, bfldid, buf, len))
-            {
-                /* We have failed! */
-                _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
-                ret=FAIL;
-            }
-            else if (SUCCEED==ret)
-            {
-                /* Finally increase the buffer usage! */
-                hdr->bytes_used+=must_have_size;
-            }
+        /* We have space, so now produce empty nodes */
+        for (i=0; i<missing_occ; i++)
+        {
+            ext1_map->p_put_empty(ext1_map, p, bfldid);
+            p+=elem_empty_size;
         }
+        /* Now load the data by itself - do not check the
+         * result it should work out OK.
+         */
+        if (SUCCEED!=dtype->p_put_data(dtype, p, bfldid, buf, len))
+        {
+            /* We have failed! */
+            _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
+            FAIL_OUT(ret);
+        }
+        /* Finally increase the buffer usage! */
+        hdr->bytes_used+=must_have_size;
     }
-
+    
+out:
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
     __dbg_olduse = (__p_ub_copy->buf_len - __p_ub_copy->bytes_used);
@@ -758,25 +741,22 @@ public BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid)
 
     UBF_LOG(log_debug, "_Boccur: bfldid: %d", bfldid);
 
-    if (FAIL!=ret)
+    /* using -2 for looping throught te all occurrances! */
+    get_fld_loc(p_ub, bfldid, -2,
+                            &fld_dtype,
+                            (char **)&p_last,
+                            NULL,
+                            &ret,
+                            NULL);
+    if (FAIL==ret)
     {
-        /* using -2 for looping throught te all occurrances! */
-        get_fld_loc(p_ub, bfldid, -2,
-                                &fld_dtype,
-                                (char **)&p_last,
-                                NULL,
-                                &ret,
-                                NULL);
-        if (FAIL==ret)
-        {
-            /* field not found! */
-            ret=0;
-        }
-        else
-        {
-            /* found (but zero based) so have to increment! */
-            ret+=1;
-        }
+        /* field not found! */
+        ret=0;
+    }
+    else
+    {
+        /* found (but zero based) so have to increment! */
+        ret+=1;
     }
 
     UBF_LOG(log_debug, "_Boccur: return %d", ret);
@@ -866,43 +846,40 @@ public int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         /* Align error */
         if (IS_TYPE_INVALID(type))
         {
-            found=FAIL;
             _Fset_error_fmt(BALIGNERR, "%s: Invalid data type: %d", type, fn);
+            found=FAIL;
+            goto out;
         }
 
-        if (found!=FAIL)
-        {
-            dtype=&G_dtype_str_map[type];
-            p=(char *)state->p_cur_bfldid;
-            /* Get step to next */
-            step = dtype->p_next(dtype, p, NULL);
-            p+=step;
-        }
+        dtype=&G_dtype_str_map[type];
+        p=(char *)state->p_cur_bfldid;
+        /* Get step to next */
+        step = dtype->p_next(dtype, p, NULL);
+        p+=step;
+
 
         /* Align error */
-        if (found!=FAIL && CHECK_ALIGN(p, p_ub, hdr))
+        if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            found=FAIL;
             _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p", fn, p);
+            found=FAIL;
+            goto out;
         }
-
-        if (found!=FAIL)
+        
+        /* Move to next */
+        state->p_cur_bfldid = (BFLDID *)p;
+        if (prev_fld==*state->p_cur_bfldid)
         {
-            /* Move to next */
-            state->p_cur_bfldid = (BFLDID *)p;
-            if (prev_fld==*state->p_cur_bfldid)
-            {
-                state->cur_occ++;
-            }
-            else
-            {
-                state->cur_occ=0;
-            }
+            state->cur_occ++;
+        }
+        else
+        {
+            state->cur_occ=0;
         }
     }
     
     /* return the results */
-    if (FAIL!=found && BBADFLDID!=*state->p_cur_bfldid)
+    if (BBADFLDID!=*state->p_cur_bfldid)
     {
         /* Return the value if needed */
         *bfldid = *state->p_cur_bfldid;
@@ -916,14 +893,15 @@ public int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
 
         if (IS_TYPE_INVALID(type))
         {
-            found=FAIL;
             _Fset_error_fmt(BALIGNERR, "Invalid data type: %d", type);
+            found=FAIL;
+            goto out;
         }
         dtype=&G_dtype_str_map[type];
         /*
          * Return the pointer to start of the field.
          */
-        if (FAIL!=found && NULL!=d_ptr)
+        if (NULL!=d_ptr)
         {
             int dlen;
             dtype_ext1_t *dtype_ext1;
@@ -941,11 +919,12 @@ public int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             }
         }
 
-        if (FAIL!=found && NULL!=buf)
+        if (NULL!=buf)
         {
             if (SUCCEED!=dtype->p_get_data(dtype, (char *)p, buf, len))
             {
                 found=FAIL;
+                goto out;
             }
 #ifdef UBF_API_DEBUG
             else
@@ -957,18 +936,19 @@ public int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             }
 #endif
         }
-        else if (FAIL!=found)
+        else
         {
             UBF_LOG(log_warn, "%s: Buffer null - not returning value", fn);
         }
     }
-    else if (FAIL!=found)
+    else
     {
         UBF_LOG(log_debug, "%s: Reached End Of Buffer", fn);
         /* do not return anything */
         found = 0; /* End Of Buffer */
     }
     
+out:
     return found;
 }
 
@@ -1007,26 +987,26 @@ public char * _Btypcvt (BFLDLEN * to_len, int to_type,
     {
         /* error should be already set */
         UBF_LOG(log_error, "%s: Malloc failed!", fn);
+        goto out;
     }
     
-    if (NULL!=ret)
+    /* Run the conversation */
+    if (NULL==ubf_convert(from_type, CNV_DIR_OUT, from_buf, from_len,
+                        to_type, ret, &cvn_len))
     {
-        /* Run the conversation */
-        if (NULL==ubf_convert(from_type, CNV_DIR_OUT, from_buf, from_len,
-                            to_type, ret, &cvn_len))
-        {
-            /* if fails, error should be already set! */
-            /* remove allocated memory */
-            free(alloc_buf);
-            alloc_buf=NULL;
-            ret=NULL;
-        }
+        /* if fails, error should be already set! */
+        /* remove allocated memory */
+        free(alloc_buf);
+        alloc_buf=NULL;
+        ret=NULL;
+        goto out;
     }
 
     /* return output len if requested */
-    if (NULL!=ret && NULL!=to_len)
+    if (NULL!=to_len)
         *to_len=cvn_len;
 
+out:
     UBF_LOG(log_debug, "%s: return %p", fn, ret);
 
 /***************************************** DEBUG *******************************/
