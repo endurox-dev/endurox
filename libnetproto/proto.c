@@ -95,6 +95,7 @@ typedef struct cproto cproto_t;
 typedef struct xmsg xmsg_t;
 
 struct cproto {
+    int     tableid;            /* table id. */
     long    tag;                /* TLV tag */
     char*   cname;              /* c field name */
     size_t  offset;             /* offset in structure */
@@ -143,69 +144,79 @@ static char *M_type[] = {
 "EXF_TIMET"     /* 12 */
 };
 
+/* TODO: Add table_id filed, so that from each row we can identify table descriptor
+ * we need a NR of elements in table so that we can perform binary search for descriptor.
+ */
+
+#define TNC      1  /* net call */
 /* Converter for cmd_br_net_call_t */
 static cproto_t M_cmd_br_net_call_x[] = 
 {
-    {0x01, "br_magic",  OFSZ(cmd_br_net_call_t,br_magic),   EXF_LONG, XFLD, 6, 6, NULL},
-    {0x02, "msg_type",  OFSZ(cmd_br_net_call_t,msg_type),   EXF_CHAR, XFLD, 1, 1},
-    {0x23, "command_id",OFSZ(cmd_br_net_call_t,command_id), EXF_INT,  XFLD, 1, 5},
-    {0x03, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10},
-    {0x04, "buf",       OFSZ(cmd_br_net_call_t,buf),        EXF_NONE, XSUB, 0, PMSGMAX, 
+    {TNC, 0x1005, "br_magic",  OFSZ(cmd_br_net_call_t,br_magic),   EXF_LONG, XFLD, 6, 6, NULL},
+    {TNC, 0x100F, "msg_type",  OFSZ(cmd_br_net_call_t,msg_type),   EXF_CHAR, XFLD, 1, 1},
+    {TNC, 0x1019, "command_id",OFSZ(cmd_br_net_call_t,command_id), EXF_INT,  XFLD, 1, 5},
+    {TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10},
+    {TNC, 0x102D, "buf",       OFSZ(cmd_br_net_call_t,buf),        EXF_NONE, XSUB, 0, PMSGMAX, 
                                                 NULL, FAIL, FAIL, classify_netcall},
-    {FAIL}
+    {TNC, FAIL}
 };
 
 /* Converter for stnadard ndrxd header. */
+#define TSH     2 /* standard hearder */
 static cproto_t M_stdhdr_x[] = 
 {
-    {0x05, "command_id",    OFSZ(command_call_t,command_id),     EXF_SHORT, XFLD, 1, 4},
-    {0x06, "proto_ver",     OFSZ(command_call_t,proto_ver),      EXF_CHAR, XFLD, 1, 1},
+    {TSH, 0x1037, "command_id",    OFSZ(command_call_t,command_id),     EXF_SHORT, XFLD, 1, 4},
+    {TSH, 0x1041, "proto_ver",     OFSZ(command_call_t,proto_ver),      EXF_CHAR, XFLD, 1, 1},
     /* it should be 0 AFAIK... */
-    {0x07, "proto_magic",   OFSZ(command_call_t,proto_magic),    EXF_INT,  XFLD, 0, 2},
-    {FAIL}
+    {TSH, 0x104B, "proto_magic",   OFSZ(command_call_t,proto_magic),    EXF_INT,  XFLD, 0, 2},
+    {TSH, FAIL}
 };
 
 /* Converter for command_call_t */
+#define TCC     3 /* Command call */
 static cproto_t M_command_call_x[] = 
 {
-    {0x20,  "stdhdr",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_stdhdr_x},
-    {0x08,  "magic",        OFSZ(command_call_t,magic),         EXF_ULONG,  XFLD, 6, 6},
-    {0x16,  "command",      OFSZ(command_call_t,command),       EXF_INT,    XFLD, 2, 2},
-    {0x09,  "msg_type",     OFSZ(command_call_t,msg_type),      EXF_SHORT,  XFLD, 1, 2},
-    {0x10,  "msg_src",      OFSZ(command_call_t,msg_src),       EXF_SHORT,  XFLD, 1, 1},
-    {0x11,  "reply_queue",  OFSZ(command_call_t,reply_queue),   EXF_STRING, XFLD, 1, 128},
-    {0x12,  "flags",        OFSZ(command_call_t,flags),         EXF_INT,    XFLD, 1, 5},
-    {0x13,  "caller_nodeid",OFSZ(command_call_t,caller_nodeid), EXF_INT,    XFLD, 1, 3},
-    {FAIL}
+    {TCC, 0x1055,  "stdhdr",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_stdhdr_x},
+    {TCC, 0x105F,  "magic",        OFSZ(command_call_t,magic),         EXF_ULONG,  XFLD, 6, 6},
+    {TCC, 0x1069,  "command",      OFSZ(command_call_t,command),       EXF_INT,    XFLD, 2, 2},
+    {TCC, 0x1073,  "msg_type",     OFSZ(command_call_t,msg_type),      EXF_SHORT,  XFLD, 1, 2},
+    {TCC, 0x107D,  "msg_src",      OFSZ(command_call_t,msg_src),       EXF_SHORT,  XFLD, 1, 1},
+    {TCC, 0x1087,  "reply_queue",  OFSZ(command_call_t,reply_queue),   EXF_STRING, XFLD, 1, 128},
+    {TCC, 0x1091,  "flags",        OFSZ(command_call_t,flags),         EXF_INT,    XFLD, 1, 5},
+    {TCC, 0x109B,  "caller_nodeid",OFSZ(command_call_t,caller_nodeid), EXF_INT,    XFLD, 1, 3},
+    {TCC, FAIL}
 };
 
 /* Convert for cmd_br_time_sync_t */
+#define TST     4   /* time sync table */
 static cproto_t M_cmd_br_time_sync_x[] = 
 {
-    {0x21,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
-    {0x15,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 40, 40},
-    {FAIL}
+    {TST, 0x10A5,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
+    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 40, 40},
+    {TST, FAIL}
 };
 
 /* Convert for bridge_refresh_svc_t */
+#define TRS     5 /* Refresh services */     
 static cproto_t Mbridge_refresh_svc_x[] = 
 {
-    {0x20,  "mode",       OFSZ(bridge_refresh_svc_t,mode),    EXF_CHAR,    XFLD, 1, 6},
-    {0x21,  "svc_nm",     OFSZ(bridge_refresh_svc_t,svc_nm),  EXF_STRING,  XFLD, 1, MAXTIDENT},
-    {0x22,  "count",      OFSZ(bridge_refresh_svc_t,count),   EXF_INT,     XFLD, 1, 6},
-    {FAIL}
+    {TRS, 0x10B9,  "mode",       OFSZ(bridge_refresh_svc_t,mode),    EXF_CHAR,    XFLD, 1, 6},
+    {TRS, 0x10C3,  "svc_nm",     OFSZ(bridge_refresh_svc_t,svc_nm),  EXF_STRING,  XFLD, 1, MAXTIDENT},
+    {TRS, 0x10CD,  "count",      OFSZ(bridge_refresh_svc_t,count),   EXF_INT,     XFLD, 1, 6},
+    {TRS, FAIL}
 };
 
 /* Convert for bridge_refresh_t */
+#define TBR     6 /* bridege refresh */
 static cproto_t M_bridge_refresh_x[] = 
 {
-    {0x24,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
-    {0x17,  "mode",       OFSZ(bridge_refresh_t,mode),        EXF_INT,    XFLD, 1, 6},
-    {0x18,  "count",      OFSZ(bridge_refresh_t,count),       EXF_INT,    XFLD, 1, 6},
+    {TBR, 0x10D7,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
+    {TBR, 0x10E1,  "mode",       OFSZ(bridge_refresh_t,mode),        EXF_INT,    XFLD, 1, 6},
+    {TBR, 0x10EB,  "count",      OFSZ(bridge_refresh_t,count),       EXF_INT,    XFLD, 1, 6},
     /* We will provide integer as counter for array:  */
-    {0x19,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 1, PMSGMAX, Mbridge_refresh_svc_x, 
+    {TBR, 0x10F5,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 1, PMSGMAX, Mbridge_refresh_svc_x, 
                             OFFSET(bridge_refresh_t,count), sizeof(bridge_refresh_svc_t)},
-    {FAIL}
+    {TBR, FAIL}
 };
 /******************** STUFF FOR UBF *******************************************/
 /* Internal structure for driving UBF fields. */
@@ -221,68 +232,79 @@ struct proto_ufb_fld
  * Table bellow at index is UBF field type
  * the value is type data tag in protocol buffer.
  */
+#define UBF_TAG_BFLD_SHORT          0x1113 
+#define UBF_TAG_BFLD_LONG           0x111D
+#define UBF_TAG_BFLD_CHAR           0x1127
+#define UBF_TAG_BFLD_FLOAT          0x1131
+#define UBF_TAG_BFLD_DOUBLE         0x113B
+#define UBF_TAG_BFLD_STRING         0x1145
+#define UBF_TAG_BFLD_CARRAY         0x114F
 static short M_ubf_proto_tag_map[] = 
 {
-    0xb10, /* BFLD_SHORT- 0   */
-    0xb11, /* BFLD_LONG - 1	 */
-    0xb12, /* BFLD_CHAR - 2	 */
-    0xb13, /* BFLD_FLOAT - 3  */
-    0xb14, /* BFLD_DOUBLE - 4 */
-    0xb15, /* BFLD_STRING - 5 */
-    0xb16, /* BFLD_CARRAY - 6 */  
+    0x1113, /* BFLD_SHORT- 0   */
+    0x111D, /* BFLD_LONG - 1	 */
+    0x1127, /* BFLD_CHAR - 2	 */
+    0x1131, /* BFLD_FLOAT - 3  */
+    0x113B, /* BFLD_DOUBLE - 4 */
+    0x1145, /* BFLD_STRING - 5 */
+    0x114F, /* BFLD_CARRAY - 6 */  
 };
+
+#define UBF_TAG_BFLDID     0x10FF
+#define UBF_TAG_BFLDLEN    0x1109
 
 /* Helper driver table for UBF buffer. */
+#define TUF         7 /* ubf field */
 static cproto_t M_ubf_field[] = 
 {
-    {0xb01,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
-    {0xb02,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 6},
+    {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
+    {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 6},
     /* Typed fields... */
-    {0xb10,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLD, 1, 6},
-    {0xb11,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
-    {0xb12,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLD, 1, 1},
-    {0xb13,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLD, 1, 40},
-    {0xb14,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLD, 1, 40},
-    {0xb15,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLD, 0, PMSGMAX},
-    {0xb16,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
+    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLD, 1, 6},
+    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
+    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLD, 1, 1},
+    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLD, 1, 40},
+    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLD, 1, 40},
+    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLD, 0, PMSGMAX},
+    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
                             /* Using counter offset as carry len field... */
                             NULL, OFFSET(proto_ufb_fld_t,bfldlen), FAIL, NULL},
-    {FAIL}
+    {TUF, FAIL}
 };
 
-/* TODO: Add XA related fields: */
 /* Converter for  tp_command_call_t */
+#define TTC        8 /* tpcall */
 static cproto_t M_tp_command_call_x[] = 
 {
-    {0xa01,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
-    {0xa02,  "buffer_type_id",OFSZ(tp_command_call_t,buffer_type_id),EXF_SHORT,   XFLD, 1, 5},
-    {0xa03,  "name",      OFSZ(tp_command_call_t,name),     EXF_STRING, XFLD, 0, XATMI_SERVICE_NAME_LENGTH},
-    {0xa04,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
-    {0xa05,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
-    {0xa06,  "my_id",     OFSZ(tp_command_call_t,my_id),    EXF_STRING, XFLD, 0, NDRX_MAX_ID_SIZE},
-    {0xa07,  "sysflags",  OFSZ(tp_command_call_t,sysflags), EXF_LONG,   XFLD, 1, 20},
-    {0xa08,  "cd",        OFSZ(tp_command_call_t,cd),       EXF_INT,    XFLD, 1, 10},
-    {0xa09,  "rval",      OFSZ(tp_command_call_t,rval),     EXF_INT,    XFLD, 1, 10},
-    {0xa0a,  "rcode",     OFSZ(tp_command_call_t,rcode),    EXF_LONG,   XFLD, 1, 20},
-    {0xa0b,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 31},
-    {0xa0c,  "flags",     OFSZ(tp_command_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
-    {0xa0e,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
-    {0xa0f,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_UINT,   XFLD, 1, 6},
-    {0xa10,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
-    {0xa11,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
-    {0xa12,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {TTC, 0x1159,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
+    {TTC, 0x1163,  "buffer_type_id",OFSZ(tp_command_call_t,buffer_type_id),EXF_SHORT,   XFLD, 1, 5},
+    {TTC, 0x116D,  "name",      OFSZ(tp_command_call_t,name),     EXF_STRING, XFLD, 0, XATMI_SERVICE_NAME_LENGTH},
+    {TTC, 0x1177,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
+    {TTC, 0x1181,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
+    {TTC, 0x118B,  "my_id",     OFSZ(tp_command_call_t,my_id),    EXF_STRING, XFLD, 0, NDRX_MAX_ID_SIZE},
+    {TTC, 0x1195,  "sysflags",  OFSZ(tp_command_call_t,sysflags), EXF_LONG,   XFLD, 1, 20},
+    {TTC, 0x119F,  "cd",        OFSZ(tp_command_call_t,cd),       EXF_INT,    XFLD, 1, 10},
+    {TTC, 0x11A9,  "rval",      OFSZ(tp_command_call_t,rval),     EXF_INT,    XFLD, 1, 10},
+    {TTC, 0x11B3,  "rcode",     OFSZ(tp_command_call_t,rcode),    EXF_LONG,   XFLD, 1, 20},
+    {TTC, 0x11BD,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 31},
+    {TTC, 0x11C7,  "flags",     OFSZ(tp_command_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
+    {TTC, 0x11D1,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
+    {TTC, 0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_UINT,   XFLD, 1, 6},
+    {TTC, 0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
+    {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
+    {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
                            OFFSET(tp_command_call_t,data_len), FAIL, NULL, OFFSET(tp_command_call_t,buffer_type_id)},
     
     
-    {0xa13,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 1, (NDRX_XID_SERIAL_BUFSIZE+1)},
-    {0xa14,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 1, 6},
-    {0xa15,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 1, 6},
-    {0xa16,  "tmsrvid", OFSZ(tp_command_call_t, tmsrvid), EXF_SHORT,   XFLD, 1, 6},
-    {0xa17,  "tmknownrms",OFSZ(tp_command_call_t,tmknownrms),    EXF_STRING, XFLD, 1, (NDRX_MAX_RMS+1)},
+    {TTC, 0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 1, (NDRX_XID_SERIAL_BUFSIZE+1)},
+    {TTC, 0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 1, 6},
+    {TTC, 0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 1, 6},
+    {TTC, 0x1221,  "tmsrvid", OFSZ(tp_command_call_t, tmsrvid), EXF_SHORT,   XFLD, 1, 6},
+    {TTC, 0x122B,  "tmknownrms",OFSZ(tp_command_call_t,tmknownrms),    EXF_STRING, XFLD, 1, (NDRX_MAX_RMS+1)},
     /* Is transaction marked as abort only? */
-    {0xa18,  "tmtxflags", OFSZ(tp_command_call_t, tmtxflags), EXF_SHORT,   XFLD, 1, 1},
-    {FAIL}
+    {TTC, 0x1235,  "tmtxflags", OFSZ(tp_command_call_t, tmtxflags), EXF_SHORT,   XFLD, 1, 1},
+    {TTC, FAIL}
 };
 
 /* Message conversion tables */
@@ -904,7 +926,7 @@ public int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             case XFLD:
             {
                 /* This is field... */
-                if ( 0xb16 == p->tag)
+                if ( UBF_TAG_BFLD_CARRAY == p->tag)
                 {
                     ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, &len, debug, 
                                 p_ub_data->bfldlen);
@@ -1103,7 +1125,8 @@ public int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     UBFH *p_ub = (UBFH *)data;
                     proto_ufb_fld_t f;
                     BFLDOCC occ;
-                    short accept_tags[] = {0xb01, 0xb02, 0, FAIL};
+                    
+                    short accept_tags[] = {UBF_TAG_BFLDID, UBF_TAG_BFLDLEN, 0, FAIL};
                     
                     /* Reserve space for Tag/Length */
                     /* <sub tlv> */
@@ -1423,13 +1446,13 @@ private int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     }
                     
                     if (NULL!=p_ub_data && ( 
-                            0xb10 == net_tag ||
-                            0xb11 == net_tag ||
-                            0xb12 == net_tag ||
-                            0xb13 == net_tag ||
-                            0xb14 == net_tag ||
-                            0xb15 == net_tag ||
-                            0xb16 == net_tag))
+                            UBF_TAG_BFLD_SHORT == net_tag ||
+                            UBF_TAG_BFLD_LONG == net_tag ||
+                            UBF_TAG_BFLD_CHAR == net_tag ||
+                            UBF_TAG_BFLD_FLOAT == net_tag ||
+                            UBF_TAG_BFLD_DOUBLE == net_tag ||
+                            UBF_TAG_BFLD_STRING == net_tag ||
+                            UBF_TAG_BFLD_CARRAY == net_tag))
                     {
                         
                         NDRX_LOG(log_debug, "Installing FB field: "
