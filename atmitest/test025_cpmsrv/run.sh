@@ -65,6 +65,11 @@ export NDRX_TOUT=13
 # Test process count
 PROC_COUNT=100
 
+PSCMD="ps -ef"
+if [ "$(uname)" == "FreeBSD" ]; then
+	PSCMD="ps"
+fi
+
 #
 # Generic exit function
 #
@@ -141,10 +146,10 @@ if [[ "$CNT" -ne "$PROC_COUNT" ]]; then
         go_out 6
 fi
 
-CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
-echo "ps -ef procs: $CNT"
+CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
+echo "$PSCMD procs: $CNT"
 if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
-        echo "TESTERROR! $PROC_COUNT procs not booted (according to ps -ef )!"
+        echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
         go_out 7
 fi
 
@@ -167,8 +172,8 @@ sleep 10
 xadmin stop -s cpmsrv
 
 # We should have 0 now
-CNT=`ps -ef | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
-echo "ps -ef procs: $CNT"
+CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
+echo "$PSCMD procs: $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
         echo "TESTERROR! not all whileproc.sh stopped!"
         go_out 8
@@ -186,8 +191,8 @@ if [[ "X$OUT" == "X" ]]; then
 fi
 
 # process must be killed
-CNT=`ps -ef | grep ignore.sh | grep -v grep | wc | awk '{print $1}'`
-echo "ps -ef procs: $CNT"
+CNT=`$PSCMD | grep ignore.sh | grep -v grep | wc | awk '{print $1}'`
+echo "$PSCMD procs: $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
         echo "TESTERROR! ignore.sh not stopped!"
         go_out 11
