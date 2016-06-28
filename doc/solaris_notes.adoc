@@ -23,7 +23,6 @@ Enduro/X for queue management uses these files.
 The installation process will install required pen source packages from 'http://www.opencsw.org'.
 you may install packages with different approach. This is just a sample process for getting
 build system working on under Solaris. For getting Enduro/X to work basically we need following packages:
- For getting Enduro/X to work basically we need following packages:
 
 . git
 . cmake
