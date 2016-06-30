@@ -180,7 +180,7 @@ void load_bfindlast_test_data(UBFH *p_ub)
  */
 Ensure(test_cbfind)
 {
-    char fb[1024];
+    char fb[1048];
     UBFH *p_ub = (UBFH *)fb;
     short *s;
     long *l;

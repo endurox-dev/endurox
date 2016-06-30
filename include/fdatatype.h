@@ -86,19 +86,19 @@ struct UBF_header
     unsigned char       version;
     char                magic[UBF_MAGIC_SIZE];
     
-    /* cache offset pointers: 
-    TODO:
-    BFLDLEN      cache_short_off;
+    /* cache offsets: 
+    TODO: 
+    BFLDLEN      cache_short_off; - short is in start anyway.
+    */
     BFLDLEN      cache_long_off;
     BFLDLEN      cache_char_off;
     BFLDLEN      cache_float_off;
     BFLDLEN      cache_double_off;
     BFLDLEN      cache_string_off;
     BFLDLEN      cache_carray_off;
-    */
     
     BFLDLEN      buf_len;
-    _UBF_INT    opts;
+    _UBF_INT     opts;
     BFLDLEN      bytes_used;
     BFLDID       bfldid;
 };

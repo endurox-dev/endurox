@@ -306,7 +306,7 @@ Ensure(test_Bsizeof)
  */
 Ensure(test_Bunused)
 {
-    char tmpbuf[40]; /* +2 for short align */
+    char tmpbuf[64]; /* +2 for short align */
     short s;
     UBFH * p_ub =  (UBFH *) tmpbuf;
 

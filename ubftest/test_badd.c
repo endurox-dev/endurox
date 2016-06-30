@@ -40,7 +40,7 @@
 
 
 
-#define DEFAULT_BUFFER  128+8
+#define DEFAULT_BUFFER  152+8
 UBFH *M_p_ub1 = NULL;
 
 /**

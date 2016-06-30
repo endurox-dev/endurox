@@ -267,7 +267,7 @@ Ensure(test_btypcvt)
 Ensure(ubf_test_struct)
 {
     /* test data structures */
-    assert_equal(sizeof(UBF_header_t), 24);
+    assert_equal(sizeof(UBF_header_t), 48);
 }
 
 /**
