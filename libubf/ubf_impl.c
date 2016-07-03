@@ -58,6 +58,101 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Update fielded buffer cache according to 
+ * @param p_ub
+ * @param fldid
+ * @param size_diff
+ */
+private void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
+{
+    
+}
+
+/**
+ * Add new typed offset cache (update offset if needed.) 
+ * @param p_ub
+ * @param fldid
+ */
+private void ubf_cache_field_add(UBFH *p_ub, BFLDID lastfield, BFLDID *p_fldid, int len)
+{
+    int offset = (char *)p_ub - (char *)p_fldid;
+    UBF_header_t *uh = (UBF_header_t *)p_ub; 
+    
+    
+    if (lastfield >= *p_fldid)
+    {
+        return;
+    }
+    
+    switch (Bfldtype(*p_fldid))
+    {
+        case BFLD_LONG:
+            if (offset<uh->cache_long_off || 0==uh->cache_long_off)
+            {
+                uh->cache_long_off = offset;
+            }
+            break;
+        case BFLD_CHAR:
+            if (offset<uh->cache_char_off || 0==uh->cache_char_off)
+            {
+                uh->cache_char_off = offset;   
+            }
+            break;
+        case BFLD_FLOAT:
+            if (offset<uh->cache_float_off || 0==uh->cache_float_off)
+            {
+                uh->cache_float_off = offset;
+            }
+            break;
+        case BFLD_DOUBLE:
+            if (offset < uh->cache_double_off || 0==uh->cache_double_off)
+            {
+                uh->cache_double_off = offset;
+            }
+            break;
+        case BFLD_STRING:
+            if (offset < uh->cache_string_off || 0 == uh->cache_string_off)
+            {
+                uh->cache_string_off = offset;
+            }
+            break;
+        case BFLD_CARRAY:
+            if (offset < uh->cache_carray_off || 0 == uh->cache_carray_off)
+            {
+                uh->cache_carray_off = offset;
+            }
+            break;
+    }
+}
+
+/**
+ * Remove element from cache.
+ * NOTE: this must be called only when last occurrence of field is removed. 
+ * @param p_ub
+ * @param fldid
+ * @param p_new_fld
+ */
+private void ubf_cache_field_rm(UBFH *p_ub, BFLDID fldid, BFLDID *p_new_fld)
+{
+    if (Bfldtype(*p_new_fld)==Bfldtype(fldid))
+    {
+        return; /* Nothing todo field type still in buffer. */
+    }
+}
+
+/**
+ * Field changed it's size.
+ * Change the value of the group's which are before this field.
+ * @param p_ub
+ * @param p_fldid
+ * @param diff_size
+ */
+private void ubf_cache_field_resize(UBFH *p_ub, BFLDID *p_fldid, int diff_size)
+{
+    
+}
+
+/**
  * Returns pointer to Fb of for specified field
  * @param p_ub
  * @param bfldid
