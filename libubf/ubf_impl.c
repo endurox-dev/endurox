@@ -79,6 +79,86 @@ static ubf_type_cache_t M_ubf_type_cache[] =
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Dump the UBF cache
+ */
+public void ubf_cache_dump(UBFH *p_ub, char *msg)
+{
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+    UBF_LOG(log_debug, "%s: ubf cache short, 0: %d", msg, 0);
+    UBF_LOG(log_debug, "%s: ubf cache long, 1: %d", msg, hdr->cache_long_off);
+    UBF_LOG(log_debug, "%s: ubf cache char, 2: %d", msg, hdr->cache_char_off);
+    UBF_LOG(log_debug, "%s: ubf cache float, 3: %d", msg, hdr->cache_float_off);
+    UBF_LOG(log_debug, "%s: ubf cache double, 4: %d", msg, hdr->cache_double_off);
+    UBF_LOG(log_debug, "%s: ubf cache string, 5: %d", msg, hdr->cache_string_off);
+    UBF_LOG(log_debug, "%s: ubf cache carray, 6: %d", msg, hdr->cache_carray_off);
+}
+/**
+ * Update the cache (usable after merge)...
+ */
+public int ubf_cache_update(UBFH *p_ub)
+{
+    int type;
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+    BFLDID   *p_bfldid = &hdr->bfldid;
+    BFLDID   *p_bfldid_start = &hdr->bfldid;
+    char *p = (char *)&hdr->bfldid;
+    dtype_str_t *dtype=NULL;
+    char *fn = "ubf_cache_update";
+    int typenext;
+    int step;
+    int ret = SUCCEED;
+    int i;
+    
+    for (i=1; i<N_DIM(M_ubf_type_cache); i++)
+    {
+        BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[i].cache_offset);
+        *offset = 0;
+    }
+
+    
+    while (BBADFLDID!=*p_bfldid)
+    {
+        /* Got to next position */
+        /* Get type */
+        type = (*p_bfldid>>EFFECTIVE_BITS);
+
+        /* Check data type alignity */
+        if (IS_TYPE_INVALID(type))
+        {
+            _Fset_error_fmt(BALIGNERR, "%s: Invalid field type (%d)", fn, *p_bfldid);
+            FAIL_OUT(ret);
+        }
+        
+        /* Get type descriptor */
+        dtype = &G_dtype_str_map[type];
+        step = dtype->p_next(dtype, p, NULL);
+        p+=step;
+        /* Align error */
+        if (CHECK_ALIGN(p, p_ub, hdr))
+        {
+            _Fset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
+                                        fn, p);
+            FAIL_OUT(ret);
+        }
+        p_bfldid = (BFLDID *)p;
+        
+        typenext = (*p_bfldid>>EFFECTIVE_BITS);
+        
+        if (type!=typenext && typenext > BFLD_SHORT)
+        {
+            /* Update the cache */
+            BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[typenext].cache_offset);
+            *offset = (((char *)p_bfldid) - ((char *)p_bfldid_start));
+            
+            ubf_cache_dump(p_ub, "Cache refresh");
+        }
+    }
+    
+out:
+    return;
+}
+
+/**
  * Update fielded buffer cache according to 
  * @param p_ub
  * @param fldid
@@ -157,21 +237,8 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     {
         /* start from the typed offset (type cache) */
         BFLDLEN *to_add = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type].cache_offset);
-        UBF_LOG(log_debug, "Cache dump short, 0: %ld", 0);
-        UBF_LOG(log_debug, "Cache dump long, 1: %ld", hdr->cache_long_off);
-        UBF_LOG(log_debug, "Cache dump char, 2: %ld", hdr->cache_char_off);
-        UBF_LOG(log_debug, "Cache dump float, 3: %ld", hdr->cache_float_off);
-        UBF_LOG(log_debug, "Cache dump double, 4: %ld", hdr->cache_double_off);
-        UBF_LOG(log_debug, "Cache dump string, 5: %ld", hdr->cache_string_off);
-        UBF_LOG(log_debug, "Cache dump carray, 6: %ld", hdr->cache_carray_off);
-        
-        NDRX_LOG(log_debug, "p_bfldid = %p (before) val: %d (adding: %d, typ %d)", 
-                p_bfldid, *p_bfldid, *to_add, type);
-
         p_bfldid= (BFLDID *)(((char *)p_bfldid) + *to_add);
         p = (char *)p_bfldid;
-
-        NDRX_LOG(log_debug, "p_bfldid = %p (after), val: %d", p_bfldid, *p_bfldid);
     }
     
     if (bfldid == *p_bfldid)
@@ -370,6 +437,7 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
     char *last;
     int move_size;
     int actual_data_size;
+    int type = (bfldid>>EFFECTIVE_BITS);
     char fn[] = "_Badd";
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
@@ -428,6 +496,12 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
     {
         p_bfldid = last_start->last_checked;
         p = (char *)last_start->last_checked;
+    }
+    else if (type > BFLD_SHORT)
+    {
+        BFLDLEN *to_add = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type].cache_offset);
+        p_bfldid= (BFLDID *)(((char *)p_bfldid) + *to_add);
+        p = (char *)p_bfldid;
     }
 
     /* Seek position where we should insert the data... */

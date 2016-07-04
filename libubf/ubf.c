@@ -109,7 +109,7 @@ public int Binit (UBFH * p_ub, BFLDLEN len)
                                     sizeof(UBF_header_t), len);
         ret=FAIL;
     }
-    if (SUCCEED==ret)
+    else
     {
         /* Initialize buffer */
         memset((char *)p_ub, 0, len); /* TODO: Do we need all to be set to 0? */
@@ -119,9 +119,10 @@ public int Binit (UBFH * p_ub, BFLDLEN len)
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
         ubf_h->bytes_used = sizeof(UBF_header_t);
+        
     }
     
-	return ret;
+    return ret;
 }
 
 /**

@@ -37,6 +37,8 @@
 #include <string.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include "ndebug.h"
+#include <fdatatype.h>
 
 void test_proj_data_1(UBFH *p_ub)
 {
@@ -244,6 +246,9 @@ Ensure(test_projcpy)
     
     char fb_dst[400];
     UBFH *p_ub_dst = (UBFH *)fb_dst;
+    
+    UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
+    UBF_header_t *hdst = (UBF_header_t *)p_ub_dst;
 
     BFLDID proj[] = {
         T_SHORT_FLD,
@@ -289,7 +294,30 @@ Ensure(test_projcpy)
     /* OK now test that all data have been copied! */
     load_proj_test_data(p_ub_src);
     assert_equal(Bprojcpy(p_ub_dst, p_ub_src, proj_all), SUCCEED);
+    
+    UBF_DUMP(log_debug, "Source buffer", p_ub_src, sizeof(fb_dst));
+    
+    UBF_LOG(log_debug, "hsrc dump short, 0: %ld", 0);
+    UBF_LOG(log_debug, "hsrc dump long, 1: %ld", hsrc->cache_long_off);
+    UBF_LOG(log_debug, "hsrc dump char, 2: %ld", hsrc->cache_char_off);
+    UBF_LOG(log_debug, "hsrc dump float, 3: %ld", hsrc->cache_float_off);
+    UBF_LOG(log_debug, "hsrc dump double, 4: %ld", hsrc->cache_double_off);
+    UBF_LOG(log_debug, "hsrc dump string, 5: %ld", hsrc->cache_string_off);
+    UBF_LOG(log_debug, "hsrc dump carray, 6: %ld", hsrc->cache_carray_off);
+        
+        
     assert_equal(memcmp(p_ub_dst, p_ub_src, sizeof(fb_dst)), SUCCEED);
+    UBF_DUMP(log_debug, "Dest buffer", p_ub_dst, sizeof(fb_dst));
+    
+        
+    UBF_LOG(log_debug, "hdst dump short, 0: %ld", 0);
+    UBF_LOG(log_debug, "hdst dump long, 1: %ld", hdst->cache_long_off);
+    UBF_LOG(log_debug, "hdst dump char, 2: %ld", hdst->cache_char_off);
+    UBF_LOG(log_debug, "hdst dump float, 3: %ld", hdst->cache_float_off);
+    UBF_LOG(log_debug, "hdst dump double, 4: %ld", hdst->cache_double_off);
+    UBF_LOG(log_debug, "hdst dump string, 5: %ld", hdst->cache_string_off);
+    UBF_LOG(log_debug, "hdst dump carray, 6: %ld", hdst->cache_carray_off);
+    
 
     /* Now test the spacing. We will put big string in src buffer,
      * but dest buffer will be shorter, so we must get error, that we do not have
@@ -392,6 +420,7 @@ Ensure(test_Bdelete)
     /* Ok now we are about to delete all items */
     assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
     assert_equal(Bdelete(p_ub, delete_all), SUCCEED);
+            
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb2)), SUCCEED);
     
 }

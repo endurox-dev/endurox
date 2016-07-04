@@ -157,15 +157,10 @@ private void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
 
         UBF_LOG(log_debug, "delete_buffer_data: to %p, from %p size: %d",
                         del_start, del_start+remove_size, move_size);
-
+        
         memmove(del_start, del_start+remove_size, move_size);
         hdr->bytes_used-=remove_size;
-        
-        
-        /* Update type offset cache: */
-        ubf_cache_shift(p_ub, *((BFLDID*)(del_start)), -1*remove_size);
                 
-
         /* Now reset the tail to zeros */
         last = (char *)hdr;
         last+=(hdr->bytes_used-1);
@@ -344,11 +339,10 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
                 *processed=*processed+1;
             }
 
-            if (mark &&
-                    NULL==del_bfldid_start)
+            if (mark && NULL==del_bfldid_start)
             {
                 del_bfldid_start = p_bfldid;
-                UBF_LOG(log_debug, "Marking field %p for deletion at %%p",
+                UBF_LOG(log_debug, "Marking field %p for deletion at %p",
                                         *del_bfldid_start, del_bfldid_start);
             }
             /* Get type descriptor */
@@ -393,6 +387,14 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
             *processed=*processed+1;
         }
     } /* Else  of use of Binit */
+    
+    if (SUCCEED!=ubf_cache_update(p_ub))
+    {
+        _Fset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
+        FAIL_OUT(ret);
+    }
+    
+out:
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
     __dbg_olduse = __p_ub_copy->bytes_used;
@@ -438,10 +440,10 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
 
 
 /**
- * Delete & clean up the buffer.
+ * Copy buffer from one to another
  * @param hdr - ptr header
- * @param del_start - ptr to start of removal
- * @param del_stop - ptr to end of the removal
+ * @param del_start 
+ * @param del_stop 
  */
 private int copy_buffer_data(UBFH *p_ub_dst,
                         char *cpy_start, char *cpy_stop, BFLDID **p_nextfld_dst)
@@ -496,7 +498,7 @@ private int copy_buffer_data(UBFH *p_ub_dst,
             ret=FAIL;
         }
         else
-        {
+        {                  
             memcpy(*p_nextfld_dst, cpy_start, cpy_size);
 
             /* Update dest pointer */
@@ -504,10 +506,6 @@ private int copy_buffer_data(UBFH *p_ub_dst,
             p+=cpy_size;
             *p_nextfld_dst = (BFLDID *)p;
             hdr_dst->bytes_used+=cpy_size;
-            
-            /* TODO? 
-            ubf_cache_shift(p_ub_dst, **p_nextfld_dst, cpy_size);
-             */
             
         }
 /***************************************** DEBUG *******************************/
@@ -607,9 +605,13 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 #endif
 /*******************************************************************************/
     /* In this case we delete all items - run the init */
-    ret=Binit (p_ub_dst, hdr_dst->buf_len);
+    
+    if (SUCCEED!=Binit (p_ub_dst, hdr_dst->buf_len))
+    {
+        FAIL_OUT(ret);
+    }
 
-    if (SUCCEED==ret && (NULL==fldlist || BBADFLDID==*fldlist))
+    if ((NULL==fldlist || BBADFLDID==*fldlist))
     {
         UBF_LOG(log_debug, "Copy list empty - nothing to do!");
     }
@@ -641,8 +643,7 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                             (char *)cpy_bfldid_start,
                             (char *)p_bfldid_src, &p_bfldid_dst))
                 {
-                    ret=FAIL; 
-                    break; /* <<< BREAK; */
+                    FAIL_OUT(ret);
                 }
                 /* Mark that we have all done! */
                 cpy_bfldid_start=NULL; /* Mark that we have finished with this. */
@@ -654,7 +655,7 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                     NULL==cpy_bfldid_start)
             {
                 cpy_bfldid_start = p_bfldid_src;
-                UBF_LOG(log_debug, "Marking field %p for copy at %%p",
+                UBF_LOG(log_debug, "Marking field %p for copy at %p",
                                         *cpy_bfldid_start, cpy_bfldid_start);
             }
             /* Get type descriptor */
@@ -662,10 +663,9 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 
             if (IS_TYPE_INVALID(type))
             {
-                ret=FAIL;
                 _Fset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
                                         "buffer: %d", fn, type);
-                break; /* <<< BREAK; */
+                FAIL_OUT(ret);
             }
 
             /* Check type alignity */
@@ -679,17 +679,16 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
             /* Align error */
             if (CHECK_ALIGN(p, p_ub_src, hdr_src))
             {
-                ret=FAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                _Fset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                             fn, p);
-                break; /* <<< BREAK; */
+                FAIL_OUT(ret);
             }
             p_bfldid_src = (BFLDID *)p;
 
         }
 
         /* If last field was Bad field, then still we need to delete the stuff out! */
-        if (SUCCEED==ret && NULL!=cpy_bfldid_start && *cpy_bfldid_start != *p_bfldid_src)
+        if (NULL!=cpy_bfldid_start && *cpy_bfldid_start != *p_bfldid_src)
         {
 
             ret=copy_buffer_data(p_ub_dst,
@@ -697,8 +696,21 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                             (char *)p_bfldid_src, &p_bfldid_dst);
             /* Mark that we have all done! */
             cpy_bfldid_start=NULL; /* Mark that we have finished with this. */
+            
+            if (SUCCEED!=ret)
+            {
+                FAIL_OUT(ret);
+            }
         }
     } /* Else  of use of Binit */
+
+    if (SUCCEED!=ubf_cache_update(p_ub_dst))
+    {
+        _Fset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
+        FAIL_OUT(ret);
+    }
+
+out:
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
     __dbg_olduse = __p_ub_copy->bytes_used;

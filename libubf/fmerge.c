@@ -80,15 +80,15 @@ public int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     chg_state.last_checked = &hdr->bfldid;
             
     while(SUCCEED==ret &&
-               1==(nxt_stat=_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
+        1==(nxt_stat=_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
-         * Update the occurrance in target buffer.
+         * Update the occurrence in target buffer.
          */
         if (SUCCEED!=(ret=_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]", 
-                                                _Bfname_int(bfldid), occ);
+                                _Bfname_int(bfldid), occ);
         }
     }
 
