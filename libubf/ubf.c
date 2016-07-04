@@ -332,51 +332,51 @@ public int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
  */
 public BFLDID Bfldid (char *fldnm)
 {
-	UBF_field_def_t *p_fld=NULL;
+    UBF_field_def_t *p_fld=NULL;
 
-	API_ENTRY;
+    API_ENTRY;
 
-	if (SUCCEED!=prepare_type_tables())
-	{
-		return BBADFLDID;
-	}
-	/* Now we can try to do lookup */
-	p_fld = _fldnmhash_get(fldnm);
+    if (SUCCEED!=prepare_type_tables())
+    {
+            return BBADFLDID;
+    }
+    /* Now we can try to do lookup */
+    p_fld = _fldnmhash_get(fldnm);
 
-	if (NULL!=p_fld)
-	{
-		return p_fld->bfldid;
-	}
-	else
-	{
-		_Fset_error(BBADNAME);
-		return BBADFLDID;
-	}
+    if (NULL!=p_fld)
+    {
+            return p_fld->bfldid;
+    }
+    else
+    {
+            _Fset_error(BBADNAME);
+            return BBADFLDID;
+    }
 }
 /**
  * Return field name from given id
  */
 public char * Bfname (BFLDID bfldid)
 {
-	UBF_field_def_t *p_fld;
-	API_ENTRY;
+    UBF_field_def_t *p_fld;
+    API_ENTRY;
 
-	if (SUCCEED!=prepare_type_tables())
-	{
-        goto out;
-	}
+    if (SUCCEED!=prepare_type_tables())
+    {
+    goto out;
+    }
 
-	/* Now try to find the data! */
-	p_fld = _bfldidhash_get(bfldid);
-	if (NULL==p_fld)
-	{
-		_Fset_error(BBADFLD);
-        goto out;
-	}
-	else
-	{
-		return p_fld->fldname;
-	}
+    /* Now try to find the data! */
+    p_fld = _bfldidhash_get(bfldid);
+    if (NULL==p_fld)
+    {
+            _Fset_error(BBADFLD);
+    goto out;
+    }
+    else
+    {
+            return p_fld->fldname;
+    }
     
 out:
     return NULL;

@@ -184,10 +184,7 @@ public void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
    while (NULL!=shift_list[typ][off])
    {
        BFLDLEN *p_cache = shift_list[typ][off];
-       
        *p_cache = (*p_cache) +  size_diff;
-       UBF_LOG(log_debug, "new cache: type %d offset %d size: %d", typ, off, *p_cache);
-               
        off++;
    }
    
