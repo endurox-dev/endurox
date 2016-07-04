@@ -166,27 +166,26 @@ out:
  */
 public void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
 {
-    UBF_header_t *uh = (UBF_header_t *)p_ub; 
-    int off = 0;
-    int * shift_list[7][7] = 
+    UBF_header_t *uh = (UBF_header_t *)p_ub;
+    int type = (fldid>>EFFECTIVE_BITS);
+    
+    switch (type)
     {
-        {&uh->cache_long_off, &uh->cache_char_off, &uh->cache_float_off, &uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL}, /* BFLD_SHORT */
-        {&uh->cache_char_off, &uh->cache_float_off, &uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL}, /* BFLD_LONG */
-        {&uh->cache_float_off, &uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL, NULL}, /* BFLD_CHAR */
-        {&uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL, NULL, NULL}, /* BFLD_FLOAT */
-        {&uh->cache_string_off, &uh->cache_carray_off, NULL, NULL, NULL}, /* BFLD_DOUBLE */
-        {&uh->cache_carray_off, NULL, NULL, NULL, NULL}, /* BFLD_STRING */
-        {NULL, NULL, NULL, NULL, NULL, NULL}  /* BFLD_CARRAY */    
-    };
-   
-   int typ = Bfldtype(fldid);
-   
-   while (NULL!=shift_list[typ][off])
-   {
-       BFLDLEN *p_cache = shift_list[typ][off];
-       *p_cache = (*p_cache) +  size_diff;
-       off++;
-   }
+        case BFLD_SHORT:
+            uh->cache_long_off+=size_diff;
+        case BFLD_LONG:
+            uh->cache_char_off+=size_diff;
+        case BFLD_CHAR:
+            uh->cache_float_off+=size_diff;
+        case BFLD_FLOAT:
+            uh->cache_double_off+=size_diff;
+        case BFLD_DOUBLE:
+            uh->cache_string_off+=size_diff;
+        case BFLD_STRING:
+            uh->cache_carray_off+=size_diff;
+            break;
+    }
+    
    
    return;
 }
