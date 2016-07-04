@@ -149,13 +149,11 @@ public int ubf_cache_update(UBFH *p_ub)
             /* Update the cache */
             BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[typenext].cache_offset);
             *offset = (((char *)p_bfldid) - ((char *)p_bfldid_start));
-            
-            ubf_cache_dump(p_ub, "Cache refresh");
         }
     }
     
 out:
-    return;
+    return ret;
 }
 
 /**
