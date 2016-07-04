@@ -61,6 +61,7 @@ extern char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char ** last_matched,
                             int *last_occ,
                             get_fld_loc_info_t *last_start);
+extern void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff);
 extern int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * buflen);
 extern int _Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,

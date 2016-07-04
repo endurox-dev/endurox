@@ -112,7 +112,7 @@ public int Binit (UBFH * p_ub, BFLDLEN len)
     if (SUCCEED==ret)
     {
         /* Initialize buffer */
-        memset((char *)p_ub, 0, len);
+        memset((char *)p_ub, 0, len); /* TODO: Do we need all to be set to 0? */
         ubf_h->version = UBF_VERSION; /* Reset options to (all disabled) */
         ubf_h->buffer_type = 0; /* not used currently */
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
@@ -243,6 +243,10 @@ public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
         
         memmove(p, p+remove_size, move_size);
         hdr->bytes_used-=remove_size;
+        
+        /* Update type offset cache: */
+        ubf_cache_shift(p_ub, bfldid, -1*remove_size);
+        
         last = (char *)hdr;
         last+=(hdr->bytes_used-1);
         /* Ensure that we reset last elements... So that we do not get
@@ -684,6 +688,16 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
         memcpy(p_ub_dst, p_ub_src, src_h->bytes_used);
         dst_h->buf_len = dst_buf_len;
         dst_h->bytes_used = src_h->bytes_used;
+        
+        /* save cache fields: */
+        dst_h->cache_long_off = src_h->cache_long_off;
+        dst_h->cache_char_off = src_h->cache_char_off;
+        dst_h->cache_float_off = src_h->cache_float_off;
+        dst_h->cache_double_off = src_h->cache_double_off;
+        dst_h->cache_string_off = src_h->cache_string_off;
+        dst_h->cache_carray_off = src_h->cache_carray_off;
+    
+        
     }
     UBF_LOG(log_debug, "Bcpy: return %d", ret);
     

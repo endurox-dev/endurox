@@ -53,8 +53,29 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+struct ubf_type_cache
+{
+    size_t  cache_offset;
+};
+typedef struct ubf_type_cache ubf_type_cache_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/**
+ * UBF cache offset table
+ */
+static ubf_type_cache_t M_ubf_type_cache[] = 
+{
+    0, /* SHORT */
+    OFFSET(UBF_header_t,cache_long_off), /* LONG */
+    OFFSET(UBF_header_t,cache_char_off), /* CHAR */
+    OFFSET(UBF_header_t,cache_float_off), /* FLOAT */
+    OFFSET(UBF_header_t,cache_double_off), /* DOUBLE */
+    OFFSET(UBF_header_t,cache_string_off), /* STRING */
+    OFFSET(UBF_header_t,cache_carray_off), /* CARRAY */
+};
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -63,93 +84,34 @@
  * @param fldid
  * @param size_diff
  */
-private void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
+public void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
 {
-    
-}
-
-/**
- * Add new typed offset cache (update offset if needed.) 
- * @param p_ub
- * @param fldid
- */
-private void ubf_cache_field_add(UBFH *p_ub, BFLDID lastfield, BFLDID *p_fldid, int len)
-{
-    int offset = (char *)p_ub - (char *)p_fldid;
     UBF_header_t *uh = (UBF_header_t *)p_ub; 
-    
-    
-    if (lastfield >= *p_fldid)
+    int off = 0;
+    int * shift_list[7][7] = 
     {
-        return;
-    }
-    
-    switch (Bfldtype(*p_fldid))
-    {
-        case BFLD_LONG:
-            if (offset<uh->cache_long_off || 0==uh->cache_long_off)
-            {
-                uh->cache_long_off = offset;
-            }
-            break;
-        case BFLD_CHAR:
-            if (offset<uh->cache_char_off || 0==uh->cache_char_off)
-            {
-                uh->cache_char_off = offset;   
-            }
-            break;
-        case BFLD_FLOAT:
-            if (offset<uh->cache_float_off || 0==uh->cache_float_off)
-            {
-                uh->cache_float_off = offset;
-            }
-            break;
-        case BFLD_DOUBLE:
-            if (offset < uh->cache_double_off || 0==uh->cache_double_off)
-            {
-                uh->cache_double_off = offset;
-            }
-            break;
-        case BFLD_STRING:
-            if (offset < uh->cache_string_off || 0 == uh->cache_string_off)
-            {
-                uh->cache_string_off = offset;
-            }
-            break;
-        case BFLD_CARRAY:
-            if (offset < uh->cache_carray_off || 0 == uh->cache_carray_off)
-            {
-                uh->cache_carray_off = offset;
-            }
-            break;
-    }
-}
-
-/**
- * Remove element from cache.
- * NOTE: this must be called only when last occurrence of field is removed. 
- * @param p_ub
- * @param fldid
- * @param p_new_fld
- */
-private void ubf_cache_field_rm(UBFH *p_ub, BFLDID fldid, BFLDID *p_new_fld)
-{
-    if (Bfldtype(*p_new_fld)==Bfldtype(fldid))
-    {
-        return; /* Nothing todo field type still in buffer. */
-    }
-}
-
-/**
- * Field changed it's size.
- * Change the value of the group's which are before this field.
- * @param p_ub
- * @param p_fldid
- * @param diff_size
- */
-private void ubf_cache_field_resize(UBFH *p_ub, BFLDID *p_fldid, int diff_size)
-{
-    
+        {&uh->cache_long_off, &uh->cache_char_off, &uh->cache_float_off, &uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL}, /* BFLD_SHORT */
+        {&uh->cache_char_off, &uh->cache_float_off, &uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL}, /* BFLD_LONG */
+        {&uh->cache_float_off, &uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL, NULL}, /* BFLD_CHAR */
+        {&uh->cache_double_off, &uh->cache_string_off, &uh->cache_carray_off, NULL, NULL, NULL}, /* BFLD_FLOAT */
+        {&uh->cache_string_off, &uh->cache_carray_off, NULL, NULL, NULL}, /* BFLD_DOUBLE */
+        {&uh->cache_carray_off, NULL, NULL, NULL, NULL}, /* BFLD_STRING */
+        {NULL, NULL, NULL, NULL, NULL, NULL}  /* BFLD_CARRAY */    
+    };
+   
+   int typ = Bfldtype(fldid);
+   
+   while (NULL!=shift_list[typ][off])
+   {
+       BFLDLEN *p_cache = shift_list[typ][off];
+       
+       *p_cache = (*p_cache) +  size_diff;
+       UBF_LOG(log_debug, "new cache: type %d offset %d size: %d", typ, off, *p_cache);
+               
+       off++;
+   }
+   
+   return;
 }
 
 /**
@@ -158,8 +120,8 @@ private void ubf_cache_field_resize(UBFH *p_ub, BFLDID *p_fldid, int diff_size)
  * @param bfldid
  * @param last_matched - last matched field (can be used together with last_occ),
  *                       It is optional (pas NULL if not needed).
- * @param occ - occurrance to get. If less than -1, then get out the count
- * @param last_occ last check occurrance
+ * @param occ - occurrence to get. If less than -1, then get out the count
+ * @param last_occ last check occurrence
  * @return - ptr to field.
  */
 public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
@@ -174,12 +136,13 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     char *p = (char *)&hdr->bfldid;
     dtype_str_t *dtype=NULL;
     int iocc=FAIL;
-    int type;
+    int type = (bfldid>>EFFECTIVE_BITS);
     int step;
     char * ret=NULL;
     *fld_dtype=NULL;
     int stat = SUCCEED;
     char fn[] = "get_fld_loc";
+    
 
     *last_occ = FAIL;
     /*
@@ -190,7 +153,27 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         p_bfldid = (BFLDID *)last_start->last_checked;
         p = (char *)last_start->last_checked;
     }
+    else if (type > BFLD_SHORT) /* Short is first, thus no need to cache the type */
+    {
+        /* start from the typed offset (type cache) */
+        BFLDLEN *to_add = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type].cache_offset);
+        UBF_LOG(log_debug, "Cache dump short, 0: %ld", 0);
+        UBF_LOG(log_debug, "Cache dump long, 1: %ld", hdr->cache_long_off);
+        UBF_LOG(log_debug, "Cache dump char, 2: %ld", hdr->cache_char_off);
+        UBF_LOG(log_debug, "Cache dump float, 3: %ld", hdr->cache_float_off);
+        UBF_LOG(log_debug, "Cache dump double, 4: %ld", hdr->cache_double_off);
+        UBF_LOG(log_debug, "Cache dump string, 5: %ld", hdr->cache_string_off);
+        UBF_LOG(log_debug, "Cache dump carray, 6: %ld", hdr->cache_carray_off);
+        
+        NDRX_LOG(log_debug, "p_bfldid = %p (before) val: %d (adding: %d, typ %d)", 
+                p_bfldid, *p_bfldid, *to_add, type);
 
+        p_bfldid= (BFLDID *)(((char *)p_bfldid) + *to_add);
+        p = (char *)p_bfldid;
+
+        NDRX_LOG(log_debug, "p_bfldid = %p (after), val: %d", p_bfldid, *p_bfldid);
+    }
+    
     if (bfldid == *p_bfldid)
     {
         iocc++;
@@ -237,8 +220,8 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         {
             _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
                                         fn, p);
-            goto out;
             stat=FAIL;
+            goto out;
         }
         p_bfldid = (BFLDID *)p;
 
@@ -277,6 +260,9 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     *last_occ = iocc;
     /* set up last checked, it could be even next element! */
     *last_checked=(char *)p_bfldid;
+    
+    
+    NDRX_LOG(log_debug, "*last_checked [%d] %p", **last_checked, *last_checked);
     
 out:
     return ret;
@@ -489,6 +475,10 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
         }
         
         hdr->bytes_used+=new_dat_size;
+        
+        /* Update type offset cache: */
+        ubf_cache_shift(p_ub, bfldid, new_dat_size);
+        
     }
     else
     {
@@ -509,6 +499,10 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
         }
         /* Update the pointer of last bit! */
         hdr->bytes_used+=new_dat_size;
+        
+        /* Update type offset cache: */
+        ubf_cache_shift(p_ub, bfldid, new_dat_size);
+        
     }
 out:
 /***************************************** DEBUG *******************************/
@@ -673,9 +667,12 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                              p+existing_size, p+existing_size+must_have_size);
 
             /* Free up, or make more memory to be used! */
-            memmove(p+existing_size + must_have_size, p+existing_size, move_size);
+            memmove(p+existing_size + must_have_size, p+existing_size, move_size); 
             hdr->bytes_used+=must_have_size;
-
+           
+            /* Update type offset cache: */
+            ubf_cache_shift(p_ub, bfldid, must_have_size);
+            
             /* Reset last bytes to 0 */
             if (must_have_size < 0)
             {
@@ -730,9 +727,9 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             FAIL_OUT(ret);
         }
 
-            must_have_size=empty_elem_tot_size+target_elem_size;
-            UBF_LOG(log_debug, "About to add data %d bytes",
-                                            must_have_size);
+        must_have_size=empty_elem_tot_size+target_elem_size;
+        UBF_LOG(log_debug, "About to add data %d bytes",
+                                        must_have_size);
         
         if (!have_buffer_size(p_ub, must_have_size, TRUE))
         {
@@ -770,9 +767,13 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             /* We have failed! */
             _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
             FAIL_OUT(ret);
-        }
+        }       
         /* Finally increase the buffer usage! */
         hdr->bytes_used+=must_have_size;
+        
+        /* Update type offset cache: */
+        ubf_cache_shift(p_ub, bfldid, must_have_size);
+        
     }
     
 out:

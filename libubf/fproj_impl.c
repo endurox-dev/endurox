@@ -160,6 +160,11 @@ private void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
 
         memmove(del_start, del_start+remove_size, move_size);
         hdr->bytes_used-=remove_size;
+        
+        
+        /* Update type offset cache: */
+        ubf_cache_shift(p_ub, *((BFLDID*)(del_start)), -1*remove_size);
+                
 
         /* Now reset the tail to zeros */
         last = (char *)hdr;
@@ -499,6 +504,11 @@ private int copy_buffer_data(UBFH *p_ub_dst,
             p+=cpy_size;
             *p_nextfld_dst = (BFLDID *)p;
             hdr_dst->bytes_used+=cpy_size;
+            
+            /* TODO? 
+            ubf_cache_shift(p_ub_dst, **p_nextfld_dst, cpy_size);
+             */
+            
         }
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
