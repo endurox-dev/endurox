@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     char test_buf_carray[8192];
     char test_buf_small[1024];
     ndrx_timer_t timer;
-    int call_num = MAX_ASYNC_CALLS *4;
+    int call_num = MAX_ASYNC_CALLS *10;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
