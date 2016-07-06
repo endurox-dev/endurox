@@ -51,6 +51,7 @@
 #include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+/* #define BIN_SEARCH_DEBUG        1 */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct ubf_type_cache
@@ -95,7 +96,7 @@ public void ubf_cache_dump(UBFH *p_ub, char *msg)
 /**
  * Update the cache (usable after merge)...
  */
-public int ubf_cache_update(UBFH *p_ub)
+public inline int ubf_cache_update(UBFH *p_ub)
 {
     int type;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -115,7 +116,6 @@ public int ubf_cache_update(UBFH *p_ub)
         *offset = 0;
     }
 
-    
     while (BBADFLDID!=*p_bfldid)
     {
         /* Got to next position */
@@ -162,7 +162,7 @@ out:
  * @param fldid
  * @param size_diff
  */
-public void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
+public inline void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
 {
     UBF_header_t *uh = (UBF_header_t *)p_ub;
     int type = (fldid>>EFFECTIVE_BITS);
@@ -189,6 +189,227 @@ public void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
 }
 
 /**
+ * Get field ID at index
+ * @param start
+ * @param i
+ * @param step
+ * @return 
+ */
+private inline BFLDID get_fldid_at_idx(char *start, int i, int step)
+{
+    BFLDID fld = *((BFLDID   *)(start + i*step));
+    
+    return fld;
+}
+
+/**
+ * return the occurrence of current field.
+ * @param start
+ * @param f
+ * @param i
+ * @param step
+ * @return G
+ */
+private inline int get_fld_occ_from_idx(char *start, BFLDID f, int i, int step)
+{
+    char *cur = start + i*step;
+    BFLDID cur_fld = *((BFLDID   *)cur);
+    int occ = -1;
+    
+    while (cur_fld == f && cur >=start)
+    {
+        occ++;
+        i--;
+        cur = start + i*step;
+        
+        if (cur>=start)
+        {
+            cur_fld = *((BFLDID   *)cur);
+        }
+    }
+    
+    return occ;
+    
+}
+
+/**
+ * Get the ptr to field (or NULL) if given occurence is not found
+ * @param start
+ * @param stop
+ * @param i
+ * @param step
+ * @param req_occ
+ * @return 
+ */
+private inline char * get_field(char *start, char *stop, BFLDID f, int i, int step, 
+        int req_occ, int get_last, int *last_occ)
+{
+    int iocc = get_fld_occ_from_idx(start, f, i, step);
+    
+    if (get_last)
+    {
+        /* operate in last off mode */
+        char *tmp;
+        char *cur = start + step * i;
+        
+        /* try to search for last one.... */
+        while (cur < stop)
+        {
+            
+            tmp = start + step * (i+1);
+            
+            if (tmp >= stop)
+            {
+                break;
+            }
+            else
+            {
+                i++;
+                cur = tmp;
+            }
+        }
+        if (NULL!=last_occ)
+        {
+            /* hm, not sure is it ok? maybe just i? but maint get_loc works as this */
+            *last_occ = i;
+        }
+        return cur;
+    }
+    else if (req_occ<=iocc)
+    {
+        return start + step*(i-(iocc-req_occ)); /* step back positions needed */
+    }
+    else
+    {
+        char *cur = start + step * (i + req_occ-iocc);
+        BFLDID cur_fld;
+        
+        if (cur >= stop)
+        {
+            return NULL; /* field not found (out of bounds) */
+        }
+        
+        cur_fld = *((BFLDID   *)cur);
+        
+        if (cur_fld==f)
+        {
+            return cur;
+        }
+        
+    }
+    
+    return NULL;
+    
+}
+
+/**
+ * Get the field by performing binary search. Must be called for proper field types (
+ * i.e. non string & non carray)
+ * @param p_ub
+ * @param bfldid
+ * @param last_matched - last matched field (can be used together with last_occ),
+ *                       It is optional (pas NULL if not needed).
+ * @param occ - occurrence to get. If less than -1, then get out the count
+ * @param last_occ last check occurrence
+ * @return - ptr to field.
+ */
+public inline char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+                            dtype_str_t **fld_dtype, int get_last, int *last_occ)
+{
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+    BFLDID   *p_bfldid_start = &hdr->bfldid;
+    BFLDID   *p_bfldid_stop  = &hdr->bfldid;
+    BFLDLEN tmp = 0;
+    BFLDLEN *to_add1 = &tmp; /* default for short */
+    BFLDLEN *to_add2;
+    char *start = (char *)&hdr->bfldid;
+    char *stop;
+    dtype_str_t *dtype=NULL;
+    int type = (bfldid>>EFFECTIVE_BITS);
+    int step;
+    char * ret=NULL;
+    
+    int first, last, middle;
+    
+    char fn[] = "get_fld_loc_binary_search";
+    
+    if (type > BFLD_SHORT) /* Short is first, thus no need to cache the type */
+    {
+        /* start from the typed offset (type cache) */
+        to_add1 = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type].cache_offset);
+        p_bfldid_start= (BFLDID *)(((char *)p_bfldid_start) + *to_add1);
+        start = (char *)p_bfldid_start;
+    }
+    
+    /* stop will be bigger than start.... anyway (take the next field cache offset) */
+    /* start from the typed offset (type cache) */
+    to_add2 = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type+1].cache_offset);
+    p_bfldid_stop= (BFLDID *)(((char *)p_bfldid_stop) + *to_add2);
+    stop = (char *)p_bfldid_stop;
+    
+#ifdef BIN_SEARCH_DEBUG
+    /* if type is present then there must be difference between start & stop */
+    UBF_LOG(log_error, "start = %p stop = %p diff = %d (off 1 %d (%d) off 2 %d (%d))", 
+        start, stop, stop-start,
+        *to_add1,
+        type,
+        *to_add2,
+        type+1
+    );
+    
+    ubf_cache_dump(p_ub, "Offsets...");
+#endif
+            
+    if (stop-start <=0)
+    {
+#ifdef BIN_SEARCH_DEBUG
+        UBF_LOG(log_warn, "Field not found stop-start < 0!");
+#endif
+        goto out;
+    }
+    
+    /* get the step of the field... (size of block) */
+    dtype = &G_dtype_str_map[type];
+    *fld_dtype=dtype;
+    step = dtype->p_next(dtype, start, NULL);
+    
+    first = 0;
+    last = (stop-start) / step - 1;
+    
+#ifdef BIN_SEARCH_DEBUG
+    UBF_LOG(log_error, "start %p stop %p, last=%d", start, stop, last);
+#endif
+    
+    middle = (first+last)/2;
+    
+    while (first <= last)
+    {
+      int fld_got = get_fldid_at_idx(start, middle, step);
+
+      if ( fld_got < bfldid)
+      {
+         first = middle + 1;    
+      }
+      else if (fld_got == bfldid)
+      {
+         ret=get_field(start, stop, bfldid, middle, step, occ, get_last, last_occ);
+         
+         break;
+      }
+      else
+      {
+         last = middle - 1;
+      }
+      
+      middle = (first + last)/2;
+   }
+    
+out:
+    return ret;
+}
+
+
+/**
  * Returns pointer to Fb of for specified field
  * @param p_ub
  * @param bfldid
@@ -198,7 +419,7 @@ public void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
  * @param last_occ last check occurrence
  * @return - ptr to field.
  */
-public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+public inline char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype,
                             char ** last_checked,
                             char **last_matched,
@@ -901,17 +1122,25 @@ public BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid)
 {
     dtype_str_t *fld_dtype;
     BFLDID *p_last=NULL;
-    int ret=SUCCEED;
+    int ret=FAIL;
 
     UBF_LOG(log_debug, "_Boccur: bfldid: %d", bfldid);
 
     /* using -2 for looping throught te all occurrances! */
-    get_fld_loc(p_ub, bfldid, -2,
-                            &fld_dtype,
-                            (char **)&p_last,
-                            NULL,
-                            &ret,
-                            NULL);
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        p_last = (BFLDID *)get_fld_loc_binary_search(p_ub, bfldid, FAIL, &fld_dtype, 
+                    TRUE, &ret);
+    }
+    else
+    {
+        get_fld_loc(p_ub, bfldid, -2,
+                                &fld_dtype,
+                                (char **)&p_last,
+                                NULL,
+                                &ret,
+                                NULL);
+    }
     if (FAIL==ret)
     {
         /* field not found! */
@@ -938,16 +1167,26 @@ public int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     BFLDID *p_last=NULL;
     int last_occ;
     int ret=TRUE;
+    char *ret_ptr;
 
     UBF_LOG(log_debug, "_Bpres: bfldid: %d occ: %d", bfldid, occ);
     
 
-    if (NULL!=get_fld_loc(p_ub, bfldid, occ,
-                            &fld_dtype,
-                            (char **)&p_last,
-                            NULL,
-                            &last_occ,
-                            NULL))
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        ret_ptr = get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, FALSE, NULL);
+    }
+    else
+    {
+        ret_ptr = get_fld_loc(p_ub, bfldid, occ,
+                                &fld_dtype,
+                                (char **)&p_last,
+                                NULL,
+                                &last_occ,
+                                NULL);
+    }
+    
+    if (NULL!=ret_ptr)
     {
         ret=TRUE;
     }
@@ -1204,12 +1443,22 @@ public int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     UBF_LOG(log_debug, "_Blen: bfldid: %d, occ: %d", bfldid, occ);
 
     /* using -2 for looping throught te all occurrances! */
-    p=get_fld_loc(p_ub, bfldid, occ,
-                            &fld_dtype,
-                            (char **)&p_last,
-                            NULL,
-                            &ret,
-                            NULL);
+    
+    
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        p=get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, FALSE, NULL);
+    }
+    else
+    {
+        p=get_fld_loc(p_ub, bfldid, occ,
+                                &fld_dtype,
+                                (char **)&p_last,
+                                NULL,
+                                &ret,
+                                NULL);
+    }
+    
     if (FAIL!=ret && NULL!=p)
     {
         

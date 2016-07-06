@@ -85,12 +85,19 @@ public char * _Bfind (UBFH * p_ub, BFLDID bfldid,
 
     UBF_LOG(log_debug, "Bfind: bfldid: %d occ: %hd", bfldid, occ);
 
-    ret=get_fld_loc(p_ub, bfldid, occ,
-                            &dtype,
-                            &last_checked,
-                            NULL,
-                            &last_occ,
-                            NULL);
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        ret=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, FALSE, NULL);
+    }
+    else
+    {
+        ret=get_fld_loc(p_ub, bfldid, occ,
+                                &dtype,
+                                &last_checked,
+                                NULL,
+                                &last_occ,
+                                NULL);
+    }
 
     /* Get the data size of Bfind */
     if (NULL!=ret)

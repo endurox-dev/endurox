@@ -153,6 +153,7 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     char *last_checked=NULL;
     int last_occ=-1;
     char fnname[] = "_Bget";
+    
 /***************************************** DEBUG *******************************/
     #ifdef UBF_API_DEBUG
     dtype_ext1_t *__dbg_dtype_ext1;
@@ -161,7 +162,16 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 
     UBF_LOG(log_debug, "%s: bfldid: %x, occ: %d", fnname, bfldid, occ);
 
-    if (NULL!=(p=get_fld_loc(p_ub, bfldid, occ, &dtype, &last_checked, NULL, &last_occ, NULL)))
+    
+    /* So started lookup for strings & carrays  */
+    if ((!UBF_BINARY_SEARCH_OK(bfldid) && 
+            NULL!=(p=get_fld_loc(p_ub, bfldid, occ, &dtype, &last_checked, NULL, &last_occ, NULL)))
+            
+            /* Do binary search for fixed fields: */
+            || 
+            (UBF_BINARY_SEARCH_OK(bfldid) &&
+            NULL!=(p=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, FALSE, NULL)))
+            )
     {
         if (NULL!=buf)
         {
@@ -217,8 +227,15 @@ public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
 /*******************************************************************************/
 
     UBF_LOG(log_debug, "%s: bfldid: %x", fnname);
-
-    get_fld_loc(p_ub, bfldid, -2, &dtype, &last_checked, &last_match, &last_occ, NULL);
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        last_match = get_fld_loc_binary_search(p_ub, bfldid, FAIL, &dtype, 
+                    TRUE, &last_occ);
+    }
+    else
+    {
+        get_fld_loc(p_ub, bfldid, -2, &dtype, &last_checked, &last_match, &last_occ, NULL);
+    }
 
     if (FAIL!=last_occ && !_Fis_error()) /* Exclude cases when error have been raised! */
     {
