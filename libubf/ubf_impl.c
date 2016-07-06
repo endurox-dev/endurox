@@ -96,7 +96,7 @@ public void ubf_cache_dump(UBFH *p_ub, char *msg)
 /**
  * Update the cache (usable after merge)...
  */
-public inline int ubf_cache_update(UBFH *p_ub)
+public int ubf_cache_update(UBFH *p_ub)
 {
     int type;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -313,7 +313,7 @@ private inline char * get_field(char *start, char *stop, BFLDID f, int i, int st
  * @param last_occ last check occurrence
  * @return - ptr to field.
  */
-public inline char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype, int get_last, int *last_occ)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -419,7 +419,7 @@ out:
  * @param last_occ last check occurrence
  * @return - ptr to field.
  */
-public inline char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype,
                             char ** last_checked,
                             char **last_matched,
