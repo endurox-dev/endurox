@@ -582,7 +582,7 @@ public bool have_buffer_size(UBFH *p_ub, int add_size, bool set_err)
  * @param p_ub
  * @return
  */
-public int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
+public inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
 {
     int ret=SUCCEED;
     UBF_header_t *hdr = (UBF_header_t *) p_ub;
