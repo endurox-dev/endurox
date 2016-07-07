@@ -733,7 +733,7 @@ public bool have_buffer_size(UBFH *p_ub, int add_size, bool set_err)
 }
 
 /**
- * Validates paramters entered into function. If not valid, then error will be set
+ * Validates parameters entered into function. If not valid, then error will be set
  * @param p_ub
  * @return
  */
@@ -867,7 +867,15 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
         p_bfldid = last_start->last_checked;
         p = (char *)last_start->last_checked;
     }
-    else if (type > BFLD_SHORT)
+    else if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        dtype_str_t *tmp;
+        get_fld_loc_binary_search(p_ub, bfldid, FAIL,
+                            &tmp, UBF_BINSRCH_GET_LAST_CHG, 
+                            NULL, &p, NULL);
+        p_bfldid= (BFLDID *)p;
+    }
+    else
     {
         BFLDLEN *to_add = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type].cache_offset);
         p_bfldid= (BFLDID *)(((char *)p_bfldid) + *to_add);
@@ -1081,9 +1089,6 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
        p=get_fld_loc(p_ub, bfldid, occ, &dtype, 
                                 &last_checked, NULL, &last_occ, last_start);
     }
-    
-    
-    
     
     if (NULL!=p)
     {
