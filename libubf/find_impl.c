@@ -88,7 +88,7 @@ public char * _Bfind (UBFH * p_ub, BFLDID bfldid,
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         ret=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, 
-                FALSE, NULL, NULL);
+                UBF_BINSRCH_GET_LAST_NONE, NULL, NULL, NULL);
     }
     else
     {

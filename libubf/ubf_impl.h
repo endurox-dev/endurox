@@ -46,6 +46,11 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define UBF_BINARY_SEARCH_OK(bfldid) ((bfldid>>EFFECTIVE_BITS) < BFLD_STRING)
+    
+    
+#define UBF_BINSRCH_GET_LAST_NONE       0x00
+#define UBF_BINSRCH_GET_LAST            0x01
+#define UBF_BINSRCH_GET_LAST_CHG        0x02 /* for change */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /* get_loc state info */
@@ -57,7 +62,8 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
-                            dtype_str_t **fld_dtype, int get_last, int *last_occ, char ** last_checked);
+                            dtype_str_t **fld_dtype, int get_last, int *last_occ, 
+                            char ** last_checked, char ** last_match);
 extern char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype,
                             char ** last_checked,

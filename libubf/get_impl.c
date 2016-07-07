@@ -171,7 +171,7 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             || 
             (UBF_BINARY_SEARCH_OK(bfldid) &&
             NULL!=(p=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, 
-                        FALSE, NULL, NULL)))
+                        UBF_BINSRCH_GET_LAST_NONE, NULL, NULL, NULL)))
             )
     {
         if (NULL!=buf)
@@ -230,8 +230,8 @@ public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
     UBF_LOG(log_debug, "%s: bfldid: %x", fnname);
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
-        last_match = get_fld_loc_binary_search(p_ub, bfldid, FAIL, &dtype, 
-                    TRUE, &last_occ, NULL);
+        get_fld_loc_binary_search(p_ub, bfldid, FAIL, &dtype, 
+                    UBF_BINSRCH_GET_LAST, &last_occ, NULL, &last_match);
     }
     else
     {

@@ -242,7 +242,7 @@ private inline int get_fld_occ_from_idx(char *start, BFLDID f, int i, int step)
  * @return 
  */
 private inline char * get_field(char *start, char *stop, BFLDID f, int i, int step, 
-        int req_occ, int get_last, int *last_occ)
+        int req_occ, int get_last, int *last_occ, char ** last_match, char ** last_checked)
 {
     char *tmp;
     char *cur;
@@ -250,49 +250,91 @@ private inline char * get_field(char *start, char *stop, BFLDID f, int i, int st
     
     int iocc = get_fld_occ_from_idx(start, f, i, step);
     
-    if (get_last)
+    if (get_last & UBF_BINSRCH_GET_LAST)
     {
+get_last:
         /* operate in last off mode */
-        cur = start + step * i;
+        tmp = cur = start + step * i;
         
         /* try to search for last one.... */
         while (cur < stop)
         {
             tmp = start + step * (i+1);
-            f1 = (BFLDID *)f1;
-            iocc++;
+            f1 = (BFLDID *)tmp;
             if (tmp >= stop)
+            {
+                break;
+            }
+            else if (*f1 > f)
             {
                 break;
             }
             else if (*f1==f)
             {
                 i++;
+                iocc++;
                 cur = tmp;
-            }
-            else
-            {
-                break;
             }
         }
         if (NULL!=last_occ)
         {
             /* hm, not sure is it ok? maybe just i? but maint get_loc works as this */
-            *last_occ = i;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "*last_occ = %d", *last_occ);
+#endif
+            *last_occ = iocc;
         }
-        return cur;
+
+        /* for change, we set to next field actually */
+        if (get_last & UBF_BINSRCH_GET_LAST_CHG)
+        {
+            cur = tmp;
+        }
+        
+        if (NULL!=last_match)
+        {
+            *last_match = cur;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "*last_match = %p", last_match);
+#endif
+        }
+
+        if (NULL!=last_checked)
+        {
+            *last_checked = cur;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "*last_match = %p", last_match);
+#endif
+        }
+        
+        return NULL;
     }
     else if (req_occ<=iocc)
     {
+#ifdef BIN_SEARCH_DEBUG
+        UBF_LOG(log_debug, "req_occ<=iocc -> %d<=%d", req_occ, iocc);
+#endif
         return start + step*(i-(iocc-req_occ)); /* step back positions needed */
     }
     else
     {
         char *cur = start + step * (i + req_occ-iocc);
-        BFLDID cur_fld;
+        BFLDID cur_fld; 
+        
+#ifdef BIN_SEARCH_DEBUG
+        UBF_LOG(log_debug, "req_occ %d/ iocc %d", req_occ, iocc);
+#endif
         
         if (cur >= stop)
         {
+            /* so for bchg we need here to locate last valid occ.... */
+            if (get_last & UBF_BINSRCH_GET_LAST_CHG)
+            {
+#ifdef BIN_SEARCH_DEBUG
+                UBF_LOG(log_debug, "going to get_last 1");
+#endif
+                goto get_last;
+            }
             return NULL; /* field not found (out of bounds) */
         }
         
@@ -301,6 +343,15 @@ private inline char * get_field(char *start, char *stop, BFLDID f, int i, int st
         if (cur_fld==f)
         {
             return cur;
+        }
+        
+        /* For change mode, roll to last field */
+        if (get_last & UBF_BINSRCH_GET_LAST_CHG)
+        {
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "going to get_last 2");
+#endif
+            goto get_last;
         }
         
     }
@@ -323,7 +374,7 @@ private inline char * get_field(char *start, char *stop, BFLDID f, int i, int st
  */
 public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype, int get_last, 
-                            int *last_occ, char ** last_checked)
+                            int *last_occ, char ** last_checked, char ** last_match)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     BFLDID   *p_bfldid_start = &hdr->bfldid;
@@ -342,8 +393,8 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     char *cur;
     char * ret=NULL;
     int did_search = FALSE;
-    int first, last, middle, last_small;
-    
+    int first, last, middle, last_middle;
+    int was_found_fldid = FALSE;
     char fn[] = "get_fld_loc_binary_search";
     
     if (type > BFLD_SHORT) /* Short is first, thus no need to cache the type */
@@ -380,6 +431,9 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 #endif
         if (NULL!=last_checked )
         {
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "Last search = start", cur);
+#endif
             *last_checked =start;
         }
         goto out;
@@ -406,25 +460,27 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     
     while (first <= last)
     {
-      fld_got = get_fldid_at_idx(start, middle, step);
+        last_middle = middle;
+        fld_got = get_fldid_at_idx(start, middle, step);
 
-      if ( fld_got < bfldid)
-      {
-         last_small = middle; /* So we are about to search */
-         first = middle + 1;    
-      }
-      else if (fld_got == bfldid)
-      {
-         ret=get_field(start, stop, bfldid, middle, step, occ, get_last, last_occ);
+        if ( fld_got < bfldid)
+        {
+           first = middle + 1;    
+        }
+        else if (fld_got == bfldid)
+        {
+            was_found_fldid = TRUE;
+           ret=get_field(start, stop, bfldid, middle, step, occ, get_last, 
+                   last_occ, last_match, last_checked);
 
-         break;
-      }
-      else
-      {
-         last = middle - 1;
-      }
+           break;
+        }
+        else
+        {
+           last = middle - 1;
+        }
 
-      middle = (first + last)/2;
+        middle = (first + last)/2;
     }
     
     /* Not found, my provide some support for add 
@@ -432,41 +488,77 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
      * of the next. If it is end of the buffer, it must be 4x bytes of zero...
      * even if we matched, we must get the last field.
      */
-    if (NULL!=last_checked)
+    if (NULL!=last_checked && !was_found_fldid)
     {
         if (did_search)
         {
             if (NULL==ret)
             {
-                cur = start + step * last_small;
-                curf = (BFLDID*)cur;
-                /* try to search for last one.... */
-                while (*curf < bfldid && *curf!=BBADFLDID)
+                char *last_ok;
+                last_ok = cur = start + step * last_middle;
+                
+                if (fld_got < bfldid)
                 {
-                    last_small++;
-                    cur = start + step * (last_small);
+                    /* Look forward */
                     curf = (BFLDID*)cur;
+                    /* try to search for last one.... */
+                    while (cur < stop && *curf < bfldid)
+                    {
+                        /* last_ok = cur; */
+                        last_middle++;
+                        cur = start + step * (last_middle);
+                        curf = (BFLDID*)cur;
+#ifdef BIN_SEARCH_DEBUG
+                        UBF_LOG(log_debug, "Stepping forward %p", cur);
+#endif
+                    }
+                    
                 }
-
+                else
+                {
+                    /* Look back */
+                    curf = (BFLDID*)cur;
+                    /* try to search for last one.... */
+                    while (cur > start && *curf > bfldid)
+                    {
+                        /* last_ok = cur; */
+                        last_middle--;
+                        cur = start + step * (last_middle);
+                        curf = (BFLDID*)cur;
+#ifdef BIN_SEARCH_DEBUG
+                        UBF_LOG(log_debug, "Stepping back %p", cur);
+#endif
+                    }
+                    
+                }
+                
                 *last_checked = cur;
+#ifdef BIN_SEARCH_DEBUG
                 UBF_LOG(log_debug, "*last_checked = %p", *last_checked);
+#endif
             }
             else
-            {
+            {   
                 *last_checked = ret;
+#ifdef BIN_SEARCH_DEBUG
                 UBF_LOG(log_debug, "*last_checked = %p", *last_checked);
+#endif
             }
         }
         else
         {
             *last_checked = start;
+#ifdef BIN_SEARCH_DEBUG
             UBF_LOG(log_debug, "*last_checked = %p", *last_checked);
+#endif
         }
     }
     
 out:
             
-    UBF_LOG(log_debug, "YOPT!");
+#ifdef BIN_SEARCH_DEBUG
+    UBF_LOG(log_debug, "%s ret %p", ret);
+#endif
 
     return ret;
 }
@@ -699,7 +791,7 @@ out:
 
 /**
  * Add value to FB...
- *
+ * TODO: Move to binary search.
  * If adding the first value, the buffer should be large enought and last
  * BFLDID should stay at BADFLID, because will not be overwritten.
  * Also last entry always must at BBADFLDID! This is the rule.
@@ -979,21 +1071,18 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 #endif
 /*******************************************************************************/
 
-#if 0
-    TODO:
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         p = get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype,
-                            TRUE, &last_occ, &last_checked);
+                            UBF_BINSRCH_GET_LAST_CHG, &last_occ, &last_checked, NULL);
     }
     else
     {
-     
-    }
-#endif
-    
        p=get_fld_loc(p_ub, bfldid, occ, &dtype, 
                                 &last_checked, NULL, &last_occ, last_start);
+    }
+    
+    
     
     
     if (NULL!=p)
@@ -1208,8 +1297,8 @@ public BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid)
     /* using -2 for looping throught te all occurrances! */
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
-        p_last = (BFLDID *)get_fld_loc_binary_search(p_ub, bfldid, FAIL, &fld_dtype, 
-                    TRUE, &ret, NULL);
+        get_fld_loc_binary_search(p_ub, bfldid, FAIL, &fld_dtype, 
+                    UBF_BINSRCH_GET_LAST, &ret, NULL, NULL);
     }
     else
     {
@@ -1254,7 +1343,7 @@ public int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         ret_ptr = get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, 
-                FALSE, NULL, NULL);
+                UBF_BINSRCH_GET_LAST_NONE, NULL, NULL, NULL);
     }
     else
     {
@@ -1527,7 +1616,8 @@ public int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
-        p=get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, FALSE, NULL, NULL);
+        p=get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, 
+                    UBF_BINSRCH_GET_LAST_NONE, NULL, NULL, NULL);
     }
     else
     {
