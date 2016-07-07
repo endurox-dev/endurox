@@ -170,7 +170,8 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             /* Do binary search for fixed fields: */
             || 
             (UBF_BINARY_SEARCH_OK(bfldid) &&
-            NULL!=(p=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, FALSE, NULL)))
+            NULL!=(p=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, 
+                        FALSE, NULL, NULL)))
             )
     {
         if (NULL!=buf)
@@ -230,7 +231,7 @@ public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         last_match = get_fld_loc_binary_search(p_ub, bfldid, FAIL, &dtype, 
-                    TRUE, &last_occ);
+                    TRUE, &last_occ, NULL);
     }
     else
     {

@@ -57,7 +57,7 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
-                            dtype_str_t **fld_dtype, int get_last, int *last_occ);
+                            dtype_str_t **fld_dtype, int get_last, int *last_occ, char ** last_checked);
 extern char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype,
                             char ** last_checked,

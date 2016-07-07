@@ -244,28 +244,35 @@ private inline int get_fld_occ_from_idx(char *start, BFLDID f, int i, int step)
 private inline char * get_field(char *start, char *stop, BFLDID f, int i, int step, 
         int req_occ, int get_last, int *last_occ)
 {
+    char *tmp;
+    char *cur;
+    BFLDID   *f1;
+    
     int iocc = get_fld_occ_from_idx(start, f, i, step);
     
     if (get_last)
     {
         /* operate in last off mode */
-        char *tmp;
-        char *cur = start + step * i;
+        cur = start + step * i;
         
         /* try to search for last one.... */
         while (cur < stop)
         {
-            
             tmp = start + step * (i+1);
-            
+            f1 = (BFLDID *)f1;
+            iocc++;
             if (tmp >= stop)
             {
                 break;
             }
-            else
+            else if (*f1==f)
             {
                 i++;
                 cur = tmp;
+            }
+            else
+            {
+                break;
             }
         }
         if (NULL!=last_occ)
@@ -309,16 +316,19 @@ private inline char * get_field(char *start, char *stop, BFLDID f, int i, int st
  * @param bfldid
  * @param last_matched - last matched field (can be used together with last_occ),
  *                       It is optional (pas NULL if not needed).
+ * @param lat_checked  - if not NULL, then function will try find the last occ of the type (even not matched).
  * @param occ - occurrence to get. If less than -1, then get out the count
  * @param last_occ last check occurrence
  * @return - ptr to field.
  */
 public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
-                            dtype_str_t **fld_dtype, int get_last, int *last_occ)
+                            dtype_str_t **fld_dtype, int get_last, 
+                            int *last_occ, char ** last_checked)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     BFLDID   *p_bfldid_start = &hdr->bfldid;
     BFLDID   *p_bfldid_stop  = &hdr->bfldid;
+    BFLDID   *curf;
     BFLDLEN tmp = 0;
     BFLDLEN *to_add1 = &tmp; /* default for short */
     BFLDLEN *to_add2;
@@ -327,9 +337,12 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     dtype_str_t *dtype=NULL;
     int type = (bfldid>>EFFECTIVE_BITS);
     int step;
+    int fld_got;
+    char *tmp1;
+    char *cur;
     char * ret=NULL;
-    
-    int first, last, middle;
+    int did_search = FALSE;
+    int first, last, middle, last_small;
     
     char fn[] = "get_fld_loc_binary_search";
     
@@ -365,6 +378,10 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 #ifdef BIN_SEARCH_DEBUG
         UBF_LOG(log_warn, "Field not found stop-start < 0!");
 #endif
+        if (NULL!=last_checked )
+        {
+            *last_checked =start;
+        }
         goto out;
     }
     
@@ -382,29 +399,75 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     
     middle = (first+last)/2;
     
+    if (first<=last)
+    {
+        did_search = TRUE;
+    }
+    
     while (first <= last)
     {
-      int fld_got = get_fldid_at_idx(start, middle, step);
+      fld_got = get_fldid_at_idx(start, middle, step);
 
       if ( fld_got < bfldid)
       {
+         last_small = middle; /* So we are about to search */
          first = middle + 1;    
       }
       else if (fld_got == bfldid)
       {
          ret=get_field(start, stop, bfldid, middle, step, occ, get_last, last_occ);
-         
+
          break;
       }
       else
       {
          last = middle - 1;
       }
-      
+
       middle = (first + last)/2;
-   }
+    }
+    
+    /* Not found, my provide some support for add 
+     * Search for the end of the last matched occurrence, i.e. we provide the address
+     * of the next. If it is end of the buffer, it must be 4x bytes of zero...
+     * even if we matched, we must get the last field.
+     */
+    if (NULL!=last_checked)
+    {
+        if (did_search)
+        {
+            if (NULL==ret)
+            {
+                cur = start + step * last_small;
+                curf = (BFLDID*)cur;
+                /* try to search for last one.... */
+                while (*curf < bfldid && *curf!=BBADFLDID)
+                {
+                    last_small++;
+                    cur = start + step * (last_small);
+                    curf = (BFLDID*)cur;
+                }
+
+                *last_checked = cur;
+                UBF_LOG(log_debug, "*last_checked = %p", *last_checked);
+            }
+            else
+            {
+                *last_checked = ret;
+                UBF_LOG(log_debug, "*last_checked = %p", *last_checked);
+            }
+        }
+        else
+        {
+            *last_checked = start;
+            UBF_LOG(log_debug, "*last_checked = %p", *last_checked);
+        }
+    }
     
 out:
+            
+    UBF_LOG(log_debug, "YOPT!");
+
     return ret;
 }
 
@@ -916,8 +979,24 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 #endif
 /*******************************************************************************/
 
-    if (NULL!=(p=get_fld_loc(p_ub, bfldid, occ, &dtype, 
-                                &last_checked, NULL, &last_occ, last_start)))
+#if 0
+    TODO:
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        p = get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype,
+                            TRUE, &last_occ, &last_checked);
+    }
+    else
+    {
+     
+    }
+#endif
+    
+       p=get_fld_loc(p_ub, bfldid, occ, &dtype, 
+                                &last_checked, NULL, &last_occ, last_start);
+    
+    
+    if (NULL!=p)
     {
        /* Play slightly differently here - get the existing data size */
         int existing_size;
@@ -1130,7 +1209,7 @@ public BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid)
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         p_last = (BFLDID *)get_fld_loc_binary_search(p_ub, bfldid, FAIL, &fld_dtype, 
-                    TRUE, &ret);
+                    TRUE, &ret, NULL);
     }
     else
     {
@@ -1174,7 +1253,8 @@ public int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
-        ret_ptr = get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, FALSE, NULL);
+        ret_ptr = get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, 
+                FALSE, NULL, NULL);
     }
     else
     {
@@ -1447,7 +1527,7 @@ public int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
-        p=get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, FALSE, NULL);
+        p=get_fld_loc_binary_search(p_ub, bfldid, occ, &fld_dtype, FALSE, NULL, NULL);
     }
     else
     {
