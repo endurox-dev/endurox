@@ -50,11 +50,19 @@
 #include <ntimer.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+/* #define TEST_STEP       8 */
+
+#define TEST_MIN    1
+#define TEST_MAX    56
+#define TEST_STEP   7
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+double M_test_array[5][TEST_MAX];
 
 /*
  * Thread function for doing ATMI tests...
@@ -64,7 +72,7 @@ void do_thread_work ( void *ptr )
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
-    int i;
+    int i, j;
     int ret=SUCCEED;
     double d;
     double cps;
@@ -78,6 +86,68 @@ void do_thread_work ( void *ptr )
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
 
+    
+    /***************************************************************************
+     * Documentation benchmark 
+     **************************************************************************/
+    if (NULL!=ptr)
+    {
+        for (j=TEST_MIN; j<TEST_MAX; j+=TEST_STEP)
+        {
+            int callsz = j*1024;
+            p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
+
+            if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d", callsz);
+                ret=FAIL;
+                goto out;
+            }
+            
+            ndrx_timer_reset(&timer);
+            
+            /* Do the loop call! */
+            for (i=0; i<call_num; i++) /* Test the cd loop */
+            {
+                /*
+                * Test the case when some data should be returned
+                */
+                if (FAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
+                    ret=FAIL;
+                    goto out;
+                }
+            }
+
+            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+
+            cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+
+            printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
+                    callsz,
+                    (int)(sizeof(test_buf_carray)*(call_num)), 
+                    (long)ndrx_timer_get_delta_sec(&timer),  
+                    d,
+                    (d/1024)/1024, 
+                    cps);
+            
+            fflush(stdout);
+            /*
+            if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+            {
+                NDRX_LOG(log_always, "Failed to write stats!");
+                FAIL_OUT(ret);
+            }
+            */
+            M_test_array[(long)ptr][j] = cps;
+        }
+        
+        return; /* terminate here! */
+    }
+    /***************************************************************************
+     * Documentation benchmark, end
+     **************************************************************************/
     
     for (i=0; i<50; i++)
     {
@@ -262,15 +332,32 @@ out:
  */
 int main(int argc, char** argv) 
 {
+    int j;
     pthread_t thread1, thread2, thread3, thread4, thread5;  /* thread variables */
-
+    void *arg1 = NULL;
+    void *arg2 = NULL;
+    void *arg3 = NULL;
+    void *arg4 = NULL;
+    void *arg5 = NULL;
+    
+    memset(M_test_array, 0, sizeof(M_test_array));
+    
+    if (argc>1)
+    {
+        arg1 = (void *)0;
+        arg2 = (void *)1;
+        arg3 = (void *)2;
+        arg4 = (void *)3;
+        arg5 = (void *)4;
+    }
+    
     /* create threads 1 and 2 */    
-    pthread_create (&thread1, NULL, (void *) &do_thread_work, NULL);
-    pthread_create (&thread2, NULL, (void *) &do_thread_work, NULL);
-    sleep(1); /* Have some async works... */
-    pthread_create (&thread3, NULL, (void *) &do_thread_work, NULL);
-    pthread_create (&thread4, NULL, (void *) &do_thread_work, NULL);
-    pthread_create (&thread5, NULL, (void *) &do_thread_work, NULL);
+    pthread_create (&thread1, NULL, (void *) &do_thread_work, arg1);
+    pthread_create (&thread2, NULL, (void *) &do_thread_work, arg2);
+    /*sleep(1);  Have some async works... WHY? */
+    pthread_create (&thread3, NULL, (void *) &do_thread_work, arg3);
+    pthread_create (&thread4, NULL, (void *) &do_thread_work, arg4);
+    pthread_create (&thread5, NULL, (void *) &do_thread_work, arg5);
 
     /* Main block now waits for both threads to terminate, before it exits
        If main block exits, both threads exit, even if the threads have not
@@ -280,8 +367,28 @@ int main(int argc, char** argv)
     pthread_join(thread3, NULL);
     pthread_join(thread4, NULL);
     pthread_join(thread5, NULL);
+    
+    /* Benchmark stuff... */
+    if (argc>1)
+    {
+        double sum;
+        int i;
+        /* plot the results... */
+        for (j=TEST_MIN; j<TEST_MAX; j+=TEST_STEP)
+        {
+            sum=0;
+            for (i=0; i<5; i++)
+            {
+                sum+=M_test_array[i][j];
+            }
+            if (SUCCEED!=ndrx_bench_write_stats((double)j, sum))
+            {
+                NDRX_LOG(log_always, "Failed to write stats!");
+                exit(FAIL);
+            }
+        }
+    }
 
-    /* exit */  
     exit(0);
 }
 

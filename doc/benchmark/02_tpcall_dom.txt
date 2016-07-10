@@ -1,0 +1,9 @@
+"Configuration" "MsgSize" "CallsPerSec"
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 1 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 8 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 15 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 22 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 29 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 36 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 43 9362
+"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 50 9362

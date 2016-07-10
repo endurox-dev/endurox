@@ -86,6 +86,9 @@ extern NDRX_API char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endva
 /* Threading functions */
 extern NDRX_API uint64_t ndrx_gettid(void);
 
+/* Internal testing */
+extern NDRX_API ndrx_bench_write_stats(double msgsize, double callspersec);
+
 #ifdef	__cplusplus
 }
 #endif

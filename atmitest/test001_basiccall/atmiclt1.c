@@ -43,6 +43,8 @@
 #include <ntimer.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _BENCHONLY
@@ -75,17 +77,17 @@ int main(int argc, char** argv) {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
-    int i;
+    int i, j;
     int ret=SUCCEED;
     double d;
     double cps;
     double dv = 55.66;
     char bench_mode[16]=":0:1:8:";
     char buf[1024];
-    char test_buf_carray[8192];
+    char test_buf_carray[56*1024];
     char test_buf_small[1024];
     ndrx_timer_t timer;
-    int call_num = MAX_ASYNC_CALLS *10;
+    int call_num = MAX_ASYNC_CALLS *8;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
@@ -300,6 +302,60 @@ int main(int argc, char** argv) {
                 (d/1024)/1024, 
                 cps);
         fflush(stdout);
+    }
+    
+    /* XKB benchmark*/
+    
+    if (strstr(bench_mode, ":B:"))
+    {
+        for (j=1; j<56; j+=7)
+        {
+            int callsz = j*1024;
+            p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
+
+            if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d", callsz);
+                ret=FAIL;
+                goto out;
+            }
+            
+            ndrx_timer_reset(&timer);
+            
+            /* Do the loop call! */
+            for (i=0; i<call_num; i++) /* Test the cd loop */
+            {
+                /*
+                * Test the case when some data should be returned
+                */
+                if (FAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
+                    ret=FAIL;
+                    goto out;
+                }
+            }
+
+            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+
+            cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+
+            printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
+                    callsz,
+                    (int)(sizeof(test_buf_carray)*(call_num)), 
+                    (long)ndrx_timer_get_delta_sec(&timer),  
+                    d,
+                    (d/1024)/1024, 
+                    cps);
+            
+            fflush(stdout);
+            
+            if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+            {
+                NDRX_LOG(log_always, "Failed to write stats!");
+                FAIL_OUT(ret);
+            }
+        }
     }
 out:
     tpterm();

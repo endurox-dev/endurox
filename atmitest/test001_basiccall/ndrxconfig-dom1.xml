@@ -58,7 +58,7 @@
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-n2 -f -r -i 127.0.0.1 -p 44001 -tA -z30</appopt>
+            <appopt>-n2 -r -i 127.0.0.1 -p 44001 -tA -z30</appopt>
         </server>
 	</servers>
 </endurox>
