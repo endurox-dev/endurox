@@ -455,11 +455,29 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     
     if (first<=last)
     {
+#ifdef BIN_SEARCH_DEBUG
+        int jj;
+        
+        UBF_LOG(log_debug, "---- Dumping the search area ----")
+        for (jj=first; jj<=last; jj++)
+        {
+            cur = start + step * (jj);
+            curf = (BFLDID*)cur;
+                        
+            UBF_LOG(log_debug, "Area: %p Field %x (%d)", 
+                cur, *curf, *curf);
+        }
+        UBF_LOG(log_debug, "---------------------------------")
+#endif
         did_search = TRUE;
     }
     
     while (first <= last)
     {
+#ifdef BIN_SEARCH_DEBUG
+        UBF_LOG(log_debug, "Looking for middle: %d (first: %d, last: %d)", 
+                middle, first, last);
+#endif
         last_middle = middle;
         fld_got = get_fldid_at_idx(start, middle, step);
         
@@ -500,7 +518,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             if (NULL==ret)
             {
                 char *last_ok;
-                last_ok = cur = start + step * last_middle;
+                /* last_ok = cur = start + step * last_middle; */
                 
                 if (fld_got < bfldid)
                 {
@@ -520,11 +538,13 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                 }
                 else
                 {
-                    /* Look back */
+                    /* Look back - we must stay at field that is first bigger than
+                     * ours field...
+                     */
                     curf = (BFLDID*)cur;
                     /* try to search for last one.... */
                     while (cur > start && *curf > bfldid)
-                    {
+                    {   
                         /* last_ok = cur; */
                         last_middle--;
                         cur = start + step * (last_middle);
