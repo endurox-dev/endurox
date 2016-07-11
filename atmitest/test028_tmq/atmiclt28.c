@@ -41,6 +41,8 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include <ubfutil.h>
+#include <ntimer.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -49,6 +51,7 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 private int basic_q_test(void);
+private int basic_bench_q_test();
 private int enq_q_test(char *q1, char *q2, char *q3);
 private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
 private int deqempty_q_test(void);
@@ -80,6 +83,10 @@ int main(int argc, char** argv)
     if (0==strcmp(argv[1], "basic"))
     {
         return basic_q_test();
+    }
+    else if (0==strcmp(argv[1], "basicbench"))
+    {
+        return basic_bench_q_test();
     }
     else if (0==strcmp(argv[1], "enq"))
     {
@@ -144,6 +151,101 @@ out:
     tpclose();
 
     return ret;   
+}
+
+/**
+ * Do the test call to the server, benchmark for docs
+ */
+private int basic_bench_q_test(void)
+{
+
+    int ret = SUCCEED;
+    TPQCTL qc;
+    int i, j;
+    ndrx_timer_t timer;
+    int call_num = 1000;
+    int callsz;
+    int first= TRUE;
+    double cps;
+    
+    /*start with 1 byte, then with 1 kb, then +4 kb up till 56... */
+    for (j=1; j<56; j+=4)
+    {
+        callsz = j*1024;
+
+        ndrx_timer_reset(&timer);
+
+        char *buf = tpalloc("CARRAY", "", callsz);
+        char *testbuf_ref = tpalloc("CARRAY", "", callsz);
+        
+warmed_up:
+        /* Do the loop call! */
+        for (i=0; i<call_num; i++) /* Test the cd loop */
+        {
+            long len=callsz;
+
+            /* enqueue the data buffer */
+            memset(&qc, 0, sizeof(qc));
+            if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+                    len, TPNOTRAN))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                FAIL_OUT(ret);
+            }
+
+            /* dequeue the data buffer + allocate the output buf. */
+
+            memset(&qc, 0, sizeof(qc));
+
+            len = 10;
+            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
+                    &len, TPNOTRAN))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                FAIL_OUT(ret);
+            }
+
+            /* compare - should be equal */
+            if (0!=memcmp(testbuf_ref, buf, len))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Buffers not equal!");
+                NDRX_DUMP(log_error, "original buffer", testbuf_ref, sizeof(testbuf_ref));
+                NDRX_DUMP(log_error, "got form q", buf, len);
+                FAIL_OUT(ret);
+            }
+        }
+
+        /*do the warmup... */
+        if (first)
+        {
+            first = FALSE;
+            goto warmed_up;
+        }
+
+        cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+
+        fflush(stdout);
+
+        if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+        {
+            NDRX_LOG(log_always, "Failed to write stats!");
+            FAIL_OUT(ret);
+        }
+        tpfree(buf);
+        tpfree(testbuf_ref);
+    }
+
+    if (SUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
 }
 
 /**

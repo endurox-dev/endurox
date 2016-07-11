@@ -162,17 +162,19 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 
     UBF_LOG(log_debug, "%s: bfldid: %x, occ: %d", fnname, bfldid, occ);
 
+    if (UBF_BINARY_SEARCH_OK(bfldid))
+    {
+        p=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, 
+                UBF_BINSRCH_GET_LAST_NONE, NULL, NULL, NULL);
+    }
+    else
+    {
+        p=get_fld_loc(p_ub, bfldid, occ, &dtype, &last_checked, 
+                NULL, &last_occ, NULL);
+    }
     
     /* So started lookup for strings & carrays  */
-    if ((!UBF_BINARY_SEARCH_OK(bfldid) && 
-            NULL!=(p=get_fld_loc(p_ub, bfldid, occ, &dtype, &last_checked, NULL, &last_occ, NULL)))
-            
-            /* Do binary search for fixed fields: */
-            || 
-            (UBF_BINARY_SEARCH_OK(bfldid) &&
-            NULL!=(p=get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype, 
-                        UBF_BINSRCH_GET_LAST_NONE, NULL, NULL, NULL)))
-            )
+    if (NULL!=p)
     {
         if (NULL!=buf)
         {

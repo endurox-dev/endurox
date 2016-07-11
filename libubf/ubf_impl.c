@@ -51,7 +51,7 @@
 #include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-/* #define BIN_SEARCH_DEBUG        1 */
+#define BIN_SEARCH_DEBUG        1
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct ubf_type_cache
@@ -462,7 +462,12 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     {
         last_middle = middle;
         fld_got = get_fldid_at_idx(start, middle, step);
-
+        
+#ifdef BIN_SEARCH_DEBUG
+        UBF_LOG(log_debug, "Got field %x (%d) search %x (%d)", 
+                fld_got, fld_got, bfldid, bfldid);
+#endif
+        
         if ( fld_got < bfldid)
         {
            first = middle + 1;    
@@ -470,7 +475,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         else if (fld_got == bfldid)
         {
             was_found_fldid = TRUE;
-           ret=get_field(start, stop, bfldid, middle, step, occ, get_last, 
+            ret=get_field(start, stop, bfldid, middle, step, occ, get_last, 
                    last_occ, last_match, last_checked);
 
            break;
@@ -502,7 +507,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                     /* Look forward */
                     curf = (BFLDID*)cur;
                     /* try to search for last one.... */
-                    while (cur < stop && *curf < bfldid)
+                    while (/* cur < stop && */ BBADFLDID!=*curf && *curf < bfldid)
                     {
                         /* last_ok = cur; */
                         last_middle++;
@@ -512,7 +517,6 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                         UBF_LOG(log_debug, "Stepping forward %p", cur);
 #endif
                     }
-                    
                 }
                 else
                 {
@@ -557,7 +561,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 out:
             
 #ifdef BIN_SEARCH_DEBUG
-    UBF_LOG(log_debug, "%s ret %p", ret);
+    UBF_LOG(log_debug, "%s ret %p", fn, ret);
 #endif
 
     return ret;

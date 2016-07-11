@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     char test_buf_carray[56*1024];
     char test_buf_small[1024];
     ndrx_timer_t timer;
-    int call_num = MAX_ASYNC_CALLS *8;
+    int call_num = MAX_ASYNC_CALLS *10;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
@@ -308,9 +308,17 @@ int main(int argc, char** argv) {
     
     if (strstr(bench_mode, ":B:"))
     {
-        for (j=1; j<56; j+=4)
+        int bench_call_num;
+        int first = TRUE;
+        
+        /*start with 1 byte, then with 1 kb, then +4 kb up till 56... */
+        for (j=0; j<56; j=(j==0?j=1:j+4))
         {
             int callsz = j*1024;
+            if (0==j)
+            {
+                callsz = 1; /* send 1 byte.. */
+            }
             p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
 
             if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
@@ -320,6 +328,16 @@ int main(int argc, char** argv) {
                 goto out;
             }
             
+            if (j<10)
+            {
+                bench_call_num = call_num*4;
+            }
+            else
+            {
+                bench_call_num = call_num;
+            }
+            
+B_warmed_up:
             ndrx_timer_reset(&timer);
             
             /* Do the loop call! */
@@ -334,6 +352,13 @@ int main(int argc, char** argv) {
                     ret=FAIL;
                     goto out;
                 }
+            }
+
+            /*do the warmup... */
+            if (first)
+            {
+                first = FALSE;
+                goto B_warmed_up;
             }
 
             d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
@@ -357,6 +382,96 @@ int main(int argc, char** argv) {
             }
         }
     }
+    
+    /* Benchmark with non-rely/async calls */
+    if (strstr(bench_mode, ":b:"))
+    {
+        int bench_call_num;
+        int first = TRUE;
+        for (j=0; j<56; j=(j==0?j=1:j+4))
+        {
+            int callsz = j*1024;
+            if (0==j)
+            {
+                callsz = 1; /* send 1 byte.. */
+            }
+
+            p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
+
+            if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d", callsz);
+                ret=FAIL;
+                goto out;
+            }
+            
+            if (j<40)
+            {
+                bench_call_num = call_num*4;
+            }
+            else
+            {
+                bench_call_num = call_num;
+            }
+
+            ndrx_timer_reset(&timer);
+            
+            
+/* Repeat the test if we did the warump for first time. */
+b_warmed_up:
+            /* Do the loop call! */
+            for (i=0; i<bench_call_num; i++) /* Test the cd loop */
+            {
+                /*
+                * Test the case when some data should be returned
+                */
+                if (FAIL==tpacall("ECHO", (char *)p_ub, 0L, TPNOTIME|TPNOREPLY))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
+                    ret=FAIL;
+                    goto out;
+                }
+            }            
+            
+            /* +1 call to ensure that target is processed all the stuff.. */
+            if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 
+                        TPNOTIME))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
+                    ret=FAIL;
+                    goto out;
+            }
+
+            /*do the warmup... */
+            if (first)
+            {
+                first = FALSE;
+                goto b_warmed_up;
+            }
+
+
+            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+
+            cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+
+            printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
+                    callsz,
+                    (int)(sizeof(test_buf_carray)*(call_num)), 
+                    (long)ndrx_timer_get_delta_sec(&timer),  
+                    d,
+                    (d/1024)/1024, 
+                    cps);
+            
+            fflush(stdout);
+            
+            if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+            {
+                NDRX_LOG(log_always, "Failed to write stats!");
+                FAIL_OUT(ret);
+            }
+        }
+    }
+    
 out:
     tpterm();
 

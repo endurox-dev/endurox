@@ -25,6 +25,52 @@ function clean_lines {
 }
 
 ################################################################################
+# 5. tpenqueue() + tpdequeue() - persistent storage
+################################################################################
+export NDRX_BENCH_FILE=`pwd`/05_persistent_storage.txt
+
+clean_lines;
+
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+    pushd .
+    cd ../../atmitest/test028_tmq
+    ./run-doc-bench-05.sh
+    popd
+fi
+
+#
+# Generate the chart
+#
+export NDRX_BENCH_TITLE="Persistent storage (enqueue + dequeue)"
+export NDRX_BENCH_X_LABEL="Msg Size (KB)"
+export NDRX_BENCH_Y_LABEL="Calls Per Second (tpenqueue()+tpdequeue()/sec)"
+export NDRX_BENCH_OUTFILE="05_persistent_storage.png"
+R -f genchart.r
+
+################################################################################
+# 4. tpacall() - async call benchmark
+################################################################################
+export NDRX_BENCH_FILE=`pwd`/04_tpacall.txt
+
+clean_lines;
+
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+    pushd .
+    cd ../../atmitest/test001_basiccall
+    ./run-doc-bench-04.sh
+    popd
+fi
+
+#
+# Generate the chart
+#
+export NDRX_BENCH_TITLE="One client, one server, tpacall (request only)"
+export NDRX_BENCH_X_LABEL="Msg Size (KB)"
+export NDRX_BENCH_Y_LABEL="Calls Per Second (tpacall()/sec)"
+export NDRX_BENCH_OUTFILE="04_tpacall.png"
+R -f genchart.r
+
+################################################################################
 # 3. Threaded tpcalls.
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/03_tpcall_threads.txt
@@ -46,6 +92,29 @@ export NDRX_BENCH_X_LABEL="Msg Size (KB)"
 export NDRX_BENCH_Y_LABEL="Calls Per Second (tpcall()/sec)"
 export NDRX_BENCH_OUTFILE="03_tpcall_threads.png"
 R -f genchart.r
+################################################################################
+# 2. Next we do network benchmark, client one side, server another
+################################################################################
+export NDRX_BENCH_FILE=`pwd`/02_tpcall_dom.txt
+
+clean_lines;
+
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+pushd .
+cd ../../atmitest/test001_basiccall
+./run-doc-bench-02.sh
+popd
+fi
+
+#
+# Generate the chart
+#
+export NDRX_BENCH_TITLE="Networked: One client, one server, tpcall, request+reply"
+export NDRX_BENCH_X_LABEL="Msg Size (KB)"
+export NDRX_BENCH_Y_LABEL="Calls Per Second (tpcall()/sec)"
+export NDRX_BENCH_OUTFILE="02_tpcall_network.png"
+R -f genchart.r
+
 
 ################################################################################
 # 1. First test case, basic benchmarking (pure tpcall)
@@ -69,29 +138,6 @@ export NDRX_BENCH_TITLE="One client, one server, tpcall, request+reply"
 export NDRX_BENCH_X_LABEL="Msg Size (KB)"
 export NDRX_BENCH_Y_LABEL="Calls Per Second (tpcall()/sec)"
 export NDRX_BENCH_OUTFILE="01_tpcall.png"
-R -f genchart.r
-
-################################################################################
-# 2. Next we do network benchmark, client one side, server another
-################################################################################
-export NDRX_BENCH_FILE=`pwd`/02_tpcall_dom.txt
-
-clean_lines;
-
-if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
-pushd .
-cd ../../atmitest/test001_basiccall
-./run-doc-bench-02.sh
-popd
-fi
-
-#
-# Generate the chart
-#
-export NDRX_BENCH_TITLE="Networked: One client, one server, tpcall, request+reply"
-export NDRX_BENCH_X_LABEL="Msg Size (KB)"
-export NDRX_BENCH_Y_LABEL="Calls Per Second (tpcall()/sec)"
-export NDRX_BENCH_OUTFILE="02_tpcall_network.png"
 R -f genchart.r
 
 

@@ -556,7 +556,7 @@ public int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
             )
     {
         NDRX_LOG(log_error, "Failed to setup TMXID/TMRMID/TMNODEID/"
-                "TMSRVID/TMKNOWNRMS!");
+                "TMSRVID/TMKNOWNRMS! - %s", Bstrerror(Berror));
         FAIL_OUT(ret);
     }
     
@@ -584,7 +584,7 @@ public int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
             )
     {
         NDRX_LOG(log_error, "Failed to setup TMXID/TMRMID/TMNODEID/"
-                "TMSRVID/TMKNOWNRMS!");
+                "TMSRVID/TMKNOWNRMS! - %s", Bstrerror(Berror));
         FAIL_OUT(ret);
     }
     
