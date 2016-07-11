@@ -21,11 +21,14 @@ yrange <- range(Bench$CallsPerSec)
 #write.csv(Bench$Configuration, file = "Configuration.csv")
 #write.csv(nConfigurations, file = "nConfigurations.csv")
 
-png(filename=OUTFILE, width = 640, height = 640, units = "px", res=100)
+png(filename=OUTFILE, width = 800, height = 480, units = "px", res=80)
 
 # set up the plot 
 #plot(xrange, yrange, type="n", xlab="MsgSize (bytes)",
 #        ylab="CallsPerSec (calls/sec)" ) 
+
+# Add extra space to right of plot area; change clipping to figure
+par(mar=c(5.1, 4.1, 4.1, 22.1), xpd=TRUE)
 
 plot(xrange, yrange, type="n", xlab=XLAB,
         ylab=YLAB ) 
@@ -53,5 +56,6 @@ ux <- unique(Bench$Configuration)
 #legend(xrange[1], yrange[2], legend=c(1:nConfigurations, cex=0.8, col=colors,
 #par(xpd=TRUE)
 #legend(xrange[1], yrange[2], legend=ux, cex=0.8, col=colors,
-legend("topright", legend=ux, cex=0.8, col=colors,
+legend("topright", inset=c(-0.8,0), legend=ux, cex=0.8, col=colors,
         pch=plotchar, lty=linetype, title="Configuration")
+

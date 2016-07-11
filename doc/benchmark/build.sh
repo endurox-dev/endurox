@@ -18,10 +18,12 @@ echo "Config name: $NDRX_BENCH_CONFIGNAME"
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/03_tpcall_threads.txt
 
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
 pushd .
 cd ../../atmitest/test015_threads
 ./run-doc-bench-03.sh
 popd
+fi
 
 #
 # Generate the chart
@@ -38,10 +40,12 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/01_tpcall.txt
 
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
 pushd .
 cd ../../atmitest/test001_basiccall
 ./run-doc-bench-01.sh
 popd
+fi
 
 #
 # Generate the chart
@@ -57,10 +61,12 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/02_tpcall_dom.txt
 
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
 pushd .
 cd ../../atmitest/test001_basiccall
 ./run-doc-bench-02.sh
 popd
+fi
 
 #
 # Generate the chart
