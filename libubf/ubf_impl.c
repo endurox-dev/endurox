@@ -51,7 +51,7 @@
 #include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define BIN_SEARCH_DEBUG        1
+/* #define BIN_SEARCH_DEBUG        1 */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct ubf_type_cache
@@ -432,7 +432,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         if (NULL!=last_checked )
         {
 #ifdef BIN_SEARCH_DEBUG
-            UBF_LOG(log_debug, "Last search = start", cur);
+            UBF_LOG(log_debug, "Last search = start");
 #endif
             *last_checked =start;
         }
@@ -518,14 +518,14 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             if (NULL==ret)
             {
                 char *last_ok;
-                /* last_ok = cur = start + step * last_middle; */
+                last_ok = cur = start + step * last_middle;
                 
                 if (fld_got < bfldid)
                 {
                     /* Look forward */
                     curf = (BFLDID*)cur;
                     /* try to search for last one.... */
-                    while (/* cur < stop && */ BBADFLDID!=*curf && *curf < bfldid)
+                    while (cur < stop && *curf < bfldid)
                     {
                         /* last_ok = cur; */
                         last_middle++;
@@ -545,7 +545,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                     /* try to search for last one.... */
                     while (cur > start && *curf > bfldid)
                     {   
-                        /* last_ok = cur; */
+                        last_ok = cur;
                         last_middle--;
                         cur = start + step * (last_middle);
                         curf = (BFLDID*)cur;
@@ -553,6 +553,8 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                         UBF_LOG(log_debug, "Stepping back %p", cur);
 #endif
                     }
+                    
+                    cur = last_ok;
                     
                 }
                 
@@ -723,7 +725,7 @@ public char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     *last_checked=(char *)p_bfldid;
     
     
-    NDRX_LOG(log_debug, "*last_checked [%d] %p", **last_checked, *last_checked);
+    UBF_LOG(log_debug, "*last_checked [%d] %p", **last_checked, *last_checked);
     
 out:
     return ret;

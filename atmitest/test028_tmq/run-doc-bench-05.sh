@@ -157,7 +157,7 @@ xadmin ppm
 set | grep NDRX
 
 echo "Running: Benchmark"
-(./atmiclt28 basic 2>&1) > ./atmiclt-dom1.log
+(./atmiclt28 basicbench 2>&1) > ./atmiclt-dom1.log
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then
