@@ -48,13 +48,14 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include <ntimer.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* #define TEST_STEP       8 */
 
 #define TEST_MIN    1
 #define TEST_MAX    56
-#define TEST_STEP   7
+#define TEST_STEP   4
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -112,7 +113,7 @@ void do_thread_work ( void *ptr )
                 /*
                 * Test the case when some data should be returned
                 */
-                if (FAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+                if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
                 {
                     NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
                     ret=FAIL;

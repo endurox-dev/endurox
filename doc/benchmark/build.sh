@@ -13,10 +13,23 @@ export NDRX_BENCH_CONFIGNAME=$1
 
 echo "Config name: $NDRX_BENCH_CONFIGNAME"
 
+
+function clean_lines {
+
+    if [ -f $NDRX_BENCH_FILE ]; then
+        echo "Cleaning up: $NDRX_BENCH_FILE"
+        grep -v "$NDRX_BENCH_CONFIGNAME" $NDRX_BENCH_FILE
+        grep -v "$NDRX_BENCH_CONFIGNAME" $NDRX_BENCH_FILE  > tmp.g
+        mv tmp.g $NDRX_BENCH_FILE
+    fi
+}
+
 ################################################################################
 # 3. Threaded tpcalls.
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/03_tpcall_threads.txt
+
+clean_lines;
 
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
 pushd .
@@ -40,6 +53,8 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/01_tpcall.txt
 
+clean_lines;
+
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
 pushd .
 cd ../../atmitest/test001_basiccall
@@ -60,6 +75,8 @@ R -f genchart.r
 # 2. Next we do network benchmark, client one side, server another
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/02_tpcall_dom.txt
+
+clean_lines;
 
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
 pushd .

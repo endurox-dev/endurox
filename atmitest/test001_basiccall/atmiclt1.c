@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
             /*
             * Test the case when some data should be returned
             */
-            if (FAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+            if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
             {
                 NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
                 ret=FAIL;
@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
             /*
             * Test the case when some data should be returned
             */
-            if (FAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+            if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
             {
                 NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
                 ret=FAIL;
@@ -308,7 +308,7 @@ int main(int argc, char** argv) {
     
     if (strstr(bench_mode, ":B:"))
     {
-        for (j=1; j<56; j+=7)
+        for (j=1; j<56; j+=4)
         {
             int callsz = j*1024;
             p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
@@ -328,7 +328,7 @@ int main(int argc, char** argv) {
                 /*
                 * Test the case when some data should be returned
                 */
-                if (FAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+                if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
                 {
                     NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
                     ret=FAIL;
