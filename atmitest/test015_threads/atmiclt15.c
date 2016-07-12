@@ -93,6 +93,8 @@ void do_thread_work ( void *ptr )
      **************************************************************************/
     if (NULL!=ptr)
     {
+	int first = TRUE;
+
         for (j=TEST_MIN; j<TEST_MAX; j+=TEST_STEP)
         {
             int callsz = j*1024;
@@ -105,6 +107,7 @@ void do_thread_work ( void *ptr )
                 goto out;
             }
             
+warmed_up:
             ndrx_timer_reset(&timer);
             
             /* Do the loop call! */
@@ -119,6 +122,12 @@ void do_thread_work ( void *ptr )
                     ret=FAIL;
                     goto out;
                 }
+            }
+
+            if (first)
+            {
+                first = FALSE;
+                goto warmed_up;
             }
 
             d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);

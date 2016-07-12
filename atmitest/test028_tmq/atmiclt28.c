@@ -163,7 +163,7 @@ private int basic_bench_q_test(void)
     TPQCTL qc;
     int i, j;
     ndrx_timer_t timer;
-    int call_num = 1000;
+    int call_num = 4000;
     int callsz;
     int first= TRUE;
     double cps;
@@ -173,12 +173,11 @@ private int basic_bench_q_test(void)
     {
         callsz = j*1024;
 
-        ndrx_timer_reset(&timer);
-
         char *buf = tpalloc("CARRAY", "", callsz);
         char *testbuf_ref = tpalloc("CARRAY", "", callsz);
         
 warmed_up:
+        ndrx_timer_reset(&timer);
         /* Do the loop call! */
         for (i=0; i<call_num; i++) /* Test the cd loop */
         {
