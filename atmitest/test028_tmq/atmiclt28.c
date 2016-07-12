@@ -223,7 +223,7 @@ warmed_up:
             goto warmed_up;
         }
 
-        cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+        cps = (double)(call_num)/(double)((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
         fflush(stdout);
 

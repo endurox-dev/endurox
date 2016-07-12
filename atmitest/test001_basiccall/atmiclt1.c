@@ -361,7 +361,7 @@ B_warmed_up:
                 goto B_warmed_up;
             }
 
-            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
             cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
 
@@ -450,7 +450,7 @@ b_warmed_up:
             }
 
 
-            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_timer_get_delta_sec(&timer)/1000.0f);
 
             cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
 
