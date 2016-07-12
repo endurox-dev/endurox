@@ -12,13 +12,21 @@ Different aspects are being tested and performance results are analyzed. Testing
 funamental message exchange between client and server, synchrouns and asynchrouns aspects are tested.
 Document also covers persistent storage benchmarks.
 
+Asynchrouns tpacall()
+---------------------
+This tests uses one way calls to the server process. At the end of the calls it is ensured that
+all messages are processed by server. Only then results are plotted.
+
+image:benchmark/04_tpacall.png[caption="Figure 1: ", title="tpacall() benchmark", alt="tpacallbench"]
+
+
 Local tpcall()
 --------------
 This test includes locally running ATMI client and ATMI server. The interprocess comunication happens
 with help of kernel queues (kq) or shared memory (shm). The polling mechanisms are either epoll() (works
  on linux, most efficient way) and usual poll() for which event chain is bit longer.
 
-image:benchmark/01_tpcall.png[caption="Figure 1: ", title="tpcall() benchmark", alt="tpcallbench"]
+image:benchmark/01_tpcall.png[caption="Figure 2: ", title="tpcall() benchmark", alt="tpcallbench"]
 
 From the results can be seen that performance mostly stays stable at different data size loads.
 
@@ -27,7 +35,7 @@ Networked tpcall()
 At this test basically same works is done as for above, but instead two instances of application servers
 are started and they are interconnected with network.
 
-image:benchmark/02_tpcall_network.png[caption="Figure 2: ", title="tpcall() network benchmark", alt="tpcall_network"]
+image:benchmark/02_tpcall_network.png[caption="Figure 3: ", title="tpcall() network benchmark", alt="tpcall_network"]
 
 Here we see that network peformance slightly fluctate. That could be related with fact now bridge is involved to transfer
 the message over the network, and process count is bigger than CPU core count. Thus scheduler comes in work.
@@ -37,7 +45,15 @@ Multi-process/multi-thread tpcall()
 This test cases employs five ATMI servers, and one ATMI client which inside have 5x threads,
 sending messagas to the servers
 
-image:benchmark/03_tpcall_threads.png[caption="Figure 3: ", title="tpcall() multiproc", alt="multiprocessing"]
+image:benchmark/03_tpcall_threads.png[caption="Figure 4: ", title="tpcall() multiproc", alt="multiprocessing"]
+
+Persisted storage benchmark, tpenqueue()
+----------------------------------------
+This test gets much lower results, because all messages are being saved to disk. Also note that internally
+Enduro/X uses distributed transaction manager to coordinate the save of the message, thus processing of 
+XA transaction takes some disk resources too.
+
+image:benchmark/05_persistent_storage.png[caption="Figure 5: ", title="Persistent storage", alt="persistent_storage"]
 
 :numbered!:
 
