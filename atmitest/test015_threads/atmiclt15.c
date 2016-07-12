@@ -82,7 +82,7 @@ void do_thread_work ( void *ptr )
     char test_buf_carray[8192];
     char test_buf_small[1024];
     ndrx_timer_t timer;
-    int call_num = MAX_ASYNC_CALLS *5;
+    int call_num = MAX_ASYNC_CALLS *3;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
@@ -132,7 +132,7 @@ warmed_up:
 
             d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
-            cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+            cps = (double)(call_num)/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
             printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
                     callsz,

@@ -363,7 +363,7 @@ B_warmed_up:
 
             d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
-            cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+            cps = (double)(call_num)/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
             printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
                     callsz,
@@ -405,9 +405,9 @@ B_warmed_up:
                 goto out;
             }
             
-            if (j<40)
+            if (j<20)
             {
-                bench_call_num = call_num*2;
+                bench_call_num = call_num*5;
             }
             else
             {
@@ -452,7 +452,7 @@ b_warmed_up:
 
             d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
-            cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+            cps = (double)(call_num)/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
             printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
                     callsz,
