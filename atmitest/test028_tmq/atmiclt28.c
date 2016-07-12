@@ -163,7 +163,7 @@ private int basic_bench_q_test(void)
     TPQCTL qc;
     int i, j;
     ndrx_timer_t timer;
-    int call_num = 4000;
+    int call_num = 500;
     int callsz;
     int first= TRUE;
     double cps;
