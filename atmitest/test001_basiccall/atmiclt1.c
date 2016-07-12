@@ -341,7 +341,7 @@ B_warmed_up:
             ndrx_timer_reset(&timer);
             
             /* Do the loop call! */
-            for (i=0; i<call_num; i++) /* Test the cd loop */
+            for (i=0; i<bench_call_num; i++) /* Test the cd loop */
             {
                 /*
                 * Test the case when some data should be returned
