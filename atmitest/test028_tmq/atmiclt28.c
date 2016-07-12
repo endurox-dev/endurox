@@ -163,7 +163,7 @@ private int basic_bench_q_test(void)
     TPQCTL qc;
     int i, j;
     ndrx_timer_t timer;
-    int call_num = 500;
+    int call_num = 5000;
     int callsz;
     int first= TRUE;
     double cps;
@@ -193,6 +193,7 @@ warmed_up:
                 FAIL_OUT(ret);
             }
 
+#if 0
             /* dequeue the data buffer + allocate the output buf. */
 
             memset(&qc, 0, sizeof(qc));
@@ -214,6 +215,7 @@ warmed_up:
                 NDRX_DUMP(log_error, "got form q", buf, len);
                 FAIL_OUT(ret);
             }
+#endif
         }
 
         /*do the warmup... */

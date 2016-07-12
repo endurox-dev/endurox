@@ -25,13 +25,12 @@ function clean_lines {
 }
 
 ################################################################################
-# 5. tpenqueue() + tpdequeue() - persistent storage
+# 5. tpenqueue() - persistent storage
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/05_persistent_storage.txt
 
-clean_lines;
-
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+    clean_lines;
     pushd .
     cd ../../atmitest/test028_tmq
     ./run-doc-bench-05.sh
@@ -41,9 +40,9 @@ fi
 #
 # Generate the chart
 #
-export NDRX_BENCH_TITLE="Persistent storage (enqueue + dequeue)"
+export NDRX_BENCH_TITLE="Persistent storage (enqueue msg to disk)"
 export NDRX_BENCH_X_LABEL="Msg Size (KB)"
-export NDRX_BENCH_Y_LABEL="Calls Per Second (tpenqueue()+tpdequeue()/sec)"
+export NDRX_BENCH_Y_LABEL="Calls Per Second (tpenqueue()/sec)"
 export NDRX_BENCH_OUTFILE="05_persistent_storage.png"
 R -f genchart.r
 
@@ -52,9 +51,8 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/04_tpacall.txt
 
-clean_lines;
-
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+    clean_lines;
     pushd .
     cd ../../atmitest/test001_basiccall
     ./run-doc-bench-04.sh
@@ -75,9 +73,8 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/03_tpcall_threads.txt
 
-clean_lines;
-
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+clean_lines;
 pushd .
 cd ../../atmitest/test015_threads
 ./run-doc-bench-03.sh
@@ -97,9 +94,8 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/02_tpcall_dom.txt
 
-clean_lines;
-
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+clean_lines;
 pushd .
 cd ../../atmitest/test001_basiccall
 ./run-doc-bench-02.sh
@@ -122,9 +118,8 @@ R -f genchart.r
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/01_tpcall.txt
 
-clean_lines;
-
 if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+clean_lines;
 pushd .
 cd ../../atmitest/test001_basiccall
 ./run-doc-bench-01.sh

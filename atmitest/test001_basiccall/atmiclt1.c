@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     char test_buf_carray[56*1024];
     char test_buf_small[1024];
     ndrx_timer_t timer;
-    int call_num = MAX_ASYNC_CALLS *10;
+    int call_num = MAX_ASYNC_CALLS *5;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
             
             if (j<10)
             {
-                bench_call_num = call_num*4;
+                bench_call_num = call_num*2;
             }
             else
             {
@@ -407,7 +407,7 @@ B_warmed_up:
             
             if (j<40)
             {
-                bench_call_num = call_num*4;
+                bench_call_num = call_num*2;
             }
             else
             {

@@ -8,7 +8,9 @@ YLAB <- Sys.getenv("NDRX_BENCH_Y_LABEL")
 TITLE <- Sys.getenv("NDRX_BENCH_TITLE")
 OUTFILE <- Sys.getenv("NDRX_BENCH_OUTFILE")
 
-Bench = mydata = read.table(DATA_FILE, header = TRUE)
+Bench = read.table(DATA_FILE, header = TRUE)
+
+Bench <- Bench[order(Bench$Configuration),]
 
 # convert factor to numeric for convenience 
 Bench$ConfigurationNum <- as.numeric(Bench$Configuration) 
