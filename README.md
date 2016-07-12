@@ -21,7 +21,7 @@ Due to fact that Enduro/X uses memory based queues, performance numbers are quit
 
 ## ATMI client calls server in async way (tpacall(), no reply from server)
 
-![Alt text](doc/benchmark/04_tpacall.png.png?raw=true "Local tpcall() performance")
+![Alt text](doc/benchmark/04_tpacall.png?raw=true "Local tpcall() performance")
 
 
 ## Local one client calls server, and gets back response:
@@ -36,7 +36,7 @@ Due to fact that Enduro/X uses memory based queues, performance numbers are quit
 
 ![Alt text](doc/benchmark/02_tpcall_network.png?raw=true "Network tpcall() performance")
 
-## Persistend storage (message enqueue to disk via tpenqueue())
+## Persistent storage (message enqueue to disk via tpenqueue())
 The number here are lower because messages are being saved to disk. Also internally XA transaction is used, which also requires logging to stable storage.
 
 ![Alt text](doc/benchmark/05_persistent_storage.png?raw=true "Network tpenqueue() performance")
