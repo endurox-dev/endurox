@@ -9,7 +9,7 @@ EnduroX have binddings for:
 - Golang
 - PHP
 - Perl
-- Python
+- Python (alpha stage)
 - Node.js
 
 Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues). Starting with Enduro/X Version 3.1.2 IBM AIX (6.1 and 7.1), Oracle Solaris 11, MAC OS X (experimental) and Cygwin (experimental) support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
