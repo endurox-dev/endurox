@@ -5,6 +5,13 @@ Platform provides X/Open XATMI and XA APIs for C/C++ applications. EnduroX can b
 
 EnduroX provides SOA architecture for C/C++ applications and allows to cluster application in fault tolerant way over multiple physical servers. EnduroX provides Oracle(R) Tuxedo(R) FML/FML32 library emulation, including boolean expressions. Other Tuxedo specific APIs are supported, such as tpforward() and work with distributed transactions (tpbegin(), tpcommit(), etc.).
 
+EnduroX have binddings for:
+- Golang
+- PHP
+- Perl
+- Python
+- Node.js
+- 
 Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues). Starting with Enduro/X Version 3.1.2 IBM AIX (6.1 and 7.1), Oracle Solaris 11, MAC OS X (experimental) and Cygwin (experimental) support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
 
 - Build and installation guides are located at: http://www.endurox.org
