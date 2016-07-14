@@ -63,6 +63,23 @@ located in 'doc/benchmark' folder, named 'build.sh <configuration name>'. The co
 of your system on which you perform tne tests. Shall not contain spaces. Results are plotten into text files located
 in same directory.
 
+NOTE: That you must enable the Q message size up till 56000 bytes. On Linux system that would mean that '/etc/rc.local' needs to be set to:
+
+---------------------------------------------------------------------
+...
+echo 56000 > /proc/sys/fs/mqueue/msgsize_max
+...
+---------------------------------------------------------------------
+
+And in 'setndrx' we shall also enable that message size:
+
+---------------------------------------------------------------------
+...
+# Max message size (in bytes)
+export NDRX_MSGSIZEMAX=56000
+...
+---------------------------------------------------------------------
+
 For our sample user (user1), then running could look like:
 
 ---------------------------------------------------------------------
@@ -82,7 +99,6 @@ $ ls -1
 build.sh
 genchart.r
 ---------------------------------------------------------------------
-
 
 
 :numbered!:
