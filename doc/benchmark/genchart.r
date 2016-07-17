@@ -2,6 +2,9 @@
 
 #write.table(Bench, "Bench.csv")
 
+# Disable exponential form
+options(scipen=999)
+
 DATA_FILE <- Sys.getenv("NDRX_BENCH_FILE")
 XLAB <- Sys.getenv("NDRX_BENCH_X_LABEL")
 YLAB <- Sys.getenv("NDRX_BENCH_Y_LABEL")
