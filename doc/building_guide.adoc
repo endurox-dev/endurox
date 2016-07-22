@@ -240,7 +240,7 @@ disk space, as logging requires some space. To run the ATMI tests do following:
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/atmitest
 $ nohup ./run.sh &
-$ tail -f /home/user1/endurox/atmitest
+$ tail -f /home/user1/endurox/atmitest/test.out
 ...
 Setting domain 2
 Server executable = tpbridge    Id = 101 :      Shutdown succeeded.
