@@ -62,9 +62,9 @@ The number here are lower because messages are being saved to disk. Also interna
 
 ## Configure make with: 
 
-cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 
-## Flags:
+### Flags:
 
 - To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
 - To disable documentation building add '-DDEFINE_DISABLEDOC=ON'
