@@ -58,4 +58,18 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.2.2 released on 15/07/2016. Bugfixes for UBF binary search. Added UBF benchmarking scripts and documents.
 
 
+# Build configurations
+
+## Configure make with: 
+
+cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+
+## Flags:
+
+- To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
+- To disable documentation building add '-DDEFINE_DISABLEDOC=ON'
+- To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
+- To disable platform script building use '-DDEFINE_DISABLEPSCRIPT=ON'
+- To do release build, use '-DDEFINE_RELEASEBUILD=ON'
+- To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON'
 
