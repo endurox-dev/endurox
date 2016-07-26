@@ -55,6 +55,52 @@ XA transaction takes some disk resources too.
 
 image:benchmark/05_persistent_storage.png[caption="Figure 5: ", title="Persistent storage", alt="persistent_storage"]
 
+Running the benchmarks
+----------------------
+It is possible to run benchmarkings on your ownsystem. Not that for chart plotting R language is used. If R will not
+be installed, then charts will not be generated. But results still can be read from data files. Benchmark script is
+located in 'doc/benchmark' folder, named 'build.sh <configuration name>'. The configuration name is arbritrary description
+of your system on which you perform tne tests. Shall not contain spaces. Results are plotten into text files located
+in same directory.
+
+NOTE: That you must enable the Q message size up till 56000 bytes. On Linux system that would mean that '/etc/rc.local' needs to be set to:
+
+---------------------------------------------------------------------
+...
+echo 56000 > /proc/sys/fs/mqueue/msgsize_max
+...
+---------------------------------------------------------------------
+
+And in 'setndrx' we shall also enable that message size:
+
+---------------------------------------------------------------------
+...
+# Max message size (in bytes)
+export NDRX_MSGSIZEMAX=56000
+...
+---------------------------------------------------------------------
+
+For our sample user (user1), then running could look like:
+
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/doc/benchmark
+$ ./build.sh my_system,linux,ssd
+$ ls -1
+01_tpcall.png
+01_tpcall.txt
+02_tpcall_dom.txt
+02_tpcall_network.png
+03_tpcall_threads.png
+03_tpcall_threads.txt
+04_tpacall.png
+04_tpacall.txt
+05_persistent_storage.png
+05_persistent_storage.txt
+build.sh
+genchart.r
+---------------------------------------------------------------------
+
+
 :numbered!:
 
 [bibliography]

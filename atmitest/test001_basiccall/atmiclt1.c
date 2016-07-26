@@ -248,9 +248,9 @@ int main(int argc, char** argv) {
             }
         }
 
-        d = (double)(sizeof(test_buf_small)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+        d = (double)(sizeof(test_buf_small)*(call_num))/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
-        cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+        cps = (double)(call_num)/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
         printf("1KB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, "
                 "calls/sec = %lf\n", 
@@ -268,7 +268,7 @@ int main(int argc, char** argv) {
     {
         p_ub = (UBFH *)tprealloc ((char *)p_ub, 9216);
 
-        if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, sizeof(test_buf_carray)))
+        if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, 1024*8))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD");
             ret=FAIL;
@@ -291,9 +291,9 @@ int main(int argc, char** argv) {
             }
         }
 
-        d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+        d = (double)(sizeof(test_buf_carray)*(call_num))/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
-        cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+        cps = (double)(call_num)/((double)ndrx_timer_get_delta(&timer)/1000.0f);
 
         printf("8KB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
                 (int)(sizeof(test_buf_carray)*(call_num)), 

@@ -182,23 +182,23 @@ cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
 # Where app domain lives
-export NDRX_APPHOME=/home/user1/endurox
+export NDRX_APPHOME=:$HOME/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=/home/user1/endurox/dist/bin
+export NDRX_HOME=:$HOME/endurox/dist/bin
 # Debug config too
-export NDRX_DEBUG_CONF=/home/user1/endurox/sampleconfig/debug.conf
+export NDRX_DEBUG_CONF=:$HOME/endurox/sampleconfig/debug.conf
 
 # NDRX config too.
-export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
+export NDRX_CONFIG=:$HOME/endurox/sampleconfig/ndrxconfig.xml
 
 # Access for binaries
-export PATH=$PATH:/$HOME/endurox/dist/bin
+export PATH=$PATH:$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
 export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib
 
 # UBF/FML field tables
-export export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
 EOF
 
@@ -240,7 +240,7 @@ disk space, as logging requires some space. To run the ATMI tests do following:
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/atmitest
 $ nohup ./run.sh &
-$ tail -f /home/user1/endurox/atmitest
+$ tail -f /home/user1/endurox/atmitest/test.out
 ...
 Setting domain 2
 Server executable = tpbridge    Id = 101 :      Shutdown succeeded.
