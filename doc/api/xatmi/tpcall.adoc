@@ -21,6 +21,12 @@ Call the XATMI service by given 'svc' name. The 'idata' is optional input XATMI 
 
 *TPNOTRAN* Do not call service in transaction mode. This is effective in case if caller process is running in transaction mode, but destination process shall not run in the same global transaction
 
+*TPSIGRSTRT* Restart the system call inprogress if interrupted by signal handler. This affects only underlaying mq_\* function calls.
+
+*TPNOTIME* Ignore timeout setting ('NDRX_TOUT' env variable). Wait for reply for indefinitely.
+
+*TPNOCHANGE* Do not allow to change the reply buffer type. If flag is set and different buffer type is received than original, then
+
 
 RETURN VALUE
 ------------
