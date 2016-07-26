@@ -1,5 +1,5 @@
 ## 
-## Build documentation
+## Build documentation, XATMI API
 ##
 ## @file CMakeLists.txt
 ## 
@@ -34,29 +34,43 @@ cmake_minimum_required(VERSION 2.8)
 find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
-set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide 
-                       getting_started_tutorial persistent_message_queues_overview
-                        osx_notes aix_notes solaris_notes freebsd_notes
-						benchmark)
-set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide
-                       getting_started_tutorial persistent_message_queues_overview
-                        osx_notes aix_notes solaris_notes freebsd_notes
-						benchmark)
+set(MAN3_NAMES tpcall)
+set(PDF_MAN_NAMES ${MAN3_NAMES})
 
-# Generate PDFs...
+# Generate MAN3
+set(A2X_OPTS_MAN3 --format=manpage -D man3)
+set(MAN3_FILES)
+foreach(m IN LISTS MAN3_NAMES)
+  set(mf ${CMAKE_CURRENT_BINARY_DIR}/man3/${m}.3)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
+  add_custom_command(OUTPUT ${mf}
+    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_MAN3} ${ms}
+    DEPENDS ${ms}
+    WORKING_DIRECTORY .
+    COMMENT "Building MAN 3 ${mf}"
+    VERBATIM)
+  list(APPEND MAN3_FILES ${mf})
+  # Install the docs
+  install (FILES
+    ${mf}
+    DESTINATION share/man/man3)
+
+endforeach()
+add_custom_target(man3_xatmi ALL DEPENDS ${MAN3_FILES})
+
 if(DBLATEX)
-set(A2X_OPTS_PDF -L -f pdf --doctype book)
-set(PDF_FILES)
-foreach(m IN LISTS PDF_NAMES)
+set(A2X_OPTS_PDF_MAN -L -f pdf --doctype book)
+set(PDF_MAN_FILES)
+foreach(m IN LISTS PDF_MAN_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.pdf)
   set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
-    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF} ${ms}
+    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF_MAN} ${ms}
     DEPENDS ${ms}
     WORKING_DIRECTORY .
-    COMMENT "Building PDF ${mf}"
+    COMMENT "Building PDF_MAN ${mf}"
     VERBATIM)
-  list(APPEND PDF_FILES ${mf})
+  list(APPEND PDF_MAN_FILES ${mf})
 
   # Install the docs
   install (FILES
@@ -64,34 +78,9 @@ foreach(m IN LISTS PDF_NAMES)
     DESTINATION share/endurox/doc/pdf)
 
 endforeach()
-add_custom_target(pdf ALL DEPENDS ${PDF_FILES})
+add_custom_target(pdf_man3_xatmi ALL DEPENDS ${PDF_MAN_FILES})
 endif()
 
-# Generate HTMLs
-set(A2X_OPTS_HTML -D . -f xhtml)
-set(HTML_FILES)
-foreach(m IN LISTS HTML_NAMES)
-  set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.html)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
-  add_custom_command(OUTPUT ${mf}
-    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_HTML} ${ms}
-    DEPENDS ${ms}
-    WORKING_DIRECTORY .
-    COMMENT "Building HTML ${mf}"
-    VERBATIM)
-  list(APPEND HTML_FILES ${mf})
-
-  # Install the docs
-  install (FILES
-    ${mf}
-    DESTINATION share/endurox/doc/html)
-
-endforeach()
-add_custom_target(html ALL DEPENDS ${HTML_FILES})
-
-
-add_subdirectory (manpage)
-add_subdirectory (api)
 # end.
 
 

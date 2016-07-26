@@ -1,0 +1,46 @@
+TPCALL(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tpcall - Call XATMI service
+
+
+SYNOPSIS
+--------
+int tpcall(char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
+
+
+DESCRIPTION
+-----------
+Call the XATMI service by given 'svc' name. The 'idata' is optional input XATMI buffer. If it is not a NULL, then it must be allocated with 'tpcalloc()' call, 'ilen' is used for buffer types such 'CARRAY', where buffer length is not described by type. When caller receives response, it is stored in 'odata' buffer which must be also allocated by 'tpcalloc()'. If the allocated buffer size is shorter then received one, then Enduro/X will automatically realloc the buffer to new size. 'olen' is mandatory field, where the received buffer length is stored.
+
+*Valid flags*
+
+*TPNOTRAN* Do not call service in transaction mode. This is effective in case if caller process is running in transaction mode, but destination process shall not run in the same global transaction
+
+
+RETURN VALUE
+------------
+On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+*TPEINVAL* Invalid parameter is given to function.
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpacall(3)* *tpgetrply(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

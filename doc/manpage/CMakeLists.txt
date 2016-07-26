@@ -37,9 +37,13 @@ find_program(DBLATEX "dblatex")
 set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf)
 set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv tprecover cpmsrv tmqueue)
 # Joined lists
-set(PDF_MAN_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv 
-                ex_env ndrxdebug.conf ndrxconfig.xml ex_envover
-                tmsrv tprecover cpmsrv tmqueue q.conf)
+#set(PDF_MAN_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv 
+#                ex_env ndrxdebug.conf ndrxconfig.xml ex_envover
+#                tmsrv tprecover cpmsrv tmqueue q.conf)
+
+
+set(PDF_MAN_NAMES ${MAN5_NAMES} ${MAN8_NAMES})
+
 
 # Generate MAN5
 set(A2X_OPTS_MAN5 --format=manpage -D man5)
