@@ -27,7 +27,6 @@ Call the XATMI service by given 'svc' name. The 'idata' is optional input XATMI 
 
 *TPNOCHANGE* Do not allow to change the reply buffer type. If flag is set and different buffer type is received than original, then
 
-
 RETURN VALUE
 ------------
 On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
@@ -35,7 +34,7 @@ On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set
 
 ERRORS
 ------
-*TPEINVAL* Invalid parameter is given to function.
+*TPEINVAL* Invalid parameter is given to function. Either service name is NULL.
 
 
 BUGS
