@@ -1,5 +1,5 @@
 TPCALL(3)
-==========
+=========
 :doctype: manpage
 
 
@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <xatmi.h>
 
-int tpcall(char \*'svc', char \*'idata', long 'ilen', char **'odata', long *'olen', long 'flags');
+int tpacall(char \*'svc', char \*'idata', long 'ilen', char **'odata', long *'olen', long 'flags');
 
 
 DESCRIPTION

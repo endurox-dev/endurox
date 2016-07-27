@@ -34,7 +34,10 @@ cmake_minimum_required(VERSION 2.8)
 find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
-set(MAN3_NAMES tpcall)
+set(MAN3_NAMES 
+        tpcall
+        tpgetrply
+        tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
 # Generate MAN3
