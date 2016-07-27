@@ -36,6 +36,7 @@ find_program(DBLATEX "dblatex")
 
 set(MAN3_NAMES 
         tpcall
+        tpadvertise
         tpgetrply
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
