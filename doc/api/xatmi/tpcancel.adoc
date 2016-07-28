@@ -1,0 +1,49 @@
+TPCANCEL(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tpcancel - Cancel the call which was issued by tpacall().
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpcancel(int cd);
+
+DESCRIPTION
+-----------
+Cancel the asynchronous call done by *tpacall()*. Basically this marks the call descriptor as un-used in internal call descriptor registry. If answer is received for such descriptor, the answer is discarded. Note that this does not abort the transaction (if started) by previous tpacall. Thus if transaction needs to be aborted, use *tpabort()*.
+
+RETURN VALUE
+------------
+On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEBADDESC* Invalid call descriptor (out of range).
+
+*TPEINVAL* Enduro/X is not configured.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpacall(3)* *tpgetrply(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

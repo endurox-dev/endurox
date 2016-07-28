@@ -10,7 +10,7 @@ tpcall - Call XATMI service
 
 SYNOPSIS
 --------
-#include <xatmi.h>
+#include <atmi.h>
 
 int tpacall(char \*'svc', char \*'idata', long 'ilen', char **'odata', long *'olen', long 'flags');
 
@@ -38,7 +38,7 @@ On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set
 
 ERRORS
 ------
-Note that *tpstrerror()* for last calls returns generic error message plus custom message with debug info from last call.
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
 
 *TPEINVAL* Invalid parameter is given to function. Either service name is NULL or flags does not allow to change the value.
 

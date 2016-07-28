@@ -10,7 +10,7 @@ tpgetrply - Get reply from asynchronous service call
 
 SYNOPSIS
 --------
-#include <xatmi.h>
+#include <atmi.h>
 
 int tpgetrply(int \*'cd', char **'data', long *'len', long 'flags');
 
