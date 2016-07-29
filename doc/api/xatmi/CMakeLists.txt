@@ -37,6 +37,7 @@ find_program(DBLATEX "dblatex")
 set(MAN3_NAMES 
         tpcall
         tpcancel
+        tpconnect
         tpalloc
         tpadvertise
         tpgetrply

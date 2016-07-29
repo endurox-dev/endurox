@@ -25,7 +25,7 @@ Call the XATMI service by given 'svc' name. The 'idata' is optional input XATMI 
 
 *TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
 
-*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for indefinitely.
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
 
 *TPNOCHANGE* Do not allow to change the reply buffer type. If flag is set and different buffer type is received than original, then error *TPEINVAL* is returned.
 
