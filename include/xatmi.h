@@ -258,7 +258,7 @@ extern "C" {
 
 #define NDRX_INTEGRA(X)		__##X##__ /* integration mode*/
 
-/********************** Queue suport  *****************************************/
+/********************** Queue support  *****************************************/
 #define TMQNAMELEN	15
 #define TMMSGIDLEN	32
 #define TMMSGIDLEN_STR	45 /* TMMSGIDLEN * 1.4 (base64 overhead) */
@@ -445,7 +445,6 @@ extern NDRX_API int tpunsubscribe (long subscription, long flags);
 extern NDRX_API int tppost (char *eventname, char *data, long len, long flags);
 extern NDRX_API int * _exget_tperrno_addr (void);
 extern NDRX_API long * _exget_tpurcode_addr (void);
-/*extern NDRX_API void tpsvrdone (void);*/
 extern NDRX_API int tpinit(TPINIT *tpinfo);
 
 /* in external application: */
