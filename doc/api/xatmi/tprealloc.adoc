@@ -1,0 +1,47 @@
+TPREALLOC(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tprealloc - Reallocated previously allocated XATMI buffer
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+char *tprealloc(char *'ptr', long 'size');
+
+
+DESCRIPTION
+-----------
+Reallocate (change the buffer size) of previously allocated resources by *tpalloc()*. The XATMI buffer is passed in with 'ptr' parameters and new size is provided in 'size' parameter. It is allowed to resize auto-allocated buffers (i.e. buffer that is passed into *TPSVCINFO.data* field.)
+
+RETURN VALUE
+------------
+In case of success, function returns possibly new pointer of re-allocated memory. The pointer could be the same, for example if size is not changed of the buffer.
+In case of failure, function returns NULL and *tperrno* returns the error code.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Invalid 'ptr' pointer passed in. Either buffer not allocated by *tpalloc()* or 'ptr' is NULL.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpalloc(3)* *tpfree(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -40,6 +40,7 @@ set(MAN3_NAMES
         tpconnect
         tpdiscon
         tpalloc
+        tprealloc
         tpfree
         tpadvertise
         tpgetrply
