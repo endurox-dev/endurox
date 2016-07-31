@@ -1364,6 +1364,7 @@ public int _tpdiscon (int cd)
     /* Check our role */
     if (NULL==(conv=get_current_connection(cd)))
     {
+        _TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d", fn, cd);
         ret=FAIL;
         goto out;
     }
@@ -1373,7 +1374,6 @@ public int _tpdiscon (int cd)
     {
         NDRX_LOG(log_debug, "Failed to send disconnect to server - IGNORE!");
     }
-
 
     /* Close down then connection (We close down this only if we are server!)*/
     if (FAIL==normal_connection_shutdown(conv, TRUE))

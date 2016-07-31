@@ -64,7 +64,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpsend(3)* *tprecv(3)*
+*tpsend(3)* *tprecv(3)* *tpdiscon(3)*
 
 COPYING
 -------

@@ -1,0 +1,46 @@
+TPDISCON(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tpdiscon - Terminate conversational session
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpdiscon(int 'cd');
+
+
+DESCRIPTION
+-----------
+Terminate connection and send *TPEV_DISCONIMM* event to other connection end. This operations does not terminate global transaction, if one in progress. It is up to user to doe the abort with *tpabort()*. *tpdiscon()* can be involved in any point at the progress of conversational session.
+
+RETURN VALUE
+------------
+On success, *tpdiscon()* return zero; on error,; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Invalid connection descriptor passed in.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpsend(3)* *tprecv(3)* *tpconnect(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
