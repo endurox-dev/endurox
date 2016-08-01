@@ -39,6 +39,7 @@ set(MAN3_NAMES
         tpcancel
         tpconnect
         tpdiscon
+        tprecv
         tpalloc
         tprealloc
         tpfree

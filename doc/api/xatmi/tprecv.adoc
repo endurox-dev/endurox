@@ -1,0 +1,74 @@
+TPRECV(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tprecv - Receive message from open conversation
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tprecv(int 'cd', char **'data', long *'len', long 'flags', long *'revent');
+
+
+DESCRIPTION
+-----------
+Receive message from open conversation, which is opened by *tpconnect()*. The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or service failure (*TPEV_SVCFAIL*), then global transaction if one in progress are aborted.
+
+*Valid flags*
+
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
+
+*TPNOBLOCK* Do not block on empty queue, if not messages present, the function returns immediately.
+
+RETURN VALUE
+------------
+On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+*'revent' return values*
+
+*TPEV_DISCONIMM* Disconnect received from other conversation end, by issuing *tpdiscon()*. The global transaction in progress is aborted in this case.
+
+*TPEV_SENDONLY* The sender program issued *tpsend()* with flag *TPEV_SENDONLY*, meaning that we become senders.
+
+*TPEV_SVCERR* Server died and queue was removed.
+
+*TPEV_SVCFAIL* Server returned *TPFAIL* with *tpreturn()*
+
+*TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Invalid call descriptor 'cd' passed in.
+
+*TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
+
+*TPEEVENT* Event received and it is installed into 'revent' field.
+
+*TPEPROTO* System level service failure. Server died during the message presence in service queue.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpconnect(3)* *tpsend(3)* *tpdiscon(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
