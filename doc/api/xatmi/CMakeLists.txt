@@ -41,6 +41,7 @@ set(MAN3_NAMES
         tpreturn
         tpdiscon
         tprecv
+        tpsend
         tpalloc
         tprealloc
         tpfree

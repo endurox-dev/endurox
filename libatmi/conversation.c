@@ -1167,8 +1167,8 @@ public int	_tpsend (int cd, char *data, long len, long flags, long *revent,
     /* Check the current connection descriptor */
     if (NULL==(conv=get_current_connection(cd)))
     {
-        ret=FAIL;
-        goto out;
+        _TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d", fn, cd);
+        FAIL_OUT(ret);
     }
 
     /* Check are we allowed to receive? */
