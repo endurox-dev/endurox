@@ -902,8 +902,8 @@ public int _tprecv (int cd, char * *data,
     /* choose the connection */
     if (NULL==(conv=get_current_connection(cd)))
     {
-        ret=FAIL;
-        goto out;
+        _TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d", fn, cd);
+        FAIL_OUT(ret);
     }
 
     /* Check are we allowed to receive? */
@@ -919,8 +919,7 @@ public int _tprecv (int cd, char * *data,
     if (SUCCEED!=setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
                                     conv->my_listen_q_str, flags))
     {
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }
 
     /* TODO: If we keep linked list with call descriptors and if there is
