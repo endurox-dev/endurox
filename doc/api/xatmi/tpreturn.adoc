@@ -1,0 +1,50 @@
+TPRETURN(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tpreturn - terminate XATMI service processing and return control back to caller.
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpreturn(int 'rval', long 'rcode', char *'data', long 'len', long 'flags');
+
+DESCRIPTION
+-----------
+Function is used to terminate service processing and return control to caller. The return buffer 'data' must be auto buffer or allocated by *tpalloc()*. Len is needed in case if buffer type is not self describing. Internally function uses long jump to get back to internal message polling mechanisms. *tpreturn()* is used for normal service calls and for conversational service calls. *tpdiscon()* shall not be used by service program, but use *tpreturn()* instead. 'rcode' field is used by user program, to return back the specific value to caller.
+
+*'rval'* values:
+
+*TPSUCCESS* service terminated with success.
+
+*TPFAIL* service terminated with failure. In case of global transaction, this return value will mark it as abort only.
+
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+Function is marked as void and it have no return values.
+
+
+ERRORS
+------
+No errors available (but some details migth be logged in trace files).
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpforward(3)* *tpcall(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -38,6 +38,7 @@ set(MAN3_NAMES
         tpcall
         tpcancel
         tpconnect
+        tpreturn
         tpdiscon
         tprecv
         tpalloc
