@@ -1,0 +1,47 @@
+TPTYPES(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tptypes - Return type information from given buffer pointer
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+long tptypes(char *'ptr', char *'type', char *'subtype');
+
+DESCRIPTION
+-----------
+Function returns type information from given buffer pointer in 'ptr'. If paramter 'type' is not NULL, then in case of success buffer type is coppied to. If buffer sub-type is used and argument 'subtype' is not NULL, then sub-type code is coppied to.
+
+RETURN VALUE
+------------
+On success, *tptypes()* return buffer allocated length; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Enduro/X is not configured or buffer pointer is NULL or not allocated by *tpalloc()*.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpalloc(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

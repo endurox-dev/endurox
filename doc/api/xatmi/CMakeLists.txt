@@ -42,10 +42,13 @@ set(MAN3_NAMES
         tpdiscon
         tprecv
         tpsend
+        tpservice
         tpalloc
         tprealloc
         tpfree
+        tptypes
         tpadvertise
+        tpunadvertise
         tpgetrply
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})

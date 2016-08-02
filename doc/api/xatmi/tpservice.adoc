@@ -1,0 +1,60 @@
+TPSERVICE(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpservice - Template service function signature
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpservice(TPSVCINFO *'svcinfo');
+
+
+DESCRIPTION
+-----------
+This is service function signature/template. *tpservice* is service function that must be passed to *tpadvertise()* in order to provide callable service to XATMI system. Services can be called by *tpcall()*, *tpacall()* or *tpforward()*. If server is conversational, then *tpconnect()* is used to establish the connection with service. When service is invoked, then parameter 'svcinfo' is initialised with following field:
+
+---------------------------------------------------------------------
+
+typedef struct
+{
+        char    name[XATMI_SERVICE_NAME_LENGTH];
+        char    *data;
+        long    len;
+        long    flags;
+        int     cd;
+        long    appkey;
+        CLIENTID cltid;
+        char    fname[XATMI_SERVICE_NAME_LENGTH+1];
+} TPSVCINFO;
+
+---------------------------------------------------------------------
+
+'name' is service name which is invoked. 'data' is pointer XATMI buffer which is allocated by Enduro/X in current process scope. Note that is service was invoked with NULL buffer, then in this case 'data' will be NULL too. 'len' is XATMI buffer length. 'flags' these are flags which were passed to origin *tpcall()*. 'appkey' is reserved for future use.  'cltid'  is reserved for future use. 'fname' is service function name which was invoked.
+
+RETURN VALUE
+------------
+The function does not return any value. But according to XATMI specification, the server function must terminate processing with *tpreturn()* or *tpforward()*, which effectively finish the service function processing and gives control back to client or next XATMI server. In case of success the server can pass *TPSUCCESS* or *TPFAIL* if doing *tpreturn()*. *TPFAIL* will automatically abort global transaction, if one in progress.
+
+
+ERRORS
+------
+Not available.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpacall(3)* *tpgetrply(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

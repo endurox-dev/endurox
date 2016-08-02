@@ -1,0 +1,49 @@
+TPUNADVERTISE(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+tpunadvertise - remove service from service registry
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpunadvertise(char *'svcname');
+
+DESCRIPTION
+-----------
+Remove serivce in parameter 'svcname' from Enduro/X application server service registry. Service previously must be advertised by server process by *tpadvertise()* or by service aliasing which was done during process startup with configuration in *ndrxconfig.xml(5)*.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpunadvertise()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+
+*TPENOENT* Service not advertised by current XATMI server process.
+
+*TPEOS* Operating system error, that could insufficient memory or other error or problem with manipulating with underlaying queues. The Enduro/X logs (*ndrxdebug.conf*) for more infos.
+
+*TPESYSTEM* Failed to updated *ndrxd* for changes in service registry.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpadvertise(3)* *ndrxd(8)* *ndrxdebug.conf(5)* *ndrxconfig.xml(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
