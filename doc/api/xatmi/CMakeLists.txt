@@ -39,6 +39,7 @@ set(MAN3_NAMES
         tpcancel
         tpconnect
         tpreturn
+        tpforward
         tpdiscon
         tprecv
         tpsend
@@ -50,6 +51,7 @@ set(MAN3_NAMES
         tpadvertise
         tpunadvertise
         tpgetrply
+        tpabort
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

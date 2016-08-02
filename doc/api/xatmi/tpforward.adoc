@@ -1,0 +1,46 @@
+TPFORWARD(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpforward - forward the service call to another service
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpforward (char *'svc', char *'data, long 'len', long 'flags');
+
+Link with '-latmisrv -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
+DESCRIPTION
+-----------
+Send the current request control to another process/service and free up current processing instance for next request. This basically makes original *tpcall()* chaining in *relay race* mode. The original caller is unaware that it's call now will be serviced by another service. The destination service is provided in parameter 'svc', data buffer is passed in 'data'/'len' pair. 'data' buffer must be allocated by *tpalloc()* or can be auto-buffer. If current process was in global transaction, then it will make the target process to join the global transaction too. If invalid service name is specified in 'svc' (service is not advertised in system), then call will be returned the caller with service error (*TPESVCERR*). 'flags' is reserved for future use.
+
+*tpreturn()* will make the current service routine go back/pop-up the stack to Enduro/X polling mechanisms for next incoming message.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+Function is marked as void and it have no return values.
+
+
+ERRORS
+------
+No errors available (but some details might be logged in trace files).
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpreturn(3)* *tpcall(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
