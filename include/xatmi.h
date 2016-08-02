@@ -417,6 +417,7 @@ extern NDRX_API char *tprealloc(char *ptr, long size);
 extern NDRX_API int tprecv(int cd, char **data, long *len, long flags, long *revent);
 extern NDRX_API void tpreturn(int rval, long rcode, char *data, long len, long flags);
 extern NDRX_API int tpsend(int cd, char *data, long len, long flags, long *revent);
+extern NDRX_API void tpservice(TPSVCINFO *svcinfo);
 extern NDRX_API long tptypes(char *ptr, char *type, char *subtype);
 extern NDRX_API int tpunadvertise(char *svcname);
 
