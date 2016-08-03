@@ -44,6 +44,7 @@ set(MAN3_NAMES
         tprecv
         tpsend
         tpservice
+        tpbegin
         tpalloc
         tprealloc
         tpfree

@@ -20,7 +20,7 @@ Abort the global transaction. This will make any resources touched during the tr
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpabort()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
 
 
 ERRORS

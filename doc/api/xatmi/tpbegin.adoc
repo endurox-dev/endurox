@@ -1,0 +1,55 @@
+TPBEGIN(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tpbegin - Start the global transaction
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpbegin (unsigned long 'timeout', long 'flags');
+
+DESCRIPTION
+-----------
+Begint the global transaction. The current user must be open *XA* subsystem by *topopen()*. 'timeout' is setting for transaction manager (*tmsrv*) how long transaction can hang in active state (i.e. not prepared/committed). Field 'flags' is reserved for future use and must be 0. The work done by *tpbegin()* transaction is only in scope of processes which uses *XA* interfaces for resource managers. Any others works are outside of current scope. If 'timeout' is set to 0, then default maximum time for transaction processing is used. Transaction must be committed or aborted by client process by using *tpcommit()* or *tpabort()*. If any *tpcall()* with no *TPNOTRAN* flag fails within given global transaction, then transaction is automatically marked as abort only.
+
+Client process can suspend the global transaction by *tpsuspend(3)* and some other process can resume the transaction as client with suspend data. In that case that other process can do the commit.
+
+RETURN VALUE
+------------
+On success, *tpbegin()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* flags was not 0.
+
+*TPETIME* Transaction manager (*tmsrv(8)*) did not respond in configured time-out time. The state of transaction is unknown.
+
+*TPESVCERR* Failed to call transaction manager, with service error. The state of transaction is unknown.
+
+*TPEPROTO* XA subsystem was not initialized (did not call *tpopen()*) or global transaction already started.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpbegin(3)* *tpcommit(3)* *tpopen(3)* *tpclose(3)* *tpsuspend(3)* *tpresume(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
