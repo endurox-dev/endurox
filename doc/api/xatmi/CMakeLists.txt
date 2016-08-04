@@ -53,6 +53,7 @@ set(MAN3_NAMES
         tpunadvertise
         tpgetrply
         tpabort
+        tpcommit
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
