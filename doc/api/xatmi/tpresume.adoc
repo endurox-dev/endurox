@@ -1,0 +1,48 @@
+TPSUSPEND(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpresume - Resume global transaction
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpresume (TPTRANID *'tranid', long 'flags');
+
+DESCRIPTION
+-----------
+Resume global transaction with given transaction data in 'tranid' paramter. 'trandid' previously must be set by *tpsuspend()* call. To resume global transaction, XA sub-system must be open, by *tpopen()*. Technically it is possible that resume is done by other process than which did the suspend.
+
+RETURN VALUE
+------------
+On success, *tpresume()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Flags was not 0. Or 'tranid' was NULL.
+
+*TPEPROTO* Global transaction is already started.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. Could be the case if XA sub-system is not open by *tpopen()*.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpsuspend(3)* *tpcommit(3)* *tpopen(3)* *tpclose(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

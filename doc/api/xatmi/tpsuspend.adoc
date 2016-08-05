@@ -41,7 +41,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpsuspend(3)* *tpcommit(3)* *tpopen(3)* *tpclose(3)* *tpresume(3)*
+*tpcommit(3)* *tpopen(3)* *tpclose(3)* *tpresume(3)*
 
 COPYING
 -------
