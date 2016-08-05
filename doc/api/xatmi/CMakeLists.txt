@@ -54,6 +54,7 @@ set(MAN3_NAMES
         tpgetrply
         tpabort
         tpcommit
+        tpsuspend
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
