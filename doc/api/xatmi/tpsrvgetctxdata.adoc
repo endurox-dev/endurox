@@ -1,0 +1,53 @@
+tpsrvgetctxdata(3)
+==================
+:doctype: manpage
+
+
+NAME
+----
+tpsrvgetctxdata - Get Server context data for multi threading server
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+char * tpsrvgetctxdata (void);
+
+DESCRIPTION
+-----------
+Get server context data. This function is intended to be used by XATMI server function. When main thread service dispatcher invokes the service function, by using *tpsrvgetctxdata()* it is possible to flip over the work load to thread. Function allocates memory block by *malloc()* and fills with the thread data. If global transaction is started, then it is suspended and transaction data is written to returned context data.
+
+Returned pointer later must be freed by caller by using *free()* to avoid memory leak.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpsrvgetctxdata()* return pointer to context data block; on error, NULL is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEPROTO* Global transaction was started and it was marked for abort-only, there was any open call descriptors with-in global transaction, 
+
+*TPERMERR* Resource Manager failed (failed to suspend global transaction). The *tpstrerror()* will provide more info from last call.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. This could also be a problem with dynamical driver loading.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpcommit(3)* *tpsrvgetctxdata(3)* *tpclose(3)* *tpsuspend(3)* *tpresume(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

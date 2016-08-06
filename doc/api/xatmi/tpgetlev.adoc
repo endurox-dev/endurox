@@ -1,0 +1,41 @@
+TPGETLEV(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tpgetlev - Get transaction level
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpgetlev (void);
+
+DESCRIPTION
+-----------
+Function returns current status of global transaction. If transaction is started by *tpbegin()* or called service is part of global transaction (invoked by process in global TX and was not specified *TPNOTRAN*), then function returns '1'. If process is not part of global transaction, then return value is *0*.
+
+RETURN VALUE
+------------
+*0* - current thread is not part of global transaction. *1* - current thread is not part of global transaction.
+
+
+ERRORS
+------
+Function does not return any errors.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpcommit(3)* *tgetlev(3)* *tpopen(3)* *tpsuspend(3)* *tpresume(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

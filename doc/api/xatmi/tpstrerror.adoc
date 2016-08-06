@@ -1,0 +1,60 @@
+TPSTRERROR(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tpstrerror - Return the description for error
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+char * tpstrerror (int 'err');
+
+DESCRIPTION
+-----------
+Function returns string description of given error code. Enduro/X also loggs additional information for last error state, and that information is returned in string format together with description of 'err'. Typically when error occurs, then programmer calls *tpstrerror(tperrno)*, thus function will closely describe what was happened. However if programmer calls *tpstrerror()* with other error code, then message will contain the description of 'err' plus last XATMI call's logged error info. Then message and *tperrno* infos are stored in thread local storage (TLS).
+
+RETURN VALUE
+------------
+String containing formatted error code description plus last call's error logged info. For example:
+
+---------------------------------------------------------------------
+
+...
+    /* call the service now! */
+    if (SUCCEED!=tpcall("NONEXISTSVC", (char *)p_ub, 0L, (char **)&p_ub_ret, &rsp_len, 0L))
+    {
+        ret=FAIL;
+
+        /* print the result */
+        fprintf(stderr, "%s\n", tpstrerror(tperrno));
+    }
+...
+
+/* Will result with this on stderr putput
+6:TPENOENT (last error 6: _tpacall: Service is not available NONEXISTSVC by shm)
+*/
+
+---------------------------------------------------------------------
+
+
+ERRORS
+------
+Function does not return any errors.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpcommit(3)* *tpstrerror(3)* *tpopen(3)* *tpsuspend(3)* *tpresume(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
