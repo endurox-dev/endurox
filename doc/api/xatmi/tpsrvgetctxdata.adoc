@@ -20,6 +20,161 @@ Get server context data. This function is intended to be used by XATMI server fu
 
 Returned pointer later must be freed by caller by using *free()* to avoid memory leak.
 
+Sample app, original request goes to 'TESTSVFN' but it is servered by later by new thread on function '_TH_TESTSVFN'.
+-------------------------------------------------------------------------------
+
+#include <unistd.h>     /* Symbolic Constants */
+#include <sys/types.h>  /* Primitive System Data Types */ 
+#include <errno.h>      /* Errors */
+#include <stdio.h>      /* Input/Output */
+#include <stdlib.h>     /* General Utilities */
+#include <pthread.h>    /* POSIX Threads */
+
+
+#include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+
+struct thread_server
+{
+    char *context_data; /* malloced by enduro/x */
+    char *buffer; /* buffer data, managed by enduro/x */
+};
+/* note we must malloc this struct too. */
+typedef struct thread_server thread_server_t;
+
+/* threaded function... */
+void _TH_TESTSVFN (void *ptr)
+{
+    int ret=SUCCEED;
+    double d;
+    int i;
+    thread_server_t *thread_data = (thread_server_t *)ptr;
+    UBFH *p_ub = (UBFH *)thread_data->buffer;
+    
+    if (SUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to init worker client");
+        exit(1);
+    }
+    
+    /* restore context. */
+    if (SUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
+    {
+        NDRX_LOG(log_error, "Failed to set context");
+        exit(1);
+    }
+    
+    /* free up the transport data.*/
+    free(thread_data->context_data);
+    free(thread_data);
+    
+    NDRX_LOG(log_debug, "TESTSVFN got call");
+
+    /* Just print the buffer 
+    Bprint(p_ub);*/
+
+    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+
+   /* this is not the end of the life - do tpterm for this thread...! */
+    tpterm();
+    NDRX_LOG(log_debug, "Thread is done - terminating...!");
+}
+
+
+/* main server thread... 
+ * NOTE: p_svc - this is local variable of enduro's main thread (on stack).
+ * but p_svc->data - is auto buffer, will be freed when main thread returns.
+ *                      Thus we need a copy of buffer for thread.
+ */
+void TESTSVFN (TPSVCINFO *p_svc)
+{
+    int ret=SUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
+    pthread_t thread;
+    pthread_attr_t attr; 
+    long size;
+    char btype[16];
+    char stype[16];
+    
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+    if (0==(size = tptypes (p_svc->data, btype, stype)))
+    {
+        NDRX_LOG(log_error, "Zero buffer received!");
+        exit(1);
+    }
+    
+    thread_server_t *thread_data = malloc(sizeof(thread_server_t));
+    
+    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
+    thread_data->buffer =  tpalloc(btype, NULL, size);
+    
+    
+    if (NULL==thread_data->buffer)
+    {
+        NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
+        exit(1);
+    }
+    
+    /* copy off the request data */
+    memcpy(thread_data->buffer, p_svc->data, size);
+    
+    thread_data->context_data = tpsrvgetctxdata();
+    
+    if (SUCCEED!=pthread_create (&thread, &attr, (void *) &_TH_TESTSVFN, thread_data))
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+out:
+    if (SUCCEED==ret)
+    {
+        /* serve next.. */
+        tpcontinue();
+    }
+    else
+    {
+        /* return error back */
+        tpreturn(  TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+    }
+}
+/*
+ * Do initialization
+ */
+int tpsvrinit(int argc, char **argv)
+{
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
+    }
+}
+
+/**
+ * Do de-initialization
+ */
+void tpsvrdone(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+
+-------------------------------------------------------------------------------
+
 This function is available only for XATMI servers.
 
 RETURN VALUE
@@ -45,7 +200,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpcommit(3)* *tpsrvgetctxdata(3)* *tpclose(3)* *tpsuspend(3)* *tpresume(3)*
+*tpsetctxdata(3)* *tpcontinue(3)* *tpinit(3)*
 
 COPYING
 -------
