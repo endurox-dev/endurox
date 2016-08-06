@@ -1,0 +1,49 @@
+TPCLOSE(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tpclose - Close XA sub-system, disconnect from XA resource manager
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpclose (void);
+
+DESCRIPTION
+-----------
+Close connection to XA resource manager. This basically calls underlaying XA switches *xa_close_entry()* with *NDRX_XA_CLOSE_STR*.
+
+If *tpclose()* was already call and XA is closed, then function will succeed, and no error will be generated.
+
+RETURN VALUE
+------------
+On success, *tpclose()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more info from last call.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. This could also be a problem with dynamical driver loading.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpcommit(3)* *tpclose(3)* *tpopen(3)* *tpsuspend(3)* *tpresume(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
