@@ -437,7 +437,6 @@ extern NDRX_API int tpgetlev (void);
 extern NDRX_API char * tpstrerror (int err);
 extern NDRX_API char * tpsrvgetctxdata (void); 
 extern NDRX_API int tpsrvsetctxdata (char *data, long flags);
-extern NDRX_API void tpsrvcontinue(void);
 extern NDRX_API void tpcontinue (void);
 extern NDRX_API long tpgetnodeid(void);
 extern NDRX_API long tpsubscribe (char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
