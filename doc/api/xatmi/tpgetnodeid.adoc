@@ -1,0 +1,45 @@
+TPGETNODEID(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpgetnodeid - Get current process cluster node id
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+long tpgetnodeid(void);
+
+DESCRIPTION
+-----------
+Function returns current cluster node id. Basically that is configured in *NDRX_NODEID* environment variable, see *ex_env(5)* page.
+
+RETURN VALUE
+------------
+On success, *tpgetnodeid()* return cluster node id (>0); on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ex_env(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

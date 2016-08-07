@@ -1,0 +1,41 @@
+TPCONTINUE(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tpcontinue - continue with service polling routine
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpcontinue (void);
+
+DESCRIPTION
+-----------
+Function is used for continuing with service polling. This is usable when service call is made and the task is flipped over to worker thread, in this case main thread have nothing to pass to *tpreturn()* or *tpforward()*, thus just invoke tpcontinue() and Enduro/X will continue with next message.
+
+RETURN VALUE
+------------
+Function is marked as void and it have no return values.
+
+
+ERRORS
+------
+No errors available.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+tpsrvgetctxdata(3)
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

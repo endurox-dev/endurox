@@ -60,6 +60,8 @@ set(MAN3_NAMES
         tpgetlev
         tpstrerror
         tpsrvgetctxdata 
+        tpcontinue
+        tpgetnodeid
         tpclose
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
