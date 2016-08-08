@@ -1,4 +1,4 @@
-tpsubscribe(3)
+TPSUBSCRIBE(3)
 ==============
 :doctype: manpage
 
@@ -80,7 +80,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpevsrv(8)*
+*tpevsrv(8)* *tpunsubscribe(3)*
 
 COPYING
 -------

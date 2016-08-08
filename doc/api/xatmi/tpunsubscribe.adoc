@@ -1,0 +1,65 @@
+TPUNSUBSCRIBE(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+tpunsubscribe - Unsubscribe from event
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpunsubscribe (long subscription, long flags);
+
+DESCRIPTION
+-----------
+Unsubscribe from event. The 'subscription' value is return value from original *tpsubscribe()* call.
+
+
+*Valid flags*
+
+*TPNOTRAN* Do not call service in transaction mode. This is effective in case if caller process is running in transaction mode, but destination process shall not run in the same global transaction
+
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpunsubscribe()* return subscribtion id; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Invalid parameter is given to function. Event expression is *NULL* or empty. Event expression is longer than 255 bytes, 'ctl' is NULL, or 'clt->name1' is empty or filter is set and longer than 255 bytes.
+
+*TPENOENT* Event server is not available.
+
+*TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
+
+*TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
+
+*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpevsrv(8)* *tpsubscribe(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
