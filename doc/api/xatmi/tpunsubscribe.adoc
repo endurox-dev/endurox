@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpunsubscribe (long subscription, long flags);
+int tpunsubscribe (long 'subscription', long 'flags');
 
 DESCRIPTION
 -----------
