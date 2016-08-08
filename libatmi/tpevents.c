@@ -207,7 +207,7 @@ out:
 out:
     /* free up any allocated resources */
     if (NULL!=p_ub)
-        tpfree((char*)p_ub);
+        tpfree((char*)p_ub); /* << TODO: This will re-write tpcall return code! Fix...!*/
 
     NDRX_LOG(log_debug, "%s returns %ld", fn, ret);
     return ret;
