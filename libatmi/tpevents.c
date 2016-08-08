@@ -153,7 +153,13 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 out:
     /* free up any allocated resources */
     if (NULL!=p_ub)
+    {
+        atmi_error_t err;
+        /* Save the original error/needed later! */
+        _TPsave_error(&err);
         tpfree((char*)p_ub);
+        _TPrestore_error(&err);
+    }
 
     NDRX_LOG(log_debug, "%s returns %ld", fn, ret);
     
@@ -183,7 +189,7 @@ out:
     }
 
     /* Check the validity of arguments */
-    if (subscription<-1)
+    if (subscription<=-1)
     {
         _TPset_error_fmt(TPEINVAL, "%s: subscription %ld cannot be < -1",
                                     fn, subscription);
@@ -207,7 +213,13 @@ out:
 out:
     /* free up any allocated resources */
     if (NULL!=p_ub)
-        tpfree((char*)p_ub); /* << TODO: This will re-write tpcall return code! Fix...!*/
+    {
+        atmi_error_t err;
+        /* Save the original error/needed later! */
+        _TPsave_error(&err);
+        tpfree((char*)p_ub);
+        _TPrestore_error(&err);
+    }
 
     NDRX_LOG(log_debug, "%s returns %ld", fn, ret);
     return ret;
