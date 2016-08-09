@@ -1,0 +1,51 @@
+TPSVRDONE(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpsvrdone - Template server done tunction signature
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpsvrdone(void);
+
+
+DESCRIPTION
+-----------
+This is XATMI server un-initialization function. It is called when Enduro/X application server is being shutdown or when process is being shutdown separately by *xadmin stop*. Depending on the version for which *atmisrv* library XATMI server is being linked, the form of function that should be exported by application changes.
+
+1. If server binary is linked with '-latmisrv', then server must contain public (non static) function of *tpsvrdone()*.
+
+2. If server binary is linked with '-latmisrvnomain', then above (1) rule still applies. But in this case the caller's *main()* must invoke *ndrx_main()* function.
+
+3. If server binary is linked with '-latmisrvinteg', then functions *tpsvrinit()* and tpsvrdone()* must be passed to *ndrx_main_integra()* function.
+
+During the execution of *tpsvrdone()* the library is still initialised and is valid for doing XATMI calls. Normally with this function, then user code shall close any XA resource managers open with *tpopen()*
+
+This only applies to XATMI servers.
+
+RETURN VALUE
+------------
+Not available as function is void.
+
+ERRORS
+------
+Not available.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrx_main(3)* *ndrx_main_integra(3)* *tpsvrinit(3)* *tpclose(3)* *tpopen(3)* *xadmin(8)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
