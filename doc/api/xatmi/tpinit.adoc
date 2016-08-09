@@ -1,0 +1,65 @@
+TPINIT(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tpinit - Initialize Enduro/x environment
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpinit(TPINIT *'tpinfo');
+
+
+DESCRIPTION
+-----------
+Function is intended to be called by XATMI clients, to initialize XATMI session. 'tpinfo' is defined as:
+
+--------------------------------------------------------------------------------
+struct  tpinfo_t
+{
+        char usrname[MAXTIDENT+2];
+        char cltname[MAXTIDENT+2];
+        char passwd[MAXTIDENT+2];
+        char grpname[MAXTIDENT+2];
+        long flags;
+        long datalen;
+        long data;
+};
+typedef struct  tpinfo_t TPINIT;
+--------------------------------------------------------------------------------
+
+If 'tpinfo->cltname' is set, then it is using for client process identification. If it is not set, then client process is identified as executable name. Other fields of 'tpinfo' are reserved for future use. 'tpinfo' can bet set to *NULL*. Function can be used also by ATMI server's worker threads, to initialize them. How ever call of *tpinit()* is optional, as it is automaitcally issued, then any of tp\* commands are invoked. At current Enduro/X version it is recommended to use *tpinit()* with NULL parameter. Also when client process does threading, then each thread needs to call *tpinit()* or it will be automatically invoked as described before. Each new thread have it's own thread local storage (TLS), which describes Enduro/X state, thus new thread will get un-initialised TLS which results in need of calling *tpinit()*.
+
+Internally function opens any Posix queues needed by client, reads the environment variables and initializes XA sub-system, if configured and not set to lazy.
+
+RETURN VALUE
+------------
+On success, *tpinit()* returns 0. On error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Environment variables not configured, see *ex_env(5)* page.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ex_env(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -66,6 +66,7 @@ set(MAN3_NAMES
         tpcontinue
         tpgetnodeid
         tpclose
+        tpinit
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
