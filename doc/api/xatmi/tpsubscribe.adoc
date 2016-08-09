@@ -80,7 +80,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpevsrv(8)* *tpunsubscribe(3)*
+*tpevsrv(8)* *tpunsubscribe(3)* *tppost(3)*
 
 COPYING
 -------
