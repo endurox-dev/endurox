@@ -1,0 +1,53 @@
+TPSVRINIT(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpsvrinit - Template for server init function
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsvrinit (int 'argc', char **'argv');
+
+
+DESCRIPTION
+-----------
+This function is called uppon server startup. Before the services are advertise, this function is activated. The 'argc' and 'argv' is command line paramters passed to binary after the '--'. Initial paramters are used by Enduro/X, these are sys-opts in the *ndrxconfig.xml*, after the '--' those are application specific options.
+
+Normally at *tpsvrinit()* XATMI server does the *tpadvertise()*, and initialise other resources, like calling *tpopen()*. Any advertise done here, actually takes a part when function returns.
+
+The function can be exposed to Enduro/X system in different ways:
+
+1. If server binary is linked with '-latmisrv', then server must contain public (non static) function of *tpsvrinit()*.
+
+2. If server binary is linked with '-latmisrvnomain', then above (1) rule still applies. But in this case the caller's *main()* must invoke *ndrx_main()* function.
+
+3. If server binary is linked with '-latmisrvinteg', then functions *tpsvrinit()* and tpsvrdone()* must be passed to *ndrx_main_integra()* function.
+
+This only applies to XATMI servers.
+
+RETURN VALUE
+------------
+If application failed to initialise, the user shall return non 0 value. If succeed, then 0 must be returned.
+
+ERRORS
+------
+Not available.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrx_main(3)* *ndrx_main_integra(3)* *tpsvrinit(3)* *tpclose(3)* *tpopen(3)* *xadmin(8)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
