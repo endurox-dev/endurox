@@ -17,11 +17,11 @@ int tprecv(int 'cd', char **'data', long *'len', long 'flags', long *'revent');
 
 DESCRIPTION
 -----------
-Receive message from open conversation, which is opened by *tpconnect()*. The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or service failure (*TPEV_SVCFAIL*), then global transaction if one in progress are aborted.
+Receive message from open conversation, which is opened by *tpconnect()*. The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or service failure (*TPEV_SVCFAIL*), then global transaction if one in progress is aborted.
 
 *Valid flags*
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlying mq_* function calls.
 
 *TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
 
