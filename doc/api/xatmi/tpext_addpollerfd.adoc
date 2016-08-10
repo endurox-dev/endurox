@@ -1,0 +1,55 @@
+TPEXT_ADDPOLLERFD(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+tpext_addpollerfd, XATMI extension, add poller FD
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpext_addpollerfd(int 'fd', uint32_t 'events', void *'ptr1', int (*'p_pollevent')(int 'fd', uint32_t 'events', void *'ptr1'));
+
+DESCRIPTION
+-----------
+This is XATMI Enduro/X extension function, which allows to add custom file descriptor ('fd') for monitoring events in Enudor/X main poll routine. The 'events' are corresponding events for *epoll()* if running on Linux and configured for epoll, or events for *poll()* if running on non Linux or configured to use poll. If for example you want to monitor socket file descriptor for incoming events, then for epoll this would be "*EPOLLET* | *EPOLLIN* | *EPOLLHUP*", for poll this would be "*POLLIN*". Then 'ptr1' is custom pointer that will be passed to callback function. 'p_pollevent' is callback function which is called by Enduro/X main loop in case if for 'fd' specified events are received. 'events' in 'p_pollevent' contains the received events. The 'ptr1' for 'p_pollevent' contains the original pointer passed to *tpext_addpollerfd()*.
+
+When 'p_pollevent' callback is called, then return value for success must be 0, otherwise it is assumed as failure. In case of callback failure, XATMI server program is terminated with failure.
+
+The custom poller can be added only after the init stage. I.e. it cannot be done at *tpsvrinit()* function. Normally application registers periodic callback function with *tpext_addperiodcb()*, where into this callback *tpext_addpollerfd()* is called.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpext_addpollerfd()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+
+*TPEMATCH* File descriptor ('fd') already registered for callback function.
+
+*TPEPROTO* Function called in invalid XATMI server stage. I.e. it cannot be called from *tpsvrinit()*.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info. That could insufficient memory or other error.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpsvrinit(3)* *tpext_addperiodcb(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

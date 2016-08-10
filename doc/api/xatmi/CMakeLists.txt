@@ -68,7 +68,8 @@ set(MAN3_NAMES
         tpclose
         tpinit
         tpsvrdone
-	tpsvrinit
+        tpsvrinit
+        tpext_addpollerfd
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
