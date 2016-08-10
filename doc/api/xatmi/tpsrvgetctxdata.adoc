@@ -5,7 +5,7 @@ tpsrvgetctxdata(3)
 
 NAME
 ----
-tpsrvgetctxdata - Get Server context data for multi threading server
+tpsrvgetctxdata - Get server context data for multi threaded server
 
 
 SYNOPSIS
