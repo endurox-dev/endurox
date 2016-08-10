@@ -63,6 +63,7 @@ set(MAN3_NAMES
         tpunsubscribe
         tppost
         tpsrvgetctxdata 
+        tpsrvsetctxdata
         tpcontinue
         tpgetnodeid
         tpclose

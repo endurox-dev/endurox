@@ -1,0 +1,51 @@
+TPSRVSETCTXDATA(3)
+==================
+:doctype: manpage
+
+
+NAME
+----
+tpsrvsetctxdata - Set server context data for multi threaded server
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsrvsetctxdata (char *'data', long 'flags');
+
+DESCRIPTION
+-----------
+Restore context data from previously saved (*tpsrvgetctxdata()*) context data. The 'data' field is value returned by *tpsrvgetctxdata()*. This function is needed for multi threaded server, in order to restore tpcall() data in worker thread. 'flags' is reserved for future use and shall be set to 0. If global transaction was running in main thread for which *tpsrvgetctxdata()* was called, then *tpsrvsetctxdata()* will resume the global transaction in current thread.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpsrvsetctxdata()* return pointer to context data block; on error, NULL is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* 'data' is NULL.
+
+*TPEPROTO* Global transaction is already started.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. Could be the case if XA sub-system is not open by *tpopen()*.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpsrvgetctxdata(3)* *tpcontinue(3)* *tpinit(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

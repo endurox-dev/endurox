@@ -5,7 +5,7 @@ TPEXT_ADDPOLLERFD(3)
 
 NAME
 ----
-tpext_addpollerfd, XATMI extension, add poller FD
+tpext_addpollerfd - XATMI extension, add poller FD
 
 
 SYNOPSIS

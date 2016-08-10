@@ -320,7 +320,13 @@ public int tpsrvsetctxdata (char *data, long flags)
     int ret=SUCCEED;
     API_ENTRY;
     server_ctx_info_t *ctxdata  = (server_ctx_info_t *)data;
+    char *fn = "tpsrvsetctxdata";
     
+    if (NULL==data)
+    {
+        _TPset_error_fmt(TPEINVAL, "%s - data is NULL", fn);
+        FAIL_OUT(ret);
+    }
     
 #if 0
     if (flags & SYS_SRV_THREAD)
