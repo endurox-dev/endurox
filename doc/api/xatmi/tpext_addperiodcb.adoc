@@ -1,0 +1,44 @@
+TPEXT_ADDPERIODCB(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+tpext_addperiodcb - XATMI extension, periodic callback function add
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpext_addperiodcb(int 'secs', int (*'p_periodcb')(void));
+
+DESCRIPTION
+-----------
+This is periodic callback function which is set for Enduro/X servers. Function is called every 'secs' seconds while XATMi server is in state of waiting next service call (during the message poll). The callback function 'p_periodcb' in case of success shall return 0. If callback function returns non 0 value, then XATMI server will proceed with shutdown.
+
+If NULL value is passed to 'p_periodcb', then poller is disabled. How ever it is recommend to set 'secs' to 0 too. Or use *tpext_delperiodcb()* for this.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpext_addperiodcb()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+At current version, function always succeeds.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpext_delperiodcb(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

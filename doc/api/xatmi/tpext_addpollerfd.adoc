@@ -47,7 +47,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpsvrinit(3)* *tpext_addperiodcb(3)*
+*tpext_delpollerfd(3)* *tpext_addperiodcb(3)*
 
 COPYING
 -------

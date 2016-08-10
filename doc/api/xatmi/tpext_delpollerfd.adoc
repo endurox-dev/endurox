@@ -1,0 +1,53 @@
+TPEXT_DELPOLLERFD(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+tpext_delpollerfd - XATMI extension, delete poller file descriptor
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpext_delpollerfd(int 'fd');
+
+DESCRIPTION
+-----------
+Delete file descriptor 'fd' which was previously added to Enduro/X event poller by *tpext_addperiodcb()*.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpext_delpollerfd()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+
+*TPEINVAL* Invalid file descriptor (value -1).
+
+*TPEMATCH* File descriptor ('fd') was not found in custom pollers list.
+
+*TPEPROTO* Function called in invalid XATMI server stage. I.e. it cannot be called from *tpsvrinit()*.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info. That could insufficient memory or other error.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpext_delpollerfd(3)* *tpext_addperiodcb(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
