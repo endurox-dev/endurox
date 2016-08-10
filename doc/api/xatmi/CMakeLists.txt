@@ -74,6 +74,8 @@ set(MAN3_NAMES
         tpext_delpollerfd
         tpext_addperiodcb
         tpext_delperiodcb
+        tpext_addb4pollcb
+        tpext_delb4pollcb
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

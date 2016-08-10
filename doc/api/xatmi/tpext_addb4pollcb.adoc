@@ -1,0 +1,44 @@
+TPEXT_ADDPERIODCB(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+tpext_addb4pollcb - XATMI extension, before poll callback add
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpext_addb4pollcb(int (*'p_b4pollcb')(void));
+
+DESCRIPTION
+-----------
+Function registers callback function which is activated when XATMI server's main loop is going to poll for next message. The 'p_b4pollcb' callback function in case of success shall return 0. If 'p_b4pollcb' returns other value than 0, then XATMI server proceeds with shutdown.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpext_addb4pollcb()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* 'p_b4pollcb' paramter is NULL.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpext_delb4pollcb(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

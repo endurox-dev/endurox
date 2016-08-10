@@ -1,0 +1,42 @@
+TPEXT_DELPERIODCB(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+tpext_delb4pollcb - XATMI extension, before poll callback remove
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpext_delb4pollcb(void);
+
+DESCRIPTION
+-----------
+Function removes previously registered callback by *tpext_addb4pollcb()* function. It is not an error to call this function twice.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *tpext_delb4pollcb()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+At current version function always succeeds.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpext_addb4pollcb(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
