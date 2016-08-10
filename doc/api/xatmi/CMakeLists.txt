@@ -68,6 +68,7 @@ set(MAN3_NAMES
         tpgetnodeid
         tpclose
         tpinit
+        tpterm
         tpsvrdone
         tpsvrinit
         tpext_addpollerfd
@@ -76,6 +77,7 @@ set(MAN3_NAMES
         tpext_delperiodcb
         tpext_addb4pollcb
         tpext_delb4pollcb
+        tpgetsrvid
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

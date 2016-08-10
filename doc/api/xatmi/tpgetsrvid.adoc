@@ -1,0 +1,42 @@
+tpgetsrvid(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tpgetsrvid - Get XATMI server process server id
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpgetsrvid (void);
+
+This function is only available for XATMI servers.
+
+DESCRIPTION
+-----------
+Function returns current XATMI server id.
+
+RETURN VALUE
+------------
+Server ID specified in *ndrxconfig.xml* or command line ('-i' argument) for server binary.
+
+ERRORS
+------
+No errors available.
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

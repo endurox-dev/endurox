@@ -1,0 +1,48 @@
+TPTERM(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tpterm - terminate XATMI client session
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpterm (void);
+
+DESCRIPTION
+-----------
+Terminate XATMI client session. The function will try to close gracefully any open conversation session. It will close client's thread reply queue, it will make thread ID free. If XA was open, then it will be closed.
+
+This function is available only for XATMI clients. It still valid to call the function from XATMI server's worker threads. The function needs to be called for any thread (except XATMI server main thread) which did the TP operations.
+
+RETURN VALUE
+------------
+On success, *tpterm_full()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+
+*TPEPROTO* Called from XATMI server (main thread).
+
+*TPESYSTEM* Failed to close conversations.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info. That could insufficient memory or other error.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpinit(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
