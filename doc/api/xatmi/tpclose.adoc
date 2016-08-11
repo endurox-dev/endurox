@@ -35,6 +35,10 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
+TESTS
+-----
+This functionality is tested under *endurox/atmitest/test021_xafull*
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com
