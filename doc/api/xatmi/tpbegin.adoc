@@ -43,7 +43,7 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 TESTS
 -----
-This functionality is tested under endurox/atmitest/test021_xafull
+This functionality is tested under *endurox/atmitest/test021_xafull*
 
 BUGS
 ----
