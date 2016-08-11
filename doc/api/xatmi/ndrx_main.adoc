@@ -1,0 +1,48 @@
+NDRX_MAIN(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+ndrx_main - run the XATMI servers main loop
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int ndrx_main(int argc, char **argv);
+
+DESCRIPTION
+-----------
+Function is used in case if Enduro/X XATMI server is linked with '-latmisrvnomain' library. In this case binarie's *main()* function resists outside of Enduro/X libs, thus to launch the XATMI server, the *ndrx_main()* needs to be called. The full 'argc' and 'argv' of binarie's command line must be passed to this function.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *ndrx_main()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+Other error might be emitted too.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrx_main_integra(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -82,6 +82,7 @@ set(MAN3_NAMES
         tpubftojson
         tpenqueue
 	tpdequeue
+	ndrx_main
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
