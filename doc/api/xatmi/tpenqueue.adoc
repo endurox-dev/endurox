@@ -102,8 +102,8 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *QMESYSTEM* Enduro/X internal problems. Might be issues with saving messages to disk.
 
-TESTS AND USECASE
------------------
+TESTS
+-----
 This functionality is tested under *endurox/atmitest/test028_tmq*
 
 BUGS
