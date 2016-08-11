@@ -1,0 +1,100 @@
+TPENQUEUE(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpenqueue, tpenqueueex - Enqueue message to persistent storage
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpenqueue (char *'qspace', char *'qname', TPQCTL *'ctl', char *'data', long 'len', long 'flags');
+
+int tpenqueueex (short 'nodeid', short 'srvid', char *'qname , TPQCTL *'ctl', char *'data', long 'len', long 'flags');
+
+
+DESCRIPTION
+-----------
+Enqueue message to transactional message queue. Queue subsystem (see *tmqueue(8)* and *persistent_message_queues_overview*) must be configured before using this function. 'qspace' is queue space name (logical queue sub-system name, that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 'ctl' is control structure that contains various details for message, how it shall be enqueued. Also 'ctl' returns some diagnostics information. 'data'/'len' pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* allows to specify exactly which *tmqueue* server will process the request, by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' from *ndrxconfig.xml(5).
+
+Functions are transactional and can participate in user's global transaction. It is not possible to enqueue and dequeue message within same global transaction.
+
+The *TPQCTL* structure is following:
+
+--------------------------------------------------------------------------------
+
+/* Queue support structure: */
+struct tpqctl_t 
+{
+        long flags;             /* indicates which of the values are set */             
+        long deq_time;          /* absolute/relative  time for dequeuing */             
+        long priority;          /* enqueue priority */          
+        long diagnostic;        /* indicates reason for failure */              
+        char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
+        char msgid[TMMSGIDLEN]; /* id of message before which to queue */               
+        char corrid[TMCORRIDLEN];/* correlation id used to identify message */          
+        char replyqueue[TMQNAMELEN+1];  /* queue name for reply message */              
+        char failurequeue[TMQNAMELEN+1];/* queue name for failure message */            
+        CLIENTID cltid;         /* client identifier for originating client */          
+        long urcode;            /* application user-return code */              
+        long appkey;            /* application authentication client key */             
+        long delivery_qos;      /* delivery quality of service  */              
+        long reply_qos;         /* reply message quality of service  */         
+        long exp_time;          /* expiration time  */          
+};              
+typedef struct tpqctl_t TPQCTL;      
+
+--------------------------------------------------------------------------------
+
+where:
+'TPQCTL.flags' can be set to following values:
+
+
+*Valid flags*
+
+*TPNOTRAN* Do not run the equeue in the users global transaction. In this case *tmqueue* will open it's own transaction, and will commit it uppon retrun.
+
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
+
+*Valid ctl->flags*
+
+RETURN VALUE
+------------
+On success, *tpenqueue()* return subscribtion id; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPEINVAL* Invalid parameter is given to function. Event expression is *NULL* or empty. Event expression is longer than 255 bytes, 'ctl' is NULL, or 'clt->name1' is empty or filter is set and longer than 255 bytes.
+
+*TPENOENT* Event server is not available.
+
+*TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
+
+*TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
+
+*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpevsrv(8)* *tpunsubscribe(3)* *tppost(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
