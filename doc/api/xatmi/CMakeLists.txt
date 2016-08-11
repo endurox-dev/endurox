@@ -81,6 +81,7 @@ set(MAN3_NAMES
         tpjsontoubf
         tpubftojson
         tpenqueue
+	tpdequeue
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
