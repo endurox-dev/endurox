@@ -105,7 +105,7 @@ void tpsvrdone(void)
 /**
  * Forward the call to NDRX
  */
-int ndrx_main_integra(int argc, char** argv, int in_tpsvrinit(int, char **), 
+int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
             void (*in_tpsvrdone)(void), long flags) 
 {
 

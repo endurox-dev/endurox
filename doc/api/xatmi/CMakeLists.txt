@@ -83,6 +83,7 @@ set(MAN3_NAMES
         tpenqueue
 	tpdequeue
 	ndrx_main
+	ndrx_main_integra
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

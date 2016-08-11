@@ -1,0 +1,53 @@
+NDRX_MAIN_INTEGRA(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+ndrx_main_integra - run the XATMI servers main loop, integration mode
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int ndrx_main_integra(int 'argc', char** 'argv', int (*'in_tpsvrinit')(int, char **),
+            void (*'in_tpsvrdone')(void), long 'flags');
+
+DESCRIPTION
+-----------
+Function is used in case if Enduro/X XATMI server is linked with '-latmisrvinteg' library. In this case binarie's *main()* function resists outside of Enduro/X libs, thus to launch the XATMI server, the *ndrx_main_integra()* needs to be called. The full 'argc' and 'argv' of binarie's command line must be passed to this function. In integration mode, callbacks for *tpsvrinit(3)* and *tpsvrdone(3)* must be passed in.
+
+*Valid flags*
+
+*ATMI_SRVLIB_NOLONGJUMP* do not do long jump when *tpreturn(3)* or *tpforward(3)* returns. This is suitable for systems for which long jump can crash runtime internals. But not that in this case *tpreturn()* and *tpforward()* will return as normal function call. Thus programmer shall ensure that proper logic. It is expected that these are last functions called in XATMI server's service.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+On success, *ndrx_main_integra()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+Other error might be emitted too.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrx_main(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
