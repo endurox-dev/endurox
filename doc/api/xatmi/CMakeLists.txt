@@ -78,6 +78,8 @@ set(MAN3_NAMES
         tpext_addb4pollcb
         tpext_delb4pollcb
         tpgetsrvid
+        tpjsontoubf
+        tpubftojson
         tpacall)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
