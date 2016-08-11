@@ -14,7 +14,7 @@ SYNOPSIS
 
 int tpenqueue (char *'qspace', char *'qname', TPQCTL *'ctl', char *'data', long 'len', long 'flags');
 
-int tpenqueueex (short 'nodeid', short 'srvid', char *'qname , TPQCTL *'ctl', char *'data', long 'len', long 'flags');
+int tpenqueueex (short 'nodeid', short 'srvid', char *'qname', TPQCTL *'ctl', char *'data', long 'len', long 'flags');
 
 
 DESCRIPTION
@@ -22,6 +22,14 @@ DESCRIPTION
 Enqueue message to transactional message queue. Queue subsystem (see *tmqueue(8)* and *persistent_message_queues_overview*) must be configured before using this function. 'qspace' is queue space name (logical queue sub-system name, that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 'ctl' is control structure that contains various details for message, how it shall be enqueued. Also 'ctl' returns some diagnostics information. 'data'/'len' pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* allows to specify exactly which *tmqueue* server will process the request, by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' from *ndrxconfig.xml(5).
 
 Functions are transactional and can participate in user's global transaction. It is not possible to enqueue and dequeue message within same global transaction.
+
+*Valid flags*
+
+*TPNOTRAN* Do not run the equeue in the users global transaction. In this case *tmqueue* will open it's own transaction, and will commit it uppon retrun.
+
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
 
 The *TPQCTL* structure is following:
 
@@ -50,41 +58,50 @@ typedef struct tpqctl_t TPQCTL;
 
 --------------------------------------------------------------------------------
 
-where:
-'TPQCTL.flags' can be set to following values:
+Valid *'TPQCTL.flags'*
 
+*TPNOFLAGS* No flags set.
 
-*Valid flags*
+*TPQCORRID* Use the correlator ID set in 'TPQCTL.corrid'. Note that each byte in 'corrid' is significant.
 
-*TPNOTRAN* Do not run the equeue in the users global transaction. In this case *tmqueue* will open it's own transaction, and will commit it uppon retrun.
+*TPQREPLYQ* Use the 'replyqueue' for submitting response messages of services which were invoked for automatic queues. If this flag is set, with response buffer message will be enqueued to 'replyqueue'.
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+*TPQFAILUREQ* Send the message to 'failurequeue' if *tpcall()* for service invoke for automatic queues failed.
 
-*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
-
-*Valid ctl->flags*
+Fields 'TPQCTL.deq_time', 'TPQCTL.priority', 'TPQCTL.urcode', 'TPQCTL.appkey', 'TPQCTL.delivery_qos', 'TPQCTL.reply_qos', 'TPQCTL.exp_time' are reserved for future use. 'TPQCTL.cltid' is automatically set by Enduro/X system when passing message to *tmqueue* server.
 
 RETURN VALUE
 ------------
-On success, *tpenqueue()* return subscribtion id; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpenqueue()* return 0; on error, -1 is returned, with *tperrno* set to indicate the error. Also 'TPQCTL.diagnostic' and 'TPQCTL.diagmsg' will contain additional information.
 
 ERRORS
 ------
 Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
 
-*TPEINVAL* Invalid parameter is given to function. Event expression is *NULL* or empty. Event expression is longer than 255 bytes, 'ctl' is NULL, or 'clt->name1' is empty or filter is set and longer than 255 bytes.
+*TPEINVAL* 'data' is NULL, 'qspace' is NULL, or 'nodeid' and 'srvid' is 0. Error can be generate in case if 'qname' is empty or NULL. 'ctl' is NULL or 'data' does not point to *tpalloc()* allocated buffer.
 
-*TPENOENT* Event server is not available.
+*TPENOENT* Tmqueue server is not available.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
 
-*TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
+*TPEDIAGNOSTIC* More information is provided in 'TPQCTL.diagnostic' field.
 
-*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+*TPESVCFAIL* Tmqueue Service returned 'TPFAIL'. This is application level failure.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESVCERR* Tmqueue service got system level failure. Server died during the message presence in service queue.
+
+*TPESYSTEM* Enduro/X internal error occurred. See logs for more info.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*Values for 'TPQCTL.diagnostic'*
+
+*QMEINVAL* Invalid request bugffer.
+
+*QMEOS* Operating system problems. Might be insufficient memory.
+
+*QMESYSTEM* Enduro/X internal problems. Might be issues with saving messages to disk.
+
 
 BUGS
 ----
@@ -92,7 +109,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpevsrv(8)* *tpunsubscribe(3)* *tppost(3)*
+*tpdequeue(3)* *tpdequeueex(3)* *tmqueue(8)* *persistent_message_queues_overview*
 
 COPYING
 -------
