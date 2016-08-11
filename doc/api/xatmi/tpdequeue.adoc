@@ -14,7 +14,7 @@ SYNOPSIS
 
 int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
-int tpdequeueex (short nodeid, short srvid, char \*qname, TPQCTL \*ctl, char **data, long *len, long flags);
+int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
 DESCRIPTION
 -----------
