@@ -189,7 +189,7 @@ out:
     }
 
     /* Check the validity of arguments */
-    if (subscription<=-1)
+    if (subscription<-1)
     {
         _TPset_error_fmt(TPEINVAL, "%s: subscription %ld cannot be < -1",
                                     fn, subscription);
