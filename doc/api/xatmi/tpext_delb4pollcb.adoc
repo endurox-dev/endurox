@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpext_delb4pollcb(void);
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Function removes previously registered callback by *tpext_addb4pollcb()* function. It is not an error to call this function twice.

@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpext_addpollerfd(int 'fd', uint32_t 'events', void *'ptr1', int (*'p_pollevent')(int 'fd', uint32_t 'events', void *'ptr1'));
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 This is XATMI Enduro/X extension function, which allows to add custom file descriptor ('fd') for monitoring events in Enudor/X main poll routine. The 'events' are corresponding events for *epoll()* if running on Linux and configured for epoll, or events for *poll()* if running on non Linux or configured to use poll. If for example you want to monitor socket file descriptor for incoming events, then for epoll this would be "*EPOLLET* | *EPOLLIN* | *EPOLLHUP*", for poll this would be "*POLLIN*". Then 'ptr1' is custom pointer that will be passed to callback function. 'p_pollevent' is callback function which is called by Enduro/X main loop in case if for 'fd' specified events are received. 'events' in 'p_pollevent' contains the received events. The 'ptr1' for 'p_pollevent' contains the original pointer passed to *tpext_addpollerfd()*.

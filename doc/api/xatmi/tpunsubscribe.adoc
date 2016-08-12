@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpunsubscribe (long 'subscription', long 'flags');
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Unsubscribe from event. The 'subscription' value is return value from original *tpsubscribe()* call. If 'subscription' is set to '-1', then it will affect all events to which subscription was made by given process.

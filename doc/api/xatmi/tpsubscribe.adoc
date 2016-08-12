@@ -15,6 +15,8 @@ SYNOPSIS
 long tpsubscribe (char *'eventexpr', char *'filter', TPEVCTL *'ctl', long 'flags');
 
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Subscribe to event. This is API function for Enduro/X event broker services. In order to get the functionality working, then event server must be started and configured. See *tpevsrv(8)* manpage. 'eventexpr' is regular expression syntax based expression which is registered into event broker, so that if it is matched then event is posted to service, written in 'ctl->name1' field. Note that many servers with the same service can subscribe to same event. All server's services will receive the event. 'filter' is boolean expression for *UBF* or regular expression for *STRING* buffer which are extra expression to be tested, when event name matched. If 'filter' is true or *NULL*, then event is posted to service.

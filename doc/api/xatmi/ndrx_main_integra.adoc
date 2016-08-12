@@ -15,6 +15,8 @@ SYNOPSIS
 int ndrx_main_integra(int 'argc', char** 'argv', int (*'in_tpsvrinit')(int, char **),
             void (*'in_tpsvrdone')(void), long 'flags');
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Function is used in case if Enduro/X XATMI server is linked with '-latmisrvinteg' library. In this case binarie's *main()* function resists outside of Enduro/X libs, thus to launch the XATMI server, the *ndrx_main_integra()* needs to be called. The full 'argc' and 'argv' of binarie's command line must be passed to this function. In integration mode, callbacks for *tpsvrinit(3)* and *tpsvrdone(3)* must be passed in.

@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpsrvsetctxdata (char *'data', long 'flags');
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Restore context data from previously saved (*tpsrvgetctxdata()*) context data. The 'data' field is value returned by *tpsrvgetctxdata()*. This function is needed for multi threaded server, in order to restore tpcall() data in worker thread. 'flags' is reserved for future use and shall be set to 0. If global transaction was running in main thread for which *tpsrvgetctxdata()* was called, then *tpsrvsetctxdata()* will resume the global transaction in current thread.

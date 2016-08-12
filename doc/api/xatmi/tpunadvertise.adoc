@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpunadvertise(char *'svcname');
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Remove serivce in parameter 'svcname' from Enduro/X application server service registry. Service previously must be advertised by server process by *tpadvertise()* or by service aliasing which was done during process startup with configuration in *ndrxconfig.xml(5)*.

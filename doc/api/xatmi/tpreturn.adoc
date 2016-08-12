@@ -14,6 +14,8 @@ SYNOPSIS
 
 void tpreturn(int 'rval', long 'rcode', char *'data', long 'len', long 'flags');
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Function is used to terminate service processing and return control to caller. The return buffer 'data' must be auto buffer or allocated by *tpalloc()*. Len is needed in case if buffer type is not self describing. Internally function uses long jump to get back to internal message polling mechanisms. *tpreturn()* is used for normal service calls and for conversational service calls. *tpdiscon()* shall not be used by service program, but use *tpreturn()* instead. 'rcode' field is used by user program, to return back the specific value to caller.

@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpext_addperiodcb(int 'secs', int (*'p_periodcb')(void));
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 This is periodic callback function which is set for Enduro/X servers. Function is called every 'secs' seconds while XATMi server is in state of waiting next service call (during the message poll). The callback function 'p_periodcb' in case of success shall return 0. If callback function returns non 0 value, then XATMI server will proceed with shutdown.

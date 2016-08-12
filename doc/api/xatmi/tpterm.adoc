@@ -14,6 +14,8 @@ SYNOPSIS
 
 int tpterm (void);
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Terminate XATMI client session. The function will try to close gracefully any open conversation session. It will close client's thread reply queue, it will make thread ID free. If XA was open, then it will be closed.

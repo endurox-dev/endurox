@@ -14,6 +14,8 @@ SYNOPSIS
 
 int ndrx_main(int argc, char **argv);
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Function is used in case if Enduro/X XATMI server is linked with '-latmisrvnomain' library. In this case binarie's *main()* function resists outside of Enduro/X libs, thus to launch the XATMI server, the *ndrx_main()* needs to be called. The full 'argc' and 'argv' of binarie's command line must be passed to this function.

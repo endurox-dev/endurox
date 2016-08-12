@@ -14,6 +14,8 @@ SYNOPSIS
 
 char * tpsrvgetctxdata (void);
 
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+
 DESCRIPTION
 -----------
 Get server context data. This function is intended to be used by XATMI server function. When main thread service dispatcher invokes the service function, by using *tpsrvgetctxdata()* it is possible to flip over the work load to thread. Function allocates memory block by *malloc()* and fills with the thread data. If global transaction is started, then it is suspended and transaction data is written to returned context data.
