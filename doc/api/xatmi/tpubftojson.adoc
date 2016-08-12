@@ -15,6 +15,10 @@ SYNOPSIS
 int tpubftojson(UBFH *'p_ub', char *'buffer', int 'bufsize');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function convers UBF buffer in 'p_ub' to JSON object string to 'buffer' string. The field 'bufsize' must indicate the space in *buffer*. If the size is not enought, function will fail.

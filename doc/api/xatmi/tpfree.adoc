@@ -15,6 +15,10 @@ SYNOPSIS
 void tpfree(char *'ptr');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Free up the XATMI buffer allocated by *tpalloc()* or *tprealloc()*. The pointer shall not be used to any other calls afterwards, as it points to invalid memory after call. *tpfree()* must not be used for auto-allocated buffers, i.e. ones received into to service routine, as auto buffers will be cleaned up in following *tpreturn()* or *tpforward()* calls.

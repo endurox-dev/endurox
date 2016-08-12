@@ -15,6 +15,10 @@ SYNOPSIS
 int tpconnect(char *svc, char *data, long len, long flags);
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Connect to conversational service. This is first step to enter in two way streamed communications between caller client and server. The service is given in 'svc' parameter. Destination service must be programmed that way, that it supports conversations. 'data' is optional data buffer that must be allocated by *tpcalloc()*, and the 'len' parameter is used only in case if 'data' is not NULL and buffer is not self describing the length, i.e. *CARRAY*.

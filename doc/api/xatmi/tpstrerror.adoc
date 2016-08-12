@@ -14,6 +14,10 @@ SYNOPSIS
 
 char * tpstrerror (int 'err');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function returns string description of given error code. Enduro/X also loggs additional information for last error state, and that information is returned in string format together with description of 'err'. Typically when error occurs, then programmer calls *tpstrerror(tperrno)*, thus function will closely describe what was happened. However if programmer calls *tpstrerror()* with other error code, then message will contain the description of 'err' plus last XATMI call's logged error info. Then message and *tperrno* infos are stored in thread local storage (TLS).

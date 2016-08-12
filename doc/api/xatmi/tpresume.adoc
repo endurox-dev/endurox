@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpresume (TPTRANID *'tranid', long 'flags');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Resume global transaction with given transaction data in 'tranid' paramter. 'trandid' previously must be set by *tpsuspend()* call. To resume global transaction, XA sub-system must be open, by *tpopen()*. Technically it is possible that resume is done by other process than which did the suspend.

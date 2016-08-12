@@ -14,6 +14,10 @@ SYNOPSIS
 
 long tptypes(char *'ptr', char *'type', char *'subtype');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function returns type information from given buffer pointer in 'ptr'. If paramter 'type' is not NULL, then in case of success buffer type is coppied to. If buffer sub-type is used and argument 'subtype' is not NULL, then sub-type code is coppied to.

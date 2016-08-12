@@ -15,6 +15,10 @@ SYNOPSIS
 int tpacall(char *'svc', char *'data', long 'len', long 'flags');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Call the XATMI service by given 'svc' name asynchronously. The 'data' is optional input XATMI buffer. If it is not a NULL, then it must be allocated with *tpcalloc()* call, 'len' is used for buffer types such *CARRAY*, where buffer length is not described by type. If call succeeds, the function return the call descriptor. With call descriptor it is possible later to receive the response by using *tpgetrply()* If *TPNOTRAN* is not specified and current process is in global transaction, then system will make destination process run in same destination process.

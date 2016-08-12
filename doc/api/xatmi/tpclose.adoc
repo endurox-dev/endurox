@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpclose (void);
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Close connection to XA resource manager. This basically calls underlaying XA switches *xa_close_entry()* with *NDRX_XA_CLOSE_STR*.

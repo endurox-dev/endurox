@@ -15,6 +15,10 @@ SYNOPSIS
 int tprecv(int 'cd', char **'data', long *'len', long 'flags', long *'revent');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Receive message from open conversation, which is opened by *tpconnect()*. The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or service failure (*TPEV_SVCFAIL*), then global transaction if one in progress is aborted.

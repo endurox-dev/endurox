@@ -15,6 +15,10 @@ SYNOPSIS
 int tpacall(char \*'svc', char \*'idata', long 'ilen', char **'odata', long *'olen', long 'flags');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Call the XATMI service by given 'svc' name. The 'idata' is optional input XATMI buffer. If it is not a NULL, then it must be allocated with *tpcalloc()* call, 'ilen' is used for buffer types such *CARRAY*, where buffer length is not described by type. When caller receives response, it is stored in 'odata' buffer which must be also allocated by *tpcalloc()*. If the allocated buffer size is shorter then received one, then Enduro/X will automatically realloc the buffer to new size. 'olen' is mandatory field, where the received buffer length is stored. If *TPNOTRAN* is not specified and current process is in global transaction, then system will make destination process run in same destination process.

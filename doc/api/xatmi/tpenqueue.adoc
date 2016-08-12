@@ -17,6 +17,10 @@ int tpenqueue (char *'qspace', char *'qname', TPQCTL *'ctl', char *'data', long 
 int tpenqueueex (short 'nodeid', short 'srvid', char *'qname', TPQCTL *'ctl', char *'data', long 'len', long 'flags');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Enqueue message to transactional message queue. Queue subsystem (see *tmqueue(8)* and *persistent_message_queues_overview*) must be configured before using this function. 'qspace' is queue space name (logical queue sub-system name, that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 'ctl' is control structure that contains various details for message, how it shall be enqueued. Also 'ctl' returns some diagnostics information. 'data'/'len' pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* allows to specify exactly which *tmqueue* server will process the request, by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' from *ndrxconfig.xml(5).

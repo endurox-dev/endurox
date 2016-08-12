@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpopen (void);
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Connect to the XA resource manager. Note that environment for process must be configured, so that Enduro/X can load correct resource manager drivers. See the *ex_env(5)* man page for environment variables, that must be set. Basically Enduro/X will dynamically load library set in *NDRX_XA_DRIVERLIB* env variable. This is the driver which provides in unified way of getting *xa_switch*. As the xa_switches can be located in different Resource Managers, the second library migth be need to load and that is marked in *NDRX_XA_RMLIB* env variable. The resource manager ID is set in *NDRX_XA_RES_ID* env variable. If your application needs different resource managers or different transaction branches, then you can use environment variable override functionality, see *ex_envover(5)* and *ndrxconfig.xml(5)*. XA connection strings for Enduro/X drivers are stored into *NDRX_XA_OPEN_STR* and *NDRX_XA_CLOSE_STR* variables. Enduro/X will try to init XA sub-system  as soon as possible (i.e. load drivers, etc.). If you want to delay this till actual *tpopen()*, then you may set *NDRX_XA_LAZY_INIT* to 1. 

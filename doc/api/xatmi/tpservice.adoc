@@ -15,6 +15,10 @@ SYNOPSIS
 void tpservice(TPSVCINFO *'svcinfo');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 This is service function signature/template. *tpservice* is service function that must be passed to *tpadvertise()* in order to provide callable service to XATMI system. Services can be called by *tpcall()*, *tpacall()* or *tpforward()*. If server is conversational, then *tpconnect()* is used to establish the connection with service. When service is invoked, then parameter 'svcinfo' is initialised with following field:

@@ -15,6 +15,10 @@ SYNOPSIS
 int tppost (char *'eventname', char *'data', long 'len', long 'flags');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Post event to event broker. This function will call the event server's *@TPEVPOST* service. Which will broadcast the 'eventname' event and 'data', 'len' buffer to servers subscribed to even, if event mask and filter matches the event name and buffer passed to. 'data' can be NULL buffer. If not NULL, then it must be allocated by *tpalloc()*, the 'len' is mandatory for types which does not contain self described length. The event brokers will broadcast event also to connected bridges. On return function returns number of servers consumed the event. This includes also number of servers consumed events on remote hosts.

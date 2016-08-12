@@ -15,7 +15,7 @@ SYNOPSIS
 int ndrx_main_integra(int 'argc', char** 'argv', int (*'in_tpsvrinit')(int, char **),
             void (*'in_tpsvrdone')(void), long 'flags');
 
-Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------

@@ -15,7 +15,7 @@ SYNOPSIS
 long tpsubscribe (char *'eventexpr', char *'filter', TPEVCTL *'ctl', long 'flags');
 
 
-Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------

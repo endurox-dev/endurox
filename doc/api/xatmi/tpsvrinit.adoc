@@ -15,6 +15,10 @@ SYNOPSIS
 int tpsvrinit (int 'argc', char **'argv');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 This function is called uppon server startup. Before the services are advertise, this function is activated. The 'argc' and 'argv' is command line paramters passed to binary after the '--'. Initial paramters are used by Enduro/X, these are sys-opts in the *ndrxconfig.xml*, after the '--' those are application specific options.

@@ -14,7 +14,7 @@ SYNOPSIS
 
 int tpext_addpollerfd(int 'fd', uint32_t 'events', void *'ptr1', int (*'p_pollevent')(int 'fd', uint32_t 'events', void *'ptr1'));
 
-Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lxml2 -lrt -lm'
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------

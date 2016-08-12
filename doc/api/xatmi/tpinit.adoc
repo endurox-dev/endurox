@@ -15,6 +15,10 @@ SYNOPSIS
 int tpinit(TPINIT *'tpinfo');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function is intended to be called by XATMI clients, to initialize XATMI session. 'tpinfo' is defined as:

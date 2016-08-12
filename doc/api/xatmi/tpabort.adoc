@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpabort (long 'flags');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Abort the global transaction. This will make any resources touched during the transaction to roll back. Enduro/X will make all resource managers to rollback the changes. Abort of transaction can only be done by transaction initiator, who originally did *tpbegin()*. 'flags' is reserved for future use and must be 0.

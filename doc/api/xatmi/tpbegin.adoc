@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpbegin (unsigned long 'timeout', long 'flags');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Begint the global transaction. The current user must be open *XA* subsystem by *topopen()*. 'timeout' is setting for transaction manager (*tmsrv*) how long transaction can hang in active state (i.e. not prepared/committed). Field 'flags' is reserved for future use and must be 0. The work done by *tpbegin()* transaction is only in scope of processes which uses *XA* interfaces for resource managers. Any others works are outside of current scope. If 'timeout' is set to 0, then default maximum time for transaction processing is used. Transaction must be committed or aborted by client process by using *tpcommit()* or *tpabort()*. If any *tpcall()* with no *TPNOTRAN* flag fails within given global transaction, then transaction is automatically marked as abort only.

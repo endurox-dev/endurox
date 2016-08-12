@@ -14,6 +14,10 @@ SYNOPSIS
 
 void tpcontinue (void);
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function is used for continuing with service polling. This is usable when service call is made and the task is flipped over to worker thread, in this case main thread have nothing to pass to *tpreturn()* or *tpforward()*, thus just invoke tpcontinue() and Enduro/X will continue with next message.

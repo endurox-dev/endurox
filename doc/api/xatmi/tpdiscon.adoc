@@ -15,6 +15,10 @@ SYNOPSIS
 int tpdiscon(int 'cd');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Terminate connection and send *TPEV_DISCONIMM* event to other connection end. This operations does not terminate global transaction, if one in progress. It is up to user to doe the abort with *tpabort()*. *tpdiscon()* can be involved in any point at the progress of conversational session.

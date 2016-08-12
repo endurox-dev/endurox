@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpcancel(int cd);
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Cancel the asynchronous call done by *tpacall()*. Basically this marks the call descriptor as un-used in internal call descriptor registry. If answer is received for such descriptor, the answer is discarded. Note that this does not abort the transaction (if started) by previous tpacall. Thus if transaction needs to be aborted, use *tpabort()*.

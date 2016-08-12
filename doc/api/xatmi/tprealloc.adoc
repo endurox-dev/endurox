@@ -15,6 +15,10 @@ SYNOPSIS
 char *tprealloc(char *'ptr', long 'size');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Reallocate (change the buffer size) of previously allocated resources by *tpalloc()*. The XATMI buffer is passed in with 'ptr' parameters and new size is provided in 'size' parameter. It is allowed to resize auto-allocated buffers (i.e. buffer that is passed into *TPSVCINFO.data* field.)

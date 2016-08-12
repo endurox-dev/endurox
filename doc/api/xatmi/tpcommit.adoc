@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpcommit (long 'flags');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function does commit the global transaction. Transaction must not be marked as abort only (e.g. in case if *tpcall()* failed). After issuing the command, *tmsrv(8)* will do the commit procedure, prepare phase first, log the results of prepare to persistent storage, and then do the actual commit.

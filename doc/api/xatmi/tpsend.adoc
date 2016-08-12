@@ -15,6 +15,10 @@ SYNOPSIS
 int tpsend(int 'cd', char *'data', long 'len', long 'flags', long *'revent');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Send a message to open conversation, described by 'cd', which is opened by *tpconnect()*. The outgoing buffer 'data' must be allocated with *tpalloc()*, if buffer is not self describing .e.g *CARRAY*, then 'len' parameter must be correctly set. The 'data' can be also set to NULL in that case 'len' is not used.

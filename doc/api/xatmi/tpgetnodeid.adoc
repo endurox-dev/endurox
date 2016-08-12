@@ -13,6 +13,10 @@ SYNOPSIS
 
 long tpgetnodeid(void);
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function returns current cluster node id. Basically that is configured in *NDRX_NODEID* environment variable, see *ex_env(5)* page.

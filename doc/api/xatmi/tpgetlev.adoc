@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpgetlev (void);
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Function returns current status of global transaction. If transaction is started by *tpbegin()* or called service is part of global transaction (invoked by process in global TX and was not specified *TPNOTRAN*), then function returns '1'. If process is not part of global transaction, then return value is *0*.

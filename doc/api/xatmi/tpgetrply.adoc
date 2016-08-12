@@ -15,6 +15,10 @@ SYNOPSIS
 int tpgetrply(int \*'cd', char **'data', long *'len', long 'flags');
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Get the response from asynchronous service call. The 'cd' is pointer to call descriptor to which value might be set, in that case only matched reply is returned, other messages are dropped. 'data' and 'len' are field used for storing the reply messages. Fields must be allocated by *tpalloc()*. In case if *TPGETANY* flag is used, then any first response which is received is returned to user application.

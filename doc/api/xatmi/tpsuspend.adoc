@@ -14,6 +14,10 @@ SYNOPSIS
 
 int tpsuspend (TPTRANID *'tranid', long 'flags');
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 Disassociate XA transaction from current thread and store transaction details to 'tranid' variable. The transaction can be resumed as by doing *tpresume()*. *tranid* must not be NULL. 'flags' are reserved for future use, and currently must be set to 0. Transaction must not be marked as abort only. It is error to have any open call descriptors (either by *tpacall()* or by *tpconnect()*). Suspending can be done by any involved process in transaction. But the role of participant does not change.  The *TPTRANID* type records the information about caller, is it transaction originator or not.

@@ -15,6 +15,10 @@ SYNOPSIS
 void tpsvrdone(void);
 
 
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
 DESCRIPTION
 -----------
 This is XATMI server un-initialization function. It is called when Enduro/X application server is being shutdown or when process is being shutdown separately by *xadmin stop*. Depending on the version for which *atmisrv* library XATMI server is being linked, the form of function that should be exported by application changes.
