@@ -16,7 +16,7 @@ int tpunsubscribe (long 'subscription', long 'flags');
 
 DESCRIPTION
 -----------
-Unsubscribe from event. The 'subscription' value is return value from original *tpsubscribe()* call.
+Unsubscribe from event. The 'subscription' value is return value from original *tpsubscribe()* call. If 'subscription' is set to '-1', then it will affect all events to which subscription was made by given process.
 
 *Valid flags*
 
@@ -36,7 +36,7 @@ ERRORS
 ------
 Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
 
-*TPEINVAL* Invalid parameter is given to function. 'subscription' <= -1.
+*TPEINVAL* Invalid parameter is given to function. 'subscription' < -1.
 
 *TPENOENT* Event server is not available.
 
@@ -49,6 +49,10 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+EXAMPLE
+-------
+See *atmitest/test004_basicevent/atmisv4_1ST.c* for sample code.
 
 BUGS
 ----

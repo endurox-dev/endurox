@@ -78,6 +78,10 @@ BUGS
 ----
 Report bugs to madars.vitolins@gmail.com
 
+EXAMPLE
+-------
+See *atmitest/test004_basicevent/atmisv4_1ST.c* for sample code.
+
 SEE ALSO
 --------
 *tpevsrv(8)* *tpunsubscribe(3)* *tppost(3)*
