@@ -105,9 +105,9 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *QMENOMSG* No messages in queue.
 
-TESTS
------
-This functionality is tested under *endurox/atmitest/test028_tmq*
+EXAMPLE
+-------
+See *atmitest/test028_tmq/atmiclt28.c* for sample code.
 
 BUGS
 ----
