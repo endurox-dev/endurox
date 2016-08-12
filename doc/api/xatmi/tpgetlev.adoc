@@ -31,6 +31,10 @@ ERRORS
 ------
 Function does not return any errors.
 
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmisv21.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

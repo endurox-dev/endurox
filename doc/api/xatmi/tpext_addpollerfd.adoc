@@ -30,7 +30,6 @@ RETURN VALUE
 ------------
 On success, *tpext_addpollerfd()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
 
-
 ERRORS
 ------
 Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
@@ -42,6 +41,10 @@ Note that *tpstrerror()* for returns generic error message plus custom message w
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info. That could insufficient memory or other error.
+
+EXAMPLE
+-------
+See *atmitest/test008_extensions/atmisv.c* for sample code.
 
 BUGS
 ----

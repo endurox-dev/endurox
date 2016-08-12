@@ -33,6 +33,10 @@ ERRORS
 ------
 Function is void and no error is returned.
 
+EXAMPLE
+-------
+See *atmitest/test026_typedjson/atmiclt26.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

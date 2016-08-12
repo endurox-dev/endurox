@@ -56,6 +56,10 @@ Note that *tpstrerror()* for last calls returns generic error message plus custo
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
+EXAMPLE
+-------
+See *atmitest/test018_tpacalltout/atmiclt18.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

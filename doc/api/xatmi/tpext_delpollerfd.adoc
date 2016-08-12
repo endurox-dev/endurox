@@ -41,6 +41,10 @@ Note that *tpstrerror()* for returns generic error message plus custom message w
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info. That could insufficient memory or other error.
 
+EXAMPLE
+-------
+See *atmitest/test008_extensions/atmisv.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

@@ -37,6 +37,10 @@ Note that *tpstrerror()* for returns generic error message plus custom message w
 
 *TPESYSTEM* Failed to updated *ndrxd* for changes in service registry.
 
+EXAMPLE
+-------
+See *atmitest/test007_advertise/atmisv.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

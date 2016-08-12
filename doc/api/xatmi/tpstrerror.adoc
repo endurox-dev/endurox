@@ -50,6 +50,11 @@ ERRORS
 ------
 Function does not return any errors.
 
+
+EXAMPLE
+-------
+See *atmitest/test003_basicconvers/atmisv3.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

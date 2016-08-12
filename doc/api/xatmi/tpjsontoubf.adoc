@@ -69,6 +69,10 @@ ERRORS
 ------
 No error codes available for this function. Additional info might be read in *ndrx*/*ubf* logs, see *ndrxdebug.conf(5)*
 
+EXAMPLE
+-------
+See *atmitest/test024_json/atmiclt24.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

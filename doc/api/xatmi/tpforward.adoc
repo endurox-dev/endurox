@@ -27,10 +27,13 @@ RETURN VALUE
 ------------
 Function is marked as void and it have no return values.
 
-
 ERRORS
 ------
 No errors available (but some details might be logged in trace files).
+
+EXAMPLE
+-------
+See *atmitest/test002_basicforward/atmisv2FIRST.c* for sample code.
 
 BUGS
 ----

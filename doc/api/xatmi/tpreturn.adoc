@@ -38,6 +38,11 @@ ERRORS
 ------
 No errors available (but some details migth be logged in trace files).
 
+
+EXAMPLE
+-------
+See *atmitest/test001_basiccall/atmisv1.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

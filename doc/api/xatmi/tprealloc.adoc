@@ -37,6 +37,10 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
 
+EXAMPLE
+-------
+See *atmitest/test001_basiccall/atmiclt1.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

@@ -32,6 +32,10 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPEINVAL* 'p_b4pollcb' paramter is NULL.
 
+EXAMPLE
+-------
+See *atmitest/test008_extensions/atmisv.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com

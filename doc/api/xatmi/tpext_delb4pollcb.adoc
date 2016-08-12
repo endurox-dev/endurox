@@ -30,6 +30,10 @@ ERRORS
 ------
 At current version function always succeeds.
 
+EXAMPLE
+-------
+See *atmitest/test008_extensions/atmisv.c* for sample code.
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com
