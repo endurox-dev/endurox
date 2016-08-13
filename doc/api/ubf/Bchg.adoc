@@ -15,6 +15,7 @@ SYNOPSIS
 
 int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
 
+Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
@@ -34,6 +35,10 @@ ERRORS
 *BNOSPACE* No space in buffer for string data.
 
 *BBADFLD* Invalid field id passed.
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
 
 BUGS
 ----

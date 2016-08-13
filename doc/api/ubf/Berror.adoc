@@ -1,0 +1,74 @@
+BERROR(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Berror - Get the error code of last UBF operation
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+#define Berror  (*_Bget_Ferror_addr())
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Return the error code of last UBF operation. To get the description of the error, use Bstrerror(3) function.
+
+RETURN VALUE
+------------
+Returns the last error code.
+
+
+ERRORS
+------
+*BMINVAL* No error.
+
+*BALIGNERR* Unified buffer not UBF or corrupted.
+
+*BNOTFLD* Unified buffer not UBF or corrupted.
+
+*BNOSPACE* No space for adding new field to buffer.
+
+*BNOTPRES* Field not present in buffer.
+
+*BBADFLD* Bad field ID.
+
+*BTYPERR* Invalid field type. Note that Field types are defined following: BFLD_SHORT (matches C short), BFLD_LONG (matches C long), BFLD_CHAR (matches C char), BFLD_FLOAT (matches C float), BFLD_DOUBLE (matches C double), BFLD_STRING (match C char* - NUL terminated), BFLD_CARRAY (matches C char*)
+
+*BEUNIX* Unix error.
+
+*BBADNAME* Bad field name.
+
+*BMALLOC* Failed to allocate memory.
+
+*BSYNTAX* Boolean expressions syntax error.
+
+*BFTOPEN* Failed to open field table.
+
+*BFTSYNTAX* Invalid field table syntax.
+
+*BEINVAL* Invalid argument passed to function.
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*CBchg(3)* *Badd(3)* *Binit(3)* *Bstrerror(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
