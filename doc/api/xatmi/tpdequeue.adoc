@@ -22,7 +22,7 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Dequeue message from transactional persistent message queue. Message queue subsystem (see *tmqueue(8)* and *persistent_message_queues_overview*) must be configured before using this function. 'qspace' is queue space name (logical queue sub-system name, that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 'ctl' is control structure that contains various details for message, how it shall be dequeue and additional meta data. Also 'ctl' returns diagnostics information in case of error. 'data'/'len' pair is XATMI buffer to which dequeued message must be written. Buffer will be reallocated accordingly to match the message type in queue. *tpdequeueex()* allows to specify exactly which *tmqueue* server will process the request, by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' from *ndrxconfig.xml(5).
+Dequeue message from transactional persistent message queue. Message queue subsystem (see *tmqueue(8)* and *persistent_message_queues_overview(guides)*) must be configured before using this function. 'qspace' is queue space name (logical queue sub-system name, that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 'ctl' is control structure that contains various details for message, how it shall be dequeue and additional meta data. Also 'ctl' returns diagnostics information in case of error. 'data'/'len' pair is XATMI buffer to which dequeued message must be written. Buffer will be reallocated accordingly to match the message type in queue. *tpdequeueex()* allows to specify exactly which *tmqueue* server will process the request, by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' from *ndrxconfig.xml(5).
 
 Functions are transactional and can participate in user's global transaction. It is not possible to enqueue and dequeue message within same global transaction.
 
@@ -119,7 +119,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpdenqueue(3)* *tpenqueueex(3)* *tmqueue(8)* *persistent_message_queues_overview*
+*tpdenqueue(3)* *tpenqueueex(3)* *tmqueue(8)* *persistent_message_queues_overview(guides)*
 
 COPYING
 -------
