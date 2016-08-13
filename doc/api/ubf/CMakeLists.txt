@@ -37,6 +37,8 @@ find_program(DBLATEX "dblatex")
 set(MAN3_NAMES 
                 Bchg
                 Berror
+		Blen
+		CBadd
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
