@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <utlist.h>
+#include <nstdutil.h>
 #include <ini.h>
 #include <inicfg.h>
 #include <nerror.h>
@@ -114,6 +115,7 @@ private int handler(void* cf_ptr, const char* section, const char* name,
     /* on error 0 */
     
     /* on success 1 */
+    return 0;
 }
 
 

@@ -42,6 +42,7 @@ set(MAN3_NAMES
 		CBadd
 		CBget
 		Bdel
+		Bpres
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

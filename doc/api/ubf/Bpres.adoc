@@ -1,0 +1,47 @@
+BPRES(3)
+=======
+:doctype: manpage
+
+
+NAME
+----
+Bpres - Test for field presence in UBF buffer
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bpres (UBFH *'p_ub', BFLDID 'bfldid', BFLDOCC 'occ');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Test the *UBF* buffer ('p_ub') for field 'bfldid' presence at occurrence 'occ'.
+
+RETURN VALUE
+------------
+If field is present, functions returns *1*, if field is not present, function returns *0*.
+
+ERRORS
+------
+Function does not return error. If buffer is invalid, then it will return *0* (field not present).
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bchg(3)* *Badd(3)* *CBadd(3)* *Bget(3)* *Badd(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
