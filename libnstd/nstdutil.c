@@ -490,3 +490,15 @@ public int ndrx_file_exists(char *filename)
     int result = stat(filename, &st);
     return result == 0;
 }
+
+/**
+ * Test if given path is regular file
+ * @param path
+ * @return 
+ */
+public int ndrx_file_regular(char *path)
+{
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}

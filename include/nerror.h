@@ -1,7 +1,7 @@
 /* 
-** Enduro/X ini config driver
+** NSTD library - header file for error handling.
 **
-** @file inicfg.h
+** @file nerror.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,88 +29,41 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef _INICFG_H
-#define	_INICFG_H
+#ifndef NERROR_H
+#define	NERROR_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <ndrxdcmn.h>
-#include <stdint.h>
-#include <ntimer.h>
-#include <uthash.h>
+#include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
-#define NDRX_INICFG_SECTION_MAX  128    
-#define NDRX_INICFG_SUBSECT_SPERATOR '/' /* seperate sub-sections with */
 /*---------------------------Macros-------------------------------------*/
+#define MAX_ERROR_LEN   1024
+
+#define NMINVAL             0 /* min error */
+#define NEINVALINI          1 /* Invalid INI file */
+#define NEMALLOC            2 /* Malloc failed */
+#define NMAXVAL             2 /* max error */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/**
- * This is key/value entry (linked list)
- */
-typedef struct ndrx_inicfg_section_keyval ndrx_inicfg_section_keyval_t;
-struct ndrx_inicfg_section_keyval
-{
-    char section[NDRX_INICFG_SECTION_MAX]; /* section */
-    char *key; /* key for ini */
-    char *val; /* value for ini */
-    
-    UT_hash_handle hh;         /* makes this structure hashable */
-};
-
-/**
- * This is section handler
- */    
-struct ndrx_inicfg_section
-{
-    char section[NDRX_INICFG_SECTION_MAX]; /* section */
-    
-    ndrx_inicfg_section_keyval_t *values; /* list of values */
-    
-    UT_hash_handle hh;         /* makes this structure hashable */
-};
-typedef struct ndrx_inicfg_section ndrx_inicfg_section_t;
-
-/**
- * Config handler
- */
-struct ndrx_inicfg_file
-{
-    /* full path */
-    char fullname[PATH_MAX+1];
-    /* original path */
-    char resource[PATH_MAX+1];
-    /* time stamp when read */
-    
-    int not_refreshed; /* marked as not refreshed (to kill after reload) */
-    UT_hash_handle hh;         /* makes this structure hashable */
-};
-
-typedef struct ndrx_inicfg_file ndrx_inicfg_file_t;
-
-
-/**
- * Config handle
- */
-struct ndrx_inicfg
-{
-    ndrx_inicfg_file_t *cfgfile;
-};
-
-typedef struct ndrx_inicfg ndrx_inicfg_t;
-
-
-
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern NDRX_API void _Nset_error(int error_code);
+extern NDRX_API void _Nset_error_msg(int error_code, char *msg);
+extern NDRX_API void _Nset_error_fmt(int error_code, const char *fmt, ...);
+/* Is error already set?  */
+extern NDRX_API int _Nis_error(void);
+extern NDRX_API void _Nappend_error_msg(char *msg);
+
+extern NDRX_API void _Nunset_error(void);
+
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* _INICFG_H */
+#endif	/* NERROR_H */
 

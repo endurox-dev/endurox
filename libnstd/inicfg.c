@@ -37,10 +37,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <utlist.h>
 #include <ini.h>
 #include <inicfg.h>
+#include <nerror.h>
+#include <sys_unix.h>
+#include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#define API_ENTRY {_Nunset_error();}
+
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -55,8 +63,12 @@ public ndrx_inicfg_t * ndrx_inicfg_new(void)
 {
     ndrx_inicfg_t *ret = NULL;
     
+    API_ENTRY;
+    
     if (NULL==(ret = calloc(1, sizeof(ndrx_inicfg_t))))
     {
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_t: %s", 
+                strerror(errno));
         NDRX_LOG(log_error, "Failed to alloc: ndrx_inicfg_t!");
         goto out;
     }
@@ -83,7 +95,70 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
             f->not_refreshed = TRUE;
         }
     }
+}
+
+/**
+ * Add stuff to file content hash
+ * @param cf_ptr
+ * @param section
+ * @param name
+ * @param value
+ * @return 
+ */
+private int handler(void* cf_ptr, const char* section, const char* name,
+                   const char* value)
+{
+    ndrx_inicfg_file_t *cf = (ndrx_inicfg_file_t*)cf_ptr;
     
+    
+    /* on error 0 */
+    
+    /* on success 1 */
+}
+
+
+/**
+ * Load single file into config
+ * @param cfg
+ * @param resource
+ * @param fullsection_start_with
+ * @return 
+ */
+public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+        char *resource, char *fullname, char **fullsection_start_with)
+{
+    ndrx_inicfg_file_t *cf = NULL;
+    int ret = SUCCEED;
+    
+    if (NULL==(cf = malloc(sizeof(ndrx_inicfg_file_t))))
+    {
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_file_t: %s", 
+                strerror(errno));
+        NDRX_LOG(log_error, "Failed to alloc: ndrx_inicfg_file_t!");
+    }
+    
+    /* copy off resource */
+    strncpy(cf->resource, resource, sizeof(cf->resource)-1);
+    cf->resource[sizeof(cf->resource)-1] = EOS;
+    
+    /* copy off fullname of file */
+    strncpy(cf->fullname, fullname, sizeof(cf->fullname)-1);
+    cf->fullname[sizeof(cf->fullname)-1] = EOS;
+    
+    cf->not_refreshed = FALSE;
+    
+    /* start to parse the file by inih */
+    
+    if (SUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf)))
+    {
+        _Nset_error_fmt(NEINVALINI, "Invalid ini file: [%s] error on line: %d", 
+                fullname, ret);
+        NDRX_LOG(log_error, "Invalid ini file: [%s] error on line: %d", 
+                fullname, ret);
+    }
+    
+out:
+    return ret;
 }
 
 /**
@@ -99,7 +174,50 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **fullsec
     
     cfg_mark_not_loaded(cfg, resource);
     
-    /* Check the type (folder or file) */
+    /* Check the type (folder or file) 
+     * If it is not file, then it is a directory (assumption).
+     */
+    if (ndrx_file_regular(resource))
+    {
+        NDRX_LOG(log_debug, "Resource: [%s] is regular file", resource);
+        if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
+                resource, fullsection_start_with))
+        {
+            FAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        string_list_t* flist = NULL;
+        string_list_t* elt = NULL;
+
+        int return_status = SUCCEED;
+        
+        NDRX_LOG(log_debug, "Resource: [%s] seems like directory "
+                "(checking for *.ini, *.cfg, *.conf, *.config)", resource);
+        
+        if (NULL!=(flist=ndrx_sys_folder_list(resource, &return_status)))
+        {
+           LL_FOREACH(flist,elt)
+           {
+               int len = strlen(elt->qname);
+               if (    (len >=4 && 0==strcmp(elt->qname+len-4, ".ini")) ||
+                       (len >=4 && 0==strcmp(elt->qname+len-4, ".cfg")) ||
+                       (len >=5 && 0==strcmp(elt->qname+len-5, ".conf")) ||
+                       (len >=7 && 0==strcmp(elt->qname+len-7, ".config"))
+                   )
+               {
+                   if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
+                           elt->qname, fullsection_start_with))
+                   {
+                       FAIL_OUT(ret);
+                   }
+               }         
+           }
+        }
+        
+        ndrx_string_list_free(flist);
+    }
     
 out:
     return ret;
