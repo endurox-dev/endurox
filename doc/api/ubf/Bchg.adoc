@@ -46,7 +46,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*CBchg(3)* *Badd(3)*
+*CBchg(3)* *Badd(3)* *CBget(3)* *Bget(3)*
 
 COPYING
 -------
