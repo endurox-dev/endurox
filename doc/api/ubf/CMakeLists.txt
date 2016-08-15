@@ -47,6 +47,7 @@ set(MAN3_NAMES
 	Bprojcpy
     Bfldid
     Bfname
+	Bcpy
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
