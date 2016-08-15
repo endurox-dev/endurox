@@ -564,7 +564,7 @@ public int prepare_type_tables(void)
 public char * _Bfname_int (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
-    static char buf[64];
+    static __thread char buf[64];
 
     if (SUCCEED!=prepare_type_tables())
     {
