@@ -1,0 +1,47 @@
+BFLDID(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bfldid - projection on buffer
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+BFLDID Bfldid (char *'fldnm');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Get field id by field name passed in 'fldnm' parameter. Note that field must be defined in field tables (*fd* files) (see ex_env(5), variables *FIELDTBLS*, *FLDTBLDIR*). 
+
+RETURN VALUE
+------------
+On success, *Bfldid()* returns compiled file id; on error, *BBADFLDID* is returned.
+
+ERRORS
+------
+No errors are returned by this function.
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bfname(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
