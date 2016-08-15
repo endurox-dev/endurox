@@ -4,10 +4,6 @@
 		<!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
 		<!-- Sanity check time, sec -->
 		<sanity>1</sanity>
-        <!-- Start wait, sec -->
-        <srvstartwait>1</srvstartwait>
-        <!-- Stop wait, sec -->
-        <srvstopwait>1</srvstopwait>
 		<!-- If process have been state changed to other than dead, exit or not running
 		but PID of program does not exists in system, then send internel message, then 
 		program have been stopped.
@@ -33,6 +29,12 @@
 	<defaults>
 		<min>1</min>
 		<max>1</max>
+
+        <!-- Start wait, sec -->
+        <srvstartwait>1</srvstartwait>
+        <!-- Stop wait, sec -->
+        <srvstopwait>1</srvstopwait>
+
 		<autokill>1</autokill>
 		<!-- Do not need respawning! -->
 		<respawn>1</respawn>
