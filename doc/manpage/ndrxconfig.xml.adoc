@@ -20,6 +20,8 @@ SYNOPSIS
 		<restart_step>RESTART_STEP</restart_step>
 		<restart_max>MAX_RESTART_TIME</restart_max>
 		<restart_to_check>NDRXD_RESTART_TO_CHECK</restart_to_check>
+        <srvstartwait>NDRXD_SRV_START_WAIT</srvstartwait>
+        <srvstopwait>NDRXD_SRV_STOP_WAIT</srvstopwait>
 		<gather_pq_stats>NDRXD_GATHER_PQ_STATS</gather_pq_stats>
 	</appconfig>
 	<defaults>
@@ -125,6 +127,12 @@ DEBUG CONFIGURATION FILE SYNTAX
 	is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
 	If in this time ATMI server does not responds, then ATMI server is subject
 	of sanity checks.
+*NDRXD_SRV_START_WAIT*::
+        Number of seconds to wait for servers to boot. If not started in given time,
+        then continue with next server.
+*NDRXD_SRV_STOP_WAIT*::
+        Number of seconds to wait for server to shutdown. If not started in given time,
+        then continue with next server.
 *NDRXD_GATHER_PQ_STATS*::
         Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
         stats for service queues. In future this might be used for automatic service starting
