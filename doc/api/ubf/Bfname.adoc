@@ -1,0 +1,46 @@
+BFLDID(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bfname - get the field name by giving compiled field id
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+char * Bfname (BFLDID 'bfldid');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Return the field name loaded for given compiled field id 'bfldid'. Field id is compiled by *mkfldhdr(8)*.
+
+RETURN VALUE
+------------
+On success, *Bfname()* returns field name in thread local storage stored char array. On failure function returns field name in form of "((BFLDID32)%d)".
+
+ERRORS
+------
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bfname(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
