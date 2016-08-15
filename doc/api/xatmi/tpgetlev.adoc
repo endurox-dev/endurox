@@ -24,7 +24,7 @@ Function returns current status of global transaction. If transaction is started
 
 RETURN VALUE
 ------------
-*0* - current thread is not part of global transaction. *1* - current thread is not part of global transaction.
+*0* - current thread is not part of global transaction. *1* - current thread is part of global transaction.
 
 
 ERRORS
