@@ -85,6 +85,10 @@ struct conf_server_node
     char SYSOPT[PATH_MAX/2 - 8 ]; /* take off -i xxxxx PID */
     char APPOPT[PATH_MAX/2];
     char clopt[PATH_MAX];
+    
+    int srvstartwait; /* Time to wait for server startup (after report in progress) */
+    int srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
+    
     /* Linked list */
     conf_server_node_t *prev;
     conf_server_node_t *next;
@@ -182,8 +186,8 @@ typedef struct
     int checkpm;             /* Time for sending info to self about process exit. */
     int brrefresh;           /* Bridge refresh timer */
     
-    int srvstartwait;        /* Time to wait for server startup (after report in progress) */
-    int srvstopwait;         /* Time to wait for server shutdown (after report in progress)*/
+    int default_srvstartwait; /* Time to wait for server startup (after report in progress) */
+    int default_srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
     
     int gather_pq_stats;     /* if set to 1, then queue stats will be gathered */
     

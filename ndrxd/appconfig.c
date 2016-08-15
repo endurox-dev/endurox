@@ -317,6 +317,22 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   p, config->default_killtime);
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "srvstartwait"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->default_srvstartwait = atoi(p)*1000;
+                NDRX_LOG(log_debug, "srvstartwait: [%s] - %d msec",
+                                            p, config->default_srvstartwait);
+                xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "srvstopwait"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->default_srvstopwait = atoi(p)*1000;
+                NDRX_LOG(log_debug, "srvstopwait: [%s] - %d msec",
+                                        p, config->default_srvstopwait);
+                xmlFree(p);
+            }
             
 #if 0
             else
@@ -353,6 +369,23 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         ret=FAIL;
         goto out;
     }
+    
+    if (!config->default_srvstartwait)
+    {
+        config->default_srvstartwait = DEF_SRV_STARTWAIT;
+        config->default_srvstartwait*=1000;
+        NDRX_LOG(log_debug, "Server start wait defaulted to %ld msec",
+                    config->default_srvstartwait);
+    }
+    
+    if (!config->default_srvstopwait)
+    {
+        config->default_srvstopwait = DEF_SRV_STARTWAIT;
+        config->default_srvstopwait*=1000;
+        NDRX_LOG(log_debug, "Server stop wait defaulted to %ld msec",
+                    config->default_srvstopwait);
+    }
+    
 
 out:
     return ret;
@@ -422,22 +455,6 @@ private int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   p, config->restart_to_check);
                 xmlFree(p);
             }
-            else if (0==strcmp((char*)cur->name, "srvstartwait"))
-            {
-                p = (char *)xmlNodeGetContent(cur);
-                config->srvstartwait = atoi(p)*1000;
-                NDRX_LOG(log_debug, "srvstartwait: [%s] - %d msec",
-                                                  p, config->srvstartwait);
-                xmlFree(p);
-            }
-            else if (0==strcmp((char*)cur->name, "srvstopwait"))
-            {
-                p = (char *)xmlNodeGetContent(cur);
-                config->srvstopwait = atoi(p)*1000;
-                NDRX_LOG(log_debug, "srvstopwait: [%s] - %d msec",
-                                                  p, config->srvstopwait);
-                xmlFree(p);
-            }
             else if (0==strcmp((char*)cur->name, "checkpm"))
             {
                 p = (char *)xmlNodeGetContent(cur);
@@ -497,22 +514,6 @@ private int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         NDRX_LOG(log_debug, "appconfig: `restart_to_check' not set!");
         ret=FAIL;
         goto out;
-    }
-    
-    if (!config->srvstartwait)
-    {
-        config->srvstartwait = DEF_SRV_STARTWAIT;
-        config->srvstartwait*=1000;
-        NDRX_LOG(log_debug, "Server start wait defaulted to %ld msec",
-                    config->srvstartwait);
-    }
-    
-    if (!config->srvstopwait)
-    {
-        config->srvstopwait = DEF_SRV_STARTWAIT;
-        config->srvstopwait*=1000;
-        NDRX_LOG(log_debug, "Server stop wait defaulted to %ld msec",
-                    config->srvstopwait);
     }
     
     if (!config->brrefresh)
@@ -717,6 +718,22 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "srvstartwait"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            p_srvnode->srvstartwait = atoi(p)*1000;
+            NDRX_LOG(log_debug, "srvstartwait: [%s] - %d msec",
+                                              p, p_srvnode->srvstartwait);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "srvstopwait"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            p_srvnode->srvstopwait = atoi(p)*1000;
+            NDRX_LOG(log_debug, "srvstopwait: [%s] - %d msec",
+                                              p, p_srvnode->srvstopwait);
+            xmlFree(p);
+        }
     }
     sprintf(p_srvnode->clopt, "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     strcpy(p_srvnode->binary_name, srvnm);
@@ -754,6 +771,12 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (EOS==p_srvnode->exportsvcs[0])
         strcpy(p_srvnode->exportsvcs, config->default_exportsvcs);
     
+    if (!p_srvnode->srvstartwait)
+        p_srvnode->srvstartwait=config->default_srvstartwait;
+    
+    if (!p_srvnode->srvstopwait)
+        p_srvnode->srvstopwait=config->default_srvstopwait;
+    
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
         NDRX_LOG(log_error, "`ping_max' not set for server! at line %hd", 
@@ -771,11 +794,13 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
-            "EXPORTSVCS=\"%s\"",
+            "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, p_srvnode->ping_max,
-                    p_srvnode->exportsvcs
+                    p_srvnode->exportsvcs,
+                    p_srvnode->srvstartwait,
+                    p_srvnode->srvstopwait
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 
