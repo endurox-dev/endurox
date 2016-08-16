@@ -48,6 +48,7 @@ set(MAN3_NAMES
     Bfldid
     Bfname
 	Bcpy
+	Binit
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
