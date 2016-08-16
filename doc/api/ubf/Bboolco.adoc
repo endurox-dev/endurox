@@ -1,0 +1,72 @@
+BPOOLCO(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bboolco - Compile boolean expression, return evaluation handler
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+char * Bboolco (char *'expr');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Compile boolean expression (in parameter 'expr') and returns the evaluation tree handler.  Following operators are available for expressions:
+
+'%%, !%' - regular expression testing e.g.  "T_STRING_2_FLD %% '58.*'"- will match if T_STRING_2_FLD is set to "58ABC" for example.
+
+'==, !=, <, <=, >, >=' - compare operations
+
+'!, ~, ^' - bitwise operations
+
+'+, -, *, %, /' - mathematical operations
+
+'&&, ||' - logical operations
+
+
+RETURN VALUE
+------------
+On success, *Bboolco()* return pointer to evaluation tree; on error, NULL is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BBADFLD* Invalid field id passed.
+
+*BNOTPRES* Field not present.
+
+*FMALLOC* Malloc failed.
+
+*BSYNTAX* Synax error in script.
+
+*BBADNAME* Bad field name specified.
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bboolev(3)* *Bfloatev(3)* *Btreefree(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -41,6 +41,7 @@ set(MAN3_NAMES
 	Blen
 	CBadd
 	CBget
+    Bget
 	Bdel
 	Bpres
 	Bproj
@@ -50,6 +51,8 @@ set(MAN3_NAMES
 	Bcpy
 	Binit
     Bnext
+    Bboolco
+    Bfind
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
