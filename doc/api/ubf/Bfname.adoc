@@ -1,4 +1,4 @@
-BFLDID(3)
+BFNAME(3)
 =========
 :doctype: manpage
 
@@ -27,6 +27,7 @@ On success, *Bfname()* returns field name in thread local storage stored char ar
 
 ERRORS
 ------
+No errors are returned by this function.
 
 EXAMPLE
 -------

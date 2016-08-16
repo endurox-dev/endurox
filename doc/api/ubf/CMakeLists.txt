@@ -49,6 +49,7 @@ set(MAN3_NAMES
     Bfname
 	Bcpy
 	Binit
+    Bnext
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
