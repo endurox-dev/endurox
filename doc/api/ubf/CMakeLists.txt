@@ -58,6 +58,7 @@ set(MAN3_NAMES
     Bfind
     Bboolev
     Bfloatev
+    Bmkfldid
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
