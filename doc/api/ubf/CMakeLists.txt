@@ -39,6 +39,7 @@ set(MAN3_NAMES
 	CBchg
 	Berror
     B_error
+    Bstrerror
 	Blen
     Badd
 	CBadd
