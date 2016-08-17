@@ -38,7 +38,9 @@ set(MAN3_NAMES
 	Bchg
 	CBchg
 	Berror
+    B_error
 	Blen
+    Badd
 	CBadd
 	CBget
     Bget

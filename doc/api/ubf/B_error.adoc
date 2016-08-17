@@ -1,0 +1,43 @@
+BERROR(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+B_error - Print the error message to *stderr*
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+void B_error (char *'str');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+The principle is similar to *perror()* POSIX function call. Function prints the last UBF error message including user message (in 'str') to *stderr*.
+
+RETURN VALUE
+------------
+Function is void and does not return value.
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*CBchg(3)* *Badd(3)* *Binit(3)* *Bstrerror(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
