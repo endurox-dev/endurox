@@ -46,6 +46,7 @@ set(MAN3_NAMES
 	CBget
     Bget
 	Bdel
+    Bdelall
 	Bpres
 	Bproj
 	Bprojcpy
@@ -61,6 +62,8 @@ set(MAN3_NAMES
     Bmkfldid
     Boccur
     Bused
+    Bfldtype
+    Bdelete
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

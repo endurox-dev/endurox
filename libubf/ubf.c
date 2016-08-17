@@ -7,8 +7,6 @@
 ** - on API exit make diff of the FB memory. Also diff the memory usage
 ** - provide the information about count of bytes from source element added
 ** - on exit, dump the first BFLDID element address
-** All API calls are server here (as entry pointes). Functions which are not
-** invoced by other functions can stay here as implementations.
 **
 ** @file ubf.c
 ** 

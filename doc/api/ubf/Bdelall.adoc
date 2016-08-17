@@ -1,0 +1,55 @@
+BDELALL(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bdelall - Remove all field occurrences from buffer
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bdelall (UBFH *'p_ub', BFLDID 'bfldid');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Remove all 'bfldid' occurrences from 'p_ub' UBF buffer.
+
+RETURN VALUE
+------------
+On success, *Bdelall()* return zero; on error, -1 is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BBADFLD* Invalid field id passed.
+
+*BNOTPRES* Field not present thus not deleted.
+
+EXAMPLE
+-------
+See *ubftest/test_bproj.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bdel(3)* *Badd(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
