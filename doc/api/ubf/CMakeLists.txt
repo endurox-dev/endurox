@@ -59,6 +59,8 @@ set(MAN3_NAMES
     Bboolev
     Bfloatev
     Bmkfldid
+    Boccur
+    Bused
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

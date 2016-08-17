@@ -4,6 +4,7 @@
 ** Enduro Execution Library
 ** Internal implementation of the library - no entry error checks.
 ** Errors are checked on entry pointers only in ubf.c!
+** TODO: Add checks for user passed bfldid type. If bigger than BFLD_CARRAY, then reject with BBADFLD.
 **
 ** @file ubf_impl.c
 ** 
@@ -403,6 +404,10 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         to_add1 = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type].cache_offset);
         p_bfldid_start= (BFLDID *)(((char *)p_bfldid_start) + *to_add1);
         start = (char *)p_bfldid_start;
+    }
+    else if (type > BFLD_CARRAY)
+    {
+	    
     }
     
     /* stop will be bigger than start.... anyway (take the next field cache offset) */
