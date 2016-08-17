@@ -53,6 +53,8 @@ set(MAN3_NAMES
     Bnext
     Bboolco
     Bfind
+    Bboolev
+    Bfloatev
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

@@ -1,0 +1,63 @@
+BFLOATEV(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+Bfloatev - Evaulate compiled expression tree against UBF buffer
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+double Bfloatev (UBFH *'p_ub', char *'tree');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Evaluate compiled expresion in 'tree' against UBF buffer in 'p_ub'. Returned value is floating point result of the operation.
+
+RETURN VALUE
+------------
+Floating point result value is returned. In case of error it is *-1*, but to detect error, check the *Berror*.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BEINVAL* 'tree' param is NULL.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BBADFLD* Invalid field id passed.
+
+*BNOTPRES* Field not present.
+
+*FMALLOC* Malloc failed.
+
+*BSYNTAX* Synax error in script.
+
+*BBADNAME* Bad field name specified.
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bboolco(3)* *Bboolev(3)* *Btreefree(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
