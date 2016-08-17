@@ -675,7 +675,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
 
     if (SUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
     {
-        _Fset_error_fmt(BNOTFLD, "Destination buffer too short. "
+        _Fset_error_fmt(BNOSPACE, "Destination buffer too short. "
                                     "Source len: %d dest used: %d",
                                     dst_h->buf_len, src_h->bytes_used);
         ret=FAIL;

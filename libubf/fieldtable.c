@@ -272,58 +272,58 @@ public UBF_field_def_t * _fldnmhash_get(char *key)
  */
 private int _ubf_load_def_table(void)
 {
-	char *flddir=NULL;
-	char *flds=NULL;
-	char *p;
-	FILE *fp;
-	char tmp_flds[FILENAME_MAX+1];
-	char tmp[FILENAME_MAX+1];
-	
-	int ret=SUCCEED;
+    char *flddir=NULL;
+    char *flds=NULL;
+    char *p;
+    FILE *fp;
+    char tmp_flds[FILENAME_MAX+1];
+    char tmp[FILENAME_MAX+1];
 
-	flddir = getenv(FLDTBLDIR);
-	if (NULL==flddir)
-	{
-		_Fset_error_msg(BFTOPEN, "Field table directory not set - "
-					 "check FLDTBLDIR env var");
-		ret=FAIL;
+    int ret=SUCCEED;
+
+    flddir = getenv(FLDTBLDIR);
+    if (NULL==flddir)
+    {
+        _Fset_error_msg(BFTOPEN, "Field table directory not set - "
+                                 "check FLDTBLDIR env var");
+        ret=FAIL;
         goto out;
-	}
+    }
     UBF_LOG(log_debug, "Load field dir [%s]", flddir);
-	
-	flds = getenv(FIELDTBLS);
-	if (NULL==flds)
-	{
-		_Fset_error_msg(BFTOPEN, "Field table list not set - "
-			 "check FIELDTBLS env var");
-		ret=FAIL;
+
+    flds = getenv(FIELDTBLS);
+    if (NULL==flds)
+    {
+        _Fset_error_msg(BFTOPEN, "Field table list not set - "
+                 "check FIELDTBLS env var");
+        ret=FAIL;
         goto out;
-	}
+    }
 
     UBF_LOG(log_debug, "About to load fields list [%s]", flds);
 
     _ubf_loader_init();
-    
-	strcpy(tmp_flds, flds);
-	p=strtok(tmp_flds, ",");
-	while (NULL!=p && SUCCEED==ret)
-	{
-		sprintf(tmp, "%s/%s", flddir, p);
-		/* Open field table file */
-		if (NULL==(fp=fopen(tmp, "r")))
-		{
+
+    strcpy(tmp_flds, flds);
+    p=strtok(tmp_flds, ",");
+    while (NULL!=p && SUCCEED==ret)
+    {
+        sprintf(tmp, "%s/%s", flddir, p);
+        /* Open field table file */
+        if (NULL==(fp=fopen(tmp, "r")))
+        {
             _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
-                                        strerror(errno));
-		    ret=FAIL;
+                                strerror(errno));
+            ret=FAIL;
             goto out;
-		}
+        }
 
         ret=_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, FALSE);
 
-		/* Close file */
-		fclose(fp);
-		p=strtok(NULL, ",");
-	}
+        /* Close file */
+        fclose(fp);
+        p=strtok(NULL, ",");
+    }
 
 out:
 
@@ -432,8 +432,8 @@ private int _ubf_load_fld_def(int base,
     {
         if (0==strcmp(p->fldname, ftype))
         {
-                fld->fldtype = p->fld_type;
-                dtype = p->fld_type;
+            fld->fldtype = p->fld_type;
+            dtype = p->fld_type;
             break;
         }
         p++;
@@ -462,9 +462,9 @@ private int _ubf_load_fld_def(int base,
             {
                 /* ERROR! ID Already defined! */
                 _Fset_error_fmt(BFTSYNTAX, "Duplicate name [%s] already taken by "
-                                        "[%s]:%d %s:%d!",
-                                        fld->fldname, reserved->fldname, number,
-                                        fname, line);
+                                "[%s]:%d %s:%d!",
+                                fld->fldname, reserved->fldname, number,
+                                fname, line);
                 ret=FAIL;
             }
 
@@ -472,9 +472,9 @@ private int _ubf_load_fld_def(int base,
             {
                 /* ERROR! Name already taken */
                 _Fset_error_fmt(BFTSYNTAX, "Duplicate ID [%s]:%d already taken by [%s]:%d "
-                                           "%s:%d!",
-                                        fld->fldname, number, reserved->fldname, number,
-                                        fname, line);
+                                    "%s:%d!",
+                                 fld->fldname, number, reserved->fldname, number,
+                                 fname, line);
                 ret=FAIL;
             }
         }
@@ -563,30 +563,32 @@ public int prepare_type_tables(void)
  */
 public char * _Bfname_int (BFLDID bfldid)
 {
-	UBF_field_def_t *p_fld;
-    static char buf[64];
+    UBF_field_def_t *p_fld;
+    static __thread char buf[64];
 
-	if (SUCCEED!=prepare_type_tables())
-	{
+    if (SUCCEED!=prepare_type_tables())
+    {
         if (BFTOPEN==Berror || BFTSYNTAX==Berror)
+        {
             _Bunset_error();
+        }
 
         sprintf(buf, "((BFLDID32)%d)", bfldid);
 
-		return buf;
-	}
-
-	/* Now try to find the data! */
-	p_fld = _bfldidhash_get(bfldid);
-	if (NULL==p_fld)
-	{
-		sprintf(buf, "((BFLDID32)%d)", bfldid);
         return buf;
-	}
-	else
-	{
-		return p_fld->fldname;
-	}
+    }
+
+    /* Now try to find the data! */
+    p_fld = _bfldidhash_get(bfldid);
+    if (NULL==p_fld)
+    {
+        sprintf(buf, "((BFLDID32)%d)", bfldid);
+        return buf;
+    }
+    else
+    {
+        return p_fld->fldname;
+    }
 }
 
 /**
@@ -609,12 +611,12 @@ private BFLDID get_from_bfldidstr(char *fldnm)
  */
 public BFLDID _Bfldid_int (char *fldnm)
 {
-	UBF_field_def_t *p_fld=NULL;
+    UBF_field_def_t *p_fld=NULL;
     BFLDID bfldid;
 
-	if (SUCCEED!=prepare_type_tables())
-	{
-        /* extening support for BFLDID syntax for read. */
+    if (SUCCEED!=prepare_type_tables())
+    {
+        /* extending support for BFLDID syntax for read. */
         if (0==strncmp(fldnm, "((BFLDID32)", 10))
         {
             bfldid = get_from_bfldidstr(fldnm);
@@ -624,22 +626,22 @@ public BFLDID _Bfldid_int (char *fldnm)
         {
             return BBADFLDID;
         }
-	}
+    }
     
-	/* Now we can try to do lookup */
-	p_fld = _fldnmhash_get(fldnm);
+    /* Now we can try to do lookup */
+    p_fld = _fldnmhash_get(fldnm);
 
-	if (NULL!=p_fld)
-	{
-		return p_fld->bfldid;
-	}
+    if (NULL!=p_fld)
+    {
+            return p_fld->bfldid;
+    }
     else if (0==strncmp(fldnm, "((BFLDID32)", 10))
     {
         bfldid = get_from_bfldidstr(fldnm);
         return bfldid;
     }
-	else
-	{
-		return BBADFLDID;
-	}
+    else
+    {
+        return BBADFLDID;
+    }
 }

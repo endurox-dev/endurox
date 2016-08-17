@@ -786,7 +786,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 /* do command processing for now */
                 command_wait_and_run(&finished, abort);
                 /* check the status? */
-            } while (ndrx_timer_get_delta(&timer) < G_app_config->srvstartwait && 
+            } while (ndrx_timer_get_delta(&timer) < p_pm->conf->srvstartwait && 
                             NDRXD_PM_STARTING==p_pm->state && !(*abort));
             
             if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
@@ -920,7 +920,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* do command processing for now */
         command_wait_and_run(&finished, abort);
         /* check the status? */
-    } while (ndrx_timer_get_delta(&timer) < G_app_config->srvstopwait &&
+    } while (ndrx_timer_get_delta(&timer) < p_pm->conf->srvstopwait &&
                     !PM_NOT_RUNNING(p_pm->state) &&
                     !(*abort));
 
