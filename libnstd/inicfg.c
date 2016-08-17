@@ -98,6 +98,50 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
     }
 }
 
+/* TODO: Func for add/get section */
+
+/**
+ * Get new qhash entry + add it to hash.
+ * @param qname
+ * @return 
+ */
+private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_file_t *cf, char *section)
+{
+    ndrx_inicfg_section_t * ret = calloc(1, sizeof(ndrx_inicfg_section_t));
+    
+    if (NULL==ret)
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_section_t: %s", strerror(err));
+        goto out;
+    }
+    
+    strcpy(ret->section, section);
+    
+    HASH_ADD_STR( cf->sections, section, ret );
+out:
+    return ret;
+}
+
+/**
+ * Get QHASH record for particular q
+ * @param qname
+ * @return 
+ */
+private ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_file_t *cf, char *section)
+{
+    ndrx_inicfg_section_t * ret = NULL;
+   
+    HASH_FIND_STR( cf->sections, section, ret);
+    
+    if (NULL==ret)
+    {
+        ret = cfg_section_new(cf, section);
+    }
+    
+    return ret;
+}
+
 /**
  * Add stuff to file content hash
  * @param cf_ptr
@@ -109,13 +153,39 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
 private int handler(void* cf_ptr, const char* section, const char* name,
                    const char* value)
 {
+    int ret = 1;
     ndrx_inicfg_file_t *cf = (ndrx_inicfg_file_t*)cf_ptr;
     
+    /* add/get section */
     
+    ndrx_inicfg_section_t *mem_section = cfg_section_get(cf, (char *)section);
+    
+    ndrx_inicfg_section_keyval_t * mem_value = NULL;
+            
+    if (NULL==mem_section)
+    {
+        ret = 0;
+        goto out;
+    }
+    
+    /* TODO: add the value entry */
+    
+    mem_value = calloc(1, sizeof(ndrx_inicfg_section_keyval_t));
+    
+    if (NULL==mem_value)
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_section_t: %s", strerror(err));
+        goto out;
+    }
+    
+        
     /* on error 0 */
     
     /* on success 1 */
-    return 0;
+    
+out:
+    return ret;
 }
 
 
@@ -136,7 +206,7 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     {
         _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_file_t: %s", 
                 strerror(errno));
-        NDRX_LOG(log_error, "Failed to alloc: ndrx_inicfg_file_t!");
+        FAIL_OUT(ret);
     }
     
     /* copy off resource */
@@ -155,8 +225,7 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     {
         _Nset_error_fmt(NEINVALINI, "Invalid ini file: [%s] error on line: %d", 
                 fullname, ret);
-        NDRX_LOG(log_error, "Invalid ini file: [%s] error on line: %d", 
-                fullname, ret);
+        
     }
     
 out:

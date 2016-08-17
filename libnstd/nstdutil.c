@@ -43,6 +43,7 @@
 #include <pthread.h>
 
 #include "nstdutil.h"
+#include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -231,20 +232,92 @@ public void ndrx_get_dt_local(long *p_date, long *p_time)
 }
 
 /**
+ * Replace string with other string, return malloced new copy
+ * @param orig original string
+ * @param rep string to replace
+ * @param with replace with
+ * @return NULL (if orgin is NULL) or newly allocated string
+ */
+char *ndrx_str_replace(char *orig, char *rep, char *with) {
+    char *result; /* the return string */
+    char *ins;    /* the next insert point */
+    char *tmp;    /* varies */
+    int len_rep;  /* length of rep */
+    int len_with; /* length of with */
+    int len_front; /* distance between rep and end of last rep */
+    int count;    /* number of replacements */
+
+    if (!orig)
+        return NULL;
+    if (!rep)
+        rep = "";
+    len_rep = strlen(rep);
+    if (!with)
+        with = "";
+    len_with = strlen(with);
+
+    ins = orig;
+    for (count = 0; tmp = strstr(ins, rep); ++count) {
+        ins = tmp + len_rep;
+    }
+
+    /* first time through the loop, all the variable are set correctly */
+    /* from here on, */
+    /*    tmp points to the end of the result string */
+    /*    ins points to the next occurrence of rep in orig */
+    /*    orig points to the remainder of orig after "end of rep" */
+    tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+
+    if (!result)
+        return NULL;
+
+    while (count--) {
+        ins = strstr(orig, rep);
+        len_front = ins - orig;
+        tmp = strncpy(tmp, orig, len_front) + len_front;
+        tmp = strcpy(tmp, with) + len_with;
+        orig += len_front + len_rep; /* move to next "end of rep" */
+    }
+    strcpy(tmp, orig);
+    return result;
+}
+
+/**
  * Substitute environment 
  * @param str
+ * @param buf_len buffer len for overrun checks
  * @return 
  */
-public char * ndrx_str_env_subs(char * str)
+public char * ndrx_str_env_subs_len(char * str, int buf_size)
 {
-    char *p;
+    char *p, *p2;
     char *next = str;
     char envnm[1024];
     char *env;
     char *out;
     char *empty="";
+    char *malloced;
+    
+    /* replace '\\' -> '\'  */
+    if (strstr(str, "\\\\"))
+    {
+        malloced = ndrx_str_replace(str, "\\\\", "\\");
+        strcpy(str, malloced);
+        free(malloced);
+    }
+    
     while (NULL!=(p=strstr(next, "${")))
     {
+        
+        p2=strstr(next, "\\${");
+        
+        /* this is escaped stuff, we shall ignore that */
+        if (p == p2)
+        {
+            next+=3; 
+            continue;
+        }
+        
         char *close =strchr(next, '}');
         if (NULL!=close)
         {
@@ -268,6 +341,14 @@ public char * ndrx_str_env_subs(char * str)
             }
             else if (cpylen+3 > envlen)
             {
+                /* if buf_len == 0, skip the checks. */
+                if (buf_size > 0 && 
+                        strlen(str) + (cpylen+3 - envlen) > buf_size-1 /*incl EOS*/)
+                {
+                    /* cannot continue it is buffer overrun! */
+                    return str;
+                }
+                
                 /*int overleft = cpylen+2 - envlen; */
                 /* copy there, and reduce total len */
                 memcpy(p, out, envlen);
@@ -294,6 +375,15 @@ public char * ndrx_str_env_subs(char * str)
     return str;
 }
 
+/**
+ * Unknown buffer len.
+ * @param str
+ * @return 
+ */
+public char * ndrx_str_env_subs(char * str)
+{
+    return ndrx_str_env_subs_len(str, 0);
+}
 /**
  * Decode number
  * @param t

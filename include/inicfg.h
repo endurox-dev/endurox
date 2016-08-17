@@ -85,6 +85,8 @@ struct ndrx_inicfg_file
     char resource[PATH_MAX+1];
     /* time stamp when read */
     
+    ndrx_inicfg_section_t *sections;
+    
     int not_refreshed; /* marked as not refreshed (to kill after reload) */
     UT_hash_handle hh;         /* makes this structure hashable */
 };

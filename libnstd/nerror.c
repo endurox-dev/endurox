@@ -130,8 +130,10 @@ public void _Nset_error(int error_code)
 {
     if (!M_nstd_error)
     {
+/*
         NDRX_LOG(log_warn, "_Nset_error: %d (%s)", 
                                 error_code, NSTD_ERROR_DESCRIPTION(error_code));
+ */
         M_nstd_error_msg_buf[0] = EOS;
         M_nstd_error = error_code;
     }
@@ -153,9 +155,10 @@ public void _Nset_error_msg(int error_code, char *msg)
         msg_len = strlen(msg);
         err_len = (msg_len>MAX_ERROR_LEN)?MAX_ERROR_LEN:msg_len;
 
-
+/*
         NDRX_LOG(log_warn, "_Nset_error_msg: %d (%s) [%s]", error_code,
                                 NSTD_ERROR_DESCRIPTION(error_code), msg);
+ */
         M_nstd_error_msg_buf[0] = EOS;
         strncat(M_nstd_error_msg_buf, msg, err_len);
         M_nstd_error = error_code;
@@ -182,10 +185,11 @@ public void _Nset_error_fmt(int error_code, const char *fmt, ...)
 
         strcpy(M_nstd_error_msg_buf, msg);
         M_nstd_error = error_code;
-
+/*
         NDRX_LOG(log_warn, "_Nset_error_fmt: %d (%s) [%s]",
                         error_code, NSTD_ERROR_DESCRIPTION(error_code),
                         M_nstd_error_msg_buf);
+ */
     }
 }
 

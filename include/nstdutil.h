@@ -68,6 +68,8 @@ extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
 extern NDRX_API char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts);
 extern NDRX_API unsigned long long ndrx_get_micro_resolution_for_sec(void);
 extern NDRX_API char * ndrx_str_env_subs(char * str);
+extern char * ndrx_str_env_subs_len(char * str, int buf_size);
+extern NDRX_API char *ndrx_str_replace(char *orig, char *rep, char *with);
 extern NDRX_API void ndrx_utc_tstamp2(long *t, long *tusec);
 extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
 extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
