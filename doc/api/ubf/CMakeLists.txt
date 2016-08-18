@@ -62,6 +62,7 @@ set(MAN3_NAMES
     Bmkfldid
     Boccur
     Bused
+    Bunused
     Bfldtype
     Bdelete
     Bfldno
