@@ -1,0 +1,44 @@
+BFLDTYPE(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+Bfldno - Return the filed type for compiled field id
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+BFLDOCC Bfldno (BFLDID 'bfldid');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Return field ID form compiled field ID.
+
+RETURN VALUE
+------------
+Function returns the field ID (the value normally present in FD files plus base).
+
+
+ERRORS
+------
+No errors are returned.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*mkfldhdr(8)* *Bfldtype(3)* *Bmkfldid(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
