@@ -43,7 +43,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*Blen(3)* *Bused(3)*
+*Bsizeof(3)* *Bused(3)*
 
 COPYING
 -------
