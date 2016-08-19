@@ -5,7 +5,7 @@ CBFIND(3)
 
 NAME
 ----
-CBfind - 
+CBfind - find type field and return user type specified value pointer
 
 
 SYNOPSIS
