@@ -1,0 +1,53 @@
+REALLOC(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Brealloc - Reallocate buffer to given size
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+
+UBFH * Brealloc (UBFH *'p_ub', BFLDOCC 'f', BFLDLEN 'v');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Reallocates UBF buffer to store the number of fields of 'f' with length of 'v'.
+
+
+RETURN VALUE
+------------
+On success, *Brealloc()* returns pointer to UBF buffer; on error, NULL is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BEINVAL* Buffer is shorter than currently bytes used, or the total size of bigger than *MAXUBFLEN*.
+
+*BMALLOC* Malloc failed.
+
+EXAMPLE
+-------
+See *ubftest/test_mem.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bfree(3)* *Balloc(3)* *Binit(3)* *Bused(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

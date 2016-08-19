@@ -69,6 +69,8 @@ set(MAN3_NAMES
     Bsizeof
     Btype
     Bfree
+    Balloc
+    Brealloc
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
