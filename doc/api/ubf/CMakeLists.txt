@@ -71,6 +71,7 @@ set(MAN3_NAMES
     Bfree
     Balloc
     Brealloc
+    Bupdate
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
