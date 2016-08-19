@@ -1452,6 +1452,11 @@ public BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
 
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
 
+    if (NULL==buf)
+    {
+         _Fset_error_fmt(BEINVAL, "buf is NULL");
+         return FAIL;
+    }
     /* Do standard validation */
     if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
@@ -1477,11 +1482,17 @@ public BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
 public BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
                                         char * buf, BFLDLEN len, int usrtype)
 {
-    char *fn = "Bfindocc";
+    char *fn = "CBfindocc";
     API_ENTRY;
 
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
 
+    if (NULL==buf)
+    {
+         _Fset_error_fmt(BEINVAL, "buf is NULL");
+         return FAIL;
+    }
+ 
     /* Do standard validation */
     if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {

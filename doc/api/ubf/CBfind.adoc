@@ -1,0 +1,55 @@
+CBFIND(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+CBfind - 
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+char * CBfind (UBFH *'p_ub', BFLDID 'bfldid', BFLDOCC 'occ', BFLDLEN *'len', int 'usrtype');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function on success returns pointer to data field present in UBF buffer, converted to user type specified in 'usrtype'. 'p_ub' is pointer to UBF buffer, 'bfldid' is field id, 'occ' is field occurrence at buffer, which needs to be found. 'len' is output paramter for indicating the type length in bytes. Then 'len' is optional. Returned pointer is valid only until next UBF operation call, as the converted value is stored in thread local storage used for varous UBF operations.
+
+RETURN VALUE
+------------
+On success, *CBfind()* return zero; on error, -1 is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BNOTPRES* Field not present.
+
+*BMALLOC* Failed to allocate type conversion buffer.
+
+EXAMPLE
+-------
+See *ubftest/test_find.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bchg(3)* *Badd(3)* *CBadd(3)* *Bfind(3)* *CBfindocc(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

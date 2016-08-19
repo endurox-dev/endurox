@@ -57,6 +57,7 @@ set(MAN3_NAMES
     Bnext
     Bboolco
     Bfind
+    CBfind
     Bboolev
     Bfloatev
     Bmkfldid
@@ -72,6 +73,7 @@ set(MAN3_NAMES
     Balloc
     Brealloc
     Bupdate
+    CBfindocc
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
