@@ -150,25 +150,51 @@ private ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_file_t *cf, char *se
  * @param value
  * @return 
  */
-private int handler(void* cf_ptr, const char* section, const char* name,
+private int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
                    const char* value)
 {
     int ret = 1;
+    int value_len;
     ndrx_inicfg_file_t *cf = (ndrx_inicfg_file_t*)cf_ptr;
+    char **section_start_with = (char **)vsection_start_with;
+    char *p;
+    int needed = TRUE;
+    
+    ndrx_inicfg_section_t *mem_section = NULL;
+    ndrx_inicfg_section_keyval_t * mem_value = NULL;
+    
+    /* check do we need this section at all */
+    
+    if (NULL!=section_start_with)
+    {
+        needed = FALSE;
+        
+        while (NULL!=*section_start_with)
+        {
+            int len = NDRX_MIN(strlen(*section_start_with), strlen(section));
+            
+            if (0 == strcmp(*section_start_with, section))
+            {
+                needed = TRUE;
+                break;
+            }
+            section_start_with++;
+        }
+    }
+    
+    /* section not needed. */
+    if (!needed)
+    {
+        goto out;
+    }
     
     /* add/get section */
-    
-    ndrx_inicfg_section_t *mem_section = cfg_section_get(cf, (char *)section);
-    
-    ndrx_inicfg_section_keyval_t * mem_value = NULL;
-            
+    mem_section = cfg_section_get(cf, (char *)section);
     if (NULL==mem_section)
     {
         ret = 0;
         goto out;
     }
-    
-    /* TODO: add the value entry */
     
     mem_value = calloc(1, sizeof(ndrx_inicfg_section_keyval_t));
     
@@ -179,10 +205,53 @@ private int handler(void* cf_ptr, const char* section, const char* name,
         goto out;
     }
     
-        
-    /* on error 0 */
+    strncpy(mem_value->section, section, sizeof(mem_value->section)-1);
+    mem_value->section[sizeof(mem_value->section)-1] = EOS;
     
-    /* on success 1 */
+    /* Process the key */
+    if (NULL==(mem_value->key = strdup(name)))
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->key: %s", strerror(err));
+        ret = 0;
+        goto out;
+    }
+    
+    if (NULL==(mem_value->val = strdup(value)))
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->val: %s", strerror(err));
+        ret = 0;
+        goto out;
+    }    
+    
+    value_len = strlen(mem_value->val) + PATH_MAX + 1;
+    
+    if (NULL==(mem_value->val = realloc(mem_value->val, value_len)))
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->val (new size: %d): %s", 
+                value_len, strerror(err));
+        ret = 0;
+        goto out;
+    }
+    /* replace the env... */
+    ndrx_str_env_subs_len(mem_value->val, value_len);
+    value_len = strlen(mem_value->val) + 1;
+    
+    /* realloc to exact size */
+    if (NULL==(mem_value->val = realloc(mem_value->val, value_len)))
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to truncate mem_value->val to %d: %s", 
+                value_len, strerror(err));
+
+        ret = 0;
+        goto out;
+    }
+    
+    /* Add stuff to the section */
+    HASH_ADD_STR(mem_section->values, key, mem_value);
     
 out:
     return ret;
@@ -193,11 +262,11 @@ out:
  * Load single file into config
  * @param cfg
  * @param resource
- * @param fullsection_start_with
+ * @param section_start_with
  * @return 
  */
 public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
-        char *resource, char *fullname, char **fullsection_start_with)
+        char *resource, char *fullname, char **section_start_with)
 {
     ndrx_inicfg_file_t *cf = NULL;
     int ret = SUCCEED;
@@ -221,7 +290,7 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     
     /* start to parse the file by inih */
     
-    if (SUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf)))
+    if (SUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, (void *)section_start_with)))
     {
         _Nset_error_fmt(NEINVALINI, "Invalid ini file: [%s] error on line: %d", 
                 fullname, ret);
@@ -236,10 +305,10 @@ out:
  * Load or update resource
  * @param cfg config handler
  * @param resource folder/file to load
- * @param fullsection_start_with list of sections which we are interested in
+ * @param section_start_with list of sections which we are interested in
  * @return 
  */
-public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **fullsection_start_with)
+public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
 {
     int ret = SUCCEED;
     
@@ -252,7 +321,7 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **fullsec
     {
         NDRX_LOG(log_debug, "Resource: [%s] is regular file", resource);
         if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
-                resource, fullsection_start_with))
+                resource, section_start_with))
         {
             FAIL_OUT(ret);
         }
@@ -279,7 +348,7 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **fullsec
                    )
                {
                    if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
-                           elt->qname, fullsection_start_with))
+                           elt->qname, section_start_with))
                    {
                        FAIL_OUT(ret);
                    }
@@ -295,27 +364,24 @@ out:
 }
 
 /**
- * If file reloaded, then populate sub-sections
- * @param fullfile full path to file
- * @return 
- */
-public int ndrx_inicfg_merge_subsect(char *fullfile)
-{
-    int ret = SUCCEED;
-    
-out:
-    return ret;
-}
-
-/**
- * Get he list of key/value entries for the section
+ * Get he list of key/value entries for the section (fills up the hash with keys/val)
  * @param cfg
  * @param section
+ * @param out
  * @return 
  */
-public ndrx_inicfg_section_keyval_t* ndrx_inicfg_get(ndrx_inicfg_t *cfg, char *fullsection)
+public void ndrx_inicfg_get(ndrx_inicfg_t *cfg, char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
 {
-    return NULL;
+    /* Loop over all resources, and check that these are present in  
+     * resources var (or resources is NULL) 
+     * in that case resolve from all resources found in system.
+     */
+    
+    
+    /* HASH FOR EACH: cfg->cfgfile */
+    
+    
+    return;
 }
 
 /**
@@ -336,7 +402,7 @@ public ndrx_inicfg_section_keyval_t* ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
  * @param fullsection_starts_with
  * @return List of sections
  */
-public ndrx_inicfg_section_keyval_t* ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, char **fullsection_starts_with)
+public ndrx_inicfg_section_keyval_t* ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, char **section_start_with)
 {
     return NULL;
 }
@@ -347,7 +413,7 @@ public ndrx_inicfg_section_keyval_t* ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, cha
  */
 public void ndrx_inicfg_keyval_free(ndrx_inicfg_section_keyval_t *keyval)
 {
-    
+
 }
 
 /**

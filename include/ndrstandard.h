@@ -78,6 +78,8 @@ typedef int         bool;
 
 #define ELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
 
+#define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
 #ifdef	__cplusplus
 }
 #endif

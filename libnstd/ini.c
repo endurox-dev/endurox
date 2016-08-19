@@ -71,7 +71,7 @@ static char* strncpy0(char* dest, const char* src, size_t size)
 
 /* See documentation in header file. */
 int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
-                     void* user)
+                     void* user, void *user2)
 {
     /* Uses a fair bit of stack (use heap instead if you need to) */
 #if INI_USE_STACK
@@ -118,7 +118,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
         else if (*prev_name && *start && start > line) {
             /* Non-blank line with leading whitespace, treat as continuation
                of previous name's value (as per Python configparser). */
-            if (!handler(user, section, prev_name, start) && !error)
+            if (!handler(user, user2, section, prev_name, start) && !error)
                 error = lineno;
         }
 #endif
@@ -151,7 +151,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 
                 /* Valid name[=:]value pair found, call handler */
                 strncpy0(prev_name, name, sizeof(prev_name));
-                if (!handler(user, section, name, value) && !error)
+                if (!handler(user, user2, section, name, value) && !error)
                     error = lineno;
             }
             else if (!error) {
@@ -174,13 +174,13 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 }
 
 /* See documentation in header file. */
-int ini_parse_file(FILE* file, ini_handler handler, void* user)
+int ini_parse_file(FILE* file, ini_handler handler, void* user, void *user2)
 {
-    return ini_parse_stream((ini_reader)fgets, file, handler, user);
+    return ini_parse_stream((ini_reader)fgets, file, handler, user, user2);
 }
 
 /* See documentation in header file. */
-int ini_parse(const char* filename, ini_handler handler, void* user)
+int ini_parse(const char* filename, ini_handler handler, void* user, void *user2)
 {
     FILE* file;
     int error;
@@ -188,7 +188,7 @@ int ini_parse(const char* filename, ini_handler handler, void* user)
     file = fopen(filename, "r");
     if (!file)
         return -1;
-    error = ini_parse_file(file, handler, user);
+    error = ini_parse_file(file, handler, user, user2);
     fclose(file);
     return error;
 }
