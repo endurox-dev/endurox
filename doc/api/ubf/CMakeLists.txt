@@ -67,6 +67,7 @@ set(MAN3_NAMES
     Bdelete
     Bfldno
     Bsizeof
+    Btype
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

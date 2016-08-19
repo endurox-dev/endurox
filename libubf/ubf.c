@@ -1176,7 +1176,7 @@ public char * Btype (BFLDID bfldid)
 public int Bfree (UBFH *p_ub)
 {
     int ret=SUCCEED;
-    char fn[] = "Bsizeof";
+    char fn[] = "Bfree";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     API_ENTRY;
     

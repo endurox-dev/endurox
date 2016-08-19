@@ -1,0 +1,49 @@
+BTYPE(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+Btype - return then type description of the compiled field id
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+char * Btype (BFLDID 'bfldid');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Return the type description of compiled field id. Possible values *short*, *long*, *char*, *float*, *double*, *string*, *carray*.
+
+RETURN VALUE
+------------
+On success, *Btype()* returns the type description. On failure function returns *NULL*.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BTYPERR* Invalid field - bad type extracted from oldest bits.
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Btype(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
