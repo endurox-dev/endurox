@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Function prints the 'p_ub' buffer content to *stdout*. The format of the output is "<FIELD><TAB><VALUE><NEW_LINE>". The *BFLD_CARRAY* fields are printed in the way that non readable characters are printed in hex-decimal format, prefixed with '\'. If value contains '\' char, then it is printted as '\\'. Example:
+Function prints the 'p_ub' buffer content to *stdout*. The format of the output is "<FIELD><TAB><VALUE><NEW LINE>". The *BFLD_CARRAY* fields are printed in the way that non readable characters are printed in hex-decimal format, prefixed with \. If value contains \ char, then it is printted as \\. Example:
 
 --------------------------------------------------------------------------------
 T_SHORT_FLD     1765
@@ -33,6 +33,8 @@ T_DOUBLE_FLD    444.000000
 T_STRING_FLD    HELLO WORLD
 T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
 --------------------------------------------------------------------------------
+
+Floating point values are printed with 6 symbols after decimal seperator.
 
 RETURN VALUE
 ------------

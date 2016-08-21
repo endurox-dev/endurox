@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Function prints the 'p_ub' buffer content to io stream at 'outf'. The format of the output is "<FIELD><TAB><VALUE><NEW_LINE>". The *BFLD_CARRAY* fields are printed in the way that non readable characters are printed in hex-decimal format, prefixed with '\'. If value contains '\' char, then it is printted as '\\'. Example:
+Function prints the 'p_ub' buffer content to io stream at 'outf'. The format of the output is "<FIELD><TAB><VALUE><NEW_LINE>". The *BFLD_CARRAY* fields are printed in the way that non readable characters are printed in hex-decimal format, prefixed with \. If value contains \ char, then it is printted as \\. Example:
 
 --------------------------------------------------------------------------------
 T_SHORT_FLD     1765
