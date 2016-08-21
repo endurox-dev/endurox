@@ -45,7 +45,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*Bchg(3)* *Badd(3)* *CBadd(3)* *CBfind(3)*
+*Bchg(3)* *Badd(3)* *CBadd(3)* *CBfind(3)* *Bfindlast(3)*
 
 COPYING
 -------
