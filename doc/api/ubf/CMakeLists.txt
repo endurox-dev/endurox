@@ -78,6 +78,7 @@ set(MAN3_NAMES
     CBgetalloc
     Bgetlast
     Bprint
+    Bfprint
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
