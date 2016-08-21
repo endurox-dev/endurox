@@ -35,25 +35,25 @@ find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
 set(MAN3_NAMES 
-	Bchg
-	CBchg
-	Berror
+    Bchg
+    CBchg
+    Berror
     B_error
     Bstrerror
-	Blen
+    Blen
     Badd
-	CBadd
-	CBget
+    CBadd
+    CBget
     Bget
-	Bdel
+    Bdel
     Bdelall
-	Bpres
-	Bproj
-	Bprojcpy
+    Bpres
+    Bproj
+    Bprojcpy
     Bfldid
     Bfname
-	Bcpy
-	Binit
+    Bcpy
+    Binit
     Bnext
     Bboolco
     Bfind
@@ -77,6 +77,7 @@ set(MAN3_NAMES
     Bfindocc
     CBgetalloc
     Bgetlast
+    Bprint
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
