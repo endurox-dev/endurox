@@ -257,15 +257,16 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
     len_with = strlen(with);
 
     ins = orig;
-    for (count = 0; tmp = strstr(ins, rep); ++count) {
+    for (count = 0; (tmp = strstr(ins, rep)); ++count) {
         ins = tmp + len_rep;
     }
 
-    /* first time through the loop, all the variable are set correctly */
-    /* from here on, */
-    /*    tmp points to the end of the result string */
-    /*    ins points to the next occurrence of rep in orig */
-    /*    orig points to the remainder of orig after "end of rep" */
+    /* first time through the loop, all the variable are set correctly 
+     * from here on,
+     *    tmp points to the end of the result string
+     *    ins points to the next occurrence of rep in orig
+     *    orig points to the remainder of orig after "end of rep"
+     */
     tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
 
     if (!result)
