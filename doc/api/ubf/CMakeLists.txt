@@ -80,6 +80,7 @@ set(MAN3_NAMES
     Bgetlast
     Bprint
     Bfprint
+    Bextread
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
