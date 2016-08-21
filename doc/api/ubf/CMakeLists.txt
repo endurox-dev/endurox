@@ -74,6 +74,7 @@ set(MAN3_NAMES
     Brealloc
     Bupdate
     CBfindocc
+    Bfindocc
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
