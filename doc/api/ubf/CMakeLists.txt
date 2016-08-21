@@ -75,6 +75,7 @@ set(MAN3_NAMES
     Bupdate
     CBfindocc
     Bfindocc
+    CBgetalloc
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
