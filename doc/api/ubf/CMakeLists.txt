@@ -83,6 +83,8 @@ set(MAN3_NAMES
     Bfprint
     Btypcvt
     Bextread
+    Bread
+    Bwrite
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
