@@ -1,4 +1,4 @@
-BPOOLCO(3)
+BBOOLCO(3)
 ==========
 :doctype: manpage
 

@@ -1,0 +1,60 @@
+BBOOLPR(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bboolpr - Print the compiler boolean expression AST
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+void Bboolpr (char *'tree', FILE *'outf');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Print the compiled UBF buffer boolean expression evaluation Abstract Syntax Tree (AST) at 'tree' hander to 'outf' stream. The sample output for AST is following:
+
+--------------------------------------------------------------------------------
+
+...
+tree=Bboolco ("2 * ( 4 + 5 ) || 5 && 'abc' %% '..b' && 2/2*4==5")
+...
+Bboolpr(tree, stdout);
+
+will give:
+((2*(4+5)) || ((5 && ('abc' %% '..b')) && (((2/2)*4) == 5))
+
+--------------------------------------------------------------------------------
+
+
+RETURN VALUE
+------------
+Function is void and does not return any value.
+
+ERRORS
+------
+Function is void and does not return any error.
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bboolev(3)* *Bfloatev(3)* *Btreefree(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
