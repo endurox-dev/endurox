@@ -1,0 +1,59 @@
+BADDS(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+Badds - Add field to UBF buffer, string type
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Badds (UBFH *'p_ub', BFLDID 'bfldid', char *'buf');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Add string value to UBF buffer field. The UBF buffer pointer is passed by 'p_ub', field id in 'bfldid'. The user value is passed in 'buf'. Function basically is wrapper for:
+
+--------------------------------------------------------------------------------
+CBadd(p_ub, bfldid, buf, 0, BFLD_STRING);
+--------------------------------------------------------------------------------
+
+RETURN VALUE
+------------
+On success, *Badds()* return zero; on error, -1 is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BNOSPACE* No space in buffer for string data.
+
+*BMALLOC* Failed to allocate type conversion buffer.
+
+EXAMPLE
+-------
+See *ubftest/test_macro.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*CBchg(3)* *Bdel(3)* *Badd(3)* *Bchg(3)* *CBadd(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

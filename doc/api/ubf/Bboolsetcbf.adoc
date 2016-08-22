@@ -1,0 +1,51 @@
+BBOOLSETCBF(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+Bboolsetcbf - Add the callback function to the boolean expression evaluator
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bboolsetcbf (char *'funcname', long (*'functionPtr')(UBFH *'p_ub', char *'funcname'));
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Register callback function to boolean expression evaluator. The function name which appears in UBF expression is set in 'funcname', the function it self is set passed in 'functionPtr'. The callback function receives the buffer on whicch it is beign evaluated in 'p_ub', and callback receives the function name too in 'funcname'.
+
+Min length for function name is 3 symbols and max length is 64.
+
+RETURN VALUE
+------------
+On success, *Bboolsetcbf()* returns *0*. On error *-1* is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BBADNAME* Invalid function name
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bboolco(3)* *Bfloatev(3)* *Btreefree(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

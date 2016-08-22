@@ -86,6 +86,9 @@ set(MAN3_NAMES
     Bread
     Bwrite
     Btreefree
+    Bboolsetcbf
+    Badds
+    Bchgs
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
