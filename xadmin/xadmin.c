@@ -659,7 +659,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, 
                     __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);
         fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");
-        fprintf(stderr, "Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.\n\n");
+        fprintf(stderr, "Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.\n\n");
         fprintf(stderr, "This software is released under one of the following licenses:\n");
         fprintf(stderr, "GPLv2 (or later) or ATR Baltic's license for commercial use.\n\n");
     }
