@@ -1,0 +1,47 @@
+BTREEFREE(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+Btreefree - Free the AST tree allocated by Bboolco(3)
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+void Btreefree (char *'tree');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Free up the memory allocated by *Bboolco(3)*. The 'tree' is pointer returned by Bboolco(3).
+
+RETURN VALUE
+------------
+Function is void and does not return any value.
+
+ERRORS
+------
+Function is void and does not return any error.
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bboolev(3)* *Bfloatev(3)* *Bboolpr(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
