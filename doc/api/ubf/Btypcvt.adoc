@@ -1,0 +1,56 @@
+BTYPCVT(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Btypcvt - Convert user data betwen UBF types
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+char * Btypcvt (BFLDLEN *'to_len', int 'to_type', char *'from_buf', int 'from_type', BFLDLEN 'from_len');
+
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Convert the data from 'from_buf'/'from_type'/'from_len' triplet to type in 'to_type'. The length is returned in 'to_len'. Length is mandatory for *BFLD_CARRAY* types, for others they can be NULL. Function returns the pointer to data block, which is malloced by this function.
+
+The memory allocated by this function user shall free with standard *free()* system call.
+
+RETURN VALUE
+------------
+On success, *Btypcvt()* return pointer to allocated memory with converted data; on error, NULL is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BTYPERR* Invalid from/to type specified.
+
+*BEINVAL* 'from_buf' is NULL.
+
+*BMALLOC* Failed to allocate type conversion buffer.
+
+EXAMPLE
+-------
+See *ubftest/test_genbuf.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*CBget(3)* *CBchg(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
