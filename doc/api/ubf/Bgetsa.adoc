@@ -1,0 +1,61 @@
+BGETSA(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bgetsa - get the field, convert to string and copy to allocated memory
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+char * Bgetsa (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function is used to get field data from UBF buffer. 'p_ub' is pointer to UBF buffer, 'bfldid' is field id, 'occ' is field occurrence at buffer, which needs to be read. The value of the field is returned by this function. The pointer returned is memory block allocated by this function. Later this needs to be freed by free() system call. If 'extralen' is not NULL, then on input it indicates number of extra bytes to allocate.
+
+This is macro function and it invokes *CBgetalloc(3)* with field type *BFLD_STRING*.
+
+RETURN VALUE
+------------
+On success, *Bgetsa()* return pointer to memory block with data; on error, NULL is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BNOSPACE* No space in 'buf'.
+
+*BMALLOC* Failed to allocate type conversion buffer.
+
+*BBADFLD* Invalid field id passed.
+
+*BNOTPRES* Field not present.
+
+EXAMPLE
+-------
+See *ubftest/test_macro.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bchg(3)* *Badd(3)* *CBadd(3)* *Bget(3)* *CBget(3)* *CBgetalloc(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

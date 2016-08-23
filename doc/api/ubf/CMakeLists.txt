@@ -90,6 +90,7 @@ set(MAN3_NAMES
     Badds
     Bchgs
     Bgets
+    Bgetsa
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

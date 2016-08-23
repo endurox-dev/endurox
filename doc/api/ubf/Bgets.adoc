@@ -5,7 +5,7 @@ BGETS(3)
 
 NAME
 ----
-Bgets - Get and convert to user type data from UBF buffer
+Bgets - Get the field value converted to *BFLD_STRING*
 
 
 SYNOPSIS
