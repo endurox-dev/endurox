@@ -98,8 +98,6 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
     }
 }
 
-/* TODO: Func for add/get section */
-
 /**
  * Get new qhash entry + add it to hash.
  * @param qname
