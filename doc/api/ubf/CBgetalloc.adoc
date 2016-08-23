@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Get the field 'bfldid' at 'occ' occurrence from 'p_ub' buffer. The value is converted to 'usrtype'. The value is returned (copied to) to memory block allocated by function. There is extra parameter 'extralen'. On input it indicates the additional space that shall be allocated, on putput it indicates the data length loaded into allocated memory. The 'extralen' can be NULL, in that case no extra memory is allocated.
+Get the field 'bfldid' at 'occ' occurrence from 'p_ub' buffer. The value is converted to 'usrtype'. The value is returned (copied to) to memory block allocated by function. There is extra parameter 'extralen'. On input it indicates the additional space that shall be allocated. The 'extralen' can be NULL, in that case no extra memory is allocated.
 
 Function is based on *Bgetalloc(3)*, which does not convert to user type, but returns direct value.
 
