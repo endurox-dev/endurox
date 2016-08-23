@@ -1,0 +1,43 @@
+BUNINDEX(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+Bunindex - un-index UBF buffer, dummy function - RFU
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+BFLDOCC Bunindex (UBFH *'p_ub');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Dummy function. Reserved for future use.
+
+RETURN VALUE
+------------
+Returns SUCCEED (0)
+
+ERRORS
+------
+No errors returned by this function.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bindex(3)* *Bidxused(3)* *Brstrindex(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

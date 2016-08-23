@@ -1,0 +1,44 @@
+BINDEX(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bindex - Index UBF buffer, RFU
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bindex (UBFH *'p_ub', BFLDOCC 'occ');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Reserved for future use. Note that UBF buffer is automatically index by type offsets, and binary search for fixed length data (numerics and BFLD_CHAR).
+
+RETURN VALUE
+------------
+Returns SUCCEED (0)
+
+
+ERRORS
+------
+No errors returned by this function.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bunindex(3)* *Bidxused(3)* *Brstrindex(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

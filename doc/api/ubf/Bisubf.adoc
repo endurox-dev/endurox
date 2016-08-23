@@ -1,0 +1,48 @@
+BISUBF(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bisubf - Test is buffer UBF type
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bisubf (UBFH *'p_ub');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Test the buffer type. Returns the *1* if 'p_ub' buffer is UBF, *0* if buffer is not UBF.
+
+RETURN VALUE
+------------
+Returns *1* if buffer is UBF, *0* if it is not UBF.
+
+
+ERRORS
+------
+No errors returned by this function.
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Binit(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -1,0 +1,43 @@
+BINDEXUSED(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+Bidxused - dummy function - RFU
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+long Bidxused (UBFH *'p_ub');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Dummy function. Reserved for future use.
+
+RETURN VALUE
+------------
+Returns SUCCEED (0)
+
+ERRORS
+------
+No errors returned by this function.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*Bindex(3)* *Bunindex(3)* *Brstrindex(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
