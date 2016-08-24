@@ -92,13 +92,6 @@ void CPMSVC (TPSVCINFO *p_svc)
     
     NDRX_LOG(log_info, "Got command: [%s]", cmd);
     
-    /* Reload the config */
-    if (SUCCEED!=load_config())
-    {
-        NDRX_LOG(log_error, "Failed to load client config!");
-        FAIL_OUT(ret);
-    }
-    
     if (0==strcmp(cmd, "bc") || 0==strcmp(cmd, "sc"))
     {
         /* get tag & subsect */
