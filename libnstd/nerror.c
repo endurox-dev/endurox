@@ -69,6 +69,7 @@ struct err_msg
     {BMINVAL,       "No error"},        /* 0 */
     {NEINVALINI,    "Invalid INI file"}, /* 1 */
     {NEMALLOC,      "Malloc failed"},    /* 2 */
+    {NEUNIX,        "Unix system call failed"},    /* 3 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

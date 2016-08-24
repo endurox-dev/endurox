@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <sys/stat.h>
 #include <ndrxdcmn.h>
 #include <stdint.h>
 #include <ntimer.h>
@@ -83,11 +84,12 @@ struct ndrx_inicfg_file
     char fullname[PATH_MAX+1];
     /* original path */
     char resource[PATH_MAX+1];
-    /* time stamp when read */
+    
+    struct stat attr; /* time stamp when read */
     
     ndrx_inicfg_section_t *sections;
     
-    int not_refreshed; /* marked as not refreshed (to kill after reload) */
+    int refreshed; /* marked as not refreshed (to kill after reload) */
     UT_hash_handle hh;         /* makes this structure hashable */
 };
 
@@ -110,6 +112,8 @@ typedef struct ndrx_inicfg ndrx_inicfg_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern NDRX_API void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, char *fullfile);
+    
 #ifdef	__cplusplus
 }
 #endif

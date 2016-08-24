@@ -45,7 +45,8 @@ extern "C" {
 #define NMINVAL             0 /* min error */
 #define NEINVALINI          1 /* Invalid INI file */
 #define NEMALLOC            2 /* Malloc failed */
-#define NMAXVAL             2 /* max error */
+#define NEUNIX              3 /* Unix error occurred */
+#define NMAXVAL             3 /* max error */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

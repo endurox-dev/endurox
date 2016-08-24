@@ -93,7 +93,25 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
     {
         if (0==strcmp(f->resource, resource))
         {
-            f->not_refreshed = TRUE;
+            f->refreshed = TRUE;
+        }
+    }
+}
+
+/**
+ * Remove any config file which is not reloaded
+ * @param cfg
+ * @param resource
+ */
+private void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
+{
+    ndrx_inicfg_file_t *f, *ftmp;
+    
+    HASH_ITER(hh, cfg->cfgfile, f, ftmp)
+    {
+        if (!f->refreshed)
+        {
+            ndrx_inicfg_file_free(cfg, f->fullname);
         }
     }
 }
@@ -263,16 +281,17 @@ out:
  * @param section_start_with
  * @return 
  */
-public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+public int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with)
 {
     ndrx_inicfg_file_t *cf = NULL;
     int ret = SUCCEED;
+    char fn[] = "ndrx_inicfg_load_single_file";
     
     if (NULL==(cf = malloc(sizeof(ndrx_inicfg_file_t))))
     {
-        _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_file_t: %s", 
-                strerror(errno));
+        _Nset_error_fmt(NEMALLOC, "%s: Failed to malloc ndrx_inicfg_file_t: %s", 
+                fn, strerror(errno));
         FAIL_OUT(ret);
     }
     
@@ -284,19 +303,139 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     strncpy(cf->fullname, fullname, sizeof(cf->fullname)-1);
     cf->fullname[sizeof(cf->fullname)-1] = EOS;
     
-    cf->not_refreshed = FALSE;
+    cf->refreshed = FALSE;
     
+    if (SUCCEED!=stat(fullname, &cf->attr))
+    {
+        _Nset_error_fmt(NEUNIX, "%s: stat() failed for [%s]:%s", 
+                fn, fullname, strerror(errno));
+        FAIL_OUT(ret);    
+    }
+
     /* start to parse the file by inih */
-    
     if (SUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, (void *)section_start_with)))
     {
-        _Nset_error_fmt(NEINVALINI, "Invalid ini file: [%s] error on line: %d", 
-                fullname, ret);
-        
+        _Nset_error_fmt(NEINVALINI, "%s: Invalid ini file: [%s] error on line: %d", 
+                fn, fullname, ret);
+        FAIL_OUT(ret);
     }
+    
+    HASH_ADD_STR( cfg->cfgfile, fullname, cf );
     
 out:
     return ret;
+}
+
+/**
+ * Get the single file
+ * @param cfg
+ * @param fullname
+ * @return 
+ */
+private ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullname)
+{
+    ndrx_inicfg_file_t * ret = NULL;
+   
+    HASH_FIND_STR( cfg->cfgfile, fullname, ret);
+    
+    return ret;
+}
+
+
+/**
+ * Check the file for changes, if found in hash & 
+ * @param cfg
+ * @param resource
+ * @param fullname
+ * @param section_start_with
+ * @return 
+ */
+public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+        char *resource, char *fullname, char **section_start_with)
+{
+    int ret = SUCCEED;
+    struct stat attr; 
+    char fn[] = "ndrx_inicfg_update_single_file";
+    int ferr = 0;
+    
+    /* try to get the file handler (resolve) */
+    ndrx_inicfg_file_t *cf = cfg_single_file_get(cfg, fullname);
+    
+    if (SUCCEED!=stat(fullname, &attr))
+    {
+        /* check the error. */
+        ferr = errno;
+    }
+    
+    if (NULL!=cf && SUCCEED==ferr && 
+            0!=memcmp(&attr.st_mtime, &cf->attr.st_mtime, sizeof(attr.st_mtime)))
+    {
+        /* reload the file - kill the old one, and load again */
+        ndrx_inicfg_file_free(cfg, fullname);
+        if (SUCCEED!=ndrx_inicfg_load_single_file(cfg, resource, fullname, 
+                section_start_with))
+        {
+            FAIL_OUT(ret);
+        }
+    }
+    else if (NULL!=cf && SUCCEED==ferr)
+    {
+        /* config not changed, mark as refreshed */
+        cf->refreshed = TRUE;
+        goto out;
+    }
+    else if (NULL==cf && SUCCEED==ferr)
+    {
+        /* config does not exists, but file exists - load */
+        if (SUCCEED!=ndrx_inicfg_load_single_file(cfg, resource, fullname, 
+                section_start_with))
+        {
+            FAIL_OUT(ret);
+        }
+    }
+    else if (NULL!=cf && SUCCEED!=ferr)
+    {
+        /* config exits, file not, kill the config  */
+        ndrx_inicfg_file_free(cfg, fullname);
+    }
+    
+out:
+    return ret;    
+}
+
+/**
+ * 
+ * @param cfg
+ * @param files - malloced array (NULL terminated) with config files (also malloced strings)
+ * @return 
+ */
+public int ndrx_inicfg_set_files(ndrx_inicfg_t *cfg, char **files)
+{
+    return SUCCEED;
+}
+
+
+/**
+ * Set ini files by environments
+ * @param cfg
+ * @return 
+ */
+public int ndrx_inicfg_set_files_by_env(ndrx_inicfg_t *cfg)
+{
+    int ret = SUCCEED;
+    
+    return ret;
+}
+
+/**
+ * Reload the config, use the globals to search for value...
+ * @param cfg
+ * @param section_start_with
+ * @return 
+ */
+public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
+{
+    
 }
 
 /**
@@ -356,6 +495,8 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **section
         
         ndrx_string_list_free(flist);
     }
+    
+    cfg_remove_not_marked(cfg);
     
 out:
     return ret;
