@@ -70,6 +70,7 @@ struct err_msg
     {NEINVALINI,    "Invalid INI file"}, /* 1 */
     {NEMALLOC,      "Malloc failed"},    /* 2 */
     {NEUNIX,        "Unix system call failed"},    /* 3 */
+    {NEINVAL,       "Invalid paramter passed to function"}, /* 4 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

@@ -49,7 +49,7 @@
 
 #define API_ENTRY {_Nunset_error();}
 
-
+#define INICFG_ENABLE_DEBUG
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -70,12 +70,16 @@ public ndrx_inicfg_t * ndrx_inicfg_new(void)
     {
         _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_t: %s", 
                 strerror(errno));
+#ifdef INICFG_ENABLE_DEBUG
         NDRX_LOG(log_error, "Failed to alloc: ndrx_inicfg_t!");
+#endif
         goto out;
     }
     
 out:
+#ifdef INICFG_ENABLE_DEBUG
     NDRX_LOG(log_debug, "ndrx_inicfg_new returns %p", ret);
+#endif
     return ret;
 }
 
@@ -404,38 +408,36 @@ out:
 }
 
 /**
- * 
+ * Configure the library with single ini file.
+ * Or maybe we need a linked list of resource files, not?
+ * In that way we could ensure that one object could keep as many configs as needed
  * @param cfg
  * @param files - malloced array (NULL terminated) with config files (also malloced strings)
  * @return 
  */
-public int ndrx_inicfg_set_files(ndrx_inicfg_t *cfg, char **files)
-{
-    return SUCCEED;
-}
-
-
-/**
- * Set ini files by environments
- * @param cfg
- * @return 
- */
-public int ndrx_inicfg_set_files_by_env(ndrx_inicfg_t *cfg)
+public int ndrx_inicfg_set_file(ndrx_inicfg_t *cfg, int slot, char *resource)
 {
     int ret = SUCCEED;
+    char fn[] = "ndrx_inicfg_set_file";
     
+    if (resource==NULL) /* nothing to do. */
+    {
+        return ret;
+    }
+    
+    if (slot<0 || slot>=NDRX_INICFG_RESOURCES_MAX)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: invalid slot %d", 
+                fn, slot);
+        FAIL_OUT(ret);    
+    }
+    
+    /* copy off the resource */
+    strncpy(cfg->resources[slot], resource, sizeof(cfg->resources[slot])-1);
+    cfg->resources[slot][sizeof(cfg->resources[slot])-1] = EOS; /* terminate the string */
+    
+out:
     return ret;
-}
-
-/**
- * Reload the config, use the globals to search for value...
- * @param cfg
- * @param section_start_with
- * @return 
- */
-public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
-{
-    
 }
 
 /**
@@ -456,7 +458,9 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **section
      */
     if (ndrx_file_regular(resource))
     {
+#ifdef INICFG_ENABLE_DEBUG
         NDRX_LOG(log_debug, "Resource: [%s] is regular file", resource);
+#endif
         if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
                 resource, section_start_with))
         {
@@ -470,8 +474,10 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **section
 
         int return_status = SUCCEED;
         
+#ifdef INICFG_ENABLE_DEBUG  
         NDRX_LOG(log_debug, "Resource: [%s] seems like directory "
                 "(checking for *.ini, *.cfg, *.conf, *.config)", resource);
+#endif
         
         if (NULL!=(flist=ndrx_sys_folder_list(resource, &return_status)))
         {
@@ -499,6 +505,41 @@ public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **section
     cfg_remove_not_marked(cfg);
     
 out:
+    return ret;
+}
+
+
+/**
+ * Reload the config, use the globals to search for value...
+ * @param cfg
+ * @param section_start_with
+ * @return 
+ */
+public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
+{
+    int i;
+    int ret = SUCCEED;
+    char fn[] = "ndrx_inicfg_reload";
+    for (i=0; i<NDRX_INICFG_RESOURCES_MAX; i++)
+    {
+        if (EOS!=cfg->resources[i])
+        {
+            
+#ifdef INICFG_ENABLE_DEBUG
+            NDRX_LOG(log_debug, "%s: Reloading [%s]", fn, cfg->resources[i]);
+#endif
+            if (SUCCEED!=ndrx_inicfg_update(cfg, cfg->resources[i], section_start_with))
+            {
+                FAIL_OUT(ret);
+            }
+        }
+    }
+    
+out:
+
+#ifdef INICFG_ENABLE_DEBUG
+    NDRX_LOG(log_debug, "%s: returns %d", fn, ret);
+#endif  
     return ret;
 }
 
