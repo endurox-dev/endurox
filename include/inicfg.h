@@ -45,6 +45,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 #define NDRX_INICFG_SECTION_MAX  128    
 #define NDRX_INICFG_SUBSECT_SPERATOR '/' /* seperate sub-sections with */
+#define NDRX_INICFG_RESOURCES_MAX   5
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -101,6 +102,8 @@ typedef struct ndrx_inicfg_file ndrx_inicfg_file_t;
  */
 struct ndrx_inicfg
 {
+    /* resource files (if set to EOS, not used) */
+    char resources[NDRX_INICFG_RESOURCES_MAX][PATH_MAX+1];
     ndrx_inicfg_file_t *cfgfile;
 };
 
