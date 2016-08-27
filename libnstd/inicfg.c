@@ -629,7 +629,7 @@ public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(ndrx_inicfg_section_k
  */
 public void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
 {
-    ndrx_inicfg_section_keyval_t * r, *rt;
+    ndrx_inicfg_section_keyval_t * r=NULL, *rt=NULL;
     /* safe iter over the list */
     HASH_ITER(hh, h, r, rt)
     {
@@ -648,9 +648,12 @@ public void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
  * @param out
  * @return 
  */
-public void ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
+public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out)
 {
+    int i;
+    int found;
+    int ret = SUCCEED;
     /* Loop over all resources, and check that these are present in  
      * resources var (or resources is NULL) 
      * in that case resolve from all resources found in system.
@@ -662,9 +665,47 @@ public void ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *sect
      * if not found, add...
      * if found ignore.
      */
+    ndrx_inicfg_file_t * config_file=NULL, *config_file_temp=NULL;
+    ndrx_inicfg_section_t *section_hash;
+    
+    /* Iter over all resources */
+    HASH_ITER(hh, cfg->cfgfile, config_file, config_file_temp)
+    {
+        found = FALSE;
+        while(NULL!=resources[i])
+        {
+            if (0==strcmp(config_file->resource, resources[i]))
+            {
+                found = TRUE;
+                break;
+            }
+        }
+        
+        if (found)
+        {
+            /* find section */
+            HASH_FIND_STR(config_file->sections, section, section_hash);
+            if (NULL!=section_hash)
+            {
+                ndrx_inicfg_section_keyval_t *vals = NULL, *vals_tmp = NULL;
+                /* ok we got a section, now get the all values down in section */
+                HASH_ITER(hh, (section_hash->values), vals, vals_tmp)
+                {
+                    if (NULL==ndrx_keyval_hash_get((*out), vals->key))
+                    {
+                        if (SUCCEED!=ndrx_keyval_hash_add(out, vals))
+                        {
+                            FAIL_OUT(ret);
+                        }
+                    }
+                } /* it over the key-vals in section */
+            } /* if section found */
+        } /* if file found in lookup resources  */
+    } /* iter over config files */
     
     
-    return;
+out:
+    return ret;
 }
 
 /**
