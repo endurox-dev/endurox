@@ -121,7 +121,7 @@ private void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
     {
         if (!f->refreshed)
         {
-            ndrx_inicfg_file_free(cfg, f->fullname);
+            ndrx_inicfg_file_free(cfg, f);
         }
     }
 }
@@ -393,7 +393,7 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
             0!=memcmp(&attr.st_mtime, &cf->attr.st_mtime, sizeof(attr.st_mtime)))
     {
         /* reload the file - kill the old one, and load again */
-        ndrx_inicfg_file_free(cfg, fullname);
+        ndrx_inicfg_file_free(cfg, cf);
         if (SUCCEED!=ndrx_inicfg_load_single_file(cfg, resource, fullname, 
                 section_start_with))
         {
@@ -418,7 +418,7 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     else if (NULL!=cf && SUCCEED!=ferr)
     {
         /* config exits, file not, kill the config  */
-        ndrx_inicfg_file_free(cfg, fullname);
+        ndrx_inicfg_file_free(cfg, cf);
     }
     
 out:
@@ -672,12 +672,23 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
     HASH_ITER(hh, cfg->cfgfile, config_file, config_file_temp)
     {
         found = FALSE;
-        while(NULL!=resources[i])
+        i = 0;
+        
+        /* If resources is NULL, then look in all config files stored.  */
+        if (NULL==resources)
         {
-            if (0==strcmp(config_file->resource, resources[i]))
+            found = TRUE;
+        }
+        else 
+        {
+            while(NULL!=resources[i])
             {
-                found = TRUE;
-                break;
+                if (0==strcmp(config_file->resource, resources[i]))
+                {
+                    found = TRUE;
+                    break;
+                }
+                i++;
             }
         }
         
@@ -709,19 +720,63 @@ out:
 }
 
 /**
- * Get the values from subsection
+ * Resolve values including sub-sections
+ * [SOME/SECTION/AND/SUBSECT]
+ * We need to resolve in this order:
+ * 1. SOME/SECTION/AND/SUBSECT
+ * 2. SOME/SECTION/AND
+ * 3. SOME/SECTION
+ * 4. SOME
  * @param cfg
  * @param section
  * @param subsect
  * @return 
  */
-public ndrx_inicfg_section_keyval_t* ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, char *section, char *subsect)
+public int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+        char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
 {
-    return NULL;
+    int ret = SUCCEED;
+    char fn[] = "ndrx_inicfg_section_keyval_t";
+    char *tmp = strdup(section);
+    char *p;
+    
+    if (NULL==tmp)
+    {
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
+        FAIL_OUT(ret);
+    }
+    
+    while (EOS!=tmp[0])
+    {
+        if (SUCCEED!=ndrx_inicfg_resolve(cfg, resources, tmp, out))
+        {
+            FAIL_OUT(ret);
+        }
+        p = strchr(tmp, NDRX_INICFG_SUBSECT_SPERATOR);
+        
+        if (NULL!=p)
+        {
+            *p = EOS;
+        }
+        else
+        {
+            break; /* terminate, we are done */
+        }
+    }
+    
+out:
+    if (NULL!=tmp)
+    {
+        free(tmp);
+    }
+
+    return ret;
 }
 
 /**
  * Iterate over the sections & return the matched image
+ * We might want to return multiple hashes here of the sections found.
+ * TODO: Think about iteration... Get the list based on sections
  * @param cfg
  * @param fullsection_starts_with
  * @return List of sections
@@ -732,23 +787,26 @@ public ndrx_inicfg_section_keyval_t* ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, cha
 }
 
 /**
- * Free up the list of key/values loaded
- * @param keyval
- */
-public void ndrx_inicfg_keyval_free(ndrx_inicfg_section_keyval_t *keyval)
-{
-
-}
-
-/**
  * Free the memory of file
  * @param cfg
  * @param fullfile
  * @return 
  */
-public void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, char *fullfile)
+public void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile)
 {
+    ndrx_inicfg_section_t *section=NULL, *section_temp=NULL;
     
+    HASH_DEL(cfg->cfgfile, cfgfile);
+    
+    /* kill the sections */
+    HASH_ITER(hh, cfgfile->sections, section, section_temp)
+    {
+        ndrx_keyval_hash_free(section->values);
+        free(section->section);
+        free(section);
+    }
+    
+    free(cfgfile);
 }
 
 /**
@@ -758,6 +816,15 @@ public void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, char *fullfile)
  */
 public void ndrx_inicfg_free(ndrx_inicfg_t *cfg)
 {
+    ndrx_inicfg_file_t *cf=NULL, *cf_tmp=NULL;
     
+    HASH_ITER(hh, cfg->cfgfile, cf, cf_tmp)
+    {
+        ndrx_inicfg_file_free(cfg, cf);
+    }
+    
+    ndrx_string_hash_free(cfg->resource_hash);
+    
+    free(cfg);
 }
 

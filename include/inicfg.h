@@ -45,6 +45,7 @@ extern "C" {
 #include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 #define NDRX_INICFG_SUBSECT_SPERATOR '/' /* seperate sub-sections with */
+#define NDRX_INICFG_SUBSECT_SPERATOR_STR "/" /* seperate sub-sections with */
 #define NDRX_INICFG_RESOURCES_MAX   5
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -116,7 +117,7 @@ typedef struct ndrx_inicfg ndrx_inicfg_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, char *fullfile);
+extern NDRX_API void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile);
     
 #ifdef	__cplusplus
 }
