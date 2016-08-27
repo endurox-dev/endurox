@@ -42,7 +42,8 @@ extern "C" {
 #include <atmi.h>
 #include <sys_mqueue.h>
 #include <ndrstandard.h>
-
+#include <uthash.h>
+    
 #ifdef EX_OS_DARWIN
 #include <sys/types.h>
 #include <sys/_types/_timespec.h>
@@ -175,12 +176,21 @@ struct ndrx_epoll_event {
 /**
  * List of posix queues
  */
-typedef struct mq_list string_list_t;
-struct mq_list
+typedef struct string_list string_list_t;
+struct string_list
 {
     char *qname;
     string_list_t *next;
 };
+
+
+typedef struct string_hash string_hash_t;
+struct string_hash
+{
+    char *str;
+    UT_hash_handle hh;
+};
+
 
 #ifdef EX_OS_DARWIN
 typedef int clockid_t;
@@ -205,7 +215,12 @@ extern NDRX_API int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, i
 extern NDRX_API int ndrx_epoll_errno(void);
 extern NDRX_API char * ndrx_poll_strerror(int err);
 
+/* string generics: */
 extern NDRX_API void ndrx_string_list_free(string_list_t* list);
+extern NDRX_API int ndrx_sys_string_list_add(string_list_t**list, char *string);
+
+extern NDRX_API void ndrx_string_hash_free(string_hash_t *h);
+extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);
 
 extern NDRX_API char *ndrx_sys_get_cur_username(void);
 extern NDRX_API string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);

@@ -84,10 +84,10 @@ See <<DEBUGCONF>> for more details about 'debug.conf' setup.
 Start EnduroX application
 -------------------------
 To start the EnduroX application, login with EnduroX instance user, and issue
-following command 'xa start', for example:
+following command 'xadmin start', for example:
 
 --------------------------------------------------------------------------------
-$ xa start -y
+$ xadmin start -y
 ndrxd PID (from PID file): 25037
 exec tpevsrv -k 0myWI5nu -i 14 -e /tmp/TPEVSRV -r --  :
 	process id=26793 ... Started.

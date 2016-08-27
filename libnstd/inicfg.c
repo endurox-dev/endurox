@@ -56,6 +56,12 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/*
+ TODO:
+ - ndrx_inicfg_section_keyval_t add/get/free
+ * 
+ */
+
 /**
  * Create new config handler
  * @return ptr to config handler or NULL
@@ -136,7 +142,13 @@ private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_file_t *cf, char *se
         goto out;
     }
     
-    strcpy(ret->section, section);
+    if (NULL==(ret->section=strdup(section)))
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_section_t: "
+                "(section) %s", strerror(err));
+        goto out;
+    }
     
     HASH_ADD_STR( cf->sections, section, ret );
 out:
@@ -222,11 +234,17 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     {
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_section_t: %s", strerror(err));
+        ret = 0;
         goto out;
     }
     
-    strncpy(mem_value->section, section, sizeof(mem_value->section)-1);
-    mem_value->section[sizeof(mem_value->section)-1] = EOS;
+    if (NULL==(mem_value->section = strdup(section)))
+    {
+        int err = errno;
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->section: %s", strerror(err));
+        ret = 0;
+        goto out;
+    }
     
     /* Process the key */
     if (NULL==(mem_value->key = strdup(name)))
@@ -415,26 +433,21 @@ out:
  * @param files - malloced array (NULL terminated) with config files (also malloced strings)
  * @return 
  */
-public int ndrx_inicfg_set_file(ndrx_inicfg_t *cfg, int slot, char *resource)
+public int ndrx_inicfg_add_resource(ndrx_inicfg_t *cfg, char *resource)
 {
     int ret = SUCCEED;
-    char fn[] = "ndrx_inicfg_set_file";
+    char fn[] = "ndrx_inicfg_add_resource";
     
     if (resource==NULL) /* nothing to do. */
     {
         return ret;
     }
     
-    if (slot<0 || slot>=NDRX_INICFG_RESOURCES_MAX)
+    if (SUCCEED!=ndrx_string_hash_add(&cfg->resource_hash, resource))
     {
-        _Nset_error_fmt(NEINVAL, "%s: invalid slot %d", 
-                fn, slot);
-        FAIL_OUT(ret);    
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
+        FAIL_OUT(ret);
     }
-    
-    /* copy off the resource */
-    strncpy(cfg->resources[slot], resource, sizeof(cfg->resources[slot])-1);
-    cfg->resources[slot][sizeof(cfg->resources[slot])-1] = EOS; /* terminate the string */
     
 out:
     return ret;
@@ -520,18 +533,17 @@ public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
     int i;
     int ret = SUCCEED;
     char fn[] = "ndrx_inicfg_reload";
-    for (i=0; i<NDRX_INICFG_RESOURCES_MAX; i++)
+    string_hash_t * r, *rt;
+    
+    /* safe iter over the list */
+    HASH_ITER(hh, cfg->resource_hash, r, rt)
     {
-        if (EOS!=cfg->resources[i])
-        {
-            
 #ifdef INICFG_ENABLE_DEBUG
-            NDRX_LOG(log_debug, "%s: Reloading [%s]", fn, cfg->resources[i]);
+        NDRX_LOG(log_debug, "%s: Reloading [%s]", fn, r->str);
 #endif
-            if (SUCCEED!=ndrx_inicfg_update(cfg, cfg->resources[i], section_start_with))
-            {
-                FAIL_OUT(ret);
-            }
+        if (SUCCEED!=ndrx_inicfg_update(cfg, r->str, section_start_with))
+        {
+            FAIL_OUT(ret);
         }
     }
     
@@ -544,21 +556,112 @@ out:
 }
 
 /**
- * Get he list of key/value entries for the section (fills up the hash with keys/val)
+ * Add item to keyval hash
+ * @param h
+ * @param str
+ * @return SUCCEED/FAIL
+ */
+public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
+            ndrx_inicfg_section_keyval_t *src)
+{
+    int ret = SUCCEED;
+    ndrx_inicfg_section_keyval_t * tmp = calloc(1, sizeof(ndrx_inicfg_section_keyval_t));
+    
+    if (NULL==tmp)
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "alloc of ndrx_inicfg_section_keyval_t (%d) failed", 
+                sizeof(ndrx_inicfg_section_keyval_t));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==(tmp->key = strdup(src->key)))
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==(tmp->val = strdup(src->val)))
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==(tmp->section = strdup(src->section)))
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    /* Add stuff to hash finaly */
+    HASH_ADD_STR( (*h), key, tmp );
+    
+out:
+    return ret;
+}
+
+/**
+ * Search for strin gexistance in hash
+ * @param h hash handler
+ * @param str keyval to search for
+ * @return NULL not found/not NULL - found
+ */
+public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(ndrx_inicfg_section_keyval_t *h, char *key)
+{
+    ndrx_inicfg_section_keyval_t * r = NULL;
+    
+    HASH_FIND_STR( h, key, r);
+    
+    return r;
+}
+
+/**
+ * Free up the hash list
+ * @param h
+ * @return 
+ */
+public void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
+{
+    ndrx_inicfg_section_keyval_t * r, *rt;
+    /* safe iter over the list */
+    HASH_ITER(hh, h, r, rt)
+    {
+        HASH_DEL(h, r);
+        free(r->key);
+        free(r->val);
+        free(r->section);
+        free(r);
+    }
+}
+
+/**
+ * Resolve the section
  * @param cfg
  * @param section
  * @param out
  * @return 
  */
-public void ndrx_inicfg_get(ndrx_inicfg_t *cfg, char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
+public void ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
+        ndrx_inicfg_section_keyval_t **out)
 {
     /* Loop over all resources, and check that these are present in  
      * resources var (or resources is NULL) 
      * in that case resolve from all resources found in system.
      */
     
-    
     /* HASH FOR EACH: cfg->cfgfile */
+    
+    /* check by ndrx_keyval_hash_get() for result 
+     * if not found, add...
+     * if found ignore.
+     */
     
     
     return;

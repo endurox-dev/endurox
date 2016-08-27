@@ -42,8 +42,8 @@ extern "C" {
 #include <stdint.h>
 #include <ntimer.h>
 #include <uthash.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
-#define NDRX_INICFG_SECTION_MAX  128    
 #define NDRX_INICFG_SUBSECT_SPERATOR '/' /* seperate sub-sections with */
 #define NDRX_INICFG_RESOURCES_MAX   5
 /*---------------------------Macros-------------------------------------*/
@@ -56,7 +56,7 @@ extern "C" {
 typedef struct ndrx_inicfg_section_keyval ndrx_inicfg_section_keyval_t;
 struct ndrx_inicfg_section_keyval
 {
-    char section[NDRX_INICFG_SECTION_MAX]; /* section */
+    char *section; /* section */
     char *key; /* key for ini */
     char *val; /* value for ini */
     
@@ -68,7 +68,7 @@ struct ndrx_inicfg_section_keyval
  */    
 struct ndrx_inicfg_section
 {
-    char section[NDRX_INICFG_SECTION_MAX]; /* section */
+    char *section; /* section */
     
     ndrx_inicfg_section_keyval_t *values; /* list of values */
     
@@ -103,7 +103,8 @@ typedef struct ndrx_inicfg_file ndrx_inicfg_file_t;
 struct ndrx_inicfg
 {
     /* resource files (if set to EOS, not used) */
-    char resources[NDRX_INICFG_RESOURCES_MAX][PATH_MAX+1];
+    /* List of resources */
+    string_hash_t *resource_hash;
     ndrx_inicfg_file_t *cfgfile;
 };
 

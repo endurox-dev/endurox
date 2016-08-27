@@ -50,21 +50,92 @@
 #include <ndebug.h>
 #include <nstdutil.h>
 #include <limits.h>
-
+#include <uthash.h>
 #include <sys_unix.h>
 
 #include <utlist.h>
 #include <pwd.h>
 
+#include "userlog.h"
+
 
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define SYSCOMMON_ENABLE_DEBUG
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+
+/**
+ * Add item to string hash
+ * @param h
+ * @param str
+ * @return SUCCEED/FAIL
+ */
+public int ndrx_string_hash_add(string_hash_t **h, char *str)
+{
+    int ret = SUCCEED;
+    string_hash_t * tmp = calloc(1, sizeof(string_hash_t));
+    
+    if (NULL==tmp)
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "alloc of string_hash_t (%d) failed", 
+                sizeof(string_hash_t));
+#endif
+        FAIL_OUT(ret);
+    }
+
+    if (NULL==(tmp->str = strdup(str)))
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    /* Add stuff to hash finaly */
+    HASH_ADD_STR( (*h), str, tmp );
+    
+out:
+    return ret;
+}
+
+/**
+ * Search for string existance in hash
+ * @param h hash handler
+ * @param str string to search for
+ * @return NULL not found/not NULL - found
+ */
+public string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str)
+{
+    string_hash_t * r = NULL;
+    
+    HASH_FIND_STR( h, str, r);
+    
+    return r;
+}
+
+/**
+ * Free up the hash list
+ * @param h
+ * @return 
+ */
+public void ndrx_string_hash_free(string_hash_t *h)
+{
+    string_hash_t * r, *rt;
+    /* safe iter over the list */
+    HASH_ITER(hh, h, r, rt)
+    {
+        HASH_DEL(h, r);
+        free(r->str);
+        free(r);
+    }
+}
 
 /**
  * Free the list of message queues
@@ -86,6 +157,43 @@ public void ndrx_string_list_free(string_list_t* list)
             free((char *)elt);
         }
     }
+}
+
+/**
+ * Add element to string list
+ * @param list
+ * @param string
+ * @return 
+ */
+public int ndrx_sys_string_list_add(string_list_t**list, char *string)
+{
+    int ret = SUCCEED;
+    string_list_t* tmp = NULL;
+    
+    if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "alloc of string_list_t (%d) failed", 
+                sizeof(string_list_t));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    /* Alloc the string down there */
+    if (NULL==(tmp->qname = malloc(strlen(string)+1)))
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_error, "alloc of string_list_t qname (%d) failed: %s", 
+               strlen(string)+1, strerror(errno));
+#endif
+        FAIL_OUT(ret);
+    }
+    
+    /*  Add the string to list finally */
+    LL_APPEND(*list, tmp);
+    
+ out:
+    return ret;
 }
 
 
@@ -113,14 +221,18 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
     sprintf(cmd, "ps -ef");
 #endif
     
+#ifdef SYSCOMMON_ENABLE_DEBUG
     NDRX_LOG(log_debug, "Listing processes [%s] f1=[%s] f2=[%s] f3=[%s] f4=[%s]", 
             cmd, filter1, filter2, filter3, filter4);
+#endif
     
     /* Open the command for reading. */
     fp = popen(cmd, "r");
     if (fp == NULL)
     {
+#ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+#endif
         goto out;
     }
     
@@ -159,9 +271,10 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
                     fp = NULL;
                     pclose(fp);
                 }
-
+#ifdef SYSCOMMON_ENABLE_DEBUG
                 NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
                         sizeof(string_list_t), strerror(errno));
+#endif
                 ndrx_string_list_free(ret);
                 ret = NULL;
                 goto out;
@@ -175,9 +288,10 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
                     fp = NULL;
                     pclose(fp);
                 }
-                
+#ifdef SYSCOMMON_ENABLE_DEBUG
                 NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
                         strlen(path)+1, strerror(errno));
+#endif
                 free(tmp);
                 ndrx_string_list_free(ret);
                 ret =  NULL;
@@ -232,8 +346,11 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
     n = scandir(path, &namelist, 0, alphasort);
     if (n < 0)
     {
+        /* standard logging might doing init right now */
+#ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_error, "Failed to open queue directory [%s]: %s", 
                 path, strerror(errno));
+#endif
         goto exit_fail;
     }
     else 
@@ -251,17 +368,21 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
             
             if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
             {
-                NDRX_LOG(log_always, "alloc of mq_list_t (%d) failed: %s", 
+                /* standard logging might doing init right now */
+#ifdef SYSCOMMON_ENABLE_DEBUG
+                NDRX_LOG(log_error, "alloc of mq_list_t (%d) failed: %s", 
                         sizeof(string_list_t), strerror(errno));
-                
-                
+#endif
                 goto exit_fail;
             }
             
             if (NULL==(tmp->qname = malloc(len)))
             {
-                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
+                /* standard logging might doing init right now */
+#ifdef SYSCOMMON_ENABLE_DEBUG
+                NDRX_LOG(log_error,"alloc of %d bytes failed: %s", 
                         len, strerror(errno));
+#endif
                 free(tmp);
                 goto exit_fail;
             }
@@ -292,6 +413,5 @@ exit_fail:
 
     return ret;   
 }
-
 
 
