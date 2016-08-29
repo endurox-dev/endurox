@@ -1,5 +1,8 @@
 /* 
 ** Enduro/X advanced configuration driver
+** We have a problem with logging here - chicken-egg issue.
+** We cannot start to log unless debug is initialised. But debug init depends
+** on ini config. Thus we print here debugs to stderr, if needed.
 **
 ** @file inicfg.c
 ** 
@@ -56,12 +59,6 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- TODO:
- - ndrx_inicfg_section_keyval_t add/get/free
- * 
- */
-
 /**
  * Create new config handler
  * @return ptr to config handler or NULL
@@ -77,14 +74,14 @@ public ndrx_inicfg_t * ndrx_inicfg_new(void)
         _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_t: %s", 
                 strerror(errno));
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_error, "Failed to alloc: ndrx_inicfg_t!");
+        fprintf(stderr, "Failed to alloc: ndrx_inicfg_t!\n");
 #endif
         goto out;
     }
     
 out:
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_debug, "ndrx_inicfg_new returns %p", ret);
+    fprintf(stderr, "ndrx_inicfg_new returns %p\n", ret);
 #endif
     return ret;
 }
@@ -104,7 +101,7 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
         if (0==strcmp(f->resource, resource))
         {
 #ifdef INICFG_ENABLE_DEBUG
-            NDRX_LOG(log_info, "Unrefreshing resource [%s] file [%s]", 
+            fprintf(stderr, "Unrefreshing resource [%s] file [%s]\n", 
                     f->resource, f->fullname);
 #endif
         
@@ -127,7 +124,7 @@ private void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
         if (!f->refreshed)
         {
 #ifdef INICFG_ENABLE_DEBUG
-            NDRX_LOG(log_info, "Resource [%s]/file [%s] not refreshed - removing from mem", 
+            fprintf(stderr, "Resource [%s]/file [%s] not refreshed - removing from mem\n", 
                     f->resource, f->fullname);
 #endif
             ndrx_inicfg_file_free(cfg, f);
@@ -156,10 +153,26 @@ private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_section_t: "
                 "(section) %s", strerror(err));
+        ret=NULL;
         goto out;
     }
     
-    HASH_ADD_STR( (*sections_h), section, ret );
+#ifdef INICFG_ENABLE_DEBUG
+    fprintf(stderr, "Adding new section [%s]\n", ret->section);
+#endif
+
+    HASH_ADD_KEYPTR(hh, (*sections_h), ret->section, 
+            strlen(ret->section), ret);
+    
+    ret = NULL;
+    
+    HASH_FIND_STR( (*sections_h), section, ret);
+    
+#ifdef INICFG_ENABLE_DEBUG
+    fprintf(stderr, "YOPT! [%p]\n", ret);
+#endif
+    
+    
 out:
     return ret;
 }
@@ -206,8 +219,9 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     
     /* check do we need this section at all */
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "Handler got: resource [%s]/file [%s] section [%s]"
-            " name [%s] value [%s]", cf->resource, cf->fullname, section, name, value);
+    fprintf(stderr, "Handler got: resource [%s]/file [%s] section [%s]"
+            " name [%s] value [%s] cf %p\n", 
+            cf->resource, cf->fullname, section, name, value, cf);
 #endif
     
     if (NULL!=section_start_with)
@@ -234,7 +248,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     if (!needed)
     {
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "Section not needed - skipping");
+        fprintf(stderr, "Section not needed - skipping\n");
 #endif
         goto out;
     }
@@ -308,10 +322,11 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     }
         
     /* Add stuff to the section */
-    HASH_ADD_STR(mem_section->values, key, mem_value);
+    HASH_ADD_KEYPTR(hh, mem_section->values, mem_section->values->key, 
+            strlen(mem_section->values->key), mem_value);
     
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "section/key/value added....");
+    fprintf(stderr, "section/key/value added OK\n");
 #endif
 
 out:
@@ -348,7 +363,7 @@ public int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
     strncpy(cf->fullname, fullname, sizeof(cf->fullname)-1);
     cf->fullname[sizeof(cf->fullname)-1] = EOS;
     
-    cf->refreshed = FALSE;
+    cf->refreshed = TRUE;
     
     if (SUCCEED!=stat(fullname, &cf->attr))
     {
@@ -356,6 +371,10 @@ public int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
                 fn, fullname, strerror(errno));
         FAIL_OUT(ret);    
     }
+    
+#ifdef INICFG_ENABLE_DEBUG
+    fprintf(stderr, "Opened config file %p\n", cf);
+#endif
 
     /* start to parse the file by inih */
     if (SUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, (void *)section_start_with)))
@@ -406,8 +425,8 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     ndrx_inicfg_file_t *cf = cfg_single_file_get(cfg, fullname);
     
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "%s: enter resource [%s]/file [%s]",
-                        resource, fullname);
+        fprintf(stderr, "%s: enter resource [%s]/file [%s]\n",
+                        fn, resource, fullname);
 #endif
 
     if (SUCCEED!=stat(fullname, &attr))
@@ -420,8 +439,8 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
             0!=memcmp(&attr.st_mtime, &cf->attr.st_mtime, sizeof(attr.st_mtime)))
     {
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "%s: [%s]/file [%s] changed - reload",
-                        resource, fullname);
+        fprintf(stderr, "%s: [%s]/file [%s] changed - reload\n",
+                        fn, resource, fullname);
 #endif
         /* reload the file - kill the old one, and load again */
         ndrx_inicfg_file_free(cfg, cf);
@@ -435,8 +454,8 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     {
         /* config not changed, mark as refreshed */
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "%s: [%s]/file [%s] not-changed - do nothing",
-                        resource, fullname);
+        fprintf(stderr, "%s: [%s]/file [%s] not-changed - do nothing\n",
+                        fn, resource, fullname);
 #endif
         cf->refreshed = TRUE;
         goto out;
@@ -444,9 +463,9 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     else if (NULL==cf && SUCCEED==ferr)
     {
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "%s: [%s]/file [%s] config does not exists, "
-                "but file exists - load",
-                        resource, fullname);
+        fprintf(stderr, "%s: [%s]/file [%s] config does not exists, "
+                "but file exists - load\n",
+                        fn, resource, fullname);
 #endif
         /* config does not exists, but file exists - load */
         if (SUCCEED!=ndrx_inicfg_load_single_file(cfg, resource, fullname, 
@@ -459,9 +478,9 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     {
         /* Config exits, file not, kill the config  */
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "%s: [%s]/file [%s] Config exits, "
-                "file not, kill the config",
-                        resource, fullname);
+        fprintf(stderr, "%s: [%s]/file [%s] Config exits, "
+                "file not, kill the config\n",
+                        fn, resource, fullname);
 #endif
         ndrx_inicfg_file_free(cfg, cf);
     }
@@ -517,7 +536,7 @@ public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_st
     if (ndrx_file_regular(resource))
     {
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_debug, "Resource: [%s] is regular file", resource);
+        fprintf(stderr, "Resource: [%s] is regular file\n", resource);
 #endif
         if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
                 resource, section_start_with))
@@ -533,8 +552,8 @@ public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_st
         int return_status = SUCCEED;
         
 #ifdef INICFG_ENABLE_DEBUG  
-        NDRX_LOG(log_debug, "Resource: [%s] seems like directory "
-                "(checking for *.ini, *.cfg, *.conf, *.config)", resource);
+        fprintf(stderr, "Resource: [%s] seems like directory "
+                "(checking for *.ini, *.cfg, *.conf, *.config)\n", resource);
 #endif
         
         if (NULL!=(flist=ndrx_sys_folder_list(resource, &return_status)))
@@ -584,7 +603,7 @@ public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
     HASH_ITER(hh, cfg->resource_hash, r, rt)
     {
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_debug, "%s: Reloading [%s]", fn, r->str);
+        fprintf(stderr, "%s: Reloading [%s]\n", fn, r->str);
 #endif
         if (SUCCEED!=ndrx_inicfg_add(cfg, r->str, section_start_with))
         {
@@ -595,7 +614,7 @@ public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
 out:
 
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_debug, "%s: returns %d", fn, ret);
+    fprintf(stderr, "%s: returns %d\n", fn, ret);
 #endif  
     return ret;
 }
@@ -614,33 +633,33 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
     
     if (NULL==tmp)
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_error, "alloc of ndrx_inicfg_section_keyval_t (%d) failed", 
-                sizeof(ndrx_inicfg_section_keyval_t));
+#ifdef INICFG_ENABLE_DEBUG
+        fprintf(stderr, "alloc of ndrx_inicfg_section_keyval_t (%d) failed\n", 
+                (int)sizeof(ndrx_inicfg_section_keyval_t));
 #endif
         FAIL_OUT(ret);
     }
     
     if (NULL==(tmp->key = strdup(src->key)))
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#ifdef INICFG_ENABLE_DEBUG
+        fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
 #endif
         FAIL_OUT(ret);
     }
     
     if (NULL==(tmp->val = strdup(src->val)))
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#ifdef INICFG_ENABLE_DEBUG
+        fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
 #endif
         FAIL_OUT(ret);
     }
     
     if (NULL==(tmp->section = strdup(src->section)))
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+#ifdef INICFG_ENABLE_DEBUG
+        fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
 #endif
         FAIL_OUT(ret);
     }
@@ -716,7 +735,7 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
     ndrx_inicfg_section_t *section_hash;
     
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: lookup section [%s]", section);
+    fprintf(stderr, "%s: lookup section [%s]\n", fn, section);
 #endif
     
     /* Iter over all resources */
@@ -725,10 +744,17 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
         found = FALSE;
         i = 0;
         
+#ifdef INICFG_ENABLE_DEBUG
+        fprintf(stderr, "%s: Checking [%s]...\n", fn, config_file->fullname);
+#endif
+    
         /* If resources is NULL, then look in all config files stored.  */
         if (NULL==resources)
         {
             found = TRUE;
+#ifdef INICFG_ENABLE_DEBUG
+            fprintf(stderr, "%s: Checking [%s] - accept any\n", fn, config_file->fullname);
+#endif
         }
         else 
         {
@@ -742,17 +768,32 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
                 i++;
             }
         }
-        
+    
         if (found)
         {
+#ifdef INICFG_ENABLE_DEBUG
+            fprintf(stderr, "%s: Checking [%s] - accepted\n", fn, config_file->fullname);
+#endif
             /* find section */
+#ifdef INICFG_ENABLE_DEBUG
+            fprintf(stderr, "%s: searching for section [%s] in %p\n", 
+                fn, section, config_file->sections);
+#endif
             HASH_FIND_STR(config_file->sections, section, section_hash);
             if (NULL!=section_hash)
             {
+                
+#ifdef INICFG_ENABLE_DEBUG
+                fprintf(stderr, "%s: got section...\n", fn);
+#endif
                 ndrx_inicfg_section_keyval_t *vals = NULL, *vals_tmp = NULL;
                 /* ok we got a section, now get the all values down in section */
                 HASH_ITER(hh, (section_hash->values), vals, vals_tmp)
                 {
+#ifdef INICFG_ENABLE_DEBUG
+                    fprintf(stderr, "%s: got section[%s]/key[%s]/val[%s]", fn, 
+                            vals->section, vals->key, vals->val);
+#endif
                     if (NULL==ndrx_keyval_hash_get((*out), vals->key))
                     {
                         if (SUCCEED!=ndrx_keyval_hash_add(out, vals))
@@ -763,12 +804,18 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
                 } /* it over the key-vals in section */
             } /* if section found */
         } /* if file found in lookup resources  */
+        else
+        {
+#ifdef INICFG_ENABLE_DEBUG
+            fprintf(stderr, "%s: Checking [%s] - NOT accepted\n", fn, config_file->fullname);
+#endif
+        }
     } /* iter over config files */
     
     
 out:
 #ifdef INICFG_ENABLE_DEBUG
-        NDRX_LOG(log_info, "%s: returns %p", *out);
+        fprintf(stderr, "%s: returns %p\n", fn, *out);
 #endif
 
     return ret;
@@ -861,7 +908,7 @@ public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
     ndrx_inicfg_section_t *section_work = NULL;
 
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: enter", fn);
+    fprintf(stderr, "%s: enter\n", fn);
 #endif
 
     /* Iter over all resources */
@@ -889,7 +936,7 @@ public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
         }
         
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: resource [%s] %s for lookup", fn, config_file->resource, 
+    fprintf(stderr, "%s: resource [%s] %s for lookup\n", fn, config_file->resource, 
             found?"ok":"not ok");
 #endif
 
@@ -923,7 +970,7 @@ public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
                 }
 
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: section [%s] %s for lookup", fn, section->section, 
+    fprintf(stderr, "%s: section [%s] %s for lookup\n", fn, section->section, 
             found?"ok":"not ok");
 #endif
                 if (found)
@@ -955,7 +1002,7 @@ public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
 out:
                 
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: returns %p", fn, *out);
+    fprintf(stderr, "%s: returns %p", fn, *out);
 #endif
 
     return ret;
@@ -970,7 +1017,7 @@ public void ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
     char fn[] = "ndrx_inicfg_sections_free";    
     ndrx_inicfg_section_t *section=NULL, *section_temp=NULL;
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: enter %p", fn, sections);
+    fprintf(stderr, "%s: enter %p\n", fn, sections);
 #endif
         
     /* kill the sections */
@@ -994,7 +1041,7 @@ public void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfil
     ndrx_inicfg_section_t *section=NULL, *section_temp=NULL;
     
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: enter cfg = %p cfgfile = %p", fn, cfg, cfgfile);
+    fprintf(stderr, "%s: enter cfg = %p cfgfile = %p\n", fn, cfg, cfgfile);
 #endif
     
     HASH_DEL(cfg->cfgfile, cfgfile);
@@ -1015,7 +1062,7 @@ public void ndrx_inicfg_free(ndrx_inicfg_t *cfg)
     ndrx_inicfg_file_t *cf=NULL, *cf_tmp=NULL;
     
 #ifdef INICFG_ENABLE_DEBUG
-    NDRX_LOG(log_info, "%s: enter cfg = %p", fn, cfg);
+    fprintf(stderr, "%s: enter cfg = %p\n", fn, cfg);
 #endif
     
     HASH_ITER(hh, cfg->cfgfile, cf, cf_tmp)

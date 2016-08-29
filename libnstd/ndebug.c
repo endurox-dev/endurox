@@ -54,6 +54,7 @@
 #include <nstdutil.h>
 #include <limits.h>
 #include <sys_unix.h>
+#include <cconfig.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -124,6 +125,15 @@ public void ndrx_init_debug(void)
      * NDRX_CCONF - optional, if set use CCONF, if not set fallback to old-style
      * NDRX_CCTAG - optional, if set use as sub-section
      */
+#if 0
+    - still under development.
+            
+    if (SUCCEED!=ndrx_cconfig_load())
+    {
+        fprintf(stderr, "GENERAL CONFIGURATION ERROR\n");
+        exit(FAIL);
+    }
+#endif
     
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));

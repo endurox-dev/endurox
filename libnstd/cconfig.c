@@ -54,13 +54,13 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
+/* These should be semaphore mutex globals... */
 ndrx_inicfg_t *G_cconfig = NULL; /* Common-config handler */
 char *G_cctag = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
-
 /**
- * TODO: Split up the CCTAG (by tokens)
+ * Split up the CCTAG (by tokens)
  * and lookup data by any of the tags 
  * @param section
  * @return 
@@ -68,9 +68,82 @@ char *G_cctag = NULL;
 public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
 {
     int ret = SUCCEED;
+    int len;
+    char *tmp1 = NULL; /* lookup section  */
+    char *tmp2 = NULL; /* token cctag */
+    char fn[] = "ndrx_cconfig_get";
+    char *saveptr1;
+    char *token_cctag;
     
+    /*  if we have CC tag, with sample value "RM1/DBG2"
+     * Then lookup will take in this order:
+     * [@debug/RM1]
+     * [@debug/DBG2]
+     */
+    if (NULL!=G_cctag)
+    {
+        len = strlen(section);
+        if (NULL!=G_cctag)
+        {
+            len+=strlen(G_cctag);
+        }
+
+        if (NULL==(tmp1 = malloc(len+1)))
+        {
+            fprintf(stderr, "%s: tmp1 malloc failed: %s\n", fn, strerror(errno));
+            FAIL_OUT(ret);
+        }
+
+
+        if (NULL==(tmp2 = malloc(strlen(G_cctag)+1)))
+        {
+            fprintf(stderr, "%s: tmp2 malloc failed: %s\n", fn, strerror(errno));
+            FAIL_OUT(ret);
+        }
+
+        strcpy(tmp2, G_cctag);
+
+
+        token_cctag = strtok_r(tmp2, NDRX_INICFG_SUBSECT_SPERATOR_STR, &saveptr1);
+
+        while( token_cctag != NULL )
+        {
+            strcpy(tmp1, section);
+            strcat(tmp1, NDRX_INICFG_SUBSECT_SPERATOR_STR);
+            strcat(tmp1, token_cctag);
+
+            if (SUCCEED!=ndrx_inicfg_resolve(G_cconfig, 
+                                NULL,  /* all config files */
+                                tmp1,  /* global section */
+                                out))
+            {
+                fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
+                FAIL_OUT(ret);
+            }
+        }
+    }/* Direct lookup if no cctag */
+    else if (SUCCEED!=ndrx_inicfg_resolve(G_cconfig, 
+                                NULL,  /* all config files */
+                                section,  /* global section */
+                                out))
+    {
+        fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
+        FAIL_OUT(ret);
+    }
     
 out:
+
+    if (NULL!=tmp1)
+    {
+        free(tmp1);
+    }
+
+    if (NULL!=tmp2)
+    {
+        free(tmp2);
+    }
+
+
     return ret;
 }
 /**
@@ -91,7 +164,12 @@ public int ndrx_cconfig_load(void)
                           NULL};
     G_cctag = getenv(NDRX_CCTAG);
     
-    char *sections[] = {"@globals", "@debug", "@queues", NULL};
+    char *sections[] = {NDRX_CONF_SECTION_GLOBAL, 
+                        NDRX_CONF_SECTION_DEBUG, 
+                        NDRX_CONF_SECTION_QUEUE, 
+                        NULL};
+    ndrx_inicfg_section_keyval_t *keyvals = NULL, *keyvals_iter = NULL, 
+                *keyvals_iter_tmp = NULL;
     
     if (NULL!=(config_resources[slot] = getenv(NDRX_CCONFIG5)))
     {
@@ -142,14 +220,39 @@ public int ndrx_cconfig_load(void)
         slot++;
     }
     
-    /* TODO: get globals & transfer to setenv() */
+    /* Get globals & transfer to setenv() */
+    if (SUCCEED!=ndrx_cconfig_get(NDRX_CONF_SECTION_GLOBAL, &keyvals))
+    {
+        fprintf(stderr, "%s: %s lookup failed: %s\n", fn, 
+                NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
+        FAIL_OUT(ret);
+    }
+    
+    /* Loop over and load the stuff... */
+    HASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
+    {
+        if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
+        {
+            fprintf(stderr, "%s: failed to set %s=%s: %s\n", fn, 
+                keyvals_iter->key, keyvals_iter->val, strerror(errno));
+            FAIL_OUT(ret);
+        }
+    }
     
 out:
 
-    if (SUCCEED!=NULL)
+    if (NULL!=keyvals)
     {
-        ndrx_inicfg_free(G_cconfig);
-        G_cconfig = NULL;
+        ndrx_keyval_hash_free(keyvals);
+        keyvals = NULL;
+    }
+    if (SUCCEED!=ret)
+    {
+        if (NULL!=G_cconfig)
+        {
+            ndrx_inicfg_free(G_cconfig);
+            G_cconfig = NULL;
+        }
     }
 
     return ret;

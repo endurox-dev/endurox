@@ -43,6 +43,7 @@ extern "C" {
 #include <ntimer.h>
 #include <uthash.h>
 #include <sys_unix.h>
+#include <inicfg.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_CCONFIG5 "NDRX_CCONFIG5"
@@ -53,11 +54,21 @@ extern "C" {
 #define NDRX_CCONFIG  "NDRX_CCONFIG"
     
 #define NDRX_CCTAG "NDRX_CCTAG" /* common-config tag */
+    
+#define NDRX_CONF_SECTION_GLOBAL "@global"
+#define NDRX_CONF_SECTION_DEBUG  "@debug"
+#define NDRX_CONF_SECTION_QUEUE  "@queue"
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+    
+extern NDRX_API int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out);
+extern NDRX_API int ndrx_cconfig_load(void);
+extern NDRX_API ndrx_inicfg_t *ndrx_get_G_cconfig(void);
+
 #ifdef	__cplusplus
 }
 #endif
