@@ -80,6 +80,11 @@ typedef int         bool;
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
+/* Params used for common config: */
+#define NDRX_CCONF "NDRX_CCONF" /* common-config, this is base
+            can be NDRX_CCONF, NDRX_CCONF2, NDRX_CCONF3, NDRX_CCONF4, NDRX_CCONF5 */
+#define NDRX_CCTAG "NDRX_CCTAG" /* common-config tag */
+
 #ifdef	__cplusplus
 }
 #endif

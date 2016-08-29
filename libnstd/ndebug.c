@@ -118,6 +118,13 @@ public void ndrx_init_debug(void)
     char *p;
     char filename[PATH_MAX]={EOS};
     
+    /*
+     * Here is the main entry point for common-confg
+     * everything start with debug, thus read the system-wide config here.
+     * NDRX_CCONF - optional, if set use CCONF, if not set fallback to old-style
+     * NDRX_CCTAG - optional, if set use as sub-section
+     */
+    
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
