@@ -112,13 +112,34 @@ struct ndrx_inicfg
 typedef struct ndrx_inicfg ndrx_inicfg_t;
 
 
-
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile);
-    
+extern NDRX_API  ndrx_inicfg_t * ndrx_inicfg_new(void);
+extern NDRX_API  int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
+        char *resource, char *fullname, char **section_start_with);
+extern NDRX_API  int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+        char *resource, char *fullname, char **section_start_with);
+extern NDRX_API  int ndrx_inicfg_add_resource(ndrx_inicfg_t *cfg, char *resource);
+extern NDRX_API  int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with);
+extern NDRX_API  int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with);
+extern NDRX_API  int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
+            ndrx_inicfg_section_keyval_t *src);
+extern NDRX_API  ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(
+        ndrx_inicfg_section_keyval_t *h, char *key);
+extern NDRX_API  void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h);
+extern NDRX_API  int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
+        ndrx_inicfg_section_keyval_t **out);
+extern NDRX_API  int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+        char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
+extern NDRX_API  int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
+        char **resources,
+        char **section_start_with, 
+        ndrx_inicfg_section_t **out);
+extern NDRX_API  void ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections);
+extern NDRX_API  void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile);
+extern NDRX_API  void ndrx_inicfg_free(ndrx_inicfg_t *cfg);
+
 #ifdef	__cplusplus
 }
 #endif

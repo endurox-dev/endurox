@@ -49,12 +49,16 @@ extern "C" {
 #define NEINVAL             4 /* Invalid value passed to function */
 #define NMAXVAL             4 /* max error */
 
+#define Nerror  (*_Nget_Nerror_addr())
+
+   
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API void _Nset_error(int error_code);
+extern NDRX_API char * Nstrerror (int err);
 extern NDRX_API void _Nset_error_msg(int error_code, char *msg);
 extern NDRX_API void _Nset_error_fmt(int error_code, const char *fmt, ...);
 /* Is error already set?  */
@@ -62,6 +66,8 @@ extern NDRX_API int _Nis_error(void);
 extern NDRX_API void _Nappend_error_msg(char *msg);
 
 extern NDRX_API void _Nunset_error(void);
+
+extern NDRX_API int * _Nget_Nerror_addr (void);
 
 #ifdef	__cplusplus
 }

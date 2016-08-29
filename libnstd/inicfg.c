@@ -505,7 +505,7 @@ out:
  * @param section_start_with list of sections which we are interested in
  * @return 
  */
-public int ndrx_inicfg_update(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
+public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
 {
     int ret = SUCCEED;
     
@@ -586,7 +586,7 @@ public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
 #ifdef INICFG_ENABLE_DEBUG
         NDRX_LOG(log_debug, "%s: Reloading [%s]", fn, r->str);
 #endif
-        if (SUCCEED!=ndrx_inicfg_update(cfg, r->str, section_start_with))
+        if (SUCCEED!=ndrx_inicfg_add(cfg, r->str, section_start_with))
         {
             FAIL_OUT(ret);
         }
@@ -658,7 +658,8 @@ out:
  * @param str keyval to search for
  * @return NULL not found/not NULL - found
  */
-public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(ndrx_inicfg_section_keyval_t *h, char *key)
+public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(
+        ndrx_inicfg_section_keyval_t *h, char *key)
 {
     ndrx_inicfg_section_keyval_t * r = NULL;
     

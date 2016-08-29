@@ -1,7 +1,7 @@
 /* 
-** Enduro/X Standard library
+** Enduro/X common-config
 **
-** @file ndrstandard.h
+** @file cconfig.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,60 +29,38 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NDRSTANDARD_H
-#define	NDRSTANDARD_H
+#ifndef _CCONFIG_H
+#define	_CCONFIG_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
-    
-#include <ndrx_config.h>
+
+/*---------------------------Includes-----------------------------------*/
+#include <sys/stat.h>
+#include <ndrxdcmn.h>
 #include <stdint.h>
-
+#include <ntimer.h>
+#include <uthash.h>
+#include <sys_unix.h>
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+#define NDRX_CCONFIG5 "NDRX_CCONFIG5"
+#define NDRX_CCONFIG4 "NDRX_CCONFIG4"
+#define NDRX_CCONFIG3 "NDRX_CCONFIG3"
+#define NDRX_CCONFIG2 "NDRX_CCONFIG2"
+#define NDRX_CCONFIG1 "NDRX_CCONFIG1"
+#define NDRX_CCONFIG  "NDRX_CCONFIG"
     
-#if UINTPTR_MAX == 0xffffffff
-/* 32-bit */
-#define SYS32BIT
-#elif UINTPTR_MAX == 0xffffffffffffffff
-#define SYS64BIT
-#else
-/* wtf */
-#endif
-
-#define FAIL		-1
-#define SUCCEED		0
-#define public
-#define private     	static
-#define EOS             '\0'
-#define BYTE(x) ((x) & 0xff)
-
-
-#ifndef  __cplusplus
-#ifndef bool
-typedef int         bool;
-#endif
-#endif
-
-#define FALSE        0
-#define TRUE         1
-
-#define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
-
-#define FAIL_OUT(X)    {X=FAIL; goto out;}
-
-#ifdef SYS64BIT
-#define OFFSET(s,e)   ((long) &(((s *)0)->e) )
-#else
-#define OFFSET(s,e)   ((const int) &(((s *)0)->e) )
-#endif
-
-#define ELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
-
-#define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
+#define NDRX_CCTAG "NDRX_CCTAG" /* common-config tag */
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* NDRSTANDARD_H */
+#endif	/* _CCONFIG_H */
 
