@@ -119,22 +119,6 @@ public void ndrx_init_debug(void)
     char *p;
     char filename[PATH_MAX]={EOS};
     
-    /*
-     * Here is the main entry point for common-confg
-     * everything start with debug, thus read the system-wide config here.
-     * NDRX_CCONF - optional, if set use CCONF, if not set fallback to old-style
-     * NDRX_CCTAG - optional, if set use as sub-section
-     */
-#if 0
-    - still under development.
-            
-    if (SUCCEED!=ndrx_cconfig_load())
-    {
-        fprintf(stderr, "GENERAL CONFIGURATION ERROR\n");
-        exit(FAIL);
-    }
-#endif
-    
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
@@ -223,7 +207,7 @@ public void ndrx_init_debug(void)
 
         fclose(f);
     }
-    else if (NULL!=cfg_file)
+    else if (NULL==cfg_file)
     {
         fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
                             errno, strerror(errno));

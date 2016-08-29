@@ -112,7 +112,7 @@ public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
             strcat(tmp1, NDRX_INICFG_SUBSECT_SPERATOR_STR);
             strcat(tmp1, token_cctag);
 
-            if (SUCCEED!=ndrx_inicfg_resolve(G_cconfig, 
+            if (SUCCEED!=ndrx_inicfg_get_subsect(G_cconfig, 
                                 NULL,  /* all config files */
                                 tmp1,  /* global section */
                                 out))
@@ -120,9 +120,11 @@ public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
                 fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
                 FAIL_OUT(ret);
             }
+            
+            token_cctag = strtok_r(NULL, NDRX_INICFG_SUBSECT_SPERATOR_STR, &saveptr1);
         }
     }/* Direct lookup if no cctag */
-    else if (SUCCEED!=ndrx_inicfg_resolve(G_cconfig, 
+    else if (SUCCEED!=ndrx_inicfg_get_subsect(G_cconfig, 
                                 NULL,  /* all config files */
                                 section,  /* global section */
                                 out))
@@ -231,12 +233,17 @@ public int ndrx_cconfig_load(void)
     /* Loop over and load the stuff... */
     HASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
     {
+        
+        fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
+                
         if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
         {
             fprintf(stderr, "%s: failed to set %s=%s: %s\n", fn, 
                 keyvals_iter->key, keyvals_iter->val, strerror(errno));
             FAIL_OUT(ret);
         }
+        
+        fprintf(stderr, "test value %s\n", getenv(keyvals_iter->key));
     }
     
 out:

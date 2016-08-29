@@ -144,6 +144,19 @@ public int ndrx_load_common_env(void)
         NDRX_LOG(log_debug, "env already loaded...");
         goto out;
     }
+    
+    /*
+     * Here is the main entry point for common-confg
+     * everything start with debug, thus read the system-wide config here.
+     * NDRX_CCONF - optional, if set use CCONF, if not set fallback to old-style
+     * NDRX_CCTAG - optional, if set use as sub-section
+     
+    if (SUCCEED!=ndrx_cconfig_load())
+    {
+        fprintf(stderr, "GENERAL CONFIGURATION ERROR\n");
+        exit(FAIL);
+    }
+     * */
 
     /* Read MAX servers */
     p = getenv(CONF_NDRX_SRVMAX);

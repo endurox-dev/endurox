@@ -168,11 +168,6 @@ private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections
     
     HASH_FIND_STR( (*sections_h), section, ret);
     
-#ifdef INICFG_ENABLE_DEBUG
-    fprintf(stderr, "YOPT! [%p]\n", ret);
-#endif
-    
-    
 out:
     return ret;
 }
@@ -235,7 +230,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
         {
             int len = NDRX_MIN(strlen(*section_start_with), strlen(section));
             
-            if (0 == strcmp(*section_start_with, section))
+            if (0 == strncmp(*section_start_with, section, len))
             {
                 needed = TRUE;
                 break;
@@ -322,8 +317,8 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     }
         
     /* Add stuff to the section */
-    HASH_ADD_KEYPTR(hh, mem_section->values, mem_section->values->key, 
-            strlen(mem_section->values->key), mem_value);
+    HASH_ADD_KEYPTR(hh, mem_section->values, mem_value->key, 
+            strlen(mem_value->key), mem_value);
     
 #ifdef INICFG_ENABLE_DEBUG
     fprintf(stderr, "section/key/value added OK\n");
@@ -665,7 +660,7 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
     }
     
     /* Add stuff to hash finaly */
-    HASH_ADD_STR( (*h), key, tmp );
+    HASH_ADD_KEYPTR( hh, (*h), tmp->key, strlen(tmp->key), tmp );
     
 out:
     return ret;
@@ -791,7 +786,7 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
                 HASH_ITER(hh, (section_hash->values), vals, vals_tmp)
                 {
 #ifdef INICFG_ENABLE_DEBUG
-                    fprintf(stderr, "%s: got section[%s]/key[%s]/val[%s]", fn, 
+                    fprintf(stderr, "%s: got section[%s]/key[%s]/val[%s]\n", fn, 
                             vals->section, vals->key, vals->val);
 #endif
                     if (NULL==ndrx_keyval_hash_get((*out), vals->key))
