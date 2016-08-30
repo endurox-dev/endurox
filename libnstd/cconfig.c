@@ -49,7 +49,7 @@
 #include <nerror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define CCONFIG_ENABLE_DEBUG
+/* #define CCONFIG_ENABLE_DEBUG */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -156,7 +156,7 @@ public int ndrx_cconfig_load(void)
 {
     int ret = SUCCEED;
     int slot = 0;
-    int have_config = TRUE;
+    int have_config = FALSE;
     char fn[] = "ndrx_cconfig_load";
     char *config_resources[]= { NULL, 
                           NULL, 
@@ -214,6 +214,7 @@ public int ndrx_cconfig_load(void)
     
     while (NULL!=config_resources[slot])
     {
+        have_config = TRUE;
         if (SUCCEED!=ndrx_inicfg_add(G_cconfig, config_resources[slot], 
                 (char **)sections))
         {
@@ -263,6 +264,11 @@ out:
             ndrx_inicfg_free(G_cconfig);
             G_cconfig = NULL;
         }
+    }
+    else if (!have_config)
+    {
+        ndrx_inicfg_free(G_cconfig);
+        G_cconfig = NULL;
     }
 
     return ret;

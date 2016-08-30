@@ -136,14 +136,19 @@ private int ndrx_init_parse_line(char *tok1, char *tok2, char *filename, int *p_
     else    
     {
         name=strtok_r (tok1,"\t ", &saveptr);
-        tok2=strtok_r (NULL,"\t ", &saveptr);
+        tok=strtok_r (NULL,"\t ", &saveptr);
     }
     
     if ('*'==name[0] || 0==strcmp(name, EX_PROGNAME))
     {
         *p_finish_off = ('*'!=name[0]);
         
-        tok=strtok_r (tok2,"\t ", &saveptr);
+        /* for non-cc mode we have already tokenised tok */
+        if (ccmode)
+        {
+            tok=strtok_r (tok2,"\t ", &saveptr);
+        }
+        
         while( tok != NULL ) 
         {
             int cmplen;
@@ -247,7 +252,7 @@ public void ndrx_init_debug(void)
 
             fclose(f);
         }
-        else if (NULL==cfg_file)
+        else if (NULL==f)
         {
             fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
                                 errno, strerror(errno));
