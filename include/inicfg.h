@@ -60,6 +60,9 @@ struct ndrx_inicfg_section_keyval
     char *section; /* section */
     char *key; /* key for ini */
     char *val; /* value for ini */
+    /* TODO: */
+    int subsection_level; /* the level of subsections (we can overwrite
+                           *  data with deeper sections) */
     
     UT_hash_handle hh;         /* makes this structure hashable */
 };

@@ -49,6 +49,7 @@
 #include <nerror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define CCONFIG_ENABLE_DEBUG
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -233,8 +234,9 @@ public int ndrx_cconfig_load(void)
     /* Loop over and load the stuff... */
     HASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
     {
-        
+#ifdef CCONFIG_ENABLE_DEBUG
         fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
+#endif
                 
         if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
         {
@@ -242,8 +244,9 @@ public int ndrx_cconfig_load(void)
                 keyvals_iter->key, keyvals_iter->val, strerror(errno));
             FAIL_OUT(ret);
         }
-        
+#ifdef CCONFIG_ENABLE_DEBUG
         fprintf(stderr, "test value %s\n", getenv(keyvals_iter->key));
+#endif
     }
     
 out:

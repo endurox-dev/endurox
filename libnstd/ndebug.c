@@ -110,6 +110,81 @@ public void ndrx_dbg_unlock(void)
 }
 
 /**
+ * Parser sharing the functionality with common config & old style debug.conf
+ * @param tok1
+ * @param tok2
+ * @return 
+ */
+private int ndrx_init_parse_line(char *tok1, char *tok2, char *filename, int *p_finish_off)
+{
+    int ret = SUCCEED;
+    char *saveptr=NULL;
+    char *name;
+    char *tok;
+    int ccmode = FALSE;
+    char *p;
+    
+    if (NULL!=tok2)
+    {
+        ccmode = TRUE;
+    }
+    
+    if (ccmode)
+    {
+        name = tok1;
+    }
+    else    
+    {
+        name=strtok_r (tok1,"\t ", &saveptr);
+        tok2=strtok_r (NULL,"\t ", &saveptr);
+    }
+    
+    if ('*'==name[0] || 0==strcmp(name, EX_PROGNAME))
+    {
+        *p_finish_off = ('*'!=name[0]);
+        
+        tok=strtok_r (tok2,"\t ", &saveptr);
+        while( tok != NULL ) 
+        {
+            int cmplen;
+            /* get the setting... */
+            p = strchr(tok, '=');
+            cmplen = p-tok;
+
+            if (0==strncmp("ndrx", tok, cmplen))
+            {
+                G_ndrx_debug.level = atoi(p+1);
+            }
+            else if (0==strncmp("ubf", tok, cmplen))
+            {
+                G_ubf_debug.level = atoi(p+1);
+            }
+            else if (0==strncmp("lines", tok, cmplen))
+            {
+                G_ndrx_debug.buf_lines = G_ubf_debug.buf_lines = atoi(p+1);
+                if (G_ndrx_debug.buf_lines<0)
+                    G_ndrx_debug.buf_lines=G_ubf_debug.buf_lines=0;
+            }
+            else if (0==strncmp("bufsz", tok, cmplen))
+            {
+                G_ndrx_debug.buffer_size = G_ubf_debug.buffer_size = atoi(p+1);
+                if (G_ndrx_debug.buffer_size<=0)
+                    G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
+            }
+            else if (0==strncmp("file", tok, cmplen))
+            {
+                strcpy(filename, p+1);
+            }
+            
+            tok=strtok_r (NULL,"\t ", &saveptr);
+        }
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * This initializes debug out form ndebug.conf
  */
 public void ndrx_init_debug(void)
@@ -117,8 +192,9 @@ public void ndrx_init_debug(void)
     char *cfg_file = getenv("NDRX_DEBUG_CONF");
     FILE *f;
     char *p;
+    int finish_off = FALSE;
     char filename[PATH_MAX]={EOS};
-    
+    ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
@@ -141,82 +217,72 @@ public void ndrx_init_debug(void)
     G_ubf_debug.buf_lines = G_ndrx_debug.buf_lines = 1;
     G_ubf_debug.level = G_ndrx_debug.level = log_debug;
 
-    if (NULL!=cfg_file &&
-            NULL!=(f=fopen(cfg_file, "r")))
+    if (NULL==cconfig)
     {
-        char buf[5000];
-        char *saveptr=NULL;
-        
-        /* process line by line */
-        while (NULL!=fgets(buf, sizeof(buf), f))
+        if (NULL!=cfg_file &&
+                NULL!=(f=fopen(cfg_file, "r")))
         {
-            char *tok=NULL;
-            char *prog;
-            /*char *strtok_r(char *str, const char *delim, char **saveptr);*/
-            if ('#'==buf[0] || '\n'==buf[0])
-            {
-                /* skip comments */
-                continue;
-            }
-            if (buf[strlen(buf)-1]=='\n')
-                buf[strlen(buf)-1]=EOS;
-            
-            tok=strtok_r (buf,"\t ", &saveptr);
+            char buf[5000];
 
-            if ('*'==tok[0] || 0==strcmp(tok, EX_PROGNAME))
+            /* process line by line */
+            while (NULL!=fgets(buf, sizeof(buf), f))
             {
-                int do_break = ('*'!=tok[0]);
-                do
+                if ('#'==buf[0] || '\n'==buf[0])
                 {
-                    int cmplen;
-                    /* get the setting... */
-                    p = strchr(tok, '=');
-                    cmplen = p-tok;
+                    /* skip comments */
+                    continue;
+                }
+                if (buf[strlen(buf)-1]=='\n')
+                {
+                    buf[strlen(buf)-1]=EOS;
+                }
 
-                    if (0==strncmp("ndrx", tok, cmplen))
-                    {
-                        G_ndrx_debug.level = atoi(p+1);
-                    }
-                    else if (0==strncmp("ubf", tok, cmplen))
-                    {
-                        G_ubf_debug.level = atoi(p+1);
-                    }
-                    else if (0==strncmp("lines", tok, cmplen))
-                    {
-                        G_ndrx_debug.buf_lines = G_ubf_debug.buf_lines = atoi(p+1);
-                        if (G_ndrx_debug.buf_lines<0)
-                            G_ndrx_debug.buf_lines=G_ubf_debug.buf_lines=0;
-                    }
-                    else if (0==strncmp("bufsz", tok, cmplen))
-                    {
-                        G_ndrx_debug.buffer_size = G_ubf_debug.buffer_size = atoi(p+1);
-                        if (G_ndrx_debug.buffer_size<=0)
-                            G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
-                    }
-                    else if (0==strncmp("file", tok, cmplen))
-                    {
-                        strcpy(filename, p+1);
-                    }
-                    tok=strtok_r (NULL,"\t ", &saveptr);
-                } while (NULL!=tok);
+                ndrx_init_parse_line(buf, NULL, filename, &finish_off);
 
-                if (do_break)
+                if (finish_off)
+                {
                     break;
+                }
             }
-        }
 
-        fclose(f);
-    }
-    else if (NULL==cfg_file)
-    {
-        fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
-                            errno, strerror(errno));
+            fclose(f);
+        }
+        else if (NULL==cfg_file)
+        {
+            fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
+                                errno, strerror(errno));
+        }
+        else
+        {
+            /* no debug configuration set! */
+            fprintf(stderr, "To control debug output, set debug"
+                            "config file path in $NDRX_DEBUG_CONF\n");
+        }
     }
     else
     {
-        /* no debug configuration set! */
-        fprintf(stderr, "To control debug output, set debug"
-                        "config file path in $NDRX_DEBUG_CONF\n");
+        /* CCONFIG in use, get the section */
+        ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
+        if (SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_DEBUG, &conf))
+        {
+            /* 1. get he line by common & process */
+            if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
+            {
+                ndrx_init_parse_line(cc->key, cc->val, filename, &finish_off);
+            }
+            
+            /* 2. get the line by binary name  */
+            if (NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)))
+            {
+                ndrx_init_parse_line(cc->key, cc->val, filename, &finish_off);
+            }   
+        }
+        
+        if (NULL!=conf)
+        {
+            /* kill the conf */
+            ndrx_keyval_hash_free(conf);
+        }
     }
 
     /* open debug file.. */
