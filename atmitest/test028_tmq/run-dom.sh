@@ -402,7 +402,7 @@ fi
 
 test_empty_qspace;
 
-echo "Running: raindom fail for auto"
+echo "Running: random fail for auto"
 (./atmiclt28 rndfail 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
