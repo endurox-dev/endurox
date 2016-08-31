@@ -78,6 +78,7 @@ extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
 extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
 
 extern NDRX_API int ndrx_isint(char *str);
+extern NDRX_API int ndrx_nr_chars(char *str, char character);
 
 extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);

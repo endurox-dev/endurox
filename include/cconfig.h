@@ -59,6 +59,8 @@ extern "C" {
 #define NDRX_CONF_SECTION_DEBUG  "@debug"
 #define NDRX_CONF_SECTION_QUEUE  "@queue"
     
+    
+#define NDRX_CCTAG_MAX      32          /* max len of cctag */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

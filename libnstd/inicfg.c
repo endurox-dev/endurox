@@ -780,11 +780,16 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
                 /* ok we got a section, now get the all values down in section */
                 HASH_ITER(hh, (section_hash->values), vals, vals_tmp)
                 {
+                    ndrx_inicfg_section_keyval_t *existing = NULL;
 #ifdef INICFG_ENABLE_DEBUG
                     fprintf(stderr, "%s: got section[%s]/key[%s]/val[%s]\n", fn, 
                             vals->section, vals->key, vals->val);
 #endif
-                    if (NULL==ndrx_keyval_hash_get((*out), vals->key))
+                    existing = ndrx_keyval_hash_get((*out), vals->key); 
+                    /* Allow deeper sections to override higher sections. */
+                    if (NULL==existing || 
+                            ndrx_nr_chars(vals->section, NDRX_INICFG_SUBSECT_SPERATOR) > 
+                            ndrx_nr_chars(existing->section, NDRX_INICFG_SUBSECT_SPERATOR))
                     {
                         if (SUCCEED!=ndrx_keyval_hash_add(out, vals))
                         {

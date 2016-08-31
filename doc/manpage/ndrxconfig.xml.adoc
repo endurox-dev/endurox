@@ -35,6 +35,7 @@ SYNOPSIS
 		<exportsvcs>EXPORT_SERVICES_DEFAULT</exportsvcs>
                 <srvstartwait>NDRXD_SRV_START_WAIT_DEFAULT</srvstartwait>
                 <srvstopwait>NDRXD_SRV_STOP_WAITT_DEFAULT</srvstopwait>
+                <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
 	</defaults>
 	<servers>
 		<server name="SERVER_BINARY_NAME">
@@ -55,6 +56,7 @@ SYNOPSIS
 			<exportsvcs>ATMI_SERVER_EXPORT_SERVICES</exportsvcs>
                         <srvstartwait>NDRXD_SRV_START_WAIT</srvstartwait>
                         <srvstopwait>NDRXD_SRV_STOP_WAITT</srvstopwait>
+                        <cctag>COMMON_CONFIG_TAG</cctag>
 		</server>
 		...
 		<server name="SERVER_BINARY_NAME_N">
@@ -187,6 +189,9 @@ DEBUG CONFIGURATION FILE SYNTAX
 	-15. And after -15 this time means when next -9 signal will be sent. This is used
 	if forced restart of forced shutdown was initiated by 'ndrxd'. This
 	can be overriden by 'KILL_TIME_SRV'.
+*COMMON_CONFIG_TAG_DEFAULT*::
+	Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
+        process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
 *SECONDS_TO_SLEEP_AFTER_SRV_START*::
 	Number of seconds to wait for next item to start after the server is launched.
 	This is useful in cases when for example we start bridge server, let it for some

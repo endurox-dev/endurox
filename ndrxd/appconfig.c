@@ -252,7 +252,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             else if (0==strcmp("env", (char *)cur->name))
             {
                 p = (char *)xmlNodeGetContent(cur);
-                strncpy(config->default_env, p, sizeof(config->default_env));
+                strncpy(config->default_env, p, sizeof(config->default_env)-1);
                 
                 /* Ensure that we terminate... */
                 config->default_env[sizeof(config->default_env)-1] = EOS;
@@ -331,6 +331,19 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 config->default_srvstopwait = atoi(p)*1000;
                 NDRX_LOG(log_debug, "srvstopwait: [%s] - %d msec",
                                         p, config->default_srvstopwait);
+                xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "cctag"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                strncpy(config->default_cctag, p, sizeof(config->default_cctag)-1);
+                
+                /* Ensure that we terminate... */
+                config->default_cctag[sizeof(config->default_cctag)-1] = EOS;
+                
+                /* process env */
+                ndrx_str_env_subs_len(config->default_cctag, sizeof(config->default_cctag));
+                
                 xmlFree(p);
             }
             
@@ -641,16 +654,14 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->start_max = atoi(p);
-            NDRX_LOG(log_debug, "start_max: [%s] - %d",
-                                                p, p_srvnode->start_max);
+            NDRX_LOG(log_debug, "start_max: [%s] - %d", p, p_srvnode->start_max);
             xmlFree(p);
         }
         else if (0==strcmp((char*)cur->name, "end_max"))
         {
             p = (char *)xmlNodeGetContent(cur);
             p_srvnode->end_max = atoi(p);
-            NDRX_LOG(log_debug, "end_max: [%s] - %d",
-                                                p, p_srvnode->end_max);
+            NDRX_LOG(log_debug, "end_max: [%s] - %d", p, p_srvnode->end_max);
             xmlFree(p);
         }
         else if (0==strcmp((char*)cur->name, "pingtime"))
@@ -688,7 +699,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("sysopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT));
+            strncpy(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT)-1);
             /* process env */
             ndrx_str_env_subs(p_srvnode->SYSOPT);
             /* Ensure that we terminate... */
@@ -698,7 +709,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("appopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT));
+            strncpy(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT)-1);
             /* process env */
             ndrx_str_env_subs(p_srvnode->SYSOPT);
             /* Ensure that we terminate... */
@@ -708,7 +719,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("env", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->env, p, sizeof(p_srvnode->env));
+            strncpy(p_srvnode->env, p, sizeof(p_srvnode->env)-1);
 
             /* Ensure that we terminate... */
             p_srvnode->env[sizeof(p_srvnode->env)-1] = EOS;
@@ -732,6 +743,16 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->srvstopwait = atoi(p)*1000;
             NDRX_LOG(log_debug, "srvstopwait: [%s] - %d msec",
                                               p, p_srvnode->srvstopwait);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "cctag"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            strncpy(p_srvnode->cctag, p, sizeof(p_srvnode->cctag)-1);
+            /* process env */
+            ndrx_str_env_subs(p_srvnode->cctag);
+            /* Ensure that we terminate... */
+            p_srvnode->cctag[sizeof(p_srvnode->cctag)-1] = EOS;
             xmlFree(p);
         }
     }
@@ -776,6 +797,9 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     if (!p_srvnode->srvstopwait)
         p_srvnode->srvstopwait=config->default_srvstopwait;
+    
+    if (EOS==p_srvnode->cctag[0])
+        strcpy(p_srvnode->cctag, config->default_cctag);
     
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {

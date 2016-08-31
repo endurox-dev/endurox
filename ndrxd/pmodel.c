@@ -739,7 +739,17 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 exit(1);
             }
         }
-
+        
+        if (EOS!=p_pm->conf->cctag[0])
+        {
+            if (SUCCEED!=setenv(NDRX_CCTAG, p_pm->conf->cctag, TRUE))
+            {
+                fprintf(stderr, "Cannot set [%s] to [%s]: %s\n", 
+                        NDRX_CCTAG, p_pm->conf->cctag, strerror(errno));
+                exit(1);
+            }
+        }
+        
         if (SUCCEED != execvp (p_pm->binary_name, cmd))
         {
             int err = errno;

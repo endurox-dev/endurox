@@ -42,6 +42,7 @@ extern "C" {
 #include <atmi_int.h>
 #include <ndrxdcmn.h>
 #include <ntimer.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define PARSE_SECTION_FAIL         FAIL
@@ -88,6 +89,9 @@ struct conf_server_node
     
     int srvstartwait; /* Time to wait for server startup (after report in progress) */
     int srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
+    
+    /* common-config tag (loaded into NDRX_CCTAG before start) */
+    char cctag[NDRX_CCTAG_MAX+1]; 
     
     /* Linked list */
     conf_server_node_t *prev;
@@ -177,7 +181,9 @@ typedef struct
     int default_end_max;    /* Max time in which process should exit */
     int default_killtime;   /* periodical time for signal sending */
     /* Special config param for bridge services - which services to export */
-    char default_exportsvcs[MAX_SERVICE_LIST]; 
+    char default_exportsvcs[MAX_SERVICE_LIST];
+    /* common-config tag (loaded into NDRX_CCTAG before start) */
+    char default_cctag[NDRX_CCTAG_MAX+1]; 
     
     int qrmdelay;   /* queue remove delay (i.e. remove only after this time + check shm on removal!) */
     

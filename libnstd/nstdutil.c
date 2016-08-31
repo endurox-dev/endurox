@@ -523,6 +523,29 @@ public int ndrx_isint(char *str)
    return TRUE;
 }
 
+/**
+ * Count the number of specified chars in string
+ * @param str
+ * @param character
+ * @return 
+ */
+public int ndrx_nr_chars(char *str, char character)
+{
+    char *p = str;
+    int count = 0;
+    
+    do
+    {
+        if (*p == character)
+        {
+            count++;
+        }
+    } while (*(p++));
+
+    return count;
+}
+
+
 
 /**
  * Returns the string mapped to long value
