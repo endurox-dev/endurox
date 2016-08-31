@@ -40,14 +40,18 @@ $#define __EXFIELDS_H
 # Service name for UD
 SRVCNM		1	string	-	Service name to be called
 
+################################################################################
 # Event subsystem related
+################################################################################
 EV_FLAGS        4       long    -       Event subscription flags
 EV_MASK         5       string  -       Event subscription mask
 EV_FILTER       6       string  -       Event subscription filter
 EV_SRVCNM	7	string	-	Event subscription service name
 EV_SUBSNR       8       long    -       Event subscriber number
 
-# EnduroXD monitor
+################################################################################
+# Enduro/X Transaction Monitor
+################################################################################
 EXDM_RESTARTS   15      long    -       ndrxd restarts done
 # Transaction manager specific fields
 TMCMD           20      char    -       Transaction Manager Command code
@@ -75,7 +79,9 @@ TMTXTRYCNT      59       long    -       Transaction try count
 TMTXTRYMAXCNT   60       long    -       Transaction try count, max
 TMTXFLAGS       61       long    -       Various TM flags...
 
+################################################################################
 # Client process manager
+################################################################################
 EX_CPMCOMMAND   100     string   -       CPM Command (bc - boot clt, sc - stop clt, pc - print clts)
 EX_CPMOUTPUT    101     string   -       CPM output
 EX_CPMTAG       102     string   -       Tag
@@ -88,7 +94,9 @@ EX_DATA_BUFTYP          152     short   -       ATMI buffer type ID
 EX_TSTAMP1_STR          153     string   -      Time stamp, yyyyMMddHHmmssSSS
 EX_TSTAMP2_STR          154     string   -      Time stamp, yyyyMMddHHmmssSSS
 
+################################################################################
 # Persistant Queue:
+################################################################################
 EX_QSPACE		    200	    string    -	q space
 EX_QNAME		    201	    string    -	q name
 EX_QFLAGS		    202	    long	-	indicates which of the values are set
@@ -116,6 +124,31 @@ EX_QMSGLOCKED		    223 	short	-	Is message locked?
 EX_QMSGIDSTR		    224	        string	-	String version of msgid
 EX_QNUMENQ		    225 	long	-	Number of enqueues
 EX_QNUMDEQ		    226 	long	-	Number of dequeues
+
+################################################################################
+# Fields for Common Config Server (ccsrv)
+# Config commands:
+# 'g' - Get (default)
+# 'l' - list (iterate through)
+################################################################################
+EX_CC_CMD                   400         char    -       Common config command
+EX_CC_RESOURCE              401         string  -       List of config resources
+EX_CC_SECTION               402         string  -       Lookup section (with sub-sects slashed) (single)
+EX_CC_SECTIONMASK           403         string -        List of sections (start with) to iterate
+
+EX_CC_MANDATORY             404         string -        List of mandatory config fields in section (only for get)
+EX_CC_FORMAT_FIELD          405         string -        List of fields to check format
+EX_CC_FORMAT_FORMAT         406         string -        For to be checked
+
+#OUTPUT
+EX_CC_RESULT_CODE           407         short  -        Result code (error code)
+EX_CC_RESULT_MSG            408         string -        Result message
+
+# Triplet for single entry of config:
+EX_CC_SECTION               409         string -        section from which value was taken (direct or parent...)
+EX_CC_KEY                   410         string -        Result key (list)
+EX_CC_VALUE                 411         string -        Corresponding occurrence of value for key
+################################################################################
 
 $#endif
 
