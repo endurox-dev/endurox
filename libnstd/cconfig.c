@@ -49,12 +49,16 @@
 #include <nerror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-/* #define CCONFIG_ENABLE_DEBUG */
+#define CCONFIG_ENABLE_DEBUG
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
+private char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
+                        NDRX_CONF_SECTION_DEBUG, 
+                        NDRX_CONF_SECTION_QUEUE, 
+                        NULL};
 /* These should be semaphore mutex globals... */
 ndrx_inicfg_t *G_cconfig = NULL; /* Common-config handler */
 char *G_cctag = NULL;
@@ -167,10 +171,6 @@ public int ndrx_cconfig_load(void)
                           NULL};
     G_cctag = getenv(NDRX_CCTAG);
     
-    char *sections[] = {NDRX_CONF_SECTION_GLOBAL, 
-                        NDRX_CONF_SECTION_DEBUG, 
-                        NDRX_CONF_SECTION_QUEUE, 
-                        NULL};
     ndrx_inicfg_section_keyval_t *keyvals = NULL, *keyvals_iter = NULL, 
                 *keyvals_iter_tmp = NULL;
     
@@ -216,7 +216,7 @@ public int ndrx_cconfig_load(void)
     {
         have_config = TRUE;
         if (SUCCEED!=ndrx_inicfg_add(G_cconfig, config_resources[slot], 
-                (char **)sections))
+                (char **)M_sections))
         {
             fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
             FAIL_OUT(ret);
@@ -272,6 +272,20 @@ out:
     }
 
     return ret;
+}
+
+/**
+ * Reload Enduro/X CConfig
+ * @return 
+ */
+public int ndrx_cconfig_reload(void)
+{
+    char fn[]="ndrx_cconfig_reload";
+    if (SUCCEED!=ndrx_inicfg_reload(G_cconfig, M_sections))
+    {
+        fprintf(stderr, "%s: %s lookup to reload: %s\n", fn, 
+                NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
+    }
 }
 
 /**

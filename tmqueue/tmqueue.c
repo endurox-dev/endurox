@@ -59,6 +59,7 @@
 #include <xa_cmn.h>
 #include "thpool.h"
 #include "qcommon.h"
+#include "cconfig.h"
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 extern char *optarg;
@@ -354,6 +355,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             default:
                 /*return FAIL;*/
                 break;
+        }
+    }
+    
+    if (ndrx_get_G_cconfig())
+    {
+        if (SUCCEED!=tmq_reload_conf(NULL))
+        {
+            NDRX_LOG(log_error, "Failed to read CCONFIG's @queue section!");
+            FAIL_OUT(ret);
         }
     }
     

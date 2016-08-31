@@ -53,6 +53,7 @@
 #include <qcommon.h>
 #include "tmqd.h"
 #include "userlog.h"
+#include "cconfig.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -756,6 +757,12 @@ public int tmq_mqrc(UBFH *p_ub)
 {
     int ret = SUCCEED;
     
+    /* if have CC */
+    if (ndrx_get_G_cconfig())
+    {
+        ndrx_cconfig_reload();
+    }
+    
     ret = tmq_reload_conf(G_tmqueue_cfg.qconfig);
     
 out:
@@ -779,7 +786,7 @@ public int tmq_mqch(UBFH *p_ub)
         FAIL_OUT(ret);
     }
     
-    ret = tmq_qconf_addupd(conf);
+    ret = tmq_qconf_addupd(conf, NULL);
     
 out:
     return ret;

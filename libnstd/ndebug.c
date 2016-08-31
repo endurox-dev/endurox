@@ -200,6 +200,7 @@ public void ndrx_init_debug(void)
     int finish_off = FALSE;
     char filename[PATH_MAX]={EOS};
     ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
+    ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
@@ -267,7 +268,6 @@ public void ndrx_init_debug(void)
     else
     {
         /* CCONFIG in use, get the section */
-        ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
         if (SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_DEBUG, &conf))
         {
             /* 1. get he line by common & process */
@@ -281,12 +281,6 @@ public void ndrx_init_debug(void)
             {
                 ndrx_init_parse_line(cc->key, cc->val, filename, &finish_off);
             }   
-        }
-        
-        if (NULL!=conf)
-        {
-            /* kill the conf */
-            ndrx_keyval_hash_free(conf);
         }
     }
 
@@ -315,6 +309,13 @@ public void ndrx_init_debug(void)
      xadmin file=/tmp/xadmin.log
      ...
      */
+    
+    if (NULL!=conf)
+    {
+        /* kill the conf */
+        ndrx_keyval_hash_free(conf);
+    }
+    
     G_ndrx_debug_first = FALSE;
 }
 

@@ -123,7 +123,6 @@ extern NDRX_API  int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
         char *resource, char *fullname, char **section_start_with);
 extern NDRX_API  int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with);
-extern NDRX_API  int ndrx_inicfg_add_resource(ndrx_inicfg_t *cfg, char *resource);
 extern NDRX_API  int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with);
 extern NDRX_API  int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with);
 extern NDRX_API  int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 

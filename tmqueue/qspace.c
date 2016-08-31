@@ -56,6 +56,7 @@
 #include "thpool.h"
 #include "nstdutil.h"
 #include "tmqueue.h"
+#include "cconfig.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TOKEN_SIZE          64 /* max key=value buffer size of qdef element */
@@ -449,32 +450,52 @@ public int tmq_reload_conf(char *cf)
     size_t len = 0;
     int ret = SUCCEED;
     ssize_t read;
+    ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
-    if (NULL==(f=fopen(cf, "r")))
+    if (NULL!=ndrx_get_G_cconfig() && 
+            SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_QUEUE, &csection))
     {
-        NDRX_LOG(log_error, "Failed to open [%s]:%s", cf, strerror(errno));
-        FAIL_OUT(ret);
-    }
-    
-    while (FAIL!=(read = getline(&line, &len, f))) 
-    {
-        ndrx_str_strip(line, " \n\r\t");
-        
-        /* Ignore comments & newlines */
-        if ('#'==*line || EOS==*line)
+        HASH_ITER(hh, csection, val, val_tmp)
         {
-            continue;
+            if (SUCCEED!=tmq_qconf_addupd(val->val, val->key))
+            {
+                FAIL_OUT(ret);
+            }
         }
-        
-        if (SUCCEED!=tmq_qconf_addupd(line))
+    }
+    else /* fallback to old config */
+    {
+        if (NULL==(f=fopen(cf, "r")))
         {
+            NDRX_LOG(log_error, "Failed to open [%s]:%s", cf, strerror(errno));
             FAIL_OUT(ret);
         }
+
+        while (FAIL!=(read = getline(&line, &len, f))) 
+        {
+            ndrx_str_strip(line, " \n\r\t");
+
+            /* Ignore comments & newlines */
+            if ('#'==*line || EOS==*line)
+            {
+                continue;
+            }
+
+            if (SUCCEED!=tmq_qconf_addupd(line, NULL))
+            {
+                FAIL_OUT(ret);
+            }
+        }
+        free(line);
     }
-    free(line);
     
     
 out:
+                
+    if (NULL!=csection)
+    {
+        ndrx_keyval_hash_free(csection);
+    }
 
     if (NULL!=f)
     {
@@ -488,10 +509,11 @@ out:
  * Add queue definition. Support also update
  * We shall support Q update too...
  * Syntax: -q VISA,svcnm=VISAIF,autoq=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
- * @param qdef
+ * @param qdefstr queue definition
+ * @param name optional name (already parsed)
  * @return  SUCCEED/FAIL
  */
-public int tmq_qconf_addupd(char *qconfstr)
+public int tmq_qconf_addupd(char *qconfstr, char *name)
 {
     tmq_qconfig_t * qconf;
     tmq_qconfig_t * dflt;
@@ -506,7 +528,14 @@ public int tmq_qconf_addupd(char *qconfstr)
     
     MUTEX_LOCK_V(M_q_lock);
     
-    p = strtok (qconfstr,",");
+    if (NULL==name)
+    {
+        p = strtok (qconfstr,",");
+    }
+    else
+    {
+        p = name;
+    }
     
     if (NULL!=p)
     {
@@ -543,7 +572,14 @@ public int tmq_qconf_addupd(char *qconfstr)
         FAIL_OUT(ret);
     }
     
-    p = strtok (NULL, ","); /* continue... */
+    if (NULL==name)
+    {
+        p = strtok (NULL, ","); /* continue... */
+    }
+    else
+    {
+        p = strtok (qconfstr, ","); /* continue... */
+    }
     
     while (p != NULL)
     {

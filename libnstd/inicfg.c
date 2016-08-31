@@ -52,7 +52,7 @@
 
 #define API_ENTRY {_Nunset_error();}
 
-/* #define INICFG_ENABLE_DEBUG */
+#define INICFG_ENABLE_DEBUG
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -485,34 +485,6 @@ out:
 }
 
 /**
- * Configure the library with single ini file.
- * Or maybe we need a linked list of resource files, not?
- * In that way we could ensure that one object could keep as many configs as needed
- * @param cfg
- * @param files - malloced array (NULL terminated) with config files (also malloced strings)
- * @return 
- */
-public int ndrx_inicfg_add_resource(ndrx_inicfg_t *cfg, char *resource)
-{
-    int ret = SUCCEED;
-    char fn[] = "ndrx_inicfg_add_resource";
-    
-    if (resource==NULL) /* nothing to do. */
-    {
-        return ret;
-    }
-    
-    if (SUCCEED!=ndrx_string_hash_add(&cfg->resource_hash, resource))
-    {
-        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
-        FAIL_OUT(ret);
-    }
-    
-out:
-    return ret;
-}
-
-/**
  * Load or update resource
  * @param cfg config handler
  * @param resource folder/file to load
@@ -522,9 +494,9 @@ out:
 public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
 {
     int ret = SUCCEED;
-    
+    char fn[] = "ndrx_inicfg_add";
     cfg_mark_not_loaded(cfg, resource);
-    
+ 
     /* Check the type (folder or file) 
      * If it is not file, then it is a directory (assumption).
      */
@@ -576,6 +548,21 @@ public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_st
     
     cfg_remove_not_marked(cfg);
     
+    /*
+     * Add resource to the hash
+     */
+    if (NULL==ndrx_string_hash_get(cfg->resource_hash, resource))
+    {
+#ifdef INICFG_ENABLE_DEBUG  
+        fprintf(stderr, "Registering resource [%s]\n", resource);
+#endif
+        if (SUCCEED!=ndrx_string_hash_add(&(cfg->resource_hash), resource))
+        {
+            _Nset_error_fmt(NEMALLOC, "%s: ndrx_string_hash_add - malloc failed", fn);
+            FAIL_OUT(ret);
+        }
+    }
+    
 out:
     return ret;
 }
@@ -624,6 +611,7 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
             ndrx_inicfg_section_keyval_t *src)
 {
     int ret = SUCCEED;
+    char fn[]="ndrx_keyval_hash_add";
     ndrx_inicfg_section_keyval_t * tmp = calloc(1, sizeof(ndrx_inicfg_section_keyval_t));
     
     if (NULL==tmp)
@@ -639,6 +627,7 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
     {
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
 #endif
         FAIL_OUT(ret);
     }
@@ -647,6 +636,8 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
     {
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
+        
 #endif
         FAIL_OUT(ret);
     }
@@ -655,6 +646,7 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
     {
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
 #endif
         FAIL_OUT(ret);
     }

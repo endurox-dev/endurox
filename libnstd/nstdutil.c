@@ -291,31 +291,33 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
  */
 public char * ndrx_str_env_subs_len(char * str, int buf_size)
 {
-    char *p, *p2;
+    char *p, *p2, *p3;
     char *next = str;
     char envnm[1024];
     char *env;
     char *out;
     char *empty="";
     char *malloced;
-    
-    /* replace '\\' -> '\'  */
-    if (strstr(str, "\\\\"))
-    {
-        malloced = ndrx_str_replace(str, "\\\\", "\\");
-        strcpy(str, malloced);
-        free(malloced);
-    }
-    
+
     while (NULL!=(p=strstr(next, "${")))
     {
-        
         p2=strstr(next, "\\${");
+        p3=strstr(next, "\\\\${");
         
         /* this is escaped stuff, we shall ignore that */
-        if (p == p2)
+        if (p == p3+2)
         {
-            next+=3; 
+            /* This is normally escaped \, thus ignore & continue 
+             * Does not affects our value
+             */
+        }
+        else if (p == (p2+1))
+        {
+            /* This is our placeholder escaped, thus skip 
+             * But we need to kill the escape
+             */
+            memmove(p2, p, strlen(p)+1);
+            next=p+3; 
             continue;
         }
         
@@ -372,7 +374,15 @@ public char * ndrx_str_env_subs_len(char * str, int buf_size)
             next+=2;
         }
     }
-
+    
+    /* replace '\\' -> '\'  */
+    if (strstr(str, "\\"))
+    {
+        malloced = ndrx_str_replace(str, "\\\\", "\\");
+        strcpy(str, malloced);
+        free(malloced);
+    }
+    
     return str;
 }
 
