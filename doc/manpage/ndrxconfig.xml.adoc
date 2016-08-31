@@ -68,7 +68,8 @@ SYNOPSIS
 			log="CLT_LOG" 
 			stdout="CLT_STDOUT"
 			stderr="CLT_STDERR"
-			env="CLT_ENV" 
+			env="CLT_ENV"
+                        CCTAG="CLT_CCTAG"
                         wd="CLT_WD"
 			autostart="CLT_AUTOSTART">
 			
@@ -78,7 +79,8 @@ SYNOPSIS
 					stdout="CLT_STDOUT_EXEC" 
 					stderr="CLT_STDERR_EXEC" 
 					env="CLT_ENV_EXEC" 
-					env="CLT_WD_EXEC" 
+                                        cctag="CLT_CCTAG_EXEC" 
+					wd="CLT_WD_EXEC" 
 					autostart="CLT_AUTOSTART_EXEC"/>
 				<exec tag="CLT_TAG_EXEC2" 
 					subsect="CLT_SUBSECT2_EXEC2" 
@@ -137,58 +139,58 @@ DEBUG CONFIGURATION FILE SYNTAX
         and stopping.
 *MIN_SERVERS_DEFAULT*::
 	Default minimum number of copies of the server which needs to be started automatically.
-	This can be overriden by 'MIN_SERVERS_SRV' per server.
+	This can be overridden by 'MIN_SERVERS_SRV' per server.
 *MAX_SERVERS_DEFAULT*::
 	Max number of ATMI server copies per ATMI server entry. The difference between
 	MIN and MAX servers means the number of standby servers configured. They can be started
 	by hand with out system re-configuration. But they are not booted automatically at
 	system startup. You will have to start them with $ xadmin start -s <server_name>
-	or by $ xadmin start -i <server_id>. This can be overriden by
+	or by $ xadmin start -i <server_id>. This can be overridden by
 	'MAX_SERVERS_SRV'.
 *AUTOKILL_DEFAULT*::
 	Should server be automatically killed (by sequence signal sequence 
 	-2, -15, -9) in case if server have been starting up too long, or
 	does not respond to pings too long, or it is performing shutdown
-	too long. This can be overriden by 'AUTOKILL_SRV' on per server
+	too long. This can be overridden by 'AUTOKILL_SRV' on per server
 	basis.
 *ENV_OVERRIDE_DEFAULT*::
 	Full path to file containing environment variable overrides.
-	see 'ex_envover(5)' for more details. This can be overriden
+	see 'ex_envover(5)' for more details. This can be overridden
 	by per server basis by ENV_OVERRIDE_SRV. 
 	Both are optional settings.
 *MAX_STARTUP_TIME_DEFAULT*::
 	Max time (in sanity units) in which server should start up, i.e. send init info to
 	'ndrxd'. If during this time server have not initialized, it is being restarted. This
-	can be overriden by 'MAX_STARTUP_TIME_SRV'.
+	can be overridden by 'MAX_STARTUP_TIME_SRV'.
 *PING_EVERY_TIME_DEFAULT*::
 	Number of sanity units in which perform peridical server pings. This can be
-	overriden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
+	overridden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
 *MAX_PING_TIME_DEFAULT*::
 	Number of sanity units, time in which server *must* respond to ping requests.
 	If there is no response from server within this time, then restart sequence is
-	initiated. This can be overriden by 'MAX_PING_TIME_SRV'.
+	initiated. This can be overridden by 'MAX_PING_TIME_SRV'.
 *MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
 	Maximum time in which shutdown of server must complete in sanity units.
 	If in given time server is not shutdown, then forced shutdown sequence
-	is started until server exits. This can be overriden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
+	is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
 	on per server basis.
 *EXPORT_SERVICES_DEFAULT*::
     Comma seperated list of services to be applied to all binaries which means the list of
-    services to be exported by tpbridge service to the node. This can be overriden by 
+    services to be exported by tpbridge service to the node. This can be overridden by 
     'ATMI_SERVER_EXPORT_SERVICES'.
 *NDRXD_SRV_START_WAIT_DEFAULT*::
         Number of seconds to wait for servers to boot. If not started in given time,
-        then continue with next server. This can be overriden by 'NDRXD_SRV_START_WAIT'.
+        then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
         Default value for this is 30 seconds.
 *NDRXD_SRV_STOP_WAIT_DEFAULT*::
         Number of seconds to wait for server to shutdown. If not started in given time,
-        then continue with next server. This can be overriden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
+        then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
         Default value for this is 30 seconds.
 *KILL_TIME_DEFAULT*::
 	Time in sanity units after which to progress from first signal -2 to next signal
 	-15. And after -15 this time means when next -9 signal will be sent. This is used
 	if forced restart of forced shutdown was initiated by 'ndrxd'. This
-	can be overriden by 'KILL_TIME_SRV'.
+	can be overridden by 'KILL_TIME_SRV'.
 *COMMON_CONFIG_TAG_DEFAULT*::
 	Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
         process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
@@ -242,22 +244,25 @@ DEBUG CONFIGURATION FILE SYNTAX
 	string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
 	for subsection substitution. Other env variables available here too.
 *CLT_LOG*::
-	Logfile to which stdout and stderr is logged. Can be overriden by 'CLT_LOG_EXEC'
+	Logfile to which stdout and stderr is logged. Can be overridden by 'CLT_LOG_EXEC'
 	for each individual process. Optional attribute.
 *CLT_STDOUT*::
-	File where to log stdout. Can be overriden by 'CLT_STDOUT_EXEC'
+	File where to log stdout. Can be overridden by 'CLT_STDOUT_EXEC'
 	for each individual process. Optional attribute.
 *CLT_STDERR*::
-	File where to log stderr. Can be overriden by 'CLT_STDERR_EXEC'
+	File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
 	for each individual process. Optional attribute.
 *CLT_ENV*::
-	Environment override file. See *ex_envover(5)* for syntax. Can be overriden by 'CLT_ENV_EXEC'
+	Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLT_ENV_EXEC'
+	for each individual process. Optional attribute.
+*CLT_CCTAG*::
+	ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
 	for each individual process. Optional attribute.
 *CLT_WD*::
-	Working directory for the process. Can be overriden by 'CLT_WD_EXEC'.
+	Working directory for the process. Can be overridden by 'CLT_WD_EXEC'.
 *CLT_AUTOSTART*::
 	Should process be started automatically? 'Y' or 'y' means boot at start.
-	Can be overriden by 'CLT_AUTOSTART_EXEC' for each individual process. 
+	Can be overridden by 'CLT_AUTOSTART_EXEC' for each individual process. 
 	Optional attribute. Default 'n'.
 *CLT_TAG_EXEC*::
 	Tagname to be set for process.
@@ -293,6 +298,7 @@ Sample configuration:
 			<srvid>14</srvid>
 			<min>1</min>
 			<max>1</max>
+                        <cctag>RM1</cctag>
 			<env>${NDRX_HOME}/tpevsrv_env</env>
 			<sysopt>-e /tmp/TPEVSRV -r</sysopt>
 		</server>
@@ -302,10 +308,15 @@ Sample configuration:
 			<sysopt>-e /tmp/BRIDGE -r</sysopt>
 			<appopt>-n2 -r -i 0.0.0.0 -p 4433 -tA</appopt>
 		</server>
+		<server name="cpmsrv">
+                        <cctag>RM2</cctag>
+			<srvid>9999</srvid>
+			<sysopt>-e /tmp/cpmsrv.log -r -- -k3 -i1</sysopt>
+		</server>
 	</servers>
 	<clients>
-		<client cmdline="testbinary -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}" autostart="Y">
-			<exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log"/>
+		<client cmdline="testbinary -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}" autostart="Y" cctag="RM4">
+			<exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log"cctag="RM5"/>
 			<exec tag="TAG2" subsect="SUBSECTION2" log="${APP_LOG}/testbin1-2.log"/>
 		</client>
                 <client cmdline="testenv.sh" env="environment.override1" log="env1.log">

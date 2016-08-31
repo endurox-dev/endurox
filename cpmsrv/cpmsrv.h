@@ -41,6 +41,7 @@ extern "C" {
 #include <uthash.h>
 #include <ntimer.h>
 #include <cpm.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -84,6 +85,7 @@ struct cpm_static_info
     char log_stderr[PATH_MAX+1];
     char wd[PATH_MAX+1]; /* Working dir */
     char env[PATH_MAX+1];
+    char cctag[NDRX_CCTAG_MAX+1];
     long flags;              /* flags of the process */
 };
 typedef struct cpm_static_info cpm_static_info_t;

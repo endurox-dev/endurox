@@ -280,6 +280,16 @@ public int cpm_exec(cpm_process_t *c)
             }
         }
         
+        if (EOS!=c->stat.cctag[0])
+        {
+            if (SUCCEED!=setenv(NDRX_CCTAG, c->stat.cctag, TRUE))
+            {
+                userlog("Cannot set [%s] to [%s]: %s\n", 
+                        NDRX_CCTAG, c->stat.cctag, strerror(errno));
+                exit(1);
+            }
+        }
+        
         /* Change working dir */
         if (EOS!=c->stat.wd[0])
         {

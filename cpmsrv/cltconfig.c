@@ -189,6 +189,13 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             cltproc.stat.env[PATH_MAX] = EOS;
             xmlFree(p);
         }
+        else if (0==strcmp((char *)attr->name, "cctag"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+            strncpy(cltproc.stat.cctag, p, NDRX_CCTAG_MAX);
+            cltproc.stat.cctag[NDRX_CCTAG_MAX] = EOS;
+            xmlFree(p);
+        }
         else if (0==strcmp((char *)attr->name, "wd"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
@@ -286,7 +293,15 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     strncpy(p_cltproc->stat.env, p, PATH_MAX);
                     p_cltproc->stat.env[PATH_MAX] = EOS;
                     xmlFree(p);
-                } 
+                }
+                else if (0==strcmp((char *)attr->name, "cctag"))
+                {
+                     /* Optional */
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    strncpy(p_cltproc->stat.cctag, p, NDRX_CCTAG_MAX);
+                    p_cltproc->stat.cctag[NDRX_CCTAG_MAX] = EOS;
+                    xmlFree(p);
+                }
                 else if (0==strcmp((char *)attr->name, "wd"))
                 {
                      /* Optional */
@@ -363,13 +378,13 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             }
             
             /* format the command line (final) */
-            ndrx_str_env_subs(p_cltproc->stat.command_line);
-            /* TODO: We should have length specifier here (so that we do not overrun the mem): */
-            ndrx_str_env_subs(p_cltproc->stat.env);
-            ndrx_str_env_subs(p_cltproc->stat.wd); /* working dir */
+            ndrx_str_env_subs_len(p_cltproc->stat.command_line, sizeof(p_cltproc->stat.command_line));
+            ndrx_str_env_subs_len(p_cltproc->stat.env, sizeof(p_cltproc->stat.env));
+            ndrx_str_env_subs_len(p_cltproc->stat.cctag, sizeof(p_cltproc->stat.cctag));
+            ndrx_str_env_subs_len(p_cltproc->stat.wd, sizeof(p_cltproc->stat.wd)); /* working dir */
             /* Expand the logfile path... */
-            ndrx_str_env_subs(p_cltproc->stat.log_stdout);
-            ndrx_str_env_subs(p_cltproc->stat.log_stderr);
+            ndrx_str_env_subs_len(p_cltproc->stat.log_stdout, sizeof(p_cltproc->stat.log_stdout));
+            ndrx_str_env_subs_len(p_cltproc->stat.log_stderr, sizeof(p_cltproc->stat.log_stderr));
             
             /* add to hash list */
             cpm_get_key(p_cltproc->key, p_cltproc->tag, p_cltproc->subsect);
