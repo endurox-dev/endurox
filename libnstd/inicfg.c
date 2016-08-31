@@ -534,8 +534,11 @@ public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_st
                        (len >=7 && 0==strcmp(elt->qname+len-7, ".config"))
                    )
                {
+                   char tmp[PATH_MAX+1];
+                   snprintf(tmp, sizeof(tmp), "%s/%s", resource, elt->qname);
+                   
                    if (SUCCEED!=ndrx_inicfg_update_single_file(cfg, resource, 
-                           elt->qname, section_start_with))
+                           tmp, section_start_with))
                    {
                        FAIL_OUT(ret);
                    }
