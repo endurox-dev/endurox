@@ -44,6 +44,7 @@
 #include <stdarg.h>     /* va_list, va_start, va_arg, va_end */
 #include <exhash.h>
 #include <nerror.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -168,6 +169,81 @@ int main(int argc, char** argv)
         /* free up the config */
         ndrx_inicfg_free(cfg);
     }
+    
+    
+    /* get the Enduro/X handler */
+    cfg = NULL;
+    out = NULL;
+    
+    if (SUCCEED!=ndrx_cconfig_load_general(&cfg))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get Enduro/X config handler: %s", Nstrerror(Nerror));
+        FAIL_OUT(ret);  
+    }
+    
+    if (SUCCEED!=ndrx_cconfig_get_cf(cfg, "@debug", &out))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to resolve [debug]: %s",
+                Nstrerror(Nerror));
+        FAIL_OUT(ret);    
+    }
+    
+    /* there should be * */
+    if (NULL==(val=ndrx_keyval_hash_get(out, "*")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get *!");
+        FAIL_OUT(ret);
+    }
+
+    if (0!=strcmp(val->val, "ndrx=5"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: invalid value for debug: [%s] vs ", 
+                val->val, "ndrx=5");
+        FAIL_OUT(ret);
+    }
+    
+    /* we can append the result "virtual secton" with new data: */
+    if (SUCCEED!=ndrx_cconfig_get_cf(cfg, "HELLO2", &out))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to resolve [debug]: %s",
+                Nstrerror(Nerror));
+        FAIL_OUT(ret);    
+    }
+    
+    if (NULL==(val=ndrx_keyval_hash_get(out, "MY")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get MY!");
+        FAIL_OUT(ret);
+    }
+
+    if (0!=strcmp(val->val, "PHONE"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: invalid value for debug: [%s]", val->val);
+        FAIL_OUT(ret);
+    }
+    
+    ndrx_keyval_hash_free(out);
+    ndrx_inicfg_free(cfg);
+    
+    /* Now test only Enduro/X cconfig (must not have HELLO2) */
+    
+    cfg = NULL;
+    out = NULL;
+    
+    if (SUCCEED!=ndrx_cconfig_load())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get Enduro/X config handler: %s", Nstrerror(Nerror));
+        FAIL_OUT(ret);  
+    }
+    
+    if (SUCCEED!=ndrx_cconfig_get("HELLO2", &out))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Enduro/X internal config must not have [HELLO2]!");
+        FAIL_OUT(ret);    
+    }
+    
+    ndrx_keyval_hash_free(out);
+    ndrx_inicfg_free(ndrx_get_G_cconfig());
     
 out:
     NDRX_LOG(log_info, "Test returns %d", ret);

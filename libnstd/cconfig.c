@@ -70,7 +70,7 @@ char *G_cctag = NULL;
  * @param section
  * @return 
  */
-public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
+public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_section_keyval_t **out)
 {
     int ret = SUCCEED;
     int len;
@@ -117,7 +117,7 @@ public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
             strcat(tmp1, NDRX_INICFG_SUBSECT_SPERATOR_STR);
             strcat(tmp1, token_cctag);
 
-            if (SUCCEED!=ndrx_inicfg_get_subsect(G_cconfig, 
+            if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, 
                                 NULL,  /* all config files */
                                 tmp1,  /* global section */
                                 out))
@@ -129,7 +129,7 @@ public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
             token_cctag = strtok_r(NULL, NDRX_INICFG_SUBSECT_SPERATOR_STR, &saveptr1);
         }
     }/* Direct lookup if no cctag */
-    else if (SUCCEED!=ndrx_inicfg_get_subsect(G_cconfig, 
+    else if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, 
                                 NULL,  /* all config files */
                                 section,  /* global section */
                                 out))
@@ -153,10 +153,23 @@ out:
 
     return ret;
 }
+
 /**
- * Load cconfig
+ * Get the Enduro/X config
+ * @param section
+ * @param out
+ * @return 
  */
-public int ndrx_cconfig_load(void)
+public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
+{
+    return ndrx_cconfig_get_cf(G_cconfig, section,  out);
+}
+
+/**
+ * Load config (for Enduro/X only)
+ * @return 
+ */
+private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
 {
     int ret = SUCCEED;
     int slot = 0;
@@ -169,7 +182,12 @@ public int ndrx_cconfig_load(void)
                           NULL, 
                           NULL, 
                           NULL};
-    G_cctag = getenv(NDRX_CCTAG);
+    
+    if (NULL!=*cfg)
+    {
+        /* config already loaded... */
+        return SUCCEED;
+    }
     
     ndrx_inicfg_section_keyval_t *keyvals = NULL, *keyvals_iter = NULL, 
                 *keyvals_iter_tmp = NULL;
@@ -203,7 +221,7 @@ public int ndrx_cconfig_load(void)
     }
         
     /* Check if envs are set before try to load */
-    if (NULL==(G_cconfig = ndrx_inicfg_new()))
+    if (NULL==(*cfg = ndrx_inicfg_new()))
     {
         fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
         FAIL_OUT(ret);
@@ -215,8 +233,8 @@ public int ndrx_cconfig_load(void)
     while (NULL!=config_resources[slot])
     {
         have_config = TRUE;
-        if (SUCCEED!=ndrx_inicfg_add(G_cconfig, config_resources[slot], 
-                (char **)M_sections))
+        if (SUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
+                (is_internal?(char **)M_sections:NULL)))
         {
             fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
             FAIL_OUT(ret);
@@ -224,30 +242,33 @@ public int ndrx_cconfig_load(void)
         slot++;
     }
     
-    /* Get globals & transfer to setenv() */
-    if (SUCCEED!=ndrx_cconfig_get(NDRX_CONF_SECTION_GLOBAL, &keyvals))
+    if (is_internal)
     {
-        fprintf(stderr, "%s: %s lookup failed: %s\n", fn, 
-                NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
-        FAIL_OUT(ret);
-    }
-    
-    /* Loop over and load the stuff... */
-    EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
-    {
+        /* Get globals & transfer to setenv() */
+        if (SUCCEED!=ndrx_cconfig_get_cf(*cfg, NDRX_CONF_SECTION_GLOBAL, &keyvals))
+        {
+            fprintf(stderr, "%s: %s lookup failed: %s\n", fn, 
+                    NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
+            FAIL_OUT(ret);
+        }
+
+        /* Loop over and load the stuff... */
+        EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
+        {
 #ifdef CCONFIG_ENABLE_DEBUG
         fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
 #endif
-                
-        if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
-        {
-            fprintf(stderr, "%s: failed to set %s=%s: %s\n", fn, 
-                keyvals_iter->key, keyvals_iter->val, strerror(errno));
-            FAIL_OUT(ret);
-        }
+
+            if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
+            {
+                fprintf(stderr, "%s: failed to set %s=%s: %s\n", fn, 
+                    keyvals_iter->key, keyvals_iter->val, strerror(errno));
+                FAIL_OUT(ret);
+            }
 #ifdef CCONFIG_ENABLE_DEBUG
         fprintf(stderr, "test value %s\n", getenv(keyvals_iter->key));
 #endif
+        }
     }
     
 out:
@@ -259,19 +280,50 @@ out:
     }
     if (SUCCEED!=ret)
     {
-        if (NULL!=G_cconfig)
+        if (NULL!=*cfg)
         {
-            ndrx_inicfg_free(G_cconfig);
-            G_cconfig = NULL;
+            ndrx_inicfg_free(*cfg);
+            *cfg = NULL;
         }
     }
     else if (!have_config)
     {
-        ndrx_inicfg_free(G_cconfig);
-        G_cconfig = NULL;
+        ndrx_inicfg_free(*cfg);
+        *cfg = NULL;
     }
 
     return ret;
+}
+/**
+ * Internal for Enduro/X - load the config
+ * @return 
+ */
+public int ndrx_cconfig_load(void)
+{
+    /* todo: might need first. */
+    if (NULL!=G_cctag)
+    {
+        G_cctag = getenv(NDRX_CCTAG);
+    }
+    
+    return _ndrx_cconfig_load(&G_cconfig, TRUE);
+}
+
+/**
+ * General for user (make config out of the Enduro/X cfg files)
+ * Use shared config
+ * @param cfg double ptr to config object
+ * @return 
+ */
+public int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg)
+{
+    /* todo: might need first. */
+    if (NULL!=G_cctag)
+    {
+        G_cctag = getenv(NDRX_CCTAG);
+    }
+    
+    return _ndrx_cconfig_load(cfg, FALSE);
 }
 
 /**
