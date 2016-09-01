@@ -1043,6 +1043,7 @@ private void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
     /* kill the sections */
     EXHASH_ITER(hh, sections, section, section_temp)
     {
+        EXHASH_DEL(sections, section);
         ndrx_keyval_hash_free(section->values);
         free(section->section);
         free(section);
