@@ -265,7 +265,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
         EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
         {
 #ifdef CCONFIG_ENABLE_DEBUG
-        fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
+            fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
 #endif
 
             if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
@@ -275,7 +275,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
                 FAIL_OUT(ret);
             }
 #ifdef CCONFIG_ENABLE_DEBUG
-        fprintf(stderr, "test value %s\n", getenv(keyvals_iter->key));
+            fprintf(stderr, "test value %s\n", getenv(keyvals_iter->key));
 #endif
         }
     }
