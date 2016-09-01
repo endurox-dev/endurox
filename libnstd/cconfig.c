@@ -245,7 +245,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
         slot++;
     }
 
-   if (NULL==config_resources[slot])
+   if (NULL==config_resources[0])
    {
         have_config = FALSE;
         goto out;
