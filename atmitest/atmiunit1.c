@@ -259,7 +259,12 @@ Ensure(test028_tmq)
     assert_equal(ret, SUCCEED);
 }
 
-
+Ensure(test029_inicfg)
+{
+    int ret;
+    ret=system_dbg("test029_inicfg/run.sh");
+    assert_equal(ret, SUCCEED);
+}
 
 
 TestSuite *atmi_test_all(void)
@@ -303,6 +308,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test027_pscript);
 #endif
     add_test(suite, test028_tmq);
+    add_test(suite, test029_inicfg);
     
     return suite;
 }

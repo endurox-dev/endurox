@@ -226,10 +226,6 @@ private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections
     EXHASH_ADD_KEYPTR(hh, (*sections_h), ret->section, 
             strlen(ret->section), ret);
     
-    ret = NULL;
-    
-    EXHASH_FIND_STR( (*sections_h), section, ret);
-    
 out:
     return ret;
 }
@@ -404,7 +400,7 @@ private int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
     int ret = SUCCEED;
     char fn[] = "_ndrx_inicfg_load_single_file";
     
-    if (NULL==(cf = malloc(sizeof(ndrx_inicfg_file_t))))
+    if (NULL==(cf = calloc(1, sizeof(ndrx_inicfg_file_t))))
     {
         _Nset_error_fmt(NEMALLOC, "%s: Failed to malloc ndrx_inicfg_file_t: %s", 
                 fn, strerror(errno));
@@ -876,7 +872,7 @@ private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
         {
             FAIL_OUT(ret);
         }
-        p = strchr(tmp, NDRX_INICFG_SUBSECT_SPERATOR);
+        p = strrchr(tmp, NDRX_INICFG_SUBSECT_SPERATOR);
         
         if (NULL!=p)
         {
@@ -981,6 +977,7 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
                 {
                     found = TRUE;
                 }
+                
                 while (EOS!=section_start_with[i])
                 {
                     len = NDRX_MIN(strlen(section->section), strlen(section_start_with[i]));
@@ -989,6 +986,7 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
                         found = TRUE;
                         break;
                     }
+                    i++;
                 }
 
 #ifdef INICFG_ENABLE_DEBUG
@@ -1260,7 +1258,7 @@ public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
 public void ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
 {
     API_ENTRY;
-    ndrx_inicfg_sections_free(sections);
+    _ndrx_inicfg_sections_free(sections);
 }
 
 /**
