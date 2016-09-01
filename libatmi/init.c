@@ -164,7 +164,8 @@ public int ndrx_load_common_env(void)
     if (NULL==p)
     {
         fprintf(stderr, "********************************************************************************\n");
-        fprintf(stderr, "**                         ! CONFIGURATION ERROR !                            **\n");
+        fprintf(stderr, "**                         CONFIGURATION ERROR !                              **\n");
+        fprintf(stderr, "**                         ... now worry                                      **\n");
         fprintf(stderr, "**                                                                            **\n");
         fprintf(stderr, "** Enduro/X Application server is not in proper environment or not configured **\n");
         fprintf(stderr, "**                                                                            **\n");

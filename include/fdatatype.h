@@ -190,7 +190,7 @@ struct UBF_field_def
     BFLDID		bfldid;
     _UBF_SHORT	fldtype;
     char		fldname[UBFFLDMAX+1];
-    UT_hash_handle hh; /* makes this structure hashable */
+    EX_hash_handle hh; /* makes this structure hashable */
     UBF_field_def_t *next; /* next with the same hash ID! */
 };
 

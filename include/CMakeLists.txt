@@ -44,6 +44,10 @@ install (FILES
     ndebug.h
     ndrstandard.h
     thlock.h
+    exhash.h
+    cconfig.h 
+    inicfg.h
+    nerror.h
     xa.h
     ndrx_config.h
     DESTINATION include)

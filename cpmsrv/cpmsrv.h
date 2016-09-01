@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <uthash.h>
+#include <exhash.h>
 #include <ntimer.h>
 #include <cpm.h>
 #include <cconfig.h>
@@ -121,7 +121,7 @@ struct cpm_process
     cpm_dynamic_info_t dyn;
     int is_cfg_refresh; /* Is config refreshed? */
 
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct cpm_process cpm_process_t;
 

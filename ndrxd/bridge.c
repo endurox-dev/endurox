@@ -44,7 +44,7 @@
 
 #include <ndebug.h>
 #include <nstdutil.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <bridge_int.h>
 #include <ntimer.h>
 #include <cmd_processor.h>
@@ -75,9 +75,9 @@ public void brd_remove_bridge_services(bridgedef_t *cur)
     bridgedef_svcs_t *r = NULL;
     bridgedef_svcs_t *rtmp = NULL;
     
-    HASH_ITER(hh, cur->theyr_services, r, rtmp)
+    EXHASH_ITER(hh, cur->theyr_services, r, rtmp)
     {
-        HASH_DEL(cur->theyr_services, r);
+        EXHASH_DEL(cur->theyr_services, r);
         /* Remove stuff from shared mem. */
         brd_lock_and_update_shm(cur->nodeid, r->svc_nm, 0, BRIDGE_REFRESH_MODE_FULL);
         free(r);
@@ -104,7 +104,7 @@ public int brd_del_bridge(int nodeid)
     {
         NDRX_LOG(log_debug, "Removing bridge %d", nodeid);
         brd_remove_bridge_services(cur);
-        HASH_DEL(G_bridge_hash, cur);
+        EXHASH_DEL(G_bridge_hash, cur);
         free(cur);
     }
     
@@ -150,7 +150,7 @@ public int brd_addupd_bridge(srv_status_t * srvinfo)
     if (add)
     {
         /* here nodeid is hash field: */
-        HASH_ADD_INT(G_bridge_hash, nodeid, cur);
+        EXHASH_ADD_INT(G_bridge_hash, nodeid, cur);
     }
     
 out:
@@ -169,7 +169,7 @@ public bridgedef_t* brd_get_bridge(int nodeid)
 {
     bridgedef_t *ret = NULL;
     
-    HASH_FIND_INT(G_bridge_hash, &nodeid, ret);
+    EXHASH_FIND_INT(G_bridge_hash, &nodeid, ret);
     
     return ret;
 }
@@ -192,7 +192,7 @@ public int brd_build_refresh_msg(bridgedef_svcs_t *svcs,
      */
     ref->mode = mode;
     
-    HASH_ITER(hh, svcs, r, rtmp)
+    EXHASH_ITER(hh, svcs, r, rtmp)
     {
         ref->svcs[ref->count].count = r->count;
         strcpy(ref->svcs[ref->count].svc_nm, r->svc_nm);
@@ -379,14 +379,14 @@ public int brd_discconnected(int nodeid)
             goto out;
         }
         
-        HASH_ITER(hh, cur->theyr_services, r, rtmp)
+        EXHASH_ITER(hh, cur->theyr_services, r, rtmp)
         {
             /* Remove from shm */
             ndrx_shm_install_svc_br(r->svc_nm, 0, 
                         TRUE, nodeid, 0, BRIDGE_REFRESH_MODE_FULL, 0);
             
             /* Delete from hash */
-            HASH_DEL(cur->theyr_services, r);
+            EXHASH_DEL(cur->theyr_services, r);
             /* Free up memory */
             free(r);
         }
@@ -418,7 +418,7 @@ public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff
     int ret=SUCCEED;
     bridgedef_svcs_t *r=NULL;
     
-    HASH_FIND_STR( *svcs, svc, r);
+    EXHASH_FIND_STR( *svcs, svc, r);
     if (NULL!=r)
     {
         if (diff || r->count>1)
@@ -431,7 +431,7 @@ public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff
         {
             NDRX_LOG(log_debug, "bridge view: svc [%s] removed", 
                     svc);
-            HASH_DEL(*svcs, r);
+            EXHASH_DEL(*svcs, r);
             free(r);
         }
     }
@@ -451,7 +451,7 @@ public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff
             }
             r->count=-1; /* should be 1 */
             strcpy(r->svc_nm, svc);
-            HASH_ADD_STR( *svcs, svc_nm, r );
+            EXHASH_ADD_STR( *svcs, svc_nm, r );
         }
         else
         {
@@ -548,7 +548,7 @@ public int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
     bridgedef_svcs_t *r=NULL;
     
     /* Try to get, if stuff in hash, increase counter */
-    HASH_FIND_STR( *svcs, svc, r);
+    EXHASH_FIND_STR( *svcs, svc, r);
     if (NULL!=r)
     {
         r->count++;
@@ -566,7 +566,7 @@ public int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
         }
         r->count++; /* should be 1 */
         strcpy(r->svc_nm, svc);
-        HASH_ADD_STR( *svcs, svc_nm, r );
+        EXHASH_ADD_STR( *svcs, svc_nm, r );
     }
     
     NDRX_LOG(log_error, "Number of services of [%s] = %d", svc, r->count);
@@ -582,9 +582,9 @@ public void brd_erase_svc_hash_g(bridgedef_svcs_t *svcs)
 {
     bridgedef_svcs_t *cur, *tmp;
     
-    HASH_ITER(hh, svcs, cur, tmp)
+    EXHASH_ITER(hh, svcs, cur, tmp)
     {
-        HASH_DEL(svcs,cur);
+        EXHASH_DEL(svcs,cur);
         free(cur);
     }
 }
@@ -599,7 +599,7 @@ public int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
     bridgedef_svcs_t *tmp=NULL;
     
     /* Try to get, if stuff in hash, increase counter */
-    HASH_FIND_STR( cur->theyr_services, svc, r);
+    EXHASH_FIND_STR( cur->theyr_services, svc, r);
     if (NULL!=r)
     {
         NDRX_LOG(log_error, "Service [%s] already exists in bridge's %d hash!",
@@ -618,7 +618,7 @@ public int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
         }
         strcpy(r->svc_nm, svc);
         r->count = count;
-        HASH_ADD_STR( cur->theyr_services, svc_nm, r );
+        EXHASH_ADD_STR( cur->theyr_services, svc_nm, r );
     }
     
 out:
@@ -640,11 +640,11 @@ public void brd_del_svc_brhash(bridgedef_t *cur, bridgedef_svcs_t *s, char *svc)
     if (NULL!=cur)
         r = s;
     else
-        HASH_FIND_STR( cur->theyr_services, svc, r);
+        EXHASH_FIND_STR( cur->theyr_services, svc, r);
     
     if (NULL!=r)
     {
-        HASH_DEL(cur->theyr_services, r);
+        EXHASH_DEL(cur->theyr_services, r);
         free(r);
     }
     else
@@ -663,7 +663,7 @@ public void brd_del_svc_brhash(bridgedef_t *cur, bridgedef_svcs_t *s, char *svc)
 public bridgedef_svcs_t * brd_get_svc_brhash(bridgedef_t *cur, char *svc)
 {
     bridgedef_svcs_t *r=NULL;
-    HASH_FIND_STR( cur->theyr_services, svc, r);
+    EXHASH_FIND_STR( cur->theyr_services, svc, r);
     
     return r;
 }
@@ -678,7 +678,7 @@ public bridgedef_svcs_t * brd_get_svc_brhash(bridgedef_t *cur, char *svc)
 public bridgedef_svcs_t * brd_get_svc(bridgedef_svcs_t * svcs, char *svc)
 {
     bridgedef_svcs_t *r=NULL;
-    HASH_FIND_STR( svcs, svc, r);
+    EXHASH_FIND_STR( svcs, svc, r);
     return r;
 }
 
@@ -691,9 +691,9 @@ private void brd_clear_diff(void)
 {
     bridgedef_svcs_t *cur, *tmp;
     
-    HASH_ITER(hh, G_bridge_svc_diff, cur, tmp)
+    EXHASH_ITER(hh, G_bridge_svc_diff, cur, tmp)
     {
-        HASH_DEL(G_bridge_svc_diff,cur);
+        EXHASH_DEL(G_bridge_svc_diff,cur);
         free(cur);
     }
     
@@ -730,7 +730,7 @@ public void brd_end_diff(void)
     M_build_diff = FALSE;
     
     /* TODO: Send stuff to everybody */
-    HASH_ITER(hh, G_bridge_hash, r, rtmp)
+    EXHASH_ITER(hh, G_bridge_hash, r, rtmp)
     {
         NDRX_LOG(log_debug, "Processing: nodeid %d, is connected=%s, flags=%d",
                                 r->nodeid, r->connected?"Yes":"No", r->flags);
@@ -790,7 +790,7 @@ public void brd_send_periodrefresh(void)
     /* Reset the buffer otherwise it keeps growing!!! */
     memset(buf, 0, sizeof(buf));
     
-    HASH_ITER(hh, G_bridge_hash, cur, rtmp)
+    EXHASH_ITER(hh, G_bridge_hash, cur, rtmp)
     {
         /* Using sanity as step interval */
         cur->lastrefresh_sent++;
@@ -811,5 +811,5 @@ public void brd_send_periodrefresh(void)
                 }
             }
         } /* If connected */
-    } /* HASH_ITER */
+    } /* EXHASH_ITER */
 }

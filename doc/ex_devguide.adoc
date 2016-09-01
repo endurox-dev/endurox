@@ -13,7 +13,7 @@ Flex and Bison for building UBF (FML) Expressions.
 Intension is done with as 4x spaces. EnduroX is programmed in NetBeans c/c++
 project. NetBeans supports CMake projects.
 
-Project also uses 'libxml2' (provided by system), 'uthash' (already included in 'include' dir) 
+Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
 and cgreen (integrated into Enduro/X) for unit testing.
 Gsoap (also included in ThirdParity/web_services) is used for webservice access
 layer generation.

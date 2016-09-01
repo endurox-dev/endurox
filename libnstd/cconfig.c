@@ -233,7 +233,7 @@ public int ndrx_cconfig_load(void)
     }
     
     /* Loop over and load the stuff... */
-    HASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
+    EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
     {
 #ifdef CCONFIG_ENABLE_DEBUG
         fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);

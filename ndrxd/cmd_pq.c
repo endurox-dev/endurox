@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <errno.h>
 #include <ndrstandard.h>
 
@@ -122,7 +122,7 @@ public int cmd_pq (command_call_t * call, char *data, size_t len, int context)
     
     pq_run_santiy(FALSE);
 
-    HASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
+    EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         pq_progress(call, cur);
     }
@@ -157,7 +157,7 @@ public int pq_run_santiy(int run_hist)
      * and get every local queue stats, if queue fails to open, then assume 0
      * before that we must shift the array...
      */
-    HASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
+    EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         /* shift the stats (if needed) */
         if (run_hist)

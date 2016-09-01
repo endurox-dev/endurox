@@ -41,7 +41,7 @@ extern "C" {
 #include <ubf.h>
 #include <string.h>
 #include <stdio.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

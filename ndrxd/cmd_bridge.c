@@ -230,7 +230,7 @@ public int cmd_brrefresh (command_call_t * call, char *data, size_t len, int con
          * in their refresh message, if not there, then we should erase 
          * it from our view
          */
-        HASH_ITER(hh, br->theyr_services, r, rtmp)
+        EXHASH_ITER(hh, br->theyr_services, r, rtmp)
         {
             NDRX_LOG(log_debug, "Cross checking service [%s] in "
                                             "refresh msg", r->svc_nm);
@@ -287,14 +287,14 @@ public void getbrs_reply_mod(command_reply_t *reply, size_t *send_size, mod_para
     
     memset(info->nodes, 0, sizeof(info->nodes));
     
-    HASH_ITER(hh, G_bridge_hash, cur, rtmp)
+    EXHASH_ITER(hh, G_bridge_hash, cur, rtmp)
     {    
         if (cur->connected)
         {
             info->nodes[pos] = (char)cur->nodeid;
             pos++;
         } /* If connected */
-    } /* HASH_ITER */
+    } /* EXHASH_ITER */
     
     br_dump_nodestack(info->nodes, "Returning list of connected nodes");
 

@@ -41,7 +41,7 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <stdint.h>
 #include <ntimer.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 #define NDRX_INICFG_SUBSECT_SPERATOR '/' /* seperate sub-sections with */
@@ -61,7 +61,7 @@ struct ndrx_inicfg_section_keyval
     char *key; /* key for ini */
     char *val; /* value for ini */
     
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 
 /**
@@ -73,7 +73,7 @@ struct ndrx_inicfg_section
     
     ndrx_inicfg_section_keyval_t *values; /* list of values */
     
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct ndrx_inicfg_section ndrx_inicfg_section_t;
 
@@ -92,7 +92,7 @@ struct ndrx_inicfg_file
     ndrx_inicfg_section_t *sections;
     
     int refreshed; /* marked as not refreshed (to kill after reload) */
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 
 typedef struct ndrx_inicfg_file ndrx_inicfg_file_t;

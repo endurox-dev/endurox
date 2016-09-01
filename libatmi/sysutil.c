@@ -42,7 +42,7 @@
 #include <signal.h>
 
 #include <ndrstandard.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <ndebug.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
@@ -68,7 +68,7 @@ struct qcache_hash
     char svcq[NDRX_MAX_Q_SIZE+1]; /* hash by this */
     char svcq_full[NDRX_MAX_Q_SIZE+1]; /* full queue name */
     
-    UT_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /* makes this structure hashable        */
 };
 
 MUTEX_LOCKDECL(M_q_cache_lock); /* lock the queue cache */
@@ -573,7 +573,7 @@ private int chk_cached_svc(char *svcq, char *svcq_full)
    
     MUTEX_LOCK_V(M_q_cache_lock);
     
-    HASH_FIND_STR( M_qcache, svcq, ret);
+    EXHASH_FIND_STR( M_qcache, svcq, ret);
     
     if (NULL==ret)
     {
@@ -590,7 +590,7 @@ private int chk_cached_svc(char *svcq, char *svcq_full)
         else
         {
             NDRX_LOG(log_warn, "Cached queue [%s] does not exists", svcq);
-            HASH_DEL(M_qcache, ret);
+            EXHASH_DEL(M_qcache, ret);
             free(ret);
             ret=NULL;
         }
@@ -626,7 +626,7 @@ private int add_cached_svc(char *svcq, char *svcq_full)
     strcpy(ret->svcq, svcq);
     strcpy(ret->svcq_full, svcq_full);
     
-    HASH_ADD_STR( M_qcache, svcq, ret );
+    EXHASH_ADD_STR( M_qcache, svcq, ret );
     
     MUTEX_UNLOCK_V(M_q_cache_lock);
     

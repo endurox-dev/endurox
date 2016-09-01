@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <utlist.h>
-#include <uthash.h>
+#include <exhash.h>
 
 #include <ndrstandard.h>
 
@@ -232,9 +232,9 @@ public int cmd_psc (command_call_t * call, char *data, size_t len, int context)
     }
     
     /* Process bridges? */
-    HASH_ITER(hh, G_bridge_hash, br, brt)
+    EXHASH_ITER(hh, G_bridge_hash, br, brt)
     {
-        HASH_ITER(hh, br->theyr_services, brs, brst)
+        EXHASH_ITER(hh, br->theyr_services, brs, brst)
         {
             psc_progress_br(call, br, brs);
         }

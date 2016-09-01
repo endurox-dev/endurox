@@ -30,7 +30,7 @@
 #include <thlock.h>
 #include <limits.h>
 #include <atmi.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <ntimer.h>
 #if defined(WIN32)
 #   define S_IXUSR  0000100
@@ -46,7 +46,7 @@ struct mq_attr defattr = { 0, 128, 1024, 0 };
 struct qd_hash
 {
     void *qd;
-    UT_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /* makes this structure hashable        */
 };
 typedef struct qd_hash qd_hash_t;
 
@@ -60,7 +60,7 @@ private int M_lock_secs = 0; /* Lock timeout... */
  * @param q
  * @return 
  */
-private int qd_hash_add(mqd_t q)
+private int qd_exhash_add(mqd_t q)
 {
     int ret = SUCCEED;
     qd_hash_t * el = calloc(1, sizeof(qd_hash_t));
@@ -76,7 +76,7 @@ private int qd_hash_add(mqd_t q)
     
     MUTEX_LOCK_V(M_lock);
     
-    HASH_ADD_PTR(M_qd_hash, qd, el);
+    EXHASH_ADD_PTR(M_qd_hash, qd, el);
     NDRX_LOG(log_error, "added...");
     
     MUTEX_UNLOCK_V(M_lock);
@@ -99,7 +99,7 @@ private int qd_hash_chk(mqd_t qd)
     
     MUTEX_LOCK_V(M_lock);
     
-    HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
+    EXHASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
     
     MUTEX_UNLOCK_V(M_lock);
     
@@ -125,11 +125,11 @@ private void qd_hash_del(mqd_t qd)
     NDRX_LOG(log_debug, "Unregistering %p as mqd_t", qd);
     
     MUTEX_LOCK_V(M_lock);
-    HASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
+    EXHASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
     
     if (NULL!=ret)
     {
-        HASH_DEL(M_qd_hash, ret);
+        EXHASH_DEL(M_qd_hash, ret);
         free(ret);
     }
     
@@ -486,7 +486,7 @@ again:
 #endif
                 goto err;
             close(fd);
-            if (SUCCEED!=qd_hash_add((mqd_t) emqinfo)) {
+            if (SUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
                 NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
                 errno = ENOMEM;
             }
@@ -542,7 +542,7 @@ exists:
     emqinfo->emqi_magic = EMQI_MAGIC;
     emqinfo->emqi_flags = nonblock;
     
-    if (SUCCEED!=qd_hash_add((mqd_t) emqinfo)) {
+    if (SUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
         NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
         errno = ENOMEM;
     }

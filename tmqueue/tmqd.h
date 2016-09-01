@@ -41,7 +41,7 @@ extern "C" {
 #include <xa_cmn.h>
 #include <atmi.h>
 #include <utlist.h>
-#include <uthash.h>
+#include <exhash.h>
 #include "thpool.h"
 #include "tmqueue.h"
     
@@ -106,8 +106,8 @@ struct tmq_memmsg
     char msgid_str[TMMSGIDLEN_STR+1]; /* we might store msgid in string format... */
     char corid_str[TMCORRIDLEN_STR+1]; /* hash for correlator            */
     /* We should have hash handler of message hash */
-    UT_hash_handle hh; /* makes this structure hashable (for msgid)        */
-    UT_hash_handle h2; /* makes this structure hashable (for corid)        */
+    EX_hash_handle hh; /* makes this structure hashable (for msgid)        */
+    EX_hash_handle h2; /* makes this structure hashable (for corid)        */
     /* We should also have a linked list handler   */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
@@ -128,7 +128,7 @@ struct tmq_qhash
     long numenq; /* Enqueued messages (even locked)                   */
     long numdeq; /* Dequeued messages (removed, including aborts)     */
     
-    UT_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /* makes this structure hashable        */
     tmq_memmsg_t *q;
 };
 
@@ -153,7 +153,7 @@ struct tmq_qconfig
     int memonly; /* is queue memory only */
     char mode; /* queue mode fifo/lifo*/
     
-    UT_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /* makes this structure hashable        */
 };
 
 /**

@@ -36,7 +36,7 @@
 #include <string.h>
 #include <gpgme.h>
 #include <stdarg.h>
-#include "uthash.h"
+#include "exhash.h"
 #include <errno.h>
 #include "gpgme_encrypt.h"
 /*---------------------------Externs------------------------------------*/
@@ -241,7 +241,7 @@ int pgpa_set_signer(pgpgme_enc_t *p_enc, char *signer)
 		goto out;
 	}
 	
-	HASH_FIND_STR( p_enc->signer_tab, signer, r);
+	EXHASH_FIND_STR( p_enc->signer_tab, signer, r);
 	
 	if (NULL==r || 0!=strcmp(r->signer, signer))
 	{
@@ -283,7 +283,7 @@ int pgpa_set_signer(pgpgme_enc_t *p_enc, char *signer)
 		
 		/* Add stuff from to hash */
 		strcpy(tmp->signer, signer);
-		HASH_ADD_STR( p_enc->signer_tab, signer, tmp );
+		EXHASH_ADD_STR( p_enc->signer_tab, signer, tmp );
         }
         else
 	{
@@ -328,7 +328,7 @@ int pgpa_set_recipient(pgpgme_enc_t *p_enc, char *rcpt)
 		goto out;
 	}
 	
-	HASH_FIND_STR( p_enc->rcpt_tab, rcpt, r);
+	EXHASH_FIND_STR( p_enc->rcpt_tab, rcpt, r);
 	
 	if (NULL==r || 0!=strcmp(r->rcpt, rcpt))
 	{
@@ -370,7 +370,7 @@ int pgpa_set_recipient(pgpgme_enc_t *p_enc, char *rcpt)
 		
 		/* Add stuff from to hash */
 		strcpy(tmp->rcpt, rcpt);
-		HASH_ADD_STR( p_enc->rcpt_tab, rcpt, tmp );
+		EXHASH_ADD_STR( p_enc->rcpt_tab, rcpt, tmp );
         }
         else
 	{

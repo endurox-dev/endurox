@@ -53,7 +53,7 @@
 #include "../libatmisrv/srv_int.h"
 #include "userlog.h"
 #include <xa_cmn.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <unistd.h>
 #include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
@@ -115,7 +115,7 @@ public atmi_xa_log_t * tms_log_get_entry(char *tmxid)
     atmi_xa_log_t *r = NULL;
     
     MUTEX_LOCK_V(M_tx_hash_lock);
-    HASH_FIND_STR( M_tx_hash, tmxid, r);
+    EXHASH_FIND_STR( M_tx_hash, tmxid, r);
     
     if (NULL!=r)
     {
@@ -180,7 +180,7 @@ public int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
     ndrx_timer_reset(&tmp->ttimer);
     
     MUTEX_LOCK_V(M_tx_hash_lock);
-    HASH_ADD_STR( M_tx_hash, tmxid, tmp);
+    EXHASH_ADD_STR( M_tx_hash, tmxid, tmp);
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
 out:
@@ -394,7 +394,7 @@ public int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     
     /* Add transaction to the hash. We need locking here. */
     MUTEX_LOCK_V(M_tx_hash_lock);
-    HASH_ADD_STR( M_tx_hash, tmxid, (*pp_tl));
+    EXHASH_ADD_STR( M_tx_hash, tmxid, (*pp_tl));
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
     NDRX_LOG(log_debug, "TX [%s] loaded OK", tmxid);
@@ -469,7 +469,7 @@ public void tms_remove_logfile(atmi_xa_log_t *p_tl)
     /* Remove the log for hash! */
     
     MUTEX_LOCK_V(M_tx_hash_lock);
-    HASH_DEL(M_tx_hash, p_tl); 
+    EXHASH_DEL(M_tx_hash, p_tl); 
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     free(p_tl);
     
@@ -845,7 +845,7 @@ public atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode)
     
     /* No changes to hash list during the lock. */    
     
-    HASH_ITER(hh, M_tx_hash, r, rt)
+    EXHASH_ITER(hh, M_tx_hash, r, rt)
     {
         /* Only background items... */
         if (r->is_background && !(copy_mode & COPY_MODE_BACKGROUND))

@@ -77,7 +77,7 @@ int M_hash2_size = 16000; /* Default size for Hash2 */
 
 /*---------------------------Prototypes---------------------------------*/
 private void _bfldidhash_add(UBF_field_def_t *p_fld);
-private void _fldnmhash_add(UBF_field_def_t *p_fld);
+private void _fldnmexhash_add(UBF_field_def_t *p_fld);
 private int _ubf_load_fld_def(int base,
                               char *fldinfo,
                               int (*put_def_line) (UBF_field_def_t *def),
@@ -221,7 +221,7 @@ public UBF_field_def_t * _bfldidhash_get(BFLDID id)
 /**
  * Add Field Name Hash record
  */
-private void _fldnmhash_add(UBF_field_def_t *p_fld)
+private void _fldnmexhash_add(UBF_field_def_t *p_fld)
 {
     /* Get the linear array key */
     int hash_key = str_hash_from_key_fn(p_fld->fldname) % M_hash2_size;
@@ -483,7 +483,7 @@ private int _ubf_load_fld_def(int base,
         {
             _bfldidhash_add(fld);
             *fld2 = *fld;
-            _fldnmhash_add(fld2);
+            _fldnmexhash_add(fld2);
         }
     }
 

@@ -34,7 +34,7 @@
 #define __GPGME_ENCRYPT_H
 
 /*---------------------------Includes-----------------------------------*/
-#include "uthash.h"
+#include "exhash.h"
 #include <gpgme.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -54,7 +54,7 @@
 struct rcpt_hash {
     char rcpt[33];             /* key (string is WITHIN the structure) 	*/
     gpgme_key_t recipients[2];
-    UT_hash_handle hh;         /* makes this structure hashable 	*/
+    EX_hash_handle hh;         /* makes this structure hashable 	*/
 };
 typedef struct rcpt_hash rcpt_hash_t;
 
@@ -62,7 +62,7 @@ typedef struct rcpt_hash rcpt_hash_t;
 struct signer_hash {
     char signer[33];             /* key (string is WITHIN the structure) 	*/
     gpgme_key_t signers[2];
-    UT_hash_handle hh;         /* makes this structure hashable 	*/
+    EX_hash_handle hh;         /* makes this structure hashable 	*/
 };
 typedef struct signer_hash signer_hash_t;
 

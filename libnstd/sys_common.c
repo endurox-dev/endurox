@@ -50,7 +50,7 @@
 #include <ndebug.h>
 #include <nstdutil.h>
 #include <limits.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <sys_unix.h>
 
 #include <utlist.h>
@@ -99,7 +99,7 @@ public int ndrx_string_hash_add(string_hash_t **h, char *str)
     }
     
     /* Add stuff to hash finaly */
-    HASH_ADD_STR( (*h), str, tmp );
+    EXHASH_ADD_STR( (*h), str, tmp );
     
 out:
     return ret;
@@ -115,7 +115,7 @@ public string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str)
 {
     string_hash_t * r = NULL;
     
-    HASH_FIND_STR( h, str, r);
+    EXHASH_FIND_STR( h, str, r);
     
     return r;
 }
@@ -129,9 +129,9 @@ public void ndrx_string_hash_free(string_hash_t *h)
 {
     string_hash_t * r, *rt;
     /* safe iter over the list */
-    HASH_ITER(hh, h, r, rt)
+    EXHASH_ITER(hh, h, r, rt)
     {
-        HASH_DEL(h, r);
+        EXHASH_DEL(h, r);
         free(r->str);
         free(r);
     }

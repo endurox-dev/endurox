@@ -72,14 +72,14 @@
 #define TMQ_QC_MEMONLY          "memonly"
 #define TMQ_QC_MODE             "mode"
 
-#define HASH_FIND_STR_H2(head,findstr,out)                                     \
-    HASH_FIND(h2,head,findstr,strlen(findstr),out)
+#define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
+    EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
 
-#define HASH_ADD_STR_H2(head,strfield,add)                                     \
-    HASH_ADD(h2,head,strfield,strlen(add->strfield),add)
+#define EXHASH_ADD_STR_H2(head,strfield,add)                                     \
+    EXHASH_ADD(h2,head,strfield,strlen(add->strfield),add)
 
-#define HASH_DEL_H2(head,delptr)                                               \
-    HASH_DELETE(h2,head,delptr)
+#define EXHASH_DEL_H2(head,delptr)                                               \
+    EXHASH_DELETE(h2,head,delptr)
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -305,7 +305,7 @@ private tmq_qconfig_t * tmq_qconf_get(char *qname)
 {
     tmq_qconfig_t *ret = NULL;
     
-    HASH_FIND_STR( G_qconf, qname, ret);
+    EXHASH_FIND_STR( G_qconf, qname, ret);
     
     return ret;
 }
@@ -426,7 +426,7 @@ private int tmq_qconf_delete(char *qname)
     
     if (NULL!=(qconf=tmq_qconf_get(qname)))
     {
-        HASH_DEL( G_qconf, qconf);
+        EXHASH_DEL( G_qconf, qconf);
         free(qconf);
     }
     else
@@ -455,7 +455,7 @@ public int tmq_reload_conf(char *cf)
     if (NULL!=ndrx_get_G_cconfig() && 
             SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_QUEUE, &csection))
     {
-        HASH_ITER(hh, csection, val, val_tmp)
+        EXHASH_ITER(hh, csection, val, val_tmp)
         {
             if (SUCCEED!=tmq_qconf_addupd(val->val, val->key))
             {
@@ -635,7 +635,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
 
     if (!qupdate)
     {
-        HASH_ADD_STR( G_qconf, qname, qconf );
+        EXHASH_ADD_STR( G_qconf, qname, qconf );
     }
     
 out:
@@ -661,7 +661,7 @@ private tmq_qhash_t * tmq_qhash_get(char *qname)
 {
     tmq_qhash_t * ret = NULL;
    
-    HASH_FIND_STR( G_qhash, qname, ret);    
+    EXHASH_FIND_STR( G_qhash, qname, ret);    
     
     return ret;
 }
@@ -684,7 +684,7 @@ private tmq_qhash_t * tmq_qhash_new(char *qname)
     
     strcpy(ret->qname, qname);
     
-    HASH_ADD_STR( G_qhash, qname, ret );
+    EXHASH_ADD_STR( G_qhash, qname, ret );
     
 out:
     return ret;
@@ -759,14 +759,14 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
     
     strcpy(mmsg->msgid_str, msgid_str);
-    HASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
+    EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
         NDRX_LOG(log_debug, "Adding to G_corid_hash [%s]", corid_str);
         
         strcpy(mmsg->corid_str, corid_str);
-        HASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
+        EXHASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
     }
     /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
      * us and that might cause stall.
@@ -1124,7 +1124,7 @@ private tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str)
 {
     tmq_memmsg_t *ret;
     
-    HASH_FIND_STR( G_msgid_hash, msgid_str, ret);
+    EXHASH_FIND_STR( G_msgid_hash, msgid_str, ret);
     
     return ret;
 }
@@ -1139,7 +1139,7 @@ private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str)
 {
     tmq_memmsg_t *ret;
     
-    HASH_FIND_STR_H2( G_corid_hash, corid_str, ret);
+    EXHASH_FIND_STR_H2( G_corid_hash, corid_str, ret);
     
     return ret;
 }
@@ -1186,11 +1186,11 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
     }
     
     /* Add the hash of IDs */
-    HASH_DEL( G_msgid_hash, mmsg);
+    EXHASH_DEL( G_msgid_hash, mmsg);
     
     if (TPQCORRID & mmsg->msg->qctl.flags)
     {
-        HASH_DEL_H2( G_corid_hash, mmsg);
+        EXHASH_DEL_H2( G_corid_hash, mmsg);
     }
     
     free(mmsg->msg);
@@ -1387,7 +1387,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
     
     MUTEX_LOCK_V(M_q_lock);
     
-    HASH_ITER(hh, G_qhash, q, qtmp)
+    EXHASH_ITER(hh, G_qhash, q, qtmp)
     {
         if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname, NULL)) && 
                 ((auto_only && qconf->autoq) || !auto_only))
@@ -1419,7 +1419,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
      */
     if (incl_def)
     {
-        HASH_ITER(hh, G_qconf, qc, qctmp)
+        EXHASH_ITER(hh, G_qconf, qc, qctmp)
         {
             if (NULL==tmq_qhash_get(qc->qname))
             {
@@ -1520,7 +1520,7 @@ public int tmq_sort_queues(void)
     MUTEX_LOCK_V(M_q_lock);
     
     /* iterate over Q hash & and sort them by Q time */
-    HASH_ITER(hh, G_qhash, q, qtmp)
+    EXHASH_ITER(hh, G_qhash, q, qtmp)
     {
         CDL_SORT(q->q, q_msg_sort);
     }   

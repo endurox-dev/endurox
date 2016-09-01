@@ -42,7 +42,7 @@ extern "C" {
 #include <atmi.h>
 #include <sys_mqueue.h>
 #include <ndrstandard.h>
-#include <uthash.h>
+#include <exhash.h>
     
 #ifdef EX_OS_DARWIN
 #include <sys/types.h>
@@ -188,7 +188,7 @@ typedef struct string_hash string_hash_t;
 struct string_hash
 {
     char *str;
-    UT_hash_handle hh;
+    EX_hash_handle hh;
 };
 
 

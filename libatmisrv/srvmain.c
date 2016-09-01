@@ -119,7 +119,7 @@ public long xcvt_lookup(char *fn_nm)
 {
     xbufcvt_entry_t *entry=NULL;
     
-    HASH_FIND_STR( G_server_conf.xbufcvt_tab, fn_nm, entry); 
+    EXHASH_FIND_STR( G_server_conf.xbufcvt_tab, fn_nm, entry); 
     
     if (NULL!=entry)
     {
@@ -191,7 +191,7 @@ int parse_xcvt_arg(char *arg)
         NDRX_LOG(log_debug, "Added have automatic convert option [%s] "
                 "for function [%s] (-x)", cvtfunc, entry->fn_nm);
         
-        HASH_ADD_STR( G_server_conf.xbufcvt_tab, fn_nm, entry );
+        EXHASH_ADD_STR( G_server_conf.xbufcvt_tab, fn_nm, entry );
         
         p = strtok(NULL, ",");
     }

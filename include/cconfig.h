@@ -41,7 +41,7 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <stdint.h>
 #include <ntimer.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <sys_unix.h>
 #include <inicfg.h>
 /*---------------------------Externs------------------------------------*/

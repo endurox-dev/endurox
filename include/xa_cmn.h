@@ -44,7 +44,7 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <stdint.h>
 #include <ntimer.h>
-#include <uthash.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -144,7 +144,7 @@ extern "C" {
 struct atmi_xa_tx_cd
 {
     int cd;
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 
 typedef struct atmi_xa_tx_cd atmi_xa_tx_cd_t;
@@ -162,7 +162,7 @@ struct atmi_xa_tx_info
                                  * (checked for commit/abort/tpreturn) */
     atmi_xa_tx_cd_t *conv_cds;  /* hash list of conversation open */
     
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct atmi_xa_tx_info atmi_xa_tx_info_t;
 
@@ -233,7 +233,7 @@ struct atmi_xa_log
     int is_background;  /* Is background responsible for tx? */
     uint64_t    lockthreadid;   /* Thread ID, locked the log entry */
     
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct atmi_xa_log atmi_xa_log_t;
 

@@ -446,7 +446,7 @@ public XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
 public atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
 {
     atmi_xa_tx_info_t *ret = NULL;
-    HASH_FIND_STR( G_atmi_xa_curtx.tx_tab, tmxid, ret);    
+    EXHASH_FIND_STR( G_atmi_xa_curtx.tx_tab, tmxid, ret);    
     return ret;
 }
 
@@ -475,7 +475,7 @@ public atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
     tmp->tmsrvid = tmsrvid;
     strcpy(tmp->tmknownrms, tmknownrms);
     
-    HASH_ADD_STR( G_atmi_xa_curtx.tx_tab, tmxid, tmp );
+    EXHASH_ADD_STR( G_atmi_xa_curtx.tx_tab, tmxid, tmp );
     
 out:
     return tmp;
@@ -487,7 +487,7 @@ out:
  */
 public void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
 {
-    HASH_DEL( G_atmi_xa_curtx.tx_tab, p_txinfo);
+    EXHASH_DEL( G_atmi_xa_curtx.tx_tab, p_txinfo);
     /* Remove any cds involved... */
     /* TODO: Think about cd invalidating... */
     atmi_xa_cd_unregall(&(p_txinfo->call_cds));
@@ -1034,7 +1034,7 @@ public int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int in_cd)
     
     cdt->cd = in_cd;
     
-    HASH_ADD_INT((*cds), cd, cdt);
+    EXHASH_ADD_INT((*cds), cd, cdt);
     
 out:
     return ret;
@@ -1049,7 +1049,7 @@ out:
 public atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int in_cd)
 {
     atmi_xa_tx_cd_t *ret = NULL;
-    HASH_FIND_INT( (*cds), &in_cd, ret);    
+    EXHASH_FIND_INT( (*cds), &in_cd, ret);    
     return ret;
 }
 
@@ -1065,7 +1065,7 @@ public int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds)
     atmi_xa_tx_cd_t *elt = NULL;
     
     /* Iterate over the hash! */
-    HASH_ITER(hh, (*cds), el, elt)
+    EXHASH_ITER(hh, (*cds), el, elt)
     {
         NDRX_LOG(log_error, "Found cd=%d linked to tx!", el->cd);
         ret = TRUE;
@@ -1088,7 +1088,7 @@ public void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int in_cd)
     
     if (NULL!=el)
     {
-        HASH_DEL((*cds), el);
+        EXHASH_DEL((*cds), el);
         
         free(el);
     }
@@ -1107,9 +1107,9 @@ public int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds)
     atmi_xa_tx_cd_t *elt = NULL;
     
     /* Iterate over the hash! */
-    HASH_ITER(hh, (*cds), el, elt)
+    EXHASH_ITER(hh, (*cds), el, elt)
     {
-         HASH_DEL((*cds), el);
+         EXHASH_DEL((*cds), el);
          free(el);
     }
     

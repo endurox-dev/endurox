@@ -112,7 +112,7 @@ public int cpm_killall(void)
 
     NDRX_LOG(log_warn, "Terminating all with %s", sig_str[i]);
     
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
@@ -130,7 +130,7 @@ if (i<2) /*no wait for killl... */
     {
         sign_chld_handler(0);
         
-        HASH_ITER(hh, G_clt_config, c, ct)
+        EXHASH_ITER(hh, G_clt_config, c, ct)
         {
             if (CLT_STATE_STARTED==c->dyn.cur_state)
             {

@@ -63,7 +63,7 @@
 #include <sys_mqueue.h>
 #include <sys_unix.h>
 
-#include <uthash.h>
+#include <exhash.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -73,11 +73,11 @@
 /*
  * Special ops for message queue...
  */
-#define HASH_FIND_MQD(head,findptr,out)                                          \
-    HASH_FIND(hh,head,findptr,sizeof(mqd_t),out)
+#define EXHASH_FIND_MQD(head,findptr,out)                                          \
+    EXHASH_FIND(hh,head,findptr,sizeof(mqd_t),out)
 
-#define HASH_ADD_MQD(head,ptrfield,add)                                          \
-    HASH_ADD(hh,head,ptrfield,sizeof(mqd_t),add)
+#define EXHASH_ADD_MQD(head,ptrfield,add)                                          \
+    EXHASH_ADD(hh,head,ptrfield,sizeof(mqd_t),add)
 
 
 #define EX_POLL_SETS_MAX            1024
@@ -108,7 +108,7 @@
 struct ndrx_epoll_fds
 {
     int fd;
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct ndrx_epoll_fds ndrx_epoll_fds_t;
 
@@ -119,7 +119,7 @@ struct ndrx_epoll_mqds
 {
     mqd_t mqd;
     struct sigevent sev;        /* event flags */
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct ndrx_epoll_mqds ndrx_epoll_mqds_t;
 
@@ -142,7 +142,7 @@ struct ndrx_epoll_set
     
     int wakeup_pipe[2]; /* wakeup pipe from notification thread */
     
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 typedef struct ndrx_epoll_set ndrx_epoll_set_t;
 
@@ -228,9 +228,9 @@ private int signal_handle_event(void)
 
     MUTEX_LOCK_V(M_psets_lock);
 
-    HASH_ITER(hh, M_psets, s, stmp)
+    EXHASH_ITER(hh, M_psets, s, stmp)
     {
-        HASH_ITER(hh, s->mqds, m, mtmp)
+        EXHASH_ITER(hh, s->mqds, m, mtmp)
         {
             struct mq_attr att;
 
@@ -314,7 +314,7 @@ private int signal_install_notifications_all(ndrx_epoll_set_t *s)
     int ret = SUCCEED;
     ndrx_epoll_mqds_t* m, *mtmp;
     
-    HASH_ITER(hh, s->mqds, m, mtmp)
+    EXHASH_ITER(hh, s->mqds, m, mtmp)
     {
         if (FAIL==ndrx_mq_notify(m->mqd, &m->sev))
         {
@@ -437,7 +437,7 @@ private void ndrx_ndrx_mq_notify_func(union sigval sv)
 
     MUTEX_LOCK_V(M_psets_lock);
 
-    HASH_ITER(hh, M_psets, s, stmp)
+    EXHASH_ITER(hh, M_psets, s, stmp)
     {
         if (NULL!=(mqd_h =  mqd_find(s, mqdes)))
         {
@@ -499,7 +499,7 @@ private ndrx_epoll_fds_t* fd_find(ndrx_epoll_set_t *pset, int fd)
 {
     ndrx_epoll_fds_t*ret = NULL;
     
-    HASH_FIND_INT( pset->fds, &fd, ret);
+    EXHASH_FIND_INT( pset->fds, &fd, ret);
     
     return ret;
 }
@@ -511,7 +511,7 @@ private ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd)
 {
     ndrx_epoll_mqds_t*ret = NULL;
     
-    HASH_FIND_MQD( pset->mqds, &mqd, ret);
+    EXHASH_FIND_MQD( pset->mqds, &mqd, ret);
     
     return ret;
 }
@@ -523,7 +523,7 @@ private ndrx_epoll_set_t* pset_find(int epfd)
 {
     ndrx_epoll_set_t *ret = NULL;
     
-    HASH_FIND_INT( M_psets, &epfd, ret);
+    EXHASH_FIND_INT( M_psets, &epfd, ret);
     
     return ret;
 }
@@ -578,7 +578,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
         }
         
         tmp->fd = fd;
-        HASH_ADD_INT(set->fds, fd, tmp);
+        EXHASH_ADD_INT(set->fds, fd, tmp);
         
         /* resize/realloc events list, add fd */
         set->nrfds++;
@@ -614,7 +614,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
         
         /* Remove fd from set->fdtab & from hash */
         
-        HASH_DEL(set->fds, tmp);
+        EXHASH_DEL(set->fds, tmp);
         free((char *)tmp);
         
         for (i = 0; i < set->nrfds; i++)
@@ -717,7 +717,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
         }
         
         tmp->mqd = mqd;
-        HASH_ADD_MQD(set->mqds, mqd, tmp);
+        EXHASH_ADD_MQD(set->mqds, mqd, tmp);
         
         /* resize/realloc events list, add fd */
         set->nrfmqds++;
@@ -765,7 +765,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
         }
         
         /* Remove fd from set->fdtab & from hash */
-        HASH_DEL(set->mqds, tmp);
+        EXHASH_DEL(set->mqds, tmp);
         free((char *)tmp);
     }
     else
@@ -864,7 +864,7 @@ public int ndrx_epoll_create(int size)
     set->fdtab[PIPE_POLL_IDX].events = POLLIN;
     
     /* add finally to hash */
-    HASH_ADD_INT(M_psets, fd, set);
+    EXHASH_ADD_INT(M_psets, fd, set);
     
     NDRX_LOG(log_info, "ndrx_epoll_create succeed, fd=%d", i);
     
@@ -934,21 +934,21 @@ public int ndrx_epoll_close(int epfd)
     }
     
     /* Kill file descriptor hash */
-    HASH_ITER(hh, set->fds, f, ftmp)
+    EXHASH_ITER(hh, set->fds, f, ftmp)
     {
         
         ndrx_epoll_ctl(set->fd, EX_EPOLL_CTL_DEL, f->fd, NULL);
     }
     
     /* Kill message queue descriptor hash */
-    HASH_ITER(hh, set->mqds, m, mtmp)
+    EXHASH_ITER(hh, set->mqds, m, mtmp)
     {
         ndrx_epoll_ctl_mq(set->fd, EX_EPOLL_CTL_DEL, m->mqd, NULL);
     }
     
     MUTEX_LOCK_V(M_psets_lock);
     free(set);
-    HASH_DEL(M_psets, set);
+    EXHASH_DEL(M_psets, set);
     MUTEX_UNLOCK_V(M_psets_lock);
     
     
@@ -1014,7 +1014,7 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
     for (try = 0; try<2; try++)
     {
         MUTEX_LOCK_V(M_psets_lock);
-        HASH_ITER(hh, set->mqds, m, mtmp)
+        EXHASH_ITER(hh, set->mqds, m, mtmp)
         {
             struct mq_attr att;
 

@@ -85,7 +85,7 @@ public cpm_process_t * cpm_client_get(char *tag, char *subsect)
     
     cpm_get_key(key, tag, subsect);
     
-    HASH_FIND_STR( G_clt_config, key, r);
+    EXHASH_FIND_STR( G_clt_config, key, r);
     
     if (NULL!=r)
     {
@@ -109,7 +109,7 @@ public cpm_process_t * cpm_get_client_by_pid(pid_t pid)
     cpm_process_t *ct = NULL;
     
     /* Mark config as not refreshed */
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         if (c->dyn.pid == pid)
         {
@@ -132,7 +132,7 @@ public cpm_process_t * cpm_start_all(void)
     cpm_process_t *ct = NULL;
     
     /* Mark config as not refreshed */
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         /* start those marked for autostart... */
         if (c->stat.flags & CPM_F_AUTO_START)
@@ -405,7 +405,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
                 NDRX_LOG(log_info, "Adding %s/%s [%s] to process list", 
                         p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
-                HASH_ADD_STR( G_clt_config, key, p_cltproc );
+                EXHASH_ADD_STR( G_clt_config, key, p_cltproc );
             }
             else
             {
@@ -583,7 +583,7 @@ public int load_config(void)
     
     
     /* Mark config as not refreshed */
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         c->is_cfg_refresh = FALSE;
     }
@@ -596,12 +596,12 @@ public int load_config(void)
     }
     
     /* Remove dead un-needed processes (killed & not in new config) */
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         if (!c->is_cfg_refresh && CLT_STATE_NOTRUN==c->dyn.cur_state)
         {
             NDRX_LOG(log_error, "Removing process: [%s]", c->stat.command_line);
-            HASH_DEL(G_clt_config, c);
+            EXHASH_DEL(G_clt_config, c);
             free(c);
         }
     }

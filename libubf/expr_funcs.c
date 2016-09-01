@@ -45,7 +45,7 @@
 #include <sys/types.h>
 #include <regex.h>
 #include <expr.tab.h>
-#include <uthash.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /* make llvm silent.. */
 extern void yy_scan_string (char *yy_str  );
@@ -78,7 +78,7 @@ struct list_node *M_first_mem;
 struct func_hash {
     char name[MAX_FUNC_NAME+1];/* key (string is WITHIN the structure) */
     functionPtr_t fptr;        /* Pointer to function                  */             
-    UT_hash_handle hh;         /* makes this structure hashable        */
+    EX_hash_handle hh;         /* makes this structure hashable        */
 };
 typedef struct func_hash func_hash_t;
 
@@ -408,7 +408,7 @@ out:
 functionPtr_t get_func(char *funcname)
 {
     func_hash_t *r = NULL;
-    HASH_FIND_STR( M_func_hash, funcname, r);
+    EXHASH_FIND_STR( M_func_hash, funcname, r);
     if (NULL!=r)
         return r->fptr;
     else
@@ -430,10 +430,10 @@ int set_func(char *funcname, functionPtr_t functionPtr)
     if (NULL==functionPtr)
     {
         func_hash_t *r = NULL;
-        HASH_FIND_STR( M_func_hash, funcname, r);
+        EXHASH_FIND_STR( M_func_hash, funcname, r);
         if (NULL!=r)
         {
-            HASH_DEL(M_func_hash, r);
+            EXHASH_DEL(M_func_hash, r);
             free(r);
         }
     }
@@ -451,7 +451,7 @@ int set_func(char *funcname, functionPtr_t functionPtr)
 
         strcpy(tmp->name, funcname);
         tmp->fptr = functionPtr;
-        HASH_ADD_STR( M_func_hash, name, tmp );
+        EXHASH_ADD_STR( M_func_hash, name, tmp );
     }
     
 out:

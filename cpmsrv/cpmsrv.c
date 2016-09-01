@@ -299,7 +299,7 @@ private int cpm_callback_timer(void)
     NDRX_LOG(log_debug, "cpm_callback_timer() enter");
             
     /* Mark config as not refreshed */
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         NDRX_LOG(log_debug, "%s/%s req %d cur %d", 
                 c->tag, c->subsect, c->dyn.req_state, c->dyn.cur_state);
@@ -465,7 +465,7 @@ private int cpm_pc(UBFH *p_ub, int cd)
     
     NDRX_LOG(log_info, "cpm_pc: listing clients");
     /* Remove dead un-needed processes (killed & not in new config) */
-    HASH_ITER(hh, G_clt_config, c, ct)
+    EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         
         NDRX_LOG(log_info, "cpm_pc: %s/%s", c->tag, c->subsect);

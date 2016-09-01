@@ -41,7 +41,7 @@ extern "C" {
 #include <xa_cmn.h>
 #include <atmi.h>
 #include <utlist.h>
-#include <uthash.h>
+#include <exhash.h>
 #include "thpool.h"
     
 /*---------------------------Externs------------------------------------*/

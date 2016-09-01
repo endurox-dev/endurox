@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <uthash.h>
+#include <exhash.h>
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -56,7 +56,7 @@ struct bridgedef_svcs
     int count;
     int pq_info[PQ_LEN];                  /* Print queues,  statistics */
     /* makes this structure hashable */
-    UT_hash_handle hh;
+    EX_hash_handle hh;
 };
 typedef struct bridgedef_svcs bridgedef_svcs_t;
 
@@ -80,7 +80,7 @@ struct bridgedef
     bridgedef_svcs_t * theyr_services;
     
     /* makes this structure hashable */
-    UT_hash_handle hh;
+    EX_hash_handle hh;
 };
 typedef struct bridgedef bridgedef_t;
 /*---------------------------Globals------------------------------------*/

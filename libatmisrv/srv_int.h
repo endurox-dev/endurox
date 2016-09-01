@@ -42,7 +42,7 @@ extern NDRX_API "C" {
 #include <atmi.h>
 #include <setjmp.h>
 #include <ndrxdcmn.h>
-#include <uthash.h>
+#include <exhash.h>
 #include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
@@ -93,7 +93,7 @@ struct xbufcvt_entry
 {
     char fn_nm[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
     long xcvtflags; /* Conversion function */
-    UT_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 
 /**
