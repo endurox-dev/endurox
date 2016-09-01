@@ -105,9 +105,9 @@ Mandatory Env. Variables
 	Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
 	The minimum is recommended something about 7. Every service name in shared memory is hashed 
 	and semaphore protecting the service is calculated by modulus of NRSEMS. This affects 
-    'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
-    by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
-    protection. Default value is 30.
+        'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
+        by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
+        protection. Default value is 30.
 *NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
     Max number of servers can advertise same service. This is used only in 'poll()' mode.
 	The number affects the size of shared memory used for services. Bigger number causes
@@ -120,6 +120,24 @@ Mandatory Env. Variables
 	This is directory where .fd files are located. I.e. UBF field definitions.
 *FIELDTBLS*='COMMA_SEPERATED_LIST_OF_FIELD_FILES'::
 	This is comma separated list of field files found in FLDTBLDIR.
+*NDRX_CCONFIG*='NDRX_COMMON_CONFIG_FILE'::
+        If this is set then, all above configuration is read from specified ini
+        file in 'NDRX_COMMON_CONFIG_FILE' in [@global] section. The Enduro/X config
+        driving unit is able to merge configuration from multiple config files,
+        and you can set higher priority files by in 'NDRX_CCONFIG1', 'NDRX_CCONFIG2'
+        'NDRX_CCONFIG3', 'NDRX_CCONFIG4', 'NDRX_CCONFIG5'. Basically 'NDRX_CCONFIG'
+        is lowest priority and 'NDRX_CCONFIG5' is highest priority. The specified
+        configuration file can be directory, in that case Enduro/X will search for
+        files with mask *.ini, *.cfg, *.conf, *.config files. All will be loaded
+        in alphabetical order.
+
+*NDRX_CCTAG*='NDRX_COMMON_CONFIG_TAG'::
+        This is basically subsection used for Enduro/X configuration sections
+        [@global], [@debug], [@queue]. If the variable is set, then Enduro/X will
+        lookup at process startup for sections like [@global/YOUR_TAG], etc. CC tag
+        can contain multiple sections, for example 'server1/RM2'. Enduro/X will lookup
+        the variables in each section [@global/server1] and [@global/RM2] for setting
+        up the system.
 
 EXAMPLE
 -------
@@ -172,6 +190,83 @@ export NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaoras.so
 export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
 export NDRX_XA_LAZY_INIT=1
 # XA SECTION, END
+
+---------------------------------------------------------------------
+
+Common-config ini file sample configuration, assuming following settings in env:
+---------------------------------------------------------------------
+export NDRX_CCONFIG=/enduro/tst1/conf/app.ini
+export NDRX_CCTAG=server1/RM2
+---------------------------------------------------------------------
+
+The configuration file might look like:
+
+---------------------------------------------------------------------
+#
+# Common variables, inherited for CCTAGs
+#
+[@global]
+FIELDTBLS=Exfields,fieldtab1.fd,fieldtab2.fd
+FLDTBLDIR=/enduro/tst1/tuxfbuf
+NDRX_DMNLEV=5
+NDRX_DMNLOG=/enduro/tst1/tmp/NDRXD
+NDRX_APPHOME=/enduro/tst1
+NDRX_CLUSTERISED=0
+NDRX_CMDWAIT=1
+NDRX_DPID=/enduro/tst1/tmp/ndrxd.pid
+NDRX_DQMAX=3000
+NDRX_HOME=/opt/endurox
+NDRX_IPCKEY=442000
+NDRX_LDBAL=0
+NDRX_LEV=5
+NDRX_LOG=/enduro/tst1/tmp/XADMIN
+NDRX_MSGMAX=100
+NDRX_MSGSIZEMAX=32000
+NDRX_NODEID=1
+NDRX_QPATH=/dev/mqueue
+NDRX_QPREFIX=/tst1
+NDRX_RNDK=jaUZwOlTqglSc
+NDRX_SHMPATH=/dev/shm
+NDRX_SRVMAX=10000
+NDRX_SVCMAX=600
+NDRX_TOUT=60
+NDRX_UBFMAXFLDS=16000
+NDRX_ULOG=/enduro/tst1/logs
+
+#
+# CCTAG section server1
+#
+[@global/server1]
+NDRX_CONFIG=/enduro/tst1/conf/ndrxconfig.xml
+
+#
+# CCTAG section RM2
+#
+[@global/RM2]
+# XA 2PC SECTION, ORACLE DB
+ORACLE_SID=ROCKY
+ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
+PATH=$PATH:ORACLE_HOME/bin
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f"
+NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+# XA Static registration driver
+NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaoras.so
+# XA Dynamic registration driver
+#NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaorad.so
+NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
+NDRX_XA_LAZY_INIT=1
+# XA SECTION, END
+
+#
+# Debug section (no need for NDRX_DEBUG_CONF in CConfig case)
+#
+[@debug]
+*= ndrx=0 ubf=0
+
+[@debug/server1]
+*= ndrx=5 ubf=0
 
 ---------------------------------------------------------------------
 

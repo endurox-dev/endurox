@@ -133,7 +133,7 @@ EX_QNUMDEQ		    226 	long	-	Number of dequeues
 ################################################################################
 EX_CC_CMD                   400         char    -       Common config command
 EX_CC_RESOURCE              401         string  -       List of config resources
-EX_CC_SECTION               402         string  -       Lookup section (with sub-sects slashed) (single)
+EX_CC_LOOKUPSECTION         402         string  -       Lookup section (with sub-sects slashed) (single)
 EX_CC_SECTIONMASK           403         string -        List of sections (start with) to iterate
 
 EX_CC_MANDATORY             404         string -        List of mandatory config fields in section (only for get)
