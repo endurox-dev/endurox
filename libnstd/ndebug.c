@@ -253,7 +253,7 @@ public void ndrx_init_debug(void)
 
             fclose(f);
         }
-        else if (NULL==f)
+        else if (NULL==f && NULL!=cfg_file)
         {
             fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
                                 errno, strerror(errno));

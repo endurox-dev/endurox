@@ -232,6 +232,9 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     
     while (NULL!=config_resources[slot])
     {
+#ifdef CCONFIG_ENABLE_DEBUG
+        fprintf(stderr, "have config at slot [%d] [%s]\n", slot, config_resources[slot]);
+#endif
         have_config = TRUE;
         if (SUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
                 (is_internal?(char **)M_sections:NULL)))
@@ -241,6 +244,12 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
         }
         slot++;
     }
+
+   if (NULL==config_resources[slot])
+   {
+        have_config = FALSE;
+        goto out;
+   }
     
     if (is_internal)
     {
@@ -278,18 +287,13 @@ out:
         ndrx_keyval_hash_free(keyvals);
         keyvals = NULL;
     }
-    if (SUCCEED!=ret)
+    if (SUCCEED!=ret || !have_config)
     {
         if (NULL!=*cfg)
         {
             ndrx_inicfg_free(*cfg);
             *cfg = NULL;
         }
-    }
-    else if (!have_config)
-    {
-        ndrx_inicfg_free(*cfg);
-        *cfg = NULL;
     }
 
     return ret;
