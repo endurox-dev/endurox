@@ -53,15 +53,17 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+/* These should be semaphore mutex globals... */
+ndrx_inicfg_t *G_cconfig = NULL; /* Common-config handler */
+char *G_cctag = NULL;
+int G_tried_to_load = FALSE; /* did we try to load the config? */
 /*---------------------------Statics------------------------------------*/
 
 private char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
                         NDRX_CONF_SECTION_DEBUG, 
                         NDRX_CONF_SECTION_QUEUE, 
                         NULL};
-/* These should be semaphore mutex globals... */
-ndrx_inicfg_t *G_cconfig = NULL; /* Common-config handler */
-char *G_cctag = NULL;
+MUTEX_LOCKDECL(M_load_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -291,9 +293,17 @@ out:
     {
         if (NULL!=*cfg)
         {
+#ifdef CCONFIG_ENABLE_DEBUG
+        fprintf(stderr, "Removing config %p\n", *cfg);
+#endif
             ndrx_inicfg_free(*cfg);
             *cfg = NULL;
         }
+    }
+
+    if (SUCCEED==ret && is_internal)
+    {
+        G_tried_to_load = TRUE;
     }
 
     return ret;
@@ -304,13 +314,21 @@ out:
  */
 public int ndrx_cconfig_load(void)
 {
+    int ret;
+    /* protect against multi-threading */
+    MUTEX_LOCK_V(M_load_lock);
+    
     /* todo: might need first. */
     if (NULL!=G_cctag)
     {
         G_cctag = getenv(NDRX_CCTAG);
     }
     
-    return _ndrx_cconfig_load(&G_cconfig, TRUE);
+    ret = _ndrx_cconfig_load(&G_cconfig, TRUE);
+    
+    MUTEX_UNLOCK_V(M_load_lock);
+    
+    return ret;
 }
 
 /**
@@ -350,5 +368,13 @@ public int ndrx_cconfig_reload(void)
  */
 public ndrx_inicfg_t *ndrx_get_G_cconfig(void)
 {
+#ifdef CCONFIG_ENABLE_DEBUG
+    fprintf(stderr, "returning G_cconfig %p\n", G_cconfig);
+#endif
+    if (!G_tried_to_load)
+    {
+        /* try to load */
+        ndrx_cconfig_load();
+    }
     return G_cconfig;
 }
