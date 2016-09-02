@@ -99,7 +99,7 @@ public int ndrx_string_hash_add(string_hash_t **h, char *str)
     }
     
     /* Add stuff to hash finaly */
-    EXHASH_ADD_STR( (*h), str, tmp );
+    EXHASH_ADD_KEYPTR( hh, (*h), tmp->str, strlen(tmp->str), tmp );
     
 out:
     return ret;

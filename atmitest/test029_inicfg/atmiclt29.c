@@ -45,6 +45,7 @@
 #include <exhash.h>
 #include <nerror.h>
 #include <cconfig.h>
+#include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -52,6 +53,34 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+
+/**
+ * Append text file
+ * @param file
+ * @param line
+ * @return 
+ */
+int append_text_file(char *file, char *line)
+{
+    int ret = SUCCEED;
+    FILE *f = fopen(file, "a");
+    
+    if (NULL==f)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to open [%s]: %s", file, strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    fprintf(f, "%s", line);
+    
+out:
+    if (NULL!=f)
+    {
+        fclose(f);
+    }
+    return ret;
+}
 
 /*
  * Main test case entry
@@ -66,9 +95,11 @@ int main(int argc, char** argv)
     char *iterfilter[] = {"my", NULL};
     int i;
     
-    for (i=0; i<10000; i++)
+    for (i=0; i<5; i++)
     {
         out = NULL;
+        
+        system("/bin/cp C_test_template.ini C_test.ini");
         
         if (NULL==(cfg=ndrx_inicfg_new()))
         {
@@ -90,6 +121,12 @@ int main(int argc, char** argv)
         }
 
         if (SUCCEED!=ndrx_inicfg_add(cfg, "B_test.ini", NULL))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to make resource: %s", Nstrerror(Nerror));
+            FAIL_OUT(ret);    
+        }
+        
+        if (SUCCEED!=ndrx_inicfg_add(cfg, "C_test.ini", NULL))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to make resource: %s", Nstrerror(Nerror));
             FAIL_OUT(ret);    
@@ -127,6 +164,7 @@ int main(int argc, char** argv)
         /* free the list */
         ndrx_keyval_hash_free(out);
 
+        out=NULL;
         /* try some iteration over the config */
         sections = NULL;
         iter = NULL;
@@ -165,6 +203,45 @@ int main(int argc, char** argv)
         
         /* kill the section listing */
         ndrx_inicfg_sections_free(sections);
+        
+        sleep(1); /* have some time to change file-system timestamp... */
+        
+        /* Update config file */
+        append_text_file("C_test.ini", "\n[MOTORCYCLE]\n");
+        append_text_file("C_test.ini", "SPEED=120\n");
+        append_text_file("C_test.ini", "COLOR=red\n");
+        
+        /* update/reload */
+        if (SUCCEED!=ndrx_inicfg_reload(cfg, NULL))
+        {
+            NDRX_LOG(log_error, "Failed to reload: %s", Nstrerror(Nerror));
+            FAIL_OUT(ret);
+        }
+        
+        /* out=NULL; - should be already */
+        /* resource == NULL, any resource. */
+        if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, NULL, "MOTORCYCLE", &out))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to resolve [MOTORCYCLE]: %s",
+                    Nstrerror(Nerror));
+            FAIL_OUT(ret);    
+        }
+
+        if (NULL==(val=ndrx_keyval_hash_get(out, "COLOR")))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get COLOR!");
+            FAIL_OUT(ret);
+        }
+
+        if (0!=strcmp(val->val, "red"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: [COLOR] is not red, but [%s]!", val->val);
+            FAIL_OUT(ret);
+        }
+        
+        /* free-up the lookup */
+        ndrx_keyval_hash_free(out);
+        out=NULL;
         
         /* free up the config */
         ndrx_inicfg_free(cfg);

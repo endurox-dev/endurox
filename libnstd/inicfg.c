@@ -52,7 +52,7 @@
 
 #define API_ENTRY {_Nunset_error();}
 
-/* #define INICFG_ENABLE_DEBUG */
+#define INICFG_ENABLE_DEBUG 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -477,8 +477,8 @@ private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     ndrx_inicfg_file_t *cf = cfg_single_file_get(cfg, fullname);
     
 #ifdef INICFG_ENABLE_DEBUG
-        fprintf(stderr, "%s: enter resource [%s]/file [%s]\n",
-                        fn, resource, fullname);
+    fprintf(stderr, "%s: enter resource [%s]/file [%s]\n",
+                    fn, resource, fullname);
 #endif
 
     if (SUCCEED!=stat(fullname, &attr))
@@ -486,9 +486,17 @@ private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
         /* check the error. */
         ferr = errno;
     }
+        
+#ifdef INICFG_ENABLE_DEBUG
+    if (NULL!=cf)
+    {
+        fprintf(stderr, "%s: tstamp: cur: %ld vs prev: %ld\n",
+                        fn, attr.st_mtime, cf->attr.st_mtime);
+    }
+#endif
     
     if (NULL!=cf && SUCCEED==ferr && 
-            0!=memcmp(&attr.st_mtime, &cf->attr.st_mtime, sizeof(attr.st_mtime)))
+            0!=memcmp(&(attr.st_mtime), &(cf->attr.st_mtime), sizeof(attr.st_mtime)))
     {
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "%s: [%s]/file [%s] changed - reload\n",
