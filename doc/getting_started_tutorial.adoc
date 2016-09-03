@@ -459,14 +459,14 @@ Very simple Makefile will look like (/opt/app1/src/banksv/Makefile):
 
 ---------------------------------------------------------------------
 banksv: banksv.c
-	gcc -o banksv banksv.c -I. -I ../../ubftab -lm -lubf -lnstd -latmi -latmisrv -lrt -ldl
+	gcc -o banksv banksv.c -I. -I ../../ubftab -latmisrv -latmi -lubf -lnstd -lrt -ldl -lm
 ---------------------------------------------------------------------
 
 Build the binary:
 ---------------------------------------------------------------------
 $ cd /opt/app1/src/banksv
 $ make
-gcc -o banksv banksv.c -I. -I ../../ubftab -lm -lubf -lnstd -latmi -latmisrv -lrt -ldl
+gcc -o banksv banksv.c -I. -I ../../ubftab -latmisrv -latmi -lubf -lnstd -lrt -ldl -lm
 ls -l
 total 20
 -rwxrwxr-x. 1 user1 user1 9937 Nov 16 04:11 banksv
@@ -633,7 +633,7 @@ Makefile (/opt/app1/src/bankcl/Makefile) looks like:
 
 ---------------------------------------------------------------------
 bankcl: bankcl.c
-	gcc -o bankcl bankcl.c -I. -I ../../ubftab -lm -lubf -lnstd -latmi -latmiclt -lrt -ldl
+	gcc -o bankcl bankcl.c -I. -I ../../ubftab -latmiclt -latmi -lubf -lnstd -lrt -ldl -lm
 ---------------------------------------------------------------------
 
 Once both bankcl.c and Makefile is created, you can run the build process:

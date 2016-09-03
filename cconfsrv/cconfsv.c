@@ -46,6 +46,7 @@
 #include <atmi_shm.h>
 
 #include "cconfsv.h"
+#include "userlog.h"
 #include <cconfig.h>
 #include <inicfg.h>
 #include <nerror.h>
@@ -244,7 +245,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
         NDRX_LOG(log_error, "Invalid format field count: "
                 "EX_CC_FORMAT_FIELD = %d but EX_CC_FORMAT_FORMAT = %d",
                 nr_formats1, nr_formats2);
-        set_error(p_ub, EINVAL, "Invalid EX_CC_FORMAT_FIELD, EX_CC_FORMAT_FORMAT "
+        set_error(p_ub, NEINVAL, "Invalid EX_CC_FORMAT_FIELD, EX_CC_FORMAT_FORMAT "
                 "count, must match.");
         FAIL_OUT(ret);
     }
@@ -377,7 +378,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                 
                 max_len = atoi(p2);
                 
-                NDRX_LOG(log_debug, "constructed check: type [%s] min_len [%d] max_len [%d]",
+                NDRX_LOG(log_debug, "constructed check: type [%c] min_len [%d] max_len [%d]",
                         fmt_code, min_len, max_len);
             }
             
@@ -423,7 +424,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                                 hash_key->key, hash_key->section, hash_key->val);
                         FAIL_OUT(ret);
                     }
-                case 'f':
+                case 'n':
                     /* do no break, we want length tests for all of the types... */
                     if(sscanf(hash_key->val, "%f", &f) == 0)  //It's a float.
                     {
@@ -472,7 +473,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
     {
         if (SUCCEED!=Badd(p_ub, EX_CC_SECTION, iter->section, 0L))
         {
-            NDRX_LOG(log_error, "Failed to set EX_CC_SECTION (val: %s): %s", 
+            NDRX_LOG(log_error, "Failed to set EX_CC_SECTION (section: %s): %s", 
                         iter->section, Nstrerror(Nerror));
             set_error(p_ub, NEINVAL, Bstrerror(Berror));
             FAIL_OUT(ret);
@@ -480,8 +481,8 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
         
         if (SUCCEED!=Badd(p_ub, EX_CC_KEY, iter->key, 0L))
         {
-            NDRX_LOG(log_error, "Failed to set EX_CC_KEY (val: %s): %s", 
-                        iter->section, Nstrerror(Nerror));
+            NDRX_LOG(log_error, "Failed to set EX_CC_KEY (key: %s): %s", 
+                        iter->key, Nstrerror(Nerror));
             set_error(p_ub, NEINVAL, Bstrerror(Berror));
             FAIL_OUT(ret);
         }
@@ -489,7 +490,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
         if (SUCCEED!=Badd(p_ub, EX_CC_VALUE, iter->val, 0L))
         {
             NDRX_LOG(log_error, "Failed to set EX_CC_VALUE (val: %s): %s", 
-                        iter->section, Nstrerror(Nerror));
+                        iter->val, Nstrerror(Nerror));
             set_error(p_ub, NEINVAL, Bstrerror(Berror));
             FAIL_OUT(ret);
         }
@@ -523,6 +524,117 @@ out:
 
     return ret;
 }
+
+/**
+ * list th config (this runs in conversational mode)
+ * @param p_ub
+ * @param req
+ * @return 
+ */
+private int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
+{
+    int ret = SUCCEED;
+    ndrx_inicfg_section_t *sections=NULL, *iter=NULL, *iter_tmp=NULL;
+    ndrx_inicfg_section_keyval_t *key_iter = NULL, *key_iter_tmp = NULL;
+    long revent;
+    BFLDID rm_list[] =  {   
+        EX_CC_SECTION, 
+        EX_CC_KEY, 
+        EX_CC_VALUE, 
+        BBADFLDID
+    };
+    
+    if (SUCCEED!=ndrx_inicfg_iterate(M_config, req->resources, 
+            req->sectionmask, &sections))
+    {
+        NDRX_LOG(log_error, "Failed to iterate sections: %s", Nstrerror(Nerror));
+        set_error(p_ub, NESYSTEM, Nstrerror(Nerror));
+        FAIL_OUT(ret);
+    }
+    
+    EXHASH_ITER(hh, sections, iter, iter_tmp)
+    {
+        NDRX_LOG(log_info, "iter: section [%s]", iter->section);
+        
+        /* Remove all  EX_CC_SECTION/ EX_CC_KEY/ EX_CC_VALUE from buffer
+         * so that we list fresh data for each section.
+         */
+        if (SUCCEED!=Bdelete(p_ub, rm_list))
+        {
+            if (Berror!=BNOTPRES)
+            {
+                NDRX_LOG(log_error, "Buffer cleanup failed: %s", Bstrerror(Berror));
+                set_error(p_ub, NESYSTEM, Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+        }
+        
+        EXHASH_ITER(hh, sections->values, key_iter, key_iter_tmp)
+        {
+            if (SUCCEED!=Badd(p_ub, EX_CC_SECTION, key_iter->section, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to set EX_CC_SECTION (section: %s): %s", 
+                            key_iter->section, Nstrerror(Nerror));
+                set_error(p_ub, NEINVAL, Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+
+            if (SUCCEED!=Badd(p_ub, EX_CC_KEY, key_iter->key, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to set EX_CC_KEY (key: %s): %s", 
+                            key_iter->key, Nstrerror(Nerror));
+                set_error(p_ub, NEINVAL, Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+
+            if (SUCCEED!=Badd(p_ub, EX_CC_VALUE, key_iter->val, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to set EX_CC_VALUE (val: %s): %s", 
+                            key_iter->val, Nstrerror(Nerror));
+                set_error(p_ub, NEINVAL, Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+        }
+        
+        ndrx_debug_dump_UBF(log_debug, "CCONF listing section", p_ub);
+        
+        /* send the stuff way... */
+        if (FAIL == tpsend(cd,
+                    (char *)p_ub,
+                    0L,
+                    0,
+                    &revent))
+        {
+            NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                                tpstrerror(tperrno), revent);
+            set_error(p_ub, NESYSTEM, tpstrerror(tperrno));
+                FAIL_OUT(ret);
+                
+        }
+        else
+        {
+            NDRX_LOG(log_debug,"sent ok");
+        }
+
+    }
+    
+    /* Remove any response (so that we finish cleanly) */
+    if (SUCCEED!=Bdelete(p_ub, rm_list))
+    {
+        if (Berror!=BNOTPRES)
+        {
+            NDRX_LOG(log_error, "Buffer cleanup failed: %s", Bstrerror(Berror));
+            set_error(p_ub, NESYSTEM, Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+    }
+    
+    
+    
+out:
+    return ret;
+}
+
 /**
  * Common config server
  * 
@@ -540,7 +652,14 @@ void CCONF (TPSVCINFO *p_svc)
     /*
      * Allocate extra 32KB for config storage.
      */
-    p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 32000);
+    if (NULL==(p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 32000)))
+    {
+        userlog("buffer realloc failed!");
+        NDRX_LOG(log_error, "tprealloc failed");
+        FAIL_OUT(ret);
+    }
+    
+    ndrx_debug_dump_UBF(log_debug, "CCONF request buffer", p_ub);
     
     
     memset(&req, 0, sizeof(req));
@@ -567,6 +686,7 @@ void CCONF (TPSVCINFO *p_svc)
                 set_error(p_ub, NEINVALINI, Nstrerror(Nerror));
                 FAIL_OUT(ret);
             }
+            i++;
         }
     }
 
@@ -584,8 +704,19 @@ void CCONF (TPSVCINFO *p_svc)
     switch (req.cmd)
     {
         case NDRX_CCONFIG_CMD_GET:
+            if (SUCCEED!=config_get(p_ub, &req))
+            {
+                NDRX_LOG(log_error, "config_get failed!");
+                FAIL_OUT(ret);
+            }
             break;
         case NDRX_CCONFIG_CMD_LIST:
+            
+            if (SUCCEED!=config_list(p_ub, &req, p_svc->cd))
+            {
+                NDRX_LOG(log_error, "config_list failed!");
+                FAIL_OUT(ret);
+            }
             break;
         default:
             NDRX_LOG(log_error, "Unsupported config command: %c", req.cmd);
@@ -594,29 +725,11 @@ void CCONF (TPSVCINFO *p_svc)
             break;
     }
     
-    /* Common config command 
-    
-     if (SUCCEED)
-    
-    /*
-    EX_CC_CMD                   400         char    -       Common config command
-EX_CC_RESOURCE              401         string  -       List of config resources
-EX_CC_LOOKUPSECTION         402         string  -       Lookup section (with sub-sects slashed) (single)
-EX_CC_SECTIONMASK           403         string -        List of sections (start with) to iterate
-
-EX_CC_MANDATORY             404         string -        List of mandatory config fields in section (only for get)
-EX_CC_FORMAT_FIELD          405         string -        List of fields to check format
-EX_CC_FORMAT_FORMAT         406         string -        For to be checked
-     */
-    
-    /* Process the config
-     * either listing (in conversational mode, or resolve)
-     */
-    
-    
-    
 out:
     free_data(&req);
+
+    ndrx_debug_dump_UBF(log_debug, "CCONF response buffer", p_ub);
+
     tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 (char *)p_ub,
@@ -637,6 +750,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to general config (Enduro/X config)!");
         FAIL_OUT(ret);
+    }
+    
+    if (!M_config)
+    {
+        NDRX_LOG(log_error, "CCONFIG must be set in order to run cconfsrv");
+        FAIL_OUT(ret);   
     }
     
     if (SUCCEED!=tpadvertise(NDRX_SVC_CCONF, CCONF))
