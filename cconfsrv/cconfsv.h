@@ -1,7 +1,6 @@
 /* 
-** Enduro/X common-config
 **
-** @file cconfig.h
+** @file cconfsv.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,62 +28,42 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef _CCONFIG_H
-#define	_CCONFIG_H
+
+#ifndef CCONFSV_H
+#define	CCONFSV_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <sys/stat.h>
-#include <ndrxdcmn.h>
-#include <stdint.h>
-#include <ntimer.h>
-#include <exhash.h>
-#include <sys_unix.h>
-#include <inicfg.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_CCONFIG5 "NDRX_CCONFIG5"
-#define NDRX_CCONFIG4 "NDRX_CCONFIG4"
-#define NDRX_CCONFIG3 "NDRX_CCONFIG3"
-#define NDRX_CCONFIG2 "NDRX_CCONFIG2"
-#define NDRX_CCONFIG1 "NDRX_CCONFIG1"
-#define NDRX_CCONFIG  "NDRX_CCONFIG"
-    
-#define NDRX_CCTAG "NDRX_CCTAG" /* common-config tag */
-    
-#define NDRX_CONF_SECTION_GLOBAL "@global"
-#define NDRX_CONF_SECTION_DEBUG  "@debug"
-#define NDRX_CONF_SECTION_QUEUE  "@queue"
-    
-    
-#define NDRX_CCTAG_MAX      32          /* max len of cctag */
-    
-/*
- * Command for cconfig
- */
-#define NDRX_CCONFIG_CMD_GET        'g' /* get config (default) */
-#define NDRX_CCONFIG_CMD_LIST       'l' /* list config */
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+typedef struct event_entry event_entry_t;
+
+
+struct event_entry
+{
+    char eventexpr[255+1]; /* Compile the regex? */
+    char filter[255+1];
+    char name1[32]; /* currently service name only */
+    long flags;
+    regex_t re; /* compiled regex */
+    long subscriberNr;
+    char my_id[NDRX_MAX_ID_SIZE+1]; /* caller ID */
+    event_entry_t *next;
+    event_entry_t *prev;
+};
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-    
-extern NDRX_API int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out);
-extern NDRX_API int ndrx_cconfig_load(void);
-extern NDRX_API ndrx_inicfg_t *ndrx_get_G_cconfig(void);
 
-/* for user: */
-extern NDRX_API int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg);
-extern NDRX_API int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_section_keyval_t **out);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* _CCONFIG_H */
+#endif	/* CCONFSV_H */
 

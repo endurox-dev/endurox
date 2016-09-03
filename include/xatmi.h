@@ -83,6 +83,8 @@ extern "C" {
 #define NDRX_SVC_QSPACE    "@QSP%s"            /* Q space format string (for service) */
     
 #define NDRX_SVC_CPM      "@CPMSVC"             /* Client Process Monitor svc */
+    
+#define NDRX_SVC_CCONF      "@CCONF"             /* Common-config server */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin," /* Prefix for sanity check. */
 

@@ -47,7 +47,10 @@ extern "C" {
 #define NEMALLOC            2 /* Malloc failed */
 #define NEUNIX              3 /* Unix error occurred */
 #define NEINVAL             4 /* Invalid value passed to function */
-#define NMAXVAL             4 /* max error */
+#define NESYSTEM            5 /* System failure */
+#define NEMANDATORY         6 /* Mandatory field is missing */
+#define NEFORMAT            7 /* Format error */
+#define NMAXVAL             7 /* max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

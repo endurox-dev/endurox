@@ -71,6 +71,9 @@ struct err_msg
     {NEMALLOC,      "Malloc failed"},    /* 2 */
     {NEUNIX,        "Unix system call failed"},    /* 3 */
     {NEINVAL,       "Invalid paramter passed to function"}, /* 4 */
+    {NESYSTEM,      "System failure"}, /* 5 */
+    {NEMANDATORY,   "Mandatory key/field missing"}, /* 6 */
+    {NEFORMAT,      "Invalid format"} /* 7 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

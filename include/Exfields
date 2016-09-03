@@ -126,6 +126,12 @@ EX_QNUMENQ		    225 	long	-	Number of enqueues
 EX_QNUMDEQ		    226 	long	-	Number of dequeues
 
 ################################################################################
+# Enduro/X standard library
+################################################################################
+EX_NERROR_CODE           300         short  -        Result code (error code)
+EX_NERROR_MSG            301         string -        Result message
+
+################################################################################
 # Fields for Common Config Server (ccsrv)
 # Config commands:
 # 'g' - Get (default)
@@ -137,12 +143,13 @@ EX_CC_LOOKUPSECTION         402         string  -       Lookup section (with sub
 EX_CC_SECTIONMASK           403         string -        List of sections (start with) to iterate
 
 EX_CC_MANDATORY             404         string -        List of mandatory config fields in section (only for get)
-EX_CC_FORMAT_FIELD          405         string -        List of fields to check format
-EX_CC_FORMAT_FORMAT         406         string -        For to be checked
 
-#OUTPUT
-EX_CC_RESULT_CODE           407         short  -        Result code (error code)
-EX_CC_RESULT_MSG            408         string -        Result message
+# Formats accepted
+# sX..Y (string, in length of X till Y, X may not be set, then 0 is accpeted), e.g. s..16, s5..10
+# nX..Y Number in length of X till Y (this allows, "e-,." to be present. X and Y is string format length of the field accepted
+# t (boolean field, accepts: yes,no,TRUE,FALSE,1,0)
+EX_CC_FORMAT_KEY            405         string -        Config key format
+EX_CC_FORMAT_FORMAT         406         string -        For to be checked
 
 # Triplet for single entry of config:
 EX_CC_SECTION               409         string -        section from which value was taken (direct or parent...)
