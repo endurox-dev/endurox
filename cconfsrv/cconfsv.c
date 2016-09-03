@@ -414,7 +414,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                     }
                     break;
                     
-                case 'd':
+                case 'i':
                     if (!ndrx_isint(hash_key->val))
                     {
                         /* invalid value... */
