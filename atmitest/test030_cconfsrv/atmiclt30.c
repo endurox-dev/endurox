@@ -58,9 +58,14 @@ int main(int argc, char** argv) {
     int i;
     int ret=SUCCEED;
     long revent;
-    int received = 0;
+    int sections_got = 0;
+    int sections_total = 0;
     int occ1, occ2;
     int cd;
+    int recv_continue=1;
+    BFLDID empty[] = {
+        BBADFLDID
+    };
     
     /**************************************************************************
      * Get one section, with type checks (OK)
@@ -191,8 +196,6 @@ int main(int argc, char** argv) {
         NDRX_LOG(log_error, "Invalid occurrences: %d vs %d", occ1, occ2);
         FAIL_OUT(ret);
     }
-    
-    
     
     /* false_setting=no */
      
@@ -514,8 +517,161 @@ int main(int argc, char** argv) {
     }
     
     /**************************************************************************
+     * Lookup stuff in new file...
+     **************************************************************************/
+    /* Remove all fields from buffer.. */
+    Bproj(p_ub, empty);
+    if (SUCCEED!=Bchg(p_ub, EX_CC_LOOKUPSECTION, 0, "test_section", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: buffer failed to setup: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_CC_RESOURCE, 0, "test.ini", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: buffer failed to setup: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    if (FAIL == tpcall("@CCONF", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: @CCONF failed: %s", tpstrerror(tperrno));
+        ndrx_debug_dump_UBF(log_debug, "CCONF error rsp", p_ub);
+        
+        FAIL_OUT(ret);
+    }
+    else
+    {     
+        if (FAIL==CBfindocc (p_ub, EX_CC_VALUE, "motorcycle", 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_error, "TESTERROR: cannot find EX_CC_VALUE with value "
+                    "[motorcycle]: %s", Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+    }
+    /* now lookup some other section, must not be found */
+    Bproj(p_ub, empty);
+    if (SUCCEED!=Bchg(p_ub, EX_CC_LOOKUPSECTION, 0, "xapp", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: buffer failed to setup: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, EX_CC_RESOURCE, 0, "test.ini", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: buffer failed to setup: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    if (SUCCEED!=Bchg(p_ub, EX_CC_MANDATORY, 0, "xstring_setting", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: buffer failed to setup: %s", 
+                Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
+    
+    
+    /* cos we are not looking into endurox.ini */
+    if (SUCCEED == tpcall("@CCONF", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: @CCONF must not return [xapp]!", tpstrerror(tperrno));
+        ndrx_debug_dump_UBF(log_debug, "CCONF error rsp", p_ub);
+        
+        FAIL_OUT(ret);
+    }
+    
+    /**************************************************************************
      * Call the section listing
      **************************************************************************/
+    
+    tpfree((char *)p_ub);
+    
+    if (NULL==(p_ub= (UBFH *)tpalloc("UBF", NULL, 1024)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: buffer alloc failed: %s", tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=CBchg(p_ub, EX_CC_CMD, 0, "l", 0L, BFLD_STRING))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set EX_CPMCOMMAND to l!");        
+        FAIL_OUT(ret);
+    }
+     
+    /* get the sections which starts with x */
+    if (SUCCEED!=CBchg(p_ub, EX_CC_SECTIONMASK, 0, "x", 0L, BFLD_STRING))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set EX_CC_SECTIONMASK to l!");        
+        FAIL_OUT(ret);
+    }
+    
+    if (FAIL == (cd = tpconnect("@CCONF",
+                                    (char *)p_ub,
+                                    0,
+                                    TPNOTRAN |
+                                    TPRECVONLY)))
+    {
+        NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
+        
+        ret = FAIL;
+        goto out;
+    }
+    NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
+
+    while (recv_continue)
+    {
+        int tp_errno;
+        recv_continue=0;
+        if (FAIL == tprecv(cd,
+                            (char **)&p_ub,
+                            0L,
+                            0L,
+                            &revent))
+        {
+            ret = FAIL;
+            tp_errno = tperrno;
+            if (TPEEVENT == tp_errno)
+            {
+                if (TPEV_SVCSUCC == revent)
+                        ret = SUCCEED;
+                else
+                {
+                    NDRX_LOG(log_error,
+                             "Unexpected conv event %lx", revent );
+                    FAIL_OUT(ret);
+                }
+            }
+        }
+        else
+        {
+            recv_continue=1;
+            /* Check for specified values (per section) and
+             * count them, must much the section count in ini
+             */
+            
+            if (CBfindocc (p_ub, EX_CC_KEY, "xstring_setting", 0, BFLD_STRING)>=0)
+            {
+                sections_got++;
+            }
+            
+            if (CBfindocc (p_ub, EX_CC_KEY, "hello", 0, BFLD_STRING)>=0)
+            {
+                sections_got++;
+            }
+            
+            sections_total++;
+        }
+    }
+    
+    if (sections_got!=sections_total)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Got sections does not match total: %d vs %d",
+                sections_got, sections_total);
+        FAIL_OUT(ret);
+    }
     
     if (SUCCEED!=tpterm())
     {

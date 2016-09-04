@@ -168,7 +168,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
     if (nr_section_masks>0)
     {
         req->sectionmask = calloc(nr_section_masks+1, sizeof(char *));
-        if (NULL==req->resources)
+        if (NULL==req->sectionmask)
         {
             NDRX_LOG(log_error, "Failed to allocate section_masks: %s", strerror(errno));
             set_error(p_ub, NEMALLOC, "malloc failed for section_masks");
