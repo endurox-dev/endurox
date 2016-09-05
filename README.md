@@ -56,6 +56,7 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.1.2 released on 25/06/2016. Added support for other Unix systems. Currently production grade support is provided for following operating systems: GNU/Linux, FreeBSD, IBM AIX and Oracle Solaris. MAC OS X and Cygwin versions are considered as experimental. FreeBSD installation guides are located at doc/freebsd_notes.adoc, AIX install guide: doc/aix_notes.adoc, Solaris install guide: doc/solaris_notes.adoc and OS X guide: doc/osx_notes.adoc. Also with this version lot of core processing bug fixes are made.
 - Version 3.2.1 released on 06/07/2016. Major UBF optimization. Now for each data type memory offset is maintained. For fixed data types (short, long, char, float, double) binary search is performend when field is read from buffer.
 - Version 3.2.2 released on 15/07/2016. Bugfixes for UBF binary search. Added UBF benchmarking scripts and documents.
+- Version 3.3.1 released on 05/09/2016. Implemented common configuration engine (can use ini files in alternative to environment variables, debug config and persistent queue config).
 
 
 # Build configurations
