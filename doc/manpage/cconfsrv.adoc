@@ -1,0 +1,51 @@
+CCONFSRV(8)
+===========
+:doctype: manpage
+
+
+NAME
+----
+cconfsrv - Common configuration server
+
+
+SYNOPSIS
+--------
+*cconfsrv*
+
+
+DESCRIPTION
+-----------
+This is sepcial XATMI server shipped with Enduro/X in order to provide common-configuration (ini file) parsing facilities
+to all programming languages which are provided by Enduro/X. The idea behind the configuration server is that it
+uses XATMI API (exposed as service) in order to get configuration section or list all configuration that is used by 
+application. 
+
+This server is optional and can be used by third party application in oder to read the configuration files via
+service calls.
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ex_env(5)*
+
+AUTHOR
+------
+Enduro/X is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
