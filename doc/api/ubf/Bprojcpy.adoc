@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-This function copies fields from 'p_ub_src' to 'p_ub_dst' buffer. The list of field which needs to be copied is marked in 'fldlist' array. The array must be terminated with *BADFLDID*. Matchied field names are copied including all it's occurrences. Before performing copy, 'p_ub_dest' buffer is erased by Binit(3).
+This function copies fields from 'p_ub_src' to 'p_ub_dst' buffer. The list of field which needs to be copied is marked in 'fldlist' array. The array must be terminated with *BBADFLDID*. Matchied field names are copied including all it's occurrences. Before performing copy, 'p_ub_dest' buffer is erased by Binit(3).
 
 RETURN VALUE
 ------------

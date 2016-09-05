@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-This function removes any field from 'p_ub' buffer which are present in 'fldlist' array. The array must be terminated with *BADFLDID*.
+This function removes any field from 'p_ub' buffer which are present in 'fldlist' array. The array must be terminated with *BBADFLDID*.
 
 RETURN VALUE
 ------------
