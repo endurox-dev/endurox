@@ -95,6 +95,8 @@ It is possible request format verification. The key-format fields are used into 
 
 *nX..Y* or *n..Y* (e.g. n2..5, n..3) - Numeric field (can be floating point format). Min length X (measured as string) and max length Y (measured as string).
 
+2. Second mode for configuration server is requesting a config listing. This enters service in conversational mode. The configuration listing mode is requested by setting 'EX_CC_CMD' to 'l'.
+
 EXIT STATUS
 -----------
 *0*::
