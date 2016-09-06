@@ -20,9 +20,68 @@ to all programming languages which are provided by Enduro/X. The idea behind the
 uses XATMI API (exposed as service) in order to get configuration section or list all configuration that is used by 
 application. 
 
-This server is optional and can be used by third party application in oder to read the configuration files via
-service calls.
+This server is optional and can be used by third party application in oder to read the configuration files via standard
+XATMi service calls.
 
+
+API - get section
+-----------------
+The server can work in two modes.
+
+1. Get mode ('EX_CC_CMD' UBF buffer set to 'g' (default)). In this mode the request for configuration is made for particular
+section.  The config files (or directories) for which to do the lookup can be set in 'EX_CC_RESOURCE' field, you may use
+multiple occurrences. If field is not set, then lookup is done in all files which are loaded into configuration library. This
+includes Enduro/X own config files, which are set in *NDRX_CCONFIG* environment variables (see ex_env(5)). The get request
+must contain 'EX_CC_LOOKUPSECTION' field, which indicates the section to lookup.
+
+'EX_CC_LOOKUPSECTION' can be set to lookup the sub-sections, for example if you have in config files:
+
+/paht/to/test1.ini:
+--------------------------------------------------------------------------------
+[TEST1]
+PARAM1=value1
+PARAM2=value2
+
+[TEST1/SUB1]
+PARAM3=value3
+PARAM5=value5
+--------------------------------------------------------------------------------
+
+/path/to/test2.ini:
+--------------------------------------------------------------------------------
+[TEST1/SUB1/SUB2]
+PARAM3=value4
+--------------------------------------------------------------------------------
+
+Then by doing lookup to 'TEST1/SUB1/SUB2' section, you will get following result:
+
+Request buffer:
+--------------------------------------------------------------------------------
+EX_CC_CMD   g
+EX_CC_LOOKUPSECTION TEST1/SUB1/SUB2
+EX_CC_RESOURCE  /paht/to/test1.ini
+EX_CC_RESOURCE  /paht/to/test2.ini
+--------------------------------------------------------------------------------
+
+Response buffer:
+--------------------------------------------------------------------------------
+EX_CC_SECTION   test1
+EX_CC_KEY   PARAM1
+EX_CC_VALUE   value1
+EX_CC_SECTION   test2
+EX_CC_KEY   PARAM2
+EX_CC_VALUE   value2
+EX_CC_SECTION   TEST1/SUB1/SUB2
+EX_CC_KEY   PARAM3
+EX_CC_VALUE   value4
+EX_CC_SECTION   TEST1/SUB1
+EX_CC_KEY   PARAM5
+EX_CC_VALUE   value5
+--------------------------------------------------------------------------------
+
+Mention taht 'PARAM3' value is set to 'value4' and not 'value3', because 'TEST1/SUB1/SUB2' closer matched the lookup request.
+The principle is that all parent variables are gathered. If any variable is common between parent and child, then child element
+will be returned, as it is with higher prioirity.
 
 EXIT STATUS
 -----------
