@@ -7,11 +7,9 @@ NAME
 ----
 cconfsrv - Common configuration server
 
-
 SYNOPSIS
 --------
 *cconfsrv*
-
 
 DESCRIPTION
 -----------
@@ -21,7 +19,7 @@ uses XATMI API (exposed as service) in order to get configuration section or lis
 application. 
 
 This server is optional and can be used by third party application in oder to read the configuration files via standard
-XATMi service calls.
+XATMI service calls.
 
 
 API - get section
@@ -79,9 +77,23 @@ EX_CC_KEY   PARAM5
 EX_CC_VALUE   value5
 --------------------------------------------------------------------------------
 
-Mention taht 'PARAM3' value is set to 'value4' and not 'value3', because 'TEST1/SUB1/SUB2' closer matched the lookup request.
+Mention that 'PARAM3' value is set to 'value4' and not 'value3', because 'TEST1/SUB1/SUB2' closer matched the lookup request.
 The principle is that all parent variables are gathered. If any variable is common between parent and child, then child element
-will be returned, as it is with higher prioirity.
+will be returned, as it is with higher priority.
+
+When doing requests to configuration server it is possible to request for mandatory field keys checking. The must-have keys are loaded into 'EX_CC_MANDATORY' field occurrences. If during section lookup key is not found, then error '6' is returned.
+
+It is possible request format verification. The key-format fields are used into 'EX_CC_FORMAT_KEY' + 'EX_CC_FORMAT_FORMAT' occurrences. If the format does not match field, error code '7' is returned.
+
+*'EX_CC_FORMAT_FORMAT' field can have following values:*
+
+*t* - Boolean field, valid values starts with on of the following symbols: 'TtFfYyNn10'.
+
+*sX..Y* or *s..Y* (e.g. s10..20, s..5) - String field, min length X and max length Y. If X is not set (second format), then X is assumed to be 0.
+
+*iX..Y* or *i..Y* (e.g. i1..2, i..3) - Integer field, min len (measured as string) X and max len (measured as string Y.
+
+*nX..Y* or *n..Y* (e.g. n2..5, n..3) - Numeric field (can be floating point format). Min length X (measured as string) and max length Y (measured as string).
 
 EXIT STATUS
 -----------
