@@ -14,7 +14,9 @@ EnduroX have binddings for:
 
 Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues). Starting with Enduro/X Version 3.1.2 IBM AIX (6.1 and 7.1), Oracle Solaris 11, MAC OS X (experimental) and Cygwin (experimental) support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
 
-- Build and installation guides are located at: http://www.endurox.org
+- Build and installation guides are located at: www.endurox.org/dokuwiki
+- 
+- Support forum: www.endurox.org
 
 - Binary builds (RPMs & DEBs) for various platforms are here: http://www.endurox.org/projects/endurox/files
 
