@@ -91,13 +91,13 @@ ndrxconfig.xml:
         <max>1</max>
         <srvid>1660</srvid>
 	<cctag>qs1</cctag>
-        <sysopt>-e /tmp/QS1.log -r -- -m MYSPACE -s1</sysopt>
+        <sysopt>-e /tmp/QS1.log -r -- -m QS1 -s1</sysopt>
     </server>
     <server name="tmqueue">
         <max>1</max>
         <srvid>1670</srvid>
 	<cctag>qs2</cctag>
-        <sysopt>-e /tmp/QS2.log -r -- -m MYSPACE -s1</sysopt>
+        <sysopt>-e /tmp/QS2.log -r -- -m QS2 -s1</sysopt>
     </server>
 ---------------------------------------------------------------------
 
