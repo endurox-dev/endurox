@@ -24,9 +24,8 @@ XATMI service calls.
 
 API - get section
 -----------------
-The server can work in two modes.
 
-1. Get mode ('EX_CC_CMD' UBF buffer set to 'g' (default)). In this mode the request for configuration is made for particular
+Get mode ('EX_CC_CMD' UBF buffer set to 'g' (default)). In this mode the request for configuration is made for particular
 section.  The config files (or directories) for which to do the lookup can be set in 'EX_CC_RESOURCE' field, you may use
 multiple occurrences. If field is not set, then lookup is done in all files which are loaded into configuration library. This
 includes Enduro/X own config files, which are set in *NDRX_CCONFIG* environment variables (see ex_env(5)). The get request
@@ -95,15 +94,40 @@ It is possible request format verification. The key-format fields are used into 
 
 *nX..Y* or *n..Y* (e.g. n2..5, n..3) - Numeric field (can be floating point format). Min length X (measured as string) and max length Y (measured as string).
 
-2. Second mode for configuration server is requesting a config listing. This enters service in conversational mode. The configuration listing mode is requested by setting 'EX_CC_CMD' to 'l'.
+API - list sections
+-------------------
+It is possible to enter in conversational mode in request sections which begins with certain phrase 
+or it is possible to list all sections for given resources. To enter is list mode you need to call
+the configuration server with 'EX_CC_CMD' UBF buffer field set 'l'. If this is the only field
+then all sections from default Enduro/X configuration files will be returned.
+
+The sections which starts with phrase can be set in 'EX_CC_LOOKUPSECTION' UBF field occurrences. Resource
+to lookup can be specified in 'EX_CC_RESOURCE'.
 
 EXIT STATUS
 -----------
-*0*::
-Success
+When error occurs, the configuration service returns *TPESVCFAIL*, and 'EX_NERROR_CODE' is set to corresponding
+error code. 'EX_NERROR_MSG' have some additional information about error condition.
 
-*1*::
-Failure
+*EX_NERROR_CODE* values:
+
+*1* Invalid INI file(s).
+
+*2* Malloc failed (system have low of memory or some kind of other system related problem).
+
+*3* Unix error occurred.
+
+*4* Invalid arguments passed.
+
+*5* System failure.
+
+*6* Mandatory field is missing. 'EX_NERROR_MSG' specifies the exact problematic field.
+
+*7* Field value format error. 'EX_NERROR_MSG' specifies the exact problematic field.
+
+EXAMPLE
+-------
+See *atmitest/test030_cconfsrv/atmiclt30.c* for sample code.
 
 BUGS
 ----

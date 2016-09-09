@@ -54,6 +54,7 @@ DEBUG CONFIGURATION FILE SYNTAX
 
 EXAMPLE
 -------
+
 Sample configuration:
 ---------------------------------------------------------------------
 #
@@ -67,13 +68,69 @@ TESTA,svcnm=-,autoq=n,waitinit=5
 LTESTB,svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=0,memonly=n,mode=lifo
 ---------------------------------------------------------------------
 
+When using common-configuration then above sample is moved to ini files. The sample section would look like:
+(e.g. '/app/dir/conf/endurox.ini')
+---------------------------------------------------------------------
+#
+# @(#) EnduroX Persistent Queue Configuration
+#
+[@queue]
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+# This will take other settings from default:
+TESTA=svcnm=-,autoq=n,waitinit=5
+
+# Automatic queue: Will try to send messages to TESTSVC
+LTESTB=svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=0,memonly=n,mode=lifo
+---------------------------------------------------------------------
+
+For common configuration sub-sections can be used by *cctag*, for example if you have following in your
+ndrxconfig.xml:
+
+---------------------------------------------------------------------
+    <server name="tmqueue">
+        <max>1</max>
+        <srvid>1660</srvid>
+	<cctag>qs1</cctag>
+        <sysopt>-e /tmp/QS1.log -r -- -m QS1 -s1</sysopt>
+    </server>
+    <server name="tmqueue">
+        <max>1</max>
+        <srvid>1670</srvid>
+	<cctag>qs2</cctag>
+        <sysopt>-e /tmp/QS2.log -r -- -m QS2 -s1</sysopt>
+    </server>
+---------------------------------------------------------------------
+
+Then queues can be defined in sub-section per server cctag, for example:
+
+---------------------------------------------------------------------
+
+#
+#Q defaults (common)
+#
+[@queue]
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+
+#
+# manual queue, overridden to lifo
+#
+[@queue/qs1]
+queue1=mode=lifo
+
+#
+# Automatic queue
+#
+[@queue/qs2]
+queue2=svcnm=TESTSV,autoq=y,tries=3,waitinit=1,waitretry=5,waitretryinc=2,waitretrymax=10
+---------------------------------------------------------------------
+
 BUGS
 ----
 Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)* *common_configuration(guides)*
 
 AUTHOR
 ------

@@ -1,0 +1,44 @@
+Common Configuration
+====================
+Madars Vitolins
+v1.0, 2016-09:
+	Initial draft
+:doctype: book
+
+About the guide
+---------------
+This document describes new configuration principles used in Enduro/X. The configuration is based on
+ini files, the in 3.x series the old style configuration files (ndrxdebug.conf, q.conf) are still supported,
+but the same format data can be now passed into ini files.
+
+== Moving environment variables to ini files
+
+Enduro/X depend on set of the environment variables which define the basic settings for application server to
+start to work. These includes various shared memory settings, queue settings, etc. See the ex_env(5) page for that.
+
+The set of environment variables means that users needs to maintain and set them some how. With the common-configuration
+framework, these variables can be defined in ini file in '[@global]' section. When the Enduro/X initializes standard library,
+it is searching for 'NDRX_CCONFIG' environment variable presence. If the variable is present, Enduro/X loads into memory
+sections which are needed for later processing. From these sections settings from [@global] is automatically loaded
+as environment variables for current processing, by using system call 'setenv()'. Thus in this section you may define 
+any environment variables you want to see for process which is started.
+
+== Conclusions
+TODO
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Resources
+- [[[ex_env.5]]] Man page for Enduro/X environment variables.
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////
