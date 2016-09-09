@@ -23,6 +23,18 @@ sections which are needed for later processing. From these sections settings fro
 as environment variables for current processing, by using system call 'setenv()'. Thus in this section you may define 
 any environment variables you want to see for process which is started.
 
+If previously yoiur application did use following 'set' script:
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+Then you may rewrite it to following:
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+Also note that 
+
+
 == Conclusions
 TODO
 
