@@ -1,7 +1,7 @@
 /* 
-** Enduro/X Standard library thread local storage
+** Enduro/X ATMI library thread local storage
 **
-** @file nstd_tls.h
+** @file atmi_tls.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,8 +29,8 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NSTD_TLS_H
-#define	NSTD_TLS_H
+#ifndef ATMI_TLS_H
+#define	ATMI_TLS_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -39,60 +39,74 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <pthread.h>
 #include <ndrstandard.h>
-#include <nerror.h>
+#include <tperror.h>
+#include <xa.h>
+    
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define ERROR_BUFFER_POLL            1024
-#define NSTD_TLS_MAGIG          0xa27f0f24
+#define ATMI_TLS_MAGIG          0x39617cde
     
-    
-#define NSTD_TLS_ENTRY  if (NULL==G_nstd_tls) {ndrx_nstd_tls_new(TRUE, TRUE);};
+#define ATMI_TLS_ENTRY  if (NULL==G_atmi_tls) {atmi_tls_new(TRUE, TRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
+    
 /**
- * NSTD Library TLS
+ * ATMI library TLS
+ * Here we will have a trick, if we get at TLS, then we must automatically suspend
+ * the global transaction if one in progress. To that if we move to different
+ * thread we can restore it...
  */
 typedef struct
 {
-    int magic; /* have some magic for context data */
+    /* atmi.c */    
+    tp_command_call_t G_last_call;
+    /* conversation.c */
+    int cd/*=1;  first available */
+    unsigned callseq;/* = 0; */
     
-    /* ndebug.c */
-    long M_threadnr; /* Current thread nr */
+    /* init.c */
+    int G_atmi_is_init;/* = 0;  Is environment initialised */
+    atmi_lib_conf_t G_atmi_conf; /* ATMI library configuration */
+    call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
+    tp_conversation_control_t G_tp_conversation_status[MAX_CONNECTIONS];
+    tp_conversation_control_t G_accepted_connection;
     
-    /* nerror.c */
-    char M_nstd_error_msg_buf[MAX_ERROR_LEN+1];
-    int M_nstd_error;
-    char errbuf[MAX_ERROR_LEN+1];
+    /* tpcall.c */
+    long M_svc_return_code;/*=0; */
+    int first; /* = TRUE; */
+    ndrx_timer_t start;
+    int cd; /* = 0; */
     
-    /* nstdutil.c */
-    char util_buf1[20][20];
-    char util_buf2[20][20];
-    char util_text[20][128];
+    /* tperror.c */
+    char M_atmi_error_msg_buf[MAX_TP_ERROR_LEN+1]; /* = {EOS}; */
+    int M_atmi_error;/* = TPMINVAL; */
+    short M_atmi_reason;/* = NDRX_XA_ERSN_NONE;  XA reason, default */
+    char errbuf[MAX_TP_ERROR_LEN+1];
+    /* xa.c */
+    int M_is_curtx_init/* = FALSE; */
+    atmi_xa_curtx_t G_atmi_xa_curtx;
+
+    /* xautils.c */
+    XID xid; /* handler for new XID */
     
-    /* sys_emqueue.c */
-    char emq_x[512];
-    
-    /* sys_poll.c: */
-    int M_last_err;
-    char M_last_err_msg[1024];  /* Last error message */
-    char poll_strerr[ERROR_BUFFER_POLL];
-    
-    /* we should have lock inside */
-    pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
-    
-} nstd_tls_t;
+} atmi_tls_t;
 
 /*---------------------------Globals------------------------------------*/
-extern NDRX_API __thread nstd_tls_t *G_nstd_tls; /* Enduro/X standard library TLS */
+extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-public NDRX_API nstd_tls_t * ndrx_nstd_tls_new(int auto_destroy, int auto_set);
-    
+
+extern NDRX_API atmi_tls_t * atmi_tls_new(int auto_destroy, int auto_set);
+
+/* this goes to xatmi.h: */
+extern NDRX_API atmi_tls_t * atmi_tls_get(void);
+extern NDRX_API void atmi_tls_set(atmi_tls_t *tls);
+extern NDRX_API int atmi_tls_free(atmi_tls_t *tls);
+
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* NSTD_CONTEXT_H */
+#endif	/* ATMI_CONTEXT_H */
 

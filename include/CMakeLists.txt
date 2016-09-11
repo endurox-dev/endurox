@@ -43,6 +43,7 @@ install (FILES
     exparson.h
     ndebug.h
     ndrstandard.h
+    nstdutil.h
     thlock.h
     exhash.h
     cconfig.h 

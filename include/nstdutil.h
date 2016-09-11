@@ -92,8 +92,11 @@ extern NDRX_API uint64_t ndrx_gettid(void);
 
 /* Internal testing */
 extern NDRX_API int ndrx_bench_write_stats(double msgsize, double callspersec);
-/* Internal user log */
-extern NDRX_API int ndrx_userlog (char *data, ...);
+
+/* Standard library TLS: */
+extern NDRX_API void * ndrx_nstd_tls_get(void);
+extern NDRX_API void ndrx_nstd_tls_set(void *data);
+extern NDRX_API int ndrx_nstd_tls_free(void *data);
 
 #ifdef	__cplusplus
 }

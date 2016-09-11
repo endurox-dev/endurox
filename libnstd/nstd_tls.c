@@ -33,10 +33,13 @@
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
+#include <stdio.h>
 #include <ndrstandard.h>
+#include <nstdutil.h>
 #include <nstd_tls.h>
 #include <string.h>
 #include "thlock.h"
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -45,45 +48,52 @@
 __thread nstd_tls_t *G_nstd_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
 private pthread_key_t nstd_buffer_key;
+MUTEX_LOCKDECL(M_thdata_init);
+private int M_first = TRUE;
 /*---------------------------Prototypes---------------------------------*/
 private void nstd_buffer_key_destruct( void *value );
 
 /**
  * Thread destructor
- * @param value
+ * @param value this is malloced thread TLS
  */
 private void nstd_buffer_key_destruct( void *value )
 {
-    if (NULL!=G_nstd_tls)
-    {
-        nstd_tls_free(G_nstd_tls);
-        G_nstd_tls = NULL;
-    }
+    ndrx_nstd_tls_free((void *)value);
+    pthread_setspecific( nstd_buffer_key, NULL );
 }
 
 /**
  * Unlock, unset G_nstd_tls, return pointer to G_nstd_tls
  * @return 
  */
-public nstd_tls_t * nstd_tls_get(void)
+public void * ndrx_nstd_tls_get(void)
 {
     nstd_tls_t *tmp = G_nstd_tls;
     
     G_nstd_tls = NULL;
     
-    /* unlock tmp */
+    /* unlock object */
     MUTEX_UNLOCK_V(tmp->mutex);
     
-    return tmp;
+    return (void *)tmp;
 }
 
 /**
  * Get the lock & set the G_nstd_tls to this one
  * @param tls
  */
-public void nstd_tls_set(nstd_tls_t *tls)
+public void ndrx_nstd_tls_set(void *data)
 {
-    /* unlock tmp */
+    nstd_tls_t *tls = (nstd_tls_t *)data;
+    /* extra control... */
+    if (NSTD_TLS_MAGIG!=tls->magic)
+    {
+        userlog("nstd_tls_set: invalid magic! expected: %x got %x", 
+                NSTD_TLS_MAGIG, tls->magic);
+    }
+    
+    /* Lock the object */
     MUTEX_LOCK_V(tls->mutex);
     
     G_nstd_tls = tls;
@@ -94,9 +104,9 @@ public void nstd_tls_set(nstd_tls_t *tls)
  * @param tls
  * @return 
  */
-public int nstd_tls_free(nstd_tls_t *tls)
+public int ndrx_nstd_tls_free(void *data)
 {
-    free((char*)tls);
+    free((char*)data);
 }
 
 /**
@@ -104,11 +114,24 @@ public int nstd_tls_free(nstd_tls_t *tls)
  * @param auto_destroy if set to 1 then when tried exits, thread data will be made free
  * @return 
  */
-public nstd_tls_t * nstd_tls_new(int auto_destroy, int auto_set)
+public nstd_tls_t * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
 {
     int ret = SUCCEED;
     nstd_tls_t *tls  = NULL;
     char fn[] = "nstd_context_new";
+    
+    /* init they key storage */
+    if (M_first)
+    {
+        MUTEX_LOCK_V(M_thdata_init);
+        if (M_first)
+        {
+            pthread_key_create( &nstd_buffer_key, 
+                    &nstd_buffer_key_destruct );
+            M_first = FALSE;
+        }
+        MUTEX_UNLOCK_V(M_thdata_init);
+    }
     
     if (NULL==(tls = (nstd_tls_t *)malloc(sizeof(nstd_tls_t))))
     {
@@ -117,6 +140,7 @@ public nstd_tls_t * nstd_tls_new(int auto_destroy, int auto_set)
     }
     
     /* do the common init... */
+    tls->magic = NSTD_TLS_MAGIG;
     tls->M_threadnr = 0;
     tls->M_nstd_error = 0;
     tls->M_last_err = 0;
@@ -129,20 +153,19 @@ public nstd_tls_t * nstd_tls_new(int auto_destroy, int auto_set)
      */
     if (auto_destroy)
     {
-         pthread_key_create( &nstd_buffer_key, 
-                 &nstd_buffer_key_destruct );
+        pthread_setspecific( nstd_buffer_key, (void *)tls );
     }
     
     if (auto_set)
     {
-        nstd_tls_set(tls);
+        ndrx_nstd_tls_set(tls);
     }
     
 out:
 
     if (SUCCEED!=ret && NULL!=tls)
     {
-        nstd_tls_free(tls);
+        ndrx_nstd_tls_free((char *)tls);
     }
 
     return tls;
