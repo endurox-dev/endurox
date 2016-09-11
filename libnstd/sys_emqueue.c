@@ -32,6 +32,7 @@
 #include <atmi.h>
 #include <exhash.h>
 #include <ntimer.h>
+#include <nstd_tls.h>
 #if defined(WIN32)
 #   define S_IXUSR  0000100
 #   define sleep(a) Sleep((a)*1000)
@@ -144,9 +145,10 @@ private void qd_hash_del(mqd_t qd)
  */
 static char *get_path(const char *path)
 {
-    static __thread char x[512];
     static int first = 1;
     static char q_path[PATH_MAX]={EOS};
+    
+    NSTD_TLS_ENTRY;
     
     if (first)
     {
@@ -160,10 +162,10 @@ static char *get_path(const char *path)
     }
     
     
-    strcpy(x, q_path);
-    strcat(x, path);
+    strcpy(G_nstd_tls->emq_x, q_path);
+    strcat(G_nstd_tls->emq_x, path);
     
-    return x;
+    return G_nstd_tls->emq_x;
 }
 
 /**

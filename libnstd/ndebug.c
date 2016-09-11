@@ -56,6 +56,8 @@
 #include <sys_unix.h>
 #include <cconfig.h>
 
+#include "nstd_tls.h"
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -80,7 +82,6 @@ ndrx_debug_t G_ndrx_debug;
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = TRUE;
-static __thread long M_threadnr = 0; /* Current thread nr */
 MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -90,7 +91,8 @@ MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
  */
 public void ndrx_dbg_setthread(long threadnr)
 {
-    M_threadnr = threadnr;
+    NSTD_TLS_ENTRY;
+    G_nstd_tls->M_threadnr = threadnr;
 }
 
 /**
@@ -553,6 +555,8 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char
     struct timezone time_zone;
     char *line_print;
     int len;
+    NSTD_TLS_ENTRY;
+    
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
     
     if ((len=strlen(file)) > 8)
@@ -564,7 +568,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char
     ndrx_get_dt_local(&ldate, &ltime);
     
     sprintf(line_start, "%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
-        mod, lev, (int)dbg_ptr->pid, M_threadnr, ldate, ltime, 
+        mod, lev, (int)dbg_ptr->pid, G_nstd_tls->M_threadnr, ldate, ltime, 
         (int)(time_val.tv_usec/1000), line_print, line);
     
     va_start(ap, fmt);    

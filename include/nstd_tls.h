@@ -1,8 +1,7 @@
 /* 
-** NDR 'standard' common utilites
-** Enduro Execution system platform library
+** Enduro/X Standard library thread local storage
 **
-** @file nstdutil.h
+** @file nstd_tls.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,74 +29,74 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NUTIL_H
-#define	NUTIL_H
+#ifndef NSTD_TLS_H
+#define	NSTD_TLS_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
 /*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
-#include <stdint.h>
+#include <pthread.h>
+#include <ndrstandard.h>
+#include <nerror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+    
+#define ERROR_BUFFER_POLL            1024
+#define NSTD_CONTEXT_MAGIG          0xa27f0f24
+    
+    
+#define NSTD_TLS_ENTRY  if (NULL==G_nstd_tls) {nstd_tls_new(TRUE, TRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-typedef struct longstrmap longstrmap_t;
-struct longstrmap
+/**
+ * ATMI error handler save/restore
+ */
+typedef struct
 {
-    long from;
-    char *to;
-};
-
-typedef struct charstrmap charstrmap_t;
-struct charstrmap
-{
-    long from;
-    char *to;
-};
+    int magic; /* have some magic for context data */
+    
+    /* ndebug.c */
+    long M_threadnr; /* Current thread nr */
+    
+    /* nerror.c */
+    char M_nstd_error_msg_buf[MAX_ERROR_LEN+1];
+    int M_nstd_error;
+    char errbuf[MAX_ERROR_LEN+1];
+    
+    /* nstdutil.c */
+    char util_buf1[20][20];
+    char util_buf2[20][20];
+    char util_text[20][128];
+    
+    /* sys_emqueue.c */
+    char emq_x[512];
+    
+    /* sys_poll.c: */
+    int M_last_err;
+    char M_last_err_msg[1024];  /* Last error message */
+    char poll_strerr[ERROR_BUFFER_POLL];
+    
+    /* we should have lock inside */
+    pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
+    
+} nstd_tls_t;
 
 /*---------------------------Globals------------------------------------*/
+extern NDRX_API __thread nstd_tls_t *G_nstd_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time);
-extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
-extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
-extern NDRX_API char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts);
-extern NDRX_API unsigned long long ndrx_get_micro_resolution_for_sec(void);
-extern NDRX_API char * ndrx_str_env_subs(char * str);
-extern char * ndrx_str_env_subs_len(char * str, int buf_size);
-extern NDRX_API char *ndrx_str_replace(char *orig, char *rep, char *with);
-extern NDRX_API void ndrx_utc_tstamp2(long *t, long *tusec);
-extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
-extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
-
-extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
-extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
-
-extern NDRX_API int ndrx_isint(char *str);
-extern NDRX_API int ndrx_nr_chars(char *str, char character);
-
-extern NDRX_API int ndrx_file_exists(char *filename);
-extern NDRX_API int ndrx_file_regular(char *path);
-
-/* Mapping functions: */
-extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
-extern NDRX_API char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval);
-
-/* Threading functions */
-extern NDRX_API uint64_t ndrx_gettid(void);
-
-/* Internal testing */
-extern NDRX_API int ndrx_bench_write_stats(double msgsize, double callspersec);
-/* Internal user log */
-extern NDRX_API int ndrx_userlog (char *data, ...);
-
+public NDRX_API nstd_tls_t * nstd_tls_get(void);
+public NDRX_API void nstd_tls_set(nstd_tls_t *tls);
+public NDRX_API int nstd_tls_free(nstd_tls_t *tls);
+public NDRX_API nstd_tls_t * nstd_tls_new(int auto_destroy, int auto_set);
+    
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* NUTIL_H */
+#endif	/* NSTD_CONTEXT_H */
 

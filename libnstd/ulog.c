@@ -41,10 +41,10 @@
 
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <atmi.h>
 #include <nstdutil.h>
 #include <sys_unix.h>
 #include <userlog.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -59,17 +59,12 @@
 public int userlog (char *data, ...)
 {
     int ret=SUCCEED;
-    int     interval = 20;
-    long    size = 0;
-    char* msg_buf;
-    long msg_len =0;
     int first = 1;
     char *out_f = NULL;
     FILE *output;
     char  pre[100];
     int fopened=0;
     struct timeval  time_val;
-    struct timezone time_zone;
     char full_name[FILENAME_MAX] = {EOS};
     long ldate, ltime;
     pid_t pid;

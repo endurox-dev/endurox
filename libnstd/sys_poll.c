@@ -65,6 +65,8 @@
 
 #include <exhash.h>
 
+#include "nstd_tls.h"
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -83,7 +85,9 @@
 #define EX_POLL_SETS_MAX            1024
 
 
-#define EX_EPOLL_API_ENTRY      {M_last_err = 0; M_last_err_msg[0] = EOS;}
+#define EX_EPOLL_API_ENTRY      {NSTD_TLS_ENTRY; \
+            G_nstd_tls->M_last_err = 0; \
+            G_nstd_tls->M_last_err_msg[0] = EOS;}
 
 /* The index of the "read" end of the pipe */
 #define READ 0
@@ -163,11 +167,6 @@ MUTEX_LOCKDECL(M_psets_lock);
  * - We need a hash list for mqd_t
  * - Once create is called, we prepare unnamed pipe2() for notify callback.
  */
-
-
-private int __thread M_last_err = 0;
-private char __thread M_last_err_msg[1024];  /* Last error message */
-
 
 private pthread_t M_signal_thread; /* Signalled thread */
 private int M_signal_first = TRUE; /* is first init for signal thread */
@@ -479,16 +478,19 @@ private void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
 {
     char msg[ERROR_BUFFER+1] = {EOS};
     va_list ap;
+    
+    NSTD_TLS_ENTRY;
 
     va_start(ap, fmt);
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
 
-    strcpy(M_last_err_msg, msg);
-    M_last_err = error_code;
+    strcpy(G_nstd_tls->M_last_err_msg, msg);
+    G_nstd_tls->M_last_err = error_code;
 
     NDRX_LOG(log_warn, "ndrx_epoll_set_err: %d (%s) (%s)",
-                    error_code, strerror(M_last_err), M_last_err_msg);
+                    error_code, strerror(G_nstd_tls->M_last_err), 
+                    G_nstd_tls->M_last_err_msg);
     
 }
 
@@ -1209,7 +1211,8 @@ out:
  */
 public int ndrx_epoll_errno(void)
 {
-    return M_last_err;
+    NSTD_TLS_ENTRY;
+    return G_nstd_tls->M_last_err;
 }
 
 /**
@@ -1219,10 +1222,11 @@ public int ndrx_epoll_errno(void)
  */
 public char * ndrx_poll_strerror(int err)
 {
-    static __thread char ret[ERROR_BUFFER];
+    NSTD_TLS_ENTRY;
     
-    sprintf(ret, "%s (last error: %s)", strerror(err), M_last_err_msg);
+    sprintf(G_nstd_tls->poll_strerr, "%s (last error: %s)", 
+    strerror(err), G_nstd_tls->M_last_err_msg);
     
-    return ret;
+    return G_nstd_tls->poll_strerr;
 }
 

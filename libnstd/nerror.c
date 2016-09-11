@@ -41,7 +41,7 @@
 #include <ndebug.h>
 #include <nerror.h>
 #include <errno.h>
-
+#include <nstd_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -54,8 +54,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-__thread char M_nstd_error_msg_buf[MAX_ERROR_LEN+1] = {EOS};
-__thread int M_nstd_error = BMINVAL;
 
 /* Do we need this to be in message catalogue?
  * table bellow is indexed by id (i.e. direct array erorr lookup should work)
@@ -83,11 +81,16 @@ struct err_msg
  */
 public void N_error (char *str)
 {
-    if (EOS!=M_nstd_error_msg_buf[0])
-        fprintf(stderr, "%s:%d:%s (%s)\n", str, M_nstd_error, NSTD_ERROR_DESCRIPTION(M_nstd_error),
-                                            M_nstd_error_msg_buf);
+    NSTD_TLS_ENTRY;
+    if (EOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
+        fprintf(stderr, "%s:%d:%s (%s)\n", str, 
+                G_nstd_tls->M_nstd_error, 
+                NSTD_ERROR_DESCRIPTION(G_nstd_tls->M_nstd_error),
+                G_nstd_tls->M_nstd_error_msg_buf);
     else
-        fprintf(stderr, "%s:%d:%s\n", str, M_nstd_error, NSTD_ERROR_DESCRIPTION(M_nstd_error));
+        fprintf(stderr, "%s:%d:%s\n", str, 
+                G_nstd_tls->M_nstd_error, 
+                NSTD_ERROR_DESCRIPTION(G_nstd_tls->M_nstd_error));
 }
 
 /**
@@ -97,23 +100,24 @@ public void N_error (char *str)
  */
 public char * Nstrerror (int err)
 {
-    static __thread char errbuf[MAX_ERROR_LEN+1];
-
-    if (EOS!=M_nstd_error_msg_buf[0])
+    NSTD_TLS_ENTRY;
+   
+    if (EOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
     {
-        snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
+        snprintf(G_nstd_tls->errbuf, sizeof(G_nstd_tls->errbuf), 
+                                "%d:%s (last error %d: %s)",
                                 err,
                                 NSTD_ERROR_DESCRIPTION(err),
-                                M_nstd_error,
-                                M_nstd_error_msg_buf);
+                                G_nstd_tls->M_nstd_error,
+                                G_nstd_tls->M_nstd_error_msg_buf);
     }
     else
     {
-        snprintf(errbuf, sizeof(errbuf), "%d:%s",
+        snprintf(G_nstd_tls->errbuf, sizeof(G_nstd_tls->errbuf), "%d:%s",
                             err, NSTD_ERROR_DESCRIPTION(err));
     }
 
-    return errbuf;
+    return G_nstd_tls->errbuf;
 }
 
 /**
@@ -122,7 +126,8 @@ public char * Nstrerror (int err)
  */
 public int * _Nget_Nerror_addr (void)
 {
-    return &M_nstd_error;
+    NSTD_TLS_ENTRY;
+    return &(G_nstd_tls->M_nstd_error);
 }
 
 /**
@@ -133,14 +138,15 @@ public int * _Nget_Nerror_addr (void)
  */
 public void _Nset_error(int error_code)
 {
-    if (!M_nstd_error)
+    NSTD_TLS_ENTRY;
+    if (!G_nstd_tls->M_nstd_error)
     {
 /*
         NDRX_LOG(log_warn, "_Nset_error: %d (%s)", 
                                 error_code, NSTD_ERROR_DESCRIPTION(error_code));
  */
-        M_nstd_error_msg_buf[0] = EOS;
-        M_nstd_error = error_code;
+        G_nstd_tls->M_nstd_error_msg_buf[0] = EOS;
+        G_nstd_tls->M_nstd_error = error_code;
     }
 }
 
@@ -154,19 +160,16 @@ public void _Nset_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
-
-    if (!M_nstd_error)
+    NSTD_TLS_ENTRY;
+    
+    if (!G_nstd_tls->M_nstd_error)
     {
         msg_len = strlen(msg);
         err_len = (msg_len>MAX_ERROR_LEN)?MAX_ERROR_LEN:msg_len;
 
-/*
-        NDRX_LOG(log_warn, "_Nset_error_msg: %d (%s) [%s]", error_code,
-                                NSTD_ERROR_DESCRIPTION(error_code), msg);
- */
-        M_nstd_error_msg_buf[0] = EOS;
-        strncat(M_nstd_error_msg_buf, msg, err_len);
-        M_nstd_error = error_code;
+        G_nstd_tls->M_nstd_error_msg_buf[0] = EOS;
+        strncat(G_nstd_tls->M_nstd_error_msg_buf, msg, err_len);
+        G_nstd_tls->M_nstd_error = error_code;
     }
 }
 
@@ -181,20 +184,17 @@ public void _Nset_error_fmt(int error_code, const char *fmt, ...)
 {
     char msg[MAX_ERROR_LEN+1] = {EOS};
     va_list ap;
+    NSTD_TLS_ENTRY;
 
-    if (!M_nstd_error)
+    if (!G_nstd_tls->M_nstd_error)
     {
         va_start(ap, fmt);
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(M_nstd_error_msg_buf, msg);
-        M_nstd_error = error_code;
-/*
-        NDRX_LOG(log_warn, "_Nset_error_fmt: %d (%s) [%s]",
-                        error_code, NSTD_ERROR_DESCRIPTION(error_code),
-                        M_nstd_error_msg_buf);
- */
+        strcpy(G_nstd_tls->M_nstd_error_msg_buf, msg);
+        G_nstd_tls->M_nstd_error = error_code;
+        
     }
 }
 
@@ -203,8 +203,9 @@ public void _Nset_error_fmt(int error_code, const char *fmt, ...)
  */
 public void _Nunset_error(void)
 {
-    M_nstd_error_msg_buf[0]=EOS;
-    M_nstd_error = BMINVAL;
+    NSTD_TLS_ENTRY;
+    G_nstd_tls->M_nstd_error_msg_buf[0]=EOS;
+    G_nstd_tls->M_nstd_error = BMINVAL;
 }
 /**
  * Return >0 if error is set
@@ -212,7 +213,8 @@ public void _Nunset_error(void)
  */
 public int _Nis_error(void)
 {
-    return M_nstd_error;
+    NSTD_TLS_ENTRY;   
+    return G_nstd_tls->M_nstd_error;
 }
 
 /**
@@ -221,10 +223,13 @@ public int _Nis_error(void)
  */
 public void _Nappend_error_msg(char *msg)
 {
-    int free_space = MAX_ERROR_LEN-strlen(M_nstd_error_msg_buf);
+    int free_space;
     int app_error_len = strlen(msg);
     int n;
+    NSTD_TLS_ENTRY;
+    
+    free_space = MAX_ERROR_LEN-strlen(G_nstd_tls->M_nstd_error_msg_buf);
     n = free_space<app_error_len?free_space:app_error_len;
-    strncat(M_nstd_error_msg_buf, msg, n);
+    strncat(G_nstd_tls->M_nstd_error_msg_buf, msg, n);
 }
 

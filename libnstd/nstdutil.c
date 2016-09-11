@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <nstd_tls.h>
 
 #include "nstdutil.h"
 #include "ndebug.h"
@@ -106,13 +107,14 @@ public char * ndrx_get_strtstamp2(int slot, long t, long tusec)
 {
     time_t tfmt;
     struct tm utc;
-    static __thread char buf[20][20];
+    NSTD_TLS_ENTRY;
     
     tfmt = t;
     gmtime_r(&tfmt, &utc);
-    strftime(buf[slot], sizeof(buf[slot]), "%Y-%m-%d %H:%M:%S", &utc);
+    strftime(G_nstd_tls->util_buf1[slot], 
+            sizeof(G_nstd_tls->util_buf1[slot]), "%Y-%m-%d %H:%M:%S", &utc);
     
-    return buf[slot];
+    return G_nstd_tls->util_buf1[slot];
 }
 
 
@@ -177,7 +179,9 @@ public char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
 {
     time_t t;
     struct tm utc;
-    static __thread char buf[20][20];
+    
+    NSTD_TLS_ENTRY;
+    
     if (sizeof(unsigned long long)>=8) 
     {
         ts = ts / 1000000;
@@ -185,9 +189,10 @@ public char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
     
     t = ts;
     gmtime_r(&t, &utc);
-    strftime(buf[slot], sizeof(buf[slot]), "%Y-%m-%d %H:%M:%S", &utc);
+    strftime(G_nstd_tls->util_buf2[slot], 
+            sizeof(G_nstd_tls->util_buf2[slot]), "%Y-%m-%d %H:%M:%S", &utc);
     
-    return buf[slot];
+    return G_nstd_tls->util_buf2[slot];
 }
 
 /**
@@ -403,7 +408,6 @@ public char * ndrx_str_env_subs(char * str)
  */
 char *ndrx_decode_num(long tt, int slot, int level, int levels)
 {
-    static __thread char text[20][128];
     char tmp[128];
     long next_t=0;
     long t = tt;
@@ -412,6 +416,7 @@ char *ndrx_decode_num(long tt, int slot, int level, int levels)
 #define DEC_B  ((long)1000*1000*1000)
 #define DEC_T  ((long long)1000*1000*1000*1000)
 
+    NSTD_TLS_ENTRY;
     
     level++;
 
@@ -442,14 +447,14 @@ char *ndrx_decode_num(long tt, int slot, int level, int levels)
     }
     
     if (level==1)
-        strcpy(text[slot], tmp);
+        strcpy(G_nstd_tls->util_text[slot], tmp);
     else
-        strcat(text[slot], tmp);
+        strcat(G_nstd_tls->util_text[slot], tmp);
     
     if (next_t)
         ndrx_decode_num(next_t, slot, level, levels);
     
-    return text[slot];
+    return G_nstd_tls->util_text[slot];
 }
 
 /**

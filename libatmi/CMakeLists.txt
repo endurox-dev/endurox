@@ -62,7 +62,6 @@ add_library (atmi SHARED
                     conversation.c
                     tpevents.c
                     shm.c
-                    ulog.c
                     sem.c
                     brsupport.c
                     xa.c
