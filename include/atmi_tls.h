@@ -102,7 +102,7 @@ extern NDRX_API atmi_tls_t * atmi_tls_new(int auto_destroy, int auto_set);
 /* this goes to xatmi.h: */
 extern NDRX_API atmi_tls_t * atmi_tls_get(void);
 extern NDRX_API void atmi_tls_set(atmi_tls_t *tls);
-extern NDRX_API int atmi_tls_free(atmi_tls_t *tls);
+extern NDRX_API void atmi_tls_free(atmi_tls_t *tls);
 
 #ifdef	__cplusplus
 }

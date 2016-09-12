@@ -104,7 +104,7 @@ public void ndrx_nstd_tls_set(void *data)
  * @param tls
  * @return 
  */
-public int ndrx_nstd_tls_free(void *data)
+public void ndrx_nstd_tls_free(void *data)
 {
     free((char*)data);
 }
