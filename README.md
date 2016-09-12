@@ -16,7 +16,7 @@ Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for P
 
 - Build and installation guides are located at: www.endurox.org/dokuwiki
  
-- Support forum: www.endurox.org
+- Support forum: http://www.endurox.org/projects/endurox/boards
 
 - Binary builds (RPMs & DEBs) for various platforms are here: http://www.endurox.org/projects/endurox/files
 
