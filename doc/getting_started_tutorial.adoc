@@ -524,7 +524,7 @@ Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 We see here two copies for banksv binaries running (Server ID 1 & 2). Both advertizes "BALANCE" service.
 
 === Testing the service with "ud" command
-It is possible to call the service with out a client process. This is useful for testing. Service can be called with `ud' utility. In which we define the target service name and any additional UBF buffer fields. In our case these fields are T_ACCNUM and T_ACCCUR, which are mandatory for the service. So we will create a `test.ud' file in folder /opt/app1/test. /opt/app1/test/test.fd looks like:
+It is possible to call the service with out a client process. This is useful for testing. Service can be called with `ud' utility. In which we define the target service name and any additional UBF buffer fields. In our case these fields are T_ACCNUM and T_ACCCUR, which are mandatory for the service. So we will create a `test.ud' file in folder /opt/app1/test. /opt/app1/test/test.ud looks like:
 
 ---------------------------------------------------------------------
 SRVCNM	BALANCE
