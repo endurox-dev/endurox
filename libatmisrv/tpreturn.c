@@ -47,6 +47,8 @@
 
 #include <xa_cmn.h>
 #include <userlog.h>
+
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -76,9 +78,11 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     long data_len;
     int return_status=0;
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EOS};
+    atmi_lib_conf_t *p_atmi_lib_conf = ndrx_get_G_atmi_conf();
+    tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     
     /* client with out last call is acceptable...! */
-    if (G_atmi_conf.is_client && !ndrx_get_G_last_call()->cd)
+    if (p_atmi_lib_conf->is_client && !ndrx_get_G_last_call()->cd)
     {
         /* this is client */
         NDRX_LOG(log_debug, "tpreturn is not available for clients!!!");
@@ -100,7 +104,7 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     /* Set descriptor */
     call->cd = ndrx_get_G_last_call()->cd;
 
-    if (CONV_IN_CONVERSATION==G_accepted_connection.status)
+    if (CONV_IN_CONVERSATION==p_accept_conn->status)
         call->cd-=MAX_CONNECTIONS;
 
     call->timestamp = ndrx_get_G_last_call()->timestamp;
@@ -238,12 +242,12 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
     }
 
     /* Wait for ack if we run in conversation */
-    if (CONV_IN_CONVERSATION==G_accepted_connection.status)
+    if (CONV_IN_CONVERSATION==p_accept_conn->status)
     {
-        get_ack(&G_accepted_connection, flags);
+        get_ack(p_accept_conn, flags);
 
         /* If this is conversation, then we should release conversation queue */
-        normal_connection_shutdown(&G_accepted_connection, FALSE);
+        normal_connection_shutdown(p_accept_conn, FALSE);
     }
 
 return_to_main:
@@ -306,13 +310,14 @@ public void _tpforward (char *svc, char *data,
     char send_q[NDRX_MAX_Q_SIZE+1];
     long return_status=0;
     int is_bridge;
+    tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     
     NDRX_LOG(log_debug, "%s enter", fn);
 
     memset(call, 0, sizeof(*call)); /* have some safety net */
 
     /* Cannot do the forward if we are in conversation! */
-    if (CONV_IN_CONVERSATION==G_accepted_connection.status ||
+    if (CONV_IN_CONVERSATION==p_accept_conn->status ||
             have_open_connection())
     {
         _TPset_error_fmt(TPEPROTO, "tpforward no allowed for conversation server!");

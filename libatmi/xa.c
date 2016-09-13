@@ -57,19 +57,20 @@
 #include <sys/ipc.h>
 #include <xa_cmn.h>
 #include <tperror.h>
-
+#include <atmi_tls.h>
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
 #define XA_API_ENTRY(X) {\
+    ATMI_TLS_ENTRY;\
     if (!M_is_xa_init) { \
         if (SUCCEED!=(ret = atmi_xa_init()))\
         {\
             goto out;\
         }\
     }\
-    if (!M_is_curtx_init)\
+    if (!G_atmi_tls->M_is_curtx_init)\
     {\
         if (SUCCEED!=(ret=atmi_xa_init_thread(X)))\
         {\
@@ -84,11 +85,6 @@
 
 /* current library status */
 private int M_is_xa_init = FALSE;
-
-/* ATMI current transaction */
-private int __thread M_is_curtx_init = FALSE;
-/* global xa transaction status */
-public atmi_xa_curtx_t __thread G_atmi_xa_curtx;
 
 /*---------------------------Prototypes---------------------------------*/
 private int atmi_xa_init_thread(int do_open);
@@ -105,8 +101,10 @@ private int atmi_xa_init_thread(int do_open)
 {
     int ret = SUCCEED;
     
-    memset(&G_atmi_xa_curtx, 0, sizeof(G_atmi_xa_curtx));
-    M_is_curtx_init = TRUE;
+    /* ATMI_TLS_ENTRY; - not needed called already from macros which does the init */
+    
+    memset(&G_atmi_tls->G_atmi_xa_curtx, 0, sizeof(G_atmi_tls->G_atmi_xa_curtx));
+    G_atmi_tls->M_is_curtx_init = TRUE;
     
 out:
     return ret;
@@ -117,15 +115,16 @@ out:
  */
 public void atmi_xa_uninit(void)
 {
+    ATMI_TLS_ENTRY;
     /* do only thread based stuff un-init */
-    if (M_is_curtx_init)
+    if (G_atmi_tls->M_is_curtx_init)
     {
-        if (G_atmi_xa_curtx.is_xa_open)
+        if (G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
         {
             atmi_xa_close_entry();
-            G_atmi_xa_curtx.is_xa_open = FALSE;
+            G_atmi_tls->G_atmi_xa_curtx.is_xa_open = FALSE;
         }
-        M_is_curtx_init = FALSE;
+        G_atmi_tls->M_is_curtx_init = FALSE;
     }
 }
 
@@ -217,11 +216,11 @@ out:
 public int atmi_xa_open_entry(void)
 {
     int ret = SUCCEED;
-    XA_API_ENTRY(FALSE);
+    XA_API_ENTRY(FALSE); /* already does ATMI_TLS_ENTRY; */
     
     NDRX_LOG(log_debug, "atmi_xa_open_entry");
     
-    if (G_atmi_xa_curtx.is_xa_open)
+    if (G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_warn, "xa_open_entry already called for context!");
         goto out;
@@ -240,7 +239,7 @@ public int atmi_xa_open_entry(void)
         goto out;
     }
     
-    G_atmi_xa_curtx.is_xa_open = TRUE;
+    G_atmi_tls->G_atmi_xa_curtx.is_xa_open = TRUE;
     
     NDRX_LOG(log_info, "XA interface open");
     
@@ -256,11 +255,11 @@ out:
 public int atmi_xa_close_entry(void)
 {
     int ret = SUCCEED;
-    XA_API_ENTRY(TRUE);
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY */
     
     NDRX_LOG(log_debug, "atmi_xa_close_entry");
     
-    if (!G_atmi_xa_curtx.is_xa_open)
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_warn, "xa_close_entry already called for context!");
         goto out;
@@ -438,14 +437,14 @@ public int _tpbegin(unsigned long timeout, long flags)
     UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_TPBEGIN);
     atmi_xa_tx_info_t xai;
     long tmflags = 0;
-    XA_API_ENTRY(TRUE);
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY */
     
     NDRX_LOG(log_debug, "_tpbegin enter");
     
     memset(&xai, 0, sizeof(atmi_xa_tx_info_t));
     
     
-    if (!G_atmi_xa_curtx.is_xa_open)
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_error, "tpbegin: - tpopen() was not called!");
         _TPset_error_msg(TPEPROTO,  "tpbegin - tpopen() was not called!");
@@ -460,12 +459,12 @@ public int _tpbegin(unsigned long timeout, long flags)
     }
     
     /* If we have active transaction, then we are in txn mode.. */
-    if (G_atmi_xa_curtx.txinfo)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpbegin: - already in transaction mode XID: [%s]", 
-                G_atmi_xa_curtx.txinfo->tmxid);
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         _TPset_error_fmt(TPEPROTO,  "tpbegin: - already in transaction mode XID: [%s]", 
-                G_atmi_xa_curtx.txinfo->tmxid);
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         FAIL_OUT(ret);
     }
     
@@ -545,10 +544,10 @@ public int _tpbegin(unsigned long timeout, long flags)
     }
     
     /*G_atmi_xa_curtx.is_in_tx = TRUE;*/
-    G_atmi_xa_curtx.txinfo->is_tx_initiator = TRUE;
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = TRUE;
 
     NDRX_LOG(log_debug, "Process joined to transaction [%s] OK",
-                        G_atmi_xa_curtx.txinfo->tmxid);
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
     
 out:
 
@@ -572,11 +571,11 @@ public int _tpcommit(long flags)
     int ret=SUCCEED;
     UBFH *p_ub = NULL;
     int do_abort = FALSE;
-    XA_API_ENTRY(TRUE);
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY; */
     
     NDRX_LOG(log_debug, "_tpcommit enter");
     
-    if (!G_atmi_xa_curtx.is_xa_open)
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_error, "tpcommit: - tpopen() was not called!");
         _TPset_error_msg(TPEPROTO,  "tpcommit - tpopen() was not called!");
@@ -590,7 +589,7 @@ public int _tpcommit(long flags)
         FAIL_OUT(ret);
     }
     
-    if (!G_atmi_xa_curtx.txinfo)
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpcommit: Not in global TX");
         _TPset_error_msg(TPEPROTO,  "tpcommit: Not in global TX");
@@ -598,7 +597,7 @@ public int _tpcommit(long flags)
         
     }
             
-    if (!G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpcommit: Not not initiator");
         _TPset_error_msg(TPEPROTO,  "tpcommit: Not not initiator");
@@ -606,19 +605,19 @@ public int _tpcommit(long flags)
     }
     
     /* Check situation with call descriptors */
-    if (atmi_xa_cd_isanyreg(&(G_atmi_xa_curtx.txinfo->call_cds)))
+    if (atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds)))
     {
         NDRX_LOG(log_error, "tpcommit: Open call descriptors found - abort!");
         do_abort = TRUE;
     }
     
-    if (atmi_xa_cd_isanyreg(&(G_atmi_xa_curtx.txinfo->conv_cds)))
+    if (atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds)))
     {
         NDRX_LOG(log_error, "tpcommit: Open conversation descriptors found - abort!");
         do_abort = TRUE;
     }
     
-    if (G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
     {
         NDRX_LOG(log_error, "tpcommit: Transaction marked as abort only!");
         do_abort = TRUE;
@@ -643,10 +642,10 @@ public int _tpcommit(long flags)
      * it should be work_done, or static reg!!!
      */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (SUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -659,7 +658,7 @@ public int _tpcommit(long flags)
     /* OK, we should call the server, request for transaction...  */
     
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPCOMMIT, FALSE, FAIL, 
-            G_atmi_xa_curtx.txinfo)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPBEGIN);
@@ -670,7 +669,7 @@ public int _tpcommit(long flags)
     }
 
     NDRX_LOG(log_debug, "Transaction [%s] commit OK",
-                        G_atmi_xa_curtx.txinfo->tmxid);
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         
 out:
     if (NULL!=p_ub)
@@ -695,11 +694,11 @@ public int _tpabort(long flags)
 {
     int ret=SUCCEED;
     UBFH *p_ub = NULL;
-    XA_API_ENTRY(TRUE);
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY; */
     
     NDRX_LOG(log_debug, "_tpabort enter");
     
-    if (!G_atmi_xa_curtx.is_xa_open)
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_error, "tpabort: - tpopen() was not called!");
         _TPset_error_msg(TPEPROTO,  "tpabort - tpopen() was not called!");
@@ -713,7 +712,7 @@ public int _tpabort(long flags)
         FAIL_OUT(ret);
     }
     
-    if (!G_atmi_xa_curtx.txinfo)
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpabort: Not in global TX");
         _TPset_error_msg(TPEPROTO,  "tpabort: Not in global TX");
@@ -721,7 +720,7 @@ public int _tpabort(long flags)
         
     }
             
-    if (!G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpabort: Not not initiator");
         _TPset_error_msg(TPEPROTO,  "tpabort: Not not initiator");
@@ -730,10 +729,10 @@ public int _tpabort(long flags)
     
     /* Disassoc from transaction! */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (SUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -745,7 +744,7 @@ public int _tpabort(long flags)
     NDRX_LOG(log_debug, "About to call TM");
     /* OK, we should call the server, request for transaction...  */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, FALSE, FAIL, 
-            G_atmi_xa_curtx.txinfo)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPBEGIN);
@@ -756,7 +755,7 @@ public int _tpabort(long flags)
     }
 
     NDRX_LOG(log_debug, "Transaction [%s] abort OK",
-                        G_atmi_xa_curtx.txinfo->tmxid);
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
 out:
     if (NULL!=p_ub)
     {
@@ -812,7 +811,7 @@ out:
 public int  _tpsuspend (TPTRANID *tranid, long flags) 
 {
     int ret=SUCCEED;
-    XA_API_ENTRY(TRUE);
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY; */
     NDRX_LOG(log_info, "Suspending global transaction...");
     if (NULL==tranid)
     {
@@ -826,14 +825,14 @@ public int  _tpsuspend (TPTRANID *tranid, long flags)
         FAIL_OUT(ret);
     }
     
-    if (!G_atmi_xa_curtx.txinfo)
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "_tpsuspend: Not in global TX");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Not in global TX");
         FAIL_OUT(ret);
     }
     
-    if (G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
     {
         NDRX_LOG(log_error, "_tpsuspend: Abort only transaction!");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Abort only transaction!");
@@ -841,14 +840,14 @@ public int  _tpsuspend (TPTRANID *tranid, long flags)
     }
     
     /* Check situation with call descriptors */
-    if (atmi_xa_cd_isanyreg(&(G_atmi_xa_curtx.txinfo->call_cds)))
+    if (atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds)))
     {
         NDRX_LOG(log_error, "_tpsuspend: Call descriptors still open!");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Call descriptors still open!");
         FAIL_OUT(ret);
     }
     
-    if (atmi_xa_cd_isanyreg(&(G_atmi_xa_curtx.txinfo->conv_cds)))
+    if (atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds)))
     {
         NDRX_LOG(log_error, "_tpsuspend: Conversation descriptors still open!");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Conversation descriptors still open!");
@@ -856,15 +855,15 @@ public int  _tpsuspend (TPTRANID *tranid, long flags)
     }
     
     /* Now transfer current transaction data from one struct to another... */
-    XA_TX_COPY(tranid, G_atmi_xa_curtx.txinfo);
-    tranid->is_tx_initiator = G_atmi_xa_curtx.txinfo->is_tx_initiator;
+    XA_TX_COPY(tranid, G_atmi_tls->G_atmi_xa_curtx.txinfo);
+    tranid->is_tx_initiator = G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator;
     
     /* Disassoc from transaction! */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (SUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -892,10 +891,10 @@ out:
 public int  _tpresume (TPTRANID *tranid, long flags)
 {
     int ret=SUCCEED;
-    XA_API_ENTRY(TRUE);
     int was_join = FALSE;
     atmi_xa_tx_info_t xai;
     
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ETNRY; */
     NDRX_LOG(log_info, "Resuming global transaction...");
     
     if (NULL==tranid)
@@ -911,7 +910,7 @@ public int  _tpresume (TPTRANID *tranid, long flags)
     }
     
     /* NOTE: TPEMATCH - not tracked. */
-    if (G_atmi_xa_curtx.txinfo)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         _TPset_error_msg(TPEPROTO,  "_tpresume: Already in global TX!");
         FAIL_OUT(ret);
@@ -926,7 +925,7 @@ public int  _tpresume (TPTRANID *tranid, long flags)
         FAIL_OUT(ret);
     }
     
-    G_atmi_xa_curtx.txinfo->is_tx_initiator = tranid->is_tx_initiator;
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = tranid->is_tx_initiator;
     
     NDRX_LOG(log_debug, "Resume ok xid: [%s] is_tx_initiator: %d", 
             tranid->tmxid, tranid->is_tx_initiator);
@@ -946,8 +945,10 @@ public int ax_reg(int rmid, XID *xid, long flags)
 {
     int ret = TM_OK;
     int was_join = FALSE;
+    ATMI_TLS_ENTRY;
+    
     NDRX_LOG(log_warn, "ax_reg called");
-    if (NULL==G_atmi_xa_curtx.txinfo)
+    if (NULL==G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "ERROR: No global transaction registered "
                 "with process/thread!");
@@ -957,7 +958,7 @@ public int ax_reg(int rmid, XID *xid, long flags)
         goto out;
     }
     
-    if (SUCCEED!=_tp_srv_join_or_new(G_atmi_xa_curtx.txinfo, TRUE, &was_join))
+    if (SUCCEED!=_tp_srv_join_or_new(G_atmi_tls->G_atmi_xa_curtx.txinfo, TRUE, &was_join))
     {
         ret = TMER_TMERR;
         goto out;
@@ -968,9 +969,9 @@ public int ax_reg(int rmid, XID *xid, long flags)
         ret = TM_JOIN;
     }
     
-    memcpy(xid, atmi_xa_get_branch_xid(G_atmi_xa_curtx.txinfo), sizeof(*xid));
+    memcpy(xid, atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), sizeof(*xid));
     
-    G_atmi_xa_curtx.txinfo->is_ax_reg_called = TRUE;
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called = TRUE;
   
 out:
     NDRX_LOG(log_info, "ax_reg returns: %d", ret);
@@ -1022,7 +1023,7 @@ public int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
     int new_rm = FALSE;
     char src_tmknownrms[2];
     long tmflags = 0;
-    XA_API_ENTRY(TRUE);
+    XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY; */
     
     /* If we are static, then register together... 
      * Dynamic code must be done this already
@@ -1145,7 +1146,7 @@ public int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         src_tmknownrms[0] = G_atmi_env.xa_rmid;
         src_tmknownrms[1] = EOS;
         
-        if (SUCCEED!=atmi_xa_update_known_rms(G_atmi_xa_curtx.txinfo->tmknownrms, 
+        if (SUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
                 src_tmknownrms))
         {
             FAIL_OUT(ret);
@@ -1176,8 +1177,9 @@ out:
 public int _tp_srv_disassoc_tx(void)
 {
     int ret = SUCCEED;
+    ATMI_TLS_ENTRY;
     
-    if (NULL==G_atmi_xa_curtx.txinfo)
+    if (NULL==G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_warn, "Not in global tx!");
         goto out;
@@ -1185,10 +1187,10 @@ public int _tp_srv_disassoc_tx(void)
     
     /* Only for static...  or if work done */
     if ( !XA_IS_DYNAMIC_REG || 
-            G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (SUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1198,9 +1200,9 @@ public int _tp_srv_disassoc_tx(void)
     }
     
     /* Remove current transaction from list */
-    atmi_xa_curtx_del(G_atmi_xa_curtx.txinfo);
+    atmi_xa_curtx_del(G_atmi_tls->G_atmi_xa_curtx.txinfo);
     
-    G_atmi_xa_curtx.txinfo = NULL;
+    G_atmi_tls->G_atmi_xa_curtx.txinfo = NULL;
     
 out:
     return ret;

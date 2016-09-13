@@ -50,6 +50,7 @@
 #include <xa_cmn.h>
 #include <tperror.h>
 #include <atmi_shm.h>
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CONV_TARGET_FLAGS(X)     \
@@ -148,6 +149,8 @@ public int close_open_client_connections(void)
     int i;
     int ret=SUCCEED;
 
+    ATMI_TLS_ENTRY;
+    
     /* nothing to do, we do not have opened any client connections! */
     if (!M_had_open_con)
     {
@@ -156,7 +159,7 @@ public int close_open_client_connections(void)
 
     for (i=0; i<MAX_CONNECTIONS; i++)
     {
-        if (CONV_IN_CONVERSATION==G_tp_conversation_status[i].status)
+        if (CONV_IN_CONVERSATION==G_atmi_tls->G_tp_conversation_status[i].status)
         {
             if (FAIL==_tpdiscon(i))
             {
@@ -179,6 +182,8 @@ public int have_open_connection(void)
 {
     int i;
     int ret=FALSE;
+    ATMI_TLS_ENTRY;
+    
     /* nothing to do, we do not have opened any client connections! */
     if (!M_had_open_con)
     {
@@ -187,7 +192,7 @@ public int have_open_connection(void)
 
     for (i=0; i<MAX_CONNECTIONS; i++)
     {
-        if (CONV_IN_CONVERSATION==G_tp_conversation_status[i].status)
+        if (CONV_IN_CONVERSATION==G_atmi_tls->G_tp_conversation_status[i].status)
         {
             ret=TRUE;
             break;
@@ -209,24 +214,29 @@ public int have_open_connection(void)
 public int accept_connection(void)
 {
     int ret=SUCCEED;
-    tp_conversation_control_t *conv = &G_accepted_connection;
+    tp_conversation_control_t *conv;
     char fn[] = "accept_connection";
     long revent;
     int q_opened=FALSE;
     char their_qstr[NDRX_MAX_Q_SIZE+1];
+    ATMI_TLS_ENTRY;
+    
+    conv= &G_atmi_tls->G_accepted_connection;
 /*
     char send_q[NDRX_MAX_Q_SIZE+1]; */
 
-    conv->flags = G_last_call.flags; /* Save call flags */
+    conv->flags = G_atmi_tls->G_last_call.flags; /* Save call flags */
     
     /* Fix up cd for future use for replies.  */
-    conv->cd = G_last_call.cd - MAX_CONNECTIONS;
+    conv->cd = G_atmi_tls->G_last_call.cd - MAX_CONNECTIONS;
     /* Change the status, that we have connection open */
     conv->status = CONV_IN_CONVERSATION;
     /* 1. Open listening queue */
     sprintf(conv->my_listen_q_str, NDRX_CONV_SRV_Q,
-                    G_atmi_conf.q_prefix, G_last_call.my_id, G_last_call.cd-MAX_CONNECTIONS,
-                    G_atmi_conf.my_id); /* In accepted connection we put their id */
+                    G_atmi_tls->G_atmi_conf.q_prefix, 
+                    G_atmi_tls->G_last_call.my_id, 
+                    G_atmi_tls->G_last_call.cd-MAX_CONNECTIONS,
+                    G_atmi_tls->G_atmi_conf.my_id); /* In accepted connection we put their id */
     
     /* TODO: Firstly we should open the queue on which to listen right? */
     if ((mqd_t)FAIL==(conv->my_listen_q =
@@ -239,24 +249,24 @@ public int accept_connection(void)
     q_opened=TRUE;
 
     /* 2. Connect to their reply queue */
-    strcpy(conv->reply_q_str, G_last_call.reply_to);
+    strcpy(conv->reply_q_str, G_atmi_tls->G_last_call.reply_to);
     
     /* Check is this coming from bridge. If so the we connect to bridge */
     
-    if (0!=G_last_call.callstack[0])
+    if (0!=G_atmi_tls->G_last_call.callstack[0])
     {
-        br_dump_nodestack(G_last_call.callstack, "Incoming conversation from bridge,"
+        br_dump_nodestack(G_atmi_tls->G_last_call.callstack, "Incoming conversation from bridge,"
                                            "using first node from node stack");
 #ifdef EX_USE_EPOLL
-        sprintf(their_qstr, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, 
-                (int)G_last_call.callstack[0]);
+        sprintf(their_qstr, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, 
+                (int)G_atmi_tls->G_last_call.callstack[0]);
 #else
         /* poll() mode: */
         {
             int is_bridge;
             char tmpsvc[MAXTIDENT+1];
 
-            sprintf(tmpsvc, NDRX_SVC_BRIDGE, (int)G_last_call.callstack[0]);
+            sprintf(tmpsvc, NDRX_SVC_BRIDGE, (int)G_atmi_tls->G_last_call.callstack[0]);
 
             if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge))
             {
@@ -287,7 +297,7 @@ public int accept_connection(void)
 
     /* 3. Send back reply to their queue */
     NDRX_LOG(log_debug, "About to send handshake back to client...");
-    if (SUCCEED!=_tpsend(G_last_call.cd, NULL, 0, 0, &revent,
+    if (SUCCEED!=_tpsend(G_atmi_tls->G_last_call.cd, NULL, 0, 0, &revent,
                             ATMI_COMMAND_CONNRPLY))
     {
         NDRX_LOG(log_error, "%s: Failed to reply for acceptance!");
@@ -325,14 +335,15 @@ public tp_conversation_control_t*  get_current_connection(int cd)
 {
     tp_conversation_control_t *ret=NULL;
     char fn[] = "get_current_connection";
-
+    ATMI_TLS_ENTRY;
+    
     if (cd>=0 && cd<MAX_CONNECTIONS)
     {
-        ret=&G_tp_conversation_status[cd];
+        ret=&G_atmi_tls->G_tp_conversation_status[cd];
     }
     else if (cd>=MAX_CONNECTIONS)
     {
-        ret=&G_accepted_connection;
+        ret=&G_atmi_tls->G_accepted_connection;
     }
     else
     {
@@ -357,7 +368,8 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
 {
     int ret=SUCCEED;
     char fn[] = "normal_connection_shutdown";
-
+    ATMI_TLS_ENTRY;
+    
     NDRX_LOG(log_debug, "%s: Closing [%s]", fn, conv->my_listen_q_str);
 
     /* close down the queue */
@@ -411,12 +423,12 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     
     /* At this point we reset the CD - free the CD!!  */
     /* Unregister CD from global tx */
-    if (G_atmi_xa_curtx.txinfo)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         /* try to unregister... anyway (even was called with TPNOTRAN)
          * will not find in hash, that's it... 
          */
-        atmi_xa_cd_unreg(&(G_atmi_xa_curtx.txinfo->conv_cds), conv->cd);
+        atmi_xa_cd_unreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), conv->cd);
     }
     
     memset(conv, 0, sizeof(*conv));
@@ -433,47 +445,50 @@ out:
  */
 private int conv_get_cd(long flags)
 {
-
-    static __thread int cd=1; /* first available */
-    int start_cd = cd; /* mark where we began */
-
-    while (CONV_NO_INITATED!=G_tp_conversation_status[cd].status)
+    ATMI_TLS_ENTRY;
+    
+    int start_cd = G_atmi_tls->conv_cd; /* mark where we began */
+    while (CONV_NO_INITATED!=
+            G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status)
     {
-        cd++;
+        G_atmi_tls->conv_cd++;
 
-        if (cd > MAX_CONNECTIONS-1)
+        if (G_atmi_tls->conv_cd > MAX_CONNECTIONS-1)
         {
-            cd=1; /* TODO: Maybe start with 0? */
+            G_atmi_tls->conv_cd=1; /* TODO: Maybe start with 0? */
         }
 
-        if (start_cd==cd)
+        if (start_cd==G_atmi_tls->conv_cd)
         {
             NDRX_LOG(log_debug, "Connection descritors overflow restart!");
             break;
         }
     }
 
-    if (CONV_NO_INITATED!=G_tp_conversation_status[cd].status)
+    if (CONV_NO_INITATED!=
+            G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status)
     {
         NDRX_LOG(log_debug, "All connection descriptors have been taken - FAIL!");
-        cd=FAIL;
+        G_atmi_tls->conv_cd=FAIL;
     }
     else
     {
-        NDRX_LOG(log_debug, "Got free connection descriptor %d", cd);
+        NDRX_LOG(log_debug, "Got free connection descriptor %d", G_atmi_tls->conv_cd);
     }
     
-    if (FAIL!=cd && !(flags & TPNOTRAN) && G_atmi_xa_curtx.txinfo)
+    if (FAIL!=G_atmi_tls->conv_cd && 
+            !(flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_debug, "Registering conv cd=%d under global "
-                "transaction!", cd);
-        if (SUCCEED!=atmi_xa_cd_reg(&(G_atmi_xa_curtx.txinfo->conv_cds), cd))
+                "transaction!", G_atmi_tls->conv_cd);
+        if (SUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), 
+                G_atmi_tls->conv_cd))
         {
-            cd=FAIL;
+            G_atmi_tls->conv_cd=FAIL;
         }
     }
 
-    return cd;
+    return G_atmi_tls->conv_cd;
 }
 
 /**
@@ -670,9 +685,9 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     long revent = 0;
     short command_id=ATMI_COMMAND_CONNECT;
     tp_conversation_control_t *conv;
-    /* Will have each thread own call sequence */
-    static __thread unsigned callseq = 0;
     int is_bridge;
+    ATMI_TLS_ENTRY;
+    
     NDRX_LOG(log_debug, "%s: called", fn);
 
     /* Check service availability */
@@ -694,7 +709,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
         goto out;
     }
 
-    conv = &G_tp_conversation_status[cd];
+    conv = &G_atmi_tls->G_tp_conversation_status[cd];
     /* Hmm setup cd? */
     conv->cd = cd;
     
@@ -734,10 +749,10 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     
 
     /* Format the conversational reply queue */
-    sprintf(reply_qstr, NDRX_CONV_INITATOR_Q, G_atmi_conf.q_prefix, 
-            G_atmi_conf.my_id, cd);
+    sprintf(reply_qstr, NDRX_CONV_INITATOR_Q, G_atmi_tls->G_atmi_conf.q_prefix, 
+            G_atmi_tls->G_atmi_conf.my_id, cd);
     NDRX_LOG(log_debug, "%s/%s/%d reply_qstr: [%s]",
-		G_atmi_conf.q_prefix,  G_atmi_conf.my_id, cd, reply_qstr);
+		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd, reply_qstr);
     strcpy(call->reply_to, reply_qstr);
 
     /* TODO: Firstly we should open the queue on which to listen right? */
@@ -758,7 +773,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     call->flags = flags;
     /* Prepare role flags */
     
-    strcpy(call->my_id, G_atmi_conf.my_id);
+    strcpy(call->my_id, G_atmi_tls->G_atmi_conf.my_id);
     
     /* TODO: lock call descriptor - possibly add to connection descriptor structs */
     timestamp = time(NULL);
@@ -766,16 +781,16 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     /* Generate flags for target now. */
     CONV_TARGET_FLAGS(call);
     call->timestamp = timestamp;
-    callseq++;
-    call->callseq = callseq;
+    G_atmi_tls->callseq++;
+    call->callseq = G_atmi_tls->callseq;
     
     /* Add global transaction info to call (if needed & tx available) */
-    if (!(call->flags & TPNOTRAN) && G_atmi_xa_curtx.txinfo)
+    if (!(call->flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_info, "Current process in global transaction (%s) - "
-                "prepare call", G_atmi_xa_curtx.txinfo->tmxid);
+                "prepare call", G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         
-        atmi_xa_cpy_xai_to_call(call, G_atmi_xa_curtx.txinfo);   
+        atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);   
     }
     /* Reset call timer...! */
     ndrx_timer_reset(&call->timer);
@@ -805,7 +820,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     {
         conv->status = CONV_IN_CONVERSATION;
         conv->timestamp = timestamp;
-        conv->callseq = callseq;
+        conv->callseq = G_atmi_tls->callseq;
 
         /* Save the flags, alright? */
         conv->flags |= (flags & TPSENDONLY);
@@ -893,7 +908,7 @@ public int _tprecv (int cd, char * *data,
     typed_buffer_descr_t *call_type;
     int answ_ok = FALSE;
     tp_conversation_control_t *conv;
-
+    ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", fn);
 
     *revent = 0;
@@ -1042,7 +1057,7 @@ public int _tprecv (int cd, char * *data,
                     NDRX_LOG(log_debug, "Server did tpreturn - closing conversation!");
 
                     /* Save the rcode returned. */
-                    M_svc_return_code = rply->rcode;
+                    G_atmi_tls->M_svc_return_code = rply->rcode;
 
                     if (TPSUCCESS!=rply->rval)
                     {
@@ -1085,7 +1100,7 @@ public int _tprecv (int cd, char * *data,
 out:
     NDRX_LOG(log_debug, "%s return %d", fn, ret);
 
-    if (G_atmi_xa_curtx.txinfo)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         if (TPEV_DISCONIMM == *revent ||  TPEV_SVCERR == *revent ||  
                 TPEV_SVCFAIL == *revent)
@@ -1093,26 +1108,27 @@ out:
              NDRX_LOG(log_warn, "tprcv error - mark "
                      "transaction as abort only!");    
             /* later should be handled by transaction initiator! */
-            G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
         }
         /* If we got any reply, and it contains abort only flag
          * (for current transaction, then we abort it...)
          */
-        if (0==strcmp(G_atmi_xa_curtx.txinfo->tmxid, rply->tmxid))
+        if (0==strcmp(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, rply->tmxid))
                 
         {
             if (rply->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
             {
-                G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
             }
             
             /* Update known RMs */
             if ( !(rply->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY) &&
                     EOS!=rply->tmknownrms[0] &&
-                    SUCCEED!=atmi_xa_update_known_rms(G_atmi_xa_curtx.txinfo->tmknownrms, 
+                    SUCCEED!=atmi_xa_update_known_rms(
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
                         rply->tmknownrms))
             {
-                G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
                 FAIL_OUT(ret);
             }
         }   
@@ -1144,9 +1160,7 @@ private void process_unsolicited_messages(int cd)
 
 }
 
-
-/*public int	_tpconnect (char *svc, char *data, long len, long flags) */
-public int	_tpsend (int cd, char *data, long len, long flags, long *revent,
+public int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id)
 {
     int ret=SUCCEED;
@@ -1156,10 +1170,9 @@ public int	_tpsend (int cd, char *data, long len, long flags, long *revent,
     char buf[ATMI_MSG_MAX_SIZE];
     long data_len = MAX_CALL_DATA_SIZE;
     tp_command_call_t *call = (tp_command_call_t *)buf;
-    time_t timestamp;
-    char send_q[NDRX_MAX_Q_SIZE+1];
-    char reply_q[NDRX_MAX_Q_SIZE+1]; /* special one for conversation */
     tp_conversation_control_t *conv;
+    
+    ATMI_TLS_ENTRY;
 
     NDRX_LOG(log_debug, "%s: called", fn);
     *revent = 0;
@@ -1307,12 +1320,12 @@ public int	_tpsend (int cd, char *data, long len, long flags, long *revent,
     call->callseq = conv->callseq;
     
     /* Add global transaction info for sending... */
-    if (G_atmi_xa_curtx.txinfo)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_info, "Current process in global transaction (%s) - "
-                "prepare call", G_atmi_xa_curtx.txinfo->tmxid);
+                "prepare call", G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         
-        atmi_xa_cpy_xai_to_call(call, G_atmi_xa_curtx.txinfo);
+        atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);
     }
     
     /* And then we call out the service. */

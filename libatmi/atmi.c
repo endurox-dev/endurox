@@ -36,16 +36,18 @@
 #include <atmi.h>
 
 #include <ndrstandard.h>
+#include <atmi_tls.h>
 #include <atmi_int.h>
 #include <ndebug.h>
 #include <Exfields.h>
 #include <xa_cmn.h>
 #include <tperror.h>
-
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {_TPunset_error(); \
-    if (!G_atmi_is_init) { \
+    ATMI_TLS_ENTRY;\
+    if (!G_atmi_tls->G_atmi_is_init) { \
         /* this means this is dirty client call, do the init */\
         NDRX_DBG_INIT(("ATMI", ""));\
         entry_status=tpinit(NULL);\
@@ -54,7 +56,6 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-__thread tp_command_call_t G_last_call;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -66,7 +67,7 @@ __thread tp_command_call_t G_last_call;
  * @param flags
  * @return
  */
-public int	tpacall (char *svc, char *data, long len, long flags)
+public int tpacall (char *svc, char *data, long len, long flags)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -96,7 +97,7 @@ out:
  * @param flags
  * @return
  */
-public int	tpacallex (char *svc, char *data, 
+public int tpacallex (char *svc, char *data, 
         long len, long flags, char *extradata, int dest_node, int ex_flags)
 {
     int ret=SUCCEED;
@@ -422,9 +423,9 @@ out:
  */
 public int	tpgetlev (void)
 {
-    _TPunset_error();
+    _TPunset_error(); /* this elary does TLS entry */
 
-    if (G_atmi_xa_curtx.txinfo)
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         return 1;
     }
@@ -905,7 +906,9 @@ out:
  */
 public tp_command_call_t *ndrx_get_G_last_call(void)
 {
-    return &G_last_call;
+    ATMI_TLS_ENTRY;
+    
+    return &G_atmi_tls->G_last_call;
 }
 
 /**
@@ -914,7 +917,8 @@ public tp_command_call_t *ndrx_get_G_last_call(void)
  */
 public atmi_lib_conf_t *ndrx_get_G_atmi_conf(void)
 {
-    return &G_atmi_conf;
+    ATMI_TLS_ENTRY;
+    return &G_atmi_tls->G_atmi_conf;
 }
 
 /**
@@ -932,5 +936,18 @@ public atmi_lib_env_t *ndrx_get_G_atmi_env(void)
  */
 public atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void)
 {
-    return &G_atmi_xa_curtx;
+    ATMI_TLS_ENTRY;
+    return &G_atmi_tls->G_atmi_xa_curtx;
 }
+
+/**
+ * Get accepted connection ATMI object
+ * @return 
+ */
+public tp_conversation_control_t *ndrx_get_G_accepted_connection(void)
+{
+    ATMI_TLS_ENTRY;
+    
+    return &G_atmi_tls->G_accepted_connection;
+}
+

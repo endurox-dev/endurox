@@ -47,6 +47,7 @@
 
 #include <ndrxdcmn.h>
 #include "gencall.h"
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -93,6 +94,7 @@ public int fill_reply_queue(char *nodestack,
     int len;
     int nodeid;
     int ret=SUCCEED;
+    ATMI_TLS_ENTRY;
     
     *reply_to = EOS;
     /* So we are going to do reply, we should scan the reply stack
@@ -123,7 +125,7 @@ public int fill_reply_queue(char *nodestack,
                 }
 #else
                 /* epoll mode direct call: */
-                sprintf(reply_to, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, nodeid);
+                sprintf(reply_to, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, nodeid);
 #endif
                 
                 nodestack[i] = EOS;

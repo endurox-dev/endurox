@@ -60,6 +60,7 @@
 #include <Exfields.h>
 
 #include <xa_cmn.h>
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define     TM_CALL_FB_SZ           1024        /* default size for TM call */
@@ -446,7 +447,9 @@ public XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
 public atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
 {
     atmi_xa_tx_info_t *ret = NULL;
-    EXHASH_FIND_STR( G_atmi_xa_curtx.tx_tab, tmxid, ret);    
+    ATMI_TLS_ENTRY;
+    
+    EXHASH_FIND_STR( G_atmi_tls->G_atmi_xa_curtx.tx_tab, tmxid, ret);    
     return ret;
 }
 
@@ -463,6 +466,8 @@ public atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
         short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms)
 {
     atmi_xa_tx_info_t * tmp = calloc(1, sizeof(atmi_xa_tx_info_t));
+    ATMI_TLS_ENTRY;
+    
     if (NULL==tmp)
     {
         userlog("malloc failed: %s", strerror(errno));
@@ -475,7 +480,7 @@ public atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
     tmp->tmsrvid = tmsrvid;
     strcpy(tmp->tmknownrms, tmknownrms);
     
-    EXHASH_ADD_STR( G_atmi_xa_curtx.tx_tab, tmxid, tmp );
+    EXHASH_ADD_STR( G_atmi_tls->G_atmi_xa_curtx.tx_tab, tmxid, tmp );
     
 out:
     return tmp;
@@ -487,7 +492,9 @@ out:
  */
 public void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
 {
-    EXHASH_DEL( G_atmi_xa_curtx.tx_tab, p_txinfo);
+    ATMI_TLS_ENTRY;
+    
+    EXHASH_DEL( G_atmi_tls->G_atmi_xa_curtx.tx_tab, p_txinfo);
     /* Remove any cds involved... */
     /* TODO: Think about cd invalidating... */
     atmi_xa_cd_unregall(&(p_txinfo->call_cds));
@@ -634,10 +641,12 @@ public void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms)
  */
 public void atmi_xa_reset_curtx(void)
 {
-    if (G_atmi_xa_curtx.txinfo)
+    ATMI_TLS_ENTRY;
+    
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
-        atmi_xa_curtx_del(G_atmi_xa_curtx.txinfo);
-        G_atmi_xa_curtx.txinfo = NULL;
+        atmi_xa_curtx_del(G_atmi_tls->G_atmi_xa_curtx.txinfo);
+        G_atmi_tls->G_atmi_xa_curtx.txinfo = NULL;
     }
 }
 
@@ -702,10 +711,13 @@ public int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai)
 {
     int ret = SUCCEED;
     int cnt;
-    if (NULL==strchr(G_atmi_xa_curtx.txinfo->tmknownrms, (unsigned char)p_xai->tmrmid))
+    ATMI_TLS_ENTRY;
+    
+    if (NULL==strchr(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
+            (unsigned char)p_xai->tmrmid))
     {
         /* Updated known RMs */
-        if ((cnt=strlen(G_atmi_xa_curtx.txinfo->tmknownrms)) > NDRX_MAX_RMS)
+        if ((cnt=strlen(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms)) > NDRX_MAX_RMS)
         {
             NDRX_LOG(log_error, "Maximum Resource Manager reached (%d)", 
                     NDRX_MAX_RMS);
@@ -715,10 +727,11 @@ public int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai)
             goto out;
         }
         
-        G_atmi_xa_curtx.txinfo->tmknownrms[cnt] = (unsigned char)p_xai->tmrmid;
+        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms[cnt] = (unsigned char)p_xai->tmrmid;
     }
     
-    atmi_xa_print_knownrms(log_info, "Known RMs", G_atmi_xa_curtx.txinfo->tmknownrms);
+    atmi_xa_print_knownrms(log_info, "Known RMs", 
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms);
 out:
 
     return ret;
@@ -732,14 +745,14 @@ out:
  */
 public int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
 {
-    int cnt;
     int ret = SUCCEED;
+    ATMI_TLS_ENTRY;
     
     /* Lookup the hash add if found ok switch ptr 
      * if not found, add and switch ptr too.
      */
-    if (NULL==(G_atmi_xa_curtx.txinfo = atmi_xa_curtx_get(p_xai->tmxid)) &&
-         NULL==(G_atmi_xa_curtx.txinfo = 
+    if (NULL==(G_atmi_tls->G_atmi_xa_curtx.txinfo = atmi_xa_curtx_get(p_xai->tmxid)) &&
+         NULL==(G_atmi_tls->G_atmi_xa_curtx.txinfo = 
             atmi_xa_curtx_add(p_xai->tmxid, p_xai->tmrmid, 
             p_xai->tmnodeid, p_xai->tmsrvid, p_xai->tmknownrms)))
             
@@ -790,6 +803,7 @@ public UBFH * atmi_xa_alloc_tm_call(char cmd)
 {
     UBFH *p_ub = NULL;
     int ret = SUCCEED;
+    ATMI_TLS_ENTRY;
     
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, TM_CALL_FB_SZ)))
     {
@@ -801,7 +815,7 @@ public UBFH * atmi_xa_alloc_tm_call(char cmd)
     }
     
     /* install caller error */
-    if (SUCCEED!=Bchg(p_ub, TMPROCESSID, 0, G_atmi_conf.my_id, 0L))
+    if (SUCCEED!=Bchg(p_ub, TMPROCESSID, 0, G_atmi_tls->G_atmi_conf.my_id, 0L))
     {
         _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMPROCESSID) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
@@ -887,6 +901,8 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
     int ret = SUCCEED;
     long rsplen;
     char svcnm[MAXTIDENT+1];
+    
+    ATMI_TLS_ENTRY;
 
     if (NULL==p_ub)
     {
@@ -922,11 +938,11 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
         /* TM + srvid*/
         /* TODO: Think - call local or RM or global!!! */
         
-        if (G_atmi_xa_curtx.txinfo)
+        if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
         {
-            sprintf(svcnm, NDRX_SVC_TM_I, G_atmi_xa_curtx.txinfo->tmnodeid, 
-                    G_atmi_xa_curtx.txinfo->tmrmid, 
-                    G_atmi_xa_curtx.txinfo->tmsrvid);
+            sprintf(svcnm, NDRX_SVC_TM_I, G_atmi_tls->G_atmi_xa_curtx.txinfo->tmnodeid, 
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmrmid, 
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmsrvid);
         }
         else if (p_xai)
         {
@@ -996,17 +1012,19 @@ out:
  */
 public XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
 {
-    static XID __thread xid; /* handler for new XID */
     unsigned char rmid = (unsigned char)G_atmi_env.xa_rmid; /* max 255...! */
-    memset(&xid, 0, sizeof(xid));
-    atmi_xa_deserialize_xid((unsigned char *)p_xai->tmxid, &xid);
+    ATMI_TLS_ENTRY;
+    
+    memset(&G_atmi_tls->xid, 0, sizeof(G_atmi_tls->xid));
+    atmi_xa_deserialize_xid((unsigned char *)p_xai->tmxid, &G_atmi_tls->xid);
     
     /* set current branch id - do we need this actually? 
      * How about byte order?
      */
-    memcpy(xid.data + sizeof(exuuid_t), &rmid, sizeof(unsigned char));
+    memcpy(G_atmi_tls->xid.data + sizeof(exuuid_t), 
+            &rmid, sizeof(unsigned char));
     
-    return &xid;
+    return &G_atmi_tls->xid;
 }   
 
 /*************************** Call descriptor manipulations ********************/

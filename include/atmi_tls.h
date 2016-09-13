@@ -41,13 +41,14 @@ extern "C" {
 #include <ndrstandard.h>
 #include <tperror.h>
 #include <xa.h>
-    
+#include <atmi_int.h>
+#include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
 #define ATMI_TLS_MAGIG          0x39617cde
     
-#define ATMI_TLS_ENTRY  if (NULL==G_atmi_tls) {atmi_tls_new(TRUE, TRUE);};
+#define ATMI_TLS_ENTRY  if (NULL==G_atmi_tls) {ndrx_atmi_tls_new(TRUE, TRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -59,10 +60,12 @@ extern "C" {
  */
 typedef struct
 {
+    int magic;
+    
     /* atmi.c */    
     tp_command_call_t G_last_call;
     /* conversation.c */
-    int cd/*=1;  first available */
+    int conv_cd;/*=1;  first available */
     unsigned callseq;/* = 0; */
     
     /* init.c */
@@ -74,9 +77,9 @@ typedef struct
     
     /* tpcall.c */
     long M_svc_return_code;/*=0; */
-    int first; /* = TRUE; */
-    ndrx_timer_t start;
-    int cd; /* = 0; */
+    int tpcall_first; /* = TRUE; */
+    ndrx_timer_t tpcall_start;
+    int tpcall_cd; /* = 0; */
     
     /* tperror.c */
     char M_atmi_error_msg_buf[MAX_TP_ERROR_LEN+1]; /* = {EOS}; */
@@ -84,11 +87,16 @@ typedef struct
     short M_atmi_reason;/* = NDRX_XA_ERSN_NONE;  XA reason, default */
     char errbuf[MAX_TP_ERROR_LEN+1];
     /* xa.c */
-    int M_is_curtx_init/* = FALSE; */
+    int M_is_curtx_init;/* = FALSE; */
     atmi_xa_curtx_t G_atmi_xa_curtx;
 
     /* xautils.c */
     XID xid; /* handler for new XID */
+    int global_tx_suspended; /* suspend the global txn */
+    TPTRANID tranid;
+    
+    /* mutex lock (so that no two parallel threads work with same tls */
+    pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
     
 } atmi_tls_t;
 
@@ -96,14 +104,6 @@ typedef struct
 extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-extern NDRX_API atmi_tls_t * atmi_tls_new(int auto_destroy, int auto_set);
-
-/* this goes to xatmi.h: */
-extern NDRX_API atmi_tls_t * atmi_tls_get(void);
-extern NDRX_API void atmi_tls_set(atmi_tls_t *tls);
-extern NDRX_API void atmi_tls_free(atmi_tls_t *tls);
-
 #ifdef	__cplusplus
 }
 #endif

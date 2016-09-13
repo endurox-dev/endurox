@@ -114,7 +114,7 @@ public void ndrx_nstd_tls_free(void *data)
  * @param auto_destroy if set to 1 then when tried exits, thread data will be made free
  * @return 
  */
-public nstd_tls_t * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
+public void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
 {
     int ret = SUCCEED;
     nstd_tls_t *tls  = NULL;
@@ -168,6 +168,6 @@ out:
         ndrx_nstd_tls_free((char *)tls);
     }
 
-    return tls;
+    return (void *)tls;
 }
 

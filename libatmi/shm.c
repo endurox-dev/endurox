@@ -43,14 +43,6 @@
 #include <memory.h>
 #include <errno.h>
 
-#include <atmi.h>
-#include <atmi_shm.h>
-#include <ndrstandard.h>
-#include <ndebug.h>
-#include <ndrxd.h>
-#include <ndrxdcmn.h>
-#include <userlog.h>
-
 /* shm_* stuff, and mmap() */
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -58,7 +50,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+
+#include <atmi.h>
 #include <atmi_shm.h>
+#include <atmi_tls.h>
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <ndrxd.h>
+#include <ndrxdcmn.h>
+#include <userlog.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -451,11 +451,12 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     static int first = TRUE;
     shm_svcinfo_t *psvcinfo = NULL;
     int chosen_node = FAIL;
+    ATMI_TLS_ENTRY;
     
     *is_bridge=FALSE;
     
     /* Initially we stick to the local service */
-    sprintf(send_q, NDRX_SVC_QFMT, G_atmi_conf.q_prefix, svc);
+    sprintf(send_q, NDRX_SVC_QFMT, G_atmi_tls->G_atmi_conf.q_prefix, svc);
     
     if (!ndrxd_shm_is_attached(&G_svcinfo))
     {
@@ -605,7 +606,8 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         if (FAIL!=chosen_node)
         {
 #ifdef EX_USE_EPOLL /* only for epoll(). For poll we do recursive call for service selection */
-            sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_conf.q_prefix, chosen_node);
+            sprintf(send_q, NDRX_SVC_QBRDIGE, 
+                    G_atmi_tls->G_atmi_conf.q_prefix, chosen_node);
 #endif
             *is_bridge=TRUE;
         }

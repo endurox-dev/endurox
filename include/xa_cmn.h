@@ -299,7 +299,6 @@ typedef struct txstate2tperrno txstate2tperrno_t;
 
 
 /*---------------------------Globals------------------------------------*/
-extern NDRX_API atmi_xa_curtx_t __thread G_atmi_xa_curtx;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     

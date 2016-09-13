@@ -479,6 +479,12 @@ extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnoma
 extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
             void (*in_tpsvrdone)(void), long flags);
 
+/* ATMI library TLS: */
+extern NDRX_API void * ndrx_atmi_tls_get(void);
+extern NDRX_API int ndrx_atmi_tls_set(void *data, int flags);
+extern NDRX_API void ndrx_atmi_tls_free(void *data);
+extern NDRX_API void * ndrx_atmi_tls_new(int auto_destroy, int auto_set);
+
 #if defined(__cplusplus)
 }
 #endif

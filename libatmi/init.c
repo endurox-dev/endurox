@@ -53,6 +53,7 @@
 #include <xa_cmn.h>
 #include <atmi_shm.h>
 #include <sys_unix.h>
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
@@ -61,17 +62,9 @@
 /*---------------------------Globals------------------------------------*/
 
 int G_srv_id = FAIL; /* If we are server, then this will be server ID */
-__thread int G_atmi_is_init = 0; /* Is environment initialised */
-
 volatile int G_is_env_loaded = 0; /* Is environment initialised */
-
 /* NOTE: THIS BELLOW ONE IS NOT INITIALIZED FOR NDRXD! */
-__thread atmi_lib_conf_t G_atmi_conf; /* ATMI library configuration */
-
 atmi_lib_env_t G_atmi_env; /* ATMI library environmental configuration */
-__thread call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
-__thread tp_conversation_control_t G_tp_conversation_status[MAX_CONNECTIONS];
-__thread tp_conversation_control_t G_accepted_connection;
 /* List of context slots... */
 long M_contexts[MAX_CONTEXTS];
 
@@ -531,17 +524,19 @@ public int _tpterm (void)
 {
     int ret=SUCCEED;
     char fn[] = "_tpterm";
-
+    
+    ATMI_TLS_ENTRY;
+    
     NDRX_LOG(log_debug, "%s called", fn);
 
-    if (!G_atmi_is_init)
+    if (!G_atmi_tls->G_atmi_is_init)
     {
         NDRX_LOG(log_debug, "%s ATMI is not initialized - "
 				"nothing to do.", fn);
         goto out;
     }
     
-    if (!G_atmi_conf.is_client)
+    if (!G_atmi_tls->G_atmi_conf.is_client)
     {
         ret=FAIL;
         _TPset_error_msg(TPEPROTO, "tpterm called from server!");
@@ -557,12 +552,12 @@ public int _tpterm (void)
     }
 
     /* Shutdown client queues */
-    if (0!=G_atmi_conf.reply_q)
+    if (0!=G_atmi_tls->G_atmi_conf.reply_q)
     {
-        if (FAIL==ndrx_mq_close(G_atmi_conf.reply_q))
+        if (FAIL==ndrx_mq_close(G_atmi_tls->G_atmi_conf.reply_q))
         {
             NDRX_LOG(log_warn, "Failed to close [%s]: %s",
-                                G_atmi_conf.reply_q_str, strerror(errno));
+                                G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
             /* nothing to do with this error!
             _TPset_error_fmt(TPEOS, "Failed to close [%s]: %s",
                                 G_atmi_conf.reply_q_str, strerror(errno));
@@ -572,13 +567,13 @@ public int _tpterm (void)
         }
     }
 
-    if (EOS!=G_atmi_conf.reply_q_str[0])
+    if (EOS!=G_atmi_tls->G_atmi_conf.reply_q_str[0])
     {
-        NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_conf.reply_q_str);
-        if (FAIL==ndrx_mq_unlink(G_atmi_conf.reply_q_str))
+        NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_tls->G_atmi_conf.reply_q_str);
+        if (FAIL==ndrx_mq_unlink(G_atmi_tls->G_atmi_conf.reply_q_str))
         {
             NDRX_LOG(log_warn, "Failed to unlink [%s]: %s",
-                                G_atmi_conf.reply_q_str, strerror(errno));
+                                G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
     
             /* really no error!
             _TPset_error_fmt(TPEOS, "Failed to unlink [%s]: %s",
@@ -591,10 +586,10 @@ public int _tpterm (void)
 
     /* Fee up context, should be last otherwise we might unlink other thread's
      * opened queue in this context!!! */
-    ndrx_ctxid_op(TRUE, G_atmi_conf.contextid);
+    ndrx_ctxid_op(TRUE, G_atmi_tls->G_atmi_conf.contextid);
     
     /* Un init the library */
-    G_atmi_is_init = FALSE;
+    G_atmi_tls->G_atmi_is_init = FALSE;
     NDRX_LOG(log_debug, "%s: ATMI library un-initialized", fn);
     
     /* close also  */
@@ -614,10 +609,11 @@ public int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
 {
     int ret=SUCCEED;
     char fn[]="tp_internal_init";
+    ATMI_TLS_ENTRY;
     
-    G_atmi_conf.reply_q = reply_q;
-    strcpy(G_atmi_conf.reply_q_str, reply_q_str);
-    if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_conf.q_attr))
+    G_atmi_tls->G_atmi_conf.reply_q = reply_q;
+    strcpy(G_atmi_tls->G_atmi_conf.reply_q_str, reply_q_str);
+    if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
                             fn, reply_q, strerror(errno));
@@ -640,9 +636,10 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     char fn[]="tp_internal_init";
     static int first = TRUE;
     int sem_fail = FALSE;
+    ATMI_TLS_ENTRY;
     /* we connect to semaphore  */
     /* Check that if we are client (in server staging, then close current queues) */
-    if (G_atmi_is_init && G_atmi_conf.is_client)
+    if (G_atmi_tls->G_atmi_is_init && G_atmi_tls->G_atmi_conf.is_client)
     {
         if (!init_data->is_client)
         {
@@ -658,37 +655,40 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
                                 "shutting down old session");
         }
 
-        if (FAIL==ndrx_mq_close(G_atmi_conf.reply_q))
+        if (FAIL==ndrx_mq_close(G_atmi_tls->G_atmi_conf.reply_q))
         {
             NDRX_LOG(log_warn, "Failed to close [%s]: %s",
-                                G_atmi_conf.reply_q_str, strerror(errno));
+                                G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
         }
 
-        NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_conf.reply_q_str);
+        NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_tls->G_atmi_conf.reply_q_str);
         
-        if (FAIL==ndrx_mq_unlink(G_atmi_conf.reply_q_str))
+        if (FAIL==ndrx_mq_unlink(G_atmi_tls->G_atmi_conf.reply_q_str))
         {
             NDRX_LOG(log_warn, "Failed to unlink [%s]: %s",
-                                G_atmi_conf.reply_q_str, strerror(errno));
+                                G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
         }
     }
 
     /* Copy the configuration here */
-    G_atmi_conf = *init_data;
-    G_atmi_is_init = 1;
+    G_atmi_tls->G_atmi_conf = *init_data;
+    G_atmi_tls->G_atmi_is_init = 1;
     /* reset callstates to default */
-    memset(&G_call_state, 0, sizeof(G_call_state));
+    memset(&G_atmi_tls->G_call_state, 0, sizeof(G_atmi_tls->G_call_state));
     /* reset last call (server side stuff) */
-    memset(&G_last_call, 0, sizeof(G_last_call));
+    memset(&G_atmi_tls->G_last_call, 0, sizeof(G_atmi_tls->G_last_call));
     
     /* reset conversation info */
-    memset(&G_tp_conversation_status, 0, sizeof(G_tp_conversation_status));
+    memset(&G_atmi_tls->G_tp_conversation_status, 0, 
+            sizeof(G_atmi_tls->G_tp_conversation_status));
 
     /* reset our acceptance info */
-    memset(&G_accepted_connection, 0, sizeof(G_accepted_connection));
+    memset(&G_atmi_tls->G_accepted_connection, 0, 
+            sizeof(G_atmi_tls->G_accepted_connection));
 
     /* read queue attributes -  only if Q was open...*/
-    if (init_data->reply_q && FAIL==ndrx_mq_getattr(init_data->reply_q, &G_atmi_conf.q_attr))
+    if (init_data->reply_q && FAIL==ndrx_mq_getattr(init_data->reply_q, 
+            &G_atmi_tls->G_atmi_conf.q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                             fn, init_data->reply_q_str, init_data->reply_q, strerror(errno));
@@ -697,8 +697,9 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     }
 
     /* format the name of ndrxd queue: */
-    sprintf(G_atmi_conf.ndrxd_q_str, NDRX_NDRXD, G_atmi_conf.q_prefix);
-    NDRX_LOG(log_debug, "NDRXD queue: [%s]", G_atmi_conf.ndrxd_q_str);
+    sprintf(G_atmi_tls->G_atmi_conf.ndrxd_q_str, NDRX_NDRXD, 
+            G_atmi_tls->G_atmi_conf.q_prefix);
+    NDRX_LOG(log_debug, "NDRXD queue: [%s]", G_atmi_tls->G_atmi_conf.ndrxd_q_str);
     
     /* we attach to shared mem & semaphores only once. */
     MUTEX_LOCK;
@@ -706,7 +707,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
         if (first)
         {
             /* Init semaphores first. */
-            ndrxd_sem_init(G_atmi_conf.q_prefix);
+            ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
             
             /* Try to attach to semaphore array */
             if (SUCCEED!=ndrx_sem_attach_all())
@@ -718,7 +719,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
             }
             
             /* Attach to client shared memory? */
-            if (SUCCEED==shm_init(G_atmi_conf.q_prefix, 
+            if (SUCCEED==shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
                         G_atmi_env.max_servers, G_atmi_env.max_svcs))
             {
                 if (init_data->is_client)
@@ -769,8 +770,9 @@ public int	tpinit (TPINIT * init_data)
     char *p;
     char read_clt_name[MAXTIDENT+1]={EOS};
     static pid_t pid;
-
-    if (G_atmi_is_init)
+    ATMI_TLS_ENTRY;
+    
+    if (G_atmi_tls->G_atmi_is_init)
     {
         NDRX_LOG(log_info, "ATMI already initialized...");
         goto out;

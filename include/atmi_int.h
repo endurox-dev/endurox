@@ -404,14 +404,18 @@ struct atmi_svc_list
 #define MAX_CALL_DATA_SIZE (ATMI_MSG_MAX_SIZE-sizeof(tp_command_call_t))
 
 /*---------------------------Globals------------------------------------*/
+#if 0
 extern NDRX_API __thread atmi_lib_conf_t G_atmi_conf; /* global access to server configuration */
+#endif
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
+#if 0
 extern NDRX_API __thread int G_atmi_is_init;
 extern NDRX_API __thread tp_command_call_t G_last_call; /* this is used by server, __thread not needed */
 extern NDRX_API __thread call_descriptor_state_t G_call_state[]; /* call descriptor states */
 extern NDRX_API __thread tp_conversation_control_t G_tp_conversation_status[];
 extern NDRX_API __thread tp_conversation_control_t G_accepted_connection;
 extern NDRX_API __thread long M_svc_return_code;
+#endif
 extern NDRX_API int G_srv_id;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -525,6 +529,7 @@ extern NDRX_API int ndrx_get_cached_svc_q(char *q);
 extern NDRX_API tp_command_call_t *ndrx_get_G_last_call(void);
 extern NDRX_API atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
 extern NDRX_API atmi_lib_env_t *ndrx_get_G_atmi_env(void);
+extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
 
 #ifdef	__cplusplus
 }

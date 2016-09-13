@@ -275,7 +275,7 @@ public char * tpsrvgetctxdata (void)
 {
     server_ctx_info_t *ret = malloc(sizeof(server_ctx_info_t));
     API_ENTRY;
-    
+    tp_conversation_control_t *p_accept_con;
     if (NULL==ret)
     {
         _TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
@@ -302,8 +302,9 @@ public char * tpsrvgetctxdata (void)
     memcpy(&ret->G_last_call, ndrx_get_G_last_call(), sizeof(ret->G_last_call));
     memset(ndrx_get_G_last_call(), 0, sizeof(ret->G_last_call));
     
-    memcpy(&ret->G_accepted_connection, &G_accepted_connection, sizeof(G_accepted_connection));
-    memset(&G_accepted_connection, 0, sizeof(G_accepted_connection));
+    p_accept_con = ndrx_get_G_accepted_connection();
+    memcpy(&ret->G_accepted_connection, p_accept_con, sizeof(*p_accept_con));
+    memset(p_accept_con, 0, sizeof(*p_accept_con));
     
 out:    
     return (char *)ret;
@@ -321,6 +322,7 @@ public int tpsrvsetctxdata (char *data, long flags)
     API_ENTRY;
     server_ctx_info_t *ctxdata  = (server_ctx_info_t *)data;
     char *fn = "tpsrvsetctxdata";
+    tp_conversation_control_t *p_accept_con;
     
     if (NULL==data)
     {
@@ -341,11 +343,13 @@ public int tpsrvsetctxdata (char *data, long flags)
     }
 #endif
     memcpy(ndrx_get_G_last_call(), &ctxdata->G_last_call, sizeof(ctxdata->G_last_call));
-    memcpy(&G_accepted_connection, &ctxdata->G_accepted_connection, 
-                sizeof(G_accepted_connection));
+    
+    p_accept_con = ndrx_get_G_accepted_connection();
+    memcpy(p_accept_con, &ctxdata->G_accepted_connection, 
+                sizeof(*p_accept_con));
     
     /* Add the additional flags to the user. */
-    G_last_call.sysflags |= flags;
+    ndrx_get_G_last_call()->sysflags |= flags;
     
 
     if (ctxdata->is_in_global_tx && SUCCEED!=tpresume(&ctxdata->tranid, 0))

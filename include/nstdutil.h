@@ -97,6 +97,7 @@ extern NDRX_API int ndrx_bench_write_stats(double msgsize, double callspersec);
 extern NDRX_API void * ndrx_nstd_tls_get(void);
 extern NDRX_API void ndrx_nstd_tls_set(void *data);
 extern NDRX_API void ndrx_nstd_tls_free(void *data);
+extern NDRX_API void * ndrx_nstd_tls_new(int auto_destroy, int auto_set);
 
 #ifdef	__cplusplus
 }

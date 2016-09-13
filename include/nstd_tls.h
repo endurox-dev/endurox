@@ -88,7 +88,6 @@ typedef struct
 extern NDRX_API __thread nstd_tls_t *G_nstd_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-public NDRX_API nstd_tls_t * ndrx_nstd_tls_new(int auto_destroy, int auto_set);
     
 #ifdef	__cplusplus
 }

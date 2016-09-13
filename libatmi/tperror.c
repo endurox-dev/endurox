@@ -43,6 +43,7 @@
 
 #include <xa.h>
 #include <atmi_int.h>
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -55,9 +56,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-__thread char M_atmi_error_msg_buf[MAX_TP_ERROR_LEN+1] = {EOS};
-__thread int M_atmi_error = TPMINVAL;
-__thread short M_atmi_reason = NDRX_XA_ERSN_NONE; /* XA reason, default */
 
 /* Do we need this to be in message catalogue?
  * table bellow is indexed by id (i.e. direct array erorr lookup should work)
@@ -147,11 +145,20 @@ struct err_msg_xa
  */
 public void TP_error (char *str)
 {
-	if (EOS!=M_atmi_error_msg_buf[0])
-		fprintf(stderr, "%s:%d:%s (%s)\n", str, M_atmi_error, ATMI_ERROR_DESCRIPTION(M_atmi_error),
-                                            M_atmi_error_msg_buf);
-	else
-		fprintf(stderr, "%s:%d:%s\n", str, M_atmi_error, ATMI_ERROR_DESCRIPTION(M_atmi_error));
+    ATMI_TLS_ENTRY;
+    
+    if (EOS!=G_atmi_tls->M_atmi_error_msg_buf[0])
+    {
+        fprintf(stderr, "%s:%d:%s (%s)\n", str, 
+                G_atmi_tls->M_atmi_error, 
+                ATMI_ERROR_DESCRIPTION(G_atmi_tls->M_atmi_error),
+                G_atmi_tls->M_atmi_error_msg_buf);
+    }
+    else
+    {
+        fprintf(stderr, "%s:%d:%s\n", str, G_atmi_tls->M_atmi_error, 
+                ATMI_ERROR_DESCRIPTION(G_atmi_tls->M_atmi_error));
+    }
 }
 
 /**
@@ -161,23 +168,23 @@ public void TP_error (char *str)
  */
 public char * tpstrerror (int err)
 {
-    static __thread char errbuf[MAX_TP_ERROR_LEN+1];
-
-    if (EOS!=M_atmi_error_msg_buf[0])
+    ATMI_TLS_ENTRY;
+    if (EOS!=G_atmi_tls->M_atmi_error_msg_buf[0])
     {
-		snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
-                                err,
-                                ATMI_ERROR_DESCRIPTION(err),
-                                M_atmi_error,
-                                M_atmi_error_msg_buf);
+        snprintf(G_atmi_tls->errbuf, sizeof(G_atmi_tls->errbuf), 
+                "%d:%s (last error %d: %s)",
+                err,
+                ATMI_ERROR_DESCRIPTION(err),
+                G_atmi_tls->M_atmi_error,
+                G_atmi_tls->M_atmi_error_msg_buf);
     }
-	else
+    else
     {
-		snprintf(errbuf, sizeof(errbuf), "%d:%s",
-                            err, ATMI_ERROR_DESCRIPTION(err));
+        snprintf(G_atmi_tls->errbuf, sizeof(G_atmi_tls->errbuf), "%d:%s",
+                    err, ATMI_ERROR_DESCRIPTION(err));
     }
 
-    return errbuf;
+    return G_atmi_tls->errbuf;
 }
 
 /**
@@ -186,7 +193,8 @@ public char * tpstrerror (int err)
  */
 public int * _exget_tperrno_addr (void)
 {
-	return &M_atmi_error;
+    ATMI_TLS_ENTRY;
+    return &G_atmi_tls->M_atmi_error;
 }
 
 /**
@@ -197,12 +205,14 @@ public int * _exget_tperrno_addr (void)
  */
 public void _TPset_error(int error_code)
 {
-    if (!M_atmi_error)
+    ATMI_TLS_ENTRY;
+    if (!G_atmi_tls->M_atmi_error)
     {
         NDRX_LOG(log_warn, "_TPset_error: %d (%s)",
-                                error_code, ATMI_ERROR_DESCRIPTION(error_code));
-        M_atmi_error_msg_buf[0] = EOS;
-        M_atmi_error = error_code;
+                error_code, ATMI_ERROR_DESCRIPTION(error_code));
+        
+        G_atmi_tls->M_atmi_error_msg_buf[0] = EOS;
+        G_atmi_tls->M_atmi_error = error_code;
     }
 }
 
@@ -216,8 +226,9 @@ public void _TPset_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
+    ATMI_TLS_ENTRY;
 
-    if (!M_atmi_error)
+    if (!G_atmi_tls->M_atmi_error)
     {
         msg_len = strlen(msg);
         err_len = (msg_len>MAX_TP_ERROR_LEN)?MAX_TP_ERROR_LEN:msg_len;
@@ -225,9 +236,9 @@ public void _TPset_error_msg(int error_code, char *msg)
 
         NDRX_LOG(log_warn, "_TPset_error_msg: %d (%s) [%s]", error_code,
                                 ATMI_ERROR_DESCRIPTION(error_code), msg);
-        M_atmi_error_msg_buf[0] = EOS;
-        strncat(M_atmi_error_msg_buf, msg, err_len);
-        M_atmi_error = error_code;
+        G_atmi_tls->M_atmi_error_msg_buf[0] = EOS;
+        strncat(G_atmi_tls->M_atmi_error_msg_buf, msg, err_len);
+        G_atmi_tls->M_atmi_error = error_code;
     }
 }
 
@@ -238,7 +249,8 @@ public void _TPset_error_msg(int error_code, char *msg)
  */
 public void _TPoverride_code(int error_code)
 {
-    M_atmi_error = error_code;
+    ATMI_TLS_ENTRY;
+    G_atmi_tls->M_atmi_error = error_code;
 }
 
 /**
@@ -252,19 +264,20 @@ public void _TPset_error_fmt(int error_code, const char *fmt, ...)
 {
     char msg[MAX_TP_ERROR_LEN+1] = {EOS};
     va_list ap;
+    ATMI_TLS_ENTRY;
 
-    if (!M_atmi_error)
+    if (!G_atmi_tls->M_atmi_error)
     {
         va_start(ap, fmt);
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(M_atmi_error_msg_buf, msg);
-        M_atmi_error = error_code;
+        strcpy(G_atmi_tls->M_atmi_error_msg_buf, msg);
+        G_atmi_tls->M_atmi_error = error_code;
 
         NDRX_LOG(log_warn, "_TPset_error_fmt: %d (%s) [%s]",
                         error_code, ATMI_ERROR_DESCRIPTION(error_code),
-                        M_atmi_error_msg_buf);
+                        G_atmi_tls->M_atmi_error_msg_buf);
     }
 }
 
@@ -279,20 +292,21 @@ public void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, 
 {
     char msg[MAX_TP_ERROR_LEN+1] = {EOS};
     va_list ap;
+    ATMI_TLS_ENTRY;
 
-    if (!M_atmi_error)
+    if (!G_atmi_tls->M_atmi_error)
     {
         va_start(ap, fmt);
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(M_atmi_error_msg_buf, msg);
-        M_atmi_error = error_code;
-        M_atmi_reason = reason;
+        strcpy(G_atmi_tls->M_atmi_error_msg_buf, msg);
+        G_atmi_tls->M_atmi_error = error_code;
+        G_atmi_tls->M_atmi_reason = reason;
 
         NDRX_LOG(log_warn, "_TPset_error_fmt_rsn: %d (%s) reason: %d [%s]",
                         error_code, ATMI_ERROR_DESCRIPTION(error_code), reason,
-                        M_atmi_error_msg_buf);
+                        G_atmi_tls->M_atmi_error_msg_buf);
     }
 }
 
@@ -301,9 +315,11 @@ public void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, 
  */
 public void _TPunset_error(void)
 {
-	M_atmi_error_msg_buf[0]=EOS;
-	M_atmi_error = BMINVAL;
-        M_atmi_reason = NDRX_XA_ERSN_NONE;
+    ATMI_TLS_ENTRY;
+    
+    G_atmi_tls->M_atmi_error_msg_buf[0]=EOS;
+    G_atmi_tls->M_atmi_error = BMINVAL;
+    G_atmi_tls->M_atmi_reason = NDRX_XA_ERSN_NONE;
 }
 /**
  * Return >0 if error is set
@@ -311,7 +327,8 @@ public void _TPunset_error(void)
  */
 public int _TPis_error(void)
 {
-    return M_atmi_error;
+    ATMI_TLS_ENTRY;
+    return G_atmi_tls->M_atmi_error;
 }
 
 /**
@@ -320,11 +337,16 @@ public int _TPis_error(void)
  */
 public void _TPappend_error_msg(char *msg)
 {
-    int free_space = MAX_TP_ERROR_LEN-strlen(M_atmi_error_msg_buf);
+    int free_space;
     int app_error_len = strlen(msg);
     int n;
+    
+    ATMI_TLS_ENTRY;
+    
+    free_space = MAX_TP_ERROR_LEN-strlen(G_atmi_tls->M_atmi_error_msg_buf);
+    
     n = free_space<app_error_len?free_space:app_error_len;
-    strncat(M_atmi_error_msg_buf, msg, n);
+    strncat(G_atmi_tls->M_atmi_error_msg_buf, msg, n);
 }
 
 /* <XA Error handling - used by ATMI lib & TM server>*/
@@ -335,7 +357,8 @@ public void _TPappend_error_msg(char *msg)
  */
 public short atmi_xa_get_reason(void)
 {   
-    return M_atmi_reason;
+    ATMI_TLS_ENTRY;
+    return G_atmi_tls->M_atmi_reason;
 }
 
 /**
@@ -346,9 +369,6 @@ public short atmi_xa_get_reason(void)
  */
 public void atmi_xa_set_error(UBFH *p_ub, short error_code, short reason)
 {
-    char error_msg_buf[MAX_TP_ERROR_LEN+1] = {EOS};
-    int error = TPMINVAL;
-
     if (!atmi_xa_is_error(p_ub))
     {
         NDRX_LOG(log_warn, "atmi_xa_set_error: %d (%s)",
@@ -466,6 +486,7 @@ public void atmi_xa2tperr(UBFH *p_ub)
     char msg[MAX_TP_ERROR_LEN+1] = {EOS};
     short code;
     short reason = 0;
+    ATMI_TLS_ENTRY;
     
     /* unset the ATMI error. */
     if (Bpres(p_ub, TMERR_CODE, 0))
@@ -479,8 +500,10 @@ public void atmi_xa2tperr(UBFH *p_ub)
         _TPset_error_msg((int)code, msg);
 
         /* Append with reason code. */
-        if (!M_atmi_reason)
-            M_atmi_reason = reason;
+        if (!G_atmi_tls->M_atmi_reason)
+        {
+            G_atmi_tls->M_atmi_reason = reason;
+        }
         
     }
 }
@@ -494,7 +517,6 @@ public char *atmi_xa_geterrstr(int code)
 {
     int i;
     static char* unknown_err = "Unknown error";
-    /* static __thread  char msg_buf[256]; */
     char *ret = unknown_err;
     
     for (i=0; i<N_DIM(M_atmi_xa_error_defs); i++)
@@ -530,9 +552,11 @@ public void atmi_xa_approve(UBFH *p_ub)
  */
 public void _TPsave_error(atmi_error_t *p_err)
 {
-    p_err->atmi_error = M_atmi_error;
-    p_err->atmi_reason = M_atmi_reason;
-    strcpy(p_err->atmi_error_msg_buf, M_atmi_error_msg_buf);
+    ATMI_TLS_ENTRY;
+    
+    p_err->atmi_error = G_atmi_tls->M_atmi_error;
+    p_err->atmi_reason = G_atmi_tls->M_atmi_reason;
+    strcpy(p_err->atmi_error_msg_buf, G_atmi_tls->M_atmi_error_msg_buf);
 }
 
 /**
@@ -541,7 +565,8 @@ public void _TPsave_error(atmi_error_t *p_err)
  */
 public void _TPrestore_error(atmi_error_t *p_err)
 {
-    M_atmi_error = p_err->atmi_error;
-    M_atmi_reason = p_err->atmi_reason;
-    strcpy(M_atmi_error_msg_buf, p_err->atmi_error_msg_buf);
+    ATMI_TLS_ENTRY;
+    G_atmi_tls->M_atmi_error = p_err->atmi_error;
+    G_atmi_tls->M_atmi_reason = p_err->atmi_reason;
+    strcpy(G_atmi_tls->M_atmi_error_msg_buf, p_err->atmi_error_msg_buf);
 }
