@@ -12,7 +12,7 @@ EnduroX have binddings for:
 - Python (client & server)
 - Node.js (client)
 
-![Alt text](doc/Endurox-overview.jpg?raw=true "Enduro/x overview")
+![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
 Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues). Starting with Enduro/X Version 3.1.2 IBM AIX (6.1 and 7.1), Oracle Solaris 11, MAC OS X (experimental) and Cygwin (experimental) support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
 
