@@ -95,6 +95,7 @@ typedef struct
     int global_tx_suspended; /* suspend the global txn */
     TPTRANID tranid;
     
+    int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* mutex lock (so that no two parallel threads work with same tls */
     pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
     
