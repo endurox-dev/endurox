@@ -16,7 +16,7 @@ EnduroX have binddings for:
 
 # Load balancing
 
-![Alt text](doc/endurox-load-balance.png?raw=true "Enduro/x service load balancer")
+![Alt text](doc/endurox-load-balance.jpg?raw=true "Enduro/x service load balancer")
 
 Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for POSIX Queues). Starting with Enduro/X Version 3.1.2 IBM AIX (6.1 and 7.1), Oracle Solaris 11, MAC OS X (experimental) and Cygwin (experimental) support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
 
