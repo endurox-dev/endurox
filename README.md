@@ -30,6 +30,21 @@ Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for P
 
 PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to get EnduroX running ;)
 
+# Call/message forwarding
+
+## Instead of doing calls to each server separately...
+
+![Alt text](doc/exforward_tpcall.png?raw=true "Classical service orchestration")
+This is typciall way for example if doing micro-services with HTTP/REST. You need to do the calls to each service separately. And that is extra overhead to system (multiple returns) and the caller must orchestrate the all calls.
+
+## Enduro/X offers much effective way - tpforward() where request flows around the system
+
+![Alt text](doc/exforward_forward.png?raw=true "Enhanced service orchestration by forwarding the call")
+
+In this case the destination service orchestrates the system, it is up to service to choose the next service which will continue the call processing. The caller is not aware of final service which will do the reply back (tpreturn()).
+
+Note that service after doing "tpforward()" becomes idle and can consume next call.
+
 # Performance
 
 Due to fact that Enduro/X uses memory based queues, performance numbers are quite high:
