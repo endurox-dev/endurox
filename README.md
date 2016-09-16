@@ -35,6 +35,7 @@ PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to g
 ## Instead of doing calls to each server separately...
 
 ![Alt text](doc/exforward_tpcall.png?raw=true "Classical service orchestration")
+
 This is typciall way for example if doing micro-services with HTTP/REST. You need to do the calls to each service separately. And that is extra overhead to system (multiple returns) and the caller must orchestrate the all calls.
 
 ## Enduro/X offers much effective way - tpforward() where request flows around the system
