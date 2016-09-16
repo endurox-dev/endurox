@@ -84,7 +84,7 @@ emerge -av indent asciidoc dblatex libxml2 cmake dia \
 
 ==== System level dependencies - for Debian 8.2
 ---------------------------------------------------------------------
-apt-get install indent asciidoc dblatex libxml2-dev fop \
+apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
 	libgpgme11-dev libxml2-dev git
@@ -92,7 +92,7 @@ apt-get install indent asciidoc dblatex libxml2-dev fop \
 	
 ==== System level dependencies - for Ubuntu 14.04
 ---------------------------------------------------------------------
-$ apt-get install indent asciidoc dblatex libxml2-dev fop \
+$ apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
 	libgpgme11-dev libxml2-dev git
