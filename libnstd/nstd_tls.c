@@ -60,7 +60,6 @@ private void nstd_buffer_key_destruct( void *value );
 private void nstd_buffer_key_destruct( void *value )
 {
     ndrx_nstd_tls_free((void *)value);
-    pthread_setspecific( M_nstd_tls_key, NULL );
 }
 
 /**
@@ -73,16 +72,19 @@ public void * ndrx_nstd_tls_get(void)
     
     G_nstd_tls = NULL;
     
-    /*
-     * Unset the destructor
-     */
-    if (tmp->is_auto)
+    if (NULL!=tmp)
     {
-        pthread_setspecific( M_nstd_tls_key, NULL );
+        /*
+         * Unset the destructor
+         */
+        if (tmp->is_auto)
+        {
+            pthread_setspecific( M_nstd_tls_key, NULL );
+        }
+
+        /* unlock object */
+        MUTEX_UNLOCK_V(tmp->mutex);
     }
-    
-    /* unlock object */
-    MUTEX_UNLOCK_V(tmp->mutex);
     
     return (void *)tmp;
 }
@@ -94,26 +96,34 @@ public void * ndrx_nstd_tls_get(void)
 public int ndrx_nstd_tls_set(void *data)
 {
     nstd_tls_t *tls = (nstd_tls_t *)data;
-    /* extra control... */
-    if (NSTD_TLS_MAGIG!=tls->magic)
+    
+    if (NULL!=tls)
     {
-        userlog("nstd_tls_set: invalid magic! expected: %x got %x", 
-                NSTD_TLS_MAGIG, tls->magic);
+        /* extra control... */
+        if (NSTD_TLS_MAGIG!=tls->magic)
+        {
+            userlog("nstd_tls_set: invalid magic! expected: %x got %x", 
+                    NSTD_TLS_MAGIG, tls->magic);
+        }
+
+        /* Lock the object */
+        MUTEX_LOCK_V(tls->mutex);
+
+        G_nstd_tls = tls;
+
+        /*
+         * Destruct automatically if it was auto-tls 
+         */
+        if (tls->is_auto)
+        {
+            pthread_setspecific( M_nstd_tls_key, (void *)tls );
+        }
     }
-    
-    /* Lock the object */
-    MUTEX_LOCK_V(tls->mutex);
-    
-    G_nstd_tls = tls;
-    
-    /*
-     * Destruct automatically if it was auto-tls 
-     */
-    if (tls->is_auto)
+    else
     {
-        pthread_setspecific( M_nstd_tls_key, (void *)tls );
+        G_nstd_tls = NULL;
     }
-    
+
     return SUCCEED;
 }
 
@@ -124,6 +134,7 @@ public int ndrx_nstd_tls_set(void *data)
  */
 public void ndrx_nstd_tls_free(void *data)
 {
+    pthread_setspecific( M_nstd_tls_key, NULL );
     free((char*)data);
 }
 

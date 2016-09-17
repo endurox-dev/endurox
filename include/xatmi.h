@@ -373,25 +373,25 @@ typedef struct tpevctl_t TPEVCTL;
  */
 typedef struct
 {
-	char	name[XATMI_SERVICE_NAME_LENGTH];
-	char	*data;
-	long	len;
-	long	flags;
-	int 	cd;
-	long    appkey;
-        CLIENTID cltid;
-        char	fname[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
+    char	name[XATMI_SERVICE_NAME_LENGTH];
+    char	*data;
+    long	len;
+    long	flags;
+    int 	cd;
+    long    appkey;
+    CLIENTID cltid;
+    char	fname[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
 } TPSVCINFO;
 
 struct	tpinfo_t
 {
-	char usrname[MAXTIDENT+2];
-	char cltname[MAXTIDENT+2];
-	char passwd[MAXTIDENT+2];
-	char grpname[MAXTIDENT+2];
-	long flags;
-	long datalen;
-	long data;
+    char usrname[MAXTIDENT+2];
+    char cltname[MAXTIDENT+2];
+    char passwd[MAXTIDENT+2];
+    char grpname[MAXTIDENT+2];
+    long flags;
+    long datalen;
+    long data;
 };
 typedef	struct	tpinfo_t TPINIT;
 
@@ -400,21 +400,21 @@ typedef void* TPCONTEXT_T; /* Enduro/X full context switching handler */
 /* Queue support structure: */
 struct tpqctl_t 
 {
-	long flags;		/* indicates which of the values are set */		
-	long deq_time;		/* absolute/relative  time for dequeuing */		
-	long priority;		/* enqueue priority */		
-	long diagnostic;	/* indicates reason for failure */		
-        char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
-	char msgid[TMMSGIDLEN];	/* id of message before which to queue */		
-	char corrid[TMCORRIDLEN];/* correlation id used to identify message */		
-	char replyqueue[TMQNAMELEN+1];	/* queue name for reply message */		
-	char failurequeue[TMQNAMELEN+1];/* queue name for failure message */		
-	CLIENTID cltid;		/* client identifier for originating client */		
-	long urcode;		/* application user-return code */		
-	long appkey;		/* application authentication client key */		
-	long delivery_qos;      /* delivery quality of service  */		
-	long reply_qos;         /* reply message quality of service  */		
-	long exp_time;          /* expiration time  */		
+    long flags;		/* indicates which of the values are set */		
+    long deq_time;		/* absolute/relative  time for dequeuing */		
+    long priority;		/* enqueue priority */		
+    long diagnostic;	/* indicates reason for failure */		
+    char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
+    char msgid[TMMSGIDLEN];	/* id of message before which to queue */		
+    char corrid[TMCORRIDLEN];/* correlation id used to identify message */		
+    char replyqueue[TMQNAMELEN+1];	/* queue name for reply message */		
+    char failurequeue[TMQNAMELEN+1];/* queue name for failure message */		
+    CLIENTID cltid;		/* client identifier for originating client */		
+    long urcode;		/* application user-return code */		
+    long appkey;		/* application authentication client key */		
+    long delivery_qos;      /* delivery quality of service  */		
+    long reply_qos;         /* reply message quality of service  */		
+    long exp_time;          /* expiration time  */		
 };		
 typedef struct tpqctl_t TPQCTL;		
 

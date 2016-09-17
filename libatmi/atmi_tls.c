@@ -61,7 +61,6 @@ private void atmi_buffer_key_destruct( void *value );
 private void atmi_buffer_key_destruct( void *value )
 {
     ndrx_atmi_tls_free((void *)value);
-    pthread_setspecific( M_atmi_tls_key, NULL );
 }
 
 /**
@@ -74,35 +73,36 @@ public void * ndrx_atmi_tls_get(void)
     
     G_atmi_tls = NULL;
     
-    /*
-     * Unset the destructor
-     */
-    if (tmp->is_auto)
+    if (NULL!=tmp)
     {
-        pthread_setspecific( M_atmi_tls_key, NULL );
-    }
-    
-    /* suspend the transaction if any in progress: similar to tpsrvgetctxdata() */
-    if (tmp->G_atmi_xa_curtx.txinfo)
-    {
-        
-        if (SUCCEED!=tpsuspend(&tmp->tranid, 0))
+        /*
+         * Unset the destructor
+         */
+        if (tmp->is_auto)
         {
-            userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
-                    tpstrerror(tperrno));
-
-            MUTEX_UNLOCK_V(tmp->mutex);
-            
-            ndrx_atmi_tls_free(tmp);
-            /* fail it. */
-            tmp = NULL;
-            goto out;
+            pthread_setspecific( M_atmi_tls_key, NULL );
         }
+
+        /* suspend the transaction if any in progress: similar to tpsrvgetctxdata() */
+        if (tmp->G_atmi_xa_curtx.txinfo)
+        {
+            if (SUCCEED!=tpsuspend(&tmp->tranid, 0))
+            {
+                userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
+                        tpstrerror(tperrno));
+
+                MUTEX_UNLOCK_V(tmp->mutex);
+
+                ndrx_atmi_tls_free(tmp);
+                /* fail it. */
+                tmp = NULL;
+                goto out;
+            }
+        }
+
+        /* unlock object */
+        MUTEX_UNLOCK_V(tmp->mutex);
     }
-    
-    /* unlock object */
-    MUTEX_UNLOCK_V(tmp->mutex);
-    
 out:
     return (void *)tmp;
 }
@@ -115,33 +115,41 @@ public int ndrx_atmi_tls_set(void *data, int flags)
 {
     int ret = SUCCEED;
     atmi_tls_t *tls = (atmi_tls_t *)data;
-    /* extra control... */
-    if (ATMI_TLS_MAGIG!=tls->magic)
+   
+    if (NULL!=tls)
     {
-        userlog("atmi_tls_set: invalid magic! expected: %x got %x", 
-                ATMI_TLS_MAGIG, tls->magic);
+        /* extra control... */
+        if (ATMI_TLS_MAGIG!=tls->magic)
+        {
+            userlog("atmi_tls_set: invalid magic! expected: %x got %x", 
+                    ATMI_TLS_MAGIG, tls->magic);
+        }
+
+        /* Lock the object */
+        MUTEX_LOCK_V(tls->mutex);
+
+
+        /* Add the additional flags to the user. */
+        tls->G_last_call.sysflags |= flags;
+
+        if (tls->G_atmi_xa_curtx.txinfo && SUCCEED!=tpresume(&tls->tranid, 0))
+        {
+            userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
+        }
+
+        G_atmi_tls = tls;
+
+        /*
+         * Destruct automatically if it was auto-tls 
+         */
+        if (tls->is_auto)
+        {
+            pthread_setspecific( M_atmi_tls_key, (void *)tls );
+        }
     }
-
-    /* Lock the object */
-    MUTEX_LOCK_V(tls->mutex);
-
-    
-    /* Add the additional flags to the user. */
-    tls->G_last_call.sysflags |= flags;
-
-    if (tls->G_atmi_xa_curtx.txinfo && SUCCEED!=tpresume(&tls->tranid, 0))
+    else
     {
-        userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
-    }
-    
-    G_atmi_tls = tls;
-    
-    /*
-     * Destruct automatically if it was auto-tls 
-     */
-    if (tls->is_auto)
-    {
-        pthread_setspecific( M_atmi_tls_key, (void *)tls );
+        G_atmi_tls = NULL;
     }
     
 out:
@@ -155,6 +163,7 @@ out:
  */
 public void ndrx_atmi_tls_free(void *data)
 {
+    pthread_setspecific( M_atmi_tls_key, NULL );
     free((char*)data);
 }
 
@@ -301,12 +310,23 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags)
         FAIL_OUT(ret);
     }
     
-    if (NULL!=ctx->p_ubf_tls && NSTD_TLS_MAGIG!=ctx->p_ubf_tls->magic)
+    if (NULL!=ctx->p_ubf_tls && UBF_TLS_MAGIG!=ctx->p_ubf_tls->magic)
     {
         _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid ubf magic: "
                 "expected: %x got %x!", UBF_TLS_MAGIG, ctx->p_ubf_tls->magic);
         FAIL_OUT(ret);
     }
+    
+    /* free the current context (with tpterm?) 
+     * if one in progress 
+     */
+    if (G_atmi_tls!=ctx && NULL!=G_atmi_tls)
+    {
+        NDRX_LOG(log_warn, "Free up context %p", G_atmi_tls);
+        tpterm();
+        tpfreectxt((TPCONTEXT_T)G_atmi_tls);
+    }
+    
     
     if (NULL!=ctx->p_nstd_tls &&
             SUCCEED!=ndrx_nstd_tls_set((void *)ctx->p_nstd_tls))

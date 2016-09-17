@@ -972,7 +972,7 @@ public int tpsetctxt(TPCONTEXT_T context, long flags)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
-    API_ENTRY;
+    /* API_ENTRY; */
 
     if (SUCCEED!=entry_status)
     {
@@ -980,7 +980,7 @@ public int tpsetctxt(TPCONTEXT_T context, long flags)
         goto out;
     }
     
-    ret = tpsetctxt(context, flags);
+    ret = _tpsetctxt(context, flags);
     
 out:
     return ret;
@@ -996,7 +996,7 @@ public int tpgetctxt(TPCONTEXT_T *context, long flags)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
-    API_ENTRY;
+    /* API_ENTRY; */
 
     if (SUCCEED!=entry_status)
     {
@@ -1004,7 +1004,7 @@ public int tpgetctxt(TPCONTEXT_T *context, long flags)
         goto out;
     }
     
-    ret = tpgetctxt(context, flags);
+    ret = _tpgetctxt(context, flags);
     
 out:
     return ret;
