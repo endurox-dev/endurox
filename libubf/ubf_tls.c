@@ -89,7 +89,7 @@ public void * ndrx_ubf_tls_get(void)
  * Get the lock & set the G_ubf_tls to this one
  * @param tls
  */
-public void ndrx_ubf_tls_set(void *data)
+public int ndrx_ubf_tls_set(void *data)
 {
     ubf_tls_t *tls = (ubf_tls_t *)data;
     /* extra control... */
@@ -111,6 +111,8 @@ public void ndrx_ubf_tls_set(void *data)
     {
         pthread_setspecific( M_ubf_tls_key, (void *)tls );
     }
+    
+    return SUCCEED;
     
 }
 

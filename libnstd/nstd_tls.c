@@ -91,7 +91,7 @@ public void * ndrx_nstd_tls_get(void)
  * Get the lock & set the G_nstd_tls to this one
  * @param tls
  */
-public void ndrx_nstd_tls_set(void *data)
+public int ndrx_nstd_tls_set(void *data)
 {
     nstd_tls_t *tls = (nstd_tls_t *)data;
     /* extra control... */
@@ -114,6 +114,7 @@ public void ndrx_nstd_tls_set(void *data)
         pthread_setspecific( M_nstd_tls_key, (void *)tls );
     }
     
+    return SUCCEED;
 }
 
 /**

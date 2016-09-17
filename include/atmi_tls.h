@@ -43,6 +43,8 @@ extern "C" {
 #include <atmi_int.h>
 #include <xa_cmn.h>
 #include <tperror.h>
+#include <nstd_tls.h>
+#include <ubf_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -100,8 +102,13 @@ typedef struct
     /* mutex lock (so that no two parallel threads work with same tls */
     pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
     
+    /* have the transport for other's TLSes 
+     * used by tpgetctxt() and tpsetctxt()
+     */
+    nstd_tls_t *p_nstd_tls;
+    ubf_tls_t *p_ubf_tls;
+    
 } atmi_tls_t;
-
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/

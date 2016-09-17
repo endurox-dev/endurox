@@ -127,7 +127,7 @@ out:
  * @param len
  * @return
  */
-public char	* tpalloc (char *type, char *subtype, long len)
+public char * tpalloc (char *type, char *subtype, long len)
 {
     char *ret=NULL;
     int entry_status=SUCCEED;
@@ -153,7 +153,7 @@ out:
  * @param len
  * @return
  */
-public char	* tprealloc (char *buf, long len)
+public char * tprealloc (char *buf, long len)
 {
     char * ret=NULL;
     int entry_status=SUCCEED;
@@ -376,7 +376,7 @@ out:
  * Open XA interface
  * @return SUCCEED/FAIL
  */
-public int	tpopen (void)
+public int tpopen (void)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -399,7 +399,7 @@ out:
  * Close XA interface
  * @return
  */
-public int	tpclose (void)
+public int tpclose (void)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -421,7 +421,7 @@ out:
  * Return the current status in global tx or not
  * @return	0 - not int tx, 1 - in transaction
  */
-public int	tpgetlev (void)
+public int tpgetlev (void)
 {
     _TPunset_error(); /* this elary does TLS entry */
 
@@ -439,7 +439,7 @@ public int	tpgetlev (void)
  * @param cd
  * @return SUCCEED/FAIL
  */
-public int	tpcancel (int cd)
+public int tpcancel (int cd)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -462,7 +462,7 @@ out:
  * tpfree implementation
  * @param buf
  */
-public void	tpfree (char *buf)
+public void tpfree (char *buf)
 {
     _TPunset_error();
 
@@ -484,7 +484,7 @@ public void	tpfree (char *buf)
  * Only not sure how about debug?
  * @return SUCCEED/FAIL
  */
-public int	tpterm (void)
+public int tpterm (void)
 {
     _TPunset_error();
     return _tpterm();
@@ -498,7 +498,7 @@ public int	tpterm (void)
  * @param flags
  * @return
  */
-public int	tpconnect (char *svc, char *data, long len, long flags)
+public int tpconnect (char *svc, char *data, long len, long flags)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
@@ -526,7 +526,7 @@ out:
  * @param command_id
  * @return
  */
-public int	tprecv (int cd, char * *data,
+public int tprecv (int cd, char * *data,
                         long *len, long flags, long *revent)
 {
     int ret=SUCCEED;
@@ -555,7 +555,7 @@ out:
  * @param revent
  * @return
  */
-public int	tpsend (int cd, char *data, long len, long flags,
+public int tpsend (int cd, char *data, long len, long flags,
                                     long *revent)
 {
     int ret=SUCCEED;
@@ -951,3 +951,61 @@ public tp_conversation_control_t *ndrx_get_G_accepted_connection(void)
     return &G_atmi_tls->G_accepted_connection;
 }
 
+/**
+ * Kill the given context
+ * @param context
+ * @param flags
+ * @return 
+ */
+public void tpfreectxt(TPCONTEXT_T context)
+{
+    _tpfreectxt(context);
+}
+
+/**
+ * Set Enduro/X context for current thread
+ * @param context
+ * @param flags
+ * @return 
+ */
+public int tpsetctxt(TPCONTEXT_T context, long flags)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    ret = tpsetctxt(context, flags);
+    
+out:
+    return ret;
+}
+
+/**
+ * Get the current context
+ * This disconnects current thread from TLS.
+ * @param flags
+ * @return 
+ */
+public int tpgetctxt(TPCONTEXT_T *context, long flags)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    ret = tpgetctxt(context, flags);
+    
+out:
+    return ret;
+}

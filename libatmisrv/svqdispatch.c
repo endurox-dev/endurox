@@ -298,6 +298,9 @@ public int sv_serve_call(int *service, int *status)
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         
+        /* set the client id to caller */
+        strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
+        
         memcpy(ndrx_get_G_last_call(), call, sizeof(tp_command_call_t));
                              /* save last call info to ATMI library
                               * (this does excludes data by default) */
@@ -511,6 +514,9 @@ public int sv_serve_connect(int *service, int *status)
         strcpy(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
+        /* set the client id to caller */
+        strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
+        
         *ndrx_get_G_last_call() = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
 

@@ -47,6 +47,8 @@
 __thread atmi_tls_t *G_atmi_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
 private pthread_key_t M_atmi_tls_key;
+private pthread_key_t M_atmi_switch_key; /* switch the structure */
+
 MUTEX_LOCKDECL(M_thdata_init);
 private int M_first = TRUE;
 /*---------------------------Prototypes---------------------------------*/
@@ -238,3 +240,136 @@ out:
     return (void *)tls;
 }
 
+/**
+ * Kill the given context
+ * @param context
+ * @param flags
+ * @return 
+ */
+public void _tpfreectxt(TPCONTEXT_T context)
+{
+    atmi_tls_t * ctx = (atmi_tls_t *)context;
+    
+    if (NULL!=ctx)
+    {
+        if (NULL!=ctx->p_nstd_tls)
+        {
+            ndrx_nstd_tls_free(ctx->p_nstd_tls);
+        }
+        
+        if (NULL!=ctx->p_ubf_tls)
+        {
+            ndrx_ubf_tls_free(ctx->p_ubf_tls);
+        }
+        
+        ndrx_atmi_tls_free(ctx);
+    }
+}
+
+/**
+ * Internal version of get context
+ * @param context
+ * @param flags
+ * @return 
+ */
+public int _tpsetctxt(TPCONTEXT_T context, long flags)
+{
+    int ret = SUCCEED;
+    atmi_tls_t * ctx;
+    
+    if (context == TPNULLCONTEXT)
+    {
+        /* free the current thread context data */
+        _tpfreectxt(context);
+        goto out; /* we are done. */
+    }
+    
+    ctx = (atmi_tls_t *)context;
+    
+    /* have a deep checks */
+    if (ATMI_TLS_MAGIG!=ctx->magic)
+    {
+        _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid atmi magic: "
+                "expected: %x got %x!", ATMI_TLS_MAGIG, ctx->magic);
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL!=ctx->p_nstd_tls && NSTD_TLS_MAGIG!=ctx->p_nstd_tls->magic)
+    {
+        _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid nstd magic: "
+                "expected: %x got %x!", NSTD_TLS_MAGIG, ctx->p_nstd_tls->magic);
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL!=ctx->p_ubf_tls && NSTD_TLS_MAGIG!=ctx->p_ubf_tls->magic)
+    {
+        _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid ubf magic: "
+                "expected: %x got %x!", UBF_TLS_MAGIG, ctx->p_ubf_tls->magic);
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL!=ctx->p_nstd_tls &&
+            SUCCEED!=ndrx_nstd_tls_set((void *)ctx->p_nstd_tls))
+    {
+        _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libnstd context");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL!=ctx->p_ubf_tls &&
+            SUCCEED!=ndrx_ubf_tls_set((void *)ctx->p_ubf_tls))
+    {
+        _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libubf context");
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=ndrx_atmi_tls_set((void *)ctx, flags))
+    {
+        _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libatmi context");
+        FAIL_OUT(ret);
+    }
+    
+    
+out:
+    return ret;
+}
+
+/**
+ * Internal version of get full context
+ * This disconnects current thread from TLS.
+ * @param flags
+ * @return 
+ */
+public int _tpgetctxt(TPCONTEXT_T *context, long flags)
+{
+    int ret = TPMULTICONTEXTS; /* default */
+    atmi_tls_t * ctx;
+    
+    if (NULL==context)
+    {
+        _TPset_error_msg(TPEINVAL, "_tpgetctxt: context must not be NULL!");
+        FAIL_OUT(ret);
+    }
+    
+    if (0!=flags)
+    {
+        _TPset_error_msg(TPEINVAL, "_tpgetctxt: flags must be 0!");
+        FAIL_OUT(ret);
+    }
+    
+    ctx = (atmi_tls_t *)ndrx_atmi_tls_get();
+    
+    if (NULL!=ctx)
+    {
+        ctx->p_nstd_tls = ndrx_nstd_tls_get();
+        ctx->p_ubf_tls = ndrx_ubf_tls_get();
+    }
+    
+    *context = (TPCONTEXT_T)ctx;
+    
+    if (NULL==ctx)
+    {
+        ret = TPNULLCONTEXT;
+    }
+out:
+    return ret;
+}

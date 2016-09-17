@@ -205,6 +205,24 @@ extern "C" {
 #define TPEV_SVCSUCC	0x0008
 #define TPEV_SENDONLY	0x0020
 
+    
+/* Tpinit flags (RFU) */
+#define TPU_MASK	0x00000007	
+#define TPU_SIG		0x00000001	
+#define TPU_DIP		0x00000002	
+#define TPU_IGN		0x00000004	
+    
+/* for compatiblity with Tuxedo */
+#define TPSA_FASTPATH	0x00000008	
+#define TPSA_PROTECTED	0x00000010
+
+/* Multi contexting */    
+#define TPINVALIDCONTEXT    -1
+#define TPSINGLECONTEXT     -2 /* Not used by Enduro/X */
+    
+#define TPNULLCONTEXT       0 /* basically NULL pointer */
+#define TPMULTICONTEXTS     0x00000040
+    
 /*
  * X/Open defined typed buffers
  */
@@ -361,7 +379,7 @@ typedef struct
 	long	flags;
 	int 	cd;
 	long    appkey;
-        CLIENTID cltid; /* RFU */
+        CLIENTID cltid;
         char	fname[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
 } TPSVCINFO;
 
@@ -376,6 +394,8 @@ struct	tpinfo_t
 	long data;
 };
 typedef	struct	tpinfo_t TPINIT;
+
+typedef void* TPCONTEXT_T; /* Enduro/X full context switching handler */
 
 /* Queue support structure: */
 struct tpqctl_t 
@@ -478,6 +498,11 @@ extern NDRX_API int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL 
 extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnomain */
 extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
             void (*in_tpsvrdone)(void), long flags);
+
+/* Contexting/switching TLS for all libs */
+extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);
+extern NDRX_API int tpsetctxt(TPCONTEXT_T context, long flags);
+extern NDRX_API void tpfreectxt(TPCONTEXT_T context);
 
 /* ATMI library TLS: */
 extern NDRX_API void * ndrx_atmi_tls_get(void);

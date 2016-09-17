@@ -188,7 +188,7 @@ extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
 /* ATMI library TLS: */
 extern NDRX_API void * ndrx_ubf_tls_get(void);
-extern NDRX_API void ndrx_ubf_tls_set(void *data);
+extern NDRX_API int ndrx_ubf_tls_set(void *data);
 extern NDRX_API void ndrx_ubf_tls_free(void *data);
 extern NDRX_API void * ndrx_ubf_tls_new(int auto_destroy, int auto_set);
 

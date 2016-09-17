@@ -274,8 +274,10 @@ public void	tpext_configbrige
 public char * tpsrvgetctxdata (void)
 {
     server_ctx_info_t *ret = malloc(sizeof(server_ctx_info_t));
-    API_ENTRY;
+    tp_command_call_t *last_call = ndrx_get_G_last_call();
     tp_conversation_control_t *p_accept_con;
+    
+    API_ENTRY;
     if (NULL==ret)
     {
         _TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
@@ -299,8 +301,8 @@ public char * tpsrvgetctxdata (void)
     }
     
     /* reset thread data */
-    memcpy(&ret->G_last_call, ndrx_get_G_last_call(), sizeof(ret->G_last_call));
-    memset(ndrx_get_G_last_call(), 0, sizeof(ret->G_last_call));
+    memcpy(&ret->G_last_call, last_call, sizeof(ret->G_last_call));
+    memset(last_call, 0, sizeof(ret->G_last_call));
     
     p_accept_con = ndrx_get_G_accepted_connection();
     memcpy(&ret->G_accepted_connection, p_accept_con, sizeof(*p_accept_con));
@@ -323,7 +325,7 @@ public int tpsrvsetctxdata (char *data, long flags)
     server_ctx_info_t *ctxdata  = (server_ctx_info_t *)data;
     char *fn = "tpsrvsetctxdata";
     tp_conversation_control_t *p_accept_con;
-    
+    tp_command_call_t * last_call = ndrx_get_G_last_call();
     if (NULL==data)
     {
         _TPset_error_fmt(TPEINVAL, "%s - data is NULL", fn);
@@ -342,16 +344,15 @@ public int tpsrvsetctxdata (char *data, long flags)
         }
     }
 #endif
-    memcpy(ndrx_get_G_last_call(), &ctxdata->G_last_call, sizeof(ctxdata->G_last_call));
+    memcpy(last_call, &ctxdata->G_last_call, sizeof(ctxdata->G_last_call));
     
     p_accept_con = ndrx_get_G_accepted_connection();
     memcpy(p_accept_con, &ctxdata->G_accepted_connection, 
                 sizeof(*p_accept_con));
     
     /* Add the additional flags to the user. */
-    ndrx_get_G_last_call()->sysflags |= flags;
+    last_call->sysflags |= flags;
     
-
     if (ctxdata->is_in_global_tx && SUCCEED!=tpresume(&ctxdata->tranid, 0))
     {
         userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
