@@ -42,6 +42,8 @@
 
 #include "ndebug.h"
 #include "ferror.h"
+#include "atmi_tls.h"
+#include <ubf_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -645,32 +647,32 @@ void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len)
 
 char *tbuf_short (struct dtype_ext1 *t, int len)
 {
-    static __thread short s=0;
-    return (char *)&s;
+    UBF_TLS_ENTRY;
+    return (char *)&G_ubf_tls->tbuf_s;
 }
 
 char *tbuf_long (struct dtype_ext1 *t, int len)
 {
-    static __thread long l=0;
-    return (char *)&l;
+    UBF_TLS_ENTRY;
+    return (char *)&G_ubf_tls->tbuf_l;
 }
 
 char *tbuf_char (struct dtype_ext1 *t, int len)
 {
-    static __thread char c=0;
-    return (char *)&c;
+    UBF_TLS_ENTRY;
+    return (char *)&G_ubf_tls->tbuf_c;
 }
 
 char *tbuf_float (struct dtype_ext1 *t, int len)
 {
-   static __thread float f=0.0;
-   return (char *)&f;
+   UBF_TLS_ENTRY;
+   return (char *)&G_ubf_tls->tbuf_f;
 }
 
 char *tbuf_double (struct dtype_ext1 *t, int len)
 {
-   static __thread double f=0.0;
-   return (char *)&f;
+   UBF_TLS_ENTRY;
+   return (char *)&G_ubf_tls->tbuf_d;
 }
 
 /**
@@ -681,20 +683,19 @@ char *tbuf_double (struct dtype_ext1 *t, int len)
  */
 char *tbuf_string (struct dtype_ext1 *t, int len)
 {
-    static __thread char *buf_ptr = NULL;
-    static __thread int dat_len = 0;
+    UBF_TLS_ENTRY;
 
-    if (dat_len!=len)
+    if (G_ubf_tls->str_dat_len!=len)
     {
         /* Free up the memory */
-        if (NULL!=buf_ptr)
+        if (NULL!=G_ubf_tls->str_buf_ptr)
         {
-            free(buf_ptr);
+            free(G_ubf_tls->str_buf_ptr);
         }
 
-        buf_ptr=malloc(len);
+        G_ubf_tls->str_buf_ptr=malloc(len);
 
-        if (NULL==buf_ptr)
+        if (NULL==G_ubf_tls->str_buf_ptr)
         {
             /* set error */
             _Fset_error_fmt(BMALLOC, "Failed to allocate string tmp space for %d bytes", len);
@@ -709,7 +710,7 @@ char *tbuf_string (struct dtype_ext1 *t, int len)
         UBF_LOG(log_debug, "tbuf_string: re-using existing space", len);
     }
     
-    return buf_ptr;
+    return G_ubf_tls->str_buf_ptr;
 }
 
 /**
@@ -720,20 +721,19 @@ char *tbuf_string (struct dtype_ext1 *t, int len)
  */
 char *tbuf_carray (struct dtype_ext1 *t, int len)
 {
-    static __thread char *buf_ptr = NULL;
-    static __thread int dat_len = 0;
+    UBF_TLS_ENTRY;
 
-    if (dat_len!=len)
+    if (G_ubf_tls->carray_dat_len!=len)
     {
         /* Free up the memory */
-        if (NULL!=buf_ptr)
+        if (NULL!=G_ubf_tls->carray_buf_ptr)
         {
-            free(buf_ptr);
+            free(G_ubf_tls->carray_buf_ptr);
         }
         
-        buf_ptr=malloc(len);
+        G_ubf_tls->carray_buf_ptr=malloc(len);
 
-        if (NULL==buf_ptr)
+        if (NULL==G_ubf_tls->carray_buf_ptr)
         {
             /* set error */
             _Fset_error_fmt(BMALLOC, "Failed to allocate carray tmp space for %d bytes", len);
@@ -748,7 +748,7 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
         UBF_LOG(log_debug, "tbuf_carray: re-using existing space", len);
     }
 
-    return buf_ptr;
+    return G_ubf_tls->carray_buf_ptr;
 }
 
 /******************************************************************************/

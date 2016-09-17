@@ -46,7 +46,7 @@
 /*---------------------------Globals------------------------------------*/
 __thread atmi_tls_t *G_atmi_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
-private pthread_key_t atmi_buffer_key;
+private pthread_key_t M_atmi_tls_key;
 MUTEX_LOCKDECL(M_thdata_init);
 private int M_first = TRUE;
 /*---------------------------Prototypes---------------------------------*/
@@ -59,7 +59,7 @@ private void atmi_buffer_key_destruct( void *value );
 private void atmi_buffer_key_destruct( void *value )
 {
     ndrx_atmi_tls_free((void *)value);
-    pthread_setspecific( atmi_buffer_key, NULL );
+    pthread_setspecific( M_atmi_tls_key, NULL );
 }
 
 /**
@@ -71,6 +71,14 @@ public void * ndrx_atmi_tls_get(void)
     atmi_tls_t *tmp = G_atmi_tls;
     
     G_atmi_tls = NULL;
+    
+    /*
+     * Unset the destructor
+     */
+    if (tmp->is_auto)
+    {
+        pthread_setspecific( M_atmi_tls_key, NULL );
+    }
     
     /* suspend the transaction if any in progress: similar to tpsrvgetctxdata() */
     if (tmp->G_atmi_xa_curtx.txinfo)
@@ -126,6 +134,14 @@ public int ndrx_atmi_tls_set(void *data, int flags)
     
     G_atmi_tls = tls;
     
+    /*
+     * Destruct automatically if it was auto-tls 
+     */
+    if (tls->is_auto)
+    {
+        pthread_setspecific( M_atmi_tls_key, (void *)tls );
+    }
+    
 out:
     return ret;
 }
@@ -157,7 +173,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
         MUTEX_LOCK_V(M_thdata_init);
         if (M_first)
         {
-            pthread_key_create( &atmi_buffer_key, 
+            pthread_key_create( &M_atmi_tls_key, 
                     &atmi_buffer_key_destruct );
             M_first = FALSE;
         }
@@ -199,7 +215,12 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
      */
     if (auto_destroy)
     {
-        pthread_setspecific( atmi_buffer_key, (void *)tls );
+        tls->is_auto = TRUE;
+        pthread_setspecific( M_atmi_tls_key, (void *)tls );
+    }
+    else
+    {
+        tls->is_auto = FALSE;
     }
     
     if (auto_set)

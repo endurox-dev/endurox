@@ -80,6 +80,30 @@ typedef int         bool;
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
+/*
+ * So we use these two macros where we need know that more times they will be
+ * true, than false. This makes some boost for CPU code branching.
+ * 
+ * So for example if expect that some variable (c) must not be NULL
+ * then we could run NDRX_UNLIKELY(NDRX_UNLIKELY).
+ * This is useful for error handling, because mostly we do not have errors like
+ * malloc fail etc..
+ */
+#if HAVE_EXPECT
+
+#define NDRX_LIKELY(x)      __builtin_expect(!!(x), 1)
+#define NDRX_UNLIKELY(x)    __builtin_expect(!!(x), 0)
+
+#else
+
+/*
+ * And this is fallback if we do not have expect compiler option.
+ */
+#define NDRX_LIKELY(x)      (x)
+#define NDRX_UNLIKELY(x)    (x)
+
+#endif
+
 #ifdef	__cplusplus
 }
 #endif

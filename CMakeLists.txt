@@ -129,6 +129,9 @@ INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 
 CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __progname[0];}" HAVE_PROGNAME)
 
+CHECK_C_SOURCE_COMPILES("int main() {__builtin_expect(1, 1);}" HAVE_EXPECT)
+
+
 # To check for an include file you do this:
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
 CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)

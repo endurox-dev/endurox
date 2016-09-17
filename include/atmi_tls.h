@@ -39,16 +39,17 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <pthread.h>
 #include <ndrstandard.h>
-#include <tperror.h>
 #include <xa.h>
 #include <atmi_int.h>
 #include <xa_cmn.h>
+#include <tperror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
 #define ATMI_TLS_MAGIG          0x39617cde
     
-#define ATMI_TLS_ENTRY  if (NULL==G_atmi_tls) {ndrx_atmi_tls_new(TRUE, TRUE);};
+#define ATMI_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_atmi_tls)) \
+    {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(TRUE, TRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     

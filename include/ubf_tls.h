@@ -1,7 +1,7 @@
 /* 
-** Enduro/X Standard library thread local storage
+** UBF library TLS storage
 **
-** @file nstd_tls.h
+** @file ubf_tls.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,8 +29,8 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NSTD_TLS_H
-#define	NSTD_TLS_H
+#ifndef UBF_TLS_H
+#define	UBF_TLS_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -39,56 +39,59 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <pthread.h>
 #include <ndrstandard.h>
-#include <nerror.h>
-#include <nstdutil.h>
+#include <ubf.h>
+#include <ferror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define ERROR_BUFFER_POLL            1024
-#define NSTD_TLS_MAGIG          0xa27f0f24
-    
-    
-#define NSTD_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_nstd_tls)) \
-        {G_nstd_tls = (nstd_tls_t *)ndrx_nstd_tls_new(TRUE, TRUE);};
+#define UBF_TLS_MAGIG          0x150519be
+#define UBF_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_ubf_tls)) \
+        {G_ubf_tls=(ubf_tls_t *)ndrx_ubf_tls_new(TRUE, TRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * NSTD Library TLS
+ * UBF Library TLS
  */
 typedef struct
 {
     int magic; /* have some magic for context data */
     
-    /* ndebug.c */
-    long M_threadnr; /* Current thread nr */
+    /* bprint_impl.c */
+    Bnext_state_t bprint_state;
     
-    /* nerror.c */
-    char M_nstd_error_msg_buf[MAX_ERROR_LEN+1];
-    int M_nstd_error;
+    /* fdatatype.c */
+    short tbuf_s; /* =0; */
+    long tbuf_l;/*=0; */
+    char tbuf_c;/*=0; */
+    float tbuf_f; /*=0.0; */
+    double tbuf_d; /*=0.0; */
+    
+    char *str_buf_ptr;/* = NULL; */
+    int str_dat_len;/* = 0;*/
+     
+    char *carray_buf_ptr;/*  = NULL; */
+    int carray_dat_len;/* = 0; */
+    
+    char M_ubf_error_msg_buf[MAX_ERROR_LEN+1];/* = {EOS}; */
+    int M_ubf_error;/* = BMINVAL; */
+    
     char errbuf[MAX_ERROR_LEN+1];
     
-    /* nstdutil.c */
-    char util_buf1[20][20];
-    char util_buf2[20][20];
-    char util_text[20][128];
+    /* fieldtable.c */
+    char bfname_buf[64];
     
-    /* sys_emqueue.c */
-    char emq_x[512];
-    
-    /* sys_poll.c: */
-    int M_last_err;
-    char M_last_err_msg[1024];  /* Last error message */
-    char poll_strerr[ERROR_BUFFER_POLL];
+    /* ubf.c */
+    Bnext_state_t bnext_state;
     
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* we should have lock inside */
     pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
     
-} nstd_tls_t;
+} ubf_tls_t;
 
 /*---------------------------Globals------------------------------------*/
-extern NDRX_API __thread nstd_tls_t *G_nstd_tls; /* Enduro/X standard library TLS */
+extern NDRX_API __thread ubf_tls_t *G_ubf_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
@@ -96,5 +99,5 @@ extern NDRX_API __thread nstd_tls_t *G_nstd_tls; /* Enduro/X standard library TL
 }
 #endif
 
-#endif	/* NSTD_CONTEXT_H */
+#endif	/* UBF_CONTEXT_H */
 

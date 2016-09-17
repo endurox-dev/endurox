@@ -44,6 +44,7 @@
 #include <ndebug.h>
 #include <ferror.h>
 #include <errno.h>
+#include <ubf_tls.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -57,8 +58,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-__thread char M_ubf_error_msg_buf[MAX_ERROR_LEN+1] = {EOS};
-__thread int M_ubf_error = BMINVAL;
 
 /* Do we need this to be in message catalogue?
  * table bellow is indexed by id (i.e. direct array erorr lookup should work)
@@ -101,11 +100,18 @@ struct err_msg
  */
 public void B_error (char *str)
 {
-    if (EOS!=M_ubf_error_msg_buf[0])
-        fprintf(stderr, "%s:%d:%s (%s)\n", str, M_ubf_error, UBF_ERROR_DESCRIPTION(M_ubf_error),
-                                            M_ubf_error_msg_buf);
+    UBF_TLS_ENTRY;
+    if (EOS!=G_ubf_tls->M_ubf_error_msg_buf[0])
+    {
+        fprintf(stderr, "%s:%d:%s (%s)\n", str, G_ubf_tls->M_ubf_error, 
+                UBF_ERROR_DESCRIPTION(G_ubf_tls->M_ubf_error),
+                G_ubf_tls->M_ubf_error_msg_buf);
+    }
     else
-        fprintf(stderr, "%s:%d:%s\n", str, M_ubf_error, UBF_ERROR_DESCRIPTION(M_ubf_error));
+    {
+        fprintf(stderr, "%s:%d:%s\n", str, G_ubf_tls->M_ubf_error, 
+                UBF_ERROR_DESCRIPTION(G_ubf_tls->M_ubf_error));
+    }
 }
 
 /**
@@ -115,23 +121,24 @@ public void B_error (char *str)
  */
 public char * Bstrerror (int err)
 {
-    static __thread char errbuf[MAX_ERROR_LEN+1];
+    UBF_TLS_ENTRY;
 
-    if (EOS!=M_ubf_error_msg_buf[0])
+    if (EOS!=G_ubf_tls->M_ubf_error_msg_buf[0])
     {
-        snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
-                                err,
-                                UBF_ERROR_DESCRIPTION(err),
-                                M_ubf_error,
-                                M_ubf_error_msg_buf);
+        snprintf(G_ubf_tls->errbuf, sizeof(G_ubf_tls->errbuf), 
+                "%d:%s (last error %d: %s)",
+                err,
+                UBF_ERROR_DESCRIPTION(err),
+                G_ubf_tls->M_ubf_error,
+                G_ubf_tls->M_ubf_error_msg_buf);
     }
     else
     {
-        snprintf(errbuf, sizeof(errbuf), "%d:%s",
+        snprintf(G_ubf_tls->errbuf, sizeof(G_ubf_tls->errbuf), "%d:%s",
                             err, UBF_ERROR_DESCRIPTION(err));
     }
 
-    return errbuf;
+    return G_ubf_tls->errbuf;
 }
 
 /**
@@ -140,7 +147,8 @@ public char * Bstrerror (int err)
  */
 public int * _Bget_Ferror_addr (void)
 {
-    return &M_ubf_error;
+    UBF_TLS_ENTRY;
+    return &G_ubf_tls->M_ubf_error;
 }
 
 /**
@@ -151,12 +159,13 @@ public int * _Bget_Ferror_addr (void)
  */
 public void _Fset_error(int error_code)
 {
-    if (!M_ubf_error)
+    UBF_TLS_ENTRY;
+    if (!G_ubf_tls->M_ubf_error)
     {
         UBF_LOG(log_warn, "_Fset_error: %d (%s)", 
                                 error_code, UBF_ERROR_DESCRIPTION(error_code));
-        M_ubf_error_msg_buf[0] = EOS;
-        M_ubf_error = error_code;
+        G_ubf_tls->M_ubf_error_msg_buf[0] = EOS;
+        G_ubf_tls->M_ubf_error = error_code;
     }
 }
 
@@ -171,7 +180,9 @@ public void _Fset_error_msg(int error_code, char *msg)
     int msg_len;
     int err_len;
 
-    if (!M_ubf_error)
+    UBF_TLS_ENTRY;
+    
+    if (!G_ubf_tls->M_ubf_error)
     {
         msg_len = strlen(msg);
         err_len = (msg_len>MAX_ERROR_LEN)?MAX_ERROR_LEN:msg_len;
@@ -179,9 +190,9 @@ public void _Fset_error_msg(int error_code, char *msg)
 
         UBF_LOG(log_warn, "_Fset_error_msg: %d (%s) [%s]", error_code,
                                 UBF_ERROR_DESCRIPTION(error_code), msg);
-        M_ubf_error_msg_buf[0] = EOS;
-        strncat(M_ubf_error_msg_buf, msg, err_len);
-        M_ubf_error = error_code;
+        G_ubf_tls->M_ubf_error_msg_buf[0] = EOS;
+        strncat(G_ubf_tls->M_ubf_error_msg_buf, msg, err_len);
+        G_ubf_tls->M_ubf_error = error_code;
     }
 }
 
@@ -196,19 +207,20 @@ public void _Fset_error_fmt(int error_code, const char *fmt, ...)
 {
     char msg[MAX_ERROR_LEN+1] = {EOS};
     va_list ap;
-
-    if (!M_ubf_error)
+    UBF_TLS_ENTRY;
+    
+    if (!G_ubf_tls->M_ubf_error)
     {
         va_start(ap, fmt);
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(M_ubf_error_msg_buf, msg);
-        M_ubf_error = error_code;
+        strcpy(G_ubf_tls->M_ubf_error_msg_buf, msg);
+        G_ubf_tls->M_ubf_error = error_code;
 
         UBF_LOG(log_warn, "_Fset_error_fmt: %d (%s) [%s]",
                         error_code, UBF_ERROR_DESCRIPTION(error_code),
-                        M_ubf_error_msg_buf);
+                        G_ubf_tls->M_ubf_error_msg_buf);
     }
 }
 
@@ -217,8 +229,9 @@ public void _Fset_error_fmt(int error_code, const char *fmt, ...)
  */
 public void _Bunset_error(void)
 {
-    M_ubf_error_msg_buf[0]=EOS;
-    M_ubf_error = BMINVAL;
+    UBF_TLS_ENTRY;
+    G_ubf_tls->M_ubf_error_msg_buf[0]=EOS;
+    G_ubf_tls->M_ubf_error = BMINVAL;
 }
 /**
  * Return >0 if error is set
@@ -226,7 +239,8 @@ public void _Bunset_error(void)
  */
 public int _Fis_error(void)
 {
-    return M_ubf_error;
+    UBF_TLS_ENTRY;
+    return G_ubf_tls->M_ubf_error;
 }
 
 /**
@@ -235,11 +249,14 @@ public int _Fis_error(void)
  */
 public void _Bappend_error_msg(char *msg)
 {
-    int free_space = MAX_ERROR_LEN-strlen(M_ubf_error_msg_buf);
+    int free_space;
     int app_error_len = strlen(msg);
     int n;
+    UBF_TLS_ENTRY;
+    
+    free_space = MAX_ERROR_LEN-strlen(G_ubf_tls->M_ubf_error_msg_buf);
     n = free_space<app_error_len?free_space:app_error_len;
-    strncat(M_ubf_error_msg_buf, msg, n);
+    strncat(G_ubf_tls->M_ubf_error_msg_buf, msg, n);
 }
 
 /**

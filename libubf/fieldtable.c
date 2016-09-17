@@ -47,6 +47,7 @@
 #include <utlist.h>
 
 #include "ndebug.h"
+#include "ubf_tls.h"
 #include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -564,7 +565,7 @@ public int prepare_type_tables(void)
 public char * _Bfname_int (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
-    static __thread char buf[64];
+    UBF_TLS_ENTRY;
 
     if (SUCCEED!=prepare_type_tables())
     {
@@ -573,17 +574,17 @@ public char * _Bfname_int (BFLDID bfldid)
             _Bunset_error();
         }
 
-        sprintf(buf, "((BFLDID32)%d)", bfldid);
+        sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);
 
-        return buf;
+        return G_ubf_tls->bfname_buf;
     }
 
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
     if (NULL==p_fld)
     {
-        sprintf(buf, "((BFLDID32)%d)", bfldid);
-        return buf;
+        sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);
+        return G_ubf_tls->bfname_buf;
     }
     else
     {

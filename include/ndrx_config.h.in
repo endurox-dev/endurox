@@ -13,6 +13,8 @@
 
 #cmakedefine HAVE_PROGNAME @HAVE_PROGNAME@
 
+#cmakedefine HAVE_EXPECT @HAVE_EXPECT@
+
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 
 #cmakedefine EX_OS_LINUX @EX_OS_LINUX@

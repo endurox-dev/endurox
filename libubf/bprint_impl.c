@@ -48,6 +48,7 @@
 #include <cf.h>
 #include <ubf_impl.h>
 #include <utils.h>
+#include <ubf_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -68,7 +69,7 @@
 public int _Bfprint (UBFH *p_ub, FILE * outf)
 {
     int ret=SUCCEED;
-    static __thread Bnext_state_t state;
+   /* static __thread Bnext_state_t state; */
     BFLDID bfldid;
     BFLDLEN  len;
     BFLDOCC occ;
@@ -78,11 +79,15 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
     char *tmp_buf;
     BFLDLEN cnv_len;
     char fn[] = "_Bfprint";
-    memset(&state, 0, sizeof(state));
+    
+    UBF_TLS_ENTRY;
+    
+    memset(&G_ubf_tls->bprint_state, 0, sizeof(G_ubf_tls->bprint_state));
 
     bfldid = BFIRSTFLDID;
 
-    while(SUCCEED==ret && 1==_Bnext(&state, p_ub, &bfldid, &occ, NULL, &len, &p))
+    while(SUCCEED==ret && 1==_Bnext(&G_ubf_tls->bprint_state, 
+            p_ub, &bfldid, &occ, NULL, &len, &p))
     {
         cnv_buf=NULL;
         tmp_buf=NULL;
