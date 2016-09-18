@@ -46,6 +46,14 @@ In this case the destination service orchestrates the system, it is up to servic
 
 Note that service after doing "tpforward()" becomes idle and can consume next call.
 
+# High availability and self healing
+
+Enduro/X is capable of detecting stalled/hanged XATMI servers and gracefully can reboot them. The ping times are configurable on per server basis. In case if main daemon dies, it is possible to configure special XATMI server named "tprecover" which monitors "ndrxd" and vice versa, ndrxd can monitor tprecover. Thus if any of these services are not cleanly shut down, then system will heal it self, and boot service/daemons back.
+
+The ndrxd learning mode is some period of time (configurable) in which ndrxd will request all the system for active servers and their services, to get back the view of the system and be in control. Note that system is able to work even with out ndrxd, but at that time no server healing and management will be done.
+
+![Alt text](doc/server_monitoring_and_recovery.png?raw=true "Enduro/X high availability facility")
+
 # Performance
 
 Due to fact that Enduro/X uses memory based queues, performance numbers are quite high:
