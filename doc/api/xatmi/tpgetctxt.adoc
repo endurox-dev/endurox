@@ -24,7 +24,7 @@ If the context data is not restored by *tpsetctxt(3)* then you have to make the 
 
 To pass the request from server main thread to worker thread, use *tpsrvgetctxdata(3)* and *tpsrvsetctxdata(3)*.
 
-This function uses underlaying thread local storage infrastructure which is provided separately for each of the major Enduro/X libraries - libnstd (Standard library), libufb (UBF buffer library) and libatmi (ATMI library). If operations at library levels are required, then functions:
+This function uses underlaying thread local storage infrastructure which is provided separately for each of the major Enduro/X libraries - libnstd (Standard library), libufb (UBF buffer library) and libatmi (ATMI library). If operations at library levels are required, then following functions can be used:
 
 1. ndrx_nstd_tls_new(), ndrx_ubf_tls_new(), ndrx_atmi_tls_new() - allocate TLS data for library.
 2. ndrx_nstd_tls_get(), ndrx_ubf_tls_get(), ndrx_atmi_tls_get() - get the TLS data for library (currently associated with thread).
