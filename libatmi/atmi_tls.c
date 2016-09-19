@@ -250,7 +250,8 @@ out:
 }
 
 /**
- * Kill the given context
+ * Kill the given context,
+ * Do we need tpterm here?
  * @param context
  * @param flags
  * @return 
