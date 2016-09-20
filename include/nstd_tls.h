@@ -41,6 +41,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <nerror.h>
 #include <nstdutil.h>
+#include <ndebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -80,6 +81,10 @@ typedef struct
     int M_last_err;
     char M_last_err_msg[1024];  /* Last error message */
     char poll_strerr[ERROR_BUFFER_POLL];
+    
+    /* ndebug.c */
+    ndrx_debug_t threadlog; /* thread private logging */
+    ndrx_debug_t requestlog; /* logfile on per request-basis */
     
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* we should have lock inside */

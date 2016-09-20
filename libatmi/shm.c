@@ -632,7 +632,7 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         
         srvid = psvcinfo->srvids[psvcinfo->rrsrv];
         
-        sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_conf.q_prefix, svc, srvid);
+        sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_tls->G_atmi_conf.q_prefix, svc, srvid);
         
         NDRX_LOG(log_debug, "Choosing local service by round-robin mode, "
                 "rr: %d, srvid: %d, q: [%s]", psvcinfo->rrsrv, srvid, send_q);
