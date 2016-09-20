@@ -1,7 +1,7 @@
 /* 
-** Enduro/X Standard library thread local storage
+** Debug commons
 **
-** @file nstd_tls.h
+** @file ndebugcmn.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,77 +29,42 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NSTD_TLS_H
-#define	NSTD_TLS_H
+#ifndef NDEBUGCMN_H
+#define	NDEBUGCMN_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
 /*---------------------------Includes-----------------------------------*/
-#include <pthread.h>
-#include <ndrstandard.h>
-#include <nerror.h>
-#include <nstdutil.h>
-#include <ndebugcmn.h>
-/*---------------------------Externs------------------------------------*/
-/*---------------------------Macros-------------------------------------*/
-    
-#define ERROR_BUFFER_POLL            1024
-#define NSTD_TLS_MAGIG          0xa27f0f24
-    
-    
-#define NSTD_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_nstd_tls)) \
-        {G_nstd_tls = (nstd_tls_t *)ndrx_nstd_tls_new(TRUE, TRUE);};
-/*---------------------------Enums--------------------------------------*/
-/*---------------------------Typedefs-----------------------------------*/
+#include <ndrx_config.h>
+#include <stdio.h>
+#include <limits.h>
+#include <stdarg.h>
 
-/**
- * NSTD Library TLS
- */
+
+/* Create main debug structure */
 typedef struct
 {
-    int magic; /* have some magic for context data */
-    
-    /* ndebug.c */
-    long M_threadnr; /* Current thread nr */
-    
-    /* nerror.c */
-    char M_nstd_error_msg_buf[MAX_ERROR_LEN+1];
-    int M_nstd_error;
-    char errbuf[MAX_ERROR_LEN+1];
-    
-    /* nstdutil.c */
-    char util_buf1[20][20];
-    char util_buf2[20][20];
-    char util_text[20][128];
-    
-    /* sys_emqueue.c */
-    char emq_x[512];
-    
-    /* sys_poll.c: */
-    int M_last_err;
-    char M_last_err_msg[1024];  /* Last error message */
-    char poll_strerr[ERROR_BUFFER_POLL];
-    
-    /* ndebug.c */
-    ndrx_debug_t threadlog; /* thread private logging */
-    ndrx_debug_t requestlog; /* logfile on per request-basis */
-    
-    int is_auto; /* is this auto-allocated (thus do the auto-free) */
-    /* we should have lock inside */
-    pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
-    
-} nstd_tls_t;
-
+    int   level;
+    FILE *dbg_f_ptr;
+    char filename[PATH_MAX];
+    pid_t pid;
+    int buf_lines;
+    int buffer_size;
+    int lines_written;
+    char module[4+1]; /* 4 symbols of the module  */
+    int is_user; /* set to 1 if we run in user log mode, 2 if request file */
+} ndrx_debug_t;
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-extern NDRX_API __thread nstd_tls_t *G_nstd_tls; /* Enduro/X standard library TLS */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-    
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* NSTD_CONTEXT_H */
+#endif	/* NDEBUGCMN_H */
 

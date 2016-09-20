@@ -174,7 +174,11 @@ public void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     tls->M_nstd_error = 0;
     tls->M_last_err = 0;
     tls->M_last_err_msg[0] = EOS;
+    
     /* disable log handlers: */
+    memset(&tls->threadlog, 0, sizeof(tls->threadlog));
+    memset(&tls->requestlog, 0, sizeof(tls->requestlog));
+    
     tls->threadlog.level = FAIL;
     tls->requestlog.level = FAIL;
     

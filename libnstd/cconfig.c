@@ -97,14 +97,14 @@ public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_se
 
         if (NULL==(tmp1 = malloc(len+1)))
         {
-            fprintf(stderr, "%s: tmp1 malloc failed: %s\n", fn, strerror(errno));
+            userlog("%s: tmp1 malloc failed: %s", fn, strerror(errno));
             FAIL_OUT(ret);
         }
 
 
         if (NULL==(tmp2 = malloc(strlen(G_cctag)+1)))
         {
-            fprintf(stderr, "%s: tmp2 malloc failed: %s\n", fn, strerror(errno));
+            userlog("%s: tmp2 malloc failed: %s", fn, strerror(errno));
             FAIL_OUT(ret);
         }
 
@@ -124,7 +124,7 @@ public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_se
                                 tmp1,  /* global section */
                                 out))
             {
-                fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
+                userlog("%s: %s", fn, Nstrerror(Nerror));
                 FAIL_OUT(ret);
             }
             
@@ -136,7 +136,7 @@ public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_se
                                 section,  /* global section */
                                 out))
     {
-        fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
+        userlog("%s: %s", fn, Nstrerror(Nerror));
         FAIL_OUT(ret);
     }
     
@@ -225,7 +225,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     /* Check if envs are set before try to load */
     if (NULL==(*cfg = ndrx_inicfg_new()))
     {
-        fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
+        userlog("%s: %s", fn, Nstrerror(Nerror));
         FAIL_OUT(ret);
     }
     
@@ -235,13 +235,13 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     while (NULL!=config_resources[slot])
     {
 #ifdef CCONFIG_ENABLE_DEBUG
-        fprintf(stderr, "have config at slot [%d] [%s]\n", slot, config_resources[slot]);
+        userlog("have config at slot [%d] [%s]\n", slot, config_resources[slot]);
 #endif
         have_config = TRUE;
         if (SUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
                 (is_internal?(char **)M_sections:NULL)))
         {
-            fprintf(stderr, "%s: %s\n", fn, Nstrerror(Nerror));
+            userlog("%s: %s", fn, Nstrerror(Nerror));
             FAIL_OUT(ret);
         }
         slot++;
@@ -258,7 +258,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
         /* Get globals & transfer to setenv() */
         if (SUCCEED!=ndrx_cconfig_get_cf(*cfg, NDRX_CONF_SECTION_GLOBAL, &keyvals))
         {
-            fprintf(stderr, "%s: %s lookup failed: %s\n", fn, 
+            userlog("%s: %s lookup failed: %s", fn, 
                     NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
             FAIL_OUT(ret);
         }
@@ -267,17 +267,17 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
         EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
         {
 #ifdef CCONFIG_ENABLE_DEBUG
-            fprintf(stderr, "settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
+            userlog("settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
 #endif
 
             if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
             {
-                fprintf(stderr, "%s: failed to set %s=%s: %s\n", fn, 
+                userlog("%s: failed to set %s=%s: %s", fn, 
                     keyvals_iter->key, keyvals_iter->val, strerror(errno));
                 FAIL_OUT(ret);
             }
 #ifdef CCONFIG_ENABLE_DEBUG
-            fprintf(stderr, "test value %s\n", getenv(keyvals_iter->key));
+            userlog("test value %s\n", getenv(keyvals_iter->key));
 #endif
         }
     }
@@ -294,7 +294,7 @@ out:
         if (NULL!=*cfg)
         {
 #ifdef CCONFIG_ENABLE_DEBUG
-        fprintf(stderr, "Removing config %p\n", *cfg);
+        userlog("Removing config %p\n", *cfg);
 #endif
             ndrx_inicfg_free(*cfg);
             *cfg = NULL;
@@ -357,7 +357,7 @@ public int ndrx_cconfig_reload(void)
     char fn[]="ndrx_cconfig_reload";
     if (SUCCEED!=ndrx_inicfg_reload(G_cconfig, M_sections))
     {
-        fprintf(stderr, "%s: %s lookup to reload: %s\n", fn, 
+        userlog("%s: %s lookup to reload: %s", fn, 
                 NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
     }
 }
@@ -369,7 +369,7 @@ public int ndrx_cconfig_reload(void)
 public ndrx_inicfg_t *ndrx_get_G_cconfig(void)
 {
 #ifdef CCONFIG_ENABLE_DEBUG
-    fprintf(stderr, "returning G_cconfig %p\n", G_cconfig);
+    userlog("returning G_cconfig %p\n", G_cconfig);
 #endif
     if (!G_tried_to_load)
     {

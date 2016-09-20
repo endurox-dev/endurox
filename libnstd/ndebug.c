@@ -74,9 +74,13 @@
     fputs("\n", dbg_p->dbg_f_ptr);\
     BUFFER_CONTROL(dbg_p)
 
+
+#define DEFAULT_BUFFER_SIZE         50000
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+ndrx_debug_t G_tp_debug;
 ndrx_debug_t G_ubf_debug;
 ndrx_debug_t G_ndrx_debug;
 ndrx_debug_t G_stdout_debug;
@@ -113,20 +117,29 @@ public void ndrx_dbg_unlock(void)
 
 /**
  * Parser sharing the functionality with common config & old style debug.conf
- * @param tok1
- * @param tok2
+ * User update mode: tok1 == NULL, tok2 config string
+ * CConfig mode: tok1 != NULL, tok2 != NULL
+ * ndrxdebug.conf mode: tok1 !=NULL tok2 == NULL
+ * @param tok1 (full string for ndrxdebug.conf, for CConfig binary name
+ * @param tok2 (config string for CConfig or update mode)
  * @return 
  */
-private int ndrx_init_parse_line(char *tok1, char *tok2, char *filename, int *p_finish_off)
+public int ndrx_init_parse_line(char *tok1, char *tok2, 
+        int *p_finish_off, ndrx_debug_t *dbg_ptr)
 {
     int ret = SUCCEED;
     char *saveptr=NULL;
     char *name;
     char *tok;
     int ccmode = FALSE;
+    int upd_mode = FALSE; /* user update mode */
     char *p;
     
-    if (NULL!=tok2)
+    if (NULL==tok1 && tok2!=NULL)
+    {
+        upd_mode = TRUE;
+    } 
+    else if (NULL!=tok2)
     {
         ccmode = TRUE;
     }
@@ -135,18 +148,24 @@ private int ndrx_init_parse_line(char *tok1, char *tok2, char *filename, int *p_
     {
         name = tok1;
     }
-    else    
+    else if (!upd_mode)
     {
         name=strtok_r (tok1,"\t ", &saveptr);
         tok=strtok_r (NULL,"\t ", &saveptr);
     }
     
-    if ('*'==name[0] || 0==strcmp(name, EX_PROGNAME))
+    /**
+     * In update mode we do not have name
+     */
+    if (upd_mode || ('*'==name[0] || 0==strcmp(name, EX_PROGNAME)))
     {
-        *p_finish_off = ('*'!=name[0]);
+        if (!upd_mode)
+        {
+            *p_finish_off = ('*'!=name[0]);
+        }
         
         /* for non-cc mode we have already tokenised tok */
-        if (ccmode)
+        if (ccmode || upd_mode)
         {
             tok=strtok_r (tok2,"\t ", &saveptr);
         }
@@ -166,21 +185,56 @@ private int ndrx_init_parse_line(char *tok1, char *tok2, char *filename, int *p_
             {
                 G_ubf_debug.level = atoi(p+1);
             }
+            else if (0==strncmp("tp", tok, cmplen))
+            {
+                G_tp_debug.level = atoi(p+1);
+            }
             else if (0==strncmp("lines", tok, cmplen))
             {
-                G_ndrx_debug.buf_lines = G_ubf_debug.buf_lines = atoi(p+1);
-                if (G_ndrx_debug.buf_lines<0)
-                    G_ndrx_debug.buf_lines=G_ubf_debug.buf_lines=0;
+                int lines = atoi(p+1);
+                
+                if (lines < 0)
+                {
+                    lines = 0;
+                }
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->buf_lines = lines;
+                }
+                else
+                {
+                    G_tp_debug.buf_lines = 
+                            G_ndrx_debug.buf_lines = 
+                            G_ubf_debug.buf_lines = lines;
+                }
             }
             else if (0==strncmp("bufsz", tok, cmplen))
             {
-                G_ndrx_debug.buffer_size = G_ubf_debug.buffer_size = atoi(p+1);
-                if (G_ndrx_debug.buffer_size<=0)
-                    G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
+                int bufsz = atoi(p+1);
+                
+                bufsz = atoi(p+1);
+                
+                if (bufsz<=0)
+                {
+                    bufsz = DEFAULT_BUFFER_SIZE;
+                }
+
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->buffer_size = bufsz;
+                }
+                else
+                {
+                    G_tp_debug.buffer_size = 
+                            G_ndrx_debug.buffer_size = 
+                            G_ubf_debug.buffer_size = bufsz;
+                }
             }
             else if (0==strncmp("file", tok, cmplen))
             {
-                strcpy(filename, p+1);
+                strcpy(G_tp_debug.filename, p+1);
+                strcpy(G_ubf_debug.filename, p+1);
+                strcpy(G_ndrx_debug.filename, p+1);
             }
             
             tok=strtok_r (NULL,"\t ", &saveptr);
@@ -200,7 +254,6 @@ public void ndrx_init_debug(void)
     FILE *f;
     char *p;
     int finish_off = FALSE;
-    char filename[PATH_MAX]={EOS};
     ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
@@ -211,6 +264,9 @@ public void ndrx_init_debug(void)
     G_ndrx_debug.dbg_f_ptr = stderr;
     G_ubf_debug.dbg_f_ptr = stderr;
     G_stdout_debug.dbg_f_ptr = stdout;
+    
+    strcpy(G_ubf_debug.module, "UBF ");
+    strcpy(G_ndrx_debug.module, "NDRX");
     
     G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
     
@@ -230,7 +286,7 @@ public void ndrx_init_debug(void)
         if (NULL!=cfg_file &&
                 NULL!=(f=fopen(cfg_file, "r")))
         {
-            char buf[5000];
+            char buf[PATH_MAX*2];
 
             /* process line by line */
             while (NULL!=fgets(buf, sizeof(buf), f))
@@ -245,7 +301,7 @@ public void ndrx_init_debug(void)
                     buf[strlen(buf)-1]=EOS;
                 }
 
-                ndrx_init_parse_line(buf, NULL, filename, &finish_off);
+                ndrx_init_parse_line(buf, NULL, &finish_off, NULL);
 
                 if (finish_off)
                 {
@@ -275,32 +331,31 @@ public void ndrx_init_debug(void)
             /* 1. get he line by common & process */
             if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
             {
-                ndrx_init_parse_line(cc->key, cc->val, filename, &finish_off);
+                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL);
             }
             
             /* 2. get the line by binary name  */
             if (NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)))
             {
-                ndrx_init_parse_line(cc->key, cc->val, filename, &finish_off);
+                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL);
             }   
         }
     }
 
     /* open debug file.. */
-    if (EOS!=filename[0])
+    if (EOS!=G_ndrx_debug.filename[0])
     {
-        ndrx_str_env_subs(filename);
-        if (!(G_ndrx_debug.dbg_f_ptr = fopen(filename, "a")))
+        ndrx_str_env_subs_len(G_ndrx_debug.filename, sizeof(G_ndrx_debug.filename));
+        /* Opens the file descriptors */
+        if (!(G_ndrx_debug.dbg_f_ptr = fopen(G_ndrx_debug.filename, "a")))
         {
-                fprintf(stderr,"Failed to open %s\n",filename);
-                G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr=stderr;
+            fprintf(stderr,"Failed to open %s\n",G_ndrx_debug.filename);
+            G_tp_debug.dbg_f_ptr = G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr=stderr;
         }
         else
-        {
-            setvbuf(G_ndrx_debug.dbg_f_ptr,   NULL, _IOFBF, G_ndrx_debug.buffer_size);
-            G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr;
-            strcpy(G_ndrx_debug.filename, filename);
-            strcpy(G_ubf_debug.filename, filename);
+        {   
+            setvbuf(G_ndrx_debug.dbg_f_ptr, NULL, _IOFBF, G_ndrx_debug.buffer_size);
+            G_tp_debug.dbg_f_ptr = G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr;
         }
     }
 
@@ -373,7 +428,7 @@ public int debug_get_ubf_level(void)
  * @param ptr2 - buffer2
  * @param len - buffer size
  */
-public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *comment, void *ptr, void *ptr2, long len)
 {
     
@@ -386,7 +441,7 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, 
     char print_line2[256]={0};
     
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
-    __ndrx_debug__(dbg_ptr, lev, mod, file, line, func, "%s", comment);
+    __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
     
     for (i = 0; i < len; i++)
     {
@@ -484,7 +539,7 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, char *mod, 
  * @param ptr - buffer1
  * @param len - buffer size
  */
-public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *comment, void *ptr, long len)
 {
     int i;
@@ -494,7 +549,7 @@ public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const
     
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
     
-    __ndrx_debug__(dbg_ptr, lev, mod, file, line, func, "%s", comment);
+    __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
 
     for (i = 0; i < len; i++)
     {
@@ -545,7 +600,7 @@ public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const
  * @param fmt - format
  * @param ... - varargs
  */
-public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char *file, 
+public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *fmt, ...)
 {
     va_list ap;
@@ -568,7 +623,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, char *mod, const char
     ndrx_get_dt_local(&ldate, &ltime);
     
     sprintf(line_start, "%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
-        mod, lev, (int)dbg_ptr->pid, G_nstd_tls->M_threadnr, ldate, ltime, 
+        dbg_ptr->module, lev, (int)dbg_ptr->pid, G_nstd_tls->M_threadnr, ldate, ltime, 
         (int)(time_val.tv_usec/1000), line_print, line);
     
     va_start(ap, fmt);    
