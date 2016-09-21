@@ -54,6 +54,12 @@ The ndrxd learning mode is some period of time (configurable) in which ndrxd wil
 
 ![Alt text](doc/server_monitoring_and_recovery.png?raw=true "Enduro/X high availability facility")
 
+# Real time system patching
+
+It is possible to patch the Enduro/X system (update stateless XATMI servers) without service interruption. This is achieved by following scheme:
+
+![Alt text](doc/rt-patching.png?raw=true "Enduro/X real time patching")
+
 # Performance
 
 Due to fact that Enduro/X uses memory based queues, performance numbers are quite high:
