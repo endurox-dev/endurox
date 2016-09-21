@@ -99,6 +99,7 @@
 #define	EX_QNUMDEQ	((BFLDID32)33554758)	/* number: 326	 type: long */
 #define	EX_NERROR_CODE	((BFLDID32)400)	/* number: 400	 type: short */
 #define	EX_NERROR_MSG	((BFLDID32)167772561)	/* number: 401	 type: string */
+#define	EX_NREQLOGFILE	((BFLDID32)167772562)	/* number: 402	 type: string */
 #define	EX_CC_CMD	((BFLDID32)67109364)	/* number: 500	 type: char */
 #define	EX_CC_RESOURCE	((BFLDID32)167772661)	/* number: 501	 type: string */
 #define	EX_CC_LOOKUPSECTION	((BFLDID32)167772662)	/* number: 502	 type: string */

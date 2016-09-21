@@ -130,7 +130,7 @@ EX_QNUMDEQ		    226 	long	-	Number of dequeues
 ################################################################################
 EX_NERROR_CODE           300         short  -        Result code (error code)
 EX_NERROR_MSG            301         string -        Result message
-
+EX_NREQLOGFILE           302         string -        Request log file
 ################################################################################
 # Fields for Common Config Server (ccsrv)
 # Config commands:
@@ -146,7 +146,8 @@ EX_CC_MANDATORY             404         string -        List of mandatory config
 
 # Formats accepted
 # sX..Y (string, in length of X till Y, X may not be set, then 0 is accpeted), e.g. s..16, s5..10
-# nX..Y Number in length of X till Y (this allows, "e-,." to be present. X and Y is string format length of the field accepted
+# fX..Y Number in length of X till Y (this allows, "e-,." to be present. X and Y is string format length of the field accepted
+# dX..Y Decimal in length of X till Y (only digits allowed)
 # t (boolean field, accepts: yes,no,TRUE,FALSE,1,0)
 EX_CC_FORMAT_KEY            405         string -        Config key format
 EX_CC_FORMAT_FORMAT         406         string -        For to be checked
