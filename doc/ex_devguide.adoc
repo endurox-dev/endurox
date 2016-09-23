@@ -15,11 +15,6 @@ project. NetBeans supports CMake projects.
 
 Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
 and cgreen (integrated into Enduro/X) for unit testing.
-Gsoap (also included in ThirdParity/web_services) is used for webservice access
-layer generation.
-
-WebService generator uses mono (v4) for c source generation.
-
 
 Unit testing
 ------------
@@ -41,11 +36,103 @@ Completed "main": 18 passes, 0 failure, 0 exceptions.
 --------------------------------------------------------------------------------
 
 
-EnduroX libraries
------------------
+Enduro/X libraries
+------------------
 
 The framework is composed by following internal libraries and it's dependencies:
 [dia, module_dependency.dia, module_dependency.png, x300]
+-------------------------------
+-------------------------------
+
+Common configuration
+--------------------
+
+Enduro/X users are welcome to use common configuration engine. This engine uses
+ini files to get key/values from ini section (and subsection with inheritance).
+The configuration can point to directory and in that case Enduro/X will read the
+all configuration files in directory which ends with with ".ini .cfg, .conf, .config".
+Configuration engine will automatically detect that given resource is directory
+and will start to scan for files in directory.
+
+The library keeps all ini file data in memory in hash tables, which also can be iterated
+as the linked lists. The library can be instructed to refresh the memory configuration.
+Refresh function detects any files changed in disk (by time stamp) and reload the data
+in memory.
+
+=== Enduro/X common config setup
+
+Enduro/X can be configured by using ini file (or files) instead of environment variables, 
+ndrxdebug.conf and q.conf.
+Two new environment variables now are added to the system:
+
+1. NDRX_CCONFIG=/path/to/ini/file/or/directory/with/files 
+
+2. And optional NDRX_CCTAG which allows processes to specify the subsection of Enduro/X system settings.
+
+The configurations sections are:
+
+- [@global] - environment variables for process (see ex_env(5))
+
+- [@debug] - debug configuration per binary (see ndrxdebug.conf(5))
+
+- [@queue] - persistent queue configurations.
+
+If you use NDRX_CCTAG or specify the "cctag" for ATMI server, then Enduro/X 
+will scan for sections like (e.g. cctag=TAG1):
+
+- [@global/TAG1] and then [@global]
+
+- [@debug/TAG1] and then [@debug]
+
+- [@queue/TAG1] and then [@debug]
+
+cctag can contain multiple tags, which are separated by '/'.
+In that case multiple lockups will be made with base section combination.
+
+=== User accessible configuration server
+
+"cconfsrv" XATMI server which can be used by applications to use Enduro/X 
+framework for application configuration. The user application can call the 
+"@CCONFIG" server in two modes:
+
+A) for getting the exact section;
+
+B) for listing the sections.
+
+See cconfsrv(8) for more details. 
+
+The idea behind this is that user can do the programming under Enduro/X in
+ multiple languages (C/Go/Perl/Python/PHP/NodeJs) and these modules typically
+needs configuration. It would be waste of time if for each of the languages
+developer would need to think how to read the configuration from configuration
+files with native libraries. The Enduro/X offers standard XATMI micro-service 
+call for reading the ini files in common way for whole application,
+no matter in which language it is programmed.
+
+But C/C++ programmers can use Enduro/X direct libraries for configuration processing.
+See the 'atmitest/test029_inicfg/atmiclt29.c' for sample code.
+
+
+=== Common configuration internals
+The configuration driving is built in multiple layers:
+
+- Layer 1: Physical file reading by "ini.h" library which gives the 
+callback for any parsed key/value/section;
+
+- Layer 2: Enduro/X code named "inicfg.h" and "inicfg.c". This drives the configuration
+object loads files into memory. Performs the refreshes, resolves the sections (with inheritance).
+Returns the buffers with values.
+
+- Layer 3: High level configuration driving by "cconfig.h" and "cconfig.c". This operates
+with Enduro/X environment variables and Enduro/X configuration files.
+However you may use different env variables for different purposes. For example:
+"NDRX_CCONFIG" variable can point to Enduro/X config, but "NDRX_CCONFIG1" can point to your
+application configuration. And this still is valid setup and keeps files separate.
+
+- Layer 4: "cconfsrv". This is high level API, accessible by transaction protocol (TP)
+sub-system. See the cconfsrv(8) manpage. Internally is uses Layer 2 and 3 API.
+
+[dia, common_config.dia, common_config.png, x450]
 -------------------------------
 -------------------------------
 
@@ -64,7 +151,7 @@ this feature limits platform to be working on Linux only.
 
 Starting from Enduro/X version 3, there is support for other Posix compatible Operating
 Systems. Where possible Posix queues are used. If no Queueu support built in, for example
-Apple OSX, then emulated posix queues are used. For these platforms, the caller processes
+Apple OSX, then emulated Posix queues are used. For these platforms, the caller processes
 does choose the queue where to send the message in round-robin mode. For each service
 shared memory contains list of server IDs providing the service. In round robin mode
 the server id is selected, and caller sends the service to queue (e.g. 'dom1,svc,TESTSVC,102'
