@@ -77,6 +77,7 @@ extern "C" {
 extern NDRX_API int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out);
 extern NDRX_API int ndrx_cconfig_load(void);
 extern NDRX_API ndrx_inicfg_t *ndrx_get_G_cconfig(void);
+extern NDRX_API int ndrx_cconfig_reload(void);
 
 /* for user: */
 extern NDRX_API int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg);

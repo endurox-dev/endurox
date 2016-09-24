@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "test000.h"
 
@@ -53,12 +54,14 @@ void* t1(void *arg)
 {    
         M_ptrs[1] = &M_field;
 	sleep(1);
+	return NULL;
 }
 
 void* t2(void *arg)
 {   
         M_ptrs[2] = &M_field;
 	sleep(1);
+	return NULL;
 }
 
 int main( int argc , char **argv )

@@ -359,7 +359,7 @@ try_again:
 		rewind(state_f);
 		len = fprintf(state_f,
 			      "clock: %04x tv: %016lu %08lu adj: %08d\n",
-			      clock_seq, last.tv_sec, last.tv_usec, adjustment);
+			      clock_seq, last.tv_sec, (unsigned long)last.tv_usec, adjustment);
 		fflush(state_f);
 		if (ftruncate(state_fd, len) < 0) {
 			fprintf(state_f, "                   \n");

@@ -60,6 +60,7 @@
 #include "thpool.h"
 #include "qcommon.h"
 #include "cconfig.h"
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 extern char *optarg;

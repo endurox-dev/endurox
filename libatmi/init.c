@@ -54,6 +54,7 @@
 #include <atmi_shm.h>
 #include <sys_unix.h>
 #include <atmi_tls.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000

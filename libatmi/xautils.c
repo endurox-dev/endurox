@@ -61,6 +61,7 @@
 
 #include <xa_cmn.h>
 #include <atmi_tls.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define     TM_CALL_FB_SZ           1024        /* default size for TM call */

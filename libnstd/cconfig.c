@@ -47,6 +47,7 @@
 #include <inicfg.h>
 #include <cconfig.h>
 #include <nerror.h>
+#include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* #define CCONFIG_ENABLE_DEBUG */
@@ -359,7 +360,10 @@ public int ndrx_cconfig_reload(void)
     {
         userlog("%s: %s lookup to reload: %s", fn, 
                 NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
+        return FAIL;
     }
+
+    return SUCCEED;
 }
 
 /**

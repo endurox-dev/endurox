@@ -50,6 +50,7 @@
 /* make llvm silent.. */
 extern void yy_scan_string (char *yy_str  );
 extern void _free_parser(void);
+extern int yyparse (void);
 /*---------------------------Macros-------------------------------------*/
 #define FREE_UP_UB_BUF(v) \
 if (v->dyn_alloc && NULL!=v->strval)\
