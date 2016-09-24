@@ -1,6 +1,6 @@
 #!/bin/bash
 ## 
-## @(#) Test2 Launcher
+## @(#) Test31 Launcher
 ##
 ## @file run.sh
 ## 
@@ -48,6 +48,10 @@ fi;
 
 rm *.log
 
+# Clean up log dir
+rm -rf ./logs
+mkdir ./logs
+
 (./atmisv31FIRST -t 4 -i 1 2>&1) > ./atmisv31FIRST.log &
 (./atmisv31SECOND -i 1 2>&1) > ./atmisv31SECOND.log &
 sleep 2
@@ -65,6 +69,33 @@ xadmin killall atmisv31FIRST 2>/dev/null
 xadmin killall atmisv31SECOND 2>/dev/null
 
 #killall atmiclt1
+
+
+# Check the log files
+if [ "X`grep 'Hello from NDRX' clt-endurox.log`" == "X" ]; then
+        echo "error in clt-endurox.log!"
+	RET=-2
+fi
+
+if [ "X`grep 'Hello from tp' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log!"
+	RET=-2
+fi
+
+if [ "X`grep 'hello from thread 1' clt-tp-th1.log`" == "X" ]; then
+        echo "error in clt-tp-th1.log!"
+	RET=-2
+fi
+
+if [ "X`grep 'hello from thread 2' clt-tp-th2.log`" == "X" ]; then
+        echo "error in clt-tp-th2.log!"
+	RET=-2
+fi
+
+if [ "X`grep 'hello from main thread' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log!"
+	RET=-2
+fi
 
 popd 2>/dev/null
 

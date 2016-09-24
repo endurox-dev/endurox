@@ -40,6 +40,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -48,81 +49,87 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+void do_thread_work1 ( void *ptr )
+{
+    if (SUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, FAIL, "file=./clt-tp-th1.log tp=5", "TEST", NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
+                Nstrerror(Nerror));
+    }
+    else
+    {
+        sleep(1);
+        tplog(5, "hello from thread 1");
+    }
+}
+
+void do_thread_work2 ( void *ptr )
+{
+    if (SUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, FAIL, "file=./clt-tp-th2.log tp=5", "TEST", NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
+                Nstrerror(Nerror));
+    }
+    else
+    {
+        sleep(1);
+        tplog(5, "hello from thread 2");
+    }
+}
+
 /*
  * Do the test call to the server
  */
-int main(int argc, char** argv) {
-
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
-    long rsplen;
-    int i,j;
-    long cnt = 0;
-    int ret=SUCCEED;
-    double d, d2;
-    double dv = 55.66;
-    double dv2 = 11.66;
-    
-for (j=0; j<100000; j++)
+int main(int argc, char** argv)
 {
-    Binit(p_ub, Bsizeof(p_ub));
-
-    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
-    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
-    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
-
-    for (i=0; i<100; i++)
+    int ret = SUCCEED;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
+    pthread_t thread1, thread2;  /* thread variables */
+    
+    if (SUCCEED==p_ub)
     {
-        cnt++;
-        dv+=1;
-        dv2+=1;
-        
-        if (FAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-        {
-            NDRX_LOG(log_error, "TEST2_1ST_AL failed: %s",
-                    tpstrerror(tperrno));
-            ret=FAIL;
-            goto out;
-        }
-
-        /* Verify the data */
-        if (FAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
-        {
-            NDRX_LOG(log_debug, "Failed to get T_DOUBLE_FLD[%d]", i);
-            ret=FAIL;
-            goto out;
-        }
-
-        if (FAIL==Bget(p_ub, T_DOUBLE_2_FLD, i, (char *)&d2, 0))
-        {
-            NDRX_LOG(log_debug, "Failed to get T_DOUBLE_2_FLD[%d]", i);
-            ret=FAIL;
-            goto out;
-        }
-
-        if (fabs(dv-d) > 0.00001)
-        {
-            NDRX_LOG(log_debug, "T_DOUBLE_FLD: %lf!=%lf =>  FAIL", dv, d);
-            ret=FAIL;
-            goto out;
-        }
-
-        if (fabs(dv2 - d2) > 0.00001)
-        {
-            NDRX_LOG(log_debug, "T_DOUBLE_2_FLD: %lf!=%lf =>  FAIL", dv, d);
-            ret=FAIL;
-            goto out;
-        }
-        
-        /* print the output */
-        Bfprint(p_ub, stderr);
+        NDRX_LOG(log_error, "TESTERROR: Failed to allocate p_ub: %s", tpstrerror(tperrno));
+        FAIL_OUT(ret);
     }
-
-    NDRX_LOG(log_debug, "CURRENT CNT: %ld", cnt);
-    if (argc<=1)
+    
+    /* 
+     * Enduro/X logging 
+     */
+    if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
+            log_debug, NULL, "TEST", "./clt-endurox.log"))
     {
-        break;
+        NDRX_LOG(log_error, "TESTERROR: Failed to configure Enduro/X logger: %s", 
+                Nstrerror(Nerror));
+        FAIL_OUT(ret);
     }
-}
+    
+    /*
+     * User TP log 
+     */
+    if (SUCCEED!=tplogconfig(LOG_FACILITY_TP, FAIL, "file=./clt-tp.log tp=6", "TEST", NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
+                Nstrerror(Nerror));
+        FAIL_OUT(ret);
+    }
+    
+    /* write some stuff in user log */
+    tplog(log_error, "Hello from tp!");
+    
+    /* write some stuff in user Enduro/X log */
+    NDRX_LOG(log_error, "Hello from NDRX!");
+    
+    tplog(6, "hello from level 6");
+    
+    /* run off two threads... (each will have it's own log file) */
+    pthread_create (&thread1, NULL, (void *) &do_thread_work1, NULL);
+    pthread_create (&thread2, NULL, (void *) &do_thread_work2, NULL);
+    
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+    
+    tplog(6, "hello from main thread");
 
 out:
     return ret;

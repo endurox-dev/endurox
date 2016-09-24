@@ -57,6 +57,7 @@
 #include <cconfig.h>
 
 #include "nstd_tls.h"
+#include "userlog.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -124,7 +125,7 @@ public void ndrx_dbg_unlock(void)
  * @param tok2 (config string for CConfig or update mode)
  * @return 
  */
-public int ndrx_init_parse_line(char *tok1, char *tok2, 
+public int ndrx_init_parse_line(char *in_tok1, char *in_tok2, 
         int *p_finish_off, ndrx_debug_t *dbg_ptr)
 {
     int ret = SUCCEED;
@@ -134,6 +135,28 @@ public int ndrx_init_parse_line(char *tok1, char *tok2,
     int ccmode = FALSE;
     int upd_mode = FALSE; /* user update mode */
     char *p;
+    /* have a own copies of params as we do the token over them... */
+    char *tok1 = NULL;
+    char *tok2 = NULL;
+    
+    if (NULL!=in_tok1)
+    {
+        if (NULL==(tok1 = strdup(in_tok1)))
+        {
+            userlog("Failed to strdup(): %s", strerror(errno));
+            FAIL_OUT(ret);
+        }
+    }
+    
+    if (NULL!=in_tok2)
+    {
+        if (NULL==(tok2 = strdup(in_tok2)))
+        {
+            userlog("Failed to strdup(): %s", strerror(errno));
+            FAIL_OUT(ret);
+        }
+    }
+    
     
     if (NULL==tok1 && tok2!=NULL)
     {
@@ -242,9 +265,16 @@ public int ndrx_init_parse_line(char *tok1, char *tok2,
             }
             else if (0==strncmp("file", tok, cmplen))
             {
-                strcpy(G_tp_debug.filename, p+1);
-                strcpy(G_ubf_debug.filename, p+1);
-                strcpy(G_ndrx_debug.filename, p+1);
+                if (NULL!=dbg_ptr)
+                {
+                    strcpy(dbg_ptr->filename, p+1);
+                }
+                else
+                {
+                    strcpy(G_tp_debug.filename, p+1);
+                    strcpy(G_ubf_debug.filename, p+1);
+                    strcpy(G_ndrx_debug.filename, p+1);
+                }
             }
             
             tok=strtok_r (NULL,"\t ", &saveptr);
@@ -252,6 +282,16 @@ public int ndrx_init_parse_line(char *tok1, char *tok2,
     }
     
 out:
+    if (NULL!=tok1)
+    {
+        free(tok1);
+    }
+
+    if (NULL!=tok2)
+    {
+        free(tok2);
+    }
+    
     return ret;
 }
 
@@ -273,12 +313,13 @@ public void ndrx_init_debug(void)
     /* Initialize with defaults.. */
     G_ndrx_debug.dbg_f_ptr = stderr;
     G_ubf_debug.dbg_f_ptr = stderr;
+    G_tp_debug.dbg_f_ptr = stderr;
     G_stdout_debug.dbg_f_ptr = stdout;
     
     strcpy(G_ubf_debug.module, "UBF ");
     strcpy(G_ndrx_debug.module, "NDRX");
     
-    G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
+    G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
     
     /* static coinf */
     G_stdout_debug.buf_lines = 1;

@@ -37,7 +37,7 @@
 #include <ubf.h>
 #include <test.fd.h>
 
-void TEST2_2ND (TPSVCINFO *p_svc)
+void TEST31_2ND (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
 
@@ -78,13 +78,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TEST2_2ND", TEST2_2ND))
+    if (SUCCEED!=tpadvertise("TEST31_2ND", TEST31_2ND))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST2_2ND (first)!");
+        NDRX_LOG(log_error, "Failed to initialize TEST31_2ND (first)!");
     }
-    else if (SUCCEED!=tpadvertise("TEST2_2ND_AL", TEST2_2ND))
+    else if (SUCCEED!=tpadvertise("TEST31_2ND_AL", TEST31_2ND))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST2_2ND_AL (alias)!");
+        NDRX_LOG(log_error, "Failed to initialize TEST31_2ND_AL (alias)!");
     }
     return SUCCEED;
 }

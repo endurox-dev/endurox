@@ -37,7 +37,7 @@
 #include <ubf.h>
 #include <test.fd.h>
 
-void TEST2_1ST (TPSVCINFO *p_svc)
+void TEST31_1ST (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
 
@@ -45,7 +45,7 @@ void TEST2_1ST (TPSVCINFO *p_svc)
 
     UBFH *p_ub = (UBFH *)p_svc->data;
 
-    NDRX_LOG(log_debug, "TEST2_1ST got call");
+    NDRX_LOG(log_debug, "TEST31_1ST got call");
 
     /* Just print the buffer */
     Bprint(p_ub);
@@ -64,7 +64,7 @@ void TEST2_1ST (TPSVCINFO *p_svc)
     }
 
 out:
-    tpforward(  "TEST2_2ND",
+    tpforward(  "TEST31_2ND",
                 (char *)p_ub,
                 0L,
                 0L);
@@ -77,13 +77,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TEST2_1ST", TEST2_1ST))
+    if (SUCCEED!=tpadvertise("TEST31_1ST", TEST31_1ST))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST2_1ST (first)!");
+        NDRX_LOG(log_error, "Failed to initialize TEST31_1ST (first)!");
     }
-    else if (SUCCEED!=tpadvertise("TEST2_1ST_AL", TEST2_1ST))
+    else if (SUCCEED!=tpadvertise("TEST31_1ST_AL", TEST31_1ST))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST2_1ST_AL (alias)!");
+        NDRX_LOG(log_error, "Failed to initialize TEST31_1ST_AL (alias)!");
     }
 
     return SUCCEED;
