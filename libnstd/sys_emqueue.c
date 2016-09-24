@@ -388,7 +388,9 @@ mqd_t emq_open(const char *pathname, int oflag, ...)
 again:
     if (oflag & O_CREAT) {
         va_start(ap, oflag); /* init ap to final named argument */
-        mode = va_arg(ap, mode_t) & ~S_IXUSR;
+
+        /*mode = va_arg(ap, mode_t) & ~S_IXUSR; - gives promition to int warning on osx */
+        mode = va_arg(ap, int) & ~S_IXUSR;
         attr = va_arg(ap, struct mq_attr *);
         va_end(ap);
 
