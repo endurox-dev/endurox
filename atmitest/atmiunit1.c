@@ -273,10 +273,10 @@ Ensure(test030_cconfsrv)
     assert_equal(ret, SUCCEED);
 }
 
-Ensure(test031_logger)
+Ensure(test031_logging)
 {
     int ret;
-    ret=system_dbg("test031_logger/run.sh");
+    ret=system_dbg("test031_logging/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
@@ -324,7 +324,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test028_tmq);
     add_test(suite, test029_inicfg);
     add_test(suite, test030_cconfsrv);
-    add_test(suite, test031_logger);
+    add_test(suite, test031_logging);
     
     return suite;
 }

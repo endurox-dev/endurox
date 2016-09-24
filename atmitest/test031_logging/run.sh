@@ -30,7 +30,7 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
-TESTNAME="test002_basicforward"
+TESTNAME="test031_logging"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
