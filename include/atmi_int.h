@@ -516,9 +516,13 @@ extern NDRX_API int _tpenqueue (char *qspace, short nodeid, short srvid, char *q
 extern NDRX_API int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char **data, long *len, long flags);
 
-extern void _tpfreectxt(TPCONTEXT_T context);
-extern int _tpsetctxt(TPCONTEXT_T context, long flags);
-extern int _tpgetctxt(TPCONTEXT_T *context, long flags);
+extern NDRX_API void _tpfreectxt(TPCONTEXT_T context);
+extern NDRX_API int _tpsetctxt(TPCONTEXT_T context, long flags);
+extern NDRX_API int _tpgetctxt(TPCONTEXT_T *context, long flags);
+
+/* debug logging */
+extern NDRX_API int _tplogsetreqfile(char **data, char *filename, char *filesvc);
+extern NDRX_API int _tploggetbufreqfile(char *data, char *filename, int bufsize);
 
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);

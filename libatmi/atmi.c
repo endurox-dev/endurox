@@ -1009,3 +1009,55 @@ public int tpgetctxt(TPCONTEXT_T *context, long flags)
 out:
     return ret;
 }
+
+/**
+ * Set the request logfile
+ * - If data exists and filename exists, then update data buffer and set active 
+ *      request logfile to filename
+ * - If data does not exists, and filename exists, then set active request logfile
+ *      to filename
+ * @param data XATMI buffer
+ * @param filename new logfile (if no data, then this is source for filename).
+ * @param filesvc filename service (optional) - call the XATMI server for 
+ *              generating file name and putting into buffer
+ * @return SUCCEED/FAIL
+ */
+public int tplogsetreqfile(char **data, char *filename, char *filesvc)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        FAIL_OUT(ret);
+    }
+    
+    ret = _tplogsetreqfile(data, filename, filesvc);
+    
+out:
+    return ret;
+}
+
+/**
+ * Get the filename from buffer ()
+ * @param data
+ * @param filename
+ * @return SUCCEED (have filename in buffer, 
+ */
+public int tploggetbufreqfile(char *data, char *filename, int bufsize)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        FAIL_OUT(ret);
+    }
+    
+    ret = _tploggetbufreqfile(data, filename, bufsize);
+    
+out:
+    return ret;
+}

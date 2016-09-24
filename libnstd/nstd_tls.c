@@ -150,6 +150,7 @@ public void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     char fn[] = "nstd_context_new";
     
     /* init they key storage */
+    
     if (M_first)
     {
         MUTEX_LOCK_V(M_thdata_init);

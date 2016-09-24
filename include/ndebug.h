@@ -57,11 +57,11 @@ extern "C" {
 /*
  * Logging settings
  */
-#define LOG_FACILITY_NDRX       1 /* settings for ATMI logging             */
-#define LOG_FACILITY_UBF        2 /* settings for UBF logging              */
-#define LOG_FACILITY_TP         3 /* settings for TP logging               */
-#define LOG_FACILITY_TP_THREAD  4 /* settings for TP, thread based logging */
-#define LOG_FACILITY_TP_REQUEST 5 /* Request logging, thread based         */
+#define LOG_FACILITY_NDRX       0x00001 /* settings for ATMI logging             */
+#define LOG_FACILITY_UBF        0x00002 /* settings for UBF logging              */
+#define LOG_FACILITY_TP         0x00004 /* settings for TP logging               */
+#define LOG_FACILITY_TP_THREAD  0x00008 /* settings for TP, thread based logging */
+#define LOG_FACILITY_TP_REQUEST 0x00010 /* Request logging, thread based         */
     
 #define DBG_MAXLEV log_dump
 

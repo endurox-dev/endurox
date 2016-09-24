@@ -47,6 +47,8 @@
 #include <userlog.h>
 #include <nstd_tls.h>
 #include <errno.h>
+
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {_Nunset_error();}
@@ -161,7 +163,8 @@ out:
  * Setup the request logging file.
  * NOTE that we need: 
  * 1. tplogsetreqfile(<buffer>, <filename> (optional, not needed if name already in buffer))
- * 2. tploggetreqfile(<buffer>) return TRUE/FALSE if we have, and string with the value of fname
+ * 2. tploggetreqfile(fname (out)) return TRUE/FALSE if we have, and string with the value of fname
+ * 3. tplogclosereqfile(); close thre request logging.
  * File will be set to EX_REQLOG = <Full path to request log file>
  * @param filename file name to log to
  */
@@ -204,6 +207,7 @@ public void tplogclosereqfile(char *filename)
     
     logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
     G_nstd_tls->requestlog.filename[0] = EOS;
+    G_nstd_tls->requestlog.dbg_f_ptr = NULL;
 }
 
 
@@ -223,80 +227,140 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
     int ret = SUCCEED;
     ndrx_debug_t *l;
     char filename[PATH_MAX];
+    int loggers[] = {LOG_FACILITY_NDRX, 
+                    LOG_FACILITY_UBF, 
+                    LOG_FACILITY_TP,
+                    LOG_FACILITY_TP_THREAD,
+                    LOG_FACILITY_TP_REQUEST
+    };
+    int i;
     
     API_ENTRY; /* set TLS too */
     
-    switch (logger)
+    for (i=0; i<N_DIM(loggers); i++)
     {
-        case LOG_FACILITY_NDRX:
+        
+        if (loggers[i] == LOG_FACILITY_NDRX && (logger & LOG_FACILITY_NDRX))
+        {
             l = &G_ndrx_debug;
-            break;
-        case LOG_FACILITY_UBF:
+        }
+        else if (loggers[i] == LOG_FACILITY_UBF && (logger & LOG_FACILITY_UBF))
+        {
             l = &G_ubf_debug;
-            break;
-        case LOG_FACILITY_TP:
+        }
+        else if (loggers[i] == LOG_FACILITY_TP && (logger & LOG_FACILITY_TP))
+        {
             l = &G_tp_debug;
-            break;
-        case LOG_FACILITY_TP_THREAD:
+        }
+        else if (loggers[i] == LOG_FACILITY_TP_THREAD && (logger & LOG_FACILITY_TP_THREAD))
+        {
+            /* if thread was not set, then inherit the all stuff from tp
+             */
+            if (FAIL==G_nstd_tls->threadlog.level)
+            {
+                memcpy(&G_nstd_tls->threadlog, &G_tp_debug, sizeof(G_tp_debug));
+            }
             l = &G_nstd_tls->threadlog;
-            break;
-        case LOG_FACILITY_TP_REQUEST:
+        }
+        else if (loggers[i] == LOG_FACILITY_TP_REQUEST && logger & (LOG_FACILITY_TP_REQUEST))
+        {
+            if (FAIL==G_nstd_tls->threadlog.level)
+            {
+                memcpy(&G_nstd_tls->requestlog, &G_tp_debug, sizeof(G_tp_debug));
+            }
+            
             l = &G_nstd_tls->requestlog;
-            break;
-        default:
+        }
+        else
+        {
             _Nset_error_fmt(NEINVAL, "tplogconfig: Invalid logger: %d", logger);
             FAIL_OUT(ret);
-            break;
-    }
-    
-    if (NULL!=module && EOS!=module[0])
-    {
-        strncpy(l->module, module, 4);
-        l->module[4] = EOS;
-    }
-    
-    if (NULL!= debug_string && EOS!=debug_string[0])
-    {
-        /* parse out the logger 
-         * Check if file is changed? If changed, then we shall
-         * close the old file & open newone...
-         */
-        strcpy(filename, l->filename);
-        if (SUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
-        {
-            _Nset_error_msg(NESYSTEM, "Failed to parse debug string");
-            FAIL_OUT(ret);
         }
-        
-        /* only if new name is not passed in */
-        if (0!=strcmp(filename, l->filename) && 
-                (NULL==new_file || EOS==new_file[0]))
+
+        if (NULL!=module && EOS!=module[0])
         {
+            strncpy(l->module, module, 4);
+            l->module[4] = EOS;
+        }
+
+        if (NULL!= debug_string && EOS!=debug_string[0])
+        {
+            /* parse out the logger 
+             * Check if file is changed? If changed, then we shall
+             * close the old file & open newone...
+             */
+            strcpy(filename, l->filename);
+            if (SUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
+            {
+                _Nset_error_msg(NESYSTEM, "Failed to parse debug string");
+                FAIL_OUT(ret);
+            }
+
+            /* only if new name is not passed in */
+            if (0!=strcmp(filename, l->filename) && 
+                    (NULL==new_file || EOS==new_file[0]))
+            {
+                /* open new log file... (to what ever level we run...) */
+                l->filename[0] = EOS; /* it will do the compare inside... */
+                if (SUCCEED!=(ret = logfile_change_name(logger, l->filename)))
+                {
+                    _Nset_error_msg(NESYSTEM, "Failed to change log name");
+                    FAIL_OUT(ret);
+                }
+            }
+        }
+
+        if (FAIL!=lev)
+        {
+            l->level = lev;
+        }
+
+        if (NULL!=new_file && EOS!=new_file[0] && 0!=strcmp(filename, l->filename))
+        {            
             /* open new log file... (to what ever level we run...) */
-            l->filename[0] = EOS; /* it will do the compare inside... */
-            if (SUCCEED!=(ret = logfile_change_name(logger, l->filename)))
+            if (SUCCEED!=(ret = logfile_change_name(logger, filename)))
             {
                 _Nset_error_msg(NESYSTEM, "Failed to change log name");
                 FAIL_OUT(ret);
             }
         }
+
     }
     
-    if (FAIL!=lev)
+out:
+    return ret;
+}
+
+
+/**
+ * Get the current request file
+ * @param filename (optional) optional to return file name
+ * @return TRUE (request file used) / FALSE (request file not used)
+ */
+public int tploggetreqfile(char *filename, int bufsize)
+{
+    int ret = FALSE;
+    
+    if (NULL==G_nstd_tls->requestlog.dbg_f_ptr)
     {
-        l->level = lev;
+        ret=FALSE;
+        goto out;
     }
     
-    if (NULL!=new_file && EOS!=new_file[0] && 0!=strcmp(filename, l->filename))
-    {            
-        /* open new log file... (to what ever level we run...) */
-        if (SUCCEED!=(ret = logfile_change_name(logger, filename)))
+    if (NULL!=filename)
+    {
+        ret = TRUE;
+        
+        if (bufsize>0)
         {
-            _Nset_error_msg(NESYSTEM, "Failed to change log name");
-            FAIL_OUT(ret);
+            strncpy(filename, G_nstd_tls->requestlog.filename, bufsize-1);
+            filename[bufsize-1] = EOS;
+        }
+        else
+        {
+            strcpy(filename, G_nstd_tls->requestlog.filename);
         }
     }
-    
     
 out:
     return ret;

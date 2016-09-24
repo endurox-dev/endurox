@@ -187,7 +187,16 @@ public int ndrx_init_parse_line(char *tok1, char *tok2,
             }
             else if (0==strncmp("tp", tok, cmplen))
             {
-                G_tp_debug.level = atoi(p+1);
+                int lev = atoi(p+1);
+            
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->level = lev;
+                }
+                else
+                {
+                    G_tp_debug.level = lev;
+                }
             }
             else if (0==strncmp("lines", tok, cmplen))
             {
@@ -197,6 +206,7 @@ public int ndrx_init_parse_line(char *tok1, char *tok2,
                 {
                     lines = 0;
                 }
+                
                 if (NULL!=dbg_ptr)
                 {
                     dbg_ptr->buf_lines = lines;
