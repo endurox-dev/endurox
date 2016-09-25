@@ -89,6 +89,8 @@ int test_request_file(void)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
     int i;
     long rsplen;
+    char testfname[PATH_MAX+1];
+    char testfname_should_be[PATH_MAX+1];
 
     if (SUCCEED==p_ub)
     {
@@ -96,7 +98,7 @@ int test_request_file(void)
         FAIL_OUT(ret);
     }
     
-    for (i=0; i<100000; i++)
+    for (i=0; i<1000; i++)
     {   
         /* let SETREQFILE service to set the filename... 
          * It shall close the previous file (thus if we have a problem there
@@ -109,12 +111,32 @@ int test_request_file(void)
             FAIL_OUT(ret);
         }
         
-        /* TODO: test _tploggetbufreqfile() must match the name we know */
         tplog(log_debug, "Hello from atmicl31!");
         
-        /* About to call service */
+        /* test tploggetbufreqfile() must match the name we know */
+        testfname[0] = EOS;
         
-        if (0==(i % 1000))
+        if (SUCCEED!=tploggetbufreqfile((char *)p_ub, testfname, sizeof(testfname)))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get current logger: %s", 
+                    tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+        
+        sprintf(testfname_should_be, "./logs/request_%d.log", i+1);
+        
+        TP_LOG(log_debug, "Request file should be [%s] got [%s]", 
+                testfname_should_be, testfname);
+        
+        if (0!=strcmp(testfname_should_be, testfname))
+        {
+            TP_LOG(log_error, "TESTERROR: Request file should be [%s] but got [%s]!!!", 
+                testfname_should_be, testfname);
+            FAIL_OUT(ret);
+        }
+        
+        /* Add some data to buffer */
+        if (0==(i % 100))
         {
             if (SUCCEED!=Badd(p_ub, T_STRING_FLD, "HELLO WORLD!", 0L))
             {
@@ -124,6 +146,7 @@ int test_request_file(void)
             }
         }
         
+        /* About to call service */
         tplog(log_warn, "Calling TEST31_1ST!");
         if (FAIL == tpcall("TEST31_1ST", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
@@ -145,12 +168,12 @@ int test_request_file(void)
         tplogprintubf(log_info, "Buffer after cleanup", p_ub);
     }
     
+out:
     /* close the logger
      * Now sutff should go to endurox and tp
      */
     tplogclosereqfile();
-    
-out:
+
     return ret;
     
 }
@@ -168,7 +191,7 @@ int main(int argc, char** argv)
      * Enduro/X logging 
      */
     if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
-            log_debug, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
+            FAIL, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure Enduro/X logger: %s", 
                 Nstrerror(Nerror));

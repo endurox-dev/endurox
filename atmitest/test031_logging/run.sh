@@ -97,6 +97,48 @@ if [ "X`grep 'hello from main thread' clt-tp.log`" == "X" ]; then
 	RET=-2
 fi
 
+# There shall be 1000 files in log directory
+FILES=` ls -1 ./logs/*.log | wc | awk '{print $1}'`
+
+echo "Got request files: [$FILES]"
+if [ "X$FILES" != "X1000" ]; then
+        echo "Invalid files count [$FILES] should be 1000!"
+	RET=-2
+fi
+
+################################################################################
+# there shall be in each log file:
+# - Hello from SETREQFILE
+# - Hello from atmicl31
+# - Hello from TEST31_2ND
+################################################################################
+
+# Test all 1000 files
+
+for ((i=1;i<=100;i++)); do
+echo "Testing sequence: $i"
+
+    if [ "X`grep 'Hello from SETREQFILE' ./logs/request_$i.log`" == "X" ]; then
+            echo "Missing 'Hello from SETREQFILE' file $i"
+            RET=-2
+    fi
+
+    if [ "X`grep 'Hello from atmicl31' ./logs/request_$i.log`" == "X" ]; then
+            echo "Missing 'Hello from atmicl31' file $i"
+            RET=-2
+    fi
+
+    if [ "X`grep 'Hello from TEST31_2ND' ./logs/request_$i.log`" == "X" ]; then
+            echo "Missing 'Hello from TEST31_2ND' file $i"
+            RET=-2
+    fi
+done
+
+if [ "X`grep 'Finishing off' ./clt-tp.log`" == "X" ]; then
+        echo "Missing 'Finishing off'"
+        RET=-2
+fi
+
 popd 2>/dev/null
 
 exit $RET
