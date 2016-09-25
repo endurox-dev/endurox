@@ -136,6 +136,7 @@ extern NDRX_API int debug_get_ndrx_level(void);
 extern NDRX_API int debug_get_ubf_level(void);
 extern NDRX_API ndrx_debug_t * debug_get_ndrx_ptr(void);
 extern NDRX_API ndrx_debug_t * debug_get_ubf_ptr(void);
+extern NDRX_API ndrx_debug_t * debug_get_tp_ptr(void);
 
 extern NDRX_API void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *fmt, ...);

@@ -460,8 +460,22 @@ public void ndrx_init_debug(void)
  */
 public ndrx_debug_t * debug_get_ndrx_ptr(void)
 {
+    NSTD_TLS_ENTRY;
     NDRX_DBG_INIT_ENTRY;
-    return &G_ndrx_debug;
+    
+    return get_debug_ptr(&G_tp_debug);
+}
+
+/**
+ * Return TP pointer
+ * @return 
+ */
+public ndrx_debug_t * debug_get_tp_ptr(void)
+{
+    NSTD_TLS_ENTRY;
+    NDRX_DBG_INIT_ENTRY;
+    
+    return get_debug_ptr(&G_ndrx_debug);
 }
 
 /**
@@ -469,9 +483,10 @@ public ndrx_debug_t * debug_get_ndrx_ptr(void)
  * @return
  */
 public ndrx_debug_t * debug_get_ubf_ptr(void)
-{
+{   NSTD_TLS_ENTRY;
     NDRX_DBG_INIT_ENTRY;
-    return &G_ubf_debug;
+    
+    return get_debug_ptr(&G_ubf_debug);
 }
 
 /**

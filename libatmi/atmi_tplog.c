@@ -93,7 +93,12 @@ private int tplog_compare_set_file(char *new_file)
  */
 public void _tplogprintubf(int lev, char *title, UBFH *p_ub)
 {
-    ndrx_debug_dump_UBF(lev, title, p_ub);
+    ndrx_debug_t * dbg = debug_get_tp_ptr();
+    if (dbg->level>=lev)
+    {
+        NDRX_LOG(lev, "%s", title);
+        Bfprint(p_ub, dbg->dbg_f_ptr);
+    }
 }
 
 /**
@@ -274,7 +279,7 @@ public int _tploggetbufreqfile(char *data, char *filename, int bufsize)
     
     if (NULL!=data)
     {
-        if (SUCCEED!=_tptypes(data, btype, stype))
+        if (FAIL==_tptypes(data, btype, stype))
         {
             FAIL_OUT(ret);
         }
@@ -338,7 +343,7 @@ public int _tplogdelbufreqfile(char *data)
     
     if (NULL!=data)
     {
-        if (SUCCEED!=_tptypes(data, btype, stype))
+        if (FAIL==_tptypes(data, btype, stype))
         {
             FAIL_OUT(ret);
         }

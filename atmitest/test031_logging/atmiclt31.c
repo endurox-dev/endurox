@@ -108,6 +108,8 @@ int test_request_file(void)
                     tpstrerror(tperrno));
             FAIL_OUT(ret);
         }
+        
+        /* TODO: test _tploggetbufreqfile() must match the name we know */
         tplog(log_debug, "Hello from atmicl31!");
         
         /* About to call service */
@@ -126,8 +128,7 @@ int test_request_file(void)
         if (FAIL == tpcall("TEST31_1ST", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TEST31_1ST failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
-            goto out;
+            FAIL_OUT(ret);
         }
         
         tplog(log_warn, "back from TEST31_1ST call!");     
@@ -135,7 +136,11 @@ int test_request_file(void)
         tplogprintubf(log_info, "Buffer before cleanup", p_ub);
         
         /* delete the request file from buffer */
-        tplogdelbufreqfile((char *)p_ub);
+        if (SUCCEED!=tplogdelbufreqfile((char *)p_ub))
+        {
+            NDRX_LOG(log_error, "tplogdelbufreqfile() failed: %s", tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
         
         tplogprintubf(log_info, "Buffer after cleanup", p_ub);
     }
@@ -159,13 +164,11 @@ int main(int argc, char** argv)
     
     pthread_t thread1, thread2;  /* thread variables */
     
-    
-    
     /* 
      * Enduro/X logging 
      */
     if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
-            log_debug, NULL, "TEST", "./clt-endurox.log ubf=0 ndrx=5"))
+            log_debug, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure Enduro/X logger: %s", 
                 Nstrerror(Nerror));
