@@ -136,6 +136,57 @@ sub-system. See the cconfsrv(8) manpage. Internally is uses Layer 2 and 3 API.
 -------------------------------
 -------------------------------
 
+Common Debug logging API - TPLOG
+--------------------------------
+
+Enduro/X offer debug logging facility named "TPLOG". TPLog basically stands for extended
+user log. The user applications can use this API to configure TPLog, NDRX and UBF logs to
+be redirect to specified files, configure levels. Enduro/X introduces concept of request
+logging which means that each system request (or session) which processes UBF buffers can
+be logged to separate file. Which basically redirects NDRX, UBF and TPLog (user) to specific
+file. File can be set by *tplogsetreqfile(5)*.
+
+=== Logging facilities 
+
+- 'NDRX', logging facility code 'N' - this is Enduro/X XATMI framework internal debug logging.
+Debug string setting for level is set with keyword 'ndrx'. Facility is defined with macros
+*LOG_FACILITY_NDRX*.
+
+- 'UBF', logging facility code 'U' - this is UBF library logs. In debug string level is set with
+keyword 'ubf'. Facility is defined with macros *LOG_FACILITY_UBF*.
+
+- 'TP', logging facility code 't' - this is user logs. In debug string level is set with
+keyword 'tp'. facility is defined with macros *LOG_CODE_TP*. This is logging process based logging.
+
+- 'TP_THREAD', logging facility code 'T' - this is user logs, set on per thread basis. The log level
+is set with keyword 'tp'.
+
+- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on per thread/request basis. The log level
+is set with keyword 'tp'.
+
+=== Hierarchy of the  loggers (facilities)
+
+The loggers output the debug content in following order of the facilities status:
+
+- If 'TP_REQUEST' is open (debug file set), then all logging (NDRX, UBF, TP) will go here.
+The debug level is shared at application level with NDRX, UBF and TP facilities. There will be no
+impact if 'TP_REQUEST' log level is different.
+
+- If 'TP_THREAD' is open (debug file set), then ...
+
+
+=== Debug string format
+
+>>TODO<<
+
+=== Logging functions
+
+This chapter will make a short list and description of API functions available for debug
+logging.
+
+>>TODO<<
+
+
 Queuing mechanisms
 ------------------
 
