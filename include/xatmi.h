@@ -504,8 +504,10 @@ extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);
 extern NDRX_API int tpsetctxt(TPCONTEXT_T context, long flags);
 extern NDRX_API void tpfreectxt(TPCONTEXT_T context);
 
-extern int tplogsetreqfile(char **data, char *filename, char *filesvc);
-extern int tploggetbufreqfile(char *data, char *filename, int bufsize);
+extern NDRX_API int tplogsetreqfile(char **data, char *filename, char *filesvc);
+extern NDRX_API int tploggetbufreqfile(char *data, char *filename, int bufsize);
+extern NDRX_API int tplogdelbufreqfile(char *data);
+extern NDRX_API void tplogprintubf(int lev, char *title, UBFH *p_ub);
 
 /* ATMI library TLS: */
 extern NDRX_API void * ndrx_atmi_tls_get(void);

@@ -40,6 +40,7 @@
 #include <string.h>
 #include "thlock.h"
 #include "userlog.h"
+#include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -182,6 +183,10 @@ public void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     
     tls->threadlog.level = FAIL;
     tls->requestlog.level = FAIL;
+    
+    tls->threadlog.code = LOG_CODE_TP_THREAD;
+    tls->requestlog.code = LOG_CODE_TP_REQUEST;
+    
     
     pthread_mutex_init(&tls->mutex, NULL);
     

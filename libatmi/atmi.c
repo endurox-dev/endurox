@@ -43,6 +43,7 @@
 #include <xa_cmn.h>
 #include <tperror.h>
 #include <atmi_tls.h>
+#include <ubf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {_TPunset_error(); \
@@ -1040,6 +1041,17 @@ out:
 }
 
 /**
+ * Print UBF buffer to logger
+ * @param lev logging level to start print at
+ * @param title title of the dump
+ * @param p_ub UBF buffer
+ */
+public void tplogprintubf(int lev, char *title, UBFH *p_ub)
+{
+    _tplogprintubf(lev, title, p_ub);
+}
+
+/**
  * Get the filename from buffer ()
  * @param data
  * @param filename
@@ -1057,6 +1069,28 @@ public int tploggetbufreqfile(char *data, char *filename, int bufsize)
     }
     
     ret = _tploggetbufreqfile(data, filename, bufsize);
+    
+out:
+    return ret;
+}
+
+/**
+ * Delete the request file from buffer
+ * @param data XATMI buffer
+ * @return SUCCEED (have filename in buffer, 
+ */
+public int tplogdelbufreqfile(char *data)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        FAIL_OUT(ret);
+    }
+    
+    ret = _tplogdelbufreqfile(data);
     
 out:
     return ret;
