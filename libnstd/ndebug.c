@@ -117,6 +117,28 @@ public void ndrx_dbg_unlock(void)
 }
 
 /**
+ * Return the logger according to curren thread settings.
+ * @param dbg_ptr
+ * @return 
+ */
+private ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
+{
+    if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+    {
+        return &G_nstd_tls->threadlog;
+    }
+    else if (NULL!=G_nstd_tls->requestlog.dbg_f_ptr)
+    {
+        return &G_nstd_tls->requestlog;
+    }
+    else
+    {
+        return dbg_ptr;
+    }
+}
+
+
+/**
  * Parser sharing the functionality with common config & old style debug.conf
  * User update mode: tok1 == NULL, tok2 config string
  * CConfig mode: tok1 != NULL, tok2 != NULL
@@ -318,6 +340,11 @@ public void ndrx_init_debug(void)
     
     strcpy(G_ubf_debug.module, "UBF ");
     strcpy(G_ndrx_debug.module, "NDRX");
+    strcpy(G_tp_debug.module, "USER");
+    
+    G_ubf_debug.code = LOG_CODE_UBF;
+    G_ndrx_debug.code = LOG_CODE_NDRX;
+    G_tp_debug.code = LOG_CODE_TP;
     
     G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
     
@@ -329,8 +356,8 @@ public void ndrx_init_debug(void)
     /* default bufsz  */
     G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
 
-    G_ubf_debug.buf_lines = G_ndrx_debug.buf_lines = 1;
-    G_ubf_debug.level = G_ndrx_debug.level = log_debug;
+    G_tp_debug.buf_lines = G_ubf_debug.buf_lines = G_ndrx_debug.buf_lines = 1;
+    G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_debug;
 
     if (NULL==cconfig)
     {
@@ -466,6 +493,7 @@ public int debug_get_ubf_level(void)
     NDRX_DBG_INIT_ENTRY;
     return G_ubf_debug.level;
 }
+
 /**
  * Print buffer dump diff to log file. Diffing buffer sizes must match the "len"
  * @param dbg_ptr - debug config
@@ -490,8 +518,9 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char 
     unsigned char *cptr2 = (unsigned char*)ptr2;
     char print_line[256]={0};
     char print_line2[256]={0};
-    
+    NSTD_TLS_ENTRY;
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
+    dbg_ptr = get_debug_ptr(dbg_ptr);
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
     
     for (i = 0; i < len; i++)
@@ -597,8 +626,10 @@ public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file
     unsigned char buf[17];
     unsigned char *cptr = (unsigned char*)ptr;
     char print_line[256]={0};
-    
+    NSTD_TLS_ENTRY;
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
+    
+    dbg_ptr = get_debug_ptr(dbg_ptr);
     
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
 
@@ -661,9 +692,12 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     struct timezone time_zone;
     char *line_print;
     int len;
+    ndrx_debug_t *org_ptr = dbg_ptr;
     NSTD_TLS_ENTRY;
     
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
+    
+    dbg_ptr = get_debug_ptr(dbg_ptr);
     
     if ((len=strlen(file)) > 8)
         line_print = (char *)file+len-8;
@@ -673,8 +707,9 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     gettimeofday( &time_val, &time_zone );
     ndrx_get_dt_local(&ldate, &ltime);
     
-    sprintf(line_start, "%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
-        dbg_ptr->module, lev, (int)dbg_ptr->pid, G_nstd_tls->M_threadnr, ldate, ltime, 
+    sprintf(line_start, "%c:%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+        dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
+        G_nstd_tls->M_threadnr, ldate, ltime, 
         (int)(time_val.tv_usec/1000), line_print, line);
     
     va_start(ap, fmt);    
@@ -686,21 +721,6 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     /* Handle some buffering... */
     BUFFER_CONTROL(dbg_ptr);
 }
-
-/**
- * Set debug level. Override one set in debug.conf
- * @param level
- */
-public void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level)
-{
-    NDRX_DBG_INIT_ENTRY;
-    if (level < 0)
-            level = 0;
-    if (level > DBG_MAXLEV)
-            level = DBG_MAXLEV;
-    dbg_ptr->level = level;
-}
-
 /**
  * Initialize debug library
  * Currently default level is to use maximum.

@@ -46,6 +46,7 @@
 #include <userlog.h>
 #include <xa_cmn.h>
 #include <Exfields.h>
+#include <ubfutil.h>
 
 #include "tperror.h"
 /*---------------------------Externs------------------------------------*/
@@ -85,6 +86,17 @@ private int tplog_compare_set_file(char *new_file)
 }
 
 /**
+ * Print UBF buffer to logger
+ * @param lev logging level to start print at
+ * @param title title of the dump
+ * @param p_ub UBF buffer
+ */
+public void _tplogprintubf(int lev, char *title, UBFH *p_ub)
+{
+    ndrx_debug_dump_UBF(lev, title, p_ub);
+}
+
+/**
  * Set the request file.
  * @param data optional, will search for filename here (XATMI buffer, UBF type
  * @param filename if file name not found in data, then use this one.
@@ -110,7 +122,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
      */
     if (NULL!=*data)
     {
-        if (SUCCEED!=_tptypes(*data, btype, stype))
+        if (FAIL==_tptypes(*data, btype, stype))
         {
             FAIL_OUT(ret);
         }
@@ -124,7 +136,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
             
             if (Bpres(p_ub, EX_NREQLOGFILE, 0))
             {
-                if (SUCCEED==Bget(p_ub, EX_NREQLOGFILE, 0, ubf_filename, &buf_len))
+                if (SUCCEED!=Bget(p_ub, EX_NREQLOGFILE, 0, ubf_filename, &buf_len))
                 {
                     NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
@@ -143,7 +155,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                     if (0!=strcmp(ubf_filename, filename))
                     {
                         /* update UBF */
-                        if (SUCCEED==Bchg(p_ub, EX_NREQLOGFILE, 0, filename, 0L))
+                        if (SUCCEED!=Bchg(p_ub, EX_NREQLOGFILE, 0, filename, 0L))
                         {
                             NDRX_LOG(log_error, "Failed to set EX_NREQLOGFILE: %s", 
                                     Bstrerror(Berror));
@@ -175,7 +187,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                 tplog_compare_set_file(filename);
                 
                 /* set stuff in buffer */
-                if (SUCCEED==Bchg(p_ub, EX_NREQLOGFILE, 0, filename, 0L))
+                if (SUCCEED!=Bchg(p_ub, EX_NREQLOGFILE, 0, filename, 0L))
                 {
                     NDRX_LOG(log_error, "Failed to set EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
@@ -276,7 +288,7 @@ public int _tploggetbufreqfile(char *data, char *filename, int bufsize)
             
             if (Bpres(p_ub, EX_NREQLOGFILE, 0))
             {
-                if (SUCCEED==Bget(p_ub, EX_NREQLOGFILE, 0, filename, &buf_len))
+                if (SUCCEED!=Bget(p_ub, EX_NREQLOGFILE, 0, filename, &buf_len))
                 {
                     NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
@@ -306,6 +318,68 @@ public int _tploggetbufreqfile(char *data, char *filename, int bufsize)
         FAIL_OUT(ret);
     }
     
+    
+out:
+    return ret;
+}
+
+/**
+ * Remove request file from buffer
+ * @param data
+ * @param filename
+ * @return 
+ */
+public int _tplogdelbufreqfile(char *data)
+{
+    int ret = SUCCEED;
+    char btype[16] = {EOS};
+    char stype[16] = {EOS};
+    UBFH *p_ub;
+    
+    if (NULL!=data)
+    {
+        if (SUCCEED!=_tptypes(data, btype, stype))
+        {
+            FAIL_OUT(ret);
+        }
+        
+        /* buffer is ok */
+        if (0==strcmp(btype, "UBF") || 0==strcmp(btype, "FML") || 
+                0==strcmp(btype, "FML32"))
+        {
+            p_ub = (UBFH *)data;
+            
+            if (Bpres(p_ub, EX_NREQLOGFILE, 0))
+            {
+                if (SUCCEED!=Bdel(p_ub, EX_NREQLOGFILE, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
+                            Bstrerror(Berror));
+                    _TPset_error_fmt(TPENOENT, "Failed to get EX_NREQLOGFILE: %s", 
+                            Bstrerror(Berror));
+                    FAIL_OUT(ret);
+                } 
+            }
+            else
+            {
+                _TPset_error_fmt(TPENOENT, "No file exists: %s", 
+                            Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            _TPset_error_fmt(TPEINVAL, "Not UBF buffer: %s", 
+                            Bstrerror(Berror));
+            FAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        _TPset_error_fmt(TPEINVAL, "Null buffer: %s", 
+                            Bstrerror(Berror));
+        FAIL_OUT(ret);
+    }
     
 out:
     return ret;

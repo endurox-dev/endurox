@@ -523,6 +523,8 @@ extern NDRX_API int _tpgetctxt(TPCONTEXT_T *context, long flags);
 /* debug logging */
 extern NDRX_API int _tplogsetreqfile(char **data, char *filename, char *filesvc);
 extern NDRX_API int _tploggetbufreqfile(char *data, char *filename, int bufsize);
+extern NDRX_API int _tplogdelbufreqfile(char *data);
+extern NDRX_API void _tplogprintubf(int lev, char *title, UBFH *p_ub);
 
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);

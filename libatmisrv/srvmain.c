@@ -251,7 +251,7 @@ int ndrx_init(int argc, char** argv)
                 break;
             case 'D': /* Not used. */
                 dbglev = atoi(optarg);
-                NDRX_DBG_SETLEV(dbglev);
+                tplogconfig(LOG_FACILITY_NDRX, dbglev, NULL, NULL, NULL);
                 break;
             case 'i': /* server id */
                 /*fprintf(stderr, "got -i: %s\n", optarg);*/

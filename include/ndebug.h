@@ -63,6 +63,12 @@ extern "C" {
 #define LOG_FACILITY_TP_THREAD  0x00008 /* settings for TP, thread based logging */
 #define LOG_FACILITY_TP_REQUEST 0x00010 /* Request logging, thread based         */
     
+#define LOG_CODE_NDRX       'N'
+#define LOG_CODE_UBF        'U'
+#define LOG_CODE_TP         't'
+#define LOG_CODE_TP_THREAD  'T'
+#define LOG_CODE_TP_REQUEST 'R'
+    
 #define DBG_MAXLEV log_dump
 
 #define NDRX_DBG_INIT_ENTRY    if (G_ndrx_debug_first) {ndrx_dbg_lock(); ndrx_init_debug(); ndrx_dbg_unlock();}
@@ -70,19 +76,6 @@ extern "C" {
 #define UBF_DBG_INIT(X) (ndrx_dbg_init X )
 #define NDRX_DBG_INIT(X) (ndrx_dbg_init X )
 
-#define UBF_DBG_SETLEV(lev) (ndrx_dbg_setlev(&G_ubf_debug, lev))
-#define NDRX_DBG_SETLEV(lev) (ndrx_dbg_setlev(&G_ndrx_debug, lev))
-
-
-#define __TPLOG_HANDLE (G_nstd_tls? /* If hav TLS */\
-                    ( /* check the request log */\
-                        NULL!=G_nstd_tls->requestlog.dbg_f_ptr?(&G_nstd_tls->requestlog):\
-                        (/* if request log level is FAIL, then check thread log  */\
-                            NULL!=G_nstd_tls->threadlog.dbg_f_ptr?(&G_nstd_tls->threadlog): (&G_tp_debug)\
-                        )\
-                    ):&G_tp_debug /* thread log is also fail, then use global tplog */\
-                )
-                
 /* Kind of GCC way only... */
 #define NDRX_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
             {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
@@ -91,7 +84,7 @@ extern "C" {
             {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 /* User logging */
 #define TP_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(__TPLOG_HANDLE, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
 
 #define UBF_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
@@ -104,7 +97,7 @@ extern "C" {
             {__ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define TP_LOGDUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug_dump__(__TPLOG_HANDLE, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+            {__ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 
 
@@ -115,7 +108,7 @@ extern "C" {
             {__ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define TP_LOGDUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug_dump_diff__(__TPLOG_HANDLE, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+            {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define NDRX_DBG_SETTHREAD(X) ndrx_dbg_setthread(X)
     
@@ -167,7 +160,7 @@ extern NDRX_API void tplog(int lev, char *message);
 extern NDRX_API int tploggetreqfile(char *filename, int bufsize);
 extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, 
         char *new_file);
-extern NDRX_API void tplogclosereqfile(char *filename);
+extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
 
 #ifdef	__cplusplus

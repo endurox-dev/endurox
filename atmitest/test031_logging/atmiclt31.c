@@ -79,26 +79,93 @@ void do_thread_work2 ( void *ptr )
     }
 }
 
-/*
- * Do the test call to the server
+/**
+ * Test the request file processing....
+ * @return 
  */
-int main(int argc, char** argv)
+int test_request_file(void)
 {
     int ret = SUCCEED;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
-    pthread_t thread1, thread2;  /* thread variables */
-    
+    int i;
+    long rsplen;
+
     if (SUCCEED==p_ub)
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to allocate p_ub: %s", tpstrerror(tperrno));
         FAIL_OUT(ret);
     }
     
+    for (i=0; i<100000; i++)
+    {   
+        /* let SETREQFILE service to set the filename... 
+         * It shall close the previous file (thus if we have a problem there
+         * will be memory leak of file descriptors...
+         */
+        if (SUCCEED!=tplogsetreqfile((char **)&p_ub, NULL, "SETREQFILE"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to set request file:%s", 
+                    tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+        tplog(log_debug, "Hello from atmicl31!");
+        
+        /* About to call service */
+        
+        if (0==(i % 1000))
+        {
+            if (SUCCEED!=Badd(p_ub, T_STRING_FLD, "HELLO WORLD!", 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to add T_STRING_FLD:%s", 
+                    Bstrerror(Berror));
+                FAIL_OUT(ret);
+            }
+        }
+        
+        tplog(log_warn, "Calling TEST31_1ST!");
+        if (FAIL == tpcall("TEST31_1ST", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TEST31_1ST failed: %s", tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+        
+        tplog(log_warn, "back from TEST31_1ST call!");     
+        
+        tplogprintubf(log_info, "Buffer before cleanup", p_ub);
+        
+        /* delete the request file from buffer */
+        tplogdelbufreqfile((char *)p_ub);
+        
+        tplogprintubf(log_info, "Buffer after cleanup", p_ub);
+    }
+    
+    /* close the logger
+     * Now sutff should go to endurox and tp
+     */
+    tplogclosereqfile();
+    
+out:
+    return ret;
+    
+}
+
+/*
+ * Do the test call to the server
+ */
+int main(int argc, char** argv)
+{
+    int ret = SUCCEED;
+    
+    pthread_t thread1, thread2;  /* thread variables */
+    
+    
+    
     /* 
      * Enduro/X logging 
      */
     if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
-            log_debug, NULL, "TEST", "./clt-endurox.log"))
+            log_debug, NULL, "TEST", "./clt-endurox.log ubf=0 ndrx=5"))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure Enduro/X logger: %s", 
                 Nstrerror(Nerror));
@@ -131,8 +198,16 @@ int main(int argc, char** argv)
     pthread_join(thread2, NULL);
     
     tplog(6, "hello from main thread");
-
+    
+    if (SUCCEED!=test_request_file())
+    {
+        tplog(5, "TESTERROR: test_request_file() failed!");
+    }
+    
 out:
+
+    tplog(1, "Finishing off");
+
     return ret;
 }
 

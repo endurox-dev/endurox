@@ -36,55 +36,115 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <test.fd.h>
+#include <ndebug.h>
 
 void TEST31_1ST (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
-
-    static double d = 55.66;
-
     UBFH *p_ub = (UBFH *)p_svc->data;
 
-    NDRX_LOG(log_debug, "TEST31_1ST got call");
-
+    if (SUCCEED!=tplogsetreqfile((char **)&p_ub, NULL, NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set request file! :%s", tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    
     /* Just print the buffer */
-    Bprint(p_ub);
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 8192))) /* allocate some stuff for more data to put in  */
-    {
-        ret=FAIL;
-        goto out;
-    }
-
-    d+=1;
-
-    if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
-    {
-        ret=FAIL;
-        goto out;
-    }
+    tplogprintubf(log_debug, "TEST31_1ST request buffer", p_ub);
+    
+    tplog(log_warn, "Hello from TEST31_1ST!");
+    
 
 out:
-    tpforward(  "TEST31_2ND",
+
+    if (SUCCEED==ret)
+    {
+        tplog(log_warn, "Request ok, forwarding to 2ND service");
+        tplogclosereqfile();
+        tpforward(  "TEST31_2ND",
+                    (char *)p_ub,
+                    0L,
+                    0L);
+    }
+    else
+    {
+        tplog(log_warn, "Request FAIL, returning...");
+        tplogclosereqfile();
+        tpreturn(TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+    }
+}
+
+/**
+ * Service for setting request file for new request...
+ * @param p_svc
+ */
+void SETREQFILE(TPSVCINFO *p_svc)
+{
+    int ret = SUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    char filename[256];
+    static int req_no = 0;
+    
+    req_no++;
+    
+    sprintf(filename, "./logs/request_%d.log", req_no);
+    
+    /* allocate bit space for new file name to be set */
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4000)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: realloc failed: %s", 
+                filename, tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=tplogsetreqfile((char **)&p_ub, filename, NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set request file to [%s]:%s", 
+                filename, tpstrerror(tperrno));
+        FAIL_OUT(ret);
+    }
+    
+    tplog(log_debug, "Hello from SETREQFILE!");
+    
+    tplogclosereqfile();
+    
+    tplog(log_debug, "SETREQFILE closed req file - logging in main");
+    
+out:
+    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+                0L,
                 (char *)p_ub,
                 0L,
                 0L);
 }
 
-/*
+/**
  * Do initialization
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
+    
+    /* configure main logger */
+    if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 
+            FAIL, "file=./1sv.log tp=5 ndrx=5 ubf=0", "1SRV", NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to configure logger!");
+    }
 
     if (SUCCEED!=tpadvertise("TEST31_1ST", TEST31_1ST))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST31_1ST (first)!");
+        NDRX_LOG(log_error, "TESTERROR: Failed to initialize TEST31_1ST (first)!");
     }
-    else if (SUCCEED!=tpadvertise("TEST31_1ST_AL", TEST31_1ST))
+    else if (SUCCEED!=tpadvertise("SETREQFILE", SETREQFILE))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST31_1ST_AL (alias)!");
+        NDRX_LOG(log_error, "TESTERROR: Failed to initialize SETREQFILE!");
     }
+    
 
     return SUCCEED;
 }

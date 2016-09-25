@@ -132,10 +132,9 @@ private int logfile_change_name(int logger, char *filename)
             break;
     }
     
-    NDRX_LOG(log_debug, "Logger = %d change name to: [%s]", logger, l->filename);
-    
     if (NULL!=filename)
     {
+        NDRX_LOG(log_debug, "Logger = %d change name to: [%s]", logger, filename);
         if (0==strcmp(l->filename, filename))
         {
             goto out;
@@ -144,6 +143,10 @@ private int logfile_change_name(int logger, char *filename)
         {
             strcpy(l->filename, filename);
         }
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Logger = %d change name to: [%s]", logger, l->filename);
     }
     
     /* name already changed no need to compare 
@@ -159,7 +162,7 @@ private int logfile_change_name(int logger, char *filename)
     }
     else if (NULL==(l->dbg_f_ptr = fopen(l->filename, "a")))
     {
-        fprintf(stderr,"Failed to open %s: %s\n",l->filename, strerror(errno));
+        NDRX_LOG(log_error,"Failed to open %s: %s\n",l->filename, strerror(errno));
         l->filename[0] = EOS;
         l->dbg_f_ptr = stderr;
     }
@@ -169,7 +172,8 @@ private int logfile_change_name(int logger, char *filename)
     }
      
 out:
-     return ret;
+    NDRX_LOG(log_debug, "Logger = %d logging to: [%s]", logger, l->filename);
+    return ret;
     
 }
 
@@ -204,6 +208,7 @@ public void tplogsetreqfile_direct(char *filename)
             /* Copy from TPlog */
             memcpy(&G_nstd_tls->requestlog, &G_tp_debug, sizeof(G_tp_debug));
         }
+        G_nstd_tls->requestlog.code = LOG_CODE_TP_REQUEST;
     }
     
     /* ok now open then file */
@@ -215,7 +220,7 @@ public void tplogsetreqfile_direct(char *filename)
  * Close the request file (back to other loggers)
  * @param filename
  */
-public void tplogclosereqfile(char *filename)
+public void tplogclosereqfile(void)
 {
     API_ENTRY; /* set TLS too */
     
@@ -273,14 +278,16 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (FAIL==G_nstd_tls->threadlog.level)
             {
                 memcpy(&G_nstd_tls->threadlog, &G_tp_debug, sizeof(G_tp_debug));
+                G_nstd_tls->threadlog.code = LOG_CODE_TP_THREAD;
             }
             l = &G_nstd_tls->threadlog;
         }
         else if (loggers[i] == LOG_FACILITY_TP_REQUEST && logger & (LOG_FACILITY_TP_REQUEST))
         {
-            if (FAIL==G_nstd_tls->threadlog.level)
+            if (FAIL==G_nstd_tls->requestlog.level)
             {
                 memcpy(&G_nstd_tls->requestlog, &G_tp_debug, sizeof(G_tp_debug));
+                G_nstd_tls->requestlog.code = LOG_CODE_TP_REQUEST;
             }
             
             l = &G_nstd_tls->requestlog;

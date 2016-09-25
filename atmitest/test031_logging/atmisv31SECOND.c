@@ -1,4 +1,5 @@
 /* 
+** Second server, will use debug defaults..
 **
 ** @file atmisv31SECOND.c
 ** 
@@ -40,30 +41,19 @@
 void TEST31_2ND (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
-
-    static double d = 11.66;
-
     UBFH *p_ub = (UBFH *)p_svc->data;
 
-    NDRX_LOG(log_debug, "TESTSVFN got call");
-
+    tplogprintubf(log_debug, "TEST31_2ND got request", p_ub);
+    
     /* Just print the buffer */
-    Bprint(p_ub);
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 8192))) /* allocate some stuff for more data to put in  */
-    {
-        ret=FAIL;
-        goto out;
-    }
-
-    d+=1;
-
-    if (FAIL==Badd(p_ub, T_DOUBLE_2_FLD, (char *)&d, 0))
-    {
-        ret=FAIL;
-        goto out;
-    }
-
+    tplogsetreqfile((char **)&p_ub, NULL, NULL);
+    
+    tplog(log_debug, "Hello from TEST31_2ND!");
+    
+    
 out:
+    tplogclosereqfile();
+    tplog(log_warn, "Returning... (logging from main)");
     tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
@@ -82,10 +72,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to initialize TEST31_2ND (first)!");
     }
-    else if (SUCCEED!=tpadvertise("TEST31_2ND_AL", TEST31_2ND))
-    {
-        NDRX_LOG(log_error, "Failed to initialize TEST31_2ND_AL (alias)!");
-    }
+
     return SUCCEED;
 }
 
