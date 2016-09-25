@@ -118,7 +118,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
     char ubf_filename[PATH_MAX] = {EOS};
     
     int buf_len;
-    UBFH *p_ub = NULL;
+    UBFH **p_ub = NULL;
     
     /* scenario 1 - have buffer:
      * Check for field existence, if exists, then get value
@@ -136,12 +136,12 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
         if (0==strcmp(btype, "UBF") || 0==strcmp(btype, "FML") || 
                 0==strcmp(btype, "FML32"))
         {
-            p_ub = (UBFH *)*data;
+            p_ub = (UBFH **)data;
             buf_len = sizeof(ubf_filename);
             
-            if (Bpres(p_ub, EX_NREQLOGFILE, 0))
+            if (Bpres(*p_ub, EX_NREQLOGFILE, 0))
             {
-                if (SUCCEED!=Bget(p_ub, EX_NREQLOGFILE, 0, ubf_filename, &buf_len))
+                if (SUCCEED!=Bget(*p_ub, EX_NREQLOGFILE, 0, ubf_filename, &buf_len))
                 {
                     NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
@@ -160,7 +160,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                     if (0!=strcmp(ubf_filename, filename))
                     {
                         /* update UBF */
-                        if (SUCCEED!=Bchg(p_ub, EX_NREQLOGFILE, 0, filename, 0L))
+                        if (SUCCEED!=Bchg(*p_ub, EX_NREQLOGFILE, 0, filename, 0L))
                         {
                             NDRX_LOG(log_error, "Failed to set EX_NREQLOGFILE: %s", 
                                     Bstrerror(Berror));
@@ -192,7 +192,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                 tplog_compare_set_file(filename);
                 
                 /* set stuff in buffer */
-                if (SUCCEED!=Bchg(p_ub, EX_NREQLOGFILE, 0, filename, 0L))
+                if (SUCCEED!=Bchg(*p_ub, EX_NREQLOGFILE, 0, filename, 0L))
                 {
                     NDRX_LOG(log_error, "Failed to set EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
@@ -209,7 +209,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                 NDRX_LOG(log_debug, "About to call [%s] for new request "
                         "file log name", filesvc);
                 
-                if (FAIL == tpcall(filesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+                if (FAIL == tpcall(filesvc, (char *)*data, 0L, (char **)data, &rsplen,0))
                 {
                     NDRX_LOG(log_error, "%s failed: %s", filesvc, tpstrerror(tperrno));
                     /* tperror already set */

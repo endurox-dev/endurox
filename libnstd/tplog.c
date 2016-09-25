@@ -190,12 +190,8 @@ public void tplogsetreqfile_direct(char *filename)
 {
     API_ENTRY; /* set TLS too */
     
-    if (NULL!=G_nstd_tls->requestlog.dbg_f_ptr)
-    {
-        logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
-    }
     /* Level not set, then there was no init */
-    else if (FAIL==G_nstd_tls->requestlog.level)
+    if (FAIL==G_nstd_tls->requestlog.level)
     {
         /* file is null, we want to copy off the settings  */
         if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
