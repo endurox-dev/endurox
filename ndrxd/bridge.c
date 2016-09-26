@@ -252,10 +252,10 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
     }
     
     /* Check is per server filter enabled? */
-    if (EOS!=srv->conf->exportsvcs[0])
+    if (EOS!=srv->conf->exportsvcs[0] || EOS!=srv->conf->blacklistsvcs[0])
     {
         int i;
-        NDRX_LOG(6, "filtering by exportsvcs");
+        NDRX_LOG(6, "filtering by exportsvcs or blacklistsvcs");
         
         memset(tmp_refresh, 0, sizeof(*tmp_refresh));
         /* Initialize the list */
@@ -272,7 +272,20 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
             strcat(search_svc, refresh->svcs[i].svc_nm);
             strcat(search_svc, ",");
             
-            if (strstr(srv->conf->exportsvcs, search_svc))
+            /*
+             * If blacklist set, then filter out blacklisted services
+             */
+            if (EOS!=srv->conf->blacklistsvcs[0] && strstr(srv->conf->blacklistsvcs, 
+                    search_svc))
+            {
+                NDRX_LOG(6, "svc %s blacklisted for export", refresh->svcs[i].svc_nm);
+                continue;
+            }
+            /* If export list empty - export all
+             * If export list set, then only those in the list
+             */
+            else if (EOS==srv->conf->exportsvcs[0] || strstr(srv->conf->exportsvcs, 
+                    search_svc))
             {
                 NDRX_LOG(6, "svc %s ok for export", refresh->svcs[i].svc_nm);
                 /* Copy the service data off */

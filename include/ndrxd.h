@@ -82,6 +82,8 @@ struct conf_server_node
     int killtime;   /* periodical time for signal sending */
     /* list of services to export (for bridge, special). comma seperated list */
     char exportsvcs[MAX_SERVICE_LIST]; 
+    /* list of services that should not be exported over the bridge */
+    char blacklistsvcs[MAX_SERVICE_LIST]; 
     int sleep_after;
     char SYSOPT[PATH_MAX/2 - 8 ]; /* take off -i xxxxx PID */
     char APPOPT[PATH_MAX/2];
@@ -182,6 +184,8 @@ typedef struct
     int default_killtime;   /* periodical time for signal sending */
     /* Special config param for bridge services - which services to export */
     char default_exportsvcs[MAX_SERVICE_LIST];
+    /* List of services that should not be exported over the bridge */
+    char default_blacklistsvcs[MAX_SERVICE_LIST];
     /* common-config tag (loaded into NDRX_CCTAG before start) */
     char default_cctag[NDRX_CCTAG_MAX+1]; 
     

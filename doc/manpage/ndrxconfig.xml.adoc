@@ -33,6 +33,7 @@ SYNOPSIS
 		<end_max>MAX_SERVER_SHUTDOWN_TIME_DEFAULT</end_max>
 		<killtime>KILL_TIME_DEFAULT</killtime>
 		<exportsvcs>EXPORT_SERVICES_DEFAULT</exportsvcs>
+                <blacklistsvcs>BLACKLIST_SERVICES_DEFAULT</blacklistsvcs>
                 <srvstartwait>NDRXD_SRV_START_WAIT_DEFAULT</srvstartwait>
                 <srvstopwait>NDRXD_SRV_STOP_WAITT_DEFAULT</srvstopwait>
                 <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
@@ -54,6 +55,7 @@ SYNOPSIS
 			<sysopt>ATMI_SERVER_SYSTEM_OPTIONS</sysopt>
 			<appopt>ATMI_SERVER_APPLICATION_OPTIONS</appopt>
 			<exportsvcs>ATMI_SERVER_EXPORT_SERVICES</exportsvcs>
+                        <blacklistsvcs>ATMI_BLACKLIST_SERVICES</blacklistsvcs>
                         <srvstartwait>NDRXD_SRV_START_WAIT</srvstartwait>
                         <srvstopwait>NDRXD_SRV_STOP_WAITT</srvstopwait>
                         <cctag>COMMON_CONFIG_TAG</cctag>
@@ -175,9 +177,15 @@ DEBUG CONFIGURATION FILE SYNTAX
 	is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
 	on per server basis.
 *EXPORT_SERVICES_DEFAULT*::
-    Comma seperated list of services to be applied to all binaries which means the list of
-    services to be exported by tpbridge service to the node. This can be overridden by 
+    Comma separated list of services to be applied to all binaries which means the list of
+    services to be exported by tpbridge server to other cluster node. This can be overridden by 
     'ATMI_SERVER_EXPORT_SERVICES'.
+*BLACKLIST_SERVICES_DEFAULT*::
+    Comma separated list of services to be applied to all server binaries which means the list of
+    services that must not be exported by tpbridge server to other cluster node.
+    'ATMI_SERVER_BLACKLIST_SERVICES' is first priority over the 'EXPORT_SERVICES_DEFAULT' if
+    service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
+    'ATMI_SERVER_BLACKLIST_SERVICES'. 
 *NDRXD_SRV_START_WAIT_DEFAULT*::
         Number of seconds to wait for servers to boot. If not started in given time,
         then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
@@ -239,6 +247,9 @@ DEBUG CONFIGURATION FILE SYNTAX
 *ATMI_SERVER_EXPORT_SERVICES*::
 	EnduroX server specific list of services to be exported. This list is only for 
 	*tpbridge* servers.
+*ATMI_SERVER_BLACKLIST_SERVICES*::
+	EnduroX server specific list of services that must not be exported. This list is only for 
+	*tpbridge* servers. Blacklist have higher priority over the Export list.
 *CLT_COMMAND_LINE*::
 	Executable name and arguments for client program. Command line basically is a format
 	string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'

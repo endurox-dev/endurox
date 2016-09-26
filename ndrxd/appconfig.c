@@ -309,6 +309,20 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                             config->default_exportsvcs);
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "blacklistsvcs"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                ndrx_str_strip(p, " \t"); /* strip spaces & tabs */
+                if (strlen(p)>=sizeof(config->default_blacklistsvcs))
+                {
+                    NDRX_LOG(log_warn, "Trimming default blacklistsvcs");
+                    p[sizeof(config->default_blacklistsvcs)-3] = EOS;
+                }
+                sprintf(config->default_blacklistsvcs, ",%s,", p);
+                NDRX_LOG(log_debug, "blacklistsvcs: [%s]", 
+                            config->default_blacklistsvcs);
+                xmlFree(p);
+            }
             else if (0==strcmp((char*)cur->name, "killtime"))
             {
                 p = (char *)xmlNodeGetContent(cur);
@@ -696,6 +710,20 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->exportsvcs);
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "blacklistsvcs"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            ndrx_str_strip(p, " \t");
+            if (strlen(p)>=sizeof(p_srvnode->blacklistsvcs)-3)
+            {
+                NDRX_LOG(log_warn, "blacklistsvcs server blacklistsvcs");
+                p[sizeof(p_srvnode->exportsvcs)-3] = EOS;
+            }
+            sprintf(p_srvnode->blacklistsvcs, ",%s,", p);
+            NDRX_LOG(log_debug, "blacklistsvcs: [%s]", 
+                    p_srvnode->blacklistsvcs);
+            xmlFree(p);
+        }
         else if (0==strcmp("sysopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
@@ -791,6 +819,9 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     /* it could be empty for defaults too - then no problem.  */
     if (EOS==p_srvnode->exportsvcs[0])
         strcpy(p_srvnode->exportsvcs, config->default_exportsvcs);
+    
+    if (EOS==p_srvnode->blacklistsvcs[0])
+        strcpy(p_srvnode->blacklistsvcs, config->default_blacklistsvcs);
     
     if (!p_srvnode->srvstartwait)
         p_srvnode->srvstartwait=config->default_srvstartwait;
