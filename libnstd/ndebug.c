@@ -602,7 +602,7 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char 
     }
 
     sprintf (print_line + strlen(print_line), "  %s", buf);
-    sprintf (print_line2 + strlen(print_line2), "  %s", buf);
+    sprintf (print_line2 + strlen(print_line2), "  %s", buf2);
 
     if (0!=strcmp(print_line, print_line2))
     {

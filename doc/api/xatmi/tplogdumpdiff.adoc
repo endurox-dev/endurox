@@ -25,7 +25,9 @@ DESCRIPTION
 Function compares two memory areas by given pointers 'ptr' and 'ptr2'. The hex dump is generate and
 output is written to current logger (either process based, thread based or request based). The 
 *tplogdumpdiff()* basically is wrapper for *TP_LOGDUMP_DIFF*. For C/C++ programs it is recommended
-to use macro version.
+to use macro version. 'lev' is debug level from 1 (log_always) .. 5 (log_debug). Comment is title line of
+the dump. 'ptr' and 'ptr2' are pointer to memory blocks to compare. 'len' is number of bytes in each array
+to compare.
 
 
 RETURN VALUE
@@ -38,7 +40,40 @@ N/A
 
 EXAMPLE
 -------
-See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+Code dumpdifftest.c
+
+---------------------------------------------------------------------
+#include <ndebug.h>
+
+int main (int argc, char **argv)
+{
+        char arr1[32];
+        char arr2[32];
+        int i;
+
+        for (i=0; i<sizeof(arr1); i++)
+        {
+                arr1[i]=(char)(65+i);
+                arr2[i]=(char)(66+i);
+        }
+        
+        tplogdumpdiff(5, "Compare two arrays", arr1, arr2, sizeof(arr1));
+        
+        return 0;
+}
+---------------------------------------------------------------------
+
+Sample run:
+---------------------------------------------------------------------
+$ gcc  dumpdifftest.c -lnstd -lpthread -lrt -lm -I /include/
+$ ./a.out 
+t:USER:5:13937:000:20160928:002924485:/tplog.c:0437:Compare two arrays
+<  0000  41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50  ABCDEFGHIJKLMNOP
+>  0000  42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50 51  BCDEFGHIJKLMNOPQ
+<  0010  51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60  QRSTUVWXYZ[\]^_`
+>  0010  52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60 61  RSTUVWXYZ[\]^_`a
+---------------------------------------------------------------------
 
 BUGS
 ----

@@ -42,8 +42,10 @@ install (FILES
     pscript.h
     exparson.h
     ndebug.h
+    ndebugcmn.h
     ndrstandard.h
     nstdutil.h
+    nstd_tls.h
     thlock.h
     exhash.h
     cconfig.h 
