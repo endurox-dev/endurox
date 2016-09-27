@@ -341,6 +341,7 @@ public void ndrxd_sigchld_uninit(void)
         }
     }
     
+    M_signal_thread_set = FALSE;
     NDRX_LOG(log_debug, "finished ok");
 out:
     return;
