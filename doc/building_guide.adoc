@@ -98,6 +98,14 @@ $ apt-get install indent asciidoc dblatex libxml2-dev \
 	libgpgme11-dev libxml2-dev git
 ---------------------------------------------------------------------
 
+==== System level dependencies - for Ubuntu 16.04 (Mint 18)
+---------------------------------------------------------------------
+$ apt-get install indent asciidoc dblatex libxml2-dev \
+	cmake dia flex bison gcc g++ zlib1g-dev \
+	libssl-dev libcrypto++-dev \
+	libgpgme11-dev libxml2-dev libxml2-utils git
+---------------------------------------------------------------------
+
 ==== System level dependencies - for Centos 6.x
 As some packages like `dia' does not exists in base Centos install,
 then few of them we will borrow from Fedora project via epel-release.

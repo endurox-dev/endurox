@@ -162,6 +162,7 @@ extern NDRX_API int tploggetreqfile(char *filename, int bufsize);
 extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, 
         char *new_file);
 extern NDRX_API void tplogclosereqfile(void);
+extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
 
 #ifdef	__cplusplus

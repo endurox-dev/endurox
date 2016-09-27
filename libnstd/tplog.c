@@ -354,6 +354,19 @@ out:
     return ret;
 }
 
+/**
+ * Close thread logger (if open)
+ * @return 
+ */
+public void tplogclosethread(void)
+{
+    if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+    {
+        logfile_close(G_nstd_tls->threadlog.dbg_f_ptr);
+        G_nstd_tls->threadlog.level = FAIL;
+        G_nstd_tls->threadlog.filename[0] = EOS;
+    }
+}
 
 /**
  * Get the current request file
