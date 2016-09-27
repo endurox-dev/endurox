@@ -52,6 +52,7 @@
 		<!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
 		to process until it have been terminated. -->
 		<killtime>20</killtime>
+		<exportsvcs>TESTSV,TIMEOUTSV,NULLSV,RETSOMEDATA,ECHO,UNIXINFO,UNIX2</exportsvcs>
 	</defaults>
 	<servers>
 		<server name="atmi.sv1">
@@ -64,6 +65,7 @@
             <srvid>101</srvid>
             <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
             <appopt>-n1 -r -i 0.0.0.0 -p 44001 -tP -z30</appopt>
+            <blacklistsvcs>UNIXINFO,UNIX2</blacklistsvcs>
         </server>
         
 	</servers>

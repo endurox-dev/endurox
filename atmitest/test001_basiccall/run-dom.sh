@@ -136,6 +136,20 @@ print_domains;
 # Go to domain 1
 set_dom1;
 
+# check that services are blacklisted (others will be tested by tpcalls)
+
+# UNIXINFO and UNIX2 must be missing
+
+xadmin psc 
+
+if [ "X`xadmin psc | grep UNIXINFO`" != "X" ]; then
+	echo "UNIXINFO is present in domain1!";
+fi
+
+if [ "X`xadmin psc | grep UNIX2`" != "X" ]; then
+	echo "UNIX2 is present in domain1!";
+fi
+
 # Run the client test...
 echo "Will issue calls to clients:"
 (./atmiclt1 2>&1) > ./atmiclt-dom1.log
