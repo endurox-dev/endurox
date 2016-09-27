@@ -10,7 +10,7 @@ ndrxdebug.conf - EnduroX Runtime Debug configuration
 
 SYNOPSIS
 --------
-BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [bufsz=DEBUG_BUFFER_SIZE] file=[LOG_FILE]
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL] [bufsz=DEBUG_BUFFER_SIZE] file=[LOG_FILE]
 
 
 DESCRIPTION
@@ -35,6 +35,9 @@ DEBUG CONFIGURATION FILE SYNTAX
 *UBF_DEBUG_LEVEL*::
 	UBF debug level. 0..5. 0=No loging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
 	5=Program detail.
+*TP_DEBUG_LEVEL*::
+	This is tplog(3) user logging level. 0..5. 0=No loging.
+        1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
 *DEBUG_BUFFER_SIZE*::
 	Number of lines to buffer before writting out to disk.
 *LOG_FILE*::
@@ -48,7 +51,7 @@ EXAMPLE
 Sample configuration:
 ---------------------------------------------------------------------
 # Global config:
-* ndrx=5 ubf=1 lines=1 bufsz=1000 file=
+* ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file=
 # Per binary config:
 xadmin 		file=${NDRX_APPHOME}/tmp/XADMIN
 ndrxd 		file=${NDRX_APPHOME}/tmp/NDRXD

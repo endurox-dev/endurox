@@ -102,7 +102,7 @@ B) for listing the sections.
 See cconfsrv(8) for more details. 
 
 The idea behind this is that user can do the programming under Enduro/X in
- multiple languages (C/Go/Perl/Python/PHP/NodeJs) and these modules typically
+ multiple languages (C/Go/Perl/Python/PHP/NodeJS) and these modules typically
 needs configuration. It would be waste of time if for each of the languages
 developer would need to think how to read the configuration from configuration
 files with native libraries. The Enduro/X offers standard XATMI micro-service 
@@ -153,38 +153,180 @@ Debug string setting for level is set with keyword 'ndrx'. Facility is defined w
 *LOG_FACILITY_NDRX*.
 
 - 'UBF', logging facility code 'U' - this is UBF library logs. In debug string level is set with
-keyword 'ubf'. Facility is defined with macros *LOG_FACILITY_UBF*.
+keyword 'ubf'. Facility is defined with macros 'LOG_FACILITY_UBF'.
 
 - 'TP', logging facility code 't' - this is user logs. In debug string level is set with
-keyword 'tp'. facility is defined with macros *LOG_CODE_TP*. This is logging process based logging.
+keyword 'tp'. Facility is defined with macros 'LOG_CODE_TP'. This is process based logging.
 
 - 'TP_THREAD', logging facility code 'T' - this is user logs, set on per thread basis. The log level
-is set with keyword 'tp'.
+is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_THREAD'.
 
-- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on per thread/request basis. The log level
-is set with keyword 'tp'.
+- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on per thread/request basis. The log level is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
 
 === Hierarchy of the  loggers (facilities)
 
-The loggers output the debug content in following order of the facilities status:
+The loggers output the debug content in following order of the facilities status (i.e. definition of current logger):
 
 - If 'TP_REQUEST' is open (debug file set), then all logging (NDRX, UBF, TP) will go here.
 The debug level is shared at application level with NDRX, UBF and TP facilities. There will be no
-impact if 'TP_REQUEST' log level is different.
+impact if 'TP_REQUEST' log level is different. The request logging can be open by *tplogsetreqfile(3)*. Logger can be closed by *tplogclosereqfile(3)*.
 
-- If 'TP_THREAD' is open (debug file set), then ...
+- If 'TP_THREAD' is open (debug file set), then all logs including NDRX, UBF and TP will log here. Thread logger can be open by doing *tplogconfig(LOG_FACILITY_TP_THREAD, ...)*. Thread logger can be closed by *tplogclosethread(3)*
+
+If there is no TP_REQUEST or TP_THREAD facilities open, then logging is done on per process basis, where there are 3 facilities which are always open:
+
+- 'NDRX', here XATMI sub-system is logged. It can be configured to use separate file by *tplogconfig(3)*.
+
+- 'UBF', here UBF sub-system is logged. It can be configured to use separate file by *tplogconfig(3)*.
+
+- 'TP', here TPLog sub-system is logged. It can be configured to use separate file by *tplogconfig(3)*.
 
 
 === Debug string format
 
->>TODO<<
+The *debug string* format is described in *ndrxdebug.conf(5)* manpage. basically it is following:
 
-=== Logging functions
+- ndrx=<Debug level> ubf=<Debug level> tp=<Debug level> bufsz=<Number of line to write after doing fflush> file=<log file name, if empty, then stderr>
 
-This chapter will make a short list and description of API functions available for debug
-logging.
+The debug level is one of the following:
 
->>TODO<<
+0. No logging output
+
+1. Fatal
+
+2. Error
+
+3. Warning 
+
+4. Program info
+
+5. Debug
+
+=== Brief of logging functions
+
+Enduro/X debugging API offers following list of the functions:
+
+==== Part of the standard library (ndebug.h)
+
+- void tplogdump(int 'lev', char *'comment', void *'ptr', int 'len'); - 
+Dumps the binary buffer (hex-dump) to current logger
+
+- void tplogdumpdiff(int 'lev', char *'comment', void *'ptr1', void *'ptr2', int 'len'); - 
+Compares two binary buffers and prints the hex-dump to current logger
+
+- void tplog(int 'lev', char *'message'); -
+Prints the message to current logger, at given log level
+
+- int tploggetreqfile(char *'filename', int 'bufsize'); - 
+Get the current request file (see the next chapter)
+
+- int tplogconfig(int 'logger', int 'lev', char *'debug_string', char *'module', char *'new_file');
+Configure logger. The loggers can be binary 'ored' and with one function call multiple loggers
+can be configured. 'lev' is optional, if not set it must be -1. Debug string is optional, but if have
+one then it can contain all elements. 'module' is 4 symbols log module code using in debug lines.
+'new_file' if set (not NULL and not EOS(0x00)) then it have priority over the file present in debug string.
+
+- void tplogclosereqfile(void); -
+Close request file. The current logger will fall-back to either thread logger (if configured)
+or to process loggers.
+
+- void tplogclosethread(void); - 
+Close thread logger, if it was configured.
+
+- void tplogsetreqfile_direct(char *filename); -
+Set the request file, directly to logger. This operation is used by next function which
+allows to store the current request logging function in the XATMI UBF buffer.
+
+==== Part of the XATMI library (xatmi.h)
+
+- int tplogsetreqfile(char **'data', char *'filename', char *'filesvc'); -
+Set the request file. If 'data' is UBF buffer allocated by *tpcalloc(3)*, then
+it will search for 'EX_NREQLOGFILE' field presence there. If field present,
+then 'TP_REQUEST' logger will be set to. If field not present, but 'filename' is set (not NULL and not EOS),
+then request logger will be set to this file and name will be loaded into buffer.
+If file name is not in the buffer and not in the 'filename' but 'filesvc' present
+then this XATMI service will be called with 'data' buffer and it is expected that field
+'EX_NREQLOGFILE' will be set which then is used for logging.
+
+- int tploggetbufreqfile(char *'data', char *'filename', int 'bufsize'); -
+Get the request logging file name from XATMI buffer, basically this returns
+'EX_NREQLOGFILE' value.
+
+- int tplogdelbufreqfile(char *'data'); -
+Delete the request logging information from XATMI buffer.
+
+- void tplogprintubf(int 'lev', char *'title', UBFH *'p_ub'); - 
+print the UBF buffer to current logger.
+
+=== Request logging concept
+
+Request logging is concept when each user session or transaction which is processed by multiple XATMI
+clients and servers, are logged to single trace file. This is very useful when system have high
+load with request. Then administrators can identify single transaction and with this request log
+file it is possible to view full sequence of operation which system performed. You do not need
+anymore to grep the big log files (based on each service output) and glue together the picture
+what have happened in system for particular transaction.
+
+The basic use of the request logging is following:
+
+Client process:
+--------------------------------------------------------------------------------
+
+/* read the request from network & parse
+ * get the transaction subject (for example bank card number (PAN))
+ * open the log file for each bank card request
+ * e.g.
+ */
+
+tplogsetreqfile(&p_ub, "/opt/app/logs/pan_based/<PAN>_<Time_stamp>", NULL);
+
+tplog("About to authorize");
+
+tpcall("AUTHORIZE", &p_ub, ...);
+
+/* reply to network */
+
+tplog("Transaction complete");
+
+/* close the logger after transaction complete */
+tplogclosereqfile();
+--------------------------------------------------------------------------------
+
+
+Server process - AUTHORIZE service
+--------------------------------------------------------------------------------
+void AUTHORIZE(TPSVCINFO *p_svc)
+{
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    /* Just print the buffer */
+    tplogsetreqfile((char **)&p_ub, NULL, NULL);
+
+    tplogprintubf(log_debug, "AUTHORIZE got request", p_ub);
+    
+    tplog(log_debug, "Processing...!");
+
+    /* do the work */
+
+	/* close the request file as we are done. */    
+    tplogclosereqfile();
+
+    tpreturn(  TPSUCCESS,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+--------------------------------------------------------------------------------
+
+
+Lest assume that for our transaction logfile is set to: '/opt/app/logs/pan_based/5555550000000001_1475008709'
+then transaction could look like:
+
+[dia, reqlogging.dia, reqlogging.png, x300]
+-------------------------------
+-------------------------------
+
 
 
 Queuing mechanisms
