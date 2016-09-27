@@ -1,0 +1,54 @@
+TPLOGDUMPDIFF(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+tplogdumpdiff - Get context data (thread local storage data)
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+void tplogdumpdiff(int 'lev', char *'comment', void *'ptr1', void *'ptr2', int 'len');
+
+or
+
+#define TP_LOGDUMP_DIFF('lev','comment','ptr','ptr2','len')
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function compares two memory areas by given pointers 'ptr' and 'ptr2'. The hex dump is generate and
+output is written to current logger (either process based, thread based or request based). The 
+*tplogdumpdiff()* basically is wrapper for *TP_LOGDUMP_DIFF*. For C/C++ programs it is recommended
+to use macro version.
+
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogdump(3)* *tplog(3)* *tplogconfig(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

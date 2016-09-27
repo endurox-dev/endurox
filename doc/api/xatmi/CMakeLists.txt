@@ -87,7 +87,9 @@ set(MAN3_NAMES
 	tpdequeue
 	ndrx_main
 	ndrx_main_integra
-        tpacall)
+        tpacall
+        tplogdumpdiff
+)
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
 # Generate MAN3
