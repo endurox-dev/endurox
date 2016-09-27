@@ -61,6 +61,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 private pthread_t M_signal_thread; /* Signalled thread */
+private int M_signal_thread_set = FALSE; /* Signal thread is set */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -290,6 +291,8 @@ public void ndrxd_sigchld_init(void)
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             check_child_exit, NULL);
+
+    M_signal_thread_set = TRUE;
 }
 
 /**
@@ -302,6 +305,12 @@ public void ndrxd_sigchld_uninit(void)
 
     NDRX_LOG(log_debug, "%s - enter", fn);
     
+    if (!M_signal_thread_set)
+    {
+        NDRX_LOG(log_debug, "Signal thread was not initialised, nothing todo...");
+        goto out;
+    }
+
 
     NDRX_LOG(log_debug, "About to cancel signal thread");
     
@@ -333,6 +342,8 @@ public void ndrxd_sigchld_uninit(void)
     }
     
     NDRX_LOG(log_debug, "finished ok");
+out:
+    return;
 }
 
 /**
