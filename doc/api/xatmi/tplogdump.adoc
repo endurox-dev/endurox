@@ -1,0 +1,96 @@
+TPLOGDUMP(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tplogdump - Print hex-dump of byte array to current logger
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+void tplogdump(int 'lev', char *'comment', void *'ptr', int 'len');
+
+or
+
+#define TP_LOGDUMP('lev','comment','ptr','len')
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function writes a hex dump of 'ptr' byte array of length 'len' to current logger 
+(process based, thread based or request based). The *tplogdump()* basically is wrapper for *TP_LOGDUMP*.
+For C/C++ programs it is recommended to use macro version. 'lev' is debug level from which start the
+logging Comment is title line of the dump.
+
+Log levels are following (from ndebug.h):
+
+- log_always      1 
+
+- log_error       2
+
+- log_warn        3
+
+- log_info        4
+
+- log_debug       5
+
+
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+
+Code dumptest.c
+
+---------------------------------------------------------------------
+#include <ndebug.h>
+
+int main (int argc, char **argv)
+{
+        char arr1[32];
+        int i;
+
+        for (i=0; i<sizeof(arr1); i++)
+        {
+                arr1[i]=(char)(65+i);
+        }
+        
+        tplogdump(5, "The dump", arr1, sizeof(arr1));
+        
+        return 0;
+}
+---------------------------------------------------------------------
+
+Sample run:
+---------------------------------------------------------------------
+$ cc  dumptest.c -lnstd -lpthread -lrt -lm -I /include
+$ ./a.out 
+t:USER:5: 6212:000:20160928:093510753:/tplog.c:0424:The dump
+  0000  41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50  ABCDEFGHIJKLMNOP
+  0010  51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60  QRSTUVWXYZ[\]^_`
+---------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogdumpdiff(3)* *tplog(3)* *tplogconfig(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -89,6 +89,7 @@ set(MAN3_NAMES
 	ndrx_main_integra
         tpacall
         tplogdumpdiff
+        tplogdump
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

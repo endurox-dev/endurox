@@ -5,7 +5,7 @@ TPLOGDUMPDIFF(3)
 
 NAME
 ----
-tplogdumpdiff - Get context data (thread local storage data)
+tplogdumpdiff - print the hex-dump differences of two buffers to log file
 
 
 SYNOPSIS
@@ -66,7 +66,7 @@ int main (int argc, char **argv)
 
 Sample run:
 ---------------------------------------------------------------------
-$ gcc  dumpdifftest.c -lnstd -lpthread -lrt -lm -I /include/
+$ cc  dumpdifftest.c -lnstd -lpthread -lrt -lm -I /include/
 $ ./a.out 
 t:USER:5:13937:000:20160928:002924485:/tplog.c:0437:Compare two arrays
 <  0000  41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50  ABCDEFGHIJKLMNOP
