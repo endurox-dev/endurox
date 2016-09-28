@@ -72,7 +72,7 @@ int main (int argc, char **argv)
         
         tplogdumpdiff(log_debug, "Compare two arrays", arr1, arr2, sizeof(arr1));
 
-		TP_DUMP_DIFF(5, "Compare two arrays (TP_DUMP version)", arr1, arr2, sizeof(arr1));
+        TP_DUMP_DIFF(5, "Compare two arrays (TP_DUMP version)", arr1, arr2, sizeof(arr1));
         
         return 0;
 }
