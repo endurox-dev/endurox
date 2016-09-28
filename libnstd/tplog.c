@@ -421,7 +421,7 @@ public void tplog(int lev, char *message)
  */
 public void tplogdump(int lev, char *comment, void *ptr, int len)
 {
-    TP_LOGDUMP(lev, comment, (char *)ptr, len);
+    TP_DUMP(lev, comment, (char *)ptr, len);
 }
 
 /**
@@ -434,6 +434,6 @@ public void tplogdump(int lev, char *comment, void *ptr, int len)
  */
 public void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
 {
-    TP_LOGDUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
+    TP_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
  
