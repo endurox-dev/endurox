@@ -134,6 +134,8 @@ int test_request_file(void)
                 testfname_should_be, testfname);
             FAIL_OUT(ret);
         }
+
+        /* TODO: add test for tploggetreqfile() */
         
         /* Add some data to buffer */
         if (0==(i % 100))
