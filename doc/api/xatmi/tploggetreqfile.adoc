@@ -1,0 +1,45 @@
+TPLOGETREQFILE(3)
+=================
+:doctype: manpage
+
+NAME
+----
+tploggetreqfile - Get the current request logger file
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+int tploggetreqfile(char *'filename', int 'bufsize');
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Return the the request logger ('LOG_FACILITY_TP_REQUEST'), if current is one. The log file name is returned in 'filename' field, if parameter is not NULL. 'bufsize' indicates the length of the output buffer. 'bufsize' is optional. In case if 'bufsize' is 0, the buffer length checks are not done and it is assumed that 'filename' have enough space to store the value.
+
+
+RETURN VALUE
+------------
+Function returns '1' if request logging is open. '0' if request logging is not in the progress, thus no value returned in 'filename'.
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *ex_devguide(guides)* *tplogdump(3)* *tplog(3)* *tplogconfig(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

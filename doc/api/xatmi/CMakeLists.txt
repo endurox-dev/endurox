@@ -91,6 +91,7 @@ set(MAN3_NAMES
         tplogdumpdiff
         tplogdump
         tplog
+        tploggetreqfile
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

@@ -383,10 +383,10 @@ public int tploggetreqfile(char *filename, int bufsize)
         goto out;
     }
     
+    ret = TRUE;
+
     if (NULL!=filename)
     {
-        ret = TRUE;
-        
         if (bufsize>0)
         {
             strncpy(filename, G_nstd_tls->requestlog.filename, bufsize-1);
