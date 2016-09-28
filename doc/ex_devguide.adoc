@@ -327,7 +327,57 @@ then transaction could look like:
 -------------------------------
 -------------------------------
 
+=== Understanding the format of log file
 
+For example given code:
+--------------------------------------------------------------------------------
+#include <ndebug.h>
+
+int main (int argc, char **argv)
+{
+        tplog(5, "Hello from function logger");
+        
+        TP_LOG(log_debug, "Hello from macro logger [logging level %d]", log_debug);
+
+        return 0;
+}
+--------------------------------------------------------------------------------
+
+Will print to log file following messages:
+
+-------------------------------------------------------------------------------
+t:USER:5:11064:000:20160928:100225252:/tplog.c:0412:Hello from function logger
+t:USER:5:11064:000:20160928:100225252:ogtest.c:0007:Hello from macro logger [logging level 5]
+--------------------------------------------------------------------------------
+
+So in general log line format is following:
+
+--------------------------------------------------------------------------------
+<LOGGER_FACILITY>:<MODULE>:<LOG_LEVEL>:<PID>:<THREAD_ID>:<DATE>:<TIME_MS>:<SOURCE_FILE>:<LINE>:<MESSAGE>
+--------------------------------------------------------------------------------
+
+Where:
+
+- 'LOGGER_FACILITY' - is logger code which to which message is logged, i.e. 'N' - NDRX process based logger, 
+'U' - UBF process based logger, 't' - TP log, process based, 'T' - thread based logger, 'R' - request logger.
+
+- 'MODULE' - 4 char long logger, 'NDRX' and 'UBF ' or user given code by *tplogconfig(3)*. Default is 'USER'.
+
+- 'LOG_LEVEL' - message log level digit.
+
+- 'PID' - process id.
+
+- 'THREAD_ID' - internal Enduro/X thread identifier.
+
+- 'DATE' - YYYYMMDD time stamp of the message (date part) in local TZ.
+
+- 'TIME_MS' - HHmmssSSS - time stamp of the message (time part) in local TZ.
+
+- 'SOURCE_FILE' - last 8 symbols of C/C++ source file from which macro logger was called.
+
+- 'LINE' - line number of the message in source code (where the macro logger was called).
+
+- 'MESSAGE' - logged user message.
 
 Queuing mechanisms
 ------------------

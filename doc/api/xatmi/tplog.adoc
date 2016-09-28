@@ -1,0 +1,88 @@
+TPLOG(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+tplog - Print log message to current logger
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+void tplog(int 'lev', char *'message');
+
+or
+
+#define TP_LOG('lev', 'fmt', ...)
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function writes the message to current log file. 'lev' is logging level. For function version 
+log message goes as 'message' parameter. For C/C++ coding it is recommended to
+use macro version *TP_LOG*, as it have a format string and it uses more efficient way
+to check the logging levels. Macro version have less functions calls during the whole process.
+
+Log levels are following (from ndebug.h):
+
+- log_always      1 
+
+- log_error       2
+
+- log_warn        3
+
+- log_info        4
+
+- log_debug       5
+
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+
+Code logtest.c
+
+---------------------------------------------------------------------
+#include <ndebug.h>
+
+int main (int argc, char **argv)
+{
+        tplog(5, "Hello from function logger");
+
+        TP_LOG(log_debug, "Hello from macro logger [logging level %d]", log_debug);
+
+        return 0;
+}
+---------------------------------------------------------------------
+
+Sample run:
+---------------------------------------------------------------------
+$ cc  logtest.c -lnstd -lpthread -lrt -lm -I /include
+$ ./a.out 
+t:USER:5:11064:000:20160928:100225252:/tplog.c:0412:Hello from function logger
+t:USER:5:11064:000:20160928:100225252:ogtest.c:0007:Hello from macro logger [logging level 5]
+---------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogconfig(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -90,6 +90,7 @@ set(MAN3_NAMES
         tpacall
         tplogdumpdiff
         tplogdump
+        tplog
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

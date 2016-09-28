@@ -16,7 +16,7 @@ void tplogdumpdiff(int 'lev', char *'comment', void *'ptr1', void *'ptr2', int '
 
 or
 
-#define TP_LOGDUMP_DIFF('lev','comment','ptr','ptr2','len')
+#define TP_DUMP_DIFF('lev','comment','ptr','ptr2','len')
 
 Link with '-lnstd -lpthread -lrt -lm'
 
@@ -26,8 +26,20 @@ Function compares two memory areas by given pointers 'ptr' and 'ptr2'. The hex d
 output is written to current logger (either process based, thread based or request based). The 
 *tplogdumpdiff()* basically is wrapper for *TP_LOGDUMP_DIFF*. For C/C++ programs it is recommended
 to use macro version. 'lev' is debug level from 1 (log_always) .. 5 (log_debug). Comment is title line of
-the dump. 'ptr' and 'ptr2' are pointer to memory blocks to compare. 'len' is number of bytes in each array
-to compare.
+the dump. 'ptr' and 'ptr2' are pointer to memory blocks to compare. 'len' is number of bytes in each array to compare.
+
+Log levels are following (from ndebug.h):
+
+- log_always      1 
+
+- log_error       2
+
+- log_warn        3
+
+- log_info        4
+
+- log_debug       5
+
 
 
 RETURN VALUE
@@ -58,7 +70,9 @@ int main (int argc, char **argv)
                 arr2[i]=(char)(66+i);
         }
         
-        tplogdumpdiff(5, "Compare two arrays", arr1, arr2, sizeof(arr1));
+        tplogdumpdiff(log_debug, "Compare two arrays", arr1, arr2, sizeof(arr1));
+
+		TP_DUMP_DIFF(5, "Compare two arrays (TP_DUMP version)", arr1, arr2, sizeof(arr1));
         
         return 0;
 }
@@ -66,9 +80,14 @@ int main (int argc, char **argv)
 
 Sample run:
 ---------------------------------------------------------------------
-$ cc  dumpdifftest.c -lnstd -lpthread -lrt -lm -I /include/
+$ cc  dumpdifftest.c -lnstd -lpthread -lrt -lm -I /include
 $ ./a.out 
-t:USER:5:13937:000:20160928:002924485:/tplog.c:0437:Compare two arrays
+t:USER:5:10865:000:20160928:095506583:/tplog.c:0437:Compare two arrays
+<  0000  41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50  ABCDEFGHIJKLMNOP
+>  0000  42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50 51  BCDEFGHIJKLMNOPQ
+<  0010  51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60  QRSTUVWXYZ[\]^_`
+>  0010  52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60 61  RSTUVWXYZ[\]^_`a
+t:USER:5:10865:000:20160928:095506583:mpdiff.c:0017:Compare two arrays (TP_DUMP version)
 <  0000  41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50  ABCDEFGHIJKLMNOP
 >  0000  42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50 51  BCDEFGHIJKLMNOPQ
 <  0010  51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 60  QRSTUVWXYZ[\]^_`
