@@ -97,6 +97,16 @@ if [ "X`grep 'hello from main thread' clt-tp.log`" == "X" ]; then
 	RET=-2
 fi
 
+if [ "X`grep 'Thread 1 logs to main' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log (missing Thread 1 logs to main in main)!"
+	RET=-2
+fi
+
+if [ "X`grep 'Thread 2 logs to main' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log (missing Thread 2 logs to main in main)!"
+	RET=-2
+fi
+
 # There shall be 1000 files in log directory
 FILES=` ls -1 ./logs/*.log | wc | awk '{print $1}'`
 

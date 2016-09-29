@@ -63,6 +63,8 @@ void do_thread_work1 ( void *ptr )
         sleep(1);
         tplog(5, "hello from thread 1");
     }
+    tplogclosethread();
+    tplog(5, "Thread 1 logs to main");
 }
 
 void do_thread_work2 ( void *ptr )
@@ -77,6 +79,8 @@ void do_thread_work2 ( void *ptr )
         sleep(1);
         tplog(5, "hello from thread 2");
     }
+    tplogclosethread();
+    tplog(5, "Thread 2 logs to main");
 }
 
 /**
