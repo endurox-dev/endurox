@@ -152,7 +152,10 @@ private int logfile_change_name(int logger, char *filename)
     /* name already changed no need to compare 
      * the caller must decide that.
      */
-    logfile_close(l->dbg_f_ptr);
+    if (l->dbg_f_ptr)
+    {
+        logfile_close(l->dbg_f_ptr);
+    }
 
     /* open the file */
     if (EOS==l->filename[0])
@@ -220,7 +223,10 @@ public void tplogclosereqfile(void)
 {
     API_ENTRY; /* set TLS too */
     
-    logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
+    if (G_nstd_tls->requestlog.dbg_f_ptr)
+    {
+        logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
+    }
     G_nstd_tls->requestlog.filename[0] = EOS;
     G_nstd_tls->requestlog.dbg_f_ptr = NULL;
 }

@@ -1,0 +1,49 @@
+TPLOGCLOSEREQFILE(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+tplogclosereqfile - Close the current request logging facility
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+void tplogclosereqfile(void);
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Close currently open request logging facility. It is not a problem to call a function twice. If request logger is closed
+nothing will happen. With this function logger will be degraded to thread logging facility (if was open) or to process
+based logging.
+
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogconfig(3)* *ex_devguide(guides)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

@@ -135,7 +135,21 @@ int test_request_file(void)
             FAIL_OUT(ret);
         }
 
-        /* TODO: add test for tploggetreqfile() */
+        /* Test tploggetreqfile() */
+        
+        if (!tploggetreqfile(testfname, sizeof(testfname)))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get current request log file: %s", 
+                    tpstrerror(tperrno));
+            FAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp(testfname_should_be, testfname))
+        {
+            TP_LOG(log_error, "TESTERROR: Request file should be [%s] but got [%s]!!!", 
+                testfname_should_be, testfname);
+            FAIL_OUT(ret);
+        }
         
         /* Add some data to buffer */
         if (0==(i % 100))
