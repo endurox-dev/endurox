@@ -84,7 +84,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *ex_devguide(guides)* ndrxdebug.conf(5)
+*tploggetreqfile(3)* *tploggetbufreqfile(3)* *tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *ex_devguide(guides)*
 
 COPYING
 -------

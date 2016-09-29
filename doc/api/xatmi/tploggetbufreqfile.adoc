@@ -1,0 +1,54 @@
+TPLOGGETBUFREQFILE(3)
+=====================
+:doctype: manpage
+
+
+NAME
+----
+tploggetbufreqfile - Get request file name from UBF buffer
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tploggetbufreqfile(char *'data', char *'filename', int 'bufsize');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Get the request file name from UBF buffer. 'data' is pointer to XATMI buffer allocated by *tpalloc(3)*. 'filename' is output paramter where to store the file name. 'buffsize' is mandatory parameter indicating the output buffer length. Basically this function returns *EX_NREQLOGFILE* field from buffer, if present.
+
+
+RETURN VALUE
+------------
+On success, *tploggetbufreqfile()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPENOENT* Request logging file name not present in UBF buffer or system failure in reading from UBF.
+
+*TPEINVAL* Not UBF buffer or buffer NULL.
+
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogsetreqfile(3)* *tplogsetreqfile_direct(3)* *tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

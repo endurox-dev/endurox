@@ -97,6 +97,7 @@ set(MAN3_NAMES
         tplogclosethread
         tplogsetreqfile_direct
         tplogsetreqfile
+	tploggetbufreqfile
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
