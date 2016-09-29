@@ -298,8 +298,9 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
         }
 
         if (NULL!=module && EOS!=module[0] && 
-                loggers[i] != LOG_FACILITY_NDRX && 
-                loggers[i] == LOG_FACILITY_TP)
+                loggers[i] != LOG_FACILITY_NDRX &&
+                loggers[i] != LOG_FACILITY_UBF
+            )
         {
             strncpy(l->module, module, 4);
             l->module[4] = EOS;
@@ -314,7 +315,7 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
             strcpy(tmp_filename, l->filename);
             if (SUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
             {
-                _Nset_error_msg(NESYSTEM, "Failed to parse debug string");
+                _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
                 FAIL_OUT(ret);
             }
 

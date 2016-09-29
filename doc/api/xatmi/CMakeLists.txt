@@ -84,14 +84,15 @@ set(MAN3_NAMES
         tpjsontoubf
         tpubftojson
         tpenqueue
-	tpdequeue
-	ndrx_main
-	ndrx_main_integra
+        tpdequeue
+        ndrx_main
+        ndrx_main_integra
         tpacall
         tplogdumpdiff
         tplogdump
         tplog
         tploggetreqfile
+        tplogconfig
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
