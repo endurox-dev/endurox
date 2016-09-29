@@ -1,1 +1,27 @@
+# Ignore all
+*
+# Unignore all with extensions
+!*.*
+# Unignore all dirs
+!*/
+install_manifest.txt
+nbproject
+include/ndrx_config.h
 sampleconfig/*
+*.log
+*.pdf
+CMakeFiles
+*.cmake
+*.so
+*.out
+libubf/expr.lex.c
+libubf/expr.tab.c
+libubf/expr.tab.h
+Makefile
+*.a
+CMakeCache.txt
+
+*.html
+!pscript.html
+!psstdlib.html
+*.css
