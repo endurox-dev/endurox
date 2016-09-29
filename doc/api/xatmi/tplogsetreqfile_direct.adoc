@@ -1,0 +1,45 @@
+TPLOGSETREQFILE_DIRECT(3)
+=========================
+:doctype: manpage
+
+
+NAME
+----
+tplogsetreqfile_direct - Set request file, directly to TLS
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+#include <nerror.h>
+
+void tplogsetreqfile_direct(char *'filename');
+
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function opens *LOG_FACILITY_TP_REQUEST* facility for logging. The logging is performed to specified 'filename' file.
+If it fails to set the log file, the logger will write the logs to *stderr*. No error is returned.
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *ex_devguide(guides)* ndrxdebug.conf(5)
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

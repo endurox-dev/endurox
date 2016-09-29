@@ -95,6 +95,8 @@ set(MAN3_NAMES
         tplogconfig
         tplogclosereqfile
         tplogclosethread
+        tplogsetreqfile_direct
+        tplogsetreqfile
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

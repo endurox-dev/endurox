@@ -209,7 +209,7 @@ public int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                 NDRX_LOG(log_debug, "About to call [%s] for new request "
                         "file log name", filesvc);
                 
-                if (FAIL == tpcall(filesvc, (char *)*data, 0L, (char **)data, &rsplen,0))
+                if (FAIL == tpcall(filesvc, (char *)*data, 0L, (char **)data, &rsplen,TPNOTRAN))
                 {
                     NDRX_LOG(log_error, "%s failed: %s", filesvc, tpstrerror(tperrno));
                     /* tperror already set */
