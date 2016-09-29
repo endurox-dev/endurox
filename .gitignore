@@ -25,3 +25,17 @@ CMakeCache.txt
 !pscript.html
 !psstdlib.html
 *.css
+
+*.sv*
+atmitest/test028_tmq/q.conf
+atmitest/test006_ulog/log
+
+*.png
+
+!exforward_forward.png
+!exforward_tpcall.png
+!rt-patching.png
+!server_monitoring_and_recovery.png
+!tmqinternals.png
+
+ 
