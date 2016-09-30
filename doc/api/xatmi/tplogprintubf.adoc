@@ -1,0 +1,62 @@
+TPLOGPRINTUBF(3)
+================
+:doctype: manpage
+
+NAME
+----
+tplogprintubf - Print the UBF buffer to current logger
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tplogprintubf(int 'lev', char *'title', UBFH *'p_ub');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function dumps the UBF bufer conenet in field/value format to current logger. The 'lev' is debug level from which to perform logging. 'title' is title of the dump, 'p_ub' is pointer to UBF buffer. The output basically is the same as from *Bfprint()* UBF API function.
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+For following code:
+
+--------------------------------------------------------------------------------
+tplogprintubf(log_info, "Buffer before cleanup", p_ub);
+--------------------------------------------------------------------------------
+
+The debug output looks like:
+
+--------------------------------------------------------------------------------
+R:NDRX:4:24112:000:20160925:215908430:_tplog.c:0099:Buffer before cleanup
+EX_NREQLOGFILE  ./logs/request_3.log
+T_STRING_FLD    HELLO WORLD!
+T_CHAR_FLD	A
+T_LONG_FLD	1000
+--------------------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogsetreqfile(3)* *tplogsetreqfile_direct(3)* *tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

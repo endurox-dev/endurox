@@ -92,7 +92,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tplogdumpdiff(3)* *tplog(3)* *tplogconfig(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *ex_devguide(guides)*
+*tplogdumpdiff(3)* *tplog(3)* *tplogprintubf(3)* *tplogconfig(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *ex_devguide(guides)*
 
 COPYING
 -------
