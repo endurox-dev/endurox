@@ -39,3 +39,6 @@ atmitest/test006_ulog/log
 !tmqinternals.png
 
  
+*.8
+*.5
+*.3
