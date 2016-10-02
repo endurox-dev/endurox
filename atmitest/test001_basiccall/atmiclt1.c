@@ -112,6 +112,20 @@ int main(int argc, char** argv) {
     printf("test mode [%s]\n", bench_mode);
     fflush(stdout);
     
+    for (i=0; i<50; i++)
+    {
+        char tmp[128];
+        sprintf(tmp, "HELLO FROM CLIENT %d abc", i);
+        if (FAIL==CBchg(p_ub, T_CARRAY_FLD, i, tmp, 0, BFLD_STRING))
+            {
+                NDRX_LOG(log_debug, "Failed to get T_CARRAY_FLD[%d]", i);
+                ret=FAIL;
+                goto out;
+            }
+    }
+    
+    tplogprintubf(log_error, "Carray buffer", p_ub);
+        
     if (strstr(bench_mode, ":0:"))
     {
         for (i=0; i<50; i++)

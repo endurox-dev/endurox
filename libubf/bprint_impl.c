@@ -86,7 +86,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
 
     bfldid = BFIRSTFLDID;
 
-    while(SUCCEED==ret && 1==_Bnext(&G_ubf_tls->bprint_state, 
+    while(1==_Bnext(&G_ubf_tls->bprint_state, 
             p_ub, &bfldid, &occ, NULL, &len, &p))
     {
         cnv_buf=NULL;
@@ -127,7 +127,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
 
             temp_len = get_nonprintable_char_tmpspace(p, len);
 
-            if (temp_len!=len)
+            if (temp_len!=len) /* for carray we need EOS at end! */
             {
                 UBF_LOG(log_debug, "Containing special characters -"
                                     " needs to temp buffer for prefixing");
@@ -135,38 +135,56 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
                 if (NULL==tmp_buf)
                 {
                     _Fset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
-                    ret=FAIL;
+                    FAIL_OUT(ret);
                 }
 
                 /* build the printable string */
                 build_printable_string(tmp_buf, p, len);
                 p = tmp_buf;
             }
-        }
-
-        if (SUCCEED==ret)
-        {
-            /* value is kept in p */
-            if (len>0)
-                fprintf(outf, "%s\t%s\n", _Bfname_int(bfldid), p);
-            else
-                fprintf(outf, "%s\t\n", _Bfname_int(bfldid));
-
-            if (ferror(outf))
+            else if (BFLD_CARRAY==fldtype) /* we need EOS for carray... */
             {
-                _Fset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
-                            strerror(errno));
-                ret=FAIL;
+                tmp_buf=malloc(temp_len+1); /* adding +1 for EOS */
+                
+                memcpy(tmp_buf, p, temp_len);
+                
+                if (NULL==tmp_buf)
+                {
+                    _Fset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
+                    FAIL_OUT(ret);
+                }
+                tmp_buf[temp_len] = EOS;
+                p = tmp_buf;
             }
         }
 
-        /* Free up allocated resources */
-        if (NULL!=tmp_buf)
-            free(tmp_buf);
-        if (NULL!=cnv_buf)
-            free(cnv_buf);
+
+        /* value is kept in p */
+        if (len>0)
+            fprintf(outf, "%s\t%s\n", _Bfname_int(bfldid), p);
+        else
+            fprintf(outf, "%s\t\n", _Bfname_int(bfldid));
+
+        if (ferror(outf))
+        {
+            _Fset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
+                        strerror(errno));
+            ret=FAIL;
+        }
+        
+    }
+    
+out:
+    /* Free up allocated resources */
+    if (NULL!=tmp_buf)
+    {
+        free(tmp_buf);
     }
 
+    if (NULL!=cnv_buf)
+    {
+        free(cnv_buf);
+    }
     /* release the stuff... */
     fflush(outf);
 
