@@ -75,8 +75,8 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
     BFLDOCC occ;
     char *p;
     int fldtype;
-    char *cnv_buf;
-    char *tmp_buf;
+    char *cnv_buf = NULL;
+    char *tmp_buf = NULL;
     BFLDLEN cnv_len;
     char fn[] = "_Bfprint";
     

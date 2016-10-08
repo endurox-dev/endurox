@@ -427,7 +427,7 @@ extern NDRX_API void (*G_tpsvrdone__)(void);
  * xatmi communication api
  */
 extern NDRX_API int tpacall(char *svc, char *data, long len, long flags);
-extern NDRX_API int tpadvertise_full (char *, void (*)(TPSVCINFO *), char *);
+extern NDRX_API int tpadvertise_full (char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
 extern NDRX_API char *tpalloc(char *type, char *subtype, long size);
 extern NDRX_API int tpcall(char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
 extern NDRX_API int tpcancel(int cd);
