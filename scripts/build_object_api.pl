@@ -262,25 +262,76 @@ sub write_h {
 # Write C object API function
 ################################################################################
 sub write_c {
-	my $func_type = $_[1];
-	my $func_name = $_[2];
-	my $sig = $_[3];
+	my $func_type = $_[0];
+	my $func_name = $_[1];
+	my $sig = $_[2];
+	my $func_args_list = $_[3];
 	
 	my @func_arg_type = @{$_[4]};
 	my @func_arg_name = @{$_[5]};
 	my @func_arg_def = @{$_[6]};
 	
-	#foreach my $type( @func_arg_type )
-	#{
-		#print $M_c_fd "$func_name - $sig - $type\n";
-	#}
 	
+	#
+	# Generate function call
+	#
+	my $invoke = "$func_name(";
+	my $first = 1;
 	
-	if ($func_type~=m/^int$/)
+	if ($func_args_list!~m/^void$/)
+	{
+		# Generate from arguments list;
+		foreach my $name ( @func_arg_name )
+		{
+			if ($first)
+			{
+				$first = 0;
+			}
+			else
+			{
+				$invoke = "$invoke, ";
+			}
+			
+			$invoke = "$invoke$name";
+		}
+	}
+	
+	$invoke = "$invoke)";
+	
+	if ($func_type=~m/^int$/)
 	{
 		# Generate int func
+$message = <<"END_MESSAGE";
+
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+public $sig 
+{
+	int ret = SUCCEED;
+	
+	/* set the context */
+	if (SUCCEED!=tpsetctxt(*context, 0))
+	{
+		userlog("ERROR! $func_name() failed to set context");
+		FAIL_OUT(ret);
+	}
+	
+	ret = $invoke;
+
+	if (SUCCEED!=tpgetctxt(context, 0))
+	{
+		userlog("ERROR! $func_name() failed to get context");
+		FAIL_OUT(ret);
+	}
+out:	
+	return ret;	
+}
+
+
+END_MESSAGE
 	} 
-	elsif ($func_type~=m/^void$/)
+	elsif ($func_type=~m/^void$/)
 	{
 # 		# Generate void func
 	}
@@ -290,6 +341,8 @@ sub write_c {
 		print "!!! Unsupported return type [$func_type]\n";
 		return;
 	}
+	
+	print $M_c_fd $message;
 	
 }
 
@@ -367,6 +420,9 @@ NEXT: while( my $line = <$info>)
 	my @func_arg_name = ();
 	my @func_arg_def = (); # in case if pointer to function used...
 	
+	#
+	# Fix callbacks with commas
+	#
 	my @args = split(/\,/, $func_args_list);
 	
 	if ($func_args_list=~m/^void$/)
@@ -414,7 +470,8 @@ NEXT: while( my $line = <$info>)
 		
 		write_h($sig);
 		
-		write_c($func_type, $func_name, $sig, \@func_arg_type, \@func_arg_name, \@func_arg_def);
+		write_c($func_type, $func_name, $sig, $func_args_list, 
+			\@func_arg_type, \@func_arg_name, \@func_arg_def);
 	
 		
 	}
