@@ -73,9 +73,9 @@ sub open_h {
 
 	my $title = "";
 
-	if ($M_name=~/oxatmi/)
+	if ($M_name=~/oatmi/)
 	{
-		$title = "XATMI Object API header (auto-generated)";
+		$title = "ATMI Object API header (auto-generated)";
 	}
 	elsif($M_name=~/oubf/)
 	{
@@ -149,9 +149,9 @@ sub open_c {
 
 	my $title = "";
 
-	if ($M_name=~/oxatmi/)
+	if ($M_name=~/oatmi/)
 	{
-		$title = "XATMI Object API code (auto-generated)";
+		$title = "ATMI Object API code (auto-generated)";
 	}
 	elsif($M_name=~/oubf/)
 	{
@@ -549,15 +549,29 @@ NEXT: while( my $line = <$info>)
 			|| $line =~ m/ndrx_atmi_tls_set/
 			|| $line =~ m/ndrx_atmi_tls_free/
 			|| $line =~ m/ndrx_atmi_tls_new/
+			# Skip the server stuff
+			|| $line =~ m/tpreturn/
+			|| $line =~ m/tpforward/
+			|| $line =~ m/tpadvertise_full/
+			|| $line =~ m/tpunadvertise/
 			)
 		{
 			print "skip - next\n";
 			next NEXT;
 		}
 	}
-	elsif ($M_name =~ m/$osrvxatmi^/)
+	elsif ($M_name =~ m/$oatmisrv^/)
 	{
-		# Server mode XATMI Object API
+		# Include only server commands
+		if ($line !~ m/tpreturn/
+			&& $line !~ m/tpforward/
+			&& $line !~ m/tpadvertise_full/
+			&& $line !~ m/tpunadvertise/
+			)
+		{
+			print "skip - next\n";
+			next NEXT;
+		}
 	}
 	
 	# Process next, parse arguments and their types
