@@ -602,6 +602,7 @@ NEXT: while( my $line = <$info>)
 				print "Normal type...\n";
                 # TODO: Support for types with space in the middle, e.g. "unsigned long"
 				($type, $name) = 
+					#($pair=~m/^\s*((unsigned\s)?[A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
 					($pair=~m/^\s*([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
 				
 				$type = remove_white_space($type);
@@ -632,8 +633,6 @@ NEXT: while( my $line = <$info>)
 		
 		write_c($func_type, $func_name, $sig, $func_args_list, 
 			\@func_arg_type, \@func_arg_name, \@func_arg_def);
-	
-		
 	}
     }
 }
