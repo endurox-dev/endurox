@@ -5,7 +5,7 @@
 #
 
 use Getopt::Std;
-
+#use Regexp::Common;
 
 our ($opt_i, $opt_o, $opt_h);
 $opt_i = 0; # Input file
@@ -35,6 +35,19 @@ sub remove_white_space {
 	$ret =~ s/\s+$//;
 
 	return $ret;
+}
+
+#http://stackoverflow.com/questions/5049358/split-on-comma-but-only-when-not-in-parenthesis
+sub split_by_comma_but_not_parenthesis {
+
+	my $string=shift;
+	my @array = ($string =~ /(
+	[^,]*\([^)]*\)   # comma inside parens is part of the word
+	|
+	[^,]*)           # split on comma outside parens
+	(?:,|$)/gx);
+	
+	return @array;
 }
 
 ################################################################################
@@ -423,7 +436,8 @@ NEXT: while( my $line = <$info>)
 	#
 	# Fix callbacks with commas
 	#
-	my @args = split(/\,/, $func_args_list);
+	#my @args = split(/\,/, $func_args_list);
+	my @args = split_by_comma_but_not_parenthesis($func_args_list);
 	
 	if ($func_args_list=~m/^void$/)
 	{
@@ -433,7 +447,7 @@ NEXT: while( my $line = <$info>)
 	{
 		# Extract the data type and ar
 		
-		foreach my $pair ( @args )
+		SKIP_TYPE: foreach my $pair ( @args )
 		{
 			$pair = remove_white_space($pair);
 			
@@ -455,6 +469,15 @@ NEXT: while( my $line = <$info>)
 				
 				$type = remove_white_space($type);
 				$name = remove_white_space($name);
+			}
+			
+			#
+			# Seems like split_by_comma_but_not_parenthesis()
+			# generates last block empty.
+			#
+			if ($name=~m/^$/)
+			{
+				next SKIP_TYPE;
 			}
 			
 			push @func_arg_def, $pair;
