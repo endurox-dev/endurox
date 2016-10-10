@@ -313,7 +313,9 @@ sub write_c {
 	
 	if ($func_type=~m/^int$/)
 	{
-		# Generate int func
+################################################################################
+# int type function
+################################################################################
 $message = <<"END_MESSAGE";
 
 /**
@@ -341,12 +343,146 @@ out:
 	return ret;	
 }
 
-
 END_MESSAGE
-	} 
+################################################################################
+	}
 	elsif ($func_type=~m/^void$/)
 	{
-# 		# Generate void func
+################################################################################
+# Void function
+################################################################################
+$message = <<"END_MESSAGE";
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+public $sig 
+{
+	/* set the context */
+	if (SUCCEED!=tpsetctxt(*context, 0))
+	{
+		userlog("ERROR! $func_name() failed to set context");
+	}
+	
+	$invoke;
+
+	if (SUCCEED!=tpgetctxt(context, 0))
+	{
+		userlog("ERROR! $func_name() failed to get context");
+	}
+out:	
+	return;
+}
+
+END_MESSAGE
+################################################################################
+	}
+	elsif ($func_type=~m/^long$/)
+	{
+################################################################################
+# long function
+################################################################################
+$message = <<"END_MESSAGE";
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+public $sig 
+{
+	long ret = SUCCEED;
+	
+	/* set the context */
+	if (SUCCEED!=tpsetctxt(*context, 0))
+	{
+		userlog("ERROR! $func_name() failed to set context");
+		FAIL_OUT(ret);
+	}
+	
+	ret = $invoke;
+
+	if (SUCCEED!=tpgetctxt(context, 0))
+	{
+		userlog("ERROR! $func_name() failed to get context");
+		FAIL_OUT(ret);
+	}
+out:	
+	return ret;	
+}
+
+END_MESSAGE
+################################################################################
+	}
+	elsif ($func_type=~m/^long \*$/)
+	{
+################################################################################
+# long function
+################################################################################
+$message = <<"END_MESSAGE";
+
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+public $sig 
+{
+	long *ret = NULL;
+	
+	/* set the context */
+	if (SUCCEED!=tpsetctxt(*context, 0))
+	{
+		userlog("ERROR! $func_name() failed to set context");
+		ret = NULL;
+		goto out;
+	}
+	
+	ret = $invoke;
+
+	if (SUCCEED!=tpgetctxt(context, 0))
+	{
+		userlog("ERROR! $func_name() failed to get context");
+		ret = NULL;
+		goto out;
+	}
+out:	
+	return ret;	
+}
+
+END_MESSAGE
+################################################################################
+	}
+	elsif ($func_type=~m/^char \*$/)
+	{
+################################################################################
+# long function
+################################################################################
+$message = <<"END_MESSAGE";
+
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+public $sig 
+{
+	char *ret = NULL;
+	
+	/* set the context */
+	if (SUCCEED!=tpsetctxt(*context, 0))
+	{
+		userlog("ERROR! $func_name() failed to set context");
+		ret = NULL;
+		goto out;
+	}
+	
+	ret = $invoke;
+
+	if (SUCCEED!=tpgetctxt(context, 0))
+	{
+		userlog("ERROR! $func_name() failed to get context");
+		ret = NULL;
+		goto out;
+	}
+out:	
+	return ret;	
+}
+
+END_MESSAGE
+################################################################################
 	}
 	else
 	{
@@ -464,6 +600,7 @@ NEXT: while( my $line = <$info>)
 			else
 			{
 				print "Normal type...\n";
+                # TODO: Support for types with space in the middle, e.g. "unsigned long"
 				($type, $name) = 
 					($pair=~m/^\s*([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
 				
