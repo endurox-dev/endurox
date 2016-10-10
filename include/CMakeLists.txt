@@ -53,6 +53,8 @@ install (FILES
     nerror.h
     xa.h
     ndrx_config.h
+    sys_unix.h
+    sys_mqueue.h 
     DESTINATION include)
 
 install (FILES
