@@ -38,11 +38,10 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <sys/stat.h>
-#include <ndrxdcmn.h>
 #include <stdint.h>
-#include <ntimer.h>
 #include <exhash.h>
 #include <sys_unix.h>
+#include <limits.h>
 /*---------------------------Externs------------------------------------*/
 #define NDRX_INICFG_SUBSECT_SPERATOR '/' /* seperate sub-sections with */
 #define NDRX_INICFG_SUBSECT_SPERATOR_STR "/" /* seperate sub-sections with */

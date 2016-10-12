@@ -37,6 +37,7 @@
 #include <ndrstandard.h>
 #include <time.h>
 #include <sys/time.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -865,9 +866,17 @@ private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
 {
     int ret = SUCCEED;
     char fn[] = "_ndrx_inicfg_section_keyval_t";
-    char *tmp = strdup(section);
+    char *tmp = NULL;
     char *p;
     
+    if (NULL==section)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: section cannot be NULL!", fn);
+        FAIL_OUT(ret);
+    }
+
+    tmp = strdup(section);
+
     if (NULL==tmp)
     {
         _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);

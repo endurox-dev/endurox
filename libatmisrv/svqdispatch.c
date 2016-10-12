@@ -218,7 +218,7 @@ public int sv_serve_call(int *service, int *status)
     buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
     long call_age;
     int generate_rply = FALSE;
-    
+    tp_command_call_t * last_call;
     *status=SUCCEED;
     G_atmisrv_reply_type = 0;
     
@@ -300,8 +300,8 @@ public int sv_serve_call(int *service, int *status)
         
         /* set the client id to caller */
         strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
-        
-        memcpy(ndrx_get_G_last_call(), call, sizeof(tp_command_call_t));
+        last_call = ndrx_get_G_last_call();
+        memcpy(last_call, call, sizeof(tp_command_call_t));
                              /* save last call info to ATMI library
                               * (this does excludes data by default) */
         
@@ -341,21 +341,30 @@ public int sv_serve_call(int *service, int *status)
         
         /* We need to convert buffer here (if function set...) */
         if (NULL!=request_buffer &&
-                G_server_conf.service_array[no]->xcvtflags)
+                G_server_conf.service_array[no]->xcvtflags && 
+                
+                /* convert in case when really needed */
+                ( (BUF_TYPE_UBF == outbufobj->type_id && 
+                    SYS_SRV_CVT_UBF2JSON & G_server_conf.service_array[no]->xcvtflags)
+                ||
+                  (BUF_TYPE_JSON == outbufobj->type_id && SYS_SRV_CVT_JSON2UBF & 
+                    G_server_conf.service_array[no]->xcvtflags)
+                )
+            )
         {
             /* 
              * Mark that buffer is converted...
              * So that later we can convert back...
              */
-            ndrx_get_G_last_call()->sysflags|= G_server_conf.service_array[no]->xcvtflags;
+            last_call->sysflags|= G_server_conf.service_array[no]->xcvtflags;
             call->sysflags |= G_server_conf.service_array[no]->xcvtflags;
             
             if (SUCCEED!=typed_xcvt(&outbufobj, call->sysflags, FALSE))
             {
                 NDRX_LOG(log_debug, "Failed to convert buffer service "
-                            "format: %llx", ndrx_get_G_last_call()->sysflags);
+                            "format: %llx", last_call->sysflags);
                 userlog("Failed to convert buffer service "
-                            "format: %llx", ndrx_get_G_last_call()->sysflags);
+                            "format: %llx", last_call->sysflags);
                 *status=FAIL;
                 generate_rply = TRUE;
                 goto out;

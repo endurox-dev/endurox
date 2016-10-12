@@ -69,7 +69,7 @@ extern "C" {
 #define LOG_CODE_TP_THREAD  'T'
 #define LOG_CODE_TP_REQUEST 'R'
     
-#define DBG_MAXLEV log_dump
+#define NDRX_DBG_MAX_LEV log_dump
 
 #define NDRX_DBG_INIT_ENTRY    if (G_ndrx_debug_first) {ndrx_dbg_lock(); ndrx_init_debug(); ndrx_dbg_unlock();}
 

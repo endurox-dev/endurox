@@ -1,0 +1,53 @@
+TPLOGDELBUFREQFILE(3)
+=====================
+:doctype: manpage
+
+
+NAME
+----
+tplogdelbufreqfile - Delete request file from UBF buffer
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tplogdelbufreqfile(char *'data');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Remove request logging file name from UBF buffer. This basically removes *EX_NREQLOGFILE* field from buffer, if present.
+
+
+RETURN VALUE
+------------
+On success, *tplogdelbufreqfile()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+
+*TPENOENT* Filed not present or failed to remove from UBF.
+
+*TPEINVAL* Not UBF buffer or buffer NULL.
+
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tplogsetreqfile(3)* *tplogsetreqfile_direct(3)* *tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+

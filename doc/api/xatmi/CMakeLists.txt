@@ -98,6 +98,8 @@ set(MAN3_NAMES
         tplogsetreqfile_direct
         tplogsetreqfile
 	tploggetbufreqfile
+        tplogdelbufreqfile
+        tplogprintubf
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
