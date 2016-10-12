@@ -57,6 +57,7 @@ add_library (atmisrv SHARED
                 dynadv.c
                 pollextension.c
                 standard.c
+                oatmisrv.c 
             )
 
 add_library (atmisrvnomain SHARED
@@ -69,6 +70,7 @@ add_library (atmisrvnomain SHARED
                 dynadv.c
                 pollextension.c
                 standard.c
+                oatmisrv.c
    	    )
 # Integration library
 add_library (atmisrvinteg SHARED
@@ -81,6 +83,7 @@ add_library (atmisrvinteg SHARED
                 dynadv.c
                 pollextension.c
                 integra.c
+                oatmisrv.c
    	    )
 
 add_library (atmisrvdum SHARED

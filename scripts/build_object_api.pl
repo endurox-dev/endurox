@@ -28,26 +28,26 @@ $M_name = "o$opt_o";
 #
 sub remove_white_space {
 
-	my $ret = shift;
-	
-	
-	$ret =~ s/^\s+//;
-	$ret =~ s/\s+$//;
+    my $ret = shift;
+    
+    
+    $ret =~ s/^\s+//;
+    $ret =~ s/\s+$//;
 
-	return $ret;
+    return $ret;
 }
 
 #http://stackoverflow.com/questions/5049358/split-on-comma-but-only-when-not-in-parenthesis
 sub split_by_comma_but_not_parenthesis {
 
-	my $string=shift;
-	my @array = ($string =~ /(
-	[^,]*\([^)]*\)   # comma inside parens is part of the word
-	|
-	[^,]*)           # split on comma outside parens
-	(?:,|$)/gx);
-	
-	return @array;
+    my $string=shift;
+    my @array = ($string =~ /(
+    [^,]*\([^)]*\)   # comma inside parens is part of the word
+    |
+    [^,]*)           # split on comma outside parens
+    (?:,|$)/gx);
+    
+    return @array;
 }
 
 ################################################################################
@@ -67,21 +67,25 @@ sub split_by_comma_but_not_parenthesis {
 ################################################################################
 sub open_h {
 
-	$M_h_name = "${M_name}.h";
-	print "Opening [$M_h_name]\n";
-	open($M_h_fd, '>', $M_h_name) or die "Could not open file '$M_h_name' $!";
+    $M_h_name = "${M_name}.h";
+    print "Opening [$M_h_name]\n";
+    open($M_h_fd, '>', $M_h_name) or die "Could not open file '$M_h_name' $!";
 
-	my $title = "";
+    my $title = "";
 
-	if ($M_name=~/oatmi/)
-	{
-		$title = "ATMI Object API header (auto-generated)";
-	}
-	elsif($M_name=~/oubf/)
-	{
-		$title = "UBF Object API header (auto-generated)";
-	}
-	
+    if ($M_name=~/^oatmisrv$/)
+    {
+        $title = "ATMI Server level Object API header (auto-generated)";
+    }
+    if ($M_name=~/^oatmi$/)
+    {
+        $title = "ATMI Object API header (auto-generated)";
+    }
+    elsif($M_name=~/oubf/)
+    {
+        $title = "UBF Object API header (auto-generated)";
+    }
+    
 my $message = <<"END_MESSAGE";
 /* 
 ** $title
@@ -132,7 +136,7 @@ extern "C" {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 END_MESSAGE
-	
+    
 print $M_h_fd $message;
 
 }
@@ -143,20 +147,24 @@ print $M_h_fd $message;
 sub open_c {
 
 
-	$M_c_name = "${M_name}.c";
-	print "Opening [$M_c_name]\n";
-	open($M_c_fd, '>', $M_c_name) or die "Could not open file '$M_c_name' $!";
+    $M_c_name = "${M_name}.c";
+    print "Opening [$M_c_name]\n";
+    open($M_c_fd, '>', $M_c_name) or die "Could not open file '$M_c_name' $!";
 
-	my $title = "";
+    my $title = "";
 
-	if ($M_name=~/^oatmi$/)
-	{
-		$title = "ATMI Object API code (auto-generated)";
-	}
-	elsif($M_name=~/oubf/)
-	{
-		$title = "UBF Object API code (auto-generated)";
-	}
+    if ($M_name=~/^oatmisrv$/)
+    {
+        $title = "ATMI Server Level Object API code (auto-generated)";
+    }
+    if ($M_name=~/^oatmi$/)
+    {
+        $title = "ATMI Object API code (auto-generated)";
+    }
+    elsif($M_name=~/oubf/)
+    {
+        $title = "UBF Object API code (auto-generated)";
+    }
 my $message = <<"END_MESSAGE";
 /* 
 ** $title
@@ -247,7 +255,7 @@ print $M_c_fd $message;
 
 close($M_c_fd)
 
-	
+    
 }
 
 
@@ -256,116 +264,116 @@ close($M_c_fd)
 ################################################################################
 sub gen_sig {
 
-	my $func_type = shift;
-	my $func_name = shift;
-	my $func_args_list = shift;
-	
-	return "$func_type O$func_name(TPCONTEXT_T *context, $func_args_list)";
+    my $func_type = shift;
+    my $func_name = shift;
+    my $func_args_list = shift;
+    
+    return "$func_type O$func_name(TPCONTEXT_T *p_ctxt, $func_args_list)";
 }
 
 ################################################################################
 # Write C object API header func
 ################################################################################
 sub write_h {
-	my $sig = shift;
-	print $M_h_fd "export NDRX_API $sig;\n";
+    my $sig = shift;
+    print $M_h_fd "export NDRX_API $sig;\n";
 }
 
 ################################################################################
 # Write C object API function
 ################################################################################
 sub write_c {
-	my $func_type = $_[0];
-	my $func_name = $_[1];
-	my $sig = $_[2];
-	my $func_args_list = $_[3];
-	
-	my @func_arg_type = @{$_[4]};
-	my @func_arg_name = @{$_[5]};
-	my @func_arg_def = @{$_[6]};
-	
-	
-	#
-	# Generate function call
-	#
-	my $invoke = "$func_name(";
-	my $first = 1;
-	
-	if ($func_args_list!~m/^void$/)
-	{
-		# Generate from arguments list;
-		foreach my $name ( @func_arg_name )
-		{
-			if ($first)
-			{
-				$first = 0;
-			}
-			else
-			{
-				$invoke = "$invoke, ";
-			}
-			
-			$invoke = "$invoke$name";
-		}
-	}
-	
-	$invoke = "$invoke)";
-	
-	my $M_priv_flags = "";
-	#
-	# Calculate the flags, all UBF operations receive only UBF & TLS contexts
-	# ATMI have ATMI too, plus somes have a TRAN
-	#
-	if ($M_name=~/^oatmi$/ 
-		|| $M_name=~/^oatmisrv$/
-		)
-	{
-		if ($func_name=~/^tpcall$/ 
-			||$func_name=~/^tpacall$/
-			||$func_name=~/^tpgetrply$/
-			||$func_name=~/^tpconnect$/
-			||$func_name=~/^tpdiscon$/
-			||$func_name=~/^tpsend$/
-			||$func_name=~/^tprecv$/
-			||$func_name=~/^tpcancel$/
-			||$func_name=~/^tpreturn$/
-			||$func_name=~/^tpgetlev$/
-			||$func_name=~/^tpabort$/
-			||$func_name=~/^tpbegin$/
-			||$func_name=~/^tpcommit$/
-			||$func_name=~/^tpopen$/
-			||$func_name=~/^tpclose$/
-			||$func_name=~/^tppost$/
-			||$func_name=~/^tpenqueue$/
-			||$func_name=~/^tpdequeue$/
-			||$func_name=~/^tpenqueueex$/
-			||$func_name=~/^tpdequeueex$/
-			||$func_name=~/^tpgetctxt$/
-			||$func_name=~/^tpsetctxt$/
-			||$func_name=~/^tpfreectxt$/
-			||$func_name=~/^tpterm$/
-		)
-		{
-			$M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN";
-		}
-		else
-		{
-			$M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI";
-		}
-		
-	}
-	elsif($M_name=~/oubf/)
-	{
-		$M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF";
-	}
-	
-	
-	if ($func_type=~m/^int$/ 
-		|| $func_type=~m/^BFLDOCC$/
-		|| $func_type=~m/^BFLDID$/
-		|| $func_type=~m/^long$/
-		)
-	{
+    my $func_type = $_[0];
+    my $func_name = $_[1];
+    my $sig = $_[2];
+    my $func_args_list = $_[3];
+    
+    my @func_arg_type = @{$_[4]};
+    my @func_arg_name = @{$_[5]};
+    my @func_arg_def = @{$_[6]};
+    
+    
+    #
+    # Generate function call
+    #
+    my $invoke = "$func_name(";
+    my $first = 1;
+    
+    if ($func_args_list!~m/^void$/)
+    {
+        # Generate from arguments list;
+        foreach my $name ( @func_arg_name )
+        {
+            if ($first)
+            {
+                $first = 0;
+            }
+            else
+            {
+                $invoke = "$invoke, ";
+            }
+            
+            $invoke = "$invoke$name";
+        }
+    }
+    
+    $invoke = "$invoke)";
+    
+    my $M_priv_flags = "";
+    #
+    # Calculate the flags, all UBF operations receive only UBF & TLS contexts
+    # ATMI have ATMI too, plus somes have a TRAN
+    #
+    if ($M_name=~/^oatmi$/ 
+        || $M_name=~/^oatmisrv$/
+        )
+    {
+        if ($func_name=~/^tpcall$/ 
+            ||$func_name=~/^tpacall$/
+            ||$func_name=~/^tpgetrply$/
+            ||$func_name=~/^tpconnect$/
+            ||$func_name=~/^tpdiscon$/
+            ||$func_name=~/^tpsend$/
+            ||$func_name=~/^tprecv$/
+            ||$func_name=~/^tpcancel$/
+            ||$func_name=~/^tpreturn$/
+            ||$func_name=~/^tpgetlev$/
+            ||$func_name=~/^tpabort$/
+            ||$func_name=~/^tpbegin$/
+            ||$func_name=~/^tpcommit$/
+            ||$func_name=~/^tpopen$/
+            ||$func_name=~/^tpclose$/
+            ||$func_name=~/^tppost$/
+            ||$func_name=~/^tpenqueue$/
+            ||$func_name=~/^tpdequeue$/
+            ||$func_name=~/^tpenqueueex$/
+            ||$func_name=~/^tpdequeueex$/
+            ||$func_name=~/^tpgetctxt$/
+            ||$func_name=~/^tpsetctxt$/
+            ||$func_name=~/^tpfreectxt$/
+            ||$func_name=~/^tpterm$/
+        )
+        {
+            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN";
+        }
+        else
+        {
+            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI";
+        }
+        
+    }
+    elsif($M_name=~/oubf/)
+    {
+        $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF";
+    }
+    
+    
+    if ($func_type=~m/^int$/ 
+        || $func_type=~m/^BFLDOCC$/
+        || $func_type=~m/^BFLDID$/
+        || $func_type=~m/^long$/
+        )
+    {
 ################################################################################
 # integral type function
 ################################################################################
@@ -376,33 +384,33 @@ $message = <<"END_MESSAGE";
  */
 public $sig 
 {
-	$func_type ret = SUCCEED;
-	
-	/* set the context */
-	if (SUCCEED!=_tpsetctxt(*context, 0, 
-		$M_priv_flags))
-	{
-		userlog("ERROR! $func_name() failed to set context");
-		FAIL_OUT(ret);
-	}
-	
-	ret = $invoke;
+    $func_type ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = $invoke;
 
-	if (SUCCEED!=_tpgetctxt(context, 0, 
-		$M_priv_flags))
-	{
-		userlog("ERROR! $func_name() failed to get context");
-		FAIL_OUT(ret);
-	}
-out:	
-	return ret;	
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
 }
 
 END_MESSAGE
 ################################################################################
-	}
-	elsif ($func_type=~m/^void$/)
-	{
+    }
+    elsif ($func_type=~m/^void$/)
+    {
 ################################################################################
 # Void function
 ################################################################################
@@ -412,32 +420,32 @@ $message = <<"END_MESSAGE";
  */
 public $sig 
 {
-	/* set the context */
-	if (SUCCEED!=_tpsetctxt(*context, 0,
-		$M_priv_flags))
-	{
-		userlog("ERROR! $func_name() failed to set context");
-	}
-	
-	$invoke;
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to set context");
+    }
+    
+    $invoke;
 
-	if (SUCCEED!=_tpgetctxt(context, 0,
-		$M_priv_flags))
-	{
-		userlog("ERROR! $func_name() failed to get context");
-	}
-out:	
-	return;
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to get context");
+    }
+out:    
+    return;
 }
 
 END_MESSAGE
 ################################################################################
-	}
-	elsif ($func_type=~m/^long \*$/ 
-		|| $func_type=~m/^char \*$/
-		|| $func_type=~m/^UBFH \*$/
-		)
-	{
+    }
+    elsif ($func_type=~m/^long \*$/ 
+        || $func_type=~m/^char \*$/
+        || $func_type=~m/^UBFH \*$/
+        )
+    {
 ################################################################################
 # pointer function
 ################################################################################
@@ -448,42 +456,42 @@ $message = <<"END_MESSAGE";
  */
 public $sig 
 {
-	long *ret = NULL;
-	
-	/* set the context */
-	if (SUCCEED!=_tpsetctxt(*context, 0, 
-		$func_name))
-	{
-		userlog("ERROR! $func_name() failed to set context");
-		ret = NULL;
-		goto out;
-	}
-	
-	ret = $invoke;
+    $func_type ret = NULL;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to set context");
+        ret = NULL;
+        goto out;
+    }
+    
+    ret = $invoke;
 
-	if (SUCCEED!=_tpgetctxt(context, 0,
-		$func_name))
-	{
-		userlog("ERROR! $func_name() failed to get context");
-		ret = NULL;
-		goto out;
-	}
-out:	
-	return ret;	
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to get context");
+        ret = NULL;
+        goto out;
+    }
+out:    
+    return ret; 
 }
 
 END_MESSAGE
 ################################################################################
-	}
-	else
-	{
-		# return if unsupported
-		print "!!! Unsupported return type [$func_type]\n";
-		return;
-	}
-	
-	print $M_c_fd $message;
-	
+    }
+    else
+    {
+        # return if unsupported
+        print "!!! Unsupported return type [$func_type]\n";
+        return;
+    }
+    
+    print $M_c_fd $message;
+    
 }
 
 
@@ -501,151 +509,179 @@ NEXT: while( my $line = <$info>)
     
     if ($line =~ m/extern NDRX_API.*\(.*/)
     {
-	# read next line, if line not completed
-	if ($line !~ m/\);\s*/)
-	{
-		my $next_line = <$info>;
-		chomp $next_line;
-		
-		$next_line =~ s/^\s+//;
-		$next_line =~ s/\s+$//;
-		
-		$line = $line.$next_line;
-	}
-	
-	#Strip off any comments found
-	$line =~ s/(\/\*.*\*\/)//gi;
-	
-	# Now get the function return type, name and arguments list
-	my ($func_type, $func_name, $func_args_list) = 
+    # read next line, if line not completed
+    if ($line !~ m/\);\s*/)
+    {
+        my $next_line = <$info>;
+        chomp $next_line;
+        
+        $next_line =~ s/^\s+//;
+        $next_line =~ s/\s+$//;
+        
+        $line = $line.$next_line;
+    }
+    
+    #Strip off any comments found
+    $line =~ s/(\/\*.*\*\/)//gi;
+    
+    # Now get the function return type, name and arguments list
+    my ($func_type, $func_name, $func_args_list) = 
                 ($line=~m/^extern NDRX_API\s*([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)\s*\((.*)\)\s*;/);
-	
-	
-	$func_type = remove_white_space($func_type);
-	$func_name = remove_white_space($func_name);
-	$func_args_list = remove_white_space($func_args_list);
-	
-	print "Processing line [$line]\n";
-	
-	#
-	# Skip the specific symbols, per output module
-	#
-	if ($M_name =~ m/$oatmi^/)
-	{
-		if ($line =~ m/G_tpsvrinit__/
-			|| $line =~ m/G_tpsvrdone__/ 
-			|| $line =~ m/ndrx_main/ 
-			|| $line =~ m/ndrx_main_integra/ 
-			|| $line =~ m/ndrx_atmi_tls_get/
-			|| $line =~ m/ndrx_atmi_tls_set/
-			|| $line =~ m/ndrx_atmi_tls_free/
-			|| $line =~ m/ndrx_atmi_tls_new/
-			# Skip the server stuff
-			|| $line =~ m/tpreturn/
-			|| $line =~ m/tpforward/
-			|| $line =~ m/tpadvertise_full/
-			|| $line =~ m/tpunadvertise/
-			)
-		{
-			print "skip - next\n";
-			next NEXT;
-		}
-	}
-	elsif ($M_name =~ m/$oatmisrv^/)
-	{
-		# Include only server commands
-		if ($line !~ m/tpreturn/
-			&& $line !~ m/tpforward/
-			&& $line !~ m/tpadvertise_full/
-			&& $line !~ m/tpunadvertise/
-			)
-		{
-			print "skip - next\n";
-			next NEXT;
-		}
-	}
-	
-	# Process next, parse arguments and their types
-	print "func_type      = [$func_type]\n";
-	print "func_name      = [$func_name]\n";
-	print "func_args_list = [$func_args_list]\n";
-	
-	my @func_arg_type = ();
-	my @func_arg_name = ();
-	my @func_arg_def = (); # in case if pointer to function used...
-	
-	#
-	# Fix callbacks with commas
-	#
-	#my @args = split(/\,/, $func_args_list);
-	my @args = split_by_comma_but_not_parenthesis($func_args_list);
-	
-	if ($func_args_list=~m/^void$/)
-	{
-		push @func_arg_type, "void";
-	}
-	else
-	{
-		# Extract the data type and ar
-		
-		SKIP_TYPE: foreach my $pair ( @args )
-		{
-			$pair = remove_white_space($pair);
-			
-			my $type = "";
-			my $name = "";
-			my $sign = "";
-			my $def = $pair;
-			
-			
-			if ($pair=~m/\(.*\)\(.*\)/)
-			{
-				print "Got ptr to function...\n";
-				($name) = ($pair=~m/\(\s*\*(.*)\)\(.*\)/);
-			}
-			else
-			{
-				print "Normal type...\n";
-                # TODO: Support for types with space in the middle, e.g. "unsigned long"
-				($sign, $type, $name) = 
-					($pair=~m/^\s*(unsigned\s*)?([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
-				#	($pair=~m/^\s*([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
-				
-				$sign = remove_white_space($sign);
-				$type = remove_white_space($type);
-				$name = remove_white_space($name);
-				
-				if ($sign!~m/^$/)
-				{
-					$type = "$sign $type";
-				}
-			}
-			
-			#
-			# Seems like split_by_comma_but_not_parenthesis()
-			# generates last block empty.
-			#
-			if ($name=~m/^$/)
-			{
-				next SKIP_TYPE;
-			}
-			
-			push @func_arg_def, $pair;
-			
-			print "got param (pair: [$pair]), type: [$type], name: [$name], def: [$def]\n";
-			push @func_arg_type, $type;
-			push @func_arg_name, $name;	
-		}
-		
-		my $sig = gen_sig($func_type, $func_name, $func_args_list);
-		
-		# Write header;
-		
-		write_h($sig);
-		
-		write_c($func_type, $func_name, $sig, $func_args_list, 
-			\@func_arg_type, \@func_arg_name, \@func_arg_def);
-	}
+    
+    
+    $func_type = remove_white_space($func_type);
+    $func_name = remove_white_space($func_name);
+    $func_args_list = remove_white_space($func_args_list);
+    
+    print "Processing line [$line] M_name = [$M_name]\n";
+    
+    #
+    # Skip the specific symbols, per output module
+    #
+    
+    if ($M_name =~ m/^oatmisrv$/)
+    {
+        # Include only server commands for ATMISRV level
+        if ($func_name !~ m/tpreturn/
+            && $func_name !~ m/tpforward/
+            && $func_name !~ m/tpadvertise_full/
+            && $func_name !~ m/tpunadvertise/
+            
+            && $func_name !~ m/tpext_addpollerfd/
+            && $func_name !~ m/tpext_delpollerfd/
+            && $func_name !~ m/tpext_addb4pollcb/
+            && $func_name !~ m/tpsrvsetctxdata/
+            && $func_name !~ m/tpext_addperiodcb/
+            
+            )
+        {
+            print "skip - next\n";
+            next NEXT;
+        }
+    }
+    elsif ($M_name =~ m/^oatmi$/)
+    {
+        # Skip the names from ATMI level
+        if ($line =~ m/G_tpsvrinit__/
+            || $line =~ m/G_tpsvrdone__/ 
+            || $func_name =~ m/ndrx_main/ 
+            || $func_name =~ m/ndrx_main_integra/ 
+            || $func_name =~ m/ndrx_atmi_tls_get/
+            || $func_name =~ m/ndrx_atmi_tls_set/
+            || $func_name =~ m/ndrx_atmi_tls_free/
+            || $func_name =~ m/ndrx_atmi_tls_new/
+            # Skip the server stuff
+            || $func_name =~ m/tpreturn/
+            || $func_name =~ m/tpforward/
+            || $func_name =~ m/tpadvertise_full/
+            || $func_name =~ m/tpunadvertise/
+            || $func_name =~ m/tpservice/
+            || $func_name =~ m/tpext_addpollerfd/
+            || $func_name =~ m/tpext_delpollerfd/
+            || $func_name =~ m/tpext_addb4pollcb/
+            || $func_name =~ m/tpsrvsetctxdata/
+            || $func_name =~ m/tpext_addperiodcb/
+            || $func_name =~ m/tpsvrinit/
+            )
+        {
+            print "skip - next\n";
+            next NEXT;
+        }
+    }
+    elsif ($M_name =~ m/^oubf$/)
+    {
+        # Skip some bits from UBF level
+        if ($func_name =~ m/^ndrx_ubf_tls_get$/
+            && $func_name =~ m/^ndrx_ubf_tls_set$/
+            && $func_name =~ m/^ndrx_ubf_tls_free$/
+            && $func_name =~ m/^ndrx_ubf_tls_new$/
+            )
+        {
+            print "skip - next\n";
+            next NEXT;
+        }
+    }
+
+    
+    # Process next, parse arguments and their types
+    print "func_type      = [$func_type]\n";
+    print "func_name      = [$func_name]\n";
+    print "func_args_list = [$func_args_list]\n";
+    
+    my @func_arg_type = ();
+    my @func_arg_name = ();
+    my @func_arg_def = (); # in case if pointer to function used...
+    
+    #
+    # Fix callbacks with commas
+    #
+    #my @args = split(/\,/, $func_args_list);
+    my @args = split_by_comma_but_not_parenthesis($func_args_list);
+    
+    if ($func_args_list=~m/^void$/)
+    {
+        push @func_arg_type, "void";
+    }
+    else
+    {
+        # Extract the data type and ar
+        
+        SKIP_TYPE: foreach my $pair ( @args )
+        {
+            $pair = remove_white_space($pair);
+            
+            my $type = "";
+            my $name = "";
+            my $sign = "";
+            my $def = $pair;
+            
+            
+            if ($pair=~m/\(.*\)\(.*\)/)
+            {
+                print "Got ptr to function...\n";
+                ($name) = ($pair=~m/\(\s*\*(.*)\)\(.*\)/);
+            }
+            else
+            {
+                print "Normal type...\n";
+                ($sign, $type, $name) = 
+                    ($pair=~m/^\s*(unsigned\s*)?([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
+                
+                $sign = remove_white_space($sign);
+                $type = remove_white_space($type);
+                $name = remove_white_space($name);
+                
+                if ($sign!~m/^$/)
+                {
+                    $type = "$sign $type";
+                }
+            }
+            
+            #
+            # Seems like split_by_comma_but_not_parenthesis()
+            # generates last block empty.
+            #
+            if ($name=~m/^$/)
+            {
+                next SKIP_TYPE;
+            }
+            
+            push @func_arg_def, $pair;
+            
+            print "got param (pair: [$pair]), type: [$type], name: [$name], def: [$def]\n";
+            push @func_arg_type, $type;
+            push @func_arg_name, $name; 
+        }
+        
+        my $sig = gen_sig($func_type, $func_name, $func_args_list);
+        
+        # Write header;
+        
+        write_h($sig);
+        
+        write_c($func_type, $func_name, $sig, $func_args_list, 
+            \@func_arg_type, \@func_arg_name, \@func_arg_def);
+    }
     }
 }
 

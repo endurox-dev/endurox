@@ -55,6 +55,9 @@ install (FILES
     ndrx_config.h
     sys_unix.h
     sys_mqueue.h 
+    oubf.h
+    oatmi.h
+    oatmisrv.h
     DESTINATION include)
 
 install (FILES

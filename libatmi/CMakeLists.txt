@@ -76,6 +76,8 @@ add_library (atmi SHARED
                     sysutil.c
                     atmi_tls.c
                     atmi_tplog.c
+                    oatmi.c
+                    oubf.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
