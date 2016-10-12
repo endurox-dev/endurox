@@ -39,3 +39,6 @@ atmitest/test006_ulog/log
 !tmqinternals.png
 
  
+atmitest/test029_inicfg/C_test.ini
+
+*.dylib
