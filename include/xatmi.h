@@ -332,7 +332,18 @@ extern "C" {
 #define QMEINVHANDLE    -15
 #define QMESHARE        -16
 
-    
+/* Flags for internal TLS processing 
+ * for 
+ * - _tpgetctxt();
+ * - _tpsetctxt();
+ */
+#define CTXT_PRIV_NONE	0x00000         /* no context data */
+#define	CTXT_PRIV_NSTD	0x00001		/* standard library TLS data */
+#define	CTXT_PRIV_UBF   0x00002		/* UBF TLS data */
+#define	CTXT_PRIV_ATMI	0x00004		/* ATMI level private data */
+#define	CTXT_PRIV_TRAN	0x00008         /* ATMI + Global transaction */
+#define	CTXT_PRIV_NOCHK	0x00010		/* Do not check signatures */
+#define	CTXT_PRIV_IGN	0x00020		/* Ignore existing context */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -504,14 +515,17 @@ extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);
 extern NDRX_API int tpsetctxt(TPCONTEXT_T context, long flags);
 extern NDRX_API void tpfreectxt(TPCONTEXT_T context);
 
+extern int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags);
+extern int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags);
+    
 extern NDRX_API int tplogsetreqfile(char **data, char *filename, char *filesvc);
 extern NDRX_API int tploggetbufreqfile(char *data, char *filename, int bufsize);
 extern NDRX_API int tplogdelbufreqfile(char *data);
 extern NDRX_API void tplogprintubf(int lev, char *title, UBFH *p_ub);
 
 /* ATMI library TLS: */
-extern NDRX_API void * ndrx_atmi_tls_get(void);
-extern NDRX_API int ndrx_atmi_tls_set(void *data, int flags);
+extern NDRX_API void * ndrx_atmi_tls_get(long priv_flags);
+extern NDRX_API int ndrx_atmi_tls_set(void *data, int flags, long priv_flags);
 extern NDRX_API void ndrx_atmi_tls_free(void *data);
 extern NDRX_API void * ndrx_atmi_tls_new(int auto_destroy, int auto_set);
 

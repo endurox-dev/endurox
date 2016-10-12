@@ -149,7 +149,7 @@ sub open_c {
 
 	my $title = "";
 
-	if ($M_name=~/oatmi/)
+	if ($M_name=~/^oatmi$/)
 	{
 		$title = "ATMI Object API code (auto-generated)";
 	}
@@ -311,10 +311,63 @@ sub write_c {
 	
 	$invoke = "$invoke)";
 	
-	if ($func_type=~m/^int$/)
+	my $M_priv_flags = "";
+	#
+	# Calculate the flags, all UBF operations receive only UBF & TLS contexts
+	# ATMI have ATMI too, plus somes have a TRAN
+	#
+	if ($M_name=~/^oatmi$/ 
+		|| $M_name=~/^oatmisrv$/
+		)
+	{
+		if ($func_name=~/^tpcall$/ 
+			||$func_name=~/^tpacall$/
+			||$func_name=~/^tpgetrply$/
+			||$func_name=~/^tpconnect$/
+			||$func_name=~/^tpdiscon$/
+			||$func_name=~/^tpsend$/
+			||$func_name=~/^tprecv$/
+			||$func_name=~/^tpcancel$/
+			||$func_name=~/^tpreturn$/
+			||$func_name=~/^tpgetlev$/
+			||$func_name=~/^tpabort$/
+			||$func_name=~/^tpbegin$/
+			||$func_name=~/^tpcommit$/
+			||$func_name=~/^tpopen$/
+			||$func_name=~/^tpclose$/
+			||$func_name=~/^tppost$/
+			||$func_name=~/^tpenqueue$/
+			||$func_name=~/^tpdequeue$/
+			||$func_name=~/^tpenqueueex$/
+			||$func_name=~/^tpdequeueex$/
+			||$func_name=~/^tpgetctxt$/
+			||$func_name=~/^tpsetctxt$/
+			||$func_name=~/^tpfreectxt$/
+			||$func_name=~/^tpterm$/
+		)
+		{
+			$M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN";
+		}
+		else
+		{
+			$M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI";
+		}
+		
+	}
+	elsif($M_name=~/oubf/)
+	{
+		$M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF";
+	}
+	
+	
+	if ($func_type=~m/^int$/ 
+		|| $func_type=~m/^BFLDOCC$/
+		|| $func_type=~m/^BFLDID$/
+		|| $func_type=~m/^long$/
+		)
 	{
 ################################################################################
-# int type function
+# integral type function
 ################################################################################
 $message = <<"END_MESSAGE";
 
@@ -323,10 +376,11 @@ $message = <<"END_MESSAGE";
  */
 public $sig 
 {
-	int ret = SUCCEED;
+	$func_type ret = SUCCEED;
 	
 	/* set the context */
-	if (SUCCEED!=tpsetctxt(*context, 0))
+	if (SUCCEED!=_tpsetctxt(*context, 0, 
+		$M_priv_flags))
 	{
 		userlog("ERROR! $func_name() failed to set context");
 		FAIL_OUT(ret);
@@ -334,7 +388,8 @@ public $sig
 	
 	ret = $invoke;
 
-	if (SUCCEED!=tpgetctxt(context, 0))
+	if (SUCCEED!=_tpgetctxt(context, 0, 
+		$M_priv_flags))
 	{
 		userlog("ERROR! $func_name() failed to get context");
 		FAIL_OUT(ret);
@@ -358,14 +413,16 @@ $message = <<"END_MESSAGE";
 public $sig 
 {
 	/* set the context */
-	if (SUCCEED!=tpsetctxt(*context, 0))
+	if (SUCCEED!=_tpsetctxt(*context, 0,
+		$M_priv_flags))
 	{
 		userlog("ERROR! $func_name() failed to set context");
 	}
 	
 	$invoke;
 
-	if (SUCCEED!=tpgetctxt(context, 0))
+	if (SUCCEED!=_tpgetctxt(context, 0,
+		$M_priv_flags))
 	{
 		userlog("ERROR! $func_name() failed to get context");
 	}
@@ -376,44 +433,13 @@ out:
 END_MESSAGE
 ################################################################################
 	}
-	elsif ($func_type=~m/^long$/)
+	elsif ($func_type=~m/^long \*$/ 
+		|| $func_type=~m/^char \*$/
+		|| $func_type=~m/^UBFH \*$/
+		)
 	{
 ################################################################################
-# long function
-################################################################################
-$message = <<"END_MESSAGE";
-/**
- * Object-API wrapper for $func_name() - Auto generated.
- */
-public $sig 
-{
-	long ret = SUCCEED;
-	
-	/* set the context */
-	if (SUCCEED!=tpsetctxt(*context, 0))
-	{
-		userlog("ERROR! $func_name() failed to set context");
-		FAIL_OUT(ret);
-	}
-	
-	ret = $invoke;
-
-	if (SUCCEED!=tpgetctxt(context, 0))
-	{
-		userlog("ERROR! $func_name() failed to get context");
-		FAIL_OUT(ret);
-	}
-out:	
-	return ret;	
-}
-
-END_MESSAGE
-################################################################################
-	}
-	elsif ($func_type=~m/^long \*$/)
-	{
-################################################################################
-# long function
+# pointer function
 ################################################################################
 $message = <<"END_MESSAGE";
 
@@ -425,7 +451,8 @@ public $sig
 	long *ret = NULL;
 	
 	/* set the context */
-	if (SUCCEED!=tpsetctxt(*context, 0))
+	if (SUCCEED!=_tpsetctxt(*context, 0, 
+		$func_name))
 	{
 		userlog("ERROR! $func_name() failed to set context");
 		ret = NULL;
@@ -434,44 +461,8 @@ public $sig
 	
 	ret = $invoke;
 
-	if (SUCCEED!=tpgetctxt(context, 0))
-	{
-		userlog("ERROR! $func_name() failed to get context");
-		ret = NULL;
-		goto out;
-	}
-out:	
-	return ret;	
-}
-
-END_MESSAGE
-################################################################################
-	}
-	elsif ($func_type=~m/^char \*$/)
-	{
-################################################################################
-# long function
-################################################################################
-$message = <<"END_MESSAGE";
-
-/**
- * Object-API wrapper for $func_name() - Auto generated.
- */
-public $sig 
-{
-	char *ret = NULL;
-	
-	/* set the context */
-	if (SUCCEED!=tpsetctxt(*context, 0))
-	{
-		userlog("ERROR! $func_name() failed to set context");
-		ret = NULL;
-		goto out;
-	}
-	
-	ret = $invoke;
-
-	if (SUCCEED!=tpgetctxt(context, 0))
+	if (SUCCEED!=_tpgetctxt(context, 0,
+		$func_name))
 	{
 		userlog("ERROR! $func_name() failed to get context");
 		ret = NULL;

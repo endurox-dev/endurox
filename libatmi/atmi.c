@@ -981,7 +981,8 @@ public int tpsetctxt(TPCONTEXT_T context, long flags)
         goto out;
     }
     
-    ret = _tpsetctxt(context, flags);
+    ret = _tpsetctxt(context, flags, (CTXT_PRIV_NSTD|CTXT_PRIV_UBF|
+            CTXT_PRIV_ATMI|CTXT_PRIV_TRAN));
     
 out:
     return ret;
@@ -1005,7 +1006,8 @@ public int tpgetctxt(TPCONTEXT_T *context, long flags)
         goto out;
     }
     
-    ret = _tpgetctxt(context, flags);
+    ret = _tpgetctxt(context, flags, (CTXT_PRIV_NSTD|CTXT_PRIV_UBF|
+            CTXT_PRIV_ATMI|CTXT_PRIV_TRAN));
     
 out:
     return ret;
