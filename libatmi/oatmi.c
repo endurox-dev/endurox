@@ -557,6 +557,90 @@ out:
 
 
 /**
+ * Object-API wrapper for tpopen() - Auto generated.
+ */
+public int Otpopen(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpopen() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpopen();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpopen() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for tpclose() - Auto generated.
+ */
+public int Otpclose(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpclose() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpclose();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpclose() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for tpgetlev() - Auto generated.
+ */
+public int Otpgetlev(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpgetlev() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpgetlev();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpgetlev() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for tpstrerror() - Auto generated.
  */
 public char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err) 
@@ -580,6 +664,34 @@ public char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err)
         userlog("ERROR! tpstrerror() failed to get context");
         ret = NULL;
         goto out;
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for tpgetnodeid() - Auto generated.
+ */
+public long Otpgetnodeid(TPCONTEXT_T *p_ctxt) 
+{
+    long ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+    {
+        userlog("ERROR! tpgetnodeid() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpgetnodeid();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+    {
+        userlog("ERROR! tpgetnodeid() failed to get context");
+        FAIL_OUT(ret);
     }
 out:    
     return ret; 
@@ -671,6 +783,66 @@ out:
 
 
 /**
+ * Object-API wrapper for _exget_tperrno_addr() - Auto generated.
+ */
+public int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt) 
+{
+    int * ret = NULL;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+    {
+        userlog("ERROR! _exget_tperrno_addr() failed to set context");
+        ret = NULL;
+        goto out;
+    }
+    
+    ret = _exget_tperrno_addr();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+    {
+        userlog("ERROR! _exget_tperrno_addr() failed to get context");
+        ret = NULL;
+        goto out;
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for _exget_tpurcode_addr() - Auto generated.
+ */
+public long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt) 
+{
+    long * ret = NULL;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+    {
+        userlog("ERROR! _exget_tpurcode_addr() failed to set context");
+        ret = NULL;
+        goto out;
+    }
+    
+    ret = _exget_tpurcode_addr();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+    {
+        userlog("ERROR! _exget_tpurcode_addr() failed to get context");
+        ret = NULL;
+        goto out;
+    }
+out:    
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for tpinit() - Auto generated.
  */
 public int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo) 
@@ -691,6 +863,34 @@ public int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo)
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
     {
         userlog("ERROR! tpinit() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for tpterm() - Auto generated.
+ */
+public int Otpterm(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpterm() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpterm();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+    {
+        userlog("ERROR! tpterm() failed to get context");
         FAIL_OUT(ret);
     }
 out:    

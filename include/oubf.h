@@ -46,6 +46,7 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+export NDRX_API int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt);
 export NDRX_API int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 export NDRX_API int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype);
 export NDRX_API int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype);
@@ -109,6 +110,7 @@ export NDRX_API int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ);
 export NDRX_API BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub);
 export NDRX_API long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub);
 export NDRX_API int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ);
+export NDRX_API void * Ondrx_ubf_tls_get(TPCONTEXT_T *p_ctxt);
 export NDRX_API int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data);
 export NDRX_API void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data);
 export NDRX_API void * Ondrx_ubf_tls_new(TPCONTEXT_T *p_ctxt, int auto_destroy, int auto_set);

@@ -268,7 +268,14 @@ sub gen_sig {
     my $func_name = shift;
     my $func_args_list = shift;
     
-    return "$func_type O$func_name(TPCONTEXT_T *p_ctxt, $func_args_list)";
+    if ($func_args_list=~/^void$/)
+    {
+        return "$func_type O$func_name(TPCONTEXT_T *p_ctxt)";
+    }
+    else
+    {
+        return "$func_type O$func_name(TPCONTEXT_T *p_ctxt, $func_args_list)";
+    }
 }
 
 ################################################################################
@@ -444,6 +451,7 @@ END_MESSAGE
     elsif ($func_type=~m/^long \*$/ 
         || $func_type=~m/^char \*$/
         || $func_type=~m/^UBFH \*$/
+        || $func_type=~m/^int \*$/
         )
     {
 ################################################################################
@@ -509,179 +517,186 @@ NEXT: while( my $line = <$info>)
     
     if ($line =~ m/extern NDRX_API.*\(.*/)
     {
-    # read next line, if line not completed
-    if ($line !~ m/\);\s*/)
-    {
-        my $next_line = <$info>;
-        chomp $next_line;
-        
-        $next_line =~ s/^\s+//;
-        $next_line =~ s/\s+$//;
-        
-        $line = $line.$next_line;
-    }
-    
-    #Strip off any comments found
-    $line =~ s/(\/\*.*\*\/)//gi;
-    
-    # Now get the function return type, name and arguments list
-    my ($func_type, $func_name, $func_args_list) = 
-                ($line=~m/^extern NDRX_API\s*([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)\s*\((.*)\)\s*;/);
-    
-    
-    $func_type = remove_white_space($func_type);
-    $func_name = remove_white_space($func_name);
-    $func_args_list = remove_white_space($func_args_list);
-    
-    print "Processing line [$line] M_name = [$M_name]\n";
-    
-    #
-    # Skip the specific symbols, per output module
-    #
-    
-    if ($M_name =~ m/^oatmisrv$/)
-    {
-        # Include only server commands for ATMISRV level
-        if ($func_name !~ m/tpreturn/
-            && $func_name !~ m/tpforward/
-            && $func_name !~ m/tpadvertise_full/
-            && $func_name !~ m/tpunadvertise/
-            
-            && $func_name !~ m/tpext_addpollerfd/
-            && $func_name !~ m/tpext_delpollerfd/
-            && $func_name !~ m/tpext_addb4pollcb/
-            && $func_name !~ m/tpsrvsetctxdata/
-            && $func_name !~ m/tpext_addperiodcb/
-            
-            )
+        # read next line, if line not completed
+        if ($line !~ m/\);\s*/)
         {
-            print "skip - next\n";
-            next NEXT;
-        }
-    }
-    elsif ($M_name =~ m/^oatmi$/)
-    {
-        # Skip the names from ATMI level
-        if ($line =~ m/G_tpsvrinit__/
-            || $line =~ m/G_tpsvrdone__/ 
-            || $func_name =~ m/ndrx_main/ 
-            || $func_name =~ m/ndrx_main_integra/ 
-            || $func_name =~ m/ndrx_atmi_tls_get/
-            || $func_name =~ m/ndrx_atmi_tls_set/
-            || $func_name =~ m/ndrx_atmi_tls_free/
-            || $func_name =~ m/ndrx_atmi_tls_new/
-            # Skip the server stuff
-            || $func_name =~ m/tpreturn/
-            || $func_name =~ m/tpforward/
-            || $func_name =~ m/tpadvertise_full/
-            || $func_name =~ m/tpunadvertise/
-            || $func_name =~ m/tpservice/
-            || $func_name =~ m/tpext_addpollerfd/
-            || $func_name =~ m/tpext_delpollerfd/
-            || $func_name =~ m/tpext_addb4pollcb/
-            || $func_name =~ m/tpsrvsetctxdata/
-            || $func_name =~ m/tpext_addperiodcb/
-            || $func_name =~ m/tpsvrinit/
-            )
-        {
-            print "skip - next\n";
-            next NEXT;
-        }
-    }
-    elsif ($M_name =~ m/^oubf$/)
-    {
-        # Skip some bits from UBF level
-        if ($func_name =~ m/^ndrx_ubf_tls_get$/
-            && $func_name =~ m/^ndrx_ubf_tls_set$/
-            && $func_name =~ m/^ndrx_ubf_tls_free$/
-            && $func_name =~ m/^ndrx_ubf_tls_new$/
-            )
-        {
-            print "skip - next\n";
-            next NEXT;
-        }
-    }
+            my $next_line = <$info>;
+            chomp $next_line;
 
-    
-    # Process next, parse arguments and their types
-    print "func_type      = [$func_type]\n";
-    print "func_name      = [$func_name]\n";
-    print "func_args_list = [$func_args_list]\n";
-    
-    my @func_arg_type = ();
-    my @func_arg_name = ();
-    my @func_arg_def = (); # in case if pointer to function used...
-    
-    #
-    # Fix callbacks with commas
-    #
-    #my @args = split(/\,/, $func_args_list);
-    my @args = split_by_comma_but_not_parenthesis($func_args_list);
-    
-    if ($func_args_list=~m/^void$/)
-    {
-        push @func_arg_type, "void";
-    }
-    else
-    {
-        # Extract the data type and ar
-        
-        SKIP_TYPE: foreach my $pair ( @args )
+            $next_line =~ s/^\s+//;
+            $next_line =~ s/\s+$//;
+
+            $line = $line.$next_line;
+        }
+
+        #Strip off any comments found
+        $line =~ s/(\/\*.*\*\/)//gi;
+
+        # Now get the function return type, name and arguments list
+        my ($func_type, $func_name, $func_args_list) = 
+                    ($line=~m/^extern NDRX_API\s*([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)\s*\((.*)\)\s*;/);
+
+
+        $func_type = remove_white_space($func_type);
+        $func_name = remove_white_space($func_name);
+        $func_args_list = remove_white_space($func_args_list);
+
+        print "Processing line [$line] M_name = [$M_name]\n";
+
+        #
+        # Skip the specific symbols, per output module
+        #
+
+        if ($M_name =~ m/^oatmisrv$/)
         {
-            $pair = remove_white_space($pair);
-            
-            my $type = "";
-            my $name = "";
-            my $sign = "";
-            my $def = $pair;
-            
-            
-            if ($pair=~m/\(.*\)\(.*\)/)
+            # Include only server commands for ATMISRV level
+            if ($func_name !~ m/tpreturn/
+                && $func_name !~ m/tpforward/
+                && $func_name !~ m/tpadvertise_full/
+                && $func_name !~ m/tpunadvertise/
+
+                && $func_name !~ m/tpext_addpollerfd/
+                && $func_name !~ m/tpext_delpollerfd/
+                && $func_name !~ m/tpext_addb4pollcb/
+                && $func_name !~ m/tpsrvsetctxdata/
+                && $func_name !~ m/tpext_addperiodcb/
+
+                )
             {
-                print "Got ptr to function...\n";
-                ($name) = ($pair=~m/\(\s*\*(.*)\)\(.*\)/);
+                print "skip - next\n";
+                next NEXT;
             }
-            else
+        }
+        elsif ($M_name =~ m/^oatmi$/)
+        {
+            # Skip the names from ATMI level
+            if ($line =~ m/G_tpsvrinit__/
+                || $line =~ m/G_tpsvrdone__/ 
+                || $func_name =~ m/ndrx_main/ 
+                || $func_name =~ m/ndrx_main_integra/ 
+                || $func_name =~ m/ndrx_atmi_tls_get/
+                || $func_name =~ m/ndrx_atmi_tls_set/
+                || $func_name =~ m/ndrx_atmi_tls_free/
+                || $func_name =~ m/ndrx_atmi_tls_new/
+                # Skip the server stuff
+                || $func_name =~ m/tpreturn/
+                || $func_name =~ m/tpforward/
+                || $func_name =~ m/tpadvertise_full/
+                || $func_name =~ m/tpunadvertise/
+                || $func_name =~ m/tpservice/
+                || $func_name =~ m/tpext_addpollerfd/
+                || $func_name =~ m/tpext_delpollerfd/
+                || $func_name =~ m/tpext_addb4pollcb/
+                || $func_name =~ m/tpsrvsetctxdata/
+                || $func_name =~ m/tpext_addperiodcb/
+                || $func_name =~ m/tpsvrinit/
+                || $func_name =~ m/tpgetsrvid/
+                || $func_name =~ m/tpsrvgetctxdata/
+                || $func_name =~ m/tpext_delb4pollcb/
+                || $func_name =~ m/tpsvrdone/
+                || $func_name =~ m/tpcontinue/
+                || $func_name =~ m/tpext_delperiodcb/
+                )
             {
-                print "Normal type...\n";
-                ($sign, $type, $name) = 
-                    ($pair=~m/^\s*(unsigned\s*)?([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
-                
-                $sign = remove_white_space($sign);
-                $type = remove_white_space($type);
-                $name = remove_white_space($name);
-                
-                if ($sign!~m/^$/)
+                print "skip - next\n";
+                next NEXT;
+            }
+        }
+        elsif ($M_name =~ m/^oubf$/)
+        {
+            # Skip some bits from UBF level
+            if ($func_name =~ m/^ndrx_ubf_tls_get$/
+                && $func_name =~ m/^ndrx_ubf_tls_set$/
+                && $func_name =~ m/^ndrx_ubf_tls_free$/
+                && $func_name =~ m/^ndrx_ubf_tls_new$/
+                )
+            {
+                print "skip - next\n";
+                next NEXT;
+            }
+        }
+
+
+        # Process next, parse arguments and their types
+        print "func_type      = [$func_type]\n";
+        print "func_name      = [$func_name]\n";
+        print "func_args_list = [$func_args_list]\n";
+
+        my @func_arg_type = ();
+        my @func_arg_name = ();
+        my @func_arg_def = (); # in case if pointer to function used...
+
+        #
+        # Fix callbacks with commas
+        #
+        #my @args = split(/\,/, $func_args_list);
+        my @args = split_by_comma_but_not_parenthesis($func_args_list);
+
+        if ($func_args_list=~m/^void$/)
+        {
+            push @func_arg_type, "void";
+        }
+        else
+        {
+            # Extract the data type and ar
+
+            SKIP_TYPE: foreach my $pair ( @args )
+            {
+                $pair = remove_white_space($pair);
+
+                my $type = "";
+                my $name = "";
+                my $sign = "";
+                my $def = $pair;
+
+
+                if ($pair=~m/\(.*\)\(.*\)/)
                 {
-                    $type = "$sign $type";
+                    print "Got ptr to function...\n";
+                    ($name) = ($pair=~m/\(\s*\*(.*)\)\(.*\)/);
                 }
+                else
+                {
+                    print "Normal type...\n";
+                    ($sign, $type, $name) = 
+                        ($pair=~m/^\s*(unsigned\s*)?([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
+
+                    $sign = remove_white_space($sign);
+                    $type = remove_white_space($type);
+                    $name = remove_white_space($name);
+
+                    if ($sign!~m/^$/)
+                    {
+                        $type = "$sign $type";
+                    }
+                }
+
+                #
+                # Seems like split_by_comma_but_not_parenthesis()
+                # generates last block empty.
+                #
+                if ($name=~m/^$/)
+                {
+                    next SKIP_TYPE;
+                }
+
+                push @func_arg_def, $pair;
+
+                print "got param (pair: [$pair]), type: [$type], name: [$name], def: [$def]\n";
+                push @func_arg_type, $type;
+                push @func_arg_name, $name; 
             }
-            
-            #
-            # Seems like split_by_comma_but_not_parenthesis()
-            # generates last block empty.
-            #
-            if ($name=~m/^$/)
-            {
-                next SKIP_TYPE;
-            }
-            
-            push @func_arg_def, $pair;
-            
-            print "got param (pair: [$pair]), type: [$type], name: [$name], def: [$def]\n";
-            push @func_arg_type, $type;
-            push @func_arg_name, $name; 
         }
         
+        # Generate signature
         my $sig = gen_sig($func_type, $func_name, $func_args_list);
         
         # Write header;
-        
         write_h($sig);
         
+        # write func out
         write_c($func_type, $func_name, $sig, $func_args_list, 
             \@func_arg_type, \@func_arg_name, \@func_arg_def);
-    }
     }
 }
 

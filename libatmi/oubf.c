@@ -54,6 +54,36 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Object-API wrapper for _Bget_Ferror_addr() - Auto generated.
+ */
+public int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt) 
+{
+    int * ret = NULL;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF))
+    {
+        userlog("ERROR! _Bget_Ferror_addr() failed to set context");
+        ret = NULL;
+        goto out;
+    }
+    
+    ret = _Bget_Ferror_addr();
+
+    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF))
+    {
+        userlog("ERROR! _Bget_Ferror_addr() failed to get context");
+        ret = NULL;
+        goto out;
+    }
+out:    
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for Blen() - Auto generated.
  */
 public int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
