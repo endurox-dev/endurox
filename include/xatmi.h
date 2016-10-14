@@ -513,6 +513,9 @@ extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)
 /* Contexting/switching TLS for all libs */
 extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);
 extern NDRX_API int tpsetctxt(TPCONTEXT_T context, long flags);
+
+/* Create new context, TODO: */
+extern NDRX_API void tpnewctxt(TPCONTEXT_T context);
 extern NDRX_API void tpfreectxt(TPCONTEXT_T context);
 
 extern int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags);
