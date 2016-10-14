@@ -72,6 +72,7 @@ sub open_h {
     open($M_h_fd, '>', $M_h_name) or die "Could not open file '$M_h_name' $!";
 
     my $title = "";
+    my $defs = "";
 
     if ($M_name=~/^oatmisrv$/)
     {
@@ -80,6 +81,10 @@ sub open_h {
     if ($M_name=~/^oatmi$/)
     {
         $title = "ATMI Object API header (auto-generated)";
+
+        $defs = "\n#define Otperrno(CTXT) (*O_exget_tperrno_addr(CTXT))\n".
+                "#define Otpurcode(CTXT) (*O_exget_tpurcode_addr(CTXT))";
+
     }
     elsif($M_name=~/oubf/)
     {
@@ -129,7 +134,7 @@ extern "C" {
 #include <ubf.h>
 #include <atmi.h>
 /*---------------------------Externs------------------------------------*/
-/*---------------------------Macros-------------------------------------*/
+/*---------------------------Macros-------------------------------------*/${defs}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -283,7 +288,7 @@ sub gen_sig {
 ################################################################################
 sub write_h {
     my $sig = shift;
-    print $M_h_fd "export NDRX_API $sig;\n";
+    print $M_h_fd "extern NDRX_API $sig;\n";
 }
 
 ################################################################################
@@ -361,17 +366,17 @@ sub write_c {
             ||$func_name=~/^tpterm$/
         )
         {
-            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN";
+            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN";
         }
         else
         {
-            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI";
+            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN";
         }
         
     }
     elsif($M_name=~/oubf/)
     {
-        $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF";
+        $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN";
     }
     
     

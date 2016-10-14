@@ -1013,6 +1013,18 @@ out:
     return ret;
 }
 
+
+/**
+ * Get the current context
+ * This disconnects current thread from TLS.
+ * @param flags
+ * @return 
+ */
+public TPCONTEXT_T tpnewctxt(void)
+{
+    return (TPCONTEXT_T) ndrx_atmi_tls_new(FALSE, FALSE);
+}
+
 /**
  * Set the request logfile
  * - If data exists and filename exists, then update data buffer and set active 

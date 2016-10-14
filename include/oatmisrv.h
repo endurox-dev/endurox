@@ -46,14 +46,14 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-export NDRX_API int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
-export NDRX_API void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, long len, long flags);
-export NDRX_API int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname);
-export NDRX_API void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
-export NDRX_API int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags);
-export NDRX_API int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
-export NDRX_API int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd);
-export NDRX_API int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)(void));
-export NDRX_API int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void));
+extern NDRX_API int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
+extern NDRX_API void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, long len, long flags);
+extern NDRX_API int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname);
+extern NDRX_API void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
+extern NDRX_API int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags);
+extern NDRX_API int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
+extern NDRX_API int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd);
+extern NDRX_API int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)(void));
+extern NDRX_API int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void));
 #endif  /* __OATMISRV_H */
 

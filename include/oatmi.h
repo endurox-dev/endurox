@@ -41,53 +41,56 @@ extern "C" {
 #include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define Otperrno(CTXT) (*O_exget_tperrno_addr(CTXT))
+#define Otpurcode(CTXT) (*O_exget_tpurcode_addr(CTXT))
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-export NDRX_API int Otpacall(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
-export NDRX_API char * Otpalloc(TPCONTEXT_T *p_ctxt, char *type, char *subtype, long size);
-export NDRX_API int Otpcall(TPCONTEXT_T *p_ctxt, char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
-export NDRX_API int Otpcancel(TPCONTEXT_T *p_ctxt, int cd);
-export NDRX_API int Otpconnect(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
-export NDRX_API int Otpdiscon(TPCONTEXT_T *p_ctxt, int cd);
-export NDRX_API void Otpfree(TPCONTEXT_T *p_ctxt, char *ptr);
-export NDRX_API int Otpgetrply(TPCONTEXT_T *p_ctxt, int *cd, char **data, long *len, long flags);
-export NDRX_API char * Otprealloc(TPCONTEXT_T *p_ctxt, char *ptr, long size);
-export NDRX_API int Otprecv(TPCONTEXT_T *p_ctxt, int cd, char **data, long *len, long flags, long *revent);
-export NDRX_API int Otpsend(TPCONTEXT_T *p_ctxt, int cd, char *data, long len, long flags, long *revent);
-export NDRX_API long Otptypes(TPCONTEXT_T *p_ctxt, char *ptr, char *type, char *subtype);
-export NDRX_API int Otpabort(TPCONTEXT_T *p_ctxt, long flags);
-export NDRX_API int Otpbegin(TPCONTEXT_T *p_ctxt, unsigned long timeout, long flags);
-export NDRX_API int Otpcommit(TPCONTEXT_T *p_ctxt, long flags);
-export NDRX_API int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long flags);
-export NDRX_API int Otpsuspend(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags);
-export NDRX_API int Otpresume(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags);
-export NDRX_API int Otpopen(TPCONTEXT_T *p_ctxt);
-export NDRX_API int Otpclose(TPCONTEXT_T *p_ctxt);
-export NDRX_API int Otpgetlev(TPCONTEXT_T *p_ctxt);
-export NDRX_API char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err);
-export NDRX_API long Otpgetnodeid(TPCONTEXT_T *p_ctxt);
-export NDRX_API long Otpsubscribe(TPCONTEXT_T *p_ctxt, char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
-export NDRX_API int Otpunsubscribe(TPCONTEXT_T *p_ctxt, long subscription, long flags);
-export NDRX_API int Otppost(TPCONTEXT_T *p_ctxt, char *eventname, char *data, long len, long flags);
-export NDRX_API int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt);
-export NDRX_API long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt);
-export NDRX_API int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo);
-export NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
-export NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
-export NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
-export NDRX_API int Otpenqueue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
-export NDRX_API int Otpdequeue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
-export NDRX_API int Otpenqueueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags);
-export NDRX_API int Otpdequeueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
-export NDRX_API int Otpgetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T *context, long flags);
-export NDRX_API int Otpsetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context, long flags);
-export NDRX_API void Otpfreectxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context);
-export NDRX_API int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *filename, char *filesvc);
-export NDRX_API int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename, int bufsize);
-export NDRX_API int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data);
-export NDRX_API void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_ub);
+extern NDRX_API int Otpacall(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
+extern NDRX_API char * Otpalloc(TPCONTEXT_T *p_ctxt, char *type, char *subtype, long size);
+extern NDRX_API int Otpcall(TPCONTEXT_T *p_ctxt, char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
+extern NDRX_API int Otpcancel(TPCONTEXT_T *p_ctxt, int cd);
+extern NDRX_API int Otpconnect(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
+extern NDRX_API int Otpdiscon(TPCONTEXT_T *p_ctxt, int cd);
+extern NDRX_API void Otpfree(TPCONTEXT_T *p_ctxt, char *ptr);
+extern NDRX_API int Otpgetrply(TPCONTEXT_T *p_ctxt, int *cd, char **data, long *len, long flags);
+extern NDRX_API char * Otprealloc(TPCONTEXT_T *p_ctxt, char *ptr, long size);
+extern NDRX_API int Otprecv(TPCONTEXT_T *p_ctxt, int cd, char **data, long *len, long flags, long *revent);
+extern NDRX_API int Otpsend(TPCONTEXT_T *p_ctxt, int cd, char *data, long len, long flags, long *revent);
+extern NDRX_API long Otptypes(TPCONTEXT_T *p_ctxt, char *ptr, char *type, char *subtype);
+extern NDRX_API int Otpabort(TPCONTEXT_T *p_ctxt, long flags);
+extern NDRX_API int Otpbegin(TPCONTEXT_T *p_ctxt, unsigned long timeout, long flags);
+extern NDRX_API int Otpcommit(TPCONTEXT_T *p_ctxt, long flags);
+extern NDRX_API int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long flags);
+extern NDRX_API int Otpsuspend(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags);
+extern NDRX_API int Otpresume(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags);
+extern NDRX_API int Otpopen(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpclose(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpgetlev(TPCONTEXT_T *p_ctxt);
+extern NDRX_API char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err);
+extern NDRX_API long Otpgetnodeid(TPCONTEXT_T *p_ctxt);
+extern NDRX_API long Otpsubscribe(TPCONTEXT_T *p_ctxt, char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
+extern NDRX_API int Otpunsubscribe(TPCONTEXT_T *p_ctxt, long subscription, long flags);
+extern NDRX_API int Otppost(TPCONTEXT_T *p_ctxt, char *eventname, char *data, long len, long flags);
+extern NDRX_API int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt);
+extern NDRX_API long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo);
+extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
+extern NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
+extern NDRX_API int Otpenqueue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
+extern NDRX_API int Otpdequeue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
+extern NDRX_API int Otpenqueueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags);
+extern NDRX_API int Otpdequeueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
+extern NDRX_API int Otpgetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T *context, long flags);
+extern NDRX_API int Otpsetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context, long flags);
+extern NDRX_API TPCONTEXT_T Otpnewctxt(TPCONTEXT_T *p_ctxt);
+extern NDRX_API void Otpfreectxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context);
+extern NDRX_API int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *filename, char *filesvc);
+extern NDRX_API int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename, int bufsize);
+extern NDRX_API int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data);
+extern NDRX_API void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_ub);
 #endif  /* __OATMI_H */
 

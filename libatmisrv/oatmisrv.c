@@ -62,7 +62,7 @@ public int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)(T
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpadvertise_full() failed to set context");
         FAIL_OUT(ret);
@@ -71,7 +71,7 @@ public int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)(T
     ret = tpadvertise_full(svc_nm, p_func, fn_nm);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpadvertise_full() failed to get context");
         FAIL_OUT(ret);
@@ -87,7 +87,7 @@ public void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, lon
 {
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
     {
         userlog("ERROR! tpreturn() failed to set context");
     }
@@ -95,7 +95,7 @@ public void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, lon
     tpreturn(rval, rcode, data, len, flags);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_TRAN))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
     {
         userlog("ERROR! tpreturn() failed to get context");
     }
@@ -113,7 +113,7 @@ public int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname)
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpunadvertise() failed to set context");
         FAIL_OUT(ret);
@@ -122,7 +122,7 @@ public int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname)
     ret = tpunadvertise(svcname);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpunadvertise() failed to get context");
         FAIL_OUT(ret);
@@ -138,7 +138,7 @@ public void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, lon
 {
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpforward() failed to set context");
     }
@@ -146,7 +146,7 @@ public void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, lon
     tpforward(svc, data, len, flags);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpforward() failed to get context");
     }
@@ -164,7 +164,7 @@ public int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags)
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpsrvsetctxdata() failed to set context");
         FAIL_OUT(ret);
@@ -173,7 +173,7 @@ public int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags)
     ret = tpsrvsetctxdata(data, flags);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpsrvsetctxdata() failed to get context");
         FAIL_OUT(ret);
@@ -192,7 +192,7 @@ public int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addpollerfd() failed to set context");
         FAIL_OUT(ret);
@@ -201,7 +201,7 @@ public int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void
     ret = tpext_addpollerfd(fd, events, ptr1, p_pollevent);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addpollerfd() failed to get context");
         FAIL_OUT(ret);
@@ -220,7 +220,7 @@ public int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd)
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_delpollerfd() failed to set context");
         FAIL_OUT(ret);
@@ -229,7 +229,7 @@ public int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd)
     ret = tpext_delpollerfd(fd);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_delpollerfd() failed to get context");
         FAIL_OUT(ret);
@@ -248,7 +248,7 @@ public int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)(v
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addperiodcb() failed to set context");
         FAIL_OUT(ret);
@@ -257,7 +257,7 @@ public int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)(v
     ret = tpext_addperiodcb(secs, p_periodcb);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addperiodcb() failed to get context");
         FAIL_OUT(ret);
@@ -276,7 +276,7 @@ public int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void))
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addb4pollcb() failed to set context");
         FAIL_OUT(ret);
@@ -285,7 +285,7 @@ public int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void))
     ret = tpext_addb4pollcb(p_b4pollcb);
 
     if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI))
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addb4pollcb() failed to get context");
         FAIL_OUT(ret);

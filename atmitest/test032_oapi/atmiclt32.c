@@ -36,10 +36,8 @@
 #include <math.h>
 #include <unistd.h>
 
-/* TODO:
 #include <oatmi.h>
 #include <oubf.h>
-*/
 #include <ubf.h>
 #include <atmi.h>
 #include <ndebug.h>
@@ -60,44 +58,64 @@
 int main(int argc, char** argv)
 {
     int ret = SUCCEED;
-    UBFH *p_ub = NULL;
-    int i;
+    UBFH *p_ub1 = NULL;
+    UBFH *p_ub2 = NULL;
+    UBFH *p_ub3 = NULL;
+    
+    int ret_ctx;
     long rsplen;
     
+    /* Allocate the context */
+    TPCONTEXT_T ctx1 = tpnewctxt();
+    TPCONTEXT_T ctx2 = tpnewctxt();
+    TPCONTEXT_T ctx3 = tpnewctxt();
     
-    /* Allocate the context 
-    TPCONTEXT_T ctx1 = (TPCONTEXT_T)ndrx_atmi_tls_new(FALSE, FALSE);
+    TPCONTEXT_T tmpt;
     
-    if (NULL==ctx)
+    if (NULL==ctx1 || NULL==ctx2 || NULL==ctx3)
     {
-        NDRX_LOG(log_error, "Failed to get new context");
+        NDRX_LOG(log_error, "TESTERROR: Failed to get new context (%p/%p/%p): %s",
+                ctx1, ctx2, ctx3, tpstrerror(tperrno));
+        exit(FAIL);
     }
-    */
     
-    (UBFH *)tpalloc("UBF", NULL, 8192);
-    for (i=0; i<1000; i++)
-    {   
-
-        /* Add some data to buffer */
-        if (0==(i % 100))
-        {
-            if (SUCCEED!=Badd(p_ub, T_STRING_FLD, "HELLO WORLD!", 0L))
-            {
-                NDRX_LOG(log_error, "TESTERROR: Failed to add T_STRING_FLD:%s", 
-                    Bstrerror(Berror));
-                FAIL_OUT(ret);
-            }
-        }
-        
-        /* About to call service */
-        tplog(log_warn, "Calling TEST32_1ST!");
-        if (FAIL == tpcall("TEST32_1ST", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-        {
-            NDRX_LOG(log_error, "TEST32_1ST failed: %s", tpstrerror(tperrno));
-            FAIL_OUT(ret);
-        }
-        
+    if (NULL==(p_ub1 = (UBFH *)Otpalloc(&ctx1, "UBF", NULL, 8192)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub1: %s",
+                    Otpstrerror(ctx3, Otperrno(ctx3)));
+        exit(FAIL);
     }
+    
+    if (NULL==(p_ub2 = (UBFH *)Otpalloc(&ctx2, "UBF", NULL, 8192)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub2: %s",
+                Otpstrerror(ctx3, Otperrno(ctx3)));
+        exit(FAIL);
+    }
+    
+    if (NULL==(p_ub3 = (UBFH *)Otpalloc(&ctx3, "UBF", NULL, 8192)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub3: %s", 
+                Otpstrerror(ctx3, Otperrno(ctx3)));
+        exit(FAIL);
+    }
+    
+    /* get the current context, as the thread, we must be at NULL context */
+    if (TPNULLCONTEXT!=(ret_ctx=tpgetctxt(&tmpt, 0)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpgetctxt() NOT %d", ret_ctx);
+        FAIL_OUT(ret);
+    }
+    
+    /* call service in async way, keep the following order:
+     * - ctx1 Oacall()
+     * - ctx2 Oacall()
+     * - ctx3 Oacall()
+     * - ctx3 Ogetrply()
+     * - ctx2 Ogetrply()
+     * - ctx1 Ogetrply()
+     */
+    
     
 out:
 
