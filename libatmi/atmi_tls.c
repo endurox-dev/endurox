@@ -92,12 +92,16 @@ public void * ndrx_atmi_tls_get(long priv_flags)
                 userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
                         tpstrerror(tperrno));
 
+#if 0
+		Nothing to do here! it will fail next time when user
+		will try to do some DB operation...
                 MUTEX_UNLOCK_V(tmp->mutex);
 
                 ndrx_atmi_tls_free(tmp);
                 /* fail it. */
                 tmp = NULL;
                 goto out;
+#endif
             }
         }
 

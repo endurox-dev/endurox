@@ -63,6 +63,7 @@ int main(int argc, char** argv)
     UBFH *p_ub3 = NULL;
     
     int ret_ctx;
+    int cd1, cd2, cd3;
     long rsplen;
     
     /* Allocate the context */
@@ -115,7 +116,6 @@ int main(int argc, char** argv)
      * - ctx2 Ogetrply()
      * - ctx1 Ogetrply()
      */
-    
     
 out:
 
