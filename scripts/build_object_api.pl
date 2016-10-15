@@ -408,7 +408,7 @@ public $sig
     
     ret = $invoke;
 
-    if (SUCCEED!=_tpgetctxt(p_ctxt, 0, 
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
         $M_priv_flags))
     {
         userlog("ERROR! $func_name() failed to get context");
@@ -441,7 +441,7 @@ public $sig
     
     $invoke;
 
-    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
         $M_priv_flags))
     {
         userlog("ERROR! $func_name() failed to get context");
@@ -482,7 +482,7 @@ public $sig
     
     ret = $invoke;
 
-    if (SUCCEED!=_tpgetctxt(p_ctxt, 0,
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
         $M_priv_flags))
     {
         userlog("ERROR! $func_name() failed to get context");

@@ -82,14 +82,14 @@ int main(int argc, char** argv)
     if (NULL==(p_ub1 = (UBFH *)Otpalloc(&ctx1, "UBF", NULL, 8192)))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub1: %s",
-                    Otpstrerror(ctx3, Otperrno(ctx3)));
+                    Otpstrerror(ctx1, Otperrno(ctx1)));
         exit(FAIL);
     }
     
     if (NULL==(p_ub2 = (UBFH *)Otpalloc(&ctx2, "UBF", NULL, 8192)))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub2: %s",
-                Otpstrerror(ctx3, Otperrno(ctx3)));
+                Otpstrerror(ctx2, Otperrno(ctx2)));
         exit(FAIL);
     }
     
