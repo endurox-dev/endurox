@@ -39,18 +39,40 @@
 #include <test.fd.h>
 #include <ndebug.h>
 
+#include "oubf.h"
+
 void TEST32_1ST (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
+    long l;
+    TPCONTEXT_T c;
     
-    /* TODO: Get the value from buffer, increment it
-     * and push back to buffer. Do this by O API.
-     */
+    /* Get the field at 0 occurrence and set it at 2nd occurrence */
+    
+    if (SUCCEED!=tpgetctxt(&c, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get context!");
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=OBget(&c, p_ub, T_LONG_FLD, 0, (char *)&l, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD[0]!");
+        FAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_info, "got l = %ld", l);
+    
+    if (SUCCEED!=OBchg(&c, p_ub, T_LONG_FLD, 1, (char *)&l, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_FLD[1]!");
+        FAIL_OUT(ret);
+    }
     
 out:
 
-    tpreturn(TPFAIL,
+    Otpreturn(&c, SUCCEED==ret?TPSUCCESS:TPFAIL,
             0L,
             (char *)p_ub,
             0L,

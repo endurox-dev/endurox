@@ -41,8 +41,8 @@ extern "C" {
 #include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define Otperrno(CTXT) (*O_exget_tperrno_addr(CTXT))
-#define Otpurcode(CTXT) (*O_exget_tpurcode_addr(CTXT))
+#define Otperrno(P_CTXT) (*O_exget_tperrno_addr(P_CTXT))
+#define Otpurcode(P_CTXT) (*O_exget_tpurcode_addr(P_CTXT))
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

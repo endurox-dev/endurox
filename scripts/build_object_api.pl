@@ -82,13 +82,15 @@ sub open_h {
     {
         $title = "ATMI Object API header (auto-generated)";
 
-        $defs = "\n#define Otperrno(CTXT) (*O_exget_tperrno_addr(CTXT))\n".
-                "#define Otpurcode(CTXT) (*O_exget_tpurcode_addr(CTXT))";
+        $defs = "\n#define Otperrno(P_CTXT) (*O_exget_tperrno_addr(P_CTXT))\n".
+                "#define Otpurcode(P_CTXT) (*O_exget_tpurcode_addr(P_CTXT))";
 
     }
     elsif($M_name=~/oubf/)
     {
         $title = "UBF Object API header (auto-generated)";
+
+        $defs = "\n#define OBerror(P_CTXT)   (*O_Bget_Ferror_addr(P_CTXT))";
     }
     
 my $message = <<"END_MESSAGE";

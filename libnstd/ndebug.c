@@ -123,11 +123,11 @@ public void ndrx_dbg_unlock(void)
  */
 private ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 {
-    if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+    if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
     {
         return &G_nstd_tls->threadlog;
     }
-    else if (NULL!=G_nstd_tls->requestlog.dbg_f_ptr)
+    else if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->requestlog.dbg_f_ptr)
     {
         return &G_nstd_tls->requestlog;
     }
@@ -460,7 +460,7 @@ public void ndrx_init_debug(void)
  */
 public ndrx_debug_t * debug_get_ndrx_ptr(void)
 {
-    NSTD_TLS_ENTRY;
+    /* NSTD_TLS_ENTRY; */
     NDRX_DBG_INIT_ENTRY;
     
     return get_debug_ptr(&G_tp_debug);
@@ -472,7 +472,7 @@ public ndrx_debug_t * debug_get_ndrx_ptr(void)
  */
 public ndrx_debug_t * debug_get_tp_ptr(void)
 {
-    NSTD_TLS_ENTRY;
+    /* NSTD_TLS_ENTRY; */
     NDRX_DBG_INIT_ENTRY;
     
     return get_debug_ptr(&G_ndrx_debug);
@@ -483,7 +483,7 @@ public ndrx_debug_t * debug_get_tp_ptr(void)
  * @return
  */
 public ndrx_debug_t * debug_get_ubf_ptr(void)
-{   NSTD_TLS_ENTRY;
+{   /* NSTD_TLS_ENTRY; */
     NDRX_DBG_INIT_ENTRY;
     
     return get_debug_ptr(&G_ubf_debug);
@@ -533,7 +533,7 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char 
     unsigned char *cptr2 = (unsigned char*)ptr2;
     char print_line[256]={0};
     char print_line2[256]={0};
-    NSTD_TLS_ENTRY;
+    /* NSTD_TLS_ENTRY; */
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
     dbg_ptr = get_debug_ptr(dbg_ptr);
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
@@ -708,9 +708,15 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     char *line_print;
     int len;
     ndrx_debug_t *org_ptr = dbg_ptr;
-    NSTD_TLS_ENTRY;
+    long  thread_nr = 0;
+    /* NSTD_TLS_ENTRY; */
     
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
+    
+    if (NULL!=G_nstd_tls)
+    {
+        thread_nr = G_nstd_tls->M_threadnr;
+    }
     
     dbg_ptr = get_debug_ptr(dbg_ptr);
     
@@ -724,7 +730,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     
     sprintf(line_start, "%c:%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
-        G_nstd_tls->M_threadnr, ldate, ltime, 
+        thread_nr, ldate, ltime, 
         (int)(time_val.tv_usec/1000), line_print, line);
     
     va_start(ap, fmt);    

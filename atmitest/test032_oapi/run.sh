@@ -48,12 +48,7 @@ fi;
 
 rm *.log
 
-# Clean up log dir
-rm -rf ./logs
-mkdir ./logs
-
 (./atmisv32FIRST -t 4 -i 1 2>&1) > ./atmisv32FIRST.log &
-(./atmisv32SECOND -i 1 2>&1) > ./atmisv32SECOND.log &
 sleep 2
 (./atmiclt32 2>&1) > ./atmiclt32.log
 
@@ -66,88 +61,6 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 fi
 
 xadmin killall atmisv32FIRST 2>/dev/null
-xadmin killall atmisv32SECOND 2>/dev/null
-
-#killall atmiclt1
-
-
-# Check the log files
-if [ "X`grep 'Hello from NDRX' clt-endurox.log`" == "X" ]; then
-        echo "error in clt-endurox.log!"
-	RET=-2
-fi
-
-if [ "X`grep 'Hello from tp' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log!"
-	RET=-2
-fi
-
-if [ "X`grep 'hello from thread 1' clt-tp-th1.log`" == "X" ]; then
-        echo "error in clt-tp-th1.log!"
-	RET=-2
-fi
-
-if [ "X`grep 'hello from thread 2' clt-tp-th2.log`" == "X" ]; then
-        echo "error in clt-tp-th2.log!"
-	RET=-2
-fi
-
-if [ "X`grep 'hello from main thread' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log!"
-	RET=-2
-fi
-
-if [ "X`grep 'Thread 1 logs to main' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (missing Thread 1 logs to main in main)!"
-	RET=-2
-fi
-
-if [ "X`grep 'Thread 2 logs to main' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (missing Thread 2 logs to main in main)!"
-	RET=-2
-fi
-
-# There shall be 1000 files in log directory
-FILES=` ls -1 ./logs/*.log | wc | awk '{print $1}'`
-
-echo "Got request files: [$FILES]"
-if [ "X$FILES" != "X1000" ]; then
-        echo "Invalid files count [$FILES] should be 1000!"
-	RET=-2
-fi
-
-################################################################################
-# there shall be in each log file:
-# - Hello from SETREQFILE
-# - Hello from atmicl32
-# - Hello from TEST32_2ND
-################################################################################
-
-# Test all 1000 files
-
-for ((i=1;i<=100;i++)); do
-echo "Testing sequence: $i"
-
-    if [ "X`grep 'Hello from SETREQFILE' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'Hello from SETREQFILE' file $i"
-            RET=-2
-    fi
-
-    if [ "X`grep 'Hello from atmicl32' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'Hello from atmicl32' file $i"
-            RET=-2
-    fi
-
-    if [ "X`grep 'Hello from TEST32_2ND' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'Hello from TEST32_2ND' file $i"
-            RET=-2
-    fi
-done
-
-if [ "X`grep 'Finishing off' ./clt-tp.log`" == "X" ]; then
-        echo "Missing 'Finishing off'"
-        RET=-2
-fi
 
 popd 2>/dev/null
 
