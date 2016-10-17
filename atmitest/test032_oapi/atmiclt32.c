@@ -44,6 +44,7 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include <nstdutil.h>
+#include <odebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -76,13 +77,39 @@ int main(int argc, char** argv)
         TPCONTEXT_T ctx3 = tpnewctxt();
 
         TPCONTEXT_T tmpt;
-
+       
         if (NULL==ctx1 || NULL==ctx2 || NULL==ctx3)
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get new context (%p/%p/%p): %s",
                     ctx1, ctx2, ctx3, tpstrerror(tperrno));
             FAIL_OUT(ret);
         }
+        
+        
+        if (SUCCEED!=Otpinit(&ctx1, NULL))
+        {
+            ONDRX_LOG(&ctx1, log_error, "TESTERROR: Failed to Otpinit 1: %s",
+                        Otpstrerror(&ctx1, Otperrno(&ctx1)));
+            FAIL_OUT(ret);
+        }
+        
+        if (SUCCEED!=Otpinit(&ctx2, NULL))
+        {
+            ONDRX_LOG(&ctx2, log_error, "TESTERROR: Failed to Otpinit 2: %s",
+                        Otpstrerror(&ctx2, Otperrno(&ctx2)));
+            FAIL_OUT(ret);
+        }
+        
+        if (SUCCEED!=Otpinit(&ctx3, NULL))
+        {
+            ONDRX_LOG(&ctx3, log_error, "TESTERROR: Failed to Otpinit 3: %s",
+                        Otpstrerror(&ctx3, Otperrno(&ctx3)));
+            FAIL_OUT(ret);
+        }
+        
+        ONDRX_LOG(&ctx1, log_always, "Hello from CTX1");
+        ONDRX_LOG(&ctx2, log_always, "Hello from CTX2");
+        ONDRX_LOG(&ctx3, log_always, "Hello from CTX3");
 
         if (NULL==(p_ub1 = (UBFH *)Otpalloc(&ctx1, "UBF", NULL, 8192)))
         {

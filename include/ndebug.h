@@ -44,6 +44,13 @@ extern "C" {
 #include <ndebugcmn.h>
 #include <nstd_tls.h>
     
+/*---------------------------Externs------------------------------------*/
+extern NDRX_API ndrx_debug_t G_ubf_debug;
+extern NDRX_API ndrx_debug_t G_tp_debug;
+extern NDRX_API ndrx_debug_t G_ndrx_debug;
+extern NDRX_API ndrx_debug_t G_stdout_debug;
+extern NDRX_API volatile int G_ndrx_debug_first;
+/*---------------------------Macros-------------------------------------*/
 /**
  * Log levels
  */
@@ -111,14 +118,6 @@ extern "C" {
             {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define NDRX_DBG_SETTHREAD(X) ndrx_dbg_setthread(X)
-    
-/*---------------------------Externs------------------------------------*/
-extern NDRX_API ndrx_debug_t G_ubf_debug;
-extern NDRX_API ndrx_debug_t G_tp_debug;
-extern NDRX_API ndrx_debug_t G_ndrx_debug;
-extern NDRX_API ndrx_debug_t G_stdout_debug;
-extern NDRX_API volatile int G_ndrx_debug_first;
-/*---------------------------Macros-------------------------------------*/
 
 /* Standard replacements for system errors */
 /* Debug msg for malloc: */

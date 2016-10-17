@@ -38,8 +38,7 @@
 #include <ubf.h>
 #include <test.fd.h>
 #include <ndebug.h>
-
-#include "oubf.h"
+#include <oubf.h>
 
 void TEST32_1ST (TPSVCINFO *p_svc)
 {
