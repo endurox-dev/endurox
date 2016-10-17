@@ -56,8 +56,10 @@ install (FILES
     sys_unix.h
     sys_mqueue.h 
     oubf.h
+    odebug.h
     oatmi.h
     oatmisrv.h
+    Exfields.h
     DESTINATION include)
 
 install (FILES

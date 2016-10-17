@@ -14,7 +14,7 @@ SYNOPSIS
 
 TPCONTEXT_T tpnewctxt(void)
 
-Link with '-latmi -lubf -lnstd -lpthread -lrt -lm'
+Link with '-latmi -lubf -lnstd -lpthread -lrt -lm -ldl'
 
 DESCRIPTION
 -----------

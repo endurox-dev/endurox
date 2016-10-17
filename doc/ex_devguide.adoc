@@ -411,6 +411,138 @@ descriptor id to unnamed pipe and that makes main thread to wake up for queue pr
 The 'poll()' for main thread supports Enduro/X extensions to add some other resource for
 polling (e.g. socket fd.)
 
+
+Object-API
+----------
+
+Enduro/X provides Object API functions. This is meant to be used with integration into
+programming languages and frameworks, where cooperative multi-threading is used.
+This API also is suitable for systems like Node.JS where system call, e.g. C lang call
+can result in different operating system thread. This fact can cause lot of issues, 
+for example, in cooperative multi-threading two concurrent 'tpacall()' requests can
+return results for different cooperative threads, which will cause them to drop the
+response and both calls with might finish with time-out.
+
+
+Thus Enduro/X provides following header files for Object-API:
+
+- odebug.h - ATMI Object based debugging
+
+- oubf.h - ATMI Object based UBF operations
+
+- oatmi.h - ATMI operations via ATMI Object
+
+- oatmisrv.h - ATMI server operations via ATMI Object.
+
+
+The API basically consists of all UBF and ATMI functions, they are prefixed with letter 'O'
+and as first parameter all of them consume 'TPCONTEXT_T' typed parameter. Which basically is
+pointer to heap stored ATMI Object. This ATMI Object also includes links to Standard library
+and UBF library heap allocated objects.
+
+Every Object-API function basically does following:
+
+1. Set (call of 'tpsetctxt()') the current thread TLS to passed in context;
+
+2. Call the actual UBF/ATMI function;
+
+3. Unset/get (call of 'tpsetctxt()') the thread local data;
+
+
+During the Enduro/X C library works, it is assumed that is not preemptible for cooperative threads.
+Thus above scheme will work for every framework that comply with rule (and mostly it does, because
+it will break the rules of library C/C++ processing).
+
+The typical code for Object API would be following:
+
+
+--------------------------------------------------------------------------------
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <oatmi.h>
+#include <oubf.h>
+#include <odebug.h>
+#include <Exfields.h>
+
+int main(int argc, char **argv)
+{
+    int ret = 0;
+    int cd1;
+    UBFH *p_ub1;
+    long rsplen;
+    /* Allocate new context aka Object */
+    TPCONTEXT_T ctx1 = tpnewctxt();
+
+    /* Initialise client session */
+    if (SUCCEED!=Otpinit(&ctx1, NULL))
+    {
+        /* print the thread based logs */
+        ONDRX_LOG(&ctx1, log_error, "TESTERROR: Failed to Otpinit 1: %s",
+                    Otpstrerror(&ctx1, Otperrno(&ctx1)));
+        ret = -1;
+        goto out;
+    }
+
+    /*Do some client based logging */
+    ONDRX_LOG(&ctx1, log_always, "Hello from CTX1");
+
+    if (NULL==(p_ub1 = (UBFH *)Otpalloc(&ctx1, "UBF", NULL, 8192)))
+    {
+        ONDRX_LOG(&ctx1, log_error, "TESTERROR: Failed to Otpalloc ub1: %s",
+                    Otpstrerror(&ctx1, Otperrno(&ctx1)));
+        ret = -1;
+        goto out;
+    }
+
+    /* set some buffer value */
+    if (SUCCEED!=OCBchg(&ctx1, p_ub1, EX_CC_CMD, 0, "l", 0L, BFLD_STRING))
+    {
+        ONDRX_LOG(&ctx1,log_error, "TESTERROR: OCBchg() failed %s", 
+                OBstrerror(&ctx1, OBerror(&ctx1)));
+        ret = -1;
+        goto out;
+   }
+
+    /* call the server */
+    if (FAIL==Otpcall(&ctx1, "SOMESVC", (char *)p_ub1, 0L, (char **)&p_ub1, &rsplen, 0L))
+    {
+        ONDRX_LOG(&ctx1, log_error, "TESTERROR: Failed to Otpcall 1: %s", 
+                Otpstrerror(&ctx1, Otperrno(&ctx1)));
+        ret = -1;
+        goto out;
+    }
+
+    /* free the buffer */
+    Otpfree(&ctx1, (char *)p_ub1);
+
+
+    /* terminate ATMI client session */
+    if (SUCCEED!=Otpterm(&ctx1))
+    {
+        ONDRX_LOG(&ctx1, log_error, "TESTERROR: Failed to terminate client 1", 
+                Otpstrerror(&ctx1, Otperrno(&ctx1)));
+        ret = -1;
+        goto out;
+    }
+
+    /* free the NSTD/UBF/ATMI objects */
+    tpfreectxt(ctx1);
+
+out:
+    return ret;
+
+}
+--------------------------------------------------------------------------------
+
+Build with:
+--------------------------------------------------------------------------------
+$ gcc test.c  -latmi -lubf -lnstd -lpthread -lrt -lm -ldl
+--------------------------------------------------------------------------------
+
+See atmitest/test032_oapi/atmiclt32.c for more sample code.
+
 :numbered!:
 
 [bibliography]
