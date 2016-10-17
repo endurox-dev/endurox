@@ -50,7 +50,7 @@ void TEST32_1ST (TPSVCINFO *p_svc)
     
     /* Get the field at 0 occurrence and set it at 2nd occurrence */
     
-    if (SUCCEED!=tpgetctxt(&c, 0))
+    if (TPMULTICONTEXTS!=tpgetctxt(&c, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get context!");
         FAIL_OUT(ret);

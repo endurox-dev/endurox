@@ -394,15 +394,33 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
         FAIL_OUT(ret);
     }
     
-    ctx = (atmi_tls_t *)ndrx_atmi_tls_get(priv_flags);
+    /* if not using ATMI, then use existing context object */
+    if (priv_flags & CTXT_PRIV_ATMI)
+    {
+        ctx = (atmi_tls_t *)ndrx_atmi_tls_get(priv_flags);
+    }
+    else   
+    {
+        ctx = (TPCONTEXT_T)*context;
+    }
     
     if (NULL!=ctx)
     {
-        ctx->p_nstd_tls = ndrx_nstd_tls_get();
-        ctx->p_ubf_tls = ndrx_ubf_tls_get();
+        if (priv_flags & CTXT_PRIV_NSTD)
+        {
+            ctx->p_nstd_tls = ndrx_nstd_tls_get();
+        }
+        
+        if (priv_flags & CTXT_PRIV_UBF)
+        {
+            ctx->p_ubf_tls = ndrx_ubf_tls_get();
+        }
     }
     
-    *context = (TPCONTEXT_T)ctx;
+    if (priv_flags & CTXT_PRIV_ATMI)
+    {
+        *context = (TPCONTEXT_T)ctx;
+    }
     
     if (NULL==ctx)
     {

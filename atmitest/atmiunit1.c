@@ -280,6 +280,13 @@ Ensure(test031_logging)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test032_oapi)
+{
+    int ret;
+    ret=system_dbg("test032_oapi/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 
 TestSuite *atmi_test_all(void)
 {
@@ -325,6 +332,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test029_inicfg);
     add_test(suite, test030_cconfsrv);
     add_test(suite, test031_logging);
+    add_test(suite, test032_oapi);
     
     return suite;
 }
