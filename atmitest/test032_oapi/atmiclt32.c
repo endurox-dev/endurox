@@ -87,21 +87,21 @@ int main(int argc, char** argv)
         if (NULL==(p_ub1 = (UBFH *)Otpalloc(&ctx1, "UBF", NULL, 8192)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub1: %s",
-                        Otpstrerror(ctx1, Otperrno(ctx1)));
+                        Otpstrerror(&ctx1, Otperrno(&ctx1)));
             FAIL_OUT(ret);
         }
 
         if (NULL==(p_ub2 = (UBFH *)Otpalloc(&ctx2, "UBF", NULL, 8192)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub2: %s",
-                    Otpstrerror(ctx2, Otperrno(ctx2)));
+                    Otpstrerror(&ctx2, Otperrno(&ctx2)));
             FAIL_OUT(ret);
         }
 
         if (NULL==(p_ub3 = (UBFH *)Otpalloc(&ctx3, "UBF", NULL, 8192)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpalloc ub3: %s", 
-                    Otpstrerror(ctx3, Otperrno(ctx3)));
+                    Otpstrerror(&ctx3, Otperrno(&ctx3)));
             FAIL_OUT(ret);
         }
 
@@ -123,19 +123,22 @@ int main(int argc, char** argv)
 
         if (SUCCEED!=OCBchg(&ctx1, p_ub1, T_LONG_FLD, 0, "1", 0L, BFLD_STRING))
         {
-            NDRX_LOG(log_error, "TESTERROR: OCBchg() failed %s", OBstrerror(&ctx1, OBerror(&ctx1)));
+            NDRX_LOG(log_error, "TESTERROR: OCBchg() failed %s", 
+                    OBstrerror(&ctx1, OBerror(&ctx1)));
             FAIL_OUT(ret);
         }
 
         if (SUCCEED!=OCBchg(&ctx2, p_ub2, T_LONG_FLD, 0, "2", 0L, BFLD_STRING))
         {
-            NDRX_LOG(log_error, "TESTERROR: OCBchg() failed %s", OBstrerror(&ctx2, OBerror(&ctx2)));
+            NDRX_LOG(log_error, "TESTERROR: OCBchg() failed %s", 
+                    OBstrerror(&ctx2, OBerror(&ctx2)));
             FAIL_OUT(ret);
         }
 
         if (SUCCEED!=OCBchg(&ctx3, p_ub3, T_LONG_FLD, 0, "3", 0L, BFLD_STRING))
         {
-            NDRX_LOG(log_error, "TESTERROR: OCBchg() failed %s", OBstrerror(&ctx3, OBerror(&ctx3)));
+            NDRX_LOG(log_error, "TESTERROR: OCBchg() failed %s", 
+                    OBstrerror(&ctx3, OBerror(&ctx3)));
             FAIL_OUT(ret);
         }
 
@@ -143,21 +146,21 @@ int main(int argc, char** argv)
         if (FAIL==(cd1=Otpacall(&ctx1, "TEST32_1ST", (char *)p_ub1, 0L, 0L)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpacall 1: %s", 
-                    Otpstrerror(ctx1, Otperrno(ctx1)));
+                    Otpstrerror(&ctx1, Otperrno(&ctx1)));
             FAIL_OUT(ret);
         }
 
         if (FAIL==(cd2=Otpacall(&ctx2, "TEST32_1ST", (char *)p_ub2, 0L, 0L)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpacall 2: %s", 
-                    Otpstrerror(ctx2, Otperrno(ctx2)));
+                    Otpstrerror(&ctx2, Otperrno(&ctx2)));
             FAIL_OUT(ret);
         }
 
         if (FAIL==(cd3=Otpacall(&ctx3, "TEST32_1ST", (char *)p_ub3, 0L, 0L)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpacall 3: %s", 
-                    Otpstrerror(ctx3, Otperrno(ctx3)));
+                    Otpstrerror(&ctx3, Otperrno(&ctx3)));
             FAIL_OUT(ret);
         }
 
@@ -167,7 +170,7 @@ int main(int argc, char** argv)
         if (SUCCEED!=Otpgetrply(&ctx1, &cd1, (char **)&p_ub1, &rsplen, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpgetrply 1: %s", 
-                    Otpstrerror(ctx1, Otperrno(ctx1)));
+                    Otpstrerror(&ctx1, Otperrno(&ctx1)));
             FAIL_OUT(ret);
         }
 
@@ -187,7 +190,7 @@ int main(int argc, char** argv)
         if (SUCCEED!=Otpgetrply(&ctx2, &cd2, (char **)&p_ub2, &rsplen, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpgetrply 2: %s", 
-                    Otpstrerror(ctx2, Otperrno(ctx2)));
+                    Otpstrerror(&ctx2, Otperrno(&ctx2)));
             FAIL_OUT(ret);
         }
 
@@ -207,7 +210,7 @@ int main(int argc, char** argv)
         if (SUCCEED!=Otpgetrply(&ctx3, &cd3, (char **)&p_ub3, &rsplen, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to Otpgetrply 3: %s", 
-                    Otpstrerror(ctx3, Otperrno(ctx3)));
+                    Otpstrerror(&ctx3, Otperrno(&ctx3)));
             FAIL_OUT(ret);
         }
 
@@ -230,21 +233,21 @@ int main(int argc, char** argv)
         if (SUCCEED!=Otpterm(&ctx1))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to terminate client 1", 
-                    Otpstrerror(ctx1, Otperrno(ctx1)));
+                    Otpstrerror(&ctx1, Otperrno(&ctx1)));
             FAIL_OUT(ret);
         }
 
         if (SUCCEED!=Otpterm(&ctx2))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to terminate client 2", 
-                    Otpstrerror(ctx2, Otperrno(ctx2)));
+                    Otpstrerror(&ctx2, Otperrno(&ctx2)));
             FAIL_OUT(ret);
         }
 
         if (SUCCEED!=Otpterm(&ctx3))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to terminate client 3", 
-                    Otpstrerror(ctx3, Otperrno(ctx3)));
+                    Otpstrerror(&ctx3, Otperrno(&ctx3)));
             FAIL_OUT(ret);
         }
 
