@@ -39,6 +39,7 @@
 #include <test.fd.h>
 #include <ndebug.h>
 #include <oubf.h>
+#include <oatmisrv.h>
 
 void TEST32_1ST (TPSVCINFO *p_svc)
 {
