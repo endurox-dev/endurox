@@ -1017,12 +1017,23 @@ out:
 /**
  * Get the current context
  * This disconnects current thread from TLS.
+ * We will allocate the NSTD & UBF TLSes too
  * @param flags
  * @return 
  */
 public TPCONTEXT_T tpnewctxt(void)
 {
-    return (TPCONTEXT_T) ndrx_atmi_tls_new(FALSE, FALSE);
+    TPCONTEXT_T ctx = ndrx_atmi_tls_new(FALSE, FALSE);
+    
+    if (NULL!=ctx)
+    {
+        atmi_tls_t * ac = (atmi_tls_t *)ctx;
+        
+        ac->p_nstd_tls = ndrx_nstd_tls_new(FALSE, FALSE);
+        ac->p_ubf_tls = ndrx_ubf_tls_new(FALSE, FALSE);
+    }
+    
+    return ctx;
 }
 
 /**

@@ -66,6 +66,7 @@ set(MAN3_NAMES
         tpsrvsetctxdata
         tpgetctxt
         tpsetctxt
+        tpnewctxt
         tpfreectxt
         tpcontinue
         tpgetnodeid
@@ -97,7 +98,7 @@ set(MAN3_NAMES
         tplogclosethread
         tplogsetreqfile_direct
         tplogsetreqfile
-	tploggetbufreqfile
+	    tploggetbufreqfile
         tplogdelbufreqfile
         tplogprintubf
 )

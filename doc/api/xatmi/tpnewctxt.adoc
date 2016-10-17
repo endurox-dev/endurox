@@ -1,0 +1,47 @@
+TPNEWCTXT(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpnewctxt - Allocate new XATMI Context
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+TPCONTEXT_T tpnewctxt(void)
+
+Link with '-latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function allocates new XATMI context. This includes allocation of standard library TLS (NSTD), UBF library TLS (UBF) and ATMI library TLS. All is stored in object to which return value ('TPCONTEXT_T' type) points to.
+
+
+RETURN VALUE
+------------
+On success, *tpnewctxt()* return pointer to newly allocate ATMI context object; on error, NULL is returned. Additional infos might be found in ULOG.
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test032_oapi/atmiclt32.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpsetctxt(3)* *tpfreectxt(3)* *tpnewctxt(3)*
+
+COPYING
+-------
+(C) ATR Baltic, SIA
+
