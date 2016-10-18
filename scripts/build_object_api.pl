@@ -567,6 +567,8 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpext_addb4pollcb/
                 && $func_name !~ m/tpsrvsetctxdata/
                 && $func_name !~ m/tpext_addperiodcb/
+                && $func_name !~ m/ndrx_main/ 
+                && $func_name !~ m/ndrx_main_integra/ 
 
                 )
             {
