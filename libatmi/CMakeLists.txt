@@ -47,37 +47,39 @@ include_directories (/opt/freeware/include)
 # Create a library called "ATMI" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
 add_library (atmi SHARED
-                    atmi.c
-                    tperror.c
-                    tpcall.c
-                    typed_buf.c
-                    typed_ubf.c
-                    typed_tpinit.c
-                    typed_null.c
-                    typed_string.c
-                    typed_json.c
-                    typed_carray.c
-                    atmiutils.c
-                    init.c
-                    conversation.c
-                    tpevents.c
-                    shm.c
-                    sem.c
-                    brsupport.c
-                    xa.c
-                    xautils.c
-                    xastates.c
-                    exparson.c
-                    ubf2exjson.c
-                    newenv.c
-                    typed_xcvt.c
-                    ubfutil.c
-                    qcommon.c
-                    sysutil.c
-                    atmi_tls.c
-                    atmi_tplog.c
-                    oatmi.c
-                    oubf.c
+                atmi.c
+                tperror.c
+                tpcall.c
+                typed_buf.c
+                typed_ubf.c
+                typed_tpinit.c
+                typed_null.c
+                typed_string.c
+                typed_json.c
+                typed_carray.c
+                atmiutils.c
+                init.c
+                conversation.c
+                tpevents.c
+                shm.c
+                sem.c
+                brsupport.c
+                xa.c
+                xautils.c
+                xastates.c
+                exparson.c
+                ubf2exjson.c
+                newenv.c
+                typed_xcvt.c
+                ubfutil.c
+                qcommon.c
+                sysutil.c
+                atmi_tls.c
+                atmi_tplog.c
+                oatmi.c
+                oubf.c
+                ondebug.c
+                onerror.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

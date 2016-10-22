@@ -57,6 +57,8 @@ install (FILES
     sys_mqueue.h 
     oubf.h
     odebug.h
+    ondebug.h
+    onerror.h
     oatmi.h
     oatmisrv.h
     Exfields.h

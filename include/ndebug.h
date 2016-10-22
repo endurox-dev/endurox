@@ -150,16 +150,14 @@ extern NDRX_API void ndrx_dbg_lock(void);
 extern NDRX_API void ndrx_dbg_unlock(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
-extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off,
-        ndrx_debug_t *dbg_ptr);
+extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, ndrx_debug_t *dbg_ptr);
 
 /* TPLOG: */
 extern NDRX_API void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
 extern NDRX_API void tplogdump(int lev, char *comment, void *ptr, int len);
 extern NDRX_API void tplog(int lev, char *message);
 extern NDRX_API int tploggetreqfile(char *filename, int bufsize);
-extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, 
-        char *new_file);
+extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, char *new_file);
 extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);

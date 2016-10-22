@@ -78,19 +78,27 @@ sub open_h {
     {
         $title = "ATMI Server level Object API header (auto-generated)";
     }
-    if ($M_name=~/^oatmi$/)
+    elsif ($M_name=~/^oatmi$/)
     {
         $title = "ATMI Object API header (auto-generated)";
 
         $defs = "\n#define Otperrno(P_CTXT) (*O_exget_tperrno_addr(P_CTXT))\n".
                 "#define Otpurcode(P_CTXT) (*O_exget_tpurcode_addr(P_CTXT))";
-
     }
     elsif($M_name=~/oubf/)
     {
         $title = "UBF Object API header (auto-generated)";
 
         $defs = "\n#define OBerror(P_CTXT)   (*O_Bget_Ferror_addr(P_CTXT))";
+    }
+    elsif($M_name=~/ondebug/)
+    {
+        $title = "Standard library debug routines";
+    }
+    elsif($M_name=~/onerror/)
+    {
+        $title = "Standard library error handler";
+        $defs = "\n#define ONerror(P_CTXT)   (*O_Nget_Nerror_addr(P_CTXT))";
     }
     
 my $message = <<"END_MESSAGE";
@@ -172,6 +180,15 @@ sub open_c {
     {
         $title = "UBF Object API code (auto-generated)";
     }
+    elsif($M_name=~/ondebug/)
+    {
+        $title = "Standard library debugging object API code (auto-generated)";
+    }
+    elsif($M_name=~/onerror/)
+    {
+        $title = "Standard library error handling";
+    }
+
 my $message = <<"END_MESSAGE";
 /* 
 ** $title
@@ -380,6 +397,14 @@ sub write_c {
     {
         $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN";
     }
+    elsif($M_name=~/onerror/)
+    {
+        $M_priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
+    }
+    elsif($M_name=~/ondebug/)
+    {
+        $M_priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
+    }
     
     
     if ($func_type=~m/^int$/ 
@@ -561,7 +586,6 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpforward/
                 && $func_name !~ m/tpadvertise_full/
                 && $func_name !~ m/tpunadvertise/
-
                 && $func_name !~ m/tpext_addpollerfd/
                 && $func_name !~ m/tpext_delpollerfd/
                 && $func_name !~ m/tpext_addb4pollcb/
@@ -569,7 +593,14 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpext_addperiodcb/
                 && $func_name !~ m/ndrx_main/ 
                 && $func_name !~ m/ndrx_main_integra/ 
-
+                && $func_name !~ m/tpcontinue/
+                && $func_name !~ m/tpext_delb4pollcb/
+                && $func_name !~ m/tpext_delperiodcb/
+                && $func_name !~ m/tpgetsrvid/
+                && $func_name !~ m/tpreturn/
+                && $func_name !~ m/tpsrvgetctxdata/
+                && $func_name !~ m/tpsrvsetctxdata/
+                && $func_name !~ m/tpunadvertise/
                 )
             {
                 print "skip - next\n";
@@ -624,6 +655,48 @@ NEXT: while( my $line = <$info>)
                 next NEXT;
             }
         }
+        elsif ($M_name =~ m/^oubf$/)
+        {
+            # Skip some bits from UBF level
+            if ($func_name =~ m/^ndrx_ubf_tls_get$/
+                && $func_name =~ m/^ndrx_ubf_tls_set$/
+                && $func_name =~ m/^ndrx_ubf_tls_free$/
+                && $func_name =~ m/^ndrx_ubf_tls_new$/
+                )
+            {
+                print "skip - next\n";
+                next NEXT;
+            }
+        }
+        elsif ($M_name =~ m/^ondebug$/)
+        {
+            # Include only server commands for ATMISRV level
+            if ($func_name !~ m/^tplogdumpdiff$/
+                && $func_name !~ m/^tplogdump$/
+                && $func_name !~ m/^tplog$/
+                && $func_name !~ m/^tploggetreqfile$/
+                && $func_name !~ m/^tplogconfig$/
+                && $func_name !~ m/^tplogclosereqfile$/
+                && $func_name !~ m/^tplogclosethread$/
+                && $func_name !~ m/^tplogsetreqfile_direct$/
+                )
+            {
+                print "skip - next\n";
+                next NEXT;
+            }
+        }
+        elsif ($M_name =~ m/^onerror$/)
+        {
+            # Include only server commands for ATMISRV level
+            if ($func_name !~ m/^Nstrerror$/
+                && $func_name !~ m/^_Nget_Nerror_addr$/
+                )
+            {
+                print "skip - next\n";
+                next NEXT;
+            }
+        }
+        # We need stuff for ndebug.h & nerror.h and this goes to ATMI level...
 
 
         # Process next, parse arguments and their types

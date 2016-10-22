@@ -156,6 +156,36 @@ out:
 
 
 /**
+ * Object-API wrapper for tpsrvgetctxdata() - Auto generated.
+ */
+public char * Otpsrvgetctxdata(TPCONTEXT_T *p_ctxt) 
+{
+    char * ret = NULL;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpsrvgetctxdata() failed to set context");
+        ret = NULL;
+        goto out;
+    }
+    
+    ret = tpsrvgetctxdata();
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpsrvgetctxdata() failed to get context");
+        ret = NULL;
+        goto out;
+    }
+out:    
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for tpsrvsetctxdata() - Auto generated.
  */
 public int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags) 
@@ -180,6 +210,29 @@ public int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags)
     }
 out:    
     return ret; 
+}
+
+/**
+ * Object-API wrapper for tpcontinue() - Auto generated.
+ */
+public void Otpcontinue(TPCONTEXT_T *p_ctxt) 
+{
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpcontinue() failed to set context");
+    }
+    
+    tpcontinue();
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpcontinue() failed to get context");
+    }
+out:    
+    return;
 }
 
 
@@ -268,6 +321,34 @@ out:
 
 
 /**
+ * Object-API wrapper for tpext_delperiodcb() - Auto generated.
+ */
+public int Otpext_delperiodcb(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpext_delperiodcb() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpext_delperiodcb();
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpext_delperiodcb() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for tpext_addb4pollcb() - Auto generated.
  */
 public int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void)) 
@@ -288,6 +369,62 @@ public int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void))
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
     {
         userlog("ERROR! tpext_addb4pollcb() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for tpext_delb4pollcb() - Auto generated.
+ */
+public int Otpext_delb4pollcb(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpext_delb4pollcb() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpext_delb4pollcb();
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpext_delb4pollcb() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for tpgetsrvid() - Auto generated.
+ */
+public int Otpgetsrvid(TPCONTEXT_T *p_ctxt) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpgetsrvid() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = tpgetsrvid();
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! tpgetsrvid() failed to get context");
         FAIL_OUT(ret);
     }
 out:    
