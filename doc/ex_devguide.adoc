@@ -136,8 +136,7 @@ sub-system. See the cconfsrv(8) manpage. Internally is uses Layer 2 and 3 API.
 -------------------------------
 -------------------------------
 
-Common Debug logging API - TPLOG
---------------------------------
+== Common Debug logging API - TPLOG
 
 Enduro/X offer debug logging facility named "TPLOG". TPLog basically stands for extended
 user log. The user applications can use this API to configure TPLog, NDRX and UBF logs to
@@ -379,8 +378,7 @@ Where:
 
 - 'MESSAGE' - logged user message.
 
-Queuing mechanisms
-------------------
+== Queuing mechanisms
 
 Enduro/X originally was developed for GNU/Linux kernels where resource polling sub-system
 i.e. epoll() can handle Posix queue handlers. This is linux non-standard feature which 
@@ -412,8 +410,7 @@ The 'poll()' for main thread supports Enduro/X extensions to add some other reso
 polling (e.g. socket fd.)
 
 
-Object-API
-----------
+== Object-API
 
 Enduro/X provides Object API functions. This is meant to be used with integration into
 programming languages and frameworks, where cooperative multi-threading is used.
@@ -542,6 +539,20 @@ $ gcc test.c  -latmi -lubf -lnstd -lpthread -lrt -lm -ldl
 --------------------------------------------------------------------------------
 
 See atmitest/test032_oapi/atmiclt32.c for more sample code.
+
+=== Class model
+
+For programming languages that supports classes or objects, following class model
+will be used for Enduro/X bindings. 
+
+[dia, class_diagram.dia, class_diagram.png, x300]
+-------------------------------
+-------------------------------
+
+This diagram is based on 'endurox-go' package, which uses structures and special
+functions that are binded to structure. Basically that is the same as classes.
+
+This model might be implemented for Node.js and Platform Script.
 
 :numbered!:
 
