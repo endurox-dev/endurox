@@ -18,7 +18,7 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 
 DESCRIPTION
 -----------
-This function is used to set context data which previously was returned by *tpgetctxt(3)* funcion. If previous thread was associated with XA global transaction, then it will be resumed at this thread. 'context' parameter accepts either thread context returned by *tpgetctxt()* or *TPNULLCONTEXT*. *TPNULLCONTEXT* will enter the current thread in NULL context and will free up the associated thread local storage (TLS) data if any.
+This function is used to set context data which previously was returned by *tpgetctxt(3)* funcion. If previous thread was associated with XA global transaction, then it will be resumed at this thread. 'context' parameter accepts either thread context returned by *tpgetctxt()* or *TPNULLCONTEXT*. *TPNULLCONTEXT* will enter the current thread in NULL context and will free up the currently associated automatically allocateed thread local storage (TLS). Automatically allocated TLS is one which is not made by *tpnewctxt(3)* but created implicitly by ATMI any other ATMI operation which requires context.
 
 If current thread was running in some context, it will be terminated (with *tpterm(3)*), TLS data will be freed. And new context will be installed.
 
