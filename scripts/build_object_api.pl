@@ -409,7 +409,6 @@ sub write_c {
     
     if ($func_type=~m/^int$/ 
         || $func_type=~m/^BFLDOCC$/
-        || $func_type=~m/^BFLDID$/
         || $func_type=~m/^long$/
         || $func_type=~m/^float$/
         || $func_type=~m/^double$/
@@ -516,6 +515,45 @@ public $sig
     {
         userlog("ERROR! $func_name() failed to get context");
         ret = NULL;
+        goto out;
+    }
+out:    
+    return ret; 
+}
+
+END_MESSAGE
+################################################################################
+    }
+    elsif ($func_type=~m/^BFLDID$/)
+    {
+################################################################################
+# BFLDID function
+################################################################################
+$message = <<"END_MESSAGE";
+
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+public $sig 
+{
+    $func_type ret = BBADFLDID;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to set context");
+        ret = BBADFLDID;
+        goto out;
+    }
+    
+    ret = $invoke;
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        $M_priv_flags))
+    {
+        userlog("ERROR! $func_name() failed to get context");
+        ret = BBADFLDID;
         goto out;
     }
 out:    

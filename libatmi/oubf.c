@@ -312,23 +312,25 @@ out:
  */
 public BFLDID OBfldid(TPCONTEXT_T *p_ctxt, char *fldnm) 
 {
-    BFLDID ret = SUCCEED;
+    BFLDID ret = BBADFLDID;
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
     {
         userlog("ERROR! Bfldid() failed to set context");
-        FAIL_OUT(ret);
+        ret = BBADFLDID;
+        goto out;
     }
     
     ret = Bfldid(fldnm);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
     {
         userlog("ERROR! Bfldid() failed to get context");
-        FAIL_OUT(ret);
+        ret = BBADFLDID;
+        goto out;
     }
 out:    
     return ret; 
@@ -707,23 +709,25 @@ out:
  */
 public BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid) 
 {
-    BFLDID ret = SUCCEED;
+    BFLDID ret = BBADFLDID;
     
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
     {
         userlog("ERROR! Bmkfldid() failed to set context");
-        FAIL_OUT(ret);
+        ret = BBADFLDID;
+        goto out;
     }
     
     ret = Bmkfldid(fldtype, bfldid);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
     {
         userlog("ERROR! Bmkfldid() failed to get context");
-        FAIL_OUT(ret);
+        ret = BBADFLDID;
+        goto out;
     }
 out:    
     return ret; 
