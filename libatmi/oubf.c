@@ -594,6 +594,34 @@ out:
 
 
 /**
+ * Object-API wrapper for Bfloatev() - Auto generated.
+ */
+public double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree) 
+{
+    double ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! Bfloatev() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = Bfloatev(p_ub, tree);
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! Bfloatev() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for Badd() - Auto generated.
  */
 public int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len) 

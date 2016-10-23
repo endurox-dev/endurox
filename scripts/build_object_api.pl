@@ -411,6 +411,8 @@ sub write_c {
         || $func_type=~m/^BFLDOCC$/
         || $func_type=~m/^BFLDID$/
         || $func_type=~m/^long$/
+        || $func_type=~m/^float$/
+        || $func_type=~m/^double$/
         )
     {
 ################################################################################
