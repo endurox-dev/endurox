@@ -130,7 +130,11 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
                     ATMI_TLS_MAGIG, tls->magic);
         }
 
-        /* Lock the object */
+        /* Lock the object 
+         * TODO: We need PTHREAD_MUTEX_RECURSIVE
+         * so that we can acquire multiple locks (for example server process calls 
+         * back tpsrvinit or done which internally may acquire some more locks!
+         */
         MUTEX_LOCK_V(tls->mutex);
 
 
