@@ -305,7 +305,7 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     if (context == TPNULLCONTEXT && NULL!=G_atmi_tls && G_atmi_tls->is_auto)
     {
         /* free the current thread context data (only in case if it was auto) */
-        _tpfreectxt(context);
+        _tpfreectxt((TPCONTEXT_T)G_atmi_tls);
         goto out; /* we are done. */
     }
     
