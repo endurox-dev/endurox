@@ -37,6 +37,8 @@
 /* Defined if pscript is off */
 #cmakedefine NDRX_DISABLEPSCRIPT @NDRX_DISABLEPSCRIPT@
 
+/* Enduro/X memory debugging */
+#cmakedefine NDRX_MEMORY_DEBUG @NDRX_MEMORY_DEBUG@
 
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@

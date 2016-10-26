@@ -754,3 +754,61 @@ public void ndrx_dbg_init(char *module, char *config_key)
    NDRX_DBG_INIT_ENTRY;
 }
 
+/* use __func__ */
+
+/**
+ * Debug version of malloc();
+ * @param size
+ * @param line
+ * @param file
+ * @param func
+ * @return 
+ */
+void *ndrx_malloc_dbg(size_t size, long line, char *file, char *func)
+{
+    userlog("malloc(size=%d): %s:%ld - %s", size, line, file, func);
+    return malloc(size);
+}
+
+/**
+ * Debug version of free();
+ * @param size
+ * @param line
+ * @param file
+ * @param func
+ * @return 
+ */
+void ndrx_free_dbg(void *ptr, long line, char *file, char *func)
+{
+    userlog("free(ptr=%p): %s:%ld - %s", ptr, line, file, func);
+    return free(ptr);
+}
+
+/**
+ * Debug version of calloc();
+ * @param size
+ * @param line
+ * @param file
+ * @param func
+ * @return 
+ */
+void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *func)
+{
+    userlog("calloc(nmemb=%d, size=%d): %s:%ld - %s", nmemb, size, line, file, func);
+    return calloc(nmemb, size);
+}
+
+/**
+ * Debug version of realloc();
+ * @param size
+ * @param line
+ * @param file
+ * @param func
+ * @return 
+ */
+void *ndrx_realloc_dbg(void *ptr, size_t size, long line, char *file, char *func)
+{
+    userlog("realloc(ptr=%p, size=%d): %s:%ld - %s", ptr, size, line, file, func);
+    return realloc(ptr, size);
+}
+

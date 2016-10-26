@@ -123,6 +123,23 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 /* Debug msg for malloc: */
 #define NDRX_ERR_MALLOC(SZ)        NDRX_LOG(log_error, "Failed to allocate %ld bytes", SZ)
 
+/* Memory debug macros */
+
+#ifdef NDRX_MEMORY_DEBUG
+
+#define NDRX_MALLOC(size) ndrx_malloc_dbg(size, __LINE__, __FILE__, __func__)
+#define NDRX_FREE(size) ndrx_free_dbg(ptr, __LINE__, __FILE__, __func__)
+#define NDRX_CALLOC(nmemb, size) ndrx_calloc_dbg(nmemb, size, __LINE__, __FILE__, __func__)
+#define NDRX_REALLOC(ptr, size) ndrx_realloc_dbg(ptr, size, __LINE__, __FILE__, __func__)
+#else
+
+#define NDRX_MALLOC(size) malloc(size)
+#define NDRX_FREE(size) free(ptr)
+#define NDRX_CALLOC(nmemb, size) calloc(nmemb, size)
+#define NDRX_REALLOC(ptr, size) realloc(ptr, size)
+
+#endif
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -161,6 +178,14 @@ extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *m
 extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
+
+/* memory debugging */
+extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, char *file, char *func);
+extern NDRX_API void ndrx_free_dbg(void *ptr, long line, char *file, char *func);
+extern NDRX_API void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *func);
+extern NDRX_API void *ndrx_realloc_dbg(void *ptr, size_t size, long line, char *file, char *func);
+
+
 
 #ifdef	__cplusplus
 }
