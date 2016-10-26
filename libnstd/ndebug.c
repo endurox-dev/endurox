@@ -766,8 +766,20 @@ public void ndrx_dbg_init(char *module, char *config_key)
  */
 void *ndrx_malloc_dbg(size_t size, long line, char *file, char *func)
 {
-    userlog("malloc(size=%d): %s:%ld - %s", size, line, file, func);
-    return malloc(size);
+    void *ret;
+    int errnosv;
+    
+    ret=malloc(size);
+    errnosv = errno;
+    
+    userlog("%p <= malloc(size=%d): %s:%ld - %s", ret, size, line, file, func);
+    
+    errno = errnosv;
+    
+    
+    return ret;
+    
+    
 }
 
 /**
@@ -794,8 +806,17 @@ void ndrx_free_dbg(void *ptr, long line, char *file, char *func)
  */
 void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *func)
 {
-    userlog("calloc(nmemb=%d, size=%d): %s:%ld - %s", nmemb, size, line, file, func);
-    return calloc(nmemb, size);
+    void *ret;
+    int errnosv;
+    
+    ret=calloc(nmemb, size);
+    errnosv = errno;
+    userlog("%p <= calloc(nmemb=%d, size=%d): %s:%ld - %s", ret, nmemb, 
+            size, line, file, func);
+    
+    errno = errnosv;
+    
+    return ret;
 }
 
 /**
@@ -807,8 +828,18 @@ void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *fu
  * @return 
  */
 void *ndrx_realloc_dbg(void *ptr, size_t size, long line, char *file, char *func)
-{
-    userlog("realloc(ptr=%p, size=%d): %s:%ld - %s", ptr, size, line, file, func);
-    return realloc(ptr, size);
+{   void *ret;
+    int errnosv;
+    
+    ret= realloc(ptr, size);
+    
+    errnosv = errno;
+            
+    userlog("%p <= realloc(ptr=%p, size=%d): %s:%ld - %s", ret, ptr, 
+            size, line, file, func);
+    
+    errno = errnosv;
+    return ret;
+    
 }
 
