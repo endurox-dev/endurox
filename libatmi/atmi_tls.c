@@ -302,10 +302,14 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     int ret = SUCCEED;
     atmi_tls_t * ctx;
     
-    if (context == TPNULLCONTEXT && NULL!=G_atmi_tls && G_atmi_tls->is_auto)
+    if (context == TPNULLCONTEXT)
     {
-        /* free the current thread context data (only in case if it was auto) */
-        _tpfreectxt((TPCONTEXT_T)G_atmi_tls);
+        if (NULL!=G_atmi_tls && G_atmi_tls->is_auto)
+        {
+            /* free the current thread context data (only in case if it was auto) */
+            _tpfreectxt((TPCONTEXT_T)G_atmi_tls);
+        }
+        /* In case if we are already in NULL context, then go out... */
         goto out; /* we are done. */
     }
     
