@@ -833,7 +833,7 @@ public void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *fil
     
     errnosv = errno;
             
-    userlog("%p <= realloc(ptr=%p, size=%d):%s %s:%ld - %s", ret, ptr, 
+    userlog("%p <= realloc(ptr=%p, size=%d):%s %s:%ld", ret, ptr, 
             size, func, file, line);
     
     errno = errnosv;
