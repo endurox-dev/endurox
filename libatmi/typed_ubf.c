@@ -273,7 +273,7 @@ public char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len
     }
 
     /* Allocate UBF buffer */
-    ret=(char *)NDRX_REALLOC(p_ub, len);
+    ret=(char *)Brealloc(p_ub, 1, len);
 
     if (NULL==ret)
     {
