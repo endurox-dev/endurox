@@ -177,8 +177,16 @@ out:
  */
 public void ndrx_atmi_tls_free(void *data)
 {
-    pthread_setspecific( M_atmi_tls_key, NULL );
-    NDRX_FREE((char*)data);
+    if (NULL!=data)
+    {
+        if (data == G_atmi_tls)
+        {
+            pthread_setspecific( M_atmi_tls_key, NULL );
+            G_atmi_tls = NULL;
+        }
+
+        NDRX_FREE((char*)data);
+    }
 }
 
 /**

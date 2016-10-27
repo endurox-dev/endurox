@@ -135,8 +135,15 @@ public int ndrx_nstd_tls_set(void *data)
  */
 public void ndrx_nstd_tls_free(void *data)
 {
-    pthread_setspecific( M_nstd_tls_key, NULL );
-    NDRX_FREE((char*)data);
+    if (NULL!=data)
+    {
+        if (data==G_nstd_tls)
+        {
+            pthread_setspecific( M_nstd_tls_key, NULL );
+            G_nstd_tls=NULL;
+        }
+        NDRX_FREE((char*)data);
+    }
 }
 
 /**
