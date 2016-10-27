@@ -690,10 +690,10 @@ char *tbuf_string (struct dtype_ext1 *t, int len)
         /* Free up the memory */
         if (NULL!=G_ubf_tls->str_buf_ptr)
         {
-            free(G_ubf_tls->str_buf_ptr);
+            NDRX_FREE(G_ubf_tls->str_buf_ptr);
         }
 
-        G_ubf_tls->str_buf_ptr=malloc(len);
+        G_ubf_tls->str_buf_ptr=NDRX_MALLOC(len);
 
         if (NULL==G_ubf_tls->str_buf_ptr)
         {
@@ -728,10 +728,10 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
         /* Free up the memory */
         if (NULL!=G_ubf_tls->carray_buf_ptr)
         {
-            free(G_ubf_tls->carray_buf_ptr);
+            NDRX_FREE(G_ubf_tls->carray_buf_ptr);
         }
         
-        G_ubf_tls->carray_buf_ptr=malloc(len);
+        G_ubf_tls->carray_buf_ptr=NDRX_MALLOC(len);
 
         if (NULL==G_ubf_tls->carray_buf_ptr)
         {
@@ -769,7 +769,7 @@ char *tallocdlft (struct dtype_ext1 *t, int *len)
 {
     char *ret=NULL;
     int alloc_size = *len;
-    ret=malloc(alloc_size);
+    ret=NDRX_MALLOC(alloc_size);
 
     if (NULL==ret)
     {
@@ -856,13 +856,13 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
             {
                 UBF_LOG(log_debug, "Freeing-up reviosly allocated "
                                                     "resources");
-                free(cashed_string);
+                NDRX_FREE(cashed_string);
                 regfree(&re);
             }
 
             tmp_len= strlen(val2)+1; /* + EOS*/
-            cashed_string = malloc(tmp_len); /* +EOS */
-            tmp_regex = malloc(tmp_len+2); /* ^$ */
+            cashed_string = NDRX_MALLOC(tmp_len); /* +EOS */
+            tmp_regex = NDRX_MALLOC(tmp_len+2); /* ^$ */
 
             if (NULL==cashed_string)
             {
@@ -905,7 +905,7 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
             {
                 if (NULL!=cashed_string)
                 {
-                    free(cashed_string); /* free up cached string for next time */
+                    NDRX_FREE(cashed_string); /* free up cached string for next time */
                     cashed_string=NULL;
                 }
             }
@@ -913,7 +913,7 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
             /* Free up temporary regexp expression */
             if (NULL!=tmp_regex)
             {
-                free(tmp_regex);
+                NDRX_FREE(tmp_regex);
             }
         }
 

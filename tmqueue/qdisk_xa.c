@@ -1197,7 +1197,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             if (0==strcmp(namelist[n]->d_name, ".") || 
                 0==strcmp(namelist[n]->d_name, ".."))
             {
-                free(namelist[n]);
+                NDRX_FREE(namelist[n]);
                 continue;
             }
 
@@ -1219,7 +1219,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                 {
                     NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
                         nodeid, srvid, msg_nodeid, msg_srvid);
-                    free(namelist[n]);
+                    NDRX_FREE(namelist[n]);
                     continue;
                 }
             }
@@ -1235,7 +1235,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             }
 
             /* Read header */            
-            if (NULL==(p_block = malloc(sizeof(*p_block))))
+            if (NULL==(p_block = NDRX_MALLOC(sizeof(*p_block))))
             {
                 NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
                    filename, strerror(errno));
@@ -1259,8 +1259,8 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             {
                 NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
                     nodeid, srvid, p_block->hdr.nodeid, p_block->hdr.srvid);
-                free(namelist[n]);
-                free((char *)p_block);
+                NDRX_FREE(namelist[n]);
+                NDRX_FREE((char *)p_block);
                 p_block = NULL;
                 continue;
             }
@@ -1270,7 +1270,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             /* if it is message, the re-alloc  */
             if (TMQ_STORCMD_NEWMSG==p_block->hdr.command_code)
             {
-                if (NULL==(p_block = realloc(p_block, sizeof(tmq_msg_t) + p_block->msg.len)))
+                if (NULL==(p_block = NDRX_REALLOC(p_block, sizeof(tmq_msg_t) + p_block->msg.len)))
                 {
                     NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
                        (sizeof(tmq_msg_t) + p_block->msg.len), strerror(errno));
@@ -1302,9 +1302,9 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                 FAIL_OUT(ret);
             }
 
-            free(namelist[n]);
+            NDRX_FREE(namelist[n]);
         }
-        free(namelist);
+        NDRX_FREE(namelist);
         namelist = NULL;
     }
     
@@ -1312,14 +1312,14 @@ out:
 
     if (NULL!=namelist)
     {
-        free(namelist[n]);
-        free(namelist);
+        NDRX_FREE(namelist[n]);
+        NDRX_FREE(namelist);
         namelist = NULL;
     }
 
     if (NULL!=p_block)
     {
-        free((char *)p_block);
+        NDRX_FREE((char *)p_block);
     }
 
     /* close the resources */

@@ -130,7 +130,7 @@ private void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
 /*******************************************************************************/
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
-    __p_ub_copy = malloc(hdr->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr->buf_len);
     memcpy(__p_ub_copy, p_ub, hdr->buf_len);
 
     UBF_LOG(log_debug, "%s: entry\n"
@@ -212,7 +212,7 @@ private void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after delete_buffer_data: ",
                                 p_ub, hdr->bytes_used);
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
 }
@@ -259,7 +259,7 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
 
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
-    __p_ub_copy = malloc(hdr->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr->buf_len);
     memcpy(__p_ub_copy, p_ub, hdr->buf_len);
 
     UBF_LOG(log_debug, "%s: entry\n FBbuflen=%d FBused=%d FBfree=%d ",fn,
@@ -431,7 +431,7 @@ out:
                           fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after _Bproj: ",p_ub, hdr->bytes_used);
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
 
@@ -469,7 +469,7 @@ private int copy_buffer_data(UBFH *p_ub_dst,
 /*******************************************************************************/
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
-    __p_ub_copy = malloc(hdr_dst->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr_dst->buf_len);
     memcpy(__p_ub_copy, p_ub_dst, hdr_dst->buf_len);
 
     UBF_LOG(log_debug, "%s: entry\n"
@@ -544,7 +544,7 @@ private int copy_buffer_data(UBFH *p_ub_dst,
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub_dst, hdr_dst->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after delete_buffer_data: ",
                                 p_ub_dst, hdr_dst->bytes_used);
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
     return ret;
@@ -595,7 +595,7 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
-    __p_ub_copy = malloc(hdr_dst->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr_dst->buf_len);
     memcpy(__p_ub_copy, p_ub_dst, hdr_dst->buf_len);
 
     UBF_LOG(log_debug, "%s: dst buf: entry\n FBbuflen=%d FBused=%d FBfree=%d ",fn,
@@ -748,7 +748,7 @@ out:
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub_dst, hdr_dst->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after _Bprojcpy: ",p_ub_dst,
                                                         hdr_dst->bytes_used);
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
 

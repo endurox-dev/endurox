@@ -361,7 +361,7 @@ public BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len,
     if (NULL!=alloc_buf)
     {
         UBF_LOG(log_debug, "%s: free alloc_buf", fn);
-        free(alloc_buf);
+        NDRX_FREE(alloc_buf);
     }
     
     UBF_LOG(log_debug, "%s: return %d", fn, ret);

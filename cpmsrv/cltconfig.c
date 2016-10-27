@@ -258,7 +258,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
          {
            /* Copy stuff from root elem to heap */
             
-            p_cltproc = malloc(sizeof(cpm_process_t));
+            p_cltproc = NDRX_MALLOC(sizeof(cpm_process_t));
             if (NULL==p_cltproc)
             {
                 NDRX_LOG(log_error, "malloc failed for p_cltproc!");
@@ -414,7 +414,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 p_cl->is_cfg_refresh = TRUE;
                 
                 memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
-                free(p_cltproc);
+                NDRX_FREE(p_cltproc);
             }
         }
     }
@@ -423,7 +423,7 @@ out:
 
     if (FAIL==ret && p_cltproc)
     {
-        free(p_cltproc);
+        NDRX_FREE(p_cltproc);
     }
 
     return ret;
@@ -602,7 +602,7 @@ public int load_config(void)
         {
             NDRX_LOG(log_error, "Removing process: [%s]", c->stat.command_line);
             EXHASH_DEL(G_clt_config, c);
-            free(c);
+            NDRX_FREE(c);
         }
     }
     

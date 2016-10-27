@@ -58,7 +58,7 @@ public char	* TPINIT_tpalloc (typed_buffer_descr_t *descr, long len)
     char fn[] = "UBF_tpalloc";
 
     /* Allocate UBF buffer */
-    ret=malloc(sizeof(TPINIT));
+    ret=NDRX_MALLOC(sizeof(TPINIT));
 
     if (NULL==ret)
     {
@@ -78,5 +78,5 @@ out:
  */
 public void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
-    free(buf);
+    NDRX_FREE(buf);
 }

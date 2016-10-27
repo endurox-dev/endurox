@@ -225,7 +225,7 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     }
 
     /* now append the memory list with allocated block */
-    if (NULL==(node=(buffer_obj_t *)malloc(sizeof(buffer_obj_t))))
+    if (NULL==(node=(buffer_obj_t *)NDRX_MALLOC(sizeof(buffer_obj_t))))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to allocate buffer list node: %s", fn,
                                         strerror(errno));
@@ -315,7 +315,7 @@ public void free_up_buffers(void)
         buf_type = &G_buf_descr[elt->sub_type_id];
         buf_type->pf_free(buf_type, elt->buf);
         DL_DELETE(G_buffers,elt);
-        free(elt);
+        NDRX_FREE(elt);
     }
     
     MUTEX_UNLOCK_V(M_lock);
@@ -350,7 +350,7 @@ public void _tpfree (char *buf, buffer_obj_t *known_buffer)
         DL_DELETE(G_buffers,elt);
         
         /* delete elt by it self */
-        free(elt);
+        NDRX_FREE(elt);
     }
     MUTEX_UNLOCK_V(M_lock);
     }
@@ -381,7 +381,7 @@ public void free_auto_buffers(void)
             buf_type->pf_free(buf_type, elt->buf);
             DL_DELETE(G_buffers,elt);
             /* fix up memory leak issues. */
-            free(elt);
+            NDRX_FREE(elt);
         }
     }
     

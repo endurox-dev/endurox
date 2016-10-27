@@ -272,7 +272,7 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
      *    ins points to the next occurrence of rep in orig
      *    orig points to the remainder of orig after "end of rep"
      */
-    tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+    tmp = result = NDRX_MALLOC(strlen(orig) + (len_with - len_rep) * count + 1);
 
     if (!result)
         return NULL;
@@ -385,7 +385,7 @@ public char * ndrx_str_env_subs_len(char * str, int buf_size)
     {
         malloced = ndrx_str_replace(str, "\\\\", "\\");
         strcpy(str, malloced);
-        free(malloced);
+        NDRX_FREE(malloced);
     }
     
     return str;

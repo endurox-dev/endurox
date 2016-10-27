@@ -84,7 +84,7 @@ private int br_add_to_q(char *buf, int len, int pack_type)
     int ret=SUCCEED;
     in_msg_t *msg;
     
-    if (NULL==(msg=calloc(1, sizeof(in_msg_t))))
+    if (NULL==(msg=NDRX_CALLOC(1, sizeof(in_msg_t))))
     {
         NDRX_ERR_MALLOC(sizeof(in_msg_t));
         FAIL_OUT(ret);
@@ -185,7 +185,7 @@ private int br_process_error(char *buf, int len, int err, in_msg_t* from_q, int 
         {
             /* Generate error reply */
             DL_DELETE(M_in_q, from_q);
-            free(from_q);
+            NDRX_FREE(from_q);
         }
     }
     
@@ -405,7 +405,7 @@ public int br_run_queue(void)
             NDRX_LOG(log_warn, "Dropping message of type %d due to "
                     "time-out condition!", elt->pack_type);
             DL_DELETE(M_in_q, elt);
-            free(elt);
+            NDRX_FREE(elt);
         }
         else
         {

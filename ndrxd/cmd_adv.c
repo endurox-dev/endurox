@@ -98,7 +98,7 @@ public int cmd_srvadv (command_call_t * call, char *data, size_t len, int contex
             goto out;
         }
         
-        new_svc=malloc(sizeof(pm_node_svc_t));
+        new_svc=NDRX_MALLOC(sizeof(pm_node_svc_t));
         if (NULL==new_svc)
         {
             NDRX_LOG(log_always, "Failed to allocate memory for new "

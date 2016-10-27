@@ -156,9 +156,9 @@ public int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
     atmi_xa_log_t *tmp = NULL;
     
     /* 1. Add stuff to hash list */
-    if (NULL==(tmp = calloc(sizeof(atmi_xa_log_t), 1)))
+    if (NULL==(tmp = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
     {
-        NDRX_LOG(log_error, "calloc() failed: %s", strerror(errno));
+        NDRX_LOG(log_error, "NDRX_CALLOC() failed: %s", strerror(errno));
         ret=FAIL;
         goto out;
     }
@@ -302,9 +302,9 @@ public int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     
     *pp_tl = NULL;
     
-    if (NULL==(*pp_tl = calloc(sizeof(atmi_xa_log_t), 1)))
+    if (NULL==(*pp_tl = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
     {
-        NDRX_LOG(log_error, "calloc() failed: %s", strerror(errno));
+        NDRX_LOG(log_error, "NDRX_CALLOC() failed: %s", strerror(errno));
         FAIL_OUT(ret);
     }
     /* set file name */
@@ -402,7 +402,7 @@ out:
     /* Clean up if error. */
     if (SUCCEED!=ret && NULL!=*pp_tl)
     {
-        free(pp_tl);
+        NDRX_FREE(pp_tl);
         *pp_tl = NULL;
     }
 
@@ -471,7 +471,7 @@ public void tms_remove_logfile(atmi_xa_log_t *p_tl)
     MUTEX_LOCK_V(M_tx_hash_lock);
     EXHASH_DEL(M_tx_hash, p_tl); 
     MUTEX_UNLOCK_V(M_tx_hash_lock);
-    free(p_tl);
+    NDRX_FREE(p_tl);
     
 }
 
@@ -854,7 +854,7 @@ public atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode)
         if (!r->is_background && !(copy_mode & COPY_MODE_FOREGROUND))
             continue;
         
-        if (NULL==(tmp = calloc(1, sizeof(atmi_xa_log_list_t))))
+        if (NULL==(tmp = NDRX_CALLOC(1, sizeof(atmi_xa_log_list_t))))
         {
             NDRX_LOG(log_error, "Failed to malloc %d: %s", 
                     sizeof(atmi_xa_log_list_t), strerror(errno));

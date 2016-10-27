@@ -190,7 +190,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
         /* OK, now populate the stuff stuff, hmm we migth update 
          * if there is already entry (if we request this on runtime?!?!)
          */
-        pm_node_svc_t *svc_info = (pm_node_svc_t *)malloc(sizeof(pm_node_svc_t));
+        pm_node_svc_t *svc_info = (pm_node_svc_t *)NDRX_MALLOC(sizeof(pm_node_svc_t));
         memset((char *)svc_info, 0, sizeof(svc_info));
         if (NULL==svc_info)
         {

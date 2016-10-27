@@ -39,6 +39,7 @@
 #include "exhash.h"
 #include <errno.h>
 #include "gpgme_encrypt.h"
+#include <ndebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* API ENTRY script */
@@ -247,7 +248,7 @@ int pgpa_set_signer(pgpgme_enc_t *p_enc, char *signer)
 	{
 		gpga_log(p_enc, 3, "Failed to lookup [%s] in hash", signer);
 		
-		if (NULL==(tmp = calloc(1, sizeof(signer_hash_t))))
+		if (NULL==(tmp = NDRX_CALLOC(1, sizeof(signer_hash_t))))
 		{
 			gpga_log(p_enc, 1, "Malloc failed!");
 			
@@ -334,7 +335,7 @@ int pgpa_set_recipient(pgpgme_enc_t *p_enc, char *rcpt)
 	{
 		gpga_log(p_enc, 3, "Failed to lookup [%s] in hash", rcpt);
 		
-		if (NULL==(tmp = calloc(1, sizeof(rcpt_hash_t))))
+		if (NULL==(tmp = NDRX_CALLOC(1, sizeof(rcpt_hash_t))))
 		{
 			gpga_log(p_enc, 1, "Malloc failed!");
 			

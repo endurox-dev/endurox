@@ -714,7 +714,7 @@ public int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
         FAIL_OUT(ret);
     }
     
-    if (NULL==(*srvlist = malloc(sizeof(short) *local_count )))
+    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(short) *local_count )))
     {
         NDRX_LOG(log_error, "malloc fail: %s", strerror(errno));
         FAIL_OUT(ret);

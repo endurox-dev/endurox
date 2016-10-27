@@ -38,6 +38,7 @@
 #include <string.h>
 #include "thlock.h"
 #include "userlog.h"
+#include <ndebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -134,7 +135,7 @@ public int ndrx_ubf_tls_set(void *data)
 public void ndrx_ubf_tls_free(void *data)
 {
     pthread_setspecific( M_ubf_tls_key, NULL );
-    free((char*)data);
+    NDRX_FREE((char*)data);
 }
 
 /**
@@ -161,7 +162,7 @@ public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
         MUTEX_UNLOCK_V(M_thdata_init);
     }
     
-    if (NULL==(tls = (ubf_tls_t *)malloc(sizeof(ubf_tls_t))))
+    if (NULL==(tls = (ubf_tls_t *)NDRX_MALLOC(sizeof(ubf_tls_t))))
     {
         userlog ("%s: failed to malloc", fn);
         FAIL_OUT(ret);

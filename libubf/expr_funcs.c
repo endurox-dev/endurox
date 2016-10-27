@@ -245,7 +245,7 @@ void remove_resouce_list(void)
     {
         struct list_node *tmp = p;
         p = p->next;
-        free(tmp); /* Delete current */
+        NDRX_FREE(tmp); /* Delete current */
         UBF_LOG(6, "List node free-up!");
     }
 }
@@ -290,7 +290,7 @@ public void _Btreefree_no_recurse (char *tree)
         case NODE_TYPE_STR:
             /* Free up internal resources (if have such)? */
             if (NULL!=a_string->str)
-                free(a_string->str);
+                NDRX_FREE(a_string->str);
 
             /* check regexp, maybe needs to clean up? */
             if (a_string->regex.compiled)
@@ -307,7 +307,7 @@ public void _Btreefree_no_recurse (char *tree)
             break;
     }
     /* delete self */
-    free(tree);
+    NDRX_FREE(tree);
 }
 
 /**
@@ -320,7 +320,7 @@ public void _Btreefree_no_recurse (char *tree)
  */
 struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
 {
-    struct ast *a = malloc(sizeof(struct ast));
+    struct ast *a = NDRX_MALLOC(sizeof(struct ast));
     memset(a, 0, sizeof(struct ast));
 
     if(!a) {
@@ -357,7 +357,7 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
 
 struct ast * newfld(bfldid_t f)
 {
-    struct ast_fld *a = malloc(sizeof(struct ast_fld));
+    struct ast_fld *a = NDRX_MALLOC(sizeof(struct ast_fld));
     memset(a, 0, sizeof(struct ast_fld));
 
     if(!a) {
@@ -435,12 +435,12 @@ int set_func(char *funcname, functionPtr_t functionPtr)
         if (NULL!=r)
         {
             EXHASH_DEL(M_func_hash, r);
-            free(r);
+            NDRX_FREE(r);
         }
     }
     else
     {
-        tmp = malloc(sizeof(func_hash_t));
+        tmp = NDRX_MALLOC(sizeof(func_hash_t));
 
         if (NULL==tmp)
         {
@@ -463,7 +463,7 @@ out:
 struct ast * newfunc(char *funcname)
 {
   int len;
-  struct ast_func *a = malloc(sizeof(struct ast_func));
+  struct ast_func *a = NDRX_MALLOC(sizeof(struct ast_func));
   memset(a, 0, sizeof(struct ast_func));
 
   if(!a)
@@ -523,7 +523,7 @@ struct ast * newfunc(char *funcname)
 
 struct ast * newstring(char *str)
 {
-    struct ast_string *a = malloc(sizeof(struct ast_string));
+    struct ast_string *a = NDRX_MALLOC(sizeof(struct ast_string));
     memset(a, 0, sizeof(struct ast_string));
 
     a->str = malloc (strlen(str)+1);
@@ -561,7 +561,7 @@ struct ast * newstring(char *str)
 
 struct ast * newfloat(double d)
 {
-    struct ast_float *a = malloc(sizeof(struct ast_float));
+    struct ast_float *a = NDRX_MALLOC(sizeof(struct ast_float));
     memset(a, 0, sizeof(struct ast_float));
 
     if(!a) {
@@ -597,7 +597,7 @@ struct ast * newfloat(double d)
 
 struct ast * newlong(long l)
 {
-    struct ast_long *a = malloc(sizeof(struct ast_long));
+    struct ast_long *a = NDRX_MALLOC(sizeof(struct ast_long));
     memset(a, 0, sizeof(struct ast_long));
 
     if(!a) {
@@ -1302,7 +1302,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
             {
                 BFLDLEN len = MAX_TEXT+1;
 
-                if (NULL==(v->strval=malloc(len)))
+                if (NULL==(v->strval=NDRX_MALLOC(len)))
                 {
                     UBF_LOG(log_error, "Error malloc fail!");
                     _Fset_error_fmt(BMALLOC, "Error malloc fail! (cannot allocate %d)", len);
@@ -1334,7 +1334,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                     }
                     /* Lets free memory right right here, why not? */
 
-                    free(v->strval);
+                    NDRX_FREE(v->strval);
                     v->dyn_alloc = 0;
                     v->strval = NULL;
                 }
@@ -1773,7 +1773,7 @@ public char * _Bboolco (char * expr)
 
     /* We have some trouble with flex! For marking the end of the line
      * So we will put there newline... not the best practice, but it will work. */
-    expr_int = malloc(buf_len);
+    expr_int = NDRX_MALLOC(buf_len);
 
     if (NULL==expr_int)
     {
@@ -1808,7 +1808,7 @@ public char * _Bboolco (char * expr)
 	/* wrapper call to yylex_destroy */
         _free_parser();
 
-        free(expr_int);
+        NDRX_FREE(expr_int);
     }
     UBF_LOG(log_debug, "%s: return %p", fn, ret);
     return ret;
@@ -1912,7 +1912,7 @@ public void _Btreefree (char *tree)
         case NODE_TYPE_STR:
             /* Free up internal resources (if have such)? */
             if (NULL!=a_string->str)
-                free(a_string->str);
+                NDRX_FREE(a_string->str);
 
             /* check regexp, maybe needs to clean up? */
             if (a_string->regex.compiled)
@@ -1936,7 +1936,7 @@ public void _Btreefree (char *tree)
             break;
     }
     /* delete self */
-    free(tree);
+    NDRX_FREE(tree);
 
 }
 

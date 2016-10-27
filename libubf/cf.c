@@ -309,7 +309,7 @@ public char * get_cbuf(int in_from_type, int in_to_type,
                 in_len = strlen(in_data);
             }
             /* if target is string, then we need extra */
-            if (NULL==(*out_alloc_buf = malloc(in_len+1)))
+            if (NULL==(*out_alloc_buf = NDRX_MALLOC(in_len+1)))
             {
                 _Fset_error(BMALLOC);
                 return NULL; /* <<<< RETURN!!! */

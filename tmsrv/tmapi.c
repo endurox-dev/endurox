@@ -519,7 +519,7 @@ public int tm_tpprinttrans(UBFH *p_ub, int cd)
         }
         
         LL_DELETE(tx_list, el);
-        free(el);
+        NDRX_FREE(el);
     }
     
 out:

@@ -134,7 +134,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #else
 
 #define NDRX_MALLOC(size) malloc(size)
-#define NDRX_FREE(size) free(ptr)
+#define NDRX_FREE(ptr) free(ptr)
 #define NDRX_CALLOC(nmemb, size) calloc(nmemb, size)
 #define NDRX_REALLOC(ptr, size) realloc(ptr, size)
 

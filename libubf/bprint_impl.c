@@ -131,7 +131,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
             {
                 UBF_LOG(log_debug, "Containing special characters -"
                                     " needs to temp buffer for prefixing");
-                tmp_buf=malloc(temp_len+1); /* adding +1 for EOS */
+                tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
                 if (NULL==tmp_buf)
                 {
                     _Fset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
@@ -144,7 +144,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
             }
             else if (BFLD_CARRAY==fldtype) /* we need EOS for carray... */
             {
-                tmp_buf=malloc(temp_len+1); /* adding +1 for EOS */
+                tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
                 
                 memcpy(tmp_buf, p, temp_len);
                 
@@ -178,12 +178,12 @@ out:
     /* Free up allocated resources */
     if (NULL!=tmp_buf)
     {
-        free(tmp_buf);
+        NDRX_FREE(tmp_buf);
     }
 
     if (NULL!=cnv_buf)
     {
-        free(cnv_buf);
+        NDRX_FREE(cnv_buf);
     }
     /* release the stuff... */
     fflush(outf);

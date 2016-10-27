@@ -427,7 +427,7 @@ private int tmq_qconf_delete(char *qname)
     if (NULL!=(qconf=tmq_qconf_get(qname)))
     {
         EXHASH_DEL( G_qconf, qconf);
-        free(qconf);
+        NDRX_FREE(qconf);
     }
     else
     {
@@ -486,7 +486,7 @@ public int tmq_reload_conf(char *cf)
                 FAIL_OUT(ret);
             }
         }
-        free(line);
+        NDRX_FREE(line);
     }
     
     
@@ -548,7 +548,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
         if (NULL== (qconf = tmq_qconf_get(buf)))
         {
             NDRX_LOG(log_info, "Q not found, adding: [%s]", buf);
-            qconf= calloc(1, sizeof(tmq_qconfig_t));
+            qconf= NDRX_CALLOC(1, sizeof(tmq_qconfig_t));
                     
             /* Try to load initial config from @ (TMQ_DEFAULT_Q) Q */
             qconf->mode = TMQ_MODE_FIFO; /* default to FIFO... */
@@ -644,7 +644,7 @@ out:
     if (SUCCEED!=ret && NULL!=qconf && !qupdate)
     {
         NDRX_LOG(log_warn, "qconf -> free");
-        free(qconf);
+        NDRX_FREE(qconf);
     }
 
     MUTEX_UNLOCK_V(M_q_lock);
@@ -673,7 +673,7 @@ private tmq_qhash_t * tmq_qhash_get(char *qname)
  */
 private tmq_qhash_t * tmq_qhash_new(char *qname)
 {
-    tmq_qhash_t * ret = calloc(1, sizeof(tmq_qhash_t));
+    tmq_qhash_t * ret = NDRX_CALLOC(1, sizeof(tmq_qhash_t));
     
     if (NULL==ret)
     {
@@ -703,7 +703,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     int ret = SUCCEED;
     int is_locked = FALSE;
     tmq_qhash_t *qhash;
-    tmq_memmsg_t *mmsg = calloc(1, sizeof(tmq_memmsg_t));
+    tmq_memmsg_t *mmsg = NDRX_CALLOC(1, sizeof(tmq_memmsg_t));
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
     char corid_str[TMCORRIDLEN_STR+1];
@@ -808,7 +808,7 @@ out:
      */
     if (SUCCEED!=ret && mmsg!=NULL)
     {
-        free(mmsg);
+        NDRX_FREE(mmsg);
     }
 
     if (is_locked)
@@ -1193,8 +1193,8 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
         EXHASH_DEL_H2( G_corid_hash, mmsg);
     }
     
-    free(mmsg->msg);
-    free(mmsg);
+    NDRX_FREE(mmsg->msg);
+    NDRX_FREE(mmsg);
 }
 
 /**
@@ -1351,7 +1351,7 @@ out:
     /* free the mem if needed: */
     if (NULL!=*p_block)
     {
-        free((char *)*p_block);
+        NDRX_FREE((char *)*p_block);
         *p_block = NULL;
     }
     return ret;
@@ -1392,7 +1392,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
         if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname, NULL)) && 
                 ((auto_only && qconf->autoq) || !auto_only))
         {
-            if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(fwd_qlist_t))))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
@@ -1423,7 +1423,7 @@ public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
         {
             if (NULL==tmq_qhash_get(qc->qname))
             {
-                if (NULL==(tmp = calloc(1, sizeof(fwd_qlist_t))))
+                if (NULL==(tmp = NDRX_CALLOC(1, sizeof(fwd_qlist_t))))
                 {
                     int err = errno;
                     NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
@@ -1474,7 +1474,7 @@ public tmq_memmsg_t *tmq_get_msglist(char *qname)
     {
         if (NULL!=node)
         {
-            if (NULL==(tmp = calloc(1, sizeof(tmq_memmsg_t))))
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(tmq_memmsg_t))))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
@@ -1483,7 +1483,7 @@ public tmq_memmsg_t *tmq_get_msglist(char *qname)
                 goto out;
             }
             
-            if (NULL==(msg = malloc(sizeof(tmq_msg_t))))
+            if (NULL==(msg = NDRX_MALLOC(sizeof(tmq_msg_t))))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));

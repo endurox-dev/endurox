@@ -116,7 +116,7 @@ private int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry
     {
         /* OK register that stuff */
         /* do the malloc! */
-        if ( (entry = (svc_entry_fn_t*)malloc(sizeof(svc_entry_fn_t))) == NULL)
+        if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
         {
             NDRX_LOG(log_error, "Failed to allocate %d bytes for service entry",
                                             sizeof(svc_entry_fn_t));
@@ -162,11 +162,11 @@ private int build_service_array_list(void)
     svc_entry_fn_t *f_tmp, *f_el;
             
     if (G_server_conf.service_array!=NULL)
-        free(G_server_conf.service_array);
+        NDRX_FREE(G_server_conf.service_array);
 
     NDRX_LOG(log_debug, "about to allocate %d of svc ptrs", G_server_conf.adv_service_count);
 
-    G_server_conf.service_array = calloc(sizeof(svc_entry_fn_t *), G_server_conf.adv_service_count);
+    G_server_conf.service_array = NDRX_CALLOC(sizeof(svc_entry_fn_t *), G_server_conf.adv_service_count);
     
     if (NULL==G_server_conf.service_array)
     {
@@ -192,7 +192,7 @@ private int add_specific_queue(char *qname, int is_admin)
 
     svc_entry_fn_t *entry;
     /* phase 0. Generate admin q */
-    if ( (entry = (svc_entry_fn_t*)malloc(sizeof(svc_entry_fn_t))) == NULL)
+    if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
     {
         NDRX_LOG(log_error, "Failed to allocate %d bytes for admin service entry",
                                         sizeof(svc_entry_fn_t));
@@ -395,7 +395,7 @@ public void un_initialize(void)
 
     if (NULL != G_server_conf.events)
     {
-        free((char *)G_server_conf.events);
+        NDRX_FREE((char *)G_server_conf.events);
     }
     
     /* close XA if was open.. */
@@ -421,7 +421,7 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
     _TPunset_error();
 
     /* allocate memory for entry */
-    if ( (entry = (svc_entry_fn_t*)malloc(sizeof(svc_entry_fn_t))) == NULL)
+    if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
     {
             _TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
                                 sizeof(svc_entry_fn_t));
@@ -471,7 +471,7 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
                                         "FAIL", svc_nm);
                     ret=FAIL;
                 }
-                free(entry);
+                NDRX_FREE(entry);
             }
             else
             {
@@ -489,7 +489,7 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
             if (FAIL==dynamic_advertise(entry, svc_nm, p_func, fn_nm))
             {
                 ret=FAIL;
-                free(entry);
+                NDRX_FREE(entry);
                 goto out;
             }
             

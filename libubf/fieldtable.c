@@ -117,7 +117,7 @@ private int init_hash_area(void)
 
     if (NULL==M_bfldidhash2)
     {
-        M_bfldidhash2 = malloc(malloc_size);
+        M_bfldidhash2 = NDRX_MALLOC(malloc_size);
         if (NULL==M_bfldidhash2)
         {
             _Fset_error_fmt(BMALLOC, "Failed to malloc bfldidhash2, requested: %d bytes err: %s",
@@ -146,7 +146,7 @@ private int init_hash_area(void)
 
     if (NULL==M_fldnmhash2)
     {
-        M_fldnmhash2 = malloc(malloc_size);
+        M_fldnmhash2 = NDRX_MALLOC(malloc_size);
         if (NULL==M_fldnmhash2)
         {
             _Fset_error_fmt(BMALLOC, "Failed to malloc fldnmhash2, requested: %d bytes err: %s",
@@ -416,8 +416,8 @@ private int _ubf_load_fld_def(int base,
     _UBF_INT dtype;
     BFLDID number;
 
-    fld = calloc(1, sizeof(UBF_field_def_t));
-    fld2 = calloc(1, sizeof(UBF_field_def_t));
+    fld = NDRX_CALLOC(1, sizeof(UBF_field_def_t));
+    fld2 = NDRX_CALLOC(1, sizeof(UBF_field_def_t));
 
     if (NULL==fld || NULL==fld2)
     {

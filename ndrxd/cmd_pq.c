@@ -197,7 +197,7 @@ public int pq_run_santiy(int run_hist)
                 }
             }
             
-            free(srvlist);
+            NDRX_FREE(srvlist);
         }
         
 #endif

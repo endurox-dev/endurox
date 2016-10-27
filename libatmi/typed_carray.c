@@ -221,7 +221,7 @@ public char * CARRAY_tpalloc (typed_buffer_descr_t *descr, long len)
     }
 
     /* Allocate CARRAY buffer */
-    ret=(char *)malloc(len);
+    ret=(char *)NDRX_MALLOC(len);
     ret[0] = EOS;
     
 out:
@@ -245,7 +245,7 @@ public char * CARRAY_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
     }
 
     /* Allocate CARRAY buffer */
-    ret=(char *)realloc(cur_ptr, len);
+    ret=(char *)NDRX_REALLOC(cur_ptr, len);
     
 
     return ret;
@@ -258,7 +258,7 @@ public char * CARRAY_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
  */
 public void CARRAY_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
-    free(buf);
+    NDRX_FREE(buf);
 }
 
 /**

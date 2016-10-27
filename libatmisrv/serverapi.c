@@ -273,7 +273,7 @@ public void	tpext_configbrige
  */
 public char * tpsrvgetctxdata (void)
 {
-    server_ctx_info_t *ret = malloc(sizeof(server_ctx_info_t));
+    server_ctx_info_t *ret = NDRX_MALLOC(sizeof(server_ctx_info_t));
     tp_command_call_t *last_call = ndrx_get_G_last_call();
     tp_conversation_control_t *p_accept_con;
     
@@ -290,7 +290,7 @@ public char * tpsrvgetctxdata (void)
         if (SUCCEED!=tpsuspend(&ret->tranid, 0))
         {
             userlog("Failed to suspend transaction: [%s]", tpstrerror(tperrno));
-            free((char *)ret);
+            NDRX_FREE((char *)ret);
             ret = NULL;
             goto out;
         }

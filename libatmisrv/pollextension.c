@@ -114,7 +114,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
         goto out;
     }
     
-    pollext = malloc(sizeof(pollextension_rec_t));
+    pollext = NDRX_MALLOC(sizeof(pollextension_rec_t));
     if (NULL==pollext)
     {
         _TPset_error_fmt(TPEOS, "failed to malloc pollextension_rec_t (%d bytes): %s", 
@@ -153,7 +153,7 @@ out:
     /* Free resources if dead on arrival */
     if (SUCCEED!=ret && NULL!=pollext)
     {
-        free(pollext);
+        NDRX_FREE(pollext);
     }
 
     return ret;
@@ -199,7 +199,7 @@ public int _tpext_delpollerfd(int fd)
     
     /* Remove from linked list */
     DL_DELETE(G_pollext, existing);
-    free(existing);
+    NDRX_FREE(existing);
     
 out:
 

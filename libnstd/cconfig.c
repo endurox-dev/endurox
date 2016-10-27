@@ -96,14 +96,14 @@ public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_se
             len+=strlen(G_cctag);
         }
 
-        if (NULL==(tmp1 = malloc(len+1)))
+        if (NULL==(tmp1 = NDRX_MALLOC(len+1)))
         {
             userlog("%s: tmp1 malloc failed: %s", fn, strerror(errno));
             FAIL_OUT(ret);
         }
 
 
-        if (NULL==(tmp2 = malloc(strlen(G_cctag)+1)))
+        if (NULL==(tmp2 = NDRX_MALLOC(strlen(G_cctag)+1)))
         {
             userlog("%s: tmp2 malloc failed: %s", fn, strerror(errno));
             FAIL_OUT(ret);
@@ -145,12 +145,12 @@ out:
 
     if (NULL!=tmp1)
     {
-        free(tmp1);
+        NDRX_FREE(tmp1);
     }
 
     if (NULL!=tmp2)
     {
-        free(tmp2);
+        NDRX_FREE(tmp2);
     }
 
 

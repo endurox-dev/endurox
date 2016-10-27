@@ -316,7 +316,7 @@ public int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 
         call_tm(el->svcnm);
         /* Have some housekeep. */
-        free(el);
+        NDRX_FREE(el);
     }
     
 out:

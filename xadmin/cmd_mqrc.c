@@ -111,9 +111,9 @@ public int cmd_mqrc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         
         /* Have some housekeep. */
         LL_DELETE(list,el);
-        free(el);
+        NDRX_FREE(el);
         
-        free((char *)p_ub);
+        NDRX_FREE((char *)p_ub);
         p_ub = NULL;
     }
     
@@ -123,7 +123,7 @@ out:
 
     if (NULL!=p_ub)
     {
-        free((char *)p_ub);
+        NDRX_FREE((char *)p_ub);
         p_ub = NULL;
     }
 
