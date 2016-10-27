@@ -111,5 +111,5 @@ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 - To disable platform script building use '-DDEFINE_DISABLEPSCRIPT=ON'
 - To do release build, use '-DDEFINE_RELEASEBUILD=ON'
 - To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON'
-- To log the memory allocation to user log add '-DNDRX_MEMORY_DEBUG=ON' 
+- To log the memory allocation to user log add '-DNDRX_MEMORY_DEBUG=1' 
 
