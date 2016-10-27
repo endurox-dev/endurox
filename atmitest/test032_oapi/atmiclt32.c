@@ -72,9 +72,9 @@ int main(int argc, char** argv)
     for (i=0; i<10000; i++)
     {
         /* Allocate the context */
-        TPCONTEXT_T ctx1 = tpnewctxt();
-        TPCONTEXT_T ctx2 = tpnewctxt();
-        TPCONTEXT_T ctx3 = tpnewctxt();
+        TPCONTEXT_T ctx1 = tpnewctxt(0,0);
+        TPCONTEXT_T ctx2 = tpnewctxt(0,0);
+        TPCONTEXT_T ctx3 = tpnewctxt(0,0);
 
         TPCONTEXT_T tmpt;
        

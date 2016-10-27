@@ -1021,16 +1021,16 @@ out:
  * @param flags
  * @return 
  */
-public TPCONTEXT_T tpnewctxt(void)
+public TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
 {
-    TPCONTEXT_T ctx = ndrx_atmi_tls_new(FALSE, FALSE);
+    TPCONTEXT_T ctx = ndrx_atmi_tls_new(auto_destroy, auto_set);
     
     if (NULL!=ctx)
     {
         atmi_tls_t * ac = (atmi_tls_t *)ctx;
         
-        ac->p_nstd_tls = ndrx_nstd_tls_new(FALSE, FALSE);
-        ac->p_ubf_tls = ndrx_ubf_tls_new(FALSE, FALSE);
+        ac->p_nstd_tls = ndrx_nstd_tls_new(auto_destroy, auto_set);
+        ac->p_ubf_tls = ndrx_ubf_tls_new(auto_destroy, auto_set);
     }
     
     return ctx;

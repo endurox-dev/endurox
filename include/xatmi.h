@@ -514,7 +514,7 @@ extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)
 extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);
 extern NDRX_API int tpsetctxt(TPCONTEXT_T context, long flags);
 
-extern NDRX_API TPCONTEXT_T tpnewctxt(void);
+extern NDRX_API TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set);
 extern NDRX_API void tpfreectxt(TPCONTEXT_T context);
 
 extern int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags);

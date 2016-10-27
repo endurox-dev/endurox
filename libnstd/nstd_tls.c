@@ -139,7 +139,10 @@ public void ndrx_nstd_tls_free(void *data)
     {
         if (data==G_nstd_tls)
         {
-            pthread_setspecific( M_nstd_tls_key, NULL );
+            if (G_nstd_tls->is_auto)
+            {
+                pthread_setspecific( M_nstd_tls_key, NULL );
+            }
             G_nstd_tls=NULL;
         }
         NDRX_FREE((char*)data);

@@ -138,7 +138,10 @@ public void ndrx_ubf_tls_free(void *data)
     {
         if (data==G_ubf_tls)
         {
-            pthread_setspecific( M_ubf_tls_key, NULL );
+            if (G_ubf_tls->is_auto)
+            {
+                pthread_setspecific( M_ubf_tls_key, NULL );
+            }
             G_ubf_tls=NULL;
         }
         NDRX_FREE((char*)data);

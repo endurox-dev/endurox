@@ -181,7 +181,10 @@ public void ndrx_atmi_tls_free(void *data)
     {
         if (data == G_atmi_tls)
         {
-            pthread_setspecific( M_atmi_tls_key, NULL );
+            if (G_atmi_tls->is_auto)
+            {
+                pthread_setspecific( M_atmi_tls_key, NULL );
+            }
             G_atmi_tls = NULL;
         }
 
