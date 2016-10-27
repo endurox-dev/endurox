@@ -856,7 +856,7 @@ public int _Badd (UBFH *p_ub, BFLDID bfldid,
     dtype_str_t *__dbg_dtype;
     dtype_ext1_t *__dbg_dtype_ext1;
     
-    __p_ub_copy = malloc(hdr->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr->buf_len);
     memcpy(__p_ub_copy, p_ub, hdr->buf_len);
     __dbg_type = (bfldid>>EFFECTIVE_BITS);
     __dbg_dtype = &G_dtype_str_map[__dbg_type];
@@ -1024,7 +1024,7 @@ out:
     UBF_DUMP_DIFF(log_always, "After Badd", __p_ub_copy, p_ub, hdr->buf_len);
     __dump_size=hdr->bytes_used;
     UBF_DUMP(log_always, "Used buffer dump after: ",p_ub, __dump_size);
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
     return ret;
@@ -1088,7 +1088,7 @@ public int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     }
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
-    __p_ub_copy = malloc(hdr->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr->buf_len);
     memcpy(__p_ub_copy, p_ub, hdr->buf_len);
     __dbg_type = (bfldid>>EFFECTIVE_BITS);
     __dbg_dtype = &G_dtype_str_map[__dbg_type];
@@ -1308,7 +1308,7 @@ out:
     __dump_size=hdr->bytes_used;
     UBF_DUMP(log_always, "Used buffer dump after: ",p_ub, __dump_size);
 
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
 
@@ -1604,7 +1604,7 @@ public char * _Btypcvt (BFLDLEN * to_len, int to_type,
     {
         /* if fails, error should be already set! */
         /* remove allocated memory */
-        free(alloc_buf);
+        NDRX_FREE(alloc_buf);
         alloc_buf=NULL;
         ret=NULL;
         goto out;

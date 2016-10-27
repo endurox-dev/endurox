@@ -706,10 +706,10 @@ public int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQ
             _TPset_error_fmt(TPEINVAL,  "_tpdequeue: Failed to prepare incoming buffer: %s", 
                     Bstrerror(Berror));
             
-            free(data_extra);
+            NDRX_FREE(data_extra);
             FAIL_OUT(ret);
         }
-        free(data_extra);
+        NDRX_FREE(data_extra);
     }
     
     /* the call is ok (or app failed), convert back. */

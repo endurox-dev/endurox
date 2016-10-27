@@ -90,7 +90,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
     int error = 0;
 
 #if !INI_USE_STACK
-    line = (char*)malloc(INI_MAX_LINE);
+    line = (char*)NDRX_MALLOC(INI_MAX_LINE);
     if (!line) {
         return -2;
     }
@@ -167,7 +167,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
     }
 
 #if !INI_USE_STACK
-    free(line);
+    NDRX_FREE(line);
 #endif
 
     return error;

@@ -168,7 +168,7 @@ public int sv_open_queue(void)
     }
 
     /* allocate events */
-    G_server_conf.events = (struct ndrx_epoll_event *)calloc(sizeof(struct ndrx_epoll_event),
+    G_server_conf.events = (struct ndrx_epoll_event *)NDRX_CALLOC(sizeof(struct ndrx_epoll_event),
                                             G_server_conf.max_events);
     if (NULL==G_server_conf.events)
     {

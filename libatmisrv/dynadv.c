@@ -86,7 +86,7 @@ public int dynamic_readvertise(char *svcname)
         srand ( time(NULL) );
     }
     
-    if ( (entry = (svc_entry_fn_t*)malloc(sizeof(svc_entry_fn_t))) == NULL)
+    if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
     {
             NDRX_LOG(log_error, "Failed to allocate %d bytes while parsing -s",
                                 sizeof(svc_entry_fn_t));
@@ -125,7 +125,7 @@ public int dynamic_readvertise(char *svcname)
 out:
 
     if (SUCCEED!=ret && NULL!=entry)
-        free(entry);
+        NDRX_FREE(entry);
 
     NDRX_LOG(log_warn, "%s: return, ret = %d", fn, ret);
     return ret;
@@ -201,7 +201,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
             goto out;
         }
         /* Now reduce the memory usage */
-        G_server_conf.service_array=realloc(G_server_conf.service_array, 
+        G_server_conf.service_array=NDRX_REALLOC(G_server_conf.service_array, 
                                 (sizeof(svc_entry_fn_t *)*len-1));
 
         if (NULL==G_server_conf.service_array)
@@ -212,7 +212,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         }
         
         /* Free up the memory used!?!  */
-        free(ent);
+        NDRX_FREE(ent);
         ent=NULL;
 
         service = pos - ATMI_SRV_Q_ADJUST;
@@ -404,7 +404,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Put stuff in linear array */
     sz = sizeof(*G_server_conf.service_array)*(G_server_conf.adv_service_count+1);
     
-    G_server_conf.service_array = realloc(G_server_conf.service_array, sz);
+    G_server_conf.service_array = NDRX_REALLOC(G_server_conf.service_array, sz);
     
     if (NULL==G_server_conf.service_array)
     {

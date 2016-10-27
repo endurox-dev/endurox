@@ -151,7 +151,7 @@ private tmq_msg_t * get_next_msg(void)
             DL_FOREACH_SAFE(list,elt,tmp) 
             {
                 DL_DELETE(list,elt);
-                free(elt);
+                NDRX_FREE(elt);
             }
         }
         

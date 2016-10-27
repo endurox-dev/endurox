@@ -208,7 +208,7 @@ public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
     }
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
-    __p_ub_copy = malloc(hdr->buf_len);
+    __p_ub_copy = NDRX_MALLOC(hdr->buf_len);
     memcpy(__p_ub_copy, p_ub, hdr->buf_len);
     __dbg_type = (bfldid>>EFFECTIVE_BITS);
     __dbg_dtype = &G_dtype_str_map[__dbg_type];
@@ -296,7 +296,7 @@ public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
                           sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After Badd", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after: ",p_ub, hdr->bytes_used);
-    free(__p_ub_copy);
+    NDRX_FREE(__p_ub_copy);
 #endif
 /*******************************************************************************/
     return ret;
@@ -481,7 +481,7 @@ public int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     if (NULL!=alloc_buf)
     {
         UBF_LOG(log_debug, "%s: free alloc_buf", fn);
-        free(alloc_buf);
+        NDRX_FREE(alloc_buf);
     }
 
     return ret;
@@ -560,7 +560,7 @@ public int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     if (NULL!=alloc_buf)
     {
         UBF_LOG(log_debug, "CBchg: free alloc_buf");
-        free(alloc_buf);
+        NDRX_FREE(alloc_buf);
     }
     
     return ret;
@@ -1188,7 +1188,7 @@ public int Bfree (UBFH *p_ub)
     else
     {
         memset(hdr->magic, 0, UBF_MAGIC_SIZE);
-        free(p_ub);
+        NDRX_FREE(p_ub);
     }
     
     return ret;
@@ -1214,7 +1214,7 @@ public UBFH * Balloc (BFLDOCC f, BFLDLEN v)
     }
     else
     {
-        p_ub=malloc(alloc_size);
+        p_ub=NDRX_MALLOC(alloc_size);
         if (NULL==p_ub)
         {
             _Fset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
@@ -1223,7 +1223,7 @@ public UBFH * Balloc (BFLDOCC f, BFLDLEN v)
         {
             if (SUCCEED!=Binit(p_ub, alloc_size))
             {
-                free(p_ub); /* Free up allocated memory! */
+                NDRX_FREE(p_ub); /* Free up allocated memory! */
                 p_ub=NULL;
                 UBF_LOG(log_error, "Balloc failed - abort Balloc!");
             }
@@ -1270,7 +1270,7 @@ public UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     }
     else
     {
-        p_ub=realloc(p_ub, alloc_size);
+        p_ub=NDRX_REALLOC(p_ub, alloc_size);
         if (NULL==p_ub)
         {
             _Fset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);

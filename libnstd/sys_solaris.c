@@ -95,13 +95,13 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
                         0==strcmp(namelist[n]->d_name, "..") ||
                         0!=strncmp(namelist[n]->d_name, ".MQP", 4))
             {
-                free(namelist[n]);
+                NDRX_FREE(namelist[n]);
                 continue;
             }
             
             len = strlen(namelist[n]->d_name) -3 /*.MQP*/ + 1 /* EOS */;
             
-            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
             {
                 NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
                         sizeof(string_list_t), strerror(errno));
@@ -110,11 +110,11 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
                 goto exit_fail;
             }
             
-            if (NULL==(tmp->qname = malloc(len)))
+            if (NULL==(tmp->qname = NDRX_MALLOC(len)))
             {
                 NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
                         len, strerror(errno));
-                free(tmp);
+                NDRX_FREE(tmp);
                 goto exit_fail;
             }
             
@@ -124,9 +124,9 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
             /* Add to LL */
             LL_APPEND(ret, tmp);
             
-            free(namelist[n]);
+            NDRX_FREE(namelist[n]);
         }
-        free(namelist);
+        NDRX_FREE(namelist);
     }
     
     return ret;

@@ -124,7 +124,7 @@ public int background_read_log(void)
                        0==strcmp(namelist[n]->d_name, ".."))
            {
                /* memory leak fixes... */
-               free(namelist[n]);
+               NDRX_FREE(namelist[n]);
                continue;
            }
 
@@ -145,20 +145,20 @@ public int background_read_log(void)
                {
                    NDRX_LOG(log_warn, "Faled to resume transaction: [%s]", 
                        fnamefull);
-                   free(namelist[n]); /* mem leak fixes */
+                   NDRX_FREE(namelist[n]); /* mem leak fixes */
                    FAIL_OUT(ret);
                }
            }
-           free(namelist[n]);
+           NDRX_FREE(namelist[n]);
        }
-       free(namelist);
+       NDRX_FREE(namelist);
        namelist = NULL;
     }
     
 out:
     if (NULL!=namelist)
     {
-       free(namelist);
+       NDRX_FREE(namelist);
     }
     return ret;
 }
@@ -231,7 +231,7 @@ public int background_loop(void)
             {
                 /* Have some housekeep. */
                 LL_DELETE(tx_list, el);
-                free(el);
+                NDRX_FREE(el);
 
                 NDRX_LOG(log_debug, "Skipping...");
                 continue;
@@ -254,7 +254,7 @@ public int background_loop(void)
             }
             /* Have some housekeep. */
             LL_DELETE(tx_list, el);
-            free(el);
+            NDRX_FREE(el);
         }
         
         background_unlock();

@@ -572,7 +572,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
             FAIL_OUT(ret);
         }
         
-        if (NULL==(tmp = calloc(1, sizeof(*tmp))))
+        if (NULL==(tmp = NDRX_CALLOC(1, sizeof(*tmp))))
         {
             ndrx_epoll_set_err(errno, "Failed to alloc FD hash entry");
             NDRX_LOG(log_error, "Failed to alloc FD hash entry");
@@ -587,7 +587,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
         
         NDRX_LOG(log_info, "set nrfds incremented to %d", set->nrfds);
         
-        if (NULL==(set->fdtab=realloc(set->fdtab, sizeof(struct pollfd)*set->nrfds)))
+        if (NULL==(set->fdtab=NDRX_REALLOC(set->fdtab, sizeof(struct pollfd)*set->nrfds)))
         {
             ndrx_epoll_set_err(errno, "Failed to realloc %d/%d", 
                     set->nrfds, sizeof(struct pollfd)*set->nrfds);
@@ -617,7 +617,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
         /* Remove fd from set->fdtab & from hash */
         
         EXHASH_DEL(set->fds, tmp);
-        free((char *)tmp);
+        NDRX_FREE((char *)tmp);
         
         for (i = 0; i < set->nrfds; i++)
         {
@@ -637,9 +637,9 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                 if (0==set->nrfds)
                 {
                     NDRX_LOG(log_warn, "set->nrfds == 0, => free");
-                    free((char *)set->fdtab);
+                    NDRX_FREE((char *)set->fdtab);
                 }
-                else if (NULL==(set->fdtab=realloc(set->fdtab, sizeof(struct pollfd)*set->nrfds)))
+                else if (NULL==(set->fdtab=NDRX_REALLOC(set->fdtab, sizeof(struct pollfd)*set->nrfds)))
                 {
                     ndrx_epoll_set_err(errno, "Failed to realloc %d/%d", 
                             set->nrfds, sizeof(struct pollfd)*set->nrfds);
@@ -710,7 +710,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
             FAIL_OUT(ret);
         }
         
-        if (NULL==(tmp = calloc(1, sizeof(*tmp))))
+        if (NULL==(tmp = NDRX_CALLOC(1, sizeof(*tmp))))
         {
             ndrx_epoll_set_err(errno, "Failed to alloc FD hash entry");
             NDRX_LOG(log_error, "Failed to alloc FD hash entry");
@@ -768,7 +768,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
         
         /* Remove fd from set->fdtab & from hash */
         EXHASH_DEL(set->mqds, tmp);
-        free((char *)tmp);
+        NDRX_FREE((char *)tmp);
     }
     else
     {
@@ -819,7 +819,7 @@ public int ndrx_epoll_create(int size)
     
     NDRX_LOG(log_info, "Creating ndrx_epoll set: %d", i);
     
-    if (NULL==(set = (ndrx_epoll_set_t *)calloc(1, sizeof(*set))))
+    if (NULL==(set = (ndrx_epoll_set_t *)NDRX_CALLOC(1, sizeof(*set))))
     {
         ndrx_epoll_set_err(errno, "Failed to alloc: %d bytes", sizeof(*set));
         
@@ -854,7 +854,7 @@ public int ndrx_epoll_create(int size)
     
     set->nrfds = 1; /* initially only pipe wait */
     set->fd = i; /* assign the FD num */
-    if (NULL==(set->fdtab = calloc(set->nrfds, sizeof(struct pollfd))))
+    if (NULL==(set->fdtab = NDRX_CALLOC(set->nrfds, sizeof(struct pollfd))))
     {
         ndrx_epoll_set_err(errno, "calloc for pollfd failed");
         NDRX_LOG(log_error, "calloc for pollfd failed");
@@ -886,7 +886,7 @@ out:
             
         if (NULL!=set)
         {
-            free((char *)set);
+            NDRX_FREE((char *)set);
         }
         
         return FAIL;
@@ -949,7 +949,7 @@ public int ndrx_epoll_close(int epfd)
     }
     
     MUTEX_LOCK_V(M_psets_lock);
-    free(set);
+    NDRX_FREE(set);
     EXHASH_DEL(M_psets, set);
     MUTEX_UNLOCK_V(M_psets_lock);
     

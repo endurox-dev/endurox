@@ -93,10 +93,10 @@ private void config_free(config_t **app_config, pm_node_t **process_model,
             DL_FOREACH_SAFE((*app_config)->monitor_config,elt,tmp)
             {
                 DL_DELETE((*app_config)->monitor_config,elt);
-                free(elt);
+                NDRX_FREE(elt);
             }
         }
-        free(*app_config);
+        NDRX_FREE(*app_config);
 
         *app_config = NULL;
     }
@@ -113,19 +113,19 @@ private void config_free(config_t **app_config, pm_node_t **process_model,
             
             /* Remove process model by it self! */
             DL_DELETE(*process_model,elt);
-            free(elt);
+            NDRX_FREE(elt);
         }
     }
 
     if (*process_model_hash)
     {
-        free(*process_model_hash);
+        NDRX_FREE(*process_model_hash);
         *process_model_hash=NULL;
     }
 
     if (*process_model_pid_hash)
     {
-        free(*process_model_pid_hash);
+        NDRX_FREE(*process_model_pid_hash);
         *process_model_pid_hash=NULL;
     }
 }
@@ -152,7 +152,7 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
     else
     {
         NDRX_LOG(log_debug, "Active configuration not loaded - will load!");
-        *app_config = calloc(1, sizeof(config_t));
+        *app_config = NDRX_CALLOC(1, sizeof(config_t));
     }
 
     if (SUCCEED!=load_config(*app_config, G_sys_config.config_file))
@@ -168,7 +168,7 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
 
     /* Allocate hash, OK? */
     NDRX_LOG(log_debug, "G_sys_config.max_servers = %d", ndrx_get_G_atmi_env()->max_servers);
-    *process_model_hash = (pm_node_t **)calloc(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_node_t *));
+    *process_model_hash = (pm_node_t **)NDRX_CALLOC(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_node_t *));
 
     if (NULL==*process_model_hash)
     {
@@ -177,7 +177,7 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
         goto out;
     }
 
-    *process_model_pid_hash = (pm_pidhash_t **)calloc(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_pidhash_t *));
+    *process_model_pid_hash = (pm_pidhash_t **)NDRX_CALLOC(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_pidhash_t *));
 
     if (NULL==*process_model_pid_hash)
     {
@@ -581,7 +581,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char *p;
     /* first of all, we need to get server name from attribs */
     
-    p_srvnode = malloc(sizeof(conf_server_node_t));
+    p_srvnode = NDRX_MALLOC(sizeof(conf_server_node_t));
     if (NULL==p_srvnode)
     {
         NDRX_LOG(log_error, "malloc failed for srvnode!");
@@ -861,7 +861,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
 out:
     if (FAIL==ret && p_srvnode)
-        free(p_srvnode);
+        NDRX_FREE(p_srvnode);
     return ret;
 }
 /**

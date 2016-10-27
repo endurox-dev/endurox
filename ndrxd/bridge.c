@@ -80,7 +80,7 @@ public void brd_remove_bridge_services(bridgedef_t *cur)
         EXHASH_DEL(cur->theyr_services, r);
         /* Remove stuff from shared mem. */
         brd_lock_and_update_shm(cur->nodeid, r->svc_nm, 0, BRIDGE_REFRESH_MODE_FULL);
-        free(r);
+        NDRX_FREE(r);
     }
     
 }
@@ -105,7 +105,7 @@ public int brd_del_bridge(int nodeid)
         NDRX_LOG(log_debug, "Removing bridge %d", nodeid);
         brd_remove_bridge_services(cur);
         EXHASH_DEL(G_bridge_hash, cur);
-        free(cur);
+        NDRX_FREE(cur);
     }
     
     return SUCCEED;
@@ -131,7 +131,7 @@ public int brd_addupd_bridge(srv_status_t * srvinfo)
     {
         NDRX_LOG(log_warn, "Bridge %d does not exists - registering", 
                  srvinfo->srvinfo.nodeid);
-        cur = calloc(1, sizeof(bridgedef_t));
+        cur = NDRX_CALLOC(1, sizeof(bridgedef_t));
         if (NULL==cur)
         {
             
@@ -401,7 +401,7 @@ public int brd_discconnected(int nodeid)
             /* Delete from hash */
             EXHASH_DEL(cur->theyr_services, r);
             /* Free up memory */
-            free(r);
+            NDRX_FREE(r);
         }
         
         /* Remove the lock! */
@@ -445,7 +445,7 @@ public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff
             NDRX_LOG(log_debug, "bridge view: svc [%s] removed", 
                     svc);
             EXHASH_DEL(*svcs, r);
-            free(r);
+            NDRX_FREE(r);
         }
     }
     else
@@ -454,7 +454,7 @@ public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff
         {
             NDRX_LOG(log_debug, "Service [%s] does not exists in "
                     "diff hash - adding", svc);
-            r = calloc(1, sizeof(*r));
+            r = NDRX_CALLOC(1, sizeof(*r));
             if (NULL==r)
             {
                 NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
@@ -569,7 +569,7 @@ public int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
     /* If not in hash, then add new struct with count 1 */
     else
     {
-        r = calloc(1, sizeof(*r));
+        r = NDRX_CALLOC(1, sizeof(*r));
         if (NULL==r)
         {
             NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
@@ -598,7 +598,7 @@ public void brd_erase_svc_hash_g(bridgedef_svcs_t *svcs)
     EXHASH_ITER(hh, svcs, cur, tmp)
     {
         EXHASH_DEL(svcs,cur);
-        free(cur);
+        NDRX_FREE(cur);
     }
 }
 
@@ -621,7 +621,7 @@ public int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
     }
     else
     {
-        r = calloc(1, sizeof(*r));
+        r = NDRX_CALLOC(1, sizeof(*r));
         if (NULL==r)
         {
             NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
@@ -658,7 +658,7 @@ public void brd_del_svc_brhash(bridgedef_t *cur, bridgedef_svcs_t *s, char *svc)
     if (NULL!=r)
     {
         EXHASH_DEL(cur->theyr_services, r);
-        free(r);
+        NDRX_FREE(r);
     }
     else
     {
@@ -707,7 +707,7 @@ private void brd_clear_diff(void)
     EXHASH_ITER(hh, G_bridge_svc_diff, cur, tmp)
     {
         EXHASH_DEL(G_bridge_svc_diff,cur);
-        free(cur);
+        NDRX_FREE(cur);
     }
     
 }

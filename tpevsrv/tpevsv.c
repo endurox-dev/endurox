@@ -84,7 +84,7 @@ private long remove_by_my_id (long subscription, char *my_id)
             regfree(&elt->re);
             /* Delete out it from list */
             DL_DELETE(M_subscribers,elt);
-            free(elt);
+            NDRX_FREE(elt);
             deleted++;
         }
 
@@ -109,12 +109,12 @@ private int compile_eventexpr(event_entry_t *p_ee)
         char errbuf[2048];
 
         errlen = (int) regerror(ret, &p_ee->re, NULL, 0);
-        errmsg = (char *) malloc(errlen*sizeof(char));
+        errmsg = (char *) NDRX_MALLOC(errlen*sizeof(char));
         regerror(ret, &p_ee->re, errmsg, errlen);
 
         NDRX_LOG(log_error, "Failed to eventexpr [%s]: %s", p_ee->eventexpr, errbuf);
 
-        free(errmsg);
+        NDRX_FREE(errmsg);
         ret=FAIL;
     }
     else
@@ -385,7 +385,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     NDRX_LOG(log_debug, "TPEVSUBS got call");
     Bfprint(p_ub, stderr);
     
-    if (NULL==(p_ee=malloc(sizeof(event_entry_t))))
+    if (NULL==(p_ee=NDRX_MALLOC(sizeof(event_entry_t))))
     {
         NDRX_LOG(log_error, "Failed to allocate %d bytes: %s!",
                                         sizeof(event_entry_t), strerror(errno));

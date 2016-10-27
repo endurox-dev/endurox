@@ -212,7 +212,7 @@ private char * b64_encode(const unsigned char *data,
     *output_length = 4 * ((input_length + 2) / 3);
 
     /*
-    char *encoded_data = malloc(*output_length);
+    char *encoded_data = NDRX_MALLOC(*output_length);
     if (encoded_data == NULL) return NULL;*/
 
     for (i = 0, j = 0; i < input_length;) 
@@ -261,7 +261,7 @@ private unsigned char *b64_decode(unsigned char *data,
     if (data[input_length - 2] == '=') (*output_length)--;
 
     /*
-    unsigned char *decoded_data = malloc(*output_length);
+    unsigned char *decoded_data = NDRX_MALLOC(*output_length);
     if (decoded_data == NULL) return NULL;
 */
     for (i = 0, j = 0; i < input_length;) {
@@ -290,7 +290,7 @@ private unsigned char *b64_decode(unsigned char *data,
 private char * build_decoding_table(char *encoding_table)
 {
     int i;
-    char *ptr = malloc(256);
+    char *ptr = NDRX_MALLOC(256);
 
     for (i = 0; i < 64; i++)
         ptr[(unsigned char) encoding_table[i]] = i;
@@ -304,7 +304,7 @@ private char * build_decoding_table(char *encoding_table)
  */
 private void base64_cleanup(void)
 {
-    free(decoding_table);
+    NDRX_FREE(decoding_table);
 }
 #endif
 
@@ -466,7 +466,7 @@ public atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
 public atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
         short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms)
 {
-    atmi_xa_tx_info_t * tmp = calloc(1, sizeof(atmi_xa_tx_info_t));
+    atmi_xa_tx_info_t * tmp = NDRX_CALLOC(1, sizeof(atmi_xa_tx_info_t));
     ATMI_TLS_ENTRY;
     
     if (NULL==tmp)
@@ -501,7 +501,7 @@ public void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
     atmi_xa_cd_unregall(&(p_txinfo->call_cds));
     atmi_xa_cd_unregall(&(p_txinfo->conv_cds));
     
-    free((void *)p_txinfo);
+    NDRX_FREE((void *)p_txinfo);
     
     return;
 }
@@ -1040,7 +1040,7 @@ public int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int in_cd)
 {
     int ret = SUCCEED;
     
-    atmi_xa_tx_cd_t *cdt = calloc(1, sizeof(atmi_xa_tx_cd_t));
+    atmi_xa_tx_cd_t *cdt = NDRX_CALLOC(1, sizeof(atmi_xa_tx_cd_t));
     
     if (NULL==cdt)
     {
@@ -1109,7 +1109,7 @@ public void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int in_cd)
     {
         EXHASH_DEL((*cds), el);
         
-        free(el);
+        NDRX_FREE(el);
     }
 }
 
@@ -1129,7 +1129,7 @@ public int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds)
     EXHASH_ITER(hh, (*cds), el, elt)
     {
          EXHASH_DEL((*cds), el);
-         free(el);
+         NDRX_FREE(el);
     }
     
 out:

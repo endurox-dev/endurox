@@ -271,7 +271,7 @@ public void report_regexp_error(char *fun_nm, int err, regex_t *rp)
     int errlen;
     char errbuf[2048];
     errlen = (int) regerror(err, rp, NULL, 0);
-    errmsg = (char *) malloc(errlen*sizeof(char));
+    errmsg = (char *) NDRX_MALLOC(errlen*sizeof(char));
     regerror(err, rp, errmsg, errlen);
 
     snprintf(errbuf, sizeof(errbuf), "regexp err (%s, %d, \"%s\").",
@@ -279,6 +279,6 @@ public void report_regexp_error(char *fun_nm, int err, regex_t *rp)
     UBF_LOG(log_error, "Failed to compile regexp: [%s]", errbuf);
     _Fset_error_msg(BSYNTAX, errbuf);
 
-    free(errmsg);
+    NDRX_FREE(errmsg);
 }
 

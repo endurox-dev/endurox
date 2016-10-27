@@ -89,7 +89,7 @@ public void exnet_remove_incoming(exnetcon_t *net)
     net->my_server->incomming_cons--;
     NDRX_LOG(log_debug, "Open connections decreased to: %d", 
             net->my_server->incomming_cons);
-    free(net);
+    NDRX_FREE(net);
 }
 
 /**
@@ -132,7 +132,7 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
 
     /* Allocate client connection structure! 
      * We could take a copy of server structure + do some modifications to it */
-    if (NULL==(client = malloc(sizeof(exnetcon_t))))
+    if (NULL==(client = NDRX_MALLOC(sizeof(exnetcon_t))))
     {
         NDRX_LOG(log_error, "Failed to allocate client structure! %s", 
                 strerror(errno));
@@ -193,7 +193,7 @@ out:
 
     if (SUCCEED!=ret && client)
     {
-        free(client);
+        NDRX_FREE(client);
     }
 
     NDRX_LOG(log_debug, "%s - return %d", fn, ret);

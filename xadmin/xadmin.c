@@ -618,7 +618,7 @@ public int ndrx_init(void)
     /* Initialize memory for arg array */
     for (i=0; i<MAX_ARGS; i++)
     {
-        G_cmd_argv[i] = malloc(MAX_ARG_LEN);
+        G_cmd_argv[i] = NDRX_MALLOC(MAX_ARG_LEN);
         if (NULL==G_cmd_argv[i])
         {
             NDRX_LOG(log_error, "Failed to initialise clp array:% s", 

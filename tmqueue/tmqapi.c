@@ -138,7 +138,7 @@ public int tmq_enqueue(UBFH *p_ub)
     /*
      * Get the message size in EX_DATA
      */
-    p_msg = malloc(sizeof(tmq_msg_t)+len);
+    p_msg = NDRX_MALLOC(sizeof(tmq_msg_t)+len);
     
     if (NULL==p_msg)
     {
@@ -242,13 +242,13 @@ out:
     /* free up the temp memory */
     if (NULL!=data)
     {
-        free(data);
+        NDRX_FREE(data);
     }
 
     if (SUCCEED!=ret && NULL!=p_msg)
     {
         NDRX_LOG(log_warn, "About to free p_msg!");
-        free(p_msg);
+        NDRX_FREE(p_msg);
     }
 
     if (local_tx)
@@ -574,7 +574,7 @@ public int tmq_mqlq(UBFH *p_ub, int cd)
         }
         
         DL_DELETE(list, el);
-        free((char *)el);
+        NDRX_FREE((char *)el);
     }
     
 out:
@@ -653,7 +653,7 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
         }
         
         DL_DELETE(list, el);
-        free((char *)el);
+        NDRX_FREE((char *)el);
     }
     
 out:
@@ -740,8 +740,8 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
         }
         
         DL_DELETE(list, el);
-        free((char *)el->msg);
-        free((char *)el);
+        NDRX_FREE((char *)el->msg);
+        NDRX_FREE((char *)el);
     }
     
 out:

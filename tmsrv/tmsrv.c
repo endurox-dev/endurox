@@ -130,8 +130,8 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     
     cd = thread_data->cd;
     /* free up the transport data.*/
-    free(thread_data->context_data);
-    free(thread_data);
+    NDRX_FREE(thread_data->context_data);
+    NDRX_FREE(thread_data);
     /**************************************************************************/
     
     /* get some more stuff! */
@@ -283,7 +283,7 @@ void TPTMSRV (TPSVCINFO *p_svc)
     long size;
     char btype[16];
     char stype[16];
-    thread_server_t *thread_data = malloc(sizeof(thread_server_t));
+    thread_server_t *thread_data = NDRX_MALLOC(sizeof(thread_server_t));
     
     if (NULL==thread_data)
     {
@@ -594,7 +594,7 @@ private void tx_tout_check_th(void *ptr)
             }
         }
         LL_DELETE(tx_list,el);
-        free(el);
+        NDRX_FREE(el);
     }
 out:    
     return;

@@ -915,7 +915,7 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
             /* Check filter, if ok - add to list! */
             if (p_filter(SHM_SVCINFO_INDEX(svcinfo, i)->service))
             {
-                if (NULL==(tmp = calloc(1, sizeof(atmi_svc_list_t))))
+                if (NULL==(tmp = NDRX_CALLOC(1, sizeof(atmi_svc_list_t))))
                 {
                     NDRX_LOG(log_error, "Failed to malloc %d: %s", 
                         sizeof(atmi_svc_list_t), strerror(errno));

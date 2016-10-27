@@ -591,7 +591,7 @@ private int chk_cached_svc(char *svcq, char *svcq_full)
         {
             NDRX_LOG(log_warn, "Cached queue [%s] does not exists", svcq);
             EXHASH_DEL(M_qcache, ret);
-            free(ret);
+            NDRX_FREE(ret);
             ret=NULL;
         }
     }
@@ -613,7 +613,7 @@ out:
  */
 private int add_cached_svc(char *svcq, char *svcq_full)
 {
-    qcache_hash_t * ret = calloc(1, sizeof(qcache_hash_t));
+    qcache_hash_t * ret = NDRX_CALLOC(1, sizeof(qcache_hash_t));
     
     MUTEX_LOCK_V(M_q_cache_lock);
     

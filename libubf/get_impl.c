@@ -103,7 +103,7 @@ public char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
             /* put data into allocated buffer */
             if (SUCCEED!=dtype_str->p_get_data(dtype_str, p_fld, ret, &tmp_len))
             {
-                free(ret); /* free up allocated memory */
+                NDRX_FREE(ret); /* free up allocated memory */
                 ret=NULL;
             }
             else

@@ -356,7 +356,7 @@ public int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
 {
     int hash_key = p_pm->pid % ndrx_get_G_atmi_env()->max_servers;
     int ret=SUCCEED;
-    pm_pidhash_t *pm_pid  = malloc(sizeof(pm_pidhash_t));
+    pm_pidhash_t *pm_pid  = NDRX_MALLOC(sizeof(pm_pidhash_t));
     memset(pm_pid, 0, sizeof(pm_pidhash_t));
 
     NDRX_LOG(log_debug, "About to add pid %d", p_pm->pid);
@@ -397,7 +397,7 @@ public int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid)
             NDRX_LOG(log_error, "Removing pid %d from pidhash", pm_pid->pid);
             DL_DELETE(pid_hash[hash_key], pm_pid);
             /* here was memory leak!! */
-            free(pm_pid);
+            NDRX_FREE(pm_pid);
         }
     }
 out:
@@ -467,7 +467,7 @@ public int build_process_model(conf_server_node_t *p_server_conf,
         for (cnt=0; cnt<p_conf->max; cnt++)
         {
             /* Now prepare add node to list + hash table */
-            p_pm = calloc(1, sizeof(pm_node_t));
+            p_pm = NDRX_CALLOC(1, sizeof(pm_node_t));
             if (NULL==p_pm)
             {
                 /* Set return error code? */
@@ -664,7 +664,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
             /* Delete out it from list */
             DL_DELETE(p_pm->svcs,elt);
             /* Fee up resources */
-            free(elt);
+            NDRX_FREE(elt);
             
             if (NULL!=svcnm)
                 break; /* This was one we wanted to remove! */

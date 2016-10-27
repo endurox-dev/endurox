@@ -100,11 +100,11 @@ private void free_data(cconf_req_t *req)
         i = 0;
         while (NULL!=req->resources[i])
         {
-            free(req->resources[i]);
+            NDRX_FREE(req->resources[i]);
             i++;
         }
         
-        free(req->resources);
+        NDRX_FREE(req->resources);
     }
     
     i = 0;
@@ -112,15 +112,15 @@ private void free_data(cconf_req_t *req)
     {
         while (NULL!=req->sectionmask[i])
         {
-            free(req->sectionmask[i]);
+            NDRX_FREE(req->sectionmask[i]);
             i++;
         }
-        free(req->sectionmask);
+        NDRX_FREE(req->sectionmask);
     }
     
     if (NULL!=req->lookup_sections)
     {
-        free(req->lookup_sections);
+        NDRX_FREE(req->lookup_sections);
     }
 }
 
@@ -145,7 +145,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
     
     if (nr_resources>0)
     {
-        req->resources = calloc(nr_resources+1, sizeof(char *));
+        req->resources = NDRX_CALLOC(nr_resources+1, sizeof(char *));
         if (NULL==req->resources)
         {
             NDRX_LOG(log_error, "Failed to allocate resources: %s", strerror(errno));
@@ -168,7 +168,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
     
     if (nr_section_masks>0)
     {
-        req->sectionmask = calloc(nr_section_masks+1, sizeof(char *));
+        req->sectionmask = NDRX_CALLOC(nr_section_masks+1, sizeof(char *));
         if (NULL==req->sectionmask)
         {
             NDRX_LOG(log_error, "Failed to allocate section_masks: %s", strerror(errno));
@@ -267,7 +267,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
     {
         if (NULL!=p)
         {
-            free(p);
+            NDRX_FREE(p);
         }
         
         if (NULL!=(p = Bgetalloc(p_ub, EX_CC_MANDATORY, i, NULL)))
@@ -294,17 +294,17 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
     {
         if (NULL!=key)
         {
-            free(key);
+            NDRX_FREE(key);
         }
         
         if (NULL!=format)
         {
-            free(format);
+            NDRX_FREE(format);
         }
         
         if (NULL!=format2)
         {
-            free(format2);
+            NDRX_FREE(format2);
         }
         
         min_len = 0;
@@ -500,7 +500,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
 out:
     if (NULL!=p)
     {
-        free(p);
+        NDRX_FREE(p);
     }
 
     if (NULL!=out)
@@ -510,17 +510,17 @@ out:
 
     if (NULL!=key)
     {
-        free(key);
+        NDRX_FREE(key);
     }
 
     if (NULL!=format)
     {
-        free(format);
+        NDRX_FREE(format);
     }
 
     if (NULL!=format2)
     {
-        free(format2);
+        NDRX_FREE(format2);
     }
 
     return ret;

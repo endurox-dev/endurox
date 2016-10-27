@@ -79,7 +79,7 @@
 public int ndrx_string_hash_add(string_hash_t **h, char *str)
 {
     int ret = SUCCEED;
-    string_hash_t * tmp = calloc(1, sizeof(string_hash_t));
+    string_hash_t * tmp = NDRX_CALLOC(1, sizeof(string_hash_t));
     
     if (NULL==tmp)
     {
@@ -132,8 +132,8 @@ public void ndrx_string_hash_free(string_hash_t *h)
     EXHASH_ITER(hh, h, r, rt)
     {
         EXHASH_DEL(h, r);
-        free(r->str);
-        free(r);
+        NDRX_FREE(r->str);
+        NDRX_FREE(r);
     }
 }
 
@@ -151,10 +151,10 @@ public void ndrx_string_list_free(string_list_t* list)
             LL_DELETE(list,elt);
             if (NULL!=elt->qname)
             {
-                free(elt->qname);
+                NDRX_FREE(elt->qname);
             }
             
-            free((char *)elt);
+            NDRX_FREE((char *)elt);
         }
     }
 }
@@ -170,7 +170,7 @@ public int ndrx_sys_string_list_add(string_list_t**list, char *string)
     int ret = SUCCEED;
     string_list_t* tmp = NULL;
     
-    if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+    if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
     {
 #ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_error, "alloc of string_list_t (%d) failed", 
@@ -180,7 +180,7 @@ public int ndrx_sys_string_list_add(string_list_t**list, char *string)
     }
     
     /* Alloc the string down there */
-    if (NULL==(tmp->qname = malloc(strlen(string)+1)))
+    if (NULL==(tmp->qname = NDRX_MALLOC(strlen(string)+1)))
     {
 #ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_error, "alloc of string_list_t qname (%d) failed: %s", 
@@ -262,7 +262,7 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
         
         if (4==ok)
         {
-            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
             {
                 
                 /* close */
@@ -280,7 +280,7 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
                 goto out;
             }
             
-            if (NULL==(tmp->qname = malloc(strlen(path)+1)))
+            if (NULL==(tmp->qname = NDRX_MALLOC(strlen(path)+1)))
             {
                 /* close */
                 if (fp!=NULL)
@@ -292,7 +292,7 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
                 NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
                         strlen(path)+1, strerror(errno));
 #endif
-                free(tmp);
+                NDRX_FREE(tmp);
                 ndrx_string_list_free(ret);
                 ret =  NULL;
                 goto out;
@@ -360,13 +360,13 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
             if (0==strcmp(namelist[n]->d_name, ".") || 
                         0==strcmp(namelist[n]->d_name, ".."))
             {
-                free(namelist[n]);
+                NDRX_FREE(namelist[n]);
                 continue;
             }
             
             len = 1 /* / */ + strlen(namelist[n]->d_name) + 1 /* EOS */;
             
-            if (NULL==(tmp = calloc(1, sizeof(string_list_t))))
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
             {
                 /* standard logging might doing init right now */
 #ifdef SYSCOMMON_ENABLE_DEBUG
@@ -376,14 +376,14 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
                 goto exit_fail;
             }
             
-            if (NULL==(tmp->qname = malloc(len)))
+            if (NULL==(tmp->qname = NDRX_MALLOC(len)))
             {
                 /* standard logging might doing init right now */
 #ifdef SYSCOMMON_ENABLE_DEBUG
                 NDRX_LOG(log_error,"alloc of %d bytes failed: %s", 
                         len, strerror(errno));
 #endif
-                free(tmp);
+                NDRX_FREE(tmp);
                 goto exit_fail;
             }
             
@@ -394,9 +394,9 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
             /* Add to LL */
             LL_APPEND(ret, tmp);
             
-            free(namelist[n]);
+            NDRX_FREE(namelist[n]);
         }
-        free(namelist);
+        NDRX_FREE(namelist);
     }
     
     return ret;

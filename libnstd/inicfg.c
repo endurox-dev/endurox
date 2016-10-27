@@ -48,6 +48,7 @@
 #include <nerror.h>
 #include <sys_unix.h>
 #include <errno.h>
+#include <ndebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -98,7 +99,7 @@ private ndrx_inicfg_t * _ndrx_inicfg_new(void)
 {
     ndrx_inicfg_t *ret = NULL;
     
-    if (NULL==(ret = calloc(1, sizeof(ndrx_inicfg_t))))
+    if (NULL==(ret = NDRX_CALLOC(1, sizeof(ndrx_inicfg_t))))
     {
         _Nset_error_fmt(NEMALLOC, "Failed to malloc ndrx_inicfg_t: %s", 
                 strerror(errno));
@@ -202,7 +203,7 @@ private void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
  */
 private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections_h, char *section)
 {
-    ndrx_inicfg_section_t * ret = calloc(1, sizeof(ndrx_inicfg_section_t));
+    ndrx_inicfg_section_t * ret = NDRX_CALLOC(1, sizeof(ndrx_inicfg_section_t));
             
     if (NULL==ret)
     {
@@ -315,7 +316,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
         goto out;
     }
     
-    mem_value = calloc(1, sizeof(ndrx_inicfg_section_keyval_t));
+    mem_value = NDRX_CALLOC(1, sizeof(ndrx_inicfg_section_keyval_t));
     
     if (NULL==mem_value)
     {
@@ -352,7 +353,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     
     value_len = strlen(mem_value->val) + PATH_MAX + 1;
     
-    if (NULL==(mem_value->val = realloc(mem_value->val, value_len)))
+    if (NULL==(mem_value->val = NDRX_REALLOC(mem_value->val, value_len)))
     {
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->val (new size: %d): %s", 
@@ -365,7 +366,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     value_len = strlen(mem_value->val) + 1;
     
     /* realloc to exact size */
-    if (NULL==(mem_value->val = realloc(mem_value->val, value_len)))
+    if (NULL==(mem_value->val = NDRX_REALLOC(mem_value->val, value_len)))
     {
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to truncate mem_value->val to %d: %s", 
@@ -401,7 +402,7 @@ private int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
     int ret = SUCCEED;
     char fn[] = "_ndrx_inicfg_load_single_file";
     
-    if (NULL==(cf = calloc(1, sizeof(ndrx_inicfg_file_t))))
+    if (NULL==(cf = NDRX_CALLOC(1, sizeof(ndrx_inicfg_file_t))))
     {
         _Nset_error_fmt(NEMALLOC, "%s: Failed to malloc ndrx_inicfg_file_t: %s", 
                 fn, strerror(errno));
@@ -647,7 +648,7 @@ private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
 {
     int ret = SUCCEED;
     char fn[]="_ndrx_keyval_hash_add";
-    ndrx_inicfg_section_keyval_t * tmp = calloc(1, sizeof(ndrx_inicfg_section_keyval_t));
+    ndrx_inicfg_section_keyval_t * tmp = NDRX_CALLOC(1, sizeof(ndrx_inicfg_section_keyval_t));
     
     if (NULL==tmp)
     {
@@ -721,10 +722,10 @@ private void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
     EXHASH_ITER(hh, h, r, rt)
     {
         EXHASH_DEL(h, r);
-        free(r->key);
-        free(r->val);
-        free(r->section);
-        free(r);
+        NDRX_FREE(r->key);
+        NDRX_FREE(r->val);
+        NDRX_FREE(r->section);
+        NDRX_FREE(r);
     }
 }
 
@@ -904,7 +905,7 @@ private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
 out:
     if (NULL!=tmp)
     {
-        free(tmp);
+        NDRX_FREE(tmp);
     }
 
     return ret;
@@ -1061,8 +1062,8 @@ private void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
     {
         EXHASH_DEL(sections, section);
         ndrx_keyval_hash_free(section->values);
-        free(section->section);
-        free(section);
+        NDRX_FREE(section->section);
+        NDRX_FREE(section);
     }
 }
 
@@ -1085,7 +1086,7 @@ private void _ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgf
     
     ndrx_inicfg_sections_free(cfgfile->sections);
     
-    free(cfgfile);
+    NDRX_FREE(cfgfile);
 }
 
 /**
@@ -1109,7 +1110,7 @@ private void _ndrx_inicfg_free(ndrx_inicfg_t *cfg)
     
     ndrx_string_hash_free(cfg->resource_hash);
     
-    free(cfg);
+    NDRX_FREE(cfg);
 }
 
 /* ===========================================================================*/

@@ -84,7 +84,7 @@ int parse_svc_arg(char *arg)
     while (NULL!=p)
     {
         /* allocate memory for entry */
-        if ( (entry = (svc_entry_t*)malloc(sizeof(svc_entry_t))) == NULL)
+        if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
         {
                 _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
                                     sizeof(svc_entry_t));
@@ -177,7 +177,7 @@ int parse_xcvt_arg(char *arg)
     while (NULL!=p)
     {
         /* allocate memory for entry */
-        if ( (entry = (xbufcvt_entry_t*)malloc(sizeof(xbufcvt_entry_t))) == NULL)
+        if ( (entry = (xbufcvt_entry_t*)NDRX_MALLOC(sizeof(xbufcvt_entry_t))) == NULL)
         {
                 _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
                                     sizeof(svc_entry_t));

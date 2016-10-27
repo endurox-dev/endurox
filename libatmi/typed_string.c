@@ -222,7 +222,7 @@ public char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
     }
 
     /* Allocate STRING buffer */
-    ret=(char *)malloc(len);
+    ret=(char *)NDRX_MALLOC(len);
     ret[0] = EOS;
     
 out:
@@ -246,7 +246,7 @@ public char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
     }
 
     /* Allocate STRING buffer */
-    ret=(char *)realloc(cur_ptr, len);
+    ret=(char *)NDRX_REALLOC(cur_ptr, len);
     
 
     return ret;
@@ -259,7 +259,7 @@ public char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
  */
 public void STRING_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
-    free(buf);
+    NDRX_FREE(buf);
 }
 
 /**

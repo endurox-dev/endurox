@@ -58,7 +58,7 @@ public char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, long len)
     char fn[] = "TPNULL_tpalloc";
 
     /* Allocate UBF buffer, 1 byte, what so ever.. */
-    ret=malloc(1);
+    ret=NDRX_MALLOC(1);
 
     if (NULL==ret)
     {
@@ -78,5 +78,5 @@ out:
  */
 public void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
-    free(buf);
+    NDRX_FREE(buf);
 }
