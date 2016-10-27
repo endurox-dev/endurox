@@ -128,7 +128,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #ifdef NDRX_MEMORY_DEBUG
 
 #define NDRX_MALLOC(size) ndrx_malloc_dbg(size, __LINE__, __FILE__, __func__)
-#define NDRX_FREE(size) ndrx_free_dbg(ptr, __LINE__, __FILE__, __func__)
+#define NDRX_FREE(ptr) ndrx_free_dbg(ptr, __LINE__, __FILE__, __func__)
 #define NDRX_CALLOC(nmemb, size) ndrx_calloc_dbg(nmemb, size, __LINE__, __FILE__, __func__)
 #define NDRX_REALLOC(ptr, size) ndrx_realloc_dbg(ptr, size, __LINE__, __FILE__, __func__)
 #else
@@ -180,10 +180,10 @@ extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
 
 /* memory debugging */
-extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, char *file, char *func);
-extern NDRX_API void ndrx_free_dbg(void *ptr, long line, char *file, char *func);
-extern NDRX_API void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *func);
-extern NDRX_API void *ndrx_realloc_dbg(void *ptr, size_t size, long line, char *file, char *func);
+extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func);
+extern NDRX_API void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func);
+extern NDRX_API void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, const char *file, const char *func);
+extern NDRX_API void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *file, const char *func);
 
 
 

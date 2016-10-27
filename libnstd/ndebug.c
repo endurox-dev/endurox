@@ -764,7 +764,7 @@ public void ndrx_dbg_init(char *module, char *config_key)
  * @param func
  * @return 
  */
-void *ndrx_malloc_dbg(size_t size, long line, char *file, char *func)
+void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func)
 {
     void *ret;
     int errnosv;
@@ -790,7 +790,7 @@ void *ndrx_malloc_dbg(size_t size, long line, char *file, char *func)
  * @param func
  * @return 
  */
-void ndrx_free_dbg(void *ptr, long line, char *file, char *func)
+void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func)
 {
     userlog("free(ptr=%p): %s:%ld - %s", ptr, line, file, func);
     return free(ptr);
@@ -804,7 +804,7 @@ void ndrx_free_dbg(void *ptr, long line, char *file, char *func)
  * @param func
  * @return 
  */
-void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *func)
+void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, const char *file, const char *func)
 {
     void *ret;
     int errnosv;
@@ -827,7 +827,7 @@ void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, char *file, char *fu
  * @param func
  * @return 
  */
-void *ndrx_realloc_dbg(void *ptr, size_t size, long line, char *file, char *func)
+void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *file, const char *func)
 {   void *ret;
     int errnosv;
     
