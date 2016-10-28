@@ -200,7 +200,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         G_config.chk_interval = CLT_KILL_INTERVAL_DEFAULT;
     }
-
+#if 0
     /* < seems with out this, sigaction on linux does not work... >*/
     sigemptyset(&wanted); 
 
@@ -220,7 +220,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "sigaction failed for SIGCHLD: %s", strerror(errno));
         FAIL_OUT(ret);
     }
-
+#endif
+    ndrxd_sigchld_init();
     /* signal(SIGCHLD, sign_chld_handler); */
     
     /* Load initial config */
@@ -267,6 +268,9 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
     
     cpm_killall();
+    
+    ndrxd_sigchld_uninit();
+    
 }
 
 /**

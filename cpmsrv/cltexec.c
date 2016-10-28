@@ -57,8 +57,12 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+private pthread_t M_signal_thread; /* Signalled thread */
+private int M_signal_thread_set = FALSE; /* Signal thread is set */
+
 /*---------------------------Prototypes---------------------------------*/
 
+#if 0
 /**
  * Handle the child signal
  * @return
@@ -95,6 +99,168 @@ public void sign_chld_handler(int sig)
     /*signal(SIGCHLD, sign_chld_handler);*/
 }
 
+#endif
+
+/**
+ * Checks for child exit.
+ * We will let mainthread to do all internal struct related work!
+ * @return Got child exit
+ */
+private void * check_child_exit(void *arg)
+{
+    pid_t chldpid;
+    int stat_loc;
+    sigset_t blockMask;
+    int sig;
+    
+        
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    NDRX_LOG(log_debug, "check_child_exit - enter...");
+    for (;;)
+    {
+        int got_something = 0;
+
+/* seems not working on darwin ... thus just wait for pid.
+ * if we do not have any childs, then sleep for 1 sec.
+ */
+#ifndef EX_OS_DARWIN
+        NDRX_LOG(log_debug, "about to sigwait()");
+        if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        {
+            NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
+
+        }        
+#endif
+        
+        NDRX_LOG(log_debug, "about to wait()");
+        while ((chldpid = wait(&stat_loc)) >= 0)
+        {
+            cpm_process_t * c = cpm_get_client_by_pid(chldpid);
+            got_something++;
+                   
+            if (NULL!=c)
+            {
+                c->dyn.cur_state = CLT_STATE_NOTRUN;
+                c->dyn.exit_status = stat_loc;
+                /* Set status change time */
+                cpm_set_cur_time(c);
+            }
+        }
+#if EX_OS_DARWIN
+        NDRX_LOG(6, "wait: %s", strerror(errno));
+        if (!got_something)
+        {
+            sleep(1);
+        }
+#endif
+    }
+   
+    NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
+    return NULL;
+}
+
+
+
+
+/**
+ * Initialize polling lib
+ * not thread safe.
+ * @return
+ */
+public void ndrxd_sigchld_init(void)
+{
+    sigset_t blockMask;
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_t pthread_custom_attr_dog;
+    struct sigaction sa; /* Seem on AIX signal might slip.. */
+    char *fn = "ndrxd_sigchld_init";
+
+    NDRX_LOG(log_debug, "%s - enter", fn);
+    
+    /* our friend AIX, might just ignore the SIG_BLOCK and raise signal
+     * Thus we will handle the stuff in as it was in Enduro/X 2.5
+     */
+    
+    /* sa.sa_handler = sign_chld_handler; they are blocked... */
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sigaction (SIGCHLD, &sa, 0);
+    
+    /* Block the notification signal (do not need it here...) */
+    
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
+    }
+    
+    pthread_attr_init(&pthread_custom_attr);
+    pthread_attr_init(&pthread_custom_attr_dog);
+    
+    /* set some small stacks size, 1M should be fine! */
+    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    pthread_create(&M_signal_thread, &pthread_custom_attr, 
+            check_child_exit, NULL);
+
+    M_signal_thread_set = TRUE;
+}
+
+
+/**
+ * Un-initialize sigchild monitor thread
+ * @return
+ */
+public void ndrxd_sigchld_uninit(void)
+{
+    char *fn = "ndrxd_sigchld_uninit";
+
+    NDRX_LOG(log_debug, "%s - enter", fn);
+    
+    if (!M_signal_thread_set)
+    {
+        NDRX_LOG(log_debug, "Signal thread was not initialised, nothing todo...");
+        goto out;
+    }
+
+
+    NDRX_LOG(log_debug, "About to cancel signal thread");
+    
+    /* TODO: have a counter for number of sets, so that we can do 
+     * un-init...
+     */
+    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+    else
+    {
+        void * res = SUCCEED;
+        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        {
+            NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
+                    strerror(errno));
+        }
+
+        if (res == PTHREAD_CANCELED)
+        {
+            NDRX_LOG(log_info, "Signal thread canceled ok!")
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Signal thread failed to cancel "
+                    "(should not happen!!)");
+        }
+    }
+    
+    M_signal_thread_set = FALSE;
+    NDRX_LOG(log_debug, "finished ok");
+out:
+    return;
+}
 
 public int cpm_killall(void)
 {
@@ -128,7 +294,7 @@ if (i<2) /*no wait for killl... */
     ndrx_timer_reset(&t);
     do
     {
-        sign_chld_handler(0);
+        /* sign_chld_handler(0); */
         
         EXHASH_ITER(hh, G_clt_config, c, ct)
         {
@@ -171,7 +337,7 @@ public int cpm_kill(cpm_process_t *c)
     ndrx_timer_reset(&t);
     do
     {
-        sign_chld_handler(0);
+        /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
@@ -190,7 +356,7 @@ public int cpm_kill(cpm_process_t *c)
     ndrx_timer_reset(&t);
     do
     {
-        sign_chld_handler(0);
+        /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
@@ -209,7 +375,7 @@ public int cpm_kill(cpm_process_t *c)
     ndrx_timer_reset(&t);
     do
     {
-        sign_chld_handler(0);
+        /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
