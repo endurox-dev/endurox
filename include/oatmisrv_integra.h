@@ -1,7 +1,7 @@
 /* 
-** ATMI Server level Object API header (auto-generated)
+** ATMI Server integration level Object API header (auto-generated)
 **
-** @file oatmisrv.h
+** @file oatmisrv_integra.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,8 +29,8 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef __OATMISRV_H
-#define __OATMISRV_H
+#ifndef __OATMISRV_INTEGRA_H
+#define __OATMISRV_INTEGRA_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -46,20 +46,6 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
-extern NDRX_API void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, long len, long flags);
-extern NDRX_API int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname);
-extern NDRX_API void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
-extern NDRX_API char * Otpsrvgetctxdata(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags);
-extern NDRX_API void Otpcontinue(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
-extern NDRX_API int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd);
-extern NDRX_API int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)(void));
-extern NDRX_API int Otpext_delperiodcb(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void));
-extern NDRX_API int Otpext_delb4pollcb(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpgetsrvid(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Ondrx_main(TPCONTEXT_T *p_ctxt, int argc, char **argv);
-#endif  /* __OATMISRV_H */
+extern NDRX_API int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags);
+#endif  /* __OATMISRV_INTEGRA_H */
 

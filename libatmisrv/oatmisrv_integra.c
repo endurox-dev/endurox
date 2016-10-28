@@ -1,7 +1,7 @@
 /* 
-** ATMI Server level Object API header (auto-generated)
+** ATMI Server Integration Level Object API code (auto-generated)
 **
-** @file oatmisrv.h
+**  oatmisrv_integra.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,16 +29,22 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef __OATMISRV_H
-#define __OATMISRV_H
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-/*---------------------------Includes-----------------------------------*/
+#include <string.h>
+#include <stdio.h>
 #include <stdint.h>
-#include <ubf.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <errno.h>
+#include <dlfcn.h>
+
 #include <atmi.h>
+#include <atmi_shm.h>
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <ndrxd.h>
+#include <ndrxdcmn.h>
+#include <userlog.h>
+#include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -46,20 +52,32 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
-extern NDRX_API void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, long len, long flags);
-extern NDRX_API int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname);
-extern NDRX_API void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
-extern NDRX_API char * Otpsrvgetctxdata(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags);
-extern NDRX_API void Otpcontinue(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
-extern NDRX_API int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd);
-extern NDRX_API int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)(void));
-extern NDRX_API int Otpext_delperiodcb(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void));
-extern NDRX_API int Otpext_delb4pollcb(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Otpgetsrvid(TPCONTEXT_T *p_ctxt);
-extern NDRX_API int Ondrx_main(TPCONTEXT_T *p_ctxt, int argc, char **argv);
-#endif  /* __OATMISRV_H */
+
+/**
+ * Object-API wrapper for ndrx_main_integra() - Auto generated.
+ */
+public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! ndrx_main_integra() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = ndrx_main_integra(argc, argv, in_tpsvrinit, in_tpsvrdone, flags);
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! ndrx_main_integra() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
 

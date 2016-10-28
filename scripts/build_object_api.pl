@@ -74,7 +74,11 @@ sub open_h {
     my $title = "";
     my $defs = "";
 
-    if ($M_name=~/^oatmisrv$/)
+    if ($M_name=~/^oatmisrv_integra/)
+    {
+        $title = "ATMI Server integration level Object API header (auto-generated)";
+    }
+    elsif ($M_name=~/^oatmisrv$/)
     {
         $title = "ATMI Server level Object API header (auto-generated)";
     }
@@ -171,6 +175,10 @@ sub open_c {
     if ($M_name=~/^oatmisrv$/)
     {
         $title = "ATMI Server Level Object API code (auto-generated)";
+    }
+    if ($M_name=~/^oatmisrv_integra$/)
+    {
+        $title = "ATMI Server Integration Level Object API code (auto-generated)";
     }
     if ($M_name=~/^oatmi$/)
     {
@@ -357,6 +365,7 @@ sub write_c {
     #
     if ($M_name=~/^oatmi$/ 
         || $M_name=~/^oatmisrv$/
+        || $M_name=~/^oatmisrv_integra$/
         )
     {
         if ($func_name=~/^tpcall$/ 
@@ -618,8 +627,16 @@ NEXT: while( my $line = <$info>)
         #
         # Skip the specific symbols, per output module
         #
-
-        if ($M_name =~ m/^oatmisrv$/)
+        if ($M_name =~ m/^oatmisrv_integra$/)
+        {
+              # Skip the names from ATMI level
+            if ($func_name !~ m/ndrx_main_integra/)
+            {
+                print "skip - next\n";
+                next NEXT;
+            }
+        }
+        elsif ($M_name =~ m/^oatmisrv$/)
         {
             # Include only server commands for ATMISRV level
             if ($func_name !~ m/tpreturn/
@@ -631,8 +648,9 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpext_addb4pollcb/
                 && $func_name !~ m/tpsrvsetctxdata/
                 && $func_name !~ m/tpext_addperiodcb/
-                && $func_name !~ m/ndrx_main/ 
-                && $func_name !~ m/ndrx_main_integra/ 
+                && $func_name !~ m/^ndrx_main$/
+                # This goes to integration module
+                #&& $func_name !~ m/ndrx_main_integra/ 
                 && $func_name !~ m/tpcontinue/
                 && $func_name !~ m/tpext_delb4pollcb/
                 && $func_name !~ m/tpext_delperiodcb/
@@ -652,7 +670,7 @@ NEXT: while( my $line = <$info>)
             # Skip the names from ATMI level
             if ($line =~ m/G_tpsvrinit__/
                 || $line =~ m/G_tpsvrdone__/ 
-                || $func_name =~ m/ndrx_main/ 
+                || $func_name =~ m/ndrx_main$/
                 || $func_name =~ m/ndrx_main_integra/ 
                 || $func_name =~ m/ndrx_atmi_tls_get/
                 || $func_name =~ m/ndrx_atmi_tls_set/
@@ -676,19 +694,6 @@ NEXT: while( my $line = <$info>)
                 || $func_name =~ m/tpsvrdone/
                 || $func_name =~ m/tpcontinue/
                 || $func_name =~ m/tpext_delperiodcb/
-                )
-            {
-                print "skip - next\n";
-                next NEXT;
-            }
-        }
-        elsif ($M_name =~ m/^oubf$/)
-        {
-            # Skip some bits from UBF level
-            if ($func_name =~ m/^ndrx_ubf_tls_get$/
-                && $func_name =~ m/^ndrx_ubf_tls_set$/
-                && $func_name =~ m/^ndrx_ubf_tls_free$/
-                && $func_name =~ m/^ndrx_ubf_tls_new$/
                 )
             {
                 print "skip - next\n";

@@ -460,31 +460,3 @@ out:
 }
 
 
-/**
- * Object-API wrapper for ndrx_main_integra() - Auto generated.
- */
-public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
-{
-    int ret = SUCCEED;
-    
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
-    {
-        userlog("ERROR! ndrx_main_integra() failed to set context");
-        FAIL_OUT(ret);
-    }
-    
-    ret = ndrx_main_integra(argc, argv, in_tpsvrinit, in_tpsvrdone, flags);
-
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
-    {
-        userlog("ERROR! ndrx_main_integra() failed to get context");
-        FAIL_OUT(ret);
-    }
-out:    
-    return ret; 
-}
-
-
