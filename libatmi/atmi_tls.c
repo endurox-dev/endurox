@@ -243,6 +243,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     tls->errbuf[0] = EOS;
     /* xa.c */
     tls->M_is_curtx_init = FALSE;
+    memset(&tls->G_atmi_xa_curtx, 0, sizeof(tls->G_atmi_xa_curtx));
     
     pthread_mutex_init(&tls->mutex, NULL);
     
