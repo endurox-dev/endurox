@@ -1,7 +1,7 @@
 /* 
-** Debug commons
+** Darwin Abstraction Layer (DAL)
 **
-** @file ndebugcmn.h
+** @file sys_darwin.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,43 +29,85 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NDEBUGCMN_H
-#define	NDEBUGCMN_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
 /*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
 #include <stdio.h>
-#include <limits.h>
-#include <stdarg.h>
+#include <stdlib.h>
+
 #include <unistd.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <memory.h>
+#include <errno.h>
+#include <signal.h>
+#include <limits.h>
+#include <pthread.h>
+#include <string.h>
+#include <mach/mach_time.h>
+
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <nstdutil.h>
+#include <limits.h>
+#include <sys_unix.h>
+#include <utlist.h>
+
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define MT_NANO (+1.0E-9)
+#define MT_GIGA UINT64_C(1000000000)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/* Create main debug structure */
-typedef struct
-{
-    int   level;
-    FILE *dbg_f_ptr;
-    char filename[PATH_MAX];
-    pid_t pid;
-    int buf_lines;
-    int buffer_size;
-    int lines_written;
-    char module[4+1]; /* 4 symbols of the module  */
-    int is_user; /* set to 1 if we run in user log mode, 2 if request file */
-    char code; /* code of the logger */
-} ndrx_debug_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+/* TODO create a list of timers,*/
+static double mt_timebase = 0.0;
+static uint64_t mt_timestart = 0;
 /*---------------------------Prototypes---------------------------------*/
-#ifdef	__cplusplus
-}
-#endif
 
-#endif	/* NDEBUGCMN_H */
+/**
+ * Return list of message queues (actually it is list of named pipes
+ * as work around for missing posix queue listing functions.
+ */
+public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+{
+    return ndrx_sys_folder_list(qpath, return_status);
+}
+
+
+
+/* TODO be more careful in a multithreaded environement */
+public int clock_gettime(clockid_t clk_id, struct timespec *tp)
+{
+    kern_return_t retval = KERN_SUCCESS;
+    if( clk_id == TIMER_ABSTIME)
+    {
+        if (!mt_timestart) { // only one timer, initilized on the first call to the TIMER
+            mach_timebase_info_data_t tb = { 0 };
+            mach_timebase_info(&tb);
+            mt_timebase = tb.numer;
+            mt_timebase /= tb.denom;
+            mt_timestart = mach_absolute_time();
+        }
+
+        double diff = (mach_absolute_time() - mt_timestart) * mt_timebase;
+        tp->tv_sec = diff * MT_NANO;
+        tp->tv_nsec = diff - (tp->tv_sec * MT_GIGA);
+    }
+    else // other clk_ids are mapped to the coresponding mach clock_service
+    {
+        clock_serv_t cclock;
+        mach_timespec_t mts;
+
+        host_get_clock_service(mach_host_self(), clk_id, &cclock);
+        retval = clock_get_time(cclock, &mts);
+        mach_port_deallocate(mach_task_self(), cclock);
+
+        tp->tv_sec = mts.tv_sec;
+        tp->tv_nsec = mts.tv_nsec;
+    }
+
+    return retval;
+}
 

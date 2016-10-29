@@ -36,8 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fmemopen.h"
-
 struct fmem_cookie {
   void *fmc_buffer;
   size_t fmc_index;
