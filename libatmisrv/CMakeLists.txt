@@ -119,7 +119,7 @@ install (TARGETS
 #################################################################################
 # Have some package config, usable for golang for example...
 #################################################################################
-SET(ATMISRV_INTEG_LIBS "-latmi -lubf -lnstd -lpthread -lm")
+SET(ATMISRV_INTEG_LIBS "-latmisrvinteg -latmi -lubf -lnstd -lpthread -lm")
 
 foreach(LIB ${RT_LIB})
     list(APPEND ATMISRV_INTEG_LIBS "-l${LIB}")
