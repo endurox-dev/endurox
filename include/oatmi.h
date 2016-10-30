@@ -86,7 +86,7 @@ extern NDRX_API int Otpenqueueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid,
 extern NDRX_API int Otpdequeueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 extern NDRX_API int Otpgetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T *context, long flags);
 extern NDRX_API int Otpsetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context, long flags);
-extern NDRX_API TPCONTEXT_T Otpnewctxt(TPCONTEXT_T *p_ctxt);
+extern NDRX_API TPCONTEXT_T Otpnewctxt(TPCONTEXT_T *p_ctxt, int auto_destroy, int auto_set);
 extern NDRX_API void Otpfreectxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context);
 extern NDRX_API int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *filename, char *filesvc);
 extern NDRX_API int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename, int bufsize);

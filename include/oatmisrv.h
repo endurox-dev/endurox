@@ -61,6 +61,5 @@ extern NDRX_API int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(vo
 extern NDRX_API int Otpext_delb4pollcb(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpgetsrvid(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Ondrx_main(TPCONTEXT_T *p_ctxt, int argc, char **argv);
-extern NDRX_API int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags);
 #endif  /* __OATMISRV_H */
 

@@ -71,9 +71,11 @@ elseif (${CMAKE_OS_NAME} STREQUAL "AIX")
 elseif (${CMAKE_OS_NAME} STREQUAL "FREEBSD")
     SET(NSTD_SYS "sys_freebsd.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
+    SET(NSTD_SYS_3 "fmemopen-funopen.c")
 elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
     SET(NSTD_SYS "sys_darwin.c")
-    SET(NSTD_SYS_3 "sys_emqueue.c")
+    SET(NSTD_SYS_2 "sys_emqueue.c")
+    SET(NSTD_SYS_3 "fmemopen-funopen.c")
 endif ()
 
 

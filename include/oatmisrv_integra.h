@@ -1,7 +1,7 @@
 /* 
-** Debug commons
+** ATMI Server integration level Object API header (auto-generated)
 **
-** @file ndebugcmn.h
+** @file oatmisrv_integra.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,43 +29,23 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NDEBUGCMN_H
-#define	NDEBUGCMN_H
+#ifndef __OATMISRV_INTEGRA_H
+#define __OATMISRV_INTEGRA_H
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
-#include <stdio.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <unistd.h>
+#include <stdint.h>
+#include <ubf.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/* Create main debug structure */
-typedef struct
-{
-    int   level;
-    FILE *dbg_f_ptr;
-    char filename[PATH_MAX];
-    pid_t pid;
-    int buf_lines;
-    int buffer_size;
-    int lines_written;
-    char module[4+1]; /* 4 symbols of the module  */
-    int is_user; /* set to 1 if we run in user log mode, 2 if request file */
-    char code; /* code of the logger */
-} ndrx_debug_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* NDEBUGCMN_H */
+extern NDRX_API int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags);
+#endif  /* __OATMISRV_INTEGRA_H */
 

@@ -1047,7 +1047,7 @@ out:
 
 
 /**
- * Object-API wrapper for Btprealloc() - Auto generated.
+ * Object-API wrapper for Brealloc() - Auto generated.
  */
 public UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v) 
 {
@@ -1057,7 +1057,7 @@ public UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
     {
-        userlog("ERROR! Btprealloc() failed to set context");
+        userlog("ERROR! Brealloc() failed to set context");
         ret = NULL;
         goto out;
     }
@@ -1067,7 +1067,7 @@ public UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
         CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
     {
-        userlog("ERROR! Btprealloc() failed to get context");
+        userlog("ERROR! Brealloc() failed to get context");
         ret = NULL;
         goto out;
     }

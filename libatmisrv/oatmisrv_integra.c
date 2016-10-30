@@ -1,7 +1,7 @@
 /* 
-** Debug commons
+** ATMI Server Integration Level Object API code (auto-generated)
 **
-** @file ndebugcmn.h
+**  oatmisrv_integra.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,43 +29,55 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NDEBUGCMN_H
-#define	NDEBUGCMN_H
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-/*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
+#include <string.h>
 #include <stdio.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <unistd.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <errno.h>
+#include <dlfcn.h>
+
+#include <atmi.h>
+#include <atmi_shm.h>
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <ndrxd.h>
+#include <ndrxdcmn.h>
+#include <userlog.h>
+#include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/* Create main debug structure */
-typedef struct
-{
-    int   level;
-    FILE *dbg_f_ptr;
-    char filename[PATH_MAX];
-    pid_t pid;
-    int buf_lines;
-    int buffer_size;
-    int lines_written;
-    char module[4+1]; /* 4 symbols of the module  */
-    int is_user; /* set to 1 if we run in user log mode, 2 if request file */
-    char code; /* code of the logger */
-} ndrx_debug_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-#ifdef	__cplusplus
-}
-#endif
 
-#endif	/* NDEBUGCMN_H */
+/**
+ * Object-API wrapper for ndrx_main_integra() - Auto generated.
+ */
+public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
+{
+    int ret = SUCCEED;
+    
+    /* set the context */
+    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! ndrx_main_integra() failed to set context");
+        FAIL_OUT(ret);
+    }
+    
+    ret = ndrx_main_integra(argc, argv, in_tpsvrinit, in_tpsvrdone, flags);
+
+    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    {
+        userlog("ERROR! ndrx_main_integra() failed to get context");
+        FAIL_OUT(ret);
+    }
+out:    
+    return ret; 
+}
+
 

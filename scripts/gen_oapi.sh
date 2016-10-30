@@ -42,8 +42,13 @@ mv oatmi.c ../libatmi
 ################################################################################
 # ATMI Server level
 ################################################################################
+# Normal API
 ./build_object_api.pl -i ../include/xatmi.h -oatmisrv
 mv oatmisrv.h ../include
 mv oatmisrv.c ../libatmisrv
+# Integration API
+./build_object_api.pl -i ../include/xatmi.h -oatmisrv_integra
+mv oatmisrv_integra.h ../include
+mv oatmisrv_integra.c ../libatmisrv
 
 echo "Done..."

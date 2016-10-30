@@ -84,6 +84,7 @@ add_library (atmisrvinteg SHARED
                 pollextension.c
                 integra.c
                 oatmisrv.c
+                oatmisrv_integra.c
    	    )
 
 add_library (atmisrvdum SHARED
