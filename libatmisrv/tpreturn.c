@@ -424,6 +424,7 @@ public void _tpforward (char *svc, char *data,
         }
 
         _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
+        userlog("%s: Failed to send, os err: %s", fn, strerror(ret));
         ret=FAIL;
 
         /* we should reply back, that call failed, so that client does not wait */
