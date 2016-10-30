@@ -204,7 +204,7 @@ extern int clock_gettime(clockid_t clk_id, struct timespec *tp);
 #endif
 
 #if defined(EX_OS_DARWIN) || defined(EX_OS_FREEBSD)
-extern NDRX_API FILE * fmemopen(void *buffer, size_t len, const char *mode)
+extern NDRX_API FILE * fmemopen(void *buffer, size_t len, const char *mode);
 #endif
 
 /* poll ops */

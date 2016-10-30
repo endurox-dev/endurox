@@ -55,6 +55,7 @@ install (FILES
     ndrx_config.h
     sys_unix.h
     sys_mqueue.h 
+    sys_emqueue.h
     oubf.h
     odebug.h
     ondebug.h

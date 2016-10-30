@@ -154,8 +154,10 @@ configure_file ("${PROJECT_SOURCE_DIR}/include/ndrx_config.h.in"
 ################################################################################
 get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
 
-if ("${LIB64}" STREQUAL "TRUE")
-    set(LIB_SUFFIX 64)
+if(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    set(LIB_SUFFIX "")
+elseif ("${LIB64}" STREQUAL "TRUE")
+    set(LIB_SUFFX 64)
 else()
     set(LIB_SUFFIX "")
 endif()
