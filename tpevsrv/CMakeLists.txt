@@ -51,7 +51,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Executables ###############################
 add_executable (tpevsrv tpevsv.c ../libatmisrv/rawmain_integra.c)
-target_link_libraries (tpevsrv m pthread atmisrvinteg atmi ubf nstd ${RT_LIB})
+target_link_libraries (tpevsrv atmisrvinteg atmi ubf nstd ${RT_LIB} pthread m)
 set_target_properties(tpevsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

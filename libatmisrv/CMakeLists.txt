@@ -115,3 +115,23 @@ install (TARGETS
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries
     )
+
+#################################################################################
+# Have some package config, usable for golang for example...
+#################################################################################
+SET(ATMISRV_INTEG_LIBS "-latmi -lubf -lnstd -lpthread -lm")
+
+foreach(LIB ${RT_LIB})
+    list(APPEND ATMISRV_INTEG_LIBS "-l${LIB}")
+endforeach()
+
+string(REPLACE ";" " " ATMISRV_INTEG_LIBS "${ATMISRV_INTEG_LIBS}")
+
+
+# Produce a pkg-config file
+configure_file("atmisrvinteg.pc.in" "atmisrvinteg.pc" @ONLY)
+
+install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/atmisrvinteg.pc"
+        DESTINATION "${INSTALL_LIB_DIR}/pkgconfig")
+#################################################################################
+
