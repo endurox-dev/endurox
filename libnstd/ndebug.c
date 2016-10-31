@@ -702,9 +702,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
 {
     va_list ap;
     char line_start[128];
-    long ldate, ltime;
-    struct timeval  time_val;
-    struct timezone time_zone;
+    long ldate, ltime, lusec;
     char *line_print;
     int len;
     ndrx_debug_t *org_ptr = dbg_ptr;
@@ -725,13 +723,13 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     else
         line_print = (char *)file;
     
-    gettimeofday( &time_val, &time_zone );
-    ndrx_get_dt_local(&ldate, &ltime);
+
+    ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
     sprintf(line_start, "%c:%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
         thread_nr, ldate, ltime, 
-        (int)(time_val.tv_usec/1000), line_print, line);
+        (int)(lusec/1000), line_print, line);
     
     va_start(ap, fmt);    
     fputs(line_start, dbg_ptr->dbg_f_ptr);

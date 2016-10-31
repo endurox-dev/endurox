@@ -220,8 +220,9 @@ public unsigned long long ndrx_get_micro_resolution_for_sec(void)
  * Return date/time local 
  * @param p_date - ptr to store long date, format YYYYMMDD
  * @param p_time - ptr to store long time, format HHMISS
+ * @param p_usec - ptr to store microseconds
  */
-public void ndrx_get_dt_local(long *p_date, long *p_time)
+public void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
     struct tm       *p_tm;
     long            lret;
@@ -232,6 +233,7 @@ public void ndrx_get_dt_local(long *p_date, long *p_time)
     p_tm = localtime(&timeval.tv_sec);
     *p_time = 10000L*p_tm->tm_hour+100*p_tm->tm_min+1*p_tm->tm_sec;
     *p_date = 10000L*(1900 + p_tm->tm_year)+100*(1+p_tm->tm_mon)+1*(p_tm->tm_mday);
+    *p_usec = timeval.tv_usec;
 
     return;
 }

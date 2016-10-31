@@ -66,13 +66,13 @@ public int userlog (char *data, ...)
     int fopened=0;
     struct timeval  time_val;
     char full_name[FILENAME_MAX] = {EOS};
-    long ldate, ltime;
+    long ldate, ltime, lusec;
     pid_t pid;
     va_list ap;
 
     gettimeofday( &time_val, NULL );
     
-    ndrx_get_dt_local(&ldate, &ltime);
+    ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
     if (first)
     {

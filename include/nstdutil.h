@@ -62,7 +62,7 @@ struct charstrmap
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time);
+extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
 extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
 extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
 extern NDRX_API char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts);
