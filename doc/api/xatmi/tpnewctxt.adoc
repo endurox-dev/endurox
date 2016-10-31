@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
+TPCONTEXT_T tpnewctxt(int 'auto_destroy', int 'auto_set')
 
 Link with '-latmi -lubf -lnstd -lpthread -lrt -lm -ldl'
 
