@@ -71,6 +71,8 @@ extern char *G_cmd_argv[MAX_ARGS];
             Xbuf[Xlen-1] = '+';\
             Xbuf[Xlen] = EOS;\
         }
+
+#define XADMIN_INVALID_OPTIONS_MSG      "Invalid options, see `help'.\n"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**

@@ -155,7 +155,7 @@ public int chk_confirm_clopt(char *message, int argc, char **argv)
     /* parse command line */
     if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
     {
-        fprintf(stderr, "Invalid options, see `help'.");
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         FAIL_OUT(ret);
     }
     

@@ -78,7 +78,7 @@ public int cmd_unadv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     /* parse command line */
     if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
     {
-        fprintf(stderr, "Invalid options, see `help'.");
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         FAIL_OUT(ret);
     }
     
