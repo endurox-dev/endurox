@@ -12,13 +12,17 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-TPCONTEXT_T tpnewctxt(void)
+TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
 
 Link with '-latmi -lubf -lnstd -lpthread -lrt -lm -ldl'
 
 DESCRIPTION
 -----------
-Function allocates new XATMI context. This includes allocation of standard library TLS (NSTD), UBF library TLS (UBF) and ATMI library TLS. All is stored in object to which return value ('TPCONTEXT_T' type) points to.
+Function allocates new XATMI context. This includes allocation of standard library TLS (NSTD), UBF library TLS (UBF) and ATMI library TLS. All is stored in object to which return value ('TPCONTEXT_T' type) points to. 
+
+The flag 'auto_destroy' if set to *1*, will make the allocated context to be automatically destroyed when thread exits (if at exit point of time this context was associated with it). To disable this functionality, set value to *0*.
+
+if 'auto_set' flag is set to *1*, current thread is automatically associated with newly allocated context. To disable this functionality, use value *0*.
 
 
 RETURN VALUE
