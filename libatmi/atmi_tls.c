@@ -71,8 +71,6 @@ public void * ndrx_atmi_tls_get(long priv_flags)
 {
     atmi_tls_t *tmp = G_atmi_tls;
     
-    G_atmi_tls = NULL;
-    
     if (NULL!=tmp)
     {
         /*
@@ -103,6 +101,9 @@ public void * ndrx_atmi_tls_get(long priv_flags)
                 goto out;
 #endif
             }
+            
+            /* Disable curren thread TLS... */
+            G_atmi_tls = NULL;
         }
 
         /* unlock object */
@@ -241,6 +242,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     tls->M_atmi_error = TPMINVAL;
     tls->M_atmi_reason = NDRX_XA_ERSN_NONE;
     tls->errbuf[0] = EOS;
+    tls->is_associated_with_thread = FALSE;
     /* xa.c */
     tls->M_is_curtx_init = FALSE;
     memset(&tls->G_atmi_xa_curtx, 0, sizeof(tls->G_atmi_xa_curtx));
@@ -379,13 +381,16 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         FAIL_OUT(ret);
     }
     
-    if (priv_flags & CTXT_PRIV_ATMI 
-            && SUCCEED!=ndrx_atmi_tls_set((void *)ctx, flags, priv_flags))
+    if (priv_flags & CTXT_PRIV_ATMI)
     {
-        _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libatmi context");
-        FAIL_OUT(ret);
+        if (SUCCEED!=ndrx_atmi_tls_set((void *)ctx, flags, priv_flags))
+        {
+            _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libatmi context");
+            FAIL_OUT(ret);
+        }
+        
+        ctx->is_associated_with_thread = TRUE;
     }
-    
     
 out:
     return ret;
@@ -418,6 +423,9 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
     if (priv_flags & CTXT_PRIV_ATMI)
     {
         ctx = (atmi_tls_t *)ndrx_atmi_tls_get(priv_flags);
+        
+        /* Dis associate */
+        ctx->is_associated_with_thread = FALSE;
     }
     else   
     {

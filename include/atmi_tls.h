@@ -108,6 +108,8 @@ typedef struct
     nstd_tls_t *p_nstd_tls;
     ubf_tls_t *p_ubf_tls;
     
+    int is_associated_with_thread; /* Is current context associated with thread? */
+    
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */

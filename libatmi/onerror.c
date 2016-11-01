@@ -38,7 +38,7 @@
 #include <dlfcn.h>
 
 #include <atmi.h>
-#include <atmi_shm.h>
+#include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrxd.h>
@@ -58,25 +58,39 @@
  */
 public char * ONstrerror(TPCONTEXT_T *p_ctxt, int err) 
 {
+    int did_set = FALSE;
     char * ret = NULL;
     
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! Nstrerror() failed to set context");
-        ret = NULL;
-        goto out;
+        /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Nstrerror() failed to set context");
+            ret = NULL;
+            goto out;
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Nstrerror() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = Nstrerror(err);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! Nstrerror() failed to get context");
-        ret = NULL;
-        goto out;
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+                CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Nstrerror() failed to get context");
+            ret = NULL;
+            goto out;
+        }
     }
 out:    
     return ret; 
@@ -88,25 +102,39 @@ out:
  */
 public int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt) 
 {
+    int did_set = FALSE;
     int * ret = NULL;
     
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! _Nget_Nerror_addr() failed to set context");
-        ret = NULL;
-        goto out;
+        /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! _Nget_Nerror_addr() failed to set context");
+            ret = NULL;
+            goto out;
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! _Nget_Nerror_addr() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = _Nget_Nerror_addr();
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! _Nget_Nerror_addr() failed to get context");
-        ret = NULL;
-        goto out;
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+                CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! _Nget_Nerror_addr() failed to get context");
+            ret = NULL;
+            goto out;
+        }
     }
 out:    
     return ret; 

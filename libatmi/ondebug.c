@@ -38,7 +38,7 @@
 #include <dlfcn.h>
 
 #include <atmi.h>
-#include <atmi_shm.h>
+#include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrxd.h>
@@ -57,6 +57,8 @@
  */
 public void Otplogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr1, void *ptr2, int len) 
 {
+    int did_set = FALSE;
+
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
         CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
@@ -80,6 +82,8 @@ out:
  */
 public void Otplogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr, int len) 
 {
+    int did_set = FALSE;
+
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
         CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
@@ -103,6 +107,8 @@ out:
  */
 public void Otplog(TPCONTEXT_T *p_ctxt, int lev, char *message) 
 {
+    int did_set = FALSE;
+
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
         CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
@@ -128,22 +134,36 @@ out:
 public int Otploggetreqfile(TPCONTEXT_T *p_ctxt, char *filename, int bufsize) 
 {
     int ret = SUCCEED;
-    
+    int did_set = FALSE;
+
     /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tploggetreqfile() failed to set context");
-        FAIL_OUT(ret);
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tploggetreqfile() failed to set context");
+            FAIL_OUT(ret);
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tploggetreqfile() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = tploggetreqfile(filename, bufsize);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tploggetreqfile() failed to get context");
-        FAIL_OUT(ret);
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tploggetreqfile() failed to get context");
+            FAIL_OUT(ret);
+        }
     }
 out:    
     return ret; 
@@ -156,22 +176,36 @@ out:
 public int Otplogconfig(TPCONTEXT_T *p_ctxt, int logger, int lev, char *debug_string, char *module, char *new_file) 
 {
     int ret = SUCCEED;
-    
+    int did_set = FALSE;
+
     /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogconfig() failed to set context");
-        FAIL_OUT(ret);
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogconfig() failed to set context");
+            FAIL_OUT(ret);
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogconfig() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = tplogconfig(logger, lev, debug_string, module, new_file);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogconfig() failed to get context");
-        FAIL_OUT(ret);
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogconfig() failed to get context");
+            FAIL_OUT(ret);
+        }
     }
 out:    
     return ret; 
@@ -182,6 +216,8 @@ out:
  */
 public void Otplogclosereqfile(TPCONTEXT_T *p_ctxt) 
 {
+    int did_set = FALSE;
+
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
         CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
@@ -205,6 +241,8 @@ out:
  */
 public void Otplogclosethread(TPCONTEXT_T *p_ctxt) 
 {
+    int did_set = FALSE;
+
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
         CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
@@ -228,6 +266,8 @@ out:
  */
 public void Otplogsetreqfile_direct(TPCONTEXT_T *p_ctxt, char *filename) 
 {
+    int did_set = FALSE;
+
     /* set the context */
     if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
         CTXT_PRIV_NSTD | CTXT_PRIV_IGN))

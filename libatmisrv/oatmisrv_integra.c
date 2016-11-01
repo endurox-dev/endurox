@@ -38,7 +38,7 @@
 #include <dlfcn.h>
 
 #include <atmi.h>
-#include <atmi_shm.h>
+#include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrxd.h>
@@ -59,22 +59,36 @@
 public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
 {
     int ret = SUCCEED;
-    
+    int did_set = FALSE;
+
     /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! ndrx_main_integra() failed to set context");
-        FAIL_OUT(ret);
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! ndrx_main_integra() failed to set context");
+            FAIL_OUT(ret);
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! ndrx_main_integra() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = ndrx_main_integra(argc, argv, in_tpsvrinit, in_tpsvrdone, flags);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! ndrx_main_integra() failed to get context");
-        FAIL_OUT(ret);
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! ndrx_main_integra() failed to get context");
+            FAIL_OUT(ret);
+        }
     }
 out:    
     return ret; 
