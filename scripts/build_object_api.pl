@@ -147,6 +147,7 @@ extern "C" {
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/${defs}
 /*---------------------------Enums--------------------------------------*/
@@ -238,7 +239,7 @@ my $message = <<"END_MESSAGE";
 #include <dlfcn.h>
 
 #include <atmi.h>
-#include <atmi_shm.h>
+#include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrxd.h>
@@ -434,22 +435,36 @@ $message = <<"END_MESSAGE";
 public $sig 
 {
     $func_type ret = SUCCEED;
-    
+    int did_set = FALSE;
+
     /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        $M_priv_flags))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! $func_name() failed to set context");
-        FAIL_OUT(ret);
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to set context");
+            FAIL_OUT(ret);
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! $func_name() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = $invoke;
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
-        $M_priv_flags))
+    if (did_set)
     {
-        userlog("ERROR! $func_name() failed to get context");
-        FAIL_OUT(ret);
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to get context");
+            FAIL_OUT(ret);
+        }
     }
 out:    
     return ret; 
@@ -469,19 +484,36 @@ $message = <<"END_MESSAGE";
  */
 public $sig 
 {
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        $M_priv_flags))
+    int did_set = FALSE;
+
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! $func_name() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! $func_name() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     $invoke;
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        $M_priv_flags))
+    if (did_set)
     {
-        userlog("ERROR! $func_name() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to get context");
+        }
     }
 out:    
     return;
@@ -506,25 +538,39 @@ $message = <<"END_MESSAGE";
  */
 public $sig 
 {
+    int did_set = FALSE;
     $func_type ret = NULL;
     
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        $M_priv_flags))
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! $func_name() failed to set context");
-        ret = NULL;
-        goto out;
+        /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to set context");
+            ret = NULL;
+            goto out;
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! $func_name() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
     }
     
     ret = $invoke;
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        $M_priv_flags))
+    if (did_set)
     {
-        userlog("ERROR! $func_name() failed to get context");
-        ret = NULL;
-        goto out;
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+                $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to get context");
+            ret = NULL;
+            goto out;
+        }
     }
 out:    
     return ret; 
@@ -546,24 +592,38 @@ $message = <<"END_MESSAGE";
 public $sig 
 {
     $func_type ret = BBADFLDID;
-    
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-        $M_priv_flags))
+    int did_set = FALSE;
+ 
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! $func_name() failed to set context");
-        ret = BBADFLDID;
-        goto out;
+        /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to set context");
+            ret = BBADFLDID;
+            goto out;
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! $func_name() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     ret = $invoke;
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        $M_priv_flags))
+    if (did_set)
     {
-        userlog("ERROR! $func_name() failed to get context");
-        ret = BBADFLDID;
-        goto out;
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            $M_priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to get context");
+            ret = BBADFLDID;
+            goto out;
+        }
     }
 out:    
     return ret; 

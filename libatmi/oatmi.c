@@ -313,19 +313,34 @@ public void Otpfree(TPCONTEXT_T *p_ctxt, char *ptr)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tpfree() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tpfree() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tpfree() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tpfree(ptr);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tpfree() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tpfree() failed to get context");
+        }
     }
 out:    
     return;
@@ -1648,19 +1663,34 @@ public void Otpfreectxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tpfreectxt() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+        {
+            userlog("ERROR! tpfreectxt() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tpfreectxt() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tpfreectxt(context);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+    if (did_set)
     {
-        userlog("ERROR! tpfreectxt() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+        {
+            userlog("ERROR! tpfreectxt() failed to get context");
+        }
     }
 out:    
     return;
@@ -1799,19 +1829,34 @@ public void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_ub
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogprintubf() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogprintubf() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogprintubf() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplogprintubf(lev, title, p_ub);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogprintubf() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogprintubf() failed to get context");
+        }
     }
 out:    
     return;

@@ -951,19 +951,34 @@ public void OB_error(TPCONTEXT_T *p_ctxt, char *str)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! B_error() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! B_error() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! B_error() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     B_error(str);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! B_error() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! B_error() failed to get context");
+        }
     }
 out:    
     return;
@@ -2130,19 +2145,34 @@ public void OBboolpr(TPCONTEXT_T *p_ctxt, char * tree, FILE *outf)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! Bboolpr() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bboolpr() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Bboolpr() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     Bboolpr(tree, outf);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! Bboolpr() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bboolpr() failed to get context");
+        }
     }
 out:    
     return;
@@ -2239,19 +2269,34 @@ public void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! Btreefree() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Btreefree() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Btreefree() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     Btreefree(tree);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! Btreefree() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Btreefree() failed to get context");
+        }
     }
 out:    
     return;
@@ -2772,19 +2817,34 @@ public void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! ndrx_ubf_tls_free() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! ndrx_ubf_tls_free() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! ndrx_ubf_tls_free() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     ndrx_ubf_tls_free(data);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! ndrx_ubf_tls_free() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! ndrx_ubf_tls_free() failed to get context");
+        }
     }
 out:    
     return;

@@ -59,19 +59,34 @@ public void Otplogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *pt
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogdumpdiff() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogdumpdiff() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogdumpdiff() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplogdumpdiff(lev, comment, ptr1, ptr2, len);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogdumpdiff() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogdumpdiff() failed to get context");
+        }
     }
 out:    
     return;
@@ -84,19 +99,34 @@ public void Otplogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr, i
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogdump() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogdump() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogdump() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplogdump(lev, comment, ptr, len);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogdump() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogdump() failed to get context");
+        }
     }
 out:    
     return;
@@ -109,19 +139,34 @@ public void Otplog(TPCONTEXT_T *p_ctxt, int lev, char *message)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplog() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplog() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplog() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplog(lev, message);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplog() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplog() failed to get context");
+        }
     }
 out:    
     return;
@@ -218,19 +263,34 @@ public void Otplogclosereqfile(TPCONTEXT_T *p_ctxt)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogclosereqfile() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogclosereqfile() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogclosereqfile() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplogclosereqfile();
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogclosereqfile() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogclosereqfile() failed to get context");
+        }
     }
 out:    
     return;
@@ -243,19 +303,34 @@ public void Otplogclosethread(TPCONTEXT_T *p_ctxt)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogclosethread() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogclosethread() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogclosethread() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplogclosethread();
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogclosethread() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogclosethread() failed to get context");
+        }
     }
 out:    
     return;
@@ -268,19 +343,34 @@ public void Otplogsetreqfile_direct(TPCONTEXT_T *p_ctxt, char *filename)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tplogsetreqfile_direct() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogsetreqfile_direct() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tplogsetreqfile_direct() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tplogsetreqfile_direct(filename);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tplogsetreqfile_direct() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tplogsetreqfile_direct() failed to get context");
+        }
     }
 out:    
     return;

@@ -101,19 +101,34 @@ public void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, lon
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tpreturn() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+        {
+            userlog("ERROR! tpreturn() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tpreturn() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tpreturn(rval, rcode, data, len, flags);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+    if (did_set)
     {
-        userlog("ERROR! tpreturn() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
+        {
+            userlog("ERROR! tpreturn() failed to get context");
+        }
     }
 out:    
     return;
@@ -168,19 +183,34 @@ public void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, lon
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tpforward() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tpforward() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tpforward() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tpforward(svc, data, len, flags);
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tpforward() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tpforward() failed to get context");
+        }
     }
 out:    
     return;
@@ -279,19 +309,34 @@ public void Otpcontinue(TPCONTEXT_T *p_ctxt)
 {
     int did_set = FALSE;
 
-    /* set the context */
-    if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        userlog("ERROR! tpcontinue() failed to set context");
+         /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tpcontinue() failed to set context");
+        }
+        did_set = TRUE;
     }
-    
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! tpcontinue() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
     tpcontinue();
 
-    if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-        CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+    if (did_set)
     {
-        userlog("ERROR! tpcontinue() failed to get context");
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! tpcontinue() failed to get context");
+        }
     }
 out:    
     return;
