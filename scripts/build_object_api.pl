@@ -416,7 +416,50 @@ sub write_c {
         $M_priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
     }
     
-    
+
+#
+# Have some extra debug
+#
+$oapi_debug_entry = <<"END_MESSAGE";
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: $func_name() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        ($M_priv_flags) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        ($M_priv_flags) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        ($M_priv_flags) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        ($M_priv_flags) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        ($M_priv_flags) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        ($M_priv_flags) & CTXT_PRIV_IGN );
+#endif
+
+END_MESSAGE
+
+
+$oapi_debug_return = <<"END_MESSAGE";
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: $func_name() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+END_MESSAGE
+
+
+
     if ($func_type=~m/^int$/ 
         || $func_type=~m/^BFLDOCC$/
         || $func_type=~m/^long$/
@@ -436,6 +479,8 @@ public $sig
 {
     $func_type ret = SUCCEED;
     int did_set = FALSE;
+
+$oapi_debug_entry 
 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
@@ -466,7 +511,8 @@ public $sig
             FAIL_OUT(ret);
         }
     }
-out:    
+out:
+$oapi_debug_return 
     return ret; 
 }
 
@@ -486,6 +532,7 @@ public $sig
 {
     int did_set = FALSE;
 
+$oapi_debug_entry 
 
  /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
@@ -515,7 +562,8 @@ public $sig
             userlog("ERROR! $func_name() failed to get context");
         }
     }
-out:    
+out:
+$oapi_debug_return
     return;
 }
 
@@ -540,6 +588,8 @@ public $sig
 {
     int did_set = FALSE;
     $func_type ret = NULL;
+
+$oapi_debug_entry 
     
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
@@ -572,7 +622,8 @@ public $sig
             goto out;
         }
     }
-out:    
+out:
+$oapi_debug_return
     return ret; 
 }
 
@@ -593,6 +644,8 @@ public $sig
 {
     $func_type ret = BBADFLDID;
     int did_set = FALSE;
+
+$oapi_debug_entry 
  
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
@@ -625,7 +678,8 @@ public $sig
             goto out;
         }
     }
-out:    
+out:
+$oapi_debug_return
     return ret; 
 }
 

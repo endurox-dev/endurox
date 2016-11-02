@@ -95,8 +95,8 @@ typedef struct
 
     /* xautils.c */
     XID xid; /* handler for new XID */
-    int global_tx_suspended; /* suspend the global txn */
-    TPTRANID tranid;
+    int global_tx_suspended; /* TODO: suspend the global txn */
+    TPTRANID tranid; /* suspended transaction id - suspended global tx... */
     
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* mutex lock (so that no two parallel threads work with same tls */

@@ -70,7 +70,7 @@ private void atmi_buffer_key_destruct( void *value )
 public void * ndrx_atmi_tls_get(long priv_flags)
 {
     atmi_tls_t *tmp = G_atmi_tls;
-    
+    char *fn = "ndrx_atmi_tls_get";
     if (NULL!=tmp)
     {
         /*
@@ -82,9 +82,21 @@ public void * ndrx_atmi_tls_get(long priv_flags)
         }
 
         /* suspend the transaction if any in progress: similar to tpsrvgetctxdata() */
+#ifdef NDRX_OAPI_DEBUG
+        
+        NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
+                    fn, tmp->G_atmi_xa_curtx.txinfo);
+#endif
         if (priv_flags & CTXT_PRIV_TRAN 
                 && tmp->G_atmi_xa_curtx.txinfo)
         {
+            /* WARNING !!! WARNING !!!
+             * GLOBAL Transaction is suspended in thread
+             * and not in the context data. Thus if we want o-api to work,
+             * needs some kind of flag that global transaction was suspended
+             * in thread.
+             * Probably we want to save the tranid in thread..
+             */
             if (SUCCEED!=tpsuspend(&tmp->tranid, 0))
             {
                 userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
@@ -121,6 +133,7 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
 {
     int ret = SUCCEED;
     atmi_tls_t *tls = (atmi_tls_t *)data;
+    char *fn = "ndrx_atmi_tls_set";
    
     if (NULL!=tls)
     {
@@ -141,7 +154,11 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
 
         /* Add the additional flags to the user. */
         tls->G_last_call.sysflags |= flags;
-
+        
+#ifdef NDRX_OAPI_DEBUG
+        NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
+                    fn, tls->G_atmi_xa_curtx.txinfo);
+#endif
         /* Resume the transaction only if flag is set
          * For Object API some of the operations do not request transaction to
          * be open.
@@ -315,6 +332,34 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
 {
     int ret = SUCCEED;
     atmi_tls_t * ctx;
+    char *fn="_tpsetctxt";
+    
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p", fn, 
+            context, G_atmi_tls);
+    
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)context)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (priv_flags) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (priv_flags) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (priv_flags) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (priv_flags) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (priv_flags) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (priv_flags) & CTXT_PRIV_IGN );
+#endif
+
     
     if (context == TPNULLCONTEXT)
     {
@@ -393,6 +438,11 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     }
     
 out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: %s returns %d, context: %p, current: %p", fn, 
+            ret, context, G_atmi_tls);
+#endif
     return ret;
 }
 
@@ -406,7 +456,30 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
 {
     int ret = TPMULTICONTEXTS; /* default */
     atmi_tls_t * ctx;
+    char *fn="_tpgetctxt";
     
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p", 
+                fn, *context, G_atmi_tls);
+    
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (priv_flags) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (priv_flags) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (priv_flags) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (priv_flags) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (priv_flags) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (priv_flags) & CTXT_PRIV_IGN );
+#endif
     if (NULL==context)
     {
         _TPset_error_msg(TPEINVAL, "_tpgetctxt: context must not be NULL!");
@@ -455,5 +528,11 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
         ret = TPNULLCONTEXT;
     }
 out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: %s returns %d, context: %p, current: %p", fn, 
+            ret, *context, G_atmi_tls);
+#endif
+
     return ret;
 }
