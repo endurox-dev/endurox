@@ -69,14 +69,14 @@ private void atmi_buffer_key_destruct( void *value )
  */
 public void * ndrx_atmi_tls_get(long priv_flags)
 {
-    atmi_tls_t *tmp = G_atmi_tls;
+    atmi_tls_t *tls = G_atmi_tls;
     char *fn = "ndrx_atmi_tls_get";
-    if (NULL!=tmp)
+    if (NULL!=tls)
     {
         /*
          * Unset the destructor
          */
-        if (tmp->is_auto)
+        if (tls->is_auto)
         {
             pthread_setspecific( M_atmi_tls_key, NULL );
         }
@@ -85,24 +85,17 @@ public void * ndrx_atmi_tls_get(long priv_flags)
 #ifdef NDRX_OAPI_DEBUG
         
         NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
-                    fn, tmp->G_atmi_xa_curtx.txinfo);
+                    fn, tls->G_atmi_xa_curtx.txinfo);
 #endif
         
         if (priv_flags & CTXT_PRIV_TRAN)
         {
-            tmp->global_tx_suspended = FALSE;
+            tls->global_tx_suspended = FALSE;
             
-            if (tmp->G_atmi_xa_curtx.txinfo)
+            if (tls->G_atmi_xa_curtx.txinfo)
             {
-                /* WARNING !!! WARNING !!!
-                 * GLOBAL Transaction is suspended in thread
-                 * and not in the context data. Thus if we want o-api to work,
-                 * needs some kind of flag that global transaction was suspended
-                 * in thread.
-                 * Probably we want to save the tranid in thread..
-                 */
-
-                if (SUCCEED!=tpsuspend(&tmp->tranid, 0))
+                tls->M_atmi_error = 0;
+                if (SUCCEED!=_tpsuspend(&tls->tranid, 0, TRUE))
                 {
                     userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
                             tpstrerror(tperrno));
@@ -110,17 +103,17 @@ public void * ndrx_atmi_tls_get(long priv_flags)
 #if 0
                     Nothing to do here! it will fail next time when user
                     will try to do some DB operation...
-                    MUTEX_UNLOCK_V(tmp->mutex);
+                    MUTEX_UNLOCK_V(tls->mutex);
 
-                    ndrx_atmi_tls_free(tmp);
+                    ndrx_atmi_tls_free(tls);
                     /* fail it. */
-                    tmp = NULL;
+                    tls = NULL;
                     goto out;
 #endif
                 }
                 else
                 {
-                    tmp->global_tx_suspended = TRUE;
+                    tls->global_tx_suspended = TRUE;
                 }
 
                 /* Disable curren thread TLS... */
@@ -129,10 +122,10 @@ public void * ndrx_atmi_tls_get(long priv_flags)
         }
 
         /* unlock object */
-        MUTEX_UNLOCK_V(tmp->mutex);
+        MUTEX_UNLOCK_V(tls->mutex);
     }
 out:
-    return (void *)tmp;
+    return (void *)tls;
 }
 
 /**
@@ -161,7 +154,6 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
          */
         MUTEX_LOCK_V(tls->mutex);
 
-
         /* Add the additional flags to the user. */
         tls->G_last_call.sysflags |= flags;
         
@@ -169,6 +161,8 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
         NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
                     fn, tls->G_atmi_xa_curtx.txinfo);
 #endif
+        G_atmi_tls = tls; /* Must be set, so that tpresume works () - not allocate new.. */
+        
         /* Resume the transaction only if flag is set
          * For Object API some of the operations do not request transaction to
          * be open.
@@ -177,7 +171,9 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
         {
             if(tls->global_tx_suspended)
             {   
-                if (SUCCEED!=tpresume(&tls->tranid, 0))
+                /* reset error */
+                tls->M_atmi_error = 0;
+                if (SUCCEED!=_tpresume(&tls->tranid, 0))
                 {
                     userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
                 }
@@ -187,9 +183,7 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
                 }
             }
         }
-
-        G_atmi_tls = tls;
-
+        
         /*
          * Destruct automatically if it was auto-tls 
          */

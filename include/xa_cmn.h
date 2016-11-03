@@ -352,7 +352,7 @@ extern NDRX_API int _tpclose(void);
 extern NDRX_API int _tpbegin(unsigned long timeout, long flags);
 extern NDRX_API int _tpcommit(long flags);
 extern NDRX_API int _tpabort(long flags);
-extern NDRX_API int _tpsuspend (TPTRANID *tranid, long flags);
+extern NDRX_API int _tpsuspend (TPTRANID *tranid, long flags, int is_contexting);
 extern NDRX_API int _tpresume (TPTRANID *tranid, long flags);
 
 extern NDRX_API int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);

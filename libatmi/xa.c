@@ -808,7 +808,7 @@ out:
  * @param flags
  * @return SUCCEED/FAIL
  */
-public int  _tpsuspend (TPTRANID *tranid, long flags) 
+public int _tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
 {
     int ret=SUCCEED;
     XA_API_ENTRY(TRUE); /* already does ATMI_TLS_ENTRY; */
@@ -832,22 +832,28 @@ public int  _tpsuspend (TPTRANID *tranid, long flags)
         FAIL_OUT(ret);
     }
     
+#if 0
+    - I guess this is not a problem. Must be able to suspend abort only transaction
+    because of object-api
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
     {
         NDRX_LOG(log_error, "_tpsuspend: Abort only transaction!");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Abort only transaction!");
         FAIL_OUT(ret);
     }
+#endif
     
     /* Check situation with call descriptors */
-    if (atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds)))
+    if (!is_contexting  /* do not check call descriptors in contexting mode */
+            && atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds)))
     {
         NDRX_LOG(log_error, "_tpsuspend: Call descriptors still open!");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Call descriptors still open!");
         FAIL_OUT(ret);
     }
     
-    if (atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds)))
+    if (!is_contexting /* do not check call descriptors in contexting mode */
+            && atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds)))
     {
         NDRX_LOG(log_error, "_tpsuspend: Conversation descriptors still open!");
         _TPset_error_msg(TPEPROTO,  "_tpsuspend: Conversation descriptors still open!");

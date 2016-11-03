@@ -477,7 +477,7 @@ public int _tpacall (char *svc, char *data,
         atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);
         
         if (call->flags & TPTRANSUSPEND && NULL!=p_tranid &&
-                SUCCEED!=_tpsuspend(p_tranid, 0))
+                SUCCEED!=_tpsuspend(p_tranid, 0, FALSE))
         {
             FAIL_OUT(ret);
         }

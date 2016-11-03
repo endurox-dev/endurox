@@ -20,7 +20,8 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Disassociate XA transaction from current thread and store transaction details to 'tranid' variable. The transaction can be resumed as by doing *tpresume()*. *tranid* must not be NULL. 'flags' are reserved for future use, and currently must be set to 0. Transaction must not be marked as abort only. It is error to have any open call descriptors (either by *tpacall()* or by *tpconnect()*). Suspending can be done by any involved process in transaction. But the role of participant does not change.  The *TPTRANID* type records the information about caller, is it transaction originator or not.
+Disassociate XA transaction from current thread and store transaction details to 'tranid' variable. The transaction can be resumed as by doing *tpresume()*. *tranid* must not be NULL. 'flags' are reserved for future use, and currently must be set to 0. It is error to have any open call descriptors (either by *tpacall()* or by *tpconnect()*). Suspending can be done by any involved process in transaction. But the role of participant does not change. The *TPTRANID* type records the information about caller, is it transaction originator or not.
+
 
 RETURN VALUE
 ------------
@@ -33,7 +34,7 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPEINVAL* flags was not 0. Or 'tranid' was NULL.
 
-*TPEPROTO* XA subsystem was not initialized (did not call *tpopen()*), global transaction was not already started, transaction was marked as abort only, or there was open call descriptors.
+*TPEPROTO* XA subsystem was not initialized (did not call *tpopen()*), global transaction was not already started, or there was open call descriptors.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 

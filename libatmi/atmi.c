@@ -703,7 +703,7 @@ public int tpsuspend (TPTRANID *tranid, long flags)
         goto out;
     }
     
-    ret = _tpsuspend (tranid, flags);
+    ret = _tpsuspend (tranid, flags, FALSE);
     
 out:
     return ret;
