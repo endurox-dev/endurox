@@ -87,35 +87,45 @@ public void * ndrx_atmi_tls_get(long priv_flags)
         NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
                     fn, tmp->G_atmi_xa_curtx.txinfo);
 #endif
-        if (priv_flags & CTXT_PRIV_TRAN 
-                && tmp->G_atmi_xa_curtx.txinfo)
+        
+        if (priv_flags & CTXT_PRIV_TRAN)
         {
-            /* WARNING !!! WARNING !!!
-             * GLOBAL Transaction is suspended in thread
-             * and not in the context data. Thus if we want o-api to work,
-             * needs some kind of flag that global transaction was suspended
-             * in thread.
-             * Probably we want to save the tranid in thread..
-             */
-            if (SUCCEED!=tpsuspend(&tmp->tranid, 0))
+            tmp->global_tx_suspended = FALSE;
+            
+            if (tmp->G_atmi_xa_curtx.txinfo)
             {
-                userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
-                        tpstrerror(tperrno));
+                /* WARNING !!! WARNING !!!
+                 * GLOBAL Transaction is suspended in thread
+                 * and not in the context data. Thus if we want o-api to work,
+                 * needs some kind of flag that global transaction was suspended
+                 * in thread.
+                 * Probably we want to save the tranid in thread..
+                 */
+
+                if (SUCCEED!=tpsuspend(&tmp->tranid, 0))
+                {
+                    userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
+                            tpstrerror(tperrno));
 
 #if 0
-		Nothing to do here! it will fail next time when user
-		will try to do some DB operation...
-                MUTEX_UNLOCK_V(tmp->mutex);
+                    Nothing to do here! it will fail next time when user
+                    will try to do some DB operation...
+                    MUTEX_UNLOCK_V(tmp->mutex);
 
-                ndrx_atmi_tls_free(tmp);
-                /* fail it. */
-                tmp = NULL;
-                goto out;
+                    ndrx_atmi_tls_free(tmp);
+                    /* fail it. */
+                    tmp = NULL;
+                    goto out;
 #endif
+                }
+                else
+                {
+                    tmp->global_tx_suspended = TRUE;
+                }
+
+                /* Disable curren thread TLS... */
+                G_atmi_tls = NULL;
             }
-            
-            /* Disable curren thread TLS... */
-            G_atmi_tls = NULL;
         }
 
         /* unlock object */
@@ -163,10 +173,19 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
          * For Object API some of the operations do not request transaction to
          * be open.
          */
-        if (priv_flags & CTXT_PRIV_TRAN 
-                && tls->G_atmi_xa_curtx.txinfo && SUCCEED!=tpresume(&tls->tranid, 0))
+        if (priv_flags & CTXT_PRIV_TRAN)
         {
-            userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
+            if(tls->global_tx_suspended)
+            {   
+                if (SUCCEED!=tpresume(&tls->tranid, 0))
+                {
+                    userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
+                }
+                else
+                {
+                    tls->global_tx_suspended = FALSE;
+                }
+            }
         }
 
         G_atmi_tls = tls;

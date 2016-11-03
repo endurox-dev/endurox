@@ -38,3 +38,4 @@ atmitest/test029_inicfg/C_test.ini
 *.8
 *.5
 *.3
+libatmisrv/atmisrvinteg.pc
