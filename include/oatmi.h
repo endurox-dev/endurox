@@ -39,7 +39,6 @@ extern "C" {
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>
-#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define Otperrno(P_CTXT) (*O_exget_tperrno_addr(P_CTXT))

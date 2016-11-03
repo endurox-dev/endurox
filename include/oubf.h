@@ -39,7 +39,6 @@ extern "C" {
 #include <stdint.h>
 #include <ubf.h>
 #include <atmi.h>
-#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define OBerror(P_CTXT)   (*O_Bget_Ferror_addr(P_CTXT))
