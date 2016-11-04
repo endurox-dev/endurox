@@ -196,6 +196,12 @@ sleep 5
 # All must be completed
 ensure_tran 0
 
+# Run o-api tests
+echo "O-api tests:"
+#(valgrind --leak-check=full ./atmiclt21-oapi 2>&1) > ./atmiclt-oapi-dom1.log
+(./atmiclt21-oapi 2>&1) > ./atmiclt-oapi-dom1.log
+RET=$?
+
 # Run the client test...
 echo "Will issue calls to clients:"
 (./atmiclt21 2>&1) > ./atmiclt-dom1.log

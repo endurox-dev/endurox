@@ -89,8 +89,17 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
     while(1==_Bnext(&G_ubf_tls->bprint_state, 
             p_ub, &bfldid, &occ, NULL, &len, &p))
     {
-        cnv_buf=NULL;
-        tmp_buf=NULL;
+        if (NULL!=tmp_buf)
+        {
+            NDRX_FREE(tmp_buf);
+            tmp_buf = NULL;
+        }
+
+        if (NULL!=cnv_buf)
+        {
+            NDRX_FREE(cnv_buf);
+            cnv_buf = NULL;
+        }
 
         fldtype=bfldid>>EFFECTIVE_BITS;
 
@@ -169,7 +178,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
         {
             _Fset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
                         strerror(errno));
-            ret=FAIL;
+            FAIL_OUT(ret);
         }
         
     }

@@ -59,18 +59,24 @@ add_executable (convclt21 convclt21.c)
 
 # shell testing
 add_executable (atmiclt21-cli atmiclt21-cli.c)
+
+# Oapi tests
+add_executable (atmiclt21-oapi atmiclt21-oapi.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv21 m ubf nstd atmi atmisrvinteg ${RT_LIB} xadrv pthread)
-target_link_libraries (atmiclt21 m ubf nstd atmi atmiclt ${RT_LIB} xadrv pthread)
+target_link_libraries (atmi.sv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pthread m)
+target_link_libraries (atmiclt21 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 
 # Conversations test
-target_link_libraries (convsv21 m ubf nstd atmi atmisrvinteg ${RT_LIB} xadrv pthread)
-target_link_libraries (convclt21 m ubf nstd atmi atmiclt ${RT_LIB} xadrv pthread)
+target_link_libraries (convsv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pthread m)
+target_link_libraries (convclt21 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 
 # shell testing
-target_link_libraries (atmiclt21-cli m ubf nstd atmi atmiclt ${RT_LIB} xadrv pthread)
+target_link_libraries (atmiclt21-cli atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
+
+# oapi testing
+target_link_libraries (atmiclt21-oapi atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 
 set_target_properties(atmi.sv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
@@ -81,6 +87,9 @@ set_target_properties(convclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # shell testing
 set_target_properties(atmiclt21-cli PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+# Oapi tests
+set_target_properties(atmiclt21-oapi PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 
 add_library (xadrv SHARED
