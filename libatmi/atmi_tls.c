@@ -114,12 +114,12 @@ public void * ndrx_atmi_tls_get(long priv_flags)
                 else
                 {
                     tls->global_tx_suspended = TRUE;
-                }
-
-                /* Disable curren thread TLS... */
-                G_atmi_tls = NULL;
+                }        
             }
         }
+        
+        /* Disable curren thread TLS... */
+        G_atmi_tls = NULL;
 
         /* unlock object */
         MUTEX_UNLOCK_V(tls->mutex);
@@ -275,6 +275,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     tls->is_associated_with_thread = FALSE;
     /* xa.c */
     tls->M_is_curtx_init = FALSE;
+    tls->global_tx_suspended = FALSE;
     memset(&tls->G_atmi_xa_curtx, 0, sizeof(tls->G_atmi_xa_curtx));
     
     pthread_mutex_init(&tls->mutex, NULL);
