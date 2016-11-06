@@ -77,8 +77,11 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define LOG_CODE_TP_REQUEST 'R'
     
 #define NDRX_DBG_MAX_LEV log_dump
-
-#define NDRX_DBG_INIT_ENTRY    if (G_ndrx_debug_first) {ndrx_dbg_lock(); ndrx_init_debug(); ndrx_dbg_unlock();}
+/* Have double check on G_ndrx_debug_first, as on after getting first mutex, object
+ * might be already initialized
+ */
+#define NDRX_DBG_INIT_ENTRY    if (G_ndrx_debug_first) {ndrx_dbg_lock(); \
+    if (G_ndrx_debug_first) {ndrx_init_debug();} ndrx_dbg_unlock();}
 
 #define UBF_DBG_INIT(X) (ndrx_dbg_init X )
 #define NDRX_DBG_INIT(X) (ndrx_dbg_init X )
