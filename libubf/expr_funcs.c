@@ -185,8 +185,6 @@ void yyerror(char *s, ...)
         va_start(ap, s);
         char errbuf[2048];
 
-        /* UBF_LOG(log_debug, "YOPT yyerror!!!");*/
-
         sprintf(errbuf, ". Near of %d-%d: ", yylloc.first_column, yylloc.last_column);
         vsprintf(errbuf+strlen(errbuf), s, ap);
 

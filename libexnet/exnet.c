@@ -267,8 +267,6 @@ public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int 
     int got_len;
     int full_msg;
 
-    /* NDRX_LOG(log_debug, "YOPT=> exnet_recv_sync enter,  dl=%d", net->dl); */
-
     if (0==net->dl)
     {
         /* This is new message */
