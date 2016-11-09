@@ -279,7 +279,7 @@ public void _Btreefree_no_recurse (char *tree)
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
 
-    UBF_LOG(6, "Free up %d", a->nodeid);
+    UBF_LOG(6, "Free up nodeid=%d nodetype=%d", a->nodeid, a->nodetype);
     switch (a->nodetype)
     {
         case NODE_TYPE_FLD:
@@ -344,11 +344,12 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
 
     G_node_count++;
 
-    UBF_LOG(log_debug, "adding newast: id: %02d, type: %s, sub-type:%s "
-                              "value: [N/A]",
-                          a->nodeid,
+    UBF_LOG(log_debug, "adding newast: nodeid: %d, nodetype: %d, type: %s, sub-type:%s "
+                              "value: [N/A] l=%p r=%p",
+                          a->nodeid, a->nodetype,
                           M_nodetypes[a->nodetype],
-                          M_subtypes[a->sub_type]);
+                          M_subtypes[a->sub_type],
+                          l, r);
 
     return a;
 }
@@ -1898,7 +1899,7 @@ public void _Btreefree (char *tree)
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
 
-    UBF_LOG(6, "Free up %d", a->nodeid);
+    UBF_LOG(6, "Free up nodeid=%d nodetype=%d", a->nodeid, a->nodetype);
     switch (a->nodetype)
     {
         case NODE_TYPE_FUNC:
