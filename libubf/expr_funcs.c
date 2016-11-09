@@ -69,11 +69,14 @@ v->dyn_alloc=0;\
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-struct ast *G_p_root_node=NULL;
-int G_node_count=0;
-int G_error;
-struct list_node *M_cur_mem;
-struct list_node *M_first_mem;
+
+/* Compile time stuff only: */
+__thread struct ast *G_p_root_node=NULL;
+__thread int G_node_count=0;
+__thread int G_error;
+static __thread struct list_node *M_cur_mem;
+static __thread struct list_node *M_first_mem;
+/* Compile time stuff only, end */
 
 /* Hash list for function callback pointers */
 struct func_hash {
@@ -855,14 +858,12 @@ int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t
     int ret=SUCCEED;
     v->value_type = VALUE_TYPE_LONG;
 
-    if ((VALUE_TYPE_LONG!=lval->value_type) &&
-            SUCCEED!=conv_to_long(lval))
+    if ((VALUE_TYPE_LONG!=lval->value_type) && SUCCEED!=conv_to_long(lval))
     {
         ret=FAIL;
     }
 
-    if (SUCCEED==ret &&
-            (VALUE_TYPE_LONG!=rval->value_type) &&
+    if (SUCCEED==ret && (VALUE_TYPE_LONG!=rval->value_type) &&
             SUCCEED!=conv_to_long(rval))
     {
         ret=FAIL;
@@ -947,13 +948,15 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t 
     v->value_type = VALUE_TYPE_LONG;
 
     if (VALUE_TYPE_FLD_STR!=lval->value_type &&
-            VALUE_TYPE_STRING!=lval->value_type && SUCCEED!=conv_to_string(lval_buf, lval))
+            VALUE_TYPE_STRING!=lval->value_type &&
+            SUCCEED!=conv_to_string(lval_buf, lval))
     {
         ret=FAIL;
     }
 
     if (SUCCEED==ret && VALUE_TYPE_FLD_STR!=rval->value_type &&
-            VALUE_TYPE_STRING!=rval->value_type && SUCCEED!=conv_to_string(rval_buf, rval))
+            VALUE_TYPE_STRING!=rval->value_type &&
+            SUCCEED!=conv_to_string(rval_buf, rval))
     {
         ret=FAIL;
     }
@@ -992,8 +995,7 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t 
             v->longval = v->boolval = FALSE;
         }
 
-        UBF_LOG(log_debug, "Result bool: %d long:%ld",
-                        v->boolval, rval->longval);
+        UBF_LOG(log_debug, "Result bool: %d long:%ld", v->boolval, rval->longval);
     }
 
     /* Dump out the final value */
@@ -1015,12 +1017,12 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
     /* Get the values out of the child stuff */
     if (SUCCEED!=eval(p_ub, l, &lval))
     {
-            ret=FAIL;
+        ret=FAIL;
     }
 
     if (SUCCEED==ret && SUCCEED!=eval(p_ub, r, &rval))
     {
-            ret=FAIL;
+        ret=FAIL;
     }
 
     if (SUCCEED==ret)
@@ -1051,7 +1053,8 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
 
         }
         else if ((VALUE_TYPE_STRING==lval.value_type ||
-            VALUE_TYPE_STRING==rval.value_type) && !(type==NODE_TYPE_ADDOP || type==NODE_TYPE_MULTOP))
+            VALUE_TYPE_STRING==rval.value_type) && !(type==NODE_TYPE_ADDOP || 
+                type==NODE_TYPE_MULTOP))
         {
             ret=op_equal_str_cmp(type, sub_type, &lval, &rval, v);
         }
@@ -1074,7 +1077,8 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
             /* If both strings are not floats, then do the long cmp */
             else
 #endif      /* mode (%) we will process as long. */
-            if ((!is_lval_float && !is_rval_float) || (NODE_TYPE_MULTOP==type && MULOP_MOD==sub_type))
+            if ((!is_lval_float && !is_rval_float) || 
+                    (NODE_TYPE_MULTOP==type && MULOP_MOD==sub_type))
             {
                 ret=op_equal_long_cmp(type, sub_type, &lval, &rval, v);
             }
@@ -1106,8 +1110,7 @@ int get_bfldid(bfldid_t *p_fl)
     /* Cache this lookup */
     if (BBADFLDID==p_fl->bfldid && BBADFLDID==(p_fl->bfldid=Bfldid(p_fl->fldnm)))
     {
-        UBF_LOG(log_error, "Failed to lookup data type for [%s]\n",
-                            p_fl->fldnm);
+        UBF_LOG(log_error, "Failed to lookup data type for [%s]\n", p_fl->fldnm);
         ret=BBADFLDID;
     }
     else
@@ -1159,13 +1162,13 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
         }
         else if (SUCCEED==ret)
         {
-                p_l = l_buf;
+            p_l = l_buf;
         }
     }
     else if (NODE_TYPE_STR==l->nodetype)
     {
-            /* Set the pointer to AST node */
-            p_l = ls->str;
+        /* Set the pointer to AST node */
+        p_l = ls->str;
     }
     else
     {
@@ -1200,13 +1203,13 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
             UBF_LOG(log_debug, "Compiling regex");
             if (SUCCEED!=(err=regcomp(re, p_r, REG_EXTENDED | REG_NOSUB)))
             {
-                    report_regexp_error("regcomp", err, re);
-                    ret=FAIL;
+                report_regexp_error("regcomp", err, re);
+                ret=FAIL;
             }
             else
             {
-                    UBF_LOG(log_debug, "REGEX: Compiled OK");
-                    rs->regex.compiled = 1;
+                UBF_LOG(log_debug, "REGEX: Compiled OK");
+                rs->regex.compiled = 1;
             }
         }
 
@@ -1255,8 +1258,8 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
     DUMP_VALUE_BLOCK("read_unary_fb", v);
 
     UBF_LOG(log_debug, "return %s %d", fn, ret);
-
-	return ret;
+    
+    return ret;
 }
 /**
  * This reads FB. But takes out no string value.
@@ -1265,11 +1268,11 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
  */
 int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 {
-	int ret=SUCCEED;
-	struct ast_fld *fld = (struct ast_fld *)a;
-	BFLDID bfldid;
-	BFLDOCC occ;
-	int fld_type;
+    int ret=SUCCEED;
+    struct ast_fld *fld = (struct ast_fld *)a;
+    BFLDID bfldid;
+    BFLDOCC occ;
+    int fld_type;
     char fn[] = "read_unary_fb()";
     /* Must be already found! */
     bfldid = fld->fld.bfldid;
@@ -1396,8 +1399,8 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 }
                 else
                 {
-                        v->value_type = VALUE_TYPE_FLOAT;
-                        v->boolval=TRUE;
+                    v->value_type = VALUE_TYPE_FLOAT;
+                    v->boolval=TRUE;
                 }
             }
 	}
@@ -1418,7 +1421,7 @@ int is_float(char *s)
 {
     if (strpbrk(s, ".,eE")) /* this will work faster than multiple strchrs */
     {
-            return TRUE;
+        return TRUE;
     }
     return FALSE;
 }
@@ -1462,99 +1465,99 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
 	
     UBF_LOG(log_debug, "Entering %s", fn);
 
-	if (SUCCEED==eval(p_ub, a->r, &pri))
-	{
-		
-            if (VALUE_TYPE_FLD_STR==pri.value_type || 
-                    VALUE_TYPE_STRING==pri.value_type)
+    if (SUCCEED==eval(p_ub, a->r, &pri))
+    {
+
+        if (VALUE_TYPE_FLD_STR==pri.value_type || 
+                VALUE_TYPE_STRING==pri.value_type)
+        {
+            if (is_float(pri.strval))
             {
-                if (is_float(pri.strval))
-                {
-                    f = atof(pri.strval);
-                    is_long = FALSE;
-                    UBF_LOG(log_warn, "Treating unary field as "
-                                        "float [%f]!", f);
-                }
-                else
-                {
-                    l = atol(pri.strval);
-                    is_long = TRUE;
-                    UBF_LOG(log_warn, "Treating unary "
-                            "field as long [%ld]", l);
-                }
-            }
-            else if (VALUE_TYPE_FLOAT==pri.value_type)
-            {
-                is_long=FALSE;
-                f = pri.floatval;
-            }
-            else if (VALUE_TYPE_LONG==pri.value_type)
-            {
-                /* it must be long */
-                is_long=TRUE;
-                l = pri.longval;
+                f = atof(pri.strval);
+                is_long = FALSE;
+                UBF_LOG(log_warn, "Treating unary field as "
+                                    "float [%f]!", f);
             }
             else
             {
-                UBF_LOG(log_warn, "Unknown value type %d", 
-                                    pri.value_type);
-                return FAIL;
+                l = atol(pri.strval);
+                is_long = TRUE;
+                UBF_LOG(log_warn, "Treating unary "
+                        "field as long [%ld]", l);
             }
+        }
+        else if (VALUE_TYPE_FLOAT==pri.value_type)
+        {
+            is_long=FALSE;
+            f = pri.floatval;
+        }
+        else if (VALUE_TYPE_LONG==pri.value_type)
+        {
+            /* it must be long */
+            is_long=TRUE;
+            l = pri.longval;
+        }
+        else
+        {
+            UBF_LOG(log_warn, "Unknown value type %d", 
+                                pri.value_type);
+            return FAIL;
+        }
 
-            if ((op==UNARY_CMPL || op==UNARY_INV) && !is_long)
-            {
-                /* Convert to long */
-                UBF_LOG(log_warn, "! or ~ converting double to long!");
-                l = (long) f;
-            }
-            v->boolval = pri.boolval;
+        if ((op==UNARY_CMPL || op==UNARY_INV) && !is_long)
+        {
+            /* Convert to long */
+            UBF_LOG(log_warn, "! or ~ converting double to long!");
+            l = (long) f;
+        }
+        v->boolval = pri.boolval;
 
-            switch (op)
-            {
-                case ADDOP_PLUS:
-                    /* actually do nothing here! */
-                    if (is_long)
-                    {
-                        v->value_type=VALUE_TYPE_LONG;
-                        v->longval = l;
-                    }
-                    else /* float */
-                    {
-                        v->value_type=VALUE_TYPE_FLOAT;
-                        v->floatval = f;
-                    }
-                    break;
-                case ADDOP_MINUS:
-                    /* actually do nothing here! */
-                    if (is_long)
-                    {
-                        v->value_type=VALUE_TYPE_LONG;
-                        v->longval = -l;
-                    }
-                    else /* float */
-                    {
-                        v->value_type=VALUE_TYPE_FLOAT;
-                        v->floatval = -f;
-                    }
-                    break;
-                case UNARY_CMPL:
-                    /* Works only on longs! */
+        switch (op)
+        {
+            case ADDOP_PLUS:
+                /* actually do nothing here! */
+                if (is_long)
+                {
                     v->value_type=VALUE_TYPE_LONG;
-                    v->boolval = ~pri.boolval;
-                    /* Assuming long as final bool*/
-                    v->longval = v->boolval;
-                    break;
-                case UNARY_INV:
+                    v->longval = l;
+                }
+                else /* float */
+                {
+                    v->value_type=VALUE_TYPE_FLOAT;
+                    v->floatval = f;
+                }
+                break;
+            case ADDOP_MINUS:
+                /* actually do nothing here! */
+                if (is_long)
+                {
                     v->value_type=VALUE_TYPE_LONG;
-                    v->boolval = !pri.boolval;
-                    v->longval = v->boolval;
-                    break;
-            }
-	}
-	else
-	{
-            ret=FAIL;
-	}
+                    v->longval = -l;
+                }
+                else /* float */
+                {
+                    v->value_type=VALUE_TYPE_FLOAT;
+                    v->floatval = -f;
+                }
+                break;
+            case UNARY_CMPL:
+                /* Works only on longs! */
+                v->value_type=VALUE_TYPE_LONG;
+                v->boolval = ~pri.boolval;
+                /* Assuming long as final bool*/
+                v->longval = v->boolval;
+                break;
+            case UNARY_INV:
+                v->value_type=VALUE_TYPE_LONG;
+                v->boolval = !pri.boolval;
+                v->longval = v->boolval;
+                break;
+        }
+    }
+    else
+    {
+        ret=FAIL;
+    }
     /* Ensure that we clean up dynamically allocated FB resources! */
     FREE_UP_UB_BUF((&pri));
     /* Dump out the final value */
@@ -1647,9 +1650,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 v->value_type=VALUE_TYPE_LONG;
 
                 if ((l.boolval && !r.boolval) || (!l.boolval && r.boolval))
-                        v->boolval=TRUE;
+                    v->boolval=TRUE;
                 else
-                        v->boolval=FALSE;
+                    v->boolval=FALSE;
             }
             DUMP_VALUE_BLOCK("NODE_TYPE_XOR", v);
             break;
@@ -1663,9 +1666,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                     ret = op_equal(p_ub, NODE_TYPE_EQOP, NODE_SUB_TYPE_DEF, a->l, a->r, v);
                     if (SUCCEED==ret)
                     {
-                            /* Inverse the result. */
-                            v->boolval = !v->boolval;
-                            v->longval = !v->longval;
+                        /* Inverse the result. */
+                        v->boolval = !v->boolval;
+                        v->longval = !v->longval;
                     }
                     DUMP_VALUE_BLOCK("EQOP_NOT_EQUAL", v);
                     break;
@@ -1676,9 +1679,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                     ret=regexp_eval(p_ub, a->l, a->r, v);
                     if (SUCCEED==ret)
                     {
-                            /* Inverse the result. */
-                            v->boolval = !v->boolval;
-                            v->longval = !v->longval;
+                        /* Inverse the result. */
+                        v->boolval = !v->boolval;
+                        v->longval = !v->longval;
                     }
                     DUMP_VALUE_BLOCK("EQOP_REGEX_NOT_EQUAL", v);
                     break;
@@ -1728,9 +1731,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 v->floatval = a_f->d;
                 /* Set the boolean value of this stuff */
                 if (v->floatval)
-                        v->boolval = TRUE;
+                    v->boolval = TRUE;
                 else
-                        v->boolval = FALSE;
+                    v->boolval = FALSE;
             }
             /* dump the final value */
              DUMP_VALUE_BLOCK("VALUE_TYPE_FLOAT", v);
@@ -1743,9 +1746,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 v->longval = a_long->l;
                 /* Set the boolean value of this stuff */
                 if (v->longval)
-                        v->boolval = TRUE;
+                    v->boolval = TRUE;
                 else
-                        v->boolval = FALSE;
+                    v->boolval = FALSE;
             }
             /* dump the final value */
             DUMP_VALUE_BLOCK("VALUE_TYPE_LONG", v);
@@ -1899,7 +1902,7 @@ public void _Btreefree (char *tree)
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
 
-    UBF_LOG(6, "Free up nodeid=%d nodetype=%d", a->nodeid, a->nodetype);
+    UBF_LOG(6, "Free up buffer %p nodeid=%d nodetype=%d", tree, a->nodeid, a->nodetype);
     switch (a->nodetype)
     {
         case NODE_TYPE_FUNC:

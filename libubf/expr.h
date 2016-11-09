@@ -240,9 +240,9 @@ extern int _Bboolev (UBFH * p_ub, char *tree);
 extern double _Bfloatev (UBFH * p_ub, char *tree);
 extern void _Btreefree (char *tree);
 
-extern struct ast *G_p_root_node;
-extern int G_node_count;
-extern int G_error;
+extern __thread struct ast *G_p_root_node;
+extern __thread int G_node_count;
+extern __thread int G_error;
 
 #ifdef	__cplusplus
 }
