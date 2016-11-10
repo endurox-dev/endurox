@@ -321,6 +321,10 @@ public void _tpfreectxt(TPCONTEXT_T context)
     
     if (NULL!=ctx)
     {
+        /* Close any open loggers... */
+        tplogclosereqfile();
+        tplogclosethread();
+        
         if (NULL!=ctx->p_nstd_tls)
         {
             ndrx_nstd_tls_free(ctx->p_nstd_tls);

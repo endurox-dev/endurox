@@ -67,7 +67,8 @@ private void logfile_close(FILE *p)
     ndrx_debug_t *fd_arr[5];
     int i;
     int cnt = 0;
-    API_ENTRY; /* set TLS too */
+    int num;
+    /*API_ENTRY;  set TLS too work with out context... */
     
     if (p == stdout || p == stderr)
     {
@@ -77,10 +78,15 @@ private void logfile_close(FILE *p)
     fd_arr[0] = &G_ndrx_debug;
     fd_arr[1] = &G_ubf_debug;
     fd_arr[2] = &G_tp_debug;
-    fd_arr[3] = &G_nstd_tls->threadlog;
-    fd_arr[4] = &G_nstd_tls->requestlog;
+    num = 3;
+    if (NULL!=G_nstd_tls)
+    {
+        fd_arr[3] = &G_nstd_tls->threadlog;
+        fd_arr[4] = &G_nstd_tls->requestlog;
+        num = 5;
+    }
     
-    for (i=0; i<N_DIM(fd_arr); i++)
+    for (i=0; i<num; i++)
     {
         if (fd_arr[i]->dbg_f_ptr == p)
         {
@@ -221,14 +227,16 @@ public void tplogsetreqfile_direct(char *filename)
  */
 public void tplogclosereqfile(void)
 {
-    API_ENTRY; /* set TLS too */
-    
-    if (G_nstd_tls->requestlog.dbg_f_ptr)
+    /* Only if we have a TLS... */
+    if (G_nstd_tls)
     {
-        logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
+        if (G_nstd_tls->requestlog.dbg_f_ptr)
+        {
+            logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
+        }
+        G_nstd_tls->requestlog.filename[0] = EOS;
+        G_nstd_tls->requestlog.dbg_f_ptr = NULL;
     }
-    G_nstd_tls->requestlog.filename[0] = EOS;
-    G_nstd_tls->requestlog.dbg_f_ptr = NULL;
 }
 
 
@@ -367,7 +375,7 @@ out:
  */
 public void tplogclosethread(void)
 {
-    if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+    if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
     {
         logfile_close(G_nstd_tls->threadlog.dbg_f_ptr);
         G_nstd_tls->threadlog.level = FAIL;
