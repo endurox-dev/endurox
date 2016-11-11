@@ -856,7 +856,7 @@ public FILE *ndrx_fopen_dbg(const char *path, const char *mode,
     
     errnosv = errno;
             
-    userlog("[%p] <= fopen(path=%s, mode=%s):%s %s:%ld", ret, 
+    userlog("[%p] <= fopen(path=%s, mode=%s):%s %s:%ld", ret,  path, mode,
             func, file, line);
     
     errno = errnosv;
