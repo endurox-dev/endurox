@@ -91,7 +91,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_debug, "argv[9]=[%s]", argv[9]);
     }
     
-    if (NULL==(f=fopen("case_type", "r")))
+    if (NULL==(f=NDRX_FOPEN("case_type", "r")))
     {
         NDRX_LOG(log_error, "Failed to open case_type: %s", strerror(errno));
         exit(FAIL);
@@ -103,7 +103,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         exit(FAIL);
     }
     
-    fclose(f);
+    NDRX_FCLOSE(f);
     
     if ('1' == str[0])
     {

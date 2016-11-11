@@ -117,7 +117,7 @@ public int is_ndrxd_running(void)
      * - Is the name of the pid correct (check /proc/<PID>/cmdline) - should be ndrxd!
      * - Check for command queue
      */
-    if (NULL==(f=fopen(G_config.pid_file, "r")))
+    if (NULL==(f=NDRX_FOPEN(G_config.pid_file, "r")))
     {
         NDRX_LOG(log_error, "Failed to open ndrxd PID file: [%s]: %s",
                 G_config.pid_file, strerror(errno));
@@ -136,7 +136,7 @@ public int is_ndrxd_running(void)
     /* Get pid value */
     fprintf(stderr, "ndrxd PID (from PID file): %s\n", pidbuf);
 
-    fclose(f);
+    NDRX_FCLOSE(f);
     f = NULL;
 
     pid = atoi(pidbuf);
@@ -162,7 +162,7 @@ out:
 
     /* close any  */
     if (NULL!=f)
-        fclose(f);
+        NDRX_FCLOSE(f);
 
     if (!ret)
     {
@@ -211,7 +211,7 @@ public int start_daemon_idle(void)
         char *cmd[] = { "ndrxd", key, (char *)0 };
 
         /* Open log file */
-        if (NULL==(f=fopen(G_config.ndrxd_logfile, "w+")))
+        if (NULL==(f=NDRX_FOPEN(G_config.ndrxd_logfile, "w+")))
         {
             fprintf(stderr, "Failed to open ndrxd log file: %s\n",
                     G_config.ndrxd_logfile);

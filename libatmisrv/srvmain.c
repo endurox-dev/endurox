@@ -271,7 +271,7 @@ int ndrx_init(int argc, char** argv)
                 strcpy(G_server_conf.err_output, optarg);
 
                 /* Open error log, OK? */
-                if (NULL!=(f=fopen(G_server_conf.err_output, "a")))
+                if (NULL!=(f=NDRX_FOPEN(G_server_conf.err_output, "a")))
                 {
                     /* Redirect stdout & stderr to error file */
                     close(1);

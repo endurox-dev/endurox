@@ -311,7 +311,7 @@ private int _ubf_load_def_table(void)
     {
         sprintf(tmp, "%s/%s", flddir, p);
         /* Open field table file */
-        if (NULL==(fp=fopen(tmp, "r")))
+        if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
         {
             _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
                                 strerror(errno));
@@ -322,7 +322,7 @@ private int _ubf_load_def_table(void)
         ret=_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, FALSE);
 
         /* Close file */
-        fclose(fp);
+        NDRX_FCLOSE(fp);
         p=strtok(NULL, ",");
     }
 

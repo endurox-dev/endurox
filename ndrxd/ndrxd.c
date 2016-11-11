@@ -68,7 +68,7 @@ private int open_pid_file(void)
     int ret=SUCCEED;
     FILE *f = NULL;
     
-    if (NULL==(f=fopen(G_sys_config.pidfile, "w")))
+    if (NULL==(f=NDRX_FOPEN(G_sys_config.pidfile, "w")))
     {
         NDRX_LOG(log_error, "Failed to open PID file %s for write: %s",
                     G_sys_config.pidfile, strerror(errno));
@@ -86,7 +86,7 @@ private int open_pid_file(void)
                     G_sys_config.pidfile, strerror(errno));
     }
 
-    fclose(f);
+    NDRX_FCLOSE(f);
     f=NULL;
 out:
     return ret;

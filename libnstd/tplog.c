@@ -96,7 +96,7 @@ private void logfile_close(FILE *p)
     
     if (cnt<2)
     {
-        fclose(p);
+        NDRX_FCLOSE(p);
     }
 }
 
@@ -169,7 +169,7 @@ private int logfile_change_name(int logger, char *filename)
         /* log to stderr. */
         l->dbg_f_ptr = stderr;
     }
-    else if (NULL==(l->dbg_f_ptr = fopen(l->filename, "a")))
+    else if (NULL==(l->dbg_f_ptr = NDRX_FOPEN(l->filename, "a")))
     {
         NDRX_LOG(log_error,"Failed to open %s: %s\n",l->filename, strerror(errno));
         l->filename[0] = EOS;

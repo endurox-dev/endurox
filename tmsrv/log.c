@@ -267,7 +267,7 @@ public int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode)
     }
     
     /* Try to open the file */
-    if (NULL==(p_tl->f=fopen(p_tl->fname, mode)))
+    if (NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
     {
         userlog("Failed to open XA transaction log file: [%s]: %s", 
                 p_tl->fname, strerror(errno));
@@ -430,7 +430,7 @@ public void tms_close_logfile(atmi_xa_log_t *p_tl)
 {
     if (NULL!=p_tl->f)
     {
-        fclose(p_tl->f);
+        NDRX_FCLOSE(p_tl->f);
         p_tl->f = NULL;
     }
 }

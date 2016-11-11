@@ -14,6 +14,7 @@ https://github.com/benhoyt/inih
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <ndebug.h>
 
 #include "ini.h"
 
@@ -185,10 +186,10 @@ int ini_parse(const char* filename, ini_handler handler, void* user, void *user2
     FILE* file;
     int error;
 
-    file = fopen(filename, "r");
+    file = NDRX_FOPEN(filename, "r");
     if (!file)
         return -1;
     error = ini_parse_file(file, handler, user, user2);
-    fclose(file);
+    NDRX_FCLOSE(file);
     return error;
 }

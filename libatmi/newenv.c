@@ -91,7 +91,7 @@ public int ndrx_load_new_env(char *file)
     
     /* Just open the file, and load new env.... */
     
-    if (NULL==(f=fopen(file, "r")))
+    if (NULL==(f=NDRX_FOPEN(file, "r")))
     {
         NDRX_LOG(log_error, "Failed to open environment override file [%s]:%s",
                             file, strerror(errno));
@@ -154,7 +154,7 @@ public int ndrx_load_new_env(char *file)
 out:
 
     if (NULL!=f)
-        fclose(f);
+        NDRX_FCLOSE(f);
 
     return ret;
 }

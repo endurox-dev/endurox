@@ -92,7 +92,7 @@ public int userlog (char *data, ...)
     }
 
     /* if no file or failed to open, then use stderr as output */
-    if (NULL==out_f || NULL==(output=fopen(full_name, "a")))
+    if (NULL==out_f || NULL==(output=NDRX_FOPEN(full_name, "a")))
     {
         if (NULL!=out_f)
         {
@@ -117,7 +117,7 @@ public int userlog (char *data, ...)
 
     if (fopened)
     {
-        fclose( output );
+        NDRX_FCLOSE( output );
     }
     
 out:

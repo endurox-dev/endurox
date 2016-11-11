@@ -253,7 +253,7 @@ public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags
     }
     
     /* Open file for write... */
-    if (NULL==(M_f = fopen(file, "w")))
+    if (NULL==(M_f = NDRX_FOPEN(file, "w")))
     {
         NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() - failed to open file: %s!", 
                 strerror(errno));
@@ -295,7 +295,7 @@ public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 out:
     if (M_f)
     {
-        fclose(M_f);
+        NDRX_FCLOSE(M_f);
         M_f = NULL;
     }
     return XA_OK;

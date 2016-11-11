@@ -309,7 +309,7 @@ private int generate_files(void)
         out_f_name[0] = EOS;
 
         /* Open field table file */
-        if (NULL==(inf=fopen(fname, "r")))
+        if (NULL==(inf=NDRX_FOPEN(fname, "r")))
         {
             _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                 fname, strerror(errno));
@@ -324,7 +324,7 @@ private int generate_files(void)
             M_renderer->get_fullname(out_f_name);
             
             /* build up path for output file name */
-            if (NULL==(G_outf=fopen(out_f_name, "w")))
+            if (NULL==(G_outf=NDRX_FOPEN(out_f_name, "w")))
             {
                 _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                             out_f_name, strerror(errno));
@@ -346,14 +346,14 @@ private int generate_files(void)
         /* close opened files. */
         if (NULL!=inf)
         {
-            fclose(inf);
+            NDRX_FCLOSE(inf);
             inf=NULL;
         }
 
         if (NULL!=G_outf)
         {
             M_renderer->file_close(out_f_name);
-            fclose(G_outf);
+            NDRX_FCLOSE(G_outf);
             G_outf=NULL;
         }
 

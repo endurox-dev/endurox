@@ -136,7 +136,7 @@ int start_daemon_recover(void)
         char *cmd[] = { "ndrxd", key, "-r", (char *)0 };
 
         /* Open log file */
-        if (NULL==(f=fopen(ndrxd_logfile, "w+")))
+        if (NULL==(f=NDRX_FOPEN(ndrxd_logfile, "w+")))
         {
             fprintf(stderr, "Failed to open ndrxd log file: %s\n",
                     ndrxd_logfile);

@@ -64,7 +64,7 @@
 int append_text_file(char *file, char *line)
 {
     int ret = SUCCEED;
-    FILE *f = fopen(file, "a");
+    FILE *f = NDRX_FOPEN(file, "a");
     
     if (NULL==f)
     {
@@ -77,7 +77,7 @@ int append_text_file(char *file, char *line)
 out:
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
     return ret;
 }

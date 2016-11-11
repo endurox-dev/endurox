@@ -831,7 +831,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             
             fname_msg = get_file_name_final(tmq_msgid_serialize(block.hdr.msgid, msgid_str));
             NDRX_LOG(log_info, "Updating message file: [%s]", fname_msg);
-            if (NULL==(f = fopen(fname_msg, "r+b")))
+            if (NULL==(f = NDRX_FOPEN(fname_msg, "r+b")))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
@@ -871,7 +871,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
 
                 goto xa_err;
             }
-            fclose(f);
+            NDRX_FCLOSE(f);
             f = NULL;
             
             /* remove the update file */
@@ -932,7 +932,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
 xa_err:
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
 
     NDRX_LOG(log_info, "Commit failed");
@@ -978,7 +978,7 @@ private int read_tx_from_file(char *fname, char *block, int len)
     int ret = SUCCEED;
     FILE *f = NULL;
     
-    if (NULL==(f = fopen(fname, "r+b")))
+    if (NULL==(f = NDRX_FOPEN(fname, "r+b")))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
@@ -995,7 +995,7 @@ out:
 
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
     
     return ret;
@@ -1038,7 +1038,7 @@ private int write_to_tx_file(char *block, int len)
     
     /* Open file for write... */
     NDRX_LOG(log_info, "Writting command file: [%s]", M_filename_active);
-    if (NULL==(f = fopen(M_filename_active, "a+b")))
+    if (NULL==(f = NDRX_FOPEN(M_filename_active, "a+b")))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
@@ -1066,7 +1066,7 @@ out:
 
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
 
     return ret;
@@ -1227,7 +1227,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             sprintf(filename, "%s/%s", folders[j], namelist[n]->d_name);
             NDRX_LOG(log_warn, "Loading [%s]", filename);
 
-            if (NULL==(f=fopen(filename, "rb")))
+            if (NULL==(f=NDRX_FOPEN(filename, "rb")))
             {
                 NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
                    filename, strerror(errno));
@@ -1290,7 +1290,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                         p_block->msg.msg, p_block->msg.len);
             }
             
-            fclose(f);
+            NDRX_FCLOSE(f);
             f=NULL;
             
             /* Process message block 
@@ -1325,7 +1325,7 @@ out:
     /* close the resources */
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
     return ret;
 }

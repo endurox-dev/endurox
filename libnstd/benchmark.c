@@ -83,7 +83,7 @@ public int ndrx_bench_write_stats(double msgsize, double callspersec)
     {
         if( access( file, F_OK ) != FAIL )
         {
-            if (NULL==(f=fopen(file, "a")))
+            if (NULL==(f=NDRX_FOPEN(file, "a")))
             {
                 NDRX_LOG(log_error, "Failed to open [%s]: %s", file, strerror(errno));
                 FAIL_OUT(ret);
@@ -92,7 +92,7 @@ public int ndrx_bench_write_stats(double msgsize, double callspersec)
         else
         {
             /* file doesn't exist - create */
-            if (NULL==(f=fopen(file, "w")))
+            if (NULL==(f=NDRX_FOPEN(file, "w")))
             {
                 NDRX_LOG(log_error, "Failed to open [%s]: %s", file, strerror(errno));
                 FAIL_OUT(ret);
@@ -112,7 +112,7 @@ out:
 
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
 
     return ret;

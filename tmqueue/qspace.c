@@ -465,7 +465,7 @@ public int tmq_reload_conf(char *cf)
     }
     else /* fallback to old config */
     {
-        if (NULL==(f=fopen(cf, "r")))
+        if (NULL==(f=NDRX_FOPEN(cf, "r")))
         {
             NDRX_LOG(log_error, "Failed to open [%s]:%s", cf, strerror(errno));
             FAIL_OUT(ret);
@@ -499,7 +499,7 @@ out:
 
     if (NULL!=f)
     {
-        fclose(f);
+        NDRX_FCLOSE(f);
     }
 
     return ret;
