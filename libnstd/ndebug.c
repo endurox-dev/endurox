@@ -824,7 +824,8 @@ public void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, const char *f
  * @return 
  */
 public void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *file, const char *func)
-{   void *ret;
+{   
+    void *ret;
     int errnosv;
     
     ret= realloc(ptr, size);
@@ -835,6 +836,54 @@ public void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *fil
             size, func, file, line);
     
     errno = errnosv;
+    return ret;
+}
+
+
+/**
+ * Memory logging version of fopen(3)
+ * @param path
+ * @param mode
+ * @return 
+ */
+public FILE *ndrx_fopen_dbg(const char *path, const char *mode, 
+        long line, const char *file, const char *func)
+{
+    FILE *ret;
+    int errnosv;
+    
+    ret = fopen(path, mode);
+    
+    errnosv = errno;
+            
+    userlog("[%p] <= fopen(path=%s, mode=%s):%s %s:%ld", ret, 
+            func, file, line);
+    
+    errno = errnosv;
+    
+    return ret;
+}
+
+
+/**
+ * Memory logging version of fclose(3)
+ * @param fp
+ * @return 
+ */
+public int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *func)
+{
+    int ret;
+    int errnosv;
+    
+    ret = fclose(fp);
+    
+    errnosv = errno;
+            
+    userlog("[%p] => fclose(fp=%p) => %d:%s %s:%ld", fp, fp, ret, 
+            func, file, line);
+    
+    errno = errnosv;
+    
     return ret;
     
 }

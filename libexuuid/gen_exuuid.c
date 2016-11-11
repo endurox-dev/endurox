@@ -297,7 +297,7 @@ static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
 		while (flock(state_fd, LOCK_EX) < 0) {
 			if ((errno == EAGAIN) || (errno == EINTR))
 				continue;
-			NDRX_FCLOSE(state_f);
+			fclose(state_f);
 			close(state_fd);
 			state_fd = -1;
 			ret = -1;
