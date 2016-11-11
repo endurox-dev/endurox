@@ -322,8 +322,12 @@ public void _tpfreectxt(TPCONTEXT_T context)
     if (NULL!=ctx)
     {
         /* Close any open loggers... */
-        tplogclosereqfile();
-        tplogclosethread();
+        if (G_atmi_tls && G_atmi_tls==context)
+        {
+            tplogclosereqfile();
+            tplogclosethread();
+            tpterm();
+        }
         
         if (NULL!=ctx->p_nstd_tls)
         {

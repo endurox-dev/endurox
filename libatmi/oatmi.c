@@ -3001,14 +3001,8 @@ public void Otpfreectxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context)
 
     tpfreectxt(context);
 
-    if (did_set)
-    {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-            CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
-        {
-            userlog("ERROR! tpfreectxt() failed to get context");
-        }
-    }
+    *p_ctxt = NULL;
+
 out:
 
 #ifdef NDRX_OAPI_DEBUG
