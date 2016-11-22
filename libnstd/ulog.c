@@ -61,6 +61,7 @@ public int userlog (char *data, ...)
     int ret=SUCCEED;
     int first = 1;
     char *out_f = NULL;
+    char *out_f_dflt = "./";
     FILE *output;
     char  pre[100];
     int fopened=0;
@@ -78,7 +79,9 @@ public int userlog (char *data, ...)
     {
         if (NULL==(out_f=getenv(CONF_NDRX_ULOG)))
         {
-            NDRX_LOG(log_warn, "%s not set!", CONF_NDRX_ULOG);
+            fprintf(stderr, "%s not set - logging to %s!\n",
+                CONF_NDRX_ULOG, out_f_dflt);
+            out_f=out_f_dflt;
         }
 
         /* get pid */
@@ -97,7 +100,7 @@ public int userlog (char *data, ...)
     {
         if (NULL!=out_f)
         {
-            NDRX_LOG(log_warn, "Failed to open [%s]", full_name);
+            fprintf(stderr, "Failed to open [%s]\n", full_name);
         }
         output=stderr;
     }
