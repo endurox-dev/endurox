@@ -518,9 +518,6 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
     if (priv_flags & CTXT_PRIV_ATMI)
     {
         ctx = (atmi_tls_t *)ndrx_atmi_tls_get(priv_flags);
-        
-        /* Dis associate */
-        ctx->is_associated_with_thread = FALSE;
     }
     else   
     {
@@ -529,6 +526,9 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
     
     if (NULL!=ctx)
     {
+        /* Dis associate */
+        ctx->is_associated_with_thread = FALSE;
+
         if (priv_flags & CTXT_PRIV_NSTD)
         {
             ctx->p_nstd_tls = ndrx_nstd_tls_get();
