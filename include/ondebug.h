@@ -49,6 +49,12 @@ extern "C" {
 extern NDRX_API void Otplogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr1, void *ptr2, int len);
 extern NDRX_API void Otplogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr, int len);
 extern NDRX_API void Otplog(TPCONTEXT_T *p_ctxt, int lev, char *message);
+extern NDRX_API void Ondrxlogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void Ondrxlogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr, int len);
+extern NDRX_API void Ondrxlog(TPCONTEXT_T *p_ctxt, int lev, char *message);
+extern NDRX_API void Oubflogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void Oubflogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr, int len);
+extern NDRX_API void Oubflog(TPCONTEXT_T *p_ctxt, int lev, char *message);
 extern NDRX_API int Otploggetreqfile(TPCONTEXT_T *p_ctxt, char *filename, int bufsize);
 extern NDRX_API int Otplogconfig(TPCONTEXT_T *p_ctxt, int logger, int lev, char *debug_string, char *module, char *new_file);
 extern NDRX_API void Otplogclosereqfile(TPCONTEXT_T *p_ctxt);

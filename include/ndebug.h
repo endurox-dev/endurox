@@ -184,9 +184,19 @@ extern NDRX_API void ndrx_dbg_setthread(long threadnr);
 extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, ndrx_debug_t *dbg_ptr);
 
 /* TPLOG: */
+
 extern NDRX_API void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
 extern NDRX_API void tplogdump(int lev, char *comment, void *ptr, int len);
 extern NDRX_API void tplog(int lev, char *message);
+
+extern NDRX_API void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void ndrxlogdump(int lev, char *comment, void *ptr, int len);
+extern NDRX_API void ndrxlog(int lev, char *message);
+
+extern NDRX_API void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void ubflogdump(int lev, char *comment, void *ptr, int len);
+extern NDRX_API void ubflog(int lev, char *message);
+
 extern NDRX_API int tploggetreqfile(char *filename, int bufsize);
 extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, char *new_file);
 extern NDRX_API void tplogclosereqfile(void);

@@ -874,10 +874,19 @@ NEXT: while( my $line = <$info>)
         }
         elsif ($M_name =~ m/^ondebug$/)
         {
-            # Include only server commands for ATMISRV level
+            # Include logging commands only
             if ($func_name !~ m/^tplogdumpdiff$/
                 && $func_name !~ m/^tplogdump$/
                 && $func_name !~ m/^tplog$/
+
+                && $func_name !~ m/^ndrxlogdumpdiff$/
+                && $func_name !~ m/^ndrxlogdump$/
+                && $func_name !~ m/^ndrxlog$/
+
+                && $func_name !~ m/^ubflogdumpdiff$/
+                && $func_name !~ m/^ubflogdump$/
+                && $func_name !~ m/^ubflog$/
+
                 && $func_name !~ m/^tploggetreqfile$/
                 && $func_name !~ m/^tplogconfig$/
                 && $func_name !~ m/^tplogclosereqfile$/

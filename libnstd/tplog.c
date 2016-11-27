@@ -453,3 +453,76 @@ public void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int le
     TP_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
  
+/**
+ * Log the message to configured device, ndrx facility
+ * @param lev
+ * @param message
+ */
+public void ndrxlog(int lev, char *message)
+{
+    NDRX_LOG(lev, message);
+}
+
+/**
+ * Do the hex dump, ndrx facility
+ * @param lev
+ * @param comment
+ * @param ptr
+ * @param len
+ */
+public void ndrxlogdump(int lev, char *comment, void *ptr, int len)
+{
+    NDRX_DUMP(lev, comment, (char *)ptr, len);
+}
+
+/**
+ * Print the differences of to binary arrays, ndrx facility
+ * @param lev
+ * @param comment
+ * @param ptr1
+ * @param ptr2
+ * @param len
+ */
+public void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+{
+    NDRX_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
+}
+
+ 
+/**
+ * Log the message to configured device, ubf facility
+ * @param lev
+ * @param message
+ */
+public void ubflog(int lev, char *message)
+{
+    UBF_LOG(lev, message);
+}
+
+/**
+ * Do the hex dump, ubf facility
+ * @param lev
+ * @param comment
+ * @param ptr
+ * @param len
+ */
+public void ubflogdump(int lev, char *comment, void *ptr, int len)
+{
+    UBF_DUMP(lev, comment, (char *)ptr, len);
+}
+
+/**
+ * Print the differences of to binary arrays, ubf facility
+ * @param lev
+ * @param comment
+ * @param ptr1
+ * @param ptr2
+ * @param len
+ */
+public void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+{
+    UBF_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
+}
+
+
+
