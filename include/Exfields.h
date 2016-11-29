@@ -110,4 +110,6 @@
 #define	EX_CC_SECTION	((BFLDID32)167772669)	/* number: 509	 type: string */
 #define	EX_CC_KEY	((BFLDID32)167772670)	/* number: 510	 type: string */
 #define	EX_CC_VALUE	((BFLDID32)167772671)	/* number: 511	 type: string */
+#define	EX_IF_ECODE	((BFLDID32)600)	/* number: 600	 type: short */
+#define	EX_IF_EMSG	((BFLDID32)167772761)	/* number: 601	 type: string */
 #endif

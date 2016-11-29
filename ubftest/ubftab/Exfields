@@ -158,5 +158,12 @@ EX_CC_KEY                   410         string -        Result key (list)
 EX_CC_VALUE                 411         string -        Corresponding occurrence of value for key
 ################################################################################
 
+################################################################################
+# Error code field for interfaces (connecting modules)
+################################################################################
+EX_IF_ECODE              500         short  -        Result code (error code)
+EX_IF_EMSG               501         string -        Result message
+################################################################################
+
 $#endif
 
