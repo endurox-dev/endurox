@@ -94,6 +94,7 @@ struct conf_server_node
     
     /* common-config tag (loaded into NDRX_CCTAG before start) */
     char cctag[NDRX_CCTAG_MAX+1]; 
+    int isprotected; /* is binary protected... */
     
     /* Linked list */
     conf_server_node_t *prev;
@@ -200,6 +201,7 @@ typedef struct
     int default_srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
     
     int gather_pq_stats;     /* if set to 1, then queue stats will be gathered */
+    int default_isprotected;  /* if set to 1, then xadmin stop will not shutdown the process (only with -c) */
     
 } config_t;
 

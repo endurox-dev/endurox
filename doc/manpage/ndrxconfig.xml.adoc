@@ -5,7 +5,7 @@ NDRXCONFIG.XML(5)
 
 NAME
 ----
-ndrxconfig.xml - EnduroX ATMI Application Domain configuration
+ndrxconfig.xml - Enduro/X ATMI Application Domain configuration
 
 
 SYNOPSIS
@@ -33,10 +33,11 @@ SYNOPSIS
 		<end_max>MAX_SERVER_SHUTDOWN_TIME_DEFAULT</end_max>
 		<killtime>KILL_TIME_DEFAULT</killtime>
 		<exportsvcs>EXPORT_SERVICES_DEFAULT</exportsvcs>
-                <blacklistsvcs>BLACKLIST_SERVICES_DEFAULT</blacklistsvcs>
-                <srvstartwait>NDRXD_SRV_START_WAIT_DEFAULT</srvstartwait>
-                <srvstopwait>NDRXD_SRV_STOP_WAITT_DEFAULT</srvstopwait>
-                <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
+		<blacklistsvcs>BLACKLIST_SERVICES_DEFAULT</blacklistsvcs>
+		<srvstartwait>NDRXD_SRV_START_WAIT_DEFAULT</srvstartwait>
+		<srvstopwait>NDRXD_SRV_STOP_WAITT_DEFAULT</srvstopwait>
+		<cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
+		<protected>PROTECTED_SERVER_DEFAULT</protected>
 	</defaults>
 	<servers>
 		<server name="SERVER_BINARY_NAME">
@@ -59,6 +60,7 @@ SYNOPSIS
                         <srvstartwait>NDRXD_SRV_START_WAIT</srvstartwait>
                         <srvstopwait>NDRXD_SRV_STOP_WAITT</srvstopwait>
                         <cctag>COMMON_CONFIG_TAG</cctag>
+                        <protected>PROTECTED_SERVER</protected>
 		</server>
 		...
 		<server name="SERVER_BINARY_NAME_N">
@@ -202,6 +204,15 @@ DEBUG CONFIGURATION FILE SYNTAX
 *COMMON_CONFIG_TAG_DEFAULT*::
 	Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
         process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
+*PROTECTED_SERVER_DEFAULT*::
+	Protected server is one that does not shuttdown with 'xadmin stop' unless you pass the
+	'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+	stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+	won't work on these because '-c' is not supposed to be used by restart.
+	The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+	something else which is involved into 'ndrxd' daemon management it self.
+	This can be overridden by 'PROTECTED_SERVER'.
+        
 *SECONDS_TO_SLEEP_AFTER_SRV_START*::
 	Number of seconds to wait for next item to start after the server is launched.
 	This is useful in cases when for example we start bridge server, let it for some
@@ -212,14 +223,14 @@ DEBUG CONFIGURATION FILE SYNTAX
 	and it cannot contains commas ','! Commas are used as internal
 	queue seperator combined with binary names.
 *SERVER_ID*::
-	Server ID. It is internal ID for server instance. For each seperate ATMI server
+	Server ID. It is internal ID for server instance. For each separate ATMI server
 	the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
 	than 1. In this case up till MAX servers, internally 'SERVER_ID' is incremented.
 	Thus for example if SERVER_ID is 200, and MAX_SERVERS_SRV is 5, then
 	following server IDs will be reserved: 200, 201, 202, 203, 204. The maximum server
 	id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
 *ATMI_SERVER_SYSTEM_OPTIONS*::
-	Command line system options passed to ATMI server. Following paramters are
+	Command line system options passed to ATMI server. Following parameters are
 	used by EnduroX ATMI servers: '-N', boolean type. If present, then no services
 	will be advertised by server. In this case will be advertised only services specified
 	by '-s' flag. For example if server advertises SERVICE1, SERVICE2, SERVICE3, but '-N'
@@ -279,6 +290,7 @@ DEBUG CONFIGURATION FILE SYNTAX
 	Tagname to be set for process.
 *CLT_SUBSECT_EXEC*::
 	Subsection to be set for process. '-' used as default.
+	
 	
 EXAMPLE
 -------

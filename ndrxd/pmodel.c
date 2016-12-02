@@ -1082,9 +1082,11 @@ public int app_shutdown(command_startstop_t *call,
         int i;
         DL_REVFOREACH(G_process_model, p_pm, i)
         {
-                /* if particular binary shutdown requested (probably we could add some index!?) */
+            /* if particular binary shutdown requested (probably we could add some index!?) */
             if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    EOS==call->binary_name[0]) /* or If full shutdown requested */
+                    (EOS==call->binary_name[0] &&  /* or If full shutdown requested */
+                    /* is if binary is not protected, or we run complete shutdown... */
+                    (!p_pm->conf->isprotected || call->complete_shutdown))) 
             {
                 stop_process(call, p_pm, p_shutdown_progress, 
                         p_processes_shutdown, &abort);

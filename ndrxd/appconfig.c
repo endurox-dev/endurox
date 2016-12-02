@@ -360,6 +360,20 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "protected"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                if ('Y' == *p || 'y' == *p)
+                {
+                    config->default_isprotected = 1;
+                }
+                else
+                {
+                    config->default_isprotected = 0;
+                }
+                NDRX_LOG(log_debug, "protected: %c", config->default_isprotected?'Y':'N');
+                xmlFree(p);
+            }
             
 #if 0
             else
@@ -600,6 +614,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->end_max = FAIL;
     p_srvnode->killtime = FAIL;
     p_srvnode->exportsvcs[0] = EOS;
+    p_srvnode->isprotected = FAIL;
 
 
     for (attr=cur->properties; attr; attr = attr->next)
@@ -783,6 +798,21 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->cctag[sizeof(p_srvnode->cctag)-1] = EOS;
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "protected"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            if ('Y' == *p || 'y' == *p)
+            {
+                p_srvnode->isprotected = 1;
+            }
+            else
+            {
+                p_srvnode->isprotected = 0;
+            }
+            NDRX_LOG(log_debug, "protected: %c",
+                                              p_srvnode->isprotected?'Y':'N');
+            xmlFree(p);
+        }
     }
     sprintf(p_srvnode->clopt, "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     strcpy(p_srvnode->binary_name, srvnm);
@@ -831,6 +861,9 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     if (EOS==p_srvnode->cctag[0])
         strcpy(p_srvnode->cctag, config->default_cctag);
+    
+    if (FAIL==p_srvnode->isprotected)
+        p_srvnode->isprotected = config->default_isprotected;
     
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
