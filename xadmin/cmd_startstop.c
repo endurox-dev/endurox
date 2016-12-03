@@ -228,7 +228,7 @@ public int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         G_call_args,
                         FALSE);
 out:
-        return ret;
+    return ret;
 }
 
 /**
@@ -330,8 +330,34 @@ out:
 public int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=SUCCEED;
-    
     cmd_mapping_t cmd;
+    short srvid=FAIL;
+    char srvnm[MAXTIDENT+1]={EOS};
+    short confirm = FALSE;
+    
+    /* just verify that content is ok: */
+    ncloptmap_t clopt[] =
+    {
+        {'i', BFLD_SHORT, (void *)&srvid, 0, 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server ID"},
+        {'s', BFLD_STRING, (void *)srvnm, sizeof(srvnm), 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
+                                
+        {'y', BFLD_SHORT, (void *)&confirm, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+        {0}
+    };
+        
+    if (argc>=2 && '-'==argv[1][0])
+    {
+        /* parse command line */
+        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+        {
+            fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+            FAIL_OUT(ret);
+        }
+    }
+    
     
     memset(&cmd, 0, sizeof(cmd));
     
@@ -342,6 +368,7 @@ public int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_ne
         ret = cmd_start(&cmd, argc, argv, p_have_next);
     }
     
+out:
     return ret;
 }
 
@@ -378,7 +405,7 @@ public int cmd_cabort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                         G_call_args,
                         FALSE);
 out:
-        return ret;
+    return ret;
 }
 
 
@@ -453,5 +480,5 @@ public int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                         G_call_args,
                         FALSE);
 out:
-        return ret;
+    return ret;
 }
