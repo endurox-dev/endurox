@@ -17,6 +17,7 @@ https://github.com/benhoyt/inih
 #include <ndebug.h>
 
 #include "ini.h"
+#include "userlog.h"
 
 #if !INI_USE_STACK
 #include <stdlib.h>
@@ -189,6 +190,8 @@ line_buffered:
                         continue; /* Skip the line... */
                     }
                     else if (*start && start > line2) {
+                        int free_space_in_value;
+                        int additional_value_len;
                         /* we have an additional data */
                         rstrip(start);
                         #if INI_ALLOW_INLINE_COMMENTS
@@ -196,7 +199,22 @@ line_buffered:
                                 if (*end)
                                     *end = '\0';
                         #endif
-                        strcat(value, start);
+                        /* calculate free space in dest buffer */
+                        free_space_in_value = INI_MAX_LINE - ((value+strlen(value)) - line);
+                        additional_value_len = strlen(start);
+                        
+                        if (free_space_in_value < additional_value_len)
+                        {
+                            userlog("Failed to parse config - value too large,"
+                                    "config param: %s (limit:%d) runs over by: %d", 
+                                    name, INI_MAX_LINE, additional_value_len,
+                                    free_space_in_value);
+                            error = lineno;
+                        }
+                        else
+                        {
+                            strcat(value, start);
+                        }
                     }
                     else
                     {

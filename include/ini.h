@@ -81,7 +81,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 
 /* Stop parsing on first error (default is to keep parsing). */
 #ifndef INI_STOP_ON_FIRST_ERROR
-#define INI_STOP_ON_FIRST_ERROR 0
+#define INI_STOP_ON_FIRST_ERROR 1
 #endif
 
 /* Maximum line length for any line in INI file. */
