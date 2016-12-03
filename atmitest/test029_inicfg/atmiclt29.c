@@ -160,9 +160,31 @@ int main(int argc, char** argv)
             NDRX_LOG(log_error, "TESTERROR: [mysection/subsect1/f/f] not 4!");
             FAIL_OUT(ret);
         }
+        
+        /* test a multi-line string */
+        if (NULL==(val=ndrx_keyval_hash_get(out, "MYVALUE3")))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get MYVALUE3!");
+            FAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_debug, "Got multi-line value [%s]", val->val);
+
+        if (NULL==strstr(val->val, "MULTILINE"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: [MYVALUE3] does not contain 'MULTILINE'!");
+            FAIL_OUT(ret);
+        }
+        
+        if (NULL==strstr(val->val, "VALUE"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: [MYVALUE3] does not contain 'VALUE'!");
+            FAIL_OUT(ret);
+        }
 
         /* free the list */
         ndrx_keyval_hash_free(out);
+        
 
         out=NULL;
         /* try some iteration over the config */

@@ -61,6 +61,8 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 #define INI_ALLOW_BOM 1
 #endif
 
+#if 0
+- no inline comments please...
 /* Nonzero to allow inline comments (with valid inline comment characters
    specified by INI_INLINE_COMMENT_PREFIXES). Set to 0 to turn off and match
    Python 3.2+ configparser behaviour. */
@@ -69,6 +71,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 #endif
 #ifndef INI_INLINE_COMMENT_PREFIXES
 #define INI_INLINE_COMMENT_PREFIXES ";"
+#endif
 #endif
 
 /* Nonzero to use stack, zero to use heap (malloc/free). */
@@ -83,7 +86,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 
 /* Maximum line length for any line in INI file. */
 #ifndef INI_MAX_LINE
-#define INI_MAX_LINE 200
+#define INI_MAX_LINE 10240
 #endif
 
 #ifdef __cplusplus

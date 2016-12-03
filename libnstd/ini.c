@@ -70,15 +70,20 @@ static char* strncpy0(char* dest, const char* src, size_t size)
     return dest;
 }
 
-/* See documentation in header file. */
+/* See documentation in header file. 
+ * mvitolin: TODO: Add support for multi-line value for single call of the handler
+ * Needs to do some buffering...
+ */
 int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
                      void* user, void *user2)
 {
     /* Uses a fair bit of stack (use heap instead if you need to) */
 #if INI_USE_STACK
-    char line[INI_MAX_LINE];
+    char tmp_line[INI_MAX_LINE];
+    char tmp_line2[INI_MAX_LINE];
 #else
-    char* line;
+    char* tmp_line;
+    char* tmp_line2;
 #endif
     char section[MAX_SECTION] = "";
     char prev_name[MAX_NAME] = "";
@@ -89,19 +94,31 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
     char* value;
     int lineno = 0;
     int error = 0;
+    
+    char *line;
+    char *line2;
+    
 
 #if !INI_USE_STACK
     line = (char*)NDRX_MALLOC(INI_MAX_LINE);
     if (!line) {
         return -2;
     }
+    
+    line2 = (char*)NDRX_MALLOC(INI_MAX_LINE);
+    if (!line2) {
+        return -2;
+    }
 #endif
+    line = tmp_line;
+    line2 = tmp_line2;
 
     /* Scan through stream line by line */
     while (reader(line, INI_MAX_LINE, stream) != NULL) {
         lineno++;
 
         start = line;
+        
 #if INI_ALLOW_BOM
         if (lineno == 1 && (unsigned char)start[0] == 0xEF &&
                            (unsigned char)start[1] == 0xBB &&
@@ -110,7 +127,8 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
         }
 #endif
         start = lskip(rstrip(start));
-
+        
+line_buffered:
         if (*start == ';' || *start == '#') {
             /* Per Python configparser, allow both ; and # comments at the
                start of a line */
@@ -152,8 +170,69 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 
                 /* Valid name[=:]value pair found, call handler */
                 strncpy0(prev_name, name, sizeof(prev_name));
+                
+#if INI_ALLOW_MULTILINE
+                /*
+                 * Home some more code for multi-line support, buffer the line read...
+                 */
+                
+                while (reader(line2, INI_MAX_LINE, stream) != NULL)
+                {
+                    lineno++;
+
+                    start = line2;
+                    start = lskip(rstrip(start));
+                    
+                    if (*start == ';' || *start == '#') {
+                        /* Per Python configparser, allow both ; and # comments at the
+                           start of a line */
+                        continue; /* Skip the line... */
+                    }
+                    else if (*start && start > line2) {
+                        /* we have an additional data */
+                        rstrip(start);
+                        #if INI_ALLOW_INLINE_COMMENTS
+                                end = find_chars_or_comment(start, NULL);
+                                if (*end)
+                                    *end = '\0';
+                        #endif
+                        strcat(value, start);
+                    }
+                    else
+                    {
+                        /* Send value to user and continue with next line */
+                        if (!handler(user, user2, section, name, value) && !error)
+                        {
+                            error = lineno;
+                        }
+                        else
+                        {
+                            /* so we have finished with value
+                             * swap the pointers...
+                             */
+                            char *p;
+                            
+                            p = line;
+                            line = line2;
+                            line2 = p;
+                            
+                            goto line_buffered;
+                        }
+                    }
+                }
+                
+                /* so if we get here, this was last line, process it accordingly.. */
+                if (!handler(user, user2, section, name, value) && !error)
+                {
+                    error = lineno;
+                }
+                
+#else
                 if (!handler(user, user2, section, name, value) && !error)
                     error = lineno;
+#endif
+                
+
             }
             else if (!error) {
                 /* No '=' or ':' found on name[=:]value line */
@@ -169,6 +248,7 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 
 #if !INI_USE_STACK
     NDRX_FREE(line);
+    NDRX_FREE(line2);
 #endif
 
     return error;
