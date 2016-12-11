@@ -82,6 +82,8 @@ extern NDRX_API int ndrx_nr_chars(char *str, char character);
 
 extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);
+extern NDRX_API char *ndrx_getline(void);
+
 
 /* Mapping functions: */
 extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);

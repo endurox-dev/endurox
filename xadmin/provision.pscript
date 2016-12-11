@@ -1,0 +1,207 @@
+#!/usr/bin/pscript 
+
+print("    ______          __                    ___  __\n");
+print("   / ____/___  ____/ /_  ___________    _/_/ |/ /\n");
+print("  / __/ / __ \\/ __  / / / / ___/ __ \\ _/_/ |   / \n");
+print(" / /___/ / / / /_/ / /_/ / /  / /_/ //_/  /   |  \n");
+print("/_____/_/ /_/\\__,_/\\__,_/_/   \\____/_/   /_/|_|  \n");
+print("\n");
+print("                     Provision\n");
+print("\n");
+
+/*
+TODO:
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Install base
+////////////////////////////////////////////////////////////////////////////////
+class InstallBase {
+
+	function CheckLimits() {
+	
+	}
+	
+	
+	function CheckLimits() {
+		
+	}
+	
+	function IsInstallNeeded() {
+	
+	}
+	
+	
+	function InstallLimits() {
+	
+	}
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Linux Install 
+////////////////////////////////////////////////////////////////////////////////
+class InstallLinux extends InstallBase {
+
+	function CheckLimits() {
+	
+		::print("Checking Linux limits...\n");
+	}
+	
+	function IsInstallNeeded() {
+	
+	}
+	
+	
+	function InstallLimits() {
+	
+	}
+	
+}
+*/
+
+//Provision class
+class Provision {
+
+	//Should come from packages
+	osType = "";
+	
+	//Queue type...
+	qType = "";
+	
+	//Get some random number...
+	</ name = "Cluster node id", type = "number", min=1, max=32 /> 
+	qprefix = "1";
+	
+	</ name = "Queue/System prefix", type = "ans", min=1, max=8, regex="^/" /> 
+	qprefix = "exrun";
+	
+	</ name = "Setup sample XA config", type = "yn"/> 
+	sampleXA = "n";
+	
+	</ name = "Application home", type = "ans", min=1, max=512, regex="^/" /> 
+	appHome = "";
+	
+	</ name = "Register application at OS startup (rc.local)", type = "yn"/> 
+	regStartup = "n";
+	
+	//If starts with '/' - then assume that it is full path...
+	</ name = "Executables/binaries sub-folder of Apphome", type = "path"/> 
+	binDir = "bin";
+	
+	</ name = "Configuration sub-folder of Apphome", type = "path"/> 
+	binDir = "conf";
+	
+	</ name = "Log sub-folder of Apphome", type = "path"/> 
+	confDir = "conf";
+	
+	</ name = "Log sub-folder of Apphome", type = "path"/> 
+	logDir = "log";
+	
+	</ name = "Temp sub-dir (used for pid file)", type = "path"/> 
+	tempDir = "tmp";
+	
+	</ name = "System wide tpcall() timeout", type = "n"/> 
+	timeout = "60";
+	
+	</ name = "Install sample queue configuration", type = "yn"/> 
+	installQ = "y";
+	
+	</ name = "Install event server", type = "yn"/> 
+	eventSv = "y";
+	
+	</ name = "Configure Client Process Monitor Server", type = "yn"/> 
+	eventSv = "y";
+	
+	</ name = "Install Configuration server", type = "yn"/> 
+	configSv = "y";
+	
+	</ name = "Install bridge connection", type = "yn"/> 
+	bridge = "y";
+	
+	</ name = "Bridge -> Role: Active(a) or passive(p)?", type = "regex", regex="a?p?", depend="bridge=='y'"/> 
+	bridgeRole = "a";
+
+	</ name = "Bridge -> IP: Listen address", type = "regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", depend="bridge=='y' && bridgeRole=='p'"/> 
+	ipl = "0.0.0.0";
+	
+	</ name = "Bridge -> IP: Connect to", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", depend="bridge=='y' && bridgeRole=='a'"/> 
+	ipc = "172.0.0.1";
+	
+	</ name = "Bridge -> IP: Port number", type="number", min=0, max=65000, depend="bridge=='y'" /> 
+	port = "21003";
+	
+	</ name = "CCTag (use if set)", type="string", min=0, max=8 /> 
+	cctag = "";
+	
+	//Install handler
+	install = null;
+	
+	//This is constructor, we shall get some infos from Enduro/X base build
+	constructor() {
+		osType = "LINUX";
+		qType = "posixq";
+		
+		//Set app home to pwd
+		//TODO: Needs io function for pwd...
+		appHome = "";
+/*		
+		if (osType == "LINUX") {
+			install = InstallLinux();
+		}
+*/
+	}
+}
+
+
+//Create a provision object
+local prov = Provision();
+
+print("Compiled system type....: " + prov.osType + "\n");
+print("Queueing mechanism......: " + prov.qType + "\n");
+print("\n");
+
+local maxMembSize = 12;
+
+//prov.install.CheckLimits();
+
+//Run the wizzard...
+//Iterate over the all paramters
+foreach(member,val in Provision)
+{
+	local attr;
+	
+	attr = Provision.getattributes(member);
+	
+	if (null!=attr)
+	{		
+		::print(format("%-12s :%s [%s]: ", member, attr["name"], prov[member]));
+		
+		local new_val  = getline();
+		
+		switch (attr["type"])
+		{
+			case "ans":
+				print("This is ans...\n");
+			break;
+		}
+		
+		//Validate input...
+	}
+	
+	/*
+	print("Input: "+member+"\n");
+	if((attr = Provision.getattributes(member)) != null) {
+		foreach(i,v in attr)
+		{
+			::print("\t"+i+" = "+(typeof v)+"\n");
+		}
+	}
+	*/
+}
+
+
+
+
+
+

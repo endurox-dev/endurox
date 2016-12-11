@@ -56,6 +56,7 @@ add_library (psstdlib SHARED
         psstdio.cpp
         psstdblob.cpp
         psstdaux.cpp
+        psstdexutil.cpp
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

@@ -18,6 +18,8 @@
 #include <psstdstring.h>
 #include <psstdaux.h>
 
+#include <psstdexutil.h>
+
 #ifdef PSUNICODE
 #define scfprintf fwprintf
 #define scfopen	_wfopen
@@ -326,6 +328,9 @@ int main(int argc, char* argv[])
 	psstd_register_systemlib(v);
 	psstd_register_mathlib(v);
 	psstd_register_stringlib(v);
+        
+        /* Enduro/X addons: */
+        psstd_register_exutillib(v);
 
 	//aux library
 	//sets error handlers
