@@ -538,6 +538,14 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char 
     dbg_ptr = get_debug_ptr(dbg_ptr);
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
     
+    if (0==len)
+    {
+        __ndrx_debug__(dbg_ptr, lev, file, line, func, "Notice: Hex dump diff - "
+                "nothing to dump: len=%d ptr=%p ptr2=%p", len, ptr, ptr2);
+        
+        return; /* nothing todo... */
+    }
+    
     for (i = 0; i < len; i++)
     {
         if ((i % 16) == 0)
@@ -647,6 +655,14 @@ public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file
     dbg_ptr = get_debug_ptr(dbg_ptr);
     
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
+    
+    if (0==len)
+    {
+        __ndrx_debug__(dbg_ptr, lev, file, line, func, "Notice: Hex dump - "
+                "nothing to dump: len=%d ptr=%p", len, ptr);
+        
+        return; /* nothing todo... */
+    }
 
     for (i = 0; i < len; i++)
     {

@@ -425,7 +425,8 @@ out:
  */
 public void tplog(int lev, char *message)
 {
-    TP_LOG(lev, message);
+    /* do not want to interpret the format string */
+    TP_LOG(lev, "%s", message);
 }
 
 /**
@@ -460,7 +461,8 @@ public void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int le
  */
 public void ndrxlog(int lev, char *message)
 {
-    NDRX_LOG(lev, message);
+    /* do not want to interpret the format string */
+    NDRX_LOG(lev, "%s", message);
 }
 
 /**
@@ -496,7 +498,8 @@ public void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int 
  */
 public void ubflog(int lev, char *message)
 {
-    UBF_LOG(lev, message);
+    /* do not want to interpret the format string */
+    UBF_LOG(lev, "%s", message);
 }
 
 /**
