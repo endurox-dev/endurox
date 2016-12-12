@@ -49,6 +49,14 @@ include_directories (${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
 # Make sure the linker can find the UBF library once it is built.
 #link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
+# Make the embedfile script
+add_executable(embedfile embedfile.c)
+add_custom_command(
+  OUTPUT provision.c
+  COMMAND embedfile provision provision.pscript
+  DEPENDS provision.pscript)
+
+
 # Exectuables
 add_executable (xadmin xadmin.c exec.c config.c
 		cmd_config.c utils.c cmd_startstop.c cmd_psc.c cmd_fdown.c
@@ -56,7 +64,8 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_shm_psvc.c cmd_shm_psrv.c cmd_readv.c cmd_pq.c cmd_pqa.c
                 cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
                 cmd_scbp.c cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
-                cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c)
+                cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
+                provision.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
