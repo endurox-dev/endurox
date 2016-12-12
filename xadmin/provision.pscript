@@ -9,57 +9,6 @@ print("\n");
 print("                     Provision\n");
 print("\n");
 
-/*
-TODO:
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Install base
-////////////////////////////////////////////////////////////////////////////////
-class InstallBase {
-
-	function CheckLimits() {
-	
-	}
-	
-	
-	function CheckLimits() {
-		
-	}
-	
-	function IsInstallNeeded() {
-	
-	}
-	
-	
-	function InstallLimits() {
-	
-	}
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Linux Install 
-////////////////////////////////////////////////////////////////////////////////
-class InstallLinux extends InstallBase {
-
-	function CheckLimits() {
-	
-		::print("Checking Linux limits...\n");
-	}
-	
-	function IsInstallNeeded() {
-	
-	}
-	
-	
-	function InstallLimits() {
-	
-	}
-	
-}
-*/
-
 //Provision class
 class Provision {
 
@@ -73,18 +22,15 @@ class Provision {
 	</ order=1, name = "Cluster node id", type = "number", min=1, max=32 /> 
 	qprefix = "1";
 	
-	</ order=2, name = "System code (prefix/setfile name, etc)", type = "ans",
-                min=1, max=4, regex="[A-Za-z0-9]+"/> 
-	qprefix = "exrun";
+	</ order=2, name = "System code (prefix/setfile name, etc)", type = "string",
+                min=1, max=8, regex="^[A-Za-z0-9]+"/> 
+	qprefix = "test1";
 	
 	</ order=3, name = "Setup sample XA config", type = "yn"/> 
 	sampleXA = "n";
 	
-	</ order=4, name = "Application home", type = "ans", min=1, max=512, regex="^/" /> 
+	</ order=4, name = "Application home", type = "string", min=1, max=512, regex="^/.*" /> 
 	appHome = "";
-	
-	</ order=5, name = "Register application at OS startup (rc.local)", type = "yn"/> 
-	regStartup = "n";
 	
 	//If starts with '/' - then assume that it is full path...
 	</ order=6, name = "Executables/binaries sub-folder of Apphome", type = "path"/> 
@@ -102,7 +48,7 @@ class Provision {
 	</ order=10, name = "Temp sub-dir (used for pid file)", type = "path"/> 
 	tempDir = "tmp";
 	
-	</ order=11, name = "System wide tpcall() timeout", type = "n"/> 
+	</ order=11, name = "System wide tpcall() timeout", type = "number"/> 
 	timeout = "60";
 	
 	</ order=12, name = "Install sample queue configuration", type = "yn"/> 
@@ -120,8 +66,8 @@ class Provision {
 	</ order=16, name = "Install bridge connection", type = "yn"/> 
 	bridge = "y";
 	
-	</ order=17, name = "Bridge -> Role: Active(a) or passive(p)?", type = "regex", 
-                regex="a?p?", depend="::prov.bridge==\"y\""/> 
+	</ order=17, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
+                regex="^[apAP]?", depend="::prov.bridge==\"y\""/> 
 	bridgeRole = "a";
 
 	</ order=18, name = "Bridge -> IP: Listen address", type = "regex", 
@@ -136,7 +82,7 @@ class Provision {
                 depend="(::prov.bridge==\"y\")" /> 
 	port = "21003";
 	
-	</ order=21, name = "CCTag (use if set)", type="string", min=0, max=8 /> 
+	</ order=21, name = "CCTag (use if set)", type="string", min=0, max=8, regex="[^/]*" /> 
 	cctag = "";
 	
 	//Install handler
@@ -149,11 +95,98 @@ class Provision {
 		
 		//Set app home to pwd
 		appHome = getcwd();
-/*		
-		if (osType == "LINUX") {
-			install = InstallLinux();
+	}
+	
+	//Print the value entry line
+	function printEntryLine(member) {
+	
+		local attr = this.getclass().getattributes(member);
+		::print(format("%2s: %-12s :%s [%s]: ", ""+attr["order"],
+				member, attr["name"], this[member]));
+	}
+	
+	//Validate the value of field
+	//@param member	Class member to attributes from
+	//@param value	Value to test validity for this field
+	function validateValue(member, value)
+	{
+	
+		local attr = Provision.getattributes(member);
+		local empty = false;
+		if (attr["type"]=="number")
+		{
+			if (attr.rawin("min"))
+			{
+				if ((value.tointeger()) < (attr["min"]))
+				{
+					print("Invalid value: Min length "+attr["min"]+"\n");
+					return 0;
+				}
+			}
+			
+			if (attr.rawin("max"))
+			{
+				if ((value.tointeger()) > (attr["max"]))
+				{
+					print("Invalid value: Max length "+attr["max"]+"\n");
+					return 0;
+				}
+			}
 		}
-*/
+		else
+		{
+			if (attr.rawin("min"))
+			{
+			
+				if (value.len() < attr["min"])
+				{
+					print("Invalid value: Min length "+attr["min"]+"\n");
+					return 0;
+				}
+				
+				if (0==attr["min"])
+				{
+					empty=true;
+				}
+			}
+			
+			if (attr.rawin("max"))
+			{
+				if (value.len() > (attr["max"]+0))
+				{
+					print("Invalid value: Max length "+attr["max"]+"\n");
+					return 0;
+				}
+			}
+		}
+		
+		//Check for regex
+		if (!empty && attr.rawin("regex"))
+		{
+		
+			local ex = regexp(attr["regex"]);
+			
+			if (!ex.match(value))
+			{
+				print("Invalid value: Does not match expression: ["+
+					attr["regex"]+"]\n");
+				return 0;
+			}
+		}
+		
+		if (attr["type"]=="yn")
+		{
+		
+			local ex = regexp("^[ynYN]$");
+			
+			if (!ex.match(value))
+			{
+				print("Error: Y/N?\n");
+				return 0;
+			}
+		}
+		
+		return 1;
 	}
 }
 
@@ -169,15 +202,11 @@ print("\n");
 
 local maxMembSize = 12;
 
+
+local elemOrder = [];
 //prov.install.CheckLimits();
 
-
-//TODO: Load all class members into array, index by order
-//And sort the array, then go over the array to print the questions...
-
-
-//Run the wizzard...
-//Iterate over the all paramters
+//Sort the fields
 foreach(member,val in Provision)
 {
 	local attr;
@@ -185,47 +214,72 @@ foreach(member,val in Provision)
 	attr = Provision.getattributes(member);
 	
 	if (null!=attr)
+	{	
+		elemOrder.append(member);
+	}
+}
+
+//Now sort the array
+//TODO: Move to class...
+elemOrder.sort(function(a,b)
+{
+	local attrA = Provision.getattributes(a);
+	
+	local attrB = Provision.getattributes(b);
+
+	return attrA["order"] <=> attrB["order"];
+} );
+
+
+
+//Run the wizzard...
+//Iterate over the all paramters
+//foreach(member,val in Provision)
+foreach(member in elemOrder)
+{
+	local attr;
+
+	attr = Provision.getattributes(member);
+
+	if (null!=attr)
 	{		
-                //Check that dependency is ok
-                local ask = 1;
-                if (attr.rawin("depend"))
-                {
-                    local compiledscript = compilestring("return "+attr["depend"]+";");
+		//Check that dependency is ok
+		local ask = 1;
+		if (attr.rawin("depend"))
+		{
+			local compiledscript = compilestring("return "+attr["depend"]+";");
+			ask = compiledscript();
+		}
+		
+		if (ask)
+		{
+		
+			local ok = false;
+			
+			while (!ok)
+			{
+				prov.printEntryLine(member);
 
-                    ask = compiledscript();
-
-                    //print("Expr ["+attr["depend"]+"] result: "+ask+"\n");
-                }
-            
-                if (ask)
-                {
-                    ::print(format("%-12s :%s [%s]: ", member, attr["name"], prov[member]));
-
-                    local new_val  = getline();
-
-                    switch (attr["type"])
-                    {
-                            case "ans":
-                                    print("This is ans...\n");
-                            break;
-                    }
-
-                    ::prov[member] = new_val;
-                }
+				local new_val  = getline();
+				
+				if (new_val=="")
+				{
+					new_val = prov[member];
+				}
+				
+				if (prov.validateValue(member, new_val))
+				{
+					::prov[member] = new_val;
+					ok = true;
+				}
+			}
+		}
 		
 		//Validate input...
 	}
-	
-	/*
-	print("Input: "+member+"\n");
-	if((attr = Provision.getattributes(member)) != null) {
-		foreach(i,v in attr)
-		{
-			::print("\t"+i+" = "+(typeof v)+"\n");
-		}
-	}
-	*/
 }
+
+//Print the list 
 
 
 

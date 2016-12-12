@@ -673,10 +673,15 @@ public char * ndrx_getline(void)
             linep = linen;
         }
 
-        if((*line++ = c) == '\n')
+        if('\n' == c)
         {
             break;
         }
+        else
+        {
+            *line++ = c;
+        }
+        
     }
     
     *line = '\0';
