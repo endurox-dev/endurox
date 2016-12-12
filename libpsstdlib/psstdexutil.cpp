@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <psstdexutil.h>
+#include <ndebug.h>
 #include <nstdutil.h>
 
 
@@ -46,11 +47,27 @@ static PSInteger _exutil_getline(HPSCRIPTVM v)
     
     if (NULL!=ret)
     {
-        free(ret);
+        NDRX_FREE(ret);
     }
 
     return 1;
 }
+
+
+//Get the current working dir
+static PSInteger _exutil_getcwd(HPSCRIPTVM v)
+{
+    char* ret;
+    char buff[PATH_MAX + 1];
+    
+    ret = getcwd( buff, sizeof(buff) );
+     
+    ps_pushstring(v,ret,-1);
+    
+    
+    return 1;
+}
+
 
 //TODO: We shall add ulog() here... so that we can do basic logging from install
 //scripts.
@@ -58,6 +75,7 @@ static PSInteger _exutil_getline(HPSCRIPTVM v)
 #define _DECL_FUNC(name,nparams,pmask) {_SC(#name),_exutil_##name,nparams,pmask}
 static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
+        _DECL_FUNC(getcwd,1,_SC(".s")),
 	{0,0}
 };
 #undef _DECL_FUNC
