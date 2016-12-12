@@ -161,9 +161,14 @@ EX_CC_VALUE                 411         string -        Corresponding occurrence
 ################################################################################
 # Error code field for interfaces (connecting modules)
 ################################################################################
-EX_IF_ECODE              500         short  -        Result code (error code)
-EX_IF_EMSG               501         string -        Result message
+EX_IF_ECODE                 500         short  -        Result code (error code)
+EX_IF_EMSG                  501         string -        Result message
 ################################################################################
+# TCP Inter-connecting
+################################################################################
+EX_TCPDATA                  550         carray -        TCP Data field
+EX_TCPGATEWAY               551         string -        TCP gateway service
+EX_TCPCONNID                552         long  -         TCP Connection id at gateway
 
 $#endif
 
