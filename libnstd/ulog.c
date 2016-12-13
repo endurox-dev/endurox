@@ -59,17 +59,20 @@
 public int userlog (char *data, ...)
 {
     int ret=SUCCEED;
-    int first = 1;
-    char *out_f = NULL;
-    char *out_f_dflt = "./";
+    /* TODO: Might need semaphore for first init... */
+    static int first = 1;
+    static char *out_f = NULL;
+    static char *out_f_dflt = ".";
     FILE *output;
     char  pre[100];
     int fopened=0;
     struct timeval  time_val;
     char full_name[FILENAME_MAX] = {EOS};
     long ldate, ltime, lusec;
+    int print_label = 0;
     pid_t pid;
     va_list ap;
+    /* No need for contexting... */
 
     gettimeofday( &time_val, NULL );
     
@@ -79,19 +82,24 @@ public int userlog (char *data, ...)
     {
         if (NULL==(out_f=getenv(CONF_NDRX_ULOG)))
         {
-            fprintf(stderr, "%s not set - logging to %s!\n",
-                CONF_NDRX_ULOG, out_f_dflt);
+            print_label = 1;
             out_f=out_f_dflt;
         }
 
         /* get pid */
         pid = getpid();
+        first = 0;
     }
 
     /* Format the full output file */
     if (NULL!=out_f)
     {
         sprintf(full_name, "%s/ULOG.%06ld", out_f, ldate);
+        
+        if (print_label)
+        {
+            fprintf(stderr, "Logging to %s\n", full_name);
+        }
     }
 
     /* if no file or failed to open, then use stderr as output */
@@ -126,4 +134,13 @@ public int userlog (char *data, ...)
     
 out:
     return ret;
+}
+
+/**
+ * Write the userlog message by const string
+ * @param msg
+ */
+public int userlog_const (const char *msg)
+{
+    return userlog("%s", msg);
 }

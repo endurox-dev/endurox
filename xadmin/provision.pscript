@@ -116,6 +116,9 @@ class Provision {
 		local attr = this.getclass().getattributes(member);
 		::print(format("%2s:%s %-12s :%s [%s]: ", ""+attr["order"], pfx,
 				member, attr["name"], this[member]));
+				
+		::userlog(format("%2s:%s %-12s :%s [%s]: ", ""+attr["order"], pfx,
+				member, attr["name"], this[member]));
 	}
 	
 	//Validate the value of field

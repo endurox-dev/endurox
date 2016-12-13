@@ -40,6 +40,7 @@ extern "C" {
 #include <ndrx_config.h>
 
 extern NDRX_API int userlog (char *, ...);
+extern NDRX_API int userlog_const (const char *msg);
 
 #if defined(__cplusplus)
 }

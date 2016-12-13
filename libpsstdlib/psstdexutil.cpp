@@ -36,9 +36,15 @@
 #include <psstdexutil.h>
 #include <ndebug.h>
 #include <nstdutil.h>
+#include <userlog.h>
+#include <string.h>
+#include <ndrx_config.h>
 
+
+ #define C_TEXT( text ) ((char*)std::string( text ).c_str())
 
 //Read the line from terminal
+//@return line read string
 static PSInteger _exutil_getline(HPSCRIPTVM v)
 {
     char *ret = ndrx_getline();
@@ -53,8 +59,17 @@ static PSInteger _exutil_getline(HPSCRIPTVM v)
     return 1;
 }
 
+//Return the compiled operating system name
+static PSInteger _exutil_getosname(HPSCRIPTVM v)
+{
+    ps_pushstring(v,NDRX_BUILD_OS_NAME,-1);
+    
+    return 1;
+}
+
 
 //Get the current working dir
+//@return   current working dir
 static PSInteger _exutil_getcwd(HPSCRIPTVM v)
 {
     char* ret;
@@ -68,6 +83,19 @@ static PSInteger _exutil_getcwd(HPSCRIPTVM v)
     return 1;
 }
 
+//Write user log message
+//@param msg    Message
+static PSInteger _exutil_userlog(HPSCRIPTVM v)
+{
+    const PSChar *s;
+    if(PS_SUCCEEDED(ps_getstring(v,2,&s))){
+        
+        userlog_const (s);
+        
+        return 1;
+    }
+    return 0;
+}
 
 //TODO: We shall add ulog() here... so that we can do basic logging from install
 //scripts.
@@ -76,6 +104,8 @@ static PSInteger _exutil_getcwd(HPSCRIPTVM v)
 static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
         _DECL_FUNC(getcwd,1,_SC(".s")),
+        _DECL_FUNC(getosname,1,_SC(".s")),
+        _DECL_FUNC(userlog,2,_SC(".s")),
 	{0,0}
 };
 #undef _DECL_FUNC
