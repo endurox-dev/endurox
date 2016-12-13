@@ -1,5 +1,8 @@
 #!/usr/bin/pscript 
 
+userlog("Provision script started");
+
+print("\n");
 print("    ______          __                    ___  __\n");
 print("   / ____/___  ____/ /_  ___________    _/_/ |/ /\n");
 print("  / __/ / __ \\/ __  / / / / ___/ __ \\ _/_/ |   / \n");
@@ -18,9 +21,13 @@ class Provision {
 	//Queue type...
 	qType = "";
 	
+	//Queue prefix
+	</ order=0, name = "Queue device path", type = "string", min=1, max=512 /> 
+	qpath = "/dev/mqueue";
+	
 	//Get some random number...
 	</ order=1, name = "Cluster node id", type = "number", min=1, max=32 /> 
-	qprefix = "1";
+	nodeid = "1";
 	
 	</ order=2, name = "System code (prefix/setfile name, etc)", type = "string",
                 min=1, max=8, regex="^[A-Za-z0-9]+"/> 
@@ -88,20 +95,26 @@ class Provision {
 	//Install handler
 	install = null;
 	
+	elemOrder = null;
+	
+	isDefaulted = false;
+	
 	//This is constructor, we shall get some infos from Enduro/X base build
 	constructor() {
-		osType = "LINUX";
-		qType = "posixq";
+		osType = getosname();
+		//qType = "posixq";
 		
 		//Set app home to pwd
 		appHome = getcwd();
+		
+		elemOrder = this.getSortedParamArray();
 	}
 	
 	//Print the value entry line
-	function printEntryLine(member) {
+	function printEntryLine(pfx, member) {
 	
 		local attr = this.getclass().getattributes(member);
-		::print(format("%2s: %-12s :%s [%s]: ", ""+attr["order"],
+		::print(format("%2s:%s %-12s :%s [%s]: ", ""+attr["order"], pfx,
 				member, attr["name"], this[member]));
 	}
 	
@@ -188,6 +201,147 @@ class Provision {
 		
 		return 1;
 	}
+	
+	//Returns elements in sorted order
+	function getSortedParamArray()
+	{
+		local elemOrder = [];
+		//prov.install.CheckLimits();
+
+		//Sort the fields
+		foreach(member,val in Provision)
+		{
+			local attr;
+			
+			attr = Provision.getattributes(member);
+			
+			if (null!=attr)
+			{	
+				elemOrder.append(member);
+			}
+		}
+
+		//Now sort the array
+		//TODO: Move to class...
+		elemOrder.sort(function(a,b)
+		{
+			local attrA = Provision.getattributes(a);
+			
+			local attrB = Provision.getattributes(b);
+
+			return attrA["order"] <=> attrB["order"];
+		} );
+		
+		return elemOrder;
+	}
+	
+	
+	//Test is field actual of the object
+	//@param member	Field to test for need
+	//@return TRUE field actual for user intervetion, FALSE not needed for user.
+	function isFieldActual(member)
+	{
+		local attr;
+		
+		attr = Provision.getattributes(member);
+		
+		//Check that dependency is ok
+		if (attr.rawin("depend"))
+		{
+			local compiledscript = compilestring("return "+attr["depend"]+";");
+			return compiledscript();
+		}
+		else
+		{
+			return true;
+		}
+	}
+	
+	//Enter the field value from console
+	//@param member 	Field to enter.
+	function enterField(member)
+	{
+		local ok = false;
+				
+		while (!ok)
+		{
+			this.printEntryLine("", member);
+
+			local new_val  = getline();
+			
+			if (new_val=="")
+			{
+				new_val = this[member];
+			}
+			
+			//Validate input...
+			if (this.validateValue(member, new_val))
+			{
+				this[member] = new_val;
+				ok = true;
+			}
+		}
+	}
+	
+	//Run the runInteractive configuration
+	//@return TRUE OK to provision (accepted), FALSE - not ok
+	function runInteractive()
+	{
+		//Run the wizzard...
+		//Iterate over the all paramters
+		//foreach(member,val in Provision)
+		foreach(member in elemOrder)
+		{
+			if (this.isFieldActual(member))
+			{
+				enterField(member);
+			}
+		}
+
+		//OK to provision..
+		return true;
+	}
+	
+	
+	//Validate and print config
+	function validatAndPrintConfig()
+	{
+		print("\n");
+		print("*** Review & edit configuration ***\n");
+		print("\n");
+		//Run the wizzard...
+		//Iterate over the all paramters
+		//foreach(member,val in Provision)
+		foreach(member in this.elemOrder)
+		{
+			if (this.isFieldActual(member))
+			{
+				
+				if (!this.validateValue(member, this[member]))
+				{
+					return false;
+				}
+			}
+			
+			//Validate input...
+			//Print the field value
+			this.printEntryLine(" Edit", member);
+			print("\n");
+		}
+		
+		//If not defauled, then allow to edit the some entry...
+		if (!isDefaulted)
+		{
+			//Offer entry...
+			::print("98: Cancel\n");
+			::print("99: Accept & provision\n");
+			::print("Enter the choise [0-21, 98, 99] \n");
+		}
+		
+		//OK to provision..
+		return true;
+	}
+	
 }
 
 local root = getroottable()
@@ -200,87 +354,8 @@ print("Compiled system type....: " + ::prov.osType + "\n");
 print("Queueing mechanism......: " + ::prov.qType + "\n");
 print("\n");
 
-local maxMembSize = 12;
-
-
-local elemOrder = [];
-//prov.install.CheckLimits();
-
-//Sort the fields
-foreach(member,val in Provision)
-{
-	local attr;
-	
-	attr = Provision.getattributes(member);
-	
-	if (null!=attr)
-	{	
-		elemOrder.append(member);
-	}
-}
-
-//Now sort the array
-//TODO: Move to class...
-elemOrder.sort(function(a,b)
-{
-	local attrA = Provision.getattributes(a);
-	
-	local attrB = Provision.getattributes(b);
-
-	return attrA["order"] <=> attrB["order"];
-} );
-
-
-
-//Run the wizzard...
-//Iterate over the all paramters
-//foreach(member,val in Provision)
-foreach(member in elemOrder)
-{
-	local attr;
-
-	attr = Provision.getattributes(member);
-
-	if (null!=attr)
-	{		
-		//Check that dependency is ok
-		local ask = 1;
-		if (attr.rawin("depend"))
-		{
-			local compiledscript = compilestring("return "+attr["depend"]+";");
-			ask = compiledscript();
-		}
-		
-		if (ask)
-		{
-		
-			local ok = false;
-			
-			while (!ok)
-			{
-				prov.printEntryLine(member);
-
-				local new_val  = getline();
-				
-				if (new_val=="")
-				{
-					new_val = prov[member];
-				}
-				
-				if (prov.validateValue(member, new_val))
-				{
-					::prov[member] = new_val;
-					ok = true;
-				}
-			}
-		}
-		
-		//Validate input...
-	}
-}
-
-//Print the list 
-
+::prov.runInteractive();
+::prov.validatAndPrintConfig();
 
 
 
