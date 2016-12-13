@@ -99,6 +99,12 @@ class Provision {
 	
 	isDefaulted = false;
 	
+	//Calculated min/max order
+	minOrder = 99;
+	
+	maxOrder = -1;
+	
+	
 	//This is constructor, we shall get some infos from Enduro/X base build
 	constructor() {
 		osType = getosname();
@@ -108,6 +114,8 @@ class Provision {
 		appHome = getcwd();
 		
 		elemOrder = this.getSortedParamArray();
+		
+		
 	}
 	
 	//Print the value entry line
@@ -214,12 +222,20 @@ class Provision {
 		//Sort the fields
 		foreach(member,val in Provision)
 		{
-			local attr;
-			
-			attr = Provision.getattributes(member);
+			local attr = Provision.getattributes(member);
 			
 			if (null!=attr)
 			{	
+				if (attr["order"]<minOrder)
+				{
+					minOrder = attr["order"];
+				}
+				
+				if (attr["order"]>maxOrder)
+				{
+					maxOrder = attr["order"];
+				}
+
 				elemOrder.append(member);
 			}
 		}
@@ -306,6 +322,15 @@ class Provision {
 	}
 	
 	
+	//Get element name by order
+	//@param order	Order number of attributes
+	//@return	element name, empty if not found
+	function getNameByOrder(order)
+	{
+		//TODO: For...
+	}
+	
+	
 	//Validate and print config
 	function validatAndPrintConfig()
 	{
@@ -336,9 +361,9 @@ class Provision {
 		if (!isDefaulted)
 		{
 			//Offer entry...
-			::print("98: Cancel\n");
-			::print("99: Accept & provision\n");
-			::print("Enter the choise [0-21, 98, 99] \n");
+			::print("91: Cancel\n");
+			::print("92: Accept & provision\n");
+			::print("Enter the choise ["+minOrder+"-"+maxOrder+", 91, 92] \n");
 		}
 		
 		//OK to provision..
