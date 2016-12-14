@@ -21,7 +21,7 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Function allocates XATMI buffer by given 'type' and 'subtype'. The buffer size is indicated by 'size' argument. Currently subtype is not used, and it can be leaved NULL or empty string. If function succeeds, then Enduro/X registers buffer in internal registry. If user allocates the buffer, it is up to user to free it with *tpfree()*, only exception is with auto buffers which are allocated at point when when service receives request, and Enduro/X will free the buffer after doing *tpreturn()* or *tpforward()*.
+Function allocates XATMI buffer by given 'type' and 'subtype'. The buffer size is indicated by 'size' argument, if it set to 0 and buffer type is 'UBF', then system allocates 1024 for new buffer. Currently subtype is not used, and it can be leaved NULL or empty string. If function succeeds, then Enduro/X registers buffer in internal registry. If user allocates the buffer, it is up to user to free it with *tpfree()*, only exception is with auto buffers which are allocated at point when when service receives request, and Enduro/X will free the buffer after doing *tpreturn()* or *tpforward()*.
 
 *Valid type*
 
