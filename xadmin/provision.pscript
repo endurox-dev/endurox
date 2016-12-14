@@ -325,18 +325,37 @@ class Provision {
 	//Get element name by order
 	//@param order	Order number of attributes
 	//@return	element name, empty if not found
-	function getNameByOrder(order)
+	function getMemberByOrder(order)
 	{
-		//TODO: For...
+		foreach(member,val in Provision)
+		{
+			local attr = Provision.getattributes(member);
+			
+			if (null!=attr)
+			{	
+				if (attr["order"] == order.tointeger())
+				{
+					if (this.isFieldActual(member))
+					{
+						return member;
+					}
+					else
+					{
+						return ""; /* currently not editable... */
+					}
+						
+				}
+			}
+		}
+		
+		return "";
 	}
 	
 	
-	//Validate and print config
-	function validatAndPrintConfig()
+	//Print the actual configuration
+	//@return true - config ok, false - config bad
+	function printConfig()
 	{
-		print("\n");
-		print("*** Review & edit configuration ***\n");
-		print("\n");
 		//Run the wizzard...
 		//Iterate over the all paramters
 		//foreach(member,val in Provision)
@@ -357,17 +376,224 @@ class Provision {
 			print("\n");
 		}
 		
-		//If not defauled, then allow to edit the some entry...
-		if (!isDefaulted)
+		return true;
+	}
+	
+	
+	//Validate and print config
+	function validatAndPrintConfig()
+	{
+		while (1)
 		{
-			//Offer entry...
-			::print("91: Cancel\n");
-			::print("92: Accept & provision\n");
-			::print("Enter the choise ["+minOrder+"-"+maxOrder+", 91, 92] \n");
+			print("\n");
+			print("*** Review & edit configuration ***\n");
+			print("\n");
+			
+			if (!printConfig())
+			{
+				return false;
+			}
+					
+			//If not defauled, then allow to edit the some entry...
+			if (!isDefaulted)
+			{
+				//Offer entry...
+				::print("91: Cancel\n");
+				::print("92: Accept\n");
+				::print("Enter the choise ["+minOrder+"-"+maxOrder+", 91, 92]: ");
+				
+				local input = getline();
+				
+				userlog("User entered: "+input);
+				if (input=="91")
+				{
+					userlog("Terminating...");
+					return false;
+				}
+				else if (input=="92")
+				{
+					userlog("Accepted");
+					return true;
+				}
+				else if (input!="")
+				{
+					/* Check the range */
+					local ok = false;
+					
+					local member = "";
+					while (!ok)
+					{
+						member = getMemberByOrder(input);
+						
+						if (member=="")
+						{
+							::print("Invalid entry\n");
+							::print("Enter the choise ["+
+								minOrder+"-"+maxOrder+", 91, 92]: ");
+							input = getline();
+						}
+						else
+						{
+							ok = true;
+						}
+					}
+					
+					/* edit the field */
+					enterField(member);
+				}	
+			}
 		}
 		
 		//OK to provision..
 		return true;
+	}
+	
+	//Get the output files to write to
+	//So we will need following:
+	//1. ndrxconfig.xml
+	//2. app.ini
+	//3. setqprefix
+	
+	ndrxconfig = "";
+	appini = "";
+	setfile = "";
+	
+	function getOutputFiles()
+	{
+		ndrxconfig = appHome+"/"+confDir+"/ndrxconfig.xml";
+		appini = appHome+"/"+confDir+"/app.ini";
+		setfile = appHome+"/"+confDir+"/set"+qprefix;
+		
+		print("ndrxconfig: ["+ndrxconfig+"]\n");
+		userlog("ndrxconfig: ["+ndrxconfig+"]");
+		
+		print("appini: ["+appini+"]\n");
+		userlog("appini: ["+appini+"]");
+		
+		print("setfile: ["+setfile+"]\n");
+		userlog("setfile: ["+setfile+"]");
+	}
+	
+	
+	//Build the ndrxconfig value
+	ndrxconfigVal = "";
+	function buildNdrxconfig()
+	{
+	
+		local xmlStart = @"
+<?xml version=""1.0"" ?>
+<endurox>
+	<!--
+			*** For more info see ndrxconfig.xml(5)  man page. ***
+	-->
+	<appconfig>
+	
+		<!-- 
+			ALL BELLOW ONES USES <sanity> periodical timer  -->
+			Sanity check time, sec
+		-->
+		<sanity>5</sanity>
+		
+		<!--
+			Seconds in which we should send service refresh to other node.
+		-->
+		<brrefresh>6</brrefresh>
+		
+		<!-- 
+			Do process reset after 1 sec 
+		-->
+		<restart_min>1</restart_min>
+		
+		<!-- 
+			If restart fails, then boot after +5 sec of previous wait time
+		-->
+		<restart_step>1</restart_step>
+		
+		<!-- 
+			If still not started, then max boot time is a 30 sec. 
+		-->
+		<restart_max>5</restart_max>
+		
+		<!--  
+			<sanity> timer, usage end
+		-->
+		
+		<!-- 
+		Time (seconds) after attach when program will start do sanity & respawn checks,
+		starts counting after configuration load 
+		-->
+		<restart_to_check>20</restart_to_check>
+		
+		
+		<!-- 
+			Setting for pq command, should ndrxd collect service 
+			queue stats automatically If set to Y or y, 
+			then queue stats are on. Default is off.
+		-->
+		<gather_pq_stats>Y</gather_pq_stats>
+		
+	</appconfig>
+	<defaults>
+	
+		<min>1</min>
+		<max>2</max>
+		
+		<!-- 
+			Kill the process which have not started in <start_max> time
+		-->
+		<autokill>1</autokill>
+		
+		<!-- 
+			The maximum time while process can hang in 'starting' state i.e.
+			have not completed initialization, sec X <= 0 = disabled  
+		-->
+		<start_max>2</start_max>
+		
+		<!--
+			Ping server in every X seconds (step is <sanity>).
+		-->
+		<pingtime>10</pingtime>
+		
+		<!--
+			Max time in seconds in which server must respond.
+			The granularity is sanity time.
+			X <= 0 = disabled 
+		-->
+		<ping_max>40</ping_max>
+		
+		<!--
+			Max time to wait until process should exit on shutdown
+			X <= 0 = disabled 
+		-->
+		<end_max>30</end_max>
+		
+		<!-- 
+			Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+			to process until it have been terminated.
+		-->
+		<killtime>1</killtime>
+		
+	</defaults>
+	<servers>";
+	
+	
+	
+
+	}
+	
+	
+	//Build the app.ini value
+	appiniVal = "";
+	function buildAppini()
+	{
+		
+	}
+	
+	
+	setfileVal = "";
+	function buildSetfile()
+	{
+		
 	}
 	
 }
@@ -383,9 +609,12 @@ print("Queueing mechanism......: " + ::prov.qType + "\n");
 print("\n");
 
 ::prov.runInteractive();
-::prov.validatAndPrintConfig();
-
-
-
+if (::prov.validatAndPrintConfig())
+{
+	::prov.getOutputFiles();
+	::prov.buildNdrxconfig();
+	::prov.buildAppini();
+	::prov.buildSetfile();
+}
 
 
