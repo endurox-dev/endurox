@@ -1,4 +1,4 @@
-#!/usr/local/bin/pscript
+#!/usr/bin/pscript
 
 userlog("Provision script started");
 
@@ -33,8 +33,10 @@ class Provision {
                 min=1, max=8, regex="^[A-Za-z0-9]+"/> 
 	qprefix = "test1";
 	
-	</ order=3, name = "Setup sample XA config", type = "yn"/> 
-	sampleXA = "n";
+	//</ order=3, name = "Setup sample XA config", type = "yn"/> 
+	//sampleXA = "n";
+	
+	//we need: Qspace, Qdata, tmlogs folder
 	
 	</ order=4, name = "Application home", type = "string", min=1, max=512, regex="^/.*" /> 
 	appHome = "";
@@ -55,48 +57,58 @@ class Provision {
 	</ order=10, name = "Temp sub-dir (used for pid file)", type = "path"/> 
 	tempDir = "tmp";
 	
-	</ order=11, name = "System wide tpcall() timeout", type = "number"/> 
-	timeout = "60";
+	</ order=11, name = "Transaction Manager Logs sub-folder of Apphome", 
+		type = "path" depend="(::prov.installQ==\"y\")" /> 
+	tmDir = "tmlogs";
 	
-	</ order=12, name = "Install sample queue configuration", type = "yn"/> 
+	</ order=12, name = "System wide tpcall() timeout", type = "number"/> 
+	timeout = "90";
+	
+	</ order=13, name = "Configure persistent queue", type = "yn"/> 
 	installQ = "y";
 	
-	</ order=13, name = "Install event server", type = "yn"/> 
+	</ order=14, name = "Persistent queue space namme", min=1, max=30,
+		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
+	qSpace = "SAMPLESPACE";
+	
+	</ order=15, name = "Sample Q name", min=1, max=30,
+		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
+	qName = "TESTQ1";
+	
+	</ order=16, name = "Install event server", type = "yn"/> 
 	eventSv = "y";
 	
-	</ order=14, name = "Configure Client Process Monitor Server", type = "yn"/> 
+	</ order=17, name = "Configure Client Process Monitor Server", type = "yn"/> 
 	cpmSv = "y";
 	
-	</ order=15, name = "Install Configuration server", type = "yn"/> 
+	</ order=18, name = "Install Configuration server", type = "yn"/> 
 	configSv = "y";
 	
-	</ order=16, name = "Install bridge connection", type = "yn"/> 
+	</ order=19, name = "Install bridge connection", type = "yn"/> 
 	bridge = "y";
 	
-	</ order=17, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
+	</ order=20, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
                 regex="^[apAP]?", depend="::prov.bridge==\"y\""/> 
 	bridgeRole = "a";
 
-	</ order=18, name = "Bridge -> IP: Listen address", type = "regex", 
-                regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", depend="(::prov.bridge==\"y\" && ::prov.bridgeRole==\"p\")"/> 
+	</ order=21, name = "Bridge -> IP: Listen address", type = "regex", 
+                regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
+                depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"P\")"/> 
 	ipl = "0.0.0.0";
 	
-	</ order=19, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
-                depend="(::prov.bridge==\"y\" && ::prov.bridgeRole==\"a\")"/> 
+	</ order=22, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
+                depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"A\")"/> 
 	ipc = "172.0.0.1";
 	
-	</ order=20, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
+	</ order=23, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
                 depend="(::prov.bridge==\"y\")" /> 
 	port = "21003";
 	
-	</ order=21, name = "Other cluster node id", type="number", min=1, max=32, 
+	</ order=24, name = "Other cluster node id", type="number", min=1, max=32, 
                 depend="(::prov.bridge==\"y\")" /> 
 	otherNodeId = "2";
-	
-	</ order=22, name = "CCTag (use if set)", type="string", min=0, max=8, regex="[^/]*" /> 
-	cctag = "";
-	
-	</ order=23, name = "IPC Key used for System V semaphores", 
+
+	</ order=25, name = "IPC Key used for System V semaphores", 
 			type="string", regex="[0-9a-fA-F]+" min=1, max=8 /> 
 	ipckey = "44000";
 	
@@ -602,22 +614,58 @@ class Provision {
 		//Install event server
 		if (eventSv=="Y" || eventSv=="y")
 		{
-		
 			xmlStart=xmlStart+
 		@"
 		<server name=""tpevsrv"">
 			<min>2</min>
 			<max>2</max>
-			<srvid>100</srvid>
+			<srvid>20</srvid>
 			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpevsrv.log -r</sysopt>
 		</server>";
 		}
 		
-		//Cluster bridge connection
-		if (eventSv=="Y" || eventSv=="y")
-		{
 		
-			//TODO:
+		////////////////////////////////////////////////////////////////
+		//Install event server
+		//So we need:
+		// - TMSRV log folder for 
+		// - Data folder
+		// - Q space name
+		// We need to make a rm1 folder!!!
+		////////////////////////////////////////////////////////////////
+		if (installQ=="Y" || installQ=="y")
+		{
+			xmlStart=xmlStart+
+		@"
+		<server name=""tmsrv"">
+			<max>3</max>
+			<max>3</max>
+			<srvid>40</srvid>
+			<cctag>RM1TMQ</cctag>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/"+tmDir+@"/rm1</sysopt>
+		</server>
+		<server name=""tmqueue"">
+			<min>1</min>
+			<max>1</min>
+			<srvid>60</srvid>
+			<cctag>RM1TMQ</cctag>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmqueue-rm1.log -r -- -m "+qSpace+@" -s1</sysopt>
+		</server>
+		@";
+		}
+		
+		//Install XA driver for Q
+		
+		//Cluster bridge connection
+		if (bridge=="Y" || bridge=="y")
+		{
+			local ip = ipl;
+			
+			if (prov.bridgeRole=="A" || prov.bridgeRole=="a")
+			{
+				ip = ipc;
+			}
+			
 			xmlStart=xmlStart+
 		@"
 		<server name=""tpbridge"">
@@ -625,16 +673,57 @@ class Provision {
 			<max>1</max>
 			<srvid>150</srvid>
 			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpbridge_"+otherNodeId+@".log -r</sysopt>
-			<appopt>-f -n"+otherNodeId+@" -r -i 127.0.0.1 -p 44002 -t"+bridgeRole.toupper()+@" -z30</appopt>
+			<appopt>-f -n"+otherNodeId+@" -r -i "+ip+" -p "+port+" -t"+bridgeRole.toupper()+@" -z30</appopt>
 		</server>";
 		}
 		
 		
+		//Install CPM srv
+		if (cpmSv=="Y" || cpmSv=="y")
+		{
+			xmlStart=xmlStart+
+		@"
+		<server name=""cpmsrv"">
+			<min>1</min>
+			<max>1</max>
+			<srvid>9999</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/cpmsrv.log -r -- -k3 -i1</sysopt>
+		</server>";
+		}
+		
+		
+		xmlStart=xmlStart+
+		@"</servers>";
+		
+		//Add Sample client process...
+		if (cpmSv=="Y" || cpmSv=="y")
+		{
+		
+			xmlStart=xmlStart+
+		@"
+		<!-- 
+			Client section 
+		-->
+		<clients>
+			<!--
+				Test parameter passing to process 
+				- To list clients:$ xadmin pc
+				- To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
+				- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
+			-->
+			<client cmdline=""your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}"">
+				<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""testbin-1.log""/>
+				<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""testbin-2.log""/>
+			</client>
+		</clients>
+		";
+		}
+		
+		xmlStart=xmlStart+@"
+</endurox>";
 		
 		print(xmlStart);
-	
 	}
-	
 	
 	//Build the app.ini value
 	appiniVal = "";
@@ -652,7 +741,7 @@ class Provision {
 	
 }
 
-local root = getroottable()
+local root = getroottable();
 
 //Create a provision object
 root["prov"] <- Provision();
