@@ -492,7 +492,7 @@ class Provision {
 <?xml version=""1.0"" ?>
 <endurox>
 	<!--
-			*** For more info see ndrxconfig.xml(5) man page. ***
+		*** For more info see ndrxconfig.xml(5) man page. ***
 	-->
 	<appconfig>
 	
@@ -661,6 +661,19 @@ root["prov"] <- Provision();
 print("Compiled system type....: " + ::prov.osType + "\n");
 print("Queueing mechanism......: " + ::prov.qType + "\n");
 print("\n");
+
+/*
+compilestring(@"
+
+function hello_from_sources()
+{
+	print(""\nHello!\n"");
+}
+
+")();
+
+hello_from_sources();
+*/
 
 ::prov.runInteractive();
 if (::prov.validatAndPrintConfig())
