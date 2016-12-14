@@ -65,7 +65,7 @@ class Provision {
 	eventSv = "y";
 	
 	</ order=14, name = "Configure Client Process Monitor Server", type = "yn"/> 
-	eventSv = "y";
+	cpmSv = "y";
 	
 	</ order=15, name = "Install Configuration server", type = "yn"/> 
 	configSv = "y";
@@ -89,8 +89,16 @@ class Provision {
                 depend="(::prov.bridge==\"y\")" /> 
 	port = "21003";
 	
-	</ order=21, name = "CCTag (use if set)", type="string", min=0, max=8, regex="[^/]*" /> 
+	</ order=21, name = "Other cluster node id", type="number", min=1, max=32, 
+                depend="(::prov.bridge==\"y\")" /> 
+	otherNodeId = "2";
+	
+	</ order=22, name = "CCTag (use if set)", type="string", min=0, max=8, regex="[^/]*" /> 
 	cctag = "";
+	
+	</ order=23, name = "IPC Key used for System V semaphores", 
+			type="string", regex="[0-9a-fA-F]+" min=1, max=8 /> 
+	ipckey = "44000";
 	
 	//Install handler
 	install = null;
@@ -484,7 +492,7 @@ class Provision {
 <?xml version=""1.0"" ?>
 <endurox>
 	<!--
-			*** For more info see ndrxconfig.xml(5)  man page. ***
+			*** For more info see ndrxconfig.xml(5) man page. ***
 	-->
 	<appconfig>
 	
@@ -576,9 +584,55 @@ class Provision {
 	</defaults>
 	<servers>";
 	
+		//Install config server
+		if (configSv=="Y" || configSv=="y")
+		{
+		
+			xmlStart=xmlStart+
+		@"
+		<server name=""cconfsrv"">
+			<min>2</min>
+			<max>2</max>
+			<srvid>1</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/cconfsrv.log -r</sysopt>
+		</server>";
+		
+		}
+		
+		//Install event server
+		if (eventSv=="Y" || eventSv=="y")
+		{
+		
+			xmlStart=xmlStart+
+		@"
+		<server name=""tpevsrv"">
+			<min>2</min>
+			<max>2</max>
+			<srvid>100</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpevsrv.log -r</sysopt>
+		</server>";
+		}
+		
+		//Cluster bridge connection
+		if (eventSv=="Y" || eventSv=="y")
+		{
+		
+			//TODO:
+			xmlStart=xmlStart+
+		@"
+		<server name=""tpbridge"">
+			<min>1</min>
+			<max>1</max>
+			<srvid>150</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpbridge_"+otherNodeId+@".log -r</sysopt>
+			<appopt>-f -n"+otherNodeId+@" -r -i 127.0.0.1 -p 44002 -t"+bridgeRole.toupper()+@" -z30</appopt>
+		</server>";
+		}
+		
+		
+		
+		print(xmlStart);
 	
-	
-
 	}
 	
 	
