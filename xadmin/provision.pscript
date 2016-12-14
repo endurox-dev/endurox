@@ -1,4 +1,4 @@
-#!/usr/bin/pscript 
+#!/usr/local/bin/pscript
 
 userlog("Provision script started");
 
@@ -376,12 +376,12 @@ class Provision {
 				{
 					return false;
 				}
-			}
 			
-			//Validate input...
-			//Print the field value
-			this.printEntryLine(" Edit", member);
-			print("\n");
+				//Validate input...
+				//Print the field value
+				this.printEntryLine(" Edit", member);
+				print("\n");
+			}
 		}
 		
 		return true;
