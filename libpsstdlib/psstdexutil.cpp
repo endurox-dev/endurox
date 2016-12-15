@@ -47,14 +47,11 @@
 //@return line read string
 static PSInteger _exutil_getline(HPSCRIPTVM v)
 {
-    char *ret = ndrx_getline();
+    char ln[PATH_MAX+1];
     
-    ps_pushstring(v,ret,-1);
+    ndrx_getline(ln, sizeof(ln));
     
-    if (NULL!=ret)
-    {
-        NDRX_FREE(ret);
-    }
+    ps_pushstring(v,ln,-1);
 
     return 1;
 }

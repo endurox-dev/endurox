@@ -82,7 +82,7 @@ extern NDRX_API int ndrx_nr_chars(char *str, char character);
 
 extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);
-extern NDRX_API char *ndrx_getline(void);
+extern NDRX_API char * ndrx_getline(char *buf, int bufsz);
 
 
 /* Mapping functions: */

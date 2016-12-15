@@ -1,4 +1,4 @@
-#!/usr/bin/pscript
+#!/usr/local/bin/pscript
 
 userlog("Provision script started");
 

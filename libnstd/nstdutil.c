@@ -635,57 +635,32 @@ public int ndrx_file_regular(char *path)
 }
 
 /**
- * Get line from STDIN, dynamically allocated
- * See `http://stackoverflow.com/questions/314401/how-to-read-a-line-from-the-console-in-c'
+ * Read the line
  * @return NULL or allocated stdin string read
  */
-public char * ndrx_getline(void)
+public char * ndrx_getline(char *buf, int bufsz)
 {
-    char * line = NDRX_MALLOC(100), * linep = line;
-    size_t lenmax = 100, len = lenmax;
-    int c;
-
-    if(line == NULL)
-    {
-        return NULL;
-    }
-
-    for(;;)
-    {
-        c = fgetc(stdin);
-        
-        if(c == EOF)
-        {
-            break;
-        }
-
-        if(--len == 0)
-        {
-            len = lenmax;
-            char * linen = NDRX_REALLOC(linep, lenmax *= 2);
-
-            if(linen == NULL)
-            {
-                free(linep);
-                return NULL;
-            }
-            line = linen + (line - linep);
-            linep = linen;
-        }
-
-        if('\n' == c)
-        {
-            break;
-        }
-        else
-        {
-            *line++ = c;
-        }
-        
-    }
+    int len;
+    fgets(buf, bufsz, stdin);
     
-    *line = '\0';
-    return linep;
+    len = strlen(buf);
+    
+    if (len>0)
+    {
+        len--;
+        //strip off newline
+        if (buf[len]=='\n')
+        {
+            buf[len] = 0;
+            len--;
+        }
+        
+        //strip off \r
+        if (len>= 0 && buf[len]=='\r')
+        {
+            buf[len] = 0;
+        }
+    }
+        
+    return buf;
 }
-
-
