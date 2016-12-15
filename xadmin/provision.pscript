@@ -22,6 +22,7 @@ class Provision {
 	qType = "";
 	
 	//Queue prefix
+	//TODO: Detect by OS + compiled q mode.
 	</ order=0, name = "Queue device path", type = "string", min=1, max=512 /> 
 	qpath = "/dev/mqueue";
 	
@@ -38,6 +39,9 @@ class Provision {
 	
 	//we need: Qspace, Qdata, tmlogs folder
 	
+	</ order=3, name = "System wide tpcall() timeout, seconds", type = "number"/> 
+	timeout = "90";
+	
 	</ order=4, name = "Application home", type = "string", min=1, max=512, regex="^/.*" /> 
 	appHome = "";
 	
@@ -45,27 +49,25 @@ class Provision {
 	</ order=6, name = "Executables/binaries sub-folder of Apphome", type = "path"/> 
 	binDir = "bin";
 	
-	</ order=7, name = "Configuration sub-folder of Apphome", type = "path"/> 
-	binDir = "conf";
-	
-	</ order=8, name = "Log sub-folder of Apphome", type = "path"/> 
+	</ order=8, name = "Configuration sub-folder of Apphome", type = "path"/> 
 	confDir = "conf";
 	
 	</ order=9, name = "Log sub-folder of Apphome", type = "path"/> 
 	logDir = "log";
 	
-	</ order=10, name = "Temp sub-dir (used for pid file)", type = "path"/> 
+	</ order=10, name = "Unified Buffer Format (UBF) field defs sub-folder of Apphome", 
+		type = "path"/> 
+	ubfDir = "ubftab";
+	
+	</ order=11, name = "Temp sub-dir (used for pid file)", type = "path"/> 
 	tempDir = "tmp";
 	
-	</ order=11, name = "Transaction Manager Logs sub-folder of Apphome", 
+	</ order=12, name = "Configure persistent queue", type = "yn"/> 
+	installQ = "y";
+	
+	</ order=13, name = "Transaction Manager Logs sub-folder of Apphome", 
 		type = "path" depend="(::prov.installQ==\"y\")" /> 
 	tmDir = "tmlogs";
-	
-	</ order=12, name = "System wide tpcall() timeout", type = "number"/> 
-	timeout = "90";
-	
-	</ order=13, name = "Configure persistent queue", type = "yn"/> 
-	installQ = "y";
 	
 	</ order=14, name = "Persistent queue space namme", min=1, max=30,
 		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
@@ -111,6 +113,25 @@ class Provision {
 	</ order=25, name = "IPC Key used for System V semaphores", 
 			type="string", regex="[0-9a-fA-F]+" min=1, max=8 /> 
 	ipckey = "44000";
+	
+	
+	</ order=26, name = "Load balance over cluster", 
+			type="number", min=0, max=100 /> 
+	ldbal = "0";
+	
+	</ order=27, name = "Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+			type="number", min=0, max=5 /> 
+	ndrxlev = "5";
+	
+	
+	</ order=28, name = "Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+			type="number", min=0, max=5 /> 
+	ubflev = "1";
+	
+	</ order=28, name = "Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+			type="number", min=0, max=5 /> 
+	tplev = "5";
+	
 	
 	//Install handler
 	install = null;
@@ -496,11 +517,11 @@ class Provision {
 	
 	
 	//Build the ndrxconfig value
-	ndrxconfigVal = "";
+	xmlStart = "";
 	function buildNdrxconfig()
 	{
 	
-		local xmlStart = @"
+		xmlStart = @"
 <?xml version=""1.0"" ?>
 <endurox>
 	<!--
@@ -650,8 +671,7 @@ class Provision {
 			<srvid>60</srvid>
 			<cctag>RM1TMQ</cctag>
 			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmqueue-rm1.log -r -- -m "+qSpace+@" -s1</sysopt>
-		</server>
-		@";
+		</server>";
 		}
 		
 		//Install XA driver for Q
@@ -693,43 +713,112 @@ class Provision {
 		
 		
 		xmlStart=xmlStart+
-		@"</servers>";
+		@"
+	</servers>";
 		
 		//Add Sample client process...
 		if (cpmSv=="Y" || cpmSv=="y")
 		{
 		
-			xmlStart=xmlStart+
-		@"
-		<!-- 
-			Client section 
+		xmlStart=xmlStart+
+	@"
+	<!-- 
+		Client section 
+	-->
+	<clients>
+		<!--
+			Test parameter passing to process 
+			- To list clients:$ xadmin pc
+			- To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
+			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
 		-->
-		<clients>
-			<!--
-				Test parameter passing to process 
-				- To list clients:$ xadmin pc
-				- To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
-				- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
-			-->
-			<client cmdline=""your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}"">
-				<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""testbin-1.log""/>
-				<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""testbin-2.log""/>
-			</client>
-		</clients>
-		";
+		<client cmdline=""your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}"">
+			<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""testbin-1.log""/>
+			<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""testbin-2.log""/>
+		</client>
+		<client cmdline=""your_test_binary2.sh -t ${NDRX_CLTTAG}"">
+			<exec tag=""TAG3"" autostart=""Y"" log=""testbin2-1.log""/>
+		</client>
+	</clients>";
 		}
 		
 		xmlStart=xmlStart+@"
 </endurox>";
 		
-		print(xmlStart);
 	}
 	
 	//Build the app.ini value
 	appiniVal = "";
 	function buildAppini()
 	{
-		
+	
+	appiniVal=appiniVal+@"
+[@global]
+NDRX_APPHOME="+appHome+@"
+NDRX_CLUSTERISED=1
+NDRX_CMDWAIT=1
+NDRX_CONFIG=${NDRX_APPHOME}/"+confDir+@"
+NDRX_DMNLOG=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
+NDRX_DPID=${NDRX_APPHOME}/"+tempDir+@"/ndrxd.pid
+NDRX_DQMAX=100
+NDRX_IPCKEY="+ipckey+@"
+NDRX_LDBAL="+ldbal+@"
+NDRX_LEV=5
+NDRX_LOG=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
+NDRX_MSGMAX=1000
+NDRX_MSGSIZEMAX=56000
+NDRX_NODEID="+nodeid+@"
+NDRX_QPATH="+qpath+@"
+NDRX_QPREFIX=/"+qprefix+@"
+NDRX_RNDK=0myWI5nu
+NDRX_SRVMAX=10000
+NDRX_SVCMAX=20000
+NDRX_TOUT="+timeout+@"
+NDRX_UBFMAXFLDS=16000
+NDRX_ULOG=${NDRX_APPHOME}/"+logDir+@"
+FIELDTBLS=Exfields
+FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
+";
+
+appiniVal=appiniVal+@"
+[@debug]
+; * - goes for all binaries not listed bellow
+*= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@"
+xadmin= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
+ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
+";
+
+	print(appiniVal);
+/*
+add stuff for cpmpsrv, tpevsrv, tmqeueu
+ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file="+appHome+"/"+logDir+@"/ndrxd.log
+*/
+
+
+/*
+[@global/RM1TMQ]
+NDRX_XA_CLOSE_STR=/tmp
+NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so
+NDRX_XA_LAZY_INIT=1
+NDRX_XA_OPEN_STR=/tmp
+NDRX_XA_RES_ID=1
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+
+
+[@global/X]
+NDRX_DMNLEV=7
+
+
+[@queue]
+#
+# @(#) EnduroX Persistent Queue Configuration
+#
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n
+SAMPLEQ=
+XX=
+YY=
+*/
+
 	}
 	
 	
