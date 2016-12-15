@@ -69,66 +69,70 @@ class Provision {
 		type = "path" depend="(::prov.installQ==\"y\")" /> 
 	tmDir = "tmlogs";
 	
-	</ order=14, name = "Persistent queue space namme", min=1, max=30,
+	</ order=14, name = "Queue data sub-folder of Apphone", 
+		type = "path" depend="(::prov.installQ==\"y\")" /> 
+	qdata = "qdata";
+	
+	</ order=15, name = "Persistent queue space namme", min=1, max=30,
 		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
 	qSpace = "SAMPLESPACE";
 	
-	</ order=15, name = "Sample Q name", min=1, max=30,
+	</ order=16, name = "Sample Q name", min=1, max=30,
 		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
 	qName = "TESTQ1";
 	
-	</ order=16, name = "Install event server", type = "yn"/> 
+	</ order=17, name = "Install event server", type = "yn"/> 
 	eventSv = "y";
 	
-	</ order=17, name = "Configure Client Process Monitor Server", type = "yn"/> 
+	</ order=18, name = "Configure Client Process Monitor Server", type = "yn"/> 
 	cpmSv = "y";
 	
-	</ order=18, name = "Install Configuration server", type = "yn"/> 
+	</ order=19, name = "Install Configuration server", type = "yn"/> 
 	configSv = "y";
 	
-	</ order=19, name = "Install bridge connection", type = "yn"/> 
+	</ order=20, name = "Install bridge connection", type = "yn"/> 
 	bridge = "y";
 	
-	</ order=20, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
+	</ order=21, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
                 regex="^[apAP]?", depend="::prov.bridge==\"y\""/> 
 	bridgeRole = "a";
 
-	</ order=21, name = "Bridge -> IP: Listen address", type = "regex", 
+	</ order=22, name = "Bridge -> IP: Listen address", type = "regex", 
                 regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
                 depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"P\")"/> 
 	ipl = "0.0.0.0";
 	
-	</ order=22, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
+	</ order=23, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
                 depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"A\")"/> 
 	ipc = "172.0.0.1";
 	
-	</ order=23, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
+	</ order=24, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
                 depend="(::prov.bridge==\"y\")" /> 
 	port = "21003";
 	
-	</ order=24, name = "Other cluster node id", type="number", min=1, max=32, 
+	</ order=25, name = "Other cluster node id", type="number", min=1, max=32, 
                 depend="(::prov.bridge==\"y\")" /> 
 	otherNodeId = "2";
 
-	</ order=25, name = "IPC Key used for System V semaphores", 
+	</ order=26, name = "IPC Key used for System V semaphores", 
 			type="string", regex="[0-9a-fA-F]+" min=1, max=8 /> 
 	ipckey = "44000";
 	
 	
-	</ order=26, name = "Load balance over cluster", 
+	</ order=27, name = "Load balance over cluster", 
 			type="number", min=0, max=100 /> 
 	ldbal = "0";
 	
-	</ order=27, name = "Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+	</ order=28, name = "Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off)", 
 			type="number", min=0, max=5 /> 
 	ndrxlev = "5";
 	
 	
-	</ order=28, name = "Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+	</ order=29, name = "Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off)", 
 			type="number", min=0, max=5 /> 
 	ubflev = "1";
 	
-	</ order=28, name = "Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+	</ order=30, name = "Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off)", 
 			type="number", min=0, max=5 /> 
 	tplev = "5";
 	
@@ -144,6 +148,8 @@ class Provision {
 	minOrder = 99;
 	
 	maxOrder = -1;
+	
+	new_val = "";
 	
 	
 	//This is constructor, we shall get some infos from Enduro/X base build
@@ -249,7 +255,13 @@ class Provision {
 				print("Error: Y/N?\n");
 				return 0;
 			}
+			
+			value = value.tolower();
 		}
+		
+		
+		//Temporary storage to return the value
+		new_val = value;
 		
 		return 1;
 	}
@@ -337,7 +349,7 @@ class Provision {
 			//Validate input...
 			if (this.validateValue(member, new_val))
 			{
-				this[member] = new_val;
+				this[member] = this.new_val;
 				ok = true;
 			}
 		}
@@ -618,7 +630,7 @@ class Provision {
 	<servers>";
 	
 		//Install config server
-		if (configSv=="Y" || configSv=="y")
+		if (configSv=="y")
 		{
 		
 			xmlStart=xmlStart+
@@ -633,7 +645,7 @@ class Provision {
 		}
 		
 		//Install event server
-		if (eventSv=="Y" || eventSv=="y")
+		if (eventSv=="y")
 		{
 			xmlStart=xmlStart+
 		@"
@@ -654,7 +666,7 @@ class Provision {
 		// - Q space name
 		// We need to make a rm1 folder!!!
 		////////////////////////////////////////////////////////////////
-		if (installQ=="Y" || installQ=="y")
+		if (installQ=="y")
 		{
 			xmlStart=xmlStart+
 		@"
@@ -677,7 +689,7 @@ class Provision {
 		//Install XA driver for Q
 		
 		//Cluster bridge connection
-		if (bridge=="Y" || bridge=="y")
+		if (bridge=="y")
 		{
 			local ip = ipl;
 			
@@ -699,7 +711,7 @@ class Provision {
 		
 		
 		//Install CPM srv
-		if (cpmSv=="Y" || cpmSv=="y")
+		if (cpmSv=="y")
 		{
 			xmlStart=xmlStart+
 		@"
@@ -717,7 +729,7 @@ class Provision {
 	</servers>";
 		
 		//Add Sample client process...
-		if (cpmSv=="Y" || cpmSv=="y")
+		if (cpmSv=="y")
 		{
 		
 		xmlStart=xmlStart+
@@ -780,6 +792,24 @@ FIELDTBLS=Exfields
 FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
 ";
 
+	//Configure queue XA driver
+	if (installQ=="y")
+	{
+appiniVal=appiniVal+@"
+; Environment for Tranactional Queue
+[@global/RM1TMQ]
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=${NDRX_APPHOME}/"+qdata+@"
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
+NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
+; dylib needed for osx
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_RMLIB=libndrxxaqdisk.dylib
+NDRX_XA_LAZY_INIT=0
+";
+	}
+
+
 appiniVal=appiniVal+@"
 [@debug]
 ; * - goes for all binaries not listed bellow
@@ -787,7 +817,6 @@ appiniVal=appiniVal+@"
 xadmin= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
 ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
 ";
-
 	print(appiniVal);
 /*
 add stuff for cpmpsrv, tpevsrv, tmqeueu
