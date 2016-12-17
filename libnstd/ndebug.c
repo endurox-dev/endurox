@@ -404,6 +404,7 @@ public void ndrx_init_debug(void)
     else
     {
         /* CCONFIG in use, get the section */
+        ndrx_cconfig_load(); /* load the global section... */
         if (SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_DEBUG, &conf))
         {
             /* 1. get he line by common & process */

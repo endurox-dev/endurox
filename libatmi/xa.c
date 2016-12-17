@@ -146,6 +146,7 @@ public int atmi_xa_init(void)
     if (!M_is_xa_init)
     {
         /* how about thread safety? */
+        NDRX_LOG(log_info, "Loading XA driver: [%s]", G_atmi_env.xa_driverlib);
         handle = dlopen (G_atmi_env.xa_driverlib, RTLD_NOW);
         if (!handle)
         {

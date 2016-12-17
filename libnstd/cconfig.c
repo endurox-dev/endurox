@@ -236,7 +236,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     while (NULL!=config_resources[slot])
     {
 #ifdef CCONFIG_ENABLE_DEBUG
-        userlog("have config at slot [%d] [%s]\n", slot, config_resources[slot]);
+        userlog("have config at slot [%d] [%s]", slot, config_resources[slot]);
 #endif
         have_config = TRUE;
         if (SUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
@@ -268,7 +268,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
         EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
         {
 #ifdef CCONFIG_ENABLE_DEBUG
-            userlog("settings %s=%s\n", keyvals_iter->key, keyvals_iter->val);
+            userlog("settings %s=%s", keyvals_iter->key, keyvals_iter->val);
 #endif
 
             if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
@@ -295,7 +295,7 @@ out:
         if (NULL!=*cfg)
         {
 #ifdef CCONFIG_ENABLE_DEBUG
-        userlog("Removing config %p\n", *cfg);
+        userlog("Removing config %p", *cfg);
 #endif
             ndrx_inicfg_free(*cfg);
             *cfg = NULL;
@@ -315,21 +315,27 @@ out:
  */
 public int ndrx_cconfig_load(void)
 {
-    int ret;
+    /* this might be called from debug... */
+    static int first = TRUE;
+    static int first_ret = SUCCEED;
     /* protect against multi-threading */
     MUTEX_LOCK_V(M_load_lock);
     
-    /* todo: might need first. */
-    if (NULL!=G_cctag)
+    if (first)
     {
-        G_cctag = getenv(NDRX_CCTAG);
+        if (NULL==G_cctag)
+        {
+            G_cctag = getenv(NDRX_CCTAG);
+        }
+
+        first_ret = _ndrx_cconfig_load(&G_cconfig, TRUE);
+        
+        first = FALSE;
     }
-    
-    ret = _ndrx_cconfig_load(&G_cconfig, TRUE);
     
     MUTEX_UNLOCK_V(M_load_lock);
     
-    return ret;
+    return first_ret;
 }
 
 /**
@@ -340,8 +346,7 @@ public int ndrx_cconfig_load(void)
  */
 public int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg)
 {
-    /* todo: might need first. */
-    if (NULL!=G_cctag)
+    if (NULL==G_cctag)
     {
         G_cctag = getenv(NDRX_CCTAG);
     }
@@ -373,7 +378,7 @@ public int ndrx_cconfig_reload(void)
 public ndrx_inicfg_t *ndrx_get_G_cconfig(void)
 {
 #ifdef CCONFIG_ENABLE_DEBUG
-    userlog("returning G_cconfig %p\n", G_cconfig);
+    userlog("returning G_cconfig %p", G_cconfig);
 #endif
     if (!G_tried_to_load)
     {

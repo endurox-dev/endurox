@@ -882,13 +882,14 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
-            "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d",
+            "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\"",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, p_srvnode->ping_max,
                     p_srvnode->exportsvcs,
                     p_srvnode->srvstartwait,
-                    p_srvnode->srvstopwait
+                    p_srvnode->srvstopwait,
+                    p_srvnode->cctag
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 

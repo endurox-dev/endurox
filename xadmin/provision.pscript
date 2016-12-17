@@ -561,8 +561,7 @@ class Provision {
 	function buildNdrxconfig()
 	{
 	
-		ndrxconfigXmlVal = @"
-<?xml version=""1.0"" ?>
+		ndrxconfigXmlVal = @"<?xml version=""1.0"" ?>
 <endurox>
 	<!--
 		*** For more info see ndrxconfig.xml(5) man page. ***
@@ -707,7 +706,7 @@ class Provision {
 		</server>
 		<server name=""tmqueue"">
 			<min>1</min>
-			<max>1</min>
+			<max>1</max>
 			<srvid>60</srvid>
 			<cctag>RM1TMQ</cctag>
 			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmqueue-rm1.log -r -- -m "+qSpace+@" -s1</sysopt>
@@ -773,11 +772,11 @@ class Provision {
 			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
 		-->
 		<client cmdline=""your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}"">
-			<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""testbin-1.log""/>
-			<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""testbin-2.log""/>
+			<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin-1.log""/>
+			<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin-3.log""/>
 		</client>
 		<client cmdline=""your_test_binary2.sh -t ${NDRX_CLTTAG}"">
-			<exec tag=""TAG3"" autostart=""Y"" log=""testbin2-1.log""/>
+			<exec tag=""TAG3"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin2-1.log""/>
 		</client>
 	</clients>";
 		}
@@ -795,7 +794,6 @@ class Provision {
 	
 		appiniVal=appiniVal+@"
 [@global]
-NDRX_APPHOME="+appHome+@"
 NDRX_CLUSTERISED=1
 NDRX_CMDWAIT=1
 NDRX_CONFIG=${NDRX_APPHOME}/"+confDir+@"/ndrxconfig.xml
@@ -829,8 +827,8 @@ FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
 [@global/RM1TMQ]
 NDRX_XA_RES_ID=1
 NDRX_XA_OPEN_STR=${NDRX_APPHOME}/"+qdata+@"
-NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
-NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
+NDRX_XA_CLOSE_STR=${NDRX_APPHOME}/"+qdata+@"
+NDRX_XA_DRIVERLIB=libndrxxaqdisks."+shared_lib_pfx+@"
 ; dylib needed for osx
 NDRX_XA_RMLIB=libndrxxaqdisk."+shared_lib_pfx+@"
 NDRX_XA_LAZY_INIT=0
@@ -869,19 +867,19 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 		print(appiniVal);
 	}
 	
-	
 	//
 	// Generate set file
-	//
+	// TODO: Might want to add cdpath too...
+	// 
 	setfileVal = "";
 	function buildSetfile()
 	{
 		setfileVal=setfileVal+@"#/bin/bash
-
 #
 # @(#) Load this script in environment
 #
 export PATH=$PATH:"+appHome+"/"+binDir+@"
+export NDRX_APPHOME="+appHome+@"
 export NDRX_CCONFIG="+appHome+"/"+confDir+@"
 ";
 		//create posix queue folder, if needed.
