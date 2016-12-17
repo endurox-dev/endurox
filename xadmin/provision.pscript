@@ -864,7 +864,7 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 		}
 	
 	
-		print(appiniVal);
+		//print(appiniVal);
 	}
 	
 	//
@@ -878,9 +878,10 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 #
 # @(#) Load this script in environment
 #
-export PATH=$PATH:"+appHome+"/"+binDir+@"
 export NDRX_APPHOME="+appHome+@"
-export NDRX_CCONFIG="+appHome+"/"+confDir+@"
+export NDRX_CCONFIG=$NDRX_APPHOME/"+confDir+@"
+export PATH=$PATH:$NDRX_APPHOME/"+binDir+@"
+export CDPATH=$NDRX_APPHOME
 ";
 		//create posix queue folder, if needed.
 		if (mk_mq_dev)
@@ -892,7 +893,7 @@ fi
 ";
 		}
 
-		print(setfileVal);
+		//print(setfileVal);
 	}
 	
 	//Create folders..
