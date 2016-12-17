@@ -111,6 +111,24 @@ PSInteger _stream_writeblob(HPSCRIPTVM v)
 	return 1;
 }
 
+//Write string, mvitolin
+PSInteger _stream_writes(HPSCRIPTVM v)
+{
+	PSInteger size;
+	SETUP_STREAM(v);
+        const PSChar *s;
+        
+        if(PS_SUCCEEDED(ps_getstring(v,2,&s))){
+
+            size = strlen(s);
+            if(self->Write((void *)s,strlen(s)) != size)
+                    return ps_throwerror(v,_SC("io error"));        
+            return 1;
+        }
+	ps_pushinteger(v,size);
+	return 1;
+}
+
 PSInteger _stream_writen(HPSCRIPTVM v)
 {
 	SETUP_STREAM(v);
@@ -242,6 +260,7 @@ static PSRegFunction _stream_methods[] = {
 	_DECL_STREAM_FUNC(readblob,2,_SC("xn")),
 	_DECL_STREAM_FUNC(readn,2,_SC("xn")),
 	_DECL_STREAM_FUNC(writeblob,-2,_SC("xx")),
+        _DECL_STREAM_FUNC(writes,2,_SC("xs")),
 	_DECL_STREAM_FUNC(writen,3,_SC("xnn")),
 	_DECL_STREAM_FUNC(seek,-2,_SC("xnn")),
 	_DECL_STREAM_FUNC(tell,1,_SC("x")),

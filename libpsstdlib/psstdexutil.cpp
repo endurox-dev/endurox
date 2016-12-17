@@ -39,9 +39,9 @@
 #include <userlog.h>
 #include <string.h>
 #include <ndrx_config.h>
+#include <sys/stat.h>
+#include <errno.h>
 
-
- #define C_TEXT( text ) ((char*)std::string( text ).c_str())
 
 //Read the line from terminal
 //@return line read string
@@ -94,8 +94,32 @@ static PSInteger _exutil_userlog(HPSCRIPTVM v)
     return 0;
 }
 
-//TODO: We shall add ulog() here... so that we can do basic logging from install
-//scripts.
+//Write user log message
+//@param msg    Message
+static PSInteger _exutil_mkdir(HPSCRIPTVM v)
+{
+    const PSChar *s;
+    long long mode;
+    char err[256];
+    struct stat sb;
+    
+    if(PS_SUCCEEDED(ps_getstring(v,2,&s)))
+    {
+        /* Check folder for existance and create if missing */
+        if (stat(s, &sb) != 0 || !S_ISDIR(sb.st_mode))
+        {
+            if (SUCCEED!=mkdir(s, 0777))
+            {
+                sprintf(err, "mkdir failed: %d:%s", 
+                        errno, strerror(errno));
+                return ps_throwerror(v,err);
+            }
+        }
+        
+        return 1;
+    }
+    return 0;
+}
 
 #define _DECL_FUNC(name,nparams,pmask) {_SC(#name),_exutil_##name,nparams,pmask}
 static PSRegFunction exutillib_funcs[]={
@@ -103,6 +127,7 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(getcwd,1,_SC(".s")),
         _DECL_FUNC(getosname,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
+        _DECL_FUNC(mkdir,2,_SC(".s")),
 	{0,0}
 };
 #undef _DECL_FUNC

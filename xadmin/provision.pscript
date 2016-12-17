@@ -1,4 +1,4 @@
-#!/usr/local/bin/pscript
+#!/usr/bin/pscript
 
 userlog("Provision script started");
 
@@ -77,62 +77,66 @@ class Provision {
 		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
 	qSpace = "SAMPLESPACE";
 	
-	</ order=16, name = "Sample Q name", min=1, max=30,
+	</ order=16, name = "Sample persistent queue name", min=1, max=30,
 		type = "string" depend="(::prov.installQ==\"y\")" regex="^[A-Za-z0-9]+" /> 
 	qName = "TESTQ1";
 	
-	</ order=17, name = "Install event server", type = "yn"/> 
+	</ order=17, name = "Target service for automatic queue for sample Q", min=1, max=30,
+		type = "string" depend="(::prov.installQ==\"y\")"/> 
+	qSvc = "TESTSVC1";
+	
+	</ order=18, name = "Install event server", type = "yn"/> 
 	eventSv = "y";
 	
-	</ order=18, name = "Configure Client Process Monitor Server", type = "yn"/> 
+	</ order=19, name = "Configure Client Process Monitor Server", type = "yn"/> 
 	cpmSv = "y";
 	
-	</ order=19, name = "Install Configuration server", type = "yn"/> 
+	</ order=20, name = "Install Configuration server", type = "yn"/> 
 	configSv = "y";
 	
-	</ order=20, name = "Install bridge connection", type = "yn"/> 
+	</ order=21, name = "Install bridge connection", type = "yn"/> 
 	bridge = "y";
 	
-	</ order=21, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
+	</ order=22, name = "Bridge -> Role: Active(a) or passive(p)?", type = "string", 
                 regex="^[apAP]?", depend="::prov.bridge==\"y\""/> 
 	bridgeRole = "a";
 
-	</ order=22, name = "Bridge -> IP: Listen address", type = "regex", 
+	</ order=23, name = "Bridge -> IP: Listen address", type = "regex", 
                 regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
                 depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"P\")"/> 
 	ipl = "0.0.0.0";
 	
-	</ order=23, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
+	</ order=24, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
                 depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"A\")"/> 
 	ipc = "172.0.0.1";
 	
-	</ order=24, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
+	</ order=25, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
                 depend="(::prov.bridge==\"y\")" /> 
 	port = "21003";
 	
-	</ order=25, name = "Other cluster node id", type="number", min=1, max=32, 
+	</ order=26, name = "Other cluster node id", type="number", min=1, max=32, 
                 depend="(::prov.bridge==\"y\")" /> 
 	otherNodeId = "2";
 
-	</ order=26, name = "IPC Key used for System V semaphores", 
+	</ order=27, name = "IPC Key used for System V semaphores", 
 			type="string", regex="[0-9a-fA-F]+" min=1, max=8 /> 
 	ipckey = "44000";
 	
 	
-	</ order=27, name = "Load balance over cluster", 
+	</ order=28, name = "Load balance over cluster", 
 			type="number", min=0, max=100 /> 
 	ldbal = "0";
 	
-	</ order=28, name = "Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+	</ order=29, name = "Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off)", 
 			type="number", min=0, max=5 /> 
 	ndrxlev = "5";
 	
 	
-	</ order=29, name = "Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+	</ order=30, name = "Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off)", 
 			type="number", min=0, max=5 /> 
 	ubflev = "1";
 	
-	</ order=30, name = "Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off)", 
+	</ order=31, name = "Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off)", 
 			type="number", min=0, max=5 /> 
 	tplev = "5";
 	
@@ -151,6 +155,9 @@ class Provision {
 	
 	new_val = "";
 	
+	shared_lib_pfx = "so";
+	
+	mk_mq_dev = true;
 	
 	//This is constructor, we shall get some infos from Enduro/X base build
 	constructor() {
@@ -162,6 +169,27 @@ class Provision {
 		
 		elemOrder = this.getSortedParamArray();
 		
+		//Set shared lib path...
+		if (osType=="DARWIN")
+		{
+			shared_lib_pfx="dylib";
+			qpath="/tmp/mq";
+			mk_mq_dev = true;
+		}
+		else if (osType=="CYGWIN")
+		{
+			shared_lib_pfx="dll";
+		}
+		else if (osType=="SUNOS")
+		{
+			//If we have a Solaris, then it is tmp...
+			qpath = "/tmp";
+		}
+		else if (osType=="AIX")
+		{
+                        qpath="/tmp/mq";
+			mk_mq_dev = true;
+		}
 		
 	}
 	
@@ -529,11 +557,11 @@ class Provision {
 	
 	
 	//Build the ndrxconfig value
-	xmlStart = "";
+	ndrxconfigXmlVal = "";
 	function buildNdrxconfig()
 	{
 	
-		xmlStart = @"
+		ndrxconfigXmlVal = @"
 <?xml version=""1.0"" ?>
 <endurox>
 	<!--
@@ -633,7 +661,7 @@ class Provision {
 		if (configSv=="y")
 		{
 		
-			xmlStart=xmlStart+
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""cconfsrv"">
 			<min>2</min>
@@ -647,7 +675,7 @@ class Provision {
 		//Install event server
 		if (eventSv=="y")
 		{
-			xmlStart=xmlStart+
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""tpevsrv"">
 			<min>2</min>
@@ -668,7 +696,7 @@ class Provision {
 		////////////////////////////////////////////////////////////////
 		if (installQ=="y")
 		{
-			xmlStart=xmlStart+
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""tmsrv"">
 			<max>3</max>
@@ -698,7 +726,7 @@ class Provision {
 				ip = ipc;
 			}
 			
-			xmlStart=xmlStart+
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""tpbridge"">
 			<min>1</min>
@@ -713,7 +741,7 @@ class Provision {
 		//Install CPM srv
 		if (cpmSv=="y")
 		{
-			xmlStart=xmlStart+
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""cpmsrv"">
 			<min>1</min>
@@ -724,7 +752,7 @@ class Provision {
 		}
 		
 		
-		xmlStart=xmlStart+
+		ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 	</servers>";
 		
@@ -732,7 +760,7 @@ class Provision {
 		if (cpmSv=="y")
 		{
 		
-		xmlStart=xmlStart+
+		ndrxconfigXmlVal=ndrxconfigXmlVal+
 	@"
 	<!-- 
 		Client section 
@@ -754,8 +782,9 @@ class Provision {
 	</clients>";
 		}
 		
-		xmlStart=xmlStart+@"
-</endurox>";
+		ndrxconfigXmlVal=ndrxconfigXmlVal+@"
+</endurox>
+";
 		
 	}
 	
@@ -764,12 +793,12 @@ class Provision {
 	function buildAppini()
 	{
 	
-	appiniVal=appiniVal+@"
+		appiniVal=appiniVal+@"
 [@global]
 NDRX_APPHOME="+appHome+@"
 NDRX_CLUSTERISED=1
 NDRX_CMDWAIT=1
-NDRX_CONFIG=${NDRX_APPHOME}/"+confDir+@"
+NDRX_CONFIG=${NDRX_APPHOME}/"+confDir+@"/ndrxconfig.xml
 NDRX_DMNLOG=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
 NDRX_DPID=${NDRX_APPHOME}/"+tempDir+@"/ndrxd.pid
 NDRX_DQMAX=100
@@ -792,10 +821,10 @@ FIELDTBLS=Exfields
 FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
 ";
 
-	//Configure queue XA driver
-	if (installQ=="y")
-	{
-appiniVal=appiniVal+@"
+		//Configure queue XA driver
+		if (installQ=="y")
+		{
+			appiniVal=appiniVal+@"
 ; Environment for Tranactional Queue
 [@global/RM1TMQ]
 NDRX_XA_RES_ID=1
@@ -803,58 +832,152 @@ NDRX_XA_OPEN_STR=${NDRX_APPHOME}/"+qdata+@"
 NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
 NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
 ; dylib needed for osx
-NDRX_XA_RMLIB=libndrxxaqdisk.so
-NDRX_XA_RMLIB=libndrxxaqdisk.dylib
+NDRX_XA_RMLIB=libndrxxaqdisk."+shared_lib_pfx+@"
 NDRX_XA_LAZY_INIT=0
 ";
-	}
+		}
 
 
 appiniVal=appiniVal+@"
 [@debug]
 ; * - goes for all binaries not listed bellow
-*= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@"
+*= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/endurox-common.log
 xadmin= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
 ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
 ";
-	print(appiniVal);
-/*
-add stuff for cpmpsrv, tpevsrv, tmqeueu
-ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file="+appHome+"/"+logDir+@"/ndrxd.log
-*/
 
 
-/*
-[@global/RM1TMQ]
-NDRX_XA_CLOSE_STR=/tmp
-NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so
-NDRX_XA_LAZY_INIT=1
-NDRX_XA_OPEN_STR=/tmp
-NDRX_XA_RES_ID=1
-NDRX_XA_RMLIB=libndrxxaqdisk.so
 
-
-[@global/X]
-NDRX_DMNLEV=7
-
-
+		if (installQ=="y")
+		{
+	
+			appiniVal=appiniVal+@"
+; Queue defintions goes here, see man q.conf(5) for syntax
 [@queue]
-#
-# @(#) EnduroX Persistent Queue Configuration
-#
-@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n
-SAMPLEQ=
-XX=
-YY=
-*/
+; Default manual queue (reserved name '@'), unknown queues are created based on this template:
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
 
+[@queue/RM1TMQ]
+; Sample queue (this one is automatic, sends messages to target service)
+"+qName+@"=svcnm="+qSvc+@",autoq=y,tries=3,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=5,memonly=n,mode=fifo
+";
+
+
+		}
+	
+	
+		print(appiniVal);
 	}
 	
 	
+	//
+	// Generate set file
+	//
 	setfileVal = "";
 	function buildSetfile()
 	{
+		setfileVal=setfileVal+@"
+#/bin/bash
+
+#
+# @(#) Load this script in environment
+#
+export PATH=$PATH:"+appHome+"/"+binDir+@"
+export NDRX_CCONFIG="+appHome+"/"+confDir+@"
+";
+		//create posix queue folder, if needed.
+		if (mk_mq_dev)
+		{
+setfileVal=setfileVal+@"
+if [ ! -d ""+qpath+@"" ]; then
+	mkdir "+qpath+@"
+fi
+";
+		}
+
+		print(setfileVal);
+	}
+	
+	//Create folders..
+	function createFolders()
+	{
+		userlog("About to create folders");
+		try
+		{
+			if (mk_mq_dev)
+			{
+				userlog(format("Creating: [%s]", qpath));
+				mkdir (qpath);
+			}
+			
+			userlog(format("Creating: [%s]", appHome));
+			mkdir (appHome);
+			
+			userlog(format("Creating: [%s]", appHome+"/"+binDir));
+			mkdir (appHome+"/"+binDir);
+			
+			userlog(format("Creating: [%s]", appHome+"/"+confDir));
+			mkdir (appHome+"/"+confDir);
+			
+			userlog(format("Creating: [%s]", appHome+"/"+logDir));
+			mkdir (appHome+"/"+logDir);
+			
+			userlog(format("Creating: [%s]", appHome+"/"+ubfDir));
+			mkdir (appHome+"/"+ubfDir);
+			
+			userlog(format("Creating: [%s]", appHome+"/"+tempDir));
+			mkdir (appHome+"/"+tempDir);
+			
+			if (installQ=="y")
+			{
+				userlog(format("Creating: [%s]", appHome+"/"+tmDir));
+				mkdir (appHome+"/"+tmDir);
+				
+				userlog(format("Creating: [%s]", appHome+"/"+tmDir));
+				mkdir (appHome+"/"+tmDir);
+				
+				userlog(format("Creating: [%s]", appHome+"/"+tmDir+"/rm1"));
+				mkdir (appHome+"/"+tmDir+"/rm1");
+				
+				userlog(format("Creating: [%s]", appHome+"/"+qdata));
+				mkdir (appHome+"/"+qdata);
+			}
+		}
+		catch (ex)
+		{
+			userlog(format("createFolders failed: %s", ex));
+			print(format("createFolders failed: %s\n", ex));
+			return false;
+		}
 		
+		return true;
+	}
+	
+	//Write the generate files
+	//@param filename	Filename to write to
+	//@param contents (string) to write to
+	//@return true - ok, false - failed.
+	function writeFile(filename, contents)
+	{
+		
+		userlog(format("Writting off [%s] with [%s]", 
+		filename, contents));
+		try
+		{
+			local out = file(filename,"w");
+			out.writes(contents);
+			out.close();
+		}
+		catch (e)
+		{
+			userlog(format("Got exception [%s]", e));
+			
+			print(e+"\n");
+			
+			return false;
+		}
+		
+		return true;
 	}
 	
 }
@@ -889,6 +1012,28 @@ if (::prov.validatAndPrintConfig())
 	::prov.buildNdrxconfig();
 	::prov.buildAppini();
 	::prov.buildSetfile();
+	
+	if (!::prov.createFolders())
+	{
+		return false;
+	}
+	
+	if (!::prov.writeFile(::prov.ndrxconfig, ::prov.ndrxconfigXmlVal))
+	{
+		return false;
+	}
+	
+	if (!::prov.writeFile(::prov.appini, ::prov.appiniVal))
+	{
+		return false;
+	}
+	
+	if (!::prov.writeFile(::prov.setfile, ::prov.setfileVal))
+	{
+		return false;
+	}
 }
 
+
+return true;
 
