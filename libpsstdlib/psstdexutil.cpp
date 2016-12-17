@@ -94,12 +94,37 @@ static PSInteger _exutil_userlog(HPSCRIPTVM v)
     return 0;
 }
 
+static PSInteger _exutil_chmod(HPSCRIPTVM v)
+{
+    const PSChar *file;
+    const PSChar *mode;
+    char err[256];
+    
+    if(PS_SUCCEEDED(ps_getstring(v,2,&file)) &&
+        PS_SUCCEEDED(ps_getstring(v,3,&mode))) {
+        
+        int mod;
+        sscanf(mode, "%x", &mod);
+        
+        if (SUCCEED!=chmod(file, mod))
+        {
+            sprintf(err, "chmod failed: %d:%s", 
+                    errno, strerror(errno));
+            return ps_throwerror(v,err);
+        }
+        
+        
+        return 1;
+    }
+    return 0;
+}
+
+
 //Write user log message
 //@param msg    Message
 static PSInteger _exutil_mkdir(HPSCRIPTVM v)
 {
     const PSChar *s;
-    long long mode;
     char err[256];
     struct stat sb;
     
@@ -128,6 +153,7 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(getosname,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),
+        _DECL_FUNC(chmod,3,_SC(".ss")),
 	{0,0}
 };
 #undef _DECL_FUNC

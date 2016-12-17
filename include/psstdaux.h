@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTD_AUXLIB_H_
 #define _PSSTD_AUXLIB_H_
 

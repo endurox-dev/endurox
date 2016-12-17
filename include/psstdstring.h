@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTD_STRING_H_
 #define _PSSTD_STRING_H_
 
@@ -10,8 +10,8 @@ typedef unsigned int PSRexBool;
 typedef struct PSRex PSRex;
 
 typedef struct {
-	const PSChar *begin;
-	PSInteger len;
+    const PSChar *begin;
+    PSInteger len;
 } PSRexMatch;
 
 PSCRIPT_API PSRex *psstd_rex_compile(const PSChar *pattern,const PSChar **error);

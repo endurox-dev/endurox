@@ -1,11 +1,12 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSPCHEADER_H_
 #define _PSPCHEADER_H_
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 #include <crtdbg.h>
-#endif 
+#endif
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTDIO_H_
 #define _PSSTDIO_H_
 
@@ -7,14 +7,14 @@
 #define PSSTD_STREAM_TYPE_TAG 0x80000000
 
 struct PSStream {
-	virtual PSInteger Read(void *buffer, PSInteger size) = 0;
-	virtual PSInteger Write(void *buffer, PSInteger size) = 0;
-	virtual PSInteger Flush() = 0;
-	virtual PSInteger Tell() = 0;
-	virtual PSInteger Len() = 0;
-	virtual PSInteger Seek(PSInteger offset, PSInteger origin) = 0;
-	virtual bool IsValid() = 0;
-	virtual bool EOS() = 0;
+    virtual PSInteger Read(void *buffer, PSInteger size) = 0;
+    virtual PSInteger Write(void *buffer, PSInteger size) = 0;
+    virtual PSInteger Flush() = 0;
+    virtual PSInteger Tell() = 0;
+    virtual PSInteger Len() = 0;
+    virtual PSInteger Seek(PSInteger offset, PSInteger origin) = 0;
+    virtual bool IsValid() = 0;
+    virtual bool EOS() = 0;
 };
 
 extern "C" {

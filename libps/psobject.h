@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSOBJECT_H_
 #define _PSOBJECT_H_
 
@@ -17,115 +17,115 @@
 struct PSSharedState;
 
 enum PSMetaMethod{
-	MT_ADD=0,
-	MT_SUB=1,
-	MT_MUL=2,
-	MT_DIV=3,
-	MT_UNM=4,
-	MT_MODULO=5,
-	MT_SET=6,
-	MT_GET=7,
-	MT_TYPEOF=8,
-	MT_NEXTI=9,
-	MT_CMP=10,
-	MT_CALL=11,
-	MT_CLONED=12,
-	MT_NEWSLOT=13,
-	MT_DELSLOT=14,
-	MT_TOSTRING=15,
-	MT_NEWMEMBER=16,
-	MT_INHERITED=17,
-	MT_LAST = 18
+    MT_ADD=0,
+    MT_SUB=1,
+    MT_MUL=2,
+    MT_DIV=3,
+    MT_UNM=4,
+    MT_MODULO=5,
+    MT_SET=6,
+    MT_GET=7,
+    MT_TYPEOF=8,
+    MT_NEXTI=9,
+    MT_CMP=10,
+    MT_CALL=11,
+    MT_CLONED=12,
+    MT_NEWSLOT=13,
+    MT_DELSLOT=14,
+    MT_TOSTRING=15,
+    MT_NEWMEMBER=16,
+    MT_INHERITED=17,
+    MT_LAST = 18
 };
 
-#define MM_ADD		_SC("_add")
-#define MM_SUB		_SC("_sub")
-#define MM_MUL		_SC("_mul")
-#define MM_DIV		_SC("_div")
-#define MM_UNM		_SC("_unm")
-#define MM_MODULO	_SC("_modulo")
-#define MM_SET		_SC("_set")
-#define MM_GET		_SC("_get")
-#define MM_TYPEOF	_SC("_typeof")
-#define MM_NEXTI	_SC("_nexti")
-#define MM_CMP		_SC("_cmp")
-#define MM_CALL		_SC("_call")
-#define MM_CLONED	_SC("_cloned")
-#define MM_NEWSLOT	_SC("_newslot")
-#define MM_DELSLOT	_SC("_delslot")
-#define MM_TOSTRING	_SC("_tostring")
+#define MM_ADD      _SC("_add")
+#define MM_SUB      _SC("_sub")
+#define MM_MUL      _SC("_mul")
+#define MM_DIV      _SC("_div")
+#define MM_UNM      _SC("_unm")
+#define MM_MODULO   _SC("_modulo")
+#define MM_SET      _SC("_set")
+#define MM_GET      _SC("_get")
+#define MM_TYPEOF   _SC("_typeof")
+#define MM_NEXTI    _SC("_nexti")
+#define MM_CMP      _SC("_cmp")
+#define MM_CALL     _SC("_call")
+#define MM_CLONED   _SC("_cloned")
+#define MM_NEWSLOT  _SC("_newslot")
+#define MM_DELSLOT  _SC("_delslot")
+#define MM_TOSTRING _SC("_tostring")
 #define MM_NEWMEMBER _SC("_newmember")
 #define MM_INHERITED _SC("_inherited")
 
 
 #define _CONSTRUCT_VECTOR(type,size,ptr) { \
-	for(PSInteger n = 0; n < ((PSInteger)size); n++) { \
-			new (&ptr[n]) type(); \
-		} \
+    for(PSInteger n = 0; n < ((PSInteger)size); n++) { \
+            new (&ptr[n]) type(); \
+        } \
 }
 
 #define _DESTRUCT_VECTOR(type,size,ptr) { \
-	for(PSInteger nl = 0; nl < ((PSInteger)size); nl++) { \
-			ptr[nl].~type(); \
-	} \
+    for(PSInteger nl = 0; nl < ((PSInteger)size); nl++) { \
+            ptr[nl].~type(); \
+    } \
 }
 
 #define _COPY_VECTOR(dest,src,size) { \
-	for(PSInteger _n_ = 0; _n_ < ((PSInteger)size); _n_++) { \
-		dest[_n_] = src[_n_]; \
-	} \
+    for(PSInteger _n_ = 0; _n_ < ((PSInteger)size); _n_++) { \
+        dest[_n_] = src[_n_]; \
+    } \
 }
 
 #define _NULL_PSOBJECT_VECTOR(vec,size) { \
-	for(PSInteger _n_ = 0; _n_ < ((PSInteger)size); _n_++) { \
-		vec[_n_].Null(); \
-	} \
+    for(PSInteger _n_ = 0; _n_ < ((PSInteger)size); _n_++) { \
+        vec[_n_].Null(); \
+    } \
 }
 
 #define MINPOWER2 4
 
 struct PSRefCounted
 {
-	PSUnsignedInteger _uiRef;
-	struct PSWeakRef *_weakref;
-	PSRefCounted() { _uiRef = 0; _weakref = NULL; }
-	virtual ~PSRefCounted();
-	PSWeakRef *GetWeakRef(PSObjectType type);
-	virtual void Release()=0;
-	
+    PSUnsignedInteger _uiRef;
+    struct PSWeakRef *_weakref;
+    PSRefCounted() { _uiRef = 0; _weakref = NULL; }
+    virtual ~PSRefCounted();
+    PSWeakRef *GetWeakRef(PSObjectType type);
+    virtual void Release()=0;
+
 };
 
 struct PSWeakRef : PSRefCounted
 {
-	void Release();
-	PSObject _obj;
+    void Release();
+    PSObject _obj;
 };
 
 #define _realval(o) (type((o)) != OT_WEAKREF?(PSObject)o:_weakref(o)->_obj)
 
 struct PSObjectPtr;
 
-#define __AddRef(type,unval) if(ISREFCOUNTED(type))	\
-		{ \
-			unval.pRefCounted->_uiRef++; \
-		}  
+#define __AddRef(type,unval) if(ISREFCOUNTED(type)) \
+        { \
+            unval.pRefCounted->_uiRef++; \
+        }
 
-#define __Release(type,unval) if(ISREFCOUNTED(type) && ((--unval.pRefCounted->_uiRef)==0))	\
-		{	\
-			unval.pRefCounted->Release();	\
-		}
+#define __Release(type,unval) if(ISREFCOUNTED(type) && ((--unval.pRefCounted->_uiRef)==0))  \
+        {   \
+            unval.pRefCounted->Release();   \
+        }
 
 #define __ObjRelease(obj) { \
-	if((obj)) {	\
-		(obj)->_uiRef--; \
-		if((obj)->_uiRef == 0) \
-			(obj)->Release(); \
-		(obj) = NULL;	\
-	} \
+    if((obj)) { \
+        (obj)->_uiRef--; \
+        if((obj)->_uiRef == 0) \
+            (obj)->Release(); \
+        (obj) = NULL;   \
+    } \
 }
 
 #define __ObjAddRef(obj) { \
-	(obj)->_uiRef++; \
+    (obj)->_uiRef++; \
 }
 
 #define type(obj) ((obj)._type)
@@ -160,168 +160,168 @@ struct PSObjectPtr;
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 #if defined(PSUSEDOUBLE) && !defined(_PS64) || !defined(PSUSEDOUBLE) && defined(_PS64)
-#define PS_REFOBJECT_INIT()	PS_OBJECT_RAWINIT()
+#define PS_REFOBJECT_INIT() PS_OBJECT_RAWINIT()
 #else
 #define PS_REFOBJECT_INIT()
 #endif
 
 #define _REF_TYPE_DECL(type,_class,sym) \
-	PSObjectPtr(_class * x) \
-	{ \
-		PS_OBJECT_RAWINIT() \
-		_type=type; \
-		_unVal.sym = x; \
-		assert(_unVal.pTable); \
-		_unVal.pRefCounted->_uiRef++; \
-	} \
-	inline PSObjectPtr& operator=(_class *x) \
-	{  \
-		PSObjectType tOldType; \
-		PSObjectValue unOldVal; \
-		tOldType=_type; \
-		unOldVal=_unVal; \
-		_type = type; \
-		PS_REFOBJECT_INIT() \
-		_unVal.sym = x; \
-		_unVal.pRefCounted->_uiRef++; \
-		__Release(tOldType,unOldVal); \
-		return *this; \
-	}
+    PSObjectPtr(_class * x) \
+    { \
+        PS_OBJECT_RAWINIT() \
+        _type=type; \
+        _unVal.sym = x; \
+        assert(_unVal.pTable); \
+        _unVal.pRefCounted->_uiRef++; \
+    } \
+    inline PSObjectPtr& operator=(_class *x) \
+    {  \
+        PSObjectType tOldType; \
+        PSObjectValue unOldVal; \
+        tOldType=_type; \
+        unOldVal=_unVal; \
+        _type = type; \
+        PS_REFOBJECT_INIT() \
+        _unVal.sym = x; \
+        _unVal.pRefCounted->_uiRef++; \
+        __Release(tOldType,unOldVal); \
+        return *this; \
+    }
 
 #define _SCALAR_TYPE_DECL(type,_class,sym) \
-	PSObjectPtr(_class x) \
-	{ \
-		PS_OBJECT_RAWINIT() \
-		_type=type; \
-		_unVal.sym = x; \
-	} \
-	inline PSObjectPtr& operator=(_class x) \
-	{  \
-		__Release(_type,_unVal); \
-		_type = type; \
-		PS_OBJECT_RAWINIT() \
-		_unVal.sym = x; \
-		return *this; \
-	}
+    PSObjectPtr(_class x) \
+    { \
+        PS_OBJECT_RAWINIT() \
+        _type=type; \
+        _unVal.sym = x; \
+    } \
+    inline PSObjectPtr& operator=(_class x) \
+    {  \
+        __Release(_type,_unVal); \
+        _type = type; \
+        PS_OBJECT_RAWINIT() \
+        _unVal.sym = x; \
+        return *this; \
+    }
 struct PSObjectPtr : public PSObject
 {
-	PSObjectPtr()
-	{
-		PS_OBJECT_RAWINIT()
-		_type=OT_NULL;
-		_unVal.pUserPointer=NULL;
-	}
-	PSObjectPtr(const PSObjectPtr &o)
-	{
-		_type = o._type;
-		_unVal = o._unVal;
-		__AddRef(_type,_unVal);
-	}
-	PSObjectPtr(const PSObject &o)
-	{
-		_type = o._type;
-		_unVal = o._unVal;
-		__AddRef(_type,_unVal);
-	}
-	_REF_TYPE_DECL(OT_TABLE,PSTable,pTable)
-	_REF_TYPE_DECL(OT_CLASS,PSClass,pClass)
-	_REF_TYPE_DECL(OT_INSTANCE,PSInstance,pInstance)
-	_REF_TYPE_DECL(OT_ARRAY,PSArray,pArray)
-	_REF_TYPE_DECL(OT_CLOSURE,PSClosure,pClosure)
-	_REF_TYPE_DECL(OT_NATIVECLOSURE,PSNativeClosure,pNativeClosure)
-	_REF_TYPE_DECL(OT_OUTER,PSOuter,pOuter)
-	_REF_TYPE_DECL(OT_GENERATOR,PSGenerator,pGenerator)
-	_REF_TYPE_DECL(OT_STRING,PSString,pString)
-	_REF_TYPE_DECL(OT_USERDATA,PSUserData,pUserData)
-	_REF_TYPE_DECL(OT_WEAKREF,PSWeakRef,pWeakRef)
-	_REF_TYPE_DECL(OT_THREAD,PSVM,pThread)
-	_REF_TYPE_DECL(OT_FUNCPROTO,PSFunctionProto,pFunctionProto)
-	
-	_SCALAR_TYPE_DECL(OT_INTEGER,PSInteger,nInteger)
-	_SCALAR_TYPE_DECL(OT_FLOAT,PSFloat,fFloat)
-	_SCALAR_TYPE_DECL(OT_USERPOINTER,PSUserPointer,pUserPointer)
+    PSObjectPtr()
+    {
+        PS_OBJECT_RAWINIT()
+        _type=OT_NULL;
+        _unVal.pUserPointer=NULL;
+    }
+    PSObjectPtr(const PSObjectPtr &o)
+    {
+        _type = o._type;
+        _unVal = o._unVal;
+        __AddRef(_type,_unVal);
+    }
+    PSObjectPtr(const PSObject &o)
+    {
+        _type = o._type;
+        _unVal = o._unVal;
+        __AddRef(_type,_unVal);
+    }
+    _REF_TYPE_DECL(OT_TABLE,PSTable,pTable)
+    _REF_TYPE_DECL(OT_CLASS,PSClass,pClass)
+    _REF_TYPE_DECL(OT_INSTANCE,PSInstance,pInstance)
+    _REF_TYPE_DECL(OT_ARRAY,PSArray,pArray)
+    _REF_TYPE_DECL(OT_CLOSURE,PSClosure,pClosure)
+    _REF_TYPE_DECL(OT_NATIVECLOSURE,PSNativeClosure,pNativeClosure)
+    _REF_TYPE_DECL(OT_OUTER,PSOuter,pOuter)
+    _REF_TYPE_DECL(OT_GENERATOR,PSGenerator,pGenerator)
+    _REF_TYPE_DECL(OT_STRING,PSString,pString)
+    _REF_TYPE_DECL(OT_USERDATA,PSUserData,pUserData)
+    _REF_TYPE_DECL(OT_WEAKREF,PSWeakRef,pWeakRef)
+    _REF_TYPE_DECL(OT_THREAD,PSVM,pThread)
+    _REF_TYPE_DECL(OT_FUNCPROTO,PSFunctionProto,pFunctionProto)
 
-	PSObjectPtr(bool bBool)
-	{
-		PS_OBJECT_RAWINIT()
-		_type = OT_BOOL;
-		_unVal.nInteger = bBool?1:0;
-	}
-	inline PSObjectPtr& operator=(bool b)
-	{ 
-		__Release(_type,_unVal);
-		PS_OBJECT_RAWINIT()
-		_type = OT_BOOL;
-		_unVal.nInteger = b?1:0;
-		return *this;
-	}
+    _SCALAR_TYPE_DECL(OT_INTEGER,PSInteger,nInteger)
+    _SCALAR_TYPE_DECL(OT_FLOAT,PSFloat,fFloat)
+    _SCALAR_TYPE_DECL(OT_USERPOINTER,PSUserPointer,pUserPointer)
 
-	~PSObjectPtr()
-	{
-		__Release(_type,_unVal);
-	}
-			
-	inline PSObjectPtr& operator=(const PSObjectPtr& obj)
-	{ 
-		PSObjectType tOldType;
-		PSObjectValue unOldVal;
-		tOldType=_type;
-		unOldVal=_unVal;
-		_unVal = obj._unVal;
-		_type = obj._type;
-		__AddRef(_type,_unVal);
-		__Release(tOldType,unOldVal);
-		return *this;
-	}
-	inline PSObjectPtr& operator=(const PSObject& obj)
-	{ 
-		PSObjectType tOldType;
-		PSObjectValue unOldVal;
-		tOldType=_type;
-		unOldVal=_unVal;
-		_unVal = obj._unVal;
-		_type = obj._type;
-		__AddRef(_type,_unVal);
-		__Release(tOldType,unOldVal);
-		return *this;
-	}
-	inline void Null()
-	{
-		PSObjectType tOldType = _type;
-		PSObjectValue unOldVal = _unVal;
-		_type = OT_NULL;
-		_unVal.raw = (PSRawObjectVal)NULL;
-		__Release(tOldType ,unOldVal);
-	}
-	private:
-		PSObjectPtr(const PSChar *){} //safety
+    PSObjectPtr(bool bBool)
+    {
+        PS_OBJECT_RAWINIT()
+        _type = OT_BOOL;
+        _unVal.nInteger = bBool?1:0;
+    }
+    inline PSObjectPtr& operator=(bool b)
+    {
+        __Release(_type,_unVal);
+        PS_OBJECT_RAWINIT()
+        _type = OT_BOOL;
+        _unVal.nInteger = b?1:0;
+        return *this;
+    }
+
+    ~PSObjectPtr()
+    {
+        __Release(_type,_unVal);
+    }
+
+    inline PSObjectPtr& operator=(const PSObjectPtr& obj)
+    {
+        PSObjectType tOldType;
+        PSObjectValue unOldVal;
+        tOldType=_type;
+        unOldVal=_unVal;
+        _unVal = obj._unVal;
+        _type = obj._type;
+        __AddRef(_type,_unVal);
+        __Release(tOldType,unOldVal);
+        return *this;
+    }
+    inline PSObjectPtr& operator=(const PSObject& obj)
+    {
+        PSObjectType tOldType;
+        PSObjectValue unOldVal;
+        tOldType=_type;
+        unOldVal=_unVal;
+        _unVal = obj._unVal;
+        _type = obj._type;
+        __AddRef(_type,_unVal);
+        __Release(tOldType,unOldVal);
+        return *this;
+    }
+    inline void Null()
+    {
+        PSObjectType tOldType = _type;
+        PSObjectValue unOldVal = _unVal;
+        _type = OT_NULL;
+        _unVal.raw = (PSRawObjectVal)NULL;
+        __Release(tOldType ,unOldVal);
+    }
+    private:
+        PSObjectPtr(const PSChar *){} //safety
 };
 
 
 inline void _Swap(PSObject &a,PSObject &b)
 {
-	PSObjectType tOldType = a._type;
-	PSObjectValue unOldVal = a._unVal;
-	a._type = b._type;
-	a._unVal = b._unVal;
-	b._type = tOldType;
-	b._unVal = unOldVal;
+    PSObjectType tOldType = a._type;
+    PSObjectValue unOldVal = a._unVal;
+    a._type = b._type;
+    a._unVal = b._unVal;
+    b._type = tOldType;
+    b._unVal = unOldVal;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 #ifndef NO_GARBAGE_COLLECTOR
 #define MARK_FLAG 0x80000000
 struct PSCollectable : public PSRefCounted {
-	PSCollectable *_next;
-	PSCollectable *_prev;
-	PSSharedState *_sharedstate;
-	virtual PSObjectType GetType()=0;
-	virtual void Release()=0;
-	virtual void Mark(PSCollectable **chain)=0;
-	void UnMark();
-	virtual void Finalize()=0;
-	static void AddToChain(PSCollectable **chain,PSCollectable *c);
-	static void RemoveFromChain(PSCollectable **chain,PSCollectable *c);
+    PSCollectable *_next;
+    PSCollectable *_prev;
+    PSSharedState *_sharedstate;
+    virtual PSObjectType GetType()=0;
+    virtual void Release()=0;
+    virtual void Mark(PSCollectable **chain)=0;
+    void UnMark();
+    virtual void Finalize()=0;
+    static void AddToChain(PSCollectable **chain,PSCollectable *c);
+    static void RemoveFromChain(PSCollectable **chain,PSCollectable *c);
 };
 
 
@@ -338,9 +338,9 @@ struct PSCollectable : public PSRefCounted {
 #endif
 
 struct PSDelegable : public CHAINABLE_OBJ {
-	bool SetDelegate(PSTable *m);
-	virtual bool GetMetaMethod(PSVM *v,PSMetaMethod mm,PSObjectPtr &res);
-	PSTable *_delegate;
+    bool SetDelegate(PSTable *m);
+    virtual bool GetMetaMethod(PSVM *v,PSMetaMethod mm,PSObjectPtr &res);
+    PSTable *_delegate;
 };
 
 PSUnsignedInteger TranslateIndex(const PSObjectPtr &idx);

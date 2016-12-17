@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTD_MATH_H_
 #define _PSSTD_MATH_H_
 

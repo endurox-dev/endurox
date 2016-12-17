@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2015 Alberto Demichelis
+Copyright (c) 2003-2016 Alberto Demichelis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -36,60 +36,9 @@ extern "C" {
 #endif
 #endif
 
-#ifdef _PS64
 
-#ifdef _MSC_VER
-typedef __int64 PSInteger;
-typedef unsigned __int64 PSUnsignedInteger;
-typedef unsigned __int64 PSHash; /*should be the same size of a pointer*/
-#else
-typedef long long PSInteger;
-typedef unsigned long long PSUnsignedInteger;
-typedef unsigned long long PSHash; /*should be the same size of a pointer*/
-#endif
-typedef int PSInt32; 
-typedef unsigned int PSUnsignedInteger32;
-#else 
-typedef int PSInteger;
-typedef int PSInt32; /*must be 32 bits(also on 64bits processors)*/
-typedef unsigned int PSUnsignedInteger32; /*must be 32 bits(also on 64bits processors)*/
-typedef unsigned int PSUnsignedInteger;
-typedef unsigned int PSHash; /*should be the same size of a pointer*/
-#endif
-
-
-#ifdef PSUSEDOUBLE
-typedef double PSFloat;
-#else
-typedef float PSFloat;
-#endif
-
-#if defined(PSUSEDOUBLE) && !defined(_PS64) || !defined(PSUSEDOUBLE) && defined(_PS64)
-#ifdef _MSC_VER
-typedef __int64 PSRawObjectVal; //must be 64bits
-#else
-typedef long long PSRawObjectVal; //must be 64bits
-#endif
-#define PS_OBJECT_RAWINIT() { _unVal.raw = 0; }
-#else
-typedef PSUnsignedInteger PSRawObjectVal; //is 32 bits on 32 bits builds and 64 bits otherwise
-#define PS_OBJECT_RAWINIT()
-#endif
-
-#ifndef PS_ALIGNMENT // PS_ALIGNMENT shall be less than or equal to PS_MALLOC alignments, and its value shall be power of 2.
-#if defined(PSUSEDOUBLE) || defined(_PS64)
-#define PS_ALIGNMENT 8
-#else
-#define PS_ALIGNMENT 4
-#endif
-#endif
-
-typedef void* PSUserPointer;
-typedef PSUnsignedInteger PSBool;
-typedef PSInteger PSRESULT;
-
-#define PSTrue	(1)
-#define PSFalse	(0)
+#define PSTrue  (1)
+#define PSFalse (0)
 
 struct PSVM;
 struct PSTable;
@@ -110,137 +59,68 @@ struct PSOuter;
 #define PSUNICODE
 #endif
 
-#ifdef PSUNICODE
-#if (defined(_MSC_VER) && _MSC_VER >= 1400) // 1400 = VS8
+#include "psconfig.h"
 
-#if !defined(_NATIVE_WCHAR_T_DEFINED) //this is if the compiler considers wchar_t as native type
-#define wchar_t unsigned short
-#endif
+#define PSCRIPT_VERSION    _SC("Pscript 3.1 stable")
+#define PSCRIPT_COPYRIGHT  _SC("Copyright (C) 2003-2016 Alberto Demichelis\nPlatform Script for Enduro/X by Mavimax SIA")
+#define PSCRIPT_AUTHOR     _SC("Alberto Demichelis; Mavimax SIA")
+#define PSCRIPT_VERSION_NUMBER 310
 
-#else
-typedef unsigned short wchar_t;
-#endif
-
-typedef wchar_t PSChar;
-#define _SC(a) L##a
-#define	scstrcmp	wcscmp
-#define scsprintf	swprintf
-#define scstrlen	wcslen
-#define scstrtod	wcstod
-#ifdef _PS64
-#define scstrtol	_wcstoi64
-#else
-#define scstrtol	wcstol
-#endif
-#define scatoi		_wtoi
-#define scstrtoul	wcstoul
-#define scvsprintf	vswprintf
-#define scstrstr	wcsstr
-#define scisspace	iswspace
-#define scisdigit	iswdigit
-#define scisxdigit	iswxdigit
-#define scisalpha	iswalpha
-#define sciscntrl	iswcntrl
-#define scisalnum	iswalnum
-#define scprintf	wprintf
-#define MAX_CHAR 0xFFFF
-#else
-typedef char PSChar;
-#define _SC(a) a
-#define	scstrcmp	strcmp
-#define scsprintf	sprintf
-#define scstrlen	strlen
-#define scstrtod	strtod
-#ifdef _PS64
-#ifdef _MSC_VER
-#define scstrtol	_strtoi64
-#else
-#define scstrtol	strtoll
-#endif
-#else
-#define scstrtol	strtol
-#endif
-#define scatoi		atoi
-#define scstrtoul	strtoul
-#define scvsprintf	vsnprintf
-#define scstrstr	strstr
-#define scisspace	isspace
-#define scisdigit	isdigit
-#define scisxdigit	isxdigit
-#define sciscntrl	iscntrl
-#define scisalpha	isalpha
-#define scisalnum	isalnum
-#define scprintf	printf
-#define MAX_CHAR 0xFF
-#endif
-
-#ifdef _PS64
-#define _PRINT_INT_PREC _SC("ll")
-#define _PRINT_INT_FMT _SC("%lld")
-#else
-#define _PRINT_INT_FMT _SC("%d")
-#endif
-
-#define PSCRIPT_VERSION	_SC("Pscript 3.0.7 stable")
-#define PSCRIPT_COPYRIGHT	_SC("Copyright (C) 2003-2015 Alberto Demichelis")
-#define PSCRIPT_AUTHOR		_SC("Alberto Demichelis")
-#define PSCRIPT_VERSION_NUMBER	307
-
-#define PS_VMSTATE_IDLE			0
-#define PS_VMSTATE_RUNNING		1
-#define PS_VMSTATE_SUSPENDED	2
+#define PS_VMSTATE_IDLE         0
+#define PS_VMSTATE_RUNNING      1
+#define PS_VMSTATE_SUSPENDED    2
 
 #define PSCRIPT_EOB 0
-#define PS_BYTECODE_STREAM_TAG	0xFAFA
+#define PS_BYTECODE_STREAM_TAG  0xFAFA
 
-#define PSOBJECT_REF_COUNTED	0x08000000
-#define PSOBJECT_NUMERIC		0x04000000
-#define PSOBJECT_DELEGABLE		0x02000000
-#define PSOBJECT_CANBEFALSE		0x01000000
+#define PSOBJECT_REF_COUNTED    0x08000000
+#define PSOBJECT_NUMERIC        0x04000000
+#define PSOBJECT_DELEGABLE      0x02000000
+#define PSOBJECT_CANBEFALSE     0x01000000
 
 #define PS_MATCHTYPEMASKSTRING (-99999)
 
 #define _RT_MASK 0x00FFFFFF
 #define _RAW_TYPE(type) (type&_RT_MASK)
 
-#define _RT_NULL			0x00000001
-#define _RT_INTEGER			0x00000002
-#define _RT_FLOAT			0x00000004
-#define _RT_BOOL			0x00000008
-#define _RT_STRING			0x00000010
-#define _RT_TABLE			0x00000020
-#define _RT_ARRAY			0x00000040
-#define _RT_USERDATA		0x00000080
-#define _RT_CLOSURE			0x00000100
-#define _RT_NATIVECLOSURE	0x00000200
-#define _RT_GENERATOR		0x00000400
-#define _RT_USERPOINTER		0x00000800
-#define _RT_THREAD			0x00001000
-#define _RT_FUNCPROTO		0x00002000
-#define _RT_CLASS			0x00004000
-#define _RT_INSTANCE		0x00008000
-#define _RT_WEAKREF			0x00010000
-#define _RT_OUTER			0x00020000
+#define _RT_NULL            0x00000001
+#define _RT_INTEGER         0x00000002
+#define _RT_FLOAT           0x00000004
+#define _RT_BOOL            0x00000008
+#define _RT_STRING          0x00000010
+#define _RT_TABLE           0x00000020
+#define _RT_ARRAY           0x00000040
+#define _RT_USERDATA        0x00000080
+#define _RT_CLOSURE         0x00000100
+#define _RT_NATIVECLOSURE   0x00000200
+#define _RT_GENERATOR       0x00000400
+#define _RT_USERPOINTER     0x00000800
+#define _RT_THREAD          0x00001000
+#define _RT_FUNCPROTO       0x00002000
+#define _RT_CLASS           0x00004000
+#define _RT_INSTANCE        0x00008000
+#define _RT_WEAKREF         0x00010000
+#define _RT_OUTER           0x00020000
 
 typedef enum tagPSObjectType{
-	OT_NULL =			(_RT_NULL|PSOBJECT_CANBEFALSE),
-	OT_INTEGER =		(_RT_INTEGER|PSOBJECT_NUMERIC|PSOBJECT_CANBEFALSE),
-	OT_FLOAT =			(_RT_FLOAT|PSOBJECT_NUMERIC|PSOBJECT_CANBEFALSE),
-	OT_BOOL =			(_RT_BOOL|PSOBJECT_CANBEFALSE),
-	OT_STRING =			(_RT_STRING|PSOBJECT_REF_COUNTED),
-	OT_TABLE =			(_RT_TABLE|PSOBJECT_REF_COUNTED|PSOBJECT_DELEGABLE),
-	OT_ARRAY =			(_RT_ARRAY|PSOBJECT_REF_COUNTED),
-	OT_USERDATA =		(_RT_USERDATA|PSOBJECT_REF_COUNTED|PSOBJECT_DELEGABLE),
-	OT_CLOSURE =		(_RT_CLOSURE|PSOBJECT_REF_COUNTED),
-	OT_NATIVECLOSURE =	(_RT_NATIVECLOSURE|PSOBJECT_REF_COUNTED),
-	OT_GENERATOR =		(_RT_GENERATOR|PSOBJECT_REF_COUNTED),
-	OT_USERPOINTER =	_RT_USERPOINTER,
-	OT_THREAD =			(_RT_THREAD|PSOBJECT_REF_COUNTED) ,
-	OT_FUNCPROTO =		(_RT_FUNCPROTO|PSOBJECT_REF_COUNTED), //internal usage only
-	OT_CLASS =			(_RT_CLASS|PSOBJECT_REF_COUNTED),
-	OT_INSTANCE =		(_RT_INSTANCE|PSOBJECT_REF_COUNTED|PSOBJECT_DELEGABLE),
-	OT_WEAKREF =		(_RT_WEAKREF|PSOBJECT_REF_COUNTED),
-	OT_OUTER =			(_RT_OUTER|PSOBJECT_REF_COUNTED) //internal usage only
+    OT_NULL =           (_RT_NULL|PSOBJECT_CANBEFALSE),
+    OT_INTEGER =        (_RT_INTEGER|PSOBJECT_NUMERIC|PSOBJECT_CANBEFALSE),
+    OT_FLOAT =          (_RT_FLOAT|PSOBJECT_NUMERIC|PSOBJECT_CANBEFALSE),
+    OT_BOOL =           (_RT_BOOL|PSOBJECT_CANBEFALSE),
+    OT_STRING =         (_RT_STRING|PSOBJECT_REF_COUNTED),
+    OT_TABLE =          (_RT_TABLE|PSOBJECT_REF_COUNTED|PSOBJECT_DELEGABLE),
+    OT_ARRAY =          (_RT_ARRAY|PSOBJECT_REF_COUNTED),
+    OT_USERDATA =       (_RT_USERDATA|PSOBJECT_REF_COUNTED|PSOBJECT_DELEGABLE),
+    OT_CLOSURE =        (_RT_CLOSURE|PSOBJECT_REF_COUNTED),
+    OT_NATIVECLOSURE =  (_RT_NATIVECLOSURE|PSOBJECT_REF_COUNTED),
+    OT_GENERATOR =      (_RT_GENERATOR|PSOBJECT_REF_COUNTED),
+    OT_USERPOINTER =    _RT_USERPOINTER,
+    OT_THREAD =         (_RT_THREAD|PSOBJECT_REF_COUNTED) ,
+    OT_FUNCPROTO =      (_RT_FUNCPROTO|PSOBJECT_REF_COUNTED), //internal usage only
+    OT_CLASS =          (_RT_CLASS|PSOBJECT_REF_COUNTED),
+    OT_INSTANCE =       (_RT_INSTANCE|PSOBJECT_REF_COUNTED|PSOBJECT_DELEGABLE),
+    OT_WEAKREF =        (_RT_WEAKREF|PSOBJECT_REF_COUNTED),
+    OT_OUTER =          (_RT_OUTER|PSOBJECT_REF_COUNTED) //internal usage only
 }PSObjectType;
 
 #define ISREFCOUNTED(t) (t&PSOBJECT_REF_COUNTED)
@@ -248,43 +128,43 @@ typedef enum tagPSObjectType{
 
 typedef union tagPSObjectValue
 {
-	struct PSTable *pTable;
-	struct PSArray *pArray;
-	struct PSClosure *pClosure;
-	struct PSOuter *pOuter;
-	struct PSGenerator *pGenerator;
-	struct PSNativeClosure *pNativeClosure;
-	struct PSString *pString;
-	struct PSUserData *pUserData;
-	PSInteger nInteger;
-	PSFloat fFloat;
-	PSUserPointer pUserPointer;
-	struct PSFunctionProto *pFunctionProto;
-	struct PSRefCounted *pRefCounted;
-	struct PSDelegable *pDelegable;
-	struct PSVM *pThread;
-	struct PSClass *pClass;
-	struct PSInstance *pInstance;
-	struct PSWeakRef *pWeakRef;
-	PSRawObjectVal raw;
+    struct PSTable *pTable;
+    struct PSArray *pArray;
+    struct PSClosure *pClosure;
+    struct PSOuter *pOuter;
+    struct PSGenerator *pGenerator;
+    struct PSNativeClosure *pNativeClosure;
+    struct PSString *pString;
+    struct PSUserData *pUserData;
+    PSInteger nInteger;
+    PSFloat fFloat;
+    PSUserPointer pUserPointer;
+    struct PSFunctionProto *pFunctionProto;
+    struct PSRefCounted *pRefCounted;
+    struct PSDelegable *pDelegable;
+    struct PSVM *pThread;
+    struct PSClass *pClass;
+    struct PSInstance *pInstance;
+    struct PSWeakRef *pWeakRef;
+    PSRawObjectVal raw;
 }PSObjectValue;
 
 
 typedef struct tagPSObject
 {
-	PSObjectType _type;
-	PSObjectValue _unVal;
+    PSObjectType _type;
+    PSObjectValue _unVal;
 }PSObject;
 
 typedef struct  tagPSMemberHandle{
-	PSBool _static;
-	PSInteger _index;
+    PSBool _static;
+    PSInteger _index;
 }PSMemberHandle;
 
 typedef struct tagPSStackInfos{
-	const PSChar* funcname;
-	const PSChar* source;
-	PSInteger line;
+    const PSChar* funcname;
+    const PSChar* source;
+    PSInteger line;
 }PSStackInfos;
 
 typedef struct PSVM* HPSCRIPTVM;
@@ -301,16 +181,17 @@ typedef PSInteger (*PSREADFUNC)(PSUserPointer,PSUserPointer,PSInteger);
 typedef PSInteger (*PSLEXREADFUNC)(PSUserPointer);
 
 typedef struct tagPSRegFunction{
-	const PSChar *name;
-	PSFUNCTION f;
-	PSInteger nparamscheck;
-	const PSChar *typemask;
+    const PSChar *name;
+    PSFUNCTION f;
+    PSInteger nparamscheck;
+    const PSChar *typemask;
 }PSRegFunction;
 
 typedef struct tagPSFunctionInfo {
-	PSUserPointer funcid;
-	const PSChar *name;
-	const PSChar *source;
+    PSUserPointer funcid;
+    const PSChar *name;
+    const PSChar *source;
+    PSInteger line;
 }PSFunctionInfo;
 
 /*vm*/
@@ -320,6 +201,12 @@ PSCRIPT_API void ps_seterrorhandler(HPSCRIPTVM v);
 PSCRIPT_API void ps_close(HPSCRIPTVM v);
 PSCRIPT_API void ps_setforeignptr(HPSCRIPTVM v,PSUserPointer p);
 PSCRIPT_API PSUserPointer ps_getforeignptr(HPSCRIPTVM v);
+PSCRIPT_API void ps_setsharedforeignptr(HPSCRIPTVM v,PSUserPointer p);
+PSCRIPT_API PSUserPointer ps_getsharedforeignptr(HPSCRIPTVM v);
+PSCRIPT_API void ps_setvmreleasehook(HPSCRIPTVM v,PSRELEASEHOOK hook);
+PSCRIPT_API PSRELEASEHOOK ps_getvmreleasehook(HPSCRIPTVM v);
+PSCRIPT_API void ps_setsharedreleasehook(HPSCRIPTVM v,PSRELEASEHOOK hook);
+PSCRIPT_API PSRELEASEHOOK ps_getsharedreleasehook(HPSCRIPTVM v);
 PSCRIPT_API void ps_setprintfunc(HPSCRIPTVM v, PSPRINTFUNCTION printfunc,PSPRINTFUNCTION errfunc);
 PSCRIPT_API PSPRINTFUNCTION ps_getprintfunc(HPSCRIPTVM v);
 PSCRIPT_API PSPRINTFUNCTION ps_geterrorfunc(HPSCRIPTVM v);
@@ -354,12 +241,15 @@ PSCRIPT_API void ps_newarray(HPSCRIPTVM v,PSInteger size);
 PSCRIPT_API void ps_newclosure(HPSCRIPTVM v,PSFUNCTION func,PSUnsignedInteger nfreevars);
 PSCRIPT_API PSRESULT ps_setparamscheck(HPSCRIPTVM v,PSInteger nparamscheck,const PSChar *typemask);
 PSCRIPT_API PSRESULT ps_bindenv(HPSCRIPTVM v,PSInteger idx);
+PSCRIPT_API PSRESULT ps_setclosureroot(HPSCRIPTVM v,PSInteger idx);
+PSCRIPT_API PSRESULT ps_getclosureroot(HPSCRIPTVM v,PSInteger idx);
 PSCRIPT_API void ps_pushstring(HPSCRIPTVM v,const PSChar *s,PSInteger len);
 PSCRIPT_API void ps_pushfloat(HPSCRIPTVM v,PSFloat f);
 PSCRIPT_API void ps_pushinteger(HPSCRIPTVM v,PSInteger n);
 PSCRIPT_API void ps_pushbool(HPSCRIPTVM v,PSBool b);
 PSCRIPT_API void ps_pushuserpointer(HPSCRIPTVM v,PSUserPointer p);
 PSCRIPT_API void ps_pushnull(HPSCRIPTVM v);
+PSCRIPT_API void ps_pushthread(HPSCRIPTVM v, HPSCRIPTVM thread);
 PSCRIPT_API PSObjectType ps_gettype(HPSCRIPTVM v,PSInteger idx);
 PSCRIPT_API PSRESULT ps_typeof(HPSCRIPTVM v,PSInteger idx);
 PSCRIPT_API PSInteger ps_getsize(HPSCRIPTVM v,PSInteger idx);
@@ -378,6 +268,7 @@ PSCRIPT_API PSRESULT ps_getuserdata(HPSCRIPTVM v,PSInteger idx,PSUserPointer *p,
 PSCRIPT_API PSRESULT ps_settypetag(HPSCRIPTVM v,PSInteger idx,PSUserPointer typetag);
 PSCRIPT_API PSRESULT ps_gettypetag(HPSCRIPTVM v,PSInteger idx,PSUserPointer *typetag);
 PSCRIPT_API void ps_setreleasehook(HPSCRIPTVM v,PSInteger idx,PSRELEASEHOOK hook);
+PSCRIPT_API PSRELEASEHOOK ps_getreleasehook(HPSCRIPTVM v,PSInteger idx);
 PSCRIPT_API PSChar *ps_getscratchpad(HPSCRIPTVM v,PSInteger minsize);
 PSCRIPT_API PSRESULT ps_getfunctioninfo(HPSCRIPTVM v,PSInteger level,PSFunctionInfo *fi);
 PSCRIPT_API PSRESULT ps_getclosureinfo(HPSCRIPTVM v,PSInteger idx,PSUnsignedInteger *nparams,PSUnsignedInteger *nfreevars);
@@ -413,9 +304,9 @@ PSCRIPT_API PSRESULT ps_rawdeleteslot(HPSCRIPTVM v,PSInteger idx,PSBool pushval)
 PSCRIPT_API PSRESULT ps_newmember(HPSCRIPTVM v,PSInteger idx,PSBool bstatic);
 PSCRIPT_API PSRESULT ps_rawnewmember(HPSCRIPTVM v,PSInteger idx,PSBool bstatic);
 PSCRIPT_API PSRESULT ps_arrayappend(HPSCRIPTVM v,PSInteger idx);
-PSCRIPT_API PSRESULT ps_arraypop(HPSCRIPTVM v,PSInteger idx,PSBool pushval); 
-PSCRIPT_API PSRESULT ps_arrayresize(HPSCRIPTVM v,PSInteger idx,PSInteger newsize); 
-PSCRIPT_API PSRESULT ps_arrayreverse(HPSCRIPTVM v,PSInteger idx); 
+PSCRIPT_API PSRESULT ps_arraypop(HPSCRIPTVM v,PSInteger idx,PSBool pushval);
+PSCRIPT_API PSRESULT ps_arrayresize(HPSCRIPTVM v,PSInteger idx,PSInteger newsize);
+PSCRIPT_API PSRESULT ps_arrayreverse(HPSCRIPTVM v,PSInteger idx);
 PSCRIPT_API PSRESULT ps_arrayremove(HPSCRIPTVM v,PSInteger idx,PSInteger itemidx);
 PSCRIPT_API PSRESULT ps_arrayinsert(HPSCRIPTVM v,PSInteger idx,PSInteger destpos);
 PSCRIPT_API PSRESULT ps_setdelegate(HPSCRIPTVM v,PSInteger idx);
@@ -450,6 +341,8 @@ PSCRIPT_API PSInteger ps_objtointeger(const HPSOBJECT *o);
 PSCRIPT_API PSFloat ps_objtofloat(const HPSOBJECT *o);
 PSCRIPT_API PSUserPointer ps_objtouserpointer(const HPSOBJECT *o);
 PSCRIPT_API PSRESULT ps_getobjtypetag(const HPSOBJECT *o,PSUserPointer * typetag);
+PSCRIPT_API PSUnsignedInteger ps_getvmrefcount(HPSCRIPTVM v, const HPSOBJECT *po);
+
 
 /*GC*/
 PSCRIPT_API PSInteger ps_collectgarbage(HPSCRIPTVM v);
@@ -498,6 +391,12 @@ PSCRIPT_API void ps_setnativedebughook(HPSCRIPTVM v,PSDEBUGHOOK hook);
 
 #define PS_FAILED(res) (res<0)
 #define PS_SUCCEEDED(res) (res>=0)
+
+#ifdef __GNUC__
+# define PS_UNUSED_ARG(x) __attribute__((unused)) x
+#else
+# define PS_UNUSED_ARG(x) x
+#endif
 
 #ifdef __cplusplus
 } /*extern "C"*/

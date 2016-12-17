@@ -157,7 +157,7 @@ class Provision {
 	
 	shared_lib_pfx = "so";
 	
-	mk_mq_dev = true;
+	mk_mq_dev = false;
 	
 	//This is constructor, we shall get some infos from Enduro/X base build
 	constructor() {
@@ -876,8 +876,7 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 	setfileVal = "";
 	function buildSetfile()
 	{
-		setfileVal=setfileVal+@"
-#/bin/bash
+		setfileVal=setfileVal+@"#/bin/bash
 
 #
 # @(#) Load this script in environment
@@ -889,8 +888,8 @@ export NDRX_CCONFIG="+appHome+"/"+confDir+@"
 		if (mk_mq_dev)
 		{
 setfileVal=setfileVal+@"
-if [ ! -d ""+qpath+@"" ]; then
-	mkdir "+qpath+@"
+if [ ! -d """+qpath+@""" ]; then
+	mkdir """+qpath+@"""
 fi
 ";
 		}
@@ -980,6 +979,27 @@ fi
 		return true;
 	}
 	
+	//Set exec permissions to file
+	//@param filename	filename
+	function setExec(filename)
+	{
+		userlog(format("Setting 755 to [%s]",  filename));
+		try
+		{
+			chmod(::prov.setfile, "755");
+		}
+		catch (e)
+		{
+			userlog(format("Got exception [%s]", e));
+			
+			print(e+"\n");
+			
+			return false;
+		}
+		
+		return true;
+	}
+	
 }
 
 local root = getroottable();
@@ -1032,6 +1052,12 @@ if (::prov.validatAndPrintConfig())
 	{
 		return false;
 	}
+	
+	if (!::prov.setExec(::prov.setfile))
+	{
+		return false;
+	}
+	
 }
 
 

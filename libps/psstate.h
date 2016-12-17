@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTATE_H_
 #define _PSSTATE_H_
 
@@ -11,44 +11,44 @@ struct PSTable;
 
 struct PSStringTable
 {
-	PSStringTable(PSSharedState*ss);
-	~PSStringTable();
-	PSString *Add(const PSChar *,PSInteger len);
-	void Remove(PSString *);
+    PSStringTable(PSSharedState*ss);
+    ~PSStringTable();
+    PSString *Add(const PSChar *,PSInteger len);
+    void Remove(PSString *);
 private:
-	void Resize(PSInteger size);
-	void AllocNodes(PSInteger size);
-	PSString **_strings;
-	PSUnsignedInteger _numofslots;
-	PSUnsignedInteger _slotused;
-	PSSharedState *_sharedstate;
+    void Resize(PSInteger size);
+    void AllocNodes(PSInteger size);
+    PSString **_strings;
+    PSUnsignedInteger _numofslots;
+    PSUnsignedInteger _slotused;
+    PSSharedState *_sharedstate;
 };
 
 struct RefTable {
-	struct RefNode {
-		PSObjectPtr obj;
-		PSUnsignedInteger refs;
-		struct RefNode *next;
-	};
-	RefTable();
-	~RefTable();
-	void AddRef(PSObject &obj);
-	PSBool Release(PSObject &obj);
-	PSUnsignedInteger GetRefCount(PSObject &obj);
+    struct RefNode {
+        PSObjectPtr obj;
+        PSUnsignedInteger refs;
+        struct RefNode *next;
+    };
+    RefTable();
+    ~RefTable();
+    void AddRef(PSObject &obj);
+    PSBool Release(PSObject &obj);
+    PSUnsignedInteger GetRefCount(PSObject &obj);
 #ifndef NO_GARBAGE_COLLECTOR
-	void Mark(PSCollectable **chain);
+    void Mark(PSCollectable **chain);
 #endif
-	void Finalize();
+    void Finalize();
 private:
-	RefNode *Get(PSObject &obj,PSHash &mainpos,RefNode **prev,bool add);
-	RefNode *Add(PSHash mainpos,PSObject &obj);
-	void Resize(PSUnsignedInteger size);
-	void AllocNodes(PSUnsignedInteger size);
-	PSUnsignedInteger _numofslots;
-	PSUnsignedInteger _slotused;
-	RefNode *_nodes;
-	RefNode *_freelist;
-	RefNode **_buckets;
+    RefNode *Get(PSObject &obj,PSHash &mainpos,RefNode **prev,bool add);
+    RefNode *Add(PSHash mainpos,PSObject &obj);
+    void Resize(PSUnsignedInteger size);
+    void AllocNodes(PSUnsignedInteger size);
+    PSUnsignedInteger _numofslots;
+    PSUnsignedInteger _slotused;
+    RefNode *_nodes;
+    RefNode *_freelist;
+    RefNode **_buckets;
 };
 
 #define ADD_STRING(ss,str,len) ss->_stringtable->Add(str,len)
@@ -58,83 +58,77 @@ struct PSObjectPtr;
 
 struct PSSharedState
 {
-	PSSharedState();
-	~PSSharedState();
-	void Init();
+    PSSharedState();
+    ~PSSharedState();
+    void Init();
 public:
-	PSChar* GetScratchPad(PSInteger size);
-	PSInteger GetMetaMethodIdxByName(const PSObjectPtr &name);
+    PSChar* GetScratchPad(PSInteger size);
+    PSInteger GetMetaMethodIdxByName(const PSObjectPtr &name);
 #ifndef NO_GARBAGE_COLLECTOR
-	PSInteger CollectGarbage(PSVM *vm);
-	void RunMark(PSVM *vm,PSCollectable **tchain);
-	PSInteger ResurrectUnreachable(PSVM *vm);
-	static void MarkObject(PSObjectPtr &o,PSCollectable **chain);
+    PSInteger CollectGarbage(PSVM *vm);
+    void RunMark(PSVM *vm,PSCollectable **tchain);
+    PSInteger ResurrectUnreachable(PSVM *vm);
+    static void MarkObject(PSObjectPtr &o,PSCollectable **chain);
 #endif
-	PSObjectPtrVec *_metamethods;
-	PSObjectPtr _metamethodsmap;
-	PSObjectPtrVec *_systemstrings;
-	PSObjectPtrVec *_types;
-	PSStringTable *_stringtable;
-	RefTable _refs_table;
-	PSObjectPtr _registry;
-	PSObjectPtr _consts;
-	PSObjectPtr _constructoridx;
+    PSObjectPtrVec *_metamethods;
+    PSObjectPtr _metamethodsmap;
+    PSObjectPtrVec *_systemstrings;
+    PSObjectPtrVec *_types;
+    PSStringTable *_stringtable;
+    RefTable _refs_table;
+    PSObjectPtr _registry;
+    PSObjectPtr _consts;
+    PSObjectPtr _constructoridx;
 #ifndef NO_GARBAGE_COLLECTOR
-	PSCollectable *_gc_chain;
+    PSCollectable *_gc_chain;
 #endif
-	PSObjectPtr _root_vm;
-	PSObjectPtr _table_default_delegate;
-	static PSRegFunction _table_default_delegate_funcz[];
-	PSObjectPtr _array_default_delegate;
-	static PSRegFunction _array_default_delegate_funcz[];
-	PSObjectPtr _string_default_delegate;
-	static PSRegFunction _string_default_delegate_funcz[];
-	PSObjectPtr _number_default_delegate;
-	static PSRegFunction _number_default_delegate_funcz[];
-	PSObjectPtr _generator_default_delegate;
-	static PSRegFunction _generator_default_delegate_funcz[];
-	PSObjectPtr _closure_default_delegate;
-	static PSRegFunction _closure_default_delegate_funcz[];
-	PSObjectPtr _thread_default_delegate;
-	static PSRegFunction _thread_default_delegate_funcz[];
-	PSObjectPtr _class_default_delegate;
-	static PSRegFunction _class_default_delegate_funcz[];
-	PSObjectPtr _instance_default_delegate;
-	static PSRegFunction _instance_default_delegate_funcz[];
-	PSObjectPtr _weakref_default_delegate;
-	static PSRegFunction _weakref_default_delegate_funcz[];
-	
-	PSCOMPILERERROR _compilererrorhandler;
-	PSPRINTFUNCTION _printfunc;
-	PSPRINTFUNCTION _errorfunc;
-	bool _debuginfo;
-	bool _notifyallexceptions;
+    PSObjectPtr _root_vm;
+    PSObjectPtr _table_default_delegate;
+    static const PSRegFunction _table_default_delegate_funcz[];
+    PSObjectPtr _array_default_delegate;
+    static const PSRegFunction _array_default_delegate_funcz[];
+    PSObjectPtr _string_default_delegate;
+    static const PSRegFunction _string_default_delegate_funcz[];
+    PSObjectPtr _number_default_delegate;
+    static const PSRegFunction _number_default_delegate_funcz[];
+    PSObjectPtr _generator_default_delegate;
+    static const PSRegFunction _generator_default_delegate_funcz[];
+    PSObjectPtr _closure_default_delegate;
+    static const PSRegFunction _closure_default_delegate_funcz[];
+    PSObjectPtr _thread_default_delegate;
+    static const PSRegFunction _thread_default_delegate_funcz[];
+    PSObjectPtr _class_default_delegate;
+    static const PSRegFunction _class_default_delegate_funcz[];
+    PSObjectPtr _instance_default_delegate;
+    static const PSRegFunction _instance_default_delegate_funcz[];
+    PSObjectPtr _weakref_default_delegate;
+    static const PSRegFunction _weakref_default_delegate_funcz[];
+
+    PSCOMPILERERROR _compilererrorhandler;
+    PSPRINTFUNCTION _printfunc;
+    PSPRINTFUNCTION _errorfunc;
+    bool _debuginfo;
+    bool _notifyallexceptions;
+    PSUserPointer _foreignptr;
+    PSRELEASEHOOK _releasehook;
 private:
-	PSChar *_scratchpad;
-	PSInteger _scratchpadsize;
+    PSChar *_scratchpad;
+    PSInteger _scratchpadsize;
 };
 
 #define _sp(s) (_sharedstate->GetScratchPad(s))
 #define _spval (_sharedstate->GetScratchPad(-1))
 
-#define _table_ddel		_table(_sharedstate->_table_default_delegate) 
-#define _array_ddel		_table(_sharedstate->_array_default_delegate) 
-#define _string_ddel	_table(_sharedstate->_string_default_delegate) 
-#define _number_ddel	_table(_sharedstate->_number_default_delegate) 
-#define _generator_ddel	_table(_sharedstate->_generator_default_delegate) 
-#define _closure_ddel	_table(_sharedstate->_closure_default_delegate) 
-#define _thread_ddel	_table(_sharedstate->_thread_default_delegate) 
-#define _class_ddel		_table(_sharedstate->_class_default_delegate) 
-#define _instance_ddel	_table(_sharedstate->_instance_default_delegate) 
-#define _weakref_ddel	_table(_sharedstate->_weakref_default_delegate) 
-
-#ifdef PSUNICODE //rsl REAL STRING LEN
-#define rsl(l) ((l)<<1)
-#else
-#define rsl(l) (l)
-#endif
-
-//extern PSObjectPtr _null_;
+#define _table_ddel     _table(_sharedstate->_table_default_delegate)
+#define _array_ddel     _table(_sharedstate->_array_default_delegate)
+#define _string_ddel    _table(_sharedstate->_string_default_delegate)
+#define _number_ddel    _table(_sharedstate->_number_default_delegate)
+#define _generator_ddel _table(_sharedstate->_generator_default_delegate)
+#define _closure_ddel   _table(_sharedstate->_closure_default_delegate)
+#define _thread_ddel    _table(_sharedstate->_thread_default_delegate)
+#define _class_ddel     _table(_sharedstate->_class_default_delegate)
+#define _instance_ddel  _table(_sharedstate->_instance_default_delegate)
+#define _weakref_ddel   _table(_sharedstate->_weakref_default_delegate)
 
 bool CompileTypemask(PSIntVec &res,const PSChar *typemask);
 

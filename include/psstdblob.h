@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTDBLOB_H_
 #define _PSSTDBLOB_H_
 

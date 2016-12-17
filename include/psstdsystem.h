@@ -1,4 +1,4 @@
-/*	see copyright notice in pscript.h */
+/*  see copyright notice in pscript.h */
 #ifndef _PSSTD_SYSTEMLIB_H_
 #define _PSSTD_SYSTEMLIB_H_
 
