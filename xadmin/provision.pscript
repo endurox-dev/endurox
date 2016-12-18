@@ -1087,26 +1087,26 @@ function install()
 
 if (::install())
 {
-    print("\n");
-    print("\n");
+	print("\n");
+	print("\n");
 
-    print("To start your system, run following commands:\n");
-    print("$ cd "+::prov.appHome+"/"+::prov.confDir+"\n");
-    print("$ source set"+::prov.qprefix+"\n");
-    print("$ xadmin start -y\n");
+	print("To start your system, run following commands:\n");
+	print("$ cd "+::prov.appHome+"/"+::prov.confDir+"\n");
+	print("$ source set"+::prov.qprefix+"\n");
+	print("$ xadmin start -y\n");
 
-    print("\n");
-    print("\n");
+	print("\n");
+	print("\n");
 
-    userlog("Provision succeed!");
-    print("Provision succeed!\n");
+	userlog("Provision succeed!");
+	print("Provision succeed!\n");
 
 
-    return 0;
+	return 0;
 }
 else
 {
-    userlog("Provision failed!");
-    print("Provision failed!\n");
-    return -1;
+	userlog("Provision failed!");
+	print("Provision failed!\n");
+	return -1;
 }

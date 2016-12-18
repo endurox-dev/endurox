@@ -173,6 +173,9 @@ COMMANDS
 	Remove specific Posix queue.
 *qrmall* <substr1> [<substr2> ... <substrN>]::
 	Remove queue matching the substring.
+*provision* [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]::
+	Prepare initial Enduro/X instance environment, create folder structure,
+	generate configuration files with ability to register all available services.
 
 EXIT STATUS
 -----------
