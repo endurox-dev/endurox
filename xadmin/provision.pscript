@@ -191,6 +191,21 @@ class Provision {
 			mk_mq_dev = true;
 		}
 		
+		/* Load the overrides from cli */
+		
+		local root = getroottable();
+		if (root.rawin("args"))
+		{
+			foreach(member,val in Provision)
+			{
+				
+				if (root.args.rawin(member))
+				{
+					/* set the value from member... */
+					this[member] = root.args[member];
+				}
+			}
+		}
 	}
 	
 	//Print the value entry line
@@ -523,6 +538,10 @@ class Provision {
 					enterField(member);
 				}	
 			}
+                        else
+                        {
+                            break;
+                        }
 		}
 		
 		//OK to provision..
@@ -1001,64 +1020,85 @@ fi
 	
 }
 
-local root = getroottable();
-
-//Create a provision object
-root["prov"] <- Provision();
-
-
-print("Compiled system type....: " + ::prov.osType + "\n");
-print("Queueing mechanism......: " + ::prov.qType + "\n");
-print("\n");
-
-/*
-compilestring(@"
-
-function hello_from_sources()
+//Run the mater installer
+function install() 
 {
-	print(""\nHello!\n"");
+    local root = getroottable();
+
+    //Create a provision object
+    root["prov"] <- Provision();
+
+    print("Compiled system type....: " + ::prov.osType + "\n");
+    print("\n");
+
+    if (!::prov.isDefaulted)
+    {
+        ::prov.runInteractive();
+    }
+
+    if (::prov.validatAndPrintConfig())
+    {
+            ::prov.getOutputFiles();
+            ::prov.buildNdrxconfig();
+            ::prov.buildAppini();
+            ::prov.buildSetfile();
+
+            if (!::prov.createFolders())
+            {
+                    return false;
+            }
+
+            if (!::prov.writeFile(::prov.ndrxconfig, ::prov.ndrxconfigXmlVal))
+            {
+                    return false;
+            }
+
+            if (!::prov.writeFile(::prov.appini, ::prov.appiniVal))
+            {
+                    return false;
+            }
+
+            if (!::prov.writeFile(::prov.setfile, ::prov.setfileVal))
+            {
+                    return false;
+            }
+
+            if (!::prov.setExec(::prov.setfile))
+            {
+                    return false;
+            }
+
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
 }
 
-")();
-
-hello_from_sources();
-*/
-
-::prov.runInteractive();
-if (::prov.validatAndPrintConfig())
+if (::install())
 {
-	::prov.getOutputFiles();
-	::prov.buildNdrxconfig();
-	::prov.buildAppini();
-	::prov.buildSetfile();
-	
-	if (!::prov.createFolders())
-	{
-		return false;
-	}
-	
-	if (!::prov.writeFile(::prov.ndrxconfig, ::prov.ndrxconfigXmlVal))
-	{
-		return false;
-	}
-	
-	if (!::prov.writeFile(::prov.appini, ::prov.appiniVal))
-	{
-		return false;
-	}
-	
-	if (!::prov.writeFile(::prov.setfile, ::prov.setfileVal))
-	{
-		return false;
-	}
-	
-	if (!::prov.setExec(::prov.setfile))
-	{
-		return false;
-	}
-	
+    print("\n");
+    print("\n");
+
+    print("To start your system, run following commands:\n");
+    print("$ cd "+::prov.appHome+"/"+::prov.confDir+"\n");
+    print("$ source set"+::prov.qprefix+"\n");
+    print("$ xadmin start -y\n");
+
+    print("\n");
+    print("\n");
+
+    userlog("Provision succeed!");
+    print("Provision succeed!\n");
+
+
+    return 0;
 }
-
-
-return true;
-
+else
+{
+    userlog("Provision failed!");
+    print("Provision failed!\n");
+    return -1;
+}

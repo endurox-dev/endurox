@@ -198,6 +198,9 @@ extern int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 extern int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+/* scripting: */
+extern int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 #ifdef	__cplusplus
 }
 #endif

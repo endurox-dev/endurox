@@ -104,7 +104,7 @@ static PSInteger _exutil_chmod(HPSCRIPTVM v)
         PS_SUCCEEDED(ps_getstring(v,3,&mode))) {
         
         int mod;
-        sscanf(mode, "%x", &mod);
+        sscanf(mode, "%o", &mod);
         
         if (SUCCEED!=chmod(file, mod))
         {

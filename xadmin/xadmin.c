@@ -177,10 +177,22 @@ cmd_mapping_t M_command_map[] =
                                     "\t\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>"},
     {"killall",   cmd_killall,FAIL, 1,  999,  0, "Kill all processes (in ps -ef) matching the name\n"
                                     "\t\targs: killall <name1> <name2> ... <nameN>\n"},
-    {"qrm",   cmd_qrm,FAIL, 1,  999,  0, "Remove specific queue \n"
+    {"qrm",       cmd_qrm,FAIL, 1,  999,  0, "Remove specific queue \n"
                                     "\t\targs: qrm <qname1> <qname2> ... <qnameN>\n"},
-    {"qrmall",   cmd_qrmall,FAIL, 1,  999,  0, "Remove queue matching the substring \n"
-                                    "\t\targs: qrmall <substr1> <substr2> ... <substrN>\n"}
+    {"qrmall",    cmd_qrmall,FAIL, 1,  999,  0, "Remove queue matching the substring \n"
+                                    "\t\targs: qrmall <substr1> <substr2> ... <substrN>\n"},
+    {"provision", cmd_provision,FAIL, 0,  999,  0, "Prepare initial Enduro/X instance environment \n"
+                                     "\t\targs: provision [-y] [-v<param1>:<value1>] .. [-v<paramN>:<valueN>]\n"}
+};
+
+/*
+ * List of commands that does not require init
+ */
+char *M_noinit[] = {
+    "provision"
+    ,"help"
+    ,"h"
+    ,"killall"
 };
 
 /**
@@ -600,7 +612,7 @@ public int ndrx_start_idle()
  * Initialize Client (and possible start idle back-end)
  * @return
  */
-public int ndrx_init(void)
+public int ndrx_init(int need_init)
 {
     int ret=SUCCEED;
     int i;
@@ -610,9 +622,12 @@ public int ndrx_init(void)
     emq_set_lock_timeout(10);
 #endif
 
-    if (SUCCEED!=(ret = load_env_config()))
+    if (need_init)
     {
-        goto out;
+        if (SUCCEED!=(ret = load_env_config()))
+        {
+            goto out;
+        }
     }
     
     /* Initialize memory for arg array */
@@ -638,17 +653,31 @@ int main(int argc, char** argv) {
 
     int have_next = 1;
     int ret=SUCCEED;
-
+    int need_init = TRUE;
     /* Command line arguments */
     M_argc = argc;
     M_argv = argv;
 
-    if (FAIL==ndrx_init())
+    if (argc>1)
     {
-        ret=FAIL;
+        int i = 0;
+        while (i< N_DIM(M_noinit))
+        {
+            if (0==strcmp(M_noinit[i], argv[1]))
+            {
+                need_init=FALSE;
+                break;
+            }
+            
+            i++;
+        }
+    }
+    
+    if (FAIL==ndrx_init(need_init))
+    {
         NDRX_LOG(log_error, "Failed to initialize!");
         fprintf(stderr, "Failed to initialize!\n");
-        goto out;
+        FAIL_OUT(ret);
     }
 
     signal(SIGCHLD, sign_chld_handler);
@@ -687,7 +716,11 @@ int main(int argc, char** argv) {
     }
 
 out:
-    un_init();
+
+    if (need_init)
+    {
+        un_init();
+    }
 /*
     fprintf(stderr, "xadmin normal shutdown (%d)\n", ret);
 */

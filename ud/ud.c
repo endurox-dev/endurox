@@ -50,10 +50,11 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
+/**
  * Main entry point for `ud' utility
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
     int ret=SUCCEED;
     UBFH *p_ub;
