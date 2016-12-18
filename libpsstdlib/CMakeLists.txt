@@ -60,9 +60,9 @@ add_library (psstdlib SHARED
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(psstdlib ps)
+    target_link_libraries(psstdlib ps nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(psstdlib ps)
+    target_link_libraries(psstdlib ps nstd)
 endif()
 
 install (TARGETS 

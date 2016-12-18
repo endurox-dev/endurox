@@ -290,7 +290,7 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
         if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
         {
             printf(_SC("Error [%s]\n"),err);
-            return;
+            FAIL_OUT(ret);
         }
     }
     
