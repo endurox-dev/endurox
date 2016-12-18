@@ -44,7 +44,10 @@
 #include <gencall.h>
 
 #include "nclopt.h"
+
+#ifndef NDRX_DISABLEPSCRIPT
 #include <pscript.h>
+#endif
 
 
 /*---------------------------Externs------------------------------------*/
@@ -59,6 +62,8 @@ extern const char G_resource_Exfields[];
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+#ifndef NDRX_DISABLEPSCRIPT
 
 void printfunc(HPSCRIPTVM v,const PSChar *s,...)
 {
@@ -308,3 +313,19 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
 out:
     return ret;
 }
+
+#else
+/**
+ * Not compiled on this platform
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    fprintf(stderr, "Pscript not compiled for this platform!\n");
+    return FAIL;
+}
+
+#endif

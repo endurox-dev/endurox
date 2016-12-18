@@ -717,7 +717,7 @@ class Provision {
 			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""tmsrv"">
-			<max>3</max>
+			<min>3</min>
 			<max>3</max>
 			<srvid>40</srvid>
 			<cctag>RM1TMQ</cctag>
