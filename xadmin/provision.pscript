@@ -858,7 +858,7 @@ NDRX_XA_LAZY_INIT=0
 appiniVal=appiniVal+@"
 [@debug]
 ; * - goes for all binaries not listed bellow
-*= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/endurox-common.log
+*= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=
 xadmin= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
 ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
 ";
