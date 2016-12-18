@@ -253,12 +253,15 @@ int emq_close(mqd_t emqd)
     msgsize = MSGSIZE(attr->mq_msgsize);
     filesize = sizeof(struct emq_hdr) + (attr->mq_maxmsg *
                       (sizeof(struct msg_hdr) + msgsize));
+
+    NDRX_LOG(log_debug, "Before munmap()");
 #if defined(WIN32)
     if (!UnmapViewOfFile(emqinfo->emqi_hdr) || !CloseHandle(emqinfo->emqi_fmap))
 #else
     if (munmap(emqinfo->emqi_hdr, filesize) == -1)
 #endif
         return(-1);
+    NDRX_LOG(log_debug, "After munmap()");
 
     emqinfo->emqi_magic = 0;          /* just in case */
     NDRX_FREE(emqinfo);
