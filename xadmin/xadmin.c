@@ -182,7 +182,7 @@ cmd_mapping_t M_command_map[] =
     {"qrmall",    cmd_qrmall,FAIL, 1,  999,  0, "Remove queue matching the substring \n"
                                     "\t\targs: qrmall <substr1> <substr2> ... <substrN>\n"},
     {"provision", cmd_provision,FAIL, 0,  999,  0, "Prepare initial Enduro/X instance environment \n"
-                                     "\t\targs: provision [-y] [-v<param1>:<value1>] .. [-v<paramN>:<valueN>]\n"}
+                                     "\t\targs: provision [-y] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"}
 };
 
 /*

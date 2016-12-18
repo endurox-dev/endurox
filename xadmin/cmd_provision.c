@@ -52,6 +52,7 @@
 /* Have some access to resources */
 
 extern const char G_resource_provision[];
+extern const char G_resource_Exfields[];
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -74,6 +75,29 @@ void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
         va_start(vl, s);
         vfprintf(stderr, s, vl);
         va_end(vl);
+}
+
+//Read the line from terminal
+//@return line read string
+static PSInteger _xadmin_getExfields(HPSCRIPTVM v)
+{
+    
+    ps_pushstring(v,G_resource_Exfields,-1);
+
+    return 1;
+}
+
+//Provide the Exfields function to root table.
+private int register_getExfields(HPSCRIPTVM v)
+{
+    
+    ps_pushstring(v,"getExfields",-1);
+    ps_newclosure(v,_xadmin_getExfields,0);
+    ps_setparamscheck(v,1,".s");
+    ps_setnativeclosurename(v,-1,"getExfields");
+    ps_newslot(v,-3,PSFalse);
+
+    return 1;
 }
 
 /**
@@ -156,6 +180,7 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     psstd_register_stringlib(v);
     psstd_register_exutillib(v);
 
+    register_getExfields(v);
     /* aux library
      * sets error handlers */
     psstd_seterrorhandlers(v);
