@@ -287,6 +287,13 @@ Ensure(test032_oapi)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test033_provision)
+{
+    int ret;
+    ret=system_dbg("test033_provision/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 
 TestSuite *atmi_test_all(void)
 {
@@ -334,6 +341,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test031_logging);
     add_test(suite, test032_oapi);
     
+#ifndef NDRX_DISABLEPSCRIPT
+    add_test(suite, test033_provision);
+#endif    
     return suite;
 }
 
