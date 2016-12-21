@@ -1081,7 +1081,7 @@ function install()
             }
 
             /* write exfields, if have the function in root table */
-            root.rawin("getExfields")
+            if (root.rawin("getExfields"))
             {
                 if (!::prov.writeFile(::prov.appHome+"/"+::prov.ubfDir+"/Exfields", ::getExfields()))
                 {
