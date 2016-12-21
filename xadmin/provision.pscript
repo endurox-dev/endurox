@@ -292,9 +292,9 @@ class WizzardBase {
 	//@return	element name, empty if not found
 	function getMemberByOrder(order)
 	{
-		foreach(member,val in this)
+		foreach(member,val in this.getclass())
 		{
-			local attr = this.getattributes(member);
+			local attr = this.getclass().getattributes(member);
 			
 			if (null!=attr)
 			{	
