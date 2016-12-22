@@ -321,6 +321,30 @@ class WizzardBase {
 	//@return true - config ok, false - config bad
 	function printConfig()
 	{
+		local first = true;
+		//If not defauled, run over the fields and ask for values..
+		if (!isDefaulted)
+		{
+			foreach(member in this.elemOrder)
+			{
+				if (this.isFieldActual(member))
+				{
+					if (!this.validateValue(member, this[member]))
+					{
+						
+						if (first)
+						{
+							print("*** New dependency fields needs to be filled! ***\n");
+							first = false;
+						}
+						//Enter the value
+						enterField(member);
+					}
+				}
+			}
+		}
+		
+		
 		//Run the wizzard...
 		//Iterate over the all paramters
 		//foreach(member,val in Provision)
@@ -365,7 +389,7 @@ class WizzardBase {
 				//Offer entry...
 				::print("91: Cancel\n");
 				::print("92: Accept\n");
-				::print("Enter the choise ["+minOrder+"-"+maxOrder+", 91, 92]: ");
+				::print("Enter the choice ["+minOrder+"-"+maxOrder+", 91, 92]: ");
 				
 				local input = getline();
 				
@@ -393,7 +417,7 @@ class WizzardBase {
 						if (member=="")
 						{
 							::print("Invalid entry\n");
-							::print("Enter the choise ["+
+							::print("Enter the choice ["+
 								minOrder+"-"+maxOrder+", 91, 92]: ");
 							input = getline();
 						}
@@ -583,7 +607,6 @@ class Provision extends WizzardBase {
 			type="string", regex="[0-9a-fA-F]+" min=1, max=8 /> 
 	ipckey = "44000";
 	
-	
 	</ order=28, name = "Load balance over cluster", 
 			type="number", min=0, max=100 /> 
 	ldbal = "0";
@@ -601,6 +624,66 @@ class Provision extends WizzardBase {
 			type="number", min=0, max=5 /> 
 	tplev = "5";
 	
+	////////////////////////////////////////////////////////////////////////
+	//User server blocks
+	////////////////////////////////////////////////////////////////////////
+	</ order=32, name = "Configure User server #1", 
+			type="yn"/> 
+	usv1 = "n";
+	
+	//Binary name
+	</ order=33, name = "User server #1: binary name", type="string", min=1,
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_name = "";
+	
+	</ order=34, name = "User server #1: min", type="number", min=0,
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_min = "1";
+	
+	</ order=35, name = "User server #1: max", type="number", min=0,
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_max = "1";
+	
+	</ order=36, name = "User server #1: srvid", type="number", min=200,
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_srvid = "2000";
+	
+	</ order=37, name = "User server #1: cctag", type="string",
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_cctag = "";
+	
+	</ order=38, name = "User server #1: sysopt", type="string", min=1,
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_sysopt = "";
+	
+	</ order=39, name = "User server #1: appopt", type="string",
+		depend="(::prov.usv1==\"y\")" /> 
+	usv1_appopt = "";
+	
+	
+	////////////////////////////////////////////////////////////////////////
+	//User client blocks
+	////////////////////////////////////////////////////////////////////////
+	</ order=50, name = "Configure User client #1", 
+			type="yn"/> 
+	ucl1 = "n";
+	</ order=51, name = "User client #1: cmdline", type="string", min=1,
+		depend="(::prov.ucl1==\"y\")" /> 
+	usv1_cmdline = "";
+	
+	</ order=52, name = "User client #1: tag", type="string", min=1,
+		depend="(::prov.ucl1==\"y\")" /> 
+	usv1_tag = "";
+	
+	</ order=53, name = "User client #1: subsect", type="string",
+		depend="(::prov.ucl1==\"y\")" /> 
+	usv1_subsect = "";
+	
+	</ order=54, name = "User client #1: logfile", type="string", min=1,
+		depend="(::prov.ucl1==\"y\")" /> 
+	usv1_log = "";
+	////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////
 	
 	//Install handler
 	install = null;
@@ -816,6 +899,32 @@ class Provision extends WizzardBase {
 		</server>";
 		}
 		
+		//Install user server 1
+		if (usv1=="y")
+		{
+			local _cctag="";
+			if (usv1_cctag!="")
+			{
+				_cctag=@"
+			<cctag>"+usv1_cctag+@"</cctag>"
+			}
+			
+			local _appopt = "";
+			if (usv1_appopt!="")
+			{
+				_appopt=@"
+			<appopt>"+usv1_cctag+@"</appopt>"
+			}
+			
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
+		@"
+		<server name="""+usv1_name+@""">"+_cctag+@"
+			<min>"+usv1_min+@"</min>
+			<max>"+usv1_max+@"</max>
+			<srvid>"+usv1_srvid+@"</srvid>
+			<sysopt>"+usv1_sysopt+@"</sysopt>"+_appopt+@"
+		</server>";
+		}
 		
 		//Install CPM srv
 		if (cpmSv=="y")
@@ -829,16 +938,28 @@ class Provision extends WizzardBase {
 			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/cpmsrv.log -r -- -k3 -i1</sysopt>
 		</server>";
 		}
-		
-		
-		ndrxconfigXmlVal=ndrxconfigXmlVal+
-		@"
+		ndrxconfigXmlVal=ndrxconfigXmlVal+@"
 	</servers>";
 		
 		//Add Sample client process...
 		if (cpmSv=="y")
 		{
+			local _ucl1 = "";
+			
+			if (ucl1=="y")
+			{
+				local _subsect1="";
+				
+				if (_subsect1=="")
+				{
+					_subsect1=@"subsect="""+usv1_subsect+@""" ";
+				}
+		_ucl1=@"
+		<client cmdline="""+usv1_cmdline+@""">
+			<exec tag="""+usv1_tag+@""" autostart=""Y"" "+_subsect1+@"log="""+usv1_log+@"""/>
+		</client>";
 		
+			}
 		ndrxconfigXmlVal=ndrxconfigXmlVal+
 	@"
 	<!-- 
@@ -857,7 +978,7 @@ class Provision extends WizzardBase {
 		</client>
 		<client cmdline=""your_test_binary2.sh -t ${NDRX_CLTTAG}"">
 			<exec tag=""TAG3"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin2-1.log""/>
-		</client>
+		</client>"+_ucl1+@"
 	</clients>";
 		}
 		
