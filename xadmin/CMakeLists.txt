@@ -49,9 +49,6 @@ include_directories (${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
 # Make sure the linker can find the UBF library once it is built.
 #link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Make the embedfile script
-add_executable(embedfile embedfile.c)
-
 add_custom_command(
   OUTPUT provision.c
   COMMAND embedfile provision.pscript provision

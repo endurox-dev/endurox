@@ -193,6 +193,7 @@ OPTION(DEFINE_DISABLEDOC "Disable documentation generation" OFF)
 # cause another cmake executable to run. The same process will walk through 
 # the project's entire directory structure. 
 add_subdirectory (libnstd)
+add_subdirectory (embedfile)
 add_subdirectory (libcgreen)
 add_subdirectory (libexuuid)
 add_subdirectory (libubf)

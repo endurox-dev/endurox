@@ -1,5 +1,5 @@
 ## 
-## EnduroX Platform Script Standard Library
+## `embedfile' writes sources in c hex
 ##
 ## @file CMakeLists.txt
 ## 
@@ -30,52 +30,19 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set minimum version
+# Set a minimum version
 cmake_minimum_required(VERSION 2.8)
 
-# Add debug options
-# By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
-	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
-	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+				     ${ENDUROX_SOURCE_DIR}/libatmi
+					 ${ENDUROX_SOURCE_DIR}/libatmiclt
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd)
 
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-add_custom_command(
-  OUTPUT WizzardBase.c
-  COMMAND embedfile WizzardBase.pscript WizzardBase
-  DEPENDS WizzardBase.pscript)
-
-
-SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
-
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd) 
-# Create a library called "ATMI" which includes the source files.
-# The extension is already found. Any number of sources could be listed here. 
-add_library (psstdlib SHARED
-        psstdsystem.cpp
-        psstdstring.cpp
-        psstdstream.cpp
-        psstdrex.cpp
-        psstdmath.cpp
-        psstdio.cpp
-        psstdblob.cpp
-        psstdaux.cpp
-        psstdexutil.cpp
-        WizzardBase.c
-            )
-
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(psstdlib ps nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(psstdlib ps nstd)
-endif()
-
-install (TARGETS 
-    psstdlib
-    DESTINATION "${INSTALL_LIB_DIR}"
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-    COMPONENT libraries)
+# Exectuables
+add_executable (embedfile embedfile.c)
 
