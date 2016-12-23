@@ -49,12 +49,30 @@ extern "C" {
 /* wtf */
 #endif
 
+#ifndef FAIL
 #define FAIL		-1
+#endif
+    
+#ifndef SUCCEED
 #define SUCCEED		0
+#endif
+
+#ifndef public
 #define public
+#endif
+    
+#ifndef private
 #define private     	static
+#endif
+    
+
+#ifndef EOS
 #define EOS             '\0'
+#endif
+    
+#ifndef BYTE
 #define BYTE(x) ((x) & 0xff)
+#endif
 
 
 #ifndef  __cplusplus
@@ -63,20 +81,33 @@ typedef int         bool;
 #endif
 #endif
 
+#ifndef FALSE
 #define FALSE        0
+#endif
+
+#ifndef TRUE
 #define TRUE         1
+#endif
 
 #define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
 
+#ifndef FAIL_OUT
 #define FAIL_OUT(X)    {X=FAIL; goto out;}
+#endif
 
+
+#ifndef OFFSET
 #ifdef SYS64BIT
 #define OFFSET(s,e)   ((long) &(((s *)0)->e) )
 #else
 #define OFFSET(s,e)   ((const int) &(((s *)0)->e) )
 #endif
+#endif
 
+
+#ifndef ELEM_SIZE
 #define ELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
+#endif
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 

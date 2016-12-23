@@ -44,8 +44,15 @@ extern "C" {
 
 #include <ndrxdcmn.h>
 #include <gencall.h>
+#include <inicfg.h>
 /*---------------------------Externs------------------------------------*/
 #define         MAX_ARGS        20
+    
+#define         CMD_MAX         PATH_MAX
+#define         MAX_ARG_LEN     500
+#define         ARG_DEILIM      " \t"
+#define         MAX_CMD_LEN     300
+
 extern int G_cmd_argc_logical;
 extern int G_cmd_argc_raw;
 extern char *G_cmd_argv[MAX_ARGS];
@@ -113,6 +120,8 @@ struct cmd_mapping
 /*---------------------------Globals------------------------------------*/
 extern ndrx_config_t G_config;
 extern gencall_args_t G_call_args[];
+extern ndrx_inicfg_section_keyval_t *G_xadmin_config;
+extern char G_xadmin_config_file[PATH_MAX+1];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int start_daemon_idle(void);

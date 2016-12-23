@@ -40,15 +40,13 @@
 #include <ndebug.h>
 
 #include "ndrx.h"
+#include "cconfig.h"
 #include <ndrxdcmn.h>
 #include <gencall.h>
 #include <errno.h>
 #include <sys_unix.h>
+#include <inicfg.h>
 /*---------------------------Externs------------------------------------*/
-#define         CMD_MAX         PATH_MAX
-#define         MAX_ARG_LEN     500
-#define         ARG_DEILIM      " \t"
-#define         MAX_CMD_LEN     300
 /*---------------------------Macros-------------------------------------*/
 
 #define PARSE_CMD_STUFF(X)\
@@ -61,25 +59,21 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /* Command line arguments */
-int M_argc;
-char **M_argv;
+private int M_argc;
+private char **M_argv;
 
 /* Final command buffer  */
-int G_cmd_argc_logical; /* logical */
-int G_cmd_argc_raw; /* raw strings in argv */
+public int G_cmd_argc_logical; /* logical */
+public int G_cmd_argc_raw; /* raw strings in argv */
 
+public ndrx_inicfg_section_keyval_t *G_xadmin_config = NULL;
+public char G_xadmin_config_file[PATH_MAX+1] = {EOS};
 
-/*
-char **M_cmd_argv;
-*/
-            
 /* if we read from stdin: */
-char *G_cmd_argv[MAX_ARGS]; /* Assume max 50 arguments */
-char M_buffer[CMD_MAX];
-char M_buffer_prev[CMD_MAX]={EOS};  /* Previous command (for interactive terminal) */
-int M_quit_requested = FALSE;       /* Mark the system state that we want exit! */
-
-
+public char *G_cmd_argv[MAX_ARGS]; /* Assume max 50 arguments */
+private char M_buffer[CMD_MAX];
+private char M_buffer_prev[CMD_MAX]={EOS};  /* Previous command (for interactive terminal) */
+private int M_quit_requested = FALSE;       /* Mark the system state that we want exit! */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -608,6 +602,35 @@ public int ndrx_start_idle()
     return ret;
 }
 
+
+/**
+ * Get the file & tests does it exists or not
+ * @param buf
+ * @param size
+ * @param path1
+ * @param path2
+ * @return TRUE/FALSE
+ */
+private int get_file(char *buf, size_t size, char *path1, char *path2)
+{
+    if (NULL!=path1 && NULL!=path2)
+    {
+        snprintf(buf, size, "%s/%s", path1, path2);
+    }
+    else if (NULL!=path1)
+    {
+        /* snprintf(buf, size, "%s", path1); */
+        strncpy(buf, path1, size);
+        buf[size-1] = EOS;
+    }
+    else
+    {
+        return FALSE;
+    }
+    
+    return ndrx_file_exists(buf);
+}
+
 /**
  * Initialize Client (and possible start idle back-end)
  * @return
@@ -616,7 +639,8 @@ public int ndrx_init(int need_init)
 {
     int ret=SUCCEED;
     int i;
-
+    ndrx_inicfg_t *cfg = NULL;
+    
 #ifdef EX_USE_EMQ
     /* We need to get lock in */
     emq_set_lock_timeout(10);
@@ -645,8 +669,8 @@ public int ndrx_init(int need_init)
     
     /* TODO: Load any config files used by xadmin... 
      * - Try some global var NDRX_XADMIN_CONFIG
-     * - Try /etc/xadmin.config
      * - Try ~/.xadmin.config
+     * - Try /etc/xadmin.config
      * 
      * If found, use the NDRX_CCTAG, and load the config in global variables
      * so that other commands can use it later.
@@ -655,8 +679,55 @@ public int ndrx_init(int need_init)
      * The "provision" and "gen" command will use this.
      */
     
+    if (get_file(G_xadmin_config_file, sizeof(G_xadmin_config_file), 
+            getenv(CONF_NDRX_XADMIN_CONFIG), "xadmin.config") ||
+        get_file(G_xadmin_config_file, sizeof(G_xadmin_config_file), 
+            getenv("HOME"), ".xadmin.config") ||
+        get_file(G_xadmin_config_file, sizeof(G_xadmin_config_file),
+            "/etc/xadmin.config", NULL))
+    {
+        char cfg_section[128];
+        char *cctag = getenv(NDRX_CCTAG);
+        
+        if (NULL==cctag)
+        {
+            strcpy(cfg_section, "@xadmin");
+        }
+        else
+        {
+            snprintf(cfg_section, sizeof(cfg_section), "@xadmin/%s", cctag);
+        }
+        
+        /* load the configuration file */
+        if (NULL==(cfg=ndrx_inicfg_new()))
+        {
+            NDRX_LOG(log_error, "Failed to create inicfg: %s", Nstrerror(Nerror));
+            FAIL_OUT(ret);
+        }
+        
+        /* Add config file */
+        if (SUCCEED!=ndrx_inicfg_add(cfg, G_xadmin_config_file, NULL))
+        {
+             NDRX_LOG(log_error, "Failed to add resource [%s]: %s", 
+                    G_xadmin_config_file, Nstrerror(Nerror));
+            FAIL_OUT(ret);       
+        }
+        
+        /* Get the section... */
+        if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, NULL, cfg_section, &G_xadmin_config))
+        {
+            NDRX_LOG(log_error, "Failed to resolve config: %s", Nstrerror(Nerror));
+            FAIL_OUT(ret);    
+        }
+    }
     
 out:
+
+    if (NULL!=cfg)
+    {
+        ndrx_inicfg_free(cfg);
+    }
+
     return ret;
 }
 /*

@@ -156,6 +156,7 @@ extern "C" {
 #define CONF_NDRX_NRSEMS_DFLT           30          /* default number of semphoares  */
 #define CONF_NDRX_MAXSVCSRVS     "NDRX_MAXSVCSRVS"  /* Max servers per service (only for poll() mode) */
 #define CONF_NDRX_MAXSVCSRVS_DFLT       30          /* default for NDRX_MAXSVCSRVS param */
+#define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG"  /* Xadmin config file */
                                                     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
