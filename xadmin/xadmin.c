@@ -643,6 +643,19 @@ public int ndrx_init(int need_init)
         }
     }
     
+    /* TODO: Load any config files used by xadmin... 
+     * - Try some global var NDRX_XADMIN_CONFIG
+     * - Try /etc/xadmin.config
+     * - Try ~/.xadmin.config
+     * 
+     * If found, use the NDRX_CCTAG, and load the config in global variables
+     * so that other commands can use it later.
+     * The section would be  [@xadmin].
+     * 
+     * The "provision" and "gen" command will use this.
+     */
+    
+    
 out:
     return ret;
 }
