@@ -51,8 +51,8 @@ include_directories (${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
 
 add_custom_command(
   OUTPUT provision.c
-  COMMAND embedfile provision.pscript provision
-  DEPENDS provision.pscript)
+  COMMAND embedfile scripts/provision.pscript provision
+  DEPENDS scripts/provision.pscript)
 
 add_custom_command(
   OUTPUT Exfields.c
