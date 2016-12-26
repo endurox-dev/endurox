@@ -92,7 +92,7 @@ func "+svcname+@"(ac *atmi.ATMICtx, svc *atmi.TPSVCINFO) {
 	if err := ub.TpRealloc(1024); err != nil {
 		ac.TpLogError(""TpRealloc() Got error: %d:[%s]\n"", err.Code(), err.Message())
 		ret = FAIL
-		goto out
+		return
 	}":"")+@"
 	
 	

@@ -56,6 +56,7 @@
 /*---------------------------Externs------------------------------------*/
 
 extern const char G_resource_gen_go_server[];
+extern const char G_resource_gen_ubf_tab[];
 
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
@@ -196,7 +197,9 @@ public int cmd_gen_load_scripts(void)
     
     
     /* 1. List strings in memory, start with "gen_001" */
-    if (SUCCEED!=reg_cmd("go server", G_resource_gen_go_server, NULL))
+    if (SUCCEED!=reg_cmd("go server", G_resource_gen_go_server, NULL)
+        || SUCCEED!=reg_cmd("ubf tab", G_resource_gen_ubf_tab, NULL)
+       )
     {
         FAIL_OUT(ret);
     }

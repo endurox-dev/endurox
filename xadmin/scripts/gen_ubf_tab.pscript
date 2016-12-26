@@ -1,0 +1,217 @@
+#!/usr/bin/pscript
+
+userlog("Generate UBF table files");
+
+//Include wizzard base.
+compilestring(getwizzardbase())();
+
+//Provision class
+class UBFTab extends WizzardBase {
+
+	constructor()
+	{
+		base.constructor();
+	}
+	
+	//Configure it:
+	</ order=0, name = "UBF Table name (.fd will be added)", type = "string", min=1, max=512 /> 
+	table_name = "test";
+
+	</ order=1, name = "Base number", type = "number", min=0/> 
+	base_number = "6000";
+	
+	</ order=2, name = "Add test fields", type = "yn"/> 
+	testfields = "y";
+	
+	</ order=3, name = "Gen Exfields", type = "yn"/> 
+	genexfields = "y";
+	
+	</ order=4, name = "Gen makefile", type = "yn"/> 
+	genmake = "y";
+	
+	</ order=5, name = "Target language (c/go)", type = "string"
+		depend="(::prov.genmake==\"y\")" regex="^c|go$" /> 
+	makeLang = "c";
+	
+	</ order=6, name = "Go Pakcage name", type = "string", 
+		depend="(::prov.genmake==\"go\")" /> 
+	go_pkg_name = "ubftab";
+	
+	tabFile = "";
+	exfieldsFile = "";
+	makeFile = "";
+	
+	function getOutputFiles()
+	{
+		tabFile=appHome+"/"+table_name+".fd";
+		exfieldsFile=appHome+"/Exfields";
+		makeFile=appHome+"/Makefile";
+	}
+	
+	////////////////////////////////////////////////////////////////////////
+	//Table file
+	////////////////////////////////////////////////////////////////////////
+	tabFileVal = "";
+	function buildTabFile()
+	{
+	
+		tabFileVal = @"
+$#ifndef __"+table_name.toupper()+@"_FD
+$#define __"+table_name.toupper()+@"_FD
+
+*base "+base_number.tostring()+@"
+
+"+(testfields=="y"?@"
+T_CHAR_FLD	        11	char	- 1 Chart test field 1
+T_CHAR_2_FLD	    	12	char	- 1 Chart test field 2
+T_SHORT_FLD	        21	short	- 1 Short test field 1
+T_SHORT_2_FLD		22	short   - 1 Short test field 2
+T_LONG_FLD		31	long	- 1 Long test field 1
+T_LONG_2_FLD		32	long	- 1 Long test field 2
+T_FLOAT_FLD		41	float   - 1 Float test field 1
+T_FLOAT_2_FLD		42	float	- 1 Float test field 2
+T_FLOAT_3_FLD		43	float	- 1 Float test field 3
+T_DOUBLE_FLD		51	double  - 1 Double test field 1
+T_DOUBLE_2_FLD		52	double  - 1 Double test field 2
+T_DOUBLE_3_FLD		53	double  - 1 Double test field 3
+T_DOUBLE_4_FLD		54	double  - 1 Double test field 4
+T_STRING_FLD		61	string  - 1 String test field 1
+T_STRING_2_FLD		62	string  - 1 String test field 2
+T_STRING_3_FLD		63	string  - 1 String test field 3
+T_STRING_4_FLD		64	string  - 1 String test field 4
+T_STRING_5_FLD		65	string  - 1 String test field 5
+T_STRING_6_FLD		66	string  - 1 String test field 6
+T_STRING_7_FLD		67	string  - 1 String test field 7
+T_STRING_8_FLD		68	string  - 1 String test field 8
+T_STRING_9_FLD		69	string  - 1 String test field 9
+T_STRING_10_FLD		10	string  - 1 String test field 10
+T_CARRAY_FLD		81	carray  - 1 Carray test field 1
+T_CARRAY_2_FLD		82	carray	- 1 Carray test field 2
+":"")+@"
+
+$#endif
+";
+	}
+	
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile, END
+	////////////////////////////////////////////////////////////////////////
+	makeFileVal = "";
+	function buildMakefile()
+	{
+		//Get the suffix
+		local suffix = "";
+		local langMode = "";
+		if (makeLang=="c")
+		{
+			suffix = ".h";
+			langMode = "0"; //It is c
+		}
+		else
+		{
+			suffix = ".go";
+			langMode = "1"; //It is go
+		}
+		
+		makeFileVal = @"
+SOURCEDIR=.
+SOURCES := $(shell find $(SOURCEDIR) -name '*.fd')
+"+(genexfields=="y"?"SOURCES += Exfields":"")+@"
+
+OUTPUT = $(addsuffix "+suffix+@", $(SOURCES))
+
+comma:= ,
+empty:=
+space:= $(empty) $(empty)
+
+export FIELDTBLS=$(subst $(space),$(comma),$(SOURCES))
+export FLDTBLDIR=$(shell pwd)
+
+$(info $$SOURCES is [${SOURCES}])
+$(info $$OUTPUT is [${OUTPUT}])
+$(info $$FIELDTBLS is [${FIELDTBLS}])
+
+PACKAGE="+go_pkg_name+@"
+
+.DEFAULT_GOAL: $(OUTPUT)
+LDFLAGS=
+
+$(OUTPUT): $(SOURCES)
+	mkfldhdr -m"+langMode+@" -p${PACKAGE}
+"+ (makeLang=="go"? @"	go build ${LDFLAGS} -o ${PACKAGE} *.go
+	go install ${LDFLAGS} ./...":"")+@"
+
+.PHONY: clean
+clean:
+	- rm *"+suffix+@"
+";
+	}
+}
+	
+
+//Run the mater installer
+function install() 
+{
+	local root = getroottable();
+
+	//Create a provision object
+	root["prov"] <- UBFTab();
+
+	if (!::prov.isDefaulted)
+	{
+		::prov.runInteractive();
+	}
+
+	if (::prov.validatAndPrintConfig())
+	{
+		::prov.getOutputFiles();
+		::prov.buildTabFile();
+
+		if (!::prov.writeFile(::prov.tabFile, ::prov.tabFileVal))
+		{
+			return false;
+		}
+		
+		//Write Exfields if requested...
+		if ("y"==::prov.genexfields)
+		{
+			if (root.rawin("getExfields"))
+			{
+				if (!::prov.writeFile(::prov.exfieldsFile, ::getExfields()))
+				{
+					return false;
+				}
+			}
+		}
+		
+		//Build makefile if needed...
+		if ("y"==::prov.genmake)
+		{
+			::prov.buildMakefile();
+			
+			if (!::prov.writeFile(::prov.makeFile, ::prov.makeFileVal))
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+if (::install())
+{
+	print("Go server gen ok!\n");
+	
+	return 0;
+}
+else
+{
+	print("Go server gen failed!\n");
+	return -1;
+}

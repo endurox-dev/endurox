@@ -205,6 +205,10 @@ class Provision extends WizzardBase {
 	////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////
 	
+	</ order=55, name = "Additional UBFTAB files (comma seperated), can be empty", type="string", min=0 /> 
+	addubf = "";
+	
+	
 	//Install handler
 	install = null;
 	
@@ -536,7 +540,7 @@ NDRX_SVCMAX=20000
 NDRX_TOUT="+timeout+@"
 NDRX_UBFMAXFLDS=16000
 NDRX_ULOG=${NDRX_APPHOME}/"+logDir+@"
-FIELDTBLS=Exfields
+FIELDTBLS=Exfields"+(addubf!=""?(","+addubf):"")+@"
 FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
 ";
 
@@ -583,7 +587,6 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 
 
 		}
-	
 	
 		//print(appiniVal);
 	}
