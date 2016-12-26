@@ -145,6 +145,7 @@ extern void printfunc(HPSCRIPTVM v,const PSChar *s,...);
 extern void errorfunc(HPSCRIPTVM v,const PSChar *s,...);
 extern int load_value(HPSCRIPTVM v, char *key_val_string);
 extern int add_defaults_from_config(HPSCRIPTVM v, char *section);
+extern int register_getExfields(HPSCRIPTVM v);
 
 #endif
 

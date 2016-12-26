@@ -354,6 +354,9 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     psstd_register_mathlib(v);
     psstd_register_stringlib(v);
     psstd_register_exutillib(v);
+    
+    register_getExfields(v);
+    
     /* aux library
      * sets error handlers */
     psstd_seterrorhandlers(v);

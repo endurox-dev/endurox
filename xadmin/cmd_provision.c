@@ -54,9 +54,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* Have some access to resources */
-
 extern const char G_resource_provision[];
-extern const char G_resource_Exfields[];
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -65,34 +63,6 @@ extern const char G_resource_Exfields[];
 /*---------------------------Prototypes---------------------------------*/
 
 #ifndef NDRX_DISABLEPSCRIPT
-
-
-/**
- *Read the line from terminal
- *@return line read string
- */
-static PSInteger _xadmin_getExfields(HPSCRIPTVM v)
-{
-    
-    ps_pushstring(v,G_resource_Exfields,-1);
-
-    return 1;
-}
-
-/**
- * Provide the Exfields function to root table.
- */
-private int register_getExfields(HPSCRIPTVM v)
-{
-    
-    ps_pushstring(v,"getExfields",-1);
-    ps_newclosure(v,_xadmin_getExfields,0);
-    ps_setparamscheck(v,1,".s");
-    ps_setnativeclosurename(v,-1,"getExfields");
-    ps_newslot(v,-3,PSFalse);
-
-    return 1;
-}
 
 /**
  * Run the wizzard for application via pscrip
