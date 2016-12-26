@@ -26,12 +26,6 @@ class Provision extends WizzardBase {
 		base.constructor();
 	}
 	
-	//Should come from packages
-	osType = "";
-	
-	//Queue type...
-	qType = "";
-	
 	//Queue prefix
 	//TODO: Detect by OS + compiled q mode.
 	</ order=0, name = "Queue device path", type = "string", min=1, max=512 /> 

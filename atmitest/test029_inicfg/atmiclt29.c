@@ -160,6 +160,21 @@ int main(int argc, char** argv)
             NDRX_LOG(log_error, "TESTERROR: [mysection/subsect1/f/f] not 4!");
             FAIL_OUT(ret);
         }
+
+        /* test multi-word param */
+        /* some multi word value */
+        if (NULL==(val=ndrx_keyval_hash_get(out, "some multi word value")))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get [some multi word value]!");
+            FAIL_OUT(ret);
+        }
+
+        if (0!=strcmp(val->val, "yes"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: [some multi word value] not yes!");
+            FAIL_OUT(ret);
+        }
+
         
         /* test a multi-line string */
         if (NULL==(val=ndrx_keyval_hash_get(out, "MYVALUE3")))

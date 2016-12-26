@@ -43,6 +43,8 @@
 #include <ndrxdcmn.h>
 #include <atmi_int.h>
 #include <nclopt.h>
+#include <pscript.h>
+#include <errno.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -51,35 +53,6 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-#if 0
-/**
- * Get argument from command line
- * @param param - param to search, for example "-y"
- * @param argc - count of args
- * @param argv - list of args
- * @param out - where to put pointer of the value;
- * @return TRUE (found)/FALSE (not found)
- */
-public int get_arg(char *param, int argc, char **argv, char **out)
-{
-    int i;
-
-    for (i=0; i<argc; i++)
-    {
-        if (0==strcmp(param, argv[i]))
-        {
-            if (i+1<argc && NULL!=out)
-            {
-                /* return some value out there! */
-                *out = argv[i+1];
-            }
-            return TRUE;
-        }
-    }
-    
-    return FALSE;
-}
-#endif
 
 /**
  * If confirmation is required for command, then check it.
@@ -166,3 +139,181 @@ out:
     return ret;
 }
 
+#ifndef NDRX_DISABLEPSCRIPT
+/**
+ * Print function for pscript
+ * @param v
+ * @param s
+ * @param ...
+ */
+public void printfunc(HPSCRIPTVM v,const PSChar *s,...)
+{
+    va_list vl;
+    va_start(vl, s);
+    vfprintf(stdout, s, vl);
+    va_end(vl);
+}
+
+
+/**
+ * Error function for pscript
+ * @param v
+ * @param s
+ * @param ...
+ */
+public void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
+{
+    va_list vl;
+    va_start(vl, s);
+    vfprintf(stderr, s, vl);
+    va_end(vl);
+}
+
+
+/**
+ * Load key:value string into VM table
+ * @param v
+ * @param key_val_string
+ * @return 
+ */
+public int load_value(HPSCRIPTVM v, char *key_val_string)
+{
+    int ret = SUCCEED;
+    char *p;
+    int len = strlen(key_val_string);
+    
+    p=strchr(key_val_string, '=');
+    
+    if (!len)
+    {
+        fprintf(stderr, "Empty value string!\n");
+        FAIL_OUT(ret);
+    }
+    
+    if (NULL==p)
+    {
+        fprintf(stderr, "Missing '=' in value [%s]!\n", key_val_string);
+        FAIL_OUT(ret);
+    }
+    
+    if (p==key_val_string)
+    {
+        fprintf(stderr, "Missing value [%s]!\n", key_val_string);
+        FAIL_OUT(ret);
+    }
+    
+    if (p==key_val_string)
+    {
+        fprintf(stderr, "Missing value [%s]!\n", key_val_string);
+        FAIL_OUT(ret);
+    }
+    
+    *p = EOS;
+    p++;
+    
+    /* fprintf(stderr, "Setting value: %s\n", p); */
+    ps_pushstring(v, key_val_string, -1); /* 4 */
+    ps_pushstring(v, p, -1);/* 5 */
+    ps_newslot(v, -3, PSFalse );/* 3 */
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Add defaults from config file
+ * @return 
+ */
+public int add_defaults_from_config(HPSCRIPTVM v, char *section)
+{
+    int ret = SUCCEED;
+    ndrx_inicfg_section_keyval_t *val;
+    char *ptr = NULL;
+    char *p;
+    /* get the value if have one */
+    if (NULL!=(val=ndrx_keyval_hash_get(G_xadmin_config, section)))
+    {
+        userlog("Got config defaults for %s: [%s]", section, val->val);
+        
+        if (NULL==(ptr = strdup(val->val)))
+        {
+            userlog("Malloc failed: %s", strerror(errno));
+            FAIL_OUT(ret);
+        }
+        
+        /* OK token the string and do override */
+        
+        /* Now split the stuff */
+        p = strtok (ptr, ARG_DEILIM);
+        while (p != NULL)
+        {
+            if (0==strcmp(p, "-d"))
+            {
+                PSBool isDefaulted = TRUE;
+                ps_pushstring(v, "isDefaulted", -1); /* 4 */
+                ps_pushbool(v, isDefaulted);
+                ps_newslot(v, -3, PSFalse );/* 3 */
+            }
+            else if (0==strncmp(p, "-v", 2) 
+                    && 0!=strcmp(p, "-v"))
+            {
+                if (strlen(p) < 4)
+                {
+                    userlog("Invalid default settings for provision command [%s]", 
+                            val->val);
+                    FAIL_OUT(ret);
+                }
+                
+                /* pass in value definition (as string) 
+                 * format <key>=<value>
+                 */
+                if (SUCCEED!=load_value(v, p+2))
+                {
+                    userlog("Invalid value\n");
+                    FAIL_OUT(ret);
+                }
+            }
+            else if (0==strncmp(p, "-v", 2))
+            {
+                p = strtok (NULL, ARG_DEILIM);
+                
+                /* next value is key */
+                if (NULL!=p)
+                {
+                    if (SUCCEED!=load_value(v, p))
+                    {
+                        userlog("Invalid value on provision defaults [%s]", 
+                                val->val);
+                        FAIL_OUT(ret);
+                    }
+                }
+                else
+                {
+                    userlog("Invalid command line missing value at end [%s]", 
+                            val->val);
+                    FAIL_OUT(ret);
+                }
+            }
+            
+            p = strtok (NULL, ARG_DEILIM);
+        }
+    }
+    
+out:
+
+    if (NULL!=ptr)
+    {
+        free(ptr);
+    }
+
+    if (SUCCEED!=ret)
+    {
+        fprintf(stderr, "Failed to process defaults - invalid config [%s], see ULOG\n", 
+                G_xadmin_config_file);
+    }
+
+    return ret;
+}
+
+#endif

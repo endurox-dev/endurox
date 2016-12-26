@@ -45,6 +45,11 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <gencall.h>
 #include <inicfg.h>
+    
+#ifndef NDRX_DISABLEPSCRIPT
+#include <pscript.h>
+#endif
+
 /*---------------------------Externs------------------------------------*/
 #define         MAX_ARGS        20
     
@@ -116,6 +121,7 @@ struct cmd_mapping
     int max_args;                   /* Maximum argument count for command   */
     int reqidle;                    /* This requires backend started        */
     char *help;                     /* Short help descr of command          */
+    int (*p_add_help) (void);       /* additional help function             */
 };
 /*---------------------------Globals------------------------------------*/
 extern ndrx_config_t G_config;
@@ -133,6 +139,14 @@ extern int chk_confirm(char *message, short is_confirmed);
 extern int chk_confirm_clopt(char *message, int argc, char **argv);
 extern int ndrx_start_idle();
 extern void sign_chld_handler(int sig);
+
+#ifndef NDRX_DISABLEPSCRIPT
+extern void printfunc(HPSCRIPTVM v,const PSChar *s,...);
+extern void errorfunc(HPSCRIPTVM v,const PSChar *s,...);
+extern int load_value(HPSCRIPTVM v, char *key_val_string);
+extern int add_defaults_from_config(HPSCRIPTVM v, char *section);
+
+#endif
 
 extern int cmd_ldcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
@@ -210,6 +224,10 @@ extern int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
 /* scripting: */
 extern int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+/* gen: */
+extern int cmd_gen_load_scripts(void);
+extern int cmd_gen_help(void);
+extern int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 #ifdef	__cplusplus
 }
 #endif

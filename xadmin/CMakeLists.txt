@@ -55,6 +55,11 @@ add_custom_command(
   DEPENDS scripts/provision.pscript)
 
 add_custom_command(
+  OUTPUT gen_go_server.c
+  COMMAND embedfile scripts/gen_go_server.pscript gen_go_server
+  DEPENDS scripts/gen_go_server.pscript)
+
+add_custom_command(
   OUTPUT Exfields.c
   COMMAND embedfile ../include/Exfields Exfields
   DEPENDS ../include/Exfields)
@@ -67,7 +72,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
                 cmd_scbp.c cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
-                provision.c Exfields.c cmd_provision.c)
+                provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
