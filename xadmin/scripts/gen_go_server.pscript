@@ -128,7 +128,7 @@ func main() {
 	ac, err := atmi.NewATMICtx()
 
 	if nil != err {
-		fmt.Errorf(""Failed to allocate context!"", err)
+		fmt.Fprintf(os.Stderr, ""Failed to allocate new context: %s"", err)
 		os.Exit(atmi.FAIL)
 	} else {
 		//Run as server
