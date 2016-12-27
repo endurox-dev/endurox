@@ -74,6 +74,7 @@ rm -rf runtime 2>/dev/null
 
 mkdir runtime
 
+xadmin killall ndrxd
 
 cd runtime
 
