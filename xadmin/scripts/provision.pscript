@@ -605,7 +605,7 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 export NDRX_APPHOME="+appHome+@"
 export NDRX_CCONFIG=$NDRX_APPHOME/"+confDir+@"
 export PATH=$PATH:$NDRX_APPHOME/"+binDir+@"
-export CDPATH=$NDRX_APPHOME
+export CDPATH=$CDPATH:.:$NDRX_APPHOME
 ";
 		//create posix queue folder, if needed.
 		if (mk_mq_dev)
