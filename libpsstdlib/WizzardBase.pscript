@@ -396,7 +396,7 @@ class WizzardBase {
 					userlog("Terminating...");
 					return false;
 				}
-				else if (input=="w" || input="W")
+				else if (input=="w" || input=="W")
 				{
 					userlog("Accepted");
 					return true;
