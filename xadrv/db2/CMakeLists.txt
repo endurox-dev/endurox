@@ -1,5 +1,5 @@
 ## 
-## Drivers for XA processing
+## Build the Db2 XA/enduro driver libs
 ##
 ## @file CMakeLists.txt
 ## 
@@ -29,10 +29,43 @@
 ## contact@atrbaltic.com
 ## -----------------------------------------------------------------------------
 ##
+
+# Set minimum version
 cmake_minimum_required(VERSION 2.8)
 
-# Sub Dirs
-add_subdirectory (oracle)
-add_subdirectory (db2)
-add_subdirectory (wsmq)
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
 
+# Make sure the compiler can find include files from our UBF library.
+include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+
+add_library (ndrxxadb2s SHARED
+                        db2_s.c
+                        db2_common.c
+   	        )
+
+add_library (ndrxxadb2d SHARED
+                        db2_d.c
+                        db2_common.c
+   	        )
+
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(ndrxxadb2s atmi ubf nstd)
+    target_link_libraries(ndrxxadb2d atmi ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(ndrxxadb2s atmi ubf nstd)
+    target_link_libraries(ndrxxadb2d atmi ubf nstd)
+endif()
+
+
+# Install bin
+install (TARGETS 
+    ndrxxadb2s
+    ndrxxadb2d
+    DESTINATION "${INSTALL_LIB_DIR}"
+    )
