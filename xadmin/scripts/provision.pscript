@@ -207,7 +207,14 @@ class Provision extends WizzardBase {
 	
 	</ order=55, name = "Additional UBFTAB files (comma seperated), can be empty", type="string", min=0 /> 
 	addubf = "";
-	
+
+	</ order=56, name = "Max IPC message size", 
+			type="number", min=1024, max=56000 /> 
+	msgsizemax="56000";
+
+	</ order=57, name = "Max IPC messages in queue", 
+			type="number", min=1 /> 
+	msgmax = "100";
 	
 	//Install handler
 	install = null;
@@ -529,8 +536,8 @@ NDRX_IPCKEY="+ipckey+@"
 NDRX_LDBAL="+ldbal+@"
 NDRX_LEV=5
 NDRX_LOG=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
-NDRX_MSGMAX=1000
-NDRX_MSGSIZEMAX=56000
+NDRX_MSGMAX="+msgmax+@"
+NDRX_MSGSIZEMAX="+msgsizemax+@"
 NDRX_NODEID="+nodeid+@"
 NDRX_QPATH="+qpath+@"
 NDRX_QPREFIX=/"+qprefix+@"
