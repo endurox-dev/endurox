@@ -1,4 +1,4 @@
-TPEXT_DELPERIODCB(3)
+TPEXT_DELB4POLLCB(3)
 ====================
 :doctype: manpage
 
