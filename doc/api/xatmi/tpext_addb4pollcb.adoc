@@ -1,4 +1,4 @@
-TPEXT_ADDPERIODCB(3)
+TPEXT_ADDB4POLLCB(3)
 ====================
 :doctype: manpage
 
