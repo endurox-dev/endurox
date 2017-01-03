@@ -18,7 +18,7 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 
 DESCRIPTION
 -----------
-This is periodic callback function which is set for Enduro/X servers. Function is called every 'secs' seconds while XATMi server is in state of waiting next service call (during the message poll). The callback function 'p_periodcb' in case of success shall return 0. If callback function returns non 0 value, then XATMI server will proceed with shutdown.
+This is periodic callback function which is set for Enduro/X servers. Function is called every 'secs' seconds while XATMI server is in state of waiting next service call (during the message poll). The callback function 'p_periodcb' in case of success shall return 0. If callback function returns non 0 value, then XATMI server will proceed with shutdown. The interval is not guaranteed. If the service is doing some work currently then it will not be interrupted. If the service workload was longer than period, then given period will be lost and will be called once timeout exceeded in next sleep period or after receiving next service call.
 
 If NULL value is passed to 'p_periodcb', then poller is disabled. How ever it is recommend to set 'secs' to 0 too. Or use *tpext_delperiodcb()* for this.
 
