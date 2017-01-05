@@ -112,7 +112,8 @@
 #define	EX_CC_VALUE	((BFLDID32)167772671)	/* number: 511	 type: string */
 #define	EX_IF_ECODE	((BFLDID32)600)	/* number: 600	 type: short */
 #define	EX_IF_EMSG	((BFLDID32)167772761)	/* number: 601	 type: string */
-#define	EX_TCPDATA	((BFLDID32)201327242)	/* number: 650	 type: carray */
-#define	EX_TCPGATEWAY	((BFLDID32)167772811)	/* number: 651	 type: string */
-#define	EX_TCPCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
+#define	EX_NETDATA	((BFLDID32)201327242)	/* number: 650	 type: carray */
+#define	EX_NETGATEWAY	((BFLDID32)167772811)	/* number: 651	 type: string */
+#define	EX_NETCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
+#define	EX_NETCORR	((BFLDID32)167772813)	/* number: 653	 type: string */
 #endif
