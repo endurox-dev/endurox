@@ -116,4 +116,5 @@
 #define	EX_NETGATEWAY	((BFLDID32)167772811)	/* number: 651	 type: string */
 #define	EX_NETCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
 #define	EX_NETCORR	((BFLDID32)167772813)	/* number: 653	 type: string */
+#define	EX_NETFLAGS	((BFLDID32)167772814)	/* number: 654	 type: string */
 #endif

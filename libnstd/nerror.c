@@ -71,7 +71,9 @@ struct err_msg
     {NEINVAL,       "Invalid paramter passed to function"}, /* 4 */
     {NESYSTEM,      "System failure"}, /* 5 */
     {NEMANDATORY,   "Mandatory key/field missing"}, /* 6 */
-    {NEFORMAT,      "Invalid format"} /* 7 */
+    {NEFORMAT,      "Invalid format"}, /* 7 */
+    {NETOUT,        "Timed-out"}, /* 8 */
+    {NENOCONN,      "No Connection"} /* 9 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
