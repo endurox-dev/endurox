@@ -52,7 +52,7 @@ extern "C" {
 #define NEFORMAT            7 /* Format error */
 #define NETOUT              8 /* Time-out condition */
 #define NENOCONN            9 /* Connection not found */
-#define NMAXVAL             7 /* max error */
+#define NMAXVAL             9 /* max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 
