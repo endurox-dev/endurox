@@ -132,6 +132,6 @@ string(REPLACE ";" " " ATMISRV_INTEG_LIBS "${ATMISRV_INTEG_LIBS}")
 configure_file("atmisrvinteg.pc.in" "atmisrvinteg.pc" @ONLY)
 
 install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/atmisrvinteg.pc"
-        DESTINATION "${INSTALL_LIB_DIR}/pkgconfig")
+        DESTINATION "${INSTALL_LIB_DIR}/pkgconfig/")
 #################################################################################
 
