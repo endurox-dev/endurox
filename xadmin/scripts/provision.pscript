@@ -263,7 +263,7 @@ class Provision extends WizzardBase {
 	<appconfig>
 	
 		<!-- 
-			ALL BELLOW ONES USES <sanity> periodical timer  -->
+			ALL BELLOW ONES USES <sanity> periodical timer
 			Sanity check time, sec
 		-->
 		<sanity>5</sanity>

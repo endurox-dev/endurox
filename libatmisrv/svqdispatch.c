@@ -67,7 +67,13 @@ public int G_shutdown_req = 0;
 public int G_shutdown_nr_wait = 0;   /* Number of self shutdown messages to wait */
 public int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  */
 
-public int G_atmisrv_reply_type = 0; /* Used no-long-jump systems  */
+/* Used no-long-jump systems, this should be thread object based.
+ * Here we will not use context as the one thread that start the processing
+ * will finish it.
+ * Also maybe not so actual here, as we expect that main poller will run only
+ * in one thread.
+ */
+public int G_atmisrv_reply_type = 0; 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -400,6 +406,11 @@ public int sv_serve_call(int *service, int *status)
                 *status=FAIL;
             }
         }
+        else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
+                G_atmisrv_reply_type & RETURN_TYPE_THREAD)
+        {
+            NDRX_LOG(log_warn, "tpcontinue() issued from integra (no longjmp)!");
+        }
         else
         {
             NDRX_LOG(log_warn, "No return from service!");
@@ -438,7 +449,13 @@ out:
      * i.e. they do manual management of memory: tpfree.
      */ 
     /* We shall find auto allocated buffer and remove it! */
-    free_auto_buffers();
+
+    /* for integra continue leave the buffers in place.. */
+    if (!(G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
+                G_atmisrv_reply_type & RETURN_TYPE_THREAD))
+    {
+        free_auto_buffers();
+    }
     
     return ret;
 }
@@ -607,6 +624,11 @@ public int sv_serve_connect(int *service, int *status)
             {
                 *status=FAIL;
             }
+        }
+        else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
+                G_atmisrv_reply_type & RETURN_TYPE_THREAD)
+        {
+            NDRX_LOG(log_warn, "tpcontinue() issued from integra (no longjmp)!");
         }
         else
         {

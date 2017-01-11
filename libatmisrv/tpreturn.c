@@ -473,10 +473,24 @@ out_no_jump:
  */
 public void _tpcontinue (void)
 {
-    long return_status=0;
-    return_status|=RETURN_TYPE_THREAD;
-    NDRX_LOG(log_debug, "Long jumping to continue!");
-    longjmp(G_server_conf.call_ret_env, return_status);
+    /* mvitolin 11.01.2017 
+     * We can do thing when we are not running in integration mode!
+     */
+    if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
+    {
+       NDRX_LOG(log_debug, "Not jumping - as integra mode!");
+       G_atmisrv_reply_type|=RETURN_TYPE_THREAD;
+
+    }
+    else 
+    {
+        long return_status=0;
+        return_status|=RETURN_TYPE_THREAD;
+        
+        NDRX_LOG(log_debug, "Long jumping to continue!");
+        longjmp(G_server_conf.call_ret_env, return_status);
+        NDRX_LOG(log_error, "doing nothing after long jmp!");
+    }
     
-    NDRX_LOG(log_debug, "doing nothing after long jmp!!!!");
+    
 }
