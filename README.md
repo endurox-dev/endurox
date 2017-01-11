@@ -98,6 +98,7 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.2.2 released on 15/07/2016. Bugfixes for UBF binary search. Added UBF benchmarking scripts and documents.
 - Version 3.3.1 released on 05/09/2016. Implemented common configuration engine (can use ini files in alternative to environment variables, debug config and persistent queue config).
 - Version 3.3.2 released on 01/10/2016. Works on TP logger, user accessible logging framework. Set of tplog\* functions.
+- Version 3.3.5 released on 10/01/2017. Fixes for RPM build and install on Red-hat enterprise linux platform.
 
 # Build configurations
 
