@@ -266,12 +266,12 @@ class Provision extends WizzardBase {
 			ALL BELLOW ONES USES <sanity> periodical timer
 			Sanity check time, sec
 		-->
-		<sanity>5</sanity>
+		<sanity>1</sanity>
 		
 		<!--
 			Seconds in which we should send service refresh to other node.
 		-->
-		<brrefresh>6</brrefresh>
+		<brrefresh>5</brrefresh>
 		
 		<!-- 
 			Do process reset after 1 sec 
@@ -326,20 +326,20 @@ class Provision extends WizzardBase {
 		<!--
 			Ping server in every X seconds (step is <sanity>).
 		-->
-		<pingtime>10</pingtime>
+		<pingtime>2</pingtime>
 		
 		<!--
 			Max time in seconds in which server must respond.
 			The granularity is sanity time.
 			X <= 0 = disabled 
 		-->
-		<ping_max>40</ping_max>
+		<ping_max>5</ping_max>
 		
 		<!--
 			Max time to wait until process should exit on shutdown
 			X <= 0 = disabled 
 		-->
-		<end_max>30</end_max>
+		<end_max>3</end_max>
 		
 		<!-- 
 			Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
