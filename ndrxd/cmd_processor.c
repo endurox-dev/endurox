@@ -140,7 +140,7 @@ command_map_t M_command_map [] =
     {NDRXD_COM_SRVPING_RP,cmd_srvpingrsp,    "srvping",  ",-1,", 0,NDRXD_CTX_NOCHG},
     /* sreload function... */
     {NDRXD_COM_SRELOAD_RQ,cmd_sreload,         "sreload",  ",0,", 0,NDRXD_CTX_START},
-    {NDRXD_COM_SRELOAD_RQ,cmd_sreload,         "sreload",  ",0,", 0,NDRXD_CTX_START},
+    {NDRXD_COM_SRELOAD_RP,cmd_dummy,           "sreload",  ",0,", 0,NDRXD_CTX_START},
     /* Print Queue */
     {NDRXD_COM_XAPQ_RQ,   cmd_pq,              "xapq",     ",-1,", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_XAPQ_RP,   cmd_dummy,           "xapq",     "", 0,NDRXD_CTX_NOCHG},
@@ -151,7 +151,9 @@ command_map_t M_command_map [] =
     {NDRXD_COM_SET_RQ,     cmd_set,            "xaset",     ",-1,", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_SET_RP,     cmd_dummy,          "xaset",     "", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_UNSET_RQ,   cmd_unset,          "xaunset",   ",-1,", 0,NDRXD_CTX_NOCHG},
-    {NDRXD_COM_UNSET_RP,   cmd_dummy,          "xaunset",   "", 0,NDRXD_CTX_NOCHG}
+    {NDRXD_COM_UNSET_RP,   cmd_dummy,          "xaunset",   "", 0,NDRXD_CTX_NOCHG},
+    {NDRXD_COM_SRELOADI_RQ,cmd_sreloadi,         "sreloadi",  ",0,", 0,NDRXD_CTX_START},
+    {NDRXD_COM_SRELOADI_RP,cmd_dummy,           "sreloadi",  ",0,", 0,NDRXD_CTX_START}
     
 };
 

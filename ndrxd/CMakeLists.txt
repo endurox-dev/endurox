@@ -79,7 +79,8 @@ add_executable (ndrxd   ndrxd.c
                         cmd_bridge.c
 			cmd_ping.c
 			cmd_pq.c
-                        cmd_env.c)
+                        cmd_env.c
+                        reloadonchange.c)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (ndrxd m nstd atmi ubf atmiclt ${RT_LIB} ${LIBXML2_LIBRARIES} pthread)

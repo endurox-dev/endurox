@@ -61,11 +61,12 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+public unsigned G_sanity_cycle = 0;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 private int check_server(char *qname);
-private int check_client(char *qname, int is_xadmin, unsigned nr_of_try);
+private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle);
 private int check_long_startup(void);
 private int check_dead_processes(void);
 /**
@@ -87,11 +88,8 @@ public int do_sanity_check(void)
     
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
-    
-    int n;
-    static unsigned nr_of_try = 0;
 
-    nr_of_try++;
+    G_sanity_cycle++;
     
     /* No sanity checks while app config not loaded */
     if (NULL==G_app_config)
@@ -138,12 +136,12 @@ public int do_sanity_check(void)
             if (0==strncmp(elt->qname, client_prefix, 
                     client_prefix_len))
             {
-                check_client(elt->qname, FALSE, nr_of_try);
+                check_client(elt->qname, FALSE, G_sanity_cycle);
             }
             else if (0==strncmp(elt->qname, xadmin_prefix, 
                     xadmin_prefix_len)) 
             {
-                check_client(elt->qname, TRUE, nr_of_try);
+                check_client(elt->qname, TRUE, G_sanity_cycle);
             } 
             /* TODO: We might want to monitor admin queues too! */
             else if (0==strncmp(elt->qname, server_prefix, 
@@ -376,13 +374,13 @@ out:
  * ---------------- => DONE
  * @return 
  */
-private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
+private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
 {
     char    process[NDRX_MAX_Q_SIZE+1];
     pid_t pid;
     /* Used for cache, so that we do not check multi threaded process
      * multiple times... */
-    static unsigned prev_nr_of_try;
+    static unsigned prev_sanity_cycle;
     static int first = TRUE;
     static char prev_process[NDRX_MAX_Q_SIZE+1];
     static pid_t prev_pid;
@@ -390,13 +388,13 @@ private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
     
     if (first)
     {
-        prev_nr_of_try = nr_of_try-1;
+        prev_sanity_cycle = sanity_cycle-1;
         first=FALSE;
     }
     
     parse_q(qname, FALSE, process, &pid, 0, is_xadmin);
     
-    if (nr_of_try == prev_nr_of_try &&
+    if (sanity_cycle == prev_sanity_cycle &&
             0==strcmp(process, prev_process) &&
             pid == prev_pid)
     {
@@ -414,7 +412,7 @@ private int check_client(char *qname, int is_xadmin, unsigned nr_of_try)
     /* Fill the prev stuff */
     prev_pid = pid;
     strcpy(prev_process, process);
-    prev_nr_of_try = nr_of_try;
+    prev_sanity_cycle = sanity_cycle;
     
     if (!ndrx_sys_is_process_running(pid, process))
     {
@@ -561,12 +559,7 @@ private int check_long_startup(void)
                 && !cksum_reload_sent
                 && ndrx_file_exists(p_pm->binary_path))
         {
-            int new_cksum = ndrx_get_cksum(p_pm->binary_path);
-            
-            NDRX_LOG(log_info, "Old cksum: %x new cksum: %x", p_pm->reloadonchange_cksum,
-                    new_cksum);
-            
-            if (p_pm->reloadonchange_cksum!=new_cksum)
+            if (roc_check_binary(p_pm->binary_path, G_sanity_cycle))
             {
                 NDRX_LOG(log_warn, "Cksums differ reload...");
                 /* Send reload command */

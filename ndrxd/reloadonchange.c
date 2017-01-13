@@ -1,0 +1,248 @@
+/* 
+** Reload services on change - support library.
+** NOTE: Currently list will not clean up during the runtime.
+** So if config changes tons of times with different bins, then this will grow,
+** TODO: Bind to config loader to remove un-needed binaries.
+** @file reloadonchange.c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or ATR Baltic's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from ATR Baltic, SIA
+** contact@atrbaltic.com
+** -----------------------------------------------------------------------------
+*/
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <memory.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <utlist.h>
+#include <fcntl.h>
+
+#include <ndrstandard.h>
+#include <ndrxd.h>
+#include <atmi_int.h>
+#include <ntimer.h>
+
+#include <ndebug.h>
+#include <cmd_processor.h>
+#include <signal.h>
+
+#include "userlog.h"
+
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/* assume this is max time for reload cmd to hang in incoming ndrxd queue of commands*/
+#define ROC_MAX_CYCLES_STAY_IN_RELOAD       5
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/**
+ * Have a track of binaries found in system & their check values.
+ */
+typedef struct roc_exe_registry roc_exe_registry_t;
+struct roc_exe_registry
+{
+    char binary_path[PATH_MAX+1];
+    
+    int cksum;
+    unsigned sanity_cycle; /* sanity cycle */
+    int reload_issued; /* is reload issued? If so do not issue any more checks  */
+    
+    EX_hash_handle hh;         /* makes this structure hashable */
+};
+
+/*---------------------------Globals------------------------------------*/
+
+private roc_exe_registry_t* M_binreg = NULL;
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Calculate checksum for binary if exists.
+ * @param checksum object
+ */
+private void roc_calc_checksum(roc_exe_registry_t *bin, unsigned sanity_cycle)
+{
+    if (ndrx_file_exists(bin->binary_path))
+    {
+        bin->cksum = ndrx_get_cksum(bin->binary_path);
+        bin->sanity_cycle = sanity_cycle;
+    }
+}
+
+/**
+ * Return the object to binary, if not found then crate one
+ * @param path full path to binary
+ * @return NULL (if failure of mem) or ptr to object
+ */
+private roc_exe_registry_t *rco_get_binary(char *binary_path, unsigned sanity_cycle)
+{
+    roc_exe_registry_t *ret = NULL;
+    
+    EXHASH_FIND_STR( M_binreg, binary_path, ret);
+    
+    if (NULL==ret)
+    {
+        /* allocate binary */
+        roc_exe_registry_t * ret = NDRX_CALLOC(1, sizeof(roc_exe_registry_t));
+
+        if (NULL==ret)
+        {
+            userlog("malloc failed: %s", strerror(errno));
+            goto out;
+        }
+        strcpy(ret->binary_path, binary_path);
+        ret->cksum = FAIL; /* no checksum at the moment. */
+        
+        EXHASH_ADD_STR(M_binreg, binary_path, ret);
+        
+        /* calculate initial checksum */
+        roc_calc_checksum(ret, sanity_cycle);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Return TRUE if reload is in progress.
+ * This will try to fix things if issue is hanged for very long time 
+ * (removed from config?)
+ * @return 
+ */
+public int roc_is_reload_in_progress(unsigned sanity_cycle)
+{
+    roc_exe_registry_t *el = NULL;
+    roc_exe_registry_t *elt = NULL;
+    long diff;
+    
+    /* go over the hash and return TRUE, if in progress... */
+    
+    EXHASH_ITER(hh, M_binreg, el, elt)
+    {
+        if (el->reload_issued)
+        {
+            /* assume 5 cycles is max */
+            if ((diff=labs(el->sanity_cycle-sanity_cycle)) > ROC_MAX_CYCLES_STAY_IN_RELOAD)
+            {
+                NDRX_LOG(log_error, "Current cycle %u reload cycle %u - assume executed",
+                        el->sanity_cycle, sanity_cycle);
+                break;
+                
+            } 
+            else
+            {
+                NDRX_LOG(log_error, "%s - enqueued for reload", el->binary_path);
+                return TRUE;
+            }
+        }
+    }
+    
+    return FALSE; 
+}
+
+/**
+ * Check binary 
+ * @param path
+ * @param sanity_cycle
+ * @return TRUE if needs to issue reload, FALSE if checksums not changed
+ */
+public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
+{
+    int ret= FALSE;
+    roc_exe_registry_t *bin = NULL;
+    int old_cksum;
+    
+    /* check the table if reload needed then no calculation needed */
+    if (roc_is_reload_in_progress(sanity_cycle))
+    {
+        ret=FALSE;
+        goto out;
+    }
+    
+    /* search for bin, if not exists, then get checksum & add */
+    if (NULL==(bin=rco_get_binary(binary_path, sanity_cycle)))
+    {
+        NDRX_LOG(log_error, "Failed to get RCO binary (%s) - memory issues", binary_path);
+        ret=FALSE;
+        goto out;
+    }
+    
+    /* if exists, and cycle equals to current one, then no cksum */
+    if (bin->sanity_cycle==sanity_cycle)
+    {
+        /* no cksum changed... as already calculated. */
+        NDRX_LOG(log_debug, "Already checked at this cycle... (cached)");
+        ret=FALSE;
+        goto out;
+    }
+    
+    /* if exists and cycle not equals, calc the checksum  */
+    old_cksum = bin->cksum;
+    
+    roc_calc_checksum(bin, sanity_cycle);
+    
+    if (old_cksum!=bin->cksum)
+    {
+        NDRX_LOG(log_warn, "Binary [%s] changed checksum: old %x new %x - issue reload",
+                binary_path, old_cksum, bin->cksum);
+        bin->reload_issued = TRUE; /* so will issue reload */
+        
+        ret = TRUE;
+        
+        goto out;
+    }
+    
+out:
+
+    NDRX_LOG(log_debug, "roc_check_binary [%s]: %s", binary_path, 
+        ret?"issued reload":"reload not issued");
+
+    return ret;
+}
+
+/**
+ * Mark binary as reloaded.
+ * @param path
+ * @return 
+ */
+public void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle)
+{
+    roc_exe_registry_t * bin = rco_get_binary(binary_path, sanity_cycle);
+    
+    if (NULL==bin)
+    {
+        NDRX_LOG(log_error, "Binary [%s] not found in hash - mem error!",
+                binary_path)
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Marking binary [%s]/%d as reloaded!",
+                binary_path, bin->reload_issued);
+                
+        bin->reload_issued = FALSE;
+    }
+}

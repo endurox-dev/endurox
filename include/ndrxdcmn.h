@@ -148,7 +148,12 @@ extern "C" {
 #define NDRXD_COM_UNSET_RQ          62   /* xadmin unset env, req  */
 #define NDRXD_COM_UNSET_RP          63   /* xadmin unset env, resp */
 
-#define NDRXD_COM_MAX               63
+#define NDRXD_COM_SRELOADI_RQ       64   /* ndrxd request for server reload, req, internal  */
+#define NDRXD_COM_SRELOADI_RP       65   /* ndrxd request for server reload, resp, internal */
+
+    
+    
+#define NDRXD_COM_MAX               65
 
 /* Command contexts */
 #define NDRXD_CTX_ANY               -1   /* Any context...                   */

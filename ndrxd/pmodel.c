@@ -78,6 +78,7 @@ public int self_sreload(pm_node_t *p_pm)
     memset(&call, 0, sizeof(call));
     
     call.srvid = FAIL;
+    strcpy(call.binary_name, p_pm->binary_name);
     
     NDRX_LOG(log_debug, "Sending sreload command that [%s] must be reloaded, rq [%s]",
             call.binary_name, call.call.reply_queue);
@@ -85,7 +86,7 @@ public int self_sreload(pm_node_t *p_pm)
     /* 
      * Send the notification that process needs to be reloaded
      */
-    ret=cmd_generic_callfl(NDRXD_COM_SRELOAD_RQ, NDRXD_SRC_NDRXD,
+    ret=cmd_generic_callfl(NDRXD_COM_SRELOADI_RQ, NDRXD_SRC_NDRXD,
                         NDRXD_CALL_TYPE_GENERIC,
                         (command_call_t *)&call, sizeof(call),
                         G_command_state.listenq_str,
@@ -778,11 +779,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     /* calculate the checksum of the process */
     if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0])
     {
-        p_pm->reloadonchange_cksum = ndrx_get_cksum(p_pm->binary_path);
-        
-        NDRX_LOG(log_info, "Cheksum for [%s]=%x", 
-                p_pm->binary_path, p_pm->reloadonchange_cksum);
-        
+        roc_mark_as_reloaded(p_pm->binary_path, G_sanity_cycle);
     }
     
     /* clone our self */

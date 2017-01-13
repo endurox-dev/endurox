@@ -99,6 +99,7 @@ extern int cmd_testcfg (command_call_t * call, char *data, size_t len, int conte
 extern int cmd_start (command_call_t * call, char *data, size_t len, int context);
 extern int cmd_stop (command_call_t * call, char *data, size_t len, int context);
 extern int cmd_sreload (command_call_t * call, char *data, size_t len, int context);
+extern int cmd_sreloadi (command_call_t * call, char *data, size_t len, int context);
 extern int cmd_notify (command_call_t * call, char *data, size_t len, int context);
 extern int cmd_abort (command_call_t * call, char *data, size_t len, int context);
 

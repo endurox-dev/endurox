@@ -259,6 +259,7 @@ extern char *G_config_file;
 extern pm_node_t *G_process_model;
 extern pm_node_t **G_process_model_hash;
 extern pm_pidhash_t **G_process_model_pid_hash;
+extern unsigned G_sanity_cycle; /* Sanity cycle */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /* cmd processor: */
@@ -325,7 +326,13 @@ extern int cmd_xadreadv (command_call_t * call, char *data, size_t len, int cont
 
 extern int readv_request(int srvid, char *svc);
 extern char * get_srv_admin_q(pm_node_t * p_pm);
-public int pq_run_santiy(int run_hist);
+extern int pq_run_santiy(int run_hist);
+    
+/* reload on change: */
+extern int roc_is_reload_in_progress(unsigned sanity_cycle);
+extern int roc_check_binary(char *binary_path, unsigned sanity_cycle);
+extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
+
 #ifdef	__cplusplus
 }
 #endif

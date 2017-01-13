@@ -315,3 +315,25 @@ out:
     /* Do not want exit ndrxd if failed...! */
     return SUCCEED;
 }
+
+/**
+ * Reload services...  (internal version
+ * @param args
+ * @return
+ */
+public int cmd_sreloadi (command_call_t * call, char *data, size_t len, int context)
+{
+    int ret=SUCCEED;
+    command_startstop_t *start = (command_startstop_t *)call;
+    long processes_started=0;
+    
+    ret = app_sreload(start, NULL, NULL, &processes_started);
+    
+    NDRX_LOG(log_warn, "cmd_start returns with status %d", ret);
+    
+out:
+    
+    /* Do not want exit ndrxd if failed...! */
+    return SUCCEED;
+}
+
