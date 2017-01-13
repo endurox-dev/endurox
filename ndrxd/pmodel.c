@@ -64,6 +64,46 @@ private pthread_t M_signal_thread; /* Signalled thread */
 private int M_signal_thread_set = FALSE; /* Signal thread is set */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Initiate process reload
+ * @return
+ */
+public int self_sreload(pm_node_t *p_pm)
+{
+    int ret=SUCCEED;
+    command_startstop_t call;
+
+    
+    memset(&call, 0, sizeof(call));
+    
+    call.srvid = FAIL;
+    
+    NDRX_LOG(log_debug, "Sending sreload command that [%s] must be reloaded, rq [%s]",
+            call.binary_name, call.call.reply_queue);
+    
+    /* 
+     * Send the notification that process needs to be reloaded
+     */
+    ret=cmd_generic_callfl(NDRXD_COM_SRELOAD_RQ, NDRXD_SRC_NDRXD,
+                        NDRXD_CALL_TYPE_GENERIC,
+                        (command_call_t *)&call, sizeof(call),
+                        G_command_state.listenq_str,
+                        (mqd_t)FAIL,
+                        (mqd_t)FAIL,
+                        G_command_state.listenq_str,
+                        0, 
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        FALSE, TPNOBLOCK);
+    
+out:
+    return ret;
+}
+
+
 /**
  * Report to ndrxd, that process had sigchld
  * @return
@@ -479,6 +519,23 @@ public int build_process_model(conf_server_node_t *p_server_conf,
             
             /* format the process model entry */
             strcpy(p_pm->binary_name, p_conf->binary_name);
+            /* get the path of the binary... */
+            if (p_conf->reloadonchange)
+            {
+                if (NULL==ndrx_get_executable_path(p_pm->binary_path, 
+                        sizeof(p_pm->binary_path), p_pm->binary_name))
+                {
+                    NDRX_LOG(log_error, "Failed to get path for executable [%s] "
+                            "`reloadonchange' will not be able to monitor it!",
+                            p_pm->binary_name);
+                }
+                else
+                {
+                    NDRX_LOG(log_info, "Got binary path: [%s]",
+                            p_pm->binary_path);
+                }
+            }
+            
             p_pm->conf = p_conf; /* keep the reference to config entry */
             p_pm->srvid = p_conf->srvid+cnt;
             /* Request state is stopped */
@@ -717,6 +774,16 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     if (NULL!=p_startup_progress)
         p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTING);
+    
+    /* calculate the checksum of the process */
+    if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0])
+    {
+        p_pm->reloadonchange_cksum = ndrx_get_cksum(p_pm->binary_path);
+        
+        NDRX_LOG(log_info, "Cheksum for [%s]=%x", 
+                p_pm->binary_path, p_pm->reloadonchange_cksum);
+        
+    }
     
     /* clone our self */
     pid = fork();

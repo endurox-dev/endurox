@@ -73,7 +73,8 @@ struct err_msg
     {NEMANDATORY,   "Mandatory key/field missing"}, /* 6 */
     {NEFORMAT,      "Invalid format"}, /* 7 */
     {NETOUT,        "Timed-out"}, /* 8 */
-    {NENOCONN,      "No Connection"} /* 9 */
+    {NENOCONN,      "No Connection"}, /* 9 */
+    {NELIMIT,       "Limit reached"} /* 10 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

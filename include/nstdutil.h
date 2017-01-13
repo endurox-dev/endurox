@@ -84,6 +84,9 @@ extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);
 extern NDRX_API char * ndrx_getline(char *buf, int bufsz);
 
+extern NDRX_API char * ndrx_get_executable_path(char * out_path, size_t bufsz, 
+        char * in_binary);
+extern NDRX_API int ndrx_get_cksum(char *file);
 
 /* Mapping functions: */
 extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);

@@ -374,6 +374,20 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_debug, "protected: %c", config->default_isprotected?'Y':'N');
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "reloadonchange"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                if ('Y' == *p || 'y' == *p)
+                {
+                    config->default_reloadonchange = 1;
+                }
+                else
+                {
+                    config->default_reloadonchange = 0;
+                }
+                NDRX_LOG(log_debug, "reloadonchange: %c", config->default_reloadonchange?'Y':'N');
+                xmlFree(p);
+            }
             
 #if 0
             else
@@ -615,6 +629,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->killtime = FAIL;
     p_srvnode->exportsvcs[0] = EOS;
     p_srvnode->isprotected = FAIL;
+    p_srvnode->reloadonchange = FAIL;
 
 
     for (attr=cur->properties; attr; attr = attr->next)
@@ -813,6 +828,21 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                               p_srvnode->isprotected?'Y':'N');
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "reloadonchange"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            if ('Y' == *p || 'y' == *p)
+            {
+                p_srvnode->reloadonchange = 1;
+            }
+            else
+            {
+                p_srvnode->reloadonchange = 0;
+            }
+            NDRX_LOG(log_debug, "reloadonchange: %c",
+                                              p_srvnode->reloadonchange?'Y':'N');
+            xmlFree(p);
+        }
     }
     sprintf(p_srvnode->clopt, "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     strcpy(p_srvnode->binary_name, srvnm);
@@ -865,6 +895,9 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (FAIL==p_srvnode->isprotected)
         p_srvnode->isprotected = config->default_isprotected;
     
+    if (FAIL==p_srvnode->reloadonchange)
+        p_srvnode->reloadonchange = config->default_reloadonchange;
+    
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
         NDRX_LOG(log_error, "`ping_max' not set for server! at line %hd", 
@@ -882,14 +915,15 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
-            "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\"",
+            "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\"",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, p_srvnode->ping_max,
                     p_srvnode->exportsvcs,
                     p_srvnode->srvstartwait,
                     p_srvnode->srvstopwait,
-                    p_srvnode->cctag
+                    p_srvnode->cctag,
+                    p_srvnode->reloadonchange?'Y':'N'
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 

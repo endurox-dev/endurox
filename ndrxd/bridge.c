@@ -775,7 +775,7 @@ public void brd_end_diff(void)
         }
         else
         {
-            NDRX_LOG(log_debug, "Not Sending refresh - not connected"
+            NDRX_LOG(log_debug, "Not Sending refresh - not connected "
                     "or refresh not required");
         }
         

@@ -648,14 +648,15 @@ public char * ndrx_getline(char *buf, int bufsz)
     if (len>0)
     {
         len--;
-        //strip off newline
+        
+        /* strip off newline */
         if (buf[len]=='\n')
         {
             buf[len] = 0;
             len--;
         }
         
-        //strip off \r
+        /* strip off \r */
         if (len>= 0 && buf[len]=='\r')
         {
             buf[len] = 0;
@@ -663,4 +664,93 @@ public char * ndrx_getline(char *buf, int bufsz)
     }
         
     return buf;
+}
+
+/**
+ * Calculate crc32 of given file
+ * @param file
+ * @return CRC32 or FAIL (-1)
+ */
+public int ndrx_get_cksum(char *file)
+{
+    unsigned char checksum = 0;
+    int ret = SUCCEED;
+    
+    FILE *fp = fopen(file,"rb");
+    
+    if (NULL!=fp)
+    {
+        
+        while (!feof(fp) && !ferror(fp)) {
+           checksum ^= fgetc(fp);
+        }
+
+        fclose(fp);
+    }
+    else
+    {
+        ret = FAIL;
+    }
+    
+    
+    if (SUCCEED==ret)
+    {
+        return checksum;
+    }
+    else
+    {
+        return FAIL;
+    }
+}
+
+/**
+ * Get the path from executable
+ * @param out_path  Out buffer
+ * @param bufsz Out buffer size
+ * @param in_binary Binary to search for
+ * @return NULL (if not found) or ptr to out_path if found
+ */
+public char * ndrx_get_executable_path(char * out_path, size_t bufsz, char * in_binary)
+{
+    char * systemPath = NULL;
+    char * candidateDir = NULL;
+    int found = FALSE;
+    char *ret;
+    
+    systemPath = getenv ("PATH");
+    if (systemPath != NULL)
+    {
+        systemPath = strdup (systemPath);
+        for (candidateDir = strtok (systemPath, ":"); 
+                candidateDir != NULL; 
+                candidateDir = strtok (NULL, ":"))
+        {
+            snprintf(out_path, bufsz, "%s/%s", candidateDir, in_binary);
+            
+            if (access(out_path, F_OK) == 0)
+            {
+                found = TRUE;
+                goto out;
+            }
+        }
+    }
+
+out:
+    
+    if (systemPath)
+    {
+        free(systemPath);
+    }
+
+    if (found) 
+    {
+        ret = out_path;
+    }
+    else
+    {
+        out_path[0] = EOS;
+        ret = NULL;
+    }
+    
+    return ret;
 }

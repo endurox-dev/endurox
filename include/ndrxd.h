@@ -96,6 +96,8 @@ struct conf_server_node
     char cctag[NDRX_CCTAG_MAX+1]; 
     int isprotected; /* is binary protected... */
     
+    int reloadonchange; /* Reload binary on change - this max the monitoring of the bin */
+    
     /* Linked list */
     conf_server_node_t *prev;
     conf_server_node_t *next;
@@ -141,6 +143,9 @@ struct pm_node
     pm_node_svc_t   *svcs;  /* list of services              */
     int flags;              /* Flags sent by server info     */
     short   nodeid;         /* other node id, if this is bridge */
+    int reloadonchange_cksum; /* Checksum code of the binary */
+    char binary_path[PATH_MAX+1]; /* Path were binary lives... */
+    
     /* Linked list */
     pm_node_t *prev;
     pm_node_t *next;
@@ -189,6 +194,8 @@ typedef struct
     char default_blacklistsvcs[MAX_SERVICE_LIST];
     /* common-config tag (loaded into NDRX_CCTAG before start) */
     char default_cctag[NDRX_CCTAG_MAX+1]; 
+    
+    int default_reloadonchange; /* Reload binary on change */
     
     int qrmdelay;   /* queue remove delay (i.e. remove only after this time + check shm on removal!) */
     

@@ -551,6 +551,28 @@ private int check_long_startup(void)
                 }
             }
         } /* If process still starting! */
+        
+        /* check the restart if needed by checksum */
+        if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0] &&
+                ndrx_file_exists(p_pm->binary_path))
+        {
+            int new_cksum = ndrx_get_cksum(p_pm->binary_path);
+            
+            NDRX_LOG(log_info, "Old cksum: %x new cksum: %x", p_pm->reloadonchange_cksum,
+                    new_cksum);
+            
+            if (p_pm->reloadonchange_cksum!=new_cksum)
+            {
+                NDRX_LOG(log_warn, "Cksums differ reload...");
+                /* Send reload command */
+                if (SUCCEED!=self_sreload(p_pm))
+                {
+                    NDRX_LOG(log_warn, "Failed to send self notification "
+                            "about changed process - ignore!");
+                }
+            }
+        }
+        
     }/* DL_FOREACH */
     
 out:
