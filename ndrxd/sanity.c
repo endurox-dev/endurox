@@ -465,6 +465,7 @@ private int check_long_startup(void)
     int ret=SUCCEED;
     pm_node_t *p_pm;
     int delta;
+    int cksum_reload_sent = FALSE; /* for now single binary only at one cycle */
     
     DL_FOREACH(G_process_model, p_pm)
     {
@@ -553,8 +554,12 @@ private int check_long_startup(void)
         } /* If process still starting! */
         
         /* check the restart if needed by checksum */
-        if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0] &&
-                ndrx_file_exists(p_pm->binary_path))
+        /* TODO: We need some hash list here so we caulcate checsums only one binary
+         * not the all instances. And only issue one update per checksum change.
+         */
+        if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0] 
+                && !cksum_reload_sent
+                && ndrx_file_exists(p_pm->binary_path))
         {
             int new_cksum = ndrx_get_cksum(p_pm->binary_path);
             
@@ -570,6 +575,7 @@ private int check_long_startup(void)
                     NDRX_LOG(log_warn, "Failed to send self notification "
                             "about changed process - ignore!");
                 }
+                cksum_reload_sent=TRUE;
             }
         }
         
