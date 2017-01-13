@@ -58,7 +58,7 @@ import (
 	atmi ""github.com/endurox-dev/endurox-go""
 	""fmt""
 	""os""
-"+(useubf?"\tu \""+ubfname+"\"\n":"")+@")
+"+(useubf=="y"?"\tu \""+ubfname+"\"\n":"")+@")
 
 const (
 	SUCCEED = atmi.SUCCEED

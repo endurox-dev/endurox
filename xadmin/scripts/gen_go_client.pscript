@@ -1,0 +1,313 @@
+#!/usr/bin/pscript
+
+userlog("Generate go client");
+
+//Include wizzard base.
+compilestring(getwizzardbase())();
+
+//Provision class
+class GoClient extends WizzardBase {
+
+	constructor()
+	{
+		base.constructor();
+	}
+	
+
+	//Configure it:
+	</ order=0, name = "XATMI Client Name (binary)", type = "string", min=1, max=512 /> 
+	cltname = "testcl";
+	
+	</ order=1, name = "Use UBF?", type = "yn"/> 
+	useubf = "y";
+	
+	</ order=2, name = "UBF package name", 
+		type = "path" depend="(::prov.useubf==\"y\")" /> 
+	ubfname = "ubftab";
+	
+	</ order=3, name = "Gen makefile", type = "yn"/> 
+	genmake = "y";
+	
+	</ order=4, name = "INI File section (optional, will read config if set)", 
+		type = "string", depend="(::prov.useubf==\"y\")", min=0/> 
+	config = "";
+	
+	goClientFile = "";
+	
+	makeFile = "";
+	
+	function getOutputFiles()
+	{
+		goClientFile=appHome+"/"+cltname+".go";
+		makeFile=appHome+"/Makefile";
+	}
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build Go Client code
+	////////////////////////////////////////////////////////////////////////
+	goClientVal = "";
+	function buildClient()
+	{
+	
+		goClientVal = @"package main
+
+import (
+	""errors""
+	""fmt""
+	""os""
+	atmi ""github.com/endurox-dev/endurox-go""
+"+(useubf=="y"?"\tu \""+ubfname+"\"\n":"")+@")
+
+/*
+#include <signal.h>
+*/
+import ""C""
+
+const (
+	ProgSection = ""+cltname+@""
+)
+
+var MSomeConfigFlag string = """"
+var MSomeOtherConfigFlag int = 0
+
+//Run the listener
+func apprun(ac *atmi.ATMICtx) error {
+
+	//Do some work here
+
+	return nil
+}
+
+//Init function
+//@param ac	ATMI context
+//@return error (if erro) or nil
+func appinit(ac *atmi.ATMICtx) error {
+
+	if err := ac.TpInit(); err != nil {
+		return errors.New(err.Error())
+	}
+
+"+(config!=""?@"//Get the configuration
+	buf, err := ac.NewUBF(16 * 1024)
+	if nil != err {
+		ac.TpLogError(""Failed to allocate buffer: [%s]"", err.Error())
+		return errors.New(err.Error())
+	}
+
+	//If we have a command line flag, then use it
+	//else use CCTAG from env
+	buf.BChg(u.EX_CC_CMD, 0, ""g"")
+
+	subSection := """"
+
+	if len(os.Args) > 1 {
+		subSection = os.Args[1]
+		ac.TpLogInfo(""Using subsection from command line: [%s]"", subSection)
+	} else {
+		subSection = os.Getenv(""NDRX_CCTAG"")
+		ac.TpLogInfo(""Using subsection from environment NDRX_CCTAG: [%s]"",
+			subSection)
+	}
+
+	buf.BChg(u.EX_CC_LOOKUPSECTION, 0, fmt.Sprintf(""%s/%s"", ProgSection, subSection))
+
+	if _, err := ac.TpCall(""@CCONF"", buf, 0); nil != err {
+		ac.TpLogError(""ATMI Error %d:[%s]\n"", err.Code(), err.Message())
+		return errors.New(err.Error())
+	}
+
+	buf.TpLogPrintUBF(atmi.LOG_DEBUG, ""Got configuration."")
+
+	//Set the parameters
+	occs, _ := buf.BOccur(u.EX_CC_KEY)
+	// Load in the config...
+	for occ := 0; occ < occs; occ++ {
+		ac.TpLog(atmi.LOG_DEBUG, ""occ %d"", occ)
+		fldName, err := buf.BGetString(u.EX_CC_KEY, occ)
+
+		if nil != err {
+			ac.TpLog(atmi.LOG_ERROR, ""Failed to get field ""+
+				""%d occ %d"", u.EX_CC_KEY, occ)
+			return errors.New(err.Error())
+		}
+
+		ac.TpLog(atmi.LOG_DEBUG, ""Got config field [%s]"", fldName)
+
+		switch fldName {
+
+		case ""some_config_flag"":
+			MSomeConfigFlag, _ = buf.BGetString(u.EX_CC_VALUE, occ)
+			ac.TpLogInfo(""Got [%s] = [%s]"", fldName, MSomeConfigFlag)
+			break
+		case ""some_other_flag"":
+			MSomeOtherConfigFlag, _ = buf.BGetInt(u.EX_CC_VALUE, occ)
+			ac.TpLogInfo(""Got [%s] = [%d]"", fldName, MSomeOtherConfigFlag)
+			break
+		case ""gencore"":
+			gencore, _ := buf.BGetInt(u.EX_CC_VALUE, occ)
+
+			if 1 == gencore {
+				//Process signals by default handlers
+				ac.TpLogInfo(""gencore=1 - SIGSEG signal will be "" +
+					""processed by default OS handler"")
+				// Have some core dumps...
+				C.signal(11, nil)
+			}
+			break
+		case ""debug"":
+			//Set debug configuration string
+			debug, _ := buf.BGetString(u.EX_CC_VALUE, occ)
+			ac.TpLogDebug(""Got [%s] = [%s] "", fldName, debug)
+			if err := ac.TpLogConfig((atmi.LOG_FACILITY_NDRX | atmi.LOG_FACILITY_UBF | atmi.LOG_FACILITY_TP),
+				-1, debug, ""TCPG"", """"); nil != err {
+				ac.TpLogError(""Invalid debug config [%s] %d:[%s]\n"",
+					debug, err.Code(), err.Message())
+				return errors.New(err.Message())
+			}
+
+		default:
+			ac.TpLogInfo(""Unknown flag [%s] - ignoring..."", fldName)
+			break
+		}
+	}":"")+@"
+
+	return nil
+}
+
+//Un-init & Terminate the application
+//@param ac	ATMI Context
+//@param restCode	Return code. atmi.FAIL (-1) or atmi.SUCCEED(0)
+func unInit(ac *atmi.ATMICtx, retCode int) {
+
+	ac.TpTerm()
+	ac.FreeATMICtx()
+	os.Exit(retCode)
+}
+
+//Cliet process main entry
+func main() {
+
+	ac, errA := atmi.NewATMICtx()
+
+	if nil != errA {
+		fmt.Fprintf(os.Stderr, ""Failed to allocate cotnext %d:%s!\n"",
+			errA.Code(), errA.Message())
+		os.Exit(atmi.FAIL)
+	}
+
+	if err := appinit(ac); nil != err {
+		ac.TpLogError(""Failed to init: %s"", err)
+		os.Exit(atmi.FAIL)
+	}
+
+	ac.TpLogWarn(""Init complete, processing..."")
+
+	if err := apprun(ac); nil != err {
+		unInit(ac, atmi.FAIL)
+	}
+
+	unInit(ac, atmi.SUCCEED)
+}
+
+";	
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	//Client END
+	////////////////////////////////////////////////////////////////////////
+	
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile
+	////////////////////////////////////////////////////////////////////////
+	
+	makeFileVal = "";
+	function buildMakefile()
+	{
+	
+		makeFileVal = @"
+SOURCEDIR=.
+SOURCES := $(shell find $(SOURCEDIR) -name '*.go')
+
+BINARY="+cltname+@"
+LDFLAGS=
+
+VERSION=1.0.0
+BUILD_TIME=`date +%FT%T%z`
+
+.DEFAULT_GOAL: $(BINARY)
+
+$(BINARY): $(SOURCES)
+	go build ${LDFLAGS} -o ${BINARY} *.go
+
+.PHONY: install
+install:
+	go install ${LDFLAGS} ./...
+
+.PHONY: clean
+clean:
+	if [ -f ${BINARY} ] ; then rm ${BINARY} ; fi
+";
+	}
+	
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile, END
+	////////////////////////////////////////////////////////////////////////
+	
+}
+	
+
+//Run the mater installer
+function install() 
+{
+	local root = getroottable();
+
+	//Create a provision object
+	root["prov"] <- GoClient();
+
+	if (!::prov.isDefaulted)
+	{
+		::prov.runInteractive();
+	}
+
+	if (::prov.validatAndPrintConfig())
+	{
+		::prov.getOutputFiles();
+		::prov.buildClient();
+
+		if (!::prov.writeFile(::prov.goClientFile, ::prov.goClientVal))
+		{
+			return false;
+		}
+		
+		//Build makefile if needed...
+		if ("y"==::prov.genmake)
+		{
+			::prov.buildMakefile();
+			
+			if (!::prov.writeFile(::prov.makeFile, ::prov.makeFileVal))
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+if (::install())
+{
+	print("Go client gen ok!\n");
+	
+	return 0;
+}
+else
+{
+	print("Go client gen failed!\n");
+	return -1;
+}
