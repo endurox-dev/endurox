@@ -185,8 +185,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, ""Failed to allocate new context: %s"", err)
 		os.Exit(atmi.FAIL)
 	} else {
-		//Run as server
-		ac.TpRun(Init, Uninit)
+                //Run as server
+                if err=ac.TpRun(Init, Uninit); nil!=err {
+                        ac.TpLogError("Exit with failure");
+                        os.Exit(atmi.FAIL)
+                } else {
+                        ac.TpLogInfo("Exit with success");
+                        os.Exit(atmi.SUCCEED)
+                }
 	}
 }
 ";	

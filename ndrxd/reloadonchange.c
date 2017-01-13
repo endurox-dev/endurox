@@ -66,8 +66,7 @@ typedef struct roc_exe_registry roc_exe_registry_t;
 struct roc_exe_registry
 {
     char binary_path[PATH_MAX+1];
-    
-    int cksum;
+    time_t mtime;
     unsigned sanity_cycle; /* sanity cycle */
     int reload_issued; /* is reload issued? If so do not issue any more checks  */
     
@@ -84,13 +83,16 @@ private roc_exe_registry_t* M_binreg = NULL;
  * Calculate checksum for binary if exists.
  * @param checksum object
  */
-private void roc_calc_checksum(roc_exe_registry_t *bin, unsigned sanity_cycle)
+private void roc_calc_tstamp(roc_exe_registry_t *bin, unsigned sanity_cycle)
 {
-    if (ndrx_file_exists(bin->binary_path))
+    struct stat file_stat;
+    
+    if (SUCCEED==stat(bin->binary_path, &file_stat))
     {
-        bin->cksum = ndrx_get_cksum(bin->binary_path);
-        bin->sanity_cycle = sanity_cycle;
+        bin->mtime = file_stat.st_mtime;
+        bin->sanity_cycle = sanity_cycle;   
     }
+    
 }
 
 /**
@@ -115,12 +117,11 @@ private roc_exe_registry_t *rco_get_binary(char *binary_path, unsigned sanity_cy
             goto out;
         }
         strcpy(ret->binary_path, binary_path);
-        ret->cksum = FAIL; /* no checksum at the moment. */
         
         EXHASH_ADD_STR(M_binreg, binary_path, ret);
         
         /* calculate initial checksum */
-        roc_calc_checksum(ret, sanity_cycle);
+        roc_calc_tstamp(ret, sanity_cycle);
     }
     
 out:
@@ -174,7 +175,7 @@ public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
 {
     int ret= FALSE;
     roc_exe_registry_t *bin = NULL;
-    int old_cksum;
+    time_t old_mtime;
     
     /* check the table if reload needed then no calculation needed */
     if (roc_is_reload_in_progress(sanity_cycle))
@@ -201,18 +202,16 @@ public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
     }
     
     /* if exists and cycle not equals, calc the checksum  */
-    old_cksum = bin->cksum;
+    old_mtime = bin->mtime;
     
-    roc_calc_checksum(bin, sanity_cycle);
+    roc_calc_tstamp(bin, sanity_cycle);
     
-    if (old_cksum!=bin->cksum)
+    if (old_mtime!=bin->mtime)
     {
-        NDRX_LOG(log_warn, "Binary [%s] changed checksum: old %x new %x - issue reload",
-                binary_path, old_cksum, bin->cksum);
+        NDRX_LOG(log_warn, "Binary [%s] timestamp changed", binary_path);
         bin->reload_issued = TRUE; /* so will issue reload */
         
         ret = TRUE;
-        
         goto out;
     }
     
