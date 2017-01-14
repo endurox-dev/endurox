@@ -213,7 +213,14 @@ public int tpcall (char *svc, char *idata, long ilen,
         ret=FAIL;
         goto out;
     }
-        
+    
+    if (flags & TPNOREPLY)
+    {
+        _TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
+        ret=FAIL;
+        goto out;
+    }
+
     ret=_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0);
     
 out:
@@ -297,6 +304,29 @@ public int tpcallex (char *svc, char *idata, long ilen,
 
     if (SUCCEED!=entry_status)
     {
+        ret=FAIL;
+        goto out;
+    }
+    
+    /* Check some other parameters */
+    if (olen==NULL)
+    {
+        _TPset_error_msg(TPEINVAL, "olen cannot be null");
+        ret=FAIL;
+        goto out;
+    }
+    
+    /* Check some other parameters */
+    if (odata==NULL)
+    {
+        _TPset_error_msg(TPEINVAL, "odata cannot be null");
+        ret=FAIL;
+        goto out;
+    }
+    
+    if (flags & TPNOREPLY)
+    {
+        _TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
         ret=FAIL;
         goto out;
     }
