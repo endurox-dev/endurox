@@ -90,6 +90,30 @@ static PSInteger _exutil_getcwd(HPSCRIPTVM v)
     return 1;
 }
 
+//Check that file exists on disk
+//@return   true exists, false does not exists
+static PSInteger _exutil_fileexists(HPSCRIPTVM v)
+{
+    const PSChar *s;
+    PSBool b;
+    
+    if(PS_SUCCEEDED(ps_getstring(v,2,&s))) {
+        
+        if (ndrx_file_exists((char *)s))
+        {
+            b = PSTrue;
+        }
+        else
+        {
+            b = PSFalse;
+        }
+        
+        ps_pushbool(v, b);
+    }
+    
+    return 1;
+}
+
 //Write user log message
 //@param msg    Message
 static PSInteger _exutil_userlog(HPSCRIPTVM v)
@@ -164,6 +188,7 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(getwizzardbase,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),
+        _DECL_FUNC(fileexists,2,_SC(".s")),
         _DECL_FUNC(chmod,3,_SC(".ss")),
 	{0,0}
 };

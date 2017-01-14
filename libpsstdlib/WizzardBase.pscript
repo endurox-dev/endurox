@@ -444,22 +444,28 @@ class WizzardBase {
 	//@return true - ok, false - failed.
 	function writeFile(filename, contents)
 	{
-		
-		userlog(format("Writting off [%s] with [%s]", 
-		filename, contents));
-		try
+		if (!fileexists(filename))
 		{
-			local out = file(filename,"w");
-			out.writes(contents);
-			out.close();
+			userlog(format("Writting off [%s] with [%s]", 
+			filename, contents));
+			try
+			{
+				local out = file(filename,"w");
+				out.writes(contents);
+				out.close();
+			}
+			catch (e)
+			{
+				userlog(format("Got exception [%s]", e));
+				
+				print(e+"\n");
+				
+				return false;
+			}
 		}
-		catch (e)
+		else
 		{
-			userlog(format("Got exception [%s]", e));
-			
-			print(e+"\n");
-			
-			return false;
+			userlog(format("File [%s] exists - not writting.",  filename));
 		}
 		
 		return true;
