@@ -116,8 +116,12 @@ public buffer_obj_t * find_buffer(char *ptr)
     {
     buffer_obj_t *ret;
     
+    /*
     ret = find_buffer_int(ptr);
-    
+    */
+    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
+        
+        
     MUTEX_UNLOCK_V(M_lock);
     return ret;
     }
@@ -126,15 +130,20 @@ public buffer_obj_t * find_buffer(char *ptr)
 /**
  * Find the buffer in list of known buffers
  * Internal version, no locking used.
+ * TODO: Move buffer registry to hash function
  * @param ptr
  * @return NULL - buffer not found/ptr - buffer found
  */
 private buffer_obj_t * find_buffer_int(char *ptr)
 {
-    buffer_obj_t *ret=NULL, eltmp;
+    buffer_obj_t *ret=NULL;
 
+    /*
     eltmp.buf = ptr;
     DL_SEARCH(G_buffers, ret, &eltmp, buf_ptr_cmp_fn);
+    */
+    
+    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
     
     return ret;
 }
@@ -245,7 +254,8 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     node->sub_type_id = 0; /* So currently sub-type not supported. ok */
 
     /* Save the allocated buffer in the list */
-    DL_APPEND(G_buffers, node);
+    /* DL_APPEND(G_buffers, node); */
+    EXHASH_ADD_PTR(G_buffers, buf, node);
 
 out:
     MUTEX_UNLOCK_V(M_lock);
@@ -291,6 +301,10 @@ public char * _tprealloc (char *buf, long len)
     }
 
     node->buf = ret;
+    /* update the hash list */
+    EXHASH_DEL(G_buffers, node);
+    EXHASH_ADD_PTR(G_buffers, buf, node);
+    
     node->size = len;
 
 out:
@@ -299,6 +313,7 @@ out:
     }
 }
 
+#if 0
 /**
  * Free up allocated buffers
  */
@@ -322,6 +337,7 @@ public void free_up_buffers(void)
     MUTEX_UNLOCK_V(M_lock);
     }
 }
+#endif
 
 /**
  * Remove the buffer
@@ -348,7 +364,8 @@ public void _tpfree (char *buf, buffer_obj_t *known_buffer)
         buf_type->pf_free(buf_type, elt->buf);
         
         /* Remove that stuff from our linked list!! */
-        DL_DELETE(G_buffers,elt);
+        /* DL_DELETE(G_buffers,elt); */
+        EXHASH_DEL(G_buffers, elt);
         
         /* delete elt by it self */
         NDRX_FREE(elt);
@@ -390,6 +407,7 @@ public int _tpisautobuf(char *buf)
     return ret;
 }
 
+#if 0
 /**
  * This does free up auto-allocated buffers.
  */
@@ -422,6 +440,7 @@ public void free_auto_buffers(void)
     MUTEX_UNLOCK_V(M_lock);
     }
 }
+#endif
 
 /**
  * Internal version of tptypes. Returns type info

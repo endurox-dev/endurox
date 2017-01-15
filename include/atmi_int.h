@@ -45,6 +45,7 @@ extern "C" {
 #include <stdint.h>
 #include <ntimer.h>
 #include <sys/sem.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -143,7 +144,9 @@ struct buffer_obj
     short autoalloc;  /* Is buffer automatically allocated by tpcall? */
     char *buf;
     long size;        /* Allocated size.... */
-    buffer_obj_t *prev, *next;
+    /* Move to hash by buf */
+    /* buffer_obj_t *prev, *next; */
+    EX_hash_handle hh;         /* makes this structure hashable */
 };
 
 /*
