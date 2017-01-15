@@ -465,6 +465,7 @@ extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 extern NDRX_API int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id);
 extern NDRX_API void _tpfree (char *buf, buffer_obj_t *known_buffer);
+extern NDRX_API int _tpisautobuf (char *buf);
 extern NDRX_API void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
 extern NDRX_API int accept_connection(void);

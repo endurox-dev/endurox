@@ -238,6 +238,7 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     memset(node, 0, sizeof(buffer_obj_t));
 
     node->buf = ret;
+    NDRX_LOG(log_debug, "%s: type=%s len=%d allocated=%p", fn, type, len, ret);
     node->size = len;
     
     node->type_id = usr_type->type_id;
@@ -354,6 +355,39 @@ public void _tpfree (char *buf, buffer_obj_t *known_buffer)
     }
     MUTEX_UNLOCK_V(M_lock);
     }
+}
+
+/**
+ * Check is buffer auto or not
+ * @param buf ATMI allocated buffer
+ * @return TRUE (1) if auto buffer, 0 manual buffer, -1 if error (unknown buffer)
+ */
+public int _tpisautobuf(char *buf)
+{
+    int ret;
+    
+    MUTEX_LOCK_V(M_lock);
+    {
+        buffer_obj_t *elt;
+
+        elt=find_buffer_int(buf);
+
+        if (NULL!=elt)
+        {
+            ret = elt->autoalloc;
+            NDRX_LOG(log_debug, "_tpisautobuf buf=%p, autoalloc=%d", buf, ret);
+        }
+        else
+        {
+            _TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
+                "not allocated by tpalloc()!");
+            ret=FAIL;
+        }
+        
+    MUTEX_UNLOCK_V(M_lock);
+    }
+    
+    return ret;
 }
 
 /**

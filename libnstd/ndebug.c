@@ -179,7 +179,6 @@ public int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         }
     }
     
-    
     if (NULL==tok1 && tok2!=NULL)
     {
         upd_mode = TRUE;
@@ -508,6 +507,16 @@ public int debug_get_ubf_level(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return G_ubf_debug.level;
+}
+
+/**
+ * Return current UBF debug level.
+ * @return 
+ */
+public int debug_get_tp_level(void)
+{
+    NDRX_DBG_INIT_ENTRY;
+    return G_tp_debug.level;
 }
 
 /**

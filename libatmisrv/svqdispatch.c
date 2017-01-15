@@ -450,12 +450,14 @@ out:
      */ 
     /* We shall find auto allocated buffer and remove it! */
 
-    /* for integra continue leave the buffers in place.. */
+    /* for integra continue leave the buffers in place.. 
+     * We will do this per call return buffer bases & if buffer is auto.
     if (!(G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
                 G_atmisrv_reply_type & RETURN_TYPE_THREAD))
     {
         free_auto_buffers();
     }
+    */
     
     return ret;
 }

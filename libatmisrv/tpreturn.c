@@ -254,9 +254,13 @@ public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
 
 return_to_main:
 
-    /* Hmm we can free up the data? */
-    if (NULL!=data)
+    /* Hmm we can free up the data? 
+     * - well mvitolin 16/01/2017 - only auto buffers & this one.
+     * Not sure how with Tuxedo multi-threading?
+     */
+    if (NULL!=data && _tpisautobuf(data))
     {
+         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, data);
         _tpfree(data, NULL);
     }
 
@@ -432,6 +436,13 @@ public void _tpforward (char *svc, char *data,
     }
 
 out:
+
+    if (NULL!=data && _tpisautobuf(data))
+    {
+         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, data);
+        _tpfree(data, NULL);
+    }
+
     NDRX_LOG(log_debug, "%s return %d (information only)", fn, ret);
 
     /* server thread, no long jump... (thread should kill it self.)*/
@@ -460,10 +471,7 @@ out:
             _tp_srv_disassoc_tx();
         }
     }
-
-out_no_jump:
-    NDRX_LOG(log_debug, "%s NOT JUMPING!", fn, ret);
-
+    
     return;
 }
 

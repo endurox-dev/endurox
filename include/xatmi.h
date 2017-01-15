@@ -446,6 +446,7 @@ extern NDRX_API int tpcancel(int cd);
 extern NDRX_API int tpconnect(char *svc, char *data, long len, long flags);
 extern NDRX_API int tpdiscon(int cd);
 extern NDRX_API void tpfree(char *ptr);
+extern NDRX_API int tpisautobuf (char *buf);
 extern NDRX_API int tpgetrply(int *cd, char **data, long *len, long flags);
 extern NDRX_API char *tprealloc(char *ptr, long size);
 extern NDRX_API int tprecv(int cd, char **data, long *len, long flags, long *revent);

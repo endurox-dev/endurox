@@ -164,6 +164,7 @@ extern NDRX_API void ndrx_dbg_init(char *module, char *config_key);
 extern NDRX_API void ndrx_dbg_setlev(ndrx_debug_t *dbg_ptr, int level);
 extern NDRX_API int debug_get_ndrx_level(void);
 extern NDRX_API int debug_get_ubf_level(void);
+extern NDRX_API int debug_get_tp_level(void);
 extern NDRX_API ndrx_debug_t * debug_get_ndrx_ptr(void);
 extern NDRX_API ndrx_debug_t * debug_get_ubf_ptr(void);
 extern NDRX_API ndrx_debug_t * debug_get_tp_ptr(void);

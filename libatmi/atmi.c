@@ -488,7 +488,6 @@ out:
     return ret;
 }
 
-
 /**
  * tpfree implementation
  * @param buf
@@ -504,6 +503,26 @@ public void tpfree (char *buf)
     else
     {
         NDRX_LOG(log_warn, "Trying to tpfree NULL buffer!");
+    }
+}
+
+/**
+ * tpisautobuf implementation
+ * @param buf Typed buffer ptr
+ * @return TRUE (automatically allocated buffer), FALSE(0) Manually allocated, -1 FAIL
+ */
+public int tpisautobuf (char *buf)
+{
+    _TPunset_error();
+
+    if (NULL!=buf)
+    {
+        return _tpisautobuf(buf);
+    }
+    else
+    {
+        _TPset_error_msg(TPEINVAL, "Null buffer passed to tpisautobuf()!");
+        return FAIL;
     }
 }
 
