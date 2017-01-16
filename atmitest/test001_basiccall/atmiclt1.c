@@ -75,7 +75,7 @@ int do_sync (void)
  */
 int main(int argc, char** argv) {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 156000);
     long rsplen;
     int i, j;
     int ret=SUCCEED;
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     char test_buf_carray[56*1024];
     char test_buf_small[1024];
     ndrx_timer_t timer;
-    int call_num = MAX_ASYNC_CALLS *5;
+    int call_num = MAX_ASYNC_CALLS *10;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
@@ -237,7 +237,7 @@ int main(int argc, char** argv) {
     /* 1KB benchmark*/
     if (strstr(bench_mode, ":1:"))
     {
-        p_ub = (UBFH *)tprealloc ((char *)p_ub, 1128);
+        /* p_ub = (UBFH *)tprealloc ((char *)p_ub, 1128); */
 
         if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_small, sizeof(test_buf_small)))
         {
@@ -280,7 +280,7 @@ int main(int argc, char** argv) {
     
     if (strstr(bench_mode, ":8:"))
     {
-        p_ub = (UBFH *)tprealloc ((char *)p_ub, 9216);
+        /* p_ub = (UBFH *)tprealloc ((char *)p_ub, 9216); */
 
         if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, 1024*8))
         {
@@ -333,11 +333,14 @@ int main(int argc, char** argv) {
             {
                 callsz = 1; /* send 1 byte.. */
             }
-            p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
+            
+            
+            /* p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500); */
 
             if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
             {
-                NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d", callsz);
+                NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d: %s",
+                        callsz, Bstrerror(Berror));
                 ret=FAIL;
                 goto out;
             }
@@ -410,7 +413,7 @@ B_warmed_up:
                 callsz = 1; /* send 1 byte.. */
             }
 
-            p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500);
+            /* p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500); */
 
             if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
             {
@@ -495,6 +498,7 @@ out:
         fflush(stdout);
         sleep(9999999);
     }
+    fprintf(stderr, "Exit with %d\n", ret);
 
     return ret;
 }
