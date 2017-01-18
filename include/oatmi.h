@@ -55,6 +55,7 @@ extern NDRX_API int Otpcancel(TPCONTEXT_T *p_ctxt, int cd);
 extern NDRX_API int Otpconnect(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
 extern NDRX_API int Otpdiscon(TPCONTEXT_T *p_ctxt, int cd);
 extern NDRX_API void Otpfree(TPCONTEXT_T *p_ctxt, char *ptr);
+extern NDRX_API int Otpisautobuf(TPCONTEXT_T *p_ctxt, char *buf);
 extern NDRX_API int Otpgetrply(TPCONTEXT_T *p_ctxt, int *cd, char **data, long *len, long flags);
 extern NDRX_API char * Otprealloc(TPCONTEXT_T *p_ctxt, char *ptr, long size);
 extern NDRX_API int Otprecv(TPCONTEXT_T *p_ctxt, int cd, char **data, long *len, long flags, long *revent);

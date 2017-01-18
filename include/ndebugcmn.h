@@ -59,6 +59,7 @@ typedef struct
     char module[4+1]; /* 4 symbols of the module  */
     int is_user; /* set to 1 if we run in user log mode, 2 if request file */
     char code; /* code of the logger */
+    char iflags[16]; /* integration flags */
 } ndrx_debug_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

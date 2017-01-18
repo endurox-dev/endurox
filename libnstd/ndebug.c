@@ -242,6 +242,12 @@ public int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_tp_debug.level = lev;
                 }
             }
+            else if (0==strncmp("iflags", tok, cmplen))
+            {
+                /* Setup integration flags */
+                strncpy(G_tp_debug.iflags, p+1, sizeof(G_tp_debug.iflags)-1);
+                G_tp_debug.iflags[sizeof(G_tp_debug.iflags)-1] = EOS;
+            }
             else if (0==strncmp("lines", tok, cmplen))
             {
                 int lines = atoi(p+1);

@@ -430,6 +430,26 @@ public void tplog(int lev, char *message)
 }
 
 /**
+ * Extended logging
+ * @param lev
+ * @param message
+ */
+public void tplogex(int lev, char *file, long line, char *message)
+{
+    /* do not want to interpret the format string */
+    TP_LOGEX(lev, file, line, "%s", message);
+}
+
+/**
+ * Get integration flags
+ * @return integration flags set (EOS or some infos from debug config)
+ */
+public char * tploggetiflags(void)
+{
+    TP_LOGGETIFLAGS;
+}
+
+/**
  * Do the hex dump
  * @param lev
  * @param comment

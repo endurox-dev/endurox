@@ -878,6 +878,8 @@ NEXT: while( my $line = <$info>)
             if ($func_name !~ m/^tplogdumpdiff$/
                 && $func_name !~ m/^tplogdump$/
                 && $func_name !~ m/^tplog$/
+                && $func_name !~ m/^tplogex$/
+                && $func_name !~ m/^tploggetiflags$/
 
                 && $func_name !~ m/^ndrxlogdumpdiff$/
                 && $func_name !~ m/^ndrxlogdump$/
