@@ -281,10 +281,12 @@ int main(int argc, char** argv) {
     if (strstr(bench_mode, ":8:"))
     {
         /* p_ub = (UBFH *)tprealloc ((char *)p_ub, 9216); */
+        tplogprintubf(log_error, "Buffer before 8K test", p_ub);
 
         if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, 1024*8))
         {
-            NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD");
+            NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD: %s",
+                Bstrerror(Berror));
             ret=FAIL;
             goto out;
         }

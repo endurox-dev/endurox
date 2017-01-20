@@ -160,7 +160,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         p_ub_out = (UBFH *)*odata;
         NDRX_LOG(log_debug, "%s: Output buffer exists", fn);
         
-        if (FAIL==(existing_size=Bused(p_ub_out)))
+        if (FAIL==(existing_size=Bsizeof(p_ub_out)))
         {
             _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
             ret=FAIL;

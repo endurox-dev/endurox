@@ -97,7 +97,7 @@ struct UBF_header
     BFLDLEN      cache_string_off;
     BFLDLEN      cache_carray_off;
     
-    BFLDLEN      buf_len;
+    BFLDLEN      buf_len; /* includes header */
     _UBF_INT     opts;
     BFLDLEN      bytes_used;
     BFLDID       bfldid;
