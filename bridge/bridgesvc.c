@@ -300,7 +300,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Then configure the lib - we will have only one client session! */
     if (SUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
-        2, is_server, backlog, 1, periodic_zero))
+        4, is_server, backlog, 1, periodic_zero))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
         FAIL_OUT(ret);
@@ -310,18 +310,18 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (SUCCEED==ret &&
             SUCCEED!=tpext_addperiodcb(check, poll_timer))
     {
-            ret=FAIL;
-            NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
-                            tpstrerror(tperrno));
+        ret=FAIL;
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
     }
     
     /* Register poller callback.... */
     if (SUCCEED==ret &&
             SUCCEED!=tpext_addb4pollcb(b4poll))
     {
-            ret=FAIL;
-            NDRX_LOG(log_error, "tpext_addb4pollcb failed: %s",
-                            tpstrerror(tperrno));
+        ret=FAIL;
+        NDRX_LOG(log_error, "tpext_addb4pollcb failed: %s",
+                        tpstrerror(tperrno));
     }
     
     /* Set server flags  */

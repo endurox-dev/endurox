@@ -187,10 +187,10 @@ func main() {
 	} else {
                 //Run as server
                 if err=ac.TpRun(Init, Uninit); nil!=err {
-                        ac.TpLogError("Exit with failure");
+                        ac.TpLogError(""Exit with failure"");
                         os.Exit(atmi.FAIL)
                 } else {
-                        ac.TpLogInfo("Exit with success");
+                        ac.TpLogInfo(""Exit with success"");
                         os.Exit(atmi.SUCCEED)
                 }
 	}

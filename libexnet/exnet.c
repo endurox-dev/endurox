@@ -109,11 +109,13 @@ public int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int a
     /* Prepare the buffer */
     memcpy(d+net->len_pfx, buf, len);
 
-    if (2==net->len_pfx)
+    if (4==net->len_pfx)
     {
         /* Install the length prefix. */
-        d[0] = (len >> 8) & 0xff;
-        d[1] = (len) & 0xff;
+        d[0] = (len >> 24) & 0xff;
+        d[1] = (len >> 16) & 0xff;
+        d[2] = (len >> 8) & 0xff;
+        d[3] = (len) & 0xff;
     }
 
     size_to_send = len+net->len_pfx;
@@ -197,13 +199,20 @@ out:
 }
 
 /**
- * Get the lenght of message currently buffered.
+ * Get the length of message currently buffered.
+ * We operate it little endian mode
  */
 private int get_full_len(exnetcon_t *net)
 {
     int  pfx_len, msg_len;
 
-    pfx_len = ( (net->d[0] & 0xff) << 8 | (0xff & net->d[1]));
+    /* 5 bytes... */
+    pfx_len = ( 
+                (net->d[0] & 0xff) << 24
+              | (net->d[1] & 0xff) << 16
+              | (net->d[2] & 0xff) << 8
+              | (net->d[3] & 0xff)
+            );
 
     msg_len = pfx_len+net->len_pfx;
     NDRX_LOG(log_debug, "pfx_len=%d msg_len=%d", pfx_len, msg_len);
@@ -333,9 +342,9 @@ out:
  */
 public int exnet_b4_poll_cb(void)
 {
-	int ret=SUCCEED;
-	char buf[DATA_BUF_MAX];
-	int len = DATA_BUF_MAX;
+    int ret=SUCCEED;
+    char buf[DATA_BUF_MAX];
+    int len = DATA_BUF_MAX;
     exnetcon_t *head = extnet_get_con_head();
     exnetcon_t *net;
     
@@ -386,10 +395,10 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         /* Call custom callback, if there is such */
         if (NULL!=net->p_connected && SUCCEED!=net->p_connected(net))
         {
-                NDRX_LOG(log_error, "Connected notification "
-                                "callback failed!");
-                ret=FAIL;
-                goto out;
+            NDRX_LOG(log_error, "Connected notification "
+                            "callback failed!");
+            ret=FAIL;
+            goto out;
         }
 
     }
