@@ -299,6 +299,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
     int max_signals = 2;
     int was_any = FALSE;
+    pid_t my_pid = getpid();
     NDRX_LOG(log_warn, "****** Forcing system down ******");
     
     
@@ -406,10 +407,10 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid) && pid!=getpid())
+            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid) && pid!=my_pid)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
-                         "pid=[%d]", signals[i], pid);
+                         "pid=[%d] mypid=[%d]", signals[i], pid, my_pid);
                  
                  if (SUCCEED!=kill(pid, signals[i]))
                  {
