@@ -58,9 +58,52 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+MUTEX_LOCKDECL(M_cd_lock);
+public call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 private void unlock_call_descriptor(int cd, short status);
+
+/**
+ * Dump to the log Command call buffer
+ * @param lev Debug level
+ * @param call call struct addr
+ */
+public void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
+{
+    ndrx_debug_t * dbg = debug_get_ndrx_ptr();
+    if (dbg->level>=lev)
+    {
+        NDRX_LOG(lev, "=== Start of tp_command_call_t call dump, ptr=%p ===", call);
+        NDRX_LOG(lev, "command_id=[%hd]", call->command_id);
+        NDRX_LOG(lev, "proto_ver=[%c%c%c%c]", call->proto_ver[0], call->proto_ver[1],
+            call->proto_ver[2], call->proto_ver[3]);
+        NDRX_LOG(lev, "proto_magic=[%d]", call->proto_magic);
+        NDRX_LOG(lev, "buffer_type_id=[%hd]", call->buffer_type_id);
+        NDRX_LOG(lev, "name=[%s]", call->name);
+        NDRX_LOG(lev, "reply_to=[%s]", call->reply_to);
+        NDRX_LOG(lev, "callstack=[%s]", call->callstack);
+        NDRX_LOG(lev, "my_id=[%s]", call->my_id);
+        NDRX_LOG(lev, "sysflags=[%p]", call->sysflags);
+        NDRX_LOG(lev, "cd=[%d]", call->cd);
+        NDRX_LOG(lev, "rval=[%d]", call->rval);
+        NDRX_LOG(lev, "rcode=[%ld]", call->rcode);
+        NDRX_LOG(lev, "extradata=[%s]", call->extradata);
+        NDRX_LOG(lev, "flags=[%p]", call->flags);
+        NDRX_LOG(lev, "timestamp=[%lu]", call->timestamp);
+        NDRX_LOG(lev, "callseq=[%u]", call->callseq);
+        NDRX_LOG(lev, "timer.tv_nsec=[%lu]", call->timer.t.tv_nsec);
+        NDRX_LOG(lev, "timer.tv_sec=[%lu]", call->timer.t.tv_sec);
+        NDRX_LOG(lev, "tmtxflags=[0x%x]", call->tmtxflags);
+        NDRX_LOG(lev, "tmxid=[%s]", call->tmxid);
+        NDRX_LOG(lev, "tmrmid=[%hd]", call->tmrmid);
+        NDRX_LOG(lev, "tmnodeid=[%hd]", call->tmnodeid);
+        NDRX_LOG(lev, "tmsrvid=[%hd]", call->tmsrvid);
+        NDRX_LOG(lev, "tmknownrms=[%s]", call->tmknownrms);
+        NDRX_LOG(lev, "data_len=[%ld]", call->data_len);
+        NDRX_LOG(lev, "===== End of tp_command_call_t call dump, ptr=%p ===", call);
+    }
+}
 
 /**
  * Process individual call in progress.
@@ -74,21 +117,21 @@ private int call_check_tout(int cd)
     int t_diff;
     ATMI_TLS_ENTRY;
     
-    if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[cd].status &&
-            !(G_atmi_tls->G_call_state[cd].flags & TPNOTIME) &&
-              (t_diff = ((t = time(NULL)) - G_atmi_tls->G_call_state[cd].timestamp)) > G_atmi_env.time_out
+    if (CALL_WAITING_FOR_ANS==G_call_state[cd].status &&
+            !(G_call_state[cd].flags & TPNOTIME) &&
+              (t_diff = ((t = time(NULL)) - G_call_state[cd].timestamp)) > G_atmi_env.time_out
             )
     {
         /* added some more debug info, because we have strange timeouts... */
         NDRX_LOG(log_warn, "cd %d (callseq %u) timeout condition - generating error "
                 "(locked at: %ld current tstamp: %ld, diff: %d, timeout_value: %d)", 
-                cd, G_atmi_tls->G_call_state[cd].callseq, 
-                G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
+                cd, G_call_state[cd].callseq, 
+                G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
         
         _TPset_error_fmt(TPETIME, "cd %d (callseq %u) timeout condition - generating error "
                 "(locked at: %ld current tstamp: %ld, diff: %d, timeout_value: %d)", 
-                cd, G_atmi_tls->G_call_state[cd].callseq, 
-                G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
+                cd, G_call_state[cd].callseq, 
+                G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
         
         /* mark cd as free (will mark as cancelled) */
         unlock_call_descriptor(cd, CALL_CANCELED);
@@ -117,12 +160,12 @@ private void call_dump_descriptors(void)
         
     for (i=1; i<MAX_ASYNC_CALLS; i++)
     {
-        if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[i].status)
+        if (CALL_WAITING_FOR_ANS==G_call_state[i].status)
         {
-            t_diff = t - G_atmi_tls->G_call_state[i].timestamp;
+            t_diff = t - G_call_state[i].timestamp;
             NDRX_LOG(log_warn, "%d\t%u\t%ld\t%d", 
-                    i, G_atmi_tls->G_call_state[i].callseq, 
-                    G_atmi_tls->G_call_state[i].timestamp, t_diff);
+                    i, G_call_state[i].callseq, 
+                    G_call_state[i].timestamp, t_diff);
         }
     }
     
@@ -201,20 +244,21 @@ out:
  * Returns free call descriptro
  * @return >0 (ok), -1 = FAIL
  */
-private int get_call_descriptor(unsigned *p_callseq)
+private int get_call_descriptor_and_lock(unsigned *p_callseq,
+        time_t timestamp, long flags)
 {
 
-    ATMI_TLS_ENTRY;
-/* Lock the call descriptor giver...! So that we have common CDs 
- * over the hreads
- */
-MUTEX_LOCK;
-{
     static int cd=MAX_ASYNC_CALLS-2; /* first available, we want test overlap!*/
     static unsigned callseq=0;
     int start_cd = cd; /* mark where we began */
-
-    while (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[cd].status)
+            
+    ATMI_TLS_ENTRY;
+    /* Lock the call descriptor giver...! So that we have common CDs 
+     * over the hreads
+     */
+    MUTEX_LOCK_V(M_cd_lock);
+    
+    while (CALL_WAITING_FOR_ANS==G_call_state[cd].status)
     {
         cd++;
 
@@ -225,15 +269,16 @@ MUTEX_LOCK;
 
         if (start_cd==cd)
         {
-            NDRX_LOG(log_debug, "All call descritors overflow restart!");
+            NDRX_LOG(log_debug, "All call descriptors overflow restart!");
             break;
         }
     }
 
-    if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[cd].status)
+    if (CALL_WAITING_FOR_ANS==G_call_state[cd].status)
     {
-        NDRX_LOG(log_debug, "All call descritors have been taken - FAIL!");
-        cd=FAIL;
+        NDRX_LOG(log_debug, "All call descriptors have been taken - FAIL!");
+        MUTEX_UNLOCK_V(M_cd_lock);
+        FAIL_OUT(cd);
     }
     else
     {
@@ -241,44 +286,31 @@ MUTEX_LOCK;
         *p_callseq=callseq;
         NDRX_LOG(log_debug, "Got free call descriptor %d, callseq: %u",
                                             cd, callseq);
-    }
 
-    MUTEX_UNLOCK;
-    return cd;
-}
-
-}
-
-/**
- * Mark particular call descriptor as used. Change status + put timestamp
- * @param cd
- * @return
- */
-private int lock_call_descriptor(int cd, time_t timestamp, unsigned callseq, long flags)
-{
-    int ret = SUCCEED;
-    ATMI_TLS_ENTRY;
-    
-    NDRX_LOG(log_debug, "cd %d locked to %d timestamp callseq: %u",
+        NDRX_LOG(log_debug, "cd %d locked to %d timestamp callseq: %u",
                                         cd, timestamp, callseq);
-    G_atmi_tls->G_call_state[cd].status = CALL_WAITING_FOR_ANS;
-    G_atmi_tls->G_call_state[cd].timestamp = timestamp;
-    G_atmi_tls->G_call_state[cd].callseq = callseq;
-    G_atmi_tls->G_call_state[cd].flags = flags;
-    
-    /* If we have global tx open, then register cd under it! */
-    if (!(flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
-    {
-        NDRX_LOG(log_debug, "Registering cd=%d under global "
-                "transaction!", cd);
-        if (SUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds), cd))
+        G_call_state[cd].status = CALL_WAITING_FOR_ANS;
+        G_call_state[cd].timestamp = timestamp;
+        G_call_state[cd].callseq = callseq;
+        G_call_state[cd].flags = flags;
+
+        MUTEX_UNLOCK_V(M_cd_lock);
+            
+        /* If we have global tx open, then register cd under it! */
+        if (!(flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
         {
-            FAIL_OUT(ret);
+            NDRX_LOG(log_debug, "Registering cd=%d under global "
+                    "transaction!", cd);
+            if (SUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds), cd))
+            {
+                FAIL_OUT(cd);
+            }
         }
     }
-    
 out:
-    return ret;
+    
+    return cd;
+
 }
 
 /**
@@ -289,12 +321,12 @@ out:
 private void unlock_call_descriptor(int cd, short status)
 {
     ATMI_TLS_ENTRY;
-    G_atmi_tls->G_call_state[cd].status = status;
+    G_call_state[cd].status = status;
     
-    if (!(G_atmi_tls->G_call_state[cd].flags & TPNOTRAN) && 
+    if (!(G_call_state[cd].flags & TPNOTRAN) && 
             G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
-        NDRX_LOG(log_debug, "Un-registering cd=%d under global "
+        NDRX_LOG(log_debug, "Un-registering cd=%d from global "
                 "transaction!", cd);
         
         atmi_xa_cd_unreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds), cd);
@@ -309,7 +341,7 @@ public void cancel_if_expected(tp_command_call_t *call)
 {
     ATMI_TLS_ENTRY;
     
-    call_descriptor_state_t *callst  = &G_atmi_tls->G_call_state[call->cd];
+    call_descriptor_state_t *callst  = &G_call_state[call->cd];
     if (CALL_WAITING_FOR_ANS==callst->status &&
             call->timestamp==callst->timestamp &&
             call->callseq==callst->callseq)
@@ -486,7 +518,8 @@ public int _tpacall (char *svc, char *data,
     if (!(flags & TPNOREPLY))
     {
         /* get the call descriptor */
-        if (FAIL==(G_atmi_tls->tpcall_cd = get_call_descriptor(&call->callseq)))
+        if (FAIL==(G_atmi_tls->tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
+                timestamp, flags)))
         {
             NDRX_LOG(log_error, "Do not have resources for "
                                 "track this call!");
@@ -494,15 +527,11 @@ public int _tpacall (char *svc, char *data,
                                 "(check why they do not free up? Maybe need to "
                                 "use tpcancel()?)", fn);
             FAIL_OUT(ret);
-        }    
-        if (SUCCEED!=lock_call_descriptor(G_atmi_tls->tpcall_cd, timestamp, call->callseq, flags))
-        {
-            FAIL_OUT(ret);
         }
     }
     else
     {
-        NDRX_LOG(log_warn, "TPNOREPLY => cd =0");
+        NDRX_LOG(log_warn, "TPNOREPLY => cd=0");
         G_atmi_tls->tpcall_cd = 0;
     }
     
@@ -515,6 +544,8 @@ public int _tpacall (char *svc, char *data,
     strcpy(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
     NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d", 
             send_q, call->my_id, call->reply_to, G_atmi_tls->tpcall_cd);
+    
+    NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
     if (SUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags)))
     {
@@ -660,17 +691,19 @@ public int _tpgetrply (int *cd,
             NDRX_LOG(log_debug, "accept any: %s", (flags & TPGETANY)?"yes":"no" );
 
             /* if answer is not expected, then we receive again! */
-            if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[rply->cd].status &&
-                    G_atmi_tls->G_call_state[rply->cd].timestamp == rply->timestamp &&
-                    G_atmi_tls->G_call_state[rply->cd].callseq == rply->callseq)
+            if (CALL_WAITING_FOR_ANS==G_call_state[rply->cd].status &&
+                    G_call_state[rply->cd].timestamp == rply->timestamp &&
+                    G_call_state[rply->cd].callseq == rply->callseq)
             {
                 /* Drop if we do not expect it!!! */
 		/* 01/11/2012 - if we have TPGETANY we ignore the cd */
                 if (/*cd_exp!=FAIL*/ !(flags & TPGETANY) && rply->cd!=cd_exp)
                 {
                     NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
-                        "cd: %d, expected cd: %d timestamp: %d callseq: %u, reply from %s",
-                        rply->cd, cd_exp, rply->timestamp, rply->callseq, rply->reply_to);
+                        "cd: %d, expected cd: %d timestamp: %d callseq: %u, "
+                            "reply from %s, cd status %hd",
+                        rply->cd, cd_exp, rply->timestamp, rply->callseq, rply->reply_to,
+                            G_call_state[rply->cd].status);
                     _tpcancel(rply->cd);
                     continue;
                 }
@@ -685,8 +718,9 @@ public int _tpgetrply (int *cd,
             else
             {
                 NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
-                        "cd: %d, timestamp :%d, callseq: %u reply from %s",
-                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
+                        "cd: %d, timestamp :%d, callseq: %u reply from %s cd status %hd",
+                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to,
+                        G_call_state[rply->cd].status);
                 
                 continue; /* Wait for next message! */
             }
@@ -876,7 +910,7 @@ public int _tpcancel (int cd)
         goto out;
     }
     /* Mark call as cancelled, so that we could re-use it later. */
-    G_atmi_tls->G_call_state[cd].status = CALL_CANCELED;
+    G_call_state[cd].status = CALL_CANCELED;
 
 out:
     return ret;

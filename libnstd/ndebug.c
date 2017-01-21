@@ -739,6 +739,8 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     int len;
     ndrx_debug_t *org_ptr = dbg_ptr;
     long  thread_nr = 0;
+    static __thread uint64_t ostid = 0;
+    static __thread int first = TRUE;
     /* NSTD_TLS_ENTRY; */
     
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
@@ -746,6 +748,13 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     if (NULL!=G_nstd_tls)
     {
         thread_nr = G_nstd_tls->M_threadnr;
+    }
+    
+    /* get the physical tid */
+    if (first)
+    {
+        ostid = ndrx_gettid();
+        first = FALSE;
     }
     
     dbg_ptr = get_debug_ptr(dbg_ptr);
@@ -758,9 +767,9 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
 
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
-    sprintf(line_start, "%c:%s:%d:%5d:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+    sprintf(line_start, "%c:%s:%d:%5d:%08ld:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
-        thread_nr, ldate, ltime, 
+        ostid, thread_nr, ldate, ltime, 
         (int)(lusec/1000), line_print, line);
     
     va_start(ap, fmt);    

@@ -74,7 +74,6 @@ typedef struct
     /* init.c */
     int G_atmi_is_init;/* = 0;  Is environment initialised */
     atmi_lib_conf_t G_atmi_conf; /* ATMI library configuration */
-    call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
     tp_conversation_control_t G_tp_conversation_status[MAX_CONNECTIONS];
     tp_conversation_control_t G_accepted_connection;
     

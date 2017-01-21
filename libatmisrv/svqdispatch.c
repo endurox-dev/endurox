@@ -227,19 +227,22 @@ public int sv_serve_call(int *service, int *status)
     tp_command_call_t * last_call;
     *status=SUCCEED;
     G_atmisrv_reply_type = 0;
+    atmi_lib_env_t * env = ndrx_get_G_atmi_env();
     
     call_age = ndrx_timer_get_delta_sec(&call->timer);
 
     NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d callseq: %u, "
-			"svc: %s, flags: %ld call age: %ld data_len: %ld",
+			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
+                        " reply_to: %s",
                     	call->cd, call->timestamp, call->callseq, 
-			call->name, call->flags, call_age, call->data_len);
+			call->name, call->flags, call_age, call->data_len,
+                        call->my_id, call->reply_to);
     
-    if (ndrx_get_G_atmi_env()->time_out>0 && call_age >= ndrx_get_G_atmi_env()->time_out && 
+    if (env->time_out>0 && call_age >= env->time_out && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, timeout = %d s", call_age, ndrx_get_G_atmi_env()->time_out);
+                "call age = %ld s, timeout = %d s", call_age, env->time_out);
         *status=FAIL;
         goto out;
     }
@@ -739,10 +742,23 @@ public int sv_server_request(char *buf, int len)
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
                 NDRX_LOG(log_warn, "Dropping un-soliceded/event reply "
-                                                "cd: %d callseq: %u timestamp: %d",
+                                        "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 /* Register as completed (if not cancelled) */
                 cancel_if_expected(call);
+            }
+            break;
+        case ATMI_COMMAND_TPREPLY:
+            {
+                tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
+                NDRX_LOG(log_warn, "Dropping un-soliceded reply "
+                                        "cd: %d callseq: %u timestamp: %d",
+                        call->cd, call->callseq, call->timestamp);
+                
+                NDRX_DUMP(log_error, "Command content", G_server_conf.last_call.buf_ptr,  
+                        G_server_conf.last_call.len);
+                
+                ndrx_dump_call_struct(log_error, call);
             }
             break;
         default:

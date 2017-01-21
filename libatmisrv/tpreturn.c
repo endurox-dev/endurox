@@ -66,7 +66,7 @@
  * @param len
  * @param flags
  */
-public void	_tpreturn (int rval, long rcode, char *data, long len, long flags)
+public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     int ret=SUCCEED;
     char buf[ATMI_MSG_MAX_SIZE]; /* physical place where to put the reply */
@@ -499,6 +499,4 @@ public void _tpcontinue (void)
         longjmp(G_server_conf.call_ret_env, return_status);
         NDRX_LOG(log_error, "doing nothing after long jmp!");
     }
-    
-    
 }

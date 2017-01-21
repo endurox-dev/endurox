@@ -121,6 +121,20 @@ out:
     }
 }
 
+
+/**
+ * One time system init
+ * @return 
+ */
+private int ndrx_init_once(void)
+{
+    int ret = SUCCEED;
+    /* reset callstates to default */
+    memset(&G_call_state, 0, sizeof(G_call_state));
+    
+out:
+    return ret;
+}
 /**
  * This function loads common environment variables.
  * This should be called by any binary which uses atmi library!
@@ -137,6 +151,12 @@ public int ndrx_load_common_env(void)
     {
         NDRX_LOG(log_debug, "env already loaded...");
         goto out;
+    }
+    
+    if (SUCCEED!=ndrx_init_once())
+    {
+        NDRX_LOG(log_error, "Init once failed");
+        FAIL_OUT(ret);
     }
     
     /*
@@ -674,8 +694,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     /* Copy the configuration here */
     G_atmi_tls->G_atmi_conf = *init_data;
     G_atmi_tls->G_atmi_is_init = 1;
-    /* reset callstates to default */
-    memset(&G_atmi_tls->G_call_state, 0, sizeof(G_atmi_tls->G_call_state));
+    
     /* reset last call (server side stuff) */
     memset(&G_atmi_tls->G_last_call, 0, sizeof(G_atmi_tls->G_last_call));
     
@@ -762,7 +781,7 @@ out:
  * Maybe... or we will create separate part for server to initialize with monitor
  * @return SUCCEED/FAIL
  */
-public int	tpinit (TPINIT * init_data)
+public int tpinit (TPINIT * init_data)
 {
     int ret=SUCCEED;
     atmi_lib_conf_t conf;

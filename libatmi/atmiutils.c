@@ -952,7 +952,11 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     NDRX_LOG(log_warn, "Replying  back to [%s] with TPESVCERR", 
             tp_call->reply_to, reply_to_q);
     
+    NDRX_LOG(log_error, "Dumping original call in queue:");
+    ndrx_dump_call_struct(log_error, tp_call);
+    
     memset(&call, 0, sizeof(call));
+    call.command_id = ATMI_COMMAND_TPREPLY;
     call.cd = tp_call->cd;
     call.timestamp = tp_call->timestamp;
     call.callseq = tp_call->callseq;
@@ -962,6 +966,9 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     /* Generate no entry, because we removed the queue
      * yeah, it might be too late for TPNOENT, but this is real error */
     call.rcode = rcode;
+    
+    NDRX_LOG(log_error, "Dumping error reply about to send:");
+    ndrx_dump_call_struct(log_error, &call);
 
     if (SUCCEED!=(ret=generic_q_send(tp_call->reply_to, (char *)&call, sizeof(call), flags)))
     {

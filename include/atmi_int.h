@@ -420,6 +420,7 @@ extern NDRX_API __thread tp_conversation_control_t G_accepted_connection;
 extern NDRX_API __thread long M_svc_return_code;
 #endif
 extern NDRX_API int G_srv_id;
+extern call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -464,6 +465,7 @@ extern NDRX_API void free_auto_buffers(void);
 extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
 extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
 extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
+extern NDRX_API void ndrx_dump_call_struct(int lev, tp_command_call_t *call);
 
 extern NDRX_API int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id);

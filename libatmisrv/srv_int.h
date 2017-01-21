@@ -155,8 +155,7 @@ struct srv_conf
     /**************** POLLING *****************/
     struct ndrx_epoll_event *events;
     int epollfd;
-    /* Information from calst call */
-    char last_caller_address[NDRX_MAX_Q_SIZE+1];
+    /* Information from last call */
     call_basic_info_t last_call;
     jmp_buf call_ret_env;
     int time_out;
