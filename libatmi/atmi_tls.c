@@ -271,7 +271,6 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     /* tpcall.c */
     tls->M_svc_return_code = 0;
     tls->tpcall_first = TRUE;
-    tls->tpcall_cd = 0;
     
     /* tperror.c */
     tls->M_atmi_error_msg_buf[0] = EOS;

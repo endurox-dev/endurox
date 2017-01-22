@@ -85,7 +85,7 @@ typedef struct
     call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
     int tpcall_get_cd; /* first available, we want test overlap!*/
     /* unsigned tpcall_callseq; */
-    int tpcall_cd; /* = 0; */
+    /*int tpcall_cd;  = 0; */
     
     /* tperror.c */
     char M_atmi_error_msg_buf[MAX_TP_ERROR_LEN+1]; /* = {EOS}; */

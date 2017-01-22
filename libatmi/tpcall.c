@@ -59,7 +59,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 EX_SPIN_LOCKDECL(M_cd_lock);
-/* public call_descriptor_state_t G_atmi_tls->G_call_state[MAX_ASYNC_CALLS]; */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 private void unlock_call_descriptor(int cd, short status);
@@ -250,7 +249,7 @@ private int get_call_descriptor_and_lock(unsigned *p_callseq,
     int start_cd = G_atmi_tls->tpcall_get_cd; /* mark where we began */
     int ret = FAIL;
     unsigned callseq=0;
-    static unsigned shared_callseq=0;
+    static volatile unsigned shared_callseq=0;
     ATMI_TLS_ENTRY;
     /* Lock the call descriptor giver...! So that we have common CDs 
      * over the hreads
@@ -385,6 +384,7 @@ public int _tpacall (char *svc, char *data,
     char send_q[NDRX_MAX_Q_SIZE+1];
     time_t timestamp;
     int is_bridge;
+    int tpcall_cd;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", fn);
 
@@ -522,7 +522,7 @@ public int _tpacall (char *svc, char *data,
     if (!(flags & TPNOREPLY))
     {
         /* get the call descriptor */
-        if (FAIL==(G_atmi_tls->tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
+        if (FAIL==(tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
                 timestamp, flags)))
         {
             NDRX_LOG(log_error, "Do not have resources for "
@@ -536,18 +536,18 @@ public int _tpacall (char *svc, char *data,
     else
     {
         NDRX_LOG(log_warn, "TPNOREPLY => cd=0");
-        G_atmi_tls->tpcall_cd = 0;
+        tpcall_cd = 0;
     }
     
-    call->cd = G_atmi_tls->tpcall_cd;
+    call->cd = tpcall_cd;
     call->timestamp = timestamp;
     
     /* Reset call timer */
     ndrx_timer_reset(&call->timer);
     
     strcpy(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
-    NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d", 
-            send_q, call->my_id, call->reply_to, G_atmi_tls->tpcall_cd);
+    NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d callseq=%u", 
+            send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq);
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
@@ -567,13 +567,13 @@ public int _tpacall (char *svc, char *data,
         ret=FAIL;
 
         /* unlock call descriptor */
-        unlock_call_descriptor(G_atmi_tls->tpcall_cd, CALL_NOT_ISSUED);
+        unlock_call_descriptor(tpcall_cd, CALL_NOT_ISSUED);
         
         goto out;
 
     }
     /* return call descriptor */
-    ret=G_atmi_tls->tpcall_cd;
+    ret=tpcall_cd;
 
 out:
     NDRX_LOG(log_debug, "%s return %d", fn, ret);
