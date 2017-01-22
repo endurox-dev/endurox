@@ -130,7 +130,7 @@ private int ndrx_init_once(void)
 {
     int ret = SUCCEED;
     /* reset callstates to default */
-    memset(&G_call_state, 0, sizeof(G_call_state));
+    /* memset(&G_call_state, 0, sizeof(G_call_state)); */
     
 out:
     return ret;

@@ -218,22 +218,22 @@ void UNIXINFO (TPSVCINFO *p_svc)
     }
 
 out:
-	/* Forward to info2 server!!! */
-	if (SUCCEED==ret)
-	{
-	    tpforward(  "UNIX2",
-	                (char *)p_ub,
-	                0L,
-	                0L);
-	}
-	else
-	{
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
-                0L,
-                (char *)p_ub,
-                0L,
-                0L);
-		}
+    /* Forward to info2 server!!! */
+    if (SUCCEED==ret)
+    {
+        tpforward(  "UNIX2",
+                    (char *)p_ub,
+                    0L,
+                    0L);
+    }
+    else
+    {
+        tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+                    0L,
+                    (char *)p_ub,
+                    0L,
+                    0L);
+    }
 }
 
 /**

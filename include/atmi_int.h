@@ -420,7 +420,7 @@ extern NDRX_API __thread tp_conversation_control_t G_accepted_connection;
 extern NDRX_API __thread long M_svc_return_code;
 #endif
 extern NDRX_API int G_srv_id;
-extern call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
+/* extern call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS]; */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
