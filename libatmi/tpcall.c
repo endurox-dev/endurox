@@ -250,7 +250,7 @@ private int get_call_descriptor_and_lock(unsigned *p_callseq,
     int ret = FAIL;
     unsigned callseq=0;
     static volatile unsigned shared_callseq=0;
-    ATMI_TLS_ENTRY;
+    /* ATMI_TLS_ENTRY; - already got from caller */
     /* Lock the call descriptor giver...! So that we have common CDs 
      * over the hreads
      */
@@ -322,7 +322,7 @@ out:
  */
 private void unlock_call_descriptor(int cd, short status)
 {
-    ATMI_TLS_ENTRY;
+    /* ATMI_TLS_ENTRY; - already done by caller */
     
     if (!(G_atmi_tls->G_call_state[cd].flags & TPNOTRAN) && 
             G_atmi_tls->G_atmi_xa_curtx.txinfo)
