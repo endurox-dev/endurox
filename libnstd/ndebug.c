@@ -769,7 +769,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     
     sprintf(line_start, "%c:%s:%d:%5d:%08llu:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
-        ostid, thread_nr, ldate, ltime, 
+        (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec/1000), line_print, line);
     
     va_start(ap, fmt);    

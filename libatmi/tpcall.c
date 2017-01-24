@@ -114,7 +114,7 @@ private int call_check_tout(int cd)
     int ret=SUCCEED;
     time_t t;
     int t_diff;
-    ATMI_TLS_ENTRY;
+    /* ATMI_TLS_ENTRY; - already called by parent processes - already called by parent processes  */
     
     if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[cd].status &&
             !(G_atmi_tls->G_call_state[cd].flags & TPNOTIME) &&
@@ -184,8 +184,6 @@ private void call_dump_descriptors(void)
  */
 private int call_scan_tout(int cd, int *cd_out)
 {
-MUTEX_LOCK;
-{
     /* for performance reasons shouldn't we keep in HASH list 
      * the list of open call descriptors, iterate them and check for
      * time-out condition
@@ -193,7 +191,8 @@ MUTEX_LOCK;
     int ret = SUCCEED;
     int i;
     long delta = 0;
-    ATMI_TLS_ENTRY;
+    /* ATMI_TLS_ENTRY; - already called by parent*/
+    /* NOTE: no need for mutexes, as we have call descriptors per TLS */
     
 #ifdef CALL_TOUT_DEBUG
     call_dump_descriptors();
@@ -234,9 +233,7 @@ MUTEX_LOCK;
     
 out:
 
-    MUTEX_UNLOCK;
     return ret;
-} /* mutex */
 }
 
 /**
