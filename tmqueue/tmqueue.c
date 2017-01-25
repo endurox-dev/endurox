@@ -250,6 +250,8 @@ void TMQUEUE (TPSVCINFO *p_svc)
     }
     
     /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
+#if 0
+        - Why? mvitolin 25/01/2017
     thread_data->buffer =  tpalloc(btype, NULL, size);
     
     if (NULL==thread_data->buffer)
@@ -260,6 +262,9 @@ void TMQUEUE (TPSVCINFO *p_svc)
     
     /* copy off the data */
     memcpy(thread_data->buffer, p_svc->data, size);
+#endif
+
+    thread_data->buffer = p_svc->data; /*the buffer is not made free by thread */
     thread_data->cd = p_svc->cd;
     
     if (NULL==(thread_data->context_data = tpsrvgetctxdata()))

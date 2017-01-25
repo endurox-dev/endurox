@@ -299,6 +299,8 @@ void TPTMSRV (TPSVCINFO *p_svc)
         FAIL_OUT(ret);
     }
     
+#if 0
+        - Why?
     /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
     thread_data->buffer =  tpalloc(btype, NULL, size);
     
@@ -310,6 +312,8 @@ void TPTMSRV (TPSVCINFO *p_svc)
     
     /* copy off the data */
     memcpy(thread_data->buffer, p_svc->data, size);
+#endif
+    thread_data->buffer=p_svc->data;
     thread_data->cd = p_svc->cd;
     thread_data->context_data = tpsrvgetctxdata();
     
