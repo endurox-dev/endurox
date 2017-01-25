@@ -480,6 +480,8 @@ public int sv_serve_connect(int *service, int *status)
     tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
     *status=SUCCEED;
     long call_age;
+    atmi_lib_env_t *env = ndrx_get_G_atmi_env();
+    tp_command_call_t * last_call = ndrx_get_G_last_call();
 
     *status=SUCCEED;
     G_atmisrv_reply_type = 0;
@@ -489,11 +491,11 @@ public int sv_serve_connect(int *service, int *status)
     
     call_age = ndrx_timer_get_delta_sec(&call->timer);
     
-    if (ndrx_get_G_atmi_env()->time_out>0 && call_age >= ndrx_get_G_atmi_env()->time_out && 
+    if (env->time_out>0 && call_age >= env->time_out && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, timeout = %d s", call_age, ndrx_get_G_atmi_env()->time_out);
+                "call age = %ld s, timeout = %d s", call_age, env->time_out);
         *status=FAIL;
         goto out;
     }
@@ -548,7 +550,7 @@ public int sv_serve_connect(int *service, int *status)
         /* set the client id to caller */
         strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
         
-        *ndrx_get_G_last_call() = *call; /* save last call info to ATMI library
+        *last_call = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
 
         /* Because we are in conversation, we should make a special cd
@@ -556,7 +558,7 @@ public int sv_serve_connect(int *service, int *status)
          * This will be cd + MAX, meaning, that we have called.
          */
         svcinfo.cd+=MAX_CONNECTIONS;
-        ndrx_get_G_last_call()->cd+=MAX_CONNECTIONS;
+        last_call->cd+=MAX_CONNECTIONS;
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
                                                call->cd, svcinfo.cd, MAX_CONNECTIONS);
 
@@ -570,7 +572,7 @@ public int sv_serve_connect(int *service, int *status)
             ret=FAIL;
 
             /* Try hardly to send SVCFAIL/ERR response back! */
-            reply_with_failure(0, ndrx_get_G_last_call(), NULL, NULL, TPESVCERR);
+            reply_with_failure(0, last_call, NULL, NULL, TPESVCERR);
             
             goto out;
         }
