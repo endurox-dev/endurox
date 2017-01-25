@@ -79,7 +79,7 @@ void do_thread_work ( void *ptr )
     double cps;
     double dv = 55.66;
     char buf[1024];
-    char test_buf_carray[8192];
+    char test_buf_carray[68192];
     char test_buf_small[1024];
     ndrx_timer_t timer;
     int call_num = MAX_ASYNC_CALLS *2;
