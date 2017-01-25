@@ -71,7 +71,7 @@ void FAILRND (TPSVCINFO *p_svc)
     
     cnt++;
     
-    if (1 == (cnt % 2) )
+    if (1 == (cnt % 4) )
     {
         ret=FAIL;
         goto out;
