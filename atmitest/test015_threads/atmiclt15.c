@@ -93,7 +93,7 @@ void do_thread_work ( void *ptr )
      **************************************************************************/
     if (NULL!=ptr)
     {
-	int first = TRUE;
+	    int first = TRUE;
 
         for (j=TEST_MIN; j<TEST_MAX; j+=TEST_STEP)
         {
