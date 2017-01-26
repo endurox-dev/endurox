@@ -665,11 +665,14 @@ public int sv_serve_connect(int *service, int *status)
     
 out:
 
-    /* free_up_buffers(); - processes manages memory manuall!!! */
+    /* free_up_buffers(); - processes manages memory manually!!! */
+/*
+	mvitolin 26/01/2017 - let the tpreturn free the auto buffer
     if (NULL!=request_buffer)
     {
         _tpfree(request_buffer, NULL);
     }
+*/
     return ret;
 }
 
