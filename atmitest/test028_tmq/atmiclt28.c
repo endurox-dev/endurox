@@ -193,7 +193,6 @@ warmed_up:
                 FAIL_OUT(ret);
             }
 
-#if 0
             /* dequeue the data buffer + allocate the output buf. */
 
             memset(&qc, 0, sizeof(qc));
@@ -215,7 +214,6 @@ warmed_up:
                 NDRX_DUMP(log_error, "got form q", buf, len);
                 FAIL_OUT(ret);
             }
-#endif
         }
 
         /*do the warmup... */
