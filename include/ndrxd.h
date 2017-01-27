@@ -332,6 +332,7 @@ extern int pq_run_santiy(int run_hist);
 extern int roc_is_reload_in_progress(unsigned sanity_cycle);
 extern int roc_check_binary(char *binary_path, unsigned sanity_cycle);
 extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
+extern int self_sreload(pm_node_t *p_pm);
 
 #ifdef	__cplusplus
 }
