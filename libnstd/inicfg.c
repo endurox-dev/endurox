@@ -1214,7 +1214,7 @@ public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(
 public void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
 {
     API_ENTRY;
-    return _ndrx_keyval_hash_free(h);
+    _ndrx_keyval_hash_free(h);
 }
 
 /**
