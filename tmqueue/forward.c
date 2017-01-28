@@ -327,7 +327,7 @@ out:
         
         if (msg->trycounter>=qconf.tries)
         {
-            NDRX_LOG(log_error, "Message [%s] expired");
+            NDRX_LOG(log_error, "Message [%s] expired", msgid_str);
             
             if (msg->qctl.flags & TPQFAILUREQ)
             {
