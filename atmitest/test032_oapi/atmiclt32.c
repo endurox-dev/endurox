@@ -69,7 +69,12 @@ int main(int argc, char** argv)
     long l;
     int i;
     
+#ifdef EX_OS_DARWIN
+    /* open/close q slow on osx */
+    for (i=0; i<50; i++)
+#else
     for (i=0; i<10000; i++)
+#endif
     {
         /* Allocate the context */
         TPCONTEXT_T ctx1 = tpnewctxt(0,0);
