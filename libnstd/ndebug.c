@@ -830,7 +830,7 @@ public void *ndrx_malloc_dbg(size_t size, long line, const char *file, const cha
 public void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func)
 {
     userlog("[%p] => free(ptr=%p):%s %s:%ld", ptr, ptr, func, file, line);
-    return free(ptr);
+    free(ptr);
 }
 
 /**
