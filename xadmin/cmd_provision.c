@@ -51,6 +51,7 @@
 #endif
 
 
+#ifndef NDRX_DISABLEPSCRIPT
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* Have some access to resources */
@@ -61,8 +62,6 @@ extern const char G_resource_provision[];
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-#ifndef NDRX_DISABLEPSCRIPT
 
 /**
  * Run the wizzard for application via pscrip

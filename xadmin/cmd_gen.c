@@ -53,6 +53,7 @@
 #include <pscript.h>
 #endif
 
+#ifndef NDRX_DISABLEPSCRIPT
 /*---------------------------Externs------------------------------------*/
 
 extern const char G_resource_gen_go_server[];
@@ -81,8 +82,6 @@ struct gen_hash
 private gen_hash_t *M_gen_res = NULL; /* gen resources */
 
 /*---------------------------Prototypes---------------------------------*/
-
-#ifndef NDRX_DISABLEPSCRIPT
 
 /**
  * Get the sub-command
@@ -540,16 +539,35 @@ out:
 
 #else
 /**
+ * Pscript not supported
+ * @return FAIL
+ */
+public int cmd_gen_help(void)
+{
+    fprintf(stderr, "Pscript not compiled for this platform!\n");
+    return FAIL;
+}
+
+/**
  * Not compiled on this platform
  * @param p_cmd_map
  * @param argc
  * @param argv
- * @return SUCCEED
+ * @return FAIL
  */
-public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     fprintf(stderr, "Pscript not compiled for this platform!\n");
     return FAIL;
+}
+
+/**
+ * Dummy for non pscript systems
+ * @return SUCCEED
+ */
+public int cmd_gen_load_scripts(void)
+{
+    return SUCCEED;
 }
 
 #endif
