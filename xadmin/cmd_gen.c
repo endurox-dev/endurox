@@ -48,9 +48,17 @@
 
 #include <exhash.h>
 #include <utlist.h>
+#include <userlog.h>
 
 #ifndef NDRX_DISABLEPSCRIPT
 #include <pscript.h>
+#include <psstdblob.h>
+#include <psstdio.h>
+#include <psstdsystem.h>
+#include <psstdmath.h>
+#include <psstdstring.h>
+#include <psstdexutil.h>
+#include <psstdaux.h>
 #endif
 
 #ifndef NDRX_DISABLEPSCRIPT
@@ -155,11 +163,6 @@ out:
     {
         if (gen)
         {
-            if (gen->command)
-            {
-                free(gen->command);
-            }
-            
             if (gen->stock)
             {
                 free(gen->stock);
@@ -304,6 +307,8 @@ public int cmd_gen_help(void)
     }
     
     fprintf(stdout, "\n");
+    
+    return SUCCEED;
 }
 
 /**

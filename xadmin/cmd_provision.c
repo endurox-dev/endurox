@@ -48,6 +48,13 @@
 
 #ifndef NDRX_DISABLEPSCRIPT
 #include <pscript.h>
+#include <psstdblob.h>
+#include <psstdio.h>
+#include <psstdsystem.h>
+#include <psstdmath.h>
+#include <psstdstring.h>
+#include <psstdexutil.h>
+#include <psstdaux.h>
 #endif
 
 

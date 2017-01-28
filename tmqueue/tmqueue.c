@@ -159,7 +159,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
             break;
         case TMQ_CMD_NOTIFY:
             
-            /* request for printing active transactions */
             if (SUCCEED!=tex_mq_notify(p_ub))
             {
                 FAIL_OUT(ret);
@@ -167,7 +166,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
             break;
         case TMQ_CMD_MQLQ:
             
-            /* request for printing active transactions */
             if (SUCCEED!=tmq_mqlq(p_ub, cd))
             {
                 FAIL_OUT(ret);
@@ -175,7 +173,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
             break;
         case TMQ_CMD_MQLC:
             
-            /* request for printing active transactions */
             if (SUCCEED!=tmq_mqlc(p_ub, cd))
             {
                 FAIL_OUT(ret);
@@ -183,7 +180,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
             break;
         case TMQ_CMD_MQLM:
             
-            /* request for printing active transactions */
             if (SUCCEED!=tmq_mqlm(p_ub, cd))
             {
                 FAIL_OUT(ret);
