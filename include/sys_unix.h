@@ -41,7 +41,6 @@ extern "C" {
 #include <ubf.h>
 #include <atmi.h>
 #include <sys_mqueue.h>
-#include <ndrstandard.h>
 #include <exhash.h>
     
 #ifdef EX_OS_DARWIN

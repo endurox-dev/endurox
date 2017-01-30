@@ -29,6 +29,7 @@
 ** contact@atrbaltic.com
 ** -----------------------------------------------------------------------------
 */
+#include <ndrstandard.h>
 #include <pscript.h>
 #include <time.h>
 #include <stdlib.h>

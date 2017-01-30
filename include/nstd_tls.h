@@ -38,7 +38,6 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <pthread.h>
-#include <ndrstandard.h>
 #include <nerror.h>
 #include <nstdutil.h>
 #include <ndebugcmn.h>
