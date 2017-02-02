@@ -232,7 +232,7 @@ out:
     return ret;
 }
 
-int emq_close(mqd_t emqd)
+public int emq_close(mqd_t emqd)
 {
     long            msgsize, filesize;
     struct emq_hdr  *emqhdr;
@@ -272,7 +272,7 @@ int emq_close(mqd_t emqd)
     return(0);
 }
 
-int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
+public int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
 {
     int             n;
     struct emq_hdr  *emqhdr;
@@ -308,7 +308,7 @@ int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     return(0);
 }
 
-int emq_notify(mqd_t emqd, const struct sigevent *notification)
+public int emq_notify(mqd_t emqd, const struct sigevent *notification)
 {
 #if !defined(WIN32)
     int             n;
@@ -360,7 +360,7 @@ err:
 #endif
 }
 
-mqd_t emq_open(const char *pathname, int oflag, ...)
+public mqd_t emq_open(const char *pathname, int oflag, ...)
 {
     int                  i, fd, nonblock, created, save_errno;
     long                 msgsize, filesize, index;
@@ -583,7 +583,7 @@ err:
 }
 
 
-ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
+public ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec *__abs_timeout)
 {
     int             n;
@@ -702,7 +702,7 @@ err:
     return(-1);
 }
 
-int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio, 
+public int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio, 
         const struct timespec *__abs_timeout)
 {
     int              n;
@@ -872,24 +872,18 @@ err:
     return(-1);
 }
 
-/**
- * TODO implement.
- */
-int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
+public int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
 {
     return emq_timedsend(emqd, ptr, len, prio, NULL);
 }
-    
-/**
- * TODO: implement.
- */
-ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
+
+public ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
 {
     return emq_timedreceive(emqd, ptr, maxlen, priop, NULL);
 }
 
 
-int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqstat)
+public int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqstat)
 {
     int             n;
     struct emq_hdr  *emqhdr;
@@ -933,7 +927,7 @@ int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqs
     return(0);
 }
 
-int emq_unlink(const char *pathname)
+public int emq_unlink(const char *pathname)
 {
     NDRX_LOG(log_debug, "into: emq_unlink");
     if (unlink(get_path(pathname)) == -1)
