@@ -176,6 +176,13 @@ COMMANDS
 *provision* [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]::
 	Prepare initial Enduro/X instance environment, create folder structure,
 	generate configuration files with ability to register all available services.
+*gen* [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]::
+	Generate application sources. See the xadmin's help for more details.
+        Currently it is possible to generate C and Go sources and the UBF buffer
+        headers for both languages. By running the command, wizzards will be offered
+        asking for different details. Which later can be reconfigured by
+        *-d* - allowing to default the wizzard, while *-v* allows to set
+        wizzard values from command line.
 
 EXIT STATUS
 -----------
