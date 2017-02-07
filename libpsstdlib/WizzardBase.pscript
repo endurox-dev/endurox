@@ -26,6 +26,12 @@ class WizzardBase {
 	//Application home directory (i.e. current dir)
 	appHome = ".";
 
+	//Queue path
+	qpath = "";
+
+	//??
+	mk_mq_dev = false;
+
 	//This is constructor, we shall get some infos from Enduro/X base build
 	constructor() {
 		osType = getosname();

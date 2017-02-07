@@ -11,9 +11,16 @@ compilestring(getwizzardbase())();
 //Provision class
 class CClient extends WizzardBase {
 
+	libs =  "-latmiclt -latmi -lubf -lnstd -lpthread -lrt -ldl -lm";
+	
 	constructor()
 	{
 		base.constructor();
+		
+		if ("DARWIN"==getosname())
+		{
+			libs = "-latmiclt -latmi -lubf -lnstd -lpthread -ldl -lm";
+		}
 	}
 	
 
@@ -346,7 +353,7 @@ SOURCES = "+cltname+@".c
 TARGET  = "+cltname+@"
 OBJECTS = $(SOURCES:%.c=%.o)
 CFLAGS	= -I../"+ubfname+@"
-LIBS = -latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm -ldl
+LIBS = "+libs+@"
 
 default: target
 
