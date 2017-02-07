@@ -1,5 +1,8 @@
 #!/usr/bin/pscript
 
+//
+// TODO: Change the linker options for OSX, etc... (RT Lib).
+//
 userlog("Generate go client");
 
 //Include wizzard base.
