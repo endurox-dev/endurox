@@ -631,6 +631,9 @@ retry:
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
         {
+            /*
+             * Retries are for Darwin, it have some bugs for mutex wait
+             */
             try++;
             if (try>3)
             {
@@ -714,6 +717,7 @@ public int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int p
     struct msg_hdr  *msghdr, *nmsghdr, *pmsghdr;
     struct emq_info  *emqinfo;
     int try = 0;
+    int ret = SUCCEED;
 
 retry:
     NDRX_LOG(log_debug, "into: emq_timedsend");
@@ -795,15 +799,22 @@ retry:
                 pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
                         &abs_timeout);
             }
-            else {
+            else
+            {
                 /* wait some time...  */
                 struct timespec abs_timeout;
                 struct timeval  timeval;
                 NDRX_LOG(log_debug, "timed wait...");
                 gettimeofday (&timeval, NULL);
-                abs_timeout.tv_sec = timeval.tv_sec+2; /* wait two secc */
-                abs_timeout.tv_nsec = timeval.tv_usec*1000;
-
+                
+                
+                /* On osx this can do early returns...*/
+                pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
+                        __abs_timeout);
+                        
+                /*
+                 * Check for expiry
+                 */
                 if (timeval.tv_sec > __abs_timeout->tv_sec ||
                       (timeval.tv_sec == __abs_timeout->tv_sec && 
 				timeval.tv_usec*1000 > __abs_timeout->tv_nsec))
@@ -812,15 +823,6 @@ retry:
                     errno = ETIMEDOUT;
                     goto err;
                 }
-
-                if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
-                        __abs_timeout))
-                {
-                    errno = ETIMEDOUT;
-                    goto err;
-                }
-                abs_timeout.tv_sec = timeval.tv_sec+2; /* wait two secc */
-                abs_timeout.tv_nsec = timeval.tv_usec*1000;
             }
             NDRX_LOG(log_warn, "%p - accessed ok", emqd);
         }
