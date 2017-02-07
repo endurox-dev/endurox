@@ -1,0 +1,413 @@
+#!/usr/bin/pscript
+
+userlog("Generate go client");
+
+//Include wizzard base.
+compilestring(getwizzardbase())();
+
+//Provision class
+class CClient extends WizzardBase {
+
+	constructor()
+	{
+		base.constructor();
+	}
+	
+
+	//Configure it:
+	</ order=0, name = "XATMI Client Name (binary)", type = "string", min=1, max=512 /> 
+	cltname = "testcl";
+	
+	</ order=1, name = "Use UBF?", type = "yn"/> 
+	useubf = "y";
+	
+	</ order=2, name = "UBF include folder name (will be done ../<name>)", 
+		type = "path" depend="(::prov.useubf==\"y\")" /> 
+	ubfname = "ubftab";
+	
+	</ order=3, name = "Gen makefile", type = "yn"/> 
+	genmake = "y";
+	
+	</ order=4, name = "INI File section (optional, will read config if set)", 
+		type = "string", depend="(::prov.useubf==\"y\")", min=0/> 
+	config = "";
+	
+	goClientFile = "";
+	
+	makeFile = "";
+	
+	function getOutputFiles()
+	{
+		goClientFile=appHome+"/"+cltname+".c";
+		makeFile=appHome+"/Makefile";
+	}
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build C Client code
+	////////////////////////////////////////////////////////////////////////
+	cClientVal = "";
+	function buildClient()
+	{
+	
+		cClientVal = @"#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <ndebug.h>
+#include <atmi.h>
+
+"+(useubf==""?"":@"
+#include <ubf.h>
+#include <Exfields.h>
+#include <test.fd.h>")+@"
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+
+#ifndef SUCCEED
+#define SUCCEED			0
+#endif
+
+#ifndef	FAIL
+#define FAIL			-1
+#endif
+
+"+(config==""?"":@"
+#define PROGSECTION		"""+config+@"""	/* configuration section */
+#define CONFIG_SERVER		""@CCONF""
+#define KEY_VAL_BUFFSZ		1024
+")+@"
+
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+
+/**
+ * Initialize the application
+ * @param argc	argument count
+ * @param argv	argument values
+ * @return SUCCEED/FAIL
+ */
+int init(int argc, char** argv)
+{
+	int ret = SUCCEED;
+"+(config==""?"":@"
+	UBFH *p_ub = NULL;
+	char config_tag[128];
+	long rsplen;
+	BFLDLEN sz;
+	int occ;
+	int i;
+	char key[KEY_VAL_BUFFSZ]={0};
+	char val[KEY_VAL_BUFFSZ]={0};
+	")+@"
+	TP_LOG(log_info, ""Initializing..."");
+
+	if (SUCCEED!=tpinit(NULL))
+	{
+		TP_LOG(log_error, ""Failed to Initialize: %s"", 
+			tpstrerror(tperrno));
+		ret = FAIL;
+		goto out;
+	}
+	
+"+(config==""?"":@"
+	/* Download configuration */
+	
+	if (NULL==(p_ub = (UBFH *)tpalloc(""UBF"", NULL, 1024)))
+	{
+		TP_LOG(log_error, ""Failed to alloc:%s"",  tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	snprintf(config_tag, sizeof(config_tag), ""%s/%s"", PROGSECTION, getenv(""NDRX_CCTAG""));
+	
+	if ( (SUCCEED!=Bchg(p_ub, EX_CC_CMD, 0, ""g"", 0L))
+		|| (SUCCEED!=Bchg(p_ub, EX_CC_LOOKUPSECTION, 0,  config_tag, 0L)))
+	{
+		TP_LOG(log_error, ""Failed to set EX_CC_CMD/EX_CC_LOOKUPSECTION: %s"", 
+			Bstrerror(Berror));
+		ret = FAIL;
+		goto out;
+	}
+	
+	if (FAIL==tpcall(CONFIG_SERVER, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+	{
+		TP_LOG(log_error, ""Failed to call %s: %s"", 
+			 CONFIG_SERVER,tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	
+	tplogprintubf(log_info, ""Got configuration"", p_ub);
+
+	occ = Boccur(p_ub, EX_CC_KEY);
+	
+	for (i=0; i<occ; i++)
+	{
+		sz = sizeof(key);
+		if (SUCCEED!=CBget(p_ub, EX_CC_KEY, i, key, &sz, BFLD_STRING))
+		{
+			TP_LOG(log_error, ""Failed to get EX_CC_KEY[%d]: %s"", i,
+			     Bstrerror(Berror));
+			ret=FAIL;
+			goto out;
+		}
+		
+		sz = sizeof(val);
+		if (SUCCEED!=CBget(p_ub, EX_CC_VALUE, i, val, &sz, BFLD_STRING))
+		{
+			TP_LOG(log_error, ""Failed to get EX_CC_VALUE[%d]: %s"", i,
+			     Bstrerror(Berror));
+			ret=FAIL;
+			goto out;
+		}
+		
+		TP_LOG(log_debug, ""Got key: [%s] = [%s]"",
+			key, val);
+		
+		if (0==strcmp(key, ""someparam1""))
+		{
+			TP_LOG(log_debug, ""Got param1: [%s]"", val);
+		}
+		else if (0==strcmp(key, ""someparam2""))
+		{
+			TP_LOG(log_debug, ""Got param2: [%s]"", val);
+		}
+		else
+		{
+			TP_LOG(log_debug, ""Unknown setting [%s] - ignoring..."",
+				key
+			);
+		}
+	}
+	")+@"
+
+out:
+"+(config==""?"":@"
+	if (NULL!=p_ub)
+	{
+		tpfree((char *)p_ub);
+	}")+@"
+	
+	return ret;
+}
+
+/**
+ * Terminate the application
+ */
+int uninit(int status)
+{
+	int ret = SUCCEED;
+	
+	TP_LOG(log_info, ""Uninitializing..."");
+	
+	ret = tpterm();
+	
+	return ret;
+}
+
+/**
+ * Do processing (call some service)
+ * @return SUCCEED/FAIL
+ */
+int process (void)
+{
+	int ret = SUCCEED;
+	
+"+(useubf==""?"":@"
+	UBFH *p_ub = NULL;
+	long rsplen;
+	char retbuf[128]={0};
+	BFLDLEN sz;")+@"
+	
+	TP_LOG(log_info, ""Processing..."");
+
+"+(useubf==""?"":@"
+	/* Call sample server... */
+	
+	if (NULL==(p_ub = (UBFH *)tpalloc(""UBF"", NULL, 1024)))
+	{
+		TP_LOG(log_error, ""Failed to tpalloc: %s"",  tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, ""Hello world!"", 0L))
+	{
+		TP_LOG(log_error, ""Failed to set T_STRING_FLD: %s"",  
+		      Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+	
+	if (FAIL==tpcall(""TESTSV"", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+	{
+		TP_LOG(log_error, ""Failed to call TESTSV: %s"", tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	tplogprintubf(log_debug, ""Got response"", p_ub);
+	
+	
+	sz = sizeof(retbuf);
+	if (SUCCEED!=Bget(p_ub, T_STRING_2_FLD, 0, retbuf, &sz))
+	{
+		TP_LOG(log_error, ""Failed to set T_STRING_2_FLD: %s"",  
+		      Bstrerror(Berror));
+		ret=FAIL;
+		goto out;
+	}
+	
+	TP_LOG(log_info, ""Got response from server: [%s]"", retbuf);")+@"
+	
+out:
+
+"+(useubf==""?"":@"
+	/* free up config data... */
+	if (NULL!=p_ub)
+	{
+		tpfree((char *)p_ub);
+	}")+@"
+	
+	return ret;
+}
+
+/**
+ * Main entry of th program
+ * @param argc	argument count
+ * @param argv	argument values
+ * @return SUCCEED/FAIL
+ */
+int main(int argc, char** argv)
+{
+	int ret = SUCCEED;
+
+	if (SUCCEED!=init(argc, argv))
+	{
+		TP_LOG(log_error, ""Failed to Initialize!"");
+		ret=FAIL;
+		goto out;
+	}
+	
+	
+	if (SUCCEED!=process())
+	{
+		TP_LOG(log_error, ""Process failed!"");
+		ret=FAIL;
+		goto out;
+	}
+    
+out:
+	uninit(ret);
+
+	return ret;
+}
+
+";	
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	//Client END
+	////////////////////////////////////////////////////////////////////////
+	
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile
+	////////////////////////////////////////////////////////////////////////
+	
+	makeFileVal = "";
+	function buildMakefile()
+	{
+	
+		makeFileVal = @"
+SOURCES = "+cltname+@".c
+TARGET  = "+cltname+@"
+OBJECTS = $(SOURCES:%.c=%.o)
+CFLAGS	= -I../"+ubfname+@"
+LIBS = -latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm -ldl
+
+default: target
+
+target: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) -o $@ $(LDFLAGS) $^ $(LIBS)
+
+%.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+clean:
+	-rm *.o
+	-rm $(TARGET)
+
+";
+	}
+		
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile, END
+	////////////////////////////////////////////////////////////////////////
+	
+}
+	
+
+//Run the mater installer
+function install() 
+{
+	local root = getroottable();
+
+	//Create a provision object
+	root["prov"] <- CClient();
+
+	if (!::prov.isDefaulted)
+	{
+		::prov.runInteractive();
+	}
+
+	if (::prov.validatAndPrintConfig())
+	{
+		::prov.getOutputFiles();
+		::prov.buildClient();
+
+		if (!::prov.writeFile(::prov.goClientFile, ::prov.cClientVal))
+		{
+			return false;
+		}
+		
+		//Build makefile if needed...
+		if ("y"==::prov.genmake)
+		{
+			::prov.buildMakefile();
+			
+			if (!::prov.writeFile(::prov.makeFile, ::prov.makeFileVal))
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+if (::install())
+{
+	print("C client gen ok!\n");
+	
+	return 0;
+}
+else
+{
+	print("C client gen failed!\n");
+	return -1;
+}
