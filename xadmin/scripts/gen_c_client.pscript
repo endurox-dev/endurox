@@ -107,6 +107,7 @@ int init(int argc, char** argv)
 	int i;
 	char key[KEY_VAL_BUFFSZ]={0};
 	char val[KEY_VAL_BUFFSZ]={0};
+	char *cctag;
 	")+@"
 	TP_LOG(log_info, ""Initializing..."");
 
@@ -128,7 +129,17 @@ int init(int argc, char** argv)
 		goto out;
 	}
 	
-	snprintf(config_tag, sizeof(config_tag), ""%s/%s"", PROGSECTION, getenv(""NDRX_CCTAG""));
+	cctag = getenv(""NDRX_CCTAG"");
+	if (NULL!=cctag)
+	{
+		snprintf(config_tag, sizeof(config_tag), ""%s/%s"", 
+			PROGSECTION, cctag);
+	}
+	else
+	{
+		/* NO subsection configured */
+		snprintf(config_tag, sizeof(config_tag), ""%s"", PROGSECTION);
+	}
 	
 	if ( (SUCCEED!=Bchg(p_ub, EX_CC_CMD, 0, ""g"", 0L))
 		|| (SUCCEED!=Bchg(p_ub, EX_CC_LOOKUPSECTION, 0,  config_tag, 0L)))
