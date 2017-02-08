@@ -11,7 +11,7 @@ compilestring(getwizzardbase())();
 //Provision class
 class CClient extends WizzardBase {
 
-	libs =  "-latmisrvnomain -latmi -lubf -lnstd -lpthread -lrt -ldl -lm";
+	libs =  "-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -ldl -lm";
 	
 	constructor()
 	{
@@ -19,7 +19,7 @@ class CClient extends WizzardBase {
 		
 		if ("DARWIN"==getosname())
 		{
-			libs = "-latmisrvnomain -latmi -lubf -lnstd -lpthread -ldl -lm";
+			libs = "-latmisrvinteg -latmi -lubf -lnstd -lpthread -ldl -lm";
 		}
 	}
 	
@@ -103,7 +103,7 @@ class CClient extends WizzardBase {
  * Service entry
  * @return SUCCEED/FAIL
  */
-int "+svcnm+@" (TPSVCINFO *p_svc)
+void "+svcnm+@" (TPSVCINFO *p_svc)
 {
 	int ret = SUCCEED;
 	
@@ -120,16 +120,12 @@ int "+svcnm+@" (TPSVCINFO *p_svc)
 		goto out;
 	}
 
-	d+=1;
-
-	if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
+	if (FAIL==Badd(p_ub, T_STRING_2_FLD, ""Hello World from XATMI server"", 0L))
 	{
 		ret=FAIL;
 		goto out;
 	}
 
-	TP_LOG(log_info, ""Got response from server: [%s]"", retbuf);
-	
 out:
 
 	tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
@@ -266,7 +262,7 @@ int init(int argc, char** argv)
 	")+@"
 	
 	/* Advertise our service */
-	if (SUCCEED!=tpadvertise("""+svcnm+@""", """+svcnm+@"""))
+	if (SUCCEED!=tpadvertise("""+svcnm+@""", "+svcnm+@"))
 	{
 		TP_LOG(log_error, ""Failed to initialize "+svcnm+@"!"");
 		ret=FAIL;
@@ -286,15 +282,9 @@ out:
 /**
  * Terminate the application
  */
-void uninit(int status)
+void uninit(void)
 {
-	int ret = SUCCEED;
-	
 	TP_LOG(log_info, ""Uninitializing..."");
-	
-	ret = tpterm();
-	
-	return ret;
 }
 
 /**
