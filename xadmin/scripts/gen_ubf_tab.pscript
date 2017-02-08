@@ -40,12 +40,23 @@ class UBFTab extends WizzardBase {
 	tabFile = "";
 	exfieldsFile = "";
 	makeFile = "";
+	makeFileCommon = "";
 	
 	function getOutputFiles()
 	{
 		tabFile=appHome+"/"+table_name+".fd";
 		exfieldsFile=appHome+"/Exfields";
-		makeFile=appHome+"/Makefile";
+		
+		makeFileCommon=appHome+"/Makefile";
+		
+		if (makeLang=="c")
+		{
+			makeFile=appHome+"/Mclang";
+		}
+		else if (makeLang=="go")
+		{
+			makeFile=appHome+"/Mgolang";
+		}
 	}
 	
 	////////////////////////////////////////////////////////////////////////
@@ -147,8 +158,27 @@ clean:
 	- rm *"+suffix+@"
 ";
 	}
-}
 	
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile, END
+	////////////////////////////////////////////////////////////////////////
+	makeFileCommonVal = "";
+	function makeFileCommonGen()
+	{
+		
+		makeFileCommonVal = @"
+.DEFAULT_GOAL: all
+.PHONY: clean all
+
+all:
+	-$(MAKE) -f Mclang
+	-$(MAKE) -f Mgolang
+clean:
+	-$(MAKE) -f Mclang clean
+	-$(MAKE) -f Mgolang clean
+";
+	}
+}
 
 //Run the mater installer
 function install() 
@@ -191,6 +221,14 @@ function install()
 			::prov.buildMakefile();
 			
 			if (!::prov.writeFile(::prov.makeFile, ::prov.makeFileVal))
+			{
+				return false;
+			}
+			
+			::prov.makeFileCommonGen();
+			
+			if (!::prov.writeFile(::prov.makeFileCommon, 
+				::prov.makeFileCommonVal))
 			{
 				return false;
 			}
