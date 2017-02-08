@@ -170,16 +170,16 @@ cmd_mapping_t M_command_map[] =
                                     "\t\targs: mqmv -n <Source cluster node id> -i <Source server ID>\n"
                                     "\t\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>", NULL},
     {"killall",   cmd_killall,FAIL, 1,  999,  0, "Kill all processes (in ps -ef) matching the name\n"
-                                    "\t\targs: killall <name1> <name2> ... <nameN>\n", NULL},
-    {"qrm",       cmd_qrm,FAIL, 1,  999,  0, "Remove specific queue \n"
+                                    "\t\targs: killall <name1> <name2> ... <nameN>", NULL},
+    {"qrm",       cmd_qrm,FAIL, 1,  999,  0, "Remove specific queue"
                                     "\t\targs: qrm <qname1> <qname2> ... <qnameN>\n", NULL},
     {"qrmall",    cmd_qrmall,FAIL, 1,  999,  0, "Remove queue matching the substring \n"
-                                    "\t\targs: qrmall <substr1> <substr2> ... <substrN>\n", NULL},
+                                    "\t\targs: qrmall <substr1> <substr2> ... <substrN>", NULL},
     {"provision", cmd_provision,FAIL, 0,  999,  0, "Prepare initial Enduro/X instance environment \n"
                                      "\t\targs: provision [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n", NULL},
     {"gen",       cmd_gen,FAIL, 0,  999,  0, "Generate sources\n"
                                      "\t\targs: gen <language> <type> [-d] "
-                                     "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n\n"
+                                     "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
                                      "\t\tsub-targets available:", cmd_gen_help}
 };
 
@@ -294,7 +294,14 @@ private int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         p = &M_command_map[i];
         if ((argc>1 && 0==strcmp(p->cmd, argv[1])) || 1==argc)
         {
-            printf("%s\t%s\n", p->cmd, p->help);
+            if (NULL==p->p_add_help)
+            {
+                printf("%s\t%s\n\n", p->cmd, p->help);
+            }
+            else
+            {
+                printf("%s\t%s\n", p->cmd, p->help);
+            }
             
             if (p->p_add_help)
             {

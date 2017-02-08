@@ -1,0 +1,411 @@
+#!/usr/bin/pscript
+
+//
+// TODO: Change the linker options for OSX, etc... (RT Lib).
+//
+userlog("Generate go server");
+
+//Include wizzard base.
+compilestring(getwizzardbase())();
+
+//Provision class
+class CClient extends WizzardBase {
+
+	libs =  "-latmisrvnomain -latmi -lubf -lnstd -lpthread -lrt -ldl -lm";
+	
+	constructor()
+	{
+		base.constructor();
+		
+		if ("DARWIN"==getosname())
+		{
+			libs = "-latmisrvnomain -latmi -lubf -lnstd -lpthread -ldl -lm";
+		}
+	}
+	
+
+	//Configure it:
+	</ order=0, name = "XATMI Server Name (binary)", type = "string", min=1, max=512 /> 
+	srvname = "testsv";
+	
+	</ order=1, name = "Service name", type = "string", min=1, max=32/> 
+	svcnm = "TESTSV";
+	
+	</ order=2, name = "Use UBF?", type = "yn"/> 
+	useubf = "y";
+	
+	</ order=3, name = "UBF include folder name (will be done ../<name>)", 
+		type = "path" depend="(::prov.useubf==\"y\")" /> 
+	ubfname = "ubftab";
+	
+	</ order=4, name = "Gen makefile", type = "yn"/> 
+	genmake = "y";
+	
+	</ order=5, name = "INI File section (optional, will read config if set)", 
+		type = "string", depend="(::prov.useubf==\"y\")", min=0/> 
+	config = "";
+	
+	goClientFile = "";
+	
+	makeFile = "";
+	
+	function getOutputFiles()
+	{
+		goClientFile=appHome+"/"+srvname+".c";
+		makeFile=appHome+"/Makefile";
+	}
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build C Server code
+	////////////////////////////////////////////////////////////////////////
+	cClientVal = "";
+	function buildServer()
+	{
+	
+		cClientVal = @"#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <ndebug.h>
+#include <atmi.h>
+
+"+(useubf==""?"":@"
+#include <ubf.h>
+#include <Exfields.h>
+#include <test.fd.h>")+@"
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+
+#ifndef SUCCEED
+#define SUCCEED			0
+#endif
+
+#ifndef	FAIL
+#define FAIL			-1
+#endif
+
+"+(config==""?"":@"
+#define PROGSECTION		"""+config+@"""	/* configuration section */
+#define CONFIG_SERVER		""@CCONF""
+#define KEY_VAL_BUFFSZ		1024
+")+@"
+
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+
+/**
+ * Service entry
+ * @return SUCCEED/FAIL
+ */
+int "+svcnm+@" (TPSVCINFO *p_svc)
+{
+	int ret = SUCCEED;
+	
+"+(useubf!=""?@"
+	UBFH *p_ub = (UBFH *)p_svc->data;
+
+	tplogprintubf(log_info, ""Got request"", p_ub);
+	
+	
+	/* allocate some stuff for more data to put in  */
+	if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096)))
+	{
+		ret=FAIL;
+		goto out;
+	}
+
+	d+=1;
+
+	if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
+	{
+		ret=FAIL;
+		goto out;
+	}
+
+	TP_LOG(log_info, ""Got response from server: [%s]"", retbuf);
+	
+out:
+
+	tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+		0L,
+		(char *)p_ub,
+		0L,
+		0L);
+
+":@"
+
+	tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+		0L,
+		(char *)p_svc->data,
+		0L,
+		0L)
+		
+	
+")+@"
+
+}
+
+/**
+ * Initialize the application
+ * @param argc	argument count
+ * @param argv	argument values
+ * @return SUCCEED/FAIL
+ */
+int init(int argc, char** argv)
+{
+	int ret = SUCCEED;
+"+(config==""?"":@"
+	UBFH *p_ub = NULL;
+	char config_tag[128];
+	long rsplen;
+	BFLDLEN sz;
+	int occ;
+	int i;
+	char key[KEY_VAL_BUFFSZ]={0};
+	char val[KEY_VAL_BUFFSZ]={0};
+	char *cctag;
+	")+@"
+	TP_LOG(log_info, ""Initializing..."");
+
+	if (SUCCEED!=tpinit(NULL))
+	{
+		TP_LOG(log_error, ""Failed to Initialize: %s"", 
+			tpstrerror(tperrno));
+		ret = FAIL;
+		goto out;
+	}
+	
+"+(config==""?"":@"
+	/* Download configuration */
+	
+	if (NULL==(p_ub = (UBFH *)tpalloc(""UBF"", NULL, 1024)))
+	{
+		TP_LOG(log_error, ""Failed to alloc:%s"",  tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	cctag = getenv(""NDRX_CCTAG"");
+	if (NULL!=cctag)
+	{
+		snprintf(config_tag, sizeof(config_tag), ""%s/%s"", 
+			PROGSECTION, cctag);
+	}
+	else
+	{
+		/* NO subsection configured */
+		snprintf(config_tag, sizeof(config_tag), ""%s"", PROGSECTION);
+	}
+	
+	if ( (SUCCEED!=Bchg(p_ub, EX_CC_CMD, 0, ""g"", 0L))
+		|| (SUCCEED!=Bchg(p_ub, EX_CC_LOOKUPSECTION, 0,  config_tag, 0L)))
+	{
+		TP_LOG(log_error, ""Failed to set EX_CC_CMD/EX_CC_LOOKUPSECTION: %s"", 
+			Bstrerror(Berror));
+		ret = FAIL;
+		goto out;
+	}
+	
+	if (FAIL==tpcall(CONFIG_SERVER, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+	{
+		TP_LOG(log_error, ""Failed to call %s: %s"", 
+			 CONFIG_SERVER,tpstrerror(tperrno));
+		ret=FAIL;
+		goto out;
+	}
+	
+	
+	tplogprintubf(log_info, ""Got configuration"", p_ub);
+
+	occ = Boccur(p_ub, EX_CC_KEY);
+	
+	for (i=0; i<occ; i++)
+	{
+		sz = sizeof(key);
+		if (SUCCEED!=CBget(p_ub, EX_CC_KEY, i, key, &sz, BFLD_STRING))
+		{
+			TP_LOG(log_error, ""Failed to get EX_CC_KEY[%d]: %s"", i,
+			     Bstrerror(Berror));
+			ret=FAIL;
+			goto out;
+		}
+		
+		sz = sizeof(val);
+		if (SUCCEED!=CBget(p_ub, EX_CC_VALUE, i, val, &sz, BFLD_STRING))
+		{
+			TP_LOG(log_error, ""Failed to get EX_CC_VALUE[%d]: %s"", i,
+			     Bstrerror(Berror));
+			ret=FAIL;
+			goto out;
+		}
+		
+		TP_LOG(log_debug, ""Got key: [%s] = [%s]"",
+			key, val);
+		
+		if (0==strcmp(key, ""someparam1""))
+		{
+			TP_LOG(log_debug, ""Got param1: [%s]"", val);
+		}
+		else if (0==strcmp(key, ""someparam2""))
+		{
+			TP_LOG(log_debug, ""Got param2: [%s]"", val);
+		}
+		else
+		{
+			TP_LOG(log_debug, ""Unknown setting [%s] - ignoring..."",
+				key
+			);
+		}
+	}
+	")+@"
+	
+	/* Advertise our service */
+	if (SUCCEED!=tpadvertise("""+svcnm+@""", """+svcnm+@"""))
+	{
+		TP_LOG(log_error, ""Failed to initialize "+svcnm+@"!"");
+		ret=FAIL;
+		goto out;
+	}	
+
+out:
+"+(config==""?"":@"
+	if (NULL!=p_ub)
+	{
+		tpfree((char *)p_ub);
+	}")+@"
+	
+	return ret;
+}
+
+/**
+ * Terminate the application
+ */
+void uninit(int status)
+{
+	int ret = SUCCEED;
+	
+	TP_LOG(log_info, ""Uninitializing..."");
+	
+	ret = tpterm();
+	
+	return ret;
+}
+
+/**
+ * Server program main entry
+ * @param argc	argument count
+ * @param argv	argument values
+ * @return SUCCEED/FAIL
+ */
+int main(int argc, char** argv)
+{
+	/* Launch the Enduro/x thread */
+	return ndrx_main_integra(argc, argv, init, uninit, 0);
+}
+
+";	
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	//Server END
+	////////////////////////////////////////////////////////////////////////
+	
+	
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile
+	////////////////////////////////////////////////////////////////////////
+	
+	makeFileVal = "";
+	function buildMakefile()
+	{
+	
+		makeFileVal = @"
+SOURCES = "+srvname+@".c
+TARGET  = "+srvname+@"
+OBJECTS = $(SOURCES:%.c=%.o)
+CFLAGS	= -I../"+ubfname+@"
+LIBS = "+libs+@"
+
+default: target
+
+target: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) -o $@ $(LDFLAGS) $^ $(LIBS)
+
+%.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+clean:
+	-rm *.o
+	-rm $(TARGET)
+
+";
+	}
+		
+	////////////////////////////////////////////////////////////////////////
+	//Build makefile, END
+	////////////////////////////////////////////////////////////////////////
+	
+}
+	
+
+//Run the mater installer
+function install() 
+{
+	local root = getroottable();
+
+	//Create a provision object
+	root["prov"] <- CClient();
+
+	if (!::prov.isDefaulted)
+	{
+		::prov.runInteractive();
+	}
+
+	if (::prov.validatAndPrintConfig())
+	{
+		::prov.getOutputFiles();
+		::prov.buildServer();
+
+		if (!::prov.writeFile(::prov.goClientFile, ::prov.cClientVal))
+		{
+			return false;
+		}
+		
+		//Build makefile if needed...
+		if ("y"==::prov.genmake)
+		{
+			::prov.buildMakefile();
+			
+			if (!::prov.writeFile(::prov.makeFile, ::prov.makeFileVal))
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+if (::install())
+{
+	print("C server gen ok!\n");
+	
+	return 0;
+}
+else
+{
+	print("C server gen failed!\n");
+	return -1;
+}

@@ -79,6 +79,11 @@ add_custom_command(
   COMMAND embedfile scripts/gen_c_client.pscript gen_c_client
   DEPENDS scripts/gen_c_client.pscript)
 
+add_custom_command(
+  OUTPUT gen_c_server.c
+  COMMAND embedfile scripts/gen_c_server.pscript gen_c_server
+  DEPENDS scripts/gen_c_server.pscript)
+  
 # Exectuables
 add_executable (xadmin xadmin.c exec.c config.c
 		cmd_config.c utils.c cmd_startstop.c cmd_psc.c cmd_fdown.c
@@ -88,7 +93,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_scbp.c cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
                 provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
-                gen_ubf_tab.c gen_go_client.c gen_c_client.c)
+                gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
