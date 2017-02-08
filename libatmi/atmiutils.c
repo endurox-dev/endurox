@@ -498,7 +498,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         }
         else
         {
-            NDRX_LOG(log_error, "Sending data to [%s] call flags=0x%x", 
+            NDRX_LOG(log_info, "Sending data to [%s] call flags=0x%x", 
                                     admin_q_str, call->flags);
             if (SUCCEED!=generic_q_send(admin_q_str, (char *)call, call_size, flags))
             {
