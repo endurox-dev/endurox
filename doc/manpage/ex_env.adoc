@@ -29,7 +29,7 @@ Mandatory Env. Variables
 	70% remotely.
 *NDRX_TOUT*='TIME_OUT_IN_SECONDS'::
 	Global tpcall() timeout, if not called with TPNOTIME flag.
-	If process will not return in this time, thne TPETIME error
+	If process will not return in this time, then TPETIME error
 	will be returned.
 *NDRX_ULOG*='ULOG_PATH'::
 	Writtable system path where to write user logs.
@@ -114,7 +114,7 @@ Mandatory Env. Variables
 	more memory to be used for service registry. If the number of servers goes over this number
 	for one service, the service entry will be ignored.
 *PATH='PATH'*::
-	This is not EnduroX specific env variable. But EnduroX distribution bin 
+	This is not Enduro/X specific env variable. But Enduro/X distribution bin 
 	directory should be included in system PATH env. variable.
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
 	This is directory where .fd files are located. I.e. UBF field definitions.
@@ -130,7 +130,6 @@ Mandatory Env. Variables
         configuration file can be directory, in that case Enduro/X will search for
         files with mask *.ini, *.cfg, *.conf, *.config files. All will be loaded
         in alphabetical order.
-
 *NDRX_CCTAG*='NDRX_COMMON_CONFIG_TAG'::
         This is basically subsection used for Enduro/X configuration sections
         [@global], [@debug], [@queue]. If the variable is set, then Enduro/X will
@@ -138,6 +137,15 @@ Mandatory Env. Variables
         can contain multiple sections, for example 'server1/RM2'. Enduro/X will lookup
         the variables in each section [@global/server1] and [@global/RM2] for setting
         up the system.
+*NDRX_XADMIN_CONFIG*='XADMIN_CONFIG_FILE'::
+        This variable is used by *xadmin* read the specific configuration file with
+        xadmin's settings. Variable is optional.
+*HOME*='UNIX_USER_HOME_DIR'::
+        This variable is used by *xadmin* to search for per user configuration file
+        when xadmin is started. In home directory search for configuration is done
+        by $HOME/.xadmin.config. This file is used in case if 'NDRX_XADMIN_CONFIG'
+        is missing. Variable is optional.
+
 
 EXAMPLE
 -------
@@ -280,7 +288,7 @@ SEE ALSO
 
 AUTHOR
 ------
-EnduroX is created by Madars Vitolins.
+Enduro/X is created by Madars Vitolins.
 
 
 COPYING
