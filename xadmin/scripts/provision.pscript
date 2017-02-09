@@ -13,11 +13,11 @@ print("                     Provision\n");
 print("\n");
 
 
-//Include wizzard base.
-compilestring(getwizzardbase())();
+//Include wizard base.
+compilestring(getwizardbase())();
 
 //Provision class
-class Provision extends WizzardBase {
+class Provision extends WizardBase {
 
 
 

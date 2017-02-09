@@ -2,11 +2,11 @@
 
 userlog("Generate UBF table files");
 
-//Include wizzard base.
-compilestring(getwizzardbase())();
+//Include wizard base.
+compilestring(getwizardbase())();
 
 //Provision class
-class UBFTab extends WizzardBase {
+class UBFTab extends WizardBase {
 
 	constructor()
 	{

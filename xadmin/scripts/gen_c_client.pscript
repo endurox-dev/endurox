@@ -5,11 +5,11 @@
 //
 userlog("Generate go client");
 
-//Include wizzard base.
-compilestring(getwizzardbase())();
+//Include wizard base.
+compilestring(getwizardbase())();
 
 //Provision class
-class CClient extends WizzardBase {
+class CClient extends WizardBase {
 
 	libs =  "-latmiclt -latmi -lubf -lnstd -lpthread -lrt -ldl -lm";
 	

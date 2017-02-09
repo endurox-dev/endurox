@@ -43,9 +43,9 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 
 add_custom_command(
-  OUTPUT WizzardBase.c
-  COMMAND embedfile WizzardBase.pscript WizzardBase
-  DEPENDS WizzardBase.pscript)
+  OUTPUT WizardBase.c
+  COMMAND embedfile WizardBase.pscript WizardBase
+  DEPENDS WizardBase.pscript)
 
 
 SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
@@ -64,7 +64,7 @@ add_library (psstdlib SHARED
         psstdblob.cpp
         psstdaux.cpp
         psstdexutil.cpp
-        WizzardBase.c
+        WizardBase.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

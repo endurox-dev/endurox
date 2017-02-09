@@ -1,16 +1,16 @@
-EnduroX Internal Develper Guide
-===============================
+Enduro/X Internal/External Developer Guide
+==========================================
 Madars Vitolins
 v1.0, 2012-12:
 	Initial draft
 :doctype: book
 
-EnduroX Development standard
+Enduro/X Development standard
 ----------------------------
-EnduroX build system is CMake. Version used should be 2.8 and above. It uses
+Enduro/X build system is CMake. Version used should be 2.8 and above. It uses
 Flex and Bison for building UBF (FML) Expressions.
 
-Intension is done with as 4x spaces. EnduroX is programmed in NetBeans c/c++
+Intension is done with as 4x spaces. Enduro/X is programmed in NetBeans c/c++
 project. NetBeans supports CMake projects.
 
 Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
@@ -160,32 +160,43 @@ keyword 'tp'. Facility is defined with macros 'LOG_CODE_TP'. This is process bas
 - 'TP_THREAD', logging facility code 'T' - this is user logs, set on per thread basis. The log level
 is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_THREAD'.
 
-- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on per thread/request basis. The log level is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
+- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on per thread/request basis. 
+The log level is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
 
 === Hierarchy of the  loggers (facilities)
 
-The loggers output the debug content in following order of the facilities status (i.e. definition of current logger):
+The loggers output the debug content in following order of the facilities status
+(i.e. definition of current logger):
 
 - If 'TP_REQUEST' is open (debug file set), then all logging (NDRX, UBF, TP) will go here.
 The debug level is shared at application level with NDRX, UBF and TP facilities. There will be no
-impact if 'TP_REQUEST' log level is different. The request logging can be open by *tplogsetreqfile(3)*. Logger can be closed by *tplogclosereqfile(3)*.
+impact if 'TP_REQUEST' log level is different. The request logging can be open 
+by *tplogsetreqfile(3)*. Logger can be closed by *tplogclosereqfile(3)*.
 
-- If 'TP_THREAD' is open (debug file set), then all logs including NDRX, UBF and TP will log here. Thread logger can be open by doing *tplogconfig(LOG_FACILITY_TP_THREAD, ...)*. Thread logger can be closed by *tplogclosethread(3)*
+- If 'TP_THREAD' is open (debug file set), then all logs including NDRX, UBF 
+and TP will log here. Thread logger can be open by doing *tplogconfig(LOG_FACILITY_TP_THREAD, ...)*.
+Thread logger can be closed by *tplogclosethread(3)*
 
-If there is no TP_REQUEST or TP_THREAD facilities open, then logging is done on per process basis, where there are 3 facilities which are always open:
+If there is no TP_REQUEST or TP_THREAD facilities open, then logging is done on 
+per process basis, where there are 3 facilities which are always open:
 
-- 'NDRX', here XATMI sub-system is logged. It can be configured to use separate file by *tplogconfig(3)*.
+- 'NDRX', here XATMI sub-system is logged. It can be configured to use separate 
+file by *tplogconfig(3)*.
 
-- 'UBF', here UBF sub-system is logged. It can be configured to use separate file by *tplogconfig(3)*.
+- 'UBF', here UBF sub-system is logged. It can be configured to use separate 
+file by *tplogconfig(3)*.
 
-- 'TP', here TPLog sub-system is logged. It can be configured to use separate file by *tplogconfig(3)*.
+- 'TP', here TPLog sub-system is logged. It can be configured to use separate 
+file by *tplogconfig(3)*.
 
 
 === Debug string format
 
-The *debug string* format is described in *ndrxdebug.conf(5)* manpage. basically it is following:
+The *debug string* format is described in *ndrxdebug.conf(5)* manpage. 
+basically it is following:
 
-- ndrx=<Debug level> ubf=<Debug level> tp=<Debug level> bufsz=<Number of line to write after doing fflush> file=<log file name, if empty, then stderr>
+- ndrx=<Debug level> ubf=<Debug level> tp=<Debug level> bufsz=<Number of 
+line to write after doing fflush> file=<log file name, if empty, then stderr>
 
 The debug level is one of the following:
 
@@ -219,11 +230,13 @@ Prints the message to current logger, at given log level
 - int tploggetreqfile(char *'filename', int 'bufsize'); - 
 Get the current request file (see the next chapter)
 
-- int tplogconfig(int 'logger', int 'lev', char *'debug_string', char *'module', char *'new_file');
-Configure logger. The loggers can be binary 'ored' and with one function call multiple loggers
-can be configured. 'lev' is optional, if not set it must be -1. Debug string is optional, but if have
-one then it can contain all elements. 'module' is 4 symbols log module code using in debug lines.
-'new_file' if set (not NULL and not EOS(0x00)) then it have priority over the file present in debug string.
+- int tplogconfig(int 'logger', int 'lev', char *'debug_string', char *'module', 
+char *'new_file'); Configure logger. The loggers can be binary 'ored' and with 
+one function call multiple loggers can be configured. 'lev' is optional, if not 
+set it must be -1. Debug string is optional, but if have one then it can contain 
+all elements. 'module' is 4 symbols log module code using in debug lines. 
+'new_file' if set (not NULL and not EOS(0x00)) 
+then it have priority over the file present in debug string.
 
 - void tplogclosereqfile(void); -
 Close request file. The current logger will fall-back to either thread logger (if configured)
@@ -241,7 +254,8 @@ allows to store the current request logging function in the XATMI UBF buffer.
 - int tplogsetreqfile(char **'data', char *'filename', char *'filesvc'); -
 Set the request file. If 'data' is UBF buffer allocated by *tpcalloc(3)*, then
 it will search for 'EX_NREQLOGFILE' field presence there. If field present,
-then 'TP_REQUEST' logger will be set to. If field not present, but 'filename' is set (not NULL and not EOS),
+then 'TP_REQUEST' logger will be set to. If field not present, but 'filename' is 
+set (not NULL and not EOS),
 then request logger will be set to this file and name will be loaded into buffer.
 If file name is not in the buffer and not in the 'filename' but 'filesvc' present
 then this XATMI service will be called with 'data' buffer and it is expected that field
@@ -259,11 +273,12 @@ print the UBF buffer to current logger.
 
 === Request logging concept
 
-Request logging is concept when each user session or transaction which is processed by multiple XATMI
-clients and servers, are logged to single trace file. This is very useful when system have high
-load with request. Then administrators can identify single transaction and with this request log
-file it is possible to view full sequence of operation which system performed. You do not need
-anymore to grep the big log files (based on each service output) and glue together the picture
+Request logging is concept when each user session or transaction which is 
+processed by multiple XATMI clients and servers, are logged to single trace file.
+This is very useful when system have high load with request. Then administrators 
+can identify single transaction and with this request log file it is possible 
+to view full sequence of operation which system performed. You do not need anymore 
+to grep the big log files (based on each service output) and glue together the picture
 what have happened in system for particular transaction.
 
 The basic use of the request logging is following:
@@ -319,8 +334,8 @@ void AUTHORIZE(TPSVCINFO *p_svc)
 --------------------------------------------------------------------------------
 
 
-Lest assume that for our transaction logfile is set to: '/opt/app/logs/pan_based/5555550000000001_1475008709'
-then transaction could look like:
+Lest assume that for our transaction logfile is set to: 
+'/opt/app/logs/pan_based/5555550000000001_1475008709' then transaction could look like:
 
 [dia, reqlogging.dia, reqlogging.png, x300]
 -------------------------------
@@ -357,8 +372,9 @@ So in general log line format is following:
 
 Where:
 
-- 'LOGGER_FACILITY' - is logger code which to which message is logged, i.e. 'N' - NDRX process based logger, 
-'U' - UBF process based logger, 't' - TP log, process based, 'T' - thread based logger, 'R' - request logger.
+- 'LOGGER_FACILITY' - is logger code which to which message is logged, i.e. 
+'N' - NDRX process based logger, 'U' - UBF process based logger, 
+'t' - TP log, process based, 'T' - thread based logger, 'R' - request logger.
 
 - 'MODULE' - 4 char long logger, 'NDRX' and 'UBF ' or user given code by *tplogconfig(3)*. Default is 'USER'.
 
@@ -553,6 +569,26 @@ This diagram is based on 'endurox-go' package, which uses structures and special
 functions that are binded to structure. Basically that is the same as classes.
 
 This model might be implemented for Node.js and Platform Script.
+
+
+=== Generating source code
+
+Enduro/X xadmin command line utility comes with built in generators. Currently
+following generator targets are available:
+
+- ubf tab - Generate 'UBF' table header files. This target can generate include file
+for C, or Go package which constants of the field definitions.
+
+- c server - Generate C server. The server can have a common configuration. Wizard
+offers some options like building a makefile and using a UBF buffer.
+
+- c client
+
+- go server
+
+- go client
+
+
 
 :numbered!:
 

@@ -1,7 +1,7 @@
 #!/usr/bin/pscript
 
-//Wizzard base processor class
-class WizzardBase {
+//Wizard base processor class
+class WizardBase {
 
 
 	elemOrder = null;
@@ -274,7 +274,7 @@ class WizzardBase {
 	//@return TRUE OK to provision (accepted), FALSE - not ok
 	function runInteractive()
 	{
-		//Run the wizzard...
+		//Run the wizard...
 		//Iterate over the all paramters
 		//foreach(member,val in Provision)
 		foreach(member in elemOrder)
@@ -348,7 +348,7 @@ class WizzardBase {
 		}
 		
 		
-		//Run the wizzard...
+		//Run the wizard...
 		//Iterate over the all paramters
 		//foreach(member,val in Provision)
 		foreach(member in this.elemOrder)

@@ -71,7 +71,7 @@ extern const char G_resource_provision[];
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Run the wizzard for application via pscrip
+ * Run the wizard for application via pscrip
  * @param p_cmd_map
  * @param argc
  * @param argv

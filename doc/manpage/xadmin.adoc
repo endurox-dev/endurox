@@ -5,7 +5,7 @@ XADMIN(8)
 
 NAME
 ----
-xadmin - EnduroX Administration command line utility
+xadmin - Enduro/X Administration command line utility
 
 
 SYNOPSIS
@@ -15,8 +15,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-'xadmin' is command line interface to EnduroX. It is administration utility.
-Which is servers as communication interface between EnduroX ATMI local daemon
+'xadmin' is command line interface to Enduro/X. It is administration utility.
+Which is servers as communication interface between Enduro/X ATMI local daemon
 and administrator. 'xadmin' can receive commands as parameter to 'xadmin'. It
 can read command from pipe (stdin). And it can work in interactive mode. In this
 case 'xadmin' is started with no parameters.
@@ -67,7 +67,7 @@ COMMANDS
 	
 *down* [-y]::
 	Force appserver shuttdown & resurce cleanup. RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!
-	Basically this kills all ATMI servers and EnduroX daemon. This does NOT remove client
+	Basically this kills all ATMI servers and Enduro/X daemon. This does NOT remove client
 	processes.
 *cat*::
 	Attached console to ndrxd user session in progress
@@ -160,7 +160,7 @@ COMMANDS
 	(except the queue name). Those other bits will be take from default q.
 *mqrm* -n <Cluster node id> -i <Server ID> -m <Message ID>::
 	Remove message from queue. You have to identify exact queue space server here by
-	EnduroX cluster id and server id.
+	Enduro/X cluster id and server id.
 *mqmv* -n <Source cluster node id> -i <Source server ID> -m <Source Message ID> -s <Dest qspace> -q <Dest qname>::
 	Move the message from specific qspace server to destination qspace and qname. The bits 
 	from 'TPQCTL' which are returned by 'tpdequeue()' call are preserved in new 'tpenqueue()' call.
@@ -179,10 +179,10 @@ COMMANDS
 *gen* [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]::
 	Generate application sources. See the xadmin's help for more details.
         Currently it is possible to generate C and Go sources and the UBF buffer
-        headers for both languages. By running the command, wizzards will be offered
+        headers for both languages. By running the command, wizards will be offered
         asking for different details. Which later can be reconfigured by
-        *-d* - allowing to default the wizzard, while *-v* allows to set
-        wizzard values from command line.
+        *-d* - allowing to default the wizard, while *-v* allows to set
+        wizard values from command line.
 
 EXIT STATUS
 -----------
@@ -202,7 +202,7 @@ SEE ALSO
 
 AUTHOR
 ------
-EnduroX is created by Madars Vitolins.
+Enduro/X is created by Madars Vitolins.
 
 
 COPYING

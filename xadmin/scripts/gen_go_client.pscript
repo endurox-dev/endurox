@@ -2,11 +2,11 @@
 
 userlog("Generate go client");
 
-//Include wizzard base.
-compilestring(getwizzardbase())();
+//Include wizard base.
+compilestring(getwizardbase())();
 
 //Provision class
-class GoClient extends WizzardBase {
+class GoClient extends WizardBase {
 
 	constructor()
 	{

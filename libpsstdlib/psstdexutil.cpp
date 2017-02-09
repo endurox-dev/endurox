@@ -44,7 +44,7 @@
 #include <errno.h>
 
 
-extern const char G_resource_WizzardBase[];
+extern const char G_resource_WizardBase[];
 
 //Read the line from terminal
 //@return line read string
@@ -67,10 +67,10 @@ static PSInteger _exutil_getosname(HPSCRIPTVM v)
     return 1;
 }
 
-//Return wizzard base script
-static PSInteger _exutil_getwizzardbase(HPSCRIPTVM v)
+//Return wizard base script
+static PSInteger _exutil_getwizardbase(HPSCRIPTVM v)
 {
-    ps_pushstring(v,G_resource_WizzardBase,-1);
+    ps_pushstring(v,G_resource_WizardBase,-1);
     
     return 1;
 }
@@ -186,7 +186,7 @@ static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
         _DECL_FUNC(getcwd,1,_SC(".s")),
         _DECL_FUNC(getosname,1,_SC(".s")),
-        _DECL_FUNC(getwizzardbase,1,_SC(".s")),
+        _DECL_FUNC(getwizardbase,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),
         _DECL_FUNC(fileexists,2,_SC(".s")),
