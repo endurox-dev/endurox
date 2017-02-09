@@ -68,7 +68,7 @@ class CClient extends WizardBase {
 #include <ndebug.h>
 #include <atmi.h>
 
-"+(useubf==""?"":@"
+"+(useubf=="n"?"":@"
 #include <ubf.h>
 #include <Exfields.h>
 #include <test.fd.h>")+@"
@@ -242,7 +242,7 @@ int process (void)
 {
 	int ret = SUCCEED;
 	
-"+(useubf==""?"":@"
+"+(useubf=="n"?"":@"
 	UBFH *p_ub = NULL;
 	long rsplen;
 	char retbuf[128]={0};
@@ -250,7 +250,7 @@ int process (void)
 	
 	TP_LOG(log_info, ""Processing..."");
 
-"+(useubf==""?"":@"
+"+(useubf=="n"?"":@"
 	/* Call sample server... */
 	
 	if (NULL==(p_ub = (UBFH *)tpalloc(""UBF"", NULL, 1024)))
@@ -291,7 +291,7 @@ int process (void)
 	
 out:
 
-"+(useubf==""?"":@"
+"+(useubf=="n"?"":@"
 	/* free up config data... */
 	if (NULL!=p_ub)
 	{

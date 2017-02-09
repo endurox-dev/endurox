@@ -71,7 +71,7 @@ class CClient extends WizardBase {
 #include <ndebug.h>
 #include <atmi.h>
 
-"+(useubf==""?"":@"
+"+(useubf=="n"?"":@"
 #include <ubf.h>
 #include <Exfields.h>
 #include <test.fd.h>")+@"
@@ -107,7 +107,7 @@ void "+svcnm+@" (TPSVCINFO *p_svc)
 {
 	int ret = SUCCEED;
 	
-"+(useubf!=""?@"
+"+(useubf=="y"?@"
 	UBFH *p_ub = (UBFH *)p_svc->data;
 
 	tplogprintubf(log_info, ""Got request"", p_ub);
@@ -133,16 +133,12 @@ out:
 		(char *)p_ub,
 		0L,
 		0L);
-
 ":@"
-
 	tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
 		0L,
 		(char *)p_svc->data,
 		0L,
-		0L)
-		
-	
+		0L);
 ")+@"
 
 }

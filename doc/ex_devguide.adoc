@@ -582,15 +582,60 @@ for C, or Go package which constants of the field definitions.
 - c server - Generate C server. The server can have a common configuration. Wizard
 offers some options like building a makefile and using a UBF buffer.
 
-- c client
+- c client - Generate C client application. This make sample C client app which in case
+if UBF buffer is select for data buffer, the sample call is made to *TESTSV* XATMI service.
 
-- go server
+- go server - Go server which depends on *endurox-go* package. Thus in project path the
+endurox-go package must be installed. (See the sample bellow).
 
-- go client
+- go client - Generate Go XATMI client process. As with Go server, it requires that endurox-go
+is installed in project path. That can be done by $ go get https://github.com/endurox-dev/endurox-go
+
+The target can be invoked by running $ xadmin gen <target>, for example:
+
+------------------------------------------------------------------------------------------
+
+$ xadmin gen c server
+Enduro/X 3.4.3, build Feb 10 2017 00:34:28, using poll for DARWIN (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+ 0: srvname      :XATMI Server Name (binary) [testsv]:
+ 1: svcnm        :Service name [TESTSV]:
+ 2: useubf       :Use UBF? [y]: n
+ 4: genmake      :Gen makefile [y]:
+
+*** Review & edit configuration ***
+
+ 0: Edit srvname      :XATMI Server Name (binary) [testsv]:
+ 1: Edit svcnm        :Service name [TESTSV]:
+ 2: Edit useubf       :Use UBF? [n]:
+ 4: Edit genmake      :Gen makefile [y]:
+c: Cancel
+w: Accept, write
+Enter the choice [0-5, c, w]: w
+C server gen ok!
+
+$ make
+cc -c -o testsv.o testsv.c -I../ubftab
+cc -o testsv  testsv.o -latmisrvinteg -latmi -lubf -lnstd -lpthread -ldl -lm
+$
+------------------------------------------------------------------------------------------
+
+Xadmin's package also includes provision scripts which will setup runtime quickly. The
+command is '$ xadmin provision'.
+
+==== Building sample application generators - overview
+
+In this section we will make an application where C client code will invoke Go server.
 
 
 
-:numbered!:
+numbered!:
 
 [bibliography]
 Additional documentation 
