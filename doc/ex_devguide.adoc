@@ -630,7 +630,10 @@ Xadmin's package also includes provision scripts which will setup runtime quickl
 command is '$ xadmin provision'.
 
 === Implementing custom generators
-TODO:
+Enduro/X *xadmin* can be configured with custom generators. The directory or script
+file name where xadmin looks for Platform Scripts, are configured with tools:
+
+
 
 
 === Building sample application generators

@@ -26,6 +26,17 @@ sends commands to 'ndrxd' and prints the response from daemon to the stdout in
 human readable form. Commands are sent and response from 'ndrxd' are received
 via POSIX Queues.
 
+'xadmin' can lookup the configuration (currently used for user specific
+generators). The configuration search order is following:
+
+1. INI file by 'NDRX_XADMIN_CONFIG' environment variable. This can also be
+a directory. The common-config routines will load all configs (.ini .cfg,
+.conf, .config) files.
+
+2. INI file in '$HOME/.xadmin.config';
+
+3. INI file in '/etc/xadmin.config';
+
 
 COMMANDS
 -------
@@ -184,6 +195,32 @@ COMMANDS
         *-d* - allowing to default the wizard, while *-v* allows to set
         wizard values from command line.
 
+CONFIGURATION
+-------------
+The following paramters from section *[@xadmin]* or *[@xadmin/<$NDRX_CCTAG>]*
+are used (if config file is present):
+
+*gen scripts*='PATH_TO_GENERATOR_SCRIPTS'::
+This parameter configures the path where 'xadmin' should look for .pscript
+files. The file names must be in following format: gen_<lang>_<type>.pscript.
+Basically <lang> and <type> will be offered as targets under $xadmin gen
+command. The $xadmin help will print these scripts. For script reference
+look in Enduro/X source code, *xadmin/scripts* folder. It is assumed that 
+these scripts will inherit 'WizardBase' class compiled into Enduro/X. This
+class is driving the wizard. Also note that each parameter which is asked to
+user enter into wizard, can be overridden from command line with
+*-v<param1>=<value1>*. The generator can be defaulted by '-d' argument.
+
+SAMPLE CONFIGURATION
+--------------------
+
+For system wide settings the following file is created: */etc/xadmin.config*:
+
+--------------------------------------------------------------------------------
+[@xadmin]
+gen scripts=/development/templates
+--------------------------------------------------------------------------------
+
 EXIT STATUS
 -----------
 *0*::
@@ -207,5 +244,5 @@ Enduro/X is created by Madars Vitolins.
 
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, SIA
 
