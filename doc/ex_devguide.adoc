@@ -571,24 +571,24 @@ functions that are binded to structure. Basically that is the same as classes.
 This model might be implemented for Node.js and Platform Script.
 
 
-=== Generating source code
+== Generating source code with Enduro/X generators
 
 Enduro/X xadmin command line utility comes with built in generators. Currently
 following generator targets are available:
 
-- ubf tab - Generate 'UBF' table header files. This target can generate include file
+- *ubf tab* - Generate 'UBF' table header files. This target can generate include file
 for C, or Go package which constants of the field definitions.
 
-- c server - Generate C server. The server can have a common configuration. Wizard
+- *c server* - Generate C server. The server can have a common configuration. Wizard
 offers some options like building a makefile and using a UBF buffer.
 
-- c client - Generate C client application. This make sample C client app which in case
+- *c client* - Generate C client application. This make sample C client app which in case
 if UBF buffer is select for data buffer, the sample call is made to *TESTSV* XATMI service.
 
-- go server - Go server which depends on *endurox-go* package. Thus in project path the
+- *go server* - Go server which depends on *endurox-go* package. Thus in project path the
 endurox-go package must be installed. (See the sample bellow).
 
-- go client - Generate Go XATMI client process. As with Go server, it requires that endurox-go
+- *go client* - Generate Go XATMI client process. As with Go server, it requires that endurox-go
 is installed in project path. That can be done by $ go get https://github.com/endurox-dev/endurox-go
 
 The target can be invoked by running $ xadmin gen <target>, for example:
@@ -629,10 +629,35 @@ $
 Xadmin's package also includes provision scripts which will setup runtime quickly. The
 command is '$ xadmin provision'.
 
-==== Building sample application generators - overview
+=== Implementing custom generators
+TODO:
 
-In this section we will make an application where C client code will invoke Go server.
 
+=== Building sample application generators
+
+In this section we will make an application where C client code will 
+invoke Go server. The IPC will use UBF buffer, with test fields which are provided
+by *ubf tab* generator. Also this example assumes that you have installed enduro/x
+and endurox-go packages to your system and kernel parameters are configured (e.g.
+queue settings in case of Linux).
+
+==== Prepare project folder
+TODO:
+
+==== Generate UBF table for both C & Go
+TODO:
+
+==== Generate C client code & make
+TODO:
+
+==== Generate Go server code & make
+TODO:
+
+==== Provision runtime and put binaries symlinks
+TODO:
+
+==== Run the client
+TODO:
 
 
 numbered!:
