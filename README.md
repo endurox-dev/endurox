@@ -103,6 +103,7 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.4.1 released on 13/01/2017. New ATMI server flag for developer - reloadonchange - if cksum change changed on binary issue sreload.
 - Version 3.4.2 released on 20/01/2017. Network protocol framing moved from 2 bytes to 4 bytes.
 - Version 3.4.3 released on 26/01/2017. Memory leak fixes for tmsrv and tmqueue servers.
+- Version 3.4.4 released on 26/01/2017. Works on documentation. Fixes on PScript.
 
 # Build configurations
 
