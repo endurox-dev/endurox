@@ -360,7 +360,7 @@ int main (int argc, char **argv)
 
 Will print to log file following messages:
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 t:USER:5:11064:000:20160928:100225252:/tplog.c:0412:Hello from function logger
 t:USER:5:11064:000:20160928:100225252:ogtest.c:0007:Hello from macro logger [logging level 5]
 --------------------------------------------------------------------------------
@@ -377,7 +377,8 @@ Where:
 'N' - NDRX process based logger, 'U' - UBF process based logger, 
 't' - TP log, process based, 'T' - thread based logger, 'R' - request logger.
 
-- 'MODULE' - 4 char long logger, 'NDRX' and 'UBF ' or user given code by *tplogconfig(3)*. Default is 'USER'.
+- 'MODULE' - 4 char long logger, 'NDRX' and 'UBF ' or user given code by 
+*tplogconfig(3)*. Default is 'USER'.
 
 - 'LOG_LEVEL' - message log level digit.
 
@@ -463,9 +464,10 @@ Every Object-API function basically does following:
 3. Unset/get (call of 'tpsetctxt()') the thread local data;
 
 
-During the Enduro/X C library works, it is assumed that is not preemptible for cooperative threads.
-Thus above scheme will work for every framework that comply with rule (and mostly it does, because
-it will break the rules of library C/C++ processing).
+During the Enduro/X C library works, it is assumed that is not preemptible for 
+cooperative threads. Thus above scheme will work for every framework that comply 
+with rule (and mostly it does, because it will break the rules of 
+library C/C++ processing).
 
 The typical code for Object API would be following:
 
@@ -589,8 +591,9 @@ if UBF buffer is select for data buffer, the sample call is made to *TESTSV* XAT
 - *go server* - Go server which depends on *endurox-go* package. Thus in project path the
 endurox-go package must be installed. (See the sample bellow).
 
-- *go client* - Generate Go XATMI client process. As with Go server, it requires that endurox-go
-is installed in project path. That can be done by $ go get https://github.com/endurox-dev/endurox-go
+- *go client* - Generate Go XATMI client process. As with Go server, 
+it requires that endurox-go is installed in project path. 
+That can be done by  $ go get https://github.com/endurox-dev/endurox-go
 
 The target can be invoked by running $ xadmin gen <target>, for example:
 
