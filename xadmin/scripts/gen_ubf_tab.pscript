@@ -244,12 +244,12 @@ function install()
 
 if (::install())
 {
-	print("Go server gen ok!\n");
+	print("Gen ok!\n");
 	
 	return 0;
 }
 else
 {
-	print("Go server gen failed!\n");
+	print("Gen failed!\n");
 	return -1;
 }

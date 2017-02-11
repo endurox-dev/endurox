@@ -67,7 +67,8 @@ Two new environment variables now are added to the system:
 
 1. NDRX_CCONFIG=/path/to/ini/file/or/directory/with/files 
 
-2. And optional NDRX_CCTAG which allows processes to specify the subsection of Enduro/X system settings.
+2. And optional NDRX_CCTAG which allows processes to specify the subsection of 
+Enduro/X system settings.
 
 The configurations sections are:
 
@@ -151,8 +152,8 @@ file. File can be set by *tplogsetreqfile(5)*.
 Debug string setting for level is set with keyword 'ndrx'. Facility is defined with macros
 *LOG_FACILITY_NDRX*.
 
-- 'UBF', logging facility code 'U' - this is UBF library logs. In debug string level is set with
-keyword 'ubf'. Facility is defined with macros 'LOG_FACILITY_UBF'.
+- 'UBF', logging facility code 'U' - this is UBF library logs. In debug string
+level is set with keyword 'ubf'. Facility is defined with macros 'LOG_FACILITY_UBF'.
 
 - 'TP', logging facility code 't' - this is user logs. In debug string level is set with
 keyword 'tp'. Facility is defined with macros 'LOG_CODE_TP'. This is process based logging.
@@ -593,7 +594,7 @@ is installed in project path. That can be done by $ go get https://github.com/en
 
 The target can be invoked by running $ xadmin gen <target>, for example:
 
-------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 $ xadmin gen c server
 Enduro/X 3.4.3, build Feb 10 2017 00:34:28, using poll for DARWIN (64 bits)
@@ -624,15 +625,15 @@ $ make
 cc -c -o testsv.o testsv.c -I../ubftab
 cc -o testsv  testsv.o -latmisrvinteg -latmi -lubf -lnstd -lpthread -ldl -lm
 $
-------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Xadmin's package also includes provision scripts which will setup runtime quickly. The
 command is '$ xadmin provision'.
 
 === Implementing custom generators
 Enduro/X *xadmin* can be configured with custom generators. The directory or script
-file name where xadmin looks for Platform Scripts, are configured with tools:
-
+file name where xadmin looks for Platform Scripts, are configured with following
+configuration resources:
 
 
 
@@ -644,17 +645,272 @@ by *ubf tab* generator. Also this example assumes that you have installed enduro
 and endurox-go packages to your system and kernel parameters are configured (e.g.
 queue settings in case of Linux).
 
-==== Prepare project folder
-TODO:
+==== Prepare project folder3
+Lets assume our project will be made at /home/user1/bankapp2. The sources (with
+sub-projects) will go under /home/user1/bankapp2/src. This structure is required
+for Go projects.
+
+--------------------------------------------------------------------------------
+# useradd -m user1
+# su - user1
+$ mkdir /home/user1/bankapp2
+$ mkdir /home/user1/bankapp2/src
+--------------------------------------------------------------------------------
 
 ==== Generate UBF table for both C & Go
-TODO:
+The application will communicate via Unified Buffer Format (*UBF*) buffer. The
+test field definitions will be used for this application. Firstly lets generate C
+headers:
+
+--------------------------------------------------------------------------------
+$ mkdir /home/user1/bankapp2/src/ubftab
+$ cd /home/user1/bankapp2/src/ubftab
+
+$ xadmin gen ubf tab
+Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+Logging to ./ULOG.20170211
+ 0: table_name   :UBF Table name (.fd will be added) [test]: 
+ 1: base_number  :Base number [6000]: 
+ 2: testfields   :Add test fields [y]: 
+ 3: genexfields  :Gen Exfields [y]: 
+ 4: genmake      :Gen makefile [y]: 
+ 5: makeLang     :Target language (c/go) [c]: 
+
+*** Review & edit configuration ***
+
+ 0: Edit table_name   :UBF Table name (.fd will be added) [test]: 
+ 1: Edit base_number  :Base number [6000]: 
+ 2: Edit testfields   :Add test fields [y]: 
+ 3: Edit genexfields  :Gen Exfields [y]: 
+ 4: Edit genmake      :Gen makefile [y]: 
+ 5: Edit makeLang     :Target language (c/go) [c]: 
+c: Cancel
+w: Accept, write
+Enter the choice [0-6, c, w]: w
+Gen ok!
+
+$
+
+--------------------------------------------------------------------------------
+
+Now we see that 'test.fd.h' is generate. Lets generate Go definitions. Before that
+we will set 'GOPATH' to project root.
+
+--------------------------------------------------------------------------------
+$ cd /home/user1/bankapp2
+$ export GOPATH=`pwd`
+$ cd /home/user1/bankapp2/src/ubftab
+$ xadmin gen ubf tab
+Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+Logging to ./ULOG.20170211
+ 0: table_name   :UBF Table name (.fd will be added) [test]: 
+ 1: base_number  :Base number [6000]: 
+ 2: testfields   :Add test fields [y]: 
+ 3: genexfields  :Gen Exfields [y]: 
+ 4: genmake      :Gen makefile [y]: 
+ 5: makeLang     :Target language (c/go) [c]: go
+
+*** Review & edit configuration ***
+
+ 0: Edit table_name   :UBF Table name (.fd will be added) [test]: 
+ 1: Edit base_number  :Base number [6000]: 
+ 2: Edit testfields   :Add test fields [y]: 
+ 3: Edit genexfields  :Gen Exfields [y]: 
+ 4: Edit genmake      :Gen makefile [y]: 
+ 5: Edit makeLang     :Target language (c/go) [go]: 
+c: Cancel
+w: Accept, write
+Enter the choice [0-6, c, w]: w
+Gen ok!
+
+$
+--------------------------------------------------------------------------------
+
+
+Once the files are generated, we can run off the make:
+
+--------------------------------------------------------------------------------
+
+$ cd /home/user1/bankapp2/src/ubftab
+
+$ make
+make -f Mclang
+$SOURCES is [./test.fd Exfields]
+$OUTPUT is [./test.fd.h Exfields.h]
+$FIELDTBLS is [./test.fd,Exfields]
+make[1]: Entering directory `/home/user1/bankapp2/src/ubftab'
+mkfldhdr -m0 -pubftab
+To control debug output, set debugconfig file path in $NDRX_DEBUG_CONF
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0229:Output directory is [.]
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0230:Language mode [0]
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0231:Private data [ubftab]
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0243:Use environment variables
+U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:dtable.c:0114:Using NDRX_UBFMAXFLDS: 16000
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0303:enter generate_files()
+U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0138:Load field dir [/home/user1/bankapp2/src/ubftab]
+U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0149:About to load fields list [./test.fd,Exfields]
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/./test.fd processed OK, output: ./test.fd.h
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/Exfields processed OK, output: ./Exfields.h
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0256:Finished with : SUCCESS
+make[1]: Leaving directory `/home/user1/bankapp2/src/ubftab'
+make -f Mgolang
+$SOURCES is [./test.fd Exfields]
+$OUTPUT is [./test.fd.go Exfields.go]
+$FIELDTBLS is [./test.fd,Exfields]
+make[1]: Entering directory `/home/user1/bankapp2/src/ubftab'
+mkfldhdr -m1 -pubftab
+To control debug output, set debugconfig file path in $NDRX_DEBUG_CONF
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0229:Output directory is [.]
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0230:Language mode [1]
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0231:Private data [ubftab]
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0243:Use environment variables
+U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:dtable.c:0114:Using NDRX_UBFMAXFLDS: 16000
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0303:enter generate_files()
+U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0138:Load field dir [/home/user1/bankapp2/src/ubftab]
+U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0149:About to load fields list [./test.fd,Exfields]
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/./test.fd processed OK, output: ./test.fd.go
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/Exfields processed OK, output: ./Exfields.go
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0256:Finished with : SUCCESS
+go build  -o ubftab *.go
+go install  ./...
+make[1]: Leaving directory `/home/user1/bankapp2/src/ubftab'
+
+$ ls -l
+total 72
+-rw-rw-r-- 1 user1 user1  9641 feb 11 16:25 Exfields
+-rw-rw-r-- 1 user1 user1  6079 feb 11 16:35 Exfields.go
+-rw-rw-r-- 1 user1 user1  7614 feb 11 16:35 Exfields.h
+-rw-rw-r-- 1 user1 user1   145 feb 11 16:25 Makefile
+-rw-rw-r-- 1 user1 user1   492 feb 11 16:25 Mclang
+-rw-rw-r-- 1 user1 user1   562 feb 11 16:27 Mgolang
+-rw-rw-r-- 1 user1 user1  1301 feb 11 16:25 test.fd
+-rw-rw-r-- 1 user1 user1  1532 feb 11 16:35 test.fd.go
+-rw-rw-r-- 1 user1 user1  1999 feb 11 16:35 test.fd.h
+-rw-rw-r-- 1 user1 user1  2882 feb 11 16:35 ubftab
+-rw-rw-r-- 1 user1 user1 15464 feb 11 16:27 ULOG.20170211
+
+$ head -n10 test.fd.h 
+#ifndef __TEST_FD
+#define __TEST_FD
+/*	fname	bfldid            */
+/*	-----	-----            */
+#define	T_CHAR_FLD	((BFLDID32)67114875)	/* number: 6011	 type: char */
+#define	T_CHAR_2_FLD	((BFLDID32)67114876)	/* number: 6012	 type: char */
+#define	T_SHORT_FLD	((BFLDID32)6021)	/* number: 6021	 type: short */
+#define	T_SHORT_2_FLD	((BFLDID32)6022)	/* number: 6022	 type: short */
+#define	T_LONG_FLD	((BFLDID32)33560463)	/* number: 6031	 type: long */
+#define	T_LONG_2_FLD	((BFLDID32)33560464)	/* number: 6032	 type: long */
+
+--------------------------------------------------------------------------------
+
+So it have installed a 'ubftab' package, and generated 'test.fd.h' file.
+
 
 ==== Generate C client code & make
-TODO:
+Now lets generate a C client code which will send the UBF buffer to Go server.
+The generator provides C sample client, let's use it.
+
+--------------------------------------------------------------------------------
+$ mkdir /home/user1/bankapp2/src/clt
+$ cd /home/user1/bankapp2/src/clt
+
+$ xadmin gen c client
+Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+Logging to ./ULOG.20170211
+ 0: cltname      :XATMI Client Name (binary) [testcl]: 
+ 1: useubf       :Use UBF? [y]: 
+ 2: ubfname      :UBF include folder name (will be done ../<name>) [ubftab]: 
+ 3: genmake      :Gen makefile [y]: 
+ 4: config       :INI File section (optional, will read config if set) []: 
+
+*** Review & edit configuration ***
+
+ 0: Edit cltname      :XATMI Client Name (binary) [testcl]: 
+ 1: Edit useubf       :Use UBF? [y]: 
+ 2: Edit ubfname      :UBF include folder name (will be done ../<name>) [ubftab]: 
+ 3: Edit genmake      :Gen makefile [y]: 
+ 4: Edit config       :INI File section (optional, will read config if set) []: 
+c: Cancel
+w: Accept, write
+Enter the choice [0-4, c, w]: w
+C client gen ok!
+
+
+$ make
+cc -c -o testcl.o testcl.c -I../ubftab
+cc -o testcl  testcl.o -latmiclt -latmi -lubf -lnstd -lpthread -lrt -ldl -lm
+--------------------------------------------------------------------------------
+
+C Client have been generated OK and built ok.
 
 ==== Generate Go server code & make
-TODO:
+
+Now lets generate Go server. Before we make the Go app, we need to get the
+*endurox-go* package.
+
+--------------------------------------------------------------------------------
+$ mkdir /home/user1/bankapp2/src/srv
+$ cd /home/user1/bankapp2/src/srv
+$ go get github.com/endurox-dev/endurox-go
+$ /home/user1/bankapp2/src/srv
+$ xadmin gen go server
+Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+Logging to ./ULOG.20170211
+ 0: svname       :XATMI Server Name (binary) [testsv]: 
+ 1: svcname      :Service name [TESTSVC]: 
+ 2: useubf       :Use UBF? [y]: 
+ 3: ubfname      :UBF package name [ubftab]: 
+ 4: genmake      :Gen makefile [y]: 
+ 5: config       :INI File section (optional, will read config if set) []: 
+
+*** Review & edit configuration ***
+
+ 0: Edit svname       :XATMI Server Name (binary) [testsv]: 
+ 1: Edit svcname      :Service name [TESTSVC]: 
+ 2: Edit useubf       :Use UBF? [y]: 
+ 3: Edit ubfname      :UBF package name [ubftab]: 
+ 4: Edit genmake      :Gen makefile [y]: 
+ 5: Edit config       :INI File section (optional, will read config if set) []: 
+c: Cancel
+w: Accept, write
+Enter the choice [0-5, c, w]: w
+Go server gen ok!
+
+
+$ make
+go build  -o testsv *.go
+--------------------------------------------------------------------------------
+As we see test server was built ok. Now next step is to configure a runtime system.
+With provisioning of the configuration files and adding testsv to boot application
+boot sequence.
 
 ==== Provision runtime and put binaries symlinks
 TODO:
