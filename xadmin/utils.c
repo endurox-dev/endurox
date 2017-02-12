@@ -45,6 +45,7 @@
 #include <nclopt.h>
 #include <pscript.h>
 #include <errno.h>
+#include <userlog.h>
 
 /*---------------------------Externs------------------------------------*/
 extern const char G_resource_Exfields[];
