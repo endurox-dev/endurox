@@ -911,15 +911,269 @@ Go server gen ok!
 $ make
 go build  -o testsv *.go
 --------------------------------------------------------------------------------
+
 As we see test server was built ok. Now next step is to configure a runtime system.
 With provisioning of the configuration files and adding testsv to boot application
 boot sequence.
 
 ==== Provision runtime and put binaries symlinks
-TODO:
+To create a runtime system, we will use $ xadmin provision command. This command
+allows to register one server to ndrxconfig.xml. For demo application purposes
+this is fully fine. The provision will be done in root directly of "bankapp2".
+
+
+--------------------------------------------------------------------------------
+$ /home/user1/bankapp2
+
+
+$ ls -l
+total 8
+drwxrwxr-x 3 user1 user1 4096 feb 11 16:27 pkg
+drwxrwxr-x 8 user1 user1 4096 feb 11 17:05 src
+
+
+$ xadmin provision
+Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+Logging to ./ULOG.20170212
+
+    ______          __                    ___  __
+   / ____/___  ____/ /_  ___________    _/_/ |/ /
+  / __/ / __ \/ __  / / / / ___/ __ \ _/_/ |   / 
+ / /___/ / / / /_/ / /_/ / /  / /_/ //_/  /   |  
+/_____/_/ /_/\__,_/\__,_/_/   \____/_/   /_/|_|  
+
+                     Provision
+
+Compiled system type....: LINUX
+
+ 0: qpath        :Queue device path [/dev/mqueue]: 
+ 1: nodeid       :Cluster node id [1]: 
+ 2: qprefix      :System code (prefix/setfile name, etc) [test1]: app2
+ 3: timeout      :System wide tpcall() timeout, seconds [90]: 
+ 4: appHome      :Application home [/home/user1/bankapp2]: 
+ 6: binDir       :Executables/binaries sub-folder of Apphome [bin]: 
+ 8: confDir      :Configuration sub-folder of Apphome [conf]: 
+ 9: logDir       :Log sub-folder of Apphome [log]: 
+10: ubfDir       :Unified Buffer Format (UBF) field defs sub-folder of Apphome [ubftab]: 
+11: tempDir      :Temp sub-dir (used for pid file) [tmp]: 
+12: installQ     :Configure persistent queue [y]: 
+13: tmDir        :Transaction Manager Logs sub-folder of Apphome [tmlogs]: 
+14: qdata        :Queue data sub-folder of Apphone [qdata]: 
+15: qSpace       :Persistent queue space namme [SAMPLESPACE]: 
+16: qName        :Sample persistent queue name [TESTQ1]: 
+17: qSvc         :Target service for automatic queue for sample Q [TESTSVC1]: 
+18: eventSv      :Install event server [y]: 
+19: cpmSv        :Configure Client Process Monitor Server [y]: 
+20: configSv     :Install Configuration server [y]: 
+21: bridge       :Install bridge connection [y]: 
+22: bridgeRole   :Bridge -> Role: Active(a) or passive(p)? [a]: 
+24: ipc          :Bridge -> IP: Connect to [172.0.0.1]: 
+25: port         :Bridge -> IP: Port number [21003]: 
+26: otherNodeId  :Other cluster node id [2]: 
+27: ipckey       :IPC Key used for System V semaphores [44000]: 
+28: ldbal        :Load balance over cluster [0]: 
+29: ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+30: ubflev       :Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off) [1]: 
+31: tplev        :Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+32: usv1         :Configure User server #1 [n]: y
+33: usv1_name    :User server #1: binary name []: testsv
+34: usv1_min     :User server #1: min [1]: 
+35: usv1_max     :User server #1: max [1]: 
+36: usv1_srvid   :User server #1: srvid [2000]: 
+37: usv1_cctag   :User server #1: cctag []: 
+38: usv1_sysopt  :User server #1: sysopt []: 
+Invalid value: Min length 1
+38: usv1_sysopt  :User server #1: sysopt []: -e ${NDRX_APPHOME}/log/testsv.log      
+39: usv1_appopt  :User server #1: appopt []: 
+50: ucl1         :Configure User client #1 [n]: 
+55: addubf       :Additional UBFTAB files (comma seperated), can be empty []: 
+56: msgsizemax   :Max IPC message size [56000]: 
+57: msgmax       :Max IPC messages in queue [100]: 
+
+*** Review & edit configuration ***
+
+ 0: Edit qpath        :Queue device path [/dev/mqueue]: 
+ 1: Edit nodeid       :Cluster node id [1]: 
+ 2: Edit qprefix      :System code (prefix/setfile name, etc) [app2]: 
+ 3: Edit timeout      :System wide tpcall() timeout, seconds [90]: 
+ 4: Edit appHome      :Application home [/home/user1/bankapp2]: 
+ 6: Edit binDir       :Executables/binaries sub-folder of Apphome [bin]: 
+ 8: Edit confDir      :Configuration sub-folder of Apphome [conf]: 
+ 9: Edit logDir       :Log sub-folder of Apphome [log]: 
+10: Edit ubfDir       :Unified Buffer Format (UBF) field defs sub-folder of Apphome [ubftab]: 
+11: Edit tempDir      :Temp sub-dir (used for pid file) [tmp]: 
+12: Edit installQ     :Configure persistent queue [y]: 
+13: Edit tmDir        :Transaction Manager Logs sub-folder of Apphome [tmlogs]: 
+14: Edit qdata        :Queue data sub-folder of Apphone [qdata]: 
+15: Edit qSpace       :Persistent queue space namme [SAMPLESPACE]: 
+16: Edit qName        :Sample persistent queue name [TESTQ1]: 
+17: Edit qSvc         :Target service for automatic queue for sample Q [TESTSVC1]: 
+18: Edit eventSv      :Install event server [y]: 
+19: Edit cpmSv        :Configure Client Process Monitor Server [y]: 
+20: Edit configSv     :Install Configuration server [y]: 
+21: Edit bridge       :Install bridge connection [y]: 
+22: Edit bridgeRole   :Bridge -> Role: Active(a) or passive(p)? [a]: 
+24: Edit ipc          :Bridge -> IP: Connect to [172.0.0.1]: 
+25: Edit port         :Bridge -> IP: Port number [21003]: 
+26: Edit otherNodeId  :Other cluster node id [2]: 
+27: Edit ipckey       :IPC Key used for System V semaphores [44000]: 
+28: Edit ldbal        :Load balance over cluster [0]: 
+29: Edit ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+30: Edit ubflev       :Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off) [1]: 
+31: Edit tplev        :Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+32: Edit usv1         :Configure User server #1 [y]: 
+33: Edit usv1_name    :User server #1: binary name [testsv]: 
+34: Edit usv1_min     :User server #1: min [1]: 
+35: Edit usv1_max     :User server #1: max [1]: 
+36: Edit usv1_srvid   :User server #1: srvid [2000]: 
+37: Edit usv1_cctag   :User server #1: cctag []: 
+38: Edit usv1_sysopt  :User server #1: sysopt [-e ${NDRX_APPHOME}/log/testsv.log]: 
+39: Edit usv1_appopt  :User server #1: appopt []: 
+50: Edit ucl1         :Configure User client #1 [n]: 
+55: Edit addubf       :Additional UBFTAB files (comma seperated), can be empty []: 
+56: Edit msgsizemax   :Max IPC message size [56000]: 
+57: Edit msgmax       :Max IPC messages in queue [100]: 
+c: Cancel
+w: Accept, write
+Enter the choice [0-57, c, w]: w
+ndrxconfig: [/home/user1/bankapp2/conf/ndrxconfig.xml]
+appini: [/home/user1/bankapp2/conf/app.ini]
+setfile: [/home/user1/bankapp2/conf/setapp2]
+
+
+To start your system, run following commands:
+$ cd /home/user1/bankapp2/conf
+$ source setapp2
+$ xadmin start -y
+
+
+Provision succeed!
+
+ $ ls -l
+total 68
+drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 bin
+drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 conf
+drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 log
+drwxrwxr-x 3 user1 user1  4096 feb 11 16:27 pkg
+drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 qdata
+drwxrwxr-x 8 user1 user1  4096 feb 11 17:05 src
+drwxrwxr-x 3 user1 user1  4096 feb 12 10:32 tmlogs
+drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 tmp
+drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 ubftab
+-rw-rw-r-- 1 user1 user1 30755 feb 12 10:32 ULOG.20170212
+
+--------------------------------------------------------------------------------
+
+Once the system is provisioned, we need to put the symbolic links to our binaries
+to Enduro/X runtime "bin" directory.
+
+--------------------------------------------------------------------------------
+
+$ cd /home/user1/bankapp2/bin
+
+$ ln -s /home/user1/bankapp2/src/clt/testcl .
+
+$ ln -s /home/user1/bankapp2/src/srv/testsv .
+
+--------------------------------------------------------------------------------
+
+Now we are ready to boot up the runtime:
+
+--------------------------------------------------------------------------------
+$ cd /home/user1/bankapp2/conf
+$ . setapp2
+$ xadmin start -y
+Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+EnduroX back-end (ndrxd) is not running
+ndrxd PID (from PID file): 18849
+ndrxd idle instance started.
+exec cconfsrv -k 0myWI5nu -i 1 -e /home/user1/bankapp2/log/cconfsrv.log -r --  :
+	process id=18851 ... Started.
+exec cconfsrv -k 0myWI5nu -i 2 -e /home/user1/bankapp2/log/cconfsrv.log -r --  :
+	process id=18852 ... Started.
+exec tpevsrv -k 0myWI5nu -i 20 -e /home/user1/bankapp2/log/tpevsrv.log -r --  :
+	process id=18853 ... Started.
+exec tpevsrv -k 0myWI5nu -i 21 -e /home/user1/bankapp2/log/tpevsrv.log -r --  :
+	process id=18854 ... Started.
+exec tmsrv -k 0myWI5nu -i 40 -e /home/user1/bankapp2/log/tmsrv-rm1.log -r -- -t1 -l/home/user1/bankapp2/tmlogs/rm1 --  :
+	process id=18855 ... Started.
+exec tmsrv -k 0myWI5nu -i 41 -e /home/user1/bankapp2/log/tmsrv-rm1.log -r -- -t1 -l/home/user1/bankapp2/tmlogs/rm1 --  :
+	process id=18867 ... Started.
+exec tmsrv -k 0myWI5nu -i 42 -e /home/user1/bankapp2/log/tmsrv-rm1.log -r -- -t1 -l/home/user1/bankapp2/tmlogs/rm1 --  :
+	process id=18879 ... Started.
+exec tmqueue -k 0myWI5nu -i 60 -e /home/user1/bankapp2/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1 --  :
+	process id=18891 ... Started.
+exec tpbridge -k 0myWI5nu -i 150 -e /home/user1/bankapp2/log/tpbridge_2.log -r -- -f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30 :
+	process id=18923 ... Started.
+exec testsv -k 0myWI5nu -i 2000 -e /home/user1/bankapp2/log/testsv.log --  :
+	process id=18924 ... Started.
+exec cpmsrv -k 0myWI5nu -i 9999 -e /home/user1/bankapp2/log/cpmsrv.log -r -- -k3 -i1 --  :
+	process id=18929 ... Started.
+Startup finished. 11 processes started.
+--------------------------------------------------------------------------------
+
+
+Now test availability of our test service:
+--------------------------------------------------------------------------------
+$ xadmin psc
+Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+
+This software is released under one of the following licenses:
+GPLv2 (or later) or ATR Baltic's license for commercial use.
+
+ndrxd PID (from PID file): 18849
+Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
+-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----
+1  @CCONF       CCONF        cconfsrv  1     0     0     0ms      0ms      AVAIL
+1  @CCONF       CCONF        cconfsrv  2     0     0     0ms      0ms      AVAIL
+1  @TPEVSUBS    TPEVSUBS     tpevsrv   20    0     0     0ms      0ms      AVAIL
+1  @TPEVUNSUBS  TPEVUNSUBS   tpevsrv   20    0     0     0ms      0ms      AVAIL
+1  @TPEVPOST    TPEVPOST     tpevsrv   20    0     0     0ms      0ms      AVAIL
+1  @TPEVDOPOST  TPEVDOPOST   tpevsrv   20    0     0     0ms      0ms      AVAIL
+1  @TPEVSUBS    TPEVSUBS     tpevsrv   21    0     0     0ms      0ms      AVAIL
+1  @TPEVUNSUBS  TPEVUNSUBS   tpevsrv   21    0     0     0ms      0ms      AVAIL
+1  @TPEVPOST    TPEVPOST     tpevsrv   21    0     0     0ms      0ms      AVAIL
+1  @TPEVDOPOST  TPEVDOPOST   tpevsrv   21    0     0     0ms      0ms      AVAIL
+1  @TM-1        TPTMSRV      tmsrv     40    0     0     0ms      0ms      AVAIL
+1  @TM-1-1      TPTMSRV      tmsrv     40    0     0     0ms      0ms      AVAIL
+1  @TM-1-1-40   TPTMSRV      tmsrv     40    0     0     0ms      0ms      AVAIL
+1  @TM-1        TPTMSRV      tmsrv     41    0     0     0ms      0ms      AVAIL
+1  @TM-1-1      TPTMSRV      tmsrv     41    0     0     0ms      0ms      AVAIL
+1  @TM-1-1-41   TPTMSRV      tmsrv     41    0     0     0ms      0ms      AVAIL
+1  @TM-1        TPTMSRV      tmsrv     42    0     0     0ms      0ms      AVAIL
+1  @TM-1-1      TPTMSRV      tmsrv     42    0     0     0ms      0ms      AVAIL
+1  @TM-1-1-42   TPTMSRV      tmsrv     42    0     0     0ms      0ms      AVAIL
+1  @TMQ-1-60    TMQUEUE      tmqueue   60    0     0     0ms      0ms      AVAIL
+1  @QSPSAMPLES+ TMQUEUE      tmqueue   60    0     0     0ms      0ms      AVAIL
+1  @TPBRIDGE002 TPBRIDGE     tpbridge  150   0     0     0ms      0ms      AVAIL
+1  TESTSVC      TESTSVC      testsv    2000  0     0     0ms      0ms      AVAIL
+1  @CPMSVC      CPMSVC       cpmsrv    9999  0     0     0ms      0ms      AVAIL
+--------------------------------------------------------------------------------
+
+TESTSVC is advertised, thus all is ok. No try will run the test client.
 
 ==== Run the client
-TODO:
+
+--------------------------------------------------------------------------------
+TODO...
+--------------------------------------------------------------------------------
 
 
 numbered!:
