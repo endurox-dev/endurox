@@ -896,7 +896,7 @@ GPLv2 (or later) or ATR Baltic's license for commercial use.
 
 Logging to ./ULOG.20170211
  0: svname       :XATMI Server Name (binary) [testsv]: 
- 1: svcname      :Service name [TESTSVC]: 
+ 1: svcname      :Service name [TESTSV]: 
  2: useubf       :Use UBF? [y]: 
  3: ubfname      :UBF package name [ubftab]: 
  4: genmake      :Gen makefile [y]: 
@@ -905,7 +905,7 @@ Logging to ./ULOG.20170211
 *** Review & edit configuration ***
 
  0: Edit svname       :XATMI Server Name (binary) [testsv]: 
- 1: Edit svcname      :Service name [TESTSVC]: 
+ 1: Edit svcname      :Service name [TESTSV]: 
  2: Edit useubf       :Use UBF? [y]: 
  3: Edit ubfname      :UBF package name [ubftab]: 
  4: Edit genmake      :Gen makefile [y]: 
@@ -1180,7 +1180,7 @@ Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 1  @CPMSVC      CPMSVC       cpmsrv    9999  0     0     0ms      0ms      AVAIL
 --------------------------------------------------------------------------------
 
-TESTSVC is advertised, thus all is ok. No try will run the test client.
+TESTSV is advertised, thus all is ok. No try will run the test client.
 
 ==== Run the client
 
