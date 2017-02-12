@@ -657,15 +657,16 @@ and endurox-go packages to your system and kernel parameters are configured (e.g
 queue settings in case of Linux).
 
 ==== Prepare project folder3
-Lets assume our project will be made at /home/user1/bankapp2. The sources (with
-sub-projects) will go under /home/user1/bankapp2/src. This structure is required
-for Go projects.
+Lets assume our project will be made at $TESTHOME. The sources (with
+sub-projects) will go under $TESTHOME/src. This structure is required
+for Go projects. For Linux operating system we will set $TESTHOME to */home/user1/app2*.
 
 --------------------------------------------------------------------------------
 # useradd -m user1
 # su - user1
-$ mkdir /home/user1/bankapp2
-$ mkdir /home/user1/bankapp2/src
+$ mkdir /home/user1/app2
+$ export TESTHOME=/home/user1/app2
+$ mkdir $TESTHOME/src
 --------------------------------------------------------------------------------
 
 ==== Generate UBF table for both C & Go
@@ -674,8 +675,8 @@ test field definitions will be used for this application. Firstly lets generate 
 headers:
 
 --------------------------------------------------------------------------------
-$ mkdir /home/user1/bankapp2/src/ubftab
-$ cd /home/user1/bankapp2/src/ubftab
+$ mkdir $TESTHOME/src/ubftab
+$ cd $TESTHOME/src/ubftab
 
 $ xadmin gen ubf tab
 Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
@@ -715,9 +716,9 @@ Now we see that 'test.fd.h' is generate. Lets generate Go definitions. Before th
 we will set 'GOPATH' to project root.
 
 --------------------------------------------------------------------------------
-$ cd /home/user1/bankapp2
+$ cd $TESTHOME
 $ export GOPATH=`pwd`
-$ cd /home/user1/bankapp2/src/ubftab
+$ cd $TESTHOME/src/ubftab
 $ xadmin gen ubf tab
 Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
 
@@ -756,14 +757,14 @@ Once the files are generated, we can run off the make:
 
 --------------------------------------------------------------------------------
 
-$ cd /home/user1/bankapp2/src/ubftab
+$ cd $TESTHOME/src/ubftab
 
 $ make
 make -f Mclang
 $SOURCES is [./test.fd Exfields]
 $OUTPUT is [./test.fd.h Exfields.h]
 $FIELDTBLS is [./test.fd,Exfields]
-make[1]: Entering directory `/home/user1/bankapp2/src/ubftab'
+make[1]: Entering directory `$TESTHOME/src/ubftab'
 mkfldhdr -m0 -pubftab
 To control debug output, set debugconfig file path in $NDRX_DEBUG_CONF
 N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0229:Output directory is [.]
@@ -772,17 +773,17 @@ N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0231:Private data [u
 N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0243:Use environment variables
 U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:dtable.c:0114:Using NDRX_UBFMAXFLDS: 16000
 N:NDRX:5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0303:enter generate_files()
-U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0138:Load field dir [/home/user1/bankapp2/src/ubftab]
+U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0138:Load field dir [$TESTHOME/src/ubftab]
 U:UBF :5:  732:2ae627e394c0:000:20170211:163548263:fldhdr.c:0149:About to load fields list [./test.fd,Exfields]
-N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/./test.fd processed OK, output: ./test.fd.h
-N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/Exfields processed OK, output: ./Exfields.h
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0369:$TESTHOME/src/ubftab/./test.fd processed OK, output: ./test.fd.h
+N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0369:$TESTHOME/src/ubftab/Exfields processed OK, output: ./Exfields.h
 N:NDRX:5:  732:2ae627e394c0:000:20170211:163548264:fldhdr.c:0256:Finished with : SUCCESS
-make[1]: Leaving directory `/home/user1/bankapp2/src/ubftab'
+make[1]: Leaving directory `$TESTHOME/src/ubftab'
 make -f Mgolang
 $SOURCES is [./test.fd Exfields]
 $OUTPUT is [./test.fd.go Exfields.go]
 $FIELDTBLS is [./test.fd,Exfields]
-make[1]: Entering directory `/home/user1/bankapp2/src/ubftab'
+make[1]: Entering directory `$TESTHOME/src/ubftab'
 mkfldhdr -m1 -pubftab
 To control debug output, set debugconfig file path in $NDRX_DEBUG_CONF
 N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0229:Output directory is [.]
@@ -791,14 +792,14 @@ N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0231:Private data [u
 N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0243:Use environment variables
 U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:dtable.c:0114:Using NDRX_UBFMAXFLDS: 16000
 N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0303:enter generate_files()
-U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0138:Load field dir [/home/user1/bankapp2/src/ubftab]
+U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0138:Load field dir [$TESTHOME/src/ubftab]
 U:UBF :5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0149:About to load fields list [./test.fd,Exfields]
-N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/./test.fd processed OK, output: ./test.fd.go
-N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0369:/home/user1/bankapp2/src/ubftab/Exfields processed OK, output: ./Exfields.go
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0369:$TESTHOME/src/ubftab/./test.fd processed OK, output: ./test.fd.go
+N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0369:$TESTHOME/src/ubftab/Exfields processed OK, output: ./Exfields.go
 N:NDRX:5:  736:2aad91d474c0:000:20170211:163548271:fldhdr.c:0256:Finished with : SUCCESS
 go build  -o ubftab *.go
 go install  ./...
-make[1]: Leaving directory `/home/user1/bankapp2/src/ubftab'
+make[1]: Leaving directory `$TESTHOME/src/ubftab'
 
 $ ls -l
 total 72
@@ -836,8 +837,8 @@ Now lets generate a C client code which will send the UBF buffer to Go server.
 The generator provides C sample client, let's use it.
 
 --------------------------------------------------------------------------------
-$ mkdir /home/user1/bankapp2/src/clt
-$ cd /home/user1/bankapp2/src/clt
+$ mkdir $TESTHOME/src/clt
+$ cd $TESTHOME/src/clt
 
 $ xadmin gen c client
 Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
@@ -881,10 +882,10 @@ Now lets generate Go server. Before we make the Go app, we need to get the
 *endurox-go* package.
 
 --------------------------------------------------------------------------------
-$ mkdir /home/user1/bankapp2/src/srv
-$ cd /home/user1/bankapp2/src/srv
+$ cd $TESTHOME
 $ go get github.com/endurox-dev/endurox-go
-$ /home/user1/bankapp2/src/srv
+$ mkdir $TESTHOME/src/srv
+$ cd $TESTHOME/src/srv
 $ xadmin gen go server
 Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
 
@@ -931,7 +932,7 @@ this is fully fine. The provision will be done in root directly of "bankapp2".
 
 
 --------------------------------------------------------------------------------
-$ /home/user1/bankapp2
+$ cd $TESTHOME
 
 
 $ ls -l
@@ -965,7 +966,7 @@ Compiled system type....: LINUX
  1: nodeid       :Cluster node id [1]: 
  2: qprefix      :System code (prefix/setfile name, etc) [test1]: app2
  3: timeout      :System wide tpcall() timeout, seconds [90]: 
- 4: appHome      :Application home [/home/user1/bankapp2]: 
+ 4: appHome      :Application home [$TESTHOME]: 
  6: binDir       :Executables/binaries sub-folder of Apphome [bin]: 
  8: confDir      :Configuration sub-folder of Apphome [conf]: 
  9: logDir       :Log sub-folder of Apphome [log]: 
@@ -1011,7 +1012,7 @@ Invalid value: Min length 1
  1: Edit nodeid       :Cluster node id [1]: 
  2: Edit qprefix      :System code (prefix/setfile name, etc) [app2]: 
  3: Edit timeout      :System wide tpcall() timeout, seconds [90]: 
- 4: Edit appHome      :Application home [/home/user1/bankapp2]: 
+ 4: Edit appHome      :Application home [$TESTHOME]: 
  6: Edit binDir       :Executables/binaries sub-folder of Apphome [bin]: 
  8: Edit confDir      :Configuration sub-folder of Apphome [conf]: 
  9: Edit logDir       :Log sub-folder of Apphome [log]: 
@@ -1051,20 +1052,20 @@ Invalid value: Min length 1
 c: Cancel
 w: Accept, write
 Enter the choice [0-57, c, w]: w
-ndrxconfig: [/home/user1/bankapp2/conf/ndrxconfig.xml]
-appini: [/home/user1/bankapp2/conf/app.ini]
-setfile: [/home/user1/bankapp2/conf/setapp2]
+ndrxconfig: [$TESTHOME/conf/ndrxconfig.xml]
+appini: [$TESTHOME/conf/app.ini]
+setfile: [$TESTHOME/conf/setapp2]
 
 
 To start your system, run following commands:
-$ cd /home/user1/bankapp2/conf
+$ cd $TESTHOME/conf
 $ source setapp2
 $ xadmin start -y
 
 
 Provision succeed!
 
- $ ls -l
+$ ls -l
 total 68
 drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 bin
 drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 conf
@@ -1081,27 +1082,27 @@ drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 ubftab
 
 Once the system is provisioned, we need to put the symbolic links to our binaries
 to Enduro/X runtime "bin" directory. Also we will put our test field definition
-file *test.fd* into */home/user1/bankapp2/ubftab* folder.
+file *test.fd* into *$TESTHOME/ubftab* folder.
 
 --------------------------------------------------------------------------------
 
-$ cd /home/user1/bankapp2/bin
+$ cd $TESTHOME/bin
 
-$ ln -s /home/user1/bankapp2/src/clt/testcl .
+$ ln -s $TESTHOME/src/clt/testcl .
 
-$ ln -s /home/user1/bankapp2/src/srv/testsv .
+$ ln -s $TESTHOME/src/srv/testsv .
 
-$ cd /home/user1/bankapp2/ubftab
+$ cd $TESTHOME/ubftab
 
-$ ln -s /home/user1/bankapp2/src/ubftab/test.fd .
+$ ln -s $TESTHOME/src/ubftab/test.fd .
 
 --------------------------------------------------------------------------------
 
 Now we are ready to boot up the runtime:
 
 --------------------------------------------------------------------------------
-$ cd /home/user1/bankapp2/conf
-$ . setapp2
+$ cd $TESTHOME/conf
+$ source setapp2
 $ xadmin start -y
 Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
 
@@ -1114,27 +1115,27 @@ GPLv2 (or later) or ATR Baltic's license for commercial use.
 EnduroX back-end (ndrxd) is not running
 ndrxd PID (from PID file): 18849
 ndrxd idle instance started.
-exec cconfsrv -k 0myWI5nu -i 1 -e /home/user1/bankapp2/log/cconfsrv.log -r --  :
+exec cconfsrv -k 0myWI5nu -i 1 -e $TESTHOME/log/cconfsrv.log -r --  :
 	process id=18851 ... Started.
-exec cconfsrv -k 0myWI5nu -i 2 -e /home/user1/bankapp2/log/cconfsrv.log -r --  :
+exec cconfsrv -k 0myWI5nu -i 2 -e $TESTHOME/log/cconfsrv.log -r --  :
 	process id=18852 ... Started.
-exec tpevsrv -k 0myWI5nu -i 20 -e /home/user1/bankapp2/log/tpevsrv.log -r --  :
+exec tpevsrv -k 0myWI5nu -i 20 -e $TESTHOME/log/tpevsrv.log -r --  :
 	process id=18853 ... Started.
-exec tpevsrv -k 0myWI5nu -i 21 -e /home/user1/bankapp2/log/tpevsrv.log -r --  :
+exec tpevsrv -k 0myWI5nu -i 21 -e $TESTHOME/log/tpevsrv.log -r --  :
 	process id=18854 ... Started.
-exec tmsrv -k 0myWI5nu -i 40 -e /home/user1/bankapp2/log/tmsrv-rm1.log -r -- -t1 -l/home/user1/bankapp2/tmlogs/rm1 --  :
+exec tmsrv -k 0myWI5nu -i 40 -e $TESTHOME/log/tmsrv-rm1.log -r -- -t1 -l$TESTHOME/tmlogs/rm1 --  :
 	process id=18855 ... Started.
-exec tmsrv -k 0myWI5nu -i 41 -e /home/user1/bankapp2/log/tmsrv-rm1.log -r -- -t1 -l/home/user1/bankapp2/tmlogs/rm1 --  :
+exec tmsrv -k 0myWI5nu -i 41 -e $TESTHOME/log/tmsrv-rm1.log -r -- -t1 -l$TESTHOME/tmlogs/rm1 --  :
 	process id=18867 ... Started.
-exec tmsrv -k 0myWI5nu -i 42 -e /home/user1/bankapp2/log/tmsrv-rm1.log -r -- -t1 -l/home/user1/bankapp2/tmlogs/rm1 --  :
+exec tmsrv -k 0myWI5nu -i 42 -e $TESTHOME/log/tmsrv-rm1.log -r -- -t1 -l$TESTHOME/tmlogs/rm1 --  :
 	process id=18879 ... Started.
-exec tmqueue -k 0myWI5nu -i 60 -e /home/user1/bankapp2/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1 --  :
+exec tmqueue -k 0myWI5nu -i 60 -e $TESTHOME/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1 --  :
 	process id=18891 ... Started.
-exec tpbridge -k 0myWI5nu -i 150 -e /home/user1/bankapp2/log/tpbridge_2.log -r -- -f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30 :
+exec tpbridge -k 0myWI5nu -i 150 -e $TESTHOME/log/tpbridge_2.log -r -- -f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30 :
 	process id=18923 ... Started.
-exec testsv -k 0myWI5nu -i 2000 -e /home/user1/bankapp2/log/testsv.log --  :
+exec testsv -k 0myWI5nu -i 2000 -e $TESTHOME/log/testsv.log --  :
 	process id=18924 ... Started.
-exec cpmsrv -k 0myWI5nu -i 9999 -e /home/user1/bankapp2/log/cpmsrv.log -r -- -k3 -i1 --  :
+exec cpmsrv -k 0myWI5nu -i 9999 -e $TESTHOME/log/cpmsrv.log -r -- -k3 -i1 --  :
 	process id=18929 ... Started.
 Startup finished. 11 processes started.
 --------------------------------------------------------------------------------
@@ -1180,7 +1181,7 @@ Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 1  @CPMSVC      CPMSVC       cpmsrv    9999  0     0     0ms      0ms      AVAIL
 --------------------------------------------------------------------------------
 
-TESTSV is advertised, thus all is ok. No try will run the test client.
+*TESTSV* is advertised, thus all is ok. No try will run the test client.
 
 ==== Run the client
 

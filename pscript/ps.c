@@ -16,6 +16,7 @@
 #include <psstdmath.h>
 #include <psstdstring.h>
 #include <psstdaux.h>
+#include <psstdexutil.h>
 
 #ifdef PSUNICODE
 #define scfprintf fwprintf

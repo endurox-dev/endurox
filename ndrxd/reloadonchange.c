@@ -147,7 +147,7 @@ public int roc_is_reload_in_progress(unsigned sanity_cycle)
         if (el->reload_issued)
         {
             /* assume 5 cycles is max */
-            if ((diff=labs(el->sanity_cycle-sanity_cycle)) > ROC_MAX_CYCLES_STAY_IN_RELOAD)
+            if ((diff=labs((long)el->sanity_cycle-(long)sanity_cycle)) > ROC_MAX_CYCLES_STAY_IN_RELOAD)
             {
                 NDRX_LOG(log_error, "Current cycle %u reload cycle %u - assume executed",
                         el->sanity_cycle, sanity_cycle);
