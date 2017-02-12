@@ -19,7 +19,7 @@ class GoServer extends WizardBase {
 	svname = "testsv";
 	
 	</ order=1, name = "Service name", type = "string", min=1, max=32 /> 
-	svcname = "TESTSVC";
+	svcname = "TESTSV";
 	
 	</ order=2, name = "Use UBF?", type = "yn"/> 
 	useubf = "y";
@@ -170,7 +170,7 @@ func Init(ac *atmi.ATMICtx) int {
 			break
 		}
 	}":"")+@"
-	//Advertize TESTSVC
+	//Advertize service
 	if err := ac.TpAdvertise("""+svcname+@""", """+svcname+@""", "+svcname+@"); err != nil {
 		ac.TpLogError(""Failed to Advertise: ATMI Error %d:[%s]\n"", err.Code(), err.Message())
 		return atmi.FAIL

@@ -161,8 +161,9 @@ keyword 'tp'. Facility is defined with macros 'LOG_CODE_TP'. This is process bas
 - 'TP_THREAD', logging facility code 'T' - this is user logs, set on per thread basis. The log level
 is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_THREAD'.
 
-- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on per thread/request basis. 
-The log level is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
+- 'TP_REQUEST', logging facility code 'R' - this is user logs, set on 
+per thread/request basis. The log level is set with keyword 'tp'. 
+Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
 
 === Hierarchy of the  loggers (facilities)
 
@@ -170,13 +171,15 @@ The loggers output the debug content in following order of the facilities status
 (i.e. definition of current logger):
 
 - If 'TP_REQUEST' is open (debug file set), then all logging (NDRX, UBF, TP) will go here.
-The debug level is shared at application level with NDRX, UBF and TP facilities. There will be no
-impact if 'TP_REQUEST' log level is different. The request logging can be open 
-by *tplogsetreqfile(3)*. Logger can be closed by *tplogclosereqfile(3)*.
+The debug level is shared at application level with NDRX, UBF and TP facilities.
+There will be no impact if 'TP_REQUEST' log level is different.
+The request logging can be open by *tplogsetreqfile(3)*. 
+Logger can be closed by *tplogclosereqfile(3)*.
 
 - If 'TP_THREAD' is open (debug file set), then all logs including NDRX, UBF 
-and TP will log here. Thread logger can be open by doing *tplogconfig(LOG_FACILITY_TP_THREAD, ...)*.
-Thread logger can be closed by *tplogclosethread(3)*
+and TP will log here. Thread logger can be open by doing
+*tplogconfig(LOG_FACILITY_TP_THREAD, ...)*. Thread logger can be 
+closed by *tplogclosethread(3)*
 
 If there is no TP_REQUEST or TP_THREAD facilities open, then logging is done on 
 per process basis, where there are 3 facilities which are always open:
@@ -259,8 +262,8 @@ then 'TP_REQUEST' logger will be set to. If field not present, but 'filename' is
 set (not NULL and not EOS),
 then request logger will be set to this file and name will be loaded into buffer.
 If file name is not in the buffer and not in the 'filename' but 'filesvc' present
-then this XATMI service will be called with 'data' buffer and it is expected that field
-'EX_NREQLOGFILE' will be set which then is used for logging.
+then this XATMI service will be called with 'data' buffer and it is expected 
+that field 'EX_NREQLOGFILE' will be set which then is used for logging.
 
 - int tploggetbufreqfile(char *'data', char *'filename', int 'bufsize'); -
 Get the request logging file name from XATMI buffer, basically this returns
@@ -279,8 +282,8 @@ processed by multiple XATMI clients and servers, are logged to single trace file
 This is very useful when system have high load with request. Then administrators 
 can identify single transaction and with this request log file it is possible 
 to view full sequence of operation which system performed. You do not need anymore 
-to grep the big log files (based on each service output) and glue together the picture
-what have happened in system for particular transaction.
+to grep the big log files (based on each service output) and glue
+together the picture what have happened in system for particular transaction.
 
 The basic use of the request logging is following:
 
@@ -368,7 +371,7 @@ t:USER:5:11064:000:20160928:100225252:ogtest.c:0007:Hello from macro logger [log
 So in general log line format is following:
 
 --------------------------------------------------------------------------------
-<LOGGER_FACILITY>:<MODULE>:<LOG_LEVEL>:<PID>:<THREAD_ID>:<DATE>:<TIME_MS>:<SOURCE_FILE>:<LINE>:<MESSAGE>
+<LOGGER_FACILITY>:<MODULE>:<LOG_LEVEL>:<PID>:<OS_THREAD_ID>:<THREAD_ID>:<DATE>:<TIME_MS>:<SOURCE_FILE>:<LINE>:<MESSAGE>
 --------------------------------------------------------------------------------
 
 Where:
@@ -383,6 +386,8 @@ Where:
 - 'LOG_LEVEL' - message log level digit.
 
 - 'PID' - process id.
+
+- 'OS_THREAD_ID' - Operating system thread id (provided by libc or so).
 
 - 'THREAD_ID' - internal Enduro/X thread identifier.
 
@@ -450,10 +455,11 @@ Thus Enduro/X provides following header files for Object-API:
 - oatmisrv.h - ATMI server operations via ATMI Object.
 
 
-The API basically consists of all UBF and ATMI functions, they are prefixed with letter 'O'
-and as first parameter all of them consume 'TPCONTEXT_T' typed parameter. Which basically is
-pointer to heap stored ATMI Object. This ATMI Object also includes links to Standard library
-and UBF library heap allocated objects.
+The API basically consists of all UBF and ATMI functions, they are prefixed 
+with letter 'O' and as first parameter all of them consume 'TPCONTEXT_T' typed
+parameter. Which basically is pointer to heap stored ATMI Object.
+This ATMI Object also includes links to Standard library and UBF 
+library heap allocated objects.
 
 Every Object-API function basically does following:
 
@@ -464,7 +470,7 @@ Every Object-API function basically does following:
 3. Unset/get (call of 'tpsetctxt()') the thread local data;
 
 
-During the Enduro/X C library works, it is assumed that is not preemptible for 
+During the Enduro/X C library works, it is assumed that is not preemptive for 
 cooperative threads. Thus above scheme will work for every framework that comply 
 with rule (and mostly it does, because it will break the rules of 
 library C/C++ processing).
@@ -585,11 +591,13 @@ for C, or Go package which constants of the field definitions.
 - *c server* - Generate C server. The server can have a common configuration. Wizard
 offers some options like building a makefile and using a UBF buffer.
 
-- *c client* - Generate C client application. This make sample C client app which in case
-if UBF buffer is select for data buffer, the sample call is made to *TESTSV* XATMI service.
+- *c client* - Generate C client application. This make sample C client app 
+which in case if UBF buffer is select for data buffer, the sample call 
+is made to *TESTSV* XATMI service.
 
-- *go server* - Go server which depends on *endurox-go* package. Thus in project path the
-endurox-go package must be installed. (See the sample bellow).
+- *go server* - Go server which depends on *endurox-go* package.
+Thus in project path the endurox-go package must be installed. 
+(See the sample bellow).
 
 - *go client* - Generate Go XATMI client process. As with Go server, 
 it requires that endurox-go is installed in project path. 
@@ -979,7 +987,7 @@ Compiled system type....: LINUX
 26: otherNodeId  :Other cluster node id [2]: 
 27: ipckey       :IPC Key used for System V semaphores [44000]: 
 28: ldbal        :Load balance over cluster [0]: 
-29: ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+29: ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]:2 
 30: ubflev       :Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off) [1]: 
 31: tplev        :Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
 32: usv1         :Configure User server #1 [n]: y
@@ -990,10 +998,10 @@ Compiled system type....: LINUX
 37: usv1_cctag   :User server #1: cctag []: 
 38: usv1_sysopt  :User server #1: sysopt []: 
 Invalid value: Min length 1
-38: usv1_sysopt  :User server #1: sysopt []: -e ${NDRX_APPHOME}/log/testsv.log      
+38: usv1_sysopt  :User server #1: sysopt []: -e ${NDRX_APPHOME}/log/testsv.log
 39: usv1_appopt  :User server #1: appopt []: 
 50: ucl1         :Configure User client #1 [n]: 
-55: addubf       :Additional UBFTAB files (comma seperated), can be empty []: 
+55: addubf       :Additional UBFTAB files (comma seperated), can be empty []: test.fd
 56: msgsizemax   :Max IPC message size [56000]: 
 57: msgmax       :Max IPC messages in queue [100]: 
 
@@ -1025,7 +1033,7 @@ Invalid value: Min length 1
 26: Edit otherNodeId  :Other cluster node id [2]: 
 27: Edit ipckey       :IPC Key used for System V semaphores [44000]: 
 28: Edit ldbal        :Load balance over cluster [0]: 
-29: Edit ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+29: Edit ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [2]: 
 30: Edit ubflev       :Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off) [1]: 
 31: Edit tplev        :Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
 32: Edit usv1         :Configure User server #1 [y]: 
@@ -1037,7 +1045,7 @@ Invalid value: Min length 1
 38: Edit usv1_sysopt  :User server #1: sysopt [-e ${NDRX_APPHOME}/log/testsv.log]: 
 39: Edit usv1_appopt  :User server #1: appopt []: 
 50: Edit ucl1         :Configure User client #1 [n]: 
-55: Edit addubf       :Additional UBFTAB files (comma seperated), can be empty []: 
+55: Edit addubf       :Additional UBFTAB files (comma seperated), can be empty [test.fd]: 
 56: Edit msgsizemax   :Max IPC message size [56000]: 
 57: Edit msgmax       :Max IPC messages in queue [100]: 
 c: Cancel
@@ -1072,7 +1080,8 @@ drwxrwxr-x 2 user1 user1  4096 feb 12 10:32 ubftab
 --------------------------------------------------------------------------------
 
 Once the system is provisioned, we need to put the symbolic links to our binaries
-to Enduro/X runtime "bin" directory.
+to Enduro/X runtime "bin" directory. Also we will put our test field definition
+file *test.fd* into */home/user1/bankapp2/ubftab* folder.
 
 --------------------------------------------------------------------------------
 
@@ -1081,6 +1090,10 @@ $ cd /home/user1/bankapp2/bin
 $ ln -s /home/user1/bankapp2/src/clt/testcl .
 
 $ ln -s /home/user1/bankapp2/src/srv/testsv .
+
+$ cd /home/user1/bankapp2/ubftab
+
+$ ln -s /home/user1/bankapp2/src/ubftab/test.fd .
 
 --------------------------------------------------------------------------------
 
@@ -1138,7 +1151,7 @@ Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
 This software is released under one of the following licenses:
 GPLv2 (or later) or ATR Baltic's license for commercial use.
 
-ndrxd PID (from PID file): 18849
+ndrxd PID (from PID file): 6119
 Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 -- ------------ ------------ --------- ----- ----- ----- -------- -------- -----
 1  @CCONF       CCONF        cconfsrv  1     0     0     0ms      0ms      AVAIL
@@ -1163,7 +1176,7 @@ Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 1  @TMQ-1-60    TMQUEUE      tmqueue   60    0     0     0ms      0ms      AVAIL
 1  @QSPSAMPLES+ TMQUEUE      tmqueue   60    0     0     0ms      0ms      AVAIL
 1  @TPBRIDGE002 TPBRIDGE     tpbridge  150   0     0     0ms      0ms      AVAIL
-1  TESTSVC      TESTSVC      testsv    2000  0     0     0ms      0ms      AVAIL
+1  TESTSV       TESTSV       testsv    2000  0     0     0ms      0ms      AVAIL
 1  @CPMSVC      CPMSVC       cpmsrv    9999  0     0     0ms      0ms      AVAIL
 --------------------------------------------------------------------------------
 
@@ -1171,9 +1184,21 @@ TESTSVC is advertised, thus all is ok. No try will run the test client.
 
 ==== Run the client
 
+We will run the client by simply invoking in shell *testcl* binary. The working
+progress will be logged on output.
 --------------------------------------------------------------------------------
-TODO...
+$ testcl 
+t:USER:4: 6845:7fd1d85b47c0:000:20170212:191211999:testcl.c:0044:Initializing...
+t:USER:4: 6845:7fd1d85b47c0:000:20170212:191212000:testcl.c:0090:Processing...
+T_STRING_FLD	Hello world!
+T_STRING_2_FLD	Hello World from XATMI server
+t:USER:4: 6845:7fd1d85b47c0:000:20170212:191212004:testcl.c:0129:Got response from server: [Hello World from XATMI server]
+t:USER:4: 6845:7fd1d85b47c0:000:20170212:191212004:testcl.c:0069:Uninitializing...
 --------------------------------------------------------------------------------
+
+Thus as we see from the sample run it did call the server and got back the response
+"Hello World from XATMI server". Thus we can conclude that server and client was
+successfully generated and runtime provisioned.
 
 
 numbered!:

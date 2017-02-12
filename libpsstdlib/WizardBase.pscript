@@ -101,22 +101,34 @@ class WizardBase {
 		local empty = false;
 		if (attr["type"]=="number")
 		{
-			if (attr.rawin("min"))
+			try
 			{
-				if ((value.tointeger()) < (attr["min"]))
+				if (attr.rawin("min"))
 				{
-					print("Invalid value: Min length "+attr["min"]+"\n");
-					return 0;
+					if ((value.tointeger()) < (attr["min"]))
+					{
+						print("Invalid value: Min length "+
+							attr["min"]+"\n");
+						return 0;
+					}
 				}
+				
+				if (attr.rawin("max"))
+				{
+					if ((value.tointeger()) > (attr["max"]))
+					{
+						print("Invalid value: Max length "+
+							attr["max"]+"\n");
+						return 0;
+					}
+				}
+				
+				local test = value.tointeger();
 			}
-			
-			if (attr.rawin("max"))
+			catch (e)
 			{
-				if ((value.tointeger()) > (attr["max"]))
-				{
-					print("Invalid value: Max length "+attr["max"]+"\n");
-					return 0;
-				}
+				print("Invalid number!\n");
+				return 0;
 			}
 		}
 		else

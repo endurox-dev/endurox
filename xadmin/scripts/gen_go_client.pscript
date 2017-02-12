@@ -74,6 +74,34 @@ var MSomeOtherConfigFlag int = 0
 func apprun(ac *atmi.ATMICtx) error {
 
 	//Do some work here
+"+(useubf=="y"?@"
+	ac, err := atmi.NewATMICtx()
+
+	if nil != err {
+		return errors.New(err.Error());
+	}
+	
+	buf, err := ac.NewUBF(1024)
+
+	if err != nil {
+		return errors.New(err.Error());
+	}
+	
+	//Set some field for call
+	if err := buf.BChg(u.T_STRING_FLD, 0, ""Hello world!""); nil != err {
+		return errors.New(err.Error());
+	}
+	
+	//Call the server
+	if _, err := ac.TpCall(""TESTSV"", buf, 0); nil != err {
+		return errors.New(err.Error());
+	}
+	
+	//Print response
+	buf.TpLogPrintUBF(atmi.LOG_DEBUG, ""Got response"")
+	
+"
+:"")+@"
 
 	return nil
 }
