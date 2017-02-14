@@ -224,13 +224,13 @@ public int cmd_gen_load_scripts(void)
             
             LL_FOREACH(flist,elt)
             {
-                len = strlen(flist->qname);
+                len = strlen(elt->qname);
                 
-                if (len>8 && 0==strncmp(flist->qname+(len-8), ".pscript", 8)
+                if (len>8 && 0==strncmp(elt->qname+(len-8), ".pscript", 8)
                         /* name shall match gen_<lang>_<type>.pscript */
                     )
                 {
-                    strncpy(tmp, flist->qname, sizeof(tmp));
+                    strncpy(tmp, elt->qname, sizeof(tmp));
                     tmp[sizeof(tmp)-1] = EOS;
                     
                     
@@ -273,7 +273,7 @@ public int cmd_gen_load_scripts(void)
                     }
                     
                     /* ok it is ours.. */
-                    snprintf(path, sizeof(path), "%s%s", val->val, flist->qname);
+                    snprintf(path, sizeof(path), "%s%s", val->val, elt->qname);
                     
 #ifdef GEN_DEBUG
                     fprintf(stdout, "Adding resource: cmd [%s] file [%s]\n", 

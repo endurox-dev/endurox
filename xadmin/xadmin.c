@@ -602,7 +602,7 @@ public int un_init(void)
  * Caller must ensure that backend is not running.
  * @return
  */
-public int ndrx_start_idle()
+public int ndrx_start_idle(void)
 {
     int ret=SUCCEED;
 
