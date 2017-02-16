@@ -5,7 +5,7 @@ BFLDID(3)
 
 NAME
 ----
-Bfldid - projection on buffer
+Bfldid - Get UBF field id from field name
 
 
 SYNOPSIS
