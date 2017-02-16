@@ -34,6 +34,7 @@ extern "C" {
 #define TPRECVONLY	0x00001000
 #define TPACK		0x00002000
 #define TPTRANSUSPEND	0x00040000	/* Suspend current transaction */
+#define TPSOFTTIMEOUT	0x00080000	/* Soft timout condition -> ret TPETIME */
 
 #define TPEVSERVICE	0x00000001
 #define TPEVPERSIST	0x00000008

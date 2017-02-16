@@ -26,6 +26,10 @@ Function is used to terminate service processing and return control to caller. T
 
 *TPFAIL* service terminated with failure. In case of global transaction, this return value will mark it as abort only.
 
+*'flags'* values:
+
+*TPSOFTTIMEOUT* soft timeout occurred. This can be used to simulate *TPETIME* error for caller. In this case 'rcode' is set to *TPETIME*, that is later used at client side for *tpreturn(3)* to respond with XATMI error.
+
 
 This function is available only for XATMI servers.
 

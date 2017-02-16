@@ -216,6 +216,16 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     data_len = sizeof(tp_command_call_t)+call->data_len;
     call->command_id = ATMI_COMMAND_TPREPLY;
     
+    /* If this is gateway timeout, then set the flags accordingly */
+    
+    if (flags & TPSOFTTIMEOUT)
+    {
+        NDRX_LOG(log_error, "TPSOFTTIMEOUT present -> returning service error TPETIME!");
+        call->sysflags |=SYS_FLAG_REPLY_ERROR;
+        call->rcode = TPETIME;
+        ret=FAIL;
+    }
+    
     /* keep the timer from last call. */
     call->timer = last_call->timer;
     
