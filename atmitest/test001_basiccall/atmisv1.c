@@ -38,7 +38,14 @@
 #include <test.fd.h>
 #include <string.h>
 #include <unistd.h>
-/*
+
+void SOFTTOUT(TPSVCINFO *p_svc)
+{
+    /* Return Software generated timeout */
+    tpreturn (TPFAIL, 0L, (char *)p_svc->data, 0L, TPSOFTTIMEOUT);
+}
+
+/**
  * Service does not return anything...
  */
 void NULLSV (TPSVCINFO *p_svc)
@@ -91,8 +98,6 @@ void RETSOMEDATA(TPSVCINFO *p_svc)
  */
 void ECHO(TPSVCINFO *p_svc)
 {
-    int first=1;
-
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     /* Return OK */
@@ -325,6 +330,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     else if (SUCCEED!=tpadvertise("SLEEP20", SLEEP20))
     {
         NDRX_LOG(log_error, "Failed to initialize SLEEP20!");
+    }
+    else if (SUCCEED!=tpadvertise("SOFTTOUT", SOFTTOUT))
+    {
+        NDRX_LOG(log_error, "Failed to advertise SOFTTOUT!");
     }
     
 #if 0

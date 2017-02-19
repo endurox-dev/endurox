@@ -181,13 +181,31 @@ int main(int argc, char** argv) {
             ret=FAIL;
             goto out;
         }
-
+        
         /* Do Another test, but now we will wait! */
         NDRX_LOG(log_debug, "Do third call to timeout-server, TPNOTIME");
         if (FAIL == tpcall("TIMEOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
                 &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+        
+        /* test soft-timeout service */
+        if (FAIL == tpcall("SOFTTOUT", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "SOFTTOUT failed: %s", tpstrerror(tperrno));
+            if (TPETIME!=tperrno)
+            {
+                NDRX_LOG(log_debug, "No timeout err from SOFTTOUT!!!");
+                ret=FAIL;
+                goto out;
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "No timeout from SOFTTOUT!!!");
             ret=FAIL;
             goto out;
         }
