@@ -224,6 +224,13 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->sysflags |=SYS_FLAG_REPLY_ERROR;
         call->rcode = TPETIME;
         ret=FAIL;
+    } 
+    else if (flags & TPSOFTENOENT)
+    {
+        NDRX_LOG(log_error, "TPSOFTENOENT present -> returning service error TPENOENT!");
+        call->sysflags |=SYS_FLAG_REPLY_ERROR;
+        call->rcode = TPENOENT;
+        ret=FAIL;
     }
     
     /* keep the timer from last call. */
