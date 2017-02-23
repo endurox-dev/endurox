@@ -93,6 +93,7 @@ EX_DATA                 151     carray  -       unified data field
 EX_DATA_BUFTYP          152     short   -       ATMI buffer type ID
 EX_TSTAMP1_STR          153     string   -      Time stamp, yyyyMMddHHmmssSSS
 EX_TSTAMP2_STR          154     string   -      Time stamp, yyyyMMddHHmmssSSS
+EX_DATA_STR             155     string  -       Generic string data
 
 ################################################################################
 # Persistant Queue:

@@ -70,6 +70,7 @@
 #define	EX_DATA_BUFTYP	((BFLDID32)252)	/* number: 252	 type: short */
 #define	EX_TSTAMP1_STR	((BFLDID32)167772413)	/* number: 253	 type: string */
 #define	EX_TSTAMP2_STR	((BFLDID32)167772414)	/* number: 254	 type: string */
+#define	EX_DATA_STR	((BFLDID32)167772415)	/* number: 255	 type: string */
 #define	EX_QSPACE	((BFLDID32)167772460)	/* number: 300	 type: string */
 #define	EX_QNAME	((BFLDID32)167772461)	/* number: 301	 type: string */
 #define	EX_QFLAGS	((BFLDID32)33554734)	/* number: 302	 type: long */

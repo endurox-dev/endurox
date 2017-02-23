@@ -106,14 +106,28 @@
 			<max>2</max>
 			<sysopt>-e /tmp/ATMISV20_1 -r</sysopt>
 		</server>
-		<server name="gtest">
+
+            <server name="tmsrv">
+                <max>1</max>
+                <srvid>1650</srvid>
+                <sysopt>-e /tmp/tmsrv-dom1.log -r -- -t1 -l/tmp</sysopt>
+            </server>
+
+            <server name="tmqueue">
+                <max>1</max>
+                <srvid>1660</srvid>
+                <sysopt>-e /tmp/tmqueue-dom1.log -r -- -m MYSPACE -s1</sysopt>
+            </server>
+
+		<server name="cconfsrv">
 			<srvid>1700</srvid>
-			<min>10</min>
-			<max>10</max>
-			<sysopt>-e /tmp/GOTEST -r -- YOPT=1</sysopt>
+			<min>1</min>
+			<max>1</max>
+			<sysopt>-e /tmp/CCONF</sysopt>
 		</server>
 		<server name="cpmsrv">
 			<srvid>9999</srvid>
+                        <cctag>YOMENT</cctag>
 			<min>1</min>
 			<max>1</max>
 			<sysopt>-e /tmp/CPMSRV -r -- -i10 -k5</sysopt>
@@ -127,6 +141,9 @@
 		</client>
 		<client cmdline="firefox"> <exec tag="FF"/> </client>
 		<client cmdline="/tmp/test.bin" env="/tmp/yopt.env"> <exec tag="TT" log="/tmp/test.out"/> </client>
+                <client cmdline="mongod -dbpath /home/mvitolin/tmp/data/db" >
+                        <exec tag="mongo" autostart="Y"/>
+                </client>
 	</clients>
 </endurox>
 
