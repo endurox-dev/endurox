@@ -1,4 +1,5 @@
-/* )
+/*
+** Test expression compiler & evaluator
 **
 ** @file test_expr.c
 ** 
@@ -379,6 +380,17 @@ Ensure(test_expr_basic_equality)
         assert_equal(Bboolev(p_ub, tree), TRUE);        
         
         Btreefree(tree);
+    /*----------------------------------------------------------*/
+       
+        tree=Bboolco ("(T_STRING_9_FLD %% '79.*') || (T_STRING_10_FLD %% '79.*') || (T_STRING_FLD %% '79.*')");
+        assert_not_equal(tree, NULL);
+        
+        /* Above stuff should be false, because we have correct data */
+        load_expr_test_data_1(p_ub);
+        assert_equal(Bboolev(p_ub, tree), FALSE);
+        
+        Btreefree(tree);
+
     /*----------------------------------------------------------*/
         /* test FB-to-FB equality */
 
