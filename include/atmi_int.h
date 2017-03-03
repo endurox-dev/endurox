@@ -334,6 +334,9 @@ struct tp_command_call
     ATMI_XA_TX_INFO_FIELDS;
     /* <XA section end> */
     
+    /* Have a ptr to auto-buffer: */
+    buffer_obj_t * autobuf;
+    
     long data_len;
     char data[0];
 };

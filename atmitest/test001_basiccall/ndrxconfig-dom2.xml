@@ -52,7 +52,7 @@
 		<!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
 		to process until it have been terminated. -->
 		<killtime>20</killtime>
-		<exportsvcs>TESTSV,TIMEOUTSV,NULLSV,RETSOMEDATA,ECHO,UNIXINFO,UNIX2</exportsvcs>
+		<exportsvcs>TESTSV,TIMEOUTSV,NULLSV,RETSOMEDATA,ECHO,UNIXINFO,UNIX2,SOFTTOUT</exportsvcs>
 	</defaults>
 	<servers>
 		<server name="atmi.sv1">

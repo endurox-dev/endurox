@@ -35,7 +35,8 @@ extern "C" {
 #define TPACK		0x00002000
 #define TPTRANSUSPEND	0x00040000	/* Suspend current transaction */
 #define TPSOFTTIMEOUT	0x00080000	/* Soft timout condition -> ret TPETIME */
-#define TPSOFTENOENT     0x00100000	/* Simulate that service is not found */
+#define TPSOFTENOENT    0x00100000	/* Simulate that service is not found */
+#define TPNOAUTBUF      0x00200000	/* Don't restore autbuf in srv context */
 
 #define TPEVSERVICE	0x00000001
 #define TPEVPERSIST	0x00000008

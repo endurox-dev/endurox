@@ -274,11 +274,23 @@ return_to_main:
     /* Hmm we can free up the data? 
      * - well mvitolin 16/01/2017 - only auto buffers & this one.
      * Not sure how with Tuxedo multi-threading?
+     * - mvitolin 03/03/2017 - will make free any buffer
      */
-    if (NULL!=data && _tpisautobuf(data))
+    if (NULL!=data)
     {
-         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, data);
+        if (NULL!=last_call->autobuf && last_call->autobuf->buf==data)
+        {
+            last_call->autobuf=NULL;
+        }
+         NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
         _tpfree(data, NULL);
+    }
+
+    if (NULL!=last_call->autobuf)
+    {
+         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
+        _tpfree(last_call->autobuf->buf, NULL);
+        last_call->autobuf = NULL;
     }
 
     /* server thread, no long jump... (thread should kill it self.)*/
@@ -454,10 +466,21 @@ public void _tpforward (char *svc, char *data,
 
 out:
 
-    if (NULL!=data && _tpisautobuf(data))
+    if (NULL!=data)
     {
-         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, data);
+        if (last_call->autobuf && last_call->autobuf->buf==data)
+        {
+            last_call->autobuf=NULL;
+        }
+         NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
         _tpfree(data, NULL);
+    }
+
+    if (last_call->autobuf)
+    {
+         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
+        _tpfree(last_call->autobuf->buf, NULL);
+        last_call->autobuf = NULL;
     }
 
     NDRX_LOG(log_debug, "%s return %d (information only)", fn, ret);

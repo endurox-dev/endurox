@@ -18,17 +18,30 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 
 DESCRIPTION
 -----------
-Restore context data from previously saved (*tpsrvgetctxdata()*) context data. The 'data' field is value returned by *tpsrvgetctxdata()*. This function is needed for multi threaded server, in order to restore tpcall() data in worker thread. 'flags' is reserved for future use and shall be set to 0. If global transaction was running in main thread for which *tpsrvgetctxdata()* was called, then *tpsrvsetctxdata()* will resume the global transaction in current thread.
+Restore context data from previously saved (*tpsrvgetctxdata()*) context data. 
+The 'data' field is value returned by *tpsrvgetctxdata()*. This function is 
+needed for multi threaded server, in order to restore tpcall() data in worker thread. 
+If global transaction was running in main thread for which *tpsrvgetctxdata()* 
+was called, then *tpsrvsetctxdata()* will resume the global transaction in current thread.
 
 This function is available only for XATMI servers.
 
+*Valid flags*
+
+*TPNOAUTBUF* Do not restore auto buffer when restoring the server context. 
+This can be suitable in case if buffer is already made free by initial service thread
+and the target server/service does not know anything about given pointer. E.g.
+the context is copied to different process.
+
 RETURN VALUE
 ------------
-On success, *tpsrvsetctxdata()* return pointer to context data block; on error, NULL is returned, with *tperrno* set to indicate the error.
+On success, *tpsrvsetctxdata()* return pointer to context data block; on error, 
+NULL is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
 
 *TPEINVAL* 'data' is NULL.
 

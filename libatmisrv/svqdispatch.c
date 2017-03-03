@@ -385,6 +385,8 @@ public int sv_serve_call(int *service, int *status)
             }
         }
         
+        last_call->autobuf = outbufobj;
+        
         /* For golang integration we need to know at service the function name */
         strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         
@@ -550,8 +552,19 @@ public int sv_serve_connect(int *service, int *status)
         /* set the client id to caller */
         strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
         
+        
         *last_call = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
+        
+        if (NULL!=request_buffer)
+        {
+            last_call->autobuf=find_buffer(request_buffer);
+            last_call->autobuf->autoalloc = 1; 
+        }
+        else
+        {
+            last_call->autobuf = NULL;
+        }
 
         /* Because we are in conversation, we should make a special cd
          * for case when we are as server

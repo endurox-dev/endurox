@@ -105,6 +105,7 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.4.3 released on 26/01/2017. Memory leak fixes for tmsrv and tmqueue servers.
 - Version 3.4.4 released on 26/01/2017. Works on documentation. Fixes on PScript.
 - Version 3.4.5 released on 14/02/2017. Fixes in generators.
+- Version 3.5.1 released on 03/03/2017. Updates on tpreturn() - more correct processing as in Tuxedo, free up return buffer + free up auto buffer.
 
 # Build configurations
 

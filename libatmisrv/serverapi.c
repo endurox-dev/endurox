@@ -353,6 +353,11 @@ public int tpsrvsetctxdata (char *data, long flags)
     /* Add the additional flags to the user. */
     last_call->sysflags |= flags;
     
+    if (flags & TPNOAUTBUF)
+    {
+        last_call->autobuf = NULL;
+    }
+    
     if (ctxdata->is_in_global_tx && SUCCEED!=tpresume(&ctxdata->tranid, 0))
     {
         userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));

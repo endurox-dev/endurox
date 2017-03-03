@@ -14,21 +14,42 @@ SYNOPSIS
 
 void tpreturn(int 'rval', long 'rcode', char *'data', long 'len', long 'flags');
 
-Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd 
+-lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Function is used to terminate service processing and return control to caller. The return buffer 'data' must be auto buffer or allocated by *tpalloc()*. Len is needed in case if buffer type is not self describing. Internally function uses long jump to get back to internal message polling mechanisms. *tpreturn()* is used for normal service calls and for conversational service calls. *tpdiscon()* shall not be used by service program, but use *tpreturn()* instead. 'rcode' field is used by user program, to return back the specific value to caller.
+Function is used to terminate service processing and return control to caller. 
+The return buffer 'data' must be auto buffer or allocated by *tpalloc()*. In either
+case the buffer's are made free by Enduro/X. I.e. The original request buffer
+is made free (if available) and the return buffer is made free too, if different
+than request buffer. 
+
+In case if doing call state transfer over the non XATMI sub-system, then at doing
+*tpsrvsetctxdata(3)* the flag *TPNOAUTBUF* flag must be specified, and the original
+transaction received prior doing *tpcontinue(3)* shall make the auto buffer free.
+
+Normally the auto-buffer shall not be made free by user, as that will cause the
+corruption at the state of the *tpreturn*.
+
+'Len' is needed in case if buffer type is not self describing. Internally function uses 
+long jump to get back to internal message polling mechanisms. *tpreturn()* is 
+used for normal service calls and for conversational service calls. *tpdiscon()* 
+shall not be used by service program, but use *tpreturn()* instead. 'rcode' 
+field is used by user program, to return back the specific value to caller.
 
 *'rval'* values:
 
 *TPSUCCESS* service terminated with success.
 
-*TPFAIL* service terminated with failure. In case of global transaction, this return value will mark it as abort only.
+*TPFAIL* service terminated with failure. In case of global transaction, this 
+return value will mark it as abort only.
 
 *'flags'* values:
 
-*TPSOFTTIMEOUT* soft timeout occurred. This can be used to simulate *TPETIME* error for caller. In this case 'rcode' is set to *TPETIME*, that is later used at client side for *tpreturn(3)* to respond with XATMI error.
+*TPSOFTTIMEOUT* soft timeout occurred. This can be used to simulate *TPETIME* 
+error for caller. In this case 'rcode' is set to *TPETIME*, that is later used 
+at client side for *tpreturn(3)* to respond with XATMI error.
 
 
 This function is available only for XATMI servers.
