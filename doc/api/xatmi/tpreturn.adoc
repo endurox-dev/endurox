@@ -25,12 +25,14 @@ case the buffer's are made free by Enduro/X. I.e. The original request buffer
 is made free (if available) and the return buffer is made free too, if different
 than request buffer. 
 
-In case if doing call state transfer over the non XATMI sub-system, then at doing
-*tpsrvsetctxdata(3)* the flag *TPNOAUTBUF* flag must be specified, and the original
-transaction received prior doing *tpcontinue(3)* shall make the auto buffer free.
-
 Normally the auto-buffer shall not be made free by user, as that will cause the
-corruption at the state of the *tpreturn*.
+corruption at the stage of the *tpreturn*. But auto-buffer free by user can be
+suitable in case if doing call state transfer over the non XATMI sub-system, 
+then call context restore in other OS process with *tpsrvsetctxdata(3)* 
+must be done with *TPNOAUTBUF* flag specified, and the original service which 
+received request prior doing *tpcontinue(3)* shall make the auto buffer free *tpfree(3)*.
+If the 'TPNOAUTBUF' was specified at state restore, then tpreturn() command will
+not try to free the auto buffer.
 
 'Len' is needed in case if buffer type is not self describing. Internally function uses 
 long jump to get back to internal message polling mechanisms. *tpreturn()* is 
