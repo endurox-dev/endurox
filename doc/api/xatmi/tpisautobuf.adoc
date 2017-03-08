@@ -1,0 +1,62 @@
+TPISAUTOBUF(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpisautobuf - Test is XATMI buffer an automatically allocated
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpisautobuf (char *'buf');
+
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf
+-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Test the buffer for marking of 'automatically allocated' by Enduro/X. Such buffers
+are made at point when they are passed to XATMI service routine by Enduro/X XATMI
+sub-system. In case if buffer is automatically allocated, return value will be *1*,
+in case if allocated by user's *tpalloc(3)* function will return *0*. In case
+of failure *-1* is returned. Function can be called by XATMI client, normally
+client processes allocates buffers are manually, but there could be
+one exception when multi-threaded XATMI server's main thread passed service 
+call 'object' to it's companion XATMI client thread by using *tpsrvgetctxdata(3)*
+and *tpsrvsetctxdata(3)*. In that case client process can get auto-buffer.
+
+
+RETURN VALUE
+------------
+If buffer is auto-allocated, *tpisautobuf()* return 1; If manually by *tpalloc(3)*
+0 is returned; in case of error, -1 is returned, with *tperrno* set to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
+
+*TPEINVAL* Invalid parameter is given to function. Either 'buf' is NULL or 
+'buf' not allocated by *tpalloc()*
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpalloc(3)* *tpfree(3)* *tpsrvgetctxdata(3)* *tpsrvsetctxdata(3)*
+
+COPYING
+-------
+(C) Mavimax, SIA
+
