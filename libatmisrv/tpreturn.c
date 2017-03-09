@@ -82,12 +82,16 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     tp_command_call_t * last_call;
     
-    /* client with out last call is acceptable...! */
+    /* client with last call is acceptable...! 
+     * As it can be a server's companion thread
+     */
     last_call = ndrx_get_G_last_call();
     if (p_atmi_lib_conf->is_client && !last_call->cd)
     {
         /* this is client */
-        NDRX_LOG(log_debug, "tpreturn is not available for clients!!!");
+        NDRX_LOG(log_debug, "tpreturn is not available for clients "
+                "(is_client=%d, cd=%d)!!!", p_atmi_lib_conf->is_client, 
+                last_call->cd);
         _TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
         return; /* <<<< RETURN */
     }
@@ -352,7 +356,10 @@ public void _tpforward (char *svc, char *data,
     
     NDRX_LOG(log_debug, "%s enter", fn);
 
-    /* client with out last call is acceptable...! */
+    /* client with last call is acceptable...! 
+     * It can be servers companion thread.
+     * TODO: Add the check.
+     */
     last_call = ndrx_get_G_last_call();
     
     memset(call, 0, sizeof(*call)); /* have some safety net */

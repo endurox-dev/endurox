@@ -247,7 +247,7 @@ public int tpext_delb4pollcb(void)
  * Set server flags, this will be used by bridge.
  * @param flags
  */
-public void	tpext_configbrige 
+public void tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type))
 {
     
@@ -276,8 +276,10 @@ public char * tpsrvgetctxdata (void)
     server_ctx_info_t *ret = NDRX_MALLOC(sizeof(server_ctx_info_t));
     tp_command_call_t *last_call = ndrx_get_G_last_call();
     tp_conversation_control_t *p_accept_con;
+    char *fn = "tpsrvgetctxdata";
     
     API_ENTRY;
+    
     if (NULL==ret)
     {
         _TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
@@ -308,7 +310,9 @@ public char * tpsrvgetctxdata (void)
     memcpy(&ret->G_accepted_connection, p_accept_con, sizeof(*p_accept_con));
     memset(p_accept_con, 0, sizeof(*p_accept_con));
     
-out:    
+out:
+    NDRX_LOG(log_debug, "%s: returning %p (last call cd: %d)", 
+        fn, ret, ret->G_last_call.cd);
     return (char *)ret;
 }
 
@@ -326,6 +330,10 @@ public int tpsrvsetctxdata (char *data, long flags)
     char *fn = "tpsrvsetctxdata";
     tp_conversation_control_t *p_accept_con;
     tp_command_call_t * last_call = ndrx_get_G_last_call();
+    
+    NDRX_LOG(log_debug, "%s: data=%p flags=%ld (last call cd: %d)", 
+            fn, data, flags, ctxdata->G_last_call.cd);
+    
     if (NULL==data)
     {
         _TPset_error_fmt(TPEINVAL, "%s - data is NULL", fn);
