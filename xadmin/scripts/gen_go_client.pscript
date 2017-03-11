@@ -64,7 +64,7 @@ import (
 import ""C""
 
 const (
-	ProgSection = ""+cltname+@""
+	ProgSection = """+cltname+@"""
 )
 
 var MSomeConfigFlag string = """"
