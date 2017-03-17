@@ -211,7 +211,7 @@ public int start_daemon_idle(void)
         char *cmd[] = { "ndrxd", key, (char *)0 };
 
         /* Open log file */
-        if (NULL==(f=NDRX_FOPEN(G_config.ndrxd_logfile, "w+")))
+        if (NULL==(f=NDRX_FOPEN(G_config.ndrxd_logfile, "a")))
         {
             fprintf(stderr, "Failed to open ndrxd log file: %s\n",
                     G_config.ndrxd_logfile);
