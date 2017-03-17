@@ -92,7 +92,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
     char bin_buf[CARR_BUFFSIZE+1];
     char	*s_ptr;
 
-    NDRX_LOG(log_error, "Parsing buffer: [%s]", buffer);
+    NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
 
     root_value = exjson_parse_string_with_comments(buffer);
     type = exjson_value_get_type(root_value);
@@ -156,8 +156,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
 
                 if (SUCCEED!=CBchg(p_ub, fid, 0, s_ptr, str_len, BFLD_CARRAY))
                 {
-                    ret=FAIL;
-                    goto out;
+                    FAIL_OUT(ret);
                 }
                 break;
             }
@@ -174,17 +173,15 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                             (char *)&l, 0L, BFLD_LONG))
                     {
                         NDRX_LOG(log_error, "Failed to set [%s] to [%ld]!", 
-                        name, l);
-                        ret=FAIL;
-                        goto out;
+                            name, l);
+                        FAIL_OUT(ret);
                     }
                 }
                 else if (SUCCEED!=CBchg(p_ub, fid, 0, (char *)&d_val, 0L, BFLD_DOUBLE))
                 {
                     NDRX_LOG(log_error, "Failed to set [%s] to [%lf]!", 
                             name, d_val);
-                    ret=FAIL;
-                    goto out;
+                    FAIL_OUT(ret);
                 }
             }
                     break;
@@ -196,8 +193,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                 {
                     NDRX_LOG(log_error, "Failed to set [%s] to [%hd]!", 
                             name, bool_val);
-                    ret=FAIL;
-                    goto out;
+                    FAIL_OUT(ret);
                 }
             }
             break;
@@ -210,8 +206,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                         exjson_object_nget_value_n(root_object, i))))
                 {
                     NDRX_LOG(log_error, "Failed to get array object!");
-                    ret=FAIL;
-                    goto out;
+                    FAIL_OUT(ret);
                 }
                 arr_cnt = exjson_array_get_count(array_val);
 
@@ -253,8 +248,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                             {
                                 NDRX_LOG(log_error, "Failed to set [%s] to [%s]!", 
                                         name, str_val);
-                                ret=FAIL;
-                                goto out;
+                                FAIL_OUT(ret);
                             }
                         }
                         break;
@@ -273,8 +267,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                                 {
                                         NDRX_LOG(log_error, "Failed to set [%s] to [%ld]!", 
                                                 name, l);
-                                        ret=FAIL;
-                                        goto out;
+                                        FAIL_OUT(ret);
                                 }
                             }
                             else if (SUCCEED!=CBchg(p_ub, fid, j, 
@@ -282,8 +275,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                             {
                                 NDRX_LOG(log_error, "Failed to set [%s] to [%lf]!", 
                                         name, d_val);
-                                ret=FAIL;
-                                goto out;
+                                FAIL_OUT(ret);
                             }
                         }
                         break;
@@ -295,8 +287,7 @@ public int _tpjsontoubf(UBFH *p_ub, char *buffer)
                             {
                                 NDRX_LOG(log_error, "Failed to set [%s] to [%hd]!", 
                                         name, bool_val);
-                                ret=FAIL;
-                                goto out;
+                                FAIL_OUT(ret);
                             }
                         }
                         default:
@@ -369,11 +360,13 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
                 if (NULL==(jarr = exjson_array_init()))
                 {
                         NDRX_LOG(log_error, "Failed to initialize array!");
+                        FAIL_OUT(ret);
                 }
                 /* add array to document... */
                 if (EXJSONSuccess!=exjson_object_set_array(root_object, nm, jarr))
                 {
                         NDRX_LOG(log_error, "Failed to add Array to root object!!");
+                        FAIL_OUT(ret);
                 }
             }
             else
@@ -392,8 +385,7 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
             {
                 NDRX_LOG(log_error, "Failed to get (double): %ld/%d",
                                                 fldid, oc);
-                ret=FAIL;
-                goto out;
+                FAIL_OUT(ret);
             }
             is_num = TRUE;
             NDRX_LOG(log_debug, "Numeric value: %lf", d_val);
@@ -406,8 +398,7 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
             {
                 NDRX_LOG(log_error, "Failed to get (string): %ld/%d",
                                                 fldid, oc);
-                ret=FAIL;
-                goto out;
+                FAIL_OUT(ret);
             }
 
             /* If it is carray, then convert to hex... */
@@ -446,14 +437,16 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
                 {
                     if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
                     {
-                            NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", d_val);
+                        NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", d_val);
+                        FAIL_OUT(ret);
                     }
                 }
                 else
                 {
                     if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
                     {
-                            NDRX_LOG(log_error, "Failed to set array elem to [%s]!", s_ptr);
+                        NDRX_LOG(log_error, "Failed to set array elem to [%s]!", s_ptr);
+                        FAIL_OUT(ret);
                     }
                 }
 
@@ -465,8 +458,9 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
             {
                 if (EXJSONSuccess!=exjson_object_set_number(root_object, nm, d_val))
                 {
-                        NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
+                    NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
                                         nm, d_val);
+                    FAIL_OUT(ret);
                 }
             }
             else
@@ -475,6 +469,7 @@ public int _tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
                 {
                     NDRX_LOG(log_error, "Failed to set [%s] value to [%s]!",
                                     nm, s_ptr);
+                    FAIL_OUT(ret);
                 }
             }
         }
