@@ -55,6 +55,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/types.h>
+#include <sys/file.h> /* mvitolin 18/03/2017 - ubuntu 16. build warning fix */
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
