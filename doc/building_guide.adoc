@@ -66,7 +66,8 @@ echo 64000 > /proc/sys/fs/mqueue/msgsize_max
 echo 10000 > /proc/sys/fs/mqueue/queues_max
 ---------------------------------------------------------------------
 
-Note for Centos/RHEL 7 you need to give execute permissions for rc.local:
+Note for Centos/RHEL/Oracle Linux 7 you need to give execute 
+permissions for rc.local:
 
 ---------------------------------------------------------------------
 # chmod +x /etc/rc.local
@@ -129,7 +130,7 @@ $
 ---------------------------------------------------------------------
 
 
-==== System level dependencies - for Centos 7.x
+==== System level dependencies - for Centos/RHEL/Oracle Linux 7.x
 
 Now install system depenencies  
 
