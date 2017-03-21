@@ -159,6 +159,23 @@ additional deps to run dia.
 # rpm -i --nodeps dia-0.97.2-5.fc19.x86_64.rpm
 ---------------------------------------------------------------------
 
+Seems that RHEL/Centos/Oracle Linux 7 ship with old CMake package which generates
+defective RPMs. Thus it The installation might give you following errors
+
+---------------------------------------------------------------------
+$ sudo rpm -i *.rpm
+	file /usr/share/man from install of endurox-3.5.1-1.x86_64 conflicts with file from package filesystem-3.2-21.el7.x86_64
+	file /usr/share/man/man3 from install of endurox-3.5.1-1.x86_64 conflicts with file from package filesystem-3.2-21.el7.x86_64
+	file /usr/share/man/man5 from install of endurox-3.5.1-1.x86_64 conflicts with file from package filesystem-3.2-21.el7.x86_64
+	file /usr/share/man/man8 from install of endurox-3.5.1-1.x86_64 conflicts with file from package filesystem-3.2-21.el7.x86_64
+	
+$ cmake --version
+cmake version 2.8.12.2
+---------------------------------------------------------------------
+
+Install new version: TODO
+
+
 ==== AsciiDoc Integration with Dia
 Also Enduro/X includes documentation in sources, thus additional config is needed
 so that `Dia` package can build illustrations needed for manuals.
