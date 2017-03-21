@@ -155,15 +155,22 @@ configure_file ("${PROJECT_SOURCE_DIR}/include/ndrx_config.h.in"
 ################################################################################
 get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
 
+message("LIB: ${LIB64}")
+
 if(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     set(LIB_SUFFIX "")
 elseif ("${LIB64}" STREQUAL "TRUE")
-    set(LIB_SUFFX 64)
+    set(LIB_SUFFIX 64)
 else()
     set(LIB_SUFFIX "")
 endif()
 
-set(INSTALL_LIB_DIR     lib${LIB_SUFFIX} CACHE PATH "Installation directory for libraries")
+message("LIB_SUFFIX: ${LIB_SUFFIX}")
+
+set(INSTALL_LIB_DIR lib${LIB_SUFFIX} CACHE PATH "Installation directory for libraries")
+
+message("INSTALL_LIB_DIR: ${INSTALL_LIB_DIR}")
+
 mark_as_advanced(INSTALL_LIB_DIR) 
 MESSAGE( STATUS "INSTALL_LIB_DIR: " ${INSTALL_LIB_DIR} )
 
@@ -309,7 +316,9 @@ find_program(APTPROG "apt")
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/man
 		/usr/share/man/man3
 		/usr/share/man/man5
-		/usr/share/man/man8)
+		/usr/share/man/man8
+		/usr/lib64/pkgconfig
+		/usr/lib/pkgconfig)
 message("Excl: ${CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION}")
 
 set(CPACK_GENERATOR "TGZ")
