@@ -304,6 +304,14 @@ set(CPACK_MONOLITHIC_INSTALL 1)
 find_program(RPMPROG "rpm")
 find_program(APTPROG "apt")
 
+# avoid file /usr/share/man from install of endurox-3.5.1-1.x86_64 conflicts with file from package filesystem-3.2-21.el7.x86_64
+# problems...
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/man
+		/usr/share/man/man3
+		/usr/share/man/man5
+		/usr/share/man/man8)
+message("Excl: ${CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION}")
+
 set(CPACK_GENERATOR "TGZ")
 if(RPMPROG)
         message("Outputting RPM")
