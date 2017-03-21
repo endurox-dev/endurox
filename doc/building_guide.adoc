@@ -199,20 +199,20 @@ $ cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
 # Where app domain lives
-export NDRX_APPHOME=:$HOME/endurox
+export NDRX_APPHOME=$HOME/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=:$HOME/endurox/dist/bin
+export NDRX_HOME=$HOME/endurox/dist/bin
 # Debug config too
-export NDRX_DEBUG_CONF=:$HOME/endurox/sampleconfig/debug.conf
+export NDRX_DEBUG_CONF=$HOME/endurox/sampleconfig/debug.conf
 
 # NDRX config too.
-export NDRX_CONFIG=:$HOME/endurox/sampleconfig/ndrxconfig.xml
+export NDRX_CONFIG=$HOME/endurox/sampleconfig/ndrxconfig.xml
 
 # Access for binaries
 export PATH=$PATH:$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
 
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
