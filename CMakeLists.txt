@@ -298,7 +298,23 @@ message("CPack:Debug: LSB_RELEASE VER = ${LSB_RELEASE_OUTPUT_VER}")
 MESSAGE( "CPack:Debug: CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME} )
 MESSAGE( "CPack:Debug: CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 set(CPACK_MONOLITHIC_INSTALL 1)
-set(CPACK_GENERATOR "DEB;RPM;TGZ")
+
+
+# Test the available generators and then configure output
+find_program(RPMPROG "rpm")
+find_program(APTPROG "apt")
+
+set(CPACK_GENERATOR "TGZ")
+if(RPMPROG)
+        message("Outputting RPM")
+	set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
+endif()
+
+if(APTPROG)
+        message("Outputting DEB")
+	set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
+endif()
+
 set(CPACK_PACKAGE_CONTACT "madars.vitolins@gmail.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
 #set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2,openssl,libgpgme11")
