@@ -154,17 +154,9 @@ additional deps to run dia.
 
 ---------------------------------------------------------------------
 # yum install -y cairo-gobject-devel gtk2 gtk2-devel gdk-pixbuf2-devel \
-		libglade2-devel libgnomeui.x86_64 wget
+		libglade2-devel libgnomeui.x86_64 wget libgnomeui
 # wget http://ftp.scientificlinux.org/linux/fedora/releases/19/Fedora/x86_64/os/Packages/d/dia-0.97.2-5.fc19.x86_64.rpm
 # rpm -i --nodeps dia-0.97.2-5.fc19.x86_64.rpm
----------------------------------------------------------------------
-
-=== Getting the Source code
----------------------------------------------------------------------
-# useradd -m user1
-# su - user1
-$ cd /home/user1
-$ git clone https://github.com/endurox-dev/endurox endurox
 ---------------------------------------------------------------------
 
 ==== AsciiDoc Integration with Dia
@@ -189,13 +181,21 @@ EOF
 ---------------------------------------------------------------------
 
 
+=== Getting the Source code
+---------------------------------------------------------------------
+# useradd -m user1
+# su - user1
+$ cd /home/user1
+$ git clone https://github.com/endurox-dev/endurox endurox
+---------------------------------------------------------------------
+
 === Enduro/X basic Environment configuration for HOME directory
 This code bellow creates 'ndrx_home' executable file which loads basic environment, 
 so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
 This also assumes that you are going to install to '$HOME/endurox/dist' folder.
 
 ---------------------------------------------------------------------
-cat << EOF > $HOME/ndrx_home
+$ cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
 # Where app domain lives
@@ -230,7 +230,7 @@ do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
 # If you want to have install folder to /home/user1/endurox/dist
-# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/ .
+# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
