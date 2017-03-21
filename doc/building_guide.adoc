@@ -134,9 +134,11 @@ $
 
 Now install system depenencies  
 
-But if you run build on *Oracle Linux*, you need to enable optional repo:
+But if you run build on *Oracle Linux*, you need to enable optional repo
+for asciidoc/gpgme-devel/dblatex
 
 ---------------------------------------------------------------------
+# yum install yum-utils
 # yum-config-manager --enable ol7_optional_latest
 ---------------------------------------------------------------------
 
