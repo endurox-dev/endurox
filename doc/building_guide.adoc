@@ -154,7 +154,7 @@ additional deps to run dia.
 
 ---------------------------------------------------------------------
 # yum install -y cairo-gobject-devel gtk2 gtk2-devel gdk-pixbuf2-devel \
-		libglade2-devel libgnomeui.x86_64
+		libglade2-devel libgnomeui.x86_64 wget
 # wget http://ftp.scientificlinux.org/linux/fedora/releases/19/Fedora/x86_64/os/Packages/d/dia-0.97.2-5.fc19.x86_64.rpm
 # rpm -i --nodeps dia-0.97.2-5.fc19.x86_64.rpm
 ---------------------------------------------------------------------
