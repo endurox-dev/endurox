@@ -40,7 +40,6 @@ set(RELEASE "1")
 # OS Confiugration
 ################################################################################
 
-
 EXEC_PROGRAM(uname ARGS -a OUTPUT_VARIABLE _TMP_CMAKE_OS_NAME)
 string(REGEX MATCH "^[a-zA-Z0-9-]*" _TMP_CMAKE_OS_NAME_EXTR ${_TMP_CMAKE_OS_NAME})
 string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
@@ -85,8 +84,10 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 # Configure the compiler, we support XLC too..
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+		message("GNU compiler")
 		set ( CMAKE_C_FLAGS "-pthread -maix64 ${CMAKE_C_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
+		message("XL compiler")
 		set ( CMAKE_C_FLAGS " -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99 -qsuppress=1506-997 -qprocimported=setjmp")
 	endif()
 
@@ -98,6 +99,10 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
 	set(EX_OS_HPUX "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	set(EX_OS_SUNOS "1")
+	if ("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
+		message("SUN Studio compiler")
+		SET(CMAKE_C_FLAGS "-KPIC -g  -G")	
+	endif()
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
         SET(RT_LIB rt)
 	set(EX_OS_FREEBSD "1")

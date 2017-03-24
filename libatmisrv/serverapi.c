@@ -63,7 +63,7 @@ public void tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     API_ENTRY;
 
-    return _tpreturn(rval, rcode, data, len, flags);
+    _tpreturn(rval, rcode, data, len, flags);
 }
 
 /**
