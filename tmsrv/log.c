@@ -392,7 +392,26 @@ public int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         line++;
     }
     
-    /* Add transaction to the hash. We need locking here. */
+    /* Add transaction to the hash. We need locking here. 
+     * 
+     * If transaction was in prepare stage XA_TX_STAGE_PREPARING (40)
+     * We need to abort it because, there is no chance that caller will get
+     * response back.
+     */
+    if (XA_TX_STAGE_PREPARING == (*pp_tl)->txstage)
+    {
+        NDRX_LOG(log_error, "XA Transaction [%s] was in preparing stage and "
+                "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
+        
+        userlog("XA Transaction [%s] was in preparing stage and "
+                "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
+        
+        /* change the status (+ log) */
+        (*pp_tl)->lockthreadid = ndrx_gettid();
+        tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING);
+        (*pp_tl)->lockthreadid = 0;
+    }
+    
     MUTEX_LOCK_V(M_tx_hash_lock);
     EXHASH_ADD_STR( M_tx_hash, tmxid, (*pp_tl));
     MUTEX_UNLOCK_V(M_tx_hash_lock);

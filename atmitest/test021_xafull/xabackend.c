@@ -74,6 +74,7 @@ public int xa_start_entry_stat(XID *xid, int rmid, long flags);
 public int xa_end_entry_stat(XID *xid, int rmid, long flags);
 public int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
 public int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
+public int xa_prepare_entry_stat105(XID *xid, int rmid, long flags);
 public int xa_commit_entry_stat(XID *xid, int rmid, long flags);
 public int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
 public int xa_forget_entry_stat(XID *xid, int rmid, long flags);
@@ -101,6 +102,22 @@ public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rm
 public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
+struct xa_switch_t ndrxstatsw105 = 
+{ 
+    .name = "ndrxstatsw105",
+    .flags = TMNOFLAGS,
+    .version = 0,
+    .xa_open_entry = xa_open_entry_stat,
+    .xa_close_entry = xa_close_entry_stat,
+    .xa_start_entry = xa_start_entry_stat,
+    .xa_end_entry = xa_end_entry_stat,
+    .xa_rollback_entry = xa_rollback_entry_stat,
+    .xa_prepare_entry = xa_prepare_entry_stat105,
+    .xa_commit_entry = xa_commit_entry_stat,
+    .xa_recover_entry = xa_recover_entry_stat,
+    .xa_forget_entry = xa_forget_entry_stat,
+    .xa_complete_entry = xa_complete_entry_stat
+};
 
 struct xa_switch_t ndrxstatsw = 
 { 
@@ -489,6 +506,23 @@ public int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
 }
+
+/**
+ * Test case for bug 105 - abort after transaction is prepared...
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
+public int xa_prepare_entry_stat105(XID *xid, int rmid, long flags)
+{
+    int ret =  xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
+    
+    abort();
+    
+    return ret;
+}
+
 public int xa_commit_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_commit_entry(&ndrxstatsw, xid, rmid, flags);

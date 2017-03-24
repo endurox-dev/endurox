@@ -662,7 +662,7 @@ public int _tpcommit(long flags)
             G_atmi_tls->G_atmi_xa_curtx.txinfo)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
-                    ATMI_XA_TPBEGIN);
+                    ATMI_XA_TPCOMMIT);
         
         /* _TPoverride_code(TPETRAN); */
         

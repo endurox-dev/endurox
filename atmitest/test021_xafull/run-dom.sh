@@ -188,6 +188,45 @@ print_domains;
 # Go to domain 1
 set_dom1;
 
+
+################################################################################
+# Test case for bug when resource manager prepares transaction, but
+# tmsrv does not log it as prepared
+# After fix it shall abort the transaction after tmsrv restart
+################################################################################
+if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"105"* ]]; then
+
+	echo "Testing bug #105 - prepare ok, but process terminates before writting log"
+
+	(./atmiclt21-105 2>&1) > ./atmiclt-105-dom1.log
+	RET=$?
+
+	# let tmsrv boot back and abort transaction
+	sleep 10
+	#
+	# If all ok, test for transaction files.
+	#
+	if [ $RET == 0 ]; then
+	
+		# test for transaction to be aborted..
+		# there should be no TRN- files at top level
+
+		if [ -f ./RM1/TRN-* ]; then
+			echo "Transaction must be completed!"
+			RET=-2
+		fi
+		
+		if [ ! -f ./RM1/aborted/* ]; then
+			echo "Transaction must be aborted!"
+			RET=-3
+		fi
+		
+	fi
+
+	go_out $RET
+
+fi
+
 echo "Testing journal recovery..."
 cp ./test_data/* ./RM1
 xadmin restart -s tmsrv

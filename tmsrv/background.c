@@ -300,8 +300,7 @@ public void * background_process(void *arg)
  */
 public void background_process_init(void)
 {
-    struct sigaction        actions;
-    
+
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
     /* clean up resources after exit.. 

@@ -45,6 +45,15 @@ else
 fi;
 
 
+echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.so
+
+if [ "$(uname)" == "Darwin" ]; then
+        export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.dylib
+fi
+
+./run-dom.sh || exit $?
+
 echo "Doing static registration tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.so
 
