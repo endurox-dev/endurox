@@ -71,6 +71,8 @@ to server.
 
 # pkg list -af 'pkg://solarisstudio/developer/solarisstudio-124/*'
 
+# pkg install -nv solarisstudio-124
+
 # pkg install solarisstudio-124
 ---------------------------------------------------------------------
 
