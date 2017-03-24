@@ -39,12 +39,39 @@ and install open source packages to local machine:
 ---------------------------------------------------------------------
 # pkgadd -d http://get.opencsw.org/now
 # /opt/csw/bin/pkgutil -U
-# /opt/csw/bin/pkgutil -y -i cmake  gcc4core 
-# /opt/csw/bin/pkgutil -y -i gcc4core
-# /opt/csw/bin/pkgutil -y -i gcc4g++
+# /opt/csw/bin/pkgutil -y -i cmake
 # /opt/csw/bin/pkgutil -y -i git
 # /opt/csw/bin/pkgutil -y -i libxml2_dev
 # /opt/csw/bin/pkgutil -y -i flex bison
+---------------------------------------------------------------------
+
+If installing GCC...
+---------------------------------------------------------------------
+# /opt/csw/bin/pkgutil -y -i gcc4core
+# /opt/csw/bin/pkgutil -y -i gcc4g++
+---------------------------------------------------------------------
+
+If installing Sun Studio...
+
+- According to: https://pkg-register.oracle.com/register/product_info/6/
+
+- Register and request access, download the 
+and pkg.oracle.com.key.pem pkg.oracle.com.certificate.pem from Oracle
+to server.
+
+---------------------------------------------------------------------
+# mkdir -m 0775 -p /var/pkg/ssl
+# cp -i download-directory/pkg.oracle.com.key.pem /var/pkg/ssl
+# cp -i download-directory/pkg.oracle.com.certificate.pem /var/pkg/ssl
+
+# pkg set-publisher \
+-k /var/pkg/ssl/pkg.oracle.com.key.pem \
+-c /var/pkg/ssl/pkg.oracle.com.certificate.pem \
+-G '*' -g https://pkg.oracle.com/solarisstudio/release solarisstudio
+
+# pkg list -af 'pkg://solarisstudio/developer/solarisstudio-124/*'
+
+# pkg install -nv solarisstudio-124
 ---------------------------------------------------------------------
 
 === Getting the source code
