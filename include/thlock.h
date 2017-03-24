@@ -58,6 +58,7 @@ extern "C" {
 /* *** EX_SPIN LOCKS *** */
 
 /* data type used for external controlled locking. */
+#if HAVE_SYNC
 #define EX_SPIN_LOCKDECL(X) static volatile int X = 0;
 
 /**
@@ -92,7 +93,17 @@ extern "C" {
 
 /* Use default __spinlock variable */
 #define EX_SPIN_UNLOCK EX_SPIN_UNLOCK_V(__spinlock);
-	
+    
+#else
+    
+#define EX_SPIN_LOCKDECL    MUTEX_LOCKDECL
+#define EX_SPIN_LOCK_V      MUTEX_LOCK_V
+#define EX_SPIN_UNLOCK_V    MUTEX_UNLOCK_V
+#define EX_SPIN_LOCK        MUTEX_LOCK
+#define EX_SPIN_UNLOCK      MUTEX_UNLOCK
+    
+#endif
+
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

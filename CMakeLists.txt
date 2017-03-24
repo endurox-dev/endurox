@@ -140,6 +140,7 @@ CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __pr
 
 CHECK_C_SOURCE_COMPILES("int main() {__builtin_expect(1, 1);}" HAVE_EXPECT)
 
+CHECK_C_SOURCE_COMPILES("int main() { int X = 0; __sync_bool_compare_and_swap(&X, 0, 1); __sync_synchronize();}" HAVE_SYNC)
 
 # To check for an include file you do this:
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
