@@ -52,17 +52,18 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Main entry point for `ud' utility
+ * Main entry point for `embedfile' utility
  */
 int main(int argc, char** argv)
 {
     int ret = SUCCEED;
-    FILE *in, *out;
+    FILE *in=NULL, *out=NULL;
     int c;
     int len = 0;
     char *inf, *outfpfx;
     char outf[PATH_MAX+1] = {EOS};
     int counter = 0;
+
     if (argc<3)
     {
         fprintf(stderr, "syntax: %s <input file> <output file>\n", argv[0]);
@@ -134,3 +135,4 @@ out:
     }
     return ret;
 }
+
