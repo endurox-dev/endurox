@@ -47,9 +47,6 @@ add_custom_command(
   COMMAND embedfile WizardBase.pscript WizardBase
   DEPENDS WizardBase.pscript)
 
-
-SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
-
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd) 
 # Create a library called "ATMI" which includes the source files.

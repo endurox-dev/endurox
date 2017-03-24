@@ -52,6 +52,9 @@ OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
 OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 
+
+SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
+
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF (DEFINE_RELEASEBUILD)
@@ -100,8 +103,9 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	set(EX_OS_SUNOS "1")
 	if ("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
-		message("SUN Studio compiler")
+		message("SUN Studio compiler (building for 64bit) ")
 		SET(CMAKE_C_FLAGS "-errtags -fast -m64")
+		SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m64")
 	endif()
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
         SET(RT_LIB rt)
