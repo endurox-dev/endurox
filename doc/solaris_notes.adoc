@@ -40,15 +40,12 @@ and install open source packages to local machine:
 # pkgadd -d http://get.opencsw.org/now
 # /opt/csw/bin/pkgutil -U
 # /opt/csw/bin/pkgutil -y -i cmake
-# /opt/csw/bin/pkgutil -y -i git
-# /opt/csw/bin/pkgutil -y -i libxml2_dev
-# /opt/csw/bin/pkgutil -y -i flex bison
+# /opt/csw/bin/pkgutil -y -i git libxml2_dev flex bison
 ---------------------------------------------------------------------
 
 If installing GCC...
 ---------------------------------------------------------------------
-# /opt/csw/bin/pkgutil -y -i gcc4core
-# /opt/csw/bin/pkgutil -y -i gcc4g++
+# /opt/csw/bin/pkgutil -y -i gcc4core gcc4g++
 ---------------------------------------------------------------------
 
 If installing Sun Studio...
@@ -79,16 +76,17 @@ to server.
 === Getting the source code
 For test purposes we will parepare new user for which Enduro/X will built (this adds the 
 in the path the /opt/csw/bin. You may modify that of your needs.
+(add /opt/solarisstudio12.4/bin if Sun studio is installed)
 
 ---------------------------------------------------------------------
 # useradd -m user1
 # su - user1
 $ bash
 $ cat << EOF >> .profile
-export PATH=$PATH:/opt/csw/bin
+export PATH=$PATH:/opt/csw/bin:/opt/solarisstudio12.4/bin
 EOF
 $ chmod +x .profile
-$ source .profiles
+$ source .profile
 $ cd /export/home/user1
 $ GIT_SSL_NO_VERIFY=true git clone https://github.com/endurox-dev/endurox
 $ cd endurox 
@@ -139,6 +137,15 @@ $ cd /export/home/user1/endurox
 $ cmake -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
+---------------------------------------------------------------------
+
+=== Building the code with Solaris Studio
+
+The compilation will be done in 64bit mode
+
+---------------------------------------------------------------------
+$ cd /export/home/user1/endurox
+
 ---------------------------------------------------------------------
 
 == Unit Testing
