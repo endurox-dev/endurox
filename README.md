@@ -93,19 +93,35 @@ The number here are lower because messages are being saved to disk. Also interna
 # Releases
 
 - Version 2.5.1 released on 18/05/2016. Support for transactional persistent message queues. Provides APIs: tpenqueue(), tpdequeue() and command line management tools. See doc/persistent_message_queues_overview.adoc, doc/manpage/tmqueue.adoc, doc/manpage/xadmin.adoc, doc/manpage/q.config.adoc. Use cases can be seen under atmitests/test028_tmq
+
 - Version 3.1.2 released on 25/06/2016. Added support for other Unix systems. Currently production grade support is provided for following operating systems: GNU/Linux, FreeBSD, IBM AIX and Oracle Solaris. MAC OS X and Cygwin versions are considered as experimental. FreeBSD installation guides are located at doc/freebsd_notes.adoc, AIX install guide: doc/aix_notes.adoc, Solaris install guide: doc/solaris_notes.adoc and OS X guide: doc/osx_notes.adoc. Also with this version lot of core processing bug fixes are made.
+
 - Version 3.2.1 released on 06/07/2016. Major UBF optimization. Now for each data type memory offset is maintained. For fixed data types (short, long, char, float, double) binary search is performend when field is read from buffer.
+
 - Version 3.2.2 released on 15/07/2016. Bugfixes for UBF binary search. Added UBF benchmarking scripts and documents.
+
 - Version 3.3.1 released on 05/09/2016. Implemented common configuration engine (can use ini files in alternative to environment variables, debug config and persistent queue config).
+
 - Version 3.3.2 released on 01/10/2016. Works on TP logger, user accessible logging framework. Set of tplog\* functions.
+
 - Version 3.3.5 released on 10/01/2017. Fixes for RPM build and install on Red-hat enterprise linux platform.
+
 - Version 3.3.6 released on 12/01/2017. Fixes for integration mode, changes in tpcontinue().
+
 - Version 3.4.1 released on 13/01/2017. New ATMI server flag for developer - reloadonchange - if cksum change changed on binary issue sreload.
+
 - Version 3.4.2 released on 20/01/2017. Network protocol framing moved from 2 bytes to 4 bytes.
+
 - Version 3.4.3 released on 26/01/2017. Memory leak fixes for tmsrv and tmqueue servers.
+
 - Version 3.4.4 released on 26/01/2017. Works on documentation. Fixes on PScript.
+
 - Version 3.4.5 released on 14/02/2017. Fixes in generators.
+
 - Version 3.5.1 released on 03/03/2017. Updates on tpreturn() - more correct processing as in Tuxedo, free up return buffer + free up auto buffer.
+
+- Version 3.5.2 released on 24/03/2017. Bug #105 fix. Abort transaction if it was in "preparing" stage, and tmsrv loaded it from logfile. 
+meaning that caller do not wait for tpcommit() anymore and got inconclusive results.
 
 # Build configurations
 
