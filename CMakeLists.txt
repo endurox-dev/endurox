@@ -106,6 +106,8 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 		message("SUN Studio compiler (building for 64bit) ")
 		SET(CMAKE_C_FLAGS "-errtags -fast -m64")
 		SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m64")
+		# Add Sun Studio C runtime
+		SET(RT_LIB ${RT_LIB} Crun)
 	endif()
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
         SET(RT_LIB rt)
