@@ -168,7 +168,7 @@ function print_domains {
 }
 
 
-rm *dom*.log
+rm *.log
 
 set_dom1;
 xadmin down -y
