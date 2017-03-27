@@ -158,7 +158,7 @@ public int atmi_xa_init(void)
             FAIL_OUT(ret);
         }
 
-        func = dlsym(handle, "ndrx_get_xa_switch");
+        func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
 
         if ((error = dlerror()) != NULL) 
         {
