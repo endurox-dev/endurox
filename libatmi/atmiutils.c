@@ -787,7 +787,8 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
                             arglist[ndrxd_cmd].p_put_output,
                             arglist[ndrxd_cmd].need_reply,
                             reply_only,
-                            NULL, NULL, TPNOTIME, NULL);
+			    /* xadmin on solaris fails to recieve answers when ndrxd exits.. */
+                            NULL, NULL, TPNOTIME | TPSIGRSTRT, NULL);
 }
 
 /**

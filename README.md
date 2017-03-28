@@ -121,6 +121,9 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.5.1 released on 03/03/2017. Updates on tpreturn() - more correct processing as in Tuxedo, free up return buffer + free up auto buffer.
 
 - Version 3.5.2 released on 24/03/2017. Bug #105 fix. Abort transaction if it was in "preparing" stage, and tmsrv loaded it from logfile. 
+
+- Version 3.5.3 released on TBA. Fixes for Solaris, Sun Studio (SUNPRO) compiler
+
 meaning that caller do not wait for tpcommit() anymore and got inconclusive results.
 
 # Build configurations
