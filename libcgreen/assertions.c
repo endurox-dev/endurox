@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ndrx_config.h>
 
 #ifdef __cplusplus
 namespace cgreen {
@@ -172,9 +173,22 @@ const char *show_null_as_the_string_null(const char *string) {
 }
 
 bool doubles_are_equal(double tried, double expected) {
+
+#ifdef EX_OS_AIX
+    /* #106 cause core dumps on AIX with xlC, 6.1 */
+    /* Thus will have simpler version: */
+    if (fabs(tried-expected)<0.1) {
+        return true;
+    }
+
+#else
     return max(tried, expected) - min(tried, expected) < accuracy(significant_figures, max(tried, expected));
+#endif
+
+    return false;
 }
 
+/* #106 Seems like Causing core dumps on aix with XLC: */
 static double accuracy(int figures, double largest) {
     return pow(10, 1 + (int)log10(largest) - figures);
 }
