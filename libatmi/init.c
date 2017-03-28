@@ -828,6 +828,7 @@ public int tpinit (TPINIT * init_data)
     pid = getpid();
     
     strcpy(read_clt_name, EX_PROGNAME);
+    NDRX_LOG(log_debug, "Got PROGNAME [%s]", read_clt_name);
     
     /* Get new context id. Threading support only for clients... */
     conf.contextid = ndrx_ctxid_op(FALSE, FAIL);

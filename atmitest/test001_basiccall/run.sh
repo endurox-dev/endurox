@@ -45,9 +45,16 @@ else
 fi;
 
 . ../testenv.sh
+
+export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
+export PATH=$PATH:$TESTDIR
+
 # client timeout
 export NDRX_TOUT=2
 export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
+
+set | grep NDRX_
+set | grep TEST
 
 (./atmi.sv1 -t10 -i 123 2>&1) > ./atmisv1.log &
 sleep 1
