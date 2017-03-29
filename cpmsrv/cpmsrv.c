@@ -221,7 +221,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         FAIL_OUT(ret);
     }
 #endif
+
+#ifndef EX_CPM_NO_THREADS
     ndrxd_sigchld_init();
+#endif
     /* signal(SIGCHLD, sign_chld_handler); */
     
     /* Load initial config */
@@ -269,8 +272,10 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     
     cpm_killall();
     
+#ifndef EX_CPM_NO_THREADS
     ndrxd_sigchld_uninit();
-    
+#endif
+
 }
 
 /**
@@ -291,6 +296,11 @@ private int cpm_callback_timer(void)
         first = FALSE;
         ndrx_timer_reset(&t);
     }
+
+#ifdef EX_CPM_NO_THREADS
+    /* Process any dead child... */
+    sign_chld_handler(SIGCHLD);
+#endif
     
     if (ndrx_timer_get_delta_sec(&t) < G_config.chk_interval)
     {

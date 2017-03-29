@@ -62,7 +62,7 @@ private int M_signal_thread_set = FALSE; /* Signal thread is set */
 
 /*---------------------------Prototypes---------------------------------*/
 
-#if 0
+#if EX_CPM_NO_THREADS
 /**
  * Handle the child signal
  * @return
@@ -99,7 +99,7 @@ public void sign_chld_handler(int sig)
     /*signal(SIGCHLD, sign_chld_handler);*/
 }
 
-#endif
+#else
 
 /**
  * Checks for child exit.
@@ -161,9 +161,6 @@ private void * check_child_exit(void *arg)
     return NULL;
 }
 
-
-
-
 /**
  * Initialize polling lib
  * not thread safe.
@@ -208,6 +205,7 @@ public void ndrxd_sigchld_init(void)
 
     M_signal_thread_set = TRUE;
 }
+#endif
 
 
 /**

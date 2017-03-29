@@ -86,6 +86,9 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 # Configure the compiler, we support XLC too..
 
+	message("No threads mode for CPM - bit slower child process exit status check...")
+    	#set(EX_CPM_NO_THREADS "1")
+
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		message("GNU compiler")
 		set ( CMAKE_C_FLAGS "-pthread -maix64 ${CMAKE_C_FLAGS}")

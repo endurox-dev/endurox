@@ -42,6 +42,7 @@ extern "C" {
 #include <ntimer.h>
 #include <cpm.h>
 #include <cconfig.h>
+#include <ndrx_config.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -156,6 +157,14 @@ extern cpm_process_t * cpm_start_all(void);
 extern int cpm_exec(cpm_process_t *c);
 extern void cpm_set_cur_time(cpm_process_t *p_cltproc);
 extern int ndrx_load_new_env(char *file);
+
+extern void cpm_cfg_lock(void);
+extern void cpm_cfg_unlock(void);
+
+#ifdef EX_CPM_NO_THREADS
+extern void sign_chld_handler(int sig);
+#endif
+
 #ifdef	__cplusplus
 }
 #endif

@@ -36,6 +36,11 @@
 /* Use emulated message queue: */
 #cmakedefine EX_USE_EMQ @EX_USE_EMQ@
 
+/* Do not use threading model in client proces monitor
+ * for example on AIX 7.2 it causes core dumps...
+ */
+#cmakedefine EX_CPM_NO_THREADS @EX_CPM_NO_THREADS@
+
 /* Defined if pscript is off */
 #cmakedefine NDRX_DISABLEPSCRIPT @NDRX_DISABLEPSCRIPT@
 
