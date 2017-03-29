@@ -92,6 +92,11 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 		message("XL compiler")
 		set ( CMAKE_C_FLAGS " -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99 -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
+
+		if (NOT DEFINE_RELEASEBUILD)
+			message("XL compiler: with -g (debug symbols...)")
+			set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+		endif()
 	endif()
 
 	set(EX_OS_AIX "1")
