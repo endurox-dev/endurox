@@ -57,8 +57,28 @@
  */
 public cpm_process_t *G_clt_config=NULL;
 
+MUTEX_LOCKDECL(M_config_lock) 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+
+/**
+ * Lock config structure access
+ */
+public void cpm_lock_config(void)
+{
+    MUTEX_LOCK_V(M_config_lock)
+}
+
+
+/**
+ * Unlock config access routines
+ */
+public void cpm_unlock_config(void)
+{
+    MUTEX_UNLOCK_V(M_config_lock)
+}
+
 
 
 /**
@@ -551,6 +571,7 @@ public int load_config(void)
     static struct stat attr;
 
     static int first = TRUE;
+    int was_locked = FALSE;
     
     /* Test for the file time stamp changes */
     
@@ -588,6 +609,14 @@ public int load_config(void)
         c->is_cfg_refresh = FALSE;
     }
 
+    
+    /* Lock so that background thread cannot access the 
+     * config during the changes in struct... 
+     * Bug #108 01/04/2015, mvitolin
+     */
+    cpm_lock_config();
+    was_locked = TRUE;
+    
     if (SUCCEED!=load_xml_config(G_config.config_file))
     {
         NDRX_LOG(log_error, "Failed to parse config");
@@ -596,6 +625,7 @@ public int load_config(void)
     }
     
     /* Remove dead un-needed processes (killed & not in new config) */
+    
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         if (!c->is_cfg_refresh && CLT_STATE_NOTRUN==c->dyn.cur_state)
@@ -607,6 +637,11 @@ public int load_config(void)
     }
     
 out:
+
+    if (was_locked)
+    {
+        cpm_unlock_config();
+    }
     return ret;    
 }
 

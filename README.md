@@ -122,7 +122,9 @@ The number here are lower because messages are being saved to disk. Also interna
 
 - Version 3.5.2 released on 24/03/2017. Bug #105 fix. Abort transaction if it was in "preparing" stage, and tmsrv loaded it from logfile. 
 
-- Version 3.5.3 released on TBA. Fixes for Solaris, Sun Studio (SUNPRO) compiler
+- Version 3.5.3 released on 26/03/2017. Fixes for Solaris, Sun Studio (SUNPRO) compiler
+
+- Version 3.5.4 released on 01/03/2017. Fixed bug #108 - possible CPM crash
 
 meaning that caller do not wait for tpcommit() anymore and got inconclusive results.
 

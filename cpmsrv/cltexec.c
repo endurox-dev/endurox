@@ -137,6 +137,13 @@ private void * check_child_exit(void *arg)
         NDRX_LOG(log_debug, "about to wait()");
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
+            
+            /* But #108 01/04/2015, mvitolin
+             * If config file is changed by foreground thread in this time,
+             * then we must synchronize with them.
+             */
+            cpm_lock_config();
+            
             cpm_process_t * c = cpm_get_client_by_pid(chldpid);
             got_something++;
                    
@@ -147,6 +154,9 @@ private void * check_child_exit(void *arg)
                 /* Set status change time */
                 cpm_set_cur_time(c);
             }
+            
+            cpm_unlock_config(); /* we are done... */
+            
         }
 #if EX_OS_DARWIN
         NDRX_LOG(6, "wait: %s", strerror(errno));
