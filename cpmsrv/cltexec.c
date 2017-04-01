@@ -138,7 +138,7 @@ private void * check_child_exit(void *arg)
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
             
-            /* But #108 01/04/2015, mvitolin
+            /* Bug #108 01/04/2015, mvitolin
              * If config file is changed by foreground thread in this time,
              * then we must synchronize with them.
              */
