@@ -93,14 +93,14 @@ func "+svcname+@"(ac *atmi.ATMICtx, svc *atmi.TPSVCINFO) {
 
 	//Resize buffer, to have some more space
 	if err := ub.TpRealloc(1024); err != nil {
-		ac.TpLogError(""TpRealloc() Got error: %d:[%s]\n"", err.Code(), err.Message())
+		ac.TpLogError(""TpRealloc() Got error: %d:[%s]"", err.Code(), err.Message())
 		ret = FAIL
 		return
 	}
 	
 	//Add test field to buffer
 	if err:=ub.BChg(u.T_STRING_2_FLD, 0, ""Hello World from XATMI server""); err!=nil {
-		ac.TpLogError(""BChg() Got error: %d:[%s]\n"", err.Code(), err.Message())
+		ac.TpLogError(""BChg() Got error: %d:[%s]"", err.Code(), err.Message())
 		ret = FAIL
 		return
 	}

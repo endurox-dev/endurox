@@ -134,7 +134,7 @@ func appinit(ac *atmi.ATMICtx) error {
 	buf.BChg(u.EX_CC_LOOKUPSECTION, 0, fmt.Sprintf(""%s/%s"", ProgSection, subSection))
 
 	if _, err := ac.TpCall(""@CCONF"", buf, 0); nil != err {
-		ac.TpLogError(""ATMI Error %d:[%s]\n"", err.Code(), err.Message())
+		ac.TpLogError(""ATMI Error %d:[%s]"", err.Code(), err.Message())
 		return errors.New(err.Error())
 	}
 
@@ -182,7 +182,7 @@ func appinit(ac *atmi.ATMICtx) error {
 			ac.TpLogDebug(""Got [%s] = [%s] "", fldName, debug)
 			if err := ac.TpLogConfig((atmi.LOG_FACILITY_NDRX | atmi.LOG_FACILITY_UBF | atmi.LOG_FACILITY_TP),
 				-1, debug, ""TCPG"", """"); nil != err {
-				ac.TpLogError(""Invalid debug config [%s] %d:[%s]\n"",
+				ac.TpLogError(""Invalid debug config [%s] %d:[%s]"",
 					debug, err.Code(), err.Message())
 				return errors.New(err.Message())
 			}
