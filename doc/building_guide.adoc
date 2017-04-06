@@ -79,14 +79,16 @@ permissions for rc.local:
 
 ==== System level dependencies - for Gentoo Linux
 ---------------------------------------------------------------------
-emerge -av indent asciidoc dblatex libxml2 cmake dia \
+$ emerge sync
+$ emerge -av indent asciidoc dblatex libxml2 cmake dia \
 	flex bison zlib openssl app-crypt/gpgme dev-vcs/git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Debian 8.2
 The same goes on Raspbian (Raspberry Pi OS)
 ---------------------------------------------------------------------
-apt-get install indent asciidoc dblatex libxml2-dev \
+$ apt-get update
+$ apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
 	libgpgme11-dev libxml2-dev git
@@ -94,6 +96,7 @@ apt-get install indent asciidoc dblatex libxml2-dev \
 	
 ==== System level dependencies - for Ubuntu 14.04
 ---------------------------------------------------------------------
+$ apt-get update
 $ apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
@@ -102,6 +105,7 @@ $ apt-get install indent asciidoc dblatex libxml2-dev \
 
 ==== System level dependencies - for Ubuntu 16.04 (Mint 18)
 ---------------------------------------------------------------------
+$ apt-get update
 $ apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++-dev \
@@ -122,6 +126,7 @@ $ su - root
 ---------------------------------------------------------------------
 Now install system depenencies  
 ---------------------------------------------------------------------
+# yum update
 # yum groupinstall 'Development Tools'
 # yum install git cmake asciidoc \
 	openssl openssl-devel \
