@@ -264,7 +264,8 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
     len_with = strlen(with);
 
     ins = orig;
-    for (count = 0; (tmp = strstr(ins, rep)); ++count) {
+    for (count = 0; (tmp = strstr(ins, rep)); ++count)
+    {
         ins = tmp + len_rep;
     }
 
@@ -279,7 +280,8 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
     if (!result)
         return NULL;
 
-    while (count--) {
+    while (count--)
+    {
         ins = strstr(orig, rep);
         len_front = ins - orig;
         tmp = strncpy(tmp, orig, len_front) + len_front;

@@ -37,6 +37,7 @@ install (FILES
     fml.h
     fml32.h
     ubf.h
+    ubfutil.h
     atmi.h
     xatmi.h
     pscript.h
@@ -63,6 +64,7 @@ install (FILES
     oatmi.h
     oatmisrv.h
     Exfields.h
+    tpadm.h
     DESTINATION include)
 
 install (FILES

@@ -1169,3 +1169,31 @@ public int tplogdelbufreqfile(char *data)
 out:
     return ret;
 }
+
+
+/**
+ * Admin call interface, not yet supported.
+ * @param inbuf
+ * @param outbuf
+ * @param flags
+ * @return 
+ */
+public int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags)
+{
+    long ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }
+    
+    
+    _TPset_error_msg(TPENOENT, "TODO: tpadmcall: Not yet implemented.");
+    ret = FAIL;
+
+out:
+    return ret;
+}

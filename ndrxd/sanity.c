@@ -357,6 +357,8 @@ private int check_server(char *qname)
             ret=FAIL;
             goto out;
         }
+        
+        /* Remove any conv queues... */
     
     }
 out:
@@ -420,6 +422,9 @@ private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
         
         unlink_dead_queue(qname);
         prev_was_unlink = TRUE;
+        
+        /* Remove any conv queues... */
+        
     }
     else
     {

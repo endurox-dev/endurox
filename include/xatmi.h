@@ -219,6 +219,8 @@ extern "C" {
 /* for compatiblity with Tuxedo */
 #define TPSA_FASTPATH	0x00000008	
 #define TPSA_PROTECTED	0x00000010
+    
+#define TPCONVMAXSTR    256 /* used by tpconvert */
 
 /* Multi contexting */    
 #define TPINVALIDCONTEXT    -1
