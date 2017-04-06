@@ -78,8 +78,14 @@ For test purposes we will parepare new user for which Enduro/X will built (this 
 in the path the /opt/csw/bin. You may modify that of your needs.
 (add /opt/solarisstudio12.4/bin if Sun studio is installed)
 
+We add the user "user1" and also set the open file limit to 4096, by
+default it is 256 which is too low for unit testing.
+
 ---------------------------------------------------------------------
 # useradd -m user1
+# passwd user1
+# projadd -K "process.max-file-descriptor=(basic,10000,deny)" proj.files 
+# usermod -K "project=proj.files" user1
 # su - user1
 $ bash
 $ cat << EOF >> .profile

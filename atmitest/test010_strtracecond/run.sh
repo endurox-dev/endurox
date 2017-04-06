@@ -105,6 +105,17 @@ if [[ "X`xadmin pqa | grep SVCOK`" != "X" ]]; then
     go_out 1
 fi
 
+echo "User: $USER"
+echo "Login: $LOGNAME"
+echo "RNDK: $NDRX_RNDK"
+
+#
+# Solaris 12, do not have $USER, but have $LOGNAME
+#
+if [[ "X$USER" == "X" ]]; then
+	USER=$LOGNAME
+fi
+
 if [ "$(uname)" == "FreeBSD" ]; then
 	BAD_PID=`ps | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $1}'`
 else
