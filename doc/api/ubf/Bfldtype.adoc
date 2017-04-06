@@ -35,7 +35,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*Blen(3)* *Binit(3)*
+*Blen(3)* *Binit(3)* *Btype(3)*
 
 COPYING
 -------

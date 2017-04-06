@@ -41,7 +41,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*Btype(3)*
+*Bfldtype(3)*
 
 COPYING
 -------
