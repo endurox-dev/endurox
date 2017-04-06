@@ -84,6 +84,7 @@ emerge -av indent asciidoc dblatex libxml2 cmake dia \
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Debian 8.2
+The same goes on Raspbian (Raspberry Pi OS)
 ---------------------------------------------------------------------
 apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
