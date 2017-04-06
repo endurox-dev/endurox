@@ -84,7 +84,7 @@ default it is 256 which is too low for unit testing.
 ---------------------------------------------------------------------
 # useradd -m user1
 # passwd user1
-# projadd -K "process.max-file-descriptor=(basic,4096,deny)" proj.files 
+# projadd -K "process.max-file-descriptor=(basic,10000,deny)" proj.files 
 # usermod -K "project=proj.files" user1
 # su - user1
 $ bash
