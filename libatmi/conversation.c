@@ -770,7 +770,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
 
     strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EOS;
-    call->flags = flags;
+    call->flags = flags | TPCONV; /* This is conversational call... */
     /* Prepare role flags */
     
     strcpy(call->my_id, G_atmi_tls->G_atmi_conf.my_id);
