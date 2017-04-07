@@ -55,9 +55,10 @@ extern "C" {
 /*
  * values for rval in tpreturn
  */
-#define TPFAIL		0x0001
-#define TPSUCCESS	0x0002
-    
+#define TPFAIL		0x00000001
+#define TPSUCCESS	0x00000002
+#define TPEXIT          0x08000000 /* RFU. */
+
 /*
  * Posix Queue processing path prefixes
  */
@@ -220,7 +221,26 @@ extern "C" {
 #define TPSA_FASTPATH	0x00000008	
 #define TPSA_PROTECTED	0x00000010
     
-#define TPCONVMAXSTR    256 /* used by tpconvert */
+/* 
+ * used by tpconvert()
+ */
+#define TPCONVMAXSTR    512         /* Max identifier buffer                */
+#define TPTOSTRING      0x00000001  /* Covnert to string                    */
+#define TPCONVCLTID     0x00000002  /* Convert client id                    */
+#define TPCONVTRANID    0x00000004  /* Convert transaction id               */
+#define TPCONVXID       0x00000008  /* Convert XID (current not supported   */
+
+/*  Size of TPINIT struct */
+#define TPINITNEED(u)	sizeof(TPINIT)
+
+#define CTXT_PRIV_NONE	0x00000         /* no context data */
+#define	CTXT_PRIV_NSTD	0x00001		/* standard library TLS data */
+#define	CTXT_PRIV_UBF   0x00002		/* UBF TLS data */
+#define	CTXT_PRIV_ATMI	0x00004		/* ATMI level private data */
+#define	CTXT_PRIV_TRAN	0x00008         /* ATMI + Global transaction */
+#define	CTXT_PRIV_NOCHK	0x00010		/* Do not check signatures */
+#define	CTXT_PRIV_IGN	0x00020		/* Ignore existing context */
+
 
 /* Multi contexting */    
 #define TPINVALIDCONTEXT    -1
@@ -350,6 +370,9 @@ extern "C" {
 #define	CTXT_PRIV_TRAN	0x00008         /* ATMI + Global transaction */
 #define	CTXT_PRIV_NOCHK	0x00010		/* Do not check signatures */
 #define	CTXT_PRIV_IGN	0x00020		/* Ignore existing context */
+    
+
+#define TPUNSOLERR	_ndrx_tmunsolerr_handler
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -485,6 +508,11 @@ extern NDRX_API int tppost (char *eventname, char *data, long len, long flags);
 extern NDRX_API int * _exget_tperrno_addr (void);
 extern NDRX_API long * _exget_tpurcode_addr (void);
 extern NDRX_API int tpinit(TPINIT *tpinfo);
+extern NDRX_API int tpchkauth(void);
+extern NDRX_API void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) 
+        (char *data, long len, long flags);
+extern NDRX_API int tpnotify(CLIENTID *clientid, char *data, long len, long flags);
+extern NDRX_API int tpchkunsol(void);
 
 /* in external application: */
 extern NDRX_API void tpsvrdone(void);
@@ -537,6 +565,9 @@ extern NDRX_API void * ndrx_atmi_tls_get(long priv_flags);
 extern NDRX_API int ndrx_atmi_tls_set(void *data, int flags, long priv_flags);
 extern NDRX_API void ndrx_atmi_tls_free(void *data);
 extern NDRX_API void * ndrx_atmi_tls_new(int auto_destroy, int auto_set);
+
+/* Error code - function for unsol: */
+extern NDRX_API void _ndrx_tmunsolerr_handler(char *data, long len, long flags);
 
 #if defined(__cplusplus)
 }

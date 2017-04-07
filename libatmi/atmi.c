@@ -1188,10 +1188,112 @@ public int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags)
     {
         ret=FAIL;
         goto out;
-    }
-    
-    
+    }   
     _TPset_error_msg(TPENOENT, "TODO: tpadmcall: Not yet implemented.");
+    ret = FAIL;
+
+out:
+    return ret;
+}
+
+/**
+ * STUB for tpchkauth()
+ * @return FAIL
+ */
+public int tpchkauth(void)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }   
+    _TPset_error_msg(TPENOENT, "TODO: tpchkauth: Not yet implemented.");
+    ret = FAIL;
+
+out:
+    return ret;
+}
+
+
+/**
+ * STUB for tpnotify()
+ * @param clientid
+ * @param data
+ * @param len
+ * @param flags
+ * @return FAIL
+ */
+public int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }   
+    _TPset_error_msg(TPENOENT, "TODO: tpnotify: Not yet implemented.");
+    ret = FAIL;
+
+out:
+    return ret;
+}
+
+/**
+ * STUB for tpsetunsol()
+ * @param disp NULL
+ */
+public void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
+{
+    void * ret=NULL;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=NULL;
+        goto out;
+    }   
+    _TPset_error_msg(TPENOENT, "TODO: tpsetunsol: Not yet implemented.");
+    ret = NULL;
+
+out:
+    return (void (*) (char *, long, long))ret;
+}
+
+/**
+ * Return constant for tpsetunsol()
+ * @param data
+ * @param len
+ * @param flags
+ */
+public void _ndrx_tmunsolerr_handler (char *data, long len, long flags)
+{
+    NDRX_LOG(log_debug, "_ndrx_tmunsolerr_handler() - TPUNSOLERR called");
+}
+
+/**
+ * Check unsoliced messages by client
+ * @return FAIL
+ */
+public int tpchkunsol(void) 
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        ret=FAIL;
+        goto out;
+    }   
+    _TPset_error_msg(TPENOENT, "TODO: tpchkunsol: Not yet implemented.");
     ret = FAIL;
 
 out:
