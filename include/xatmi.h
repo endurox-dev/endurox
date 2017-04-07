@@ -37,9 +37,12 @@ extern "C" {
 #define TPSOFTTIMEOUT	0x00080000	/* Soft timout condition -> ret TPETIME */
 #define TPSOFTENOENT    0x00100000	/* Simulate that service is not found */
 #define TPNOAUTBUF      0x00200000	/* Don't restore autbuf in srv context */
+#define RESERVED_BIT1   0x00400000  /* RFU, tux compatiblity */
 
-#define TPEVSERVICE	0x00000001
-#define TPEVPERSIST	0x00000008
+#define TPEVSERVICE	    0x00000001
+#define TPEVQUEUE       0x00000002 /* RFU */
+#define TPEVTRAN        0x00000004 /* RFU */
+#define TPEVPERSIST	    0x00000008
 
 #define NDRX_XID_SERIAL_BUFSIZE     48 /* Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /* Number of resource managers supported */
@@ -370,6 +373,17 @@ extern "C" {
 #define	CTXT_PRIV_TRAN	0x00008         /* ATMI + Global transaction */
 #define	CTXT_PRIV_NOCHK	0x00010		/* Do not check signatures */
 #define	CTXT_PRIV_IGN	0x00020		/* Ignore existing context */
+
+/* Tuxedo compatiblity/emulation - no use currently: */
+
+/* Flags to tpscmt() - TP_COMMIT_CONTROL values */
+#define TP_CMT_LOGGED   0x01       /* RFU: return after commit decision is logged    */
+#define TP_CMT_COMPLETE 0x02       /* RFU: return after commit has completed     */
+
+/* tpchkauth() return values */
+#define TPNOAUTH         0        /* RFU: no authentication          */
+#define TPSYSAUTH        1        /* RFU: system authentication          */
+#define TPAPPAUTH        2        /* RFU: system and application authentication  */
     
 
 #define TPUNSOLERR	_ndrx_tmunsolerr_handler
