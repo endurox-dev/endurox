@@ -39,8 +39,17 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 #include <stdint.h>
+#include <unistd.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+    
+/**
+ * Quick env subst. via static buffer
+ */
+#define NDRX_QENV_SUBST(t, p) strncpy(t, p, sizeof(t)-1);\
+                t[sizeof(t)-1] = (char)0;\
+                ndrx_str_env_subs_len(t, sizeof(t));
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

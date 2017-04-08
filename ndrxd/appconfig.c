@@ -219,6 +219,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
     int ret=SUCCEED;
     char *p;
+    char tmp[PATH_MAX];
     
     if (NULL!=cur)
     {
@@ -226,8 +227,14 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             if (0==strcmp((char*)cur->name, "min"))
             {
+               
                 p = (char *)xmlNodeGetContent(cur);
-                config->default_min = atoi(p);
+                
+                /* we should be able to setup this from env variables
+                 * for external scripting...
+                 */
+                NDRX_QENV_SUBST(tmp, p);
+                config->default_min = atoi(tmp);
                 NDRX_LOG(log_debug, "Got default min: [%s] - %d",
                                                   p, config->default_min);
                 xmlFree(p);
@@ -235,7 +242,9 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             else if (0==strcmp((char*)cur->name, "max"))
             {
                 p = (char *)xmlNodeGetContent(cur);
-                config->default_max = atoi(p);
+                NDRX_QENV_SUBST(tmp, p);
+                
+                config->default_max = atoi(tmp);
                 NDRX_LOG(log_debug, "Got default max: [%s] - %d",
                                                   p, config->default_max);
                 xmlFree(p);
@@ -665,8 +674,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             
-            strcpy(tmp, p);
-            ndrx_str_env_subs(tmp);
+            NDRX_QENV_SUBST(tmp, p);
 
             p_srvnode->min = atoi(tmp);
             xmlFree(p);
@@ -675,8 +683,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             
-            strcpy(tmp, p);
-            ndrx_str_env_subs(tmp);
+            NDRX_QENV_SUBST(tmp, p);
             
             p_srvnode->max = atoi(tmp);
             xmlFree(p);
@@ -769,7 +776,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p = (char *)xmlNodeGetContent(cur);
             strncpy(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT)-1);
             /* process env */
-            ndrx_str_env_subs(p_srvnode->SYSOPT);
+            ndrx_str_env_subs_len(p_srvnode->APPOPT, sizeof(p_srvnode->APPOPT));
             /* Ensure that we terminate... */
             p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EOS;
             xmlFree(p);
