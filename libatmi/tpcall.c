@@ -942,6 +942,7 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
     int srvid = FAIL;
     int pid = FAIL;
     int nodeid = FAIL;
+    long contextid = FAIL;
     char fn[] = "get_evpost_sendq";
     int i, len;
     ATMI_TLS_ENTRY;
@@ -966,7 +967,7 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
             tmp[i]=' ';
     }
     
-    sscanf(tmp, NDRX_MY_ID_SRV_PARSE, binary, &srvid, &pid, &nodeid);
+    sscanf(tmp, NDRX_MY_ID_SRV_PARSE, binary, &srvid, &pid, &contextid, &nodeid);
     
     NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d nodeid=%d",
             binary, srvid, pid, nodeid);

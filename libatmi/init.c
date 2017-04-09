@@ -846,13 +846,14 @@ public int tpinit (TPINIT * init_data)
         sprintf(my_id, NDRX_MY_ID_SRV, init_data!=NULL?init_data->cltname:read_clt_name, 
                                         G_srv_id, 
                                         pid,
+                                        conf.contextid, /* Bug #119 server multicontext fixes... */
                                         G_atmi_env.our_nodeid);
         strcpy(conf.my_id, my_id);
     }
 
     NDRX_LOG(log_debug, "my_id=[%s]", conf.my_id);
-    /* TODO: Safe copy? */
-    sprintf(reply_q, NDRX_CLT_QREPLY, conf.q_prefix,
+
+    snprintf(reply_q, sizeof(reply_q), NDRX_CLT_QREPLY, conf.q_prefix,
                 read_clt_name, pid, conf.contextid); /* no client name if no provided */
 
     /* at first try to un-link existing queue */

@@ -44,6 +44,7 @@
 #include <string.h>
 #include "srv_int.h"
 #include "tperror.h"
+#include "atmi_tls.h"
 #include <atmi_int.h>
 #include <atmi_shm.h>
 #include <xa_cmn.h>
@@ -322,7 +323,10 @@ public int initialize_atmi_library(void)
 
     /* Generate my_id */
     sprintf(conf.my_id, NDRX_MY_ID_SRV, G_server_conf.binary_name, 
-            G_server_conf.srv_id, pid, G_atmi_env.our_nodeid);
+            G_server_conf.srv_id, pid, 
+            G_atmi_tls->G_atmi_conf.contextid, 
+            G_atmi_env.our_nodeid);
+    
     conf.is_client = 0;
     
     /*

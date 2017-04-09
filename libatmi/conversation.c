@@ -236,8 +236,8 @@ public int accept_connection(void)
                     G_atmi_tls->G_atmi_conf.q_prefix, 
                     G_atmi_tls->G_last_call.my_id, 
                     G_atmi_tls->G_last_call.cd-MAX_CONNECTIONS,
-                    G_atmi_tls->G_atmi_conf.my_id,/* In accepted connection we put their id */
-                    G_atmi_tls->G_atmi_conf.contextid);  /* Bug #119 - in case if we are server... */
+                    G_atmi_tls->G_atmi_conf.my_id/* In accepted connection we put their id */
+                    );
     
     /* TODO: Firstly we should open the queue on which to listen right? */
     if ((mqd_t)FAIL==(conv->my_listen_q =
@@ -751,7 +751,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
 
     /* Format the conversational reply queue */
     sprintf(reply_qstr, NDRX_CONV_INITATOR_Q, G_atmi_tls->G_atmi_conf.q_prefix, 
-            G_atmi_tls->G_atmi_conf.my_id, cd, G_atmi_tls->G_atmi_conf.contextid); /* Bug #119 */
+            G_atmi_tls->G_atmi_conf.my_id, cd);
     NDRX_LOG(log_debug, "%s/%s/%d reply_qstr: [%s]",
 		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd, reply_qstr);
     strcpy(call->reply_to, reply_qstr);
