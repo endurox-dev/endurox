@@ -106,8 +106,8 @@ extern "C" {
 #define NDRX_ADMIN_SVC     "%s-%d"
 
 /* This queue basically links two process IDs for conversation */
-#define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d" /* Conversation initiator */
-#define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /* Conversation server Q */
+#define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d,%ld" /* Conversation initiator */
+#define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s,%ld" /* Conversation server Q */
 
 #define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%d" /* binary name, server id, pid, nodeid */
 #define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %d" /* binary name, server id, pid, nodeid for parse */
