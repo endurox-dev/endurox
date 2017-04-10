@@ -1662,7 +1662,8 @@ private int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         
                         *buf_len = hdr->buf_len;
                                 
-                        Bprint(p_ub);
+                        /* Bprint(p_ub); Bug #120 */
+			ndrx_debug_dump_UBF(log_debug, "Restored buffer", p_ub);
                         
                         /*  have some debug */
                         {
