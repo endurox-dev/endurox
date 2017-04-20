@@ -253,7 +253,7 @@ export NDRX_CONFIG=$HOME/endurox/sampleconfig/ndrxconfig.xml
 export PATH=$PATH:$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib:$HOME/endurox/dist/lib64
 
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
