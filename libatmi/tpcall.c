@@ -969,8 +969,8 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
     
     sscanf(tmp, NDRX_MY_ID_SRV_PARSE, binary, &srvid, &pid, &contextid, &nodeid);
     
-    NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d nodeid=%d",
-            binary, srvid, pid, nodeid);
+    NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d contextid=%ld nodeid=%d",
+            binary, srvid, pid, contextid, nodeid);
     
     /*check is parsed ok?*/
     if (EOS==binary[0] || FAIL==srvid || FAIL==pid || FAIL==nodeid)
