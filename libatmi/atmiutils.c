@@ -179,6 +179,7 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq
 {
     struct mq_attr attr_int;
     struct mq_attr * p_at;
+    mqd_t ret;
 
     if (NULL==attr)
     {
@@ -196,9 +197,12 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq
     if (!p_at->mq_msgsize)
         p_at->mq_msgsize = G_atmi_env.msgsize_max;
 
-    /*NDRX_LOG(log_debug, "mq_maxmsg: %d mq_msgsize: %d",
-                                       p_at->mq_maxmsg, p_at->mq_msgsize);*/
-    return ndrx_mq_open(name, oflag, mode, p_at);
+    ret=ndrx_mq_open(name, oflag, mode, p_at);
+
+    NDRX_LOG(6, "ndrx_mq_open_at(name=%s) returns %lx (mq_maxmsg: %d mq_msgsize: %d)",
+	name, (long int) ret, p_at->mq_maxmsg, p_at->mq_msgsize);
+
+    return ret;
 }
 
 /**
@@ -382,7 +386,8 @@ public long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *
     
 restart:
     SET_TOUT_VALUE;
-    NDRX_LOG(6, "use timeout: %d config: %d", use_tout, G_atmi_env.time_out);
+    NDRX_LOG(6, "use timeout: %d config: %d qdescr: %lx", use_tout,
+		G_atmi_env.time_out, (long int)q_descr);
     if ((!use_tout && FAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
          (use_tout && FAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {
@@ -404,8 +409,9 @@ restart:
 
             CONV_ERROR_CODE(ret, err);
 
+            _TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%d): %s",
+			(long int)q_descr, ret, strerror(ret));
             ret=FAIL;
-            _TPset_error_fmt(err, "ndrx_mq_receive failed: %s", strerror(errno));
         }
     }
     return ret;
