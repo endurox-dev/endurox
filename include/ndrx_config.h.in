@@ -19,6 +19,8 @@
 
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 
+#cmakedefine EX_USE_FDPOLL @EX_USE_FDPOLL@
+
 #cmakedefine EX_OS_LINUX @EX_OS_LINUX@
 
 #cmakedefine EX_OS_AIX @EX_OS_AIX@

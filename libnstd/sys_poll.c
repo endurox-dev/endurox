@@ -627,7 +627,11 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                 if (i!=set->nrfds-1 && set->nrfds>1)
                 {
                     /* It is not last element, thus we can move something... */
-                    memmove(set->fdtab+i, set->fdtab+i+1, set->nrfds-i-1);
+                    /* Something is not right here... .. the sizes! 
+                    memmove(set->fdtab+i, set->fdtab+i+1, set->nrfds-i-1);*/
+                    
+                    memmove(&set->fdtab[i], &set->fdtab[i+1], 
+                            sizeof(struct pollfd)*(set->nrfds-i-1));
                 }
                 
                 set->nrfds--;
@@ -639,7 +643,8 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                     NDRX_LOG(log_warn, "set->nrfds == 0, => free");
                     NDRX_FREE((char *)set->fdtab);
                 }
-                else if (NULL==(set->fdtab=NDRX_REALLOC(set->fdtab, sizeof(struct pollfd)*set->nrfds)))
+                else if (NULL==(set->fdtab=NDRX_REALLOC(set->fdtab, 
+                        sizeof(struct pollfd)*set->nrfds)))
                 {
                     ndrx_epoll_set_err(errno, "Failed to realloc %d/%d", 
                             set->nrfds, sizeof(struct pollfd)*set->nrfds);
@@ -801,10 +806,12 @@ public int ndrx_epoll_create(int size)
     
     EX_EPOLL_API_ENTRY;
     
+    MUTEX_LOCK_V(M_psets_lock);
     while (NULL!=(set=pset_find(i)) && i < EX_POLL_SETS_MAX)
     {
         i++;
     }
+    MUTEX_UNLOCK_V(M_psets_lock);
     
     /* we must have free set */
     if (NULL!=set)
@@ -866,7 +873,9 @@ public int ndrx_epoll_create(int size)
     set->fdtab[PIPE_POLL_IDX].events = POLLIN;
     
     /* add finally to hash */
+    MUTEX_LOCK_V(M_psets_lock);
     EXHASH_ADD_INT(M_psets, fd, set);
+    MUTEX_UNLOCK_V(M_psets_lock); /*  <<< release the lock */
     
     NDRX_LOG(log_info, "ndrx_epoll_create succeed, fd=%d", i);
     
@@ -1102,8 +1111,9 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
                 i, set->fdtab[i].fd, set->fdtab[i].events);
     }
 
-    NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - about to poll(nrfds=%d)",
-                        fn, epfd, events, maxevents, timeout, set->nrfds);
+    NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - "
+                    "about to poll(nrfds=%d)",
+                    fn, epfd, events, maxevents, timeout, set->nrfds);
     
     
     retpoll = poll( set->fdtab, set->nrfds, timeout);
@@ -1119,29 +1129,29 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
                 int err;
                 mqd_t mqdes = 0;
                 while (numevents < maxevents && 
-                        FAIL!=(ret=read(set->wakeup_pipe[READ], (char *)&mqdes, sizeof(mqdes))))
+                        FAIL!=(ret=read(set->wakeup_pipe[READ], (char *)&mqdes, 
+                        sizeof(mqdes))))
                 {
 		    struct mq_attr att;
-	   /* read the attributes of the Q */
-	  /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
-            if (SUCCEED!= ndrx_mq_getattr(mqdes, &att))
-            {
-                /*ndrx_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
-                NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
-          /*      FAIL_OUT(ret);*/
-            }
-		else if (att.mq_curmsgs > 0)
-		{
+                    /* read the attributes of the Q */
+                    /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
+                    if (SUCCEED!= ndrx_mq_getattr(mqdes, &att))
+                    {
+                        /*ndrx_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
+                        NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  
+                                m->mqd);
+                        /* FAIL_OUT(ret);*/
+                    }
+                    else if (att.mq_curmsgs > 0)
+                    {
+                        numevents++;
 
+                        NDRX_LOG(log_info, "Got mqdes %d for pipe", mqdes);
 
-                    numevents++;
-                    
-                    NDRX_LOG(log_info, "Got mqdes %d for pipe", mqdes);
-                    
-                    events[numevents-1].data.mqd = mqdes;
-                    events[numevents-1].events = set->fdtab[i].revents;
-                    events[numevents-1].is_mqd = TRUE;
-		}
+                        events[numevents-1].data.mqd = mqdes;
+                        events[numevents-1].events = set->fdtab[i].revents;
+                        events[numevents-1].is_mqd = TRUE;
+                    }
                     
                 }
                 

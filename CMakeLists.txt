@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "3.5.4")
+set(VERSION "3.5.5")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -49,6 +49,7 @@ message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
 message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
 
 OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
+OPTION(DEFINE_FORCEFDPOLL "Use Force FDPOLL" OFF)
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
 OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 
@@ -73,12 +74,20 @@ IF(DEFINE_FORCEEMQ)
     set(EX_USE_EMQ "1")
 ENDIF()
 
+# Use emulated message queue
+IF(DEFINE_FORCEFDPOLL)
+    message("Using poll on MQ mqd_t as file descriptor")
+    set(EX_USE_FDPOLL "1")
+ENDIF()
+
 SET(RT_LIB rt dl)
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_OS_LINUX "1")
         # Enable poll only
         IF(DEFINE_FORCEPOLL)
             message("Linux - Using poll()")
+        ELSEIF(DEFINE_FORCEFDPOLL)
+            message("Linux - Using fdpoll()")
         ELSE()
             message("Linux - Using epoll()")
             set(EX_USE_EPOLL "1")

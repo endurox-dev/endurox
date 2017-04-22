@@ -48,6 +48,12 @@ else ()
     SET(NSTD_POLLER "sys_poll.c")
 endif ()
 
+# Using poll on file descriptor based Q
+# For example freebsd also have q descriptors actually a FD
+IF(DEFINE_FORCEFDPOLL)
+    SET(NSTD_POLLER "sys_fdpoll.c")
+endif ()
+
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 
 # Use emulated queues (if forced).
@@ -94,4 +100,4 @@ install (TARGETS
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries
-    )
+)

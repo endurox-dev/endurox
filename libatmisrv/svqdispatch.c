@@ -1089,7 +1089,7 @@ public int sv_wait_for_request(void)
             evfd = G_server_conf.events[n].data.fd;
             evmqd = G_server_conf.events[n].data.mqd;
 
-#ifndef EX_USE_EPOLL
+#if !defined(EX_USE_FDPOLL) && !defined(EX_USE_EPOLL)
             NDRX_LOG(log_debug, "not epoll()");
             /* for non linux, we need to distinguish between fd & mq */
             is_mq_only = G_server_conf.events[n].is_mqd;

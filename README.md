@@ -144,4 +144,5 @@ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 - To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON'
 - To log the memory allocation to user log add '-DNDRX_MEMORY_DEBUG=1' 
 - To trace the Object-API use '-DNDRX_OAPI_DEBUG=1' 
+- To enable file descriptor based treating of the queues '-DDEFINE_FORCEFDPOLL=ON'
 
