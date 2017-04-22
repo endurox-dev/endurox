@@ -169,7 +169,7 @@ public inline void ndrx_epoll_sys_uninit(void)
  */
 public inline char * ndrx_epoll_mode(void)
 {
-    static char *mode = "epoll";
+    static char *mode = "fdpoll";
     
     return mode;
 }
