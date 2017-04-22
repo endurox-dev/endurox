@@ -126,6 +126,8 @@ The number here are lower because messages are being saved to disk. Also interna
 
 - Version 3.5.4 released on 01/03/2017. Fixed bug #108 - possible CPM crash
 
+- Version 3.5.5 released on 23/03/2017. Works Feature #113 - mqd_t use as file descriptor - for quick poll operations.
+
 meaning that caller do not wait for tpcommit() anymore and got inconclusive results.
 
 # Build configurations
