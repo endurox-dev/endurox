@@ -124,6 +124,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
         SET(RT_LIB rt)
 
 	set(EX_OS_FREEBSD "1")
+	# Best option...
         set(EX_USE_KQUEUE "1")
 
 elseif(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
@@ -329,7 +330,9 @@ if(LSB_RELEASE_EXECUTABLE)
         #string(REGEX MATCH "^[0-9]+" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
 else ()
         set(LSB_RELEASE_OUTPUT_OS ${CMAKE_OS_NAME})
-        set(LSB_RELEASE_OUTPUT_VER "0")
+
+        string(REPLACE "." "_" _TMP_LSB_RELEASE_OUTPUT_VER ${CMAKE_SYSTEM_VERSION})
+        string(REPLACE "-" "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
 	
 	# If it is AIX, then we can extract version from uname
 	if(${CMAKE_OS_NAME} STREQUAL "AIX")
