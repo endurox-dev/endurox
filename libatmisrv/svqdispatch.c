@@ -1089,14 +1089,15 @@ public int sv_wait_for_request(void)
             evfd = G_server_conf.events[n].data.fd;
             evmqd = G_server_conf.events[n].data.mqd;
 
+/* so this way will work for POLL & Kqueue */
 #if !defined(EX_USE_FDPOLL) && !defined(EX_USE_EPOLL)
             NDRX_LOG(log_debug, "not epoll()");
             /* for non linux, we need to distinguish between fd & mq */
             is_mq_only = G_server_conf.events[n].is_mqd;
 #endif
 
-            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, is_mq_only: %d, G_pollext=%p",
-                        n, G_server_conf.events[n].data.u32, evfd, is_mq_only, G_pollext);
+            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, is_mq_only: %d, G_pollext=%p",
+                        n, G_server_conf.events[n].data.u32, evfd, evmqd, is_mq_only, G_pollext);
             
             /* Check poller extension */
             if (NULL!=G_pollext && (FAIL==is_mq_only || FALSE==is_mq_only) )
@@ -1147,7 +1148,6 @@ public int sv_wait_for_request(void)
             }
             else
             {
-                /* NDRX_LOG(log_debug, "Got request"); */
                 /* OK, we got the message and now we can call the service */
                 /*G_server_conf.service_array[n]->p_func((TPSVCINFO *)msg_buf);*/
 

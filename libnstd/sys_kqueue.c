@@ -102,6 +102,8 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
     char *fn = "ndrx_epoll_ctl";
     struct kevent ev;
     
+    ev.udata = NULL;
+
     if (EX_EPOLL_CTL_ADD == op)
     {
         NDRX_LOG(log_info, "%s: Add operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
@@ -142,7 +144,44 @@ out:
  */
 public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
 {
-    return ndrx_epoll_ctl(epfd, op, (int)fd, event);
+    int ret = SUCCEED;
+    char *fn = "ndrx_epoll_ctl";
+    struct kevent ev;
+    void *tmp = fd;
+    int real_fd = *((int *)tmp);
+
+    /* for bsd the file descriptor must be dereferenced from pointer */
+
+    if (EX_EPOLL_CTL_ADD == op)
+    {
+        NDRX_LOG(log_info, "%s: Add operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
+
+        EV_SET(&ev, real_fd, EVFILT_READ, event->events, 0, 0, NULL);
+        ev.udata = fd;
+
+        return kevent(epfd, &ev, 1, NULL, 0, NULL);
+    }
+    else if (EX_EPOLL_CTL_DEL == op)
+    {
+        NDRX_LOG(log_info, "%s: Delete operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
+
+        EV_SET(&ev, real_fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+
+        return kevent(epfd, &ev, 1, NULL, 0, NULL);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid operation %d", op);
+        errno = EINVAL;
+        FAIL_OUT(ret);
+    }
+
+out:
+
+    NDRX_LOG(log_info, "%s return %d", fn, ret);
+
+    return ret;
+
 }
 
 /**
@@ -194,9 +233,19 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
 
         numevents++;
 
-        events[numevents-1].data.fd = tevent.ident;
+        if (tevent.udata!=NULL)
+        {
+            /* the mqueue hanlder is encoded here (ptr to fd..)*/
+            events[numevents-1].data.mqd = (mqd_t)tevent.udata;
+            events[numevents-1].is_mqd = TRUE;
+        }
+        else
+        {
+           events[numevents-1].data.fd = tevent.ident;
+           events[numevents-1].is_mqd = FALSE;
+        }
+
         events[numevents-1].events = tevent.flags;
-        events[numevents-1].is_mqd = FAIL;
     }
     else
     {
