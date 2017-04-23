@@ -249,18 +249,14 @@ public int ndrx_get_pid_from_ps(char *psout, pid_t *pid)
     strcpy(tmp, psout);
 
     /* get the first token */
-    token = strtok(tmp, "\t ");
-
-/* for free bsd PID is on first column... */
-#ifndef EX_OS_FREEBSD
-    if (NULL==token)
+    if (NULL==(token = strtok(tmp, "\t ")))
     {
-        NDRX_LOG(log_error, "missing first ps -ef column")
+        NDRX_LOG(log_error, "missing username in ps -ef output")
         FAIL_OUT(ret);
     }
-    
+
+    /* get second token */
     token = strtok(NULL, "\t ");
-#endif
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing pid in ps -ef output")

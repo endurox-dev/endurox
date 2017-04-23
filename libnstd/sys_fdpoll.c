@@ -494,14 +494,15 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
     
     for (i=0; i<set->nrfds; i++)
     {
+        NDRX_LOG(log_debug, "fd=%d, i=%d revents=%d", 
+                set->fdtab[i].fd, i, set->fdtab[i].revents);
         if (set->fdtab[i].revents && maxevents > numevents)
         {
-            NDRX_LOG(log_debug, "fd=%d, i=%d revents=%d", 
-                    set->fdtab[i].fd, i, set->fdtab[i].revents);
+            NDRX_LOG(log_debug, "Returning...");
 
             numevents++;
             
-            events[numevents-1].data.mqd = set->fdtab[i].fd;
+            events[numevents-1].data.fd = set->fdtab[i].fd;
             events[numevents-1].events = set->fdtab[i].revents;
             events[numevents-1].is_mqd = FALSE;
 	}
