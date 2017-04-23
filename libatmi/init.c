@@ -319,7 +319,12 @@ public int ndrx_load_common_env(void)
     }
     else
     {
-        sscanf(p, "%x", &(G_atmi_env.ipckey));
+	int tmpkey;
+
+	/* bsd warning of long: */
+        sscanf(p, "%x", &tmpkey);
+	G_atmi_env.ipckey = tmpkey;
+
         NDRX_LOG(log_debug, "SystemV SEM IPC Key set to: [%x]",
                             G_atmi_env.ipckey);
     }

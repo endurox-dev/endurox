@@ -161,6 +161,9 @@ extern int ndrx_load_new_env(char *file);
 extern void cpm_cfg_lock(void);
 extern void cpm_cfg_unlock(void);
 
+extern void cpm_lock_config(void);
+extern void cpm_unlock_config(void);
+
 #ifdef EX_CPM_NO_THREADS
 extern void sign_chld_handler(int sig);
 #endif

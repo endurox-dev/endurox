@@ -44,6 +44,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/event.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -83,7 +84,7 @@ public inline void ndrx_epoll_sys_uninit(void)
  */
 public inline char * ndrx_epoll_mode(void)
 {
-    static char *mode = "fdpoll";
+    static char *mode = "kqueue";
     
     return mode;
 }
@@ -99,27 +100,28 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
 {   
     int ret = SUCCEED;
     char *fn = "ndrx_epoll_ctl";
-    struct	kevent event;
+    struct kevent ev;
     
     if (EX_EPOLL_CTL_ADD == op)
     {
         NDRX_LOG(log_info, "%s: Add operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
         
-        EV_SET(&event, fd, EVFILT_READ, event->events, 0, 0, NULL);
+        EV_SET(&ev, fd, EVFILT_READ, event->events, 0, 0, NULL);
         
-        return kevent(kq, &event, 1, NULL, 0, NULL);
+        return kevent(epfd, &ev, 1, NULL, 0, NULL);
     }
     else if (EX_EPOLL_CTL_DEL == op)
     {
         NDRX_LOG(log_info, "%s: Delete operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
            
-        EV_SET(&event,	fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        EV_SET(&ev,	fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
         
-        return kevent(kq, &event, 1, NULL, 0, NULL);
+        return kevent(epfd, &ev, 1, NULL, 0, NULL);
     }
     else
     {
         NDRX_LOG(log_error, "Invalid operation %d", op);
+	errno = EINVAL;
         FAIL_OUT(ret);
     }
     
@@ -179,7 +181,7 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
     int retpoll;
     struct kevent tevent;	 /* Event triggered */
     
-    retpoll = kevent(kq, NULL, 0, &tevent, 1, NULL);
+    retpoll = kevent(epfd, NULL, 0, &tevent, 1, NULL);
     
     err_saved = errno;
     

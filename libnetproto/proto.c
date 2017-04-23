@@ -60,6 +60,7 @@
 #include <ubf_int.h>            /* FLOAT_RESOLUTION, DOUBLE_RESOLUTION */
 
 #include <typed_buf.h>
+#include <ubfutil.h>
 
 #include "fdatatype.h"
 /*---------------------------Externs------------------------------------*/
