@@ -116,7 +116,7 @@ public int remove_service_q(char *svc, short srvid)
     char *fn = "remove_service_q";
     NDRX_LOG(log_debug, "%s - Enter, svc = [%s], srvid = %hd", fn, svc, srvid);
      
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     sprintf(q_str, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, svc, srvid);
 #else
     sprintf(q_str, NDRX_SVC_QFMT, G_sys_config.qprefix, svc);

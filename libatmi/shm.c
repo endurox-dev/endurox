@@ -605,7 +605,7 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         
         if (FAIL!=chosen_node)
         {
-#ifdef EX_USE_EPOLL /* only for epoll(). For poll we do recursive call for service selection */
+#ifndef EX_USE_POLL /* only for epoll/fdpoll/kqueue(). For poll we do recursive call for service selection */
             sprintf(send_q, NDRX_SVC_QBRDIGE, 
                     G_atmi_tls->G_atmi_conf.q_prefix, chosen_node);
 #endif

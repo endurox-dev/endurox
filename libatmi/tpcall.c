@@ -401,9 +401,7 @@ public int _tpacall (char *svc, char *data,
     if (ex_flags & TPCALL_BRCALL)
     {
         /* If this is a bridge call, then format the bridge Q */
-#ifdef EX_USE_EPOLL
-        sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, dest_node);
-#else
+#ifdef EX_USE_POLL
         {
             int tmp_is_bridge;
             char tmpsvc[MAXTIDENT+1];
@@ -417,6 +415,8 @@ public int _tpacall (char *svc, char *data,
                 FAIL_OUT(ret);
             }
         }
+#else
+        sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, dest_node);
 #endif
         
         is_bridge=TRUE;
@@ -985,9 +985,7 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
         NDRX_LOG(log_debug, "Server is located on different server, "
                 "our nodeid=%d their=%d",
                 G_atmi_env.our_nodeid, nodeid);
-#ifdef EX_USE_EPOLL
-        sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, nodeid);
-#else
+#ifdef EX_USE_POLL
         /* poll() mode: */
         {
             int is_bridge;
@@ -1002,6 +1000,8 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
                 FAIL_OUT(ret);
             }
         }
+#else
+        sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, nodeid);
 #endif
     }
     else

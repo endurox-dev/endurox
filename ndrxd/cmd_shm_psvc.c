@@ -82,7 +82,7 @@ public void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
     
     shm_psvc_info->srvids[0] = 0;
 
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     /* copy the number of elements */
     i = shm_psvc_info->srvs - shm_psvc_info->csrvs;
     if (i > CONF_NDRX_MAX_SRVIDS_XADMIN)

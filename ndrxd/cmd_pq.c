@@ -167,7 +167,7 @@ public int pq_run_santiy(int run_hist)
                 cur->pq_info[i]=cur->pq_info[i-1];
             }
         }
-#ifdef EX_USE_EPOLL
+#ifndef EX_USE_POLL
         /* now write at POS 0, latest reading of service */
         sprintf(q, NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
         

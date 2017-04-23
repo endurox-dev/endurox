@@ -219,10 +219,20 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
     int i;
     int retpoll;
     struct kevent tevent;	 /* Event triggered */
+    struct timespec tout;
     
-    NDRX_LOG(log_debug, "about to keven %d", epfd);
-
-    retpoll = kevent(epfd, NULL, 0, &tevent, 1, NULL);
+    if (timeout>0)
+    {
+    	NDRX_LOG(log_debug, "about to kevent wait %d, timeout %d", epfd, timeout);
+        tout.tv_nsec = 0;
+        tout.tv_sec = timeout/1000;
+        retpoll = kevent(epfd, NULL, 0, &tevent, 1, &tout);
+    }
+    else
+    {
+    	NDRX_LOG(log_debug, "about to kevent wait %d, no timeout", epfd);
+        retpoll = kevent(epfd, NULL, 0, &tevent, 1, NULL);
+    }
     
     err_saved = errno;
     
@@ -230,7 +240,7 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
     if (retpoll > 0)
     {
         /* 1 event currently supported... */
-        NDRX_LOG(log_debug, "fd=%d, i=%d revents=%d", 
+        NDRX_LOG(log_debug, "fd=%d, i=%d revents=%u", 
                 tevent.ident, tevent.flags);
 
         numevents++;
@@ -248,6 +258,10 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
         }
 
         events[numevents-1].events = tevent.flags;
+    }
+    else if (retpoll==0)
+    {
+        goto out;
     }
     else
     {
