@@ -70,6 +70,8 @@ get it working:
 # ln -s /usr/local/bin/bash /bin/bash
 ---------------------------------------------------------------------
 
+*reboot* to apply new settigns (limits & mqueue mount)
+
 === Getting the source code
 For test purposes we will parepare new user for which Enduro/X will built.
 
