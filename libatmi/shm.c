@@ -460,14 +460,14 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     
     if (!ndrxd_shm_is_attached(&G_svcinfo))
     {
-#ifndef EX_USE_EPOLL
-        /* TODO: lookup first service in cache: */
+#ifdef EX_USE_POLL
+        /* lookup first service in cache: */
         ret = ndrx_get_cached_svc_q(send_q);
 #endif
         goto out; /* do not fail, try locally */
     }
     
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_lock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
@@ -618,7 +618,7 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
             ret=FAIL;
         }
     }
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     else
     {
         short srvid;
@@ -816,7 +816,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     int tot_local_srvs;
     int is_new;
     
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_lock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
@@ -837,7 +837,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
                 (0==SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs && count>0))
         {
 
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
             
             tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->srvs - 
                     SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
@@ -998,7 +998,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     }
 out:
 
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_unlock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
@@ -1049,7 +1049,7 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
     int tot_local_srvs;
     int lpos;
     
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_lock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
@@ -1067,7 +1067,7 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
                                 svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
                                 SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
 
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
 
             tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->srvs - 
                     SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
@@ -1127,7 +1127,7 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
             *last=TRUE;
     }
     
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_unlock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
@@ -1143,7 +1143,7 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
     int pos = FAIL;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
 
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_lock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
@@ -1178,7 +1178,7 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
             *last=TRUE;
     }
     
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_unlock_svc_nm(svc))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);

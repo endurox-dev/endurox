@@ -70,29 +70,13 @@ ELSE ()
         SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
-# Use emulated message queue
-IF(DEFINE_FORCEEMQ)
-    message("Using emulated message queue")
-    set(EX_USE_EMQ "1")
-ENDIF()
-
-# Use emulated message queue
-IF(DEFINE_FORCEFDPOLL)
-    message("Using poll on MQ mqd_t as file descriptor")
-    set(EX_USE_FDPOLL "1")
-ENDIF()
-
-IF(DEFINE_FORCEKQUEUE)
-    message("Using Kqueue event mechanism")
-    set(EX_USE_KQUEUE "1")
-ENDIF()
-
 SET(RT_LIB rt dl)
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_OS_LINUX "1")
         # Enable poll only
         IF(DEFINE_FORCEPOLL)
             message("Linux - Using poll()")
+            set(EX_USE_POLL "1")
         ELSEIF(DEFINE_FORCEFDPOLL)
             message("Linux - Using fdpoll()")
         ELSE()
@@ -119,11 +103,13 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 		endif()
 	endif()
 
+        set(EX_USE_POLL "1")
 	set(EX_OS_AIX "1")
         # For AIX we do not have other options that use file system
         # base queue registry.
         set(USE_FS_REGISTRY "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
+        set(EX_USE_POLL "1")
 	set(EX_OS_HPUX "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	set(EX_OS_SUNOS "1")
@@ -136,17 +122,39 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	endif()
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
         SET(RT_LIB rt)
+
 	set(EX_OS_FREEBSD "1")
+        set(EX_USE_KQUEUE "1")
+
 elseif(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
 	set(EX_OS_CYGWIN "1")
+        set(EX_USE_POLL "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
         SET(RT_LIB dl)
 	set(EX_OS_DARWIN "1")
-# Unkonwn OS:
+        set(EX_USE_POLL "1")
+# Unknown OS:
 else()
 	message( FATAL_ERROR "Unsupported OS" )
 endif()
 
+# Use emulated message queue
+IF(DEFINE_FORCEEMQ)
+    message("Using emulated message queue")
+    set(EX_USE_EMQ "1")
+    set(EX_USE_POLL "1")
+ENDIF()
+
+# Use emulated message queue
+IF(DEFINE_FORCEFDPOLL)
+    message("Using poll on MQ mqd_t as file descriptor")
+    set(EX_USE_FDPOLL "1")
+ENDIF()
+
+IF(DEFINE_FORCEKQUEUE)
+    message("Using Kqueue event mechanism")
+    set(EX_USE_KQUEUE "1")
+ENDIF()
 
 ################################################################################
 # "Configure"

@@ -258,7 +258,7 @@ public int accept_connection(void)
     {
         br_dump_nodestack(G_atmi_tls->G_last_call.callstack, "Incoming conversation from bridge,"
                                            "using first node from node stack");
-#ifdef EX_USE_EPOLL
+#ifndef EX_USE_POLL
         sprintf(their_qstr, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, 
                 (int)G_atmi_tls->G_last_call.callstack[0]);
 #else
