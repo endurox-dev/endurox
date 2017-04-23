@@ -60,14 +60,20 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
 
 #define EX_EPOLL_CTL_ADD        EPOLL_CTL_ADD
 #define EX_EPOLL_CTL_DEL        EPOLL_CTL_DEL
     
-    
 #define EX_EPOLL_FLAGS          (EPOLLIN | EPOLLERR | EPOLLEXCLUSIVE)
 
+#elif defined (EX_USE_KQUEUE)
+
+#define EX_EPOLL_CTL_ADD        1
+#define EX_EPOLL_CTL_DEL        2
+    
+#define EX_EPOLL_FLAGS          EV_ADD | EV_ONESHOT | EV_ENABLE
+    
 #else
 
 #define EX_EPOLL_CTL_ADD        1

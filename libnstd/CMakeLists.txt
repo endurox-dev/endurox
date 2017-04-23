@@ -54,6 +54,11 @@ IF(DEFINE_FORCEFDPOLL)
     SET(NSTD_POLLER "sys_fdpoll.c")
 endif ()
 
+# BSD Style of events
+IF(DEFINE_FORCEKQUEUE)
+    SET(NSTD_POLLER "sys_kqueue.c")
+endif ()
+
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 
 # Use emulated queues (if forced).

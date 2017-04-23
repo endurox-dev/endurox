@@ -321,14 +321,7 @@ out:
  */
 public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
 {
-    int ret = SUCCEED;
-    
-    
     return ndrx_epoll_ctl(epfd, op, (int)fd, event);
-    
-    
-out:
-    return ret;
 }
 
 /**
@@ -504,7 +497,7 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
             
             events[numevents-1].data.fd = set->fdtab[i].fd;
             events[numevents-1].events = set->fdtab[i].revents;
-            events[numevents-1].is_mqd = FALSE;
+            events[numevents-1].is_mqd = FAIL;
 	}
     }
     

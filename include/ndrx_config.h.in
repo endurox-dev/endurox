@@ -21,6 +21,8 @@
 
 #cmakedefine EX_USE_FDPOLL @EX_USE_FDPOLL@
 
+#cmakedefine EX_USE_KQUEUE @EX_USE_KQUEUE@
+
 #cmakedefine EX_OS_LINUX @EX_OS_LINUX@
 
 #cmakedefine EX_OS_AIX @EX_OS_AIX@

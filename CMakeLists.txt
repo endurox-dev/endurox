@@ -48,8 +48,10 @@ message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
 message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
 
-OPTION(DEFINE_FORCEPOLL "Use Force POLL (even on linux)" OFF)
-OPTION(DEFINE_FORCEFDPOLL "Use Force FDPOLL" OFF)
+OPTION(DEFINE_FORCEPOLL "Force POLL (even on linux)" OFF)
+OPTION(DEFINE_FORCEFDPOLL "Force FDPOLL" OFF)
+OPTION(DEFINE_FORCEKQUEUE "Force Kqueue (BSD poll framework)" OFF)
+
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
 OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 
@@ -78,6 +80,11 @@ ENDIF()
 IF(DEFINE_FORCEFDPOLL)
     message("Using poll on MQ mqd_t as file descriptor")
     set(EX_USE_FDPOLL "1")
+ENDIF()
+
+IF(DEFINE_FORCEKQUEUE)
+    message("Using Kqueue event mechanism")
+    set(EX_USE_KQUEUE "1")
 ENDIF()
 
 SET(RT_LIB rt dl)
