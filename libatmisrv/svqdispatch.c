@@ -118,7 +118,7 @@ public int sv_open_queue(void)
         }
         
         /* Open the queue */
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
         /* for poll mode, we must ensure that queue does not exists before start
          */
         if (SUCCEED!=ndrx_mq_unlink(entry->listen_q))
@@ -193,6 +193,7 @@ public int sv_open_queue(void)
 #ifdef EX_USE_EPOLL
         ev.data.fd = G_server_conf.service_array[i]->q_descr;
 #else
+        /* this is ok, more accurate */
         ev.data.mqd = G_server_conf.service_array[i]->q_descr;
 #endif
         
@@ -886,7 +887,7 @@ public int process_admin_req(char *buf, long len, int *shutdown_req)
         NDRX_LOG(log_warn, "Shutdown requested by [%s]", 
                                         call->reply_queue);
         *shutdown_req=TRUE;
-#ifndef EX_USE_EPOLL
+#ifdef EX_USE_POLL
         /* TODO: We shall send request to all open service queues
          * to do the shutdown. This is only for poll() mode.
          */

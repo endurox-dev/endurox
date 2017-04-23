@@ -74,7 +74,8 @@ extern "C" {
 #define EX_EPOLL_CTL_ADD        1
 #define EX_EPOLL_CTL_DEL        2
     
-#define EX_EPOLL_FLAGS          EV_ADD | EV_ONESHOT | EV_ENABLE
+/* #define EX_EPOLL_FLAGS          EV_ADD | EV_ONESHOT | EV_ENABLE */
+#define EX_EPOLL_FLAGS          EV_ADD
     
 #else
 

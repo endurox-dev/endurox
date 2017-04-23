@@ -220,6 +220,8 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
     int retpoll;
     struct kevent tevent;	 /* Event triggered */
     
+    NDRX_LOG(log_debug, "about to keven %d", epfd);
+
     retpoll = kevent(epfd, NULL, 0, &tevent, 1, NULL);
     
     err_saved = errno;
