@@ -122,7 +122,8 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	endif()
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
         SET(RT_LIB rt)
-
+	# seem that threading model also does not work here...
+    	set(EX_CPM_NO_THREADS "1")
 	set(EX_OS_FREEBSD "1")
 	# Best option...
         set(EX_USE_KQUEUE "1")
