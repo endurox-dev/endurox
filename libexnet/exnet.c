@@ -44,9 +44,13 @@
 
 #include <ndrstandard.h>
 
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
 
 #include <sys/epoll.h>
+
+#elif defined(EX_USE_KQUEUE)
+
+#include <sys/event.h>
 
 #endif
 
@@ -65,9 +69,13 @@
 /*---------------------------Macros-------------------------------------*/
 #define DBUF_SZ	(sizeof(net->d) - net->dl)	/* Buffer size to recv in 	*/
 
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
 
 #define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+
+#elif defined(EX_USE_KQUEUE)
+
+#define POLL_FLAGS EVFILT_READ
 
 #else
 
@@ -386,7 +394,12 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         goto out;
     }
 
-    if (0==so_error && !net->is_connected && events)
+    if (0==so_error && !net->is_connected
+
+#ifndef  EX_USE_KQUEUE
+	&& events /* for Kqueue looks like no event is ok! */
+#endif
+	)
     {
         int arg;
         net->is_connected = TRUE;

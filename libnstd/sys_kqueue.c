@@ -108,7 +108,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
     {
         NDRX_LOG(log_info, "%s: Add operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
         
-        EV_SET(&ev, fd, EVFILT_READ, event->events, 0, 0, NULL);
+        EV_SET(&ev, fd, event->events, EV_ADD, 0, 0, NULL);
         
         return kevent(epfd, &ev, 1, NULL, 0, NULL);
     }
@@ -116,7 +116,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
     {
         NDRX_LOG(log_info, "%s: Delete operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
            
-        EV_SET(&ev,	fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        EV_SET(&ev,fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
         
         return kevent(epfd, &ev, 1, NULL, 0, NULL);
     }

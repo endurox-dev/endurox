@@ -51,9 +51,13 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
 
 #include <sys/epoll.h>
+
+#elif defined(EX_USE_KQUEUE)
+
+#include <sys/event.h>
 
 #else
 
