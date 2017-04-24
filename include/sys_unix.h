@@ -169,7 +169,9 @@ typedef union ndrx_epoll_data {
  * (E)poll event
  */
 struct ndrx_epoll_event {
+
         uint32_t     events;    /* Epoll events */
+
         ndrx_epoll_data_t data;      /* User data variable */
         
         /* The structure generally is the same as for linux epoll_wait

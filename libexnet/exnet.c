@@ -451,10 +451,18 @@ public int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     }
 
     /* Hmm try to receive something? */
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
+    
     if (events & EPOLLIN)
+        
+#elif defined(EX_USE_KQUEUE)
+        
+    if (1) /* Process all events... of Kqueue */
+        
 #else
+        
     if (events & POLLIN)
+        
 #endif
     {
         /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); */

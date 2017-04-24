@@ -256,7 +256,7 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
            events[numevents-1].data.fd = tevent.ident;
            events[numevents-1].is_mqd = FALSE;
         }
-
+        /* will provide back both flags & flag flags... */
         events[numevents-1].events = tevent.flags;
     }
     else if (retpoll==0)
