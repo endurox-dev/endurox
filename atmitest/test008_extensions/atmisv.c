@@ -44,9 +44,13 @@
 
 #include <ndrstandard.h>
 
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
 
 #include <sys/epoll.h>
+
+#elif defined(EX_USE_KQUEUE)
+
+#include <sys/event.h>
 
 #else
 
@@ -62,9 +66,13 @@
 #include <test.fd.h>
 
 
-#ifdef EX_USE_EPOLL
+#if defined(EX_USE_EPOLL)
 
 #define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+
+#elif defined(EX_USE_KQUEUE)
+
+#define POLL_FLAGS (EVFILT_READ)
 
 #else
 
