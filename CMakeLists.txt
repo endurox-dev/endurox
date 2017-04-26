@@ -127,7 +127,6 @@ elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
 	set(EX_OS_FREEBSD "1")
 	# Best option...
         set(EX_USE_KQUEUE "1")
-
 elseif(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
 	set(EX_OS_CYGWIN "1")
         set(EX_USE_POLL "1")

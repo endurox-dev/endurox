@@ -37,27 +37,17 @@ cmake_minimum_required(VERSION 2.6)
 # Make sure the compiler can find include files from our Hello library. 
 include_directories (. ../include)
 
-# Set the poller
-if (${CMAKE_OS_NAME} STREQUAL "LINUX")
-        IF(DEFINE_FORCEPOLL)
-                SET(NSTD_POLLER "sys_poll.c")
-        ELSE (DEFINE_FORCEPOLL)
-                SET(NSTD_POLLER "sys_epoll.c")
-        ENDIF(DEFINE_FORCEPOLL)
-else ()
-    SET(NSTD_POLLER "sys_poll.c")
-endif ()
+SET(NSTD_POLLER "invalid_poller.c")
 
-# Using poll on file descriptor based Q
-# For example freebsd also have q descriptors actually a FD
-IF(DEFINE_FORCEFDPOLL)
-    SET(NSTD_POLLER "sys_fdpoll.c")
-endif ()
-
-# BSD Style of events
-IF(DEFINE_FORCEKQUEUE)
+if (${EX_USE_KQUEUE} STREQUAL "1")
     SET(NSTD_POLLER "sys_kqueue.c")
-endif ()
+elseif(${EX_USE_POLL} STREQUAL "1")
+    SET(NSTD_POLLER "sys_poll.c")
+elseif(${EX_USE_FDPOLL} STREQUAL "1")
+    SET(NSTD_POLLER "sys_fdpoll.c")
+elseif(${EX_USE_EPOLL} STREQUAL "1")
+    SET(NSTD_POLLER "sys_epoll.c")
+endif()
 
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 
