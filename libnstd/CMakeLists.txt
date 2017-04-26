@@ -39,13 +39,13 @@ include_directories (. ../include)
 
 SET(NSTD_POLLER "invalid_poller.c")
 
-if (${EX_USE_KQUEUE} STREQUAL "1")
+if (DEFINED EX_USE_KQUEUE)
     SET(NSTD_POLLER "sys_kqueue.c")
-elseif(${EX_USE_POLL} STREQUAL "1")
+elseif(DEFINED EX_USE_POLL)
     SET(NSTD_POLLER "sys_poll.c")
-elseif(${EX_USE_FDPOLL} STREQUAL "1")
+elseif(DEFINED EX_USE_FDPOLL)
     SET(NSTD_POLLER "sys_fdpoll.c")
-elseif(${EX_USE_EPOLL} STREQUAL "1")
+elseif(DEFINED EX_USE_EPOLL)
     SET(NSTD_POLLER "sys_epoll.c")
 endif()
 
