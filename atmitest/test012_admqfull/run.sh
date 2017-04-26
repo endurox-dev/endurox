@@ -87,6 +87,7 @@ echo "Running tests with: $TEST_PROCS processes...."
 #
 function go_out {
     echo "Test exiting with: $1"
+    xadmin killall sleep
 # Might cause respawn for that one process...
     xadmin stop -y
     xadmin down -y
@@ -111,7 +112,7 @@ exit_timeout() {
 
 #Prepare to catch SIGALRM, call exit_timeout
 trap exit_timeout SIGALRM
-(sleep $ALARMTIME; kill -ALRM $PARENTPID) &
+(sleep $ALARMTIME && kill -ALRM $PARENTPID) &
 ##################################
 
 rm *.log
