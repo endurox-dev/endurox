@@ -67,7 +67,7 @@ PROC_COUNT=100
 
 PSCMD="ps -ef"
 if [ "$(uname)" == "FreeBSD" ]; then
-	PSCMD="ps aux"
+	PSCMD="ps -auwwx"
 fi
 
 #

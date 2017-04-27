@@ -117,7 +117,7 @@ if [[ "X$USER" == "X" ]]; then
 fi
 
 if [ "$(uname)" == "FreeBSD" ]; then
-	BAD_PID=`ps | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $1}'`
+	BAD_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $1}'`
 else
 	BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
 fi

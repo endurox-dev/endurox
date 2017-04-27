@@ -90,7 +90,7 @@ sleep 2
 #### Capture current PIDs of all 3x processes #####
 LONG_START_PID=""
 if [ "$(uname)" == "FreeBSD" ]; then
-	LONG_START_PID=`ps | grep "\-i 125" | grep -v grep | awk '{print $1}'`;
+	LONG_START_PID=`ps -auwwx | grep "\-i 125" | grep -v grep | awk '{print $1}'`;
 else
 	LONG_START_PID=`ps -ef | grep "\-i 125" | grep -v grep | awk '{print $2}'`;
 fi
