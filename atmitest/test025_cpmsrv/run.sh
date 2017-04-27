@@ -146,6 +146,9 @@ if [[ "$CNT" -ne "$PROC_COUNT" ]]; then
         go_out 6
 fi
 
+echo "Processes in system: "
+$PSCMD
+
 CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "$PSCMD procs: $CNT"
 if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
