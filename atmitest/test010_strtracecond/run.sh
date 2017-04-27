@@ -121,10 +121,10 @@ if [ "$(uname)" == "FreeBSD" ]; then
 	echo "******* PS ***************"
 	ps -auwwx
 	echo "******* PS Grep'ped*******"
-	ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $1}
+	ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'
 	echo "**************************"
 
-	BAD_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $1}'`
+	BAD_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
 else
 	BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
 fi
