@@ -82,7 +82,13 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
                             srvinfo->srvinfo.srvid, srvinfo->srvinfo.state);
     
     srvid=srvinfo->srvinfo.srvid;
-    if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers)
+    if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers
+        /* Fix for BSD Bug #129 - seems that in some test cases we might get
+         * late messages from exiting queue or processes which only now boots from
+         * previous test case
+         * thus drop such messages, if PM is not loaded
+         */
+        && NULL!=G_process_model_hash)
     {
         p_pm = G_process_model_hash[srvid];
     }
