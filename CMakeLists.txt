@@ -205,6 +205,9 @@ message("LIB: ${LIB64}")
 
 if(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     set(LIB_SUFFIX "")
+# Seems like BSD does not use lib64 folder
+elseif ("${CMAKE_OS_NAME}" STREQUAL "FREEBSD")
+    set(LIB_SUFFIX "")
 elseif ("${LIB64}" STREQUAL "TRUE")
     set(LIB_SUFFIX 64)
 else()
