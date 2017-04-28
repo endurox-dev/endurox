@@ -231,6 +231,10 @@ DEBUG CONFIGURATION FILE SYNTAX
 	This name cannot contain special symbols like path seperator '/'
 	and it cannot contains commas ','! Commas are used as internal
 	queue seperator combined with binary names.
+*RESPAWN_SRV*::
+    Do the automatica process respawning if process is died for some reason. The default
+    value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
+    then sanity checks will not automatically re-boot the process.
 *SERVER_ID*::
 	Server ID. It is internal ID for server instance. For each separate ATMI server
 	the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
