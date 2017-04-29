@@ -296,6 +296,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     int max_signals = 2;
     int was_any = FALSE;
     pid_t my_pid = getpid();
+    char *username;
     NDRX_LOG(log_warn, "****** Forcing system down ******");
     
     
@@ -360,9 +361,12 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     }
     
     /* kill all servers */
-    NDRX_LOG(log_warn, "Removing server processes...");
-    
     was_any = FALSE;
+    username = ndrx_sys_get_cur_username();
+    
+    NDRX_LOG(log_warn, "Removing server processes for user [%s] and key [%s]", 
+        username, test_string2);
+    
     srvlist = ndrx_sys_ps_list(ndrx_sys_get_cur_username(), test_string2, "", "");
     
     for (i=0; i<max_signals; i++)
