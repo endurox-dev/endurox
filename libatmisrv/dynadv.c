@@ -361,7 +361,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     
     /* ###################### CRITICAL SECTION ############################### */
     /* Acquire semaphore here.... */
-    if (G_shm_srv && SUCCEED!=ndrx_lock_svc_op())
+    if (G_shm_srv && SUCCEED!=ndrx_lock_svc_op(__func__))
     {
         NDRX_LOG(log_error, "Failed to lock sempahore");
         ret=FAIL;
@@ -377,7 +377,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     if ((mqd_t)FAIL==entry_new->q_descr)
     {
         /* Release semaphore! */
-         if (G_shm_srv) ndrx_unlock_svc_op();
+         if (G_shm_srv) ndrx_unlock_svc_op(__func__);
          
         _TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                     entry_new->listen_q, strerror(errno));
@@ -392,7 +392,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     }
     
     /* Release semaphore! */
-    if (G_shm_srv) ndrx_unlock_svc_op();
+    if (G_shm_srv) ndrx_unlock_svc_op(__func__);
     /* ###################### CRITICAL SECTION, END ########################## */
     
     /* Save the time when stuff is open! */

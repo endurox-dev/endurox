@@ -56,6 +56,9 @@
 /* Object API debug - tracking */
 #cmakedefine NDRX_OAPI_DEBUG @NDRX_OAPI_DEBUG@
 
+/* Semaphore API debug - tracking */
+#cmakedefine NDRX_SEM_DEBUG @NDRX_SEM_DEBUG@
+
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 

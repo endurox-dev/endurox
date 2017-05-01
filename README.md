@@ -128,6 +128,8 @@ The number here are lower because messages are being saved to disk. Also interna
 
 - Version 3.5.5 released on 23/03/2017. Works Feature #113 - mqd_t use as file descriptor - for quick poll operations.
 
+- Version 3.5.6 released on 02/04/2017. Fixed issues with possible deadlock for poll mode on bridge service calls.
+
 meaning that caller do not wait for tpcommit() anymore and got inconclusive results.
 
 # Build configurations
@@ -145,6 +147,6 @@ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 - To do release build, use '-DDEFINE_RELEASEBUILD=ON'
 - To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON'
 - To log the memory allocation to user log add '-DNDRX_MEMORY_DEBUG=1' 
-- To trace the Object-API use '-DNDRX_OAPI_DEBUG=1' 
+- To trace of the Object-API use '-DNDRX_OAPI_DEBUG=1' 
 - To enable file descriptor based treating of the queues '-DDEFINE_FORCEFDPOLL=ON'
-
+- To trace of the Semaphore handling use '-DNDRX_SEM_DEBUG=1' 

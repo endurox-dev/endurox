@@ -467,14 +467,6 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         goto out; /* do not fail, try locally */
     }
     
-#ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_lock_svc_nm(svc))
-    {
-        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
-        FAIL_OUT(ret);
-    }
-#endif
-    
     /* Get the service entry */
     if (!_ndrx_shm_get_svc(svc, &pos))
     {
@@ -622,27 +614,40 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     else
     {
         short srvid;
+        short rrsrv;
+        
+        /* ###################### CRITICAL SECTION ############################### */
+        /* lock for round-robin... */
+
+        if (SUCCEED!=ndrx_lock_svc_nm(svc, __func__))
+        {
+            NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
+            FAIL_OUT(ret);
+        }
         
         psvcinfo->rrsrv++;
+        
         if (psvcinfo->rrsrv < 0 || /* just in case... */
                 psvcinfo->rrsrv >= (psvcinfo->srvs - psvcinfo->csrvs))
         {
             psvcinfo->rrsrv = 0;
         }
         
-        srvid = psvcinfo->srvids[psvcinfo->rrsrv];
+        rrsrv = psvcinfo->rrsrv;
+        
+        srvid = psvcinfo->srvids[rrsrv];
+        
+        if (SUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
+        {
+            NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
+            FAIL_OUT(ret);
+        }
+        /* ###################### CRITICAL SECTION, END ########################## */
         
         sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_tls->G_atmi_conf.q_prefix, svc, srvid);
         
         NDRX_LOG(log_debug, "Choosing local service by round-robin mode, "
-                "rr: %d, srvid: %d, q: [%s]", psvcinfo->rrsrv, srvid, send_q);
-    }
-
-
-    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
-    {
-        NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
-        FAIL_OUT(ret);
+                "rr: %d, srvid: %d, q: [%s]", rrsrv, srvid, send_q);
     }
     
     if (*is_bridge && 0!=strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN))
@@ -688,7 +693,7 @@ public int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
         goto out; /* do not fail, try locally */
     }
     
-    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    if (SUCCEED!=ndrx_lock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         FAIL_OUT(ret);
@@ -725,7 +730,7 @@ public int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
     
 out:
 
-    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
+    if (SUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
     }
@@ -817,7 +822,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     int is_new;
     
 #ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    if (SUCCEED!=ndrx_lock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         ret=FAIL;
@@ -999,7 +1004,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
 out:
 
 #ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
+    if (SUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
     }
@@ -1050,7 +1055,7 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
     int lpos;
     
 #ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    if (SUCCEED!=ndrx_lock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         return;
@@ -1128,7 +1133,7 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
     }
     
 #ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
+    if (SUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
         return;
@@ -1144,7 +1149,7 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
 
 #ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_lock_svc_nm(svc))
+    if (SUCCEED!=ndrx_lock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         return;
@@ -1179,7 +1184,7 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
     }
     
 #ifdef EX_USE_POLL
-    if (SUCCEED!=ndrx_unlock_svc_nm(svc))
+    if (SUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
         return;

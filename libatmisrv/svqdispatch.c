@@ -105,7 +105,7 @@ public int sv_open_queue(void)
             use_sem = TRUE;
         }
         
-        if (use_sem && SUCCEED!=ndrx_lock_svc_op())
+        if (use_sem && SUCCEED!=ndrx_lock_svc_op(__func__))
         {
             NDRX_LOG(log_error, "Failed to lock sempahore");
             ret=FAIL;
@@ -138,7 +138,7 @@ public int sv_open_queue(void)
         {
             /* Release semaphore! */
             if (use_sem) 
-                ndrx_unlock_svc_op();
+                ndrx_unlock_svc_op(__func__);
             
             _TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                         entry->listen_q, strerror(errno));
@@ -153,7 +153,7 @@ public int sv_open_queue(void)
         }
 
         /* Release semaphore! */
-        if (G_shm_srv && EOS!=entry->svc_nm[0]) ndrx_unlock_svc_op();
+        if (G_shm_srv && EOS!=entry->svc_nm[0]) ndrx_unlock_svc_op(__func__);
         /* ###################### CRITICAL SECTION, END ########################## */
         
         /* Save the time when stuff is open! */

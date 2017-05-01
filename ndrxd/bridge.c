@@ -387,7 +387,7 @@ public int brd_discconnected(int nodeid)
         
         /* ###################### CRITICAL SECTION ###################### */
         /* So we make this part critical... */
-        if (SUCCEED!=ndrx_lock_svc_op())
+        if (SUCCEED!=ndrx_lock_svc_op(__func__))
         {
             goto out;
         }
@@ -405,7 +405,7 @@ public int brd_discconnected(int nodeid)
         }
         
         /* Remove the lock! */
-        ndrx_unlock_svc_op();
+        ndrx_unlock_svc_op(__func__);
         /* ###################### CRITICAL SECTION, END ################# */
         
     }

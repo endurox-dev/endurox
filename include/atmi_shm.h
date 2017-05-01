@@ -106,12 +106,12 @@ extern NDRX_API int ndrxd_sem_delete(void);
 extern NDRX_API void ndrxd_sem_delete_with_init(char *q_prefix);
 extern NDRX_API int ndrxd_sem_is_attached(ndrx_sem_t *sem);
 extern NDRX_API int ndrx_sem_attach_all(void);
-extern NDRX_API int ndrx_lock_svc_op(void);
-extern NDRX_API int ndrx_unlock_svc_op(void);
+extern NDRX_API int ndrx_lock_svc_op(const char *msg);
+extern NDRX_API int ndrx_unlock_svc_op(const char *msg);
 extern NDRX_API unsigned int ndrx_hash_fn( void *k );
 
-extern NDRX_API int ndrx_lock_svc_nm(char *svcnm);
-extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm);
+extern NDRX_API int ndrx_lock_svc_nm(char *svcnm, const char *msg);
+extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg);
 
 #ifdef	__cplusplus
 }

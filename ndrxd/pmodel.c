@@ -695,7 +695,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
             
             /* ###################### CRITICAL SECTION ###################### */
             /* So we make this part critical... */
-            if (SUCCEED!=ndrx_lock_svc_op())
+            if (SUCCEED!=ndrx_lock_svc_op(__func__))
             {
                 ret=FAIL;
                 goto out;
@@ -713,7 +713,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
 #endif
             
             /* Remove the lock! */
-            ndrx_unlock_svc_op();
+            ndrx_unlock_svc_op(__func__);
             /* ###################### CRITICAL SECTION, END ################# */
             
             /*  Delete it from our bridge view */

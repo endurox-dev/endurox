@@ -65,8 +65,8 @@ private int M_init = FALSE;                 /* no init yet done         */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num);
-extern int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num);
+extern int ndrx_lock(ndrx_sem_t *sem, const char *msg, int sem_num);
+extern int ndrx_unlock(ndrx_sem_t *sem, const char *msg, int sem_num);
 
 /**
  * Initialise prefix part, that is needed for shm...
@@ -343,18 +343,18 @@ out:
  * Lock service operation
  * @return 
  */
-public int ndrx_lock_svc_op(void)
+public int ndrx_lock_svc_op(const char *msg)
 {
-    return ndrx_lock(&G_sem_svcop, "SVCOP", SEM_SVC_GLOBAL_NUM);
+    return ndrx_lock(&G_sem_svcop, msg, SEM_SVC_GLOBAL_NUM);
 }
 
 /**
  * Unlock service operation
  * @return 
  */
-public int ndrx_unlock_svc_op(void)
+public int ndrx_unlock_svc_op(const char *msg)
 {
-    return ndrx_unlock(&G_sem_svcop, "SVCOP", SEM_SVC_GLOBAL_NUM);
+    return ndrx_unlock(&G_sem_svcop, msg, SEM_SVC_GLOBAL_NUM);
 }
 
 /**
@@ -363,10 +363,21 @@ public int ndrx_unlock_svc_op(void)
  * @param svcnm service name
  * @return 
  */
-public int ndrx_lock_svc_nm(char *svcnm)
+public int ndrx_lock_svc_nm(char *svcnm, const char *msg)
 {
+#ifdef NDRX_SEM_DEBUG
+    char tmp_buf[1024];
+    
     int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
+    
+    snprintf(tmp_buf, sizeof(tmp_buf), "ndrx_unlock_svc_nm-> semnum:%d, %s - %s", 
+            semnum, svcnm, msg);
+    
     return ndrx_lock(&G_sem_svcop, svcnm, semnum);
+#else 
+    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
+    return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
+#endif
 }
 
 /**
@@ -374,10 +385,19 @@ public int ndrx_lock_svc_nm(char *svcnm)
  * @param svcnm
  * @return 
  */
-public int ndrx_unlock_svc_nm(char *svcnm)
+public int ndrx_unlock_svc_nm(char *svcnm, const char *msg)
 {
+#ifdef NDRX_SEM_DEBUG
+    char tmp_buf[1024];
+    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
+    
+    snprintf(tmp_buf, sizeof(tmp_buf), "ndrx_unlock_svc_nm-> semnum: %d, %s - %s", 
+            semnum, svcnm, msg);
+    return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
+#else
     int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
     return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
+#endif
 }
 
 /**
@@ -386,7 +406,7 @@ public int ndrx_unlock_svc_nm(char *svcnm)
  * @param msg
  * @return 
  */
-public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
+public int ndrx_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
 {
     int ret=SUCCEED;
     int errno_int;
@@ -399,6 +419,10 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
     
     semOp[0].sem_op = 0; /* Wait for zero */
     semOp[1].sem_op = 1; /* Add 1 to lock it*/
+    
+#ifdef NDRX_SEM_DEBUG
+    userlog("ENTER: ndrx_lock: %s", msg);
+#endif
     
     while(FAIL==(ret=semop(sem->semid, semOp, 2)) && (EINTR==errno || EAGAIN==errno))
     {
@@ -417,6 +441,10 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
                 strerror(errno_int));
     }
     
+#ifdef NDRX_SEM_DEBUG
+    userlog("EXIT: ndrx_lock %d: %s", ret, msg);
+#endif
+    
     return ret;
 }
 
@@ -426,7 +454,7 @@ public int ndrx_lock(ndrx_sem_t *sem, char *msg, int sem_num)
  * @param msg
  * @return 
  */
-public int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num)
+public int ndrx_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
 {
     struct sembuf semOp[1];
        
@@ -434,6 +462,10 @@ public int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num)
     semOp[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
     semOp[0].sem_op = -1; /* Decrement to unlock */
     
+
+#ifdef NDRX_SEM_DEBUG
+    userlog("ENTER: ndrx_unlock: %s", msg);
+#endif
     
     if (SUCCEED!=semop(sem->semid, semOp, 1))
     {
@@ -444,6 +476,10 @@ public int ndrx_unlock(ndrx_sem_t *sem, char *msg, int sem_num)
     
     NDRX_LOG(log_warn, "%s/%d/%d semaphore un-locked", 
             msg, sem->semid, sem_num);
+    
+#ifdef NDRX_SEM_DEBUG
+    userlog("EXIT: ndrx_unlock: %s", msg);
+#endif
     
     return SUCCEED;
 }

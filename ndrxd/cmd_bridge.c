@@ -109,7 +109,7 @@ public int brd_lock_and_update_shm(int nodeid, char *svc_nm, int count, char mod
     
     /* ###################### CRITICAL SECTION ###################### */
     /* So we make this part critical... */
-    if (SUCCEED!=ndrx_lock_svc_op())
+    if (SUCCEED!=ndrx_lock_svc_op(__func__))
     {
         ret=FAIL;
         goto out;
@@ -120,7 +120,7 @@ public int brd_lock_and_update_shm(int nodeid, char *svc_nm, int count, char mod
 
 
     /* Remove the lock! */
-    ndrx_unlock_svc_op();
+    ndrx_unlock_svc_op(__func__);
     /* ###################### CRITICAL SECTION, END ################# */
     
 out:
