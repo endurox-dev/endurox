@@ -74,8 +74,8 @@ public int br_calc_clock_diff(command_call_t *call)
     
     G_bridge_cfg.timediff = ndrx_timer_diff(&their_time->time, &our_time);
     NDRX_LOG(log_warn, "Monotonic clock time correction between us "
-            "and node %d is: %ld msec", 
-            call->caller_nodeid, G_bridge_cfg.timediff);
+            "and node %d is: %lld msec (%d) ", 
+            call->caller_nodeid, G_bridge_cfg.timediff, sizeof(G_bridge_cfg.timediff));
     
     return ret;
 }
@@ -119,7 +119,7 @@ public void br_clock_adj(tp_command_call_t *call, int is_out)
 #if CLOCK_DEBUG
     ndrx_timer_t our_time;
     ndrx_timer_reset(&our_time);
-    NDRX_LOG(log_debug, "Original call age: %ld ms", 
+    NDRX_LOG(log_debug, "Original call age: %lld ms", 
             ndrx_timer_diff(&call->timer, &our_time));
 #endif
     if (is_out)
@@ -131,11 +131,11 @@ public void br_clock_adj(tp_command_call_t *call, int is_out)
         ndrx_timer_minus(&call->timer, G_bridge_cfg.timediff);
     }
         
-    NDRX_LOG(log_debug, "Clock diff: %ld ms", G_bridge_cfg.timediff);
+    NDRX_LOG(log_debug, "Clock diff: %lld ms", G_bridge_cfg.timediff);
     N_TIMER_DUMP(log_info, "Adjusted call timer: ", call->timer);
     
 #if CLOCK_DEBUG
-    NDRX_LOG(log_debug, "New call age: %ld ms", 
+    NDRX_LOG(log_debug, "New call age: %lld ms", 
             ndrx_timer_diff(&call->timer, &our_time));
     NDRX_LOG(log_debug, "Clock based call age (according to tstamp): %d", 
             time(NULL) - call->timestamp);

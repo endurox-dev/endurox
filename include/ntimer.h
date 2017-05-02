@@ -65,9 +65,9 @@ extern NDRX_API long ndrx_timer_get_delta(ndrx_timer_t *timer);
 extern NDRX_API long ndrx_timer_get_delta_sec(ndrx_timer_t *timer);
 extern NDRX_API char *ndrx_decode_msec(long t, int slot, int level, int levels);
 extern NDRX_API char *ndrx_timer_decode(ndrx_timer_t *timer, int slot);
-extern NDRX_API long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2);
-extern NDRX_API void ndrx_timer_minus(ndrx_timer_t *timer, long msec);
-extern NDRX_API void ndrx_timer_plus(ndrx_timer_t *timer, long msec);
+extern NDRX_API long long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2);
+extern NDRX_API void ndrx_timer_minus(ndrx_timer_t *timer, long long msec);
+extern NDRX_API void ndrx_timer_plus(ndrx_timer_t *timer, long long msec);
 #ifdef	__cplusplus
 }
 #endif

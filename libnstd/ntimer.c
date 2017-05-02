@@ -171,12 +171,13 @@ void ndrx_timer_reset(ndrx_timer_t *timer)
  * @param timer2
  * @return diff in milliseconds
  */
-long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2)
+long long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2)
 {
-    long t1r = t1->t.tv_sec*1000 + t1->t.tv_nsec/1000000; /* Convert to milliseconds */
-    long t2r = t2->t.tv_sec*1000 + t2->t.tv_nsec/1000000; /* Convert to milliseconds */
-    
-    return (t1r-t2r);
+    long long t1r = ((long long)t1->t.tv_sec)*1000 + t1->t.tv_nsec/1000000; /* Convert to milliseconds */
+    long long t2r = ((long long)t2->t.tv_sec)*1000 + t2->t.tv_nsec/1000000; /* Convert to milliseconds */
+    long long ret = (t1r-t2r);
+/* DEBUG:    NDRX_LOG(log_error, "t1r (%d) = %lld t2r=%lld ret=%lld", t1->t.tv_sec, t1r, t2r, ret); */
+    return ret;
 }
 
 /**
@@ -215,7 +216,7 @@ long ndrx_timer_get_delta_sec(ndrx_timer_t *timer)
  * @param msec
  * @return 
  */
-void ndrx_timer_plus(ndrx_timer_t *timer, long msec)
+void ndrx_timer_plus(ndrx_timer_t *timer, long long msec)
 {
     if (msec < 0)
     {
@@ -243,7 +244,7 @@ void ndrx_timer_plus(ndrx_timer_t *timer, long msec)
  * @param msec
  * @return 
  */
-void ndrx_timer_minus(ndrx_timer_t *timer, long msec)
+void ndrx_timer_minus(ndrx_timer_t *timer, long long msec)
 {
     if (msec < 0)
     {
@@ -251,8 +252,8 @@ void ndrx_timer_minus(ndrx_timer_t *timer, long msec)
     }
     else
     {
-        long over = msec % 1000; /* Real milli seconds */
-        long nsec_tot = over*1000000;
+        long long over = msec % 1000; /* Real milli seconds */
+        long long nsec_tot = over*1000000;
 
         timer->t.tv_sec-= msec/1000;
 

@@ -50,7 +50,7 @@ typedef struct
     exnetcon_t net;               /* Network handler, might be client or server...  */
     exnetcon_t *con;              /* Real working connection  */
     char svc[XATMI_SERVICE_NAME_LENGTH+1];  /* Service name used by this bridge */
-    long timediff;                /* Bridge time correction       */
+    long long timediff;           /* Bridge time correction       */
     int common_format;            /* Common platform format. */
     char gpg_recipient[33];       /* PGP Encryption recipient */
     char gpg_signer[33];          /* PGP Encryption signer */
