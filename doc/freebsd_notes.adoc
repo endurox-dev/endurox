@@ -138,7 +138,7 @@ export PATH=$PATH:$HOME/projects/endurox/dist/bin
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
 export PATH=$PATH:/opt/csw/bin:$HOME/endurox/dist/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib64
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
 
 # Where the queues live:
 export NDRX_QPATH=/mnt/mqueue
