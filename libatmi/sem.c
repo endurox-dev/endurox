@@ -365,18 +365,18 @@ public int ndrx_unlock_svc_op(const char *msg)
  */
 public int ndrx_lock_svc_nm(char *svcnm, const char *msg)
 {
+    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
 #ifdef NDRX_SEM_DEBUG
     char tmp_buf[1024];
-    
-    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
     
     snprintf(tmp_buf, sizeof(tmp_buf), "ndrx_unlock_svc_nm-> semnum:%d, %s - %s", 
             semnum, svcnm, msg);
     
     return ndrx_lock(&G_sem_svcop, svcnm, semnum);
+    
 #else 
-    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
-    return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
+    
+    return ndrx_lock(&G_sem_svcop, svcnm, semnum);
 #endif
 }
 
@@ -387,15 +387,14 @@ public int ndrx_lock_svc_nm(char *svcnm, const char *msg)
  */
 public int ndrx_unlock_svc_nm(char *svcnm, const char *msg)
 {
+    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
 #ifdef NDRX_SEM_DEBUG
     char tmp_buf[1024];
-    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
-    
+
     snprintf(tmp_buf, sizeof(tmp_buf), "ndrx_unlock_svc_nm-> semnum: %d, %s - %s", 
             semnum, svcnm, msg);
     return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
 #else
-    int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
     return ndrx_unlock(&G_sem_svcop, svcnm, semnum);
 #endif
 }
