@@ -24,6 +24,12 @@ class Provision extends WizardBase {
 	constructor()
 	{
 		base.constructor();
+
+		/* Override the default q path for BSD.. */
+		if ("FREEBSD"==getosname())
+                {
+			qpath = "/mnt/mqueue";
+                }
 	}
 	
 	//Queue prefix
