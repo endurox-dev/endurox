@@ -120,7 +120,7 @@ The number here are lower because messages are being saved to disk. Also interna
 
 - Version 3.5.1 released on 03/03/2017. Updates on tpreturn() - more correct processing as in Tuxedo, free up return buffer + free up auto buffer.
 
-- Version 3.5.2 released on 24/03/2017. Bug #105 fix. Abort transaction if it was in "preparing" stage, and tmsrv loaded it from logfile. 
+- Version 3.5.2 released on 24/03/2017. Bug #105 fix. Abort transaction if it was in "preparing" stage, and tmsrv loaded it from logfile. Meaning that caller alaready do not wait for tpcommit() anymore and got inconclusive results, thus better to abort. 
 
 - Version 3.5.3 released on 26/03/2017. Fixes for Solaris, Sun Studio (SUNPRO) compiler
 
@@ -129,8 +129,6 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.5.5 released on 23/03/2017. Works Feature #113 - mqd_t use as file descriptor - for quick poll operations.
 
 - Version 3.5.6 released on 02/04/2017. Fixed issues with possible deadlock for poll mode on bridge service calls. Fixed issuw with 25 day uptime problem for bridges on 32bit platfroms - the messages becomes expired on target server.
-
-meaning that caller do not wait for tpcommit() anymore and got inconclusive results.
 
 # Build configurations
 
