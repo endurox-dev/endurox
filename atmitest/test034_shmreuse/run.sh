@@ -32,7 +32,7 @@
 ##
 
 export TESTNO="034"
-export TESTNAME_SHORT="cconfsrv"
+export TESTNAME_SHORT="shmreuse"
 export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
 
 PWD=`pwd`
@@ -59,9 +59,10 @@ export NDRX_TOUT=10
 function set_dom1 {
     echo "Setting domain 1"
     . ../dom1.sh
-    export NDRX_LOG=$TESTDIR/ndrx-dom1.log
-    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
-    export NDRX_CCONFIG=`pwd`
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig.xml
+    export NDRX_DMNLOG=$TESTDIR/ndrxd.log
+    export NDRX_LOG=$TESTDIR/ndrx.log
+    export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 }
 
 #

@@ -87,7 +87,7 @@ int process (void)
 
 	/* Call sample server... */
 	
-	for (i=0; i<10000000; i++)
+	for (i=0; i<100000; i++)
 	{
 		if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
 		{
@@ -115,7 +115,7 @@ int process (void)
 		tplogprintubf(log_debug, "Got response from test server...", p_ub);
 		
 		/* Get the service number to advertise */
-		sprintf(svcnm, "SVC%06ld", svcNr);
+		sprintf(svcnm, "SVC%06ld", i);
 		
 		NDRX_LOG(log_info, "About to call service: [%s] - must be advertised",
 				svcnm);

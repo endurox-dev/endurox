@@ -75,6 +75,7 @@ add_subdirectory (test029_inicfg)
 add_subdirectory (test030_cconfsrv)
 add_subdirectory (test031_logging)
 add_subdirectory (test032_oapi)
+add_subdirectory (test034_shmreuse)
 
 ################################################################################
 # Master test case driver
