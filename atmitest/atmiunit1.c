@@ -294,6 +294,13 @@ Ensure(test033_provision)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test034_shmreuse)
+{
+    int ret;
+    ret=system_dbg("test034_shmreuse/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 
 TestSuite *atmi_test_all(void)
 {
@@ -344,6 +351,10 @@ TestSuite *atmi_test_all(void)
 #ifndef NDRX_DISABLEPSCRIPT
     add_test(suite, test033_provision);
 #endif    
+    
+    /* Feature #139 mvitolin, 09/05/2017 */
+    add_test(suite, test034_shmreuse);
+            
     return suite;
 }
 

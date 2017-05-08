@@ -62,6 +62,8 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/* Feature #139 mvitolin, 09/05/2017 */
 #define _NDRX_SVCINSTALL_NOT		0 /* Not doing service install		  */
 #define _NDRX_SVCINSTALL_DO		1 /* Installing new service to SHM	  */
 #define _NDRX_SVCINSTALL_OVERWRITE	2 /* Overwrite the already installed data */
@@ -746,8 +748,6 @@ not_locked:
     return ret;
 }
 
-
-
 /**
  * Search over the memory for service.
  * This is internal version and not meant be used outside of this file.
@@ -792,18 +792,31 @@ public int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_inst
             break;  /* <<< Break! */
         }
 	
+        /* Feature #139 mvitolin, 09/05/2017 
+         * Allow to reuse services... As we know we do not remove them from SHM
+         * so that if we have some service with the same hash number, but different
+         * name than existing. Thus if we remove existing and put empty space there
+         * then our service search algorithm will identify service as not present.
+         * 
+         * But to save the space and we install new service and the cell was used
+         * but is serving 0 services, then we write off new service here.
+         */
 	if (_NDRX_SVCINSTALL_DO==doing_install)
 	{
-		if (SHM_SVCINFO_INDEX(svcinfo, try)->srvs == 0)
-		{
-			*p_install_cmd=_NDRX_SVCINSTALL_OVERWRITE;
-			break; /* <<< break! */
-		}
+            if (SHM_SVCINFO_INDEX(svcinfo, try)->srvs == 0)
+            {
+                *p_install_cmd=_NDRX_SVCINSTALL_OVERWRITE;
+                break; /* <<< break! */
+            }
 	}
 
         try++;
-
-        if (try>G_svcinfo.size-1)
+        
+        /* we loop over... 
+         * Feature #139 mvitolin, 09/05/2017
+         * Fix potential overflow issues at the border... of SHM...
+         */
+        if (try>=G_max_svcs)
         {
             try = 0;
             overflow=TRUE;
@@ -816,9 +829,9 @@ public int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_inst
     
     *pos=try;
     NDRX_LOG(log_debug, "ndrx_shm_get_svc [%s] - result: %d, "
-				"interations: %d, pos: %d, install: %d",
-				 svc, ret, interations, *pos, 
-				 (doing_install?*p_install_cmd:_NDRX_SVCINSTALL_NOT));
+                            "interations: %d, pos: %d, install: %d",
+                             svc, ret, interations, *pos, 
+                             (doing_install?*p_install_cmd:_NDRX_SVCINSTALL_NOT));
     return ret;
 }
 
