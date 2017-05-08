@@ -97,7 +97,7 @@ class CClient extends WizardBase {
 
 
 /**
- * Initialize the application
+ * Initialise the application
  * @param argc	argument count
  * @param argv	argument values
  * @return SUCCEED/FAIL
@@ -120,7 +120,7 @@ int init(int argc, char** argv)
 
 	if (SUCCEED!=tpinit(NULL))
 	{
-		TP_LOG(log_error, ""Failed to Initialize: %s"", 
+		TP_LOG(log_error, ""Failed to Initialise: %s"", 
 			tpstrerror(tperrno));
 		ret = FAIL;
 		goto out;
@@ -227,7 +227,7 @@ int uninit(int status)
 {
 	int ret = SUCCEED;
 	
-	TP_LOG(log_info, ""Uninitializing..."");
+	TP_LOG(log_info, ""Uninitialising..."");
 	
 	ret = tpterm();
 	
@@ -313,7 +313,7 @@ int main(int argc, char** argv)
 
 	if (SUCCEED!=init(argc, argv))
 	{
-		TP_LOG(log_error, ""Failed to Initialize!"");
+		TP_LOG(log_error, ""Failed to Initialise!"");
 		ret=FAIL;
 		goto out;
 	}

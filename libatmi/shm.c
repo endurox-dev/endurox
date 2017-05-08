@@ -62,6 +62,9 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define _NDRX_SVCINSTALL_NOT		0 /* Not doing service install		  */
+#define _NDRX_SVCINSTALL_DO		1 /* Installing new service to SHM	  */
+#define _NDRX_SVCINSTALL_OVERWRITE	2 /* Overwrite the already installed data */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -468,7 +471,7 @@ public int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
     }
     
     /* Get the service entry */
-    if (!_ndrx_shm_get_svc(svc, &pos))
+    if (!_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
     {
         NDRX_LOG(log_error, "Service %s not found in shm", svc);
         FAIL_OUT(ret);
@@ -700,7 +703,7 @@ public int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
     }
     
     /* Get the service entry */
-    if (!_ndrx_shm_get_svc(svc, &pos))
+    if (!_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
     {
         NDRX_LOG(log_error, "Service %s not found in shm", svc);
         FAIL_OUT(ret);
@@ -750,9 +753,16 @@ not_locked:
  * This is internal version and not meant be used outside of this file.
  * @param svc - service name
  * @param pos - store the last position
+ * @param doing_install - we are doing service install, 
+ *	thus we can return empty positions.
+ *      In value: _NDRX_SVCINSTALL_NOT
+ *      In value: _NDRX_SVCINSTALL_DO
+ *      Out value: _NDRX_SVCINSTALL_OVERWRITE
+ * @param p_install_cmd - Return command of installation process
+ *	see values of _NDRX_SVCINSTALL_*
  * @return TRUE/FALSE
  */
-public int _ndrx_shm_get_svc(char *svc, int *pos)
+public int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_install_cmd)
 {
     int ret=FALSE;
     int try = ndrx_hash_fn(svc) % G_max_svcs;
@@ -780,8 +790,16 @@ public int _ndrx_shm_get_svc(char *svc, int *pos)
             ret=TRUE;
             *pos=try;
             break;  /* <<< Break! */
-
         }
+	
+	if (_NDRX_SVCINSTALL_DO==doing_install)
+	{
+		if (SHM_SVCINFO_INDEX(svcinfo, try)->srvs == 0)
+		{
+			*p_install_cmd=_NDRX_SVCINSTALL_OVERWRITE;
+			break; /* <<< break! */
+		}
+	}
 
         try++;
 
@@ -795,11 +813,12 @@ public int _ndrx_shm_get_svc(char *svc, int *pos)
         
         NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
     }
-
+    
     *pos=try;
     NDRX_LOG(log_debug, "ndrx_shm_get_svc [%s] - result: %d, "
-                                    "interations: %d, pos: %d",
-                                     svc, ret, interations, *pos);
+				"interations: %d, pos: %d, install: %d",
+				 svc, ret, interations, *pos, 
+				 (doing_install?*p_install_cmd:_NDRX_SVCINSTALL_NOT));
     return ret;
 }
 
@@ -807,6 +826,7 @@ public int _ndrx_shm_get_svc(char *svc, int *pos)
  * Install service data into shared memory.
  * If service already found, then just update the flags.
  * If service is not found the add details to shm.
+ * !!! Must be run from semaphore locked area!
  * @param svc
  * @param flags
  * @return SUCCEED/FAIL
@@ -820,6 +840,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     int i;
     int tot_local_srvs;
     int is_new;
+    int shm_install_cmd = _NDRX_SVCINSTALL_NOT;
     
 #ifdef EX_USE_POLL
     if (SUCCEED!=ndrx_lock_svc_nm(svc, __func__))
@@ -830,7 +851,7 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
     }
 #endif
     
-    if (_ndrx_shm_get_svc(svc, &pos))
+    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_DO, &shm_install_cmd))
     {
         NDRX_LOG(log_debug, "Updating flags for [%s] from %d to %d",
                 svc, SHM_SVCINFO_INDEX(svcinfo, pos)->flags, flags);
@@ -880,7 +901,8 @@ public int ndrx_shm_install_svc_br(char *svc, int flags,
         }
     }
     /* It is OK, if there is no entry, we just start from scratch! */
-    else if (!(SHM_SVCINFO_INDEX(svcinfo, pos)->flags & NDRXD_SVCINFO_INIT))
+    else if (!(SHM_SVCINFO_INDEX(svcinfo, pos)->flags & NDRXD_SVCINFO_INIT) ||
+	    _NDRX_SVCINSTALL_OVERWRITE==shm_install_cmd)
     {
         is_new=TRUE;
         if (is_bridge && 0==count)
@@ -1017,6 +1039,7 @@ lock_fail:
 
 /**
  * Wrapper for bridged version
+ * !!! Must be run from semaphore locked area!
  * @param svc
  * @param flags
  * @return 
@@ -1063,7 +1086,7 @@ public void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
 #endif
     
     *last=FALSE;
-    if (_ndrx_shm_get_svc(svc, &pos))
+    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
     {
         if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
         {
@@ -1157,7 +1180,7 @@ public void ndrxd_shm_shutdown_svc(char *svc, int *last)
 #endif
     
     *last=FALSE;
-    if (_ndrx_shm_get_svc(svc, &pos))
+    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
     {
         if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
         {

@@ -163,11 +163,11 @@ int init(int argc, char** argv)
 	char val[KEY_VAL_BUFFSZ]={0};
 	char *cctag;
 	")+@"
-	TP_LOG(log_info, ""Initializing..."");
+	TP_LOG(log_info, ""Initialising..."");
 
 	if (SUCCEED!=tpinit(NULL))
 	{
-		TP_LOG(log_error, ""Failed to Initialize: %s"", 
+		TP_LOG(log_error, ""Failed to Initialise: %s"", 
 			tpstrerror(tperrno));
 		ret = FAIL;
 		goto out;
@@ -260,7 +260,7 @@ int init(int argc, char** argv)
 	/* Advertise our service */
 	if (SUCCEED!=tpadvertise("""+svcnm+@""", "+svcnm+@"))
 	{
-		TP_LOG(log_error, ""Failed to initialize "+svcnm+@"!"");
+		TP_LOG(log_error, ""Failed to initialise "+svcnm+@"!"");
 		ret=FAIL;
 		goto out;
 	}	
@@ -280,7 +280,7 @@ out:
  */
 void uninit(void)
 {
-	TP_LOG(log_info, ""Uninitializing..."");
+	TP_LOG(log_info, ""Uninitialising..."");
 }
 
 /**
