@@ -97,6 +97,7 @@ struct conf_server_node
     int isprotected; /* is binary protected... */
     
     int reloadonchange; /* Reload binary on change - this max the monitoring of the bin */
+    int respawn;	/* Should we ndrxd respawn process automatically when dead */
     
     /* Linked list */
     conf_server_node_t *prev;
@@ -207,8 +208,9 @@ typedef struct
     int default_srvstartwait; /* Time to wait for server startup (after report in progress) */
     int default_srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
     
-    int gather_pq_stats;     /* if set to 1, then queue stats will be gathered */
-    int default_isprotected;  /* if set to 1, then xadmin stop will not shutdown the process (only with -c) */
+    int gather_pq_stats;	/* if set to 1, then queue stats will be gathered */
+    int default_isprotected;	/* if set to 1, then xadmin stop will not shutdown the process (only with -c) */
+    int default_respawn;	/* Set to 1 if auto respawn is required for process */
     
 } config_t;
 
