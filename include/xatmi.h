@@ -473,7 +473,20 @@ struct tpqctl_t
     long reply_qos;         /* reply message quality of service  */		
     long exp_time;          /* expiration time  */		
 };		
-typedef struct tpqctl_t TPQCTL;		
+typedef struct tpqctl_t TPQCTL;
+
+/* MYID of client, parsed */
+struct tpclientmyid_t
+{
+	/* TODO: Client ID fields, parsed out. */
+};
+
+/* MYID of server, parsed */
+struct tpservermyid_t
+{
+	/* TODO: Server ID fields, parsed out. */
+};
+
 
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API int (*G_tpsvrinit__)(int, char **);
