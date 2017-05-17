@@ -1,7 +1,7 @@
 /* 
-** Basic test client
+** Housekeeping testing
 **
-** @file atmiclt3.c
+** @file atmiclt35.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -50,7 +50,8 @@
 /*
  * Do the test call to the server
  */
-int main(int argc, char** argv) {
+void do_thread_work ( void *ptr )
+{
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
@@ -69,7 +70,7 @@ int main(int argc, char** argv) {
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
 
 
-    if (FAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
+    if (FAIL==(cd=tpconnect((char *)ptr, (char *)p_ub, 0L, TPRECVONLY)))
     {
             NDRX_LOG(log_error, "TESTSV connect failed!: %s",
                                     tpstrerror(tperrno));
@@ -108,7 +109,7 @@ int main(int argc, char** argv) {
     /* Now give the control to the server, so that he could finish up */
     if (FAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
     {
-        NDRX_LOG(log_debug, "Failed to give server control!!");
+        NDRX_LOG(log_debug, "TESTERROR: Failed to give server control!!");
         ret=FAIL;
         goto out;
     }
@@ -128,12 +129,50 @@ int main(int argc, char** argv) {
     
     if (SUCCEED!=tpterm())
     {
-        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: tpterm failed with: %s", tpstrerror(tperrno));
         ret=FAIL;
         goto out;
     }
     
 out:
-    return ret;
+
+        NDRX_LOG(log_error, "Thread returns with %d", ret);
+	
 }
 
+/*
+ * Do the test call to the server
+ */
+int main(int argc, char** argv) 
+{
+    int j;
+    pthread_t thread1, thread2, thread3, thread4, thread5;  /* thread variables */
+    void *arg1 = "CONVSV";
+    void *arg2 = "CONVSV2";
+    void *arg3 = "CONVSV";
+    void *arg4 = "CONVSV2";
+    void *arg5 = "CONVSV";
+    
+    tpinit(NULL); /* pull off init from main thread too... */
+    
+    /* create threads 1 and 2 */    
+    pthread_create (&thread1, NULL, (void *) &do_thread_work, arg1);
+    pthread_create (&thread2, NULL, (void *) &do_thread_work, arg2);
+    /*sleep(1);  Have some async works... WHY? */
+    pthread_create (&thread3, NULL, (void *) &do_thread_work, arg3);
+    pthread_create (&thread4, NULL, (void *) &do_thread_work, arg4);
+    pthread_create (&thread5, NULL, (void *) &do_thread_work, arg5);
+
+    /* Main block now waits for both threads to terminate, before it exits
+       If main block exits, both threads exit, even if the threads have not
+       finished their work */ 
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+    pthread_join(thread3, NULL);
+    pthread_join(thread4, NULL);
+    pthread_join(thread5, NULL);
+    
+    
+
+    exit(0);
+}

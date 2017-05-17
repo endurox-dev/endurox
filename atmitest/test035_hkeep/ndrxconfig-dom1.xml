@@ -31,7 +31,7 @@
 		<min>1</min>
 		<max>1</max>
 		<autokill>1</autokill>
-        <!-- Do not need respawning! -->
+		<!-- Do not need respawning! -->
 		<respawn>0</respawn>
 		<!-- The maximum time while process can hang in 'starting' state i.e.
 		have not completed initialization, sec -->
@@ -54,11 +54,19 @@
 		<killtime>20</killtime>
 	</defaults>
 	<servers>
-        <server name="tpbridge">
-            <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30</appopt>
-        </server>
+		
+		<server name="atmisv35">
+			<srvid>10</srvid>
+			<min>5</min>
+			<max>5</max>
+			<sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -N -sCONVSV2/CONVSV3/CONVSV4:CONVSV</sysopt>
+		</server>
+
+		<server name="tpbridge">
+		    <max>1</max>
+		    <srvid>101</srvid>
+		    <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+		    <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30</appopt>
+		</server>
 	</servers>
 </endurox>

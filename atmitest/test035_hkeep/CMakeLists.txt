@@ -50,14 +50,14 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmisv3 atmisv3.c ../../libatmisrv/rawmain_integra.c)
-add_executable (atmiclt3 atmiclt3.c)
+add_executable (atmisv35 atmisv35.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt35 atmiclt35.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmisv3 m ubf nstd atmi atmisrvinteg ${RT_LIB} pthread)
-target_link_libraries (atmiclt3 m ubf nstd atmi atmiclt ${RT_LIB} pthread)
+target_link_libraries (atmisv35 m ubf nstd atmi atmisrvinteg ${RT_LIB} pthread)
+target_link_libraries (atmiclt35 m ubf nstd atmi atmiclt ${RT_LIB} pthread)
 
-set_target_properties(atmisv3 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(atmiclt3 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmisv35 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt35 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

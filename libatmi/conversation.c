@@ -662,7 +662,18 @@ out:
 }
 
 /**
- * Internal implementation of tpconnect
+ * Internal implementation of tpconnect.
+ * So basically after connect, the picture if following (example):
+ * 
+ * As client we option this queue: /dom1,cnv,c,clt,atmiclt35,24280,5,1,1, and 
+ * this is used for us to receive msgs. Thus if atmiclt35 is dead, we can remove
+ * this q (of corse if we are on node 1).
+ * 
+ * When server accepts connection, it builds something like this:
+ * dom2,cnv,s,clt,atmiclt35,24280,1,1,1,srv,atmisv35,10,24228,0,2 and this is
+ * used on their side to receive msgs.
+ * Thus if atmisv35 is dead and we are on node2, we can remove the q.
+ * 
  * @param svc
  * @param data
  * @param len

@@ -31,8 +31,8 @@
 ## -----------------------------------------------------------------------------
 ##
 
-export TESTNO="003"
-export TESTNAME_SHORT="basicconvers"
+export TESTNO="035"
+export TESTNAME_SHORT="hkeep"
 export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
 
 PWD=`pwd`
@@ -50,8 +50,8 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-# Override timeout!
-export NDRX_TOUT=10
+# We do not need timeout, we will kill procs...
+export NDRX_TOUT=9999
 
 #
 # Domain 1 - here client will live
@@ -92,7 +92,7 @@ function go_out {
     xadmin down -y
 
     # If some alive stuff left...
-    xadmin killall atmiclt3
+    xadmin killall atmiclt35
 
     popd 2>/dev/null
     exit $1
@@ -119,8 +119,31 @@ echo "Soon will issue client calls:"
 xadmin psc
 xadmin psvc
 xadmin ppm
-(./atmiclt3 2>&1) > ./atmiclt-dom1.log
-RET=$?
+
+echo "Before test start"
+xadmin pqa -a
+
+# This will call local and remove conv servers...
+(./atmiclt35 2>&1) > ./atmiclt-dom1.log &
+
+echo "after start"
+xadmin pqa -a
+
+# Wait threads start-up
+sleep 5
+
+xadmin killall atmiclt35 atmisv35 tpbridge
+
+echo "after kill"
+
+xadmin pqa -a
+
+# Let house keep to run...
+sleep 20
+
+echo "after sleep 20"
+
+xadmin pqa -a
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

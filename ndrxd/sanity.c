@@ -67,6 +67,8 @@ public unsigned G_sanity_cycle = 0;
 
 private int check_server(char *qname);
 private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle);
+private int check_cnvclt(char *qname);
+private int check_cnvsrv(char *qname);
 private int check_long_startup(void);
 private int check_dead_processes(void);
 /**
@@ -84,6 +86,15 @@ public int do_sanity_check(void)
     static int     client_prefix_len;
     static char    xadmin_prefix[NDRX_MAX_Q_SIZE+1];
     static int     xadmin_prefix_len;
+    
+    /* conversational prefixes */
+    static char    cnvclt_prefix[NDRX_MAX_Q_SIZE+1]; /* initiator... */
+    static int     cnvclt_prefix_len;
+    
+    static char    cnvsrv_prefix[NDRX_MAX_Q_SIZE+1];
+    static int     cnvsrv_prefix_len;
+    
+    
     int wasrun = FALSE;
     
     string_list_t* qlist = NULL;
@@ -113,7 +124,17 @@ public int do_sanity_check(void)
         server_prefix_len=strlen(server_prefix);
         NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                             server_prefix_len);
-         
+	
+	sprintf(cnvclt_prefix, NDRX_CONV_INITATOR_Q_PFX, G_sys_config.qprefix);
+        cnvclt_prefix_len=strlen(cnvclt_prefix);
+        NDRX_LOG(log_debug, "cnvclt_prefix=[%s]/%d", cnvclt_prefix, 
+                            cnvclt_prefix_len);
+	
+	sprintf(cnvsrv_prefix, NDRX_CONV_SRV_Q_PFX, G_sys_config.qprefix);
+        cnvsrv_prefix_len=strlen(cnvsrv_prefix);
+        NDRX_LOG(log_debug, "cnvsrv_prefix=[%s]/%d", cnvsrv_prefix, 
+                            cnvsrv_prefix_len);
+	
         first=FALSE;
     }
      
@@ -148,6 +169,16 @@ public int do_sanity_check(void)
                     server_prefix_len)) 
             {
                 check_server(elt->qname);
+            } /*  Bug #112 */
+	    else if (0==strncmp(elt->qname, cnvclt_prefix, 
+                    cnvclt_prefix_len)) 
+            {
+                check_cnvclt(elt->qname);
+            } /*  Bug #112 */
+	    else if (0==strncmp(elt->qname, cnvsrv_prefix, 
+                    cnvsrv_prefix_len)) 
+            {
+                check_cnvsrv(elt->qname);
             }
         }
 
@@ -641,4 +672,105 @@ out:
 private int check_svc_shm(void)
 {
     return SUCCEED;
+}
+
+/*
+
+ Picture here with conv quueues can be follwing:
+Msg queued Q name
+---------- ---------------------------------------------------------------------
+0          /dom2,sys,bg,ndrxd
+0          /dom2,cnv,s,srv,atmisv35,19,32175,0,2,1,srv,atmisv35,10,32157,0,2
+0          /dom2,cnv,s,srv,atmisv35,18,32173,0,2,1,srv,atmisv35,19,32175,0,2
+0          /dom2,cnv,s,srv,atmisv35,17,32171,0,2,1,srv,atmisv35,18,32173,0,2
+0          /dom2,cnv,s,srv,atmisv35,16,32169,0,2,1,srv,atmisv35,17,32171,0,2
+0          /dom2,cnv,s,srv,atmisv35,15,32167,0,2,1,srv,atmisv35,16,32169,0,2
+0          /dom2,cnv,s,srv,atmisv35,14,32165,0,2,1,srv,atmisv35,15,32167,0,2
+0          /dom2,cnv,s,srv,atmisv35,13,32163,0,2,1,srv,atmisv35,14,32165,0,2
+0          /dom2,cnv,s,srv,atmisv35,12,32161,0,2,1,srv,atmisv35,13,32163,0,2
+0          /dom2,cnv,s,srv,atmisv35,11,32159,0,2,1,srv,atmisv35,12,32161,0,2
+0          /dom2,cnv,s,clt,atmiclt35,32218,2,1,1,srv,atmisv35,11,32159,0,2
+1          /dom2,cnv,c,srv,atmisv35,19,32175,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,18,32173,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,17,32171,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,16,32169,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,15,32167,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,14,32165,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,13,32163,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,12,32161,0,2,1
+1          /dom2,cnv,c,srv,atmisv35,11,32159,0,2,1
+0          /dom2,cnv,c,srv,atmisv35,10,32157,0,2,1
+0          /dom1,sys,bg,xadmin,32241
+0          /dom1,sys,bg,ndrxd
+0          /dom1,cnv,s,clt,atmiclt35,32218,3,1,1,srv,atmisv35,12,32137,0,1
+0          /dom1,cnv,s,clt,atmiclt35,32218,1,1,1,srv,atmisv35,11,32135,0,1
+0          /dom1,cnv,c,clt,atmiclt35,32218,5,1,1
+0          /dom1,cnv,c,clt,atmiclt35,32218,4,1,1
+0          /dom1,cnv,c,clt,atmiclt35,32218,3,1,1
+0          /dom1,cnv,c,clt,atmiclt35,32218,2,1,1
+0          /dom1,cnv,c,clt,atmiclt35,32218,1,1,1
+Test exiting with: 
+ 
+ */
+
+/**
+ * Check is server live by myid - NDRX_MY_ID_SRV_PARSE
+ * @param myid
+ * @return 
+ */
+private int check_local_server_by_myid(char *myid)
+{
+	return SUCCEED;
+}
+
+/**
+ * Check is server live by myid - NDRX_MY_ID_CLT_PARSE
+ * @param myid
+ * @return 
+ */
+private int check_local_client_by_myid(char *myid)
+{
+	return SUCCEED;
+}
+
+/**
+ * Check the conversational initiator. We will kill the queue if any of the processes
+ * in our cluster node are dead.
+ * @return 
+ */
+private int check_cnvclt(char *qname)
+{
+    char buf[NDRX_MAX_Q_SIZE+1];
+    int ret = SUCCEED;
+    /* have some safe copy */
+    strncpy(buf, qname, sizeof(buf));
+    buf[sizeof(buf)-1] = EOS;
+    
+    /* TODO: check start with srv, or ctl, then call local checks... 
+     * if process dead, kill the Q
+     */
+    
+    
+out:
+    return ret;
+}
+
+
+private int check_cnvsrv(char *qname)
+{
+    char buf[NDRX_MAX_Q_SIZE+1];
+
+    int ret = SUCCEED;
+    /* have some safe copy */
+    strncpy(buf, qname, sizeof(buf));
+    buf[sizeof(buf)-1] = EOS;
+    
+    
+    /* TODO: check start with srv, or ctl, then detect the length of the halve
+     * and parse other part.
+     * We are interested in other part, if it is dead, then kill the Q.
+     */
+   
+out:
+    return ret;
 }

@@ -251,7 +251,11 @@ DEBUG CONFIGURATION FILE SYNTAX
 	advertised. The '-s' argument also can contain aliases for services, for example
 	'-sOTHERSVC:SERVICE2', then new service OTHERSVC will be advertised which
 	basically is the same SERVICE2 (same function used). '-s' and '-N' can be mixed.
-	'-s' can appear multiple times in system options.
+	'-s' can appear multiple times in system options. With one '-s' multiple services
+        can be aliased to single existing service.
+        The format is: '-s<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The ',' can be
+        used as separator too, but for certain platforms it does not work, thus '/' is
+        recommended.
 	Server binaries output is controlled via '-e LOG_FILE', which means
 	that stdout & stderr of server is dumped to LOG_FILE.
 	There are few internal params: param '-k' is just a random key

@@ -43,6 +43,7 @@ void CONVSV (TPSVCINFO *p_svc)
     long revent;
     static double d = 55.66;
     int i;
+    int cd;
     UBFH *p_ub = (UBFH *)p_svc->data;
     char tmp[128];
     NDRX_LOG(log_debug, "CONVSV got call");
@@ -76,6 +77,22 @@ void CONVSV (TPSVCINFO *p_svc)
                 NDRX_LOG(log_error, "Failed to send to client!");
             }
         }
+	
+	/* well we will now try to connect to other server... if we are conv2 */
+	
+	if (strcmp(p_svc->name, "CONVSV2"))
+	{
+		NDRX_LOG(log_info, "Try to connect to CONVSV!!!");
+		if (FAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
+		{
+			NDRX_LOG(log_error, "TESTERROR: connect failed!: %s",
+						tpstrerror(tperrno));
+			ret=FAIL;
+			goto out;
+		}
+	}
+	
+	sleep(999);
     }
 
     /* Now we will become as listeners, OK? */

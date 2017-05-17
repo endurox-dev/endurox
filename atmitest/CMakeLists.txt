@@ -76,6 +76,7 @@ add_subdirectory (test030_cconfsrv)
 add_subdirectory (test031_logging)
 add_subdirectory (test032_oapi)
 add_subdirectory (test034_shmreuse)
+add_subdirectory (test035_hkeep)
 
 ################################################################################
 # Master test case driver

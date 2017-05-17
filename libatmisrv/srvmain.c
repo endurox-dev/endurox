@@ -1,5 +1,5 @@
 /* 
-** EnduroX server main entry point
+** Enduro/X server main entry point
 **
 ** @file srvmain.c
 ** 
@@ -57,6 +57,10 @@ srv_conf_t G_server_conf;
 
 /**
  * Parse service argument (-s)
+ * The format is following:
+ * -s<New Service1>[,|/]<New Service2>[,|/]..[,|/]<New Service N>:<existing service>
+ * e.g.
+ * -sNEWSVC1/NEWSVC2:EXISTINGSVC
  * @param argc
  * @param argv
  * @return
@@ -79,8 +83,10 @@ int parse_svc_arg(char *arg)
         *p=EOS;
     }
     
-    /* Now loop thourght services and add them to the list. */
-    p = strtok(arg, ",");
+    /* Now loop through services and add them to the list. 
+     * Seems that , is eat up by shell.. thus another symbol could be /
+     */
+    p = strtok(arg, ",/");
     while (NULL!=p)
     {
         /* allocate memory for entry */
@@ -104,9 +110,8 @@ int parse_svc_arg(char *arg)
          */
         DL_APPEND(G_server_conf.svc_list, entry);
 
-        NDRX_LOG(log_debug, "-s [%s]:[%s]", entry->svc_nm,
-                                                         entry->svc_alias);
-        p = strtok(NULL, ",");
+        NDRX_LOG(log_debug, "-s [%s]:[%s]", entry->svc_nm, entry->svc_alias);
+        p = strtok(NULL, ",/");
     }
     
     return SUCCEED;
