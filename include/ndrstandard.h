@@ -111,6 +111,9 @@ typedef int         bool;
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
+
+#define NDRX_STRCPY_SAFE(X, Y) {strncpy(X, Y, sizeof(X)-1);\
+                          X[sizeof(X)-1]=EOS;}
 /*
  * So we use these two macros where we need know that more times they will be
  * true, than false. This makes some boost for CPU code branching.

@@ -624,7 +624,6 @@ private int check_dead_processes(void)
 {
     int ret=SUCCEED;
     pm_node_t *p_pm;
-    int delta;
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
     
@@ -714,62 +713,51 @@ Test exiting with:
  */
 
 /**
- * Check is server live by myid - NDRX_MY_ID_SRV_PARSE
- * @param myid
- * @return 
- */
-private int check_local_server_by_myid(char *myid)
-{
-	return SUCCEED;
-}
-
-/**
- * Check is server live by myid - NDRX_MY_ID_CLT_PARSE
- * @param myid
- * @return 
- */
-private int check_local_client_by_myid(char *myid)
-{
-	return SUCCEED;
-}
-
-/**
  * Check the conversational initiator. We will kill the queue if any of the processes
  * in our cluster node are dead.
  * @return 
  */
 private int check_cnvclt(char *qname)
 {
-    char buf[NDRX_MAX_Q_SIZE+1];
     int ret = SUCCEED;
-    /* have some safe copy */
-    strncpy(buf, qname, sizeof(buf));
-    buf[sizeof(buf)-1] = EOS;
+    TPMYID myid;
     
-    /* TODO: check start with srv, or ctl, then call local checks... 
-     * if process dead, kill the Q
-     */
-    
+    if (SUCCEED==ndrx_cvnq_parse_client(qname, &myid))
+    {
+        if (FALSE==ndrx_myid_is_alive(&myid))
+        {
+            ndrx_myid_dump(log_debug, &myid, "process is dead, remove the queue");
+            
+            unlink_dead_queue(qname);
+        }
+    }
     
 out:
     return ret;
 }
 
-
+/**
+ * Check conversation server accepted Q
+ * @param qname queue name
+ * @return SUCCEED
+ */
 private int check_cnvsrv(char *qname)
 {
-    char buf[NDRX_MAX_Q_SIZE+1];
-
     int ret = SUCCEED;
-    /* have some safe copy */
-    strncpy(buf, qname, sizeof(buf));
-    buf[sizeof(buf)-1] = EOS;
+    TPMYID myid1, myid2;
     
-    
-    /* TODO: check start with srv, or ctl, then detect the length of the halve
+    /* check start with srv, or ctl, then detect the length of the halve
      * and parse other part.
      * We are interested in other part, if it is dead, then kill the Q.
      */
+    if (SUCCEED==ndrx_cvnq_parse_server(qname, &myid1, &myid2))
+    {
+        if (FALSE==ndrx_myid_is_alive(&myid2))
+        {
+            ndrx_myid_dump(log_debug, &myid2, "process is dead, remove the queue");
+            unlink_dead_queue(qname);
+        }
+    }
    
 out:
     return ret;

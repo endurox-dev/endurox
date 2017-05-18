@@ -410,20 +410,8 @@ struct atmi_svc_list
 #define MAX_CALL_DATA_SIZE (ATMI_MSG_MAX_SIZE-sizeof(tp_command_call_t))
 
 /*---------------------------Globals------------------------------------*/
-#if 0
-extern NDRX_API __thread atmi_lib_conf_t G_atmi_conf; /* global access to server configuration */
-#endif
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
-#if 0
-extern NDRX_API __thread int G_atmi_is_init;
-extern NDRX_API __thread tp_command_call_t G_last_call; /* this is used by server, __thread not needed */
-extern NDRX_API __thread call_descriptor_state_t G_call_state[]; /* call descriptor states */
-extern NDRX_API __thread tp_conversation_control_t G_tp_conversation_status[];
-extern NDRX_API __thread tp_conversation_control_t G_accepted_connection;
-extern NDRX_API __thread long M_svc_return_code;
-#endif
 extern NDRX_API int G_srv_id;
-/* extern call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS]; */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -444,6 +432,15 @@ extern NDRX_API int ndrx_q_setblock(mqd_t q_descr, int blocked);
 extern NDRX_API void br_dump_nodestack(char *stack, char *msg);
 extern NDRX_API int fill_reply_queue(char *nodestack, 
             char *org_reply_to, char *reply_to);
+
+extern NDRX_API int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid);
+extern NDRX_API int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  
+        TPMYID *p_myid_second);
+extern NDRX_API int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator);
+extern NDRX_API int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator);
+extern NDRX_API int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator);
+extern NDRX_API int ndrx_myid_is_alive(TPMYID *p_myid);
+extern NDRX_API void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg);
 
 /* Base64 encode/decode with file system valid output */
 extern NDRX_API char * atmi_xa_base64_encode(unsigned char *data,

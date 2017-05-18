@@ -842,17 +842,22 @@ public int tpinit (TPINIT * init_data)
     /* Format my ID */
     if (FAIL==G_srv_id)
     {
-        sprintf(my_id, NDRX_MY_ID_CLT, init_data!=NULL?init_data->cltname:read_clt_name, 
-                pid, conf.contextid, G_atmi_env.our_nodeid);
+        sprintf(my_id, NDRX_MY_ID_CLT, 
+                init_data!=NULL?init_data->cltname:read_clt_name, 
+                pid, 
+                conf.contextid, 
+                G_atmi_env.our_nodeid);
+        
         strcpy(conf.my_id, my_id);
     }
     else
     {
-        sprintf(my_id, NDRX_MY_ID_SRV, init_data!=NULL?init_data->cltname:read_clt_name, 
-                                        G_srv_id, 
-                                        pid,
-                                        conf.contextid, /* Bug #119 server multicontext fixes... */
-                                        G_atmi_env.our_nodeid);
+        sprintf(my_id, NDRX_MY_ID_SRV, 
+                init_data!=NULL?init_data->cltname:read_clt_name, 
+                G_srv_id, 
+                pid,
+                conf.contextid, /* Bug #119 server multicontext fixes... */
+                G_atmi_env.our_nodeid);
         strcpy(conf.my_id, my_id);
     }
 
