@@ -301,6 +301,13 @@ Ensure(test034_shmreuse)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test035_hkeep)
+{
+    int ret;
+    ret=system_dbg("test035_hkeep/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 
 TestSuite *atmi_test_all(void)
 {
@@ -354,6 +361,9 @@ TestSuite *atmi_test_all(void)
     
     /* Feature #139 mvitolin, 09/05/2017 */
     add_test(suite, test034_shmreuse);
+    
+    /* mvitolin Bug #112, 18/05/2017 */
+    add_test(suite, test035_hkeep);
             
     return suite;
 }

@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <sys_unix.h>
 #include <atmi.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -981,4 +982,367 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     {
         NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", fn, strerror(ret));
     }
+}
+
+/**
+ * Parse Q. This will parse only the id, it will ignore the Q prefix
+ * @param qname full queue named
+ * @param p_myid parsed ID
+ * @return SUCCEED/FAIL
+ */
+public int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
+{
+    int ret = SUCCEED;
+    char *p;
+    
+    /* can be, example:
+    - /dom2,cnv,c,srv,atmisv35,11,32159,0,2,1
+    - /dom1,cnv,c,clt,atmiclt35,32218,5,1,1
+     */
+    
+    if (NULL==(p = strchr(qname, NDRX_FMT_SEP)))
+    {
+        NDRX_LOG(log_error, "Invalid conversational initiator/client Q (1): [%s]", 
+                qname);
+        FAIL_OUT(ret);
+    }
+    p++;
+    
+    if (0!=strncmp(p, "cnv"NDRX_FMT_SEP_STR, 4))
+    {
+        NDRX_LOG(log_error, "Invalid conversational initiator/client Q (2): [%s]", 
+                qname);
+        FAIL_OUT(ret);
+    }
+    p+=4;
+    
+    if (0!=strncmp(p, "c"NDRX_FMT_SEP_STR, 2))
+    {
+        NDRX_LOG(log_error, "Invalid conversational initiator/client Q (3): [%s]", 
+                qname);
+        FAIL_OUT(ret);
+    }
+    p+=2;
+    
+    ret = ndrx_myid_parse(p, p_myid, TRUE);
+    
+    
+out:
+    
+    return ret;
+}
+
+
+/**
+ * Step forward number of separators
+ * @param qname
+ * @param num
+ * @return 
+ */
+private char * move_forward(char *qname, int num)
+{
+    char *p = qname;
+    int i;
+    
+    for (i=0; i<num; i++)
+    {
+        if (NULL==(p=strchr(p, NDRX_FMT_SEP)))
+        {
+            NDRX_LOG(log_error, "Search for %d %c seps in [%s], step %d- fail",
+                    num, NDRX_FMT_SEP, qname, i);
+            goto out;
+        }
+        p++;
+    }
+    
+out:
+    return p;
+       
+}
+/**
+ * Parse conversational server Q. Which is compiled of two initiator and acceptor:
+ * e.g. 
+ * - /dom2,cnv,s,srv,atmisv35,13,32163,0,2,1,srv,atmisv35,14,32165,0,2
+ * - /dom2,cnv,s,clt,atmiclt35,32218,2,1,1,srv,atmisv35,11,32159,0,2
+ * @param qname
+ * @param p_myid_first
+ * @param p_myid_second
+ * @return 
+ */
+public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_myid_second)
+{
+    int ret = SUCCEED;
+    char tmpq[NDRX_MAX_Q_SIZE+1];
+    char *p;
+    char *p2;
+    /* we might want to get specs about count of separator commas 
+     * symbols in each of the ids. Thus we could step forward for compiled
+     * Q identifiers.
+     */
+    
+    NDRX_STRCPY_SAFE(tmpq, qname);
+    
+    /* /dom2,cnv,s,clt,atmiclt35,32218,2,1,1,srv,atmisv35,11,32159,0,2 */
+    
+    if (NULL==(p = strchr(tmpq, NDRX_FMT_SEP)))
+    {
+        NDRX_LOG(log_error, "Invalid conversational server Q (1): [%s]", 
+                qname);
+        FAIL_OUT(ret);
+    }
+    p++;
+    
+    if (0!=strncmp(p, "cnv"NDRX_FMT_SEP_STR, 4))
+    {
+        NDRX_LOG(log_error, "Invalid conversational server Q (2): [%s]", 
+                qname);
+        FAIL_OUT(ret);
+    }
+    p+=4;
+    
+    if (0!=strncmp(p, "s"NDRX_FMT_SEP_STR, 2))
+    {
+        NDRX_LOG(log_error, "Invalid conversational server Q (3): [%s]", 
+                qname);
+        FAIL_OUT(ret);
+    }
+    p+=2;
+    
+    if (0==strncmp(p, "srv"NDRX_FMT_SEP_STR, 4))
+    {
+        /* +1 because we want to get till the end of the our component */
+        if (NULL==(p2=move_forward(p, NDRX_MY_ID_SRV_CNV_NRSEPS+1)))
+        {
+            NDRX_LOG(log_error, "Failed to decode server myid seps count: [%s]",
+                   p);
+        }
+        p2--;
+        *p2 = EOS;
+        p2++;
+        
+        if (strlen(p2)==0)
+        {
+            NDRX_LOG(log_error, "Invalid server queue");
+            FAIL_OUT(ret);
+        }
+    }
+    else if (0==strncmp(p, "clt"NDRX_FMT_SEP_STR, 4))
+    {
+        /* +1 because we want to get till the end of the our component */
+        if (NULL==(p2=move_forward(p, NDRX_MY_ID_CLT_CNV_NRSEPS+1)))
+        {
+            NDRX_LOG(log_error, "Failed to decode client myid seps count: [%s]",
+                   p);
+        }
+        p2--;
+        *p2 = EOS;
+        p2++;
+        
+        if (strlen(p2)==0)
+        {
+            NDRX_LOG(log_error, "Invalid client queue of server q [%s]", qname);
+            FAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Cannot detect myid type of conversational Q: "
+                "[%s]", qname);
+        FAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Parsing Q: [%s] first part: [%s] "
+            "second part: [%s]",qname, p, p2);
+    if (SUCCEED!=ndrx_myid_parse(p, p_myid_first, TRUE) || 
+            SUCCEED!=ndrx_myid_parse(p2, p_myid_second, FALSE))
+    {
+        NDRX_LOG(log_error, "Failed to parse Q: [%s] first part: [%s] "
+            "second part: [%s]",qname, p, p2);
+        FAIL_OUT(ret);
+    }
+    
+out:
+    NDRX_LOG(log_error, "ndrx_parse_cnv_srv_q returns with %d", ret);
+    return ret;
+}
+
+/**
+ * Prase myid (it will detect client or server)
+ * @param my_id myid string
+ * @param out parsed myid
+ * @return SUCCEED/FAIL
+ */
+public int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator)
+{
+    int ret = SUCCEED;
+    
+    if (0==strncmp(my_id, "srv"NDRX_FMT_SEP_STR, 4))
+    {
+        NDRX_LOG(log_debug, "Parsing server myid: [%s]", my_id);
+        return ndrx_myid_parse_srv(my_id, out, iscnv_initator);
+    }
+    else if (0==strncmp(my_id, "clt"NDRX_FMT_SEP_STR, 4))
+    {
+        NDRX_LOG(log_debug, "Parsing client myid: [%s]", my_id);
+        return ndrx_myid_parse_clt(my_id, out, iscnv_initator);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Cannot detect myid type: [%s]", my_id);
+        ret=FAIL;
+    }
+    
+    return ret;
+}
+
+
+/**
+ * Parse client id
+ * @param my_id client id string
+ * @param out client id out struct
+ * @return SUCCEED
+ */
+public int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
+{
+    int ret = SUCCEED;
+    int len;
+    int i;
+    char tmp[NDRX_MAX_Q_SIZE+1];
+    
+    NDRX_STRCPY_SAFE(tmp, my_id);
+    len = strlen(tmp);
+    for (i=0; i<len; i++)
+    {
+        if (NDRX_FMT_SEP==tmp[i])
+            tmp[i]=' ';
+    }
+    
+    NDRX_LOG(log_debug, "Parsing: [%s]", tmp);
+    if (iscnv_initator)
+    {
+        sscanf(tmp, NDRX_MY_ID_CLT_CNV_PARSE, 
+                out->binary_name
+                ,&(out->pid)
+                ,&(out->contextid)
+                ,&(out->nodeid)
+                ,&(out->cd));
+        out->isconv = TRUE;
+    }
+    else 
+    {
+
+        sscanf(tmp, NDRX_MY_ID_CLT_PARSE, 
+                out->binary_name
+                ,&(out->pid)
+                ,&(out->contextid)
+                ,&(out->nodeid));
+        out->isconv = FALSE;
+    }
+
+    out->tpmyidtyp = TPMYIDTYP_CLIENT;
+    
+    ndrx_myid_dump(log_debug, out, "Parsed myid");
+    
+    return ret;
+}
+
+/**
+ * Parse myid of the server process
+ * @param my_id myid/NDRX_MY_ID_SRV formatted id
+ * @param out filled structure of the parse id
+ * @return SUCCEED
+ */
+public int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
+{
+    int ret = SUCCEED;
+    int len;
+    int i;
+    char tmp[NDRX_MAX_Q_SIZE+1];
+    
+    NDRX_STRCPY_SAFE(tmp, my_id);
+    len = strlen(tmp);
+    for (i=0; i<len; i++)
+    {
+        if (NDRX_FMT_SEP==tmp[i])
+            tmp[i]=' ';
+    }
+    
+    NDRX_LOG(log_debug, "Parsing: [%s]", tmp);
+    if (iscnv_initator)
+    {
+        sscanf(tmp, NDRX_MY_ID_SRV_CNV_PARSE, 
+                out->binary_name
+                ,&(out->srv_id)
+                ,&(out->pid)
+                ,&(out->contextid)
+                ,&(out->nodeid)
+                ,&(out->cd));
+        out->isconv = TRUE;
+    }
+    else
+    {
+        sscanf(tmp, NDRX_MY_ID_SRV_PARSE, 
+                out->binary_name
+                ,&(out->srv_id)
+                ,&(out->pid)
+                ,&(out->contextid)
+                ,&(out->nodeid));
+        out->isconv = FALSE;
+    }
+    
+    out->tpmyidtyp = TPMYIDTYP_SERVER;
+    
+    ndrx_myid_dump(log_debug, out, "Parsed myid output");
+    
+    return ret;
+}
+
+/**
+ * Check is process a live
+ * @param 
+ * @return FAIL (not our node)/TRUE (live)/FALSE (dead)
+ */
+public int ndrx_myid_is_alive(TPMYID *p_myid)
+{
+    if (tpgetnodeid()==G_atmi_env.our_nodeid)
+    {
+        /* cltname same pos as server proc name */
+        return ndrx_sys_is_process_running(p_myid->pid, p_myid->binary_name);
+    }
+    else
+    {
+        return FAIL;
+    }
+}
+
+/**
+ * Dump the MYID struct to the log
+ * @param p_myid ptr to myid
+ * @param lev debug level to print of
+ */
+public void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
+{
+    
+    NDRX_LOG(lev, "=== %s ===", msg);
+    
+    NDRX_LOG(lev, "binary_name:[%s]", p_myid->binary_name);
+    NDRX_LOG(lev, "pid        :%d", p_myid->pid);
+    NDRX_LOG(lev, "contextid  :%ld", p_myid->contextid);
+    NDRX_LOG(lev, "nodeid     :%d", p_myid->nodeid);
+    NDRX_LOG(lev, "typ        :%s (%d)", 
+            p_myid->tpmyidtyp==TPMYIDTYP_SERVER?"server":"client", 
+            p_myid->tpmyidtyp);
+    
+    if (p_myid->tpmyidtyp==TPMYIDTYP_SERVER)
+    {
+        NDRX_LOG(lev, "srv_id     :%d", p_myid->srv_id);
+    }
+    NDRX_LOG(lev, "cnv initia :%s", p_myid->isconv?"TRUE":"FALSE");
+    
+    if (p_myid->isconv)
+    {
+        NDRX_LOG(lev, "cd         :%d", p_myid->cd);
+    }
+    NDRX_LOG(lev, "=================");
+            
 }

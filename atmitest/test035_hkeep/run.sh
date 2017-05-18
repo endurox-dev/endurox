@@ -1,8 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) Test003 - clusterised version
+## @(#) Test035 - housekeep routine tests
 ##
-## @file run-dom.sh
+## @file run.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -114,6 +114,8 @@ sleep 60
 # Go to domain 1
 set_dom1;
 
+RET=0
+
 # Run the client test...
 echo "Soon will issue client calls:"
 xadmin psc
@@ -144,6 +146,20 @@ sleep 20
 echo "after sleep 20"
 
 xadmin pqa -a
+
+# Test the queues, must be something like this
+#0          /dom2,sys,bg,ndrxd
+#0          /dom2,clt,reply,ndrxd,14591,0
+#0          /dom1,sys,bg,xadmin,14629
+#0          /dom1,sys,bg,ndrxd
+#0          /dom1,clt,reply,ndrxd,14573,0
+
+CNT=`xadmin pqa -a | wc | awk '{print $1}'`
+
+if [[ $CNT -ne 5 ]]; then
+    echo "Queue count $CNT, must be 5"
+    go_out 3
+fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

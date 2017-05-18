@@ -14,6 +14,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 #include <stdint.h>
+#include <sys/types.h>
 #include <ubf.h>
 /*---------------------------Macros-------------------------------------*/
     
@@ -111,10 +112,19 @@ extern "C" {
 #define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /* Conversation server Q */
 #define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /* Prefix for sanity check. */
 
-#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d" /* binary name, server id, pid, context_id, nodeid */
-#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d" /* binary name, server id, pid, context_id, nodeid for parse */
-#define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d"
-#define NDRX_MY_ID_CLT_PARSE  "clt %s %d %ld %d"
+#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d" /* binary name, server id, pid, contextid, nodeid */
+#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d" /* binary name, server id, pid, contextid, nodeid for parse */
+#define NDRX_MY_ID_SRV_NRSEPS  5 /* Number of separators in myid of server */
+    
+#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d" /* binary name, server id, pid, contextid, nodeid, cd for parse */
+#define NDRX_MY_ID_SRV_CNV_NRSEPS  6 /* Number of separators in myid of server */
+    
+#define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d" /* cltname, pid, contextid, nodeid */
+#define NDRX_MY_ID_CLT_PARSE  "clt %s %d %ld %d" /* cltname, pid, contextid, nodeid */
+#define NDRX_MY_ID_CLT_NRSEPS  4 /* Number of separators in myid of client */
+    
+#define NDRX_MY_ID_CLT_CNV_PARSE  "clt %s %d %ld %d %d" /* cltname, pid, contextid, nodeid, cd */
+#define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /* Number of separators in myid of client */
 
 /* Shared memory formats */
 #define NDRX_SHM_SRVINFO        "%s,shm,srvinfo"        /* Server info SHM  */
@@ -390,13 +400,20 @@ extern "C" {
     
 
 #define TPUNSOLERR	_ndrx_tmunsolerr_handler
+    
+/**
+ * Internal process identifier
+ */
+#define TPMYIDTYP_CLIENT       1 /* Q identifier is client */
+#define TPMYIDTYP_SERVER       2 /* Q identifier is server */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
 /* client/caller identifier */
 struct clientid_t
 {
-        char    clientdata[NDRX_MAX_ID_SIZE];          
+    char    clientdata[NDRX_MAX_ID_SIZE];          
 };
 typedef struct clientid_t CLIENTID;
 
@@ -475,18 +492,20 @@ struct tpqctl_t
 };		
 typedef struct tpqctl_t TPQCTL;
 
-/* MYID of client, parsed */
-struct tpclientmyid_t
+
+struct tpmyid_t
 {
-	/* TODO: Client ID fields, parsed out. */
+    char binary_name[MAXTIDENT+2];
+    pid_t pid;
+    long contextid;
+    int nodeid;
+    int srv_id;
+    int tpmyidtyp;
+    int isconv;
+    int cd; /* if we run in conversational mode */
 };
 
-/* MYID of server, parsed */
-struct tpservermyid_t
-{
-	/* TODO: Server ID fields, parsed out. */
-};
-
+typedef struct tpmyid_t TPMYID;
 
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API int (*G_tpsvrinit__)(int, char **);
