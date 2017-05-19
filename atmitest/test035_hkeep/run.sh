@@ -156,8 +156,8 @@ xadmin pqa -a
 
 CNT=`xadmin pqa -a | wc | awk '{print $1}'`
 
-if [[ $CNT -ne 5 ]]; then
-    echo "Queue count $CNT, must be 5"
+if [[ $CNT -gt 5 ]]; then
+    echo "Queue count $CNT, must be 5 or less"
     go_out 3
 fi
 
