@@ -178,7 +178,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int c;
     int is_server = FAIL;
     char addr[EXNET_ADDR_LEN] = {EOS};
-    short port=FAIL;
+    int port=FAIL;
     int rcvtimeout = ndrx_get_G_atmi_env()->time_out;
     int backlog = 100;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
@@ -210,7 +210,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
             case 'p':
                 port = atoi(optarg);
-                NDRX_LOG(log_debug, "Port no, -p = [%hd]", port);
+		/* port will be promoted to integer... */
+                NDRX_LOG(log_debug, "Port no, -p = [%d]", port);
                 break;
             case 'T':
                 rcvtimeout = atoi(optarg);

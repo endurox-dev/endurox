@@ -31,8 +31,7 @@
 		<min>1</min>
 		<max>1</max>
 		<autokill>1</autokill>
-		<!-- Do not need respawning! -->
-		<respawn>0</respawn>
+		<respawn>1</respawn>
 		<!-- The maximum time while process can hang in 'starting' state i.e.
 		have not completed initialization, sec -->
 		<start_max>20</start_max>
