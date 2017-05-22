@@ -79,6 +79,7 @@ static ubf_type_cache_t M_ubf_type_cache[] =
 };
 
 /*---------------------------Prototypes---------------------------------*/
+private inline void ubf_cache_set(UBFH *p_ub, BFLDID fldid, int next_offset);
 
 /**
  * Dump the UBF cache
@@ -103,6 +104,7 @@ public int ubf_cache_update(UBFH *p_ub)
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     BFLDID   *p_bfldid = &hdr->bfldid;
     BFLDID   *p_bfldid_start = &hdr->bfldid;
+    BFLDID   *p_cur;
     char *p = (char *)&hdr->bfldid;
     dtype_str_t *dtype=NULL;
     char *fn = "ubf_cache_update";
@@ -111,17 +113,26 @@ public int ubf_cache_update(UBFH *p_ub)
     int ret = SUCCEED;
     int i;
     
+    /* reset cache... */
     for (i=1; i<N_DIM(M_ubf_type_cache); i++)
     {
         BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[i].cache_offset);
         *offset = 0;
     }
 
+#ifdef BIN_SEARCH_DEBUG
+    NDRX_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
+#endif
+    
     while (BBADFLDID!=*p_bfldid)
     {
         /* Got to next position */
         /* Get type */
         type = (*p_bfldid>>EFFECTIVE_BITS);
+        
+#ifdef BIN_SEARCH_DEBUG
+        NDRX_LOG(log_debug, "%s: Got field: [%d], type %d", fn, *p_bfldid, type);
+#endif
 
         /* Check data type alignity */
         if (IS_TYPE_INVALID(type))
@@ -129,6 +140,8 @@ public int ubf_cache_update(UBFH *p_ub)
             _Fset_error_fmt(BALIGNERR, "%s: Invalid field type (%d)", fn, *p_bfldid);
             FAIL_OUT(ret);
         }
+        
+        p_cur = p_bfldid;
         
         /* Get type descriptor */
         dtype = &G_dtype_str_map[type];
@@ -145,11 +158,21 @@ public int ubf_cache_update(UBFH *p_ub)
         
         typenext = (*p_bfldid>>EFFECTIVE_BITS);
         
-        if (type!=typenext && typenext > BFLD_SHORT)
+#ifdef BIN_SEARCH_DEBUG
+        NDRX_LOG(log_debug, "%s: Next field: [%d], type %d", fn, *p_bfldid, typenext);
+#endif
+        
+        if (type!=typenext)
         {
             /* Update the cache */
-            BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[typenext].cache_offset);
-            *offset = (((char *)p_bfldid) - ((char *)p_bfldid_start));
+            int offset = (((char *)p_bfldid) - ((char *)p_bfldid_start));
+            ubf_cache_set(p_ub, *p_cur, offset);
+        }
+        else
+        {
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: Not updating type=%d, typenext=%d", fn, type, typenext);
+#endif
         }
     }
     
@@ -157,6 +180,59 @@ out:
     return ret;
 }
 
+/**
+ * Set cache absolute values
+ * @param p_ub UBF buffer
+ * @param fldid last field ID
+ * @param next_offset offset of the end of the fldid
+ */
+private inline void ubf_cache_set(UBFH *p_ub, BFLDID fldid, int next_offset)
+{
+    UBF_header_t *uh = (UBF_header_t *)p_ub;
+    char *fn = "ubf_cache_shift";
+    int type = (fldid>>EFFECTIVE_BITS);
+    
+    switch (type)
+    {
+        case BFLD_SHORT:
+            uh->cache_long_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off => %d", 
+                    fn, uh->cache_long_off);
+#endif
+        case BFLD_LONG:
+            uh->cache_char_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off=> %d", 
+                    fn, uh->cache_char_off);
+#endif
+        case BFLD_CHAR:
+            uh->cache_float_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off=> %d", 
+                    fn, uh->cache_float_off);
+#endif
+        case BFLD_FLOAT:
+            uh->cache_double_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off=> %d", 
+                    fn, uh->cache_double_off);
+#endif
+        case BFLD_DOUBLE:
+            uh->cache_string_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off=> %d", 
+                    fn, uh->cache_string_off);
+#endif
+        case BFLD_STRING:
+            uh->cache_carray_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off=> %d", 
+                    fn, uh->cache_carray_off);
+#endif
+            break;
+    }
+}
 /**
  * Update fielded buffer cache according to 
  * @param p_ub
@@ -166,26 +242,49 @@ out:
 public inline void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
 {
     UBF_header_t *uh = (UBF_header_t *)p_ub;
+    char *fn = "ubf_cache_shift";
     int type = (fldid>>EFFECTIVE_BITS);
     
     switch (type)
     {
         case BFLD_SHORT:
             uh->cache_long_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off+=%d => %d", 
+                    fn, size_diff, uh->cache_long_off);
+#endif
         case BFLD_LONG:
             uh->cache_char_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off+=%d => %d", 
+                    fn, size_diff, uh->cache_char_off);
+#endif
         case BFLD_CHAR:
             uh->cache_float_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off+=%d => %d", 
+                    fn, size_diff, uh->cache_float_off);
+#endif
         case BFLD_FLOAT:
             uh->cache_double_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off+=%d => %d", 
+                    fn, size_diff, uh->cache_double_off);
+#endif
         case BFLD_DOUBLE:
             uh->cache_string_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off+=%d => %d", 
+                    fn, size_diff, uh->cache_string_off);
+#endif
         case BFLD_STRING:
             uh->cache_carray_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            NDRX_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off+=%d => %d", 
+                    fn, size_diff, uh->cache_carray_off);
+#endif
             break;
     }
-    
-   
    return;
 }
 
@@ -428,7 +527,7 @@ public char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     
     ubf_cache_dump(p_ub, "Offsets...");
 #endif
-            
+    
     if (stop-start <=0)
     {
 #ifdef BIN_SEARCH_DEBUG

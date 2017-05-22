@@ -339,6 +339,9 @@ Ensure(test_Bdelall)
     char buf[64];
     UBFH *p_ub = (UBFH *)fb;
     int len;
+    BFLDID bfldid;
+    BFLDOCC occ;
+    int flds = 0;
     
     assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
     load_proj_test_data(p_ub);
@@ -368,24 +371,36 @@ Ensure(test_Bdelall)
     
     
     /* Bug #148 */
+    
     assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    load_proj_test_data(p_ub);
-    set_up_dummy_data(p_ub);
     
-    Bprint(p_ub);
+    assert_equal(CBadd(p_ub, T_CHAR_FLD, "2", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_FLD, "631419304311", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, "Y", 0L, BFLD_STRING), SUCCEED);
     
-    assert_equal(Bdelall(p_ub, T_STRING_2_FLD), SUCCEED);
+    Bfprint(p_ub, stderr);
     
-    NDRX_LOG(log_debug, "After T_STRING_2_FLD delete...");
-    Bprint(p_ub);
+    assert_equal(Bdelall(p_ub, T_STRING_FLD), SUCCEED);
     
-    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 0, "X", 0L, BFLD_STRING), SUCCEED);
+    NDRX_LOG(log_debug, "After T_STRING_FLD delete...");
+    Bfprint(p_ub, stderr);
     
-    NDRX_LOG(log_debug, "After changed T_CHAR_2_FLD");
-    Bprint(p_ub);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, "X", 0L, BFLD_STRING), SUCCEED);
     
+    NDRX_LOG(log_debug, "After changed T_CHAR_FLD => occ: [%d]", 
+            Boccur(p_ub, T_CHAR_FLD));
     
+    Bfprint(p_ub, stderr);
     
+    bfldid = BFIRSTFLDID;
+    
+    /* Only 1 field must be here! */
+    while(1==Bnext(p_ub, &bfldid, &occ, NULL, NULL))
+    {
+        flds++;
+    }
+    
+    assert_equal(flds, 1);
 }
 /**
  * Delete all items from 
