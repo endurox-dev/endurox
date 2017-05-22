@@ -3,7 +3,7 @@
     <appconfig>
         <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
         <!-- Sanity check time, sec -->
-        <sanity>15</sanity>
+        <sanity>1</sanity>
         <!-- If process have been state changed to other than dead, exit or not running
         but PID of program does not exists in system, then send internel message, then 
         program have been stopped.
@@ -54,17 +54,22 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-        <server name="atmisv35">
+        <server name="tprecover">
+            <max>1</max>
+            <srvid>1</srvid>
+            <sysopt>-e ${TESTDIR}/tprecover-dom1.log -r</sysopt>
+        </server>
+        <server name="atmisv36">
+            <min>10</min>
+            <max>10</max>
             <srvid>10</srvid>
-            <min>5</min>
-            <max>5</max>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -N -sCONVSV2/CONVSV3/CONVSV4:CONVSV</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
         </server>
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30</appopt>
+            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
+            <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30</appopt>
         </server>
     </servers>
 </endurox>

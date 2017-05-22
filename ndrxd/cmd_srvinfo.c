@@ -186,6 +186,11 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
         /* reset ping timer */
         p_pm->pingtimer = SANITY_CNT_START;
         p_pm->rsptimer = SANITY_CNT_START; /* restart rsp timer */
+        
+        /* Bridge stuff: */
+        p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
+        p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
+            
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
     }
     

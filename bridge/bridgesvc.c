@@ -71,63 +71,27 @@ extern char *optarg;
 public bridge_cfg_t G_bridge_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-/**
- * Connection have been established
- */
-public int br_connected(exnetcon_t *net)
-{
-    int ret=SUCCEED;
-    bridge_info_t gencall;
-    
-    G_bridge_cfg.con = net;
-    NDRX_LOG(log_debug, "Net=%p", G_bridge_cfg.net);
-    
-    /* Send our clock to other node. */
-    if (SUCCEED==br_send_clock())
-    {
-    
-        /* Reset gencall */
-        memset(&gencall, 0, sizeof(gencall));
-        gencall.nodeid = G_bridge_cfg.nodeid;
-
-        NDRX_LOG(log_debug, "Connection have been established - "
-                                    "reporting to ndrxd");
-
-        /* Send command call to ndrxd */
-        ret=cmd_generic_call(NDRXD_COM_BRCON_RQ, NDRXD_SRC_BRIDGE,
-                        NDRXD_CALL_TYPE_BRIDGEINFO,
-                        (command_call_t *)&gencall, sizeof(bridge_info_t),
-                        ndrx_get_G_atmi_conf()->reply_q_str,
-                        ndrx_get_G_atmi_conf()->reply_q,
-                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
-                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
-                        0, NULL,
-                        NULL,
-                        NULL,
-                        NULL,
-                        FALSE);
-    }
-    return ret;
-}
 
 /**
- * Bridge is disconnected.
+ * Send status to NDRXD
+ * @param is_connected TRUE connected, FALSE not connected
+ * @return SUCCEED/FAIL 
  */
-public int br_disconnected(exnetcon_t *net)
+private int br_send_status(int is_connected)
 {
-    int ret=SUCCEED;
+    int ret = SUCCEED;
+    
     bridge_info_t gencall;
-    
-    G_bridge_cfg.con = NULL;
-    
+
     /* Reset gencall */
     memset(&gencall, 0, sizeof(gencall));
     gencall.nodeid = G_bridge_cfg.nodeid;
     
-    NDRX_LOG(log_debug, "Disconnected - reporting to ndrxd.");
+    NDRX_LOG(log_debug, "Reporting to ndrxd (is_connected=%d)", is_connected);
     
     /* Send command call to ndrxd */
-    ret=cmd_generic_call(NDRXD_COM_BRDISCON_RQ, NDRXD_SRC_BRIDGE,
+    ret=cmd_generic_call((is_connected?NDRXD_COM_BRCON_RQ:NDRXD_COM_BRDISCON_RQ),
+                    NDRXD_SRC_BRIDGE,
                     NDRXD_CALL_TYPE_BRIDGEINFO,
                     (command_call_t *)&gencall, sizeof(bridge_info_t),
                     ndrx_get_G_atmi_conf()->reply_q_str,
@@ -139,7 +103,62 @@ public int br_disconnected(exnetcon_t *net)
                     NULL,
                     NULL,
                     FALSE);
+    
+    return ret;
+}
+/**
+ * Connection have been established
+ */
+public int br_connected(exnetcon_t *net)
+{
+    int ret=SUCCEED;
+    
+    G_bridge_cfg.con = net;
+    NDRX_LOG(log_debug, "Net=%p", G_bridge_cfg.net);
+    
+    /* Send our clock to other node. */
+    if (SUCCEED==br_send_clock())
+    {
+        ret=br_send_status(TRUE);
+    }
+    return ret;
+}
+
+/**
+ * Bridge is disconnected.
+ */
+public int br_disconnected(exnetcon_t *net)
+{
+    int ret=SUCCEED;
+    
+    G_bridge_cfg.con = NULL;
+    
+    ret=br_send_status(FALSE);
+    
     return ret;  
+}
+
+/**
+ * Report status to ndrxd by callback, so that when ndrxd is being restarted
+ * we get back correct bridge state.
+ * @return SUCCEED/FAIL
+ */
+public int br_report_to_ndrxd_cb(void)
+{
+    int ret = SUCCEED;
+    
+    NDRX_LOG(log_warn, "br_report_to_ndrxd_cb: Reporting to ndrxd bridge status: %s", 
+            (G_bridge_cfg.con?"Connected":"Disconnected"));
+    if (G_bridge_cfg.con)
+    {
+        ret=br_send_status(TRUE);
+    }
+    else
+    {
+        ret=br_send_status(FALSE);
+    }
+    
+    return ret;
 }
 
 /**
@@ -157,7 +176,7 @@ public int poll_timer(void)
  */
 int b4poll(void)
 {
-        return exnet_b4_poll_cb();
+    return exnet_b4_poll_cb();
 }
 
 /**
@@ -299,6 +318,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Install call-backs */
     exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, br_disconnected);
     
+    ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
+    
     /* Then configure the lib - we will have only one client session! */
     if (SUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
         4, is_server, backlog, 1, periodic_zero))
@@ -328,7 +349,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Set server flags  */
     tpext_configbrige(G_bridge_cfg.nodeid, flags, br_got_message_from_q);
     
-    sprintf(G_bridge_cfg.svc, NDRX_SVC_BRIDGE, G_bridge_cfg.nodeid);
+    snprintf(G_bridge_cfg.svc, sizeof(G_bridge_cfg.svc), NDRX_SVC_BRIDGE, G_bridge_cfg.nodeid);
     
     if (SUCCEED!=tpadvertise(G_bridge_cfg.svc, TPBRIDGE))
     {

@@ -57,7 +57,7 @@ extern char *optarg;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 static long M_restarts = 0;
-static long M_check = FAIL;
+static long M_check = 5; /* defaulted to 10 sec */
 /*---------------------------Prototypes---------------------------------*/
 int start_daemon_recover(void);
 

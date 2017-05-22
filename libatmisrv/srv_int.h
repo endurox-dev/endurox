@@ -210,6 +210,7 @@ extern NDRX_API void _tpcontinue (void);
 extern NDRX_API int advertse_to_ndrxd(svc_entry_fn_t *entry);
 extern NDRX_API int advertse_to_ndrxd(svc_entry_fn_t *entry);
 extern NDRX_API int report_to_ndrxd(void);
+extern NDRX_API void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_callback) (void));
 /* Return list of connected bridge nodes. */
 extern NDRX_API int ndrxd_get_bridges(char *nodes_out);
 extern NDRX_API int pingrsp_to_ndrxd(command_srvping_t *ping);

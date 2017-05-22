@@ -443,7 +443,7 @@ int ndrx_main(int argc, char** argv)
         FAIL_OUT(ret);
     }
     
-    /* As we can run even witout ndrxd, then we ingore the result of send op */
+    /* As we can run even without ndrxd, then we ignore the result of send op */
     report_to_ndrxd();
 
     /* run process here! */

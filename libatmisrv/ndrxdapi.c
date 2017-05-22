@@ -54,8 +54,22 @@
  * but receiving tons of event postages...*/
 ndrx_timer_t M_getbrs_timer;
 
+int (*G_report_to_ndrxd_cb) (void) = NULL;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Install callback function which will be additionally called when 
+ * libatmisrv is reporting service status to ndrxd.
+ * @param report_to_ndrxd_callback - callback func. Can be NULL, to disable cback.
+ */
+public void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_cb) (void))
+{
+    NDRX_LOG(log_warn, "Installing additional report_to_ndrxd() callback = %p", 
+            report_to_ndrxd_cb);
+    G_report_to_ndrxd_cb = report_to_ndrxd_cb;
+}
 
 /**
  * Report to ndrxd
@@ -113,8 +127,13 @@ public int report_to_ndrxd(void)
                         NULL,
                         NULL,
                         FALSE);
-
-out:
+    /* Bug #110 - provide bridge status after ndrxd recovery... */
+    if (SUCCEED==ret && NULL!=G_report_to_ndrxd_cb)
+    {
+        NDRX_LOG(log_info, "Callback on report_to_ndrxd is set.");
+        ret=G_report_to_ndrxd_cb();
+    }
+    
     return ret;
 }
 
