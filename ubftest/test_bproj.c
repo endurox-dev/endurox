@@ -365,6 +365,27 @@ Ensure(test_Bdelall)
     /* Check if we delete nothing, then this is error condition */
     assert_equal(Bdelall(p_ub, T_CARRAY_2_FLD), FAIL);
     assert_equal(Berror, BNOTPRES);
+    
+    
+    /* Bug #148 */
+    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    load_proj_test_data(p_ub);
+    set_up_dummy_data(p_ub);
+    
+    Bprint(p_ub);
+    
+    assert_equal(Bdelall(p_ub, T_STRING_2_FLD), SUCCEED);
+    
+    NDRX_LOG(log_debug, "After T_STRING_2_FLD delete...");
+    Bprint(p_ub);
+    
+    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 0, "X", 0L, BFLD_STRING), SUCCEED);
+    
+    NDRX_LOG(log_debug, "After changed T_CHAR_2_FLD");
+    Bprint(p_ub);
+    
+    
+    
 }
 /**
  * Delete all items from 
