@@ -611,10 +611,10 @@ $ xadmin gen c server
 Enduro/X 3.4.3, build Feb 10 2017 00:34:28, using poll for DARWIN (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
  0: srvname      :XATMI Server Name (binary) [testsv]:
  1: svcnm        :Service name [TESTSV]:
@@ -682,10 +682,10 @@ $ xadmin gen ubf tab
 Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 Logging to ./ULOG.20170211
  0: table_name   :UBF Table name (.fd will be added) [test]: 
@@ -723,10 +723,10 @@ $ xadmin gen ubf tab
 Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 Logging to ./ULOG.20170211
  0: table_name   :UBF Table name (.fd will be added) [test]: 
@@ -844,10 +844,10 @@ $ xadmin gen c client
 Enduro/X 3.4.3, build Feb 10 2017 00:26:22, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 Logging to ./ULOG.20170211
  0: cltname      :XATMI Client Name (binary) [testcl]: 
@@ -890,10 +890,10 @@ $ xadmin gen go server
 Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 Logging to ./ULOG.20170211
  0: svname       :XATMI Server Name (binary) [testsv]: 
@@ -945,10 +945,10 @@ $ xadmin provision
 Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 Logging to ./ULOG.20170212
 
@@ -1107,10 +1107,10 @@ $ xadmin start -y
 Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 EnduroX back-end (ndrxd) is not running
 ndrxd PID (from PID file): 18849
@@ -1147,10 +1147,10 @@ $ xadmin psc
 Enduro/X 3.4.4, build Feb 11 2017 16:57:21, using epoll for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, 2016 ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, 2016 Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 ndrxd PID (from PID file): 6119
 Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT

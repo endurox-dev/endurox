@@ -265,10 +265,10 @@ $ xadmin start -y
 Enduro/X v2.3.2, build Nov 16 2015 08:22:23
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 EnduroX back-end (ndrxd) is not running!
 ndrxd PID (from PID file): 1695
@@ -488,10 +488,10 @@ $ xadmin start
 Enduro/X v2.3.2, build Nov 16 2015 08:22:23
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 ndrxd PID (from PID file): 2608
 Are you sure you want to start application? [Y/N]: y
@@ -509,10 +509,10 @@ $ xadmin psc
 Enduro/X v2.3.2, build Nov 16 2015 08:22:23
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 ndrxd PID (from PID file): 2608
 Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT

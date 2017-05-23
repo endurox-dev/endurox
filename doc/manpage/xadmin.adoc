@@ -244,5 +244,5 @@ Enduro/X is created by Madars Vitolins.
 
 COPYING
 -------
-(C) Mavimax, SIA
+(C) Mavimax, Ltd
 

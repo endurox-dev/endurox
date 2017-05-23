@@ -30,7 +30,7 @@ Supported operating system: GNU/Linux, starting from 2.6.12 kernel (needed for P
 
 - Source corss reference: http://www.silodev.com/lxr/source
 
-PS, feel free to contact me at madars@atrbaltic.com. I will gladly help you to get EnduroX running ;)
+PS, feel free to contact me at madars@mavimax.com. I will gladly help you to get EnduroX running ;)
 
 # Call/message forwarding
 

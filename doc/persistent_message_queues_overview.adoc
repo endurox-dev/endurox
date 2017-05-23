@@ -275,10 +275,10 @@ $ xadmin start -y
 EnduroX v2.5.0 alpha, build May 16 2016 12:25:55
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 EnduroX back-end (ndrxd) is not running
 ndrxd PID (from PID file): 25799
@@ -301,10 +301,10 @@ $ xadmin mqlc
 EnduroX v2.5.0 alpha, build May 16 2016 12:25:55
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 ndrxd PID (from PID file): 25799
 Nd SRVID QSPACE    QNAME     FLAGS QDEF
@@ -350,10 +350,10 @@ $ xadmin mqlq
 EnduroX v2.5.0 alpha, build May 16 2016 12:25:55
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or ATR Baltic's license for commercial use.
+GPLv2 (or later) or Mavimax's license for commercial use.
 
 ndrxd PID (from PID file): 27208
 Nd SRVID QSPACE    QNAME     #QUEU #LOCK #ENQ  #DEQ  #SUCC #FAIL

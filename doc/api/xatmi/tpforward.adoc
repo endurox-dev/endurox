@@ -67,5 +67,5 @@ SEE ALSO
 
 COPYING
 -------
-(C) ATR Baltic, SIA
+(C) Mavimax, Ltd
 

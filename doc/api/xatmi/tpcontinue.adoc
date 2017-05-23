@@ -41,5 +41,5 @@ tpsrvgetctxdata(3)
 
 COPYING
 -------
-(C) ATR Baltic, SIA
+(C) Mavimax, Ltd
 

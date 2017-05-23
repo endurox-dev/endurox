@@ -47,5 +47,5 @@ Enduro/X is created by Madars Vitolins.
 
 COPYING
 -------
-(C) ATR Baltic, SIA
+(C) Mavimax, Ltd
 
