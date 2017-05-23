@@ -50,6 +50,7 @@
 #include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+/* #define UBF_API_DEBUG */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -307,7 +308,6 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
             {
                 /* if not in list then about to delete. */
                 mark = !is_fld_pres(fldlist, 0, fld_count-1, *p_bfldid);
-
             }
             else if (PROJ_MODE_DELETE==mode)
             {
@@ -330,7 +330,8 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
                 UBF_LOG(log_debug, "Current BFLDID before removal: %p",
                                                     *p_bfldid);
 
-                delete_buffer_data(p_ub, (char *)del_bfldid_start, (char *)p_bfldid, &p_bfldid);
+                delete_buffer_data(p_ub, (char *)del_bfldid_start, 
+                        (char *)p_bfldid, &p_bfldid);
 
                 UBF_LOG(log_debug, "Current BFLDID after  removal: %p",
                                                     *p_bfldid);

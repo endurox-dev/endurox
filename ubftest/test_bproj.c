@@ -339,6 +339,9 @@ Ensure(test_Bdelall)
     char buf[64];
     UBFH *p_ub = (UBFH *)fb;
     int len;
+    BFLDID bfldid;
+    BFLDOCC occ;
+    int flds = 0;
     
     assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
     load_proj_test_data(p_ub);
@@ -365,6 +368,39 @@ Ensure(test_Bdelall)
     /* Check if we delete nothing, then this is error condition */
     assert_equal(Bdelall(p_ub, T_CARRAY_2_FLD), FAIL);
     assert_equal(Berror, BNOTPRES);
+    
+    
+    /* Bug #148 */
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    
+    assert_equal(CBadd(p_ub, T_CHAR_FLD, "2", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_FLD, "631419304311", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, "Y", 0L, BFLD_STRING), SUCCEED);
+    
+    Bfprint(p_ub, stderr);
+    
+    assert_equal(Bdelall(p_ub, T_STRING_FLD), SUCCEED);
+    
+    NDRX_LOG(log_debug, "After T_STRING_FLD delete...");
+    Bfprint(p_ub, stderr);
+    
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, "X", 0L, BFLD_STRING), SUCCEED);
+    
+    NDRX_LOG(log_debug, "After changed T_CHAR_FLD => occ: [%d]", 
+            Boccur(p_ub, T_CHAR_FLD));
+    
+    Bfprint(p_ub, stderr);
+    
+    bfldid = BFIRSTFLDID;
+    
+    /* Only 1 field must be here! */
+    while(1==Bnext(p_ub, &bfldid, &occ, NULL, NULL))
+    {
+        flds++;
+    }
+    
+    assert_equal(flds, 1);
 }
 /**
  * Delete all items from 

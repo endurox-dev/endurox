@@ -71,8 +71,6 @@ void TPRECOVER (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
-
-    /* TODO! */
     
     NDRX_LOG(log_debug, "TPRECOVER got call");
     Bfprint(p_ub, stderr);
