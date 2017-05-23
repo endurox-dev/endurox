@@ -99,6 +99,8 @@ function go_out {
 }
 
 rm *dom*.log
+# Any bridges that are live must be killed!
+xadmin killall tpbridge
 
 set_dom1;
 xadmin down -y
@@ -109,7 +111,7 @@ xadmin down -y
 xadmin start -y || go_out 2
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 60
+sleep 180
 
 set_dom1;
 
