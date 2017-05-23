@@ -76,7 +76,7 @@
 	<servers>
 		<server name="tprecover">
 			<srvid>1</srvid>
-			<min>0</min>
+			<min>1</min>
 			<max>1</max>
 			<sysopt>-e /tmp/RECOVER -r</sysopt>
 			<appopt>-c10</appopt>

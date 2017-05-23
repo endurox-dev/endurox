@@ -178,7 +178,7 @@ void handle_sigchld(int sig)
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=SUCCEED;
-    signed char c;
+    char c;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
     /* Parse command line  */
@@ -202,6 +202,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     signal(SIGCHLD, handle_sigchld);
 
     /* Register timer check.... */
+    NDRX_LOG(log_warn, "Config: ndrxd check time: %d sec", M_check);
     if (SUCCEED!=tpext_addperiodcb((int)M_check, poll_timer))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",

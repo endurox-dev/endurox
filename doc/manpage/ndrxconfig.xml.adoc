@@ -120,6 +120,7 @@ DEBUG CONFIGURATION FILE SYNTAX
 	Number of sanity units in which 'tpbridge' refresh should be send to other node.
 	If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
 	then period between bridge refreshes will be 10*2 = 20 seconds.
+    Default value is *0* - do not send full updates.
 *MIN_RESTART_TIME*::
 	Number of sanity units in which died server will be tried to start back. This is
 	minimal time, means that this time is applied in case if server was running and died.

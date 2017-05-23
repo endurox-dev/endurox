@@ -26,6 +26,8 @@
         <!-- Time after attach when program will start do sanity & respawn checks,
         starts counting after configuration load -->
         <restart_to_check>20</restart_to_check>
+        <!-- Send full service table every 5 seconds -->
+        <brrefresh>5</brrefresh>
     </appconfig>
     <defaults>
         <min>1</min>
@@ -57,7 +59,7 @@
         <server name="tprecover">
             <max>1</max>
             <srvid>1</srvid>
-            <sysopt>-e ${TESTDIR}/tprecover-dom1.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/tprecover-dom2.log -r</sysopt>
         </server>
         <server name="atmisv36">
             <min>10</min>

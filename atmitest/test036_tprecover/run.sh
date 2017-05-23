@@ -124,7 +124,8 @@ xadmin ppm
 
 xadmin killall ndrxd
 
-sleep 30
+# Let the restore services + send bridge updates
+sleep 60
 
 echo "Before ndrxd kill - dom2"
 echo "We should be ready back online"
