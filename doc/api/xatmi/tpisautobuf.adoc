@@ -58,5 +58,5 @@ SEE ALSO
 
 COPYING
 -------
-(C) Mavimax, SIA
+(C) Mavimax, Ltd
 

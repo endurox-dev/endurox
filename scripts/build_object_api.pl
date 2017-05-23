@@ -113,9 +113,9 @@ my $message = <<"END_MESSAGE";
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 ** This software is released under one of the following licenses:
-** GPL or ATR Baltic's license for commercial use.
+** GPL or Mavimax's license for commercial use.
 ** -----------------------------------------------------------------------------
 ** GPL license:
 ** 
@@ -133,8 +133,8 @@ my $message = <<"END_MESSAGE";
 ** Place, Suite 330, Boston, MA 02111-1307 USA
 **
 ** -----------------------------------------------------------------------------
-** A commercial use license is available from ATR Baltic, SIA
-** contact\@atrbaltic.com
+** A commercial use license is available from Mavimax, Ltd
+** contact\@mavimax.com
 ** -----------------------------------------------------------------------------
 */
 #ifndef __${M_name_upper}_H
@@ -205,9 +205,9 @@ my $message = <<"END_MESSAGE";
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, ATR Baltic, SIA. All Rights Reserved.
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 ** This software is released under one of the following licenses:
-** GPL or ATR Baltic's license for commercial use.
+** GPL or Mavimax's license for commercial use.
 ** -----------------------------------------------------------------------------
 ** GPL license:
 ** 
@@ -225,8 +225,8 @@ my $message = <<"END_MESSAGE";
 ** Place, Suite 330, Boston, MA 02111-1307 USA
 **
 ** -----------------------------------------------------------------------------
-** A commercial use license is available from ATR Baltic, SIA
-** contact\@atrbaltic.com
+** A commercial use license is available from Mavimax, Ltd
+** contact\@mavimax.com
 ** -----------------------------------------------------------------------------
 */
 #include <string.h>

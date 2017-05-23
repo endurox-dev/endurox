@@ -62,8 +62,8 @@ struct PSOuter;
 #include "psconfig.h"
 
 #define PSCRIPT_VERSION    _SC("Pscript 3.1 stable")
-#define PSCRIPT_COPYRIGHT  _SC("Copyright (C) 2003-2016 Alberto Demichelis\nPlatform Script for Enduro/X by Mavimax SIA")
-#define PSCRIPT_AUTHOR     _SC("Alberto Demichelis; Mavimax SIA")
+#define PSCRIPT_COPYRIGHT  _SC("Copyright (C) 2003-2016 Alberto Demichelis\nPlatform Script for Enduro/X by Mavimax Ltd")
+#define PSCRIPT_AUTHOR     _SC("Alberto Demichelis; Mavimax Ltd")
 #define PSCRIPT_VERSION_NUMBER 310
 
 #define PS_VMSTATE_IDLE         0
