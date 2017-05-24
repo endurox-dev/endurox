@@ -193,8 +193,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                         M_check);
                 break;
             default:
-                NDRX_LOG(log_error, "Unknown param %c", c);
-                FAIL_OUT(ret);
+                NDRX_LOG(log_error, "Unknown param %c - 0x%x", c, (int)c);
+                /*
+		- having some issues on aix - gives mysterious config flag.
+		FAIL_OUT(ret);
+		*/
                 break;
         }
     }
