@@ -178,7 +178,8 @@ void handle_sigchld(int sig)
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=SUCCEED;
-    char c;
+    int c;
+    extern char *optarg;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
     /* Parse command line  */
@@ -193,11 +194,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                         M_check);
                 break;
             default:
-                NDRX_LOG(log_error, "Unknown param %c - 0x%x", c, (int)c);
-                /*
-		- having some issues on aix - gives mysterious config flag.
+                NDRX_LOG(log_error, "Unknown param %c - 0x%x", c, c);
 		FAIL_OUT(ret);
-		*/
                 break;
         }
     }
