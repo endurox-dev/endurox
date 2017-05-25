@@ -78,7 +78,7 @@ public int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
         NDRX_LOG(log_error, "Failed to prepare local transaction!");        
         if (NULL!=p_ub)
         {
-            atmi_xa_set_error_fmt(p_ub, TPEABORT, ret, 
+            atmi_xa_set_error_fmt(p_ub, tperrno, atmi_xa_get_reason(), 
                     "Failed to prepare local transaction, "
                     "xa error: %d [%s]", ret, atmi_xa_geterrstr(ret));
         }
@@ -154,7 +154,7 @@ public int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
         NDRX_LOG(log_error, "Failed to abort transaction!");
         if (NULL!=p_ub)
         {
-            atmi_xa_set_error_fmt(p_ub, TPETRAN, ret, 
+            atmi_xa_set_error_fmt(p_ub, tperrno, atmi_xa_get_reason(), 
                     "Failed to abort transaction, "
                     "xa error: %d [%s]", ret, atmi_xa_geterrstr(ret));
         }
