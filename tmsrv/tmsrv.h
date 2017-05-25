@@ -47,7 +47,9 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
-#define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
+#define THREADPOOL_DFLT         10  /* Default number of threads spawned   */
+
+#define XA_RETRIES_DFLT         3   /* number of foreground retries */
 
 #define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements   */
 #define COPY_MODE_BACKGROUND        0x2       /* Copy background elements   */
@@ -68,6 +70,8 @@ typedef struct
                          * (in this process session) */
     int tout_check_time; /* seconds used for detecting transaction timeout   */
     int threadpoolsize; /* thread pool size */
+    /* Number of foreground retries in stage for XA_RETRY */
+    int xa_retries;
     
     threadpool thpool;
 } tmsrv_cfg_t;

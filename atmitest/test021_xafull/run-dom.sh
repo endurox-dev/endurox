@@ -191,6 +191,7 @@ set_dom1;
 #
 # Test case when tries exceeded, transaction not committed
 # after manual commit from xadmin few times, in gets finally committed.
+# the config is -m10 attempts each takes -r2x times
 #
 if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryfail"* ]]; then
     echo ">>> TRYFAIL testing..."
@@ -215,8 +216,8 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryfail"* ]]; then
         TX=`xadmin pt | grep 'TM ref' | cut -d ':' -f2 | cut -d ')' -f1`
 
         cmd="xadmin commit $TX -y" 
-        # 1 try for online, 20 for background, 9 retry, 
-        for i in 1 2 3 4 5 6 7 8 9
+        # 1x2 try for online, 10x2 for background, 2x4 retry, 
+        for i in 1 2 3 4
         do
             echo "Running [$cmd"]
             eval $cmd

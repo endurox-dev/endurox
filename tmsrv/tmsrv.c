@@ -360,8 +360,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_debug, "tpsvrinit called");
     int nodeid;
     
+    memset(&G_tmsrv_cfg, 0, sizeof(G_tmsrv_cfg));
+    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "t:s:l:c:m:p:")) != -1)
+    while ((c = getopt(argc, argv, "t:s:l:c:m:p:r:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -390,6 +392,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             case 'p': 
                 G_tmsrv_cfg.threadpoolsize = atol(optarg);
                 break;
+            case 'r': 
+                G_tmsrv_cfg.xa_retries = atoi(optarg);
+                break;
             default:
                 /*return FAIL;*/
                 break;
@@ -417,6 +422,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_tmsrv_cfg.threadpoolsize = THREADPOOL_DFLT;
     }
     
+    if (0>=G_tmsrv_cfg.xa_retries)
+    {
+        G_tmsrv_cfg.xa_retries = XA_RETRIES_DFLT;
+    }
+        
     if (EOS==G_tmsrv_cfg.tlog_dir[0])
     {
         userlog("TMS log dir not set!");
@@ -431,6 +441,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     NDRX_LOG(log_debug, "Worker pool size [%d] threads",
                             G_tmsrv_cfg.threadpoolsize);
+    
+    NDRX_LOG(log_debug, "Foreground retries in stage [%d]",
+                            G_tmsrv_cfg.xa_retries);
     
     NDRX_LOG(log_debug, "About to initialize XA!");
     if (SUCCEED!=atmi_xa_init()) /* will open next... */

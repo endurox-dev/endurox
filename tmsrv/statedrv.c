@@ -74,8 +74,11 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
     rmstatus_driver_t* vote_txstage;
     txstage_descriptor_t* descr;
     char stagearr[NDRX_MAX_RMS];
+    char xa_retry[NDRX_MAX_RMS];
     int min_in_group;
     int min_in_overall;
+    int try=0;
+    int was_retry;
     NDRX_LOG(log_info, "tm_drive() enter from xid=[%s]", p_xai->tmxid);
     do
     {
@@ -84,6 +87,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         int op_ret = 0;
         int op_reason = 0;
         int op_tperrno = 0;
+        was_retry = FALSE;
         
         again = FALSE;
         
@@ -95,6 +99,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         }
         
         NDRX_LOG(log_info, "Entered in stage: %s", descr->descr);
+        
         memset(stagearr, 0, sizeof(stagearr));
         
         for (i=0; i<NDRX_MAX_RMS; i++)
@@ -146,6 +151,11 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
             }
             NDRX_LOG(log_info, "Operation tperrno: %d, xa return code: %d",
                                      op_tperrno, op_reason);
+            
+            if (op_reason==XA_RETRY) 
+            {
+                was_retry = TRUE;   
+            }
             
             /* Now get the transition of the state/vote */
             if (XA_OP_NOP == op_code)
@@ -261,6 +271,25 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         {
             tms_log_stage(p_tl, new_txstage);
             again = TRUE;
+        }
+        
+        if (was_retry)
+        {
+            try++;
+            
+            NDRX_LOG(log_warn, "XA_RETRY: current try: %d, max (-r): %d", 
+                        try, G_tmsrv_cfg.xa_retries);
+            
+            if (try<G_tmsrv_cfg.xa_retries)
+            {
+                again = TRUE;
+                NDRX_LOG(log_warn, "Retry on XA_RETRY");
+            }
+        }
+        else
+        {
+            /* reset counter if no retry */
+            try = 0;
         }
         
     } while (again);
