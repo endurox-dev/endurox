@@ -53,6 +53,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_executable (atmi.sv21 atmisv21.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt21 atmiclt21.c)
 add_executable (atmiclt21-105 atmiclt21-105.c)
+add_executable (atmiclt21-try atmiclt21-try.c)
 
 # Conversations
 add_executable (convsv21 convsv21.c ../../libatmisrv/rawmain_integra.c)
@@ -69,6 +70,7 @@ add_executable (atmiclt21-oapi atmiclt21-oapi.c)
 target_link_libraries (atmi.sv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pthread m)
 target_link_libraries (atmiclt21 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 target_link_libraries (atmiclt21-105 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
+target_link_libraries (atmiclt21-try atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 
 # Conversations test
 target_link_libraries (convsv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pthread m)
@@ -109,6 +111,16 @@ add_library (xadrv_s-105 SHARED
                 xabackend_common.c
             )
 
+add_library (xadrv_s-tryok SHARED
+                xabackend_s-tryok.c
+                xabackend_common.c
+            )
+
+add_library (xadrv_s-tryfail SHARED
+                xabackend_s-tryfail.c
+                xabackend_common.c
+            )
+
 add_library (xadrv_d SHARED
                 xabackend_d.c
                 xabackend_common.c
@@ -119,11 +131,15 @@ if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(xadrv atmi ubf nstd)
     target_link_libraries(xadrv_s atmi ubf nstd)
     target_link_libraries(xadrv_s-105 atmi ubf nstd)
+    target_link_libraries(xadrv_s-tryok atmi ubf nstd)
+    target_link_libraries(xadrv_s-tryfail atmi ubf nstd)
     target_link_libraries(xadrv_d atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(xadrv atmi ubf nstd)
     target_link_libraries(xadrv_s atmi ubf nstd)
     target_link_libraries(xadrv_s-105 atmi ubf nstd)
+    target_link_libraries(xadrv_s-tryok atmi ubf nstd)
+    target_link_libraries(xadrv_s-tryfail atmi ubf nstd)
     target_link_libraries(xadrv_d atmi ubf nstd)
 endif()
 ################################################################################

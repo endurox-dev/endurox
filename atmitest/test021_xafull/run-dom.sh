@@ -188,6 +188,44 @@ print_domains;
 # Go to domain 1
 set_dom1;
 
+#
+# Test case when tries not exceeded, we get committed tran
+#
+echo ">>> LIB: $NDRX_XA_DRIVERLIB_FILENAME"
+
+if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryok"* ]]; then
+    echo ">>> TRYOK testing..."
+
+    (./atmiclt21-try 2>&1) > ./atmiclt-try-dom1.log
+    RET=$?
+
+    sleep 20
+
+    if [ $RET == 0 ]; then
+
+            # test for transaction to be committed..
+            # there should be no TRN- files at top level
+
+            if [ -f ./RM1/TRN-* ]; then
+                    echo "Transaction must be completed!"
+                    RET=-2
+            fi
+
+            if [ ! -f ./RM1/committed/* ]; then
+                    echo "Transaction must be aborted!"
+                    RET=-3
+            fi
+
+    fi
+
+    go_out $RET
+
+fi
+#
+# Test case when tries exceeded, transaction not committed
+# after manual commit from xadmin few times, in gets finally committed.
+#
+
 
 ################################################################################
 # Test case for bug when resource manager prepares transaction, but

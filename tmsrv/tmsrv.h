@@ -49,9 +49,9 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
 #define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
 
-#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements */
-#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements */
-#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?    */
+#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements   */
+#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements   */
+#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?      */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

@@ -102,6 +102,15 @@ This is number of worker threads for forwarder. Default value is '10'.
 Maximum number of seconds to wait for XA transaction to be completed. This used internally when global transactions
 are not used. Default is '30'.
 
+[*-m* 'BACKGROUND_TRIES']::
+Maximum number of attempts to process locked transaction. Tries counter is increased by '-s' scan time steps.
+If tries count is reached, transaction becomes stalled. And it can be force re-attempted manually from xadmin
+only *xadmin commit* or *xadmin abort* for example.
+Default is '100'.
+
+[*-c* 'TIMEOUT_TEST_TIME']::
+Number of seconds by which run periodical scans of the expired transactions.
+Default is '1'.
 
 EXIT STATUS
 -----------

@@ -1,16 +1,17 @@
 /* 
 ** Tmsrv server - transaction monitor
-** TODO: Create framework for error processing.
 ** After that log transaction to hash & to disk for tracking the stuff...
 ** TODO: We should have similar control like "TP_COMMIT_CONTROL" -
 ** either return after stuff logged or after really commit completed.
-** TODO: Also we have to think about conversations, how xa will act there.
 ** Error handling:
 ** - System errors we will track via ATMI interface error functions
 ** - XA errors will be tracked via XA error interface
-** TODO: We need a periodical callback from checking for transaction time-outs!
-** TODO: Should we call xa_end for joined transactions? See:
+** Should we call xa_end for joined transactions? See:
 ** https://www-01.ibm.com/support/knowledgecenter/SSFKSJ_7.0.1/com.ibm.mq.amqzag.doc/fa13870_.htm
+**
+** TODO: count the XA_RETRY as part of the transaction retry counter.
+** i.e. if state is not changed counter++
+** have a new flag for max count to return heuristic and move to background.
 **
 ** @file tmsrv.c
 ** 
@@ -463,7 +464,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* very generic version/only Resource ID known */
     
-    sprintf(svcnm, NDRX_SVC_RM, G_atmi_env.xa_rmid);
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, G_atmi_env.xa_rmid);
     
     if (SUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
@@ -472,7 +473,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     /* generic instance: */
-    sprintf(svcnm, NDRX_SVC_TM, nodeid, G_atmi_env.xa_rmid);
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM, nodeid, G_atmi_env.xa_rmid);
     
     if (SUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
@@ -481,7 +482,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     /* specific instance */
-    sprintf(svcnm, NDRX_SVC_TM_I, nodeid, G_atmi_env.xa_rmid, G_server_conf.srv_id);
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM_I, nodeid, G_atmi_env.xa_rmid, 
+            G_server_conf.srv_id);
+    
     if (SUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
@@ -585,13 +588,13 @@ private void tx_tout_check_th(void *ptr)
                 XA_TX_COPY((&xai), p_tl);
 
                 tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
-                /* NOTE: We migth want to move this to background processing
+                /* NOTE: We might want to move this to background processing
                  * because for example, oracle in some cases does long aborts...
                  * thus it slows down general processing
                  * BUT: if we want to move it to background, we should protect
-                 * transaction log from concurent access, e.g.
+                 * transaction log from concurrent access, e.g.
                  * - background does the abort()
-                 * - meanwhile forground calls commit()
+                 * - meanwhile foreground calls commit()
                  * This can be reached with per transaction locking...
                  */
                 tm_drive(&xai, p_tl, XA_OP_ROLLBACK, FAIL);

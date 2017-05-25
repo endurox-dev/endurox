@@ -58,7 +58,7 @@
                 <srvid>50</srvid>
                 <min>1</min>
                 <max>1</max>
-                <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
+                <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1 -m20 -s1</sysopt>
             </server>
             <server name="tpbridge">
                 <max>1</max>

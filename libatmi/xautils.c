@@ -919,12 +919,12 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
     if (svcnm_spec)
     {
        /* Override the service name! */
-        strcpy(svcnm, svcnm_spec);
+        NDRX_STRCPY_SAFE(svcnm, svcnm_spec);
     }
     else if (rmid>0)
     {
         /* Any entry of TM */
-        sprintf(svcnm, NDRX_SVC_RM, rmid);
+        snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, rmid);
     }
     else if (call_any)
     {
@@ -932,7 +932,7 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
         /*
         sprintf(svcnm, NDRX_SVC_TM, G_atmi_env.our_nodeid, G_atmi_env.xa_rmid);
          */
-        sprintf(svcnm, NDRX_SVC_RM, G_atmi_env.xa_rmid);
+        snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, G_atmi_env.xa_rmid);
     }
     else
     {
@@ -941,13 +941,14 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
         
         if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
         {
-            sprintf(svcnm, NDRX_SVC_TM_I, G_atmi_tls->G_atmi_xa_curtx.txinfo->tmnodeid, 
+            snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM_I, 
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmnodeid, 
                     G_atmi_tls->G_atmi_xa_curtx.txinfo->tmrmid, 
                     G_atmi_tls->G_atmi_xa_curtx.txinfo->tmsrvid);
         }
         else if (p_xai)
         {
-            sprintf(svcnm, NDRX_SVC_TM_I, p_xai->tmnodeid, 
+            snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM_I, p_xai->tmnodeid, 
                     p_xai->tmrmid, 
                     p_xai->tmsrvid);
         }

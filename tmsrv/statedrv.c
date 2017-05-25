@@ -209,23 +209,40 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
                 if (stagearr[i])
                 {
                     NDRX_LOG(log_info, "RM %d votes for stage: %d", i+1, stagearr[i]);
-                    if (stagearr[i] < min_in_group)
+                    
+                    /* Bug #150 */
+                    if (stagearr[i] < min_in_overall)
                     {
                         min_in_overall = stagearr[i];
+                        NDRX_LOG(log_debug, "min_in_overall=>%d", min_in_overall);
                     }
                     
-                    if (descr->txs_stage_min<vote_txstage->next_txstage &&
-                        descr->txs_max_complete>vote_txstage->next_txstage)
+                    /* what is this? Descr and vote_txstage will be last
+                     * from the loop - wrong!
+                     * We play with next stages from arr: stagearr[i]
+                     * What is group? Seems like same type of staging, i.e.
+                     * still committing
+                     */
+                    if (descr->txs_stage_min<=stagearr[i] && 
+                            descr->txs_max_complete>=stagearr[i] &&
+                            min_in_group < stagearr[i])
                     {
                         min_in_group = stagearr[i];
+                        NDRX_LOG(log_debug, "min_in_group=>%d", min_in_group);
                     }
                 }
             }/* for */
             
             if (min_in_group!=XA_TX_STAGE_MAX_NEVER)
+            {
                 new_txstage=min_in_group;
+                NDRX_LOG(log_debug, "New tx stage set by min_in_group=>%d", new_txstage);
+            }
             else
+            {
                 new_txstage=min_in_overall;
+                NDRX_LOG(log_debug, "New tx stage set by min_in_overall=>%d", new_txstage);
+            }
             
             if (XA_TX_STAGE_MAX_NEVER==new_txstage)
             {
@@ -248,7 +265,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         
     } while (again);
     
-    /* TODO: Check are we complete */
+    /* Check are we complete */
     if (descr->txstage >=descr->txs_min_complete &&
             descr->txstage <=descr->txs_max_complete)
     {
@@ -263,7 +280,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         NDRX_LOG(log_info, "Transaction not completed - leave "
                 "to background");
         p_tl->is_background = TRUE;
-        /* TODO: Unlock the transaction */
+        /* Unlock the transaction */
         tms_unlock_entry(p_tl);
     }
     

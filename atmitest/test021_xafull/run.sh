@@ -44,32 +44,32 @@ else
 	cd $TESTNAME
 fi;
 
-
-echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
-export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.so
+SUFFIX="so"
 
 if [ "$(uname)" == "Darwin" ]; then
-        export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.dylib
+    SUFFIX="dylib"
 fi
 
+
+echo "Doing static registration tests... (Bug #123 - try fail, but recovers after awhile)"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-tryok.$SUFFIX
+./run-dom.sh || exit $?
+
+#echo "Doing static registration tests... (Bug #123 - try fail commit \
+#        manual complete (by xadmin))"
+#export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-tryfail.$SUFFIX
+#./run-dom.sh || exit $?
+
+
+echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.$SUFFIX
 ./run-dom.sh || exit $?
 
 echo "Doing static registration tests..."
-export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.so
-
-if [ "$(uname)" == "Darwin" ]; then
-        export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.dylib
-fi
-
-
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.$SUFFIX
 ./run-dom.sh || exit $?
 
 echo "Doing dynamic registration tests..."
-export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_d.so
-
-if [ "$(uname)" == "Darwin" ]; then
-        export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_d.dylib
-fi
-
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_d.$SUFFIX
 ./run-dom.sh || exit $?
 

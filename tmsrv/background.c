@@ -222,7 +222,7 @@ public int background_loop(void)
         
         LL_FOREACH_SAFE(tx_list,el,tmp)
         {
-            el->p_tl.trycount++;
+            /* el->p_tl.trycount++; moved to COPY_MODE_INCCOUNTER */
             NDRX_LOG(log_info, "XID: [%s] stage: [%hd]. Try: %d, max: %d", 
                     el->p_tl.tmxid, el->p_tl.txstage, el->p_tl.trycount, 
                     G_tmsrv_cfg.max_tries);
@@ -233,13 +233,19 @@ public int background_loop(void)
                 LL_DELETE(tx_list, el);
                 NDRX_FREE(el);
 
-                NDRX_LOG(log_debug, "Skipping...");
+                NDRX_LOG(log_warn, "Skipping try %d of %d...", 
+                        el->p_tl.trycount,  G_tmsrv_cfg.max_tries);
                 continue;
             }
             
             /* Now try to get transaction for real (with a lock!) */
             if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid)))
             {
+                p_tl->trycount++;
+                
+                NDRX_LOG(log_info, "XID: [%s] try counter increased to: %d",
+                        el->p_tl.tmxid, G_tmsrv_cfg.max_tries);
+                
                 XA_TX_COPY((&xai), p_tl);
 
                 /* If we have transaction in background, then do something with it

@@ -136,6 +136,7 @@ public txaction_driver_t G_txaction_driver[] =
  */
 public txstage_descriptor_t G_state_descriptor[] =
 {
+/* txstage                     txs_stage_min                 txs_min_complete             txs_max_complete  descr   allow_jump */
 {XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL, "NULL", FALSE},
 {XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL, "ACTIVE", FALSE},
 {XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED, "ABORTING", FALSE},

@@ -227,11 +227,11 @@ public int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
     /* we should start new transaction... */
     if (SUCCEED!=(ret = atmi_xa_commit_entry(atmi_xa_get_branch_xid(p_xai), 0)))
     {
-        NDRX_LOG(log_error, "Failed to abort transaction!");
+        NDRX_LOG(log_error, "Failed to commit transaction!");
         
         if (NULL!=p_ub)
         {
-            atmi_xa_set_error_fmt(p_ub, TPEHEURISTIC, NDRX_XA_ERSN_NONE, 
+            atmi_xa_set_error_fmt(p_ub, tperrno, atmi_xa_get_reason(), 
                     "Failed to commit transaction, "
                     "xa error: %d [%s]", ret, atmi_xa_geterrstr(ret));
         }
