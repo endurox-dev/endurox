@@ -189,6 +189,57 @@ print_domains;
 set_dom1;
 
 #
+# Test case when tries exceeded, transaction not committed
+# after manual commit from xadmin few times, in gets finally committed.
+#
+if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryfail"* ]]; then
+    echo ">>> TRYFAIL testing..."
+
+    (./atmiclt21-try 2>&1) > ./atmiclt-try-dom1.log
+    RET=$?
+
+    sleep 30
+
+    if [ $RET == 0 ]; then
+
+        # test for transaction to be committed..
+        # there should be no TRN- files at top level
+
+        if [ ! -f ./RM1/TRN-* ]; then
+                echo "Transaction must NOT be completed - thus \
+                        intermediate file must exist!"
+                RET=-2
+        fi
+
+        # try to manually commit with xadmin, 11 times, then it will approve
+        TX=`xadmin pt | grep 'TM ref' | cut -d ':' -f2 | cut -d ')' -f1`
+
+        cmd="xadmin commit $TX -y" 
+        # 1 try for online, 20 for background, 9 retry, 
+        for i in 1 2 3 4 5 6 7 8 9
+        do
+            echo "Running [$cmd"]
+            eval $cmd
+        done
+        
+        # Commit, should be ok
+        eval $cmd || exit -10
+
+        if [ -f ./RM1/TRN-* ]; then
+                echo "Transaction must be completed!"
+                RET=-3
+        fi
+
+        if [ ! -f ./RM1/committed/* ]; then
+                echo "Transaction must be committed!"
+                RET=-4
+        fi
+
+    fi
+    go_out $RET
+fi
+
+#
 # Test case when tries not exceeded, we get committed tran
 #
 echo ">>> LIB: $NDRX_XA_DRIVERLIB_FILENAME"
@@ -203,29 +254,24 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryok"* ]]; then
 
     if [ $RET == 0 ]; then
 
-            # test for transaction to be committed..
-            # there should be no TRN- files at top level
+        # test for transaction to be committed..
+        # there should be no TRN- files at top level
 
-            if [ -f ./RM1/TRN-* ]; then
-                    echo "Transaction must be completed!"
-                    RET=-2
-            fi
+        if [ -f ./RM1/TRN-* ]; then
+                echo "Transaction must be completed!"
+                RET=-2
+        fi
 
-            if [ ! -f ./RM1/committed/* ]; then
-                    echo "Transaction must be aborted!"
-                    RET=-3
-            fi
+        if [ ! -f ./RM1/committed/* ]; then
+                echo "Transaction must be committed!"
+                RET=-3
+        fi
 
     fi
 
     go_out $RET
 
 fi
-#
-# Test case when tries exceeded, transaction not committed
-# after manual commit from xadmin few times, in gets finally committed.
-#
-
 
 ################################################################################
 # Test case for bug when resource manager prepares transaction, but
@@ -234,34 +280,34 @@ fi
 ################################################################################
 if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"105"* ]]; then
 
-	echo "Testing bug #105 - prepare ok, but process terminates before writting log"
+    echo "Testing bug #105 - prepare ok, but process terminates before writting log"
 
-	(./atmiclt21-105 2>&1) > ./atmiclt-105-dom1.log
-	RET=$?
+    (./atmiclt21-105 2>&1) > ./atmiclt-105-dom1.log
+    RET=$?
 
-	# let tmsrv boot back and abort transaction
-	sleep 10
-	#
-	# If all ok, test for transaction files.
-	#
-	if [ $RET == 0 ]; then
-	
-		# test for transaction to be aborted..
-		# there should be no TRN- files at top level
+    # let tmsrv boot back and abort transaction
+    sleep 10
+    #
+    # If all ok, test for transaction files.
+    #
+    if [ $RET == 0 ]; then
 
-		if [ -f ./RM1/TRN-* ]; then
-			echo "Transaction must be completed!"
-			RET=-2
-		fi
-		
-		if [ ! -f ./RM1/aborted/* ]; then
-			echo "Transaction must be aborted!"
-			RET=-3
-		fi
-		
-	fi
+        # test for transaction to be aborted..
+        # there should be no TRN- files at top level
 
-	go_out $RET
+        if [ -f ./RM1/TRN-* ]; then
+                echo "Transaction must be completed!"
+                RET=-2
+        fi
+
+        if [ ! -f ./RM1/aborted/* ]; then
+                echo "Transaction must be aborted!"
+                RET=-3
+        fi
+
+    fi
+
+    go_out $RET
 
 fi
 

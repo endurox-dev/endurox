@@ -100,7 +100,6 @@ public int tms_unlock_entry(atmi_xa_log_t *p_tl)
     
     MUTEX_LOCK_V(M_tx_hash_lock);
     p_tl->lockthreadid = 0;
-    p_tl->trycount = 0; /* Bug #123 - reset counter for next ops */
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
     return SUCCEED;
@@ -873,13 +872,7 @@ public atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode)
         
         if (!r->is_background && !(copy_mode & COPY_MODE_FOREGROUND))
             continue;
-        
-        /* Bug #123, 23/05/2017 */
-        if (copy_mode & COPY_MODE_FOREGROUND)
-        {
-            r->trycount++;
-        }
-        
+                
         if (NULL==(tmp = NDRX_CALLOC(1, sizeof(atmi_xa_log_list_t))))
         {
             NDRX_LOG(log_error, "Failed to malloc %d: %s", 

@@ -223,7 +223,7 @@ public int background_loop(void)
         LL_FOREACH_SAFE(tx_list,el,tmp)
         {
             /* el->p_tl.trycount++; moved to COPY_MODE_INCCOUNTER */
-            NDRX_LOG(log_info, "XID: [%s] stage: [%hd]. Try: %d, max: %d", 
+            NDRX_LOG(log_info, "XID: [%s] stage: [%hd]. Try: %ld, max: %d.", 
                     el->p_tl.tmxid, el->p_tl.txstage, el->p_tl.trycount, 
                     G_tmsrv_cfg.max_tries);
             
@@ -233,7 +233,7 @@ public int background_loop(void)
                 LL_DELETE(tx_list, el);
                 NDRX_FREE(el);
 
-                NDRX_LOG(log_warn, "Skipping try %d of %d...", 
+                NDRX_LOG(log_warn, "Skipping try %ld of %ld...", 
                         el->p_tl.trycount,  G_tmsrv_cfg.max_tries);
                 continue;
             }
@@ -244,7 +244,7 @@ public int background_loop(void)
                 p_tl->trycount++;
                 
                 NDRX_LOG(log_info, "XID: [%s] try counter increased to: %d",
-                        el->p_tl.tmxid, G_tmsrv_cfg.max_tries);
+                        el->p_tl.tmxid, p_tl->trycount);
                 
                 XA_TX_COPY((&xai), p_tl);
 

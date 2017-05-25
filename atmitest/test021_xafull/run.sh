@@ -51,15 +51,14 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 
+echo "Doing static registration tests... (Bug #123 - try fail commit \
+        manual complete (by xadmin))"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-tryfail.$SUFFIX
+./run-dom.sh || exit $?
+
 echo "Doing static registration tests... (Bug #123 - try fail, but recovers after awhile)"
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-tryok.$SUFFIX
 ./run-dom.sh || exit $?
-
-#echo "Doing static registration tests... (Bug #123 - try fail commit \
-#        manual complete (by xadmin))"
-#export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-tryfail.$SUFFIX
-#./run-dom.sh || exit $?
-
 
 echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.$SUFFIX
