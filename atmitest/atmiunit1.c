@@ -315,6 +315,12 @@ Ensure(test036_tprecover)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test037_down)
+{
+    int ret;
+    ret=system_dbg("test037_down/run.sh");
+    assert_equal(ret, SUCCEED);
+}
 
 TestSuite *atmi_test_all(void)
 {
@@ -373,6 +379,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test035_hkeep);
     /* mvitolin Bug #110, 22/05/2017 */
     add_test(suite, test036_tprecover);
+    
+    /* Bug #133 */
+    add_test(suite, test037_down);
             
     return suite;
 }
