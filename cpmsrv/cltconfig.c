@@ -274,6 +274,10 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     cltproc.stat.flags|=CPM_F_KILL_LEVEL_HIGH;
                 case 1:
                     cltproc.stat.flags|=CPM_F_KILL_LEVEL_LOW;
+                    break;
+                case 0:
+                    cltproc.stat.flags&=~CPM_F_KILL_LEVEL_HIGH;
+                    cltproc.stat.flags&=~CPM_F_KILL_LEVEL_LOW;
             }
 
             xmlFree(p);
@@ -398,6 +402,11 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                             p_cltproc->stat.flags|=CPM_F_KILL_LEVEL_HIGH;
                         case 1:
                             p_cltproc->stat.flags|=CPM_F_KILL_LEVEL_LOW;
+                            break;
+                            
+                        case 0:
+                            p_cltproc->stat.flags&=~CPM_F_KILL_LEVEL_HIGH;
+                            p_cltproc->stat.flags&=~CPM_F_KILL_LEVEL_LOW;
                     }
 
                     xmlFree(p);

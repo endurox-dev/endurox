@@ -75,6 +75,33 @@
                         <exec tag="IGNORE" />
                 </client>
 
+                <!-- 
+                    Kill children only at -9... 
+                    So this will do the ignores and chld2.sh will be killed
+                    This is lower level
+                -->
+                <client cmdline="chld1.sh" log="chld1.log" autostart="Y" klevel="1">
+                        <exec tag="CHLD1" />
+                </client>
+                
+                <!-- 
+                    Kill children only at -2,-15,-9... 
+                    This will not do the ignores
+                    This is higher kill level
+                -->
+                <client cmdline="chld3.sh" log="chld3.log" autostart="Y" klevel="0">
+                        <exec tag="CHLD3" klevel="2" />
+                </client>
+                
+                <!--
+                    Do not kill the children at all
+                    The process will do ignore...
+                    Kill level disabled = 0
+                -->
+                <client cmdline="chld5.sh" log="chld5.log" autostart="Y" klevel="0">
+                        <exec tag="CHLD5"/>
+                </client>
+
                 <!-- Have some dozens of processes, to check the real stress -->
                 <client cmdline="whileproc.sh" log="while.log">
                         <exec tag="WHILE" subsect="1"/>

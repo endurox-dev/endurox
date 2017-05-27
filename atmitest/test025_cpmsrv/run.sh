@@ -77,12 +77,40 @@ function go_out {
     echo "Test exiting with: $1"
     xadmin stop -y
     xadmin down -y
+    xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh
 
     popd 2>/dev/null
     exit $1
 }
 
+#
+# Test process count with given name
+#
+function test_proc_cnt {
+    proc=$1
+    cnt=$2
+    go=$3
+
+    echo ">>> Testing $proc to be $cnt of count. If fail, error $go"
+    $PSCMD | grep $proc | grep -v grep
+    CNT=`$PSCMD | grep $proc | grep -v grep | wc | awk '{print $1}'`
+    XPROC_COUNT=$cnt
+    echo ">>> $PSCMD procs: $CNT"
+    if [[ "$CNT" -ne "$XPROC_COUNT" ]]; then 
+        echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
+        go_out $go
+    fi
+
+    echo "$proc ok cnt $cnt ok"
+
+}  
+
 rm *.log
+
+#
+# Kill the children test processes if any
+#
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh
 
 xadmin down -y
 xadmin start -y || go_out 1
@@ -93,6 +121,48 @@ xadmin bc -t TESTENV2
 sleep 10
 
 xadmin pc
+
+
+################################################################################
+# Child cleanup... testing
+################################################################################
+
+# At this point we should have all child processes
+
+test_proc_cnt "chld1.sh" "1" "21"
+test_proc_cnt "chld2.sh" "1" "22"
+test_proc_cnt "chld3.sh" "1" "23"
+test_proc_cnt "chld4.sh" "1" "24"
+test_proc_cnt "chld5.sh" "1" "25"
+test_proc_cnt "chld6.sh" "1" "26"
+
+echo "Stopping CHLD 1,3,5 ..."
+
+xadmin sc -t CHLD1
+test_proc_cnt "chld1.sh" "0" "27"
+test_proc_cnt "chld2.sh" "0" "28"
+
+xadmin sc -t CHLD3
+test_proc_cnt "chld3.sh" "0" "23"
+test_proc_cnt "chld4.sh" "0" "24"
+
+#
+# here "chld3.log" should contain some messages about shutdown...
+#
+OUT=`grep "Doing exit of chld3" chld3.log`
+
+if [[ "X$OUT" == "X" ]]; then
+    echo "chld3.log does not contain the message!!!!"
+    go_out 25
+fi
+
+xadmin sc -t CHLD5
+test_proc_cnt "chld5.sh", "0", "26"
+test_proc_cnt "chld6.sh", "1", "27"
+
+################################################################################
+# Child cleanup... testing, end
+################################################################################
 
 # Test for section/subsection passing
 OUT=`grep '\-t TAG1 \-s SUBSECTION1' testbin1-1.log`

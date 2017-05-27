@@ -102,7 +102,7 @@ function go_out {
 rm *dom*.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
-xadmin killall sleep
+#xadmin killall sleep
 xadmin killall nap.sh
 xadmin killall nap2.sh
 xadmin killall atmiclt
