@@ -283,8 +283,8 @@ public int ndrxd_sem_delete(void)
     }
     else
     {
-            NDRX_LOG(log_error, "SHM library not initialized!");
-            return FAIL;
+        NDRX_LOG(log_error, "SHM library not initialized!");
+        return FAIL;
     }
 
     return SUCCEED;
@@ -300,7 +300,10 @@ public void ndrxd_sem_delete_with_init(char *q_prefix)
         ndrxd_sem_init(q_prefix);
     }
     
-    remove_sem(&G_sem_svcop, TRUE);
+    if (SUCCEED==ndrxd_sem_open(&G_sem_svcop))
+    {
+        remove_sem(&G_sem_svcop, TRUE);
+    }
 }
 
 

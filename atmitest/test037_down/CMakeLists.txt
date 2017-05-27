@@ -1,6 +1,5 @@
 ## 
-## Enduro Execution platform's ATMI library/ies tests
-## Using Cgreen framework for tests.
+## `xadmin down' tests with two domains
 ##
 ## @file CMakeLists.txt
 ## 
@@ -38,53 +37,27 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
+
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
+
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Sub Tests
-add_subdirectory (test000_system)
-add_subdirectory (test001_basiccall)
-add_subdirectory (test002_basicforward)
-add_subdirectory (test003_basicconvers)
-add_subdirectory (test004_basicevent)
-add_subdirectory (test005_convconfload)
-add_subdirectory (test006_ulog)
-add_subdirectory (test007_advertise)
-add_subdirectory (test008_extensions)
-add_subdirectory (test009_srvdie)
-add_subdirectory (test010_strtracecond)
-add_subdirectory (test011_tout)
-add_subdirectory (test012_admqfull)
-add_subdirectory (test013_procnorsp)
-add_subdirectory (test015_threads)
-add_subdirectory (test016_contextsw)
-add_subdirectory (test017_srvthread)
-add_subdirectory (test018_tpacalltout)
-add_subdirectory (test021_xafull)
-add_subdirectory (test022_typedstring)
-add_subdirectory (test023_typedcarray)
-add_subdirectory (test024_json)
-add_subdirectory (test026_typedjson)
-
-IF (NOT DEFINE_DISABLEPSCRIPT)
-	add_subdirectory (test027_pscript)
-ENDIF()
-
-add_subdirectory (test028_tmq)
-add_subdirectory (test029_inicfg)
-add_subdirectory (test030_cconfsrv)
-add_subdirectory (test031_logging)
-add_subdirectory (test032_oapi)
-add_subdirectory (test034_shmreuse)
-add_subdirectory (test035_hkeep)
-add_subdirectory (test036_tprecover)
-add_subdirectory (test037_down)
-
+############################# Test - executables ###############################
+add_executable (atmisv37 atmisv37.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt37 atmiclt37.c)
 ################################################################################
-# Master test case driver
-add_executable (atmiunit1 atmiunit1.c)
-################################################################################
-# Master test case driver
-target_link_libraries (atmiunit1 ubf cgreen m nstd ${RT_LIB} pthread)
-set_target_properties(atmiunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmisv37 atmisrvinteg atmi ubf nstd  m ${RT_LIB} pthread)
+target_link_libraries (atmiclt37 atmiclt atmi ubf nstd  m ${RT_LIB} pthread)
 
+set_target_properties(atmisv37 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt37 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################

@@ -193,6 +193,8 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     
     memset(&cltproc, 0, sizeof(cpm_process_t));
     
+    cltproc.stat.flags |= CPM_F_KILL_LEVEL_DEFAULT;
+    
     for (attr=cur->properties; attr; attr = attr->next)
     {
         if (0==strcmp((char *)attr->name, "cmdline"))
@@ -257,6 +259,23 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 cltproc.stat.flags|=CPM_F_AUTO_START;
             }
             
+            xmlFree(p);
+        }
+        else if (0==strcmp((char *)attr->name, "klevel"))
+        {
+            int d;
+            p = (char *)xmlNodeGetContent(attr->children);
+
+            d = atoi(p);
+
+            switch (d)
+            {
+                case 2:
+                    cltproc.stat.flags|=CPM_F_KILL_LEVEL_HIGH;
+                case 1:
+                    cltproc.stat.flags|=CPM_F_KILL_LEVEL_LOW;
+            }
+
             xmlFree(p);
         }
     }
@@ -366,7 +385,29 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
                     xmlFree(p);
                 }
+                else if (0==strcmp((char *)attr->name, "klevel"))
+                {
+                    int d;
+                    p = (char *)xmlNodeGetContent(attr->children);
+
+                    d = atoi(p);
+                    
+                    switch (d)
+                    {
+                        case 2:
+                            p_cltproc->stat.flags|=CPM_F_KILL_LEVEL_HIGH;
+                        case 1:
+                            p_cltproc->stat.flags|=CPM_F_KILL_LEVEL_LOW;
+                    }
+
+                    xmlFree(p);
+                }
             }
+            
+            NDRX_LOG(log_debug, "klevel = low=%d high=%d", 
+                    p_cltproc->stat.flags & CPM_F_KILL_LEVEL_LOW,
+                    p_cltproc->stat.flags & CPM_F_KILL_LEVEL_HIGH
+                    );
             
             /* Check the client config... */
             if (EOS==p_cltproc->tag[0])

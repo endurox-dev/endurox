@@ -55,14 +55,18 @@ mode.
 Every instance of 'tmsrv' will advertise following list of services
 
 1. @TM-<Resource Manager ID>
+
 2. @TM-<Cluster Node ID>-<Resource Manager ID>
+
 3. @TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>
 
 For example for Resource Manager ID '1', Cluster Node ID '6', Enduro/X Server ID '10'
 services will look like:
 
 1. @TM-1
+
 2. @TM-6-1
+
 3. @TM-6-1-10
 
 Currently 1. format is used for starting the transaction, and accepting prepare/commit/abort
@@ -99,9 +103,20 @@ I.e. the background thread does the sleep of this time on every loop. Default is
 This is periodic timer for doing active transactions time-out checks. Default is set to '1'
 
 [*-m* 'MAX_TRIES']::
-Max tries to complete the transactions by background thread. If the counter is reached,
+Max tries to complete whole transaction by background thread. If the counter is reached,
 then no more attempts to complete the transaction are done. The counter is restarted at
 'tmsrv' reboot. Default is set to '100'.
+
+[*-r* 'XA_RETRIES']::
+This is number of attempts on resource manager when it returns *XA_RETRY* during
+the commit. So lets say we have issued *tpcommit()* and some involved database
+is returning *XA_RETRY*. If '-r' is set above 2, then during the processing
+of 'tpcommit()', the xa commit to database will be retries one more time. If
+DB returns any other error than *XA_RETRY* or succeeds, the transaction is proceeded.
+If retry is returned again, then *TPEHAZARD* is returned to caller, transaction
+is moved to background thread, and will by processed by '-m' tries. But also here
+every '-m' try for *XA_RETRY* will be multiplied by '-r' attempts.
+Default value is seto to '3'. 
 
 [*-p* 'THREAD_POOL_SIZE']::
 This is the number of threads processing incoming requsts. If all threads are busy, then

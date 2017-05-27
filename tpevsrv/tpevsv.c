@@ -44,7 +44,7 @@
 #include <ubf.h>
 #include <Exfields.h>
 #include <atmi_shm.h>
-
+#include <exregex.h>
 #include "tpevsv.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -81,7 +81,7 @@ private long remove_by_my_id (long subscription, char *my_id)
         {
             NDRX_LOG(log_debug, "Removing subscription %ld", subscription);
             /* Un-initalize  */
-            regfree(&elt->re);
+            ndrx_regfree(&elt->re);
             /* Delete out it from list */
             DL_DELETE(M_subscribers,elt);
             NDRX_FREE(elt);
@@ -95,34 +95,12 @@ private long remove_by_my_id (long subscription, char *my_id)
 
 /**
  * Compile the regular expression rules
- * @param
- * @return
+ * @param regex entry
+ * @return SUCCEED/FAIL
  */
 private int compile_eventexpr(event_entry_t *p_ee)
 {
-    int ret=SUCCEED;
-
-    if (SUCCEED!=(ret=regcomp(&p_ee->re, p_ee->eventexpr, REG_EXTENDED | REG_NOSUB)))
-    {
-        char *errmsg;
-        int errlen;
-        char errbuf[2048];
-
-        errlen = (int) regerror(ret, &p_ee->re, NULL, 0);
-        errmsg = (char *) NDRX_MALLOC(errlen*sizeof(char));
-        regerror(ret, &p_ee->re, errmsg, errlen);
-
-        NDRX_LOG(log_error, "Failed to eventexpr [%s]: %s", p_ee->eventexpr, errbuf);
-
-        NDRX_FREE(errmsg);
-        ret=FAIL;
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "eventexpr [%s] compiled OK", p_ee->eventexpr);
-    }
-    
-    return ret;
+    return ndrx_regcomp(&(p_ee->re), p_ee->eventexpr);
 }
 
 /**
@@ -140,6 +118,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     char buf_type[9];
     char buf_subtype[17];
     long buf_len;
+    tp_command_call_t * last_call;
     
     memset(buf_type, 0, sizeof(buf_type));
     memset(buf_subtype, 0, sizeof(buf_subtype));
@@ -156,21 +135,23 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
             Bfprint((UBFH *)data, stderr);
         }
     }
+    
+    last_call=ndrx_get_G_last_call();
 
-    NDRX_LOG(log_debug, "Posting event [%s] to system", ndrx_get_G_last_call()->extradata);
+    NDRX_LOG(log_debug, "Posting event [%s] to system", last_call->extradata);
     
     /* Delete the stuff out */
     DL_FOREACH_SAFE(M_subscribers,elt,tmp)
     {
         /* Get type */
         typed_buffer_descr_t *descr;
-        descr = &G_buf_descr[ndrx_get_G_last_call()->buffer_type_id];
+        descr = &G_buf_descr[last_call->buffer_type_id];
 
         NDRX_LOG(log_debug, "Checking Nr: %d, event [%s]",
                                 elt->subscriberNr, elt->eventexpr);
 
         /* Check do we have event match? */
-        if (SUCCEED==regexec(&elt->re, ndrx_get_G_last_call()->extradata, (size_t) 0, NULL, 0))
+        if (SUCCEED==regexec(&elt->re, last_call->extradata, (size_t) 0, NULL, 0))
         {
             NDRX_LOG(log_debug, "Event matched");
             
@@ -206,10 +187,10 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     else
                     {
                         numdisp++;
-			/* free up connectoin descriptor */
+			/* free up connection descriptor */
                         if (err)
                         {
-                                tpcancel(err);
+                            tpcancel(err);
                         }
                     }
                 }
@@ -265,7 +246,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                 
                 if (FAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
-                        0, ndrx_get_G_last_call()->extradata, nodeid, TPCALL_BRCALL)))
+                        0, last_call->extradata, nodeid, TPCALL_BRCALL)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
                                     nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));

@@ -55,7 +55,6 @@
 #include <unistd.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define KILL_SLEEP_SECS 2
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -87,10 +86,11 @@ public int ndrx_chk_server(char *procname, short srvid)
     char test_string4[64];
     string_list_t * list;
      
-    sprintf(test_string3, "-k %s", G_atmi_env.rnd_key);
-    sprintf(test_string4, "-i %hd", srvid);
+    snprintf(test_string3, sizeof(test_string3), "-k %s", G_atmi_env.rnd_key);
+    snprintf(test_string4, sizeof(test_string4), "-i %hd", srvid);
     
-    list =  ndrx_sys_ps_list(ndrx_sys_get_cur_username(), procname, test_string3, test_string4);
+    list =  ndrx_sys_ps_list(ndrx_sys_get_cur_username(), procname, 
+            test_string3, test_string4, "");
     
     if (NULL!=list)
     {
@@ -118,9 +118,10 @@ public int ndrx_chk_ndrxd(void)
     char test_string3[NDRX_MAX_KEY_SIZE+4];
     string_list_t * list;
      
-    sprintf(test_string3, "-k %s", G_atmi_env.rnd_key);
+    snprintf(test_string3, sizeof(test_string3), "-k %s", G_atmi_env.rnd_key);
     
-    list =  ndrx_sys_ps_list(ndrx_sys_get_cur_username(), "ndrxd", test_string3, "");
+    list =  ndrx_sys_ps_list(ndrx_sys_get_cur_username(), "ndrxd", 
+            test_string3, "", "");
     
     if (NULL!=list)
     {
@@ -164,7 +165,7 @@ public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th
         goto out;
     }
             
-    strcpy(tmp, q);
+    NDRX_STRCPY_SAFE(tmp, q);
     
     /* get the first token */
     token = strtok(tmp, NDRX_FMT_SEP_STR);
@@ -234,42 +235,9 @@ out:
     return ret;
 }
 
-/**
- * Parse pid from PS output
- * @param psout
- * @param pid
- * @return 
- */
-public int ndrx_get_pid_from_ps(char *psout, pid_t *pid)
-{
-    char tmp[PATH_MAX+1];
-    char *token;
-    int ret = SUCCEED;
-    
-    strcpy(tmp, psout);
 
-    /* get the first token */
-    if (NULL==(token = strtok(tmp, "\t ")))
-    {
-        NDRX_LOG(log_error, "missing username in ps -ef output")
-        FAIL_OUT(ret);
-    }
 
-    /* get second token */
-    token = strtok(NULL, "\t ");
-    if (NULL==token)
-    {
-        NDRX_LOG(log_error, "missing pid in ps -ef output")
-        FAIL_OUT(ret);
-    }   
-    else
-    {
-        *pid = atoi(token);
-    }
-    
-out:
-    return ret;
-}
+
 
 /**
  * Kill the system running (the xadmin dies last...)
@@ -277,15 +245,21 @@ out:
 public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
 {
     int ret = SUCCEED;
+#define DOWN_KILL_SIG   1
     int signals[] = {SIGTERM, SIGKILL};
     int i;
     string_list_t* qlist = NULL;
     string_list_t* srvlist = NULL;
+    string_list_t* ndrxdlist = NULL;
+    string_list_t* cpmsrvs = NULL;
     string_list_t* xadminlist = NULL;
+    string_list_t* cltchildren = NULL;
     string_list_t* elt = NULL;
+    string_list_t* elt2 = NULL;
+    string_list_t* qclts = NULL;
     char pfx[NDRX_MAX_Q_SIZE+1];
     char proc[NDRX_MAX_Q_SIZE+1];
-    pid_t pid;
+    pid_t pid, ppid;
     long th;
     char test_string2[NDRX_MAX_KEY_SIZE+4];
     char srvinfo[NDRX_MAX_SHM_SIZE];
@@ -300,15 +274,14 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     NDRX_LOG(log_warn, "****** Forcing system down ******");
     
     
-    sprintf(srvinfo, NDRX_SHM_SRVINFO, qprefix);
-    sprintf(svcinfo, NDRX_SHM_SVCINFO, qprefix);
-    sprintf(brinfo,  NDRX_SHM_BRINFO,  qprefix);
+    snprintf(srvinfo, sizeof(srvinfo), NDRX_SHM_SRVINFO, qprefix);
+    snprintf(svcinfo, sizeof(svcinfo), NDRX_SHM_SVCINFO, qprefix);
+    snprintf(brinfo, sizeof(brinfo),  NDRX_SHM_BRINFO,  qprefix);
     
      
-    sprintf(test_string2, "-k %s", G_atmi_env.rnd_key);
+    snprintf(test_string2, sizeof(test_string2), "-k %s", G_atmi_env.rnd_key);
     
-    NDRX_LOG(log_warn, "Removing all client processes..");
-    
+
     if (is_force)
     {
         signals[0] = SIGKILL;
@@ -324,6 +297,200 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
         qlist = NULL;
     }
     
+    username = ndrx_sys_get_cur_username();
+    
+    /* THIS IS FIRST!!!! We do not want continues respawning!!!
+     * kill any ndrxd, as they can respawn xatmi servers 
+     * But... tprecover might running and restoring ndrxd back
+     * thus we need somehow in loop kill both with -9
+     */
+    NDRX_LOG(log_debug, "Killing the ndrxd and tprecover...");
+    do
+    {
+        was_any = FALSE;
+        
+        ndrxdlist = ndrx_sys_ps_list(username, test_string2, 
+                "", "", "[\\s/]*ndrxd\\s");
+        
+        srvlist = ndrx_sys_ps_list(username, test_string2, 
+                "", "", "[\\s/]*tprecover\\s");
+        
+        LL_FOREACH(ndrxdlist,elt)
+        {
+            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            {
+                 NDRX_LOG(log_error, "! killing (ndrxd)  sig=%d "
+                         "pid=[%d] (%s)", signals[DOWN_KILL_SIG], pid, elt->qname);
+
+                 if (SUCCEED!=kill(pid, signals[DOWN_KILL_SIG]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 else
+                 {
+                    was_any = TRUE;
+                 }
+            }
+        }
+        
+        LL_FOREACH(srvlist,elt)
+        {
+            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            {
+                 NDRX_LOG(log_error, "! killing (tprecover)  sig=%d "
+                         "pid=[%d] (%s)", signals[DOWN_KILL_SIG], pid, elt->qname);
+
+                 if (SUCCEED!=kill(pid, signals[DOWN_KILL_SIG]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 else
+                 {
+                    was_any = TRUE;
+                 }
+            }
+        }
+        
+        ndrx_string_list_free(ndrxdlist);
+        ndrxdlist = NULL;
+        ndrx_string_list_free(srvlist);
+        srvlist = NULL;
+        
+    } while(was_any);
+    
+    /* Get the pid of cpmsrv - from queue, I guess or from PS output..? */
+    
+    /* 
+     * List child processes of the cpmsrv
+     * and kill the cpmsrv and the child processes
+     */
+    NDRX_LOG(log_debug, "Searching child processes of the cpmsrv");
+            
+    cpmsrvs = ndrx_sys_ps_list(username, test_string2, 
+                "", "", "[\\s/]*cpmsrv\\s");
+    
+    LL_FOREACH(cpmsrvs,elt2)
+    {
+        /* List the children of the cpmsrv... */
+        if (SUCCEED==ndrx_proc_pid_get_from_ps(elt2->qname, &ppid))
+        {
+            
+            NDRX_LOG(log_warn, "CPMSRV PID = %d, extracting children", ppid);
+            
+            qclts = ndrx_sys_ps_getchilds(ppid);
+            was_any = FALSE;
+            
+            NDRX_LOG(log_warn, "! Children extracted, about kill the cpmsrv...");
+            /* At this moment we must kill the CPM, as it will spawn the children 
+             * The children list extract and parent can be killed
+             */
+            if (SUCCEED!=kill(ppid, signals[0]))
+            {
+                NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                        signals[i], ppid, strerror(errno));
+            }
+
+            sleep(EX_KILL_SLEEP_SECS);
+            
+            if (SUCCEED!=kill(ppid, signals[1]))
+            {
+                NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                        signals[i], ppid, strerror(errno));
+            }
+            
+            NDRX_LOG(log_warn, "Now kill the child processes one by one");
+            for (i=0; i<max_signals; i++)
+            {
+                LL_FOREACH(qclts,elt)
+                {
+                    /* Parse out process name & pid */
+                    NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
+
+                    if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+                    {
+                        if (0==i)
+                        {
+                            ndrx_proc_children_get_recursive(&cltchildren, pid);
+                        }
+
+                        NDRX_LOG(log_error, "! killing  sig=%d "
+                                "pid=[%d] mypid=[%d]", signals[i], pid, my_pid);
+
+                        if (SUCCEED!=kill(pid, signals[i]))
+                        {
+                            NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                                    signals[i], pid, strerror(errno));
+                        }
+                        was_any = TRUE;
+                    }
+                }
+                
+                if (0==i && was_any)
+                {
+                    sleep(EX_KILL_SLEEP_SECS);
+                }
+            }
+            
+            ndrx_string_list_free(qclts);
+            qclts = NULL;
+            
+            /* kill the children of the children */
+            ndrx_proc_kill_list(cltchildren);
+            ndrx_string_list_free(cltchildren);
+            
+            cltchildren = NULL;
+            
+            qclts = NULL;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to extract pid from: [%s]", elt->qname);
+        }
+    }
+    
+    /* 
+     * kill all servers 
+     */
+    was_any = FALSE;
+    NDRX_LOG(log_warn, "Removing server processes for user [%s] and key [%s]", 
+        username, test_string2);
+    
+    srvlist = ndrx_sys_ps_list(username, test_string2, 
+                "", "", "");
+    
+    for (i=0; i<max_signals; i++)
+    {
+        LL_FOREACH(srvlist,elt)
+        {
+            /* Parse out process name & pid */
+            NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
+            
+            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d "
+                         "pid=[%d] (%s)", signals[i], pid, elt->qname);
+                 
+                 if (SUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 was_any = TRUE;
+            }
+        }
+        if (0==i && was_any)
+        {
+            sleep(EX_KILL_SLEEP_SECS);
+        }
+    }
+    
+    NDRX_LOG(log_warn, "Removing all client processes.. (by Q)");
+    /* Kill the children against the Q 
+     * DO this after the servers. So that servers have no chance to respawn
+     * any client
+     */
     for (i=0; i<max_signals; i++)
     {
         LL_FOREACH(qlist,elt)
@@ -343,62 +510,41 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             if (SUCCEED==ndrx_parse_clt_q(elt->qname, pfx, proc, &pid, &th) &&
                     0!=strcmp(proc, "xadmin"))
             {
-                 NDRX_LOG(log_error, "! killing  sig=%d pfx=[%s] proc=[%s] "
-                         "pid=[%d] th=[%ld]", signals[i], pfx, proc, pid, th);
-                 if (SUCCEED!=kill(pid, signals[i]))
-                 {
-                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
-                             signals[i], pid, strerror(errno));
-                 }
-                 was_any = TRUE;
+                if (0==i)
+                {
+                    ndrx_proc_children_get_recursive(&cltchildren, pid);
+                }
+                
+                NDRX_LOG(log_error, "! killing  sig=%d pfx=[%s] proc=[%s] "
+                        "pid=[%d] th=[%ld]", signals[i], pfx, proc, pid, th);
+                if (SUCCEED!=kill(pid, signals[i]))
+                {
+                    NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                            signals[i], pid, strerror(errno));
+                }
+                else
+                {
+                   was_any = TRUE;
+                }
             }
         }
         
         if (0==i && was_any)
         {
-            sleep(KILL_SLEEP_SECS);
+            sleep(EX_KILL_SLEEP_SECS);
         }
     }
     
-    /* kill all servers */
-    was_any = FALSE;
-    username = ndrx_sys_get_cur_username();
-    
-    NDRX_LOG(log_warn, "Removing server processes for user [%s] and key [%s]", 
-        username, test_string2);
-    
-    srvlist = ndrx_sys_ps_list(ndrx_sys_get_cur_username(), test_string2, "", "");
-    
-    for (i=0; i<max_signals; i++)
-    {
-        LL_FOREACH(srvlist,elt)
-        {
-            /* Parse out process name & pid */
-            NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
-            
-            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid))
-            {
-                 NDRX_LOG(log_error, "! killing  sig=%d "
-                         "pid=[%d]", signals[i], pid);
-                 
-                 if (SUCCEED!=kill(pid, signals[i]))
-                 {
-                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
-                             signals[i], pid, strerror(errno));
-                 }
-                 was_any = TRUE;
-            }
-        }
-        if (0==i && was_any)
-        {
-            sleep(KILL_SLEEP_SECS);
-        }
-    }
+    /* kill the children of the children */
+    ndrx_proc_kill_list(cltchildren);
+    ndrx_string_list_free(cltchildren);
+    cltchildren = NULL;
 
     /* remove all xadmins... */
     NDRX_LOG(log_warn, "Removing other xadmins...");
     was_any = FALSE;
-    xadminlist = ndrx_sys_ps_list(ndrx_sys_get_cur_username(), "xadmin", "", "");
+    xadminlist = ndrx_sys_ps_list(username, "xadmin", 
+        "", "", "");
     
     for (i=0; i<max_signals; i++)
     {
@@ -407,7 +553,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid) && pid!=my_pid)
+            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=my_pid)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d] mypid=[%d]", signals[i], pid, my_pid);
@@ -417,14 +563,16 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
-                 
-                 was_any = TRUE;
+                 else
+                 {
+                    was_any = TRUE;
+                 }
             }
         }
         
         if (0==i && was_any)
         {
-            sleep(KILL_SLEEP_SECS);
+            sleep(EX_KILL_SLEEP_SECS);
         }
     }
     
@@ -489,7 +637,10 @@ out:
     ndrx_string_list_free(qlist);
     ndrx_string_list_free(srvlist);
     ndrx_string_list_free(xadminlist);
-    
+    ndrx_string_list_free(cpmsrvs);
+    ndrx_string_list_free(qclts);
+    ndrx_string_list_free(ndrxdlist);
+    ndrx_string_list_free(cltchildren);
     
     return ret;
 }
@@ -511,7 +662,7 @@ public int ndrx_killall(char *mask)
     
     int ret = FAIL;
     
-    plist = ndrx_sys_ps_list(mask, "", "", "");
+    plist = ndrx_sys_ps_list(mask, "", "", "", "");
     
     for (i=0; i<2; i++)
     {
@@ -520,7 +671,7 @@ public int ndrx_killall(char *mask)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_get_pid_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
+            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
@@ -536,7 +687,7 @@ public int ndrx_killall(char *mask)
         }
         if (0==i && was_any)
         {
-            sleep(KILL_SLEEP_SECS);
+            sleep(EX_KILL_SLEEP_SECS);
         }
     }
     

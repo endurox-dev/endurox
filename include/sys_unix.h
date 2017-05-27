@@ -98,6 +98,8 @@ extern "C" {
 #define CLOCK_MONOTONIC SYSTEM_CLOCK
 
 #endif
+    
+#define EX_KILL_SLEEP_SECS 2
 /******************************************************************************/
 /***************************** PROGNAME ***************************************/
 /******************************************************************************/
@@ -231,16 +233,24 @@ extern NDRX_API char * ndrx_poll_strerror(int err);
 
 /* string generics: */
 extern NDRX_API void ndrx_string_list_free(string_list_t* list);
-extern NDRX_API int ndrx_sys_string_list_add(string_list_t**list, char *string);
+extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
 
 extern NDRX_API void ndrx_string_hash_free(string_hash_t *h);
 extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);
 extern NDRX_API string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str);
 
 extern NDRX_API char *ndrx_sys_get_cur_username(void);
-extern NDRX_API string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4);
+extern NDRX_API string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, 
+        char *filter3, char *filter4, char *regex1);
+extern NDRX_API string_list_t * ndrx_sys_ps_getchilds(pid_t ppid);
 extern NDRX_API string_list_t* ndrx_sys_folder_list(char *path, int *return_status);
 
+extern NDRX_API int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid);
+extern NDRX_API int ndrx_proc_ppid_get_from_pss(char *psout, pid_t *ppid);
+
+extern NDRX_API void ndrx_proc_kill_list(string_list_t *list);
+extern NDRX_API int ndrx_proc_children_get_recursive(string_list_t **list, pid_t pid);
+    
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);
 extern NDRX_API int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);

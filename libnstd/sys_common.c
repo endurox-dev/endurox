@@ -55,15 +55,19 @@
 
 #include <utlist.h>
 #include <pwd.h>
+#include <regex.h>
 
 #include "userlog.h"
+#include "exregex.h"
 
 
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-/* #define SYSCOMMON_ENABLE_DEBUG - causes locks in case of invalid config,
+    
+/*#define SYSCOMMON_ENABLE_DEBUG - causes locks in case of invalid config,
  *      due to recursive debug init */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -162,33 +166,32 @@ public void ndrx_string_list_free(string_list_t* list)
 
 /**
  * Add element to string list
- * @param list
- * @param string
- * @return 
+ * @param list List to append, can be ptr to NULL
+ * @param string String element to add to list
+ * @return SUCCEED/FAIL. If fail, list element will not be allocated
  */
-public int ndrx_sys_string_list_add(string_list_t**list, char *string)
+public int ndrx_string_list_add(string_list_t**list, char *string)
 {
     int ret = SUCCEED;
     string_list_t* tmp = NULL;
     
     if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_error, "alloc of string_list_t (%d) failed", 
                 sizeof(string_list_t));
-#endif
         FAIL_OUT(ret);
     }
     
     /* Alloc the string down there */
     if (NULL==(tmp->qname = NDRX_MALLOC(strlen(string)+1)))
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_error, "alloc of string_list_t qname (%d) failed: %s", 
                strlen(string)+1, strerror(errno));
-#endif
+        NDRX_FREE(tmp);
         FAIL_OUT(ret);
     }
+    
+    strcpy(tmp->qname, string);
     
     /*  Add the string to list finally */
     LL_APPEND(*list, tmp);
@@ -197,15 +200,83 @@ public int ndrx_sys_string_list_add(string_list_t**list, char *string)
     return ret;
 }
 
+/**
+ * Return PS output for the parent
+ * assuming that next we will extract only pid and not any other infos
+ * because for BSD the output will be slightly different than normal ps -ef or auxxw
+ * @param ppid  Parent PID id
+ * @return List of child processes or NULL.
+ */
+public string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
+{
+    /*
+     * Free BSD: ps -jauxxw
+     * Other Unix: ps -ef
+     * compare third column with 
+     */
+    char cmd[128];
+    FILE *fp=NULL;
+    string_list_t* tmp;
+    string_list_t* ret = NULL;
+    pid_t pid;
+    char path[PATH_MAX];
+    int is_error = FALSE;
+    
+#ifdef EX_OS_FREEBSD
+    snprintf(cmd, sizeof(cmd), "ps -jauxxw");
+#else
+    snprintf(cmd, sizeof(cmd), "ps -ef");
+#endif
+    
+    fp = popen(cmd, "r");
+    
+    if (fp == NULL)
+    {
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
+    }
+    
+    while (fgets(path, sizeof(path)-1, fp) != NULL)
+    {
+        if (SUCCEED==ndrx_proc_ppid_get_from_ps(path, &pid) && ppid == pid)
+        {
+            if (SUCCEED!=ndrx_string_list_add(&ret, path))
+            {
+                NDRX_LOG(log_error, "Failed to add [%s] to list of processes", path);
+                is_error = TRUE;
+                goto out;
+            }
+        }
+    }
+    
+ out:
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+ 
+    if (is_error)
+    {
+        ndrx_string_list_free(ret);
+        ret = NULL;
+    }
+
+    return ret;   
+}
+    
 
 /**
  * List processes by filters
- * @param filter1
- * @param filter2
- * @param filter3
- * @return 
+ * @param filter1 - match the string1
+ * @param filter2 - match the string2
+ * @param filter3 - match the string3
+ * @param filter4 - match the string4
+ * @param regex1  - match by regular expression (if any set)
+ * @return String list of matched lines
  */
-public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filter3, char *filter4)
+public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, 
+        char *filter3, char *filter4, char *regex1)
 {
     FILE *fp=NULL;
     char cmd[128];
@@ -214,17 +285,35 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
     int i;
     string_list_t* tmp;
     string_list_t* ret = NULL;
-    char *filter[4] = {filter1, filter2, filter3, filter4};
+    regex_t r1;
+    int r1_alloc = FALSE;
+    int is_error = FALSE;
+    
+#define MAX_FILTER      5
+    char *filter[MAX_FILTER] = {filter1, filter2, filter3, filter4, regex1};
     
 #ifdef EX_OS_FREEBSD
-    sprintf(cmd, "ps -auwwx");
+    snprintf(cmd, sizeof(cmd), "ps -auwwx");
 #else
-    sprintf(cmd, "ps -ef");
+    snprintf(cmd, sizeof(cmd), "ps -ef");
 #endif
     
+    if (EOS!=regex1[0])
+    {
+        if (SUCCEED!=ndrx_regcomp(&r1, regex1))
+        {
+            NDRX_LOG(log_error, "ndrx_sys_ps_list: Failed to compile regex1: [%s]", regex1);
+            userlog("ndrx_sys_ps_list: Failed to compile regex1: [%s]", regex1);
+            ret = NULL;
+            goto out;
+        }
+        
+        r1_alloc = TRUE;
+    }
+    
 #ifdef SYSCOMMON_ENABLE_DEBUG
-    NDRX_LOG(log_debug, "Listing processes [%s] f1=[%s] f2=[%s] f3=[%s] f4=[%s]", 
-            cmd, filter1, filter2, filter3, filter4);
+    NDRX_LOG(log_debug, "Listing processes [%s] f1=[%s] f2=[%s] f3=[%s] f4=[%s] r1=[%s]", 
+            cmd, filter1, filter2, filter3, filter4, regex1);
 #endif
     
     /* Open the command for reading. */
@@ -240,11 +329,20 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
     /* Check the process name in output... */
     while (fgets(path, sizeof(path)-1, fp) != NULL)
     {
-     /*   NDRX_LOG(log_debug, "Got line [%s]", path); - causes locks... */
+
+        /*NDRX_LOG(log_debug, "Got line [%s]", path); - causes locks... */
+        
         ok = 0;
         
-        for (i = 0; i<4; i++)
+        for (i = 0; i<MAX_FILTER; i++)
         {
+            /* Do the regexp match.. */
+            if (EOS!=filter[i][0] && filter[i]==regex1 
+                    && SUCCEED==ndrx_regexec(&r1, path))
+            {
+                /* for example [/ ]cpmsrv\s */
+                ok++;
+            }
             if (EOS!=filter[i][0] && strstr(path, filter[i]))
             {
                 /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
@@ -261,47 +359,13 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, char *filt
             }
         }
         
-        if (4==ok)
+        if (MAX_FILTER==ok)
         {
-            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
+            if (SUCCEED!=ndrx_string_list_add(&ret, path))
             {
-                
-                /* close */
-                if (fp!=NULL)
-                {
-                    fp = NULL;
-                    pclose(fp);
-                }
-#ifdef SYSCOMMON_ENABLE_DEBUG
-                NDRX_LOG(log_always, "alloc of string_list_t (%d) failed: %s", 
-                        sizeof(string_list_t), strerror(errno));
-#endif
-                ndrx_string_list_free(ret);
-                ret = NULL;
+                is_error = TRUE;
                 goto out;
             }
-            
-            if (NULL==(tmp->qname = NDRX_MALLOC(strlen(path)+1)))
-            {
-                /* close */
-                if (fp!=NULL)
-                {
-                    fp = NULL;
-                    pclose(fp);
-                }
-#ifdef SYSCOMMON_ENABLE_DEBUG
-                NDRX_LOG(log_always, "alloc of %d bytes failed: %s", 
-                        strlen(path)+1, strerror(errno));
-#endif
-                NDRX_FREE(tmp);
-                ndrx_string_list_free(ret);
-                ret =  NULL;
-                goto out;
-            }
-            
-            strcpy(tmp->qname, path);
-            
-            LL_APPEND(ret, tmp);
         }
     }
 
@@ -310,6 +374,17 @@ out:
     if (fp!=NULL)
     {
         pclose(fp);
+    }
+
+    if (r1_alloc)
+    {
+        ndrx_regfree(&r1);
+    }
+
+    if (is_error)
+    {
+        ndrx_string_list_free(ret);
+        ret=NULL;
     }
 
     return ret;
@@ -413,6 +488,175 @@ exit_fail:
     }
 
     return ret;   
+}
+
+/**
+ * Kill the list
+ * @param list list of ps output processes to kill
+ */
+public void ndrx_proc_kill_list(string_list_t *list)
+{
+    string_list_t* elt = NULL;
+    int signals[] = {SIGTERM, SIGKILL};
+    int i;
+    int max_signals = 2;
+    int was_any = FALSE;
+    pid_t pid;
+    char *fn = "ndrx_proc_kill_list";
+    NDRX_LOG(log_info, "%s enter-> %p", fn, list);
+    
+    for (i=0; i<max_signals; i++)
+    {
+        LL_FOREACH(list,elt)
+        {
+            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d "
+                         "pid=[%d] (%s)", signals[i], pid, elt->qname);
+
+                 if (SUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 else
+                 {
+                    was_any = TRUE;
+                 }
+            }    
+        } /* for list entry */
+    } /* for signals */
+    
+}
+
+/**
+ * Hmm we shall not kill up here. but just generate a list of childs
+ * afterwards will kill one by one
+ * 
+ * @param list list to fill with all processes under then parent
+ * @param pid PID of the parent
+ * @return SUCCEED/FAIL
+ */
+public int ndrx_proc_children_get_recursive(string_list_t**list, pid_t pid)
+{
+    int ret = SUCCEED;
+    string_list_t* elt = NULL;
+    string_list_t* children = NULL;
+    
+    char *fn = "ndrx_get_childproc_recursive";
+    NDRX_LOG(log_info, "%s enter-> list=%p, pid=%d", fn, list, pid);
+    
+    children = ndrx_sys_ps_getchilds(pid);
+    
+    LL_FOREACH(children,elt)
+    {
+        if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+        {
+            /* Step into, search for childs */
+            if (SUCCEED!=ndrx_proc_children_get_recursive(list, pid))
+            {
+                FAIL_OUT(ret);
+            }
+            
+            if (SUCCEED!=ndrx_string_list_add(list, elt->qname))
+            {
+                FAIL_OUT(ret);
+            }
+    
+        }
+    } /* For children... */
+    
+out:
+    ndrx_string_list_free(children);
+    return ret;
+}
+
+/**
+ * Parse pid from PS output
+ * @param psout
+ * @param pid
+ * @return 
+ */
+public int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
+{
+    char tmp[PATH_MAX+1];
+    char *token;
+    int ret = SUCCEED;
+    
+    NDRX_STRCPY_SAFE(tmp, psout);
+
+    /* get the first token */
+    if (NULL==(token = strtok(tmp, "\t ")))
+    {
+        NDRX_LOG(log_error, "missing username in ps -ef output")
+        FAIL_OUT(ret);
+    }
+
+    /* get second token */
+    token = strtok(NULL, "\t ");
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing pid in ps -ef output")
+        FAIL_OUT(ret);
+    }   
+    else
+    {
+        *pid = atoi(token);
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_debug, "ndrx_get_pid_from_ps: Got %d as pid of [%s]", *pid, psout);
+#endif
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Get child process from ps -ef or ps -jauxxw for bsd
+ * @param psout ps string
+ * @param pid   If succeed then PID is loaded
+ * @return SUCCEED/FAIL
+ */
+int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
+{
+    char tmp[PATH_MAX+1];
+    char *token;
+    int ret = SUCCEED;
+    
+    NDRX_STRCPY_SAFE(tmp, psout);
+
+    /* get the first token */
+    if (NULL==(token = strtok(tmp, "\t ")))
+    {
+        NDRX_LOG(log_error, "missing username in ps -ef output (1)")
+        FAIL_OUT(ret);
+    }
+
+    /* get second token */
+    token = strtok(NULL, "\t ");
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing pid in ps -ef output (2)")
+        FAIL_OUT(ret);
+    }
+    
+    /* get third token */
+    token = strtok(NULL, "\t ");
+    if (NULL==token)
+    {
+        NDRX_LOG(log_error, "missing pid in ps -ef output (3)")
+        FAIL_OUT(ret);
+    }
+    else
+    {
+        *ppid = atoi(token);
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_debug, "Got %d as parent pid of [%s]", *ppid, psout);
+#endif
+    }
+    
+out:
+    return ret;
 }
 
 

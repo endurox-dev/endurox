@@ -230,10 +230,9 @@ public void ndrxd_sigchld_uninit(void)
     
     if (!M_signal_thread_set)
     {
-        NDRX_LOG(log_debug, "Signal thread was not initialised, nothing todo...");
+        NDRX_LOG(log_debug, "Signal thread was not initialized, nothing to do...");
         goto out;
     }
-
 
     NDRX_LOG(log_debug, "About to cancel signal thread");
     
@@ -270,6 +269,10 @@ out:
     return;
 }
 
+/**
+ * Killall client running
+ * @return SUCCEED
+ */
 public int cpm_killall(void)
 {
     int ret = SUCCEED;
@@ -280,46 +283,69 @@ public int cpm_killall(void)
     char *sig_str[3]={"SIGINT","SIGTERM", "SIGKILL"};
     int sig[3]={SIGINT,SIGTERM, SIGKILL};
     int i;
+    int was_chld_kill;
+    string_list_t* cltchildren = NULL;
     
     for (i=0; i<3; i++)
     {
+        NDRX_LOG(log_warn, "Terminating all with %s", sig_str[i]);
 
-    NDRX_LOG(log_warn, "Terminating all with %s", sig_str[i]);
-    
-    EXHASH_ITER(hh, G_clt_config, c, ct)
-    {
-        if (CLT_STATE_STARTED==c->dyn.cur_state)
-        {
-            NDRX_LOG(log_warn, "Killing: %s/%s/%d with %s",
-		c->tag, c->subsect, c->dyn.pid, sig_str[i]);
-            kill(c->dyn.pid, sig[i]);
-        }
-    }
-    
-if (i<2) /*no wait for killl... */
-{
-    is_any_running = FALSE;
-    ndrx_timer_reset(&t);
-    do
-    {
-        /* sign_chld_handler(0); */
-        
         EXHASH_ITER(hh, G_clt_config, c, ct)
         {
             if (CLT_STATE_STARTED==c->dyn.cur_state)
             {
-                is_any_running = TRUE;
-                break;
+                NDRX_LOG(log_warn, "Killing: %s/%s/%d with %s",
+                    c->tag, c->subsect, c->dyn.pid, sig_str[i]);
+                
+                
+                /* if we kill with -9, then kill all childrent too
+                 * this is lengthly operation, thus only for emergency kill only
+                 */
+                was_chld_kill = FALSE;
+                if (SIGKILL==sig[i] && c->stat.flags & CPM_F_KILL_LEVEL_LOW ||
+                        c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
+                {
+                    was_chld_kill = TRUE;
+                    ndrx_proc_children_get_recursive(&cltchildren, c->dyn.pid);
+                }
+                
+                kill(c->dyn.pid, sig[i]);
+                
+                if (was_chld_kill)
+                {
+                    ndrx_proc_kill_list(cltchildren);
+                    ndrx_string_list_free(cltchildren);
+                    cltchildren=NULL;
+                }
+
             }
         }
-        
-        if (is_any_running)
+
+        if (i<2) /*no wait for kill... */
         {
-            usleep(CLT_STEP_INTERVAL_ALL);
+            is_any_running = FALSE;
+            ndrx_timer_reset(&t);
+            do
+            {
+                /* sign_chld_handler(0); */
+
+                EXHASH_ITER(hh, G_clt_config, c, ct)
+                {
+                    if (CLT_STATE_STARTED==c->dyn.cur_state)
+                    {
+                        is_any_running = TRUE;
+                        break;
+                    }
+                }
+
+                if (is_any_running)
+                {
+                    usleep(CLT_STEP_INTERVAL_ALL);
+                }
+            }
+            while (is_any_running && 
+                    ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
         }
-    }
-    while (is_any_running && ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
-}
     }
     
     NDRX_LOG(log_debug, "cpm_killall done");
@@ -338,10 +364,25 @@ public int cpm_kill(cpm_process_t *c)
 {
     int ret = SUCCEED;
     ndrx_timer_t t;
+    string_list_t* cltchildren = NULL;
+        
     NDRX_LOG(log_warn, "Stopping %s/%s - %s", c->tag, c->subsect, c->stat.command_line);
             
     /* INT interval */
+    if (c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
+    {
+        ndrx_proc_children_get_recursive(&cltchildren, c->dyn.pid);
+    }
+    
     kill(c->dyn.pid, SIGINT);
+    
+    if (c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
+    {
+        ndrx_proc_kill_list(cltchildren);
+        ndrx_string_list_free(cltchildren);
+        cltchildren=NULL;
+    }
+    
     ndrx_timer_reset(&t);
     do
     {
@@ -360,7 +401,21 @@ public int cpm_kill(cpm_process_t *c)
             c->tag, c->subsect);
     
     /* TERM interval */
+    if (c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
+    {
+        ndrx_proc_children_get_recursive(&cltchildren, c->dyn.pid);
+    }
+    
     kill(c->dyn.pid, SIGTERM);
+    
+    if (c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
+    {
+        ndrx_proc_kill_list(cltchildren);
+        ndrx_string_list_free(cltchildren);
+        cltchildren=NULL;
+    }
+    
+    
     ndrx_timer_reset(&t);
     do
     {
@@ -379,7 +434,28 @@ public int cpm_kill(cpm_process_t *c)
                         c->tag, c->subsect);
     
     /* KILL interval */
+    
+    /* OK we are here to kill -9, then we shall killall children processes too */
+    
+    /* if we kill with -9, then kill all children too
+     * this is lengthly operation, thus only for emergency kill only 
+     */
+    
+    
+    if (c->stat.flags & CPM_F_KILL_LEVEL_LOW)
+    {
+        ndrx_proc_children_get_recursive(&cltchildren, c->dyn.pid);
+    }
+    
     kill(c->dyn.pid, SIGKILL);
+    
+    if (c->stat.flags & CPM_F_KILL_LEVEL_LOW)
+    {
+        ndrx_proc_kill_list(cltchildren);
+        ndrx_string_list_free(cltchildren);
+        cltchildren=NULL;
+    }
+
     ndrx_timer_reset(&t);
     do
     {
@@ -449,7 +525,7 @@ public int cpm_exec(cpm_process_t *c)
         {
             if (SUCCEED!=ndrx_load_new_env(c->stat.env))
             {
-                userlog("Failed to load custom env from: %s!\n", c->stat.env);
+                userlog("Failed to load custom env from: %s!", c->stat.env);
                 exit(1);
             }
         }
@@ -458,7 +534,7 @@ public int cpm_exec(cpm_process_t *c)
         {
             if (SUCCEED!=setenv(NDRX_CCTAG, c->stat.cctag, TRUE))
             {
-                userlog("Cannot set [%s] to [%s]: %s\n", 
+                userlog("Cannot set [%s] to [%s]: %s", 
                         NDRX_CCTAG, c->stat.cctag, strerror(errno));
                 exit(1);
             }
@@ -471,9 +547,9 @@ public int cpm_exec(cpm_process_t *c)
             {
                 int err = errno;
                 
-                NDRX_LOG(log_error, "Failed to change working diretory: %s - %s!\n", 
+                NDRX_LOG(log_error, "Failed to change working diretory: %s - %s!", 
                         c->stat.wd, strerror(err));
-                userlog("Failed to change working diretory: %s - %s!\n", 
+                userlog("Failed to change working diretory: %s - %s!", 
                         c->stat.wd, strerror(err));
                 exit(1);
             }
@@ -503,7 +579,8 @@ public int cpm_exec(cpm_process_t *c)
         if (SUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-            NDRX_LOG(log_error, "Failed to start client, error: %d, %s\n", err, strerror(err));
+            NDRX_LOG(log_error, "Failed to start client, error: %d, %s", 
+                    err, strerror(err));
             exit (err);
         }
     }
