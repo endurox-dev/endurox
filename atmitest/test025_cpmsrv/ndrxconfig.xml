@@ -95,10 +95,10 @@
                 
                 <!--
                     Do not kill the children at all
-                    The process will do ignore...
+                    The process will do ignore... (default)...
                     Kill level disabled = 0
                 -->
-                <client cmdline="chld5.sh" log="chld5.log" autostart="Y" klevel="0">
+                <client cmdline="chld5.sh" log="chld5.log" autostart="Y">
                         <exec tag="CHLD5"/>
                 </client>
 

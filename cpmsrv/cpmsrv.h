@@ -53,7 +53,7 @@ extern "C" {
 #define CPM_F_KILL_LEVEL_LOW     0x00000004     /* Kill children at -9                      */
 #define CPM_F_KILL_LEVEL_HIGH    0x00000008     /* Kill children at normal shutdown         */
     
-#define CPM_F_KILL_LEVEL_DEFAULT CPM_F_KILL_LEVEL_LOW /* default kill level                 */
+#define CPM_F_KILL_LEVEL_DEFAULT 0              /* default kill level                       */
     
 #define NDRX_CLTTAG                 "NDRX_CLTTAG" /* Tag format string         */
 #define NDRX_CLTSUBSECT             "NDRX_CLTSUBSECT" /* Subsect format string */
