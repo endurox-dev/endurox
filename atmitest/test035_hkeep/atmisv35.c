@@ -36,6 +36,7 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <test.fd.h>
+#include <string.h>
 
 void CONVSV (TPSVCINFO *p_svc)
 {

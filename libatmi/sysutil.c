@@ -310,10 +310,10 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
         was_any = FALSE;
         
         ndrxdlist = ndrx_sys_ps_list(username, test_string2, 
-                "", "", "[\\s/]*ndrxd\\s");
+                "", "", "[\\s/ ]*ndrxd[\\s ]");
         
         srvlist = ndrx_sys_ps_list(username, test_string2, 
-                "", "", "[\\s/]*tprecover\\s");
+                "", "", "[\\s/ ]*tprecover[\\s ]");
         
         LL_FOREACH(ndrxdlist,elt)
         {
@@ -369,7 +369,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     NDRX_LOG(log_debug, "Searching child processes of the cpmsrv");
             
     cpmsrvs = ndrx_sys_ps_list(username, test_string2, 
-                "", "", "[\\s/]*cpmsrv\\s");
+                "", "", "[\\s/ ]*cpmsrv[\\s ]");
     
     LL_FOREACH(cpmsrvs,elt2)
     {
