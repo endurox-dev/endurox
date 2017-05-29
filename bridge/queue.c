@@ -71,6 +71,7 @@ in_msg_t *M_in_q = NULL;            /* Linked list with incoming message in Q */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+private int br_got_message_from_q_th(void *ptr, int *p_finish_off);
 
 /**
  * Enqueue the message for delayed send.
@@ -284,10 +285,8 @@ out:
     return SUCCEED;    
 }
 
-
-
 /**
- * At this point we got message from Q, so we should forward it to network.
+ * Thread entry wrapper...
  * @param buf
  * @param len
  * @param msg_type
@@ -295,8 +294,70 @@ out:
  */
 public int br_got_message_from_q(char *buf, int len, char msg_type)
 {
-    int ret=SUCCEED;
+    int ret = SUCCEED;
+    xatmi_brmessage_t *thread_data;
     
+    thread_data = NDRX_MALLOC(sizeof(xatmi_brmessage_t));
+    
+    if (NULL==thread_data)
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to allocate xatmi_brmessage_t: %s", 
+                strerror(err));
+        
+        userlog("Failed to allocate xatmi_brmessage_t: %s", 
+                strerror(err));
+        FAIL_OUT(ret);
+    }
+    
+    thread_data->buf = ndrx_memdup(buf, len);
+    
+    
+    
+    thread_data->len = len;
+    thread_data->msg_type = msg_type;
+    
+    if (SUCCEED!=thpool_add_work(G_bridge_cfg.thpool, (void*)br_got_message_from_q_th, 
+            (void *)thread_data))
+    {
+        FAIL_OUT(ret);
+    }
+out:
+            
+    if (SUCCEED!=ret)
+    {
+        if (NULL!=thread_data)
+        {
+            if (NULL!=thread_data->buf)
+            {
+                NDRX_FREE(thread_data->buf);
+            }
+            NDRX_FREE(thread_data);
+        }
+    }
+    return ret;
+}
+
+
+/**
+ * At this point we got message from Q, so we should forward it to network.
+ * Q basically is XATMI sub-system
+ * Thread processing
+ * @param buf
+ * @param len
+ * @param msg_type
+ * @return 
+ */
+private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
+{
+    int ret=SUCCEED;
+    /* Get threaded data */
+    xatmi_brmessage_t *p_xatmimsg = (xatmi_brmessage_t *)ptr;
+    char *buf = p_xatmimsg->buf;
+    int len = p_xatmimsg->len;
+    char msg_type = p_xatmimsg->msg_type;
+    
+    BR_THREAD_ENTRY;
     
     NDRX_DUMP(log_debug, "Got message from Q:", buf, len);
     
@@ -379,6 +440,10 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
         }
     }
 out:
+                
+    NDRX_FREE(p_xatmimsg->buf);
+    NDRX_FREE(p_xatmimsg);
+    
     return ret;
 }
 

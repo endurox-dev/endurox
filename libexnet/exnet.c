@@ -87,6 +87,10 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+MUTEX_LOCKDECL(M_send_lock) 
+MUTEX_LOCKDECL(M_recv_lock) 
+
 /*---------------------------Prototypes---------------------------------*/
 private int close_socket(exnetcon_t *net);
 private int open_socket(exnetcon_t *net);
@@ -129,6 +133,7 @@ public int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int a
     size_to_send = len+net->len_pfx;
 
     /* Do sending in loop... */
+    MUTEX_LOCK_V(M_send_lock)
     do
     {
         NDRX_LOG(log_debug, "Sending, len: %d", size_to_send-sent);
@@ -148,7 +153,6 @@ public int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int a
                             strerror(errno));
             close_socket(net);
             ret=FAIL;
-            goto out;
         }
         else
         {
@@ -157,10 +161,11 @@ public int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int a
             sent+=tmp_s;
         }
 
-    } while (sent < size_to_send);
+    } while (SUCCEED==ret && sent < size_to_send);
+    MUTEX_UNLOCK_V(M_send_lock)
 
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -277,6 +282,9 @@ out:
  * Receive single message with prefixed length.
  * We will check peek the lenght bytes, and then
  * will request to receive full message
+ * If we do poll on incoming messages, we shall receive from the same thread
+ * because, otherwise it will alert for messages all the time or we need to
+ * check some advanced flags..
  */
 public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int appflags)
 {
@@ -291,6 +299,8 @@ public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int 
         ndrx_timer_reset(&net->rcv_timer);
     }
     
+    /* Lock the stuff... */
+    MUTEX_LOCK_V(M_recv_lock)
     while (SUCCEED==ret)
     {
         /* Either we will timeout, or return by cut_out_msg! */
@@ -306,6 +316,7 @@ public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int 
                 NDRX_LOG(log_debug,
                     "Full msg in buffer");
                 /* Copy msg out there & cut the buffer */
+                MUTEX_UNLOCK_V(M_recv_lock)
                 return cut_out_msg(net, full_msg, buf, len, appflags);
             }
         }
@@ -315,7 +326,6 @@ public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int 
         {
             /* NDRX_LOG(log_error, "Failed to get data");*/
             ret=FAIL;
-            goto out;
         }
         else
         {
@@ -324,9 +334,10 @@ public int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int 
                 NDRX_DUMP(log_debug, "Got packet: ",
                         net->d+net->dl, got_len);
             }
+            net->dl+=got_len;
         }
-        net->dl+=got_len;
     }
+    MUTEX_UNLOCK_V(M_recv_lock)
     
     /* We should fail anyway, because no message received, yet! */
     ret=FAIL;
@@ -341,7 +352,7 @@ out:
         close_socket(net);
     }
 
-	return ret;
+    return ret;
 }
 
 /**

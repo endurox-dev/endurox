@@ -302,7 +302,7 @@ public int cpm_killall(void)
                  * this is lengthly operation, thus only for emergency kill only
                  */
                 was_chld_kill = FALSE;
-                if (SIGKILL==sig[i] && c->stat.flags & CPM_F_KILL_LEVEL_LOW ||
+                if ((SIGKILL==sig[i] && (c->stat.flags & CPM_F_KILL_LEVEL_LOW)) ||
                         c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
                 {
                     was_chld_kill = TRUE;

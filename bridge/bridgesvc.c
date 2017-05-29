@@ -7,6 +7,13 @@
 ** -n <Node id of server> -i <IP of the server> -p <Port of the server> -tA
 ** In server mode (-tP = type [P]asive, wait for call)
 ** -n <node id of server> -i <Bind address usually 0.0.0.0> -p <Port to bind on> -tP
+** Notes for multi thread:
+** - Outgoing message fully received by xatmi main thread, 
+** and is submitted to thread pool. The treads perform async send to network.
+** - Incoming message from network also are fully received from main thread.
+** Once read fully, submitted to thread pool for further processing.
+** In case if thread count is set to 0, then do not use threading model, just
+** just do direct calls if send & receive.
 **
 ** @file bridgesvc.c
 ** 
@@ -69,7 +76,9 @@ extern char *optarg;
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 public bridge_cfg_t G_bridge_cfg;
+public __thread int G_thread_init = FALSE; /* Was thread init done?     */
 /*---------------------------Statics------------------------------------*/
+private int M_init_ok = FALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -266,6 +275,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "Using GPG Encryption, signer: [%s]", 
 					G_bridge_cfg.gpg_signer);
                 break;
+            case 'P': 
+                G_bridge_cfg.threadpoolsize = atol(optarg);
+                break;
             case 't': 
                 
                 if ('P'==*optarg)
@@ -286,6 +298,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
         }
     }
+    
+    if (G_bridge_cfg.threadpoolsize <= 0)
+    {
+        G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
+    }
+    
+    NDRX_LOG(log_info, "Threadpool size set to: %d", G_bridge_cfg.threadpoolsize);
     
     /* Check configuration */
     if (FAIL==G_bridge_cfg.nodeid)
@@ -358,15 +377,39 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
     
+    if (NULL==(G_bridge_cfg.thpool = thpool_init(G_bridge_cfg.threadpoolsize)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
+                G_bridge_cfg.threadpoolsize);
+        FAIL_OUT(ret);
+    }
+    
+    M_init_ok = TRUE;
+    
 out:
     return ret;
 }
+
+/**
+ * Shutdown the thread
+ * @param arg
+ * @param p_finish_off
+ */
+public void tp_thread_shutdown(void *ptr, int *p_finish_off)
+{
+    tpterm();
+    
+    *p_finish_off = TRUE;
+    
+}
+
 
 /**
  * Do de-initialization
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
+    int i;
     NDRX_LOG(log_debug, "tpsvrdone called");
     
     if (NULL!=G_bridge_cfg.con)
@@ -381,4 +424,16 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         exnet_close_shut(&G_bridge_cfg.net);
     }
     
+    if (M_init_ok)
+    {
+        /* Terminate the threads */
+        for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
+        {
+            thpool_add_work(G_bridge_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+        }
+        
+        /* Wait for threads to finish */
+        thpool_wait(G_bridge_cfg.thpool);
+        thpool_destroy(G_bridge_cfg.thpool);
+    }
 }

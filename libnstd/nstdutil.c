@@ -756,3 +756,25 @@ out:
     
     return ret;
 }
+
+/**
+ * Allocate & duplicate the ptr to which org points
+ * @param org memroy to copy
+ * @param len length to copy
+ * @return NULL or allocated memory
+ */
+public char * ndrx_memdup(char *org, size_t len)
+{
+    char *ret;
+    
+    if (NULL!=(ret = NDRX_MALLOC(len)))
+    {
+        memcpy(ret, org, len);
+        return ret;
+    }
+    
+    return NULL;
+}
+
+
+

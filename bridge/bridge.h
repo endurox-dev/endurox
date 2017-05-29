@@ -1,4 +1,5 @@
 /* 
+** Bridge commons
 **
 ** @file bridge.h
 ** 
@@ -37,8 +38,22 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <thpool.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+    
+#define BR_DEFAULT_THPOOL_SIZE          5 /* Default threadpool size */
+#define BR_THREAD_ENTRY if (!G_thread_init) \
+         { \
+                if (SUCCEED==tpinit(NULL))\
+                { \
+                    G_thread_init=TRUE; \
+                } \
+                else \
+                { \
+                    FAIL_OUT(ret);\
+                } \
+         }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*
@@ -54,6 +69,8 @@ typedef struct
     int common_format;            /* Common platform format. */
     char gpg_recipient[33];       /* PGP Encryption recipient */
     char gpg_signer[33];          /* PGP Encryption signer */
+    int threadpoolsize;           /* Thread pool size */
+    threadpool thpool;            /* Thread pool by it self */
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;
@@ -65,8 +82,34 @@ struct in_msg
     ndrx_timer_t trytime;  /* Time in Q */
     in_msg_t *prev, *next;
 };
+
+/**
+ * Message received from XATMI, for sending to network, by thread
+ */
+typedef struct
+{
+    char *buf;
+    int len;
+    char msg_type;
+    int threaded; /* Do we run in threaded mode? */
+    
+} xatmi_brmessage_t;
+
+
+/**
+ * Message received from network and submitted to thread
+ */
+typedef struct
+{
+    char *buf;
+    int len;
+    exnetcon_t *net;
+    int threaded; /* Do we run in threaded mode? */
+} net_brmessage_t;
+
 /*---------------------------Globals------------------------------------*/
 extern bridge_cfg_t G_bridge_cfg;
+extern __thread int G_thread_init;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q);
