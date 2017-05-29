@@ -617,7 +617,7 @@ out:
  * @param pid   If succeed then PID is loaded
  * @return SUCCEED/FAIL
  */
-int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
+public int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
 {
     char tmp[PATH_MAX+1];
     char *token;
