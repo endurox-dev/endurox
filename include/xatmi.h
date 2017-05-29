@@ -303,7 +303,7 @@ extern "C" {
 #endif
 
 /* Bigger connection count may slowdown whole system. */
-#define MAX_CONNECTIONS      5
+#define MAX_CONNECTIONS      10
     
 /* EnduroX system ATMI flags */
 #define SYS_FLAG_REPLY_ERROR    0x00000001

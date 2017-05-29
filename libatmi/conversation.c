@@ -449,9 +449,9 @@ private int conv_get_cd(long flags)
     ATMI_TLS_ENTRY;
     
     int start_cd = G_atmi_tls->conv_cd; /* mark where we began */
-    while (CONV_NO_INITATED!=
-            G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status)
-    {
+    
+    /* Just take a next number... for better hash. */
+    do {
         G_atmi_tls->conv_cd++;
 
         if (G_atmi_tls->conv_cd > MAX_CONNECTIONS-1)
@@ -465,6 +465,8 @@ private int conv_get_cd(long flags)
             break;
         }
     }
+    while (CONV_NO_INITATED!=
+            G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status);
 
     if (CONV_NO_INITATED!=
             G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status)
