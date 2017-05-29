@@ -148,6 +148,8 @@ for (j=0; j<1000; j++)
             goto out;
         }
     }
+    /* close conv... */
+    tpdiscon(cd);
 }
     
 out:
