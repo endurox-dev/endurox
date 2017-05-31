@@ -32,9 +32,10 @@
 #define MAX_NANOSEC 999999999
 #define CEIL(X) ((X-(int)(X)) > 0 ? (int)(X+1) : (int)(X))
 
+/*
 static volatile int threads_keepalive;
 static volatile int threads_on_hold;
-
+*/
 
 
 
@@ -82,6 +83,10 @@ typedef struct thpool_{
 	volatile int num_threads_alive;      /* threads currently alive   */
 	volatile int num_threads_working;    /* threads currently working */
 	pthread_mutex_t  thcount_lock;       /* used for thread count etc */
+        
+        int threads_keepalive;
+        int threads_on_hold;
+
 	jobqueue*  jobqueue_p;               /* pointer to the job queue  */    
 } thpool_;
 
@@ -119,9 +124,6 @@ static void  bsem_wait(struct bsem *bsem_p);
 /* Initialise thread pool */
 struct thpool_* thpool_init(int num_threads){
 
-	threads_on_hold   = 0;
-	threads_keepalive = 1;
-
 	if ( num_threads < 0){
 		num_threads = 0;
 	}
@@ -135,7 +137,10 @@ struct thpool_* thpool_init(int num_threads){
 	}
 	thpool_p->num_threads_alive   = 0;
 	thpool_p->num_threads_working = 0;
-
+        
+        thpool_p->threads_on_hold   = 0;
+	thpool_p->threads_keepalive = 1;
+        
 	/* Initialise the job queue */
 	if (jobqueue_init(thpool_p) == -1){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for job queue\n");
@@ -244,7 +249,7 @@ void thpool_destroy(thpool_* thpool_p){
 	volatile int threads_total = thpool_p->num_threads_alive;
 
 	/* End each thread 's infinite loop */
-	threads_keepalive = 0;
+	thpool_p->threads_keepalive = 0;
 	
 	/* Give one second to kill idle threads */
 	double TIMEOUT = 1.0;
@@ -276,7 +281,8 @@ void thpool_destroy(thpool_* thpool_p){
 	free(thpool_p);
 }
 
-
+#if 0
+- no need.
 /* Pause all threads in threadpool */
 void thpool_pause(thpool_* thpool_p) {
 	int n;
@@ -284,12 +290,14 @@ void thpool_pause(thpool_* thpool_p) {
 		pthread_kill(thpool_p->threads[n]->pthread, SIGUSR1);
 	}
 }
+#endif
 
-
+#if 0
 /* Resume all threads in threadpool */
 void thpool_resume(thpool_* thpool_p) {
 	threads_on_hold = 0;
 }
+#endif
 
 /* Mavimax, return free threads */
 int thpool_freethreads_nr(thpool_* thpool_p) {
@@ -321,7 +329,7 @@ static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p
 	
 }
 
-
+#if 0
 /* Sets the calling thread on hold */
 static void poolthread_hold () {
 	threads_on_hold = 1;
@@ -329,6 +337,7 @@ static void poolthread_hold () {
 		sleep(1);
 	}
 }
+#endif
 
 
 /* What each thread is doing
@@ -353,24 +362,26 @@ static void* poolthread_do(struct poolthread* poolthread_p){
 
 	/* Assure all threads have been created before starting serving */
 	thpool_* thpool_p = poolthread_p->thpool_p;
-	
+#if 0
+        - no need for pause
 	/* Register signal handler */
 	struct sigaction act;
 	act.sa_handler = poolthread_hold;
 	if (sigaction(SIGUSR1, &act, NULL) == -1) {
 		fprintf(stderr, "poolthread_do(): cannot handle SIGUSR1");
 	}
+#endif
 	
 	/* Mark thread as alive (initialized) */
 	pthread_mutex_lock(&thpool_p->thcount_lock);
 	thpool_p->num_threads_alive += 1;
 	pthread_mutex_unlock(&thpool_p->thcount_lock);
 
-	while(threads_keepalive && !finish_off){
+	while(poolthread_p->thpool_p->threads_keepalive && !finish_off){
 
 		bsem_wait(thpool_p->jobqueue_p->has_jobs);
 
-		if (threads_keepalive){
+		if (poolthread_p->thpool_p->threads_keepalive){
 			
 			pthread_mutex_lock(&thpool_p->thcount_lock);
 			thpool_p->num_threads_working++;

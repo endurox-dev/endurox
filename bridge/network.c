@@ -180,6 +180,24 @@ public int br_process_msg(exnetcon_t *net, char *buf, int len)
 {
     int ret = SUCCEED;
     net_brmessage_t *thread_data;
+    net_brmessage_t thread_data_stat;
+    char *fn = "br_process_msg";
+    
+    thread_data_stat.buf_malloced = FALSE;
+    
+    if (0==G_bridge_cfg.threadpoolsize)
+    {
+        int finish_off = FALSE;
+        
+        NDRX_LOG(log_debug, "%s: single thread mode", fn);
+        
+        thread_data_stat.buf = buf;
+        thread_data_stat.len = len;
+        thread_data_stat.net = net;
+        thread_data_stat.threaded = FALSE;
+        
+        return br_process_msg_th((void *)&thread_data_stat, &finish_off); /* <<<< RETURN!!!! */
+    }
     
     thread_data = NDRX_MALLOC(sizeof(net_brmessage_t));
     
@@ -194,6 +212,9 @@ public int br_process_msg(exnetcon_t *net, char *buf, int len)
         FAIL_OUT(ret);
     }
     
+    NDRX_LOG(log_debug, "%s: multi thread mode - dispatching to worker", fn);
+    
+    thread_data->threaded = TRUE;
     thread_data->buf = ndrx_memdup(buf, len);
     
     thread_data->len = len;
@@ -217,12 +238,112 @@ out:
             NDRX_FREE(thread_data);
         }
     }
+
+    if (thread_data_stat.buf_malloced)
+    {
+        NDRX_FREE(thread_data_stat.buf);
+    }
+
     return ret;
 }
 
 /**
+ * Submit the message to XATMI.
+ * This is called directly for normal messages
+ * Called via thread pool for CNV pools. To have the order that all conv
+ * traffic goes via one node.
+ * 
+ * @param buf message received from network
+ * @return SUCCEED/FAIL
+ */
+private int br_net_submit_xatmi_th(void *ptr, int *p_finish_off)
+{
+    int ret = SUCCEED;
+    net_brmessage_t *p_netmsg = (net_brmessage_t *)ptr;
+    cmd_br_net_call_t *call = (cmd_br_net_call_t *)p_netmsg->buf;
+    tp_command_generic_t *gen_command = (tp_command_generic_t *)call->buf;
+    
+    /* Have some more debug out there: */
+   
+    tp_command_call_t *extra_debug = (tp_command_call_t *)call->buf;
+    NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
+            extra_debug->timer.t.tv_sec,
+            extra_debug->timer.t.tv_nsec,
+            ndrx_timer_get_delta_sec(&extra_debug->timer) );
+
+    NDRX_LOG(log_debug, "callseq  %hd",   extra_debug->callseq);
+    NDRX_LOG(log_debug, "cd       %d",    extra_debug->cd);
+    NDRX_LOG(log_debug, "my_id    [%s]",  extra_debug->my_id);
+    NDRX_LOG(log_debug, "reply_to [%s]",  extra_debug->reply_to);
+    NDRX_LOG(log_debug, "name     [%s]",  extra_debug->name);
+
+
+    NDRX_LOG(log_debug, "ATMI message, command id=%d", 
+            gen_command->command_id);
+
+    switch (gen_command->command_id)
+    {
+
+        case ATMI_COMMAND_TPCALL:
+        case ATMI_COMMAND_EVPOST:
+        case ATMI_COMMAND_CONNECT:
+            NDRX_LOG(log_debug, "tpcall or connect");
+            /* If this is a call, then we should append caller address */
+            if (SUCCEED!=br_tpcall_pushstack((tp_command_call_t *)gen_command))
+            {
+                FAIL_OUT(ret);
+            }
+            /* Call service */
+            NDRX_LOG(log_debug, "About to call service...");
+            ret=br_submit_to_service((tp_command_call_t *)gen_command, call->len, NULL);
+            break;
+
+        /* tpreply & conversation goes via reply Q */
+        case ATMI_COMMAND_TPREPLY:
+        case ATMI_COMMAND_CONVDATA:
+        case ATMI_COMMAND_CONNRPLY:
+        case ATMI_COMMAND_DISCONN:
+        case ATMI_COMMAND_CONNUNSOL:
+        case ATMI_COMMAND_CONVACK:
+        case ATMI_COMMAND_SHUTDOWN:
+            /* TODO: So this is reply... we should pop the stack and decide 
+             * where to send the message, either to service replyQ
+             * or other node 
+             */
+            NDRX_LOG(log_debug, "Reply back to caller/bridge");
+            ret = br_submit_reply_to_q((tp_command_call_t *)gen_command, call->len, NULL);
+            break;
+        case ATMI_COMMAND_TPFORWARD:
+            /* not used */
+            break;
+    }
+    
+ out:       
+    if (p_netmsg->threaded)
+    {
+        NDRX_FREE(p_netmsg->buf);
+        NDRX_FREE(p_netmsg);
+    }
+ 
+    return ret;
+}
+/**
  * Bridge have received message.
  * Got message from Network.
+ * But we have a problem here, as multiple threads are doing receive, there
+ * is possibility that conversational is also received in out of order...
+ * and submitting to specific thread pool will not solve the issue.
+ * 
+ * The other option is to do ack on every conversational message.
+ * 
+ * Or do message sequencing and reordering at the client end (i.e. consume
+ * the out of order messages in the process memory, sort the messages by sequence
+ * number, when message is received or we are going to look for the message, then
+ * check the queue in memory. If we have something there and looks like correct
+ * message sequence number, then use it.
+ * 
+ * The queue will be dumped after the conversation is closed.
+ * 
  * @param net
  * @param buf
  * @param len
@@ -231,24 +352,31 @@ out:
 private int br_process_msg_th(void *ptr, int *p_finish_off)
 {
     int ret=SUCCEED;
-    char tmp[ATMI_MSG_MAX_SIZE];
+    char *tmp=NULL;
     /* Also we could thing something better! which does not eat so much stack*/
-    char tmp_clr[ATMI_MSG_MAX_SIZE];
+    char *tmp_clr=NULL;
     net_brmessage_t *p_netmsg = (net_brmessage_t *)ptr;
-    exnetcon_t *net = p_netmsg->net;
-    char *buf = p_netmsg->buf;
-    int len = p_netmsg->len;
+    int pool;
+    int is_removed = FALSE;
     
-    cmd_br_net_call_t *call = (cmd_br_net_call_t *)buf;
+    p_netmsg->call = (cmd_br_net_call_t *)p_netmsg->buf;
     
     BR_THREAD_ENTRY;
     
 #ifndef DISABLEGPGME
-    /* Decrypt the mssage, if decryption is used... */
+    /* Decrypt the mssages, if decryption is used... */
     /* use GPG encryption */
     if (EOS!=G_bridge_cfg.gpg_recipient[0])
     {
 	int clr_len = ATMI_MSG_MAX_SIZE;
+        
+        if (NULL==(tmp_clr = NDRX_MALLOC(clr_len)))
+        {
+            NDRX_LOG(log_error, "Malloc failed %d:%s", clr_len, strerror(errno));
+            userlog("Malloc failed %d:%s", clr_len, strerror(errno));
+            FAIL_OUT(ret);
+        }
+        
 	if (!M_is_gpg_init)
 	{
             if (SUCCEED==br_init_gpg())
@@ -264,7 +392,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
 	}
 	
 	/* Encrypt the message */
-	if (SUCCEED!=pgpa_decrypt(&M_enc, buf, len, 
+	if (SUCCEED!=pgpa_decrypt(&M_enc, p_netmsg->buf, p_netmsg->len, 
 				tmp_clr, &clr_len))
 	{
             NDRX_LOG(log_always, "GPG msg decryption failed: "
@@ -282,129 +410,121 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
             NDRX_LOG(log_debug, "Msg Decrypt OK, len: %d", clr_len);
 	}
 	
-	buf = tmp_clr;
-	call = (cmd_br_net_call_t *)tmp_clr;
-	len = clr_len;
+        if (p_netmsg->threaded)
+        {
+            NDRX_FREE(p_netmsg->buf);
+            p_netmsg->buf = tmp_clr;
+        }
+        else
+        {
+            p_netmsg->buf = tmp_clr;
+            p_netmsg->buf_malloced = TRUE;
+        }
+        
+        p_netmsg->len = clr_len;
+	p_netmsg->call = (cmd_br_net_call_t *)p_netmsg->buf;
     }
 #endif
     
     if (G_bridge_cfg.common_format)
     {
-        long tmp_len = len;
+        long tmp_len = p_netmsg->len;
         NDRX_LOG(log_debug, "Convert message from network...");
-        /* do some optimisation: memset(tmp, 0, sizeof(tmp)); */
         
-        if (SUCCEED!=exproto_proto2ex(buf, tmp_len,  tmp, &tmp_len))
+        if (NULL==(tmp = NDRX_MALLOC(ATMI_MSG_MAX_SIZE)))
+        {
+            NDRX_LOG(log_error, "Malloc failed %d:%s", ATMI_MSG_MAX_SIZE, strerror(errno));
+            userlog("Malloc failed %d:%s", ATMI_MSG_MAX_SIZE, strerror(errno));
+            FAIL_OUT(ret);
+        }
+        
+        if (SUCCEED!=exproto_proto2ex(p_netmsg->buf, tmp_len,  tmp, &tmp_len))
         {
             NDRX_LOG(log_error, "Failed to convert incoming message!");
             FAIL_OUT(ret);
         }
         
+        if (p_netmsg->buf_malloced)
+        {
+            NDRX_FREE(p_netmsg->buf);
+        }
+        p_netmsg->buf = tmp;
+        p_netmsg->len = tmp_len;
+        p_netmsg->buf_malloced = TRUE;
+        
         /* Switch ptr to converted one.! */
-        call = (cmd_br_net_call_t *)tmp;
+        p_netmsg->call = (cmd_br_net_call_t *)tmp;
         /* Should ignore len field...! */
-        call->len = tmp_len - OFFSET(cmd_br_net_call_t, buf);
+        p_netmsg->call->len = tmp_len - OFFSET(cmd_br_net_call_t, buf);
         
         /*
         NDRX_LOG(log_debug, "Got c len=%ld bytes (br refresh %d) - internal %ld", 
                 tmp_len, sizeof(bridge_refresh_t), call->len);
         */
-        NDRX_DUMP(log_debug, "Got converted packet: ", call->buf, call->len);
+        NDRX_DUMP(log_debug, "Got converted packet: ", p_netmsg->call->buf, 
+                p_netmsg->call->len);
     }
     
     NDRX_LOG(log_debug, "Got message from net.");
     
     
-    if (BR_NET_CALL_MAGIC!=call->br_magic)
+    if (BR_NET_CALL_MAGIC!=p_netmsg->call->br_magic)
     {
         NDRX_LOG(log_error, "Got bridge message, but invalid magic: got"
-                " %p, expected: %p", call->br_magic, BR_NET_CALL_MAGIC);
+                " %p, expected: %p", p_netmsg->call->br_magic, BR_NET_CALL_MAGIC);
         goto out;
     }
     
-    if (BR_NET_CALL_MSG_TYPE_ATMI==call->msg_type)
+    if (BR_NET_CALL_MSG_TYPE_ATMI==p_netmsg->call->msg_type)
     {
-        tp_command_generic_t *gen_command = (tp_command_generic_t *)call->buf;
+        int conv_cd;
+        int finish_off = FALSE;
         
-        /* Have some more debug out there: */
+        /* mem will be deleted in this branch */
+        is_removed = TRUE;
+        
+        if (0==G_bridge_cfg.threadpoolsize)
         {
-            tp_command_call_t *extra_debug = (tp_command_call_t *)call->buf;
-            NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
-                    extra_debug->timer.t.tv_sec,
-                    extra_debug->timer.t.tv_nsec,
-                    ndrx_timer_get_delta_sec(&extra_debug->timer) );
-
-            NDRX_LOG(log_debug, "callseq  %hd",   extra_debug->callseq);
-            NDRX_LOG(log_debug, "cd       %d",    extra_debug->cd);
-            NDRX_LOG(log_debug, "my_id    [%s]",  extra_debug->my_id);
-            NDRX_LOG(log_debug, "reply_to [%s]",  extra_debug->reply_to);
-            NDRX_LOG(log_debug, "name     [%s]",  extra_debug->name);
+            if (SUCCEED!=br_net_submit_xatmi_th(p_netmsg, &finish_off))
+            {
+                FAIL_OUT(ret);
+            }
         }
-        
-        NDRX_LOG(log_debug, "ATMI message, command id=%d", 
-                gen_command->command_id);
-        
-        switch (gen_command->command_id)
+        else
         {
+            conv_cd = br_get_conv_cd(p_netmsg->call->msg_type, p_netmsg->buf, &pool);
             
-            case ATMI_COMMAND_TPCALL:
-            case ATMI_COMMAND_EVPOST:
-            case ATMI_COMMAND_CONNECT:
-                NDRX_LOG(log_debug, "tpcall or connect");
-                /* If this is a call, then we should append caller address */
-                if (SUCCEED!=br_tpcall_pushstack((tp_command_call_t *)gen_command))
+            /* So here we have the flow 
+             * XATMI main thread reads the socket => 
+             * Sends to generic thread of the pool => Sends to conv thread 
+             */
+            if (FAIL!=conv_cd)
+            {
+                NDRX_LOG(log_debug, "conv_cd = %d - submitting to thread pool", 
+                        conv_cd);
+                
+                if (SUCCEED!=thpool_add_work(G_bridge_cfg.cnvthpools[pool],
+                       (void*)br_net_submit_xatmi_th, 
+                       (void *)p_netmsg))
                 {
                     FAIL_OUT(ret);
                 }
-                /* Call service */
-                NDRX_LOG(log_debug, "About to call service...");
-                ret=br_submit_to_service((tp_command_call_t *)gen_command, call->len, NULL);
-                break;
-             
-            /* tpreply & conversation goes via reply Q */
-            case ATMI_COMMAND_TPREPLY:
-            case ATMI_COMMAND_CONVDATA:
-            case ATMI_COMMAND_CONNRPLY:
-            case ATMI_COMMAND_DISCONN:
-            case ATMI_COMMAND_CONNUNSOL:
-            case ATMI_COMMAND_CONVACK:
-            case ATMI_COMMAND_SHUTDOWN:
-                /* TODO: So this is reply... we should pop the stack and decide 
-                 * where to send the message, either to service replyQ
-                 * or other node 
-                 */
-                NDRX_LOG(log_debug, "Reply back to caller/bridge");
-                ret = br_submit_reply_to_q((tp_command_call_t *)gen_command, call->len, NULL);
-                break;
-            case ATMI_COMMAND_TPFORWARD:
-                /* not used */
-                break;
-#if 0
-            case ATMI_COMMAND_CONVDATA:
-                
-                break;
-            case ATMI_COMMAND_CONNRPLY:
-                
-                break;
-            case ATMI_COMMAND_DISCONN:
-                
-                break;
-            case ATMI_COMMAND_CONNUNSOL:
-                
-                break;
-            case ATMI_COMMAND_CONVACK:
-                
-                break;
-            case ATMI_COMMAND_SHUTDOWN:
-                
-                break;
-#endif
+            }
+            else
+            {
+                /* Go directly */
+                if (SUCCEED!=br_net_submit_xatmi_th((void *)p_netmsg, &finish_off))
+                {
+                    FAIL_OUT(ret);
+                }
+            }
         }
+        
     }
-    else if (BR_NET_CALL_MSG_TYPE_NDRXD==call->msg_type)
+    else if (BR_NET_CALL_MSG_TYPE_NDRXD==p_netmsg->call->msg_type)
     {
-        command_call_t *icall = (command_call_t *)call->buf;
-        int call_len = call->len;
+        command_call_t *icall = (command_call_t *)p_netmsg->call->buf;
+        int call_len = p_netmsg->call->len;
         
         /* TODO: Might want to check the buffers sizes to minimum */
         NDRX_LOG(log_debug, "NDRX message, call_len=%d", call_len);
@@ -422,11 +542,16 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                             icall->command);
                 break;
         }
-        
+         
     }
 out:
-    NDRX_FREE(p_netmsg->buf);
-    NDRX_FREE(p_netmsg);
+                
+    if (!is_removed && p_netmsg->threaded)
+    {
+        NDRX_FREE(p_netmsg->buf);
+        NDRX_FREE(p_netmsg);
+    }
+
     return ret;
 }
 

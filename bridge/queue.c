@@ -287,6 +287,7 @@ out:
 
 /**
  * Thread entry wrapper...
+ * Sending message to network
  * @param buf
  * @param len
  * @param msg_type
@@ -296,9 +297,27 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
 {
     int ret = SUCCEED;
     xatmi_brmessage_t *thread_data;
+    int finish_off = FALSE;
+    char *fn = "br_got_message_from_q";
+    int conv_cd = FAIL;
+    int pool;
+    if (0==G_bridge_cfg.threadpoolsize)
+    {
+        xatmi_brmessage_t thread_data_stat;
+        
+        NDRX_LOG(log_debug, "%s: single thread mode", fn);
+        thread_data_stat.threaded=FALSE;
+        thread_data_stat.buf = buf;
+        thread_data_stat.len = len;
+        thread_data_stat.msg_type = msg_type;
+        
+        return br_got_message_from_q_th((void *)&thread_data_stat, &finish_off);  /* <<<< RETURN!!!! */
+    }
+    
+    NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker", fn);
     
     thread_data = NDRX_MALLOC(sizeof(xatmi_brmessage_t));
-    
+
     if (NULL==thread_data)
     {
         int err = errno;
@@ -311,16 +330,39 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
     }
     
     thread_data->buf = ndrx_memdup(buf, len);
-    
+    thread_data->threaded=TRUE;
     
     
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    if (SUCCEED!=thpool_add_work(G_bridge_cfg.thpool, (void*)br_got_message_from_q_th, 
-            (void *)thread_data))
+    conv_cd= br_get_conv_cd(msg_type, buf, &pool);
+    
+    /* We run in thread pool mode */
+    
+    if (FAIL!=conv_cd)
+    {    
+        NDRX_LOG(log_debug, "Conversational thread pool, cd = %d, "
+                "submitting to pool #%d", conv_cd, pool);
+        
+        /* Go conversational */
+        if (SUCCEED!=thpool_add_work(G_bridge_cfg.cnvthpools[pool],
+                (void*)br_got_message_from_q_th, 
+                (void *)thread_data))
+        {
+            FAIL_OUT(ret);
+        }   
+    }
+    else
     {
-        FAIL_OUT(ret);
+        NDRX_LOG(log_debug, "Non conversational thread poo");
+        /* Non conversational */
+        if (SUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
+                (void*)br_got_message_from_q_th, 
+                (void *)thread_data))
+        {
+            FAIL_OUT(ret);
+        }
     }
 out:
             
@@ -441,64 +483,11 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
     }
 out:
                 
-    NDRX_FREE(p_xatmimsg->buf);
-    NDRX_FREE(p_xatmimsg);
-    
-    return ret;
-}
-
-/**
- * Process any stuff we have in queue!
- * @return 
- */
-public int br_run_queue(void)
-{
-    int ret=SUCCEED;
-    char *fn="br_run_queue";
-    in_msg_t *elt = NULL;
-    in_msg_t *tmp = NULL;
-    
-    NDRX_LOG(log_debug, "%s - enter", fn);
-    
-    DL_FOREACH_SAFE(M_in_q, elt, tmp)
+    if (p_xatmimsg->threaded)
     {
-        /* Check the time-out
-         * TODO: Support for TPNOTIME!!!!
-         */
-        if (ndrx_timer_get_delta_sec(&elt->trytime) >=G_atmi_env.time_out)
-        {
-            NDRX_LOG(log_warn, "Dropping message of type %d due to "
-                    "time-out condition!", elt->pack_type);
-            DL_DELETE(M_in_q, elt);
-            NDRX_FREE(elt);
-        }
-        else
-        {
-            /* Process it only not sure about error handling... generally we ignore the error */
-            switch (elt->pack_type)
-            {
-                /* WARNING!!!! POSSIBLE MEM LEAK HERE!!!! */
-                case PACK_TYPE_TONDRXD:
-                    br_submit_to_ndrxd((command_call_t *)elt->buffer, elt->len, elt);
-                    break;
-                case PACK_TYPE_TOSVC: 
-                    br_submit_to_service((tp_command_call_t *)elt->buffer, elt->len, elt);
-                    break;
-                case PACK_TYPE_TORPLYQ:
-                    br_submit_reply_to_q((tp_command_call_t *)elt->buffer, elt->len, elt);
-                    break;
-                default:
-                    NDRX_LOG(log_error, "Unknown queued message type %d",
-                            elt->pack_type);
-                    FAIL_OUT(ret);
-                    break;
-            }
-        }
+        NDRX_FREE(p_xatmimsg->buf);
+        NDRX_FREE(p_xatmimsg);
     }
     
-out:    
-    NDRX_LOG(log_debug, "%s - return", fn);
-    
     return ret;
 }
-

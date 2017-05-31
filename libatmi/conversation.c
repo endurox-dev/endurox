@@ -69,6 +69,9 @@
         }\
     } \
     while (0)
+
+
+/* #define CONV_USE_ACK 1 */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -581,7 +584,7 @@ private int send_ack(tp_conversation_control_t *conv, long flags)
 {
 #if CONV_USE_ACK
     int ret=SUCCEED;
-    tp_command_generic_t ack;
+    tp_conv_ack_t ack;
     char fn[]="get_ack";
     
     memset(&ack, 0, sizeof(ack));
@@ -617,7 +620,7 @@ public int get_ack(tp_conversation_control_t *conv, long flags)
 #if CONV_USE_ACK
     int ret=SUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
-    tp_command_generic_t *ack = (tp_command_generic_t *)buf;
+    tp_conv_ack_t *ack = (tp_conv_ack_t *)buf;
     long rply_len;
     unsigned prio;
 
@@ -630,7 +633,7 @@ public int get_ack(tp_conversation_control_t *conv, long flags)
     NDRX_LOG(log_debug, "Waiting for ACK");
     rply_len = generic_q_receive(conv->my_listen_q, buf, sizeof(buf), &prio, flags);
     
-    if (rply_len<sizeof(tp_command_generic_t))
+    if (rply_len<sizeof(tp_conv_ack_t))
     {
         ret=FAIL;
         _TPset_error_fmt(TPESYSTEM, "Invalid ACK reply, len: %d expected %d",

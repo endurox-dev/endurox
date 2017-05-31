@@ -368,7 +368,7 @@ struct tp_conversation_control
 };
 typedef struct tp_conversation_control tp_conversation_control_t;
 
-#if 0
+
 /* Simple command to get ACK back when we have sent something */
 struct tp_conv_ack
 {
@@ -376,7 +376,6 @@ struct tp_conv_ack
     int cd;
 };
 typedef struct tp_conv_ack tp_conv_ack_t;
-#endif
 
 
 /**

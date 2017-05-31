@@ -248,6 +248,14 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         goto return_to_main;
     }
     
+    /* Needs some hint for multi-threaded bridge
+     * To choose reply thread (all convs goes to thread number = cd % workers_count
+     */
+    if (CONV_IN_CONVERSATION==p_accept_conn->status)
+    {
+        call->sysflags |=SYS_CONVERSATION;
+    }
+    
     /* send the reply back actually */
     NDRX_LOG(log_debug, "Returning to %s cd %d, timestamp %d, callseq: %u, rval: %d, rcode: %ld",
                             reply_to, call->cd, call->timestamp, call->callseq,

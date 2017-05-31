@@ -71,6 +71,14 @@ typedef struct
     char gpg_signer[33];          /* PGP Encryption signer */
     int threadpoolsize;           /* Thread pool size */
     threadpool thpool;            /* Thread pool by it self */
+    /*
+     * Each thread will have it's own "pool"
+     * consisting of one thread. Basically this is used for making a queue
+     * ended with thread. All conversational messages with some cd will be
+     * submitted to one pool only. This is needed for keeping the 
+     */
+    threadpool *cnvthpools;        /* List of conversational thread pools */
+    int cnvnrofpools;        /* Number of threadpools for conversational */
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;
@@ -105,6 +113,8 @@ typedef struct
     int len;
     exnetcon_t *net;
     int threaded; /* Do we run in threaded mode? */
+    int buf_malloced; /* buffer is malloced? */
+    cmd_br_net_call_t *call; /* Intermediate field */
 } net_brmessage_t;
 
 /*---------------------------Globals------------------------------------*/
@@ -125,6 +135,7 @@ extern int br_send_clock(void);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
+public int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
 
 #ifdef	__cplusplus
 }

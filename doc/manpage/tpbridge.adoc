@@ -109,6 +109,20 @@ This is recipients reference code for GNU PGP message encryption.
 Signer reference for GNU PGP scheme. Signer works if '-g' is enabled.
 '-s' is optional.
 
+[*-P* 'THREAD_POOL_SIZE']::
+This is number of worker threads for sending and receiving messages
+for/to network. The default size is 5. If set to 0, then multi-threading
+is disabled and all work is done by main XATMI server thread.
+
+[*-C* 'CONVERSATIONAL_THREAD_POOLS']::
+Number of thread pools used for conversational messaging. As for conversational
+the order of messages are significan, the messages are modulated by call descriptor
+and passed to conversational threads. Thus any single conversation will
+go to only on thread. The default size is 5. If not set, then value is taken
+from *-P*. If *-P* is 0 (disabled), then conversational thread pools are disabled
+too.
+
+
 EXIT STATUS
 -----------
 *0*::
