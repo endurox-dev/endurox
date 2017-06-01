@@ -152,7 +152,8 @@ static char *M_type[] = {
 "EXF_ULONG",    /* 9 */
 "EXF_UINT",     /* 10 */
 "EXF_NTIMER",   /* 11 */
-"EXF_TIMET"     /* 12 */
+"EXF_TIMET",    /* 12 */
+"EXF_USHORT"    /* 13 */
 };
 
 /* TODO: Add table_id filed, so that from each row we can identify table descriptor
@@ -301,7 +302,8 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11BD,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 31},
     {TTC, 0x11C7,  "flags",     OFSZ(tp_command_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
     {TTC, 0x11D1,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
-    {TTC, 0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_UINT,   XFLD, 1, 6},
+    {TTC, 0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
+    {TTC, 0x11DC,  "msgseq",    OFSZ(tp_command_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
     {TTC, 0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
     {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
     {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
@@ -486,6 +488,13 @@ private int x_ctonet(cproto_t *fld, char *c_buf_in,
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = TRUE;
         }    
+        case EXF_USHORT:
+        {
+            unsigned short *tmp = (unsigned short *)c_buf_in;
+            sprintf(c_buf_out, "%hu", *tmp);
+            *net_buf_len = strlen(c_buf_out);
+            conv_bcd = TRUE;
+        }    
             break;
         case EXF_NTIMER:
         {
@@ -613,6 +622,7 @@ private int x_nettoc(cproto_t *fld,
         }
         case EXF_ULONG:
         case EXF_UINT:
+        case EXF_USHORT:
         case EXF_NTIMER:
             conv_bcd = TRUE;
             break;
@@ -780,6 +790,17 @@ private int x_nettoc(cproto_t *fld,
             if (debug_get_ndrx_level() >= log_debug)
             {
                 sprintf(debug_buf, "%u", *tmp);
+            }
+        }    
+            break;
+        case EXF_USHORT:
+        {
+            unsigned short *tmp = (unsigned short *)c_buf_out;
+            sscanf(bcd_buf, "%hu", tmp);
+            
+            if (debug_get_ndrx_level() >= log_debug)
+            {
+                sprintf(debug_buf, "%hu", *tmp);
             }
         }    
             break;

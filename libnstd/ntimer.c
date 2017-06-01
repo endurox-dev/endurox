@@ -1,5 +1,5 @@
 /* 
-** Basic timer implementation.
+** Basic stop-watch implementation.
 **
 ** @file ntimer.c
 ** 
@@ -144,7 +144,7 @@ public char *ndrx_decode_msec(long t, int slot, int level, int levels)
  * @param slot
  * @return 
  */
-char *ndrx_timer_decode(ndrx_timer_t *timer, int slot)
+public char *ndrx_timer_decode(ndrx_timer_t *timer, int slot)
 {
     static char *na="N/A";
     
@@ -160,7 +160,7 @@ char *ndrx_timer_decode(ndrx_timer_t *timer, int slot)
  * Reset timer
  * @param timer
  */
-void ndrx_timer_reset(ndrx_timer_t *timer)
+public void ndrx_timer_reset(ndrx_timer_t *timer)
 {
     clock_gettime(CLOCK_MONOTONIC, &timer->t);
 }
@@ -171,7 +171,7 @@ void ndrx_timer_reset(ndrx_timer_t *timer)
  * @param timer2
  * @return diff in milliseconds
  */
-long long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2)
+public long long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2)
 {
     long long t1r = ((long long)t1->t.tv_sec)*1000 + t1->t.tv_nsec/1000000; /* Convert to milliseconds */
     long long t2r = ((long long)t2->t.tv_sec)*1000 + t2->t.tv_nsec/1000000; /* Convert to milliseconds */
@@ -185,7 +185,7 @@ long long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2)
  * @param timer
  * @return time spent in milliseconds
  */
-long ndrx_timer_get_delta(ndrx_timer_t *timer)
+public long ndrx_timer_get_delta(ndrx_timer_t *timer)
 {
     struct timespec t;
     long ret;
@@ -204,7 +204,7 @@ long ndrx_timer_get_delta(ndrx_timer_t *timer)
  * @param timer
  * @return time spent in seconds
  */
-long ndrx_timer_get_delta_sec(ndrx_timer_t *timer)
+public long ndrx_timer_get_delta_sec(ndrx_timer_t *timer)
 {
     return (ndrx_timer_get_delta(timer)/1000);
 }
@@ -216,7 +216,7 @@ long ndrx_timer_get_delta_sec(ndrx_timer_t *timer)
  * @param msec
  * @return 
  */
-void ndrx_timer_plus(ndrx_timer_t *timer, long long msec)
+public void ndrx_timer_plus(ndrx_timer_t *timer, long long msec)
 {
     if (msec < 0)
     {
@@ -244,7 +244,7 @@ void ndrx_timer_plus(ndrx_timer_t *timer, long long msec)
  * @param msec
  * @return 
  */
-void ndrx_timer_minus(ndrx_timer_t *timer, long long msec)
+public void ndrx_timer_minus(ndrx_timer_t *timer, long long msec)
 {
     if (msec < 0)
     {

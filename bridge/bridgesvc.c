@@ -279,9 +279,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             case 'P': 
                 G_bridge_cfg.threadpoolsize = atol(optarg);
                 break;
-            case 'C': 
-                G_bridge_cfg.cnvnrofpools = atol(optarg);
-                break;
             case 't': 
                 
                 if ('P'==*optarg)
@@ -308,21 +305,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
     }
     
-    if (G_bridge_cfg.cnvnrofpools <= 0)
-    {
-        G_bridge_cfg.cnvnrofpools = G_bridge_cfg.threadpoolsize;
-    }
-    
-    if (0==G_bridge_cfg.threadpoolsize && G_bridge_cfg.cnvnrofpools > 0)
-    {
-        NDRX_LOG(log_error, " ERROR! -C (number of conv threadpools) cannot be "
-                "set unless -P (threadpools size) - defaulting cnv to 0");
-        G_bridge_cfg.cnvnrofpools = 0;
-    }
-    
     NDRX_LOG(log_info, "Threadpool size set to: %d", G_bridge_cfg.threadpoolsize);
-    NDRX_LOG(log_info, "Conversational thread pool size set to: %d", 
-            G_bridge_cfg.cnvnrofpools);
     
     /* Check configuration */
     if (FAIL==G_bridge_cfg.nodeid)
@@ -402,32 +385,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         FAIL_OUT(ret);
     }
     
-    /* 
-     * make pool for cnvthpool - the same number of threads as for 
-     * standard pool. But we will need a new flag to override the size of
-     * Conv threads.
-     */
-    
-    G_bridge_cfg.cnvthpools = NDRX_CALLOC(G_bridge_cfg.cnvnrofpools, 
-                            sizeof(threadpool));
-    if (NULL==G_bridge_cfg.cnvthpools)
-    {
-        NDRX_LOG(log_error, "Failed to allocate %d thread pools for conversational: %s", 
-            G_bridge_cfg.cnvnrofpools, strerror(errno));
-        FAIL_OUT(ret);
-    }
-
-    for (i=0; i<G_bridge_cfg.cnvnrofpools; i++)
-    {
-        NDRX_LOG(log_info, "Init conv thread pool #%d", i);
-        if (NULL==(G_bridge_cfg.cnvthpools[i] = thpool_init(1)))
-        {
-            NDRX_LOG(log_error, "Failed to initialize conv thread pool %d!",
-                    i);
-            FAIL_OUT(ret);
-        }
-    }
-    
     M_init_ok = TRUE;
     
 out:
@@ -481,20 +438,5 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         thpool_wait(G_bridge_cfg.thpool);
         thpool_destroy(G_bridge_cfg.thpool);
         
-        for (i=0; i<G_bridge_cfg.cnvnrofpools; i++)
-        {
-            NDRX_LOG(log_info, "Terminating conversation threadpool #%d", i);
-            
-            
-            NDRX_LOG(log_info, "Adding work unit...");
-            thpool_add_work((G_bridge_cfg.cnvthpools[i]), 
-                    (void *)tp_thread_shutdown, NULL);
-            
-            NDRX_LOG(log_info, "Wait...");
-            thpool_wait(G_bridge_cfg.cnvthpools[i]);
-            
-            NDRX_LOG(log_info, "Destroy...");
-            thpool_destroy(G_bridge_cfg.cnvthpools[i]);
-        }
     }
 }

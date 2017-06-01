@@ -46,6 +46,7 @@ extern "C" {
 #include <ntimer.h>
 #include <sys/sem.h>
 #include <exhash.h>
+#include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -131,6 +132,52 @@ extern "C" {
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
+
+#define NDRX_CONF_MSGSEQ_START       65530   /* Have a high number for wrap test */    
+    
+/* Memory allocation helpers */
+    
+/**
+ * Allocate buffer, if fail set ATMI error, and goto out
+ */
+#define NDRX_SYSBUF_ALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
+{\
+    __buf = NDRX_CALLOC(1, (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE));\
+    if (NULL==__buf)\
+    {\
+        int err = errno;\
+        _TPset_error_fmt(TPEOS, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
+        NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
+        userlog("%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
+        errno = err;\
+        FAIL_OUT(__ret);\
+    }\
+    if (NULL!=__p_bufsz)\
+    {\
+        *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+    }\
+}
+    
+/**
+ * Allocate the ATMI system buffer (MALLOC mode, just a hint)
+ */
+#define NDRX_SYSBUF_MALLOC_OUT(__buf, __p_bufsz, __ret)\
+{\
+    __buf = NDRX_MALLOC((G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE));\
+    if (NULL==__buf)\
+    {\
+        int err = errno;\
+        NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
+        userlog("%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
+        errno = err;\
+        FAIL_OUT(__ret);\
+    }\
+    if (NULL!=__p_bufsz)\
+    {\
+        *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+    }\
+}
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -326,7 +373,9 @@ struct tp_command_call
     char extradata[31+1]; /* Extra char data to be passed over the call */
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
-    unsigned callseq;
+    unsigned short callseq;
+    /* message sequence for conversational over multithreaded bridges*/
+    unsigned short msgseq;
     /* call timer so that we do not operate with timed-out calls. */
     ndrx_timer_t timer;    
     
@@ -341,6 +390,22 @@ struct tp_command_call
     char data[0];
 };
 typedef struct tp_command_call tp_command_call_t;
+
+
+/**
+ * Conversational buffer by message sequence number
+ * Needed to keep the messages in memory to have them in order
+ * as the muli-threaded bridge can send messages out of the order
+ */
+typedef struct tpconv_buffer tpconv_buffer_t;
+struct tpconv_buffer
+{
+    int msgseq;
+    char *buf;
+    size_t size;        /* Allocated size.... */
+    
+    EX_hash_handle hh;         /* makes this structure hashable */
+};
 
 
 /**
@@ -360,11 +425,21 @@ struct tp_conversation_control
     mqd_t my_listen_q; /* Queue on which we are going to wait for msg */
     struct mq_attr my_q_attr; /* My listening queue attributes. */
     time_t timestamp;
-    unsigned callseq;
+    unsigned short callseq; /* Call/conv sequence number */
+    
+    /* message sequence number (from our side to their) 
+     * Basically this is message number we are sending them
+     * The other side will follow the incremental order of the messages.
+     */
+    unsigned short msgseqout;  /* Next number to send */
+    unsigned short msgseqin;  /* incoming message sequence number, expecting num */
     int rval; /* when tpreturn took a place */
     long rcode; /* when tpreturn took a place */
     long revent; /* Last event occurred at channel */
     short handshaked;
+    
+    tpconv_buffer_t *out_of_order_msgs; /* hash for out of the order messages */
+    
 };
 typedef struct tp_conversation_control tp_conversation_control_t;
 
@@ -465,6 +540,7 @@ extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
 extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
 extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 extern NDRX_API void ndrx_dump_call_struct(int lev, tp_command_call_t *call);
+extern NDRX_API unsigned short ndrx_get_next_callseq_shared(void);
 
 extern NDRX_API int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id);

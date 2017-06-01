@@ -298,8 +298,8 @@ extern "C" {
 #define EXF_UINT    10  /* Data type - unsigned */ 
 #define EXF_NTIMER  11  /* Data type - n_timer_t */ 
 #define EXF_TIMET   12  /* Data type - time_t */ 
-    
-#define EXF_MAX     12   /* Maximum suported type */
+#define EXF_USHORT  13  /* Data type - unsigned short */ 
+#define EXF_MAX     13   /* Maximum suported type */
 
 
 #define PQ_LEN                  12        /* The len of last print queue data */

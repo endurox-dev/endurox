@@ -69,7 +69,7 @@ typedef struct
     tp_command_call_t G_last_call;
     /* conversation.c */
     int conv_cd;/*=1;  first available */
-    unsigned callseq;/* = 0; */
+    /* unsigned callseq; - will be shared with tpcalls... global ...*//* = 0; */ 
     
     /* init.c */
     int G_atmi_is_init;/* = 0;  Is environment initialised */

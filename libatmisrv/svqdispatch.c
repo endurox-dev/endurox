@@ -489,7 +489,7 @@ public int sv_serve_connect(int *service, int *status)
     *status=SUCCEED;
     G_atmisrv_reply_type = 0;
     
-    NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %u",
+    NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %hu",
                                         call->cd, call->timestamp, call->callseq);
     
     call_age = ndrx_timer_get_delta_sec(&call->timer);

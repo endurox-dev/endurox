@@ -59,6 +59,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 EX_SPIN_LOCKDECL(M_cd_lock);
+EX_SPIN_LOCKDECL(M_callseq_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 private void unlock_call_descriptor(int cd, short status);
@@ -90,7 +91,7 @@ public void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
         NDRX_LOG(lev, "extradata=[%s]", call->extradata);
         NDRX_LOG(lev, "flags=[%p]", call->flags);
         NDRX_LOG(lev, "timestamp=[%lu]", call->timestamp);
-        NDRX_LOG(lev, "callseq=[%u]", call->callseq);
+        NDRX_LOG(lev, "callseq=[%hu]", call->callseq);
         NDRX_LOG(lev, "timer.tv_nsec=[%lu]", call->timer.t.tv_nsec);
         NDRX_LOG(lev, "timer.tv_sec=[%lu]", call->timer.t.tv_sec);
         NDRX_LOG(lev, "tmtxflags=[0x%x]", call->tmtxflags);
@@ -237,16 +238,33 @@ out:
 }
 
 /**
+ * Return next call sequence number
+ * The number is shared between conversational and standard call
+ * @param p_callseq ptr to return next number into
+ * @return 
+ */
+public unsigned short ndrx_get_next_callseq_shared(void)
+{
+    static volatile unsigned short shared_callseq=0;
+    
+    EX_SPIN_LOCK_V(M_callseq_lock);
+    shared_callseq++;
+    EX_SPIN_UNLOCK_V(M_callseq_lock);
+    
+    return shared_callseq;
+}
+
+/**
  * Returns free call descriptro
  * @return >0 (ok), -1 = FAIL
  */
-private int get_call_descriptor_and_lock(unsigned *p_callseq,
+private int get_call_descriptor_and_lock(unsigned short *p_callseq,
         time_t timestamp, long flags)
 {
     int start_cd = G_atmi_tls->tpcall_get_cd; /* mark where we began */
     int ret = FAIL;
-    unsigned callseq=0;
-    static volatile unsigned shared_callseq=0;
+    unsigned short callseq=0;
+    
     /* ATMI_TLS_ENTRY; - already got from caller */
     /* Lock the call descriptor giver...! So that we have common CDs 
      * over the hreads
@@ -276,10 +294,7 @@ private int get_call_descriptor_and_lock(unsigned *p_callseq,
     }
     else
     {
-        EX_SPIN_LOCK_V(M_cd_lock);
-        shared_callseq++;
-        callseq = shared_callseq;
-        EX_SPIN_UNLOCK_V(M_cd_lock);
+        callseq = ndrx_get_next_callseq_shared();
         
         ret = G_atmi_tls->tpcall_get_cd;
         *p_callseq=callseq;

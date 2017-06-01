@@ -46,6 +46,7 @@
 #include <typed_buf.h>
 
 #include "../libatmisrv/srv_int.h"
+#include "userlog.h"
 #include <thlock.h>
 #include <xa_cmn.h>
 #include <tperror.h>
@@ -80,7 +81,8 @@ int M_had_open_con = FALSE;
 /*---------------------------Prototypes---------------------------------*/
 private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr);
 private mqd_t open_reply_q(char *q, struct mq_attr *q_attr);
-
+private void rcv_hash_delall(tp_conversation_control_t *conv);
+private char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq);
 /**
  * Fix queue attributes to match the requested mode.
  * @param conv
@@ -234,12 +236,17 @@ public int accept_connection(void)
     conv->cd = G_atmi_tls->G_last_call.cd - MAX_CONNECTIONS;
     /* Change the status, that we have connection open */
     conv->status = CONV_IN_CONVERSATION;
+    conv->msgseqout = NDRX_CONF_MSGSEQ_START;
+    conv->msgseqin = NDRX_CONF_MSGSEQ_START;
+    conv->callseq = G_atmi_tls->G_last_call.callseq;
     /* 1. Open listening queue */
-    sprintf(conv->my_listen_q_str, NDRX_CONV_SRV_Q,
+    snprintf(conv->my_listen_q_str, sizeof(conv->my_listen_q_str), 
+                    NDRX_CONV_SRV_Q,
                     G_atmi_tls->G_atmi_conf.q_prefix, 
                     G_atmi_tls->G_last_call.my_id, 
                     G_atmi_tls->G_last_call.cd-MAX_CONNECTIONS,
-                    G_atmi_tls->G_atmi_conf.my_id/* In accepted connection we put their id */
+                    /* In accepted connection we put their id */
+                    G_atmi_tls->G_atmi_conf.my_id
                     );
     
     /* TODO: Firstly we should open the queue on which to listen right? */
@@ -259,10 +266,12 @@ public int accept_connection(void)
     
     if (0!=G_atmi_tls->G_last_call.callstack[0])
     {
-        br_dump_nodestack(G_atmi_tls->G_last_call.callstack, "Incoming conversation from bridge,"
-                                           "using first node from node stack");
+        br_dump_nodestack(G_atmi_tls->G_last_call.callstack, 
+                "Incoming conversation from bridge,"
+                "using first node from node stack");
 #ifndef EX_USE_POLL
-        sprintf(their_qstr, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, 
+        snprintf(their_qstr, sizeof(their_qstr),NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, 
                 (int)G_atmi_tls->G_last_call.callstack[0]);
 #else
         /* poll() mode: */
@@ -285,7 +294,7 @@ public int accept_connection(void)
     else
     {
         /* Local conversation  */
-        strcpy(their_qstr, conv->reply_q_str);
+        NDRX_STRCPY_SAFE(their_qstr, conv->reply_q_str);
     }
     
     NDRX_LOG(log_debug, "Connecting to: [%s]", their_qstr);
@@ -434,6 +443,9 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
          */
         atmi_xa_cd_unreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), conv->cd);
     }
+    
+    
+    rcv_hash_delall(conv); /* Remove all buffers if left... */
     
     memset(conv, 0, sizeof(*conv));
     
@@ -766,8 +778,9 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     
 
     /* Format the conversational reply queue */
-    sprintf(reply_qstr, NDRX_CONV_INITATOR_Q, G_atmi_tls->G_atmi_conf.q_prefix, 
-            G_atmi_tls->G_atmi_conf.my_id, cd);
+    snprintf(reply_qstr, sizeof(reply_qstr), NDRX_CONV_INITATOR_Q, 
+            G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd);
+    
     NDRX_LOG(log_debug, "%s/%s/%d reply_qstr: [%s]",
 		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd, reply_qstr);
     strcpy(call->reply_to, reply_qstr);
@@ -798,8 +811,8 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     /* Generate flags for target now. */
     CONV_TARGET_FLAGS(call);
     call->timestamp = timestamp;
-    G_atmi_tls->callseq++;
-    call->callseq = G_atmi_tls->callseq;
+    call->callseq = ndrx_get_next_callseq_shared();
+    call->msgseq = NDRX_CONF_MSGSEQ_START; /* start with NDRX_CONF_MSGSEQ_START */
     
     /* Add global transaction info to call (if needed & tx available) */
     if (!(call->flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
@@ -812,7 +825,8 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     /* Reset call timer...! */
     ndrx_timer_reset(&call->timer);
 
-    NDRX_LOG(log_debug, "Sending request to: %s", send_qstr);
+    NDRX_LOG(log_debug, "Sending request to: %s, callseq: %hu", 
+            send_qstr, call->callseq);
 
     /* And then we call out the service. */
     if (SUCCEED!=(ret=generic_q_send(send_qstr, (char *)call, data_len, flags)))
@@ -837,7 +851,9 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     {
         conv->status = CONV_IN_CONVERSATION;
         conv->timestamp = timestamp;
-        conv->callseq = G_atmi_tls->callseq;
+        conv->callseq = call->callseq;
+        conv->msgseqout = call->msgseq;
+        conv->msgseqin = NDRX_CONF_MSGSEQ_START; /* start with 1 */
 
         /* Save the flags, alright? */
         conv->flags |= (flags & TPSENDONLY);
@@ -847,6 +863,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
 
     /* So now, we shall receive back handshake, by receving private queue 
      * id on which we can reach the server!
+     * TODO: We might want to move to dynamic memory..?
      */
     memset(buf, 0, sizeof(buf));
 
@@ -903,8 +920,98 @@ out:
 }
 
 /**
- * TODO: Validate invalid queue.
- * TODO: Check cd - is it open?
+ * Add message to hash
+ * If remove message if exists...
+ * @param conv
+ * @param msgseq
+ * @param buf
+ * @return 
+ */
+private int rcv_hash_add(tp_conversation_control_t *conv,
+           unsigned short msgseq, char *buf)
+{
+    
+    int ret = SUCCEED;
+    char *tmp;
+    tpconv_buffer_t * el = NDRX_CALLOC(1, sizeof(tpconv_buffer_t));
+    
+    if (NULL!=(tmp=rcv_hash_ck(conv, msgseq)))
+    {
+        NDRX_LOG(log_error, "Dropping existing out of order conversation "
+                "msgseq: %hu, ptr: %p",
+                msgseq, tmp);
+        userlog("Dropping existing out of order conversation "
+                "msgseq: %hu, ptr: %p",
+                msgseq, tmp);
+        NDRX_FREE(tmp);
+    }
+    
+    if (NULL==el)
+    {
+        _TPset_error_fmt(TPESYSTEM, "%s: Failed to allocate mem: %s", 
+                __func__, strerror(errno));
+        FAIL_OUT(ret);
+    }
+    
+    el->msgseq = (int)msgseq;
+    el->buf = buf;
+    
+    EXHASH_ADD_INT( conv->out_of_order_msgs, msgseq, el );
+    
+out:
+                                
+    return ret;
+}
+
+/**
+ * Check the message within hash, if found, remove hash entry
+ * @param conv
+ * @param msgseq
+ * @return NULL if item not found, buffer if found
+ */
+private char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq)
+{
+    char *ret = NULL;
+    tpconv_buffer_t * el;
+    int seq =  (int)msgseq;
+    
+    EXHASH_FIND_INT( conv->out_of_order_msgs, &seq, el);
+    
+    if (NULL!=el)
+    {
+        ret = el->buf;
+        EXHASH_DEL(conv->out_of_order_msgs, el);
+        NDRX_FREE(el);
+    }
+    
+    return ret;
+}
+
+/**
+ * Delete all hash
+ * @param conv
+ * @param msgseq
+ * @return 
+ */
+private void rcv_hash_delall(tp_conversation_control_t *conv)
+{
+    tpconv_buffer_t *el = NULL;
+    tpconv_buffer_t *elt = NULL;
+    
+    /* Iterate over the hash! */
+    EXHASH_ITER(hh, conv->out_of_order_msgs, el, elt)
+    {
+         EXHASH_DEL(conv->out_of_order_msgs, el);
+         NDRX_FREE(el->buf); /* dealloc system buffer */
+         NDRX_FREE(el); /* free hash item */
+    }
+    
+}
+
+/**
+ * Receive message from conversation
+ * TODO: Add stopwatch for timeout...
+ * 
  * @param cd
  * @param data
  * @param len
@@ -920,16 +1027,22 @@ public int _tprecv (int cd, char * *data,
     char fn[] = "_tprecv";
     long rply_len;
     unsigned prio;
-    char rply_buf[ATMI_MSG_MAX_SIZE];
-    tp_command_call_t *rply=(tp_command_call_t *)rply_buf;
+    size_t rply_bufsz;
+    char *rply_buf; /* Allocate dynamically! */
+    tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
     int answ_ok = FALSE;
     tp_conversation_control_t *conv;
+    ndrx_timer_t t;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", fn);
 
     *revent = 0;
-    memset(rply_buf, 0, sizeof(*rply_buf));
+    
+    if (!(flags & TPNOTIME))
+    {
+        ndrx_timer_reset(&t);
+    }
     
     /* choose the connection */
     if (NULL==(conv=get_current_connection(cd)))
@@ -941,10 +1054,9 @@ public int _tprecv (int cd, char * *data,
     /* Check are we allowed to receive? */
     if (ATMI_COMMAND_CONVDATA==*command_id && conv->flags & TPSENDONLY)
     {
-        ret=FAIL;
         _TPset_error_fmt(TPEPROTO, "%s: Not allowed to receive "
                                     "because flags say: TPSENDONLY!", fn);
-        goto out;
+        FAIL_OUT(ret);
     }
 
     /* Change the attributes of the queue to match required */
@@ -953,24 +1065,49 @@ public int _tprecv (int cd, char * *data,
     {
         FAIL_OUT(ret);
     }
+    
+    /* Check the message in hash?! */
+    if (NULL!=(rply_buf = rcv_hash_ck(conv, conv->msgseqin)))
+    {
+        NDRX_LOG(log_debug, "Message with sequence already in memory: %hu - injecting",
+                conv->msgseqin);
+        rply = (tp_command_call_t *)rply_buf;
+        goto inject_message;
+    }
 
+    /* Allocate Enduro/X system buffer */
+    NDRX_SYSBUF_ALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
+    rply = (tp_command_call_t *)rply_buf;
+    
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
+
     /**
      * We will drop any answers not registered for this call
      */
     while (!answ_ok)
     {
+        long spent;
+        if (!(flags & TPNOTIME) && (spent=ndrx_timer_get_delta_sec(&t)) > G_atmi_env.time_out)
+        {
+            NDRX_LOG(log_error, "%s: call expired (spent: %ld sec, tout: %ld sec)", 
+                    __func__, spent, G_atmi_env.time_out);
+            
+            _TPset_error_fmt(TPETIME, "%s: call expired (spent: %ld sec, tout: %ld sec)", 
+                    __func__, spent, G_atmi_env.time_out);
+            
+            FAIL_OUT(ret);
+        }
+
         /* receive the reply back */
-        rply_len = generic_q_receive(conv->my_listen_q, rply_buf, sizeof(rply_buf), 
+        rply_len = generic_q_receive(conv->my_listen_q, rply_buf, rply_bufsz, 
                                         &prio, flags);
 
         
         if (GEN_QUEUE_ERR_NO_DATA==rply_len)
         {
             /* there is no data in reply, nothing to do & nothing to return */
-            ret=FAIL;
-            goto out;
+            FAIL_OUT(ret);
         }
         else if (FAIL==rply_len)
         {
@@ -986,22 +1123,50 @@ public int _tprecv (int cd, char * *data,
             {
 
                 NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
-                        "expected cd: %d, cd: %d, timestamp :%d, callseq: %u, reply from %s",
+                        "expected cd: %d, cd: %d, timestamp :%d, callseq: %hu, reply from %s",
                         conv->cd, rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
-                /* clear the attributes we got... */
+                /* clear the attributes we got... 
                 memset(rply_buf, 0, sizeof(*rply_buf));
+                 * Really need a memset?
+                 * */
                 continue; /* Wait for next message! */
+            }
+            
+inject_message:
+            /* we have an answer - prepare buffer */
+            /* Check the sequence number */
+            if (rply->msgseq!=conv->msgseqin)
+            {
+                answ_ok=FALSE;
+                NDRX_LOG(log_info, "Message out of sequence, expected: %hu, "
+                        "got: %hu - suspending to hash",
+                        conv->msgseqin, rply->msgseq);
+                
+                /* TODO: Add reply message to the hash of the waiting msgs... */
+                if (SUCCEED!=rcv_hash_add(conv, rply->msgseq, rply_buf))
+                {
+                    FAIL_OUT(ret);
+                }
+                
+                /* Realloc system buffer */
+                NDRX_SYSBUF_ALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
+                /* switch the ptrs... */
+                rply = (tp_command_call_t *)rply_buf;
+                
+                continue;
             }
             else
             {
                 answ_ok=TRUE;
+                conv->msgseqin++;
+                NDRX_LOG(log_info, "msgseq %hu received as expected", 
+                        rply->msgseq);
             }
 
             /* Send ACK? */
             if (conv->handshaked && FAIL==send_ack(conv, flags))
             {
-                ret=FAIL;
-                goto out;
+                FAIL_OUT(ret);
             }
 
             *command_id=rply->command_id;
@@ -1009,10 +1174,6 @@ public int _tprecv (int cd, char * *data,
             /* Save the last return codes */
             conv->rcode=rply->rcode;
             conv->rval=rply->rval;
-
-
-            /* TODO: check incoming type! */
-            /* we have an answer - prepare buffer */
 
             if (rply->sysflags & SYS_FLAG_REPLY_ERROR)
             {
@@ -1043,19 +1204,25 @@ public int _tprecv (int cd, char * *data,
             }
             else
             {
-                call_type = &G_buf_descr[rply->buffer_type_id];
-
-                ret=call_type->pf_prepare_incoming(call_type,
-                                rply->data,
-                                rply->data_len,
-                                data,
-                                len,
-                                flags);
-                /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
-                if (ret==FAIL)
+                NDRX_LOG(log_debug, "Buffer type id: %d", rply->buffer_type_id);
+                if (rply->data_len > 0)
                 {
-                    goto out;
+                    call_type = &G_buf_descr[rply->buffer_type_id];
+
+                    ret=call_type->pf_prepare_incoming(call_type,
+                                    rply->data,
+                                    rply->data_len,
+                                    data,
+                                    len,
+                                    flags);
+                    
+                    /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
+                    if (ret==FAIL)
+                    {
+                        goto out;
+                    }
                 }
+                
 #if 0
                 /* if all OK, then finally check the reply answer */
                 if (TPSUCCESS!=rply->rval)
@@ -1151,6 +1318,8 @@ out:
         }   
     }
 
+    NDRX_FREE(rply_buf);
+    
     return ret;
 }
 
@@ -1177,6 +1346,16 @@ private void process_unsolicited_messages(int cd)
 
 }
 
+/**
+ * Send the message to conversation
+ * @param cd
+ * @param data
+ * @param len
+ * @param flags
+ * @param revent
+ * @param command_id
+ * @return 
+ */
 public int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id)
 {
@@ -1305,12 +1484,18 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
 
     data_len+=sizeof(tp_command_call_t);
 
+    call->callseq = conv->callseq;
+    call->msgseq = conv->msgseqout;
+    
+    
     /* So here is little trick for bridge.
      * As it needs to know where reply should go, we should leave here original caller
      * reply address, but pack in different my_listen_q_str
      */
-    NDRX_LOG(log_debug, "Reply address should be: [%s] but our address is: [%s]",
-            conv->reply_q_str, conv->my_listen_q_str);
+    NDRX_LOG(log_debug, "Our address is: [%s], their reply address must be: [%s]. "
+            "Callseq: %hu, msgseq: %hu",
+            conv->my_listen_q_str, conv->reply_q_str, 
+            call->callseq, call->msgseq);
     
     strcpy(call->reply_to, conv->reply_q_str);
      
@@ -1334,7 +1519,6 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     }
 
     call->timestamp = conv->timestamp;
-    call->callseq = conv->callseq;
     
     /* Add global transaction info for sending... */
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
@@ -1363,6 +1547,11 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
         ret=FAIL;
 
         goto out;
+    }
+    else
+    {
+        /* schedule next delivery */
+        conv->msgseqout++;
     }
 
     if (conv->handshaked && SUCCEED!=get_ack(conv, flags))
@@ -1405,6 +1594,7 @@ public int _tpdiscon (int cd)
     }
 
     /* Close down then connection (We close down this only if we are server!)*/
+    
     if (FAIL==normal_connection_shutdown(conv, TRUE))
     {
         ret=FAIL;

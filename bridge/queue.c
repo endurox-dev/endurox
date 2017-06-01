@@ -336,33 +336,11 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    conv_cd= br_get_conv_cd(msg_type, buf, &pool);
-    
-    /* We run in thread pool mode */
-    
-    if (FAIL!=conv_cd)
-    {    
-        NDRX_LOG(log_debug, "Conversational thread pool, cd = %d, "
-                "submitting to pool #%d", conv_cd, pool);
-        
-        /* Go conversational */
-        if (SUCCEED!=thpool_add_work(G_bridge_cfg.cnvthpools[pool],
-                (void*)br_got_message_from_q_th, 
-                (void *)thread_data))
-        {
-            FAIL_OUT(ret);
-        }   
-    }
-    else
+    if (SUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
+            (void*)br_got_message_from_q_th, 
+            (void *)thread_data))
     {
-        NDRX_LOG(log_debug, "Non conversational thread poo");
-        /* Non conversational */
-        if (SUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
-                (void*)br_got_message_from_q_th, 
-                (void *)thread_data))
-        {
-            FAIL_OUT(ret);
-        }
+        FAIL_OUT(ret);
     }
 out:
             

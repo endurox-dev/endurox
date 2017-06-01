@@ -71,14 +71,6 @@ typedef struct
     char gpg_signer[33];          /* PGP Encryption signer */
     int threadpoolsize;           /* Thread pool size */
     threadpool thpool;            /* Thread pool by it self */
-    /*
-     * Each thread will have it's own "pool"
-     * consisting of one thread. Basically this is used for making a queue
-     * ended with thread. All conversational messages with some cd will be
-     * submitted to one pool only. This is needed for keeping the 
-     */
-    threadpool *cnvthpools;        /* List of conversational thread pools */
-    int cnvnrofpools;        /* Number of threadpools for conversational */
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;

@@ -111,7 +111,11 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     call->cd = last_call->cd;
 
     if (CONV_IN_CONVERSATION==p_accept_conn->status)
+    {
         call->cd-=MAX_CONNECTIONS;
+        call->msgseq = p_accept_conn->msgseqout;
+        p_accept_conn->msgseqout++;
+    }
 
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;

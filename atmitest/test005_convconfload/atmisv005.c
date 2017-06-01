@@ -121,11 +121,11 @@ int send_config_data(BFLDID fld, char *data)
     long revent;
     tpfree((char *)M_p_ub);
 
-    if ( !(M_p_ub = (UBFH *)tpalloc("FML", NULL, 1024)) )
+    if ( !(M_p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)) )
     {
-            NDRX_LOG(log_error, "TESTERROR: FML alloc failed");
-            ret=FAIL;
-            goto out;
+        NDRX_LOG(log_error, "TESTERROR: FML alloc failed");
+        ret=FAIL;
+        goto out;
     }
     else if (SUCCEED == CBchg(M_p_ub, fld, 0,
                                             data,
@@ -175,7 +175,7 @@ void CONVSV (TPSVCINFO *p_svc)
 
     for (i=0; i<100; i++)
     {
-        sprintf(databuf, "svc send %d", i);
+        snprintf(databuf, sizeof(databuf), "svc send %d", i);
         if (FAIL==send_config_data(T_STRING_FLD, databuf))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to send config!");
