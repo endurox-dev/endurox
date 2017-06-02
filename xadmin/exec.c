@@ -66,7 +66,7 @@ void sign_chld_handler(int sig)
     pid_t chldpid;
     int stat_loc;
     struct rusage rusage;
-    NDRX_LOG(log_warn, "Got sigchld...");
+/*    NDRX_LOG(log_warn, "Got sigchld..."); - debug might cause locking?*/
 
     memset(&rusage, 0, sizeof(rusage));
 
@@ -81,7 +81,7 @@ void sign_chld_handler(int sig)
     }
     else
     {
-        NDRX_LOG(log_error, "Got sigchild for unknown");
+/*        NDRX_LOG(log_error, "Got sigchild for unknown"); */
     }
 }
 
