@@ -299,8 +299,7 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
     xatmi_brmessage_t *thread_data;
     int finish_off = FALSE;
     char *fn = "br_got_message_from_q";
-    int conv_cd = FAIL;
-    int pool;
+    
     if (0==G_bridge_cfg.threadpoolsize)
     {
         xatmi_brmessage_t thread_data_stat;
@@ -331,8 +330,6 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
     
     thread_data->buf = ndrx_memdup(buf, len);
     thread_data->threaded=TRUE;
-    
-    
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
