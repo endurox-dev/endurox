@@ -209,7 +209,7 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     buffer_obj_t *node;
     char fn[] = "_tpalloc";
     
-    NDRX_LOG(log_debug, "%s: type=%s len=%d", fn, type, len);
+    NDRX_LOG(log_debug, "%s: type=%s len=%d", fn, (NULL==type?"NULL":type), len);
     
     if (NULL==known_type)
     {
@@ -247,7 +247,8 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     memset(node, 0, sizeof(buffer_obj_t));
 
     node->buf = ret;
-    NDRX_LOG(log_debug, "%s: type=%s len=%d allocated=%p", fn, type, len, ret);
+    NDRX_LOG(log_debug, "%s: type=%s len=%d allocated=%p", 
+            fn, (NULL==type?"NULL":type), len, ret);
     node->size = len;
     
     node->type_id = usr_type->type_id;
