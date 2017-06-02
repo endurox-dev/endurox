@@ -315,6 +315,9 @@ int thpool_freethreads_nr(thpool_* thpool_p) {
  */
 static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p, int id){
 	
+	pthread_attr_t pthread_custom_attr;
+	pthread_attr_init(&pthread_custom_attr);
+
 	*poolthread_p = (struct poolthread*)malloc(sizeof(struct poolthread));
 	if (poolthread_p == NULL){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for thread\n");
@@ -324,7 +327,10 @@ static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p
 	(*poolthread_p)->thpool_p = thpool_p;
 	(*poolthread_p)->id       = id;
 
-	pthread_create(&(*poolthread_p)->pthread, NULL, (void *)poolthread_do, (*poolthread_p));
+	/* have some stack space... */
+	pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+	pthread_create(&(*poolthread_p)->pthread, &pthread_custom_attr,
+			(void *)poolthread_do, (*poolthread_p));
 	pthread_detach((*poolthread_p)->pthread);
 	
 }
