@@ -17,6 +17,8 @@
 
 #cmakedefine HAVE_SYNC @HAVE_SYNC@
 
+#cmakedefine HAVE_GETLINE @HAVE_GETLINE@
+
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 
 #cmakedefine EX_USE_POLL @EX_USE_POLL@
