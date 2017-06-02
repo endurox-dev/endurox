@@ -215,7 +215,8 @@ public char * _tpalloc (typed_buffer_descr_t *known_type,
     {
         if (NULL==(usr_type = get_buffer_descr(type, subtype)))
         {
-            _TPset_error_fmt(TPEOTYPE, "Unknown type (%s)/subtype(%s)", type, subtype);
+            _TPset_error_fmt(TPEOTYPE, "Unknown type (%s)/subtype(%s)", 
+                    (NULL==type?"NULL":type), (NULL==subtype?"NULL":subtype));
             ret=NULL;
             goto out;
         }
