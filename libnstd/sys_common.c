@@ -294,6 +294,9 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     
 #ifdef EX_OS_FREEBSD
     snprintf(cmd, sizeof(cmd), "ps -auwwx");
+#elif EX_OS_DARWIN
+    /* we need full username instead of uid in output...*/
+    snprintf(cmd, sizeof(cmd), "ps -je");
 #else
     snprintf(cmd, sizeof(cmd), "ps -ef");
 #endif
