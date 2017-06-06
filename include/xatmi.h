@@ -112,6 +112,9 @@ extern "C" {
  * as it is local
  */
 #define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld" /* pfx, name, pid, context id*/
+/* client rply q parse  */
+#define NDRX_CLT_QREPLY_PARSE "%s clt reply %s %d %ld" /* pfx, name, pid, context_id*/
+    
 #define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /* Prefix for sanity check */
 #define NDRX_QTYPE_CLTRPLY  5                   /* Client Reply Q */
 #define NDRX_CLT_QREPLY_CHK   ",clt,reply," /* (verify that it is reply q) */

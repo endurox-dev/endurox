@@ -1255,7 +1255,7 @@ public int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
         FAIL_OUT(ret);
     }
        
-    if (SUCCEED!=_tpnotify(clientid, &myid, data, len, flags,
+    if (SUCCEED!=_tpnotify(clientid, &myid, NULL, data, len, flags,
             myid.nodeid, NULL, NULL, NULL, 0L))
     {
         NDRX_LOG(log_error, "_tpnotify - failed!");

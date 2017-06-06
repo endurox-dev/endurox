@@ -47,6 +47,7 @@
 
 #include "../libatmisrv/srv_int.h"
 #include "ndrxd.h"
+#include "userlog.h"
 #include <thlock.h>
 #include <xa_cmn.h>
 #include <atmi_shm.h>
@@ -78,6 +79,7 @@
  * @return 
  */
 public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
+        char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
         int dest_node, char *usrname,  char *cltname, char *nodeid, /* RFU */
         int ex_flags)
@@ -126,6 +128,11 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
 #endif
         
         is_bridge=TRUE;
+    }
+    else if (NULL!=cltq)
+    {
+        /* We have Q build already */
+        NDRX_STRCPY_SAFE(send_q, cltq);
     }
     else
     {
@@ -420,6 +427,69 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
     int typ;
+    TPMYID myid;
+    ndrx_qdet_t qdet;
+    CLIENTID cltid;
+    regex_t regexp_nodeid;
+    int     regexp_nodeid_comp = FALSE;
+    
+    regex_t regexp_usrname;
+    int     regexp_usrname_comp = FALSE;
+    
+    regex_t regexp_cltname;
+    int     regexp_cltname_comp = FALSE;
+    
+    /* if the username is  */
+    if (flags & TPREGEXMATCH)
+    {
+        /* Setup regexp matches (if any) */
+        
+        if (NULL!=nodeid)
+        {
+            if (SUCCEED!=ndrx_regcomp(&regexp_nodeid, nodeid))
+            {
+                _TPset_error_fmt(TPEINVAL, "Failed to compile nodeid=[%s] regexp",
+                        __func__, nodeid);
+                NDRX_LOG(log_error, "Failed to compile nodeid=[%s]", nodeid);
+                FAIL_OUT(ret);
+            }
+            else
+            {
+                regexp_nodeid_comp = TRUE;
+            }
+        }
+        
+        if (NULL!=usrname)
+        {
+            if (SUCCEED!=ndrx_regcomp(&regexp_nodeid, usrname))
+            {
+                _TPset_error_fmt(TPEINVAL, "Failed to compile usrname=[%s] regexp",
+                        __func__, nodeid);
+                NDRX_LOG(log_error, "Failed to compile usrname=[%s]", usrname);
+                FAIL_OUT(ret);
+            }
+            else
+            {
+                regexp_usrname_comp = TRUE;
+            }
+        }
+        
+        if (NULL!=cltname)
+        {
+            if (SUCCEED!=ndrx_regcomp(&regexp_nodeid, cltname))
+            {
+                _TPset_error_fmt(TPEINVAL, "Failed to compile cltname=[%s] regexp",
+                        __func__, cltname);
+                NDRX_LOG(log_error, "Failed to compile cltname=[%s]", cltname);
+                FAIL_OUT(ret);
+            }
+            else
+            {
+                regexp_cltname_comp = TRUE;
+            }
+        }
+    }
+    
     /* So list all client queues locally
      * Match them
      * Build client ID
@@ -436,6 +506,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         qlist = NULL;
     }
     
+    /* TODO: Check our node here */
     LL_FOREACH(qlist,elt)
     {
         /* currently we will match cltname only and will work on
@@ -451,10 +522,65 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
              * Build client id..
              */
             NDRX_LOG(log_debug, "Got client Q: [%s] - extract CLIENTID", elt->qname);
+            
+            /* parse q details */
+            if (SUCCEED!=ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
+            {
+                NDRX_LOG(log_error, "Failed to parse Q details!");
+                FAIL_OUT(ret);
+            }
+
+            /* TODO: Check client name */
+            
+            /* Build myid */
+            if (SUCCEED!=ndrx_myid_convert_from_qdet(&myid, &qdet, tpgetnodeid()))
+            {
+                NDRX_LOG(log_error, "Failed to build MYID from QDET!");
+                FAIL_OUT(ret);
+            }
+            
+            /* Build my_id string */
+            ndrx_myid_to_my_id_str(&myid, cltid.clientdata);
+            
+            NDRX_LOG(log_info, "Build client id string: [%s]",
+                    cltid.clientdata);
+            
+            if (SUCCEED!=_tpnotify(&cltid, &myid, elt->qname,
+                data, len, flags,  0, nodeid, usrname, cltname, 0))
+            {
+                NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
+                        cltid.clientdata, len);
+                userlog("Failed to notify [%s] with buffer len: %d", 
+                        cltid.clientdata, len);
+            }
         }
     }
     
+    /* Process cluster nodes... */
+    
+    /* TODO: Check the nodes to broadcast to 
+     * In future if we choose to route transaction via different nodes
+     * then we need to broadcast the notification to all machines.
+     */
+    
 out:
-    ndrx_string_list_free(qlist);   
+
+    ndrx_string_list_free(qlist);
+
+    if (regexp_nodeid_comp)
+    {
+        ndrx_regfree(&regexp_nodeid);
+    }
+
+    if (regexp_usrname_comp)
+    {
+        ndrx_regfree(&regexp_usrname);
+    }
+
+    if (regexp_cltname_comp)
+    {
+        ndrx_regfree(&regexp_cltname);
+    }
+
     return ret;
 }

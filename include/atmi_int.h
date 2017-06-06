@@ -609,6 +609,12 @@ extern NDRX_API int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_init
 extern NDRX_API int ndrx_myid_is_alive(TPMYID *p_myid);
 extern NDRX_API void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg);
 extern NDRX_API int ndrx_myid_convert_to_q(TPMYID *p_myid, char *rply_q, int rply_q_buflen);
+
+extern NDRX_API int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qdet, long nodeid);
+extern NDRX_API void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id);
+extern NDRX_API int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr);
+extern NDRX_API void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg);
+
 extern NDRX_API int ndrx_atmiutil_init(void);
 
 /* Base64 encode/decode with file system valid output */
@@ -627,6 +633,7 @@ extern NDRX_API int _tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
                 TPTRANID *p_tran);
 extern NDRX_API int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
+        char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
         int dest_node, char *usrname,  char *cltname, char *nodeid, /* RFU */
         int ex_flags);

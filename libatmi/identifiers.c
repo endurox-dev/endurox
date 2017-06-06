@@ -491,15 +491,62 @@ out:
     return ret;
 }
 
+
 /**
- * Parse qstr 
- * @param qdet
- * @param qstr
- * @return 
+ * Dump the MYID struct to the log
+ * @param p_myid ptr to myid
+ * @param lev debug level to print of
  */
-public int ndrx_qdet_parse_qstr(ndrx_qdet_t *qdet, char *qstr)
+public void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
 {
     
+    NDRX_LOG(lev, "=== %s ===", msg);
+    /* I */
+    NDRX_LOG(lev, "binary_name:[%s]", qdet->binary_name);
+    NDRX_LOG(lev, "pid        :%d", qdet->pid);
+    NDRX_LOG(lev, "contextid  :%ld", qdet->contextid);
+    NDRX_LOG(lev, "typ        :%d",  qdet->qtype);
+    
+    NDRX_LOG(lev, "=================");
+            
+}
+
+/**
+ * Parse client qstr 
+ * @param qdet queue details where to store
+ * @param qstr Queue string to parse
+ * @return SUCCEED
+ */
+public int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr)
+{   
+    int ret = SUCCEED;
+    int len;
+    int i;
+    char tmp[NDRX_MAX_Q_SIZE+1];
+    
+    NDRX_STRCPY_SAFE(tmp, qstr);
+    len = strlen(tmp);
+    for (i=0; i<len; i++)
+    {
+        if (NDRX_FMT_SEP==tmp[i])
+            tmp[i]=' ';
+    }
+    
+    NDRX_LOG(log_debug, "Parsing: [%s]", tmp);
+    
+    sscanf(tmp, NDRX_CLT_QREPLY_PARSE, 
+            qdet->qprefix,
+            qdet->binary_name
+            ,&(qdet->pid)
+            ,&(qdet->contextid));
+
+    
+    qdet->qtype = NDRX_QTYPE_CLTRPLY;
+    
+    ndrx_qdet_dump(log_debug, qdet, "Parsed qdet client output");
+    
+out:
+    return ret;
 }
 /**
  * Build myid from reply q. 
@@ -508,13 +555,44 @@ public int ndrx_qdet_parse_qstr(ndrx_qdet_t *qdet, char *qstr)
  * @param nodeid - Cluster node id, as q does not encode cluster id
  * @return SUCCEED/FAIL
  */
-public int ndrx_myid_convert_from_qstr(TPMYID *p_myid, char *rply_q, long nodeid)
+public int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qdet, long nodeid)
 {
     int ret = SUCCEED;
     
+    if (NDRX_QTYPE_CLTRPLY==qdet->qtype)
+    {
+        NDRX_STRCPY_SAFE(p_myid->binary_name, qdet->binary_name);
+        p_myid->contextid = qdet->contextid;
+        p_myid->pid = qdet->pid;
+        p_myid->nodeid = nodeid;
+    }
+    else
+    {
+        NDRX_LOG(log_error, "%s: Unsupported qtype for building myid: %d", 
+                __func__, qdet->qtype);
+        FAIL_OUT(ret);
+    }
     
 out:
     return ret;
+}
+
+/**
+ * Convert TPMYID to string
+ * @param p_myid
+ * @param my_id
+ * @return SUCCEED
+ */
+public void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id)
+{
+    snprintf(my_id, NDRX_MAX_ID_SIZE, NDRX_MY_ID_CLT, 
+        p_myid->binary_name,
+        p_myid->pid,
+        p_myid->contextid,
+        p_myid->nodeid
+    );
+    
+    NDRX_LOG(log_debug, "%s: built my_id: [%s]", my_id);
 }
 
 /**
