@@ -42,13 +42,13 @@ and install open source packages to local machine:
 # /opt/csw/bin/pkgutil -y -i git libxml2_dev flex bison cmake gmake
 ---------------------------------------------------------------------
 
-==== If installing GCC...
+=== If installing GCC...
 
 ---------------------------------------------------------------------
 # /opt/csw/bin/pkgutil -y -i gcc4core gcc4g++
 ---------------------------------------------------------------------
 
-==== If installing Sun Studio (on Solaris 11)...
+=== If installing Sun Studio (on Solaris 11)...
 
 - According to: https://pkg-register.oracle.com/register/product_info/6/
 
@@ -73,7 +73,7 @@ to server.
 # pkg install solarisstudio-124
 ---------------------------------------------------------------------
 
-==== If installing Sun Studio (on Solaris 10)...
+=== If installing Sun Studio (on Solaris 10)...
 
 Firstly download the "tarfile" version from Oracle, visit 
 http://www.oracle.com/technetwork/server-storage/solarisstudio/downloads/tarfiles-studio-12-4-3048109.html
@@ -102,14 +102,14 @@ Also for solaris 10 we need "ar" tool which we will use from GNU package:
 # /opt/csw/bin/pkgutil -y -i gcc4core gcc4g++
 ---------------------------------------------------------------------
 
-=== Getting the source code
+== Getting the source code
 
 Firstly we need to add "user1" under which we will perform build actions.
 For test purposes we will parepare new user for which Enduro/X will built 
 (this adds the  in the path the /opt/csw/bin. You may modify that of your needs.
 (add /opt/solarisstudio12.4/bin if Sun studio is installed)
 
-==== Adding user on Solaris 11
+=== Adding user on Solaris 11
 We add the user "user1" and also set the open file limit to 4096, by
 default it is 256 which is too low for unit testing.
 
@@ -121,7 +121,7 @@ default it is 256 which is too low for unit testing.
 # su - user1
 ---------------------------------------------------------------------
 
-==== Adding user on Solaris 10
+=== Adding user on Solaris 10
 
 ---------------------------------------------------------------------
 # useradd -d /export/home/user1 -m -s /usr/bin/bash -c "User1 User1" user1
@@ -179,12 +179,12 @@ EOF
 $ chmod +x $HOME/ndrx_home
 ---------------------------------------------------------------------
 
-=== Building the code with GCC
+== Building the code with GCC
 
 It is assumed that gcc is default compiler on the system (i.e. Oracle Studio not installed), 
 thus following cmake will pick up gcc by default:
 
-==== Solaris 11
+=== Solaris 11
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc\
@@ -193,7 +193,7 @@ $ make
 $ make install
 ---------------------------------------------------------------------
 
-==== Solaris 10
+=== Solaris 10
 
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
@@ -204,18 +204,20 @@ $ make install
 ---------------------------------------------------------------------
 
 
-=== Building the code with Solaris Studio
+== Building the code with Solaris Studio
 
 The compilation will be done in 64bit mode
 
-==== Solaris 11
+=== Solaris 11
+
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 ---------------------------------------------------------------------
 
-==== Solaris 10
+=== Solaris 10
 This assumes that GCC is installed, and "ar" from gcc will be used.
+
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar \
