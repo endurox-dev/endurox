@@ -72,8 +72,9 @@ void sign_chld_handler(int sig)
 
     if (0!=(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
     {
-        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
-                                           chldpid, stat_loc);
+/*        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
+                                           chldpid, stat_loc); - this too 
+        can cause some lockups... */
 
         /* TODO: If this is last pid, then set state in idle? */
         G_config.ndrxd_stat=NDRXD_STAT_NOT_STARTED;
