@@ -120,7 +120,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     }
 
     /* Figure out the passed in buffer */
-    if (NULL!=*odata && NULL==(outbufobj=find_buffer(*odata)))
+    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         _TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);

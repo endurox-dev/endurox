@@ -195,7 +195,7 @@ public int brd_build_refresh_msg(bridgedef_svcs_t *svcs,
     EXHASH_ITER(hh, svcs, r, rtmp)
     {
         ref->svcs[ref->count].count = r->count;
-        strcpy(ref->svcs[ref->count].svc_nm, r->svc_nm);
+        NDRX_STRCPY_SAFE(ref->svcs[ref->count].svc_nm, r->svc_nm);
         ref->svcs[ref->count].mode = mode;
         
         NDRX_LOG(log_debug, "Built refresh line: count: %d svc_nm: [%s] mode: %c",

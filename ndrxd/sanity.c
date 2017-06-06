@@ -110,27 +110,33 @@ public int do_sanity_check(void)
     {
         ndrx_timer_reset(&timer);
         /* Initialise q prefixes, +1 for skipping initial / */
-        sprintf(client_prefix, NDRX_CLT_QREPLY_PFX, G_sys_config.qprefix);
+        snprintf(client_prefix, sizeof(client_prefix), NDRX_CLT_QREPLY_PFX, 
+                G_sys_config.qprefix);
         client_prefix_len=strlen(client_prefix);
         NDRX_LOG(log_debug, "client_prefix=[%s]/%d", client_prefix, 
                             client_prefix_len);
         
-        sprintf(xadmin_prefix, NDRX_NDRXCLT_PFX, G_sys_config.qprefix);
+        snprintf(xadmin_prefix, sizeof(xadmin_prefix),
+                NDRX_NDRXCLT_PFX, G_sys_config.qprefix);
         xadmin_prefix_len=strlen(xadmin_prefix);
         NDRX_LOG(log_debug, "xadmin_prefix=[%s]/%d", xadmin_prefix, 
                             xadmin_prefix_len);
         
-        sprintf(server_prefix, NDRX_SVR_QREPLY_PFX, G_sys_config.qprefix);
+        snprintf(server_prefix, sizeof(server_prefix), NDRX_SVR_QREPLY_PFX, 
+                G_sys_config.qprefix);
         server_prefix_len=strlen(server_prefix);
         NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                             server_prefix_len);
 	
-	sprintf(cnvclt_prefix, NDRX_CONV_INITATOR_Q_PFX, G_sys_config.qprefix);
+	snprintf(cnvclt_prefix, sizeof(cnvclt_prefix), NDRX_CONV_INITATOR_Q_PFX, 
+                G_sys_config.qprefix);
+        
         cnvclt_prefix_len=strlen(cnvclt_prefix);
         NDRX_LOG(log_debug, "cnvclt_prefix=[%s]/%d", cnvclt_prefix, 
                             cnvclt_prefix_len);
 	
-	sprintf(cnvsrv_prefix, NDRX_CONV_SRV_Q_PFX, G_sys_config.qprefix);
+	snprintf(cnvsrv_prefix, sizeof(cnvsrv_prefix), NDRX_CONV_SRV_Q_PFX, 
+                G_sys_config.qprefix);
         cnvsrv_prefix_len=strlen(cnvsrv_prefix);
         NDRX_LOG(log_debug, "cnvsrv_prefix=[%s]/%d", cnvsrv_prefix, 
                             cnvsrv_prefix_len);
@@ -233,7 +239,7 @@ private void parse_q(char *qname, int is_server, char *process, pid_t *p_pid,
     char *p;
     int len;
     
-    strcpy(buf, qname);
+    NDRX_STRCPY_SAFE(buf, qname);
     
     /* We are client, thus needs to skip the context */
     if (!is_server && !is_xadmin)
@@ -276,7 +282,7 @@ private int unlink_dead_queue(char *qname)
     
     if ('/'!=qname[0])
     {
-        strcpy(q_str, "/");
+        NDRX_STRCPY_SAFE(q_str, "/");
         strcat(q_str, qname);
         p = q_str;
     }
@@ -312,7 +318,8 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
 
     if (NULL==rplyq)
     {
-        sprintf(q_str, NDRX_SVR_QREPLY, G_sys_config.qprefix, process, srv_id, pid);
+        snprintf(q_str, sizeof(q_str), NDRX_SVR_QREPLY, 
+                G_sys_config.qprefix, process, srv_id, pid);
         
         p = q_str;
         if (!ndrx_q_exists(q_str)) 
@@ -336,7 +343,8 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
         unlink_dead_queue(p);
     }
 
-    sprintf(q_str, NDRX_ADMIN_FMT, G_sys_config.qprefix, process, srv_id, pid);
+    snprintf(q_str, sizeof(q_str), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
+            process, srv_id, pid);
     /* Note - admin_q_str already contains / in front! */
     /*If exists admin queue, but process does not exists, then remove admin q too! */
 
@@ -409,7 +417,7 @@ out:
  */
 private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
 {
-    char    process[NDRX_MAX_Q_SIZE+1];
+    char process[NDRX_MAX_Q_SIZE+1];
     pid_t pid;
     /* Used for cache, so that we do not check multi threaded process
      * multiple times... */
@@ -444,7 +452,7 @@ private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
     
     /* Fill the prev stuff */
     prev_pid = pid;
-    strcpy(prev_process, process);
+    NDRX_STRCPY_SAFE(prev_process, process);
     prev_sanity_cycle = sanity_cycle;
     
     if (!ndrx_sys_is_process_running(pid, process))

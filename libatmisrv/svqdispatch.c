@@ -286,7 +286,7 @@ public int sv_serve_call(int *service, int *status)
         else
         {
             /* this must succeed */
-            outbufobj=find_buffer(request_buffer);
+            outbufobj=ndrx_find_buffer(request_buffer);
             outbufobj->autoalloc = 1; /* We have stuff autoallocated! */
             NDRX_LOG(log_debug, "Buffer=%p autoalloc=%hd", 
                     outbufobj->buf, outbufobj->autoalloc);
@@ -304,12 +304,12 @@ public int sv_serve_call(int *service, int *status)
 
         svcinfo.data = request_buffer;
         svcinfo.len = req_len;
-        strcpy(svcinfo.name, call->name);
+        NDRX_STRCPY_SAFE(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         
         /* set the client id to caller */
-        strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
+        NDRX_STRCPY_SAFE(svcinfo.cltid.clientdata, (char *)call->my_id);
         last_call = ndrx_get_G_last_call();
         memcpy(last_call, call, sizeof(tp_command_call_t));
                              /* save last call info to ATMI library
@@ -389,7 +389,7 @@ public int sv_serve_call(int *service, int *status)
         last_call->autobuf = outbufobj;
         
         /* For golang integration we need to know at service the function name */
-        strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
+        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         
         if (FAIL!=*status) /* Dot not invoke if failed! */
         {
@@ -559,7 +559,7 @@ public int sv_serve_connect(int *service, int *status)
         
         if (NULL!=request_buffer)
         {
-            last_call->autobuf=find_buffer(request_buffer);
+            last_call->autobuf=ndrx_find_buffer(request_buffer);
             last_call->autobuf->autoalloc = 1; 
         }
         else

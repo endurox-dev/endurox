@@ -110,7 +110,7 @@ private int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
  * @param ptr
  * @return NULL - buffer not found/ptr - buffer found
  */
-public buffer_obj_t * find_buffer(char *ptr)
+public buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
     MUTEX_LOCK_V(M_lock);
     {

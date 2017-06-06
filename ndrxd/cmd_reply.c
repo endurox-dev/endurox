@@ -106,7 +106,7 @@ public int simple_command_reply(command_call_t * call,
     
     /* Do reply with ATMI helper function */
     ret = generic_q_send_2(call->reply_queue, 
-            (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT);
+            (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT, 0);
     
     if (SUCCEED!=ret)
     {

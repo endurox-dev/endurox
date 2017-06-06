@@ -1231,37 +1231,67 @@ public int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
 {
     int ret=SUCCEED;
     int entry_status=SUCCEED;
+    TPMYID myid;
     API_ENTRY;
 
     if (SUCCEED!=entry_status)
     {
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }   
-    _TPset_error_msg(TPENOENT, "TODO: tpnotify: Not yet implemented.");
-    ret = FAIL;
+    
+    if (NULL==clientid)
+    {
+        NDRX_LOG(log_error, "%s: clientid is NULL!", __func__);
+        _TPset_error_msg(TPEINVAL, "clientid is NULL!");
+        
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=ndrx_myid_parse(clientid->clientdata, &myid, FALSE))
+    {
+        NDRX_LOG(log_error, "%s: Failed to parse my_id!", __func__);
+        _TPset_error_fmt(TPEINVAL, "Failed to parse: [%s]", clientid->clientdata);
+        
+        FAIL_OUT(ret);
+    }
+       
+    if (SUCCEED!=_tpnotify(clientid, &myid, data, len, flags,
+            myid.nodeid, NULL, NULL, NULL, 0L))
+    {
+        NDRX_LOG(log_error, "_tpnotify - failed!");
+        FAIL_OUT(ret);
+    }
 
 out:
+
+    NDRX_LOG(log_error, "%s returns %d", __func__, ret);
+
     return ret;
 }
 
 /**
- * STUB for tpsetunsol()
- * @param disp NULL
+ * Set handler for unsolicited messages
+ * @param disp message hander (if processing allowed) or NULL (if no delivery needed)
+ * @return previous handler
  */
 public void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
 {
     void * ret=NULL;
     int entry_status=SUCCEED;
     API_ENTRY;
-
+            
     if (SUCCEED!=entry_status)
     {
         ret=NULL;
         goto out;
-    }   
-    _TPset_error_msg(TPENOENT, "TODO: tpsetunsol: Not yet implemented.");
-    ret = NULL;
+    }
+    
+    ret = G_atmi_tls->p_unsol_handler;
+    
+    G_atmi_tls->p_unsol_handler = disp;
+    
+    NDRX_LOG(log_debug, "%s: new disp=%p old=%p", 
+            __func__, G_atmi_tls->p_unsol_handler, ret);
 
 out:
     return (void (*) (char *, long, long))ret;
@@ -1279,7 +1309,7 @@ public void _ndrx_tmunsolerr_handler (char *data, long len, long flags)
 }
 
 /**
- * Check unsoliced messages by client
+ * Check unsolicited messages by client
  * @return FAIL
  */
 public int tpchkunsol(void) 
@@ -1290,12 +1320,19 @@ public int tpchkunsol(void)
 
     if (SUCCEED!=entry_status)
     {
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }   
-    _TPset_error_msg(TPENOENT, "TODO: tpchkunsol: Not yet implemented.");
-    ret = FAIL;
+    
+    if (SUCCEED!=_tpchkunsol())
+    {
+        NDRX_LOG(log_error, "_tpchkunsol failed");
+        FAIL_OUT(ret);
+    }
 
 out:
     return ret;
 }
+
+
+
+

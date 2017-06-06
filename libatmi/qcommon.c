@@ -397,7 +397,7 @@ public int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQ
     }
     
 
-    if (NULL==(buffer_info = find_buffer(data)))
+    if (NULL==(buffer_info = ndrx_find_buffer(data)))
     {
         _TPset_error_fmt(TPEINVAL, "Buffer not known to system!");
         FAIL_OUT(ret);

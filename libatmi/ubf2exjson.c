@@ -551,7 +551,7 @@ public int typed_xcvt_json2ubf(buffer_obj_t **buffer)
 
     }
 
-    tmp_b=find_buffer((char *)newbuf_out);
+    tmp_b=ndrx_find_buffer((char *)newbuf_out);
     tmp_b->autoalloc = (*buffer)->autoalloc;
 
     /* Kill the buffers */
@@ -606,7 +606,7 @@ public int typed_xcvt_ubf2json(buffer_obj_t **buffer)
 
     strcpy(newbuf_out, tmp);
 
-    tmp_b=find_buffer((char *)newbuf_out);
+    tmp_b=ndrx_find_buffer((char *)newbuf_out);
     tmp_b->autoalloc = (*buffer)->autoalloc;
 
     /* Kill the buffers */

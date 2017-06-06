@@ -775,8 +775,8 @@ private int add_cached_svc(char *svcq, char *svcq_full)
         userlog("Failed to alloc qcache_hash_t: %s", strerror(errno));
     }
     
-    strcpy(ret->svcq, svcq);
-    strcpy(ret->svcq_full, svcq_full);
+    NDRX_STRCPY_SAFE(ret->svcq, svcq);
+    NDRX_STRCPY_SAFE(ret->svcq_full, svcq_full);
     
     EXHASH_ADD_STR( M_qcache, svcq, ret );
     
@@ -801,14 +801,13 @@ public int ndrx_get_cached_svc_q(char *q)
     string_list_t* elt = NULL;
     char svcq[NDRX_MAX_Q_SIZE+1];
     
-    strcpy(svcq, q);
+    NDRX_STRCPY_SAFE(svcq, q);
     
     if (SUCCEED==chk_cached_svc(svcq, q))
     {
         NDRX_LOG(log_info, "Got cached service: [%s]", q);
         return SUCCEED;
     }
-    
     
     qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
     

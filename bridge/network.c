@@ -248,6 +248,58 @@ out:
 }
 
 /**
+ * Dump the tpcall
+ * @param buf message received from net
+ */
+private void br_dump_tp_command_call(char *buf)
+{
+    tp_command_call_t *extra_debug = (tp_command_call_t *)buf;
+    /* Have some more debug out there: */
+
+    NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
+            extra_debug->timer.t.tv_sec,
+            extra_debug->timer.t.tv_nsec,
+            ndrx_timer_get_delta_sec(&extra_debug->timer) );
+
+    NDRX_LOG(log_debug, "callseq  %hu",   extra_debug->callseq);
+    NDRX_LOG(log_debug, "msgseq   %hu",   extra_debug->msgseq);
+    NDRX_LOG(log_debug, "cd       %d",    extra_debug->cd);
+    NDRX_LOG(log_debug, "my_id    [%s]",  extra_debug->my_id);
+    NDRX_LOG(log_debug, "reply_to [%s]",  extra_debug->reply_to);
+    NDRX_LOG(log_debug, "name     [%s]",  extra_debug->name);
+}
+
+/**
+ * Dump the tpcall
+ * @param buf message received from net
+ */
+private void br_dump_tp_notif_call(char *buf)
+{
+    tp_notif_call_t *extra_debug = (tp_notif_call_t *)buf;
+    /* Have some more debug out there: */
+
+    NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
+            extra_debug->timer.t.tv_sec,
+            extra_debug->timer.t.tv_nsec,
+            ndrx_timer_get_delta_sec(&extra_debug->timer) );
+
+    NDRX_LOG(log_debug, "callseq          %hu",   extra_debug->callseq);
+    NDRX_LOG(log_debug, "msgseq           %hu",   extra_debug->msgseq);
+    NDRX_LOG(log_debug, "cd               %d",    extra_debug->cd);
+    NDRX_LOG(log_debug, "my_id            [%s]",  extra_debug->my_id);
+    NDRX_LOG(log_debug, "reply_to         [%s]",  extra_debug->reply_to);
+    NDRX_LOG(log_debug, "destclient       [%s]",  extra_debug->destclient);
+    NDRX_LOG(log_debug, "cltname          [%s]",  extra_debug->cltname);
+    NDRX_LOG(log_debug, "cltname_isnull   [%d]",  extra_debug->cltname_isnull);
+    NDRX_LOG(log_debug, "nodeid           [%s]",  extra_debug->nodeid);
+    NDRX_LOG(log_debug, "nodeid_isnull    [%d]",  extra_debug->nodeid_isnull);
+    NDRX_LOG(log_debug, "usrname          [%s]",  extra_debug->usrname);
+    NDRX_LOG(log_debug, "usrname_isnull   [%d]",  extra_debug->usrname_isnull);
+}
+
+
+
+/**
  * Bridge have received message.
  * Got message from Network.
  * But we have a problem here, as multiple threads are doing receive, there
@@ -390,21 +442,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
     if (BR_NET_CALL_MSG_TYPE_ATMI==p_netmsg->call->msg_type)
     {
         tp_command_generic_t *gen_command = (tp_command_generic_t *)p_netmsg->call->buf;
-        tp_command_call_t *extra_debug = (tp_command_call_t *)p_netmsg->call->buf;
-        /* Have some more debug out there: */
-            
-        NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
-                extra_debug->timer.t.tv_sec,
-                extra_debug->timer.t.tv_nsec,
-                ndrx_timer_get_delta_sec(&extra_debug->timer) );
 
-        NDRX_LOG(log_debug, "callseq  %hu",   extra_debug->callseq);
-        NDRX_LOG(log_debug, "msgseq   %hu",   extra_debug->msgseq);
-        NDRX_LOG(log_debug, "cd       %d",    extra_debug->cd);
-        NDRX_LOG(log_debug, "my_id    [%s]",  extra_debug->my_id);
-        NDRX_LOG(log_debug, "reply_to [%s]",  extra_debug->reply_to);
-        NDRX_LOG(log_debug, "name     [%s]",  extra_debug->name);
-        
         NDRX_LOG(log_debug, "ATMI message, command id=%d", 
                 gen_command->command_id);
         
@@ -415,6 +453,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
             case ATMI_COMMAND_EVPOST:
             case ATMI_COMMAND_CONNECT:
                 NDRX_LOG(log_debug, "tpcall or connect");
+                br_dump_tp_command_call(p_netmsg->call->buf);
                 /* If this is a call, then we should append caller address */
                 if (SUCCEED!=br_tpcall_pushstack((tp_command_call_t *)gen_command))
                 {
@@ -434,6 +473,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
             case ATMI_COMMAND_CONNUNSOL:
             case ATMI_COMMAND_CONVACK:
             case ATMI_COMMAND_SHUTDOWN:
+                br_dump_tp_command_call(p_netmsg->call->buf);
                 /* TODO: So this is reply... we should pop the stack and decide 
                  * where to send the message, either to service replyQ
                  * or other node 
@@ -443,7 +483,27 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                         p_netmsg->call->len, NULL);
                 break;
             case ATMI_COMMAND_TPFORWARD:
+                br_dump_tp_command_call(p_netmsg->call->buf);
                 /* not used */
+                break;
+            case ATMI_COMMAND_TPNOTIFY:
+                /* Call the reply Q
+                 * If this is broadcast, then we send it to broadcast server
+                 * If this is notification, then send to client proc only.
+                 */
+                NDRX_LOG(log_debug, "Sending tpnotify to client queue...");
+                br_dump_tp_notif_call(p_netmsg->call->buf);
+                
+                ret = br_submit_reply_to_q_notif((tp_notif_call_t *)gen_command, 
+                        p_netmsg->call->len, NULL);
+                
+                break;
+            case ATMI_COMMAND_BROADCAST:
+                /*
+                 * TODO: Do the transfer to broadcast server Q
+                 */
+                NDRX_LOG(log_debug, "Sending tpbroadcast to TPBROADNNN request Q...");
+                
                 break;
         }
         
@@ -481,8 +541,6 @@ out:
 
     return ret;
 }
-
-
 
 /**
  * Send message to other bridge.

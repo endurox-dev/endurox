@@ -246,7 +246,7 @@ public int build_advertise_list(void)
     char replyq[NDRX_MAX_Q_SIZE+1];
 
     /* Server admin queue */
-    sprintf(adminq, NDRX_ADMIN_FMT, G_server_conf.q_prefix,
+    snprintf(adminq, sizeof(adminq), NDRX_ADMIN_FMT, G_server_conf.q_prefix,
                                 G_server_conf.binary_name, 
                                 G_server_conf.srv_id, mypid);
     ret=add_specific_queue(adminq, 1);
@@ -255,7 +255,7 @@ public int build_advertise_list(void)
         goto out;
 
     /* Server reply queue */
-    sprintf(replyq, NDRX_SVR_QREPLY, G_server_conf.q_prefix,
+    snprintf(replyq, sizeof(replyq), NDRX_SVR_QREPLY, G_server_conf.q_prefix,
                                     G_server_conf.binary_name, 
                                     G_server_conf.srv_id, mypid);
     

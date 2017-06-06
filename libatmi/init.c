@@ -396,7 +396,7 @@ public int ndrx_load_common_env(void)
     /* Open string: */
     if (NULL!=(p=getenv(CONF_NDRX_XA_OPEN_STR)))
     {
-        strcpy(G_atmi_env.xa_open_str, p);
+        NDRX_STRCPY_SAFE(G_atmi_env.xa_open_str, p);
         NDRX_LOG(log_debug, "[%s]: XA Open String: [%s]", 
                 CONF_NDRX_XA_OPEN_STR,
                 G_atmi_env.xa_open_str);
@@ -405,14 +405,14 @@ public int ndrx_load_common_env(void)
     /* Close string: */
     if (NULL!=(p=getenv(CONF_NDRX_XA_CLOSE_STR)))
     {
-        strcpy(G_atmi_env.xa_close_str, p);
+        NDRX_STRCPY_SAFE(G_atmi_env.xa_close_str, p);
         NDRX_LOG(log_debug, "[%s]: XA Close String: [%s]", 
                 CONF_NDRX_XA_CLOSE_STR,
                 G_atmi_env.xa_close_str);
     }
     else
     {
-        strcpy(G_atmi_env.xa_close_str, G_atmi_env.xa_open_str);
+        NDRX_STRCPY_SAFE(G_atmi_env.xa_close_str, G_atmi_env.xa_open_str);
         NDRX_LOG(log_debug, "[%s]: XA Close String defaulted to: [%s]", 
                 CONF_NDRX_XA_CLOSE_STR,
                 G_atmi_env.xa_close_str);
@@ -421,7 +421,7 @@ public int ndrx_load_common_env(void)
     /* Driver lib: */
     if (NULL!=(p=getenv(CONF_NDRX_XA_DRIVERLIB)))
     {
-        strcpy(G_atmi_env.xa_driverlib, p);
+        NDRX_STRCPY_SAFE(G_atmi_env.xa_driverlib, p);
         NDRX_LOG(log_debug, "[%s]: Enduro/X XA Driver lib (.so): [%s]", 
                 CONF_NDRX_XA_DRIVERLIB,
                 G_atmi_env.xa_driverlib);
@@ -430,7 +430,7 @@ public int ndrx_load_common_env(void)
     /* Resource manager lib: */
     if (NULL!=(p=getenv(CONF_NDRX_XA_RMLIB)))
     {
-        strcpy(G_atmi_env.xa_rmlib, p);
+        NDRX_STRCPY_SAFE(G_atmi_env.xa_rmlib, p);
         NDRX_LOG(log_debug, "[%s]: Resource manager lib (.so): [%s]", 
                 CONF_NDRX_XA_RMLIB,
                 G_atmi_env.xa_rmlib);
@@ -535,9 +535,16 @@ public int ndrx_load_common_env(void)
                 CONF_NDRX_MAXSVCSRVS, G_atmi_env.maxsvcsrvs, CONF_NDRX_MAXSVCSRVS_DFLT);
     
     /* </poll() mode configuration> */
-    
-   NDRX_LOG(log_debug, "env loaded ok");
-   G_is_env_loaded = TRUE;
+
+    /* Init the util lib.. */ 
+    if (SUCCEED!=ndrx_atmiutil_init())
+    {
+       NDRX_LOG(log_error, "ndrx_atmiutil_init() failed");
+       FAIL_OUT(ret);
+    }
+   
+    NDRX_LOG(log_debug, "env loaded ok");
+    G_is_env_loaded = TRUE;
 out:
     MUTEX_UNLOCK_V(M_env_lock);
     return ret;
@@ -638,7 +645,7 @@ public int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
     ATMI_TLS_ENTRY;
     
     G_atmi_tls->G_atmi_conf.reply_q = reply_q;
-    strcpy(G_atmi_tls->G_atmi_conf.reply_q_str, reply_q_str);
+    NDRX_STRCPY_SAFE(G_atmi_tls->G_atmi_conf.reply_q_str, reply_q_str);
     if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
@@ -722,7 +729,8 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
     }
 
     /* format the name of ndrxd queue: */
-    sprintf(G_atmi_tls->G_atmi_conf.ndrxd_q_str, NDRX_NDRXD, 
+    snprintf(G_atmi_tls->G_atmi_conf.ndrxd_q_str, 
+            sizeof(G_atmi_tls->G_atmi_conf.ndrxd_q_str), NDRX_NDRXD, 
             G_atmi_tls->G_atmi_conf.q_prefix);
     NDRX_LOG(log_debug, "NDRXD queue: [%s]", G_atmi_tls->G_atmi_conf.ndrxd_q_str);
     
@@ -782,7 +790,7 @@ out:
 }
 
 /**
- * Initialise client. Not sure should this be called by server process?
+ * Initialize client. Not sure should this be called by server process?
  * Maybe... or we will create separate part for server to initialize with monitor
  * @return SUCCEED/FAIL
  */
@@ -824,7 +832,7 @@ public int tpinit (TPINIT * init_data)
     }
     else
     {
-        strcpy(conf.q_prefix, p);
+        NDRX_STRCPY_SAFE(conf.q_prefix, p);
         NDRX_LOG(log_debug, "Got prefix [%s]", conf.q_prefix);
         
     }
@@ -832,7 +840,7 @@ public int tpinit (TPINIT * init_data)
     /* Get the PID of the process */
     pid = getpid();
     
-    strcpy(read_clt_name, EX_PROGNAME);
+    NDRX_STRCPY_SAFE(read_clt_name, EX_PROGNAME);
     NDRX_LOG(log_debug, "Got PROGNAME [%s]", read_clt_name);
     
     /* Get new context id. Threading support only for clients... */
@@ -842,23 +850,23 @@ public int tpinit (TPINIT * init_data)
     /* Format my ID */
     if (FAIL==G_srv_id)
     {
-        sprintf(my_id, NDRX_MY_ID_CLT, 
+        snprintf(my_id, sizeof(my_id), NDRX_MY_ID_CLT, 
                 init_data!=NULL?init_data->cltname:read_clt_name, 
                 pid, 
                 conf.contextid, 
                 G_atmi_env.our_nodeid);
         
-        strcpy(conf.my_id, my_id);
+        NDRX_STRCPY_SAFE(conf.my_id, my_id);
     }
     else
     {
-        sprintf(my_id, NDRX_MY_ID_SRV, 
+        snprintf(my_id, sizeof(my_id), NDRX_MY_ID_SRV, 
                 init_data!=NULL?init_data->cltname:read_clt_name, 
                 G_srv_id, 
                 pid,
                 conf.contextid, /* Bug #119 server multicontext fixes... */
                 G_atmi_env.our_nodeid);
-        strcpy(conf.my_id, my_id);
+        NDRX_STRCPY_SAFE(conf.my_id, my_id);
     }
 
     NDRX_LOG(log_debug, "my_id=[%s]", conf.my_id);
@@ -869,15 +877,14 @@ public int tpinit (TPINIT * init_data)
     /* at first try to un-link existing queue */
     ndrx_mq_unlink(reply_q);
 
-    strcpy(conf.reply_q_str, reply_q);
+    NDRX_STRCPY_SAFE(conf.reply_q_str, reply_q);
     /* now try to open the queue, by default we will have blocked access */
     conf.reply_q = ndrx_mq_open_at(reply_q, O_RDONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
     if ((mqd_t)FAIL==conf.reply_q)
     {
         _TPset_error_fmt(TPEOS, "Failed to open queue [%s] errno: %s", 
                     conf.reply_q_str, strerror(errno));
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }
 
     NDRX_LOG(log_debug, "Client queue [%s] opened.", conf.reply_q_str);

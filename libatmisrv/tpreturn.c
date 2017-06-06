@@ -161,7 +161,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     if ((TPFAIL==rval || TPSUCCESS==rval) && NULL!=data)
     {
         /* try convert the data */
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             NDRX_LOG(log_error, "Err: No buffer as %p registered in system", data);
             /* set reply fail FLAG */
@@ -269,7 +269,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
      * the closest reply node... We might event not to pop the stack.
      * But each node searches for closest path, from right to left.
      */
-    if (FAIL==generic_q_send(reply_to, (char *)call, data_len, flags))
+    if (FAIL==generic_q_send(reply_to, (char *)call, data_len, flags, 0))
     {
         NDRX_LOG(log_error, "ATTENTION!! Reply to queue [%s] failed!",
                                             reply_to);
@@ -383,7 +383,7 @@ public void _tpforward (char *svc, char *data,
         _TPset_error_fmt(TPEPROTO, "tpforward no allowed for conversation server!");
     }
 
-    if (NULL==(buffer_info = find_buffer(data)))
+    if (NULL==(buffer_info = ndrx_find_buffer(data)))
     {
         _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
         ret=FAIL;
@@ -460,7 +460,7 @@ public void _tpforward (char *svc, char *data,
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
                     call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
         
-    if (SUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags)))
+    if (SUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags, 0)))
     {
         /* reply FAIL back to caller! */
         int err;

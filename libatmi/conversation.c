@@ -750,7 +750,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     if (NULL!=data)
     {
         /* fill up the details */
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
             ret=FAIL;
@@ -829,7 +829,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
             send_qstr, call->callseq);
 
     /* And then we call out the service. */
-    if (SUCCEED!=(ret=generic_q_send(send_qstr, (char *)call, data_len, flags)))
+    if (SUCCEED!=(ret=generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
     {
         int err;
         
@@ -1446,7 +1446,7 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     if (NULL!=data)
     {
         /* fill up the details */
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
             ret=FAIL;

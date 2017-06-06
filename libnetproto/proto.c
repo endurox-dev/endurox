@@ -321,6 +321,42 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, FAIL}
 };
 
+/* Converter for  tp_notif_call_t */
+#define TPN        8 /* tpnotify/tpbroadcast */
+static cproto_t M_tp_notif_call_x[] = 
+{
+    {TPN, 0x123F,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
+    {TPN, 0x1249,  "destclient",OFSZ(tp_notif_call_t,buffer_type_id),EXF_STRING,   XFLD, 1, NDRX_MAX_ID_SIZE},
+    
+    {TPN, 0x1253,  "nodeid",      OFSZ(tp_notif_call_t,nodeid),     EXF_STRING, XFLD, 0, MAXTIDENT*2},
+    {TPN, 0x125D,  "nodeid_isnull",  OFSZ(tp_notif_call_t,nodeid_isnull), EXF_INT, XFLD, 1, 1},
+    
+    {TPN, 0x1267,  "usrname",      OFSZ(tp_notif_call_t,usrname),     EXF_STRING, XFLD, 0, MAXTIDENT*2},
+    {TPN, 0x1271,  "usrname_isnull",  OFSZ(tp_notif_call_t,usrname_isnull), EXF_INT, XFLD, 1, 1},
+    
+    {TPN, 0x127B,  "cltname",      OFSZ(tp_notif_call_t,cltname),     EXF_STRING, XFLD, 0, MAXTIDENT*2},
+    {TPN, 0x1285,  "cltname_isnull",  OFSZ(tp_notif_call_t,cltname_isnull), EXF_INT, XFLD, 1, 1},
+    
+    {TPN, 0x128F,  "buffer_type_id",OFSZ(tp_notif_call_t,buffer_type_id),EXF_SHORT,   XFLD, 1, 5},
+    {TPN, 0x1299,  "reply_to",  OFSZ(tp_notif_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
+    
+    {TPN, 0x12A3,  "callstack", OFSZ(tp_notif_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
+    {TPN, 0x12AD,  "my_id",     OFSZ(tp_notif_call_t,my_id),    EXF_STRING, XFLD, 0, NDRX_MAX_ID_SIZE},
+    {TPN, 0x12B7,  "sysflags",  OFSZ(tp_notif_call_t,sysflags), EXF_LONG,   XFLD, 1, 20},
+    {TPN, 0x12C1,  "cd",        OFSZ(tp_notif_call_t,cd),       EXF_INT,    XFLD, 1, 10},
+    {TPN, 0x12CB,  "rval",      OFSZ(tp_notif_call_t,rval),     EXF_INT,    XFLD, 1, 10},
+    {TPN, 0x12D5,  "rcode",     OFSZ(tp_notif_call_t,rcode),    EXF_LONG,   XFLD, 1, 20},
+    {TPN, 0x12DF,  "flags",     OFSZ(tp_notif_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
+    {TPN, 0x12E9,  "timestamp", OFSZ(tp_notif_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
+    {TPN, 0x12F3,  "callseq",   OFSZ(tp_notif_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
+    {TPN, 0x12FD,  "msgseq",    OFSZ(tp_notif_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
+    {TPN, 0x1307,  "timer",     OFSZ(tp_notif_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
+    {TPN, 0x1311,  "data_len",  OFSZ(tp_notif_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
+    {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+                /* WARNING! Using counter offset here are length FLD offset! */
+               OFFSET(tp_notif_call_t,data_len), FAIL, NULL, OFFSET(tp_notif_call_t,buffer_type_id)},
+    {TPN, FAIL}
+};
 
 /**
  * Get the number of elements in array.
@@ -334,7 +370,8 @@ static ptinfo_t M_ptinfo[] =
     {TRS, N_DIM(Mbridge_refresh_svc_x)},
     {TBR, N_DIM(M_bridge_refresh_x)},
     {TUF, N_DIM(M_ubf_field)},
-    {TTC, N_DIM(M_tp_command_call_x)}
+    {TTC, N_DIM(M_tp_command_call_x)},
+    {TPN, N_DIM(M_tp_notif_call_x)}
 };
 
 /* Message conversion tables */
@@ -348,10 +385,6 @@ static xmsg_t M_ndrxd_x[] =
     {FAIL, FAIL}
 };
 
-
-
-/* ATMI messages: */
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 private int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
@@ -363,7 +396,7 @@ private int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 #define FIX_SIGNF(x) if ('1'==bdc_sign) *x = -1.0 * (*x);
 
 /**
- * BCD Enconding rules:
+ * BCD Encoding rules:
  * 
  * signed decimals:
  * Prefix 0 if needs to align to bytes.

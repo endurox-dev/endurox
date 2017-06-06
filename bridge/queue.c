@@ -201,7 +201,7 @@ public int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q)
     int ret=SUCCEED;
     
     if (SUCCEED!=(ret=generic_q_send(ndrx_get_G_atmi_conf()->ndrxd_q_str, 
-            (char *)call, len, TPNOBLOCK)))
+            (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TONDRXD);
@@ -245,7 +245,7 @@ public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from
     }
     
     NDRX_LOG(log_debug, "Calling service: %s", svc_q);
-    if (SUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK)))
+    if (SUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
@@ -257,7 +257,50 @@ out:
 }
 
 /**
- * Submit reply to service. We should do this via Q
+ * Send message to broadcast service
+ * @param call
+ * @param len
+ * @param from_q
+ * @return 
+ */
+public int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* from_q)
+{
+    int ret=SUCCEED;
+    char svcnm[MAXTIDENT];
+    int is_bridge = FALSE;
+    char svc_q[NDRX_MAX_Q_SIZE+1];
+    
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
+
+    if (SUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge))
+    {
+        NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
+                svcnm);
+        userlog("Failed to get local service [%s] for bridge call!", svcnm);
+        br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
+        FAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Calling broadcast server: %s", svc_q);
+    if (SUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
+    {
+        NDRX_LOG(log_error, "Failed to send message to ndrxd!");
+        br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
+    }
+    
+    /* TODO: Check the result, if called failed, then reply back with error? */
+    
+out:
+    return SUCCEED;    
+}
+
+
+/**
+ * Submit reply to service. We should do this via Q for ATMI command
+ * @param call
+ * @param len
+ * @param from_q
+ * @return 
  */
 public int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from_q)
 {
@@ -274,7 +317,41 @@ public int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from
     }
     
     NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);
-    if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK)))
+    if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
+    {
+        NDRX_LOG(log_error, "Failed to send message to %s!", reply_to);
+        br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TORPLYQ);
+        goto out;
+    }
+    
+out:
+    return SUCCEED;    
+}
+
+/**
+ * Submit reply to service. We should do this via Q for notif
+ * @param call
+ * @param len
+ * @param from_q
+ * @return 
+ */
+public int br_submit_reply_to_q_notif(tp_notif_call_t *call, int len, in_msg_t* from_q)
+{
+    char reply_to[NDRX_MAX_Q_SIZE+1];
+    int ret=SUCCEED;
+    
+    /* TODO: We have problem here, because of missing reply_to */
+    if (!from_q)
+    {
+        if (SUCCEED!=fill_reply_queue(call->callstack, call->reply_to, reply_to))
+        {
+            NDRX_LOG(log_error, "Failed to send message to ndrxd!");
+            goto out;
+        }
+    }
+    
+    NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);
+    if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to %s!", reply_to);
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TORPLYQ);
@@ -440,8 +517,21 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
                         G_shutdown_nr_got, G_shutdown_nr_wait);
 
                 break;
+            case  ATMI_COMMAND_BROADCAST:
+            case  ATMI_COMMAND_TPNOTIFY:
+                
+                NDRX_LOG(log_info, "Sending tpnotify/broadcast:");
+                ret=br_send_to_net(buf, len, BR_NET_CALL_MSG_TYPE_ATMI, 
+                        gen_command->command_id);
+                
+                if (SUCCEED!=ret)
+                {
+                    NDRX_LOG(log_error, "Failed to send reply to "
+                            "net - nothing todo");
+                    ret=SUCCEED;
+                }       
+                break;
         }
-        
     }
     else if (msg_type==BR_NET_CALL_MSG_TYPE_NDRXD)
     {
