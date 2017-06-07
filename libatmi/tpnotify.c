@@ -48,6 +48,7 @@
 #include "../libatmisrv/srv_int.h"
 #include "ndrxd.h"
 #include "userlog.h"
+#include "exregex.h"
 #include <thlock.h>
 #include <xa_cmn.h>
 #include <atmi_shm.h>
@@ -410,6 +411,56 @@ out:
     return ret;
 }
 
+
+/**
+ * Match the given node against the dispatch arguments
+ * @param nodeid_str nodeid to test (string)
+ * @param nodeid nodeid/lmid in tpbroadcast
+ * @param regexp_nodeid compiled regexp (if TPREGEXMATCH used)
+ * @param flags flags passed to tpbrodcast
+ * @return TRUE node accepted, FALSE not accepted
+ */
+private int match_nodeid(char *nodeid_str,  char *nodeid, 
+        regex_t *regexp_nodeid, long flags)
+{
+    int ret = FALSE;
+    
+    if (NULL!=nodeid)
+    {
+        if (EOS==nodeid[0])
+        {
+            NDRX_LOG(log_info, "Nodeid %s (nodeid=EOS)", nodeid_str);
+            ret = TRUE;
+        }
+        else if ((flags & TPREGEXMATCH ) && 
+                ndrx_regexec(regexp_nodeid, nodeid_str))
+        {
+            NDRX_LOG(log_info, "Nodeid %s matched local node by regexp",
+                    nodeid_str);
+            ret = TRUE;
+        }
+        else if (0==strcmp(nodeid, nodeid_str))
+        {
+            NDRX_LOG(log_info, "Nodeid %s matched by nodeid str param",
+                    nodeid_str);
+            ret = TRUE;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Nodeid %s did not match nodeid param [%s] => "
+                    "skip node for broadcast",
+                    nodeid_str, nodeid);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_info, "nodeid param NULL, local node %s matched for broadcast",
+                    nodeid_str);
+            ret = TRUE;
+    }
+    
+    return ret;
+}
 /**
  * Local broadcast, sends the message to 
  * @param nodeid NULL, empty string or regexp of cluster nodes. not used on local
@@ -438,6 +489,15 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     
     regex_t regexp_cltname;
     int     regexp_cltname_comp = FALSE;
+    char nodeid_str[16];
+    
+    int local_node_ok = FALSE;
+    int cltname_ok;
+    
+    long local_nodeid = tpgetnodeid();
+    
+    char connected_nodes[CONF_NDRX_NODEID_COUNT+1] = {EOS};
+    
     
     /* if the username is  */
     if (flags & TPREGEXMATCH)
@@ -495,73 +555,152 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
      * Build client ID
      * and run _tpnotify
      */
-      
-    /* list all queues */
-    qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
     
-    if (SUCCEED!=ret)
-    {
-        NDRX_LOG(log_error, "posix queue listing failed... continue...!");
-        ret = SUCCEED;
-        qlist = NULL;
-    }
+    /* Check our node here */
+    snprintf(nodeid_str, sizeof(nodeid_str), "%ld", local_nodeid);
     
-    /* TODO: Check our node here */
-    LL_FOREACH(qlist,elt)
+    local_node_ok=match_nodeid(nodeid_str,  nodeid,  &regexp_nodeid, flags);
+    
+    if (local_node_ok)
     {
-        /* currently we will match cltname only and will work on
-         * server & client reply qs 
-         * because server can have reply q too... as we know.
-         */
-        
-        typ = ndrx_q_type_get(elt->qname);
-        
-        if (NDRX_QTYPE_CLTRPLY==typ)
-        {
-            /* This is our client, lets broadcast to it... 
-             * Build client id..
-             */
-            NDRX_LOG(log_debug, "Got client Q: [%s] - extract CLIENTID", elt->qname);
-            
-            /* parse q details */
-            if (SUCCEED!=ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
-            {
-                NDRX_LOG(log_error, "Failed to parse Q details!");
-                FAIL_OUT(ret);
-            }
+        /* list all queues */
+        qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
 
-            /* TODO: Check client name */
-            
-            /* Build myid */
-            if (SUCCEED!=ndrx_myid_convert_from_qdet(&myid, &qdet, tpgetnodeid()))
-            {
-                NDRX_LOG(log_error, "Failed to build MYID from QDET!");
-                FAIL_OUT(ret);
-            }
-            
-            /* Build my_id string */
-            ndrx_myid_to_my_id_str(&myid, cltid.clientdata);
-            
-            NDRX_LOG(log_info, "Build client id string: [%s]",
-                    cltid.clientdata);
-            
-            if (SUCCEED!=_tpnotify(&cltid, &myid, elt->qname,
-                data, len, flags,  0, nodeid, usrname, cltname, 0))
-            {
-                NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
-                        cltid.clientdata, len);
-                userlog("Failed to notify [%s] with buffer len: %d", 
-                        cltid.clientdata, len);
-            }
+        if (SUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "posix queue listing failed... continue...!");
+            ret = SUCCEED;
+            qlist = NULL;
         }
-    }
+
+        LL_FOREACH(qlist,elt)
+        {
+            /* currently we will match cltname only and will work on
+             * server & client reply qs 
+             * because server can have reply q too... as we know.
+             */
+
+            typ = ndrx_q_type_get(elt->qname);
+
+            if (NDRX_QTYPE_CLTRPLY==typ)
+            {
+                /* This is our client, lets broadcast to it... 
+                 * Build client id..
+                 */
+                NDRX_LOG(log_debug, "Got client Q: [%s] - extract CLIENTID",
+                        elt->qname);
+
+                /* parse q details */
+                if (SUCCEED!=ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
+                {
+                    NDRX_LOG(log_error, "Failed to parse Q details!");
+                    FAIL_OUT(ret);
+                }
+
+                /* Check client name */
+                cltname_ok = FALSE;
+                
+                if (NULL!=cltname)
+                {
+                    if (EOS==cltname[0])
+                    {
+                        NDRX_LOG(log_info, "Process matched broadcast [%s] "
+                                "(cltname=EOS)", 
+                                elt->qname);
+                        cltname_ok = TRUE;
+                    }
+                    else if ((flags & TPREGEXMATCH )
+                        && ndrx_regexec(&regexp_cltname, elt->qname))
+                    {
+                        NDRX_LOG(log_info, "Process [%s] matched broadcast "
+                                "by regexp",
+                                elt->qname);
+                        cltname_ok = TRUE;
+                    }
+                    else if (0==strcmp(cltname, elt->qname))
+                    {
+                        NDRX_LOG(log_info, "Process [%s] matched by "
+                                "cltname str param",
+                                elt->qname);
+                        cltname_ok = TRUE;
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_info, "Process [%s] did not match "
+                                "cltname param [%s] => "
+                                "skip node for broadcast",
+                                elt->qname, cltname);
+                    }
+                }
+                else
+                {
+                    NDRX_LOG(log_info, "cltname param NULL, process [%s] "
+                            "matched for broadcast",
+                                elt->qname);
+                        cltname_ok = TRUE;
+                }
+                
+                if (cltname_ok)
+                {
+                    /* Build myid */
+                    if (SUCCEED!=ndrx_myid_convert_from_qdet(&myid, &qdet, local_nodeid))
+                    {
+                        NDRX_LOG(log_error, "Failed to build MYID from QDET!");
+                        FAIL_OUT(ret);
+                    }
+
+                    /* Build my_id string */
+                    ndrx_myid_to_my_id_str(&myid, cltid.clientdata);
+
+                    NDRX_LOG(log_info, "Build client id string: [%s]",
+                            cltid.clientdata);
+
+                    if (SUCCEED!=_tpnotify(&cltid, &myid, elt->qname,
+                        data, len, flags,  0, nodeid, usrname, cltname, 0))
+                    {
+                        NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
+                                cltid.clientdata, len);
+                        userlog("Failed to notify [%s] with buffer len: %d", 
+                                cltid.clientdata, len);
+                    }
+                }
+            } /* if client reply q */
+        } /* for each q */
+    } /* local node ok */
     
     /* Process cluster nodes... */
     
-    /* TODO: Check the nodes to broadcast to 
+    /* Check the nodes to broadcast to 
      * In future if we choose to route transaction via different nodes
      * then we need to broadcast the notification to all machines.
      */
+    if (SUCCEED==ndrx_shm_birdge_getnodesconnected(connected_nodes))
+    {
+        int i;
+        int len = strlen(connected_nodes);
+        for (i=0; i<len; i++)
+        {
+            /* Sending stuff to connected nodes (if any matched) */
+            snprintf(nodeid_str, sizeof(nodeid_str), "%d", 
+                    (int)connected_nodes[i]);
+            
+            if (match_nodeid(nodeid_str,  nodeid,  &regexp_nodeid, flags))
+            {
+                NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
+                        (int)connected_nodes[i]);
+
+                if (SUCCEED!=_tpnotify(NULL, NULL, elt->qname,
+                        data, len, flags, 
+                        (long)connected_nodes[i], nodeid, usrname, cltname, TPCALL_BRCALL))
+                {
+                    NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
+                            cltid.clientdata, len);
+                    userlog("Failed to notify [%s] with buffer len: %d", 
+                            cltid.clientdata, len);
+                }
+            }
+        }
+    }
     
 out:
 
@@ -584,3 +723,4 @@ out:
 
     return ret;
 }
+

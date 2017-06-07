@@ -1273,8 +1273,8 @@ out:
 }
 
 /**
- * Mark in the shm, that node is connected
- * @return 
+ * Return list of connected nodes, installed in array byte positions.
+ * @return SUCCEED/FAIL
  */
 public int ndrx_shm_birdge_getnodesconnected(char *outputbuf)
 {
@@ -1285,8 +1285,7 @@ public int ndrx_shm_birdge_getnodesconnected(char *outputbuf)
     
     if (!ndrxd_shm_is_attached(&G_brinfo))
     {
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }
     
     for (i=1; i<=CONF_NDRX_NODEID_COUNT; i++)
