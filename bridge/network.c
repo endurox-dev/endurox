@@ -502,7 +502,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                 /*
                  * TODO: Do the transfer to broadcast server Q
                  */
-                NDRX_LOG(log_debug, "Sending tpbroadcast to TPBROADNNN request Q...");
+                NDRX_LOG(log_debug, "Sending tpbroadcast() to @TPBROADNNN request Q...");
                 
                 break;
         }

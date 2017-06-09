@@ -1,5 +1,5 @@
 /* 
-** EnduroX server main entry point
+** Enduro/X server main entry point
 **
 ** @file svqdispatch.c
 ** 
@@ -346,7 +346,7 @@ public int sv_serve_call(int *service, int *status)
         {
             G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
             /* put reply address */
-            strcpy(G_shm_srv->last_reply_q, call->reply_to);
+            NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
         }
         
         /* We need to convert buffer here (if function set...) */
@@ -547,11 +547,11 @@ public int sv_serve_connect(int *service, int *status)
             svcinfo.len = 0;
         }
 
-        strcpy(svcinfo.name, call->name);
+        NDRX_STRCPY_SAFE(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         /* set the client id to caller */
-        strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
+        NDRX_STRCPY_SAFE(svcinfo.cltid.clientdata, (char *)call->my_id);
         
         
         *last_call = *call; /* save last call info to ATMI library
@@ -574,7 +574,7 @@ public int sv_serve_connect(int *service, int *status)
         svcinfo.cd+=MAX_CONNECTIONS;
         last_call->cd+=MAX_CONNECTIONS;
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
-                                               call->cd, svcinfo.cd, MAX_CONNECTIONS);
+                                        call->cd, svcinfo.cd, MAX_CONNECTIONS);
 
 
         /* At this point we should build up conversation queues
@@ -621,10 +621,10 @@ public int sv_serve_connect(int *service, int *status)
         {
             G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
             /* put reply address */
-            strcpy(G_shm_srv->last_reply_q, call->reply_to);
+            NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
         }
         /* For golang integration we need to know at service the function name */
-        strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
+        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         G_server_conf.service_array[no]->p_func(&svcinfo);
         
         /*Needs some patch for go-lang that we do not use long jumps...
@@ -780,14 +780,83 @@ public int sv_server_request(char *buf, int len)
                 ndrx_dump_call_struct(log_error, call);
             }
             break;
+        case ATMI_COMMAND_TPNOTIFY:
+        case ATMI_COMMAND_BROADCAST:
+            {
+                /* Got broadcast message, just use ATMI lib internal
+                 * dispatcher...
+                 */
+                tp_notif_call_t *notif = (tp_notif_call_t*)G_server_conf.last_call.buf_ptr;
+                char *request_buffer = NULL;
+                long req_len = 0;
+                typed_buffer_descr_t *call_type;
+                
+                NDRX_LOG(log_info, "Doing local %s...",
+                     (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"));
+                
+                /* How about prepare incoming buffer? */
+                
+                if (req_len==0 || SUCCEED==call_type->pf_prepare_incoming(call_type,
+                        notif->data,
+                        notif->data_len,
+                        &request_buffer,
+                        &req_len,
+                        0L))
+                {
+                    if (ATMI_COMMAND_TPNOTIFY==gen_command->command_id)
+                    {
+                        TPMYID myid;
+                        CLIENTID *clt;
+                        
+                        clt = (CLIENTID *)notif->destclient; /* same char arr.. */
+                        
+                        if (SUCCEED!=ndrx_myid_parse(notif->destclient, &myid, FALSE))
+                        {
+                            NDRX_LOG(log_error, "Failed to parse client: [%s]",
+                                    notif->destclient);
+                            FAIL_OUT(ret);
+                        }
+                        
+                        ret=_tpnotify((CLIENTID *)notif->destclient, /* basically clientid */
+                                &myid, 
+                                NULL, 
+                                request_buffer, 
+                                req_len, 
+                                notif->flags,
+                                myid.nodeid,
+                                (notif->usrname_isnull?NULL:notif->usrname),
+                                (notif->cltname_isnull?NULL:notif->cltname),
+                                (notif->nodeid_isnull?NULL:notif->nodeid),
+                                 0L);
+                    }
+                    else
+                    {
+                        ret=_tpbroadcast_local((notif->nodeid_isnull?NULL:notif->nodeid),
+                                (notif->usrname_isnull?NULL:notif->usrname),
+                                (notif->cltname_isnull?NULL:notif->cltname),
+                                request_buffer, req_len, notif->flags, TRUE);
+                    }
+                    
+                    if (NULL!=request_buffer)
+                    {
+                        tpfree(request_buffer);
+                    }
+                    
+                    if (SUCCEED!=ret)
+                    {
+                        NDRX_LOG(log_error, "Local notification/broadcast failed");
+                    }
+                }
+                
+            }
+            break;
         default:
             NDRX_LOG(log_error, "Unknown command ID: %hd", gen_command->command_id);
             
             /* Dump the message to log... */
             NDRX_DUMP(log_error, "Command content", buf,  len);
             
-            ret=FAIL;
-            goto out;
+            FAIL_OUT(ret);
             break;
     }
 
@@ -800,7 +869,7 @@ public int sv_server_request(char *buf, int len)
         G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
         G_shm_srv->status = NDRXD_SVC_STATUS_AVAIL;
 
-        /* update timeing */
+        /* update timing */
         /* min, if this is first time, then update directly */
         if (0==G_shm_srv->svc_succeed[service] && 0==G_shm_srv->svc_fail[service])
         {

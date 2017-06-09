@@ -1333,6 +1333,39 @@ out:
     return ret;
 }
 
+/**
+ * Broadcast the message to matched clients
+ * @param lmid optional nodeid can be NULL (matches all), emtpy (matches all), 
+ * or exact match or regexp match.
+ * @param usrname not used can be null or set or empty
+ * @param cltname client name can be NULL or empty (matches all). Or regexp match
+ * @param data tpalloc allocated buffer
+ * @param len data len
+ * @param flags flags like TPNOBLOCK and TPREGEXMATCH
+ * @return SUCCEED/FAIL
+ */
+public int tpbroadcast(char *lmid, char *usrname, char *cltname,
+  char *data,  long len, long flags)
+{
+    int ret=SUCCEED;
+    int entry_status=SUCCEED;
+    API_ENTRY;
+
+    if (SUCCEED!=entry_status)
+    {
+        FAIL_OUT(ret);
+    }   
+    
+    if (SUCCEED!=_tpbroadcast_local(lmid, usrname, cltname, 
+            data,  len, flags, 0))
+    {
+        NDRX_LOG(log_error, "_tpbroadcast_local failed");
+        FAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
 
 
 

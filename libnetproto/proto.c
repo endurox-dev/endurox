@@ -309,8 +309,6 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
                            OFFSET(tp_command_call_t,data_len), FAIL, NULL, OFFSET(tp_command_call_t,buffer_type_id)},
-    
-    
     {TTC, 0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 1, (NDRX_XID_SERIAL_BUFSIZE+1)},
     {TTC, 0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 1, 6},
     {TTC, 0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 1, 6},
@@ -355,6 +353,7 @@ static cproto_t M_tp_notif_call_x[] =
     {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                 /* WARNING! Using counter offset here are length FLD offset! */
                OFFSET(tp_notif_call_t,data_len), FAIL, NULL, OFFSET(tp_notif_call_t,buffer_type_id)},
+    {TPN, 0x1325,  "destnodeid",OFSZ(tp_notif_call_t,destnodeid),    EXF_LONG,   XFLD, 1, 20},
     {TPN, FAIL}
 };
 

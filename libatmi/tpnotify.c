@@ -96,18 +96,20 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     time_t timestamp;
     int is_bridge;
     int tpcall_cd;
+    long local_node = tpgetnodeid();
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s enter", fn);
 
     /* Might want to remove in future... but it might be dangerous!*/
     memset(call, 0, sizeof(tp_notif_call_t));
-    
+   
+    call->destnodeid = 0;
     /* Check service availability by SHM? 
-     * TODO: We might want to check the flags, the service might be marked for shutdown!
      */
     if (ex_flags & TPCALL_BRCALL)
     {
+        call->destnodeid = dest_node;
         /* If this is a bridge call, then format the bridge Q */
 #ifdef EX_USE_POLL
         {
@@ -137,7 +139,10 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
-        /* we are sending to client directly thus setup the q properly... */
+        /* we are sending to client directly thus setup the q properly... 
+         * But client could resist on different cluster node
+         * Thus we need to check their node...
+         */
         
         if (SUCCEED!=ndrx_myid_convert_to_q(p_clientid_myid, send_q, 
                 sizeof(send_q)))
@@ -145,6 +150,23 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
             _TPset_error_fmt(TPEINVAL, "Failed to translate client data [%s] to Q", 
                     clientid->clientdata);
             FAIL_OUT(ret);
+        }
+        
+        if (p_clientid_myid->nodeid!=local_node)
+        {
+            NDRX_LOG(log_info, "The client [%s] resists on another node [%ld], "
+                    "thus send in cluster", clientid->clientdata, 
+                    (long)p_clientid_myid->nodeid);
+            
+            /* Will do call in recursive way so that cluster code picks up
+             * this dispatch...
+             */
+            return _tpnotify(clientid, p_clientid_myid, 
+                        cltq, /* client q already built by broadcast */
+                        data, len, flags, 
+                        p_clientid_myid->nodeid, 
+                        usrname,  cltname, nodeid,ex_flags | TPCALL_BRCALL);
+            
         }
     }
     
@@ -472,7 +494,7 @@ private int match_nodeid(char *nodeid_str,  char *nodeid,
  * @return SUCCEED/FAIL
  */
 public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname, 
-        char *data,  long len, long flags)
+        char *data,  long len, long flags, int dispatch_local)
 {
     int ret = SUCCEED;
     string_list_t* qlist = NULL;
@@ -674,32 +696,41 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
      * In future if we choose to route transaction via different nodes
      * then we need to broadcast the notification to all machines.
      */
-    if (SUCCEED==ndrx_shm_birdge_getnodesconnected(connected_nodes))
+    if (!dispatch_local)
     {
-        int i;
-        int len = strlen(connected_nodes);
-        for (i=0; i<len; i++)
+        NDRX_LOG(log_info, "Dispatching over any connected nodes");
+        if (SUCCEED==ndrx_shm_birdge_getnodesconnected(connected_nodes))
         {
-            /* Sending stuff to connected nodes (if any matched) */
-            snprintf(nodeid_str, sizeof(nodeid_str), "%d", 
-                    (int)connected_nodes[i]);
-            
-            if (match_nodeid(nodeid_str,  nodeid,  &regexp_nodeid, flags))
+            int i;
+            int len = strlen(connected_nodes);
+            for (i=0; i<len; i++)
             {
-                NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
+                /* Sending stuff to connected nodes (if any matched) */
+                snprintf(nodeid_str, sizeof(nodeid_str), "%d", 
                         (int)connected_nodes[i]);
 
-                if (SUCCEED!=_tpnotify(NULL, NULL, elt->qname,
-                        data, len, flags, 
-                        (long)connected_nodes[i], nodeid, usrname, cltname, TPCALL_BRCALL))
+                if (match_nodeid(nodeid_str,  nodeid,  &regexp_nodeid, flags))
                 {
-                    NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
-                            cltid.clientdata, len);
-                    userlog("Failed to notify [%s] with buffer len: %d", 
-                            cltid.clientdata, len);
+                    NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
+                            (int)connected_nodes[i]);
+
+                    if (SUCCEED!=_tpnotify(NULL, NULL, elt->qname,
+                            data, len, flags, 
+                            (long)connected_nodes[i], nodeid, usrname, cltname, 
+                            TPCALL_BRCALL))
+                    {
+                        NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
+                                cltid.clientdata, len);
+                        userlog("Failed to notify [%s] with buffer len: %d", 
+                                cltid.clientdata, len);
+                    }
                 }
-            }
-        }
+            } /* for each node */
+        } /* get cluster connected nodes */
+    } /* is local dispatch? */
+    else
+    {
+        NDRX_LOG(log_info, "Skip the cluster, local dispatch only...");
     }
     
 out:
@@ -721,6 +752,8 @@ out:
         ndrx_regfree(&regexp_cltname);
     }
 
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
+    
     return ret;
 }
 

@@ -462,8 +462,11 @@ struct tp_notif_call
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;
     
+    long destnodeid; /* Dest node to which we are sending the msg */
+    
     long data_len;
     char data[0];
+    
 };
 typedef struct tp_notif_call tp_notif_call_t;
 
