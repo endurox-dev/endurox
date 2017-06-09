@@ -263,7 +263,7 @@ public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from
     
     if (ATMI_COMMAND_EVPOST==call->command_id)
     {
-        if (SUCCEED!=_get_evpost_sendq(svc_q, call->extradata))
+        if (SUCCEED!=_get_evpost_sendq(svc_q, sizeof(svc_q), call->extradata))
         {
             NDRX_LOG(log_error, "Failed figure out postage Q");
             ret=FAIL;

@@ -679,7 +679,7 @@ extern NDRX_API long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, l
 extern NDRX_API int _tppost(char *eventname, char *data, long len, long flags);
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
-extern NDRX_API int _get_evpost_sendq(char *send_q, char *extradata);
+extern NDRX_API int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata);
 
 extern NDRX_API char * atmi_base64_encode(unsigned char *data, size_t input_length, 
         size_t *output_length, char *encoded_data);

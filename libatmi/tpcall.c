@@ -439,7 +439,7 @@ public int _tpacall (char *svc, char *data,
     }
     else if (ex_flags & TPCALL_EVPOST)
     {
-        if (SUCCEED!=_get_evpost_sendq(send_q, extradata))
+        if (SUCCEED!=_get_evpost_sendq(send_q, sizeof(send_q), extradata))
         {
             NDRX_LOG(log_error, "%s: Cannot get send Q for server: [%s]", 
                     fn, extradata);
@@ -995,17 +995,11 @@ public long * _exget_tpurcode_addr (void)
  * @param extradata
  * @return 
  */
-public int _get_evpost_sendq(char *send_q, char *extradata)
+public int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata)
 {
     int ret=SUCCEED;
-    char tmp[NDRX_MAX_ID_SIZE];
-    char binary[NDRX_MAX_ID_SIZE] = {EOS};
-    int srvid = FAIL;
-    int pid = FAIL;
-    int nodeid = FAIL;
-    long contextid = FAIL;
     char fn[] = "get_evpost_sendq";
-    int i, len;
+    TPMYID myid;
     ATMI_TLS_ENTRY;
     if (NULL==extradata || EOS==extradata[0] || NULL==send_q)
     {
@@ -1016,43 +1010,29 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
     
     NDRX_LOG(log_debug, "%s: server's id=[%s]", fn, extradata);
     
-    send_q[0] = EOS;
-    
-    NDRX_STRCPY_SAFE(tmp, extradata);
-    
-    len = strlen(extradata);
-    
-    for (i=0; i<len; i++)
+    if (SUCCEED!=ndrx_myid_parse(extradata, &myid, FALSE))
     {
-        if (NDRX_FMT_SEP==tmp[i])
-            tmp[i]=' ';
+        NDRX_LOG(log_error, "Failed to parse my_id string [%s]", extradata);
+        /* Do fail? */
+        goto out;
     }
-    
-    sscanf(tmp, NDRX_MY_ID_SRV_PARSE, binary, &srvid, &pid, &contextid, &nodeid);
     
     NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d contextid=%ld nodeid=%d",
-            binary, srvid, pid, contextid, nodeid);
+            myid.binary_name, myid.srv_id, myid.pid, myid.contextid, myid.nodeid);
+   
     
-    /*check is parsed ok?*/
-    if (EOS==binary[0] || FAIL==srvid || FAIL==pid || FAIL==nodeid)
-    {
-        NDRX_LOG(log_warn, "Invalid server's my id: binary=[%s] "
-                        "srvid=%d pid=%d nodeid=%d",
-                        binary, srvid, pid, nodeid );
-    }
-    
-    if (G_atmi_env.our_nodeid!=nodeid)
+    if (G_atmi_env.our_nodeid!=myid.nodeid)
     {
         NDRX_LOG(log_debug, "Server is located on different server, "
                 "our nodeid=%d their=%d",
-                G_atmi_env.our_nodeid, nodeid);
+                G_atmi_env.our_nodeid, myid.nodeid);
 #ifdef EX_USE_POLL
         /* poll() mode: */
         {
             int is_bridge;
             char tmpsvc[MAXTIDENT+1];
 
-            sprintf(tmpsvc, NDRX_SVC_BRIDGE, nodeid);
+            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, myid.nodeid);
 
             if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &is_bridge))
             {
@@ -1062,15 +1042,16 @@ public int _get_evpost_sendq(char *send_q, char *extradata)
             }
         }
 #else
-        snprintf(send_q, sizeof(send_q), NDRX_SVC_QBRDIGE, 
-                G_atmi_tls->G_atmi_conf.q_prefix, nodeid);
+        snprintf(send_q, send_q_bufsz, NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, myid.nodeid);
 #endif
     }
     else
     {
         NDRX_LOG(log_debug, "This is local server");
-        snprintf(send_q, sizeof(send_q), NDRX_ADMIN_FMT, 
-                G_atmi_tls->G_atmi_conf.q_prefix, binary, srvid, pid);
+        snprintf(send_q, send_q_bufsz, NDRX_ADMIN_FMT, 
+                G_atmi_tls->G_atmi_conf.q_prefix, myid.binary_name, 
+                myid.srv_id, myid.pid);
     }
     
 out:
@@ -1080,5 +1061,6 @@ out:
 
     return ret;
 }
+
 
 
