@@ -267,6 +267,7 @@ add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
 add_subdirectory (libexnet)
+add_subdirectory (libxmemck)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (libps) # Platform script
