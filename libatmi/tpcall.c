@@ -732,7 +732,7 @@ public int _tpgetrply (int *cd,
         }
         else
         {
-            
+	    rply  = (tp_command_call_t *)pbuf;
             if (ATMI_COMMAND_TPNOTIFY==rply->command_id ||
                     ATMI_COMMAND_BROADCAST==rply->command_id)
             {
