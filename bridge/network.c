@@ -486,6 +486,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                 br_dump_tp_command_call(p_netmsg->call->buf);
                 /* not used */
                 break;
+            case ATMI_COMMAND_BROADCAST:
             case ATMI_COMMAND_TPNOTIFY:
                 /* Call the reply Q
                  * If this is broadcast, then we send it to broadcast server
@@ -498,13 +499,7 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                         p_netmsg->call->len, NULL);
                 
                 break;
-            case ATMI_COMMAND_BROADCAST:
-                /*
-                 * TODO: Do the transfer to broadcast server Q
-                 */
-                NDRX_LOG(log_debug, "Sending tpbroadcast() to @TPBROADNNN request Q...");
                 
-                break;
         }
         
     }

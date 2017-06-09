@@ -663,6 +663,7 @@ public int _tpgetrply (int *cd,
     /**
      * We will drop any answers not registered for this call
      */
+    rply  = (tp_command_call_t *)pbuf;
     while (!answ_ok)
     {
         /* We shall check that we do not have something in memq...
@@ -684,6 +685,10 @@ public int _tpgetrply (int *cd,
             /* delete first elem in the list */
             DL_DELETE(G_atmi_tls->memq, G_atmi_tls->memq);
             NDRX_FREE(G_atmi_tls->memq);
+            
+            /* Switch to received buffer... */
+            rply  = (tp_command_call_t *)pbuf;
+            
         }
         else
         {
@@ -732,7 +737,6 @@ public int _tpgetrply (int *cd,
         }
         else
         {
-	    rply  = (tp_command_call_t *)pbuf;
             if (ATMI_COMMAND_TPNOTIFY==rply->command_id ||
                     ATMI_COMMAND_BROADCAST==rply->command_id)
             {
