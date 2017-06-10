@@ -613,7 +613,7 @@ public int ndrx_start_idle(void)
     }
     else if (NDRXD_STAT_MALFUNCTION==G_config.ndrxd_stat)
     {
-        fprintf(stderr, "EnduroX back-end (ndrxd) malfunction - see logs!\n");
+        fprintf(stderr, "Enduro/X back-end (ndrxd) malfunction - see logs!\n");
     }
 
     return ret;

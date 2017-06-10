@@ -167,7 +167,7 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, "EnduroX back-end (ndrxd) is not running\n");
+        fprintf(stderr, "Enduro/X back-end (ndrxd) is not running\n");
         if ((mqd_t)FAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);

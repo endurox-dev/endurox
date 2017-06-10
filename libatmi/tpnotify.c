@@ -384,6 +384,7 @@ public int _tpchkunsol(void)
     char *pbuf = NULL;
     size_t pbuf_len;
     size_t rply_len;
+    int num_applied = 0;
     unsigned prio;
     tpmemq_t *tmp;
     tp_notif_call_t *notif;
@@ -391,57 +392,68 @@ public int _tpchkunsol(void)
     /* Allocate the buffer... to put data into */
     NDRX_SYSBUF_MALLOC_OUT(pbuf, &pbuf_len, ret);
 
-    rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, pbuf,
-                                           pbuf_len, &prio, TPNOBLOCK);
-    if (rply_len<=0)
+    do
     {
-        NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, (unsigned long)rply_len);
-        goto out;
-    }
-    
-    notif=(tp_notif_call_t *) pbuf;
-    
-    /* could use %zu,  but we must be max cross platform... */
-    NDRX_LOG(log_info, "%s: got message, len: %lu, command id: %d", 
-            __func__, (unsigned long)rply_len, notif->command_id);
-    
-    if (ATMI_COMMAND_TPNOTIFY == notif->command_id ||
-            ATMI_COMMAND_BROADCAST == notif->command_id)
-    {
-        NDRX_LOG(log_info, "Got unsol command");
-        ndrx_process_notif(pbuf, rply_len);
-        NDRX_FREE(pbuf);
-        pbuf = NULL;
-    }
-    else
-    {
-        NDRX_LOG(log_info, "got non unsol command - enqueue");
-        
-        if (NULL==(tmp = NDRX_CALLOC(1, sizeof(tpmemq_t))))
+        rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, pbuf,
+                                               pbuf_len, &prio, TPNOBLOCK);
+        if (rply_len<=0)
         {
-            int err = errno;
-            NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
-            userlog("Failed to alloc: %s", strerror(err));
-            FAIL_OUT(ret);
+            NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, (unsigned long)rply_len);
+            goto out;
         }
-        
-        tmp->buf = pbuf;
-        tmp->len = pbuf_len;
-        tmp->data_len = rply_len;
 
-        DL_APPEND(G_atmi_tls->memq, tmp); 
-    }
+        notif=(tp_notif_call_t *) pbuf;
+
+        /* could use %zu,  but we must be max cross platform... */
+        NDRX_LOG(log_info, "%s: got message, len: %lu, command id: %d", 
+                __func__, (unsigned long)rply_len, notif->command_id);
+
+        if (ATMI_COMMAND_TPNOTIFY == notif->command_id ||
+                ATMI_COMMAND_BROADCAST == notif->command_id)
+        {
+            num_applied++;
+            NDRX_LOG(log_info, "Got unsol command");
+            ndrx_process_notif(pbuf, rply_len);
+            NDRX_FREE(pbuf);
+            pbuf = NULL;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "got non unsol command - enqueue");
+
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(tpmemq_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                FAIL_OUT(ret);
+            }
+
+            tmp->buf = pbuf;
+            tmp->len = pbuf_len;
+            tmp->data_len = rply_len;
+
+            DL_APPEND(G_atmi_tls->memq, tmp); 
+        }
+        /* Note loop will be terminated if not message in Q */
+    } while (SUCCEED==ret);
 out:
 
     if (NULL!=pbuf)
     {
         NDRX_FREE(pbuf);
     }
-    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
+    NDRX_LOG(log_debug, "%s returns %d (applied msgs: %d)", __func__, ret, num_applied);
 
-    return ret;
+    if (SUCCEED==ret)
+    {
+        return num_applied;
+    }
+    else
+    {
+        return ret;
+    }
 }
-
 
 /**
  * Match the given node against the dispatch arguments

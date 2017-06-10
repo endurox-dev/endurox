@@ -851,7 +851,10 @@ public int tpinit (TPINIT * init_data)
     if (FAIL==G_srv_id)
     {
         snprintf(my_id, sizeof(my_id), NDRX_MY_ID_CLT, 
-                init_data!=NULL?init_data->cltname:read_clt_name, 
+                /* we always assume that name is process name...!
+                 * This is how enduro/x is built.
+                 */
+                /*init_data!=NULL?init_data->cltname:*/read_clt_name, 
                 pid, 
                 conf.contextid, 
                 G_atmi_env.our_nodeid);
@@ -861,7 +864,7 @@ public int tpinit (TPINIT * init_data)
     else
     {
         snprintf(my_id, sizeof(my_id), NDRX_MY_ID_SRV, 
-                init_data!=NULL?init_data->cltname:read_clt_name, 
+                /*init_data!=NULL?init_data->cltname:*/read_clt_name, 
                 G_srv_id, 
                 pid,
                 conf.contextid, /* Bug #119 server multicontext fixes... */
@@ -891,7 +894,7 @@ public int tpinit (TPINIT * init_data)
 
     if (NULL!=init_data)
     {
-        
+        memcpy(&G_atmi_tls->client_init_data, init_data, sizeof(*init_data));
     }
     /* do the library initialisation */
     ret=tp_internal_init(&conf);

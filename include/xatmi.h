@@ -245,10 +245,10 @@ extern "C" {
 
     
 /* Tpinit flags (RFU) */
-#define TPU_MASK	0x00000007	
-#define TPU_SIG		0x00000001	
-#define TPU_DIP		0x00000002	
-#define TPU_IGN		0x00000004	
+#define TPU_MASK	0x00000007
+#define TPU_SIG		0x00000001	/* RFU */
+#define TPU_DIP		0x00000002
+#define TPU_IGN		0x00000004  /* Ignore unsol messages */
     
 /* for compatiblity with Tuxedo */
 #define TPSA_FASTPATH	0x00000008	

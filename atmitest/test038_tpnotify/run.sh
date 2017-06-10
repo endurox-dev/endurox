@@ -136,31 +136,30 @@ fi
 CNT=`grep BB0100 atmiclt-dom1.log | wc | awk '{print $1}'`
 echo "BB0100 count: $CNT"
 if [[ $CNT -ne $MAX_CALLS ]]; then
-        echo "Actual BB0100 $MAX_CALLS != $MAX_CALLS! (1)"
+        echo "Actual BB0100 $CNT != $MAX_CALLS! (1)"
         go_out 1        
 fi
 
 CNT=`grep BB0200 atmiclt-dom1.log | wc | awk '{print $1}'`
 echo "BB0200 count: $CNT"
 if [[ $CNT -ne $MAX_CALLS ]]; then
-        echo "Actual BB0200 $MAX_CALLS != $MAX_CALLS! (2)"
+        echo "Actual BB0200 $CNT != $MAX_CALLS! (2)"
         go_out 2
 fi
 
 CNT=`grep CC0100 atmiclt-dom1.log | wc | awk '{print $1}'`
 echo "CC0100 count: $CNT"
 if [[ $CNT -ne $MAX_CALLS ]]; then
-        echo "Actual CC0100 $MAX_CALLS != $MAX_CALLS! (1)"
+        echo "Actual CC0100 $CNT != $MAX_CALLS! (3)"
         go_out 3
 fi
 
 CNT=`grep CC0200 atmiclt-dom1.log | wc | awk '{print $1}'`
 echo "CC0200 count: $CNT"
 if [[ $CNT -ne $MAX_CALLS ]]; then
-        echo "Actual CC0200 $MAX_CALLS != $MAX_CALLS! (2)"
+        echo "Actual CC0200 $CNT != $MAX_CALLS! (4)"
         go_out 4
 fi
-
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
