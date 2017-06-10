@@ -105,7 +105,10 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     memset(call, 0, sizeof(tp_notif_call_t));
    
     /* Set the dest client id */
-    NDRX_STRCPY_SAFE(call->destclient, clientid->clientdata);
+    if (NULL!=clientid)
+    {
+        NDRX_STRCPY_SAFE(call->destclient, clientid->clientdata);
+    }
     
     call->destnodeid = 0;
     /* Check service availability by SHM? 
@@ -735,7 +738,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
                             (int)connected_nodes[i]);
 
-                    if (SUCCEED!=_tpnotify(NULL, NULL, elt->qname,
+                    if (SUCCEED!=_tpnotify(NULL, NULL, NULL,
                             data, len, flags, 
                             (long)connected_nodes[i], nodeid, usrname, cltname, 
                             TPCALL_BRCALL))

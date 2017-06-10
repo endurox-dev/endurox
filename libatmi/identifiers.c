@@ -592,7 +592,7 @@ public void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id)
         p_myid->nodeid
     );
     
-    NDRX_LOG(log_debug, "%s: built my_id: [%s]", my_id);
+    NDRX_LOG(log_debug, "%s: built my_id: [%s]", __func__, my_id);
 }
 
 /**
