@@ -699,7 +699,6 @@ out:
 public int sv_server_request(char *buf, int len)
 {
     int ret=SUCCEED;
-
     tp_command_generic_t *gen_command = (tp_command_generic_t *)G_server_conf.last_call.buf_ptr;
     ndrx_timer_t timer;
     /* take time */

@@ -273,8 +273,9 @@ extern "C" {
 /*
  * Values for cmd_br_net_call_t.msg_type
  */
-#define BR_NET_CALL_MSG_TYPE_ATMI       'A'      /* This is ATMI call          */
-#define BR_NET_CALL_MSG_TYPE_NDRXD      'X'      /* This is EnduroX call       */
+#define BR_NET_CALL_MSG_TYPE_ATMI       'A' /* This is ATMI call                */
+#define BR_NET_CALL_MSG_TYPE_NOTIF      'N' /* This is ATMI, notif/broadcast    */
+#define BR_NET_CALL_MSG_TYPE_NDRXD      'X' /* This is EnduroX call             */
 
 #define BR_NET_CALL_MAGIC               0x6A12CC51L /* Magic of the netcall  */
     

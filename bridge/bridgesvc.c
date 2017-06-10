@@ -217,7 +217,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     G_bridge_cfg.nodeid = FAIL;
     G_bridge_cfg.timediff = 0;
-    
+    G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     /* Parse command line  */
     while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:")) != -1)
     {
@@ -300,8 +300,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
-    if (G_bridge_cfg.threadpoolsize <= 0)
+    if (G_bridge_cfg.threadpoolsize < 0)
     {
+        NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
+                "(%d) defaulting to %d", 
+                G_bridge_cfg.threadpoolsize, BR_DEFAULT_THPOOL_SIZE);
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
     }
     

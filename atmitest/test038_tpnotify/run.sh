@@ -113,6 +113,53 @@ xadmin start -y || go_out 2
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 sleep 30
 RET=0
+MAX_CALLS=10000 # Same as in atmiclt38.c constant...
+
+echo "Running off client"
+set_dom1;
+(./atmiclt38 2>&1) > ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+#
+# Check the presence of numbers in logs...
+# In ATMI client:
+# We need to have BB0100 - 10000
+# We need to have BB0200 - 10000
+
+# We need to have CC0100 - 10000
+# We need to have CC0200 - 10000
+
+CNT=`grep BB0100 atmiclt-dom1.log | wc | awk '{print $1}'`
+echo "BB0100 count: $CNT"
+if [[ $CNT -ne $MAX_CALLS ]]; then
+        echo "Actual BB0100 $MAX_CALLS != $MAX_CALLS! (1)"
+        go_out 1        
+fi
+
+CNT=`grep BB0200 atmiclt-dom1.log | wc | awk '{print $1}'`
+echo "BB0200 count: $CNT"
+if [[ $CNT -ne $MAX_CALLS ]]; then
+        echo "Actual BB0200 $MAX_CALLS != $MAX_CALLS! (2)"
+        go_out 2
+fi
+
+CNT=`grep CC0100 atmiclt-dom1.log | wc | awk '{print $1}'`
+echo "CC0100 count: $CNT"
+if [[ $CNT -ne $MAX_CALLS ]]; then
+        echo "Actual CC0100 $MAX_CALLS != $MAX_CALLS! (1)"
+        go_out 3
+fi
+
+CNT=`grep CC0200 atmiclt-dom1.log | wc | awk '{print $1}'`
+echo "CC0200 count: $CNT"
+if [[ $CNT -ne $MAX_CALLS ]]; then
+        echo "Actual CC0200 $MAX_CALLS != $MAX_CALLS! (2)"
+        go_out 4
+fi
 
 
 # Catch is there is test error!!!

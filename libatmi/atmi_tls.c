@@ -259,6 +259,10 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     
     /* init.c */    
     tls->conv_cd=1;/*  first available */
+    
+    /* reset client info  */
+    memset(&tls->client_init_data, 0, sizeof(tls->client_init_data));
+    
     /* tls->callseq = 0; ???? */
     tls->G_atmi_is_init= 0;/*  Is environment initialised */
     memset (tls->G_call_state, 0, sizeof(tls->G_call_state));

@@ -56,16 +56,17 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-        <server name="tprecover">
-            <max>1</max>
+        <server name="atmisv38">
+            <min>2</min>
+            <max>2</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/tprecover-dom1.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
         </server>
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30</appopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30 -P0</appopt>
         </server>
     </servers>
 </endurox>

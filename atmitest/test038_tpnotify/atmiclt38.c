@@ -41,7 +41,7 @@
 #include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MAX_CALLS       100000
+#define MAX_CALLS       10000
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -59,7 +59,7 @@ void notification_callback (char *data, long len, long flags)
     UBFH *p_ub = (UBFH *)data;
     NDRX_LOG(log_info, "Got notification...");
     /* Dump UBF buffer... */
-    ndrx_debug_dump_UBF(log_error, "notification_callback got response", p_ub);
+    ndrx_debug_dump_UBF(log_error, "notification_callback", p_ub);
     M_notifs_got++;
 }
 
@@ -74,7 +74,8 @@ int handle_replies(UBFH **pp_ub)
     int cd;
     
     /* Read the replies... */
-    while (SUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK))
+    while (SUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
+            && 0!=cd)
     {
         ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
         M_replies_got++;
@@ -135,7 +136,7 @@ int main(int argc, char** argv)
             FAIL_OUT(ret);
         }
         
-        snprintf(tmp, sizeof(tmp), "AA%08d", i);
+        snprintf(tmp, sizeof(tmp), "AA%02ld%08d", tpgetnodeid(), i);
         
         if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
@@ -179,17 +180,19 @@ int main(int argc, char** argv)
         FAIL_OUT(ret);
     }
     
-    if (MAX_CALLS!=M_notifs_got)
+    /* Reply from both domains */
+    if (MAX_CALLS*2!=M_notifs_got)
     {
         NDRX_LOG(log_error, "TESTERROR: M_notifs_got = %d, expected: %d", 
-                M_notifs_got, MAX_CALLS);
+                M_notifs_got, MAX_CALLS*2);
         FAIL_OUT(ret);
     }
     
-    if (MAX_CALLS!=M_replies_got)
+    /* Reply from both domains */
+    if (MAX_CALLS*2!=M_replies_got)
     {
         NDRX_LOG(log_error, "TESTERROR: M_replies_got = %d, expected: %d", 
-                M_notifs_got, MAX_CALLS);
+                M_replies_got, MAX_CALLS*2);
         FAIL_OUT(ret);
     }
     

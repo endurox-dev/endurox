@@ -57,8 +57,8 @@
     </defaults>
     <servers>
         <server name="atmisv38">
-            <min>10</min>
-            <max>10</max>
+            <min>2</min>
+            <max>2</max>
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
         </server>
@@ -66,7 +66,7 @@
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30</appopt>
+            <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30 -P0</appopt>
         </server>
     </servers>
 </endurox>

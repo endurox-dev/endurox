@@ -297,8 +297,6 @@ private void br_dump_tp_notif_call(char *buf)
     NDRX_LOG(log_debug, "usrname_isnull   [%d]",  extra_debug->usrname_isnull);
 }
 
-
-
 /**
  * Bridge have received message.
  * Got message from Network.
@@ -439,7 +437,8 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
         goto out;
     }
     
-    if (BR_NET_CALL_MSG_TYPE_ATMI==p_netmsg->call->msg_type)
+    if (BR_NET_CALL_MSG_TYPE_ATMI==p_netmsg->call->msg_type ||
+            BR_NET_CALL_MSG_TYPE_NOTIF==p_netmsg->call->msg_type)
     {
         tp_command_generic_t *gen_command = (tp_command_generic_t *)p_netmsg->call->buf;
 

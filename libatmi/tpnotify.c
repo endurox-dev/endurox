@@ -104,6 +104,9 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     /* Might want to remove in future... but it might be dangerous!*/
     memset(call, 0, sizeof(tp_notif_call_t));
    
+    /* Set the dest client id */
+    NDRX_STRCPY_SAFE(call->destclient, clientid->clientdata);
+    
     call->destnodeid = 0;
     /* Check service availability by SHM? 
      */
@@ -315,7 +318,13 @@ public void ndrx_process_notif(char *buf, long len)
     if (NULL==G_atmi_tls->p_unsol_handler)
     {
         NDRX_LOG(log_warn, "Unsol handler not set - dropping message");
-        FAIL_OUT(ret);
+        goto out;
+    }
+    
+    if (G_atmi_tls->client_init_data.flags & TPU_IGN)
+    {
+        NDRX_LOG(log_warn, "TPU_IGN have been set - dropping message");
+        goto out;
     }
     
     /* Convert only if we have data */

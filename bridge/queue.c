@@ -378,17 +378,23 @@ out:
  */
 public int br_submit_reply_to_q_notif(tp_notif_call_t *call, int len, in_msg_t* from_q)
 {
+    int ret = SUCCEED;
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    int ret=SUCCEED;
+    TPMYID myid;
     
-    /* TODO: We have problem here, because of missing reply_to */
-    if (!from_q)
+    /* Build a client Q */
+    if (SUCCEED!=ndrx_myid_parse(call->destclient, &myid, FALSE))
     {
-        if (SUCCEED!=fill_reply_queue(call->callstack, call->reply_to, reply_to))
-        {
-            NDRX_LOG(log_error, "Failed to send message to ndrxd!");
-            goto out;
-        }
+        NDRX_LOG(log_error, "Failed to parse myid: [%s]", call->destclient);
+        userlog("Failed to parse myid: [%s]", call->destclient);
+        FAIL_OUT(ret);
+    }
+    
+    if (SUCCEED!=ndrx_myid_convert_to_q(&myid, reply_to, sizeof(reply_to)))
+    {
+        NDRX_LOG(log_error, "Failed to convert myid: [%s] to Q", call->destclient);
+        userlog("Failed to convert myid: [%s] to Q", call->destclient);
+        FAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);
@@ -562,7 +568,9 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
             case  ATMI_COMMAND_TPNOTIFY:
                 
                 NDRX_LOG(log_info, "Sending tpnotify/broadcast:");
-                ret=br_send_to_net(buf, len, BR_NET_CALL_MSG_TYPE_ATMI, 
+                
+                /* Translate to notification... */
+                ret=br_send_to_net(buf, len, BR_NET_CALL_MSG_TYPE_NOTIF, 
                         gen_command->command_id);
                 
                 if (SUCCEED!=ret)

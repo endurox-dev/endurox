@@ -134,6 +134,8 @@ typedef struct
     /* unsolicited notification processing */
     void (*p_unsol_handler) (char *data, long len, long flags);
     
+    TPINIT client_init_data;
+    
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */

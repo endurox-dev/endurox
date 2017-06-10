@@ -309,11 +309,11 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
                            OFFSET(tp_command_call_t,data_len), FAIL, NULL, OFFSET(tp_command_call_t,buffer_type_id)},
-    {TTC, 0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 1, (NDRX_XID_SERIAL_BUFSIZE+1)},
-    {TTC, 0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 1, 6},
-    {TTC, 0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 1, 6},
-    {TTC, 0x1221,  "tmsrvid", OFSZ(tp_command_call_t, tmsrvid), EXF_SHORT,   XFLD, 1, 6},
-    {TTC, 0x122B,  "tmknownrms",OFSZ(tp_command_call_t,tmknownrms),    EXF_STRING, XFLD, 1, (NDRX_MAX_RMS+1)},
+    {TTC, 0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 0, (NDRX_XID_SERIAL_BUFSIZE+1)},
+    {TTC, 0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 0, 6},
+    {TTC, 0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 0, 6},
+    {TTC, 0x1221,  "tmsrvid", OFSZ(tp_command_call_t, tmsrvid), EXF_SHORT,   XFLD, 0, 6},
+    {TTC, 0x122B,  "tmknownrms",OFSZ(tp_command_call_t,tmknownrms),    EXF_STRING, XFLD, 0, (NDRX_MAX_RMS+1)},
     /* Is transaction marked as abort only? */
     {TTC, 0x1235,  "tmtxflags", OFSZ(tp_command_call_t, tmtxflags), EXF_SHORT,   XFLD, 1, 1},
     {TTC, FAIL}
@@ -324,7 +324,7 @@ static cproto_t M_tp_command_call_x[] =
 static cproto_t M_tp_notif_call_x[] = 
 {
     {TPN, 0x123F,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
-    {TPN, 0x1249,  "destclient",OFSZ(tp_notif_call_t,buffer_type_id),EXF_STRING,   XFLD, 1, NDRX_MAX_ID_SIZE},
+    {TPN, 0x1249,  "destclient",OFSZ(tp_notif_call_t,destclient),EXF_STRING,   XFLD, 0, NDRX_MAX_ID_SIZE},
     
     {TPN, 0x1253,  "nodeid",      OFSZ(tp_notif_call_t,nodeid),     EXF_STRING, XFLD, 0, MAXTIDENT*2},
     {TPN, 0x125D,  "nodeid_isnull",  OFSZ(tp_notif_call_t,nodeid_isnull), EXF_INT, XFLD, 1, 1},
@@ -379,6 +379,8 @@ static ptinfo_t M_ptinfo[] =
 static xmsg_t M_ndrxd_x[] = 
 {
     {'A', 0, /*any*/             "atmi_any",    XTAB2(M_cmd_br_net_call_x, M_tp_command_call_x)},
+    {'N', ATMI_COMMAND_TPNOTIFY, "notif",       XTAB2(M_cmd_br_net_call_x, M_tp_notif_call_x)},
+    {'N', ATMI_COMMAND_BROADCAST, "broadcast",  XTAB2(M_cmd_br_net_call_x, M_tp_notif_call_x)},
     {'X', NDRXD_COM_BRCLOCK_RQ,  "brclockreq",  XTAB2(M_cmd_br_net_call_x, M_cmd_br_time_sync_x)},
     {'X', NDRXD_COM_BRREFERSH_RQ,"brrefreshreq",XTAB2(M_cmd_br_net_call_x, M_bridge_refresh_x)},
     {FAIL, FAIL}
@@ -1322,7 +1324,7 @@ out:
 }
 
 /**
- * Convert EnduroX internal format to Network Format.
+ * Convert Enduro/X internal format to Network Format.
  * @param 
  */
 public int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *proto_len)
@@ -1346,8 +1348,8 @@ public int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *pr
             /* This is NDRXD message */
         {
             tp_command_generic_t *call = (tp_command_generic_t *)msg->buf;
-            msg_type = 'A';
             command = call->command_id;
+            msg_type = 'A';
         }
             break;
         case BR_NET_CALL_MSG_TYPE_NDRXD:
@@ -1360,6 +1362,14 @@ public int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *pr
             
         }
             break;
+        case BR_NET_CALL_MSG_TYPE_NOTIF:
+            /* This is NDRXD message */
+        {
+            tp_command_generic_t *call = (tp_command_generic_t *)msg->buf;
+            command = call->command_id;
+            msg_type = 'N';
+        }
+            break;
     }
     
     cv = M_ndrxd_x;
@@ -1368,7 +1378,9 @@ public int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *pr
     {
 
         if ((msg_type == cv->msg_type && command == cv->command)
-                || 'A' == msg_type /* Accept any ATMI - common structure! */)
+                /* Accept any ATMI - common structure! */
+                || (msg_type == cv->msg_type && 'A' == msg_type )
+                )
         {
             NDRX_LOG(log_debug, "Found conv table for: %c/%d/%s", 
                     cv->msg_type, cv->command, cv->descr);
@@ -1809,7 +1821,8 @@ private xmsg_t * classify_netcall (char *ex_buf, long ex_len)
     while (FAIL!=cv->command)
     {
         if ((msg->msg_type == cv->msg_type && msg->command_id == cv->command)
-                || 'A' == msg->msg_type /* Accept any ATMI - common structure! */)
+                /* Accept any ATMI - common structure! */
+                || (msg->msg_type == cv->msg_type && 'A' == msg->msg_type))
         {
             NDRX_LOG(log_debug, "Found conv table for: %c/%d/%s", 
                     cv->msg_type, cv->command, cv->descr);

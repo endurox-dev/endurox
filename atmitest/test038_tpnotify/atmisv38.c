@@ -40,11 +40,54 @@
 void SVC38 (TPSVCINFO *p_svc)
 {
     int ret=SUCCEED;
-
+    char tmp[20];
+    char nodeid[5];
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     
-    Bprint(p_ub);
+    ndrx_debug_dump_UBF(log_error, "SVC38 got request", p_ub);
+    
+    
+    if (SUCCEED!=Bget(p_ub, T_STRING_FLD, 0, tmp, NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD!");
+        FAIL_OUT(ret);
+    }
+    
+    snprintf(nodeid, sizeof(nodeid), "%02ld", tpgetnodeid());
+    
+    /* put the reply nodeid */
+    tmp[2]=nodeid[0];
+    tmp[3]=nodeid[1];
+    
+    /* Change the buffer & send notif */
+    tmp[0]='B';
+    tmp[1]='B';
+    
+    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to setup T_STRING_FLD!");
+        FAIL_OUT(ret);
+    }
+    
+    /* OK we shall send notification to client, b */
+    
+    if (SUCCEED!=tpnotify(&p_svc->cltid, (char *)p_ub, 0L, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to tpnotify()!");
+        FAIL_OUT(ret);
+    }
+    
+    
+    /* Set to CC */
+    tmp[0]='C';
+    tmp[1]='C';
+    
+    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to setup T_STRING_FLD!");
+        FAIL_OUT(ret);
+    }
     
 out:
     tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,

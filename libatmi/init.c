@@ -889,6 +889,10 @@ public int tpinit (TPINIT * init_data)
 
     NDRX_LOG(log_debug, "Client queue [%s] opened.", conf.reply_q_str);
 
+    if (NULL!=init_data)
+    {
+        
+    }
     /* do the library initialisation */
     ret=tp_internal_init(&conf);
     
