@@ -359,6 +359,8 @@ struct atmi_lib_env
     int     maxsvcsrvs; /* Max servers per service (only for poll() mode) */
     
     char    qprefix[NDRX_MAX_Q_SIZE+1]; /* Queue prefix (common, finally!) */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /* Includes separator at the end */
+    int     qprefix_match_len;              /* Includes number bytes to match */
     char    qpath[PATH_MAX+1]; /* Queue path (common, finally!) */
     
 };

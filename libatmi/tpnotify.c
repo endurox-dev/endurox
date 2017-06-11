@@ -395,10 +395,14 @@ public int _tpchkunsol(void)
     /* Allocate the buffer... to put data into */
     NDRX_SYSBUF_MALLOC_OUT(pbuf, &pbuf_len, ret);
 
+    NDRX_LOG(log_debug, "Into %s", __func__);
     do
     {
         rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, pbuf,
                                                pbuf_len, &prio, TPNOBLOCK);
+        
+        NDRX_LOG(log_debug, "%s: %lu", __func__, (long)rply_len);
+        
         if (rply_len<=0)
         {
             NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, (unsigned long)rply_len);
@@ -446,6 +450,7 @@ out:
     {
         NDRX_FREE(pbuf);
     }
+
     NDRX_LOG(log_debug, "%s returns %d (applied msgs: %d)", __func__, ret, num_applied);
 
     if (SUCCEED==ret)
@@ -621,6 +626,13 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
 
         LL_FOREACH(qlist,elt)
         {
+            /* if not print all, then skip this queue */
+            if (0!=strncmp(elt->qname, 
+                    G_atmi_env.qprefix_match, G_atmi_env.qprefix_match_len))
+            {
+                continue;
+            }
+            
             /* currently we will match cltname only and will work on
              * server & client reply qs 
              * because server can have reply q too... as we know.

@@ -278,16 +278,22 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
         userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        ret=FAIL;
-        goto out;
+        FAIL_OUT(ret);
     }
     else
     {
         strncpy(G_atmi_env.qprefix, p, sizeof(G_atmi_env.qprefix)-1);
         G_atmi_env.qprefix[sizeof(G_atmi_env.qprefix)-1] = EOS;
         
-        NDRX_LOG(log_debug, "Posix queue prefix set to: [%s]",
-                            G_atmi_env.qprefix);
+        snprintf(G_atmi_env.qprefix_match, sizeof(G_atmi_env.qprefix_match),
+                "%s%c", G_atmi_env.qprefix, NDRX_FMT_SEP);
+        
+        G_atmi_env.qprefix_match_len = strlen(G_atmi_env.qprefix_match);
+        
+        NDRX_LOG(log_debug, "Posix queue prefix set to: [%s], "
+                            "match string: [%s] (len: %d)",
+                            G_atmi_env.qprefix, G_atmi_env.qprefix_match,
+                            G_atmi_env.qprefix_match_len);
     }
     
     p = getenv(CONF_NDRX_QPATH);
