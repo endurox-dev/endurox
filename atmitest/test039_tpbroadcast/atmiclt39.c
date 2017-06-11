@@ -120,6 +120,12 @@ int run_broadcast(void)
                     tpstrerror(tperrno));
             FAIL_OUT(ret);
         }
+        
+        if (FAIL==tpchkunsol())
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpchkunsol() failed!");
+            FAIL_OUT(ret);
+        }
     }
     
     /* Send only to B like services */

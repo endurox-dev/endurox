@@ -398,6 +398,7 @@ public int _tpchkunsol(void)
     NDRX_LOG(log_debug, "Into %s", __func__);
     do
     {
+        /* TODO: Set blocked... */
         rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, pbuf,
                                                pbuf_len, &prio, TPNOBLOCK);
         
