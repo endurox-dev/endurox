@@ -83,65 +83,6 @@ private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr);
 private mqd_t open_reply_q(char *q, struct mq_attr *q_attr);
 private void rcv_hash_delall(tp_conversation_control_t *conv);
 private char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq);
-/**
- * Fix queue attributes to match the requested mode.
- * @param conv
- * @param flags
- * @return SUCCEED/FAIL
- */
-private int setup_queue_attrs(struct mq_attr *p_q_attr,
-                                mqd_t listen_q,
-                                char *listen_q_str, 
-                                long flags)
-{
-    int ret=SUCCEED;
-    int change_flags = FALSE;
-    struct mq_attr new;
-    char fn[] = "setup_queue_attrs";
-
-    NDRX_LOG(log_debug, "ATTRS BEFORE: %d", p_q_attr->mq_flags);
-
-    if (flags & TPNOBLOCK && !(p_q_attr->mq_flags & O_NONBLOCK))
-    {
-        /* change attributes non block mode*/
-        new = *p_q_attr;
-        new.mq_flags |= O_NONBLOCK;
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
-                                            listen_q_str);
-    }
-    else if (!(flags & TPNOBLOCK) && (p_q_attr->mq_flags & O_NONBLOCK))
-    {
-        /* change attributes to block mode */
-        new = *p_q_attr;
-        new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
-                                            listen_q_str);
-    }
-
-    if (change_flags)
-    {
-        if (FAIL==ndrx_mq_setattr(listen_q, &new,
-                            p_q_attr))
-        {
-            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
-                                fn, listen_q_str, listen_q, strerror(errno));
-            ret=FAIL;
-            goto out;
-        }
-        else
-        {
-            /* Save new attrs */
-            *p_q_attr = new;
-        }
-    }
-
-    NDRX_LOG(log_debug, "ATTRS AFTER: %d", p_q_attr->mq_flags);
-    
-out:
-    return ret;
-}
 
 /**
  * Closes any connection made as client.
@@ -636,7 +577,7 @@ public int get_ack(tp_conversation_control_t *conv, long flags)
     long rply_len;
     unsigned prio;
 
-    if (SUCCEED!=setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
+    if (SUCCEED!=ndrx_setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
                                     conv->my_listen_q_str, 0L))
     {
         ret=FAIL;
@@ -1060,7 +1001,7 @@ public int _tprecv (int cd, char * *data,
     }
 
     /* Change the attributes of the queue to match required */
-    if (SUCCEED!=setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
+    if (SUCCEED!=ndrx_setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
                                     conv->my_listen_q_str, flags))
     {
         FAIL_OUT(ret);
@@ -1100,8 +1041,8 @@ public int _tprecv (int cd, char * *data,
         }
 
         /* receive the reply back */
-        rply_len = generic_q_receive(conv->my_listen_q, rply_buf, rply_bufsz, 
-                                        &prio, flags);
+        rply_len = generic_q_receive(conv->my_listen_q, NULL, NULL, 
+                rply_buf, rply_bufsz, &prio, flags);
 
         
         if (GEN_QUEUE_ERR_NO_DATA==rply_len)
@@ -1403,7 +1344,7 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     /* Change the mode in which we run.\
      * We may receive message in async mode.
      */
-    if (SUCCEED!=setup_queue_attrs(&conv->reply_q_attr, conv->reply_q,
+    if (SUCCEED!=ndrx_setup_queue_attrs(&conv->reply_q_attr, conv->reply_q,
                                     conv->reply_q_str, flags))
     {
         ret=FAIL;

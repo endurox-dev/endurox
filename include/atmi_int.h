@@ -307,7 +307,7 @@ struct atmi_lib_conf
     char reply_q_str[NDRX_MAX_Q_SIZE+1]; /* Provide reply q better debug */
     mqd_t reply_q; /* Reply queue */
     /* queue attributes */
-    struct mq_attr q_attr; /* Queue attributes. */
+    struct mq_attr reply_q_attr; /* Queue attributes of replyq */
     /*
      * ID string. For example:
      * srv.testsrv-1
@@ -593,9 +593,16 @@ extern NDRX_API int ndrx_load_new_env(char *file);
 extern NDRX_API int generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
 extern NDRX_API int generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
 extern NDRX_API int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
-extern NDRX_API long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
+extern NDRX_API long generic_q_receive(mqd_t q_descr, char *q_str, 
+        struct mq_attr *reply_q_attr,
+        char *buf, long buf_max, 
+        unsigned *prio, long flags);
+    
 extern NDRX_API int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
-
+extern NDRX_API int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
+                                mqd_t listen_q,
+                                char *listen_q_str, 
+                                long flags);
 extern NDRX_API mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern NDRX_API mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag);
 extern NDRX_API void ndrx_mq_fix_mass_send(int *cntr);

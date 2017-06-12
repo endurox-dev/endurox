@@ -652,7 +652,7 @@ public int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
     
     G_atmi_tls->G_atmi_conf.reply_q = reply_q;
     NDRX_STRCPY_SAFE(G_atmi_tls->G_atmi_conf.reply_q_str, reply_q_str);
-    if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.q_attr))
+    if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.reply_q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
                             fn, reply_q, strerror(errno));
@@ -726,7 +726,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
 
     /* read queue attributes -  only if Q was open...*/
     if (init_data->reply_q && FAIL==ndrx_mq_getattr(init_data->reply_q, 
-            &G_atmi_tls->G_atmi_conf.q_attr))
+            &G_atmi_tls->G_atmi_conf.reply_q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                             fn, init_data->reply_q_str, init_data->reply_q, strerror(errno));

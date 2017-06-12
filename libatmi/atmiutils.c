@@ -375,17 +375,32 @@ out:
 /**
  * Generic queue receiver
  * @param q_descr - queue descriptro
+ * @param q_str - string queue, can be NULL, then attribs not set
+ * @param reply_q_attr - current queue attributes, can be null, then attribs not set
  * @param buf - where to put received data
  * @param buf_max - buffer size
  * @param prio - priority of message
  * @return GEN_QUEUE_ERR_NO_DATA/FAIL/data len
  */
-public long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags)
+public long generic_q_receive(mqd_t q_descr, char *q_str, 
+        struct mq_attr *reply_q_attr,
+        char *buf, long buf_max, 
+        unsigned *prio, long flags)
 {
     long ret=SUCCEED;
     int use_tout;
-    struct timespec abs_timeout;
+    struct timespec abs_timeout;   
+    
     SET_TOUT_CONF;
+    
+    if (NULL!=q_str && NULL!=reply_q_attr)
+    {
+        if (SUCCEED!=ndrx_setup_queue_attrs(reply_q_attr, q_descr, q_str, flags))
+        {
+            NDRX_LOG(log_error, "%s: Failed to setup queue attribs, flags=%ld", flags);
+            FAIL_OUT(ret);
+        }
+    }
     
 restart:
     SET_TOUT_VALUE;
@@ -417,6 +432,8 @@ restart:
             ret=FAIL;
         }
     }
+    
+out:
     return ret;
 }
 
@@ -538,7 +555,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     {
         command_call_t *test_call = (command_call_t *)msg_buffer_max;
         /* Error could be also -2..! */
-        if (0>(reply_len=generic_q_receive(reply_queue,
+        if (0>(reply_len=generic_q_receive(reply_queue, NULL, NULL,
                 msg_buffer_max, sizeof(msg_buffer_max), &prio, flags)))
         {
             NDRX_LOG(log_error, "Failed to receive reply from ndrxd!");
@@ -991,3 +1008,65 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
                 fn, strerror(ret));
     }
 }
+
+
+/**
+ * Fix queue attributes to match the requested mode.
+ * @param conv
+ * @param flags
+ * @return SUCCEED/FAIL
+ */
+public int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
+                                mqd_t listen_q,
+                                char *listen_q_str, 
+                                long flags)
+{
+    int ret=SUCCEED;
+    int change_flags = FALSE;
+    struct mq_attr new;
+    char fn[] = "ndrx_setup_queue_attrs";
+
+    /* NDRX_LOG(log_debug, "ATTRS BEFORE: %d", p_q_attr->mq_flags); */
+
+    if (flags & TPNOBLOCK && !(p_q_attr->mq_flags & O_NONBLOCK))
+    {
+        /* change attributes non block mode*/
+        new = *p_q_attr;
+        new.mq_flags |= O_NONBLOCK;
+        change_flags = TRUE;
+        NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
+                                            listen_q_str);
+    }
+    else if (!(flags & TPNOBLOCK) && (p_q_attr->mq_flags & O_NONBLOCK))
+    {
+        /* change attributes to block mode */
+        new = *p_q_attr;
+        new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
+        change_flags = TRUE;
+        NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
+                                            listen_q_str);
+    }
+
+    if (change_flags)
+    {
+        if (FAIL==ndrx_mq_setattr(listen_q, &new,
+                            NULL))
+        {
+            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
+                                fn, listen_q_str, listen_q, strerror(errno));
+            ret=FAIL;
+            goto out;
+        }
+        else
+        {
+            /* Save new attrs */
+            *p_q_attr = new;
+        }
+    }
+
+    /* NDRX_LOG(log_debug, "ATTRS AFTER: %d", p_q_attr->mq_flags); */
+    
+out:
+    return ret;
+}
+

@@ -608,8 +608,6 @@ public int _tpgetrply (int *cd,
 {
     int ret=SUCCEED;
     char fn[] = "_tpgetrply";
-    int change_flags = FALSE;
-    struct mq_attr new;
     long rply_len;
     unsigned prio;
     /*char rply_buf[ATMI_MSG_MAX_SIZE];*/
@@ -623,38 +621,6 @@ public int _tpgetrply (int *cd,
     
     NDRX_LOG(log_debug, "%s enter, flags %ld", fn, flags);
     
-    if (flags & TPNOBLOCK && !(G_atmi_tls->G_atmi_conf.q_attr.mq_flags & O_NONBLOCK))
-    {
-        /* change attributes non block mode*/
-        new = G_atmi_tls->G_atmi_conf.q_attr;
-        new.mq_flags |= O_NONBLOCK;
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
-                                            G_atmi_tls->G_atmi_conf.reply_q_str);
-    }
-    else if (!(flags & TPNOBLOCK) && (G_atmi_tls->G_atmi_conf.q_attr.mq_flags & O_NONBLOCK))
-    {
-        /* change attributes to block mode */
-        new = G_atmi_tls->G_atmi_conf.q_attr;
-        new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
-                                            G_atmi_tls->G_atmi_conf.reply_q_str);
-    }
-    
-    if (change_flags)
-    {
-        if (FAIL==ndrx_mq_setattr(G_atmi_tls->G_atmi_conf.reply_q, &new,
-                            &G_atmi_tls->G_atmi_conf.q_attr))
-        {
-            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
-                                fn, G_atmi_tls->G_atmi_conf.reply_q_str, 
-                                G_atmi_tls->G_atmi_conf.reply_q, strerror(errno));
-            ret=FAIL;
-            goto out;
-        }
-    }
-
     /* Allocate the buffer, dynamically... */
     NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
         
@@ -695,8 +661,10 @@ public int _tpgetrply (int *cd,
             NDRX_LOG(log_info, "Waiting on OS Q...");
             
             /* receive the reply back */
-            rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, pbuf,
-                                            pbuf_len, &prio, flags);
+            rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
+                    G_atmi_tls->G_atmi_conf.reply_q_str,
+                    &(G_atmi_tls->G_atmi_conf.reply_q_attr),
+                    pbuf, pbuf_len, &prio, flags);
         }
         
         /* In case  if we did receive any response (in non blocked mode

@@ -386,7 +386,7 @@ public int _tpchkunsol(void)
     int ret = SUCCEED;
     char *pbuf = NULL;
     size_t pbuf_len;
-    size_t rply_len;
+    long rply_len;
     int num_applied = 0;
     unsigned prio;
     tpmemq_t *tmp;
@@ -398,23 +398,25 @@ public int _tpchkunsol(void)
     NDRX_LOG(log_debug, "Into %s", __func__);
     do
     {
-        /* TODO: Set blocked... */
-        rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, pbuf,
-                                               pbuf_len, &prio, TPNOBLOCK);
+        rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
+                G_atmi_tls->G_atmi_conf.reply_q_str,
+                &(G_atmi_tls->G_atmi_conf.reply_q_attr),
+                pbuf, pbuf_len, &prio, TPNOBLOCK);
         
         NDRX_LOG(log_debug, "%s: %lu", __func__, (long)rply_len);
         
         if (rply_len<=0)
         {
-            NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, (unsigned long)rply_len);
+            NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, 
+                    (unsigned long)rply_len);
             goto out;
         }
 
         notif=(tp_notif_call_t *) pbuf;
 
         /* could use %zu,  but we must be max cross platform... */
-        NDRX_LOG(log_info, "%s: got message, len: %lu, command id: %d", 
-                __func__, (unsigned long)rply_len, notif->command_id);
+        NDRX_LOG(log_info, "%s: got message, len: %ld, command id: %d", 
+                __func__, rply_len, notif->command_id);
 
         if (ATMI_COMMAND_TPNOTIFY == notif->command_id ||
                 ATMI_COMMAND_BROADCAST == notif->command_id)
@@ -452,7 +454,8 @@ out:
         NDRX_FREE(pbuf);
     }
 
-    NDRX_LOG(log_debug, "%s returns %d (applied msgs: %d)", __func__, ret, num_applied);
+    NDRX_LOG(log_debug, "%s returns %d (applied msgs: %d)", __func__, 
+            ret, num_applied);
 
     if (SUCCEED==ret)
     {
@@ -573,7 +576,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         
         if (NULL!=usrname)
         {
-            if (SUCCEED!=ndrx_regcomp(&regexp_nodeid, usrname))
+            if (SUCCEED!=ndrx_regcomp(&regexp_usrname, usrname))
             {
                 _TPset_error_fmt(TPEINVAL, "Failed to compile usrname=[%s] regexp",
                         __func__, nodeid);
@@ -588,7 +591,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         
         if (NULL!=cltname)
         {
-            if (SUCCEED!=ndrx_regcomp(&regexp_nodeid, cltname))
+            if (SUCCEED!=ndrx_regcomp(&regexp_cltname, cltname))
             {
                 _TPset_error_fmt(TPEINVAL, "Failed to compile cltname=[%s] regexp",
                         __func__, cltname);

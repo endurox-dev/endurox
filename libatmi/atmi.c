@@ -1323,7 +1323,7 @@ public int tpchkunsol(void)
         FAIL_OUT(ret);
     }   
     
-    if (SUCCEED!=_tpchkunsol())
+    if (_tpchkunsol()<0)
     {
         NDRX_LOG(log_error, "_tpchkunsol failed");
         FAIL_OUT(ret);
