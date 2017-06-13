@@ -107,11 +107,11 @@ function chk_lines {
     must_be=$3
     chk_num=$4
 
-    CNT=`grep $code $log_file | wc | awk '{print $1}'`
+    CNT=`grep $code $log_file | grep T_STRING_FLD | wc | awk '{print $1}'`
     echo "$code count in $log_file: $CNT"
 
     if [[ $CNT -ne $must_be ]]; then
-            echo "Actual $code $$CNT != $must_be!"
+            echo "Actual $code $CNT != $must_be!"
             go_out $chk_num
     fi
 
@@ -136,10 +136,11 @@ MAX_CALLS=1000 # Same as in atmiclt39.c constant...
 
 echo "Running off client"
 
+set_dom1;
 #
 # Dom 1 set
 #
-./atmicltA39 listen > ./atmicltA39-listen-dom1.log  2>&1 &
+(./atmicltA39 listen 2>&1 ) > ./atmicltA39-listen-dom1.log &
 #./atmicltA39 mutted > ./atmicltA39-mutted-dom1.log  2>&1 &
 
 #./atmicltB39 listen > ./atmicltB39-listen-dom1.log  2>&1 &
