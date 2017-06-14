@@ -626,6 +626,7 @@ extern NDRX_API int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qde
 extern NDRX_API void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id);
 extern NDRX_API int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr);
 extern NDRX_API void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg);
+extern NDRX_API int ndrx_q_type_get(char *q);
 
 extern NDRX_API int ndrx_atmiutil_init(void);
 
@@ -649,7 +650,9 @@ extern NDRX_API int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         char *data, long len, long flags, 
         int dest_node, char *usrname,  char *cltname, char *nodeid, /* RFU */
         int ex_flags);
-extern int _tpchkunsol(void);
+extern NDRX_API int _tpchkunsol(void);
+extern NDRX_API int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
+        char *data,  long len, long flags, int dispatch_local);
 extern NDRX_API void ndrx_process_notif(char *buf, long len);
 extern NDRX_API char * _tprealloc (char *buf, long len);
 extern NDRX_API long	_tptypes (char *ptr, char *type, char *subtype);

@@ -577,7 +577,7 @@ extern NDRX_API int tpinit(TPINIT *tpinfo);
 extern NDRX_API int tpchkauth(void);
 extern NDRX_API void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags);
 extern NDRX_API int tpnotify(CLIENTID *clientid, char *data, long len, long flags);
-extern NDRX_API tpbroadcast(char *lmid, char *usrname, char *cltname, char *data,  long len, long flags);
+extern NDRX_API int tpbroadcast(char *lmid, char *usrname, char *cltname, char *data,  long len, long flags);
 extern NDRX_API int tpchkunsol(void);
 
 /* in external application: */

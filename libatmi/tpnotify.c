@@ -424,8 +424,10 @@ public int _tpchkunsol(void)
             num_applied++;
             NDRX_LOG(log_info, "Got unsol command");
             ndrx_process_notif(pbuf, rply_len);
+	    /* are we sure we want to have free here of sysbuf? 
             NDRX_FREE(pbuf);
             pbuf = NULL;
+	     */
         }
         else
         {
@@ -440,6 +442,7 @@ public int _tpchkunsol(void)
             }
 
             tmp->buf = pbuf;
+	    pbuf = NULL; /* save the buffer... */
             tmp->len = pbuf_len;
             tmp->data_len = rply_len;
 

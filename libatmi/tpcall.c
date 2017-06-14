@@ -42,6 +42,7 @@
 #include <fcntl.h>
 
 #include <atmi.h>
+#include <userlog.h>
 #include <ndebug.h>
 #include <tperror.h>
 #include <typed_buf.h>
