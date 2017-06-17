@@ -307,12 +307,14 @@ int main(int argc, char** argv)
     memset(&init, 0, sizeof(init));
     
     
-    if (strcmp(argv[0], "broadcast"))
+    if (0==strcmp(argv[1], "broadcast"))
     {
+        NDRX_LOG(log_error, "Running: broadcast");
         ret = run_broadcast();
     }
-    else if (strcmp(argv[0], "listen"))
+    else if (0==strcmp(argv[1], "listen"))
     {
+        NDRX_LOG(log_error, "Running: listen");
         /* no flags.. */
         if (SUCCEED!=tpinit(&init))
         {
@@ -322,9 +324,9 @@ int main(int argc, char** argv)
 
         ret = bc_listen();
     }
-    else if (strcmp(argv[0], "mutted"))
+    else if (0==strcmp(argv[1], "mutted"))
     {
-        /* no flags.. */
+        NDRX_LOG(log_error, "Running: mutted");
         init.flags|=TPU_IGN;
         if (SUCCEED!=tpinit(&init))
         {

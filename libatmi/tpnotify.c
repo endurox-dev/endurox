@@ -407,8 +407,7 @@ public int _tpchkunsol(void)
         
         if (rply_len<=0)
         {
-            NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, 
-                    (unsigned long)rply_len);
+            NDRX_LOG(log_warn, "%s: No message (%ld)", __func__,  rply_len);
             goto out;
         }
 
