@@ -116,11 +116,9 @@ extern __thread int G_thread_init;
 /*---------------------------Prototypes---------------------------------*/
 extern int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q);
 extern int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from_q);
-extern int br_submit_to_service_broadcast(tp_notif_call_t *notif, int len, in_msg_t* from_q);
 extern int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* from_q);
 extern int br_got_message_from_q(char *buf, int len, char msg_type);
 extern int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from_q);
-extern int br_submit_reply_to_q_notif(tp_notif_call_t *call, int len, in_msg_t* from_q);
     
 extern int br_process_msg(exnetcon_t *net, char *buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);

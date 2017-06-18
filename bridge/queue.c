@@ -211,47 +211,6 @@ out:
     return SUCCEED;    
 }
 
-
-/**
- * Send broadcast request to service
- * Special broadcast server
- * @param notif
- * @param len
- * @param from_q
- * @return 
- */
-public int br_submit_to_service_broadcast(tp_notif_call_t *notif, int len, 
-        in_msg_t* from_q)
-{
-    int ret=SUCCEED;
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
-    int is_bridge = FALSE;
-    char svc_q[NDRX_MAX_Q_SIZE+1];
-    
-    /* So message is sent to local node, lets process it... */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, notif->destnodeid);
-
-    NDRX_LOG(log_info, "%s: Passing broadcast message to: [%s]", __func__, svcnm);
-    
-    if (SUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge))
-    {
-        NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
-                svcnm);
-        userlog("Failed to get local service [%s] for bridge call!", svcnm);
-        br_process_error((char *)notif, len, ret, from_q, PACK_TYPE_TOSVC);
-        FAIL_OUT(ret);
-    }
-    
-    NDRX_LOG(log_debug, "Calling service: %s", svc_q);
-    if (SUCCEED!=(ret=generic_q_send(svc_q, (char *)notif, len, TPNOBLOCK, 0)))
-    {
-        NDRX_LOG(log_error, "Failed to send message to ndrxd!");
-        userlog("Failed to send broadcast message to [%s]/[%s]", svcnm, svc_q);
-    }
-    
-out:
-    return SUCCEED;    
-}
 /**
  * Submit to service. We should do this via Q
  */
@@ -355,46 +314,6 @@ public int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from
             NDRX_LOG(log_error, "Failed to send message to ndrxd!");
             goto out;
         }
-    }
-    
-    NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);
-    if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
-    {
-        NDRX_LOG(log_error, "Failed to send message to %s!", reply_to);
-        br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TORPLYQ);
-        goto out;
-    }
-    
-out:
-    return SUCCEED;    
-}
-
-/**
- * Submit reply to service. We should do this via Q for notif
- * @param call
- * @param len
- * @param from_q
- * @return 
- */
-public int br_submit_reply_to_q_notif(tp_notif_call_t *call, int len, in_msg_t* from_q)
-{
-    int ret = SUCCEED;
-    char reply_to[NDRX_MAX_Q_SIZE+1];
-    TPMYID myid;
-    
-    /* Build a client Q */
-    if (SUCCEED!=ndrx_myid_parse(call->destclient, &myid, FALSE))
-    {
-        NDRX_LOG(log_error, "Failed to parse myid: [%s]", call->destclient);
-        userlog("Failed to parse myid: [%s]", call->destclient);
-        FAIL_OUT(ret);
-    }
-    
-    if (SUCCEED!=ndrx_myid_convert_to_q(&myid, reply_to, sizeof(reply_to)))
-    {
-        NDRX_LOG(log_error, "Failed to convert myid: [%s] to Q", call->destclient);
-        userlog("Failed to convert myid: [%s] to Q", call->destclient);
-        FAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);

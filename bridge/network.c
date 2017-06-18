@@ -494,13 +494,16 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                 NDRX_LOG(log_debug, "Sending tpnotify to client queue...");
                 br_dump_tp_notif_call(p_netmsg->call->buf);
                 
+/*
                 ret = br_submit_reply_to_q_notif((tp_notif_call_t *)gen_command, 
                         p_netmsg->call->len, NULL);
+  */            
+                ret = br_submit_to_service_notif((tp_notif_call_t *)gen_command, 
+                        p_netmsg->call->len, NULL);
+                
                 
                 break;
-                
         }
-        
     }
     else if (BR_NET_CALL_MSG_TYPE_NDRXD==p_netmsg->call->msg_type)
     {

@@ -1,8 +1,6 @@
 /* 
-** Dispatch the "tpbroadcast" events on remote machines...
-** All the handling actually is done in libatmi and libatmisrv...
 **
-** @file tpbroadcastsv.c
+** @file brdcstsv.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,73 +28,27 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <regex.h>
-#include <utlist.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/wait.h>
 
-#include <ndebug.h>
-#include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
-#include <ubf.h>
-#include <Exfields.h>
+#ifndef BRDCSTSV_H
+#define	BRDCSTSV_H
 
-#include "tpbroadcastsv.h"
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*---------------------------Includes-----------------------------------*/
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-static long M_restarts = 0;
-static long M_check = 5; /* defaulted to 5 sec */
 /*---------------------------Prototypes---------------------------------*/
-int start_daemon_recover(void);
 
-/**
- * Nothing to do here..
- * 
- * @param p_svc
- */
-void TPBROADCAST (TPSVCINFO *p_svc)
-{
-    int ret=SUCCEED;
-    
-out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
-                0,
-                (char *)p_svc->data,
-                0L,
-                0L);
+
+#ifdef	__cplusplus
 }
+#endif
 
-/*
- * Do initialization
- */
-int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
-{
-    int ret=SUCCEED;
+#endif	/* BRDCSTSV_H */
 
-    if (SUCCEED!=tpadvertise(NDRX_SVC_BRIDGE, TPBROADCAST))
-    {
-        NDRX_LOG(log_error, "Failed to initialize TPBROADCAST!");
-        FAIL_OUT(ret);
-    }
-
-out:
-    return ret;
-}
-
-void NDRX_INTEGRA(tpsvrdone)(void)
-{
-    /* just for build... */
-}

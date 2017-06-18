@@ -86,7 +86,7 @@ extern "C" {
 #define NDRX_SVC_BRIDGE   "@TPBRIDGE%03d"        /* Bridge service format */
 #define NDRX_SVC_QBRDIGE  "%s,svc,@TPBRIDGE%03d" /* Bridge service Q format */
     
-#define NDRX_SVC_TPBROAD   "@TPBROAD%03ld"        /* tpbroadcast remote dispatcher */
+#define NDRX_SVC_TPBROAD   "@TPBRDCST%03ld"     /* notify/broadcast remote dispatcher */
 
 #define NDRX_SVC_RM       "@TM-%d"              /* resource_id */
 #define NDRX_SVC_TM       "@TM-%d-%d"           /* Node_idresource_id */
