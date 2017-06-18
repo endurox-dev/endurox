@@ -85,10 +85,13 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=SUCCEED;
+    char svcnm[MAXTIDENT+1];
+    
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
 
-    if (SUCCEED!=tpadvertise(NDRX_SVC_BRIDGE, TPBROADCAST))
+    if (SUCCEED!=tpadvertise(svcnm, TPBROADCAST))
     {
-        NDRX_LOG(log_error, "Failed to initialize TPBROADCAST!");
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", svcnm);
         FAIL_OUT(ret);
     }
 

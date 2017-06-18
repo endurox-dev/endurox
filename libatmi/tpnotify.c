@@ -214,7 +214,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
     
     /* If call to bridge, then it is broadcast... */
-    if (!(ex_flags & TPCALL_BROADCAST))
+    if (ex_flags & TPCALL_BROADCAST)
     {
         call->command_id = ATMI_COMMAND_BROADCAST;
     }
@@ -759,7 +759,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     if (SUCCEED!=_tpnotify(NULL, NULL, NULL,
                             data, len, flags, 
                             (long)connected_nodes[i], nodeid, usrname, cltname, 
-                            TPCALL_BRCALL))
+                            (TPCALL_BRCALL | TPCALL_BROADCAST)))
                     {
                         NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
                                 cltid.clientdata, len);
