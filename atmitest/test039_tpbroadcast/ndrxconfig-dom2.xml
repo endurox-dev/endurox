@@ -63,8 +63,8 @@
             <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
         </server>
         <server name="tpbrdcstsv">
-            <min>2</min>
-            <max>2</max>
+            <min>1</min>
+            <max>1</max>
             <srvid>20</srvid>
             <sysopt>-e ${TESTDIR}/tpbrdcstsv-dom2.log -r</sysopt>
         </server>

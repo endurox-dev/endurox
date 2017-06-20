@@ -830,14 +830,22 @@ public int sv_server_request(char *buf, int len)
                                 req_len, 
                                 notif->flags,
                                 myid.nodeid,
+                                (notif->nodeid_isnull?NULL:notif->nodeid),
                                 (notif->usrname_isnull?NULL:notif->usrname),
                                 (notif->cltname_isnull?NULL:notif->cltname),
-                                (notif->nodeid_isnull?NULL:notif->nodeid),
                                  0L);
                     }
                     else
                     {
-/*                        NDRX_LOG(log_debug, "Doing tpbroadcast...");*/
+                        NDRX_LOG(log_debug, "Doing tpbroadcast... flags = %ld, is regexp=%d", 
+                                notif->flags, notif->flags&TPREGEXMATCH);
+                        
+                        NDRX_LOG(log_debug, "notif->nodeid_isnull: %d (%s)", 
+                                notif->nodeid_isnull, notif->nodeid);
+                        NDRX_LOG(log_debug, "notif->usrname_isnull: %d (%s)", 
+                                notif->usrname_isnull, notif->usrname);
+                        NDRX_LOG(log_debug, "notif->cltname_isnull: %d (%s)", 
+                                notif->cltname_isnull, notif->cltname);
                         
                         ret=_tpbroadcast_local((notif->nodeid_isnull?NULL:notif->nodeid),
                                 (notif->usrname_isnull?NULL:notif->usrname),
@@ -1282,7 +1290,8 @@ public int sv_wait_for_request(void)
                         ret=FAIL;
                         goto out;
                     }
-
+                    
+                    /* Save on the big message copy... */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
 

@@ -648,7 +648,7 @@ extern NDRX_API int _tpacall (char *svc, char *data,
 extern NDRX_API int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
-        int dest_node, char *usrname,  char *cltname, char *nodeid, /* RFU */
+        int dest_node, char *nodeid, char *usrname,  char *cltname,
         int ex_flags);
 extern NDRX_API int _tpchkunsol(void);
 extern NDRX_API int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
