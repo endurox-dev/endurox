@@ -332,7 +332,7 @@ Ensure(test038_tpnotify)
 Ensure(test039_tpbroadcast)
 {
     int ret;
-    ret=system_dbg("test039_broadcast/run.sh");
+    ret=system_dbg("test039_tpbroadcast/run.sh");
     assert_equal(ret, SUCCEED);
 }
 
