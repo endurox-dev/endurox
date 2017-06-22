@@ -108,7 +108,7 @@ Mandatory Env. Variables
 	of xa_close()/xa_open() and doing xa_start() again in case if original
 	xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
 	closed the connection. The format for the tag is:
-	'RECON:<comma separated list of error codes e.g. 4,-8,* - any err:<number of attempts>:<sleep between attempts milli-sec>'
+	'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number of attempts>:<sleep between attempts milli-sec>'
 	example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
 	3x attempts, sleep 100 milliseconds between attempts.
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
