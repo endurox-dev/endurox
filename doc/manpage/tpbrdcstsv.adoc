@@ -1,0 +1,52 @@
+TPBRDCSTSV(8)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tpbrdcstsv - Incoming to local machine broadcast and notification dispatching server
+
+
+SYNOPSIS
+--------
+'*tpbrdcstsv*'
+
+
+DESCRIPTION
+-----------
+This is special ATMI system process which is started in standard way by
+'ndrxd' process application server boot. The server process is used for remote
+cluster node notification and broadcast dispatching in local application domain.
+When remote machine issues *tpnotify(3)* or *tpbroadcast(3)* command and the
+notification is delivered to local machine, the notification firstly is sent to
+*tpbrdcstsv*. Then *tpbrdcstsv*, service 'TPBROADNNN' (where NNN - is local
+cluster node id) dispatches the notification/broadcast to the local app domain.
+Multiple copies of the server process can be started, in order to load balance
+the notification dispatching.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)* *tpnotify(3)* *tpbroadcast(3)* *tpchkunsol(3)* *tpsetunsol(3)*
+
+AUTHOR
+------
+Enduro/X is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
