@@ -813,10 +813,7 @@ public void *ndrx_malloc_dbg(size_t size, long line, const char *file, const cha
     
     errno = errnosv;
     
-    
     return ret;
-    
-    
 }
 
 /**
@@ -929,3 +926,21 @@ public int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *fu
     
 }
 
+/**
+ * Debug version of strdup();
+ * @return 
+ */
+public char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const char *func)
+{
+    char *ret;
+    int errnosv;
+    
+    ret=strdup(ptr);
+    errnosv = errno;
+    
+    userlog("[%p] <= strdup(ptr=%p):%s %s:%ld", ret, ptr, func, file, line);
+    
+    errno = errnosv;
+    
+    return ret;
+}

@@ -188,6 +188,7 @@ print_domains;
 # Go to domain 1
 set_dom1;
 
+
 #
 # Test case when tries exceeded, transaction not committed
 # after manual commit from xadmin few times, in gets finally committed.
@@ -271,7 +272,44 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryok"* ]]; then
     fi
 
     go_out $RET
+    
+fi
 
+################################################################################
+# Test case when xa_start_entry fails due to connection close (i.e. no 
+# work done by tpopen() was closed).
+# So it works for both cases when flag enabled end flag disabled
+#
+################################################################################
+
+if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"startfail"* ]]; then
+
+	echo ">>> XA Start fail/retry, flags [$NDRX_XA_FLAGS]"
+
+	(./atmiclt21-startfail $TEST160_FLAG 2>&1) > ./atmiclt-startfail-dom1.log
+	RET=$?
+
+	#
+	# If all ok, test for transaction files.
+	#
+	if [ $RET == 0 ]; then
+	
+		# test for transaction to be aborted..
+		# there should be no TRN- files at top level
+
+		if [ -f ./RM1/TRN-* ]; then
+			echo "Transaction must be completed!"
+			RET=-2
+		fi
+		
+		#if [ ! -f ./RM1/aborted/* ]; then
+		#	echo "Transaction must be aborted!"
+		#	RET=-3
+		#fi
+		
+	fi
+
+	go_out $RET
 fi
 
 ################################################################################

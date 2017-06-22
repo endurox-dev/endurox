@@ -139,12 +139,10 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FREE(ptr) ndrx_free_dbg(ptr, __LINE__, __FILE__, __func__)
 #define NDRX_CALLOC(nmemb, size) ndrx_calloc_dbg(nmemb, size, __LINE__, __FILE__, __func__)
 #define NDRX_REALLOC(ptr, size) ndrx_realloc_dbg(ptr, size, __LINE__, __FILE__, __func__)
-
+#define NDRX_STRDUP(ptr) ndrx_strdup_dbg(ptr, __LINE__, __FILE__, __func__)
 
 #define NDRX_FOPEN(path, mode) ndrx_fopen_dbg(path, mode, __LINE__, __FILE__, __func__)
 #define NDRX_FCLOSE(fp) ndrx_fclose_dbg(fp,__LINE__, __FILE__, __func__)
-
-
 
 #else
 
@@ -152,6 +150,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FREE(ptr) free(ptr)
 #define NDRX_CALLOC(nmemb, size) calloc(nmemb, size)
 #define NDRX_REALLOC(ptr, size) realloc(ptr, size)
+#define NDRX_STRDUP(ptr) strdup(ptr)
 
 #define NDRX_FOPEN(path, mode) fopen(path, mode)
 #define NDRX_FCLOSE(fp) fclose(fp)
@@ -223,6 +222,7 @@ extern NDRX_API void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const 
 
 extern NDRX_API FILE *ndrx_fopen_dbg(const char *path, const char *mode, long line, const char *file, const char *func);
 extern NDRX_API int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *func);
+extern NDRX_API char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const char *func);
 
 #ifdef	__cplusplus
 }

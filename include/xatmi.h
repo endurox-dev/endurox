@@ -186,6 +186,7 @@ extern "C" {
 #define CONF_NDRX_XA_CLOSE_STR   "NDRX_XA_CLOSE_STR"/* XA Close string          */
 #define CONF_NDRX_XA_DRIVERLIB   "NDRX_XA_DRIVERLIB"/* Enduro RM Library        */
 #define CONF_NDRX_XA_RMLIB       "NDRX_XA_RMLIB"    /* RM library               */
+#define CONF_NDRX_XA_FLAGS       "NDRX_XA_FLAGS"    /* Enduro/X Specific flags  */
 #define CONF_NDRX_XA_LAZY_INIT   "NDRX_XA_LAZY_INIT"/* 0 - load libs on 
                                                       init, 1 - load at use     */
 #define CONF_NDRX_NRSEMS         "NDRX_NRSEMS"      /* Number of semaphores used for

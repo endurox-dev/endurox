@@ -71,6 +71,7 @@ FILE *M_f = NULL;
 public int xa_open_entry_stat(char *xa_info, int rmid, long flags);
 public int xa_close_entry_stat(char *xa_info, int rmid, long flags);
 public int xa_start_entry_stat(XID *xid, int rmid, long flags);
+public int xa_start_entry_statstartfail(XID *xid, int rmid, long flags);
 public int xa_end_entry_stat(XID *xid, int rmid, long flags);
 public int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
 public int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
@@ -103,6 +104,23 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
 public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
 public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
+
+struct xa_switch_t ndrxstatsw_startfail = 
+{ 
+    .name = "ndrxstatsw_startfail",
+    .flags = TMNOFLAGS,
+    .version = 0,
+    .xa_open_entry = xa_open_entry_stat,
+    .xa_close_entry = xa_close_entry_stat,
+    .xa_start_entry = xa_start_entry_statstartfail,
+    .xa_end_entry = xa_end_entry_stat,
+    .xa_rollback_entry = xa_rollback_entry_stat,
+    .xa_prepare_entry = xa_prepare_entry_stat,
+    .xa_commit_entry = xa_commit_entry_stat,
+    .xa_recover_entry = xa_recover_entry_stat,
+    .xa_forget_entry = xa_forget_entry_stat,
+    .xa_complete_entry = xa_complete_entry_stat
+};
 
 struct xa_switch_t ndrxstatswtryfail = 
 { 
@@ -137,6 +155,7 @@ struct xa_switch_t ndrxstatswtryok =
     .xa_forget_entry = xa_forget_entry_stat,
     .xa_complete_entry = xa_complete_entry_stat
 };
+
 
 struct xa_switch_t ndrxstatsw105 = 
 { 
@@ -530,6 +549,33 @@ public int xa_start_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_start_entry(&ndrxstatsw, xid, rmid, flags);
 }
+
+/**
+ * For test case #160, retry to reconnect...
+ * So on every 3 start we return SUCCEED;
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
+public int xa_start_entry_statstartfail(XID *xid, int rmid, long flags)
+{
+    static __thread int cntr = 0;
+    cntr++;
+    
+    if (0!=cntr%3)
+    {
+        NDRX_LOG(log_error, "start FAIL (%d) - close connection too...", cntr);
+        M_is_open = FALSE;
+        return XAER_RMERR;
+    }
+    else
+    {
+        return xa_start_entry(&ndrxstatsw, xid, rmid, flags);
+    }
+    
+}
+
 public int xa_end_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_end_entry(&ndrxstatsw, xid, rmid, flags);
