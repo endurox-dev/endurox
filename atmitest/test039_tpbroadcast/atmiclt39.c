@@ -40,6 +40,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CALLS       1000
@@ -94,6 +95,7 @@ int run_broadcast(void)
     /**
      * Send simple broadcast to all nodes and clients...
      */
+    NDRX_LOG(log_info, ">>> Send simple broadcast to all nodes and clients...");
     for (i=0; i<MAX_CALLS; i++)
     {
         /* Let servers to provide back replies... */
@@ -129,6 +131,7 @@ int run_broadcast(void)
     }
     
     /* Send only to B like services */
+    NDRX_LOG(log_info, ">>> Send only to B like services");
     for (i=0; i<MAX_CALLS; i++)
     {
         /* Let servers to provide back replies... */
@@ -164,6 +167,7 @@ int run_broadcast(void)
     }
     
     /* Send only to 2nd node */
+    NDRX_LOG(log_info, ">>> Send only to 2nd node");
     for (i=0; i<MAX_CALLS; i++)
     {
         /* Let servers to provide back replies... */
@@ -200,6 +204,7 @@ int run_broadcast(void)
     }
     
     /* Send to single client (matching the name) */
+    NDRX_LOG(log_info, ">>> Send to single client (matching the name)");
     for (i=0; i<MAX_CALLS; i++)
     {
         /* Let servers to provide back replies... */
