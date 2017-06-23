@@ -86,7 +86,7 @@ extern "C" {
 #define NDRX_SVC_BRIDGE   "@TPBRIDGE%03d"        /* Bridge service format */
 #define NDRX_SVC_QBRDIGE  "%s,svc,@TPBRIDGE%03d" /* Bridge service Q format */
     
-#define NDRX_SVC_TPBROAD   "@TPBROAD%03ld"        /* tpbroadcast remote dispatcher */
+#define NDRX_SVC_TPBROAD   "@TPBRDCST%03ld"     /* notify/broadcast remote dispatcher */
 
 #define NDRX_SVC_RM       "@TM-%d"              /* resource_id */
 #define NDRX_SVC_TM       "@TM-%d-%d"           /* Node_idresource_id */
@@ -186,6 +186,7 @@ extern "C" {
 #define CONF_NDRX_XA_CLOSE_STR   "NDRX_XA_CLOSE_STR"/* XA Close string          */
 #define CONF_NDRX_XA_DRIVERLIB   "NDRX_XA_DRIVERLIB"/* Enduro RM Library        */
 #define CONF_NDRX_XA_RMLIB       "NDRX_XA_RMLIB"    /* RM library               */
+#define CONF_NDRX_XA_FLAGS       "NDRX_XA_FLAGS"    /* Enduro/X Specific flags  */
 #define CONF_NDRX_XA_LAZY_INIT   "NDRX_XA_LAZY_INIT"/* 0 - load libs on 
                                                       init, 1 - load at use     */
 #define CONF_NDRX_NRSEMS         "NDRX_NRSEMS"      /* Number of semaphores used for

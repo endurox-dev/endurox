@@ -1,6 +1,7 @@
 /* 
+** Static driver, tase case for Bug #105
 **
-** @file tpbroadcastsv.h
+** @file xabackend_s-105.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -28,15 +29,23 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+#include <errno.h>
 
-#ifndef TPBROADCASTSV_H
-#define	TPBROADCASTSV_H
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <ntimer.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
+#include <xa.h>
+#include <atmi_int.h>
+#include "xabackend_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -45,10 +54,8 @@ extern "C" {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-
-#ifdef	__cplusplus
+struct xa_switch_t *ndrx_get_xa_switch(void)
+{
+    return ndrx_get_xa_switch_int("ndrxstatsw_startfail", "Loading XA_Test Static "
+                                    "XA driver (bug #160 - start fail)");
 }
-#endif
-
-#endif	/* TPBROADCASTSV_H */
-

@@ -82,7 +82,7 @@
 public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
-        int dest_node, char *usrname,  char *cltname, char *nodeid, /* RFU */
+        int dest_node, char *nodeid, char *usrname,  char *cltname,
         int ex_flags)
 {
     int ret=SUCCEED;
@@ -171,7 +171,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
                         cltq, /* client q already built by broadcast */
                         data, len, flags, 
                         p_clientid_myid->nodeid, 
-                        usrname,  cltname, nodeid,ex_flags | TPCALL_BRCALL);
+                        nodeid, usrname, cltname,ex_flags | TPCALL_BRCALL);
             
         }
     }
@@ -214,7 +214,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
     
     /* If call to bridge, then it is broadcast... */
-    if (!(ex_flags & TPCALL_BROADCAST))
+    if (ex_flags & TPCALL_BROADCAST)
     {
         call->command_id = ATMI_COMMAND_BROADCAST;
     }
@@ -247,6 +247,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
+        call->usrname[0] = EOS;
         call->usrname_isnull = TRUE;
     }
     
@@ -256,6 +257,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
+        call->cltname[0] = EOS;
         call->cltname_isnull = TRUE;
     }
     
@@ -265,6 +267,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
+        call->nodeid[0] = EOS;
         call->nodeid_isnull = TRUE;
     }
     
@@ -407,8 +410,7 @@ public int _tpchkunsol(void)
         
         if (rply_len<=0)
         {
-            NDRX_LOG(log_warn, "%s: No message (%lu)", __func__, 
-                    (unsigned long)rply_len);
+            NDRX_LOG(log_warn, "%s: No message (%ld)", __func__,  rply_len);
             goto out;
         }
 
@@ -675,33 +677,33 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                         cltname_ok = TRUE;
                     }
                     else if ((flags & TPREGEXMATCH )
-                        && ndrx_regexec(&regexp_cltname, elt->qname))
+                        && SUCCEED==ndrx_regexec(&regexp_cltname, qdet.binary_name))
                     {
-                        NDRX_LOG(log_info, "Process [%s] matched broadcast "
+                        NDRX_LOG(log_info, "Process [%s]/[%s] matched broadcast "
                                 "by regexp",
-                                elt->qname);
+                                elt->qname, qdet.binary_name);
                         cltname_ok = TRUE;
                     }
-                    else if (0==strcmp(cltname, elt->qname))
+                    else if (0==strcmp(cltname, qdet.binary_name))
                     {
-                        NDRX_LOG(log_info, "Process [%s] matched by "
-                                "cltname str param",
-                                elt->qname);
+                        NDRX_LOG(log_info, "Process [%s]/[%s] matched by "
+                                "cltname str param [%s]",
+                                elt->qname, qdet.binary_name, cltname);
                         cltname_ok = TRUE;
                     }
                     else
                     {
-                        NDRX_LOG(log_info, "Process [%s] did not match "
+                        NDRX_LOG(log_info, "Process [%s]/[%s] did not match "
                                 "cltname param [%s] => "
-                                "skip node for broadcast",
-                                elt->qname, cltname);
+                                "skip process for broadcast",
+                                elt->qname, qdet.binary_name, cltname);
                     }
                 }
                 else
                 {
-                    NDRX_LOG(log_info, "cltname param NULL, process [%s] "
+                    NDRX_LOG(log_info, "cltname param NULL, process [%s]/[%s] "
                             "matched for broadcast",
-                                elt->qname);
+                                elt->qname, qdet.binary_name);
                         cltname_ok = TRUE;
                 }
                 
@@ -760,7 +762,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     if (SUCCEED!=_tpnotify(NULL, NULL, NULL,
                             data, len, flags, 
                             (long)connected_nodes[i], nodeid, usrname, cltname, 
-                            TPCALL_BRCALL))
+                            (TPCALL_BRCALL | TPCALL_BROADCAST)))
                     {
                         NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
                                 cltid.clientdata, len);

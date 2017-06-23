@@ -57,10 +57,16 @@
     </defaults>
     <servers>
         <server name="atmisv38">
-            <min>2</min>
-            <max>2</max>
+            <min>1</min>
+            <max>1</max>
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+        </server>
+        <server name="tpbrdcstsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${TESTDIR}/tpbrdcstsv-dom1.log -r</sysopt>
         </server>
         <server name="tpbridge">
             <max>1</max>

@@ -142,6 +142,7 @@ public int atmi_xa_init(void)
     void *handle; /* keep the handle, so that we have a reference */
     ndrx_get_xa_switch_loader func;
     char *error;
+    char *xa_flags = NULL; /* dynamically allocated... */
     
     if (!M_is_xa_init)
     {
@@ -186,10 +187,130 @@ public int atmi_xa_init(void)
         NDRX_LOG(log_info, "Using XA %s", 
                 (G_atmi_env.xa_sw->flags&TMREGISTER)?"dynamic registration":"static registration");
         
+        /* Parse the flags... and store the config 
+         * This is done for Feature #160. Customer have an issue with xa_start
+         * after a while. Suspect that firewall closes connections and oracle XA
+         * lib looses the connection (fact that there was xa_open()). Thus 
+         * at xa_start allow to retry with xa_close(), xa_open() and xa_start.
+         */
+        NDRX_LOG(log_debug, "xa_flags = [%s]", G_atmi_env.xa_flags);
+        if (EOS!=G_atmi_env.xa_flags[0])
+        {
+            char *tag_ptr;
+            /* Note this will be parsed and EOS inserted. */
+            char *tag_first;
+            char *tag_token;
+            int token_nr = 0;
+            
+            char *value_ptr, *value_first, *value_token;
+            
+            if (NULL==(xa_flags = NDRX_STRDUP(G_atmi_env.xa_flags)))
+            {
+                int err = errno;
+                _TPset_error_fmt(TPEOS,  "Failed to allocate xa_flags temp buffer: %s", 
+                        strerror(err));
+                
+                userlog("Failed to allocate xa_flags temp buffer: %s", strerror(err));
+                
+                FAIL_OUT(ret);
+            }
+            
+            tag_first = xa_flags;
+            NDRX_LOG(log_debug, "About token: [%s]", tag_first);
+            while ((tag_token = strtok_r(tag_first, ";", &tag_ptr)))
+            {
+                if (NULL!=tag_first)
+                {
+                    tag_first = NULL; /* now loop over the string */
+                }
+                
+                NDRX_LOG(log_debug, "Got tag [%s]", tag_token);
+                
+                /* format: RECON:<1,2,* - error codes>:<tries>:<sleep_millisec>
+                 * "*" - used for any error.
+                 * example:
+                 * RECON:*:3:250
+                 * Meaning: on any xa_start error, reconnect (tpclose/tpopen/tpbegin)
+                 * 3x times, between attempts sleep 250ms.
+                 */
+                if (0==strncmp(tag_token, NDRX_XA_FLAG_RECON_TEST, strlen(NDRX_XA_FLAG_RECON_TEST)))
+                {
+                    value_first = tag_token;
+                    G_atmi_env.xa_recon_usleep = FAIL;
+                    
+                    NDRX_LOG(log_warn, "Parsing RECON tag... [%s]", value_first);
+                    
+                    while ((value_token = strtok_r(value_first, ":", &value_ptr)))
+                    {
+                        token_nr++;
+                        if (NULL!=value_first)
+                        {
+                            value_first = NULL; /* now loop over the string */
+                        }
+                        
+                        switch (token_nr)
+                        {
+                            case 1:
+                                /* This is "RECON" */
+                                NDRX_LOG(log_debug, "RECON: 1: [%s]", value_token);
+                                break;
+                            case 2:
+                                /* This is list of error codes */
+                                NDRX_LOG(log_debug, "RECON: 2: [%s]", value_token);
+                                snprintf(G_atmi_env.xa_recon_retcodes, 
+                                        sizeof(G_atmi_env.xa_recon_retcodes),
+                                        ",%s,", value_token);
+                                
+                                /* Remove spaces and tabs.. */
+                                ndrx_str_strip(G_atmi_env.xa_recon_retcodes, "\t ");
+                                
+                                break;
+                                
+                            case 3:
+                                NDRX_LOG(log_debug, "RECON: 3: [%s]", value_token);
+                                G_atmi_env.xa_recon_times = atoi(value_token);
+                                break;
+                            case 4:
+                                /* so user gives us milliseconds */
+                                NDRX_LOG(log_debug, "RECON: 4: [%s]", value_token);
+                                G_atmi_env.xa_recon_usleep = atol(value_token)*1000;
+                                break;
+                        }
+                    }
+                    
+                    if (G_atmi_env.xa_recon_usleep < 0)
+                    {
+                        NDRX_LOG(log_error, "Invalid [%s] settings in "
+                                "XA_FLAGS [%s] (usleep not set)", 
+                                NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
+                        
+                        _TPset_error_fmt(TPEINVAL, "Invalid [%s] settings in "
+                                "XA_FLAGS [%s] (usleep not set)", 
+                                NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
+                        
+                        FAIL_OUT(ret);
+                    }
+                    
+                    NDRX_LOG(log_error, "XA flag: [%s]: on xa_start ret codes: [%s],"
+                            " recon number of %d times, sleep %ld "
+                            "microseconds between attempts",
+                            NDRX_XA_FLAG_RECON, 
+                            G_atmi_env.xa_recon_retcodes, 
+                            G_atmi_env.xa_recon_times, 
+                            G_atmi_env.xa_recon_usleep);
+                } /* If tag is RECON */
+            } /* for tag.. */
+        } /* if xa_flags set */
+        
         M_is_xa_init = TRUE;
     }
     
 out:
+                                
+    if (NULL!=xa_flags)
+    {
+        NDRX_FREE(xa_flags);
+    }
 
     if (SUCCEED!=ret && NULL!=handle)
     {
@@ -266,6 +387,9 @@ public int atmi_xa_close_entry(void)
         goto out;
     }
     
+    /* lets assume it is closed... */
+    G_atmi_tls->G_atmi_xa_curtx.is_xa_open = FALSE;
+    
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_close_entry(G_atmi_env.xa_close_str, 
                                     G_atmi_env.xa_rmid, 0)))
     {
@@ -283,6 +407,39 @@ out:
 }
 
 /**
+ * Test the RECON settings for error 
+ * @param retcode return code for xa_start to test for
+ * @return TRUE - do retry, FALSE - no retry
+ */
+private int is_error_in_recon_list(int retcode)
+{
+    char scanstr[16];
+    char scanstr2[4] = ",*,";
+    int ret = FALSE;
+    
+    snprintf(scanstr, sizeof(scanstr), ",%d,", retcode);
+    
+    NDRX_LOG(log_warn, "%s testing return code [%s] in recon list [%s]", 
+            __func__, scanstr, G_atmi_env.xa_recon_retcodes);
+    
+    if (NULL!=strstr(G_atmi_env.xa_recon_retcodes, scanstr))
+    {
+        NDRX_LOG(log_warn, "matched by code - DO RETRY");
+        ret = TRUE;
+        goto out;
+    }
+    else if (NULL!=strstr(G_atmi_env.xa_recon_retcodes, scanstr2))
+    {
+        NDRX_LOG(log_warn, "matched by wildcard - DO RETRY");
+        ret = TRUE;
+        goto out;
+    }
+    
+out:
+    return ret;
+    
+}
+/**
  * Start transaction (or join..) depending on flags.
  * @param xid
  * @param flags
@@ -290,7 +447,7 @@ out:
  */
 public int atmi_xa_start_entry(XID *xid, long flags)
 {
-int ret = SUCCEED;
+    int ret = SUCCEED;
     XA_API_ENTRY(TRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_start_entry");
@@ -298,11 +455,62 @@ int ret = SUCCEED;
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
+        int tries;
+        
         NDRX_LOG(log_error, "xa_start_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "xa_start_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        goto out;
+        
+        /* Check that return code is in list... */
+        if (G_atmi_env.xa_recon_times > 1 && is_error_in_recon_list(ret))
+        {
+            for (tries=1; tries<G_atmi_env.xa_recon_times; tries++)
+            {
+                NDRX_LOG(log_warn, "RECON: Attempt %d, sleeping %ld micro-sec", 
+                        tries, G_atmi_env.xa_recon_usleep);
+                usleep(G_atmi_env.xa_recon_usleep);
+                
+                
+                NDRX_LOG(log_warn, "RECON: Retrying...");
+                
+                /* xa_close */
+                
+                NDRX_LOG(log_warn, "RECON: atmi_xa_close_entry()");
+                
+                atmi_xa_close_entry();
+                
+                NDRX_LOG(log_warn, "RECON: atmi_xa_open_entry()");
+                if (SUCCEED==atmi_xa_open_entry())
+                {
+
+                    /* restart...: */
+                    NDRX_LOG(log_warn, "RECON: atmi_xa_start_entry()");
+                    if (XA_OK==(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
+                                        G_atmi_env.xa_rmid, flags)))
+                    {
+                        NDRX_LOG(log_warn, "RECON: Succeed");
+                        break;
+                    }
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "RECON: Attempt %d xa_start_entry - "
+                            "fail: %d [%s]", 
+                    ret, tries, atmi_xa_geterrstr(ret));
+                }
+            } /* for tries */
+        } /* if retry supported. */
+        
+        if (XA_OK!=ret)
+        {
+            NDRX_LOG(log_error, "finally xa_start_entry - fail: %d [%s]", 
+                    ret, atmi_xa_geterrstr(ret));
+
+            _TPset_error_fmt_rsn(TPERMERR,  ret, "finally xa_start_entry - fail: %d [%s]", 
+                    ret, atmi_xa_geterrstr(ret));
+
+            goto out;
+        }
+        
     }
     
 out:

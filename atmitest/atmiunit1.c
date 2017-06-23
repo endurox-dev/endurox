@@ -329,6 +329,13 @@ Ensure(test038_tpnotify)
     assert_equal(ret, SUCCEED);
 }
 
+Ensure(test039_tpbroadcast)
+{
+    int ret;
+    ret=system_dbg("test039_tpbroadcast/run.sh");
+    assert_equal(ret, SUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -391,6 +398,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test037_down);
     
     add_test(suite, test038_tpnotify);
+    add_test(suite, test039_tpbroadcast);
             
     return suite;
 }

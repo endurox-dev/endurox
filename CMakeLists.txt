@@ -277,7 +277,7 @@ ENDIF()
 
 add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
-add_subdirectory (tpbroadcastsv) # tpbroadcast remote machine dispatcher
+add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)

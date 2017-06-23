@@ -62,6 +62,12 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
         </server>
+        <server name="tpbrdcstsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${TESTDIR}/tpbrdcstsv-dom2.log -r</sysopt>
+        </server>
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>

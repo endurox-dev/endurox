@@ -487,20 +487,27 @@ private int br_process_msg_th(void *ptr, int *p_finish_off)
                 break;
             case ATMI_COMMAND_BROADCAST:
             case ATMI_COMMAND_TPNOTIFY:
+            {
+                tp_notif_call_t * p_notif = (tp_notif_call_t *)gen_command;
                 /* Call the reply Q
                  * If this is broadcast, then we send it to broadcast server
                  * If this is notification, then send to client proc only.
                  */
-                NDRX_LOG(log_debug, "Sending tpnotify to client queue...");
+                NDRX_LOG(log_debug, "Sending tpnotify to client queue... "
+                        "(flags got: %ld, regex: %d)",
+                        p_notif->flags, p_notif->flags & TPREGEXMATCH);
                 br_dump_tp_notif_call(p_netmsg->call->buf);
                 
+/*
                 ret = br_submit_reply_to_q_notif((tp_notif_call_t *)gen_command, 
                         p_netmsg->call->len, NULL);
+  */            
+                ret = br_submit_to_service_notif((tp_notif_call_t *)gen_command, 
+                        p_netmsg->call->len, NULL);
                 
+            }   
                 break;
-                
         }
-        
     }
     else if (BR_NET_CALL_MSG_TYPE_NDRXD==p_netmsg->call->msg_type)
     {

@@ -50,13 +50,13 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ###############################
-add_executable (tpbroadcastsv tpbroadcastsv.c ../libatmisrv/rawmain_integra.c)
-target_link_libraries (tpbroadcastsv atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
-set_target_properties(tpbroadcastsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+add_executable (tpbrdcstsv brdcstsv.c ../libatmisrv/rawmain_integra.c)
+target_link_libraries (tpbrdcstsv atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+set_target_properties(tpbrdcstsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 # Install bin
 install (TARGETS 
-    tpbroadcastsv
+    tpbrdcstsv
     DESTINATION bin)
 

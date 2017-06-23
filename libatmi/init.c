@@ -442,6 +442,16 @@ public int ndrx_load_common_env(void)
                 G_atmi_env.xa_rmlib);
     }
     
+    if (NULL!=(p=getenv(CONF_NDRX_XA_FLAGS)))
+    {
+        NDRX_STRCPY_SAFE(G_atmi_env.xa_flags, p);
+        NDRX_LOG(log_debug, "[%s]: XA Enduro/X specific flags: [%s]", 
+                CONF_NDRX_XA_FLAGS, G_atmi_env.xa_flags);
+    }
+    else
+    {
+        G_atmi_env.xa_flags[0] = EOS;
+    }
     
     if (NULL!=(p=getenv(CONF_NDRX_XA_LAZY_INIT)))
     {

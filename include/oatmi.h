@@ -78,6 +78,11 @@ extern NDRX_API int Otppost(TPCONTEXT_T *p_ctxt, char *eventname, char *data, lo
 extern NDRX_API int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt);
 extern NDRX_API long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo);
+extern NDRX_API int Otpchkauth(TPCONTEXT_T *p_ctxt);
+extern NDRX_API void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags);
+extern NDRX_API int Otpnotify(TPCONTEXT_T *p_ctxt, CLIENTID *clientid, char *data, long len, long flags);
+extern NDRX_API int Otpbroadcast(TPCONTEXT_T *p_ctxt, char *lmid, char *usrname, char *cltname, char *data,  long len, long flags);
+extern NDRX_API int Otpchkunsol(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
 extern NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
@@ -93,5 +98,6 @@ extern NDRX_API int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *fil
 extern NDRX_API int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename, int bufsize);
 extern NDRX_API int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data);
 extern NDRX_API void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_ub);
+extern NDRX_API void O_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags);
 #endif  /* __OATMI_H */
 

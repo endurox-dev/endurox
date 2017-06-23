@@ -790,23 +790,30 @@ public int sv_server_request(char *buf, int len)
                 long req_len = 0;
                 typed_buffer_descr_t *call_type;
                 
-                NDRX_LOG(log_info, "Doing local %s...",
-                     (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"));
+                call_type = &G_buf_descr[notif->buffer_type_id];
+                
+                NDRX_LOG(log_info, "Doing local %s... (buffer type %hd)",
+                     (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"),
+                        notif->buffer_type_id);
                 
                 /* How about prepare incoming buffer? */
                 
-                if (req_len==0 || SUCCEED==call_type->pf_prepare_incoming(call_type,
+                if (0==notif->data_len ||
+                        SUCCEED==call_type->pf_prepare_incoming(call_type,
                         notif->data,
                         notif->data_len,
                         &request_buffer,
                         &req_len,
                         0L))
                 {
+                    NDRX_LOG(log_debug, "ATMI Command id: %d", 
+                            gen_command->command_id);
                     if (ATMI_COMMAND_TPNOTIFY==gen_command->command_id)
                     {
                         TPMYID myid;
                         CLIENTID *clt;
-                        
+                    
+                        /* NDRX_LOG(log_debug, "Doing notify..."); */
                         clt = (CLIENTID *)notif->destclient; /* same char arr.. */
                         
                         if (SUCCEED!=ndrx_myid_parse(notif->destclient, &myid, FALSE))
@@ -823,13 +830,23 @@ public int sv_server_request(char *buf, int len)
                                 req_len, 
                                 notif->flags,
                                 myid.nodeid,
+                                (notif->nodeid_isnull?NULL:notif->nodeid),
                                 (notif->usrname_isnull?NULL:notif->usrname),
                                 (notif->cltname_isnull?NULL:notif->cltname),
-                                (notif->nodeid_isnull?NULL:notif->nodeid),
                                  0L);
                     }
                     else
                     {
+                        NDRX_LOG(log_debug, "Doing tpbroadcast... flags = %ld, is regexp=%d", 
+                                notif->flags, notif->flags&TPREGEXMATCH);
+                        
+                        NDRX_LOG(log_debug, "notif->nodeid_isnull: %d (%s)", 
+                                notif->nodeid_isnull, notif->nodeid);
+                        NDRX_LOG(log_debug, "notif->usrname_isnull: %d (%s)", 
+                                notif->usrname_isnull, notif->usrname);
+                        NDRX_LOG(log_debug, "notif->cltname_isnull: %d (%s)", 
+                                notif->cltname_isnull, notif->cltname);
+                        
                         ret=_tpbroadcast_local((notif->nodeid_isnull?NULL:notif->nodeid),
                                 (notif->usrname_isnull?NULL:notif->usrname),
                                 (notif->cltname_isnull?NULL:notif->cltname),
@@ -1273,7 +1290,8 @@ public int sv_wait_for_request(void)
                         ret=FAIL;
                         goto out;
                     }
-
+                    
+                    /* Save on the big message copy... */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
 

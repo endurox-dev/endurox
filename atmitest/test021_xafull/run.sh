@@ -44,12 +44,72 @@ else
 	cd $TESTNAME
 fi;
 
+
 SUFFIX="so"
 
 if [ "$(uname)" == "Darwin" ]; then
     SUFFIX="dylib"
 fi
 
+
+
+################################################################################
+# Bug 160, xa_start fails due to closed connection, recon
+################################################################################
+
+
+echo ">>> Doing static registration tests... (Bug #160 - start fails at random...)"
+echo ">>> #160: Firstly does retry, test case must succeed as flags set"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-startfail.$SUFFIX
+
+#
+# Recon on every xa_start error, 3xretries, sleep 10ms between retries.
+#
+export NDRX_XA_FLAGS="RECON:*:3:10"
+export TEST160_FLAG=""
+
+./run-dom.sh || exit $?
+
+
+################################################################################
+# Bug 160, xa_start fails due to closed connection, recon, but only 2x times
+# the test case engine needs 3x times...
+################################################################################
+
+
+echo ">>> Doing static registration tests... (Bug #160 - start fails at random...)"
+echo ">>> #160: Secondly does retry, only 2x times, no success"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-startfail.$SUFFIX
+
+#
+# Recon on every xa_start error, 3xretries, sleep 10ms between retries.
+#
+export NDRX_XA_FLAGS="RECON:*:2:10"
+export TEST160_FLAG="fail"
+
+./run-dom.sh || exit $?
+
+
+################################################################################
+# Bug 160, xa_start fails due to closed connection, no recon
+################################################################################
+
+echo ">>> Doing static registration tests... (Bug #160 - start fails at random...)"
+echo ">>> #160: Third test -  no retries, test case must fail"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-startfail.$SUFFIX
+export TEST160_FLAG="fail"
+unset NDRX_XA_FLAGS
+
+./run-dom.sh || exit $?
+
+
+################################################################################
+# Test case 105, prepare fails
+################################################################################
+
+echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.so
+./run-dom.sh || exit $?
 
 echo "Doing static registration tests... (Bug #123 - try fail commit \
         manual complete (by xadmin))"

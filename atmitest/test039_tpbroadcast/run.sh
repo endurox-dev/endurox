@@ -136,33 +136,35 @@ MAX_CALLS=1000 # Same as in atmiclt39.c constant...
 
 echo "Running off client"
 
-set_dom1;
 #
 # Dom 1 set
 #
+set_dom1;
 (./atmicltA39 listen 2>&1 ) > ./atmicltA39-listen-dom1.log &
-#./atmicltA39 mutted > ./atmicltA39-mutted-dom1.log  2>&1 &
+(./atmicltA39 mutted 2>&1 ) > ./atmicltA39-mutted-dom1.log  &
 
-#./atmicltB39 listen > ./atmicltB39-listen-dom1.log  2>&1 &
-#./atmicltB39 mutted > ./atmicltB39-mutted-dom1.log  2>&1 &
+(./atmicltB39 listen 2>&1 ) > ./atmicltB39-listen-dom1.log  &
+(./atmicltB39 mutted 2>&1 ) > ./atmicltB39-mutted-dom1.log  &
 
-#./atmicltC39 listen > ./atmicltC39-listen-dom1.log  2>&1 &
-#./atmicltC39 mutted > ./atmicltC39-mutted-dom1.log  2>&1 &
+(./atmicltC39 listen 2>&1 ) > ./atmicltC39-listen-dom1.log  &
+(./atmicltC39 mutted 2>&1 ) > ./atmicltC39-mutted-dom1.log  &
 
 #
 # Dom2
 #
 set_dom2;
-#./atmicltA39 listen > ./atmicltA39-listen-dom2.log  2>&1 &
-#./atmicltA39 mutted > ./atmicltA39-mutted-dom2.log  2>&1 &
+(./atmicltA39 listen 2>&1 ) > ./atmicltA39-listen-dom2.log  &
+(./atmicltA39 mutted 2>&1 ) > ./atmicltA39-mutted-dom2.log  &
 
-#./atmicltB39 listen > ./atmicltB39-listen-dom2.log  2>&1 &
-#./atmicltB39 mutted > ./atmicltB39-mutted-dom2.log  2>&1 &
+(./atmicltB39 listen 2>&1 ) > ./atmicltB39-listen-dom2.log  &
+(./atmicltB39 mutted 2>&1 ) > ./atmicltB39-mutted-dom2.log  &
 
-#./atmicltC39 listen > ./atmicltC39-listen-dom2.log  2>&1 &
-#./atmicltC39 mutted > ./atmicltC39-mutted-dom2.log  2>&1 &
+(./atmicltC39 listen 2>&1 ) > ./atmicltC39-listen-dom2.log  &
+(./atmicltC39 mutted 2>&1 ) > ./atmicltC39-mutted-dom2.log  &
 
 
+# Let all listeners to wake up (start..)
+sleep 5
 #
 # Broadcast from dom1
 #

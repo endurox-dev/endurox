@@ -200,7 +200,7 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode,
 
     ret=ndrx_mq_open(name, oflag, mode, p_at);
 
-    NDRX_LOG(6, "ndrx_mq_open_at(name=%s) returns %lx (mq_maxmsg: %d mq_msgsize: %d)",
+    NDRX_LOG(6, "ndrx_mq_open_at(name=%s) returns 0x%lx (mq_maxmsg: %d mq_msgsize: %d)",
 	name, (long int) ret, p_at->mq_maxmsg, p_at->mq_msgsize);
 
     return ret;
