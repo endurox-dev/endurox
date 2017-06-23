@@ -1282,7 +1282,7 @@ public void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (cha
             
     if (SUCCEED!=entry_status)
     {
-        ret=NULL;
+        ret=TPUNSOLERR;
         goto out;
     }
     
