@@ -26,7 +26,7 @@ DESCRIPTION
 Function is used for sending unsolicited message to multiple clients at once. 
 The target clients can be matched by following options:
 
-# 'lmid' Cluster node id to send the message to. If field is set to empty string 
+- 'lmid' Cluster node id to send the message to. If field is set to empty string 
 (first byte 0x00) then any cluster node id is matched. If string value is given
 then numeric value is expected and is matched against the connected cluster nodes.
 Either local or remote. This field can be set to regular expression, 
