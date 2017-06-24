@@ -102,6 +102,8 @@ set(MAN3_NAMES
         tplogdelbufreqfile
         tplogprintubf
         tpisautobuf
+        tpsetunsol
+        tpnotify
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

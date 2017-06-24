@@ -5,7 +5,7 @@ TPSETUNSOL(3)
 
 NAME
 ----
-tpsetunsol - Call XATMI service asynchronously
+tpsetunsol - Set unsolicited message callback handler function
 
 
 SYNOPSIS
