@@ -31,7 +31,7 @@ The target clients can be matched by following options:
 then numeric value is expected and is matched against the connected cluster nodes.
 Either local or remote. This field can be set to regular expression, 
 in that case 'flags' should contain the 'TPREGEXMATCH'. Maximum
-statement length is *MAXTIDENT*\*2-1.
+statement length is *MAXTIDENT**2-1.
 
 - 'usrname' is reserved for future use. Currently not supported.
 
@@ -40,7 +40,7 @@ is NULL or empty string, then it is matched. If string is given then exact execu
 is matched for delivery. If binary runs in multiple copies, all of them will
 receive notification. The field can be set to regular expression, in that case
 flags must contain 'TPREGEXMATCH'. The max length of 'cltname' string can be 
-*MAXTIDENT*\*2-1.
+*MAXTIDENT**2-1.
 
 
 Any combination is possible between 'lmid' and 'cltname'. Any matched process that
