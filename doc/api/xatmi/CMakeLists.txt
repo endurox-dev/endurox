@@ -104,6 +104,7 @@ set(MAN3_NAMES
         tpisautobuf
         tpsetunsol
         tpnotify
+        tpbroadcast
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

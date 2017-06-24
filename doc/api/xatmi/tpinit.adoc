@@ -54,6 +54,10 @@ get un-initialised TLS which results in need of calling *tpinit()*.
 Internally function opens any Posix queues needed by client, reads the environment 
 variables and initializes XA sub-system, if configured and not set to lazy.
 
+*Valid flags for TPINIT.flags* 
+
+*TPU_IGN* Ignore (drop) incoming unsolicited messages.
+
 RETURN VALUE
 ------------
 On success, *tpinit()* returns 0. On error, -1 is returned, with *tperrno* set 
