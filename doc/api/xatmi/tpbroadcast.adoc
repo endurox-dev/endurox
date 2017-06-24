@@ -33,9 +33,9 @@ Either local or remote. This field can be set to regular expression,
 in that case 'flags' should contain the 'TPREGEXMATCH'. Maximum
 statement length is *MAXTIDENT*\*2-1.
 
-# 'usrname' is reserved for future use. Currently not supported.
+- 'usrname' is reserved for future use. Currently not supported.
 
-# 'cltname' is process name (executable name) that should be matched. If 'cltname'
+- 'cltname' is process name (executable name) that should be matched. If 'cltname'
 is NULL or empty string, then it is matched. If string is given then exact executable
 is matched for delivery. If binary runs in multiple copies, all of them will
 receive notification. The field can be set to regular expression, in that case
