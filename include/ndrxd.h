@@ -131,7 +131,7 @@ struct pm_node
     int exec_seq_try;       /* Sequental start try           */
     long rsptimer;           /* Sanity cycle counter for (start/ping/stop)     */
     long pingtimer;    /* Timer which counts ping intervals              */
-    ndrx_timer_t pingroundtrip; /* Ping  roundtrip tipe         */
+    ndrx_stopwatch_t pingroundtrip; /* Ping  roundtrip tipe         */
     int pingseq;            /* Last ping sequence sent       */
             
     int num_term_sigs;      /* Number of times to send term sig, before -9 */
@@ -237,7 +237,7 @@ typedef struct
     /* NDRXD restart: */
     short restarting;  /* In restart mode, after restart_to_check expired, 
                         * process becomes in normal mode */
-    ndrx_timer_t time_from_restart; /* Time counter, how long we are restarting/learning */
+    ndrx_stopwatch_t time_from_restart; /* Time counter, how long we are restarting/learning */
 } sys_config_t;
 
 /**

@@ -1,7 +1,7 @@
 /* 
-** Timer handler
+** Memory checking routines
 **
-** @file ntimer.h
+** @file xmemck.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,48 +29,79 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
+#ifndef XMEMCK_H
+#define XMEMCK_H
 
-#ifndef NSTOPWATCH_H
-#define	NSTOPWATCH_H
 
-#ifdef	__cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
-
 /*---------------------------Includes-----------------------------------*/
-#include <time.h>
-
-#include "ndebug.h"
+#include <ndrx_config.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-/* Dump the contents of N timer. */
-#define N_TIMER_DUMP(L, T, D) NDRX_LOG(L, "%s sec=%ld nsec=%ld", T, \
-                                D.t.tv_sec, D.t.tv_nsec);
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/**
- * Timer struct
+
+/* So we need two structures here:
+ * 1. Configuration
+ * 2. Per process statistics 
  */
-typedef struct
+
+/**
+ * Memory check config
+ */
+struct xmemck_config
 {
-    /*struct timeval  timeval;*/
-    struct timespec t;
-} ndrx_stopwatch_t;
+    char mask[PATH_MAX+1]; 
+    
+    long mem_limit;
+    int percent_diff_allow;
+    char dlft_mask[PATH_MAX+1]; 
+    int interval_start_prcnt;
+    int interval_stop_prcnt;
+    long flags;
+
+    EX_hash_handle hh;
+};
+typedef struct xmemck_config xmemck_config_t;
+
+/**
+ * Statistics entry point...
+ */
+struct xmemck_statentry
+{
+    long rss;
+    long vsz;
+};
+typedef struct xmemck_statentry xmemck_statentry_t;
+
+/**
+ * Definition of client processes (full command line & all settings)
+ */
+struct xmemck_process
+{   
+    int pid;                   /* which pid we are monitoring       */
+    
+    char psout[PATH_MAX+1];     /* ps string we are monitoring      */
+    
+    xmemck_config_t *p_config; /* when remvoing config, xmemck_process shall be removed too */
+    xmemck_statentry_t *stats; /* Array of statistics               */
+    int nr_of_stats;           /* Number array elements...          */
+    
+    EX_hash_handle hh;         /* makes this structure hashable     */
+};
+typedef struct xmemck_process xmemck_process_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer);
-extern NDRX_API long ndrx_stopwatch_get_delta(ndrx_stopwatch_t *timer);
-extern NDRX_API long ndrx_stopwatch_get_delta_sec(ndrx_stopwatch_t *timer);
-extern NDRX_API char *ndrx_decode_msec(long t, int slot, int level, int levels);
-extern NDRX_API char *ndrx_stopwatch_decode(ndrx_stopwatch_t *timer, int slot);
-extern NDRX_API long long ndrx_stopwatch_diff(ndrx_stopwatch_t *t1, ndrx_stopwatch_t *t2);
-extern NDRX_API void ndrx_stopwatch_minus(ndrx_stopwatch_t *timer, long long msec);
-extern NDRX_API void ndrx_stopwatch_plus(ndrx_stopwatch_t *timer, long long msec);
-#ifdef	__cplusplus
+
+
+#if defined(__cplusplus)
 }
 #endif
 
-#endif	/* NSTOPWATCH_H */
 
+#endif

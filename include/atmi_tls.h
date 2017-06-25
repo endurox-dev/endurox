@@ -96,7 +96,7 @@ typedef struct
     /* tpcall.c */
     long M_svc_return_code;/*=0; */
     int tpcall_first; /* = TRUE; */
-    ndrx_timer_t tpcall_start;
+    ndrx_stopwatch_t tpcall_start;
     call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
     int tpcall_get_cd; /* first available, we want test overlap!*/
     /* unsigned tpcall_callseq; */

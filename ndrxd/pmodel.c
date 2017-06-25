@@ -840,7 +840,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     else if (FAIL!=pid)
     {
-        ndrx_timer_t timer;
+        ndrx_stopwatch_t timer;
         int finished = FALSE;
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
@@ -864,7 +864,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             /* this is parent for child - sleep some seconds, then check for PID... */
             /* TODO: Replace sleep with wait call from service - wait for message? */
             /*usleep(250000);  250 milli seconds */
-            ndrx_timer_reset(&timer);
+            ndrx_stopwatch_reset(&timer);
 
             do
             {
@@ -872,19 +872,19 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 /* do command processing for now */
                 command_wait_and_run(&finished, abort);
                 /* check the status? */
-            } while (ndrx_timer_get_delta(&timer) < p_pm->conf->srvstartwait && 
+            } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
                             NDRXD_PM_STARTING==p_pm->state && !(*abort));
             
             if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
             {
-                ndrx_timer_t sleep_timer;
-                ndrx_timer_reset(&sleep_timer);
+                ndrx_stopwatch_t sleep_timer;
+                ndrx_stopwatch_reset(&sleep_timer);
                 
                 do
                 {
                     NDRX_LOG(log_debug, "In process after start sleep...");
                     command_wait_and_run(&finished, abort);
-                } while (ndrx_timer_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
+                } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
                 
             }
             
@@ -936,7 +936,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 {
     int ret=SUCCEED;
     command_call_t call;
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     int finished = FALSE;
     char srv_queue[NDRX_MAX_Q_SIZE+1];
     char fn[] = "stop_process";
@@ -998,7 +998,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /*goto out; Ignore this condition, just get the status of binary... */
     }
 
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     do
     {
         NDRX_LOG(log_debug, "Waiting for response from srv... state: %d",
@@ -1006,7 +1006,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* do command processing for now */
         command_wait_and_run(&finished, abort);
         /* check the status? */
-    } while (ndrx_timer_get_delta(&timer) < p_pm->conf->srvstopwait &&
+    } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstopwait &&
                     !PM_NOT_RUNNING(p_pm->state) &&
                     !(*abort));
 

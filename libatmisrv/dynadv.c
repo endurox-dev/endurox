@@ -396,7 +396,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     /* ###################### CRITICAL SECTION, END ########################## */
     
     /* Save the time when stuff is open! */
-    ndrx_timer_reset(&entry_new->qopen_time);
+    ndrx_stopwatch_reset(&entry_new->qopen_time);
 
     NDRX_LOG(log_debug, "Got file descriptor: %d, adding to e-poll!",
                             entry_new->q_descr);

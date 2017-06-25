@@ -193,7 +193,7 @@ public void emq_set_lock_timeout(int secs)
 private int emq_try_lock(struct emq_hdr  *emqhdr)
 {
     int ret = SUCCEED;
-    ndrx_timer_t t;
+    ndrx_stopwatch_t t;
     int e=FAIL;
     
     if (0==M_lock_secs)
@@ -202,9 +202,9 @@ private int emq_try_lock(struct emq_hdr  *emqhdr)
         goto out;
     }
     
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     
-    while (ndrx_timer_get_delta_sec(&t) < M_lock_secs)
+    while (ndrx_stopwatch_get_delta_sec(&t) < M_lock_secs)
     {
         if(SUCCEED!=(e=pthread_mutex_trylock(&emqhdr->emqh_lock)))
         {
@@ -219,7 +219,7 @@ private int emq_try_lock(struct emq_hdr  *emqhdr)
     if (SUCCEED!=e)
     {
         NDRX_LOG(log_error, "Lock stalled (%d / %d), returning error!",
-                    M_lock_secs, ndrx_timer_get_delta_sec(&t));
+                    M_lock_secs, ndrx_stopwatch_get_delta_sec(&t));
         ret=EINPROGRESS;
     }
     else

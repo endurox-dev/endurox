@@ -227,7 +227,7 @@ struct atmi_xa_log
     /* background processing: */
     long trycount;       /* Number of attempts */
     /* Have a timer for active transaction (to watch for time-outs)  */
-    ndrx_timer_t ttimer;   /* transaction timer */
+    ndrx_stopwatch_t ttimer;   /* transaction timer */
     long txtout;  /* Number of seconds for timeout */
     
     int is_background;  /* Is background responsible for tx? */

@@ -111,7 +111,7 @@ public int do_restart_actions(void)
     }
 
     /* Reset wait timer for learning */
-    ndrx_timer_reset(&(G_sys_config.time_from_restart));
+    ndrx_stopwatch_reset(&(G_sys_config.time_from_restart));
 
 out:
 
@@ -161,7 +161,7 @@ public int do_restart_chk(void)
     int ret=SUCCEED;
     int delta;
     
-    if ((delta=ndrx_timer_get_delta_sec(&(G_sys_config.time_from_restart))) > G_app_config->restart_to_check)
+    if ((delta=ndrx_stopwatch_get_delta_sec(&(G_sys_config.time_from_restart))) > G_app_config->restart_to_check)
     {
         NDRX_LOG(log_warn, "Restart learning time spent over... "
                 "switching to normal state!");

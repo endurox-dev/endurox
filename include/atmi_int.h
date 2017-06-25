@@ -416,7 +416,7 @@ struct tp_command_call
     /* message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
     /* call timer so that we do not operate with timed-out calls. */
-    ndrx_timer_t timer;    
+    ndrx_stopwatch_t timer;    
     
     /* <XA section begin> */
     ATMI_XA_TX_INFO_FIELDS;
@@ -468,7 +468,7 @@ struct tp_notif_call
     /* message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
     /* call timer so that we do not operate with timed-out calls. */
-    ndrx_timer_t timer;    
+    ndrx_stopwatch_t timer;    
     
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;

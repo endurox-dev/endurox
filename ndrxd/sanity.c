@@ -78,7 +78,7 @@ private int check_dead_processes(void);
 public int do_sanity_check(void)
 {
     int ret=SUCCEED;
-    static ndrx_timer_t timer;
+    static ndrx_stopwatch_t timer;
     static int first = TRUE;    
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
@@ -108,7 +108,7 @@ public int do_sanity_check(void)
     
     if (first)
     {
-        ndrx_timer_reset(&timer);
+        ndrx_stopwatch_reset(&timer);
         /* Initialise q prefixes, +1 for skipping initial / */
         snprintf(client_prefix, sizeof(client_prefix), NDRX_CLT_QREPLY_PFX, 
                 G_sys_config.qprefix);
@@ -144,7 +144,7 @@ public int do_sanity_check(void)
         first=FALSE;
     }
      
-    if (ndrx_timer_get_delta_sec(&timer)>=G_app_config->sanity)
+    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity)
     {
         wasrun = TRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
@@ -221,7 +221,7 @@ out:
 
     /* Reset timer on run */
     if (wasrun)
-        ndrx_timer_reset(&timer);
+        ndrx_stopwatch_reset(&timer);
 
     return ret;
 }

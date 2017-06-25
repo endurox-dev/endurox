@@ -583,7 +583,7 @@ private void tx_tout_check_th(void *ptr)
     LL_FOREACH_SAFE(tx_list,el,tmp)
     {
         NDRX_LOG(log_debug, "Checking [%s]...", el->p_tl.tmxid);
-        if ((tspent = ndrx_timer_get_delta_sec(&el->p_tl.ttimer)) > 
+        if ((tspent = ndrx_stopwatch_get_delta_sec(&el->p_tl.ttimer)) > 
                 el->p_tl.txtout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
         {
             NDRX_LOG(log_error, "XID [%s] timed out "

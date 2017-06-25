@@ -272,7 +272,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     
     /* Reset call timer */
-    ndrx_timer_reset(&call->timer);
+    ndrx_stopwatch_reset(&call->timer);
     
     NDRX_STRCPY_SAFE(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
     

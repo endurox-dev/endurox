@@ -81,7 +81,7 @@ void do_thread_work ( void *ptr )
     char buf[1024];
     char test_buf_carray[68192];
     char test_buf_small[1024];
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     int call_num = MAX_ASYNC_CALLS *2;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
@@ -108,7 +108,7 @@ void do_thread_work ( void *ptr )
             }
             
 warmed_up:
-            ndrx_timer_reset(&timer);
+            ndrx_stopwatch_reset(&timer);
             
             /* Do the loop call! */
             for (i=0; i<call_num; i++) /* Test the cd loop */
@@ -130,14 +130,14 @@ warmed_up:
                 goto warmed_up;
             }
 
-            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_timer_get_delta(&timer)/1000.0f);
+            d = (double)(sizeof(test_buf_carray)*(call_num))/(double)((double)ndrx_stopwatch_get_delta(&timer)/1000.0f);
 
-            cps = (double)(call_num)/((double)ndrx_timer_get_delta(&timer)/1000.0f);
+            cps = (double)(call_num)/((double)ndrx_stopwatch_get_delta(&timer)/1000.0f);
 
             printf("%dKB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
                     callsz,
                     (int)(sizeof(test_buf_carray)*(call_num)), 
-                    (long)ndrx_timer_get_delta_sec(&timer),  
+                    (long)ndrx_stopwatch_get_delta_sec(&timer),  
                     d,
                     (d/1024)/1024, 
                     cps);
@@ -266,7 +266,7 @@ warmed_up:
         goto out;
     }
         
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     
     /* Do the loop call! */
     for (i=0; i<call_num; i++) /* Test the cd loop */
@@ -282,13 +282,13 @@ warmed_up:
         }
     }
     
-    d = (double)(sizeof(test_buf_small)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+    d = (double)(sizeof(test_buf_small)*(call_num))/(double)ndrx_stopwatch_get_delta_sec(&timer);
     
-    cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+    cps = (double)(call_num)/(double)ndrx_stopwatch_get_delta_sec(&timer);
     
     printf("1KB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
             (int)(sizeof(test_buf_small)*(call_num)), 
-            (long)ndrx_timer_get_delta_sec(&timer),  
+            (long)ndrx_stopwatch_get_delta_sec(&timer),  
             d,
             (d/1024)/1024, 
             cps);
@@ -305,7 +305,7 @@ warmed_up:
         goto out;
     }
     
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     
     /* Do the loop call! */
     for (i=0; i<call_num; i++) /* Test the cd loop */
@@ -321,13 +321,13 @@ warmed_up:
         }
     }
     
-    d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_timer_get_delta_sec(&timer);
+    d = (double)(sizeof(test_buf_carray)*(call_num))/(double)ndrx_stopwatch_get_delta_sec(&timer);
     
-    cps = (double)(call_num)/(double)ndrx_timer_get_delta_sec(&timer);
+    cps = (double)(call_num)/(double)ndrx_stopwatch_get_delta_sec(&timer);
     
     printf("8KB Performance: %d bytes in %ld (sec) = %lf bytes/sec = %lf bytes/MB sec, calls/sec = %lf\n", 
             (int)(sizeof(test_buf_carray)*(call_num)), 
-            (long)ndrx_timer_get_delta_sec(&timer),  
+            (long)ndrx_stopwatch_get_delta_sec(&timer),  
             d,
             (d/1024)/1024, 
             cps);

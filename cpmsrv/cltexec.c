@@ -279,7 +279,7 @@ public int cpm_killall(void)
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     int is_any_running;
-    ndrx_timer_t t;
+    ndrx_stopwatch_t t;
     char *sig_str[3]={"SIGINT","SIGTERM", "SIGKILL"};
     int sig[3]={SIGINT,SIGTERM, SIGKILL};
     int i;
@@ -324,7 +324,7 @@ public int cpm_killall(void)
         if (i<2) /*no wait for kill... */
         {
             is_any_running = FALSE;
-            ndrx_timer_reset(&t);
+            ndrx_stopwatch_reset(&t);
             do
             {
                 /* sign_chld_handler(0); */
@@ -344,7 +344,7 @@ public int cpm_killall(void)
                 }
             }
             while (is_any_running && 
-                    ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+                    ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
         }
     }
     
@@ -363,7 +363,7 @@ public int cpm_killall(void)
 public int cpm_kill(cpm_process_t *c)
 {
     int ret = SUCCEED;
-    ndrx_timer_t t;
+    ndrx_stopwatch_t t;
     string_list_t* cltchildren = NULL;
         
     NDRX_LOG(log_warn, "Stopping %s/%s - %s", c->tag, c->subsect, c->stat.command_line);
@@ -383,7 +383,7 @@ public int cpm_kill(cpm_process_t *c)
         cltchildren=NULL;
     }
     
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     do
     {
         /* sign_chld_handler(0); */
@@ -392,7 +392,7 @@ public int cpm_kill(cpm_process_t *c)
             usleep(CLT_STEP_INTERVAL);
         }
     } while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -416,7 +416,7 @@ public int cpm_kill(cpm_process_t *c)
     }
     
     
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     do
     {
         /* sign_chld_handler(0); */
@@ -425,7 +425,7 @@ public int cpm_kill(cpm_process_t *c)
             usleep(CLT_STEP_INTERVAL);
         }
     } while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -456,7 +456,7 @@ public int cpm_kill(cpm_process_t *c)
         cltchildren=NULL;
     }
 
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     do
     {
         /* sign_chld_handler(0); */
@@ -467,7 +467,7 @@ public int cpm_kill(cpm_process_t *c)
         }
     }
     while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;

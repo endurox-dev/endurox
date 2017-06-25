@@ -1,5 +1,5 @@
 ## 
-## Enduro/X memory profling library.
+## Enduro/X memory profiling library.
 ##
 ## @file CMakeLists.txt
 ## 

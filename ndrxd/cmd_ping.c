@@ -73,7 +73,7 @@ public int srv_send_ping (pm_node_t *p_pm)
     }
     ping.seq = p_pm->pingseq;
     ping.srvid = p_pm->srvid;
-    ndrx_timer_reset(&p_pm->pingroundtrip);
+    ndrx_stopwatch_reset(&p_pm->pingroundtrip);
     
     /* Call the server */
     if (SUCCEED!=(ret = cmd_generic_callfl(NDRXD_COM_SRVPING_RQ, NDRXD_SRC_ADMIN,
@@ -126,7 +126,7 @@ public int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int co
     else if (p_pm->pingseq == ping->seq)
     {
         NDRX_LOG(log_error, "Server id=%d ok, binary: [%s] ping reply seq: %d, rsptime: %s", 
-                ping->srvid, p_pm->binary_name, ping->seq, ndrx_timer_decode(&p_pm->pingroundtrip, 0));
+                ping->srvid, p_pm->binary_name, ping->seq, ndrx_stopwatch_decode(&p_pm->pingroundtrip, 0));
         p_pm->rsptimer = SANITY_CNT_START;
     }
     else

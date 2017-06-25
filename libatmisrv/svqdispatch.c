@@ -157,7 +157,7 @@ public int sv_open_queue(void)
         /* ###################### CRITICAL SECTION, END ########################## */
         
         /* Save the time when stuff is open! */
-        ndrx_timer_reset(&entry->qopen_time);
+        ndrx_stopwatch_reset(&entry->qopen_time);
 
         NDRX_LOG(log_debug, "Got file descriptor: %d", entry->q_descr);
     }
@@ -230,7 +230,7 @@ public int sv_serve_call(int *service, int *status)
     G_atmisrv_reply_type = 0;
     atmi_lib_env_t * env = ndrx_get_G_atmi_env();
     
-    call_age = ndrx_timer_get_delta_sec(&call->timer);
+    call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
 
     NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d callseq: %u, "
 			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
@@ -492,7 +492,7 @@ public int sv_serve_connect(int *service, int *status)
     NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %hu",
                                         call->cd, call->timestamp, call->callseq);
     
-    call_age = ndrx_timer_get_delta_sec(&call->timer);
+    call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
     
     if (env->time_out>0 && call_age >= env->time_out && 
             !(call->flags & TPNOTIME))
@@ -700,9 +700,9 @@ public int sv_server_request(char *buf, int len)
 {
     int ret=SUCCEED;
     tp_command_generic_t *gen_command = (tp_command_generic_t *)G_server_conf.last_call.buf_ptr;
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     /* take time */
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     int service = FAIL;
     int status;
     
@@ -879,7 +879,7 @@ public int sv_server_request(char *buf, int len)
     /* Update stats, if ptr available */
     if (FAIL!=service && G_shm_srv)
     {
-        unsigned result = ndrx_timer_get_delta(&timer);
+        unsigned result = ndrx_stopwatch_get_delta(&timer);
 
         /* reset back to avail. */
         G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
@@ -1076,8 +1076,8 @@ public int sv_wait_for_request(void)
     pollextension_rec_t *ext;
     int evfd;
     mqd_t evmqd;
-    ndrx_timer_t   dbg_time;   /* Generally this is used for debug. */
-    ndrx_timer_t   periodic_cb;
+    ndrx_stopwatch_t   dbg_time;   /* Generally this is used for debug. */
+    ndrx_stopwatch_t   periodic_cb;
     command_call_t *p_adm_cmd = (command_call_t *)msg_buf;
     tp_command_call_t *call =  (tp_command_call_t*)msg_buf;
     
@@ -1090,8 +1090,8 @@ public int sv_wait_for_request(void)
         tout=FAIL; /* Timeout disabled */
     }
     
-    ndrx_timer_reset(&dbg_time);
-    ndrx_timer_reset(&periodic_cb);
+    ndrx_stopwatch_reset(&dbg_time);
+    ndrx_stopwatch_reset(&periodic_cb);
     
     /* THIS IS MAIN SERVER LOOP! */
     while(SUCCEED==ret && (!G_shutdown_req || 
@@ -1112,13 +1112,13 @@ public int sv_wait_for_request(void)
          * so we just put timer there if tout used, and no timer if no tout use.
          * If tout used, then 60 sec will be ok for dbug
          */
-        if (FAIL==tout || ndrx_timer_get_delta_sec(&dbg_time) >= 60)
+        if (FAIL==tout || ndrx_stopwatch_get_delta_sec(&dbg_time) >= 60)
         {
             NDRX_LOG(log_debug, "About to poll - timeout=%d millisec", 
                                                 tout);
             if (FAIL!=tout)
             {
-                ndrx_timer_reset(&dbg_time);
+                ndrx_stopwatch_reset(&dbg_time);
             }
         }
         
@@ -1150,7 +1150,7 @@ public int sv_wait_for_request(void)
         /* We should use timer here because, if there are service requests at
          * constant time (less than poll time), then callback will be never called! */
         else if (FAIL!=tout && 
-                ndrx_timer_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
+                ndrx_stopwatch_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
         {
             if (NULL!=G_server_conf.p_periodcb &&
                     SUCCEED!=(ret=G_server_conf.p_periodcb()))
@@ -1160,7 +1160,7 @@ public int sv_wait_for_request(void)
                 goto out;
             }
             
-            ndrx_timer_reset(&periodic_cb);
+            ndrx_stopwatch_reset(&periodic_cb);
         }
         
         /*

@@ -52,7 +52,7 @@
 /*---------------------------Globals------------------------------------*/
 /* We should have monitor timer for long not-receiving ndrxd reply
  * but receiving tons of event postages...*/
-ndrx_timer_t M_getbrs_timer;
+ndrx_stopwatch_t M_getbrs_timer;
 
 int (*G_report_to_ndrxd_cb) (void) = NULL;
 
@@ -266,7 +266,7 @@ private int get_bridges_rply_request(char *buf, long len)
         ret = process_admin_req(buf, len, &G_shutdown_req);
     }
     
-    if (ndrx_timer_get_delta_sec(&M_getbrs_timer) > ndrx_get_G_atmi_env()->time_out)
+    if (ndrx_stopwatch_get_delta_sec(&M_getbrs_timer) > ndrx_get_G_atmi_env()->time_out)
     {
         NDRX_LOG(log_error, "Did not get reply from ndrxd int time for "
                 "bridge listing - FAIL!");
@@ -293,7 +293,7 @@ public int ndrxd_get_bridges(char *nodes_out)
     int rply_len= sizeof(rply);
     svc_entry_fn_t *entry = G_server_conf.service_array[ATMI_SRV_ADMIN_Q];
 
-    ndrx_timer_reset(&M_getbrs_timer);
+    ndrx_stopwatch_reset(&M_getbrs_timer);
     
     memset(&req, 0, sizeof(req));
     memset(&rply, 0, sizeof(rply));

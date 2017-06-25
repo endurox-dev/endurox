@@ -203,7 +203,7 @@ private int call_scan_tout(int cd, int *cd_out)
     
     /* Check that it is time for scan... */
     if (G_atmi_tls->tpcall_first || 
-            (delta=ndrx_timer_get_delta(&G_atmi_tls->tpcall_start)) >=1000 || 
+            (delta=ndrx_stopwatch_get_delta(&G_atmi_tls->tpcall_start)) >=1000 || 
                 /* incase of overflow: */
                 delta < 0)
     {
@@ -230,7 +230,7 @@ private int call_scan_tout(int cd, int *cd_out)
             }
         }
         /* if all ok, schedule after 1 sec. */
-        ndrx_timer_reset(&G_atmi_tls->tpcall_start);
+        ndrx_stopwatch_reset(&G_atmi_tls->tpcall_start);
         G_atmi_tls->tpcall_first = FALSE; /* only when all ok... */
     } /* if check time... */
     
@@ -555,7 +555,7 @@ public int _tpacall (char *svc, char *data,
     call->timestamp = timestamp;
     
     /* Reset call timer */
-    ndrx_timer_reset(&call->timer);
+    ndrx_stopwatch_reset(&call->timer);
     
     NDRX_STRCPY_SAFE(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
     NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d callseq=%u", 

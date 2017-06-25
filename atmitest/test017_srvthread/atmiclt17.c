@@ -61,17 +61,17 @@ int main(int argc, char** argv) {
     double d;
     int j;
     int calls = 0;
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     double cps;
 
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     for (j = 0; j<100; j++)
     {
         UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9217);
 
     double dv = 55.66;
 
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     int call_num = MAX_ASYNC_CALLS *4;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
            tpfree((char *)p_ub);
     }
    
-    cps = (double)(calls)/(double)ndrx_timer_get_delta_sec(&timer);
+    cps = (double)(calls)/(double)ndrx_stopwatch_get_delta_sec(&timer);
     printf("Performance - Nr calls: %d calls per sec: %lf\n", calls, cps);
     
 out:

@@ -259,7 +259,7 @@ private void br_dump_tp_command_call(char *buf)
     NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
             extra_debug->timer.t.tv_sec,
             extra_debug->timer.t.tv_nsec,
-            ndrx_timer_get_delta_sec(&extra_debug->timer) );
+            ndrx_stopwatch_get_delta_sec(&extra_debug->timer) );
 
     NDRX_LOG(log_debug, "callseq  %hu",   extra_debug->callseq);
     NDRX_LOG(log_debug, "msgseq   %hu",   extra_debug->msgseq);
@@ -281,7 +281,7 @@ private void br_dump_tp_notif_call(char *buf)
     NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
             extra_debug->timer.t.tv_sec,
             extra_debug->timer.t.tv_nsec,
-            ndrx_timer_get_delta_sec(&extra_debug->timer) );
+            ndrx_stopwatch_get_delta_sec(&extra_debug->timer) );
 
     NDRX_LOG(log_debug, "callseq          %hu",   extra_debug->callseq);
     NDRX_LOG(log_debug, "msgseq           %hu",   extra_debug->msgseq);

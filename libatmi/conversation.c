@@ -764,7 +764,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
         atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);   
     }
     /* Reset call timer...! */
-    ndrx_timer_reset(&call->timer);
+    ndrx_stopwatch_reset(&call->timer);
 
     NDRX_LOG(log_debug, "Sending request to: %s, callseq: %hu", 
             send_qstr, call->callseq);
@@ -974,7 +974,7 @@ public int _tprecv (int cd, char * *data,
     typed_buffer_descr_t *call_type;
     int answ_ok = FALSE;
     tp_conversation_control_t *conv;
-    ndrx_timer_t t;
+    ndrx_stopwatch_t t;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", fn);
 
@@ -982,7 +982,7 @@ public int _tprecv (int cd, char * *data,
     
     if (!(flags & TPNOTIME))
     {
-        ndrx_timer_reset(&t);
+        ndrx_stopwatch_reset(&t);
     }
     
     /* choose the connection */
@@ -1029,7 +1029,7 @@ public int _tprecv (int cd, char * *data,
     while (!answ_ok)
     {
         long spent;
-        if (!(flags & TPNOTIME) && (spent=ndrx_timer_get_delta_sec(&t)) > G_atmi_env.time_out)
+        if (!(flags & TPNOTIME) && (spent=ndrx_stopwatch_get_delta_sec(&t)) > G_atmi_env.time_out)
         {
             NDRX_LOG(log_error, "%s: call expired (spent: %ld sec, tout: %ld sec)", 
                     __func__, spent, G_atmi_env.time_out);

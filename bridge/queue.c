@@ -96,7 +96,7 @@ private int br_add_to_q(char *buf, int len, int pack_type)
     msg->len = len;
     memcpy(msg->buffer, buf, len);
     
-    ndrx_timer_reset(&msg->trytime);
+    ndrx_stopwatch_reset(&msg->trytime);
     
     DL_APPEND(M_in_q, msg);
     

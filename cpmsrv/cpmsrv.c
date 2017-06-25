@@ -289,12 +289,12 @@ private int cpm_callback_timer(void)
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     static int first = TRUE;
-    static ndrx_timer_t t;
+    static ndrx_stopwatch_t t;
     
     if (first)
     {
         first = FALSE;
-        ndrx_timer_reset(&t);
+        ndrx_stopwatch_reset(&t);
     }
 
 #ifdef EX_CPM_NO_THREADS
@@ -302,12 +302,12 @@ private int cpm_callback_timer(void)
     sign_chld_handler(SIGCHLD);
 #endif
     
-    if (ndrx_timer_get_delta_sec(&t) < G_config.chk_interval)
+    if (ndrx_stopwatch_get_delta_sec(&t) < G_config.chk_interval)
     {
         goto out;
     }
     
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     
     
     NDRX_LOG(log_debug, "cpm_callback_timer() enter");

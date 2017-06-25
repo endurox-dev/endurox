@@ -532,7 +532,7 @@ private int x_ctonet(cproto_t *fld, char *c_buf_in,
             break;
         case EXF_NTIMER:
         {
-            ndrx_timer_t *tmp = (ndrx_timer_t *)c_buf_in;
+            ndrx_stopwatch_t *tmp = (ndrx_stopwatch_t *)c_buf_in;
             sprintf(c_buf_out, "%020ld%020ld", tmp->t.tv_sec, 
                     tmp->t.tv_nsec);
             NDRX_LOG(6, "time=>[%s]", c_buf_out);
@@ -540,7 +540,7 @@ private int x_ctonet(cproto_t *fld, char *c_buf_in,
             NDRX_LOG(log_debug, "timer = (tv_sec: %ld tv_nsec: %ld)"
                                     " delta: %d", 
                                     tmp->t.tv_sec,  tmp->t.tv_nsec, 
-                                    ndrx_timer_get_delta_sec(tmp));
+                                    ndrx_stopwatch_get_delta_sec(tmp));
             
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = TRUE;
@@ -842,7 +842,7 @@ private int x_nettoc(cproto_t *fld,
         {
             char timer_buf[21];
             char *p;
-            ndrx_timer_t *tmp = (ndrx_timer_t *)c_buf_out;
+            ndrx_stopwatch_t *tmp = (ndrx_stopwatch_t *)c_buf_out;
             
             strncpy(timer_buf, bcd_buf, 20);
             timer_buf[20] = EOS;
@@ -1739,7 +1739,7 @@ private int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
                                     more_debug->timer.t.tv_sec, 
                                     more_debug->timer.t.tv_nsec,
-                                    ndrx_timer_get_delta_sec(&more_debug->timer));
+                                    ndrx_stopwatch_get_delta_sec(&more_debug->timer));
                             NDRX_LOG(log_debug, "callseq  %hd", 
                                     more_debug->callseq);
                             NDRX_LOG(log_debug, "cd  %d", 

@@ -64,7 +64,7 @@ typedef struct removed_svcs removed_svcs_t;
 struct removed_svcs
 {
     char svc[XATMI_SERVICE_NAME_LENGTH+1];
-    ndrx_timer_t remove_time;
+    ndrx_stopwatch_t remove_time;
     removed_svcs_t *prev, *next;
 };
 

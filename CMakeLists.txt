@@ -274,7 +274,6 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (libpsstdlib) # Platform script standard library
 ENDIF()
 
-
 add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
