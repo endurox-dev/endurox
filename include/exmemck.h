@@ -1,7 +1,7 @@
 /* 
 ** Memory checking routines
 **
-** @file xmemck.h
+** @file exmemck.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,8 +29,8 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef XMEMCK_H
-#define XMEMCK_H
+#ifndef EXMEMCK_H
+#define EXMEMCK_H
 
 
 #if defined(__cplusplus)
@@ -52,7 +52,7 @@ extern "C" {
 /**
  * Memory check config
  */
-struct xmemck_config
+struct exmemck_config
 {
     char mask[PATH_MAX+1]; 
     
@@ -65,34 +65,34 @@ struct xmemck_config
 
     EX_hash_handle hh;
 };
-typedef struct xmemck_config xmemck_config_t;
+typedef struct exmemck_config exmemck_config_t;
 
 /**
  * Statistics entry point...
  */
-struct xmemck_statentry
+struct exmemck_statentry
 {
     long rss;
     long vsz;
 };
-typedef struct xmemck_statentry xmemck_statentry_t;
+typedef struct exmemck_statentry exmemck_statentry_t;
 
 /**
  * Definition of client processes (full command line & all settings)
  */
-struct xmemck_process
+struct exmemck_process
 {   
     int pid;                   /* which pid we are monitoring       */
     
     char psout[PATH_MAX+1];     /* ps string we are monitoring      */
     
-    xmemck_config_t *p_config; /* when remvoing config, xmemck_process shall be removed too */
-    xmemck_statentry_t *stats; /* Array of statistics               */
+    exmemck_config_t *p_config; /* when removing config, exmemck_process shall be removed too */
+    exmemck_statentry_t *stats; /* Array of statistics               */
     int nr_of_stats;           /* Number array elements...          */
     
     EX_hash_handle hh;         /* makes this structure hashable     */
 };
-typedef struct xmemck_process xmemck_process_t;
+typedef struct exmemck_process exmemck_process_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

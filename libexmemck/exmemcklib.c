@@ -1,7 +1,7 @@
 /* 
 ** Memory checking library
 **
-** @file xmemcklib.c
+** @file exmemcklib.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -39,14 +39,59 @@
 #include "thlock.h"
 #include "userlog.h"
 #include "ndebug.h"
-#include <xmemck.h>
+#include <exmemck.h>
+#include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+
+exmemck_config_t *M_config = NULL; /* global config */
+exmemck_process_t *M_proc = NULL; /* global process list */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Get config
+ * @param mask
+ * @param autocreate create entry automatically...
+ * @return found/allocated config block or NULL
+ */
+private exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret, 
+        int *p_is_new)
+{
+    exmemck_config_t * ret;
+    
+    EXHASH_FIND_STR(M_config, mask, ret);
+    
+    if (NULL==ret && autocreate)
+    {
+        /* Allocate the block */
+        
+        if (SUCCEED!=(ret=NDRX_CALLOC(1, sizeof(exmemck_config_t))))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "Failed to allocate xmemck_config_t: %s", 
+                    strerror(err));
+            
+            userlog("Failed to allocate xmemck_config_t: %s", 
+                    strerror(err));
+            FAIL_OUT((*p_ret));
+        }
+        
+        NDRX_STRCPY_SAFE(ret->mask, mask);
+        
+        EXHASH_ADD_STR(M_config, mask, ret);
+        
+        *p_is_new = TRUE;
+        
+    }
+out:
+
+    return ret;
+}
 
 /**
  * Add configuration entry to the xm lib. Each entry will epply to the
@@ -69,13 +114,74 @@ public int ndrx_memck_add_mask(char *mask,
         long flags)
 {
     int ret = SUCCEED;
+    int is_new = FALSE;
     
+    exmemck_config_t * cfg, *dflt;
+    
+    NDRX_LOG(log_debug, "%s: enter, mask: [%s]", __func__, mask);
+    
+    cfg = get_config(mask, TRUE, &ret, &is_new);
+    
+    if (NULL==cfg || SUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "%s: failed to get config for mask [%s]", 
+                __func__, mask);
+        FAIL_OUT(ret);
+    }
+    
+    /* search for defaults */
+    if (is_new && NULL!=dlft_mask)
+    {
+        NDRX_LOG(log_debug, "Making init for defaults: [%s]", dlft_mask);
+        
+        /* ret will succeed here always! */
+        dflt = get_config(dlft_mask, FALSE, &ret, NULL);
+        
+        if (NULL!=dflt)
+        {
+            /* Got defaults */
+            
+            NDRX_LOG(log_debug, "Got defaults...");
+            cfg->flags = dflt->flags;
+            cfg->interval_start_prcnt = dflt->interval_start_prcnt;
+            cfg->interval_stop_prcnt = dflt->interval_stop_prcnt;
+            cfg->mem_limit = dflt->mem_limit;
+            cfg->percent_diff_allow = dflt->percent_diff_allow;
+        }
+    }
+    
+    
+    if (flags>FAIL)
+    {
+        cfg->flags = flags;
+    }
+    
+    if (interval_start_prcnt>FAIL)
+    {
+        cfg->interval_start_prcnt = interval_start_prcnt;
+    }
+    
+    if (interval_stop_prcnt >FAIL)
+    {
+        cfg->interval_stop_prcnt = interval_stop_prcnt;
+    }
+    
+    if (mem_limit >FAIL)
+    {
+        cfg->mem_limit = mem_limit;
+    }
+    
+    if (percent_diff_allow >FAIL)
+    {
+        cfg->percent_diff_allow = percent_diff_allow;
+    }
+   
 out:    
     return ret;
 }
 
 /**
- * Remove process by mask
+ * Remove process by mask. Also will remove any monitored processes from the list
  * @param mask
  * @return 
  */
@@ -95,36 +201,6 @@ public void* ndrx_memck_getstats(void)
 {
     return NULL;
 }
-
-
-/**
- * Report status callback of the process
- * status should contain:
- * - ok, or leaky.
- * The status block should be the same as the stats, some linked list of all 
- * attribs..
- * @return 
- */
-public int ndrx_memck_set_status_cb(void)
-{
-    int ret = SUCCEED;
-    
-out:    
-    return ret;
-}
-    
-/**
- * Set the callback func to be invoked when process needs to be killed (too leaky!)
- * @return 
- */
-public int ndrx_memck_set_kill_cb(void)
-{
-    int ret = SUCCEED;
-    
-out:    
-    return ret;
-}
-
 
 /**
  * Reset statistics for process
@@ -171,6 +247,10 @@ public int ndrx_memck_tick(void)
     
     /* Add process statistics, if found in table, the add func shall create new
      * entry or append existing entry */
+    
+    /* If process is not running anymore, just report its stats via callback
+     * and remove from the memory
+     */
     
 out:    
     return ret;
