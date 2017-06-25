@@ -92,18 +92,32 @@ out:
 
     return ret;
 }
+/**
+ * Dump the configuration to log file
+ * @param cfg configuration node
+ */
+exprivate void dump_config(exmemck_config_t * cfg)
+{
+    NDRX_LOG(log_debug, "=== Config entry, mask: [%s] ======", cfg->mask);
+    NDRX_LOG(log_debug, "inheritted defaults from mask: [%s]", cfg->dlft_mask);
+    NDRX_LOG(log_debug, "mem_limit                    : [%ld]", cfg->settings.mem_limit);
+    NDRX_LOG(log_debug, "percent_diff_allow           : [%ld]", cfg->settings.percent_diff_allow);
+    NDRX_LOG(log_debug, "interval_start_prcnt         : [%ld]", cfg->settings.interval_start_prcnt);
+    NDRX_LOG(log_debug, "interval_stop_prcnt          : [%ld]", cfg->settings.interval_stop_prcnt);
+    NDRX_LOG(log_debug, "flags                        : [0x%lx]", cfg->settings.flags);
+    NDRX_LOG(log_debug, "interval_mon                 : [%d]", cfg->settings.interval_mon);
+    NDRX_LOG(log_debug, "pf_proc_exit                 : [%p]", cfg->settings.pf_proc_exit);
+    NDRX_LOG(log_debug, "pf_proc_leaky                : [%p]", cfg->settings.pf_proc_leaky);
+    NDRX_LOG(log_debug, "===================================="); 
+}
 
 /**
  * Add configuration entry to the xm lib. Each entry will epply to the
  * list of the processes
- * @param mask
- * @param mem_limit
- * @param percent_diff_allow
- * @param dlft_mask
- * @param interval_start_prcnt
- * @param interval_stop_prcnt
- * @param flags
- * @return 
+ * @param mask    Mask key
+ * @param dfld_mask Default mask
+ * @param p_settings    Settings for the monitoring
+ * @return SUCCEED/FAIL
  */
 expublic int ndrx_memck_add(char *mask,  char *dlft_mask, exmemck_settings_t *p_settings )
 {
@@ -137,6 +151,8 @@ expublic int ndrx_memck_add(char *mask,  char *dlft_mask, exmemck_settings_t *p_
             
             NDRX_LOG(log_debug, "Got defaults...");
             memcpy(&(cfg->settings), &(dflt->settings), sizeof(cfg->settings));
+            
+            NDRX_STRCPY_SAFE(cfg->dlft_mask, dlft_mask);
         }
     }
     
@@ -174,22 +190,93 @@ expublic int ndrx_memck_add(char *mask,  char *dlft_mask, exmemck_settings_t *p_
     {
         cfg->settings.pf_proc_leaky = p_settings->pf_proc_leaky;
     }
+    
+    
+    dump_config(cfg);
    
 out:    
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
+
     return ret;
 }
 
 /**
- * Remove process by mask. Also will remove any monitored processes from the list
- * @param mask
+ * Remove process
+ * @param el
  * @return 
+ */
+exprivate void rm_proc(exmemck_process_t *el)
+{
+    EXHASH_DEL(M_proc, el);
+    
+    NDRX_FREE(el->stats);
+    
+    NDRX_FREE(el);
+}
+
+/**
+ * Remove process by mask. Also will remove any monitored processes from the list
+ * If mask is not found, then function will return SUCCEED anyway...
+ * @param mask Mask to search for and remote, this will kill all the processes
+ * monitored by this mask
+ * @return SUCCEED/FAIL
  */
 expublic int ndrx_memck_rm(char *mask)
 {
     int ret = EXSUCCEED;
+    exmemck_config_t * cfg;
     
-out:    
+    exmemck_process_t *el = NULL;
+    exmemck_process_t *elt = NULL;
+    
+    NDRX_LOG(log_debug, "%s enter, mask: [%s]", __func__, mask);
+    
+    cfg = get_config(mask, EXFALSE, NULL,  NULL);
+    
+    if (NULL!=cfg)
+    {
+        NDRX_LOG(log_debug, "Entry found - removing...");
+        EXHASH_DEL(M_config, cfg);
+        
+        /* Loop over the processes and kill with this config */
+        
+        /* Iterate over the hash! */
+        EXHASH_ITER(hh, M_proc, el, elt)
+        {
+            if (el->p_config == cfg)
+            {
+                NDRX_LOG(log_info, "deleting process: %d by mask [%s]", 
+                        el->pid, mask);
+                rm_proc(el);
+            }
+        }
+        
+        NDRX_FREE(cfg);
+    }
+out:
     return ret;
+}
+
+/**
+ * Calculate statistics for single process
+ * if finding out that it is leaking, call the callback if defined.
+ * Set the status...
+ */
+exprivate int calc_stat(exmemck_process_t *proc)
+{
+    int ret = EXSUCCEED;
+    
+out:
+    return ret;
+}
+/**
+ * Get statistics for single process
+ * @param pid
+ * @return 
+ */
+expublic exmemck_process_t* ndrx_memck_getstats_single(pid_t pid)
+{
+    
 }
 
 /**
@@ -238,7 +325,9 @@ expublic int ndrx_memck_tick(void)
 {
     int ret = EXSUCCEED;
     
-    /* List all processes */
+    /* List all processes that matches the mask */
+    
+    
     
     /* Check them against monitoring table */
     

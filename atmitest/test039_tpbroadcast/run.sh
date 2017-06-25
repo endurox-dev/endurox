@@ -177,6 +177,9 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+# let the messages to completes it's processing...
+sleep 10
+
 #
 # Broadcast of AA message to all clients
 #
