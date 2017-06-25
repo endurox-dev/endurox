@@ -1,0 +1,78 @@
+TPCHKUNSOL(3)
+=============
+:doctype: manpage
+
+NAME
+----
+tpchkunsol - Process received unsolicited messages
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpchkunsol(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi 
+-lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used for receiving and dispatching unsolicited messages 
+(published by *tpnotify(3)* or *tpbroadcast(3)*) to client processes 
+in case if client process is not doing in-progress *tpcall(3)* or *tpgetrply(3)*.
+
+From software architecture standpoint, the XATMI client reply queue is shared
+between normal tpcall/tpacall replies and notifications.
+
+*tpchkunsol()* checks for priority 1 messages (notification/broadcast) 
+in client reply queue. If such message is found, 
+then callback set by *tpsetunsol(3)* is invoked. If *tpacall(3)*
+reply message is received instead of notification, the call reply message is saved
+in in-process memory linked list which serves internally as a 'queue'. Thus
+the next *tpacall(3)* invocation will return to user process message from linked
+list instead of the POSIX queue. The programmer must take this in account, because
+if there will be lots of *tpacall(3)* invocation and few *tpgetrply(3)*,
+then process memory will grow with unprocessed replies. 
+Thus it is recommended when using unsolicited messaging, periodically invoke 
+the *tpgetrply(3)*.
+
+Note when doing *tpcall(3)* or *tpgetrply(3)*, these functions
+in case of receiving unsolicited message, will dispatch notifications automatically.
+Thus there is no need for *tpchkunsol(3)* invocation during this time.
+
+
+RETURN VALUE
+------------
+On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* 
+set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
+
+
+EXAMPLE
+-------
+See *atmitest/test039_tpbroadcast/atmiclt39.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpsetunsol(3)* *tpnotify(3)* *tpbroadcast(3)* *tpinit(3)* *tpbrdcstsv(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
