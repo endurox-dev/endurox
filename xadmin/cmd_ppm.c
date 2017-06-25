@@ -44,7 +44,7 @@
 #include <atmi_int.h>
 #include <gencall.h>
 
-#include "ntimer.h"
+#include "nstopwatch.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define FIX_NM(Xsrc, Xbuf, Xlen) \

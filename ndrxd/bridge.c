@@ -46,7 +46,7 @@
 #include <nstdutil.h>
 #include <exhash.h>
 #include <bridge_int.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cmd_processor.h>
 #include <atmi_shm.h>
 /*---------------------------Externs------------------------------------*/

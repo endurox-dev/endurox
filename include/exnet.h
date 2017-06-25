@@ -40,7 +40,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <ntimer.h>
+#include <nstopwatch.h>
 /*------------------------------Externs---------------------------------------*/
 extern int G_recv_tout;				/* Was there timeout on recieve? */
 /*------------------------------Macros----------------------------------------*/

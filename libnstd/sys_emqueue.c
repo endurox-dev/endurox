@@ -31,7 +31,7 @@
 #include <limits.h>
 #include <atmi.h>
 #include <exhash.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <nstd_tls.h>
 #if defined(WIN32)
 #   define S_IXUSR  0000100

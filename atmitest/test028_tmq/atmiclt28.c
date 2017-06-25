@@ -41,7 +41,7 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include <ubfutil.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

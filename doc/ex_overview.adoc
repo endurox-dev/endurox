@@ -98,7 +98,7 @@ over the single thread
 | exenv.h | Execution Environment related macros 
 | fml.h | Wrapper for ubf.h
 | fml32.h | Wrapper for ubf.h
-| ntimer.h | Timer library
+| nstopwatch.h | Stop-watch library
 | ubf.h | Universal Buffer Format handling header
 | userlog.h | User logging facility interface
 |==============================================

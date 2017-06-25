@@ -38,7 +38,7 @@
 #include <ndrx_config.h>
 #include <sys_unix.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include "ndebug.h"
 #include <time.h>
 /*---------------------------Externs------------------------------------*/

@@ -43,7 +43,7 @@ extern "C" {
 #include <atmi.h>
 #include <ndrxdcmn.h>
 #include <stdint.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <sys/sem.h>
 #include <exhash.h>
 #include <ndrstandard.h>

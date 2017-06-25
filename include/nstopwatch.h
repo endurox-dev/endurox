@@ -1,7 +1,7 @@
 /* 
 ** Timer handler
 **
-** @file ntimer.h
+** @file nstopwatch.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing

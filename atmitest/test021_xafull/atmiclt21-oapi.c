@@ -40,7 +40,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <oatmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

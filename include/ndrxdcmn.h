@@ -39,7 +39,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <atmi_int.h>
 #include <sys/param.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

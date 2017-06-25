@@ -41,7 +41,7 @@ extern "C" {
 #include <atmi.h>
 #include <atmi_int.h>
 #include <ndrxdcmn.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

@@ -49,7 +49,7 @@
 #include "xa_cmn.h"
 #include <atmi_int.h>
 #include <typed_buf.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <atmi_shm.h>
 #include <gencall.h>
 #include <tperror.h>

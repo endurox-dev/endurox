@@ -45,7 +45,7 @@
 #include <ndrstandard.h>
 #include <ndrxd.h>
 #include <atmi_int.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 
 #include <ndebug.h>
 #include <cmd_processor.h>

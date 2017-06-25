@@ -39,7 +39,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <exhash.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cpm.h>
 #include <cconfig.h>
 #include <ndrx_config.h>

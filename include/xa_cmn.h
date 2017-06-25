@@ -43,7 +43,7 @@ extern "C" {
     
 #include <ndrxdcmn.h>
 #include <stdint.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

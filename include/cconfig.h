@@ -40,7 +40,7 @@ extern "C" {
 #include <sys/stat.h>
 #include <ndrxdcmn.h>
 #include <stdint.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <exhash.h>
 #include <sys_unix.h>
 #include <inicfg.h>

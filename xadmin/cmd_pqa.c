@@ -44,7 +44,7 @@
 #include <atmi_int.h>
 #include <gencall.h>
 
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <nclopt.h>
 #include <sys_unix.h>
 #include <utlist.h>

@@ -80,7 +80,7 @@
 #include <ubf.h>
 #include <ndebug.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 
 #include <xa.h>
 #include <atmi_int.h>

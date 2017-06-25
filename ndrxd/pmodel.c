@@ -47,7 +47,7 @@
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cmd_processor.h>
 #include <pthread.h>
 #include <nstdutil.h>
