@@ -114,11 +114,11 @@ extern "C" {
     
 #define XA_TX_ZERO(X)\
     X->tmtxflags = 0;\
-    X->tmxid[0] = EOS;\
+    X->tmxid[0] = EXEOS;\
     X->tmrmid = 0;\
     X->tmnodeid = 0;\
     X->tmsrvid = 0;\
-    X->tmknownrms[0] = EOS;
+    X->tmknownrms[0] = EXEOS;
     
     
 #define TMTXFLAGS_DYNAMIC_REG      0x00000001  /* TX initiator uses dyanmic reg */

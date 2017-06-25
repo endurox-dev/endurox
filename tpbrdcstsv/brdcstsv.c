@@ -69,10 +69,10 @@ int start_daemon_recover(void);
  */
 void TPBROADCAST (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 (char *)p_svc->data,
                 0L,
@@ -84,15 +84,15 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char svcnm[MAXTIDENT+1];
     
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
 
-    if (SUCCEED!=tpadvertise(svcnm, TPBROADCAST))
+    if (EXSUCCEED!=tpadvertise(svcnm, TPBROADCAST))
     {
         NDRX_LOG(log_error, "Failed to initialize [%s]!", svcnm);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:

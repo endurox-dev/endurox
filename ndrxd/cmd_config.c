@@ -56,20 +56,20 @@
  * @param args
  * @return 
  */
-public int cmd_config_load (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_config_load (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     ret = load_active_config(&G_app_config, &G_process_model,
                 &G_process_model_hash, &G_process_model_pid_hash);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     NDRX_LOG(log_warn, "cmd_config_load returns with status %d", ret);
     
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 

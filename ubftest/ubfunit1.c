@@ -54,7 +54,7 @@ FILE *M_test_temp_file=NULL;
 void open_test_temp(char *mode)
 {
     strcpy(M_test_temp_filename, "/tmp/ubf-test-com-XXXXXX");
-    assert_not_equal(mkstemp(M_test_temp_filename), FAIL);
+    assert_not_equal(mkstemp(M_test_temp_filename), EXFAIL);
     assert_not_equal((M_test_temp_file=fopen(M_test_temp_filename, mode)), NULL);
 }
 
@@ -94,7 +94,7 @@ void close_test_temp(void)
 void remove_test_temp(void)
 {
     /* Remove test file */
-    assert_equal(unlink(M_test_temp_filename), SUCCEED);
+    assert_equal(unlink(M_test_temp_filename), EXSUCCEED);
 }
 
 /**
@@ -113,22 +113,22 @@ void load_field_table(void)
  */
 void set_up_dummy_data(UBFH *p_ub)
 {
-    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "20", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "31", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "20", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "31", 0, BFLD_STRING), EXSUCCEED);
 
-    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "1.11", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "2.41231", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "1.11", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "2.41231", 0, BFLD_STRING), EXSUCCEED);
 
-    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_8_FLD, "HELLO WORLD1", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_5_FLD, "HELLO WORLD2", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_7_FLD, "HELLO WORLD3", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_6_FLD, "HELLO WORLD4", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_10_FLD, "HELLO WORLD5", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD6", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_3_FLD, "HELLO WORLD7", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub, T_CARRAY_2_FLD, 1, "TEST CARRAY", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_8_FLD, "HELLO WORLD1", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_5_FLD, "HELLO WORLD2", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_7_FLD, "HELLO WORLD3", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_6_FLD, "HELLO WORLD4", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_10_FLD, "HELLO WORLD5", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD6", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_3_FLD, "HELLO WORLD7", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_2_FLD, 1, "TEST CARRAY", 0, BFLD_STRING), EXSUCCEED);
 
 }
 
@@ -136,37 +136,37 @@ void do_dummy_data_test(UBFH *p_ub)
 {
     char buf[128];
     int len;
-    assert_equal(CBget(p_ub, T_STRING_9_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_9_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "01");
-    assert_equal(CBget(p_ub, T_STRING_9_FLD, 1, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_9_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "20");
-    assert_equal(CBget(p_ub, T_STRING_9_FLD, 2, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_9_FLD, 2, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "31");
 
-    assert_equal(CBget(p_ub, T_DOUBLE_3_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_DOUBLE_3_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_equal(strncmp(buf, "1.11", 4), 0);
-    assert_equal(CBget(p_ub, T_DOUBLE_3_FLD, 1,buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_DOUBLE_3_FLD, 1,buf, 0, BFLD_STRING), EXSUCCEED);
     assert_equal(strncmp(buf, "2.41231", 4), 0);
 
-    assert_equal(CBget(p_ub, T_STRING_4_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_4_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD");
-    assert_equal(CBget(p_ub, T_STRING_8_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_8_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD1");
-    assert_equal(CBget(p_ub, T_STRING_5_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_5_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD2");
-    assert_equal(CBget(p_ub, T_STRING_7_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_7_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD3");
-    assert_equal(CBget(p_ub, T_STRING_6_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_6_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD4");
-    assert_equal(CBget(p_ub, T_STRING_10_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_10_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD5");
-    assert_equal(CBget(p_ub, T_STRING_4_FLD, 1, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_4_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD6");
-    assert_equal(CBget(p_ub, T_STRING_3_FLD, 0, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_3_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD7");
     /* Another carray test */
     len = sizeof(buf);
-    assert_equal(CBget(p_ub, T_CARRAY_2_FLD, 1, buf, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBget(p_ub, T_CARRAY_2_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "TEST CARRAY");
 }
 
@@ -178,7 +178,7 @@ void basic_setup(void)
     /*printf("basic_setup\n");*/
     M_p_ub = malloc(DEFAULT_BUFFER);
     memset(M_p_ub, 255, DEFAULT_BUFFER);
-    if (FAIL==Binit(M_p_ub, DEFAULT_BUFFER))
+    if (EXFAIL==Binit(M_p_ub, DEFAULT_BUFFER))
     {
         fprintf(stderr, "Binit failed!\n");
     }
@@ -200,7 +200,7 @@ Ensure(test_Binit) {
     char tmpbuf[1024];
     UBFH * p_ub =  (UBFH *) tmpbuf;
     /* Check basic Binit */
-    assert_equal(Binit(p_ub, 1024), SUCCEED);
+    assert_equal(Binit(p_ub, 1024), EXSUCCEED);
     /* Check the size of Binit */
     assert_equal(Bsizeof(p_ub), 1024);
 }
@@ -280,10 +280,10 @@ Ensure(test_Bisubf)
     char tmpbuf[64];
     UBFH * p_ub =  (UBFH *) tmpbuf;
     /* Check basic Binit */
-    assert_equal(Binit(p_ub, sizeof(tmpbuf)), SUCCEED);
-    assert_equal(Bisubf(p_ub), TRUE);
+    assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
+    assert_equal(Bisubf(p_ub), EXTRUE);
     memset(p_ub, 0, sizeof(tmpbuf));
-    assert_equal(Bisubf(p_ub), FALSE);
+    assert_equal(Bisubf(p_ub), EXFALSE);
     /* Error should not be set */
     assert_equal(Berror, BMINVAL);
 }
@@ -296,7 +296,7 @@ Ensure(test_Bsizeof)
     char tmpbuf[64];
     UBFH * p_ub =  (UBFH *) tmpbuf;
 
-    assert_equal(Binit(p_ub, sizeof(tmpbuf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
     assert_equal(Bsizeof(p_ub), sizeof(tmpbuf));
 
 }
@@ -311,13 +311,13 @@ Ensure(test_Bunused)
     UBFH * p_ub =  (UBFH *) tmpbuf;
 
     /* Check basic Binit */
-    assert_equal(Binit(p_ub, sizeof(tmpbuf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t));
     /* Add some field and then see what happens */
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(BFLDID)-sizeof(s)-2/* align of short */);
     /* fill up to zero */
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "abc", 0), SUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "abc", 0), EXSUCCEED);
     assert_equal(Bunused(p_ub), 0);
 }
 
@@ -339,15 +339,15 @@ Ensure(test_Blen)
     BFLDLEN len = strlen(carr);
     char *str="TEST STR VAL";
     
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)str, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)str, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
     
     
     assert_equal(Blen(p_ub, T_SHORT_FLD, 1), sizeof(s));
@@ -358,7 +358,7 @@ Ensure(test_Blen)
     assert_equal(Blen(p_ub, T_STRING_FLD, 1), strlen(str)+1);
     assert_equal(Blen(p_ub, T_CARRAY_FLD, 1), len);
     
-    assert_equal(Blen(p_ub, T_CARRAY_FLD, 2), FAIL);
+    assert_equal(Blen(p_ub, T_CARRAY_FLD, 2), EXFAIL);
     assert_equal(Berror, BNOTPRES);
 }
 
@@ -377,8 +377,8 @@ Ensure(test_buffer_align_fadd)
     char *p = buf+1024-sizeof(BFLDID);
     BFLDID *check = (BFLDID *)p;
     short *short_check;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
-    while (SUCCEED==Badd(p_ub, T_SHORT_FLD, (char *)&data, 0)){}
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    while (EXSUCCEED==Badd(p_ub, T_SHORT_FLD, (char *)&data, 0)){}
     /* check that buffer is full */
     err = _Bget_Ferror_addr();
     assert_equal(*err, BNOSPACE);
@@ -406,11 +406,11 @@ Ensure(test_buffer_align_fchg_and_fpresocc)
     char *p = buf+1024-sizeof(BFLDID);
     BFLDID *check = (BFLDID *)p;
     short *short_check;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     BFLDOCC occ=0;
     int i;
 
-    while (SUCCEED==Bchg(p_ub, T_SHORT_FLD, occ, (char *)&data, 0)){occ++;}
+    while (EXSUCCEED==Bchg(p_ub, T_SHORT_FLD, occ, (char *)&data, 0)){occ++;}
     /* check that buffer is full */
     err = _Bget_Ferror_addr();
     assert_equal(*err, BNOSPACE);
@@ -431,10 +431,10 @@ Ensure(test_buffer_align_fchg_and_fpresocc)
     /* Check that every field is present */
     for (i=0; i<occ; i++)
     {
-        assert_equal(Bpres(p_ub, T_SHORT_FLD, i), TRUE);
+        assert_equal(Bpres(p_ub, T_SHORT_FLD, i), EXTRUE);
     }
     /* check for non existing, should fail */
-    assert_equal(Bpres(p_ub, T_SHORT_FLD, occ), FALSE);
+    assert_equal(Bpres(p_ub, T_SHORT_FLD, occ), EXFALSE);
 }
 
 /**
@@ -448,19 +448,19 @@ Ensure(test_buffer_alignity)
     BFLDID bfldid=BBADFLDID;
     BFLDOCC occ;
     
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     memset(buf+sizeof(UBF_header_t)-sizeof(BFLDID), 0xff,
             sizeof(buf)-sizeof(UBF_header_t)+sizeof(BFLDID));
 
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&short_v, 0), FAIL);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&short_v, 0), EXFAIL);
     assert_equal(Berror, BALIGNERR);
-    assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_v, 0), FAIL);
+    assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_v, 0), EXFAIL);
     assert_equal(Berror, BALIGNERR);
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&short_v, 0), FAIL);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&short_v, 0), EXFAIL);
     assert_equal(Berror, BALIGNERR);
-    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), FAIL);
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), EXFAIL);
     assert_equal(Berror, BALIGNERR);
-    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, 0), FAIL);
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, 0), EXFAIL);
     assert_equal(Berror, BALIGNERR);
 }
 

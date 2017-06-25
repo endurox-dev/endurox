@@ -60,8 +60,8 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public ndrx_sem_t G_sem_svcop;              /* Service operations       */
-private int M_init = FALSE;                 /* no init yet done         */
+expublic ndrx_sem_t G_sem_svcop;              /* Service operations       */
+exprivate int M_init = EXFALSE;                 /* no init yet done         */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -73,7 +73,7 @@ extern int ndrx_unlock(ndrx_sem_t *sem, const char *msg, int sem_num);
  * @param ndrx_prefix
  * @return 
  */
-public int ndrxd_sem_init(char *q_prefix)
+expublic int ndrxd_sem_init(char *q_prefix)
 {
     memset(&G_sem_svcop, 0, sizeof(G_sem_svcop));
     
@@ -82,17 +82,17 @@ public int ndrxd_sem_init(char *q_prefix)
     NDRX_LOG(log_debug, "Using service semaphore key: [%d]", 
             G_sem_svcop.key);
     
-    M_init = TRUE;
-    return SUCCEED;
+    M_init = EXTRUE;
+    return EXSUCCEED;
 }
 
 /**
  * Attach to semaphore, semaphore must exist!
  * @return
  */
-public int ndrx_sem_attach(ndrx_sem_t *sem)
+expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "ndrx_sem_attach";
 
     NDRX_LOG(log_debug, "%s enter", fn);
@@ -103,7 +103,7 @@ public int ndrx_sem_attach(ndrx_sem_t *sem)
     if (!M_init)
     {
         NDRX_LOG(log_error, "%s: ndrx shm/sem library not initialised!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -117,11 +117,11 @@ public int ndrx_sem_attach(ndrx_sem_t *sem)
     /* Attach to semaphore block */
     sem->semid = semget(sem->key, G_atmi_env.nrsems, IPC_EXCL);
 
-    if (FAIL==sem->semid) 
+    if (EXFAIL==sem->semid) 
     {
         NDRX_LOG(log_error, "%s: Failed to attach sem, key [%d]: %s",
                             fn, sem->key, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 #if 0
@@ -143,9 +143,9 @@ out:
  * ??? Not sure ca we close it ?
  * @return
  */
-private int ndrxd_sem_close(ndrx_sem_t *sem)
+exprivate int ndrxd_sem_close(ndrx_sem_t *sem)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
 out:
     return ret;
@@ -155,9 +155,9 @@ out:
  * Open service info semaphore segment
  * @return
  */
-private int ndrxd_sem_open(ndrx_sem_t *sem)
+exprivate int ndrxd_sem_open(ndrx_sem_t *sem)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "ndrxd_sem_open";
     union semun 
     {
@@ -173,7 +173,7 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
     if (!M_init)
     {
         NDRX_LOG(log_error, "ndrx sem library not initialized");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -184,11 +184,11 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
     /* creating the semaphore object --  sem_open() */
     sem->semid = semget(sem->key, G_atmi_env.nrsems, 0660|IPC_CREAT);
 
-    if (FAIL==sem->semid) 
+    if (EXFAIL==sem->semid) 
     {
         NDRX_LOG(log_error, "%s: Failed to create sem, key[%x]: %s",
                             fn, sem->key, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -200,11 +200,11 @@ private int ndrxd_sem_open(ndrx_sem_t *sem)
     {
         NDRX_LOG(log_error, "%s: Failed to reset to 0, key[%x], semid: %d: %s",
                             fn, sem->key, sem->semid, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    sem->attached = TRUE;
+    sem->attached = EXTRUE;
     
 #if 0
     /* These never change so leave them outside the loop */
@@ -226,13 +226,13 @@ out:
  * Open semaphore
  * @return
  */
-public int ndrxd_sem_open_all(void)
+expublic int ndrxd_sem_open_all(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    if (SUCCEED!=ndrxd_sem_open(&G_sem_svcop))
+    if (EXSUCCEED!=ndrxd_sem_open(&G_sem_svcop))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -244,9 +244,9 @@ out:
  * Closes all semaphore resources, generally ignores errors.
  * @return FAIL if something failed.
  */
-public int ndrxd_sem_close_all(void)
+expublic int ndrxd_sem_close_all(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     ndrxd_sem_close(&G_sem_svcop);
     
@@ -257,52 +257,52 @@ public int ndrxd_sem_close_all(void)
  * Remove semaphores...
  * @param sem
  */
-private void remove_sem(ndrx_sem_t *sem, int force)
+exprivate void remove_sem(ndrx_sem_t *sem, int force)
 {
     /* Close that one... */
     if (sem->attached || force)
     {
         NDRX_LOG(log_error, "Removing semid: %d", sem->semid);
-        if (SUCCEED!= semctl(sem->semid, 0, IPC_RMID))
+        if (EXSUCCEED!= semctl(sem->semid, 0, IPC_RMID))
         {
                 NDRX_LOG(log_warn, "semctl DEL failed err: %s", 
                         strerror(errno));
         }
     }
-    sem->attached=FALSE;
+    sem->attached=EXFALSE;
 }
 
 /**
  * Does delete all semaphore blocks.
  */
-public int ndrxd_sem_delete(void)
+expublic int ndrxd_sem_delete(void)
 {
     if (M_init)
     {
-        remove_sem(&G_sem_svcop, FALSE);
+        remove_sem(&G_sem_svcop, EXFALSE);
     }
     else
     {
         NDRX_LOG(log_error, "SHM library not initialized!");
-        return FAIL;
+        return EXFAIL;
     }
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
  * Does delete all semaphore blocks.
  */
-public void ndrxd_sem_delete_with_init(char *q_prefix)
+expublic void ndrxd_sem_delete_with_init(char *q_prefix)
 {
     if (!M_init)
     {
         ndrxd_sem_init(q_prefix);
     }
     
-    if (SUCCEED==ndrxd_sem_open(&G_sem_svcop))
+    if (EXSUCCEED==ndrxd_sem_open(&G_sem_svcop))
     {
-        remove_sem(&G_sem_svcop, TRUE);
+        remove_sem(&G_sem_svcop, EXTRUE);
     }
 }
 
@@ -312,13 +312,13 @@ public void ndrxd_sem_delete_with_init(char *q_prefix)
  * WARNING: This assumes that fd 0 could never be used by sem!
  * @return TRUE/FALSE
  */
-public int ndrxd_sem_is_attached(ndrx_sem_t *sem)
+expublic int ndrxd_sem_is_attached(ndrx_sem_t *sem)
 {
-    int ret=TRUE;
+    int ret=EXTRUE;
     
     if (!sem->attached)
     {
-        ret=FALSE;
+        ret=EXFALSE;
     }
 
     return ret;
@@ -328,13 +328,13 @@ public int ndrxd_sem_is_attached(ndrx_sem_t *sem)
  * @lev indicates the attach level (should it be service array only)?
  * @return 
  */
-public int ndrx_sem_attach_all(void)
+expublic int ndrx_sem_attach_all(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
    
-    if (SUCCEED!=ndrx_sem_attach(&G_sem_svcop))
+    if (EXSUCCEED!=ndrx_sem_attach(&G_sem_svcop))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -346,7 +346,7 @@ out:
  * Lock service operation
  * @return 
  */
-public int ndrx_lock_svc_op(const char *msg)
+expublic int ndrx_lock_svc_op(const char *msg)
 {
     return ndrx_lock(&G_sem_svcop, msg, SEM_SVC_GLOBAL_NUM);
 }
@@ -355,7 +355,7 @@ public int ndrx_lock_svc_op(const char *msg)
  * Unlock service operation
  * @return 
  */
-public int ndrx_unlock_svc_op(const char *msg)
+expublic int ndrx_unlock_svc_op(const char *msg)
 {
     return ndrx_unlock(&G_sem_svcop, msg, SEM_SVC_GLOBAL_NUM);
 }
@@ -366,7 +366,7 @@ public int ndrx_unlock_svc_op(const char *msg)
  * @param svcnm service name
  * @return 
  */
-public int ndrx_lock_svc_nm(char *svcnm, const char *msg)
+expublic int ndrx_lock_svc_nm(char *svcnm, const char *msg)
 {
     int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
 #ifdef NDRX_SEM_DEBUG
@@ -388,7 +388,7 @@ public int ndrx_lock_svc_nm(char *svcnm, const char *msg)
  * @param svcnm
  * @return 
  */
-public int ndrx_unlock_svc_nm(char *svcnm, const char *msg)
+expublic int ndrx_unlock_svc_nm(char *svcnm, const char *msg)
 {
     int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
 #ifdef NDRX_SEM_DEBUG
@@ -408,9 +408,9 @@ public int ndrx_unlock_svc_nm(char *svcnm, const char *msg)
  * @param msg
  * @return 
  */
-public int ndrx_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
+expublic int ndrx_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int errno_int;
     struct sembuf semOp[2];
        
@@ -426,13 +426,13 @@ public int ndrx_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
     userlog("ENTER: ndrx_lock: %s", msg);
 #endif
     
-    while(FAIL==(ret=semop(sem->semid, semOp, 2)) && (EINTR==errno || EAGAIN==errno))
+    while(EXFAIL==(ret=semop(sem->semid, semOp, 2)) && (EINTR==errno || EAGAIN==errno))
     {
         NDRX_LOG(log_warn, "%s: Interrupted while waiting for semaphore!!", msg);
     };
     errno_int = errno;
     
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         NDRX_LOG(log_warn, "%s/%d/%d: semaphore locked... ", msg, sem->semid, sem_num);
     }
@@ -456,7 +456,7 @@ public int ndrx_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
  * @param msg
  * @return 
  */
-public int ndrx_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
+expublic int ndrx_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
 {
     struct sembuf semOp[1];
        
@@ -469,11 +469,11 @@ public int ndrx_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
     userlog("ENTER: ndrx_unlock: %s", msg);
 #endif
     
-    if (SUCCEED!=semop(sem->semid, semOp, 1))
+    if (EXSUCCEED!=semop(sem->semid, semOp, 1))
     {
         NDRX_LOG(log_debug, "%s/%d%/d: failed: %s", msg, 
                 sem->semid, sem_num, strerror(errno));
-        return FAIL;
+        return EXFAIL;
     }
     
     NDRX_LOG(log_warn, "%s/%d/%d semaphore un-locked", 
@@ -483,6 +483,6 @@ public int ndrx_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
     userlog("EXIT: ndrx_unlock: %s", msg);
 #endif
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 

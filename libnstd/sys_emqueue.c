@@ -55,22 +55,22 @@ typedef struct qd_hash qd_hash_t;
 MUTEX_LOCKDECL(M_lock);
 qd_hash_t *M_qd_hash = NULL;
 
-private int M_lock_secs = 0; /* Lock timeout... */
+exprivate int M_lock_secs = 0; /* Lock timeout... */
 /**
  * Add queue descriptor to hash
  * @param q
  * @return 
  */
-private int qd_exhash_add(mqd_t q)
+exprivate int qd_exhash_add(mqd_t q)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     qd_hash_t * el = NDRX_CALLOC(1, sizeof(qd_hash_t));
     
     NDRX_LOG(log_debug, "Registering %p as mqd_t", q);
     if (NULL==el)
     {
         NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     el->qd  = (void *)q;
@@ -92,7 +92,7 @@ out:
  * @param q
  * @return 
  */
-private int qd_hash_chk(mqd_t qd)
+exprivate int qd_hash_chk(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
     
@@ -106,11 +106,11 @@ private int qd_hash_chk(mqd_t qd)
     
     if (NULL!=ret)
     {
-        return TRUE;
+        return EXTRUE;
     }
     else
     {
-        return FALSE;
+        return EXFALSE;
     }
 }
 
@@ -119,7 +119,7 @@ private int qd_hash_chk(mqd_t qd)
  * @param q
  * @return 
  */
-private void qd_hash_del(mqd_t qd)
+exprivate void qd_hash_del(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
     
@@ -146,7 +146,7 @@ private void qd_hash_del(mqd_t qd)
 static char *get_path(const char *path)
 {
     static int first = 1;
-    static char q_path[PATH_MAX]={EOS};
+    static char q_path[PATH_MAX]={EXEOS};
     
     NSTD_TLS_ENTRY;
     
@@ -171,7 +171,7 @@ static char *get_path(const char *path)
 /**
  * Set the timeout for lock. If expired then return fail.
  */
-public void emq_set_lock_timeout(int secs)
+expublic void emq_set_lock_timeout(int secs)
 {
     M_lock_secs = secs;
     NDRX_LOG(log_debug, "Setting lock timeout to: %d", M_lock_secs);
@@ -190,11 +190,11 @@ public void emq_set_lock_timeout(int secs)
  * @param emqhdr
  * @return 
  */
-private int emq_try_lock(struct emq_hdr  *emqhdr)
+exprivate int emq_try_lock(struct emq_hdr  *emqhdr)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_stopwatch_t t;
-    int e=FAIL;
+    int e=EXFAIL;
     
     if (0==M_lock_secs)
     {
@@ -206,7 +206,7 @@ private int emq_try_lock(struct emq_hdr  *emqhdr)
     
     while (ndrx_stopwatch_get_delta_sec(&t) < M_lock_secs)
     {
-        if(SUCCEED!=(e=pthread_mutex_trylock(&emqhdr->emqh_lock)))
+        if(EXSUCCEED!=(e=pthread_mutex_trylock(&emqhdr->emqh_lock)))
         {
             usleep(5000);
         }
@@ -216,7 +216,7 @@ private int emq_try_lock(struct emq_hdr  *emqhdr)
         }
     }
     
-    if (SUCCEED!=e)
+    if (EXSUCCEED!=e)
     {
         NDRX_LOG(log_error, "Lock stalled (%d / %d), returning error!",
                     M_lock_secs, ndrx_stopwatch_get_delta_sec(&t));
@@ -232,7 +232,7 @@ out:
     return ret;
 }
 
-public int emq_close(mqd_t emqd)
+expublic int emq_close(mqd_t emqd)
 {
     long            msgsize, filesize;
     struct emq_hdr  *emqhdr;
@@ -272,7 +272,7 @@ public int emq_close(mqd_t emqd)
     return(0);
 }
 
-public int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
+expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
 {
     int             n;
     struct emq_hdr  *emqhdr;
@@ -308,7 +308,7 @@ public int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     return(0);
 }
 
-public int emq_notify(mqd_t emqd, const struct sigevent *notification)
+expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
 {
 #if !defined(WIN32)
     int             n;
@@ -360,7 +360,7 @@ err:
 #endif
 }
 
-public mqd_t emq_open(const char *pathname, int oflag, ...)
+expublic mqd_t emq_open(const char *pathname, int oflag, ...)
 {
     int                  i, fd, nonblock, created, save_errno;
     long                 msgsize, filesize, index;
@@ -493,7 +493,7 @@ again:
 #endif
                 goto err;
             close(fd);
-            if (SUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
+            if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
                 NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
                 errno = ENOMEM;
             }
@@ -549,7 +549,7 @@ exists:
     emqinfo->emqi_magic = EMQI_MAGIC;
     emqinfo->emqi_flags = nonblock;
     
-    if (SUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
+    if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
         NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
         errno = ENOMEM;
     }
@@ -583,7 +583,7 @@ err:
 }
 
 
-public ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
+expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec *__abs_timeout)
 {
     int             n;
@@ -705,7 +705,7 @@ err:
     return(-1);
 }
 
-public int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio, 
+expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio, 
         const struct timespec *__abs_timeout)
 {
     int              n;
@@ -717,7 +717,7 @@ public int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int p
     struct msg_hdr  *msghdr, *nmsghdr, *pmsghdr;
     struct emq_info  *emqinfo;
     int try = 0;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
 
 retry:
     NDRX_LOG(log_debug, "into: emq_timedsend");
@@ -874,18 +874,18 @@ err:
     return(-1);
 }
 
-public int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
+expublic int emq_send(mqd_t emqd, const char *ptr, size_t len, unsigned int prio)
 {
     return emq_timedsend(emqd, ptr, len, prio, NULL);
 }
 
-public ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
+expublic ssize_t emq_receive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop)
 {
     return emq_timedreceive(emqd, ptr, maxlen, priop, NULL);
 }
 
 
-public int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqstat)
+expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr *oemqstat)
 {
     int             n;
     struct emq_hdr  *emqhdr;
@@ -929,7 +929,7 @@ public int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_attr
     return(0);
 }
 
-public int emq_unlink(const char *pathname)
+expublic int emq_unlink(const char *pathname)
 {
     NDRX_LOG(log_debug, "into: emq_unlink");
     if (unlink(get_path(pathname)) == -1)

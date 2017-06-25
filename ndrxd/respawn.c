@@ -64,13 +64,13 @@
  * if the wait time have been reached.
  * @return 
  */
-public int do_respawn_check(void)
+expublic int do_respawn_check(void)
  {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *p_pm;
     long delta;
-    int wasrun = FALSE;
-    int abort = FALSE;
+    int wasrun = EXFALSE;
+    int abort = EXFALSE;
     
     /* No sanity checks while app config not loaded */
     if (NULL==G_app_config)
@@ -105,7 +105,7 @@ public int do_respawn_check(void)
                 NDRX_LOG(log_warn, "Respawning server: srvid: %d,"
                         " name: [%s], seq try: %d, already not running: %d secs",
                         p_pm->srvid, p_pm->binary_name, p_pm->exec_seq_try, delta);
-                start_process(NULL, p_pm, NULL, &processes_started, TRUE, &abort);
+                start_process(NULL, p_pm, NULL, &processes_started, EXTRUE, &abort);
 
                 /***Just for info***/
                 schedule_next = G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step;

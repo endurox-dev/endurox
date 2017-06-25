@@ -103,7 +103,7 @@
  * Might think in future increase msg_max size...!
  * @return 
  */
-public void ndrx_mq_fix_mass_send(int *cntr)
+expublic void ndrx_mq_fix_mass_send(int *cntr)
 {
     *cntr = *cntr + 1;
     /* Have some backup */
@@ -120,18 +120,18 @@ public void ndrx_mq_fix_mass_send(int *cntr)
  * @param q_descr
  * @return 
  */
-public int ndrx_q_setblock(mqd_t q_descr, int blocked)
+expublic int ndrx_q_setblock(mqd_t q_descr, int blocked)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     struct mq_attr new;
     struct mq_attr old;
-    int change = FALSE;
+    int change = EXFALSE;
     
-    if (SUCCEED!= ndrx_mq_getattr(q_descr, &old))
+    if (EXSUCCEED!= ndrx_mq_getattr(q_descr, &old))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d, err: %s", 
                 q_descr, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -141,7 +141,7 @@ public int ndrx_q_setblock(mqd_t q_descr, int blocked)
         memcpy(&new, &old, sizeof(new));
         NDRX_LOG(log_warn, "Switching qd %d to non-blocked", q_descr);
         new.mq_flags |= O_NONBLOCK;
-        change = TRUE;
+        change = EXTRUE;
     }
     /*blocked requested & but currently Q is not blocked => change attribs*/
     else if (blocked && old.mq_flags & O_NONBLOCK)
@@ -149,17 +149,17 @@ public int ndrx_q_setblock(mqd_t q_descr, int blocked)
         memcpy(&new, &old, sizeof(new));
         NDRX_LOG(log_warn, "Switching qd %d to blocked", q_descr);
         new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change = TRUE;
+        change = EXTRUE;
     }
     
     if (change)
     {
-        if (FAIL==ndrx_mq_setattr(q_descr, &new,
+        if (EXFAIL==ndrx_mq_setattr(q_descr, &new,
                             &old))
         {
             NDRX_LOG(log_error, "Failed to set attribs for qd %d: %s", 
                     q_descr, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -175,7 +175,7 @@ out:
  * @param attr
  * @return
  */
-public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, 
+expublic mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, 
         struct mq_attr *attr)
 {
     struct mq_attr attr_int;
@@ -212,7 +212,7 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode,
  * @param oflag
  * @return
  */
-public mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
+expublic mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
 {
     
     return ndrx_mq_open_at(name, oflag, 0, NULL);
@@ -229,9 +229,9 @@ public mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
  * @param len
  * @return
  */
-public int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
+expublic int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int use_tout;
     struct timespec abs_timeout;
     SET_TOUT_CONF;
@@ -239,8 +239,8 @@ public int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 restart:
 
     SET_TOUT_VALUE;
-    if ((!use_tout && FAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && FAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -268,9 +268,9 @@ out:
  * @param flags
  * @return 
  */
-public int generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
+expublic int generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
 {
-    return generic_q_send_2(queue, data, len, flags, FAIL, msg_prio);
+    return generic_q_send_2(queue, data, len, flags, EXFAIL, msg_prio);
 }
 
 /**
@@ -284,11 +284,11 @@ public int generic_q_send(char *queue, char *data, long len, long flags, unsigne
  * @param msg_prio - message priority see, NDRX_MSGPRIO_*
  * @return SUCCEED/FAIL
  */
-public int generic_q_send_2(char *queue, char *data, long len, long flags, 
+expublic int generic_q_send_2(char *queue, char *data, long len, long flags, 
         long tout, unsigned int msg_prio)
 {
-    int ret=SUCCEED;
-    mqd_t q_descr=(mqd_t)FAIL;
+    int ret=EXSUCCEED;
+    mqd_t q_descr=(mqd_t)EXFAIL;
     int use_tout;
     struct timespec abs_timeout;
     long add_flags = 0;
@@ -306,13 +306,13 @@ public int generic_q_send_2(char *queue, char *data, long len, long flags,
 restart_open:
     q_descr = ndrx_mq_open_at_wrp (queue, O_WRONLY | add_flags);
 
-    if ((mqd_t)FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
+    if ((mqd_t)EXFAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
     {
         NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_open");
         goto restart_open;
     }
     
-    if ((mqd_t)FAIL==q_descr)
+    if ((mqd_t)EXFAIL==q_descr)
     {
         NDRX_LOG(log_error, "Failed to open queue [%s] with error: %s",
                                         queue, strerror(errno));
@@ -340,8 +340,8 @@ restart_send:
 
     NDRX_LOG(6, "use timeout: %d config: %d", 
                 use_tout, G_atmi_env.time_out);
-    if ((!use_tout && FAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && FAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
@@ -359,7 +359,7 @@ restart_send:
 
 restart_close:
     /* Generally we ingore close */
-    if (FAIL==ndrx_mq_close(q_descr))
+    if (EXFAIL==ndrx_mq_close(q_descr))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -382,12 +382,12 @@ out:
  * @param prio - priority of message
  * @return GEN_QUEUE_ERR_NO_DATA/FAIL/data len
  */
-public long generic_q_receive(mqd_t q_descr, char *q_str, 
+expublic long generic_q_receive(mqd_t q_descr, char *q_str, 
         struct mq_attr *reply_q_attr,
         char *buf, long buf_max, 
         unsigned *prio, long flags)
 {
-    long ret=SUCCEED;
+    long ret=EXSUCCEED;
     int use_tout;
     struct timespec abs_timeout;   
     
@@ -395,10 +395,10 @@ public long generic_q_receive(mqd_t q_descr, char *q_str,
     
     if (NULL!=q_str && NULL!=reply_q_attr)
     {
-        if (SUCCEED!=ndrx_setup_queue_attrs(reply_q_attr, q_descr, q_str, flags))
+        if (EXSUCCEED!=ndrx_setup_queue_attrs(reply_q_attr, q_descr, q_str, flags))
         {
             NDRX_LOG(log_error, "%s: Failed to setup queue attribs, flags=%ld", flags);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -406,8 +406,8 @@ restart:
     SET_TOUT_VALUE;
     NDRX_LOG(6, "use timeout: %d config: %d qdescr: %lx", use_tout,
 		G_atmi_env.time_out, (long int)q_descr);
-    if ((!use_tout && FAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
-         (use_tout && FAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
+    if ((!use_tout && EXFAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
+         (use_tout && EXFAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -429,7 +429,7 @@ restart:
 
             _TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%d): %s",
 			(long int)q_descr, ret, strerror(ret));
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
     
@@ -441,7 +441,7 @@ out:
  * Initialize generic structure (used for network send.)
  * @param call
  */
-public void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
+expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, char *reply_q)
 {
         call->command = ndrxd_cmd;
@@ -460,7 +460,7 @@ public void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
  * @param p_have_next
  * @return SUCCEED/FAIL
  */
-public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -480,7 +480,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             int (*p_rply_request)(char *buf, long len)
         )
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_reply_t *reply;
     unsigned prio = 0;
     char    msg_buffer_max[ATMI_MSG_MAX_SIZE];
@@ -495,7 +495,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     {
         NDRX_LOG(log_error, "User buffer address specified in params, "
                 "but rply_buf_out_len is NULL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (!reply_only)
@@ -507,18 +507,18 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
         call->caller_nodeid = G_atmi_env.our_nodeid;
 
-        if ((mqd_t)FAIL!=admin_queue)
+        if ((mqd_t)EXFAIL!=admin_queue)
         {
             NDRX_LOG(log_error, "Sending data to [%s], fd=%d, call flags=0x%x", 
                                 admin_q_str, admin_queue, call->flags);
-            if (SUCCEED!=generic_qfd_send(admin_queue, (char *)call, call_size, flags))
+            if (EXSUCCEED!=generic_qfd_send(admin_queue, (char *)call, call_size, flags))
             {
                 NDRX_LOG(log_error, "Failed to send msg to ndrxd!");
 
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
 
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -526,12 +526,12 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_info, "Sending data to [%s] call flags=0x%x", 
                                     admin_q_str, call->flags);
-            if (SUCCEED!=generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
+            if (EXSUCCEED!=generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
             {
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
 
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -563,15 +563,15 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Failed to receive reply from ndrxd!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else if (test_call->command % 2 == 0 && NULL!=p_rply_request)
         {
-            if (SUCCEED!=p_rply_request(msg_buffer_max, reply_len))
+            if (EXSUCCEED!=p_rply_request(msg_buffer_max, reply_len))
             {
                 NDRX_LOG(log_error, "Failed to process request!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             else
@@ -588,7 +588,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Invalid reply size from ndrxd!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* Check the reply msg */
@@ -603,7 +603,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Invalid response - invalid header!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -616,12 +616,12 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Invalid response - invalid response command code!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         /* check reply status: */
-        if (SUCCEED==reply->status)
+        if (EXSUCCEED==reply->status)
         {
             if (NULL!=p_rsp_process)
             {
@@ -640,7 +640,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                     NDRX_LOG(log_warn, "Received packet size %d longer "
                             "than user buffer in rply_buf_len %d", 
                             reply_len, *rply_buf_out_len);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 else
                 {
@@ -673,7 +673,7 @@ out:
  * This is wrapper for cmd_generic_call_2,
  * Full request.
  */
-public int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -696,7 +696,7 @@ public int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             p_rsp_process,
                             p_put_output,
                             need_reply,
-                            FALSE,
+                            EXFALSE,
                             NULL, NULL, TPNOTIME, NULL);
 }
 
@@ -704,7 +704,7 @@ public int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
  * This is wrapper for cmd_generic_call_2,
  * This exposes flags to user.
  */
-public int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -728,7 +728,7 @@ public int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             p_rsp_process,
                             p_put_output,
                             need_reply,
-                            FALSE,
+                            EXFALSE,
                             NULL, NULL, flags, NULL);
 }
 
@@ -737,7 +737,7 @@ public int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
  * Full request.
  * Including output buffers.
  */
-public int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -823,14 +823,14 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
  * Send error reply back to originator.
  * Fix this function to send error message over the bridge.
  */
-public int reply_with_failure(long flags, tp_command_call_t *last_call,
+expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
             char *buf, int *len, long rcode)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "reply_with_failure";
     tp_command_call_t call_b;
     tp_command_call_t *call;
-    char reply_to[NDRX_MAX_Q_SIZE+1] = {EOS};
+    char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
 
     if (NULL==buf)
     {
@@ -853,7 +853,7 @@ public int reply_with_failure(long flags, tp_command_call_t *last_call,
     call->rcode = rcode;
     NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     
-    if (SUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
+    if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
         goto out;
@@ -861,7 +861,7 @@ public int reply_with_failure(long flags, tp_command_call_t *last_call,
 
     if (NULL==buf)
     {
-        if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, 
+        if (EXSUCCEED!=(ret=generic_q_send(reply_to, (char *)call, 
                 sizeof(*call), flags, 0)))
         {
             NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
@@ -885,30 +885,30 @@ out:
  * @param p_att - attributes 
  * @return SUCCEED/FAIL
  */
-public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
+expublic int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
 {
-    int ret=SUCCEED;
-    mqd_t q_descr=(mqd_t)FAIL;
+    int ret=EXSUCCEED;
+    mqd_t q_descr=(mqd_t)EXFAIL;
     
     /* read the stats of the queue */
-    if ((mqd_t)FAIL==(q_descr = ndrx_mq_open_at_wrp(q, 0)))
+    if ((mqd_t)EXFAIL==(q_descr = ndrx_mq_open_at_wrp(q, 0)))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: [%s], err: %s", 
                 q, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* read the attributes of the Q */
-    if (SUCCEED!= ndrx_mq_getattr(q_descr, p_att))
+    if (EXSUCCEED!= ndrx_mq_getattr(q_descr, p_att))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d, err: %s", 
                 q_descr, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
     
-    if ((mqd_t)FAIL!=q_descr)
+    if ((mqd_t)EXFAIL!=q_descr)
     {
         ndrx_mq_close(q_descr);
     }
@@ -921,7 +921,7 @@ out:
  * @param start_with - service name start.
  * @return 
  */
-public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
+expublic atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
 {
     atmi_svc_list_t *ret = NULL;
     atmi_svc_list_t *tmp;
@@ -940,7 +940,7 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
         /* we might have in old service in SHM (with no actual servers) thus 
          * skip such.
          */
-        if (EOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0] && 
+        if (EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0] && 
                 (SHM_SVCINFO_INDEX(svcinfo, i)->srvs || SHM_SVCINFO_INDEX(svcinfo, i)->csrvs) )
         {
             /* Check filter, if ok - add to list! */
@@ -973,10 +973,10 @@ out:
  * @param rcode Error code
  * @param reply_to_q Sender id
  */
-public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
+expublic void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
         long rcode, char *reply_to_q)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "ndrx_reply_with_failure";
     tp_command_call_t call;
 
@@ -1001,7 +1001,7 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     NDRX_LOG(log_error, "Dumping error reply about to send:");
     ndrx_dump_call_struct(log_error, &call);
 
-    if (SUCCEED!=(ret=generic_q_send(tp_call->reply_to, (char *)&call, 
+    if (EXSUCCEED!=(ret=generic_q_send(tp_call->reply_to, (char *)&call, 
             sizeof(call), flags, 0)))
     {
         NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
@@ -1016,13 +1016,13 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
  * @param flags
  * @return SUCCEED/FAIL
  */
-public int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
+expublic int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
                                 mqd_t listen_q,
                                 char *listen_q_str, 
                                 long flags)
 {
-    int ret=SUCCEED;
-    int change_flags = FALSE;
+    int ret=EXSUCCEED;
+    int change_flags = EXFALSE;
     struct mq_attr new;
     char fn[] = "ndrx_setup_queue_attrs";
 
@@ -1033,7 +1033,7 @@ public int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
         /* change attributes non block mode*/
         new = *p_q_attr;
         new.mq_flags |= O_NONBLOCK;
-        change_flags = TRUE;
+        change_flags = EXTRUE;
         NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
                                             listen_q_str);
     }
@@ -1042,19 +1042,19 @@ public int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
         /* change attributes to block mode */
         new = *p_q_attr;
         new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change_flags = TRUE;
+        change_flags = EXTRUE;
         NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
                                             listen_q_str);
     }
 
     if (change_flags)
     {
-        if (FAIL==ndrx_mq_setattr(listen_q, &new,
+        if (EXFAIL==ndrx_mq_setattr(listen_q, &new,
                             NULL))
         {
             _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
                                 fn, listen_q_str, listen_q, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else

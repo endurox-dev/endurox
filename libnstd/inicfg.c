@@ -60,42 +60,42 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private ndrx_inicfg_t * _ndrx_inicfg_new(void);
-private int _ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with);
-private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource);
-private void cfg_remove_not_marked(ndrx_inicfg_t *cfg);
-private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections_h, char *section);
-private ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sections_h, char *section);
-private int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
+exprivate ndrx_inicfg_t * _ndrx_inicfg_new(void);
+exprivate int _ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with);
+exprivate void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource);
+exprivate void cfg_remove_not_marked(ndrx_inicfg_t *cfg);
+exprivate ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections_h, char *section);
+exprivate ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sections_h, char *section);
+exprivate int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
                    const char* value);
-private int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with);
-private ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullname);
-private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+exprivate ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullname);
+exprivate int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with);
-private int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with);
-private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
+exprivate int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with);
+exprivate int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
             ndrx_inicfg_section_keyval_t *src);
-private ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
+exprivate ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
         ndrx_inicfg_section_keyval_t *h, char *key);
-private void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h);
-private int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
+exprivate void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h);
+exprivate int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out);
-private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
         char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
-private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
         char **resources,
         char **section_start_with, 
         ndrx_inicfg_section_t **out);
-private void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections);
-private void _ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile);
-private void _ndrx_inicfg_free(ndrx_inicfg_t *cfg);
+exprivate void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections);
+exprivate void _ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile);
+exprivate void _ndrx_inicfg_free(ndrx_inicfg_t *cfg);
 
 /**
  * Create new config handler
  * @return ptr to config handler or NULL
  */
-private ndrx_inicfg_t * _ndrx_inicfg_new(void)
+exprivate ndrx_inicfg_t * _ndrx_inicfg_new(void)
 {
     ndrx_inicfg_t *ret = NULL;
     
@@ -123,10 +123,10 @@ out:
  * @param section_start_with
  * @return 
  */
-private int _ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
+exprivate int _ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
 {
     int i;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[] = "_ndrx_inicfg_reload";
     string_hash_t * r, *rt;
     
@@ -136,9 +136,9 @@ private int _ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "%s: Reloading [%s]\n", fn, r->str);
 #endif
-        if (SUCCEED!=_ndrx_inicfg_add(cfg, r->str, section_start_with))
+        if (EXSUCCEED!=_ndrx_inicfg_add(cfg, r->str, section_start_with))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -156,7 +156,7 @@ out:
  * @param resource
  * @return 
  */
-private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
+exprivate void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
 {
     ndrx_inicfg_file_t *f, *ftmp;
     
@@ -169,7 +169,7 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
                     f->resource, f->fullname);
 #endif
         
-            f->refreshed = FALSE;
+            f->refreshed = EXFALSE;
         }
     }
 }
@@ -179,7 +179,7 @@ private void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource)
  * @param cfg
  * @param resource
  */
-private void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
+exprivate void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
 {
     ndrx_inicfg_file_t *f, *ftmp;
     
@@ -201,7 +201,7 @@ private void cfg_remove_not_marked(ndrx_inicfg_t *cfg)
  * @param qname
  * @return 
  */
-private ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections_h, char *section)
+exprivate ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections_h, char *section)
 {
     ndrx_inicfg_section_t * ret = NDRX_CALLOC(1, sizeof(ndrx_inicfg_section_t));
             
@@ -237,7 +237,7 @@ out:
  * @param qname
  * @return 
  */
-private ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sections_h, char *section)
+exprivate ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sections_h, char *section)
 {
     ndrx_inicfg_section_t * ret = NULL;
    
@@ -259,7 +259,7 @@ private ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sections
  * @param value
  * @return 
  */
-private int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
+exprivate int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
                    const char* value)
 {
     int ret = 1;
@@ -267,7 +267,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     ndrx_inicfg_file_t *cf = (ndrx_inicfg_file_t*)cf_ptr;
     char **section_start_with = (char **)vsection_start_with;
     char *p;
-    int needed = TRUE;
+    int needed = EXTRUE;
     
     ndrx_inicfg_section_t *mem_section = NULL;
     ndrx_inicfg_section_keyval_t * mem_value = NULL;
@@ -281,10 +281,10 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
     
     if (NULL!=section_start_with)
     {
-        needed = FALSE;
+        needed = EXFALSE;
         if (NULL==section_start_with)
         {
-            needed = TRUE;
+            needed = EXTRUE;
         }
         else while (NULL!=*section_start_with)
         {
@@ -292,7 +292,7 @@ private int handler(void* cf_ptr, void *vsection_start_with, const char* section
             
             if (0 == strncmp(*section_start_with, section, len))
             {
-                needed = TRUE;
+                needed = EXTRUE;
                 break;
             }
             section_start_with++;
@@ -395,35 +395,35 @@ out:
  * @param section_start_with
  * @return 
  */
-private int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with)
 {
     ndrx_inicfg_file_t *cf = NULL;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[] = "_ndrx_inicfg_load_single_file";
     
     if (NULL==(cf = NDRX_CALLOC(1, sizeof(ndrx_inicfg_file_t))))
     {
         _Nset_error_fmt(NEMALLOC, "%s: Failed to malloc ndrx_inicfg_file_t: %s", 
                 fn, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* copy off resource */
     strncpy(cf->resource, resource, sizeof(cf->resource)-1);
-    cf->resource[sizeof(cf->resource)-1] = EOS;
+    cf->resource[sizeof(cf->resource)-1] = EXEOS;
     
     /* copy off fullname of file */
     strncpy(cf->fullname, fullname, sizeof(cf->fullname)-1);
-    cf->fullname[sizeof(cf->fullname)-1] = EOS;
+    cf->fullname[sizeof(cf->fullname)-1] = EXEOS;
     
-    cf->refreshed = TRUE;
+    cf->refreshed = EXTRUE;
     
-    if (SUCCEED!=stat(fullname, &cf->attr))
+    if (EXSUCCEED!=stat(fullname, &cf->attr))
     {
         _Nset_error_fmt(NEUNIX, "%s: stat() failed for [%s]:%s", 
                 fn, fullname, strerror(errno));
-        FAIL_OUT(ret);    
+        EXFAIL_OUT(ret);    
     }
     
 #ifdef INICFG_ENABLE_DEBUG
@@ -431,11 +431,11 @@ private int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
 #endif
 
     /* start to parse the file by inih */
-    if (SUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, (void *)section_start_with)))
+    if (EXSUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, (void *)section_start_with)))
     {
         _Nset_error_fmt(NEINVALINI, "%s: Invalid ini file: [%s] error on line: %d", 
                 fn, fullname, ret);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     EXHASH_ADD_STR( cfg->cfgfile, fullname, cf );
@@ -450,7 +450,7 @@ out:
  * @param fullname
  * @return 
  */
-private ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullname)
+exprivate ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullname)
 {
     ndrx_inicfg_file_t * ret = NULL;
    
@@ -468,10 +468,10 @@ private ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullna
  * @param section_start_with
  * @return 
  */
-private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     struct stat attr; 
     char fn[] = "_ndrx_inicfg_update_single_file";
     int ferr = 0;
@@ -483,7 +483,7 @@ private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
                     fn, resource, fullname);
 #endif
 
-    if (SUCCEED!=stat(fullname, &attr))
+    if (EXSUCCEED!=stat(fullname, &attr))
     {
         /* check the error. */
         ferr = errno;
@@ -497,7 +497,7 @@ private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
     }
 #endif
     
-    if (NULL!=cf && SUCCEED==ferr && 
+    if (NULL!=cf && EXSUCCEED==ferr && 
             0!=memcmp(&(attr.st_mtime), &(cf->attr.st_mtime), sizeof(attr.st_mtime)))
     {
 #ifdef INICFG_ENABLE_DEBUG
@@ -506,23 +506,23 @@ private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
 #endif
         /* reload the file - kill the old one, and load again */
         ndrx_inicfg_file_free(cfg, cf);
-        if (SUCCEED!=_ndrx_inicfg_load_single_file(cfg, resource, fullname, 
+        if (EXSUCCEED!=_ndrx_inicfg_load_single_file(cfg, resource, fullname, 
                 section_start_with))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
-    else if (NULL!=cf && SUCCEED==ferr)
+    else if (NULL!=cf && EXSUCCEED==ferr)
     {
         /* config not changed, mark as refreshed */
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "%s: [%s]/file [%s] not-changed - do nothing\n",
                         fn, resource, fullname);
 #endif
-        cf->refreshed = TRUE;
+        cf->refreshed = EXTRUE;
         goto out;
     }
-    else if (NULL==cf && SUCCEED==ferr)
+    else if (NULL==cf && EXSUCCEED==ferr)
     {
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "%s: [%s]/file [%s] config does not exists, "
@@ -530,13 +530,13 @@ private int _ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
                         fn, resource, fullname);
 #endif
         /* config does not exists, but file exists - load */
-        if (SUCCEED!=_ndrx_inicfg_load_single_file(cfg, resource, fullname, 
+        if (EXSUCCEED!=_ndrx_inicfg_load_single_file(cfg, resource, fullname, 
                 section_start_with))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
-    else if (NULL!=cf && SUCCEED!=ferr)
+    else if (NULL!=cf && EXSUCCEED!=ferr)
     {
         /* Config exits, file not, kill the config  */
 #ifdef INICFG_ENABLE_DEBUG
@@ -558,9 +558,9 @@ out:
  * @param section_start_with list of sections which we are interested in
  * @return 
  */
-private int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
+exprivate int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[] = "_ndrx_inicfg_add";
     cfg_mark_not_loaded(cfg, resource);
  
@@ -572,10 +572,10 @@ private int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_
 #ifdef INICFG_ENABLE_DEBUG
         fprintf(stderr, "Resource: [%s] is regular file\n", resource);
 #endif
-        if (SUCCEED!=_ndrx_inicfg_update_single_file(cfg, resource, 
+        if (EXSUCCEED!=_ndrx_inicfg_update_single_file(cfg, resource, 
                 resource, section_start_with))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else
@@ -583,7 +583,7 @@ private int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_
         string_list_t* flist = NULL;
         string_list_t* elt = NULL;
 
-        int return_status = SUCCEED;
+        int return_status = EXSUCCEED;
         
 #ifdef INICFG_ENABLE_DEBUG  
         fprintf(stderr, "Resource: [%s] seems like directory "
@@ -604,10 +604,10 @@ private int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_
                    char tmp[PATH_MAX+1];
                    snprintf(tmp, sizeof(tmp), "%s/%s", resource, elt->qname);
                    
-                   if (SUCCEED!=_ndrx_inicfg_update_single_file(cfg, resource, 
+                   if (EXSUCCEED!=_ndrx_inicfg_update_single_file(cfg, resource, 
                            tmp, section_start_with))
                    {
-                       FAIL_OUT(ret);
+                       EXFAIL_OUT(ret);
                    }
                }         
            }
@@ -626,10 +626,10 @@ private int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_
 #ifdef INICFG_ENABLE_DEBUG  
         fprintf(stderr, "Registering resource [%s]\n", resource);
 #endif
-        if (SUCCEED!=ndrx_string_hash_add(&(cfg->resource_hash), resource))
+        if (EXSUCCEED!=ndrx_string_hash_add(&(cfg->resource_hash), resource))
         {
             _Nset_error_fmt(NEMALLOC, "%s: ndrx_string_hash_add - malloc failed", fn);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -643,10 +643,10 @@ out:
  * @param str
  * @return SUCCEED/FAIL
  */
-private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
+exprivate int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
             ndrx_inicfg_section_keyval_t *src)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[]="_ndrx_keyval_hash_add";
     ndrx_inicfg_section_keyval_t * tmp = NDRX_CALLOC(1, sizeof(ndrx_inicfg_section_keyval_t));
     
@@ -656,7 +656,7 @@ private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
         fprintf(stderr, "alloc of ndrx_inicfg_section_keyval_t (%d) failed\n", 
                 (int)sizeof(ndrx_inicfg_section_keyval_t));
 #endif
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(tmp->key = strdup(src->key)))
@@ -665,7 +665,7 @@ private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
         fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
         _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
 #endif
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(tmp->val = strdup(src->val)))
@@ -675,7 +675,7 @@ private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
         _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
         
 #endif
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(tmp->section = strdup(src->section)))
@@ -684,7 +684,7 @@ private int _ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
         fprintf(stderr, "strdup() failed: %s\n", strerror(errno));
         _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
 #endif
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Add stuff to hash finaly */
@@ -700,7 +700,7 @@ out:
  * @param str keyval to search for
  * @return NULL not found/not NULL - found
  */
-private ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
+exprivate ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
         ndrx_inicfg_section_keyval_t *h, char *key)
 {
     ndrx_inicfg_section_keyval_t * r = NULL;
@@ -715,7 +715,7 @@ private ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
  * @param h
  * @return 
  */
-private void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
+exprivate void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
 {
     ndrx_inicfg_section_keyval_t * r=NULL, *rt=NULL;
     /* safe iter over the list */
@@ -736,12 +736,12 @@ private void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
  * @param out
  * @return 
  */
-private int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
+exprivate int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out)
 {
     int i;
     int found;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[] = "_ndrx_inicfg_resolve";
     /* Loop over all resources, and check that these are present in  
      * resources var (or resources is NULL) 
@@ -764,7 +764,7 @@ private int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *sec
     /* Iter over all resources */
     EXHASH_ITER(hh, cfg->cfgfile, config_file, config_file_temp)
     {
-        found = FALSE;
+        found = EXFALSE;
         i = 0;
         
 #ifdef INICFG_ENABLE_DEBUG
@@ -774,7 +774,7 @@ private int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *sec
         /* If resources is NULL, then look in all config files stored.  */
         if (NULL==resources)
         {
-            found = TRUE;
+            found = EXTRUE;
 #ifdef INICFG_ENABLE_DEBUG
             fprintf(stderr, "%s: Checking [%s] - accept any\n", fn, config_file->fullname);
 #endif
@@ -785,7 +785,7 @@ private int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *sec
             {
                 if (0==strcmp(config_file->resource, resources[i]))
                 {
-                    found = TRUE;
+                    found = EXTRUE;
                     break;
                 }
                 i++;
@@ -824,9 +824,9 @@ private int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *sec
                             ndrx_nr_chars(vals->section, NDRX_INICFG_SUBSECT_SPERATOR) > 
                             ndrx_nr_chars(existing->section, NDRX_INICFG_SUBSECT_SPERATOR))
                     {
-                        if (SUCCEED!=_ndrx_keyval_hash_add(out, vals))
+                        if (EXSUCCEED!=_ndrx_keyval_hash_add(out, vals))
                         {
-                            FAIL_OUT(ret);
+                            EXFAIL_OUT(ret);
                         }
                     }
                 } /* it over the key-vals in section */
@@ -862,10 +862,10 @@ out:
  * @param subsect
  * @return 
  */
-private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
         char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[] = "_ndrx_inicfg_section_keyval_t";
     char *tmp = NULL;
     char *p;
@@ -873,7 +873,7 @@ private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
     if (NULL==section)
     {
         _Nset_error_fmt(NEINVAL, "%s: section cannot be NULL!", fn);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     tmp = strdup(section);
@@ -881,20 +881,20 @@ private int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
     if (NULL==tmp)
     {
         _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    while (EOS!=tmp[0])
+    while (EXEOS!=tmp[0])
     {
-        if (SUCCEED!=_ndrx_inicfg_resolve(cfg, resources, tmp, out))
+        if (EXSUCCEED!=_ndrx_inicfg_resolve(cfg, resources, tmp, out))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         p = strrchr(tmp, NDRX_INICFG_SUBSECT_SPERATOR);
         
         if (NULL!=p)
         {
-            *p = EOS;
+            *p = EXEOS;
         }
         else
         {
@@ -919,14 +919,14 @@ out:
  * @param fullsection_starts_with
  * @return List of sections
  */
-private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
+exprivate int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
         char **resources,
         char **section_start_with, 
         ndrx_inicfg_section_t **out)
 {
     int i;
     int found;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char fn[] = "_ndrx_inicfg_iterate";
     /* Loop over all resources, and check that these are present in  
      * resources var (or resources is NULL) 
@@ -950,13 +950,13 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
     /* Iter over all resources */
     EXHASH_ITER(hh, cfg->cfgfile, config_file, config_file_temp)
     {
-        found = FALSE;
+        found = EXFALSE;
         i = 0;
         
         /* If resources is NULL, then look in all config files stored.  */
         if (NULL==resources)
         {
-            found = TRUE;
+            found = EXTRUE;
         }
         else 
         {
@@ -964,7 +964,7 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
             {
                 if (0==strcmp(config_file->resource, resources[i]))
                 {
-                    found = TRUE;
+                    found = EXTRUE;
                     break;
                 }
                 i++;
@@ -988,19 +988,19 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
             {
                 int len;
                 
-                found = FALSE;
+                found = EXFALSE;
                 i = 0;
                 
                 if (NULL==section_start_with)
                 {
-                    found = TRUE;
+                    found = EXTRUE;
                 }
-                else while (EOS!=section_start_with[i])
+                else while (EXEOS!=section_start_with[i])
                 {
                     len = NDRX_MIN(strlen(section->section), strlen(section_start_with[i]));
                     if (0==strncmp(section->section, section_start_with[i], len))
                     {
-                        found = TRUE;
+                        found = EXTRUE;
                         break;
                     }
                     i++;
@@ -1015,7 +1015,7 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
                     /* build up the result section hash (check is there on or missing)... */
                     if (NULL==(section_work=cfg_section_get(out, section->section)))
                     {
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
 
                     ndrx_inicfg_section_keyval_t *vals = NULL, *vals_tmp = NULL;
@@ -1024,9 +1024,9 @@ private int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
                     {
                         if (NULL==_ndrx_keyval_hash_get((section_work->values), vals->key))
                         {
-                            if (SUCCEED!=_ndrx_keyval_hash_add(&(section_work->values), vals))
+                            if (EXSUCCEED!=_ndrx_keyval_hash_add(&(section_work->values), vals))
                             {
-                                FAIL_OUT(ret);
+                                EXFAIL_OUT(ret);
                             }
                         }
                     } /* it over the key-vals in section */
@@ -1049,7 +1049,7 @@ out:
  * Free all sections from hash
  * @param sections ptr becomes invalid after function call
  */
-private void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
+exprivate void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
 {
     char fn[] = "_ndrx_inicfg_sections_free";    
     ndrx_inicfg_section_t *section=NULL, *section_temp=NULL;
@@ -1073,7 +1073,7 @@ private void _ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
  * @param fullfile
  * @return 
  */
-private void _ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile)
+exprivate void _ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile)
 {
     char fn[] = "_ndrx_inicfg_file_free";
     ndrx_inicfg_section_t *section=NULL, *section_temp=NULL;
@@ -1094,7 +1094,7 @@ private void _ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgf
  * @param cfg config handler will become invalid after this operation
  * @return 
  */
-private void _ndrx_inicfg_free(ndrx_inicfg_t *cfg)
+exprivate void _ndrx_inicfg_free(ndrx_inicfg_t *cfg)
 {
     char fn[]="_ndrx_inicfg_free";
     ndrx_inicfg_file_t *cf=NULL, *cf_tmp=NULL;
@@ -1123,7 +1123,7 @@ private void _ndrx_inicfg_free(ndrx_inicfg_t *cfg)
  * @param section_start_with
  * @return 
  */
-public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
+expublic int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
 {
     API_ENTRY;
     return _ndrx_inicfg_reload(cfg, section_start_with);
@@ -1134,7 +1134,7 @@ public int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
  * Create new config handler
  * @return ptr to config handler or NULL
  */
-public ndrx_inicfg_t * ndrx_inicfg_new(void)
+expublic ndrx_inicfg_t * ndrx_inicfg_new(void)
 {
     API_ENTRY;
     return _ndrx_inicfg_new();
@@ -1145,7 +1145,7 @@ public ndrx_inicfg_t * ndrx_inicfg_new(void)
 /**
  * API version of _ndrx_inicfg_load_single_file
  */
-public int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
+expublic int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with)
 {
     API_ENTRY;
@@ -1159,7 +1159,7 @@ public int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
 /**
  * API version of _ndrx_inicfg_update_single_file
  */
-public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
+expublic int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with)
 {
     API_ENTRY;
@@ -1174,7 +1174,7 @@ public int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg,
  * @param section_start_with list of sections which we are interested in
  * @return 
  */
-public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
+expublic int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_start_with)
 {
     API_ENTRY;
     return _ndrx_inicfg_add(cfg, resource, section_start_with);
@@ -1186,7 +1186,7 @@ public int ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **section_st
  * @param str
  * @return SUCCEED/FAIL
  */
-public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
+expublic int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h, 
             ndrx_inicfg_section_keyval_t *src)
 {
     API_ENTRY;
@@ -1199,7 +1199,7 @@ public int ndrx_keyval_hash_add(ndrx_inicfg_section_keyval_t **h,
  * @param key
  * @return 
  */
-public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(
+expublic ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(
         ndrx_inicfg_section_keyval_t *h, char *key)
 {
     API_ENTRY;
@@ -1211,7 +1211,7 @@ public ndrx_inicfg_section_keyval_t * ndrx_keyval_hash_get(
  * @param h
  * @return 
  */
-public void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
+expublic void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
 {
     API_ENTRY;
     _ndrx_keyval_hash_free(h);
@@ -1224,7 +1224,7 @@ public void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h)
  * @param out
  * @return 
  */
-public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
+expublic int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out)
 {
     API_ENTRY;
@@ -1244,7 +1244,7 @@ public int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *secti
  * @param subsect
  * @return 
  */
-public int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+expublic int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
         char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
 {
     API_ENTRY;
@@ -1260,7 +1260,7 @@ public int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
  * @param fullsection_starts_with
  * @return List of sections
  */
-public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
+expublic int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
         char **resources,
         char **section_start_with, 
         ndrx_inicfg_section_t **out)
@@ -1273,7 +1273,7 @@ public int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
  * API version of _ndrx_inicfg_sections_free
  * @param sections ptr becomes invalid after function call
  */
-public void ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
+expublic void ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
 {
     API_ENTRY;
     _ndrx_inicfg_sections_free(sections);
@@ -1286,7 +1286,7 @@ public void ndrx_inicfg_sections_free(ndrx_inicfg_section_t *sections)
  * @param fullfile
  * @return 
  */
-public void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile)
+expublic void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfile)
 {
     API_ENTRY;
     _ndrx_inicfg_file_free(cfg, cfgfile);
@@ -1299,7 +1299,7 @@ public void ndrx_inicfg_file_free(ndrx_inicfg_t *cfg, ndrx_inicfg_file_t *cfgfil
  * @param cfg config handler will become invalid after this operation
  * @return 
  */
-public void ndrx_inicfg_free(ndrx_inicfg_t *cfg)
+expublic void ndrx_inicfg_free(ndrx_inicfg_t *cfg)
 {
     API_ENTRY;
     _ndrx_inicfg_free(cfg);

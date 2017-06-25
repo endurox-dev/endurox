@@ -59,7 +59,7 @@
  * 2. Get new TX state (Driven by current TX stage, and RM new status)
  * And the for file TX outcome we should select the stage with lower number...
  */
-public rmstatus_driver_t G_rm_status_driver[] =
+expublic rmstatus_driver_t G_rm_status_driver[] =
 {  
     /* Driving of the Preparing: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_OK,     XA_OK,     XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
@@ -116,53 +116,53 @@ public rmstatus_driver_t G_rm_status_driver[] =
 
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
-    {FAIL}
+    {EXFAIL}
 };
 
 /**
  * If Stage/State not in list, then assume XA_OP_NOP
  */
-public txaction_driver_t G_txaction_driver[] =
+expublic txaction_driver_t G_txaction_driver[] =
 {  
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, 		XA_OP_PREPARE},
     {XA_TX_STAGE_COMMITTING,XA_RM_STATUS_PREP, 			XA_OP_COMMIT},
     {XA_TX_STAGE_ABORTING,  XA_RM_STATUS_ACTIVE, 		XA_OP_ROLLBACK},
     {XA_TX_STAGE_ABORTING,  XA_RM_STATUS_PREP, 	    	        XA_OP_ROLLBACK},
-    {FAIL}
+    {EXFAIL}
 };
 
 /**
  * State descriptors
  */
-public txstage_descriptor_t G_state_descriptor[] =
+expublic txstage_descriptor_t G_state_descriptor[] =
 {
 /* txstage                     txs_stage_min                 txs_min_complete             txs_max_complete  descr   allow_jump */
-{XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL, "NULL", FALSE},
-{XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL, "ACTIVE", FALSE},
-{XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED, "ABORTING", FALSE},
+{XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL, "NULL", EXFALSE},
+{XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL, "ACTIVE", EXFALSE},
+{XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED, "ABORTING", EXFALSE},
 /* Left for compliance: */
-{XA_TX_STAGE_ABORTED_HAZARD,   XA_TX_STAGE_ABORTED_HAZARD,   XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED_HAZARD, "ABORTED_HAZARD", FALSE},
+{XA_TX_STAGE_ABORTED_HAZARD,   XA_TX_STAGE_ABORTED_HAZARD,   XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED_HAZARD, "ABORTED_HAZARD", EXFALSE},
 /* Left for compliance: */
-{XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS, "ABORTED_HEURIS", FALSE},
+{XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS, "ABORTED_HEURIS", EXFALSE},
 /* Left for compliance: */
-{XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,         XA_TX_STAGE_ABORTED, "ABORTED", FALSE},
+{XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,         XA_TX_STAGE_ABORTED, "ABORTED", EXFALSE},
 /* This assumes that after preparing follows committing, and this is the group. The completed min is: XA_TX_STAGE_COMMITTED_HAZARD
  * and not XA_TX_STAGE_PREPARING! */
-{XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPARING,        XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED, "PREPARING", TRUE},
-{XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED, "COMMITTING", FALSE},
+{XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPARING,        XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED, "PREPARING", EXTRUE},
+{XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED, "COMMITTING", EXFALSE},
 /* Left for compliance: */
-{XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED_HAZARD, "COMMITTED_HAZARD", FALSE},
+{XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED_HAZARD, "COMMITTED_HAZARD", EXFALSE},
 /* Left for compliance: */
-{XA_TX_STAGE_COMMITTED_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS,XA_TX_STAGE_COMMITTED_HEURIS, "COMMITTED_HEURIS", FALSE},
+{XA_TX_STAGE_COMMITTED_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS,XA_TX_STAGE_COMMITTED_HEURIS, "COMMITTED_HEURIS", EXFALSE},
 /* Left for compliance: */
-{XA_TX_STAGE_COMMITTED,        XA_TX_STAGE_COMMITTED,        XA_TX_STAGE_COMMITTED,       XA_TX_STAGE_COMMITTED, "COMMITTED", FALSE},
-{FAIL, 0, 0, 0, "FAIL"}
+{XA_TX_STAGE_COMMITTED,        XA_TX_STAGE_COMMITTED,        XA_TX_STAGE_COMMITTED,       XA_TX_STAGE_COMMITTED, "COMMITTED", EXFALSE},
+{EXFAIL, 0, 0, 0, "FAIL"}
 };
 
 /**
  * Needs new table: state-to-tpreturn code mapper. 
  */
-public txstate2tperrno_t G_txstage2tperrno[] =
+expublic txstate2tperrno_t G_txstage2tperrno[] =
 {
 {XA_TX_STAGE_NULL,             XA_OP_COMMIT, TPESYSTEM},
 {XA_TX_STAGE_ACTIVE,           XA_OP_COMMIT, TPESYSTEM},
@@ -175,7 +175,7 @@ public txstate2tperrno_t G_txstage2tperrno[] =
 {XA_TX_STAGE_COMMITTING,       XA_OP_COMMIT, TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_OP_COMMIT, TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HEURIS, XA_OP_COMMIT, TPEHEURISTIC},
-{XA_TX_STAGE_COMMITTED,        XA_OP_COMMIT, SUCCEED},
+{XA_TX_STAGE_COMMITTED,        XA_OP_COMMIT, EXSUCCEED},
 
 {XA_TX_STAGE_NULL,             XA_OP_ROLLBACK, TPESYSTEM},
 {XA_TX_STAGE_ACTIVE,           XA_OP_ROLLBACK, TPESYSTEM},
@@ -183,14 +183,14 @@ public txstate2tperrno_t G_txstage2tperrno[] =
 {XA_TX_STAGE_ABORTED_HAZARD,   XA_OP_ROLLBACK, TPEHAZARD},
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_OP_ROLLBACK, TPEHEURISTIC},
 /* Extra check on exit, if abort was requested, then translate to SUCCEED */
-{XA_TX_STAGE_ABORTED,          XA_OP_ROLLBACK, SUCCEED},
+{XA_TX_STAGE_ABORTED,          XA_OP_ROLLBACK, EXSUCCEED},
 {XA_TX_STAGE_PREPARING,        XA_OP_ROLLBACK, TPESYSTEM},
 {XA_TX_STAGE_COMMITTING,       XA_OP_ROLLBACK, TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_OP_ROLLBACK, TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HEURIS, XA_OP_ROLLBACK, TPEHEURISTIC},
 {XA_TX_STAGE_COMMITTED,        XA_OP_ROLLBACK, TPEHEURISTIC},
 
-{FAIL}
+{EXFAIL}
 };
 
 /*---------------------------Prototypes---------------------------------*/
@@ -203,12 +203,12 @@ public txstate2tperrno_t G_txstage2tperrno[] =
  * @param op_retcode - operation return code
  * @return NULL or transition descriptor
  */
-public rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
+expublic rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
                                                     int op, int op_retcode)
 {
     rmstatus_driver_t *ret = G_rm_status_driver;
     
-    while (FAIL!=ret->txstage)
+    while (EXFAIL!=ret->txstage)
     {
         if (ret->txstage == txstage &&
                 ret->rmstatus == rmstatus &&
@@ -222,7 +222,7 @@ public rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus,
         ret++;
     } 
     
-    if (FAIL==ret->txstage)
+    if (EXFAIL==ret->txstage)
     {
         ret=NULL;
     }
@@ -237,12 +237,12 @@ public rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus,
  * @param next_rmstatus - RM status (after NOP...)
  * @return NULL or transition descriptor
  */
-public rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
+expublic rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
                                                     char next_rmstatus)
 {
     rmstatus_driver_t *ret = G_rm_status_driver;
     
-    while (FAIL!=ret->txstage)
+    while (EXFAIL!=ret->txstage)
     {
         if (ret->txstage == txstage &&
                 ret->next_rmstatus == next_rmstatus
@@ -253,7 +253,7 @@ public rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage,
         ret++;
     }
     
-    if (FAIL==ret->txstage)
+    if (EXFAIL==ret->txstage)
     {
         ret=NULL;
     }
@@ -267,11 +267,11 @@ public rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage,
  * @param rmstatus curren RM status
  * @return operation to be done or NOP
  */
-public int xa_status_get_op(short txstage, char rmstatus)
+expublic int xa_status_get_op(short txstage, char rmstatus)
 {
     txaction_driver_t *ret = G_txaction_driver;
     
-    while (FAIL!=ret->txstage)
+    while (EXFAIL!=ret->txstage)
     {
         if (ret->txstage == txstage &&
                 ret->rmstatus == rmstatus
@@ -282,7 +282,7 @@ public int xa_status_get_op(short txstage, char rmstatus)
         ret++;
     }
     
-    if (FAIL!=ret->txstage)
+    if (EXFAIL!=ret->txstage)
     {
         return ret->op;
     }
@@ -297,11 +297,11 @@ public int xa_status_get_op(short txstage, char rmstatus)
  * @param txstage
  * @return NULL or stage descriptor
  */
-public txstage_descriptor_t* xa_stage_get_descr(short txstage)
+expublic txstage_descriptor_t* xa_stage_get_descr(short txstage)
 {
     txstage_descriptor_t* ret = G_state_descriptor;
     
-    while (FAIL!=ret->txstage)
+    while (EXFAIL!=ret->txstage)
     {
         if (ret->txstage == txstage)
         {
@@ -310,7 +310,7 @@ public txstage_descriptor_t* xa_stage_get_descr(short txstage)
         ret++;
     }
     
-    if (FAIL==ret->txstage)
+    if (EXFAIL==ret->txstage)
         ret = NULL;
     
     return ret;
@@ -321,11 +321,11 @@ public txstage_descriptor_t* xa_stage_get_descr(short txstage)
  * @param txstage
  * @return 
  */
-public int xa_txstage2tperrno(short txstage, int master_op)
+expublic int xa_txstage2tperrno(short txstage, int master_op)
 {
     txstate2tperrno_t* ret = G_txstage2tperrno;
     
-    while (FAIL!=ret->txstage)
+    while (EXFAIL!=ret->txstage)
     {
         if (ret->txstage == txstage &&
                 ret->master_op == master_op
@@ -336,7 +336,7 @@ public int xa_txstage2tperrno(short txstage, int master_op)
         ret++;
     }
     
-    if (FAIL==ret->txstage)
+    if (EXFAIL==ret->txstage)
         return TPESYSTEM;
     
     return ret->tpe;

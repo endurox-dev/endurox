@@ -57,20 +57,20 @@ ndrx_config_t G_config;
  * Load environment configuration
  * @return SUCCEED/FAIL
  */
-public int load_env_config(void)
+expublic int load_env_config(void)
 {
     char *p;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     memset(&G_config, 0, sizeof(G_config));
-    G_config.ndrxd_q = (mqd_t)FAIL;
-    G_config.reply_queue = (mqd_t)FAIL;
+    G_config.ndrxd_q = (mqd_t)EXFAIL;
+    G_config.reply_queue = (mqd_t)EXFAIL;
     
     /* Common configuration loading... */   
-    if (SUCCEED!=ndrx_load_common_env())
+    if (EXSUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -88,7 +88,7 @@ public int load_env_config(void)
     if (NULL==G_config.qprefix)
     {
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -96,7 +96,7 @@ public int load_env_config(void)
     if (NULL==G_config.qpath)
     {
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPATH);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -111,7 +111,7 @@ public int load_env_config(void)
     NDRX_LOG(log_debug, "About to open reply queue: [%s]",
                                         G_config.reply_queue_str);
     /* Open new queue... */
-    if ((mqd_t)FAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
+    if ((mqd_t)EXFAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
                                         O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {
@@ -119,7 +119,7 @@ public int load_env_config(void)
                                         G_config.reply_queue_str, strerror(errno));
         userlog("Failed to open queue: [%s] err: %s",
                                         G_config.reply_queue_str, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -130,7 +130,7 @@ public int load_env_config(void)
     if (NULL==G_config.ndrxd_logfile)
     {
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_DMNLOG);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 

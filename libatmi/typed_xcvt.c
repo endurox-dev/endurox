@@ -62,9 +62,9 @@
  * @param is_reverse
  * @return 
  */
-public int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse)
+expublic int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* Make the convert in normal form: */
     

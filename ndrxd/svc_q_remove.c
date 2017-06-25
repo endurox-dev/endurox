@@ -79,7 +79,7 @@ removed_svcs_t * M_removed = NULL;
  * @param svc
  * @return 
  */
-private removed_svcs_t * find_removed_entry(char *svc)
+exprivate removed_svcs_t * find_removed_entry(char *svc)
 {
     removed_svcs_t * ret = NULL;
     removed_svcs_t * tmp = NULL;
@@ -104,11 +104,11 @@ private removed_svcs_t * find_removed_entry(char *svc)
  * @param svc
  * @return 
  */
-public int remove_service_q(char *svc, short srvid)
+expublic int remove_service_q(char *svc, short srvid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char q_str[NDRX_MAX_Q_SIZE+1];
-    mqd_t qd=(mqd_t)FAIL;
+    mqd_t qd=(mqd_t)EXFAIL;
     char msg_buf[ATMI_MSG_MAX_SIZE];
     int len;
     unsigned prio;
@@ -123,17 +123,17 @@ public int remove_service_q(char *svc, short srvid)
 #endif
     
     /* Run in non-blocked mode */
-    if ((mqd_t)FAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
+    if ((mqd_t)EXFAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
                                         q_str, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     /* Unlink the queue, the actual queue will live out throught next session! 
      * i.e. all users should close it to dispose it! As by manpage! */
-    if (SUCCEED!=ndrx_mq_unlink(q_str))
+    if (EXSUCCEED!=ndrx_mq_unlink(q_str))
     {
         NDRX_LOG(log_error, "Failed to unlink q [%s]: %s", 
                 q_str, strerror(errno));
@@ -161,9 +161,9 @@ public int remove_service_q(char *svc, short srvid)
     }
     
 out:
-    if ((mqd_t)FAIL!=qd)
+    if ((mqd_t)EXFAIL!=qd)
     {
-        if (SUCCEED!=ndrx_mq_close(qd))
+        if (EXSUCCEED!=ndrx_mq_close(qd))
         {
             NDRX_LOG(log_warn, "Failed to close q: %d - %s", qd, 
                     strerror(errno));

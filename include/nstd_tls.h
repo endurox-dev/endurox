@@ -49,7 +49,7 @@ extern "C" {
     
     
 #define NSTD_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_nstd_tls)) \
-        {G_nstd_tls = (nstd_tls_t *)ndrx_nstd_tls_new(TRUE, TRUE);};
+        {G_nstd_tls = (nstd_tls_t *)ndrx_nstd_tls_new(EXTRUE, EXTRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

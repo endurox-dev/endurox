@@ -78,16 +78,16 @@ extern char *optarg;
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public tmsrv_cfg_t G_tmsrv_cfg;
+expublic tmsrv_cfg_t G_tmsrv_cfg;
 /*---------------------------Statics------------------------------------*/
-private int M_init_ok = FALSE;
+exprivate int M_init_ok = EXFALSE;
 /* Wait for one free thread: */
 pthread_mutex_t M_wait_th_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
 /*---------------------------Prototypes---------------------------------*/
-private int tx_tout_check(void);
-private void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
+exprivate int tx_tout_check(void);
+exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
 
 /**
  * Tmsrv service entry (working thread)
@@ -98,10 +98,10 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     /* Ok we should not handle the commands 
      * TPBEGIN...
      */
-    int ret=SUCCEED;
-    static __thread int first = TRUE;
+    int ret=EXSUCCEED;
+    static __thread int first = EXTRUE;
     thread_server_t *thread_data = (thread_server_t *)ptr;
-    char cmd = EOS;
+    char cmd = EXEOS;
     int cd;
     
     /**************************************************************************/
@@ -112,8 +112,8 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     /* Do the ATMI init */
     if (first)
     {
-        first = FALSE;
-        if (SUCCEED!=tpinit(NULL))
+        first = EXFALSE;
+        if (EXSUCCEED!=tpinit(NULL))
         {
             NDRX_LOG(log_error, "Failed to init worker client");
             userlog("tmsrv: Failed to init worker client");
@@ -122,7 +122,7 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     }
     
     /* restore context. */
-    if (SUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
+    if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
     {
         userlog("tmsrv: Failed to set context");
         NDRX_LOG(log_error, "Failed to set context");
@@ -146,7 +146,7 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     if (Bget(p_ub, TMCMD, 0, (char *)&cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to read command code!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     NDRX_LOG(log_info, "Got command code: [%c]", cmd);
@@ -156,81 +156,81 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
         case ATMI_XA_TPBEGIN:
             
             /* start new tran... */
-            if (SUCCEED!=tm_tpbegin(p_ub))
+            if (EXSUCCEED!=tm_tpbegin(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_TPCOMMIT:
             
             /* start new tran... */
-            if (SUCCEED!=tm_tpcommit(p_ub))
+            if (EXSUCCEED!=tm_tpcommit(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_TPABORT:
             
             /* start new tran... */
-            if (SUCCEED!=tm_tpabort(p_ub))
+            if (EXSUCCEED!=tm_tpabort(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_PRINTTRANS:
             
             /* request for printing active transactions */
-            if (SUCCEED!=tm_tpprinttrans(p_ub, cd))
+            if (EXSUCCEED!=tm_tpprinttrans(p_ub, cd))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_ABORTTRANS:
             
             /* request for printing active transactions */
-            if (SUCCEED!=tm_aborttrans(p_ub))
+            if (EXSUCCEED!=tm_aborttrans(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_COMMITTRANS:
             
             /* request for printing active transactions */
-            if (SUCCEED!=tm_committrans(p_ub))
+            if (EXSUCCEED!=tm_committrans(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_TMPREPARE:
             
             /* prepare the stuff locally */
-            if (SUCCEED!=tm_tmprepare(p_ub))
+            if (EXSUCCEED!=tm_tmprepare(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_TMCOMMIT:
             
             /* prepare the stuff locally */
-            if (SUCCEED!=tm_tmcommit(p_ub))
+            if (EXSUCCEED!=tm_tmcommit(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         case ATMI_XA_TMABORT:
             
             /* abort the stuff locally */
-            if (SUCCEED!=tm_tmabort(p_ub))
+            if (EXSUCCEED!=tm_tmabort(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
@@ -238,35 +238,35 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             /* Some binary is telling as the different RM is involved
              * in transaction.
              */
-            if (SUCCEED!=tm_tmregister(p_ub))
+            if (EXSUCCEED!=tm_tmregister(p_ub))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             break;
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
-            ret=FAIL;
+            ret=EXFAIL;
             break;
     }
     
 out:
             
     /* Approve the request if all ok */
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         atmi_xa_approve(p_ub);
     }
 
-    if (SUCCEED!=ret && XA_RDONLY==atmi_xa_get_reason())
+    if (EXSUCCEED!=ret && XA_RDONLY==atmi_xa_get_reason())
     {
         NDRX_LOG(log_debug, "Marking READ ONLY = SUCCEED");
-        ret=SUCCEED;
+        ret=EXSUCCEED;
     }
 
     ndrx_debug_dump_UBF(log_info, "TPTMSRV return buffer:", p_ub);
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -279,7 +279,7 @@ out:
  */
 void TPTMSRV (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
     long size;
     char btype[16];
@@ -290,14 +290,14 @@ void TPTMSRV (TPSVCINFO *p_svc)
     {
         userlog("Failed to malloc memory - %s!", strerror(errno));
         NDRX_LOG(log_error, "Failed to malloc memory");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0==(size = tptypes (p_svc->data, btype, stype)))
     {
         NDRX_LOG(log_error, "Zero buffer received!");
         userlog("Zero buffer received!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 #if 0
@@ -308,7 +308,7 @@ void TPTMSRV (TPSVCINFO *p_svc)
     if (NULL==thread_data->buffer)
     {
         NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* copy off the data */
@@ -322,7 +322,7 @@ void TPTMSRV (TPSVCINFO *p_svc)
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)TPTMSRV_TH, (void *)thread_data);
     
 out:
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         /* serve next.. 
          * At this point we should know that at least one thread is free
@@ -354,7 +354,7 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     signed char c;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
@@ -427,11 +427,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_tmsrv_cfg.xa_retries = XA_RETRIES_DFLT;
     }
         
-    if (EOS==G_tmsrv_cfg.tlog_dir[0])
+    if (EXEOS==G_tmsrv_cfg.tlog_dir[0])
     {
         userlog("TMS log dir not set!");
         NDRX_LOG(log_error, "TMS log dir not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     NDRX_LOG(log_debug, "Recovery scan time set to [%d]",
                             G_tmsrv_cfg.scan_time);
@@ -446,10 +446,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                             G_tmsrv_cfg.xa_retries);
     
     NDRX_LOG(log_debug, "About to initialize XA!");
-    if (SUCCEED!=atmi_xa_init()) /* will open next... */
+    if (EXSUCCEED!=atmi_xa_init()) /* will open next... */
     {
         NDRX_LOG(log_error, "Failed to initialize XA driver!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* we should open the XA  */
@@ -464,7 +464,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     else
     {
         NDRX_LOG(log_error, "xa_open ok");
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }
                 
     /* All OK, about to advertise services */
@@ -472,43 +472,43 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (nodeid<1)
     {
         NDRX_LOG(log_error, "Failed to get current node_id");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* very generic version/only Resource ID known */
     
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, G_atmi_env.xa_rmid);
     
-    if (SUCCEED!=tpadvertise(svcnm, TPTMSRV))
+    if (EXSUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* generic instance: */
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM, nodeid, G_atmi_env.xa_rmid);
     
-    if (SUCCEED!=tpadvertise(svcnm, TPTMSRV))
+    if (EXSUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* specific instance */
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM_I, nodeid, G_atmi_env.xa_rmid, 
             G_server_conf.srv_id);
     
-    if (SUCCEED!=tpadvertise(svcnm, TPTMSRV))
+    if (EXSUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(G_tmsrv_cfg.thpool = thpool_init(G_tmsrv_cfg.threadpoolsize)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_tmsrv_cfg.threadpoolsize);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Start the background processing */
@@ -516,14 +516,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     
     /* Register timer check (needed for time-out detection) */
-    if (SUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tx_tout_check))
+    if (EXSUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tx_tout_check))
     {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                             tpstrerror(tperrno));
     }
     
-    M_init_ok = TRUE;
+    M_init_ok = EXTRUE;
     
 out:
     return ret;
@@ -538,7 +538,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
-    G_bacground_req_shutdown = TRUE;
+    G_bacground_req_shutdown = EXTRUE;
     
     if (M_init_ok)
     {
@@ -566,7 +566,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
  * (will be done by threadpoll)
  * @return 
  */
-private void tx_tout_check_th(void *ptr)
+exprivate void tx_tout_check_th(void *ptr)
 {
     long tspent;
     atmi_xa_log_list_t *tx_list;
@@ -610,7 +610,7 @@ private void tx_tout_check_th(void *ptr)
                  * - meanwhile foreground calls commit()
                  * This can be reached with per transaction locking...
                  */
-                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, FAIL);
+                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL);
             }
         }
         LL_DELETE(tx_list,el);
@@ -624,13 +624,13 @@ out:
  * Callback routine for scheduled timeout checks.
  * @return 
  */
-private int tx_tout_check(void)
+exprivate int tx_tout_check(void)
 {
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
     /* return SUCCEED; */
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -638,7 +638,7 @@ private int tx_tout_check(void)
  * thread is free, before we are going to mail poll.
  * @param ptr
  */
-private void tm_chk_one_free_thread(void *ptr, int *p_finish_off)
+exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off)
 {
     pthread_mutex_lock(&M_wait_th_mutex);
     pthread_cond_signal(&M_wait_th_cond);

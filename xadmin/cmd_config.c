@@ -57,7 +57,7 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_ldcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_ldcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -72,6 +72,6 @@ public int cmd_ldcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 

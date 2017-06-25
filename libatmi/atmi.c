@@ -68,23 +68,23 @@
  * @param flags
  * @return
  */
-public int tpacall (char *svc, char *data, long len, long flags)
+expublic int tpacall (char *svc, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!
      causes problems with serice async replies!, See doc for tpacall! */
             
-    ret=_tpacall(svc, data, len, flags, NULL, FAIL, 0, NULL); /* no reply queue */
+    ret=_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL); /* no reply queue */
     
 out:
     return ret;
@@ -98,17 +98,17 @@ out:
  * @param flags
  * @return
  */
-public int tpacallex (char *svc, char *data, 
+expublic int tpacallex (char *svc, char *data, 
         long len, long flags, char *extradata, int dest_node, int ex_flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -128,10 +128,10 @@ out:
  * @param len
  * @return
  */
-public char * tpalloc (char *type, char *subtype, long len)
+expublic char * tpalloc (char *type, char *subtype, long len)
 {
     char *ret=NULL;
-    int entry_status=SUCCEED;
+    int entry_status=EXSUCCEED;
     
 /* Allow to skip initalization - this for for clt init (using tpalloc for buffer request)
     API_ENTRY;
@@ -154,13 +154,13 @@ out:
  * @param len
  * @return
  */
-public char * tprealloc (char *buf, long len)
+expublic char * tprealloc (char *buf, long len)
 {
     char * ret=NULL;
-    int entry_status=SUCCEED;
+    int entry_status=EXSUCCEED;
     
     API_ENTRY;
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
         ret=NULL;
         goto out;
@@ -184,17 +184,17 @@ out:
  * @param flags
  * @return SUCCEED/FAIL
  */
-public int tpcall (char *svc, char *idata, long ilen,
+expublic int tpcall (char *svc, char *idata, long ilen,
                 char **odata, long *olen, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     TPTRANID tranid;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -202,7 +202,7 @@ public int tpcall (char *svc, char *idata, long ilen,
     if (olen==NULL)
     {
         _TPset_error_msg(TPEINVAL, "olen cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -210,14 +210,14 @@ public int tpcall (char *svc, char *idata, long ilen,
     if (odata==NULL)
     {
         _TPset_error_msg(TPEINVAL, "odata cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     if (flags & TPNOREPLY)
     {
         _TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -235,45 +235,45 @@ out:
  * @param flags
  * @return SUCCEED/FAIL
  */
-public int tpgetrply (int *cd, char **data, long *len, long flags)
+expublic int tpgetrply (int *cd, char **data, long *len, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     if (cd==NULL)
     {
         _TPset_error_msg(TPEINVAL, "cd cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     if (data==NULL)
     {
         _TPset_error_msg(TPEINVAL, "data cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     if (len==NULL)
     {
         _TPset_error_msg(TPEINVAL, "len cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     if (flags & TPGETANY)
-        ret=_tpgetrply (cd, FAIL, data, len, flags, NULL);
+        ret=_tpgetrply (cd, EXFAIL, data, len, flags, NULL);
     else if (*cd <= 0 )
     {
         _TPset_error_msg(TPEINVAL, "*cd <= 0");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -294,17 +294,17 @@ out:
  * @param extradata - extra data to be passed over the call
  * @return SUCCEED/FAIL
  */
-public int tpcallex (char *svc, char *idata, long ilen,
+expublic int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -312,7 +312,7 @@ public int tpcallex (char *svc, char *idata, long ilen,
     if (olen==NULL)
     {
         _TPset_error_msg(TPEINVAL, "olen cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -320,14 +320,14 @@ public int tpcallex (char *svc, char *idata, long ilen,
     if (odata==NULL)
     {
         _TPset_error_msg(TPEINVAL, "odata cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     if (flags & TPNOREPLY)
     {
         _TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -341,15 +341,15 @@ out:
  * Distributed transaction abort.
  * @return SUCCED/FAIL
  */
-public int tpabort (long flags)
+expublic int tpabort (long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -363,15 +363,15 @@ out:
  * Distributed transaction begin
  * @return SUCCEED/FAIL
  */
-public int tpbegin (unsigned long timeout, long flags)
+expublic int tpbegin (unsigned long timeout, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -385,15 +385,15 @@ out:
  * Distro transaction commit
  * @return SUCCED/FAIL
  */
-public int tpcommit (long flags)
+expublic int tpcommit (long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -407,15 +407,15 @@ out:
  * Open XA interface
  * @return SUCCEED/FAIL
  */
-public int tpopen (void)
+expublic int tpopen (void)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -430,15 +430,15 @@ out:
  * Close XA interface
  * @return
  */
-public int tpclose (void)
+expublic int tpclose (void)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -452,7 +452,7 @@ out:
  * Return the current status in global tx or not
  * @return	0 - not int tx, 1 - in transaction
  */
-public int tpgetlev (void)
+expublic int tpgetlev (void)
 {
     _TPunset_error(); /* this elary does TLS entry */
 
@@ -470,15 +470,15 @@ public int tpgetlev (void)
  * @param cd
  * @return SUCCEED/FAIL
  */
-public int tpcancel (int cd)
+expublic int tpcancel (int cd)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -492,7 +492,7 @@ out:
  * tpfree implementation
  * @param buf
  */
-public void tpfree (char *buf)
+expublic void tpfree (char *buf)
 {
     _TPunset_error();
 
@@ -511,7 +511,7 @@ public void tpfree (char *buf)
  * @param buf Typed buffer ptr
  * @return TRUE (automatically allocated buffer), FALSE(0) Manually allocated, -1 FAIL
  */
-public int tpisautobuf (char *buf)
+expublic int tpisautobuf (char *buf)
 {
     _TPunset_error();
 
@@ -522,7 +522,7 @@ public int tpisautobuf (char *buf)
     else
     {
         _TPset_error_msg(TPEINVAL, "Null buffer passed to tpisautobuf()!");
-        return FAIL;
+        return EXFAIL;
     }
 }
 
@@ -534,7 +534,7 @@ public int tpisautobuf (char *buf)
  * Only not sure how about debug?
  * @return SUCCEED/FAIL
  */
-public int tpterm (void)
+expublic int tpterm (void)
 {
     _TPunset_error();
     return _tpterm();
@@ -548,15 +548,15 @@ public int tpterm (void)
  * @param flags
  * @return
  */
-public int tpconnect (char *svc, char *data, long len, long flags)
+expublic int tpconnect (char *svc, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -576,17 +576,17 @@ out:
  * @param command_id
  * @return
  */
-public int tprecv (int cd, char * *data,
+expublic int tprecv (int cd, char * *data,
                         long *len, long flags, long *revent)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     short command_id=ATMI_COMMAND_CONVDATA;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -605,16 +605,16 @@ out:
  * @param revent
  * @return
  */
-public int tpsend (int cd, char *data, long len, long flags,
+expublic int tpsend (int cd, char *data, long len, long flags,
                                     long *revent)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -633,15 +633,15 @@ out:
  * @param revent
  * @return
  */
-public int tpdiscon (int cd)
+expublic int tpdiscon (int cd)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -661,13 +661,13 @@ out:
  */
 int tppost(char *eventname, char *data, long len, long flags)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -682,13 +682,13 @@ out:
  */
 long tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -703,13 +703,13 @@ out:
  */
 int tpunsubscribe(long subscription, long flags)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -727,11 +727,11 @@ out:
  * @param 
  * @return 
  */
-public int tpconvert (char *strrep, char *binrep, long flags)
+expublic int tpconvert (char *strrep, char *binrep, long flags)
 {
     NDRX_LOG(log_error, "tpconvert - ATMI dummy");
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -740,19 +740,19 @@ public int tpconvert (char *strrep, char *binrep, long flags)
  * @param flags
  * @return SUCCEED/FAIL
  */
-public int tpsuspend (TPTRANID *tranid, long flags) 
+expublic int tpsuspend (TPTRANID *tranid, long flags) 
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    ret = _tpsuspend (tranid, flags, FALSE);
+    ret = _tpsuspend (tranid, flags, EXFALSE);
     
 out:
     return ret;
@@ -764,15 +764,15 @@ out:
  * @param flags
  * @return SUCCEED/FAIL
  */
-public int tpresume (TPTRANID *tranid, long flags)
+expublic int tpresume (TPTRANID *tranid, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -790,22 +790,22 @@ out:
  * @param subtype
  * @return 
  */
-public long tptypes (char *ptr, char *type, char *subtype)
+expublic long tptypes (char *ptr, char *type, char *subtype)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     if (ptr==NULL)
     {
         _TPset_error_msg(TPEINVAL, "ptr cannot be null");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -820,15 +820,15 @@ out:
  * Return current node id
  * @return FAIL = error, >0 node id.
  */
-public long tpgetnodeid(void)
+expublic long tpgetnodeid(void)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -844,7 +844,7 @@ out:
  * @param buffer    input buffer
  * @return 
  */
-public int tpjsontoubf(UBFH *p_ub, char *buffer)
+expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
 {
     return _tpjsontoubf(p_ub, buffer);
 }
@@ -856,7 +856,7 @@ public int tpjsontoubf(UBFH *p_ub, char *buffer)
  * @param bufsize
  * @return 
  */
-public int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
+expublic int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
 {
     return _tpubftojson(p_ub, buffer, bufsize);
 }
@@ -864,15 +864,15 @@ public int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
 /**
  * Enqueue message
  */
-public int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags)
+expublic int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags)
 {   
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -886,15 +886,15 @@ out:
 /**
  * Dequeue message
  */
-public int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
+expublic int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -907,15 +907,15 @@ out:
 /**
  * Enqueue message
  */
-public int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags)
+expublic int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags)
 {   
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -929,15 +929,15 @@ out:
 /**
  * Dequeue message
  */
-public int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
+expublic int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -954,7 +954,7 @@ out:
  * But functions work..
  * @return 
  */
-public tp_command_call_t *ndrx_get_G_last_call(void)
+expublic tp_command_call_t *ndrx_get_G_last_call(void)
 {
     ATMI_TLS_ENTRY;
     
@@ -965,7 +965,7 @@ public tp_command_call_t *ndrx_get_G_last_call(void)
  * Access to atmi lib conf
  * @return 
  */
-public atmi_lib_conf_t *ndrx_get_G_atmi_conf(void)
+expublic atmi_lib_conf_t *ndrx_get_G_atmi_conf(void)
 {
     ATMI_TLS_ENTRY;
     return &G_atmi_tls->G_atmi_conf;
@@ -975,7 +975,7 @@ public atmi_lib_conf_t *ndrx_get_G_atmi_conf(void)
  * Access to to atmi lib env globals
  * @return 
  */
-public atmi_lib_env_t *ndrx_get_G_atmi_env(void)
+expublic atmi_lib_env_t *ndrx_get_G_atmi_env(void)
 {
     return &G_atmi_env;
 }
@@ -984,7 +984,7 @@ public atmi_lib_env_t *ndrx_get_G_atmi_env(void)
  * Get current ATMI transaction object
  * @return 
  */
-public atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void)
+expublic atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void)
 {
     ATMI_TLS_ENTRY;
     return &G_atmi_tls->G_atmi_xa_curtx;
@@ -994,7 +994,7 @@ public atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void)
  * Get accepted connection ATMI object
  * @return 
  */
-public tp_conversation_control_t *ndrx_get_G_accepted_connection(void)
+expublic tp_conversation_control_t *ndrx_get_G_accepted_connection(void)
 {
     ATMI_TLS_ENTRY;
     
@@ -1007,7 +1007,7 @@ public tp_conversation_control_t *ndrx_get_G_accepted_connection(void)
  * @param flags
  * @return 
  */
-public void tpfreectxt(TPCONTEXT_T context)
+expublic void tpfreectxt(TPCONTEXT_T context)
 {
     _tpfreectxt(context);
 }
@@ -1018,15 +1018,15 @@ public void tpfreectxt(TPCONTEXT_T context)
  * @param flags
  * @return 
  */
-public int tpsetctxt(TPCONTEXT_T context, long flags)
+expublic int tpsetctxt(TPCONTEXT_T context, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     /* API_ENTRY; */
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -1043,15 +1043,15 @@ out:
  * @param flags
  * @return 
  */
-public int tpgetctxt(TPCONTEXT_T *context, long flags)
+expublic int tpgetctxt(TPCONTEXT_T *context, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     /* API_ENTRY; */
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -1070,7 +1070,7 @@ out:
  * @param flags
  * @return 
  */
-public TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
+expublic TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
 {
     TPCONTEXT_T ctx = ndrx_atmi_tls_new(auto_destroy, auto_set);
     
@@ -1097,15 +1097,15 @@ public TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
  *              generating file name and putting into buffer
  * @return SUCCEED/FAIL
  */
-public int tplogsetreqfile(char **data, char *filename, char *filesvc)
+expublic int tplogsetreqfile(char **data, char *filename, char *filesvc)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret = _tplogsetreqfile(data, filename, filesvc);
@@ -1120,7 +1120,7 @@ out:
  * @param title title of the dump
  * @param p_ub UBF buffer
  */
-public void tplogprintubf(int lev, char *title, UBFH *p_ub)
+expublic void tplogprintubf(int lev, char *title, UBFH *p_ub)
 {
     _tplogprintubf(lev, title, p_ub);
 }
@@ -1131,15 +1131,15 @@ public void tplogprintubf(int lev, char *title, UBFH *p_ub)
  * @param filename
  * @return SUCCEED (have filename in buffer, 
  */
-public int tploggetbufreqfile(char *data, char *filename, int bufsize)
+expublic int tploggetbufreqfile(char *data, char *filename, int bufsize)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret = _tploggetbufreqfile(data, filename, bufsize);
@@ -1153,15 +1153,15 @@ out:
  * @param data XATMI buffer
  * @return SUCCEED (have filename in buffer, 
  */
-public int tplogdelbufreqfile(char *data)
+expublic int tplogdelbufreqfile(char *data)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret = _tplogdelbufreqfile(data);
@@ -1178,19 +1178,19 @@ out:
  * @param flags
  * @return 
  */
-public int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags)
+expublic int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags)
 {
-    long ret=SUCCEED;
-    int entry_status=SUCCEED;
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }   
     _TPset_error_msg(TPENOENT, "TODO: tpadmcall: Not yet implemented.");
-    ret = FAIL;
+    ret = EXFAIL;
 
 out:
     return ret;
@@ -1200,19 +1200,19 @@ out:
  * STUB for tpchkauth()
  * @return FAIL
  */
-public int tpchkauth(void)
+expublic int tpchkauth(void)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }   
     _TPset_error_msg(TPENOENT, "TODO: tpchkauth: Not yet implemented.");
-    ret = FAIL;
+    ret = EXFAIL;
 
 out:
     return ret;
@@ -1227,16 +1227,16 @@ out:
  * @param flags
  * @return FAIL
  */
-public int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
+expublic int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     TPMYID myid;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }   
     
     if (NULL==clientid)
@@ -1244,22 +1244,22 @@ public int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
         NDRX_LOG(log_error, "%s: clientid is NULL!", __func__);
         _TPset_error_msg(TPEINVAL, "clientid is NULL!");
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=ndrx_myid_parse(clientid->clientdata, &myid, FALSE))
+    if (EXSUCCEED!=ndrx_myid_parse(clientid->clientdata, &myid, EXFALSE))
     {
         NDRX_LOG(log_error, "%s: Failed to parse my_id!", __func__);
         _TPset_error_fmt(TPEINVAL, "Failed to parse: [%s]", clientid->clientdata);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
        
-    if (SUCCEED!=_tpnotify(clientid, &myid, NULL, data, len, flags,
+    if (EXSUCCEED!=_tpnotify(clientid, &myid, NULL, data, len, flags,
             myid.nodeid, NULL, NULL, NULL, 0L))
     {
         NDRX_LOG(log_error, "_tpnotify - failed!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -1274,13 +1274,13 @@ out:
  * @param disp message hander (if processing allowed) or NULL (if no delivery needed)
  * @return previous handler
  */
-public void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
+expublic void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
 {
     void * ret=NULL;
-    int entry_status=SUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
             
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
         ret=TPUNSOLERR;
         goto out;
@@ -1303,7 +1303,7 @@ out:
  * @param len
  * @param flags
  */
-public void _ndrx_tmunsolerr_handler (char *data, long len, long flags)
+expublic void _ndrx_tmunsolerr_handler (char *data, long len, long flags)
 {
     NDRX_LOG(log_debug, "_ndrx_tmunsolerr_handler() - TPUNSOLERR called");
 }
@@ -1312,21 +1312,21 @@ public void _ndrx_tmunsolerr_handler (char *data, long len, long flags)
  * Check unsolicited messages by client
  * @return FAIL
  */
-public int tpchkunsol(void) 
+expublic int tpchkunsol(void) 
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }   
     
     if (_tpchkunsol()<0)
     {
         NDRX_LOG(log_error, "_tpchkunsol failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -1344,23 +1344,23 @@ out:
  * @param flags flags like TPNOBLOCK and TPREGEXMATCH
  * @return SUCCEED/FAIL
  */
-public int tpbroadcast(char *lmid, char *usrname, char *cltname,
+expublic int tpbroadcast(char *lmid, char *usrname, char *cltname,
   char *data,  long len, long flags)
 {
-    int ret=SUCCEED;
-    int entry_status=SUCCEED;
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
     API_ENTRY;
 
-    if (SUCCEED!=entry_status)
+    if (EXSUCCEED!=entry_status)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }   
     
-    if (SUCCEED!=_tpbroadcast_local(lmid, usrname, cltname, 
+    if (EXSUCCEED!=_tpbroadcast_local(lmid, usrname, cltname, 
             data,  len, flags, 0))
     {
         NDRX_LOG(log_error, "_tpbroadcast_local failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:

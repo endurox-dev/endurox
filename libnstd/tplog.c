@@ -62,7 +62,7 @@
  * Close the file if only one logger is using that
  * @param p
  */
-private void logfile_close(FILE *p)
+exprivate void logfile_close(FILE *p)
 {
     ndrx_debug_t *fd_arr[5];
     int i;
@@ -107,10 +107,10 @@ private void logfile_close(FILE *p)
  * @param file full path to file (optional) if present, does compare
  * @return 
  */
-private int logfile_change_name(int logger, char *filename)
+exprivate int logfile_change_name(int logger, char *filename)
 {
     ndrx_debug_t *l;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     API_ENTRY; /* set TLS too */
     
@@ -134,7 +134,7 @@ private int logfile_change_name(int logger, char *filename)
             break;
         default:
             _Nset_error_fmt(NEINVAL, "tplogfileset: Invalid logger: %d", logger);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
             break;
     }
     
@@ -164,7 +164,7 @@ private int logfile_change_name(int logger, char *filename)
     }
 
     /* open the file */
-    if (EOS==l->filename[0])
+    if (EXEOS==l->filename[0])
     {
         /* log to stderr. */
         l->dbg_f_ptr = stderr;
@@ -172,7 +172,7 @@ private int logfile_change_name(int logger, char *filename)
     else if (NULL==(l->dbg_f_ptr = NDRX_FOPEN(l->filename, "a")))
     {
         NDRX_LOG(log_error,"Failed to open %s: %s\n",l->filename, strerror(errno));
-        l->filename[0] = EOS;
+        l->filename[0] = EXEOS;
         l->dbg_f_ptr = stderr;
     }
     else
@@ -195,12 +195,12 @@ out:
  * File will be set to EX_REQLOG = <Full path to request log file>
  * @param filename file name to log to
  */
-public void tplogsetreqfile_direct(char *filename)
+expublic void tplogsetreqfile_direct(char *filename)
 {
     API_ENTRY; /* set TLS too */
     
     /* Level not set, then there was no init */
-    if (FAIL==G_nstd_tls->requestlog.level)
+    if (EXFAIL==G_nstd_tls->requestlog.level)
     {
         /* file is null, we want to copy off the settings  */
         if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
@@ -225,7 +225,7 @@ public void tplogsetreqfile_direct(char *filename)
  * Close the request file (back to other loggers)
  * @param filename
  */
-public void tplogclosereqfile(void)
+expublic void tplogclosereqfile(void)
 {
     /* Only if we have a TLS... */
     if (G_nstd_tls)
@@ -234,7 +234,7 @@ public void tplogclosereqfile(void)
         {
             logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
         }
-        G_nstd_tls->requestlog.filename[0] = EOS;
+        G_nstd_tls->requestlog.filename[0] = EXEOS;
         G_nstd_tls->requestlog.dbg_f_ptr = NULL;
     }
 }
@@ -250,10 +250,10 @@ public void tplogclosereqfile(void)
  * @param new_file New logging file (this overrides the stuff from debug string)
  * @return SUCCEED/FAIL
  */
-public int tplogconfig(int logger, int lev, char *debug_string, char *module, 
+expublic int tplogconfig(int logger, int lev, char *debug_string, char *module, 
         char *new_file)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_debug_t *l;
     char tmp_filename[PATH_MAX];
     int loggers[] = {LOG_FACILITY_NDRX, 
@@ -285,7 +285,7 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
         {
             /* if thread was not set, then inherit the all stuff from tp
              */
-            if (FAIL==G_nstd_tls->threadlog.level)
+            if (EXFAIL==G_nstd_tls->threadlog.level)
             {
                 memcpy(&G_nstd_tls->threadlog, &G_tp_debug, sizeof(G_tp_debug));
                 G_nstd_tls->threadlog.code = LOG_CODE_TP_THREAD;
@@ -294,7 +294,7 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
         }
         else if (loggers[i] == LOG_FACILITY_TP_REQUEST && logger & (LOG_FACILITY_TP_REQUEST))
         {
-            if (FAIL==G_nstd_tls->requestlog.level)
+            if (EXFAIL==G_nstd_tls->requestlog.level)
             {
                 memcpy(&G_nstd_tls->requestlog, &G_tp_debug, sizeof(G_tp_debug));
                 G_nstd_tls->requestlog.code = LOG_CODE_TP_REQUEST;
@@ -311,55 +311,55 @@ public int tplogconfig(int logger, int lev, char *debug_string, char *module,
             continue;
         }
 
-        if (NULL!=module && EOS!=module[0] && 
+        if (NULL!=module && EXEOS!=module[0] && 
                 loggers[i] != LOG_FACILITY_NDRX &&
                 loggers[i] != LOG_FACILITY_UBF
             )
         {
             strncpy(l->module, module, 4);
-            l->module[4] = EOS;
+            l->module[4] = EXEOS;
         }
 
-        if (NULL!= debug_string && EOS!=debug_string[0])
+        if (NULL!= debug_string && EXEOS!=debug_string[0])
         {
             /* parse out the logger 
              * Check if file is changed? If changed, then we shall
              * close the old file & open newone...
              */
             strcpy(tmp_filename, l->filename);
-            if (SUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
+            if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
             {
                 _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             /* only if new name is not passed in */
             if (0!=strcmp(tmp_filename, l->filename) && 
-                    (NULL==new_file || EOS==new_file[0]))
+                    (NULL==new_file || EXEOS==new_file[0]))
             {
                 /* open new log file... (to what ever level we run...) */
-                if (SUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
+                if (EXSUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
                 {
                     _Nset_error_msg(NESYSTEM, "Failed to change log name");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
         }
 
-        if (FAIL!=lev)
+        if (EXFAIL!=lev)
         {
             l->level = lev;
         }
         
         /* new file passed in: */
-        if (NULL!=new_file && EOS!=new_file[0] && 0!=strcmp(new_file, l->filename))
+        if (NULL!=new_file && EXEOS!=new_file[0] && 0!=strcmp(new_file, l->filename))
         {            
             /* open new log file... (to what ever level we run...) */
             strcpy(l->filename, new_file);
-            if (SUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
+            if (EXSUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
             {
                 _Nset_error_msg(NESYSTEM, "Failed to change log name");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 
@@ -373,13 +373,13 @@ out:
  * Close thread logger (if open)
  * @return 
  */
-public void tplogclosethread(void)
+expublic void tplogclosethread(void)
 {
     if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
     {
         logfile_close(G_nstd_tls->threadlog.dbg_f_ptr);
-        G_nstd_tls->threadlog.level = FAIL;
-        G_nstd_tls->threadlog.filename[0] = EOS;
+        G_nstd_tls->threadlog.level = EXFAIL;
+        G_nstd_tls->threadlog.filename[0] = EXEOS;
         G_nstd_tls->threadlog.dbg_f_ptr = NULL;
     }
 }
@@ -389,24 +389,24 @@ public void tplogclosethread(void)
  * @param filename (optional) optional to return file name
  * @return TRUE (request file used) / FALSE (request file not used)
  */
-public int tploggetreqfile(char *filename, int bufsize)
+expublic int tploggetreqfile(char *filename, int bufsize)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     
     if (NULL==G_nstd_tls->requestlog.dbg_f_ptr)
     {
-        ret=FALSE;
+        ret=EXFALSE;
         goto out;
     }
     
-    ret = TRUE;
+    ret = EXTRUE;
 
     if (NULL!=filename)
     {
         if (bufsize>0)
         {
             strncpy(filename, G_nstd_tls->requestlog.filename, bufsize-1);
-            filename[bufsize-1] = EOS;
+            filename[bufsize-1] = EXEOS;
         }
         else
         {
@@ -423,7 +423,7 @@ out:
  * @param lev
  * @param message
  */
-public void tplog(int lev, char *message)
+expublic void tplog(int lev, char *message)
 {
     /* do not want to interpret the format string */
     TP_LOG(lev, "%s", message);
@@ -434,7 +434,7 @@ public void tplog(int lev, char *message)
  * @param lev
  * @param message
  */
-public void tplogex(int lev, char *file, long line, char *message)
+expublic void tplogex(int lev, char *file, long line, char *message)
 {
     /* do not want to interpret the format string */
     TP_LOGEX(lev, file, line, "%s", message);
@@ -444,7 +444,7 @@ public void tplogex(int lev, char *file, long line, char *message)
  * Get integration flags
  * @return integration flags set (EOS or some infos from debug config)
  */
-public char * tploggetiflags(void)
+expublic char * tploggetiflags(void)
 {
     TP_LOGGETIFLAGS;
 }
@@ -456,7 +456,7 @@ public char * tploggetiflags(void)
  * @param ptr
  * @param len
  */
-public void tplogdump(int lev, char *comment, void *ptr, int len)
+expublic void tplogdump(int lev, char *comment, void *ptr, int len)
 {
     TP_DUMP(lev, comment, (char *)ptr, len);
 }
@@ -469,7 +469,7 @@ public void tplogdump(int lev, char *comment, void *ptr, int len)
  * @param ptr2
  * @param len
  */
-public void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+expublic void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
 {
     TP_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
@@ -479,7 +479,7 @@ public void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int le
  * @param lev
  * @param message
  */
-public void ndrxlog(int lev, char *message)
+expublic void ndrxlog(int lev, char *message)
 {
     /* do not want to interpret the format string */
     NDRX_LOG(lev, "%s", message);
@@ -492,7 +492,7 @@ public void ndrxlog(int lev, char *message)
  * @param ptr
  * @param len
  */
-public void ndrxlogdump(int lev, char *comment, void *ptr, int len)
+expublic void ndrxlogdump(int lev, char *comment, void *ptr, int len)
 {
     NDRX_DUMP(lev, comment, (char *)ptr, len);
 }
@@ -505,7 +505,7 @@ public void ndrxlogdump(int lev, char *comment, void *ptr, int len)
  * @param ptr2
  * @param len
  */
-public void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+expublic void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
 {
     NDRX_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
@@ -516,7 +516,7 @@ public void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int 
  * @param lev
  * @param message
  */
-public void ubflog(int lev, char *message)
+expublic void ubflog(int lev, char *message)
 {
     /* do not want to interpret the format string */
     UBF_LOG(lev, "%s", message);
@@ -529,7 +529,7 @@ public void ubflog(int lev, char *message)
  * @param ptr
  * @param len
  */
-public void ubflogdump(int lev, char *comment, void *ptr, int len)
+expublic void ubflogdump(int lev, char *comment, void *ptr, int len)
 {
     UBF_DUMP(lev, comment, (char *)ptr, len);
 }
@@ -542,7 +542,7 @@ public void ubflogdump(int lev, char *comment, void *ptr, int len)
  * @param ptr2
  * @param len
  */
-public void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+expublic void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
 {
     UBF_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }

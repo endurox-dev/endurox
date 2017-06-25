@@ -53,7 +53,7 @@
  * @param call
  * @param pm
  */
-public void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_reload_t * err_info = (command_reply_reload_t *)reply;
    
@@ -79,9 +79,9 @@ public void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_para
  * @param pm
  * @return
  */
-public void reload_error(command_call_t * call, int srvid, char *old_bin, char *new_bin, int error)
+expublic void reload_error(command_call_t * call, int srvid, char *old_bin, char *new_bin, int error)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "reload_error enter");
@@ -93,7 +93,7 @@ public void reload_error(command_call_t * call, int srvid, char *old_bin, char *
     params.mod_param3 = new_bin;
     params.param4 = srvid;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, reload_reply_mod, 0L, 0, NULL))
     {
@@ -108,20 +108,20 @@ public void reload_error(command_call_t * call, int srvid, char *old_bin, char *
  * @param args
  * @return
  */
-public int cmd_testcfg (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_testcfg (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    ret = test_config(FALSE, call, reload_error);
+    ret = test_config(EXFALSE, call, reload_error);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     NDRX_LOG(log_warn, "cmd_testcfg returns with status %d", ret);
 
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 
 
@@ -130,18 +130,18 @@ public int cmd_testcfg (command_call_t * call, char *data, size_t len, int conte
  * @param args
  * @return 
  */
-public int cmd_reload (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_reload (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    ret = test_config(TRUE, call, reload_error);
+    ret = test_config(EXTRUE, call, reload_error);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     NDRX_LOG(log_warn, "cmd_reload returns with status %d", ret);
     
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }

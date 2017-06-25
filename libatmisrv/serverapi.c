@@ -59,7 +59,7 @@
  * @param len
  * @param flags
  */
-public void tpreturn (int rval, long rcode, char *data, long len, long flags)
+expublic void tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     API_ENTRY;
 
@@ -73,7 +73,7 @@ public void tpreturn (int rval, long rcode, char *data, long len, long flags)
  * @param len
  * @param flags
  */
-public void tpforward (char *svc, char *data, long len, long flags)
+expublic void tpforward (char *svc, char *data, long len, long flags)
 {
     API_ENTRY;
 
@@ -83,7 +83,7 @@ public void tpforward (char *svc, char *data, long len, long flags)
 /**
  * Main server thread, continue with polling.
  */
-public void tpcontinue (void)
+expublic void tpcontinue (void)
 {
     API_ENTRY;
     _tpcontinue ();
@@ -95,7 +95,7 @@ public void tpcontinue (void)
  * @return Server id (-i argument value). Can be 0 or random value, if server
  *                  not intialized
  */
-public int tpgetsrvid (void)
+expublic int tpgetsrvid (void)
 {
     API_ENTRY;
     return  G_server_conf.srv_id;
@@ -108,24 +108,24 @@ public int tpgetsrvid (void)
  * @param p_pollevent
  * @return 
  */
-public int tpext_addpollerfd(int fd, uint32_t events, 
+expublic int tpext_addpollerfd(int fd, uint32_t events, 
         void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1))
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn="tpext_addpollerfd";
     API_ENTRY;
     
-    if (FAIL==fd)
+    if (EXFAIL==fd)
     {
         _TPset_error_fmt(TPEINVAL, "%s - invalid fd, %d", fn, fd);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     if (NULL==p_pollevent)
     {
         _TPset_error_fmt(TPEINVAL, "%s - invalid p_pollevent=NULL!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -140,16 +140,16 @@ out:
  * @param fd
  * @return 
  */
-public int tpext_delpollerfd(int fd)
+expublic int tpext_delpollerfd(int fd)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn="tpext_delpollerfd";
     API_ENTRY;
     
-    if (FAIL==fd)
+    if (EXFAIL==fd)
     {
         _TPset_error_fmt(TPEINVAL, "%s - invalid fd, %d", fn, fd);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -164,23 +164,23 @@ out:
  * @param fd
  * @return 
  */
-public int tpext_addperiodcb(int secs, int (*p_periodcb)(void))
+expublic int tpext_addperiodcb(int secs, int (*p_periodcb)(void))
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn="tpext_addperiodcb";
     API_ENTRY;
     
     if (secs<=0)
     {
         _TPset_error_fmt(TPEINVAL, "%s - invalid secs %d, must be >=0", fn, secs);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     if (NULL==p_periodcb)
     {
         _TPset_error_fmt(TPEINVAL, "%s - invalid p_periodcb, it is NULL!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -196,7 +196,7 @@ out:
  * @param fd
  * @return 
  */
-public int tpext_delperiodcb(void)
+expublic int tpext_delperiodcb(void)
 {
     API_ENTRY;
     
@@ -211,16 +211,16 @@ public int tpext_delperiodcb(void)
  * @param fd
  * @return 
  */
-public int tpext_addb4pollcb(int (*p_b4pollcb)(void))
+expublic int tpext_addb4pollcb(int (*p_b4pollcb)(void))
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn="tpext_addb4pollcb";
     API_ENTRY;
     
     if (NULL==p_b4pollcb)
     {
         _TPset_error_fmt(TPEINVAL, "%s - invalid p_b4pollcb, it is NULL!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -236,7 +236,7 @@ out:
  * @param fd
  * @return 
  */
-public int tpext_delb4pollcb(void)
+expublic int tpext_delb4pollcb(void)
 {
     API_ENTRY;
     
@@ -247,7 +247,7 @@ public int tpext_delb4pollcb(void)
  * Set server flags, this will be used by bridge.
  * @param flags
  */
-public void tpext_configbrige 
+expublic void tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type))
 {
     
@@ -271,7 +271,7 @@ public void tpext_configbrige
  * @param flags
  * @return 
  */
-public char * tpsrvgetctxdata (void)
+expublic char * tpsrvgetctxdata (void)
 {
     server_ctx_info_t *ret = NDRX_MALLOC(sizeof(server_ctx_info_t));
     tp_command_call_t *last_call = ndrx_get_G_last_call();
@@ -288,8 +288,8 @@ public char * tpsrvgetctxdata (void)
     
     if (tpgetlev())
     {
-        ret->is_in_global_tx = TRUE;
-        if (SUCCEED!=tpsuspend(&ret->tranid, 0))
+        ret->is_in_global_tx = EXTRUE;
+        if (EXSUCCEED!=tpsuspend(&ret->tranid, 0))
         {
             userlog("Failed to suspend transaction: [%s]", tpstrerror(tperrno));
             NDRX_FREE((char *)ret);
@@ -299,7 +299,7 @@ public char * tpsrvgetctxdata (void)
     }
     else
     {
-        ret->is_in_global_tx = FALSE;
+        ret->is_in_global_tx = EXFALSE;
     }
     
     /* reset thread data */
@@ -322,9 +322,9 @@ out:
  * @param flags
  * @return 
  */
-public int tpsrvsetctxdata (char *data, long flags)
+expublic int tpsrvsetctxdata (char *data, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     API_ENTRY;
     server_ctx_info_t *ctxdata  = (server_ctx_info_t *)data;
     char *fn = "tpsrvsetctxdata";
@@ -337,17 +337,17 @@ public int tpsrvsetctxdata (char *data, long flags)
     if (NULL==data)
     {
         _TPset_error_fmt(TPEINVAL, "%s - data is NULL", fn);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 #if 0
     if (flags & SYS_SRV_THREAD)
     {
         /* init the client + set reply possible...! */
-        if (SUCCEED!=tpinit(NULL))
+        if (EXSUCCEED!=tpinit(NULL))
         {
             NDRX_LOG(log_error, "Failed to initialise server thread");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -366,10 +366,10 @@ public int tpsrvsetctxdata (char *data, long flags)
         last_call->autobuf = NULL;
     }
     
-    if (ctxdata->is_in_global_tx && SUCCEED!=tpresume(&ctxdata->tranid, 0))
+    if (ctxdata->is_in_global_tx && EXSUCCEED!=tpresume(&ctxdata->tranid, 0))
     {
         userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:

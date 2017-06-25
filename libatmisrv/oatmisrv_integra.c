@@ -56,10 +56,10 @@
 /**
  * Object-API wrapper for ndrx_main_integra() - Auto generated.
  */
-public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
+expublic int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -91,13 +91,13 @@ public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_main_integra() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -114,7 +114,7 @@ public int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_main_integra() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:

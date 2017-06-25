@@ -51,7 +51,7 @@
 int (*G_tpsvrinit__)(int, char **) = NULL;
 void (*G_tpsvrdone__)(void) = NULL;
 /* No jump please (default for integra) */
-public long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; 
+expublic long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -60,11 +60,11 @@ public long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP;
  */
 int tpsvrinit(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit() called");
     if (NULL!=G_tpsvrinit__)
     {
-        if (SUCCEED!=(ret = G_tpsvrinit__(argc, argv)))
+        if (EXSUCCEED!=(ret = G_tpsvrinit__(argc, argv)))
         {
             NDRX_LOG(log_error, "G_tpsvrinit__() failed");
             goto out;
@@ -77,7 +77,7 @@ int tpsvrinit(int argc, char **argv)
     else
     {
         NDRX_LOG(log_error, "G_tpsvrinit__ == NULL => FAIL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:

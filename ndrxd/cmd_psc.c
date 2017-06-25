@@ -59,7 +59,7 @@
  * @param call
  * @param pm
  */
-public void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_psc_t * psc_info = (command_reply_psc_t *)reply;
     pm_node_t *p_pm = (pm_node_t *)params->mod_param1;
@@ -111,7 +111,7 @@ public void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t
  * @param call
  * @param pm
  */
-public void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_psc_t * psc_info = (command_reply_psc_t *)reply;
     
@@ -126,8 +126,8 @@ public void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_para
     *send_size += (sizeof(command_reply_psc_t) - sizeof(command_reply_t));
 
     strcpy(psc_info->binary_name, "N/A");
-    psc_info->srvid = FAIL;
-    psc_info->state = FAIL;
+    psc_info->srvid = EXFAIL;
+    psc_info->state = EXFAIL;
     psc_info->nodeid = br->nodeid;
     /* Bridge svc id: */
     psc_info->srvid = br->srvid;
@@ -136,11 +136,11 @@ public void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_para
     /* Prepare service details... */
     for (i=0; i<rs->count; i++)
     {
-        psc_info->svcdet[svc].done=FAIL;
-        psc_info->svcdet[svc].fail=FAIL;
-        psc_info->svcdet[svc].max=FAIL;
-        psc_info->svcdet[svc].min=FAIL;
-        psc_info->svcdet[svc].last=FAIL;
+        psc_info->svcdet[svc].done=EXFAIL;
+        psc_info->svcdet[svc].fail=EXFAIL;
+        psc_info->svcdet[svc].max=EXFAIL;
+        psc_info->svcdet[svc].min=EXFAIL;
+        psc_info->svcdet[svc].last=EXFAIL;
         psc_info->svcdet[svc].status=0;
         strcpy(psc_info->svcdet[svc].svc_nm, rs->svc_nm);
         strcpy(psc_info->svcdet[svc].fn_nm, "N/A");
@@ -160,9 +160,9 @@ public void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_para
  * @param pm
  * @return
  */
-private void psc_progress(command_call_t * call, pm_node_t *pm)
+exprivate void psc_progress(command_call_t * call, pm_node_t *pm)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "startup_progress enter");
@@ -171,7 +171,7 @@ private void psc_progress(command_call_t * call, pm_node_t *pm)
     /* pass to reply process model node */
     params.mod_param1 = (void *)pm;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, psc_reply_mod, 0L, 0, NULL))
     {
@@ -186,9 +186,9 @@ private void psc_progress(command_call_t * call, pm_node_t *pm)
  * @param call
  * @param pm
  */
-private void psc_progress_br(command_call_t * call, bridgedef_t *br, bridgedef_svcs_t *brs)
+exprivate void psc_progress_br(command_call_t * call, bridgedef_t *br, bridgedef_svcs_t *brs)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "startup_progress enter");
@@ -198,7 +198,7 @@ private void psc_progress_br(command_call_t * call, bridgedef_t *br, bridgedef_s
     params.mod_param1 = br;
     params.mod_param3 = brs;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, psc_reply_mod_br, 0L, 0, NULL))
     {
@@ -213,9 +213,9 @@ private void psc_progress_br(command_call_t * call, bridgedef_t *br, bridgedef_s
  * @param args
  * @return
  */
-public int cmd_psc (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_psc (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *pm;
     /*Bridge listing*/
     bridgedef_t *br = NULL;
@@ -240,7 +240,7 @@ public int cmd_psc (command_call_t * call, char *data, size_t len, int context)
         }
     }
     
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

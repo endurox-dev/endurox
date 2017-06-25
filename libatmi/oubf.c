@@ -56,9 +56,9 @@
 /**
  * Object-API wrapper for _Bget_Ferror_addr() - Auto generated.
  */
-public int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt) 
+expublic int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     int * ret = NULL;
 
 
@@ -91,14 +91,14 @@ public int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _Bget_Ferror_addr() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -134,10 +134,10 @@ out:
 /**
  * Object-API wrapper for Blen() - Auto generated.
  */
-public int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
+expublic int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -169,13 +169,13 @@ public int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Blen() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -192,7 +192,7 @@ public int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Blen() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -210,10 +210,10 @@ out:
 /**
  * Object-API wrapper for CBadd() - Auto generated.
  */
-public int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype) 
+expublic int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -245,13 +245,13 @@ public int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, BF
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBadd() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -268,7 +268,7 @@ public int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, BF
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBadd() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -286,10 +286,10 @@ out:
 /**
  * Object-API wrapper for CBchg() - Auto generated.
  */
-public int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype) 
+expublic int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -321,13 +321,13 @@ public int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBchg() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -344,7 +344,7 @@ public int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBchg() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -362,10 +362,10 @@ out:
 /**
  * Object-API wrapper for CBget() - Auto generated.
  */
-public int OCBget(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype) 
+expublic int OCBget(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -397,13 +397,13 @@ public int OCBget(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBget() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -420,7 +420,7 @@ public int OCBget(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBget() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -438,10 +438,10 @@ out:
 /**
  * Object-API wrapper for Bdel() - Auto generated.
  */
-public int OBdel(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ) 
+expublic int OBdel(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -473,13 +473,13 @@ public int OBdel(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdel() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -496,7 +496,7 @@ public int OBdel(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdel() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -514,10 +514,10 @@ out:
 /**
  * Object-API wrapper for Bpres() - Auto generated.
  */
-public int OBpres(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
+expublic int OBpres(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -549,13 +549,13 @@ public int OBpres(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bpres() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -572,7 +572,7 @@ public int OBpres(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bpres() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -590,10 +590,10 @@ out:
 /**
  * Object-API wrapper for Bproj() - Auto generated.
  */
-public int OBproj(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID * fldlist) 
+expublic int OBproj(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID * fldlist) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -625,13 +625,13 @@ public int OBproj(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID * fldlist)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bproj() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -648,7 +648,7 @@ public int OBproj(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID * fldlist)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bproj() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -666,10 +666,10 @@ out:
 /**
  * Object-API wrapper for Bprojcpy() - Auto generated.
  */
-public int OBprojcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src, BFLDID * fldlist) 
+expublic int OBprojcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src, BFLDID * fldlist) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -701,13 +701,13 @@ public int OBprojcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src, BFLD
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprojcpy() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -724,7 +724,7 @@ public int OBprojcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src, BFLD
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprojcpy() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -742,10 +742,10 @@ out:
 /**
  * Object-API wrapper for Bfldid() - Auto generated.
  */
-public BFLDID OBfldid(TPCONTEXT_T *p_ctxt, char *fldnm) 
+expublic BFLDID OBfldid(TPCONTEXT_T *p_ctxt, char *fldnm) 
 {
     BFLDID ret = BBADFLDID;
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -777,14 +777,14 @@ public BFLDID OBfldid(TPCONTEXT_T *p_ctxt, char *fldnm)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldid() failed to set context");
             ret = BBADFLDID;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -820,9 +820,9 @@ out:
 /**
  * Object-API wrapper for Bfname() - Auto generated.
  */
-public char * OBfname(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
+expublic char * OBfname(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -855,14 +855,14 @@ public char * OBfname(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfname() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -898,10 +898,10 @@ out:
 /**
  * Object-API wrapper for Bcpy() - Auto generated.
  */
-public int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src) 
+expublic int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -933,13 +933,13 @@ public int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bcpy() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -956,7 +956,7 @@ public int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bcpy() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -974,10 +974,10 @@ out:
 /**
  * Object-API wrapper for Bchg() - Auto generated.
  */
-public int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len) 
+expublic int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1009,13 +1009,13 @@ public int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, ch
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchg() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1032,7 +1032,7 @@ public int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, ch
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchg() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1050,10 +1050,10 @@ out:
 /**
  * Object-API wrapper for Binit() - Auto generated.
  */
-public int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len) 
+expublic int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1085,13 +1085,13 @@ public int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Binit() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1108,7 +1108,7 @@ public int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Binit() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1126,10 +1126,10 @@ out:
 /**
  * Object-API wrapper for Bnext() - Auto generated.
  */
-public int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len) 
+expublic int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1161,13 +1161,13 @@ public int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bnext() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1184,7 +1184,7 @@ public int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bnext() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1202,10 +1202,10 @@ out:
 /**
  * Object-API wrapper for Bget() - Auto generated.
  */
-public int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN * buflen) 
+expublic int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN * buflen) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1237,13 +1237,13 @@ public int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, c
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bget() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1260,7 +1260,7 @@ public int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, c
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bget() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1278,9 +1278,9 @@ out:
 /**
  * Object-API wrapper for Bboolco() - Auto generated.
  */
-public char * OBboolco(TPCONTEXT_T *p_ctxt, char * expr) 
+expublic char * OBboolco(TPCONTEXT_T *p_ctxt, char * expr) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -1313,14 +1313,14 @@ public char * OBboolco(TPCONTEXT_T *p_ctxt, char * expr)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolco() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1356,9 +1356,9 @@ out:
 /**
  * Object-API wrapper for Bfind() - Auto generated.
  */
-public char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * p_len) 
+expublic char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * p_len) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -1391,14 +1391,14 @@ public char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC oc
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfind() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1434,10 +1434,10 @@ out:
 /**
  * Object-API wrapper for Bboolev() - Auto generated.
  */
-public int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree) 
+expublic int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1469,13 +1469,13 @@ public int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolev() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1492,7 +1492,7 @@ public int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolev() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1510,10 +1510,10 @@ out:
 /**
  * Object-API wrapper for Bfloatev() - Auto generated.
  */
-public double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree) 
+expublic double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree) 
 {
-    double ret = SUCCEED;
-    int did_set = FALSE;
+    double ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1545,13 +1545,13 @@ public double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfloatev() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1568,7 +1568,7 @@ public double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfloatev() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1586,10 +1586,10 @@ out:
 /**
  * Object-API wrapper for Badd() - Auto generated.
  */
-public int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len) 
+expublic int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1621,13 +1621,13 @@ public int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLD
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badd() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1644,7 +1644,7 @@ public int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLD
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badd() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1661,9 +1661,9 @@ out:
 /**
  * Object-API wrapper for B_error() - Auto generated.
  */
-public void OB_error(TPCONTEXT_T *p_ctxt, char *str) 
+expublic void OB_error(TPCONTEXT_T *p_ctxt, char *str) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1696,12 +1696,12 @@ public void OB_error(TPCONTEXT_T *p_ctxt, char *str)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! B_error() failed to set context");
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1735,9 +1735,9 @@ out:
 /**
  * Object-API wrapper for Bstrerror() - Auto generated.
  */
-public char * OBstrerror(TPCONTEXT_T *p_ctxt, int err) 
+expublic char * OBstrerror(TPCONTEXT_T *p_ctxt, int err) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -1770,14 +1770,14 @@ public char * OBstrerror(TPCONTEXT_T *p_ctxt, int err)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bstrerror() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1813,10 +1813,10 @@ out:
 /**
  * Object-API wrapper for Bmkfldid() - Auto generated.
  */
-public BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid) 
+expublic BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid) 
 {
     BFLDID ret = BBADFLDID;
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1848,14 +1848,14 @@ public BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bmkfldid() failed to set context");
             ret = BBADFLDID;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1891,10 +1891,10 @@ out:
 /**
  * Object-API wrapper for Boccur() - Auto generated.
  */
-public BFLDOCC OBoccur(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid) 
+expublic BFLDOCC OBoccur(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid) 
 {
-    BFLDOCC ret = SUCCEED;
-    int did_set = FALSE;
+    BFLDOCC ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -1926,13 +1926,13 @@ public BFLDOCC OBoccur(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Boccur() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -1949,7 +1949,7 @@ public BFLDOCC OBoccur(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Boccur() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -1967,10 +1967,10 @@ out:
 /**
  * Object-API wrapper for Bused() - Auto generated.
  */
-public long OBused(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
+expublic long OBused(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
 {
-    long ret = SUCCEED;
-    int did_set = FALSE;
+    long ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2002,13 +2002,13 @@ public long OBused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bused() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2025,7 +2025,7 @@ public long OBused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bused() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2043,10 +2043,10 @@ out:
 /**
  * Object-API wrapper for Bfldtype() - Auto generated.
  */
-public int OBfldtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
+expublic int OBfldtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2078,13 +2078,13 @@ public int OBfldtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldtype() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2101,7 +2101,7 @@ public int OBfldtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldtype() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2119,10 +2119,10 @@ out:
 /**
  * Object-API wrapper for Bdelall() - Auto generated.
  */
-public int OBdelall(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid) 
+expublic int OBdelall(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2154,13 +2154,13 @@ public int OBdelall(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelall() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2177,7 +2177,7 @@ public int OBdelall(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelall() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2195,10 +2195,10 @@ out:
 /**
  * Object-API wrapper for Bdelete() - Auto generated.
  */
-public int OBdelete(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldlist) 
+expublic int OBdelete(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldlist) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2230,13 +2230,13 @@ public int OBdelete(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldlist)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelete() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2253,7 +2253,7 @@ public int OBdelete(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldlist)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelete() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2271,10 +2271,10 @@ out:
 /**
  * Object-API wrapper for Bfldno() - Auto generated.
  */
-public BFLDOCC OBfldno(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
+expublic BFLDOCC OBfldno(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
 {
-    BFLDOCC ret = SUCCEED;
-    int did_set = FALSE;
+    BFLDOCC ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2306,13 +2306,13 @@ public BFLDOCC OBfldno(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldno() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2329,7 +2329,7 @@ public BFLDOCC OBfldno(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldno() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2347,10 +2347,10 @@ out:
 /**
  * Object-API wrapper for Bunused() - Auto generated.
  */
-public long OBunused(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
+expublic long OBunused(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
 {
-    long ret = SUCCEED;
-    int did_set = FALSE;
+    long ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2382,13 +2382,13 @@ public long OBunused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunused() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2405,7 +2405,7 @@ public long OBunused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunused() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2423,10 +2423,10 @@ out:
 /**
  * Object-API wrapper for Bsizeof() - Auto generated.
  */
-public long OBsizeof(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
+expublic long OBsizeof(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
 {
-    long ret = SUCCEED;
-    int did_set = FALSE;
+    long ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2458,13 +2458,13 @@ public long OBsizeof(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bsizeof() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2481,7 +2481,7 @@ public long OBsizeof(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bsizeof() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2499,9 +2499,9 @@ out:
 /**
  * Object-API wrapper for Btype() - Auto generated.
  */
-public char * OBtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
+expublic char * OBtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -2534,14 +2534,14 @@ public char * OBtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btype() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2577,10 +2577,10 @@ out:
 /**
  * Object-API wrapper for Bfree() - Auto generated.
  */
-public int OBfree(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
+expublic int OBfree(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2612,13 +2612,13 @@ public int OBfree(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfree() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2635,7 +2635,7 @@ public int OBfree(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfree() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2653,9 +2653,9 @@ out:
 /**
  * Object-API wrapper for Balloc() - Auto generated.
  */
-public UBFH * OBalloc(TPCONTEXT_T *p_ctxt, BFLDOCC f, BFLDLEN v) 
+expublic UBFH * OBalloc(TPCONTEXT_T *p_ctxt, BFLDOCC f, BFLDLEN v) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     UBFH * ret = NULL;
 
 
@@ -2688,14 +2688,14 @@ public UBFH * OBalloc(TPCONTEXT_T *p_ctxt, BFLDOCC f, BFLDLEN v)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Balloc() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2731,9 +2731,9 @@ out:
 /**
  * Object-API wrapper for Brealloc() - Auto generated.
  */
-public UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v) 
+expublic UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     UBFH * ret = NULL;
 
 
@@ -2766,14 +2766,14 @@ public UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brealloc() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2809,10 +2809,10 @@ out:
 /**
  * Object-API wrapper for Bupdate() - Auto generated.
  */
-public int OBupdate(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src) 
+expublic int OBupdate(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2844,13 +2844,13 @@ public int OBupdate(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bupdate() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2867,7 +2867,7 @@ public int OBupdate(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bupdate() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2885,10 +2885,10 @@ out:
 /**
  * Object-API wrapper for Bconcat() - Auto generated.
  */
-public int OBconcat(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src) 
+expublic int OBconcat(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -2920,13 +2920,13 @@ public int OBconcat(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bconcat() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -2943,7 +2943,7 @@ public int OBconcat(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bconcat() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -2961,9 +2961,9 @@ out:
 /**
  * Object-API wrapper for CBfind() - Auto generated.
  */
-public char * OCBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype) 
+expublic char * OCBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -2996,14 +2996,14 @@ public char * OCBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC o
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfind() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3039,9 +3039,9 @@ out:
 /**
  * Object-API wrapper for CBgetalloc() - Auto generated.
  */
-public char * OCBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, int usrtype, BFLDLEN *extralen) 
+expublic char * OCBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, int usrtype, BFLDLEN *extralen) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -3074,14 +3074,14 @@ public char * OCBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDO
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBgetalloc() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3117,10 +3117,10 @@ out:
 /**
  * Object-API wrapper for CBfindocc() - Auto generated.
  */
-public BFLDOCC OCBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * buf, BFLDLEN len, int usrtype) 
+expublic BFLDOCC OCBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * buf, BFLDLEN len, int usrtype) 
 {
-    BFLDOCC ret = SUCCEED;
-    int did_set = FALSE;
+    BFLDOCC ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3152,13 +3152,13 @@ public BFLDOCC OCBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfindocc() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3175,7 +3175,7 @@ public BFLDOCC OCBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfindocc() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3193,10 +3193,10 @@ out:
 /**
  * Object-API wrapper for Bfindocc() - Auto generated.
  */
-public BFLDOCC OBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * buf, BFLDLEN len) 
+expublic BFLDOCC OBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * buf, BFLDLEN len) 
 {
-    BFLDOCC ret = SUCCEED;
-    int did_set = FALSE;
+    BFLDOCC ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3228,13 +3228,13 @@ public BFLDOCC OBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * b
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindocc() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3251,7 +3251,7 @@ public BFLDOCC OBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char * b
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindocc() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3269,9 +3269,9 @@ out:
 /**
  * Object-API wrapper for Bgetalloc() - Auto generated.
  */
-public char * OBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen) 
+expublic char * OBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -3304,14 +3304,14 @@ public char * OBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOC
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetalloc() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3347,9 +3347,9 @@ out:
 /**
  * Object-API wrapper for Bfindlast() - Auto generated.
  */
-public char * OBfindlast(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid,BFLDOCC *occ, BFLDLEN *len) 
+expublic char * OBfindlast(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid,BFLDOCC *occ, BFLDLEN *len) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -3382,14 +3382,14 @@ public char * OBfindlast(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid,BFLDOCC
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindlast() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3425,10 +3425,10 @@ out:
 /**
  * Object-API wrapper for Bgetlast() - Auto generated.
  */
-public int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *occ, char *buf, BFLDLEN *len) 
+expublic int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *occ, char *buf, BFLDLEN *len) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3460,13 +3460,13 @@ public int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *occ
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetlast() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3483,7 +3483,7 @@ public int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *occ
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetlast() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3501,10 +3501,10 @@ out:
 /**
  * Object-API wrapper for Bprint() - Auto generated.
  */
-public int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
+expublic int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3536,13 +3536,13 @@ public int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprint() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3559,7 +3559,7 @@ public int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprint() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3577,10 +3577,10 @@ out:
 /**
  * Object-API wrapper for Bfprint() - Auto generated.
  */
-public int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf) 
+expublic int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3612,13 +3612,13 @@ public int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfprint() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3635,7 +3635,7 @@ public int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfprint() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3653,9 +3653,9 @@ out:
 /**
  * Object-API wrapper for Btypcvt() - Auto generated.
  */
-public char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char *from_buf, int from_type, BFLDLEN from_len) 
+expublic char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char *from_buf, int from_type, BFLDLEN from_len) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -3688,14 +3688,14 @@ public char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char *
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btypcvt() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3731,10 +3731,10 @@ out:
 /**
  * Object-API wrapper for Bextread() - Auto generated.
  */
-public int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf) 
+expublic int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3766,13 +3766,13 @@ public int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bextread() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3789,7 +3789,7 @@ public int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bextread() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3806,9 +3806,9 @@ out:
 /**
  * Object-API wrapper for Bboolpr() - Auto generated.
  */
-public void OBboolpr(TPCONTEXT_T *p_ctxt, char * tree, FILE *outf) 
+expublic void OBboolpr(TPCONTEXT_T *p_ctxt, char * tree, FILE *outf) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3841,12 +3841,12 @@ public void OBboolpr(TPCONTEXT_T *p_ctxt, char * tree, FILE *outf)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolpr() failed to set context");
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3880,10 +3880,10 @@ out:
 /**
  * Object-API wrapper for Bread() - Auto generated.
  */
-public int OBread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE * inf) 
+expublic int OBread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE * inf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3915,13 +3915,13 @@ public int OBread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE * inf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bread() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -3938,7 +3938,7 @@ public int OBread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE * inf)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bread() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -3956,10 +3956,10 @@ out:
 /**
  * Object-API wrapper for Bwrite() - Auto generated.
  */
-public int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf) 
+expublic int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -3991,13 +3991,13 @@ public int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bwrite() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4014,7 +4014,7 @@ public int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bwrite() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4031,9 +4031,9 @@ out:
 /**
  * Object-API wrapper for Btreefree() - Auto generated.
  */
-public void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree) 
+expublic void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4066,12 +4066,12 @@ public void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btreefree() failed to set context");
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4105,10 +4105,10 @@ out:
 /**
  * Object-API wrapper for Bboolsetcbf() - Auto generated.
  */
-public int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname)) 
+expublic int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname)) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4140,13 +4140,13 @@ public int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPtr)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolsetcbf() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4163,7 +4163,7 @@ public int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPtr)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolsetcbf() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4181,10 +4181,10 @@ out:
 /**
  * Object-API wrapper for Badds() - Auto generated.
  */
-public int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf) 
+expublic int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4216,13 +4216,13 @@ public int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badds() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4239,7 +4239,7 @@ public int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badds() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4257,10 +4257,10 @@ out:
 /**
  * Object-API wrapper for Bchgs() - Auto generated.
  */
-public int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf) 
+expublic int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4292,13 +4292,13 @@ public int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchgs() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4315,7 +4315,7 @@ public int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchgs() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4333,10 +4333,10 @@ out:
 /**
  * Object-API wrapper for Bgets() - Auto generated.
  */
-public int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf) 
+expublic int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4368,13 +4368,13 @@ public int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgets() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4391,7 +4391,7 @@ public int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, c
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgets() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4409,9 +4409,9 @@ out:
 /**
  * Object-API wrapper for Bgetsa() - Auto generated.
  */
-public char * OBgetsa(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen) 
+expublic char * OBgetsa(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -4444,14 +4444,14 @@ public char * OBgetsa(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC oc
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetsa() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4487,9 +4487,9 @@ out:
 /**
  * Object-API wrapper for Bfinds() - Auto generated.
  */
-public char * OBfinds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
+expublic char * OBfinds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -4522,14 +4522,14 @@ public char * OBfinds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC oc
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfinds() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4565,10 +4565,10 @@ out:
 /**
  * Object-API wrapper for Bisubf() - Auto generated.
  */
-public int OBisubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
+expublic int OBisubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4600,13 +4600,13 @@ public int OBisubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bisubf() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4623,7 +4623,7 @@ public int OBisubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bisubf() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4641,10 +4641,10 @@ out:
 /**
  * Object-API wrapper for Bindex() - Auto generated.
  */
-public int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ) 
+expublic int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4676,13 +4676,13 @@ public int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bindex() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4699,7 +4699,7 @@ public int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bindex() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4717,10 +4717,10 @@ out:
 /**
  * Object-API wrapper for Bunindex() - Auto generated.
  */
-public BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub) 
+expublic BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub) 
 {
-    BFLDOCC ret = SUCCEED;
-    int did_set = FALSE;
+    BFLDOCC ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4752,13 +4752,13 @@ public BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunindex() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4775,7 +4775,7 @@ public BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunindex() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4793,10 +4793,10 @@ out:
 /**
  * Object-API wrapper for Bidxused() - Auto generated.
  */
-public long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub) 
+expublic long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub) 
 {
-    long ret = SUCCEED;
-    int did_set = FALSE;
+    long ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4828,13 +4828,13 @@ public long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bidxused() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4851,7 +4851,7 @@ public long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bidxused() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4869,10 +4869,10 @@ out:
 /**
  * Object-API wrapper for Brstrindex() - Auto generated.
  */
-public int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ) 
+expublic int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4904,13 +4904,13 @@ public int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brstrindex() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -4927,7 +4927,7 @@ public int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brstrindex() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -4945,10 +4945,10 @@ out:
 /**
  * Object-API wrapper for ndrx_ubf_tls_set() - Auto generated.
  */
-public int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data) 
+expublic int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data) 
 {
-    int ret = SUCCEED;
-    int did_set = FALSE;
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -4980,13 +4980,13 @@ public int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_set() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -5003,7 +5003,7 @@ public int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data)
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_set() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -5020,9 +5020,9 @@ out:
 /**
  * Object-API wrapper for ndrx_ubf_tls_free() - Auto generated.
  */
-public void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data) 
+expublic void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
@@ -5055,12 +5055,12 @@ public void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_free() failed to set context");
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {

@@ -66,7 +66,7 @@
  * @param p_fld - pointer to start of the actual field (optional)
  * @return
  */
-public char * _Bfind (UBFH * p_ub, BFLDID bfldid,
+expublic char * _Bfind (UBFH * p_ub, BFLDID bfldid,
                                         BFLDOCC occ, BFLDLEN * len,
                                         char **p_fld)
 {
@@ -151,7 +151,7 @@ public char * _Bfind (UBFH * p_ub, BFLDID bfldid,
  * @param type
  * @return
  */
-public char * _CBfind (UBFH *p_ub, BFLDID bfldid,
+expublic char * _CBfind (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC occ, BFLDLEN * len, int usrtype,
                         int mode, int extralen)
 {
@@ -219,14 +219,14 @@ public char * _CBfind (UBFH *p_ub, BFLDID bfldid,
  * @param len
  * @return
  */
-public BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
+expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
 {
     dtype_str_t *dtype=NULL;
     dtype_ext1_t *dtype_ext1;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     char *last_checked=NULL;
     int last_occ;
-    BFLDOCC ret = FAIL;
+    BFLDOCC ret = EXFAIL;
     char *fn = "_Bfindocc";
     BFLDLEN dlen;
     char *p_fld;
@@ -256,13 +256,13 @@ public BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
         step = dtype->p_next(dtype, p_fld, &dlen);
         /* Now do compare */
         cmp_ret=dtype_ext1->p_cmp(dtype_ext1, p_dat, dlen, buf, len);
-        if (TRUE==cmp_ret)
+        if (EXTRUE==cmp_ret)
         {
             UBF_LOG(log_debug, "%s: Found occurrance: %d", fn, iocc);
             ret=iocc;
             break; /* <<< BREAKE on Found. */
         }
-        else if (FALSE==cmp_ret)
+        else if (EXFALSE==cmp_ret)
         {
             p_fld+=step;
             /* Align error */
@@ -284,14 +284,14 @@ public BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
                 iocc++;
             }
         } /* if/else */
-        else if (FAIL==cmp_ret)
+        else if (EXFAIL==cmp_ret)
         {
             /* Regexp failed or malloc problems: error should be already set! */
             break; /* <<< BREAK!!! */
         }
     }/* while */
 
-    if (!_Fis_error() && ret==FAIL )
+    if (!_Fis_error() && ret==EXFAIL )
     {
         /* The we do not have a result */
         _Fset_error_fmt(BNOTPRES, "%s: Occurrance of field %d not found last occ: %hd",
@@ -314,9 +314,9 @@ public BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
  * @param usrtype - user data type specified
  * @return -1 (FAIL)/>=0 occurrance
  */
-public BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype)
+expublic BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype)
 {
-    int ret=FAIL;
+    int ret=EXFAIL;
     int cvn_len=0;
     char *cvn_buf;
     char tmp_buf[CF_TEMP_BUF_MAX];
@@ -339,7 +339,7 @@ public BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len,
                                 CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "%s: Malloc failed!", fn);
-        return FAIL; /* <<<< RETURN!!!! */
+        return EXFAIL; /* <<<< RETURN!!!! */
     }
 
     /* Convert the value */
@@ -354,7 +354,7 @@ public BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len,
     {
         UBF_LOG(log_error, "%s: failed to convert data!", fn);
         /* Error should be provided by conversation function */
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     /* Free up buffer */
@@ -377,7 +377,7 @@ public BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len,
  * @param len
  * @return 
  */
-public char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
+expublic char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                                 BFLDOCC *occ,
                                                 BFLDLEN * len)
 {
@@ -402,7 +402,7 @@ public char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
 
     dtype = &G_dtype_str_map[data_type];
     /* Get the data size of Bfind */
-    if (FAIL!=last_occ && !_Fis_error())
+    if (EXFAIL!=last_occ && !_Fis_error())
     {
         int dlen;
 

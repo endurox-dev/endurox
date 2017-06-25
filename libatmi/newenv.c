@@ -64,7 +64,7 @@
  * Strip whitespace from string.
  * @param pp
  */
-private char * strip_whitespace(char *pp)
+exprivate char * strip_whitespace(char *pp)
 {
     while (' '==pp[0] || '\t'==pp[0])
     {
@@ -79,9 +79,9 @@ private char * strip_whitespace(char *pp)
  * @param p_pm
  * @return 
  */
-public int ndrx_load_new_env(char *file)
+expublic int ndrx_load_new_env(char *file)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     FILE *f;
     char line [8192];
     char *p;
@@ -95,7 +95,7 @@ public int ndrx_load_new_env(char *file)
     {
         NDRX_LOG(log_error, "Failed to open environment override file [%s]:%s",
                             file, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
    
     while ( fgets ( line, sizeof(line), f ) != NULL ) /* read a line */
@@ -107,7 +107,7 @@ public int ndrx_load_new_env(char *file)
         len = strlen(p);
         if (len > 0 && '\n'==p[len-1])
         {
-            p[len-1]=EOS;
+            p[len-1]=EXEOS;
         }
         
         NDRX_LOG(log_debug, "%d:env over: [%s]", line_no, line);
@@ -117,7 +117,7 @@ public int ndrx_load_new_env(char *file)
         p = strip_whitespace(p);
         
         /* Check isn't it comment */
-        if ('#' == line[0] || EOS == line[0])
+        if ('#' == line[0] || EXEOS == line[0])
         {
             continue;
         }
@@ -136,18 +136,18 @@ public int ndrx_load_new_env(char *file)
         {
             NDRX_LOG(log_error, "Error on line %d: No equal "
                     "sign found in [%s]", line_no, p);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* we are OK, we have key & value */
-        *e=EOS;
+        *e=EXEOS;
         e++; /* << This is value and p is key */
         NDRX_LOG(log_debug, "Key: [%s], value: [%s]", p, e);
         
-        if (SUCCEED!=setenv(p, e, TRUE))
+        if (EXSUCCEED!=setenv(p, e, EXTRUE))
         {
             NDRX_LOG(log_error, "");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
         

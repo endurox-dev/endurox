@@ -57,7 +57,7 @@
  * @param reply_len
  * @return
  */
-public int reload_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int reload_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     if (NDRXD_CALL_TYPE_PM_RELERR==reply->msg_type)
     {
@@ -83,7 +83,7 @@ public int reload_rsp_process(command_reply_t *reply, size_t reply_len)
         printf("OK\n");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -93,7 +93,7 @@ public int reload_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -108,7 +108,7 @@ public int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 
 /**
@@ -118,7 +118,7 @@ public int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
  * @param argv
  * @return SUCCEED
  */
-public int cmd_testcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_testcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -133,5 +133,5 @@ public int cmd_testcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }

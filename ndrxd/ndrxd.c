@@ -63,9 +63,9 @@ sys_config_t        G_sys_config;           /* Deamon configuration     */
  * Open PID file...
  * @return 
  */
-private int open_pid_file(void)
+exprivate int open_pid_file(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     FILE *f = NULL;
     
     if (NULL==(f=NDRX_FOPEN(G_sys_config.pidfile, "w")))
@@ -74,7 +74,7 @@ private int open_pid_file(void)
                     G_sys_config.pidfile, strerror(errno));
         userlog("Failed to open PID file %s for write: %s",
                     G_sys_config.pidfile, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -96,16 +96,16 @@ out:
  * Remove pid file
  * @return SUCCEED/FAIL
  */
-private int unlink_pid_file(void)
+exprivate int unlink_pid_file(void)
 {
-    if (SUCCEED!=unlink(G_sys_config.pidfile))
+    if (EXSUCCEED!=unlink(G_sys_config.pidfile))
     {
         NDRX_LOG(log_error, "Failed to unlink to PID file %s: %s",
                     G_sys_config.pidfile, strerror(errno));
-        return FAIL;
+        return EXFAIL;
     }
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -115,23 +115,23 @@ private int unlink_pid_file(void)
  */
 int main_loop()
 {
-    int finished = FALSE;
-    int ret=SUCCEED;
+    int finished = EXFALSE;
+    int ret=EXSUCCEED;
 
-    if (SUCCEED!=open_pid_file())
+    if (EXSUCCEED!=open_pid_file())
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /* Open queue & receive command */
-    while (!finished && SUCCEED==ret && 
+    while (!finished && EXSUCCEED==ret && 
             /* stop processing if shutdown requested! */
             !(G_sys_config.stat_flags & NDRXD_STATE_SHUTDOWN && is_srvs_down()))
     {
         /* Process command */
-        if (FAIL==command_wait_and_run(&finished, NDRXD_CTX_ZERO))
+        if (EXFAIL==command_wait_and_run(&finished, NDRXD_CTX_ZERO))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -157,9 +157,9 @@ void clean_shutdown(int sig)
  * @param argv
  * @return 
  */
-public int init_cmdline_opts(int argc, char **argv)
+expublic int init_cmdline_opts(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int c;
     extern char *optarg;
     
@@ -170,7 +170,7 @@ public int init_cmdline_opts(int argc, char **argv)
         {
             case 'r':
                 fprintf(stderr, "Entering in restart mode");
-                G_sys_config.restarting  = TRUE;
+                G_sys_config.restarting  = EXTRUE;
                 break;
             case 'k':
                 /* No need for random key parsing yet */
@@ -179,7 +179,7 @@ public int init_cmdline_opts(int argc, char **argv)
                 printf("usage: %s [-r restart] [-k random key]\n",
                         argv[0]);
                 
-                return FAIL;
+                return EXFAIL;
 
                 break;
         }
@@ -197,7 +197,7 @@ out:
  */
 int main_init(int argc, char** argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     
 #if 0
@@ -214,10 +214,10 @@ int main_init(int argc, char** argv)
      * by popen(). which causes problems with
      * SIGCHLD handlers. Thus handle them after libinit
      */
-    if (SUCCEED!=ndrx_load_common_env())
+    if (EXSUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -233,7 +233,7 @@ int main_init(int argc, char** argv)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
         userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -243,7 +243,7 @@ int main_init(int argc, char** argv)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_CONFIG);
         userlog("Missing config key %s - FAIL", CONF_NDRX_CONFIG);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -278,12 +278,12 @@ int main_init(int argc, char** argv)
                             G_sys_config.cmd_wait_time);
     }
     
-    if (SUCCEED!=cmd_processor_init())
+    if (EXSUCCEED!=cmd_processor_init())
     {
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Failed to initialize command processor!");
         userlog("Failed to initailize command processor!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -295,7 +295,7 @@ int main_init(int argc, char** argv)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_DPID);
         userlog("Missing config key %s - FAIL", CONF_NDRX_DPID);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -310,7 +310,7 @@ int main_init(int argc, char** argv)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPATH);
         userlog("Missing config key %s - FAIL", CONF_NDRX_QPATH);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -320,18 +320,18 @@ int main_init(int argc, char** argv)
 
     
     /* semaphores must go first!: */
-    if (SUCCEED!=ndrxd_sem_init(G_sys_config.qprefix))
+    if (EXSUCCEED!=ndrxd_sem_init(G_sys_config.qprefix))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRX_LOG(log_error, "Failed to initialise share memory lib");
         goto out;
     }
     /* and then shm: initialise shared memory */
-    if (SUCCEED!=shm_init(G_sys_config.qprefix,
+    if (EXSUCCEED!=shm_init(G_sys_config.qprefix,
                             ndrx_get_G_atmi_env()->max_servers,
                             ndrx_get_G_atmi_env()->max_svcs))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRX_LOG(log_error, "Failed to initialise share memory lib");
         goto out;
     }
@@ -340,9 +340,9 @@ int main_init(int argc, char** argv)
     if (G_sys_config.restarting)
     {
         
-        if (SUCCEED!=ndrx_sem_attach_all())
+        if (EXSUCCEED!=ndrx_sem_attach_all())
         {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to attach to Semaphores");
             goto out;
         }
@@ -351,9 +351,9 @@ int main_init(int argc, char** argv)
             NDRX_LOG(log_error, "Attached to semaphores OK");
         }
         
-        if (SUCCEED!=ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR))
+        if (EXSUCCEED!=ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to attach to shared memory segments");
             goto out;
         }
@@ -366,16 +366,16 @@ int main_init(int argc, char** argv)
     else 
     {
         /* Semaphores are first */
-        if (SUCCEED!=ndrxd_sem_open_all())
+        if (EXSUCCEED!=ndrxd_sem_open_all())
         {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to open semaphores!");
             goto out;
         }
         
-        if (SUCCEED!=ndrxd_shm_open_all())
+        if (EXSUCCEED!=ndrxd_shm_open_all())
         {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to open shared memory segments!");
             goto out;
         }
@@ -385,11 +385,11 @@ int main_init(int argc, char** argv)
     
 #if 0
     /* Do the initialization... */
-    if (FAIL==load_config(M_config_file))
+    if (EXFAIL==load_config(M_config_file))
     {
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Configuration failed!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 #endif
@@ -424,7 +424,7 @@ int main_uninit(void)
     /* Remove pid file */
     unlink_pid_file();
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /*
@@ -432,26 +432,26 @@ int main_uninit(void)
  */
 int main(int argc, char** argv) {
 
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     /* Do some init */
     memset(&G_sys_config, 0, sizeof(G_sys_config));
     
-    if (SUCCEED!=init_cmdline_opts(argc, argv))
+    if (EXSUCCEED!=init_cmdline_opts(argc, argv))
     {
         NDRX_LOG(log_error, "ndrxd - command line args failed");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
-    else if (SUCCEED!=main_init(argc, argv))
+    else if (EXSUCCEED!=main_init(argc, argv))
     {
         NDRX_LOG(log_error, "ndrxd - INIT FAILED!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /* If we are doing restart, the do actions needed for restart! */
-    if (G_sys_config.restarting && SUCCEED!=do_restart_actions())
+    if (G_sys_config.restarting && EXSUCCEED!=do_restart_actions())
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 

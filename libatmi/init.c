@@ -62,7 +62,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 
-int G_srv_id = FAIL; /* If we are server, then this will be server ID */
+int G_srv_id = EXFAIL; /* If we are server, then this will be server ID */
 volatile int G_is_env_loaded = 0; /* Is environment initialised */
 /* NOTE: THIS BELLOW ONE IS NOT INITIALIZED FOR NDRXD! */
 atmi_lib_env_t G_atmi_env; /* ATMI library environmental configuration */
@@ -79,32 +79,32 @@ MUTEX_LOCKDECL(M_env_lock);
  * We should have linked list of contexts...
  * @return 
  */
-public long ndrx_ctxid_op(int make_free, long ctxid)
+expublic long ndrx_ctxid_op(int make_free, long ctxid)
 {
     MUTEX_LOCK;
     {
-        static int first = TRUE;
-        long ret=FAIL;
+        static int first = EXTRUE;
+        long ret=EXFAIL;
         long i;
         
         if (first)
         {
             /* Invalidate context slots */
-            memset(M_contexts, FAIL, sizeof(M_contexts));
-            first = FALSE;
+            memset(M_contexts, EXFAIL, sizeof(M_contexts));
+            first = EXFALSE;
         }
         
         /* TODO: Check for boundary!? */
         if (make_free)
         {
             NDRX_LOG(log_debug, "Marking context %ld as free", ctxid);
-            M_contexts[ctxid] = FAIL;
+            M_contexts[ctxid] = EXFAIL;
         }
         else
         {
             for (i=0; i<MAX_CONTEXTS; i++)
             {
-                if (FAIL==M_contexts[i])
+                if (EXFAIL==M_contexts[i])
                 {
                     NDRX_LOG(log_debug, "Got free context id=%ld", i);
                     M_contexts[i] = i;
@@ -126,9 +126,9 @@ out:
  * One time system init
  * @return 
  */
-private int ndrx_init_once(void)
+exprivate int ndrx_init_once(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     /* reset callstates to default */
     /* memset(&G_call_state, 0, sizeof(G_call_state)); */
     
@@ -141,9 +141,9 @@ out:
  * If this fails, then binary should fail too!
  * @return 
  */
-public int ndrx_load_common_env(void)
+expublic int ndrx_load_common_env(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     
     MUTEX_LOCK_V(M_env_lock);
@@ -153,10 +153,10 @@ public int ndrx_load_common_env(void)
         goto out;
     }
     
-    if (SUCCEED!=ndrx_init_once())
+    if (EXSUCCEED!=ndrx_init_once())
     {
         NDRX_LOG(log_error, "Init once failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*
@@ -166,10 +166,10 @@ public int ndrx_load_common_env(void)
      * NDRX_CCTAG - optional, if set use as sub-section
      */
      
-    if (SUCCEED!=ndrx_cconfig_load())
+    if (EXSUCCEED!=ndrx_cconfig_load())
     {
         fprintf(stderr, "GENERAL CONFIGURATION ERROR\n");
-        exit(FAIL);
+        exit(EXFAIL);
     }
     
     /* Read MAX servers */
@@ -191,7 +191,7 @@ public int ndrx_load_common_env(void)
         fprintf(stderr, "**                                                                            **\n");
         fprintf(stderr, "** Process is now terminating with failure                                    **\n");
         fprintf(stderr, "********************************************************************************\n");
-        exit(FAIL);
+        exit(EXFAIL);
     }
     
     if (NULL==p)
@@ -199,7 +199,7 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_SRVMAX);
         userlog("Missing config key %s - FAIL", CONF_NDRX_SRVMAX);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -215,7 +215,7 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_SVCMAX);
         userlog("Missing config key %s - FAIL", CONF_NDRX_SVCMAX);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -231,7 +231,7 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_RNDK);
         userlog("Missing config key %s - FAIL", CONF_NDRX_RNDK);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -246,7 +246,7 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", NDRX_MSGMAX);
         userlog("Missing config key %s - FAIL", NDRX_MSGMAX);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -262,7 +262,7 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", NDRX_MSGSIZEMAX);
         userlog("Missing config key %s - FAIL", NDRX_MSGSIZEMAX);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -278,12 +278,12 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
         userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     else
     {
         strncpy(G_atmi_env.qprefix, p, sizeof(G_atmi_env.qprefix)-1);
-        G_atmi_env.qprefix[sizeof(G_atmi_env.qprefix)-1] = EOS;
+        G_atmi_env.qprefix[sizeof(G_atmi_env.qprefix)-1] = EXEOS;
         
         snprintf(G_atmi_env.qprefix_match, sizeof(G_atmi_env.qprefix_match),
                 "%s%c", G_atmi_env.qprefix, NDRX_FMT_SEP);
@@ -302,13 +302,13 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPATH);
         userlog("Missing config key %s - FAIL", CONF_NDRX_QPATH);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
     {
         strncpy(G_atmi_env.qpath, p, sizeof(G_atmi_env.qpath)-1);
-        G_atmi_env.qpath[sizeof(G_atmi_env.qpath)-1] = EOS;
+        G_atmi_env.qpath[sizeof(G_atmi_env.qpath)-1] = EXEOS;
         
         NDRX_LOG(log_debug, "Posix queue queue path set to: [%s]",
                             G_atmi_env.qpath);
@@ -320,7 +320,7 @@ public int ndrx_load_common_env(void)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
         userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -353,7 +353,7 @@ public int ndrx_load_common_env(void)
             NDRX_LOG(log_error, "Invalid [%s] setting! Min: %d, Max %d, got: %hd",
                     CONF_NDRX_NODEID, CONF_NDRX_NODEID_MIN, CONF_NDRX_NODEID_MAX,
                     G_atmi_env.our_nodeid);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         NDRX_LOG(log_debug, "Cluster node id=%hd", G_atmi_env.our_nodeid);
@@ -370,7 +370,7 @@ public int ndrx_load_common_env(void)
         {
             NDRX_LOG(log_error, "%s - invalid: min 0, max 100, got: %d",
                     CONF_NDRX_LDBAL, G_atmi_env.ldbal);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         NDRX_LOG(log_debug, "%s set to %d", 
@@ -450,7 +450,7 @@ public int ndrx_load_common_env(void)
     }
     else
     {
-        G_atmi_env.xa_flags[0] = EOS;
+        G_atmi_env.xa_flags[0] = EXEOS;
     }
     
     if (NULL!=(p=getenv(CONF_NDRX_XA_LAZY_INIT)))
@@ -466,10 +466,10 @@ public int ndrx_load_common_env(void)
     if (G_atmi_env.xa_rmid)
     {
         if (
-            EOS==G_atmi_env.xa_open_str[0] ||
-            EOS==G_atmi_env.xa_close_str[0] ||
-            EOS==G_atmi_env.xa_driverlib[0] ||
-            EOS==G_atmi_env.xa_rmlib[0])
+            EXEOS==G_atmi_env.xa_open_str[0] ||
+            EXEOS==G_atmi_env.xa_close_str[0] ||
+            EXEOS==G_atmi_env.xa_driverlib[0] ||
+            EXEOS==G_atmi_env.xa_rmlib[0])
         {
             NDRX_LOG(log_error, "Invalid XA configuration, missing "
                     "%s or %s or %s or %s keys...",
@@ -477,7 +477,7 @@ public int ndrx_load_common_env(void)
                     CONF_NDRX_XA_CLOSE_STR,
                     CONF_NDRX_XA_DRIVERLIB,
                     CONF_NDRX_XA_RMLIB);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -487,10 +487,10 @@ public int ndrx_load_common_env(void)
         if (!G_atmi_env.xa_lazy_init)
         {
             NDRX_LOG(log_debug, "Loading XA driver...");
-            if (SUCCEED!=atmi_xa_init())
+            if (EXSUCCEED!=atmi_xa_init())
             {
                 NDRX_LOG(log_error, "Failed to load XA driver!!!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     }
@@ -553,14 +553,14 @@ public int ndrx_load_common_env(void)
     /* </poll() mode configuration> */
 
     /* Init the util lib.. */ 
-    if (SUCCEED!=ndrx_atmiutil_init())
+    if (EXSUCCEED!=ndrx_atmiutil_init())
     {
        NDRX_LOG(log_error, "ndrx_atmiutil_init() failed");
-       FAIL_OUT(ret);
+       EXFAIL_OUT(ret);
     }
    
     NDRX_LOG(log_debug, "env loaded ok");
-    G_is_env_loaded = TRUE;
+    G_is_env_loaded = EXTRUE;
 out:
     MUTEX_UNLOCK_V(M_env_lock);
     return ret;
@@ -569,9 +569,9 @@ out:
  * Close open client session
  * @return
  */
-public int _tpterm (void)
+expublic int _tpterm (void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "_tpterm";
     
     ATMI_TLS_ENTRY;
@@ -587,15 +587,15 @@ public int _tpterm (void)
     
     if (!G_atmi_tls->G_atmi_conf.is_client)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_msg(TPEPROTO, "tpterm called from server!");
         goto out;
     }
 
     /* Close client connections */
-    if (SUCCEED!=close_open_client_connections())
+    if (EXSUCCEED!=close_open_client_connections())
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_msg(TPESYSTEM, "Failed to close conversations!");
         goto out;
     }
@@ -603,7 +603,7 @@ public int _tpterm (void)
     /* Shutdown client queues */
     if (0!=G_atmi_tls->G_atmi_conf.reply_q)
     {
-        if (FAIL==ndrx_mq_close(G_atmi_tls->G_atmi_conf.reply_q))
+        if (EXFAIL==ndrx_mq_close(G_atmi_tls->G_atmi_conf.reply_q))
         {
             NDRX_LOG(log_warn, "Failed to close [%s]: %s",
                                 G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
@@ -616,10 +616,10 @@ public int _tpterm (void)
         }
     }
 
-    if (EOS!=G_atmi_tls->G_atmi_conf.reply_q_str[0])
+    if (EXEOS!=G_atmi_tls->G_atmi_conf.reply_q_str[0])
     {
         NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_tls->G_atmi_conf.reply_q_str);
-        if (FAIL==ndrx_mq_unlink(G_atmi_tls->G_atmi_conf.reply_q_str))
+        if (EXFAIL==ndrx_mq_unlink(G_atmi_tls->G_atmi_conf.reply_q_str))
         {
             NDRX_LOG(log_warn, "Failed to unlink [%s]: %s",
                                 G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
@@ -635,10 +635,10 @@ public int _tpterm (void)
 
     /* Fee up context, should be last otherwise we might unlink other thread's
      * opened queue in this context!!! */
-    ndrx_ctxid_op(TRUE, G_atmi_tls->G_atmi_conf.contextid);
+    ndrx_ctxid_op(EXTRUE, G_atmi_tls->G_atmi_conf.contextid);
     
     /* Un init the library */
-    G_atmi_tls->G_atmi_is_init = FALSE;
+    G_atmi_tls->G_atmi_is_init = EXFALSE;
     NDRX_LOG(log_debug, "%s: ATMI library un-initialized", fn);
     
     /* close also  */
@@ -654,19 +654,19 @@ out:
  * @param qd
  * @return 
  */
-public int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
+expublic int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[]="tp_internal_init";
     ATMI_TLS_ENTRY;
     
     G_atmi_tls->G_atmi_conf.reply_q = reply_q;
     NDRX_STRCPY_SAFE(G_atmi_tls->G_atmi_conf.reply_q_str, reply_q_str);
-    if (FAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.reply_q_attr))
+    if (EXFAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.reply_q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
                             fn, reply_q, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -679,12 +679,12 @@ out:
  * @param init_data
  * @return SUCCEED/FAIL
  */
-public int tp_internal_init(atmi_lib_conf_t *init_data)
+expublic int tp_internal_init(atmi_lib_conf_t *init_data)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[]="tp_internal_init";
-    static int first = TRUE;
-    int sem_fail = FALSE;
+    static int first = EXTRUE;
+    int sem_fail = EXFALSE;
     ATMI_TLS_ENTRY;
     /* we connect to semaphore  */
     /* Check that if we are client (in server staging, then close current queues) */
@@ -704,7 +704,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
                                 "shutting down old session");
         }
 
-        if (FAIL==ndrx_mq_close(G_atmi_tls->G_atmi_conf.reply_q))
+        if (EXFAIL==ndrx_mq_close(G_atmi_tls->G_atmi_conf.reply_q))
         {
             NDRX_LOG(log_warn, "Failed to close [%s]: %s",
                                 G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
@@ -712,7 +712,7 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
 
         NDRX_LOG(log_debug, "Unlinking [%s]", G_atmi_tls->G_atmi_conf.reply_q_str);
         
-        if (FAIL==ndrx_mq_unlink(G_atmi_tls->G_atmi_conf.reply_q_str))
+        if (EXFAIL==ndrx_mq_unlink(G_atmi_tls->G_atmi_conf.reply_q_str))
         {
             NDRX_LOG(log_warn, "Failed to unlink [%s]: %s",
                                 G_atmi_tls->G_atmi_conf.reply_q_str, strerror(errno));
@@ -735,12 +735,12 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
             sizeof(G_atmi_tls->G_accepted_connection));
 
     /* read queue attributes -  only if Q was open...*/
-    if (init_data->reply_q && FAIL==ndrx_mq_getattr(init_data->reply_q, 
+    if (init_data->reply_q && EXFAIL==ndrx_mq_getattr(init_data->reply_q, 
             &G_atmi_tls->G_atmi_conf.reply_q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                             fn, init_data->reply_q_str, init_data->reply_q, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -759,44 +759,44 @@ public int tp_internal_init(atmi_lib_conf_t *init_data)
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
             
             /* Try to attach to semaphore array */
-            if (SUCCEED!=ndrx_sem_attach_all())
+            if (EXSUCCEED!=ndrx_sem_attach_all())
             {
                 NDRX_LOG(log_error, "Failed to attache to semaphores!!");
-                sem_fail = TRUE;
+                sem_fail = EXTRUE;
                 /*ret=FAIL;
                 goto out;*/
             }
             
             /* Attach to client shared memory? */
-            if (SUCCEED==shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
+            if (EXSUCCEED==shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
                         G_atmi_env.max_servers, G_atmi_env.max_svcs))
             {
                 if (init_data->is_client)
                 {
-                    if (SUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR) &&
+                    if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR) &&
                             sem_fail)
                     {
                         NDRX_LOG(log_error, "SHM ok, but sem fail -"
                                 " cannot operate in this mode!");
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 }
                 else
                 {
                     /* In case of server we attach to both shared memory blocks */
-                    if (SUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | 
+                    if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | 
                                         NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR) &&
                             sem_fail)
                     
                     {
                         NDRX_LOG(log_error, "SHM ok, but sem fail -"
                                 " cannot operate in this mode!");
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 }
             }
             
-            first = FALSE;
+            first = EXFALSE;
         }
         MUTEX_UNLOCK;
     }
@@ -810,14 +810,14 @@ out:
  * Maybe... or we will create separate part for server to initialize with monitor
  * @return SUCCEED/FAIL
  */
-public int tpinit (TPINIT * init_data)
+expublic int tpinit (TPINIT * init_data)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     atmi_lib_conf_t conf;
     char reply_q[NDRX_MAX_Q_SIZE+1];
     char my_id[NDRX_MAX_ID_SIZE+1];
     char *p;
-    char read_clt_name[MAXTIDENT+1]={EOS};
+    char read_clt_name[MAXTIDENT+1]={EXEOS};
     static pid_t pid;
     ATMI_TLS_ENTRY;
     
@@ -832,10 +832,10 @@ public int tpinit (TPINIT * init_data)
     conf.is_client = 1;
     
     /* Load common environment for client - this should be synced...*/
-    if (SUCCEED!=ndrx_load_common_env())
+    if (EXSUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -843,7 +843,7 @@ public int tpinit (TPINIT * init_data)
     if (NULL==(p=getenv("NDRX_QPREFIX")))
     {
         _TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -860,11 +860,11 @@ public int tpinit (TPINIT * init_data)
     NDRX_LOG(log_debug, "Got PROGNAME [%s]", read_clt_name);
     
     /* Get new context id. Threading support only for clients... */
-    conf.contextid = ndrx_ctxid_op(FALSE, FAIL);
+    conf.contextid = ndrx_ctxid_op(EXFALSE, EXFAIL);
     NDRX_DBG_SETTHREAD(conf.contextid);
     
     /* Format my ID */
-    if (FAIL==G_srv_id)
+    if (EXFAIL==G_srv_id)
     {
         snprintf(my_id, sizeof(my_id), NDRX_MY_ID_CLT, 
                 /* we always assume that name is process name...!
@@ -899,11 +899,11 @@ public int tpinit (TPINIT * init_data)
     NDRX_STRCPY_SAFE(conf.reply_q_str, reply_q);
     /* now try to open the queue, by default we will have blocked access */
     conf.reply_q = ndrx_mq_open_at(reply_q, O_RDONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
-    if ((mqd_t)FAIL==conf.reply_q)
+    if ((mqd_t)EXFAIL==conf.reply_q)
     {
         _TPset_error_fmt(TPEOS, "Failed to open queue [%s] errno: %s", 
                     conf.reply_q_str, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     NDRX_LOG(log_debug, "Client queue [%s] opened.", conf.reply_q_str);
@@ -924,9 +924,9 @@ out:
  * @param arg
  * @param p_finish_off
  */
-public void tp_thread_shutdown(void *ptr, int *p_finish_off)
+expublic void tp_thread_shutdown(void *ptr, int *p_finish_off)
 {
     tpterm();
     
-    *p_finish_off = TRUE;
+    *p_finish_off = EXTRUE;
 }

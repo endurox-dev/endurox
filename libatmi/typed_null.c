@@ -52,7 +52,7 @@
  * @param len
  * @return
  */
-public char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, long len)
 {
     char *ret=NULL;
     char fn[] = "TPNULL_tpalloc";
@@ -76,7 +76,7 @@ out:
  * @param descr
  * @param buf
  */
-public void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf)
+expublic void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
     NDRX_FREE(buf);
 }

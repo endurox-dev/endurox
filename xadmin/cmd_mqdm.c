@@ -65,9 +65,9 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     short srvid;
     short nodeid;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -91,10 +91,10 @@ public int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Have a number in FB! */
@@ -109,23 +109,23 @@ public int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     
     buf = tpalloc("STRING", "", 1);
     
-    if (SUCCEED!=tpdequeueex(nodeid, srvid, "*N/A*", &qc, (char **)&buf, &len, 0))
+    if (EXSUCCEED!=tpdequeueex(nodeid, srvid, "*N/A*", &qc, (char **)&buf, &len, 0))
     {
         fprintf(stderr, "failed %s diag: %ld:%s", 
                 tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", "", 1024)))
     {
         NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tmq_tpqctl_to_ubf_deqrsp(p_ub, &qc))
+    if (EXSUCCEED!=tmq_tpqctl_to_ubf_deqrsp(p_ub, &qc))
     {
         NDRX_LOG(log_error, "Failed to build tpqctl struct ubf");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     printf("*************** TPQCTL ***************\n");
@@ -136,10 +136,10 @@ public int cmd_mqdm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     
     
     /* Check the buffer & do the actions */
-    if (FAIL==(blen=tptypes(buf, typ, NULL)))
+    if (EXFAIL==(blen=tptypes(buf, typ, NULL)))
     {
         NDRX_LOG(log_error, "Failed to detect buffer type");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     printf("* Buffer type = %s\n", typ);

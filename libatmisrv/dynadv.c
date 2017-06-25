@@ -69,20 +69,20 @@
  * @param svcname
  * @return 
  */
-public int dynamic_readvertise(char *svcname)
+expublic int dynamic_readvertise(char *svcname)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL;
     char *fn="dynamic_readvertise";
-    int found = FALSE;
-    static int first = TRUE;
+    int found = EXFALSE;
+    static int first = EXTRUE;
     int mod;
     
     NDRX_LOG(log_warn, "%s: enter, svcname = [%s]", fn, svcname);
     
     if (first)
     {
-        first = FALSE;
+        first = EXFALSE;
         srand ( time(NULL) );
     }
     
@@ -90,17 +90,17 @@ public int dynamic_readvertise(char *svcname)
     {
             NDRX_LOG(log_error, "Failed to allocate %d bytes while parsing -s",
                                 sizeof(svc_entry_fn_t));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
     }
     
     memset(entry, 0, sizeof(*entry));
     
     /* Un-advertise it firstly */
-    if (SUCCEED!=dynamic_unadvertise(svcname, &found, entry) || !found)
+    if (EXSUCCEED!=dynamic_unadvertise(svcname, &found, entry) || !found)
     {
         NDRX_LOG(log_error, "Failed to unadvertise: [%s]", svcname);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -115,16 +115,16 @@ public int dynamic_readvertise(char *svcname)
     sleep(READVERTISE_SLEEP_SRV+mod);
     
     /* Now advertise back on! */
-    if (SUCCEED!=dynamic_advertise(entry, svcname, entry->p_func, entry->fn_nm))
+    if (EXSUCCEED!=dynamic_advertise(entry, svcname, entry->p_func, entry->fn_nm))
     {
         NDRX_LOG(log_error, "Failed to advertise: [%s]", svcname);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
 out:
 
-    if (SUCCEED!=ret && NULL!=entry)
+    if (EXSUCCEED!=ret && NULL!=entry)
         NDRX_FREE(entry);
 
     NDRX_LOG(log_warn, "%s: return, ret = %d", fn, ret);
@@ -136,9 +136,9 @@ out:
  * @param svcname
  * @return 
  */
-public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
+expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int pos;
     svc_entry_fn_t *ent=NULL;
     int service;
@@ -166,38 +166,38 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         
         if (NULL!=found)
         {
-            *found = TRUE;
+            *found = EXTRUE;
         }
         
         NDRX_LOG(log_error, "Q File descriptor: %d - removing from polling struct", 
                 ent->q_descr);
         
-        if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
+        if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                             ent->q_descr, NULL))
         {
             _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed to remove fd %d from epollfd: %s", 
                     ent->q_descr, ndrx_poll_strerror(ndrx_epoll_errno()));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         /* Now close the FD */
-        if (SUCCEED!=ndrx_mq_close(ent->q_descr))
+        if (EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             _TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
                     ent->q_descr, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         len = G_server_conf.adv_service_count;
         
-        if (SUCCEED!=array_remove_element((void *)(G_server_conf.service_array), pos, 
+        if (EXSUCCEED!=array_remove_element((void *)(G_server_conf.service_array), pos, 
                     len, sizeof(svc_entry_fn_t *)))
         {
             NDRX_LOG(log_error, "Failed to shift memory for "
                                 "G_server_conf.service_array!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* Now reduce the memory usage */
@@ -207,7 +207,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         if (NULL==G_server_conf.service_array)
         {
             _TPset_error_fmt(TPEOS, "realloc failed: %s", strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -216,17 +216,17 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         ent=NULL;
 
         service = pos - ATMI_SRV_Q_ADJUST;
-        if (SUCCEED!=array_remove_element((void *)G_shm_srv->svc_fail, service, 
+        if (EXSUCCEED!=array_remove_element((void *)G_shm_srv->svc_fail, service, 
                     MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->svc_fail))))
         {
             NDRX_LOG(log_error, "Failed to shift memory for G_shm_srv->svc_succeed!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
-        if (SUCCEED!=unadvertse_to_ndrxd(svcname))
+        if (EXSUCCEED!=unadvertse_to_ndrxd(svcname))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -235,47 +235,47 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
         if (G_shm_srv)
         {
             /* Shift shared memory, adjust the stuff by: ATMI_SRV_Q_ADJUST*/
-            if (SUCCEED!=array_remove_element((void *)(G_shm_srv->svc_succeed), service, 
+            if (EXSUCCEED!=array_remove_element((void *)(G_shm_srv->svc_succeed), service, 
                         MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->svc_succeed))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for G_shm_srv->svc_succeed!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
-            if (SUCCEED!=array_remove_element((void *)&(G_shm_srv->min_rsp_msec), 
+            if (EXSUCCEED!=array_remove_element((void *)&(G_shm_srv->min_rsp_msec), 
                      service, MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->min_rsp_msec))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for "
                                                 "G_shm_srv->min_rsp_msec!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
-            if (SUCCEED!=array_remove_element((void *)(G_shm_srv->max_rsp_msec), 
+            if (EXSUCCEED!=array_remove_element((void *)(G_shm_srv->max_rsp_msec), 
                         service, MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->max_rsp_msec))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for "
                                                 "G_shm_srv->max_rsp_msec!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
-            if (SUCCEED!=array_remove_element((void *)(G_shm_srv->last_rsp_msec), 
+            if (EXSUCCEED!=array_remove_element((void *)(G_shm_srv->last_rsp_msec), 
                         service,  MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->last_rsp_msec))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for 1"
                                                 "G_shm_srv->last_rsp_msec!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
-            if (SUCCEED!=array_remove_element((void *)&(G_shm_srv->svc_status), 
+            if (EXSUCCEED!=array_remove_element((void *)&(G_shm_srv->svc_status), 
                         service, MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->svc_status))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for "
                                                 "G_shm_srv->svc_status!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -283,7 +283,7 @@ public int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
     else 
     {
         _TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", thisfn, svcname);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -296,10 +296,10 @@ out:
  * @param svcname
  * @return 
  */
-public int	dynamic_advertise(svc_entry_fn_t *entry_new, 
+expublic int	dynamic_advertise(svc_entry_fn_t *entry_new, 
                     char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int pos, service;
     svc_entry_fn_t *entry_chk=NULL;
     struct ndrx_epoll_event ev;
@@ -331,7 +331,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
             _TPset_error_fmt(TPEMATCH, "Service [%s] already advertised by func. "
                     "ptr. 0x%lx, but now requesting advertise by func. ptr. 0x%lx!",
                     svc_nm, entry_chk->p_func, p_func);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -340,7 +340,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     if (G_server_conf.adv_service_count+1>MAX_SVC_PER_SVR)
     {
         _TPset_error_fmt(TPELIMIT, "Servce limit %d reached!", MAX_SVC_PER_SVR);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /* This will be the current, note that count is already lass then 1, 
@@ -361,10 +361,10 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     
     /* ###################### CRITICAL SECTION ############################### */
     /* Acquire semaphore here.... */
-    if (G_shm_srv && SUCCEED!=ndrx_lock_svc_op(__func__))
+    if (G_shm_srv && EXSUCCEED!=ndrx_lock_svc_op(__func__))
     {
         NDRX_LOG(log_error, "Failed to lock sempahore");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -374,14 +374,14 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     /*
      * Check are we ok or failed?
      */
-    if ((mqd_t)FAIL==entry_new->q_descr)
+    if ((mqd_t)EXFAIL==entry_new->q_descr)
     {
         /* Release semaphore! */
          if (G_shm_srv) ndrx_unlock_svc_op(__func__);
          
         _TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                     entry_new->listen_q, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -409,7 +409,7 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     if (NULL==G_server_conf.service_array)
     {
         _TPset_error_fmt(TPEOS, "Failed to reallocate memory to %d bytes!", sz);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -426,12 +426,12 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     ev.data.mqd = entry_new->q_descr;
 #endif
     
-    if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
+    if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             entry_new->q_descr, &ev))
     {
         _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
                 ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -440,10 +440,10 @@ public int	dynamic_advertise(svc_entry_fn_t *entry_new,
     
     
     /* Send to NDRXD that we have are OK! */
-    if (SUCCEED!=advertse_to_ndrxd(entry_new))
+    if (EXSUCCEED!=advertse_to_ndrxd(entry_new))
     {
         NDRX_LOG(log_error, "Failed to send advertise message to NDRXD!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 

@@ -78,7 +78,7 @@ typedef struct prefixmap prefixmap_t;
 /**
  * Prefix mapping table for detecting Q type
  */
-public prefixmap_t M_prefixmap[] =
+expublic prefixmap_t M_prefixmap[] =
 {  
     /* Qprefix format string, match off, len, q type classifier */
     {NDRX_NDRXD,                NULL, 0, NDRX_QTYPE_NDRXD,      "ndrxd Q"},
@@ -99,9 +99,9 @@ public prefixmap_t M_prefixmap[] =
  * @param p_myid parsed ID
  * @return SUCCEED/FAIL
  */
-public int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
+expublic int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *p;
     
     /* can be, example:
@@ -113,7 +113,7 @@ public int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
     {
         NDRX_LOG(log_error, "Invalid conversational initiator/client Q (1): [%s]", 
                 qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     p++;
     
@@ -121,7 +121,7 @@ public int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
     {
         NDRX_LOG(log_error, "Invalid conversational initiator/client Q (2): [%s]", 
                 qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     p+=4;
     
@@ -129,11 +129,11 @@ public int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
     {
         NDRX_LOG(log_error, "Invalid conversational initiator/client Q (3): [%s]", 
                 qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     p+=2;
     
-    ret = ndrx_myid_parse(p, p_myid, TRUE);
+    ret = ndrx_myid_parse(p, p_myid, EXTRUE);
     
     
 out:
@@ -148,7 +148,7 @@ out:
  * @param num
  * @return 
  */
-private char * move_forward(char *qname, int num)
+exprivate char * move_forward(char *qname, int num)
 {
     char *p = qname;
     int i;
@@ -178,9 +178,9 @@ out:
  * @param p_myid_second
  * @return 
  */
-public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_myid_second)
+expublic int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_myid_second)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char tmpq[NDRX_MAX_Q_SIZE+1];
     char *p;
     char *p2;
@@ -197,7 +197,7 @@ public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_
     {
         NDRX_LOG(log_error, "Invalid conversational server Q (1): [%s]", 
                 qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     p++;
     
@@ -205,7 +205,7 @@ public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_
     {
         NDRX_LOG(log_error, "Invalid conversational server Q (2): [%s]", 
                 qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     p+=4;
     
@@ -213,7 +213,7 @@ public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_
     {
         NDRX_LOG(log_error, "Invalid conversational server Q (3): [%s]", 
                 qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     p+=2;
     
@@ -226,13 +226,13 @@ public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_
                    p);
         }
         p2--;
-        *p2 = EOS;
+        *p2 = EXEOS;
         p2++;
         
         if (strlen(p2)==0)
         {
             NDRX_LOG(log_error, "Invalid server queue");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else if (0==strncmp(p, "clt"NDRX_FMT_SEP_STR, 4))
@@ -244,30 +244,30 @@ public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_
                    p);
         }
         p2--;
-        *p2 = EOS;
+        *p2 = EXEOS;
         p2++;
         
         if (strlen(p2)==0)
         {
             NDRX_LOG(log_error, "Invalid client queue of server q [%s]", qname);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else
     {
         NDRX_LOG(log_error, "Cannot detect myid type of conversational Q: "
                 "[%s]", qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "Parsing Q: [%s] first part: [%s] "
             "second part: [%s]",qname, p, p2);
-    if (SUCCEED!=ndrx_myid_parse(p, p_myid_first, TRUE) || 
-            SUCCEED!=ndrx_myid_parse(p2, p_myid_second, FALSE))
+    if (EXSUCCEED!=ndrx_myid_parse(p, p_myid_first, EXTRUE) || 
+            EXSUCCEED!=ndrx_myid_parse(p2, p_myid_second, EXFALSE))
     {
         NDRX_LOG(log_error, "Failed to parse Q: [%s] first part: [%s] "
             "second part: [%s]",qname, p, p2);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -281,9 +281,9 @@ out:
  * @param out parsed myid
  * @return SUCCEED/FAIL
  */
-public int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator)
+expublic int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     if (0==strncmp(my_id, "srv"NDRX_FMT_SEP_STR, 4))
     {
@@ -298,7 +298,7 @@ public int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator)
     else
     {
         NDRX_LOG(log_error, "Cannot detect myid type: [%s]", my_id);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;
@@ -311,9 +311,9 @@ public int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator)
  * @param out client id out struct
  * @return SUCCEED
  */
-public int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
+expublic int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int len;
     int i;
     char tmp[NDRX_MAX_Q_SIZE+1];
@@ -335,7 +335,7 @@ public int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
                 ,&(out->contextid)
                 ,&(out->nodeid)
                 ,&(out->cd));
-        out->isconv = TRUE;
+        out->isconv = EXTRUE;
     }
     else 
     {
@@ -345,7 +345,7 @@ public int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
                 ,&(out->pid)
                 ,&(out->contextid)
                 ,&(out->nodeid));
-        out->isconv = FALSE;
+        out->isconv = EXFALSE;
     }
 
     out->tpmyidtyp = TPMYIDTYP_CLIENT;
@@ -361,9 +361,9 @@ public int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
  * @param out filled structure of the parse id
  * @return SUCCEED
  */
-public int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
+expublic int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int len;
     int i;
     char tmp[NDRX_MAX_Q_SIZE+1];
@@ -386,7 +386,7 @@ public int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
                 ,&(out->contextid)
                 ,&(out->nodeid)
                 ,&(out->cd));
-        out->isconv = TRUE;
+        out->isconv = EXTRUE;
     }
     else
     {
@@ -396,7 +396,7 @@ public int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
                 ,&(out->pid)
                 ,&(out->contextid)
                 ,&(out->nodeid));
-        out->isconv = FALSE;
+        out->isconv = EXFALSE;
     }
     
     out->tpmyidtyp = TPMYIDTYP_SERVER;
@@ -411,7 +411,7 @@ public int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
  * @param 
  * @return FAIL (not our node)/TRUE (live)/FALSE (dead)
  */
-public int ndrx_myid_is_alive(TPMYID *p_myid)
+expublic int ndrx_myid_is_alive(TPMYID *p_myid)
 {
     if (tpgetnodeid()==G_atmi_env.our_nodeid)
     {
@@ -420,7 +420,7 @@ public int ndrx_myid_is_alive(TPMYID *p_myid)
     }
     else
     {
-        return FAIL;
+        return EXFAIL;
     }
 }
 
@@ -429,7 +429,7 @@ public int ndrx_myid_is_alive(TPMYID *p_myid)
  * @param p_myid ptr to myid
  * @param lev debug level to print of
  */
-public void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
+expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
 {
     
     NDRX_LOG(lev, "=== %s ===", msg);
@@ -464,9 +464,9 @@ public void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
  * @param my_id String version of my_id
  * @param rply_q String version (full version with pfx) of the reply Q
  */
-public int ndrx_myid_convert_to_q(TPMYID *p_myid, char *rply_q, int rply_q_buflen)
+expublic int ndrx_myid_convert_to_q(TPMYID *p_myid, char *rply_q, int rply_q_buflen)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* Now build the reply Qs */
     if (TPMYIDTYP_SERVER==p_myid->tpmyidtyp)
@@ -497,7 +497,7 @@ out:
  * @param p_myid ptr to myid
  * @param lev debug level to print of
  */
-public void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
+expublic void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
 {
     
     NDRX_LOG(lev, "=== %s ===", msg);
@@ -517,9 +517,9 @@ public void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
  * @param qstr Queue string to parse
  * @return SUCCEED
  */
-public int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr)
+expublic int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr)
 {   
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int len;
     int i;
     char tmp[NDRX_MAX_Q_SIZE+1];
@@ -555,9 +555,9 @@ out:
  * @param nodeid - Cluster node id, as q does not encode cluster id
  * @return SUCCEED/FAIL
  */
-public int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qdet, long nodeid)
+expublic int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qdet, long nodeid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     if (NDRX_QTYPE_CLTRPLY==qdet->qtype)
     {
@@ -570,7 +570,7 @@ public int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qdet, long n
     {
         NDRX_LOG(log_error, "%s: Unsupported qtype for building myid: %d", 
                 __func__, qdet->qtype);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -583,7 +583,7 @@ out:
  * @param my_id
  * @return SUCCEED
  */
-public void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id)
+expublic void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id)
 {
     snprintf(my_id, NDRX_MAX_ID_SIZE, NDRX_MY_ID_CLT, 
         p_myid->binary_name,
@@ -600,9 +600,9 @@ public void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id)
  * Setup the queue testing strings for local host
  * @return SUCCEED/FAIL
  */
-public int ndrx_atmiutil_init(void)
+expublic int ndrx_atmiutil_init(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     prefixmap_t *p = M_prefixmap;
     
     while (NULL!=p->prefix)
@@ -613,7 +613,7 @@ public int ndrx_atmiutil_init(void)
         {
             NDRX_LOG(log_error, "%s failed to search for [%c] in [%s]", __func__, 
                     NDRX_FMT_SEP, p->prefix);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* calculate match length for the Q */
@@ -630,9 +630,9 @@ out:
  * @param q full queue (with prefix)
  * @return see NDRX_QTYPE_* or FAIL
  */
-public int ndrx_q_type_get(char *q)
+expublic int ndrx_q_type_get(char *q)
 {
-    int ret = FAIL;
+    int ret = EXFAIL;
     prefixmap_t *p = M_prefixmap;
     char *q_wo_pfx = strchr(q, NDRX_FMT_SEP);
     
@@ -640,7 +640,7 @@ public int ndrx_q_type_get(char *q)
     {
         NDRX_LOG(log_error, "Invalid Enduro/X Q (possible not Enduro/X): [%s]", 
                 q_wo_pfx);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     while (NULL!=p->prefix)

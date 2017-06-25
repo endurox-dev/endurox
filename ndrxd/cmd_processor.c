@@ -63,7 +63,7 @@ command_call_t * G_last_interactive_call=NULL;  /* The last call make by user (i
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-private int cmd_dummy (command_call_t * call, char *data, size_t len, int context);
+exprivate int cmd_dummy (command_call_t * call, char *data, size_t len, int context);
 typedef struct
 {
     int command;        /* Command id */
@@ -164,33 +164,33 @@ command_map_t M_command_map [] =
  * @param len
  * @return 
  */
-private int cmd_dummy(command_call_t * call, char *data, size_t len, int context)
+exprivate int cmd_dummy(command_call_t * call, char *data, size_t len, int context)
 {
     NDRX_LOG(log_debug, "Un-expected command call!");
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
  * Open listening queue
  * @return
  */
-private int cmd_open_queue(void)
+exprivate int cmd_open_queue(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     /* Unlink previous admin queue (if have such) - ignore any error */
     ndrx_mq_unlink(G_command_state.listenq_str);
     NDRX_LOG(log_debug, "About to open deamon queue: [%s]",
                                         G_command_state.listenq_str);
     /* Open new queue (non blocked, so  that we do not get deadlock on batch deaths! */
-    if ((mqd_t)FAIL==(G_command_state.listenq = ndrx_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
+    if ((mqd_t)EXFAIL==(G_command_state.listenq = ndrx_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
                                         S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
                                         G_command_state.listenq_str, strerror(errno));
         userlog("Failed to open queue: [%s] err: %s",
                                         G_command_state.listenq_str, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -204,18 +204,18 @@ out:
  * Open listening queue
  * @return
  */
-public int cmd_close_queue(void)
+expublic int cmd_close_queue(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    if (SUCCEED!=ndrx_mq_close(G_command_state.listenq))
+    if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
     {
         NDRX_LOG(log_error, "Failed to close: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
     }
 
     /* Unlink previous admin queue (if have such) - ignore any error */
-    if (SUCCEED!=ndrx_mq_unlink(G_command_state.listenq_str))
+    if (EXSUCCEED!=ndrx_mq_unlink(G_command_state.listenq_str))
     {
             NDRX_LOG(log_error, "Failed to unlink: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
@@ -228,16 +228,16 @@ out:
  * Initialize command processor
  * @return
  */
-public int cmd_processor_init(void)
+expublic int cmd_processor_init(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     memset(&G_command_state, 0, sizeof(G_command_state));
     sprintf(G_command_state.listenq_str, NDRX_NDRXD, G_sys_config.qprefix);
     
-    if (FAIL==cmd_open_queue())
+    if (EXFAIL==cmd_open_queue())
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -250,15 +250,15 @@ out:
  * @param attr
  * @return 
  */
-public int get_cmdq_attr(struct mq_attr *attr)
+expublic int get_cmdq_attr(struct mq_attr *attr)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
-    if (FAIL==ndrx_mq_getattr(G_command_state.listenq, attr))
+    if (EXFAIL==ndrx_mq_getattr(G_command_state.listenq, attr))
     {
         NDRX_LOG(log_error, "Failed to ex_mq_getattr on cmd q: %s", 
                 strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;
@@ -268,9 +268,9 @@ public int get_cmdq_attr(struct mq_attr *attr)
  * @param finished
  * @return
  */
-public int command_wait_and_run(int *finished, int *abort)
+expublic int command_wait_and_run(int *finished, int *abort)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char    msg_buffer_max[ATMI_MSG_MAX_SIZE];
     size_t buf_max = sizeof(msg_buffer_max);
     unsigned int prio = 0;
@@ -281,7 +281,7 @@ public int command_wait_and_run(int *finished, int *abort)
     size_t  data_len;
     int     error;
     command_map_t *cmd;
-    int marked_interactive = FALSE;
+    int marked_interactive = EXFALSE;
     char context_check[16];
     int prev_context = NDRXD_CTX_NOCHG;
     
@@ -323,7 +323,7 @@ public int command_wait_and_run(int *finished, int *abort)
      This causes some messages to be lost! */
     
     /* Change to blocked, if not already! */
-    ndrx_q_setblock(G_command_state.listenq, TRUE);
+    ndrx_q_setblock(G_command_state.listenq, EXTRUE);
     /* For OSX we need a special case here, we try to access to 
      * the queue for serveral minutes. If we get trylock rejected for
      * configured number of time, we shall close the queue and open it again
@@ -331,7 +331,7 @@ public int command_wait_and_run(int *finished, int *abort)
      * some reason (killed). In that secnario, robust mutexes might help
      * but OSX do no have such....
      */ 
-    if (FAIL==(data_len = ndrx_mq_timedreceive (G_command_state.listenq,
+    if (EXFAIL==(data_len = ndrx_mq_timedreceive (G_command_state.listenq,
                     msg_buffer_max, buf_max, &prio, &abs_timeout)))
     {
         error = errno;
@@ -346,19 +346,19 @@ public int command_wait_and_run(int *finished, int *abort)
     }
     /*siginterrupt(SIGCHLD, FALSE);*/
 
-    if (FAIL==data_len && EINTR==error)
+    if (EXFAIL==data_len && EINTR==error)
     {
         NDRX_LOG(log_warn, "ex_mq_timedreceive got interrupted!");
-        ret=SUCCEED;
+        ret=EXSUCCEED;
         goto out;
     }
-    else if (FAIL==data_len && ETIMEDOUT==error)
+    else if (EXFAIL==data_len && ETIMEDOUT==error)
     {
         /* nothing recieved - OK */
-        ret=SUCCEED;
+        ret=EXSUCCEED;
         goto out;
     }
-    else if (FAIL==data_len)
+    else if (EXFAIL==data_len)
     {
         NDRX_LOG(log_error, "Error occurred when listening on :%s - %d/%s,"
                                 "issuing re-init",
@@ -369,14 +369,14 @@ public int command_wait_and_run(int *finished, int *abort)
 */
         cmd_close_queue();
 
-        if (FAIL==cmd_open_queue())
+        if (EXFAIL==cmd_open_queue())
         {
-            ret=FAIL;
+            ret=EXFAIL;
         }
         else
         {
             NDRX_LOG(log_error, "Re-init OK");
-            ret=SUCCEED;
+            ret=EXSUCCEED;
         }
 
         goto out; /* finish with this loop */
@@ -411,7 +411,7 @@ public int command_wait_and_run(int *finished, int *abort)
 
         /* Reply with error - non supported! */
         NDRXD_set_error_fmt(NDRXD_ECMDNOTFOUND, "Unknown command %d", call->command);
-        if (SUCCEED!=simple_command_reply(call, FAIL, 0L, NULL, NULL, 0L, 0, NULL))
+        if (EXSUCCEED!=simple_command_reply(call, EXFAIL, 0L, NULL, NULL, 0L, 0, NULL))
         {
             userlog("Failed to send reply back to [%s]", call->reply_queue);
         }
@@ -431,7 +431,7 @@ public int command_wait_and_run(int *finished, int *abort)
         NDRXD_set_error_fmt(NDRXD_ECONTEXT, "Invalid context for command. Current:"
                 " [%s] supported: [%s]", context_check, cmd->contexts);
         
-        if (SUCCEED!=simple_command_reply(call, FAIL, 0L, NULL, NULL, 0L, 0, NULL))
+        if (EXSUCCEED!=simple_command_reply(call, EXFAIL, 0L, NULL, NULL, 0L, 0, NULL))
         {
             userlog("Failed to send reply back to [%s]", call->reply_queue);
         }
@@ -443,7 +443,7 @@ public int command_wait_and_run(int *finished, int *abort)
     if (cmd->interactive && NULL==G_last_interactive_call)
     {
         G_last_interactive_call = call;
-        marked_interactive=TRUE;
+        marked_interactive=EXTRUE;
     }
     
     /* Enter context */
@@ -458,7 +458,7 @@ public int command_wait_and_run(int *finished, int *abort)
     if (NDRXD_COM_XACABORT_RQ==cmd->command)
     {
         NDRX_LOG(log_warn, "Abort requested from xadmin!");
-        *abort = TRUE;
+        *abort = EXTRUE;
     }
   
     ret = cmd->p_cmd_call(call, msg_buffer_max, data_len, G_command_state.context);
@@ -467,7 +467,7 @@ public int command_wait_and_run(int *finished, int *abort)
     if (marked_interactive)
     {
         G_last_interactive_call = NULL;
-        marked_interactive=FALSE;
+        marked_interactive=EXFALSE;
     }
     
 

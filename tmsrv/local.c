@@ -67,12 +67,12 @@
  * @param p_xai
  * @return 
  */
-public int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* we should start new transaction... */
-    if (SUCCEED!=(ret = atmi_xa_prepare_entry(atmi_xa_get_branch_xid(p_xai),
+    if (EXSUCCEED!=(ret = atmi_xa_prepare_entry(atmi_xa_get_branch_xid(p_xai),
             0)))
     {
         NDRX_LOG(log_error, "Failed to prepare local transaction!");        
@@ -95,21 +95,21 @@ out:
  * @param p_xai
  * @return SUCCEED/FAIL
  */
-public int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
+expublic int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
 {
     UBFH* p_ub;
             
     /* Call the remote TM.
      * TODO: How about error handling? 
      */
-    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMPREPARE, TRUE, rmid, p_xai);
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMPREPARE, EXTRUE, rmid, p_xai);
 
     if (NULL==p_ub)    
-        return FAIL;
+        return EXFAIL;
     else
     {
         tpfree((char *)p_ub);
-        return SUCCEED;
+        return EXSUCCEED;
     }
 }
 
@@ -117,9 +117,9 @@ public int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
  * Combined prepare of to commit. Selects automatically do the local prepare or
  * remote depending on RMID.
  */
-public int tm_prepare_combined(atmi_xa_tx_info_t *p_xai, short rmid)
+expublic int tm_prepare_combined(atmi_xa_tx_info_t *p_xai, short rmid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* Check is this local */
     if (rmid == G_atmi_env.xa_rmid)
@@ -143,12 +143,12 @@ out:
  * @param p_xai
  * @return XA error code.
  */
-public int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* we should start new transaction... */
-    if (SUCCEED!=(ret = atmi_xa_rollback_entry(atmi_xa_get_branch_xid(p_xai), 
+    if (EXSUCCEED!=(ret = atmi_xa_rollback_entry(atmi_xa_get_branch_xid(p_xai), 
             0)))
     {
         NDRX_LOG(log_error, "Failed to abort transaction!");
@@ -171,21 +171,21 @@ out:
  * @param p_xai
  * @return SUCCEED/FAIL
  */
-public int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
+expublic int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
 {
     UBFH* p_ub;
             
     /* Call the remote TM.
      * TODO: How about error handling? 
      */
-    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMABORT, TRUE, rmid, p_xai);
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMABORT, EXTRUE, rmid, p_xai);
 
     if (NULL==p_ub)    
-        return FAIL;
+        return EXFAIL;
     else
     {
         tpfree((char *)p_ub);
-        return SUCCEED;
+        return EXSUCCEED;
     }
 }
 
@@ -193,9 +193,9 @@ public int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
  * Combined rollback of to commit. Selects automatically do the local rollback or
  * remote depending on RMID.
  */
-public int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid)
+expublic int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* Check is this local */
     if (rmid == G_atmi_env.xa_rmid)
@@ -220,12 +220,12 @@ out:
  * @param p_xai
  * @return XA error code.
  */
-public int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* we should start new transaction... */
-    if (SUCCEED!=(ret = atmi_xa_commit_entry(atmi_xa_get_branch_xid(p_xai), 0)))
+    if (EXSUCCEED!=(ret = atmi_xa_commit_entry(atmi_xa_get_branch_xid(p_xai), 0)))
     {
         NDRX_LOG(log_error, "Failed to commit transaction!");
         
@@ -248,21 +248,21 @@ out:
  * @param p_xai
  * @return SUCCEED/FAIL
  */
-public int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
+expublic int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
 {
     UBFH* p_ub;
             
     /* Call the remote TM.
      * TODO: How about error handling? 
      */
-    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMCOMMIT, TRUE, rmid, p_xai);
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMCOMMIT, EXTRUE, rmid, p_xai);
 
     if (NULL==p_ub)    
-        return FAIL;
+        return EXFAIL;
     else
     {
         tpfree((char *)p_ub);
-        return SUCCEED;
+        return EXSUCCEED;
     }
 }
 
@@ -270,9 +270,9 @@ public int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
  * Combined commit of to commit. Selects automatically do the local commit or
  * remote depending on RMID.
  */
-public int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid)
+expublic int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* Check is this local */
     if (rmid == G_atmi_env.xa_rmid)

@@ -61,9 +61,9 @@
  * @param context
  * @return 
  */
-public int cmd_brcon (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_brcon (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridge_info_t *brcall = (bridge_info_t *)call;
     
     /* Will not check for error, bad call could case server to exit. */
@@ -83,9 +83,9 @@ out:
  * @param context
  * @return 
  */
-public int cmd_brdiscon (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_brdiscon (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridge_info_t *brcall = (bridge_info_t *)call;
 
     /* Will not check for error, bad call could case server to exit. */
@@ -103,20 +103,20 @@ out:
  * @param count - final count.
  * @return 
  */
-public int brd_lock_and_update_shm(int nodeid, char *svc_nm, int count, char mode)
+expublic int brd_lock_and_update_shm(int nodeid, char *svc_nm, int count, char mode)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     /* ###################### CRITICAL SECTION ###################### */
     /* So we make this part critical... */
-    if (SUCCEED!=ndrx_lock_svc_op(__func__))
+    if (EXSUCCEED!=ndrx_lock_svc_op(__func__))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     ret=ndrx_shm_install_svc_br(svc_nm, 0, 
-                TRUE, nodeid, count, mode, 0);
+                EXTRUE, nodeid, count, mode, 0);
 
 
     /* Remove the lock! */
@@ -135,9 +135,9 @@ out:
  * @param context
  * @return 
  */
-public int cmd_brrefresh (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_brrefresh (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridge_refresh_t *refresh = (bridge_refresh_t *)call;
     int i, j;
     bridgedef_t* br = brd_get_bridge(call->caller_nodeid);
@@ -173,12 +173,12 @@ public int cmd_brrefresh (command_call_t * call, char *data, size_t len, int con
          */
         
         /* Update shared mem. */
-        if (SUCCEED!=brd_lock_and_update_shm(br->nodeid, 
+        if (EXSUCCEED!=brd_lock_and_update_shm(br->nodeid, 
                 ref_ent->svc_nm, ref_ent->count, ref_ent->mode))
         {
             NDRX_LOG(log_error, "Failed to update shared mem for [%s]/%d/%c!",
                     ref_ent->svc_nm, ref_ent->count, ref_ent->mode);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (NULL!=(svc_ent = brd_get_svc_brhash(br, refresh->svcs[i].svc_nm)))
@@ -211,10 +211,10 @@ public int cmd_brrefresh (command_call_t * call, char *data, size_t len, int con
             {
                 NDRX_LOG(log_debug, "Adding service to bridge svc hash");
                 /* Add that stuff to bridge! We run in full mode. */
-                if (SUCCEED!=brd_add_svc_brhash(br, ref_ent->svc_nm, 
+                if (EXSUCCEED!=brd_add_svc_brhash(br, ref_ent->svc_nm, 
                         ref_ent->count))
                 {
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
         }
@@ -274,7 +274,7 @@ out:
  * @param send_size
  * @param params
  */
-public void getbrs_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void getbrs_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_getbrs_t * info = (command_reply_getbrs_t *)reply;
     bridgedef_t *cur = NULL;
@@ -309,14 +309,14 @@ public void getbrs_reply_mod(command_reply_t *reply, size_t *send_size, mod_para
  * @param context
  * @return 
  */
-public int cmd_getbrs (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_getbrs (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     NDRX_LOG(log_warn, "cmd_getbrs: call flags 0x%x", call->flags);
 
     /* Generate list of connected bridges... (in callback) */
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, getbrs_reply_mod, 
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, getbrs_reply_mod, 
             0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);

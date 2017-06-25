@@ -58,21 +58,21 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private int request_info(char *qname);
+exprivate int request_info(char *qname);
 
 /**
  * Do actions required for restart.
  */
-public int do_restart_actions(void)
+expublic int do_restart_actions(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
     
     /* Load app config */
-    if (SUCCEED!=(ret = load_active_config(&G_app_config, &G_process_model,
+    if (EXSUCCEED!=(ret = load_active_config(&G_app_config, &G_process_model,
             &G_process_model_hash, &G_process_model_pid_hash)))
     {
         NDRX_LOG(log_error, "Failed to load active configuration - "
@@ -91,10 +91,10 @@ public int do_restart_actions(void)
     
     qlist = ndrx_sys_mqueue_list_make(G_sys_config.qpath, &ret);
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "posix queue listing failed!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     LL_FOREACH(qlist,elt)
@@ -106,7 +106,7 @@ public int do_restart_actions(void)
         }
         
         /* Check the status of above run */
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
             goto out;
     }
 
@@ -126,24 +126,24 @@ out:
 /**
  * Send info request to server.
  */
-private int request_info(char *qname)
+exprivate int request_info(char *qname)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_call_t call;
     memset(&call, 0, sizeof(call));
     
-    if (SUCCEED!=(cmd_generic_call(NDRXD_COM_SRVINFO_RQ, NDRXD_SRC_ADMIN,
+    if (EXSUCCEED!=(cmd_generic_call(NDRXD_COM_SRVINFO_RQ, NDRXD_SRC_ADMIN,
                 NDRXD_CALL_TYPE_GENERIC,
                 &call, sizeof(call),
                 G_command_state.listenq_str,
                 G_command_state.listenq,
-                (mqd_t)FAIL,
+                (mqd_t)EXFAIL,
                 qname,
                 0, NULL,
                 NULL,
                 NULL,
                 NULL,
-                FALSE)))
+                EXFALSE)))
     {
         /* Will ignore any error */
         NDRX_LOG(log_error, "Failed to call: [%s]", qname);
@@ -156,16 +156,16 @@ out:
  * Do checking about shall we switch to normal mode.
  * @return 
  */
-public int do_restart_chk(void)
+expublic int do_restart_chk(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int delta;
     
     if ((delta=ndrx_stopwatch_get_delta_sec(&(G_sys_config.time_from_restart))) > G_app_config->restart_to_check)
     {
         NDRX_LOG(log_warn, "Restart learning time spent over... "
                 "switching to normal state!");
-        G_sys_config.restarting = FALSE;
+        G_sys_config.restarting = EXFALSE;
     }
     else
     {

@@ -82,10 +82,10 @@ struct err_msg
  * Printer error to stderr
  * @param str
  */
-public void N_error (char *str)
+expublic void N_error (char *str)
 {
     NSTD_TLS_ENTRY;
-    if (EOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
+    if (EXEOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
         fprintf(stderr, "%s:%d:%s (%s)\n", str, 
                 G_nstd_tls->M_nstd_error, 
                 NSTD_ERROR_DESCRIPTION(G_nstd_tls->M_nstd_error),
@@ -101,11 +101,11 @@ public void N_error (char *str)
  * This is not thread safe (as all other functions).
  * @param error_code
  */
-public char * Nstrerror (int err)
+expublic char * Nstrerror (int err)
 {
     NSTD_TLS_ENTRY;
    
-    if (EOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
+    if (EXEOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
     {
         snprintf(G_nstd_tls->errbuf, sizeof(G_nstd_tls->errbuf), 
                                 "%d:%s (last error %d: %s)",
@@ -127,7 +127,7 @@ public char * Nstrerror (int err)
  * ATMI standard
  * @return - pointer to int holding error code?
  */
-public int * _Nget_Nerror_addr (void)
+expublic int * _Nget_Nerror_addr (void)
 {
     NSTD_TLS_ENTRY;
     return &(G_nstd_tls->M_nstd_error);
@@ -139,7 +139,7 @@ public int * _Nget_Nerror_addr (void)
  * @param msg
  * @return
  */
-public void _Nset_error(int error_code)
+expublic void _Nset_error(int error_code)
 {
     NSTD_TLS_ENTRY;
     if (!G_nstd_tls->M_nstd_error)
@@ -148,7 +148,7 @@ public void _Nset_error(int error_code)
         NDRX_LOG(log_warn, "_Nset_error: %d (%s)", 
                                 error_code, NSTD_ERROR_DESCRIPTION(error_code));
  */
-        G_nstd_tls->M_nstd_error_msg_buf[0] = EOS;
+        G_nstd_tls->M_nstd_error_msg_buf[0] = EXEOS;
         G_nstd_tls->M_nstd_error = error_code;
     }
 }
@@ -159,7 +159,7 @@ public void _Nset_error(int error_code)
  * @param msg
  * @return
  */
-public void _Nset_error_msg(int error_code, char *msg)
+expublic void _Nset_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
@@ -170,7 +170,7 @@ public void _Nset_error_msg(int error_code, char *msg)
         msg_len = strlen(msg);
         err_len = (msg_len>MAX_ERROR_LEN)?MAX_ERROR_LEN:msg_len;
 
-        G_nstd_tls->M_nstd_error_msg_buf[0] = EOS;
+        G_nstd_tls->M_nstd_error_msg_buf[0] = EXEOS;
         strncat(G_nstd_tls->M_nstd_error_msg_buf, msg, err_len);
         G_nstd_tls->M_nstd_error = error_code;
     }
@@ -183,9 +183,9 @@ public void _Nset_error_msg(int error_code, char *msg)
  * @param fmt - format stirng
  * @param ... - format details
  */
-public void _Nset_error_fmt(int error_code, const char *fmt, ...)
+expublic void _Nset_error_fmt(int error_code, const char *fmt, ...)
 {
-    char msg[MAX_ERROR_LEN+1] = {EOS};
+    char msg[MAX_ERROR_LEN+1] = {EXEOS};
     va_list ap;
     NSTD_TLS_ENTRY;
 
@@ -204,17 +204,17 @@ public void _Nset_error_fmt(int error_code, const char *fmt, ...)
 /**
  * Unset any error data currently in use
  */
-public void _Nunset_error(void)
+expublic void _Nunset_error(void)
 {
     NSTD_TLS_ENTRY;
-    G_nstd_tls->M_nstd_error_msg_buf[0]=EOS;
+    G_nstd_tls->M_nstd_error_msg_buf[0]=EXEOS;
     G_nstd_tls->M_nstd_error = BMINVAL;
 }
 /**
  * Return >0 if error is set
  * @return 
  */
-public int _Nis_error(void)
+expublic int _Nis_error(void)
 {
     NSTD_TLS_ENTRY;   
     return G_nstd_tls->M_nstd_error;
@@ -224,7 +224,7 @@ public int _Nis_error(void)
  * Append error message
  * @param msg
  */
-public void _Nappend_error_msg(char *msg)
+expublic void _Nappend_error_msg(char *msg)
 {
     int free_space;
     int app_error_len = strlen(msg);

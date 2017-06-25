@@ -61,7 +61,7 @@
     if (!M_init) { \
 	MUTEX_LOCK; \
         UBF_DBG_INIT(("UBF", UBFDEBUGLEV));\
-        M_init=TRUE;\
+        M_init=EXTRUE;\
 	MUTEX_UNLOCK;\
     }\
 }\
@@ -81,16 +81,16 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-static volatile bool M_init = FALSE;
+static volatile int M_init = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Initialize bisubf buffer
  * Size already includes last BBADFLDID! Which always must stay as BBADFLDID!
  */
-public int Binit (UBFH * p_ub, BFLDLEN len)
+expublic int Binit (UBFH * p_ub, BFLDLEN len)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBF_header_t *ubf_h = (UBF_header_t *)p_ub;
     
     UBF_LOG(log_debug, "Binit p_ub=%p len=%d", p_ub, len);
@@ -99,13 +99,13 @@ public int Binit (UBFH * p_ub, BFLDLEN len)
     {
         /* Null buffer */
         _Fset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else if (len < sizeof(UBF_header_t))
     {
         _Fset_error_fmt(BNOSPACE, "Minimum: %d, but got: %d",
                                     sizeof(UBF_header_t), len);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -130,13 +130,13 @@ public int Binit (UBFH * p_ub, BFLDLEN len)
  * BFLDID should stay at BADFLID, because will not be overwritten.
  * Also last entry always must at BBADFLDID! This is the rule.
  */
-public int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
+expublic int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
 {
     API_ENTRY;
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "Badd: arguments fail!");
-        return FAIL;
+        return EXFAIL;
     }
     
     return _Badd (p_ub, bfldid, buf, len, NULL);
@@ -151,15 +151,15 @@ public int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
  * @param buflen
  * @return 
  */
-public int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * buflen)
 {
     API_ENTRY;
 
-    if (SUCCEED!=validate_entry(p_ub, bfldid,occ,0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid,occ,0))
     {
         UBF_LOG(log_warn, "Bget: arguments fail!");
-        return FAIL; /* <<<< RETURN HERE! */
+        return EXFAIL; /* <<<< RETURN HERE! */
     }
 
     return _Bget (p_ub, bfldid, occ, buf, buflen);
@@ -172,9 +172,9 @@ public int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
  * @param occ
  * @return
  */
-public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
+expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     /* BFLDID   *p_bfldid = &hdr->bfldid; */
     dtype_str_t *dtype;
@@ -200,10 +200,10 @@ public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
 #endif
 /*******************************************************************************/
     API_ENTRY;
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "Bdel: arguments fail!");
-        ret=FAIL;
+        ret=EXFAIL;
         return ret; /* <<<< RETURN HERE! */
     }
 /***************************************** DEBUG *******************************/
@@ -258,7 +258,7 @@ public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
     else
     {
         _Fset_error(BNOTPRES);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
 /***************************************** DEBUG *******************************/
@@ -311,15 +311,15 @@ public int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param
  * @return
  */
-public int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len)
 {
     API_ENTRY; /* Standard initialization */
 
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "Bchg: arguments fail!");
-        return FAIL; /* <<<< RETURN HERE! */
+        return EXFAIL; /* <<<< RETURN HERE! */
     }
 
     return _Bchg(p_ub, bfldid, occ, buf, len, NULL);
@@ -328,13 +328,13 @@ public int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 /**
  * Return BFLDID from name!
  */
-public BFLDID Bfldid (char *fldnm)
+expublic BFLDID Bfldid (char *fldnm)
 {
     UBF_field_def_t *p_fld=NULL;
 
     API_ENTRY;
 
-    if (SUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=prepare_type_tables())
     {
             return BBADFLDID;
     }
@@ -354,12 +354,12 @@ public BFLDID Bfldid (char *fldnm)
 /**
  * Return field name from given id
  */
-public char * Bfname (BFLDID bfldid)
+expublic char * Bfname (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
     API_ENTRY;
 
-    if (SUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=prepare_type_tables())
     {
     goto out;
     }
@@ -389,14 +389,14 @@ out:
  * @param p_len
  * @return
  */
-public char * Bfind (UBFH * p_ub, BFLDID bfldid,
+expublic char * Bfind (UBFH * p_ub, BFLDID bfldid,
                                         BFLDOCC occ, BFLDLEN * p_len)
 {
     API_ENTRY;
 
     UBF_LOG(log_debug, "Bfind: bfldid: %d occ: %hd", bfldid, occ);
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "Bdel: arguments fail!");
         return NULL;
@@ -416,10 +416,10 @@ public char * Bfind (UBFH * p_ub, BFLDID bfldid,
  * @param usrtype
  * @return
  */
-public int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
+expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
                                 BFLDLEN len, int usrtype)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cvn_len=0;
     char *cvn_buf;
 
@@ -438,14 +438,14 @@ public int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "CBadd: arguments fail!");
-        return FAIL;
+        return EXFAIL;
     }
 
     /* validate user specified type */
-    VALIDATE_USER_TYPE(usrtype, return FAIL);
+    VALIDATE_USER_TYPE(usrtype, return EXFAIL);
 
     /* if types are the same then do direct call */
     if (usrtype==to_type)
@@ -460,7 +460,7 @@ public int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
                                 &cvn_len, CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "%s: Malloc failed!", fn);
-        return FAIL; /* <<<< RETURN!!!! */
+        return EXFAIL; /* <<<< RETURN!!!! */
     }
 
     cvn_buf = ubf_convert(usrtype, CNV_DIR_IN, buf, len,
@@ -474,7 +474,7 @@ public int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     {
         UBF_LOG(log_error, "%s: failed to convert data!", fn);
         /* Error should be provided by conversation function */
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     /* Free up buffer */
@@ -498,10 +498,10 @@ public int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
  * @param usrtype
  * @return
  */
-public int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                                 char * buf, BFLDLEN len, int usrtype)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cvn_len=0;
     char *cvn_buf;
     char tmp_buf[CF_TEMP_BUF_MAX];
@@ -518,13 +518,13 @@ public int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
     API_ENTRY; /* Standard initialization */
 
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "CBchg: arguments fail!");
-        return FAIL; /* <<<< RETURN HERE! */
+        return EXFAIL; /* <<<< RETURN HERE! */
     }
     /* validate user specified type */
-    VALIDATE_USER_TYPE(usrtype, return FAIL);
+    VALIDATE_USER_TYPE(usrtype, return EXFAIL);
 
     /* if types are the same then do direct call */
     if (usrtype==to_type)
@@ -539,7 +539,7 @@ public int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                                 CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "CBchg: Malloc failed!");
-        return FAIL; /* <<<< RETURN!!!! */
+        return EXFAIL; /* <<<< RETURN!!!! */
     }
 
     cvn_buf = ubf_convert(usrtype, CNV_DIR_IN, buf, len,
@@ -553,7 +553,7 @@ public int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     {
         UBF_LOG(log_error, "CBchg: failed to convert data!");
         /* Error should be provided by conversation function */
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     /* Free up buffer */
@@ -567,10 +567,10 @@ public int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 }
 
 /* Have to think here, not?  */
-public int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
+expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
                                 char *buf, BFLDLEN *len, int usrtype)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int from_type = (bfldid>>EFFECTIVE_BITS);
     BFLDLEN tmp_len = 0;
     char *cvn_buf;
@@ -582,14 +582,14 @@ public int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
 /*******************************************************************************/
     
     API_ENTRY;
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "CBget: arguments fail!");
-        return FAIL;
+        return EXFAIL;
     }
 
     /* validate user specified type */
-    VALIDATE_USER_TYPE(usrtype, return FAIL);
+    VALIDATE_USER_TYPE(usrtype, return EXFAIL);
 
     /* if types are the same then do direct call */
     if (usrtype==from_type)
@@ -610,17 +610,17 @@ public int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
         {
             UBF_LOG(log_error, "CBget: failed to convert data!");
             /* Error should be provided by conversation function */
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
     else
     {
         UBF_LOG(log_error, "CBget: Field not present!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/
     #ifdef UBF_API_DEBUG
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "CBget got data", buf, len);
     }
@@ -638,7 +638,7 @@ public int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
  */
 int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBF_header_t *src_h = (UBF_header_t *)p_ub_src;
     UBF_header_t *dst_h = (UBF_header_t *)p_ub_dst;
     int dst_buf_len;
@@ -647,39 +647,39 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
     UBF_LOG(log_debug, "Bcpy: About to copy from FB=%p to FB=%p",
                                     p_ub_src, p_ub_dst);
 
-    if (SUCCEED==ret && NULL==p_ub_src)
+    if (EXSUCCEED==ret && NULL==p_ub_src)
     {
         _Fset_error_msg(BNOTFLD, "p_ub_src is NULL!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && NULL==p_ub_dst)
+    if (EXSUCCEED==ret && NULL==p_ub_dst)
     {
         _Fset_error_msg(BNOTFLD, "p_ub_dst is NULL!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && 0!=strncmp(src_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
+    if (EXSUCCEED==ret && 0!=strncmp(src_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
         _Fset_error_msg(BNOTFLD, "source buffer magic failed!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && 0!=strncmp(dst_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
+    if (EXSUCCEED==ret && 0!=strncmp(dst_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
         _Fset_error_msg(BNOTFLD, "destination buffer magic failed!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
+    if (EXSUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
     {
         _Fset_error_fmt(BNOSPACE, "Destination buffer too short. "
                                     "Source len: %d dest used: %d",
                                     dst_h->buf_len, src_h->bytes_used);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         /* save some original characteristics of dest buffer */
         dst_buf_len = dst_h->buf_len;
@@ -710,15 +710,15 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
  */
 long Bused (UBFH *p_ub)
 {
-    long ret=FAIL;
+    long ret=EXFAIL;
     char fn[] = "Bused";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     API_ENTRY;
 
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FALSE;
+        ret=EXFALSE;
     }
     else
     {
@@ -755,10 +755,10 @@ BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid)
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "_Boccur: arguments fail!");
-        return FAIL;
+        return EXFAIL;
     }
 
     return _Boccur (p_ub, bfldid);
@@ -773,10 +773,10 @@ int Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     API_ENTRY;
     
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "_Bpres: arguments fail!");
-        return FALSE;
+        return EXFALSE;
     }
 
     return _Bpres(p_ub, bfldid, occ);
@@ -787,12 +787,12 @@ int Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param bfldid
  * @return
  */
-public int Bfldtype (BFLDID bfldid)
+expublic int Bfldtype (BFLDID bfldid)
 {
     return bfldid >> EFFECTIVE_BITS;
 }
 
-public char * Bboolco (char * expr)
+expublic char * Bboolco (char * expr)
 {
     API_ENTRY;
     {
@@ -807,7 +807,7 @@ public char * Bboolco (char * expr)
     }
 }
 
-public int Bboolev (UBFH * p_ub, char *tree)
+expublic int Bboolev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
     return _Bboolev (p_ub, tree);
@@ -819,13 +819,13 @@ public int Bboolev (UBFH * p_ub, char *tree)
  * @param tree
  * @return
  */
-public double Bfloatev (UBFH * p_ub, char *tree)
+expublic double Bfloatev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
     return _Bfloatev (p_ub, tree);
 }
 
-public void Btreefree (char *tree)
+expublic void Btreefree (char *tree)
 {
     API_ENTRY;
     _Btreefree (tree);
@@ -843,7 +843,7 @@ public void Btreefree (char *tree)
  * @param len
  * @return -1 (FAIL)/0 (End of Buffer)/1 (Found)
  */
-public int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len)
+expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len)
 {
     char fn[] = "Bnext";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -853,29 +853,29 @@ public int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
     else if (NULL==bfldid || NULL==occ)
     {
         _Fset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
-        return FAIL;
+        return EXFAIL;
     }
     else if (*bfldid != BFIRSTFLDID && state.p_ub != p_ub)
     {
         _Fset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
                                     "used for different state", fn,
                                     state.p_ub, p_ub);
-        return FAIL;
+        return EXFAIL;
     }
     else if (*bfldid != BFIRSTFLDID && state.size!=hdr->bytes_used)
     {
         _Fset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
                                     "from last search", fn,
                                     state.size, hdr->bytes_used);
-        return FAIL;
+        return EXFAIL;
     }
     else
     {
@@ -894,16 +894,16 @@ public int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *
  * @param fldlist
  * @return SUCCEED/FAIL
  */
-public int Bproj (UBFH * p_ub, BFLDID * fldlist)
+expublic int Bproj (UBFH * p_ub, BFLDID * fldlist)
 {
     char fn[] = "Bproj";
     int processed;
     API_ENTRY;
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
     else
     {
@@ -919,23 +919,23 @@ public int Bproj (UBFH * p_ub, BFLDID * fldlist)
  * @param fldlist
  * @return
  */
-public int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+expublic int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                                     BFLDID * fldlist)
 {
     char fn[] = "Bprojcpy";
     API_ENTRY;
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
         _Bappend_error_msg("(Bprojcpy: arguments fail for src buf!)");
-        return FAIL;
+        return EXFAIL;
     }
-    else if (SUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
+    else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
         _Bappend_error_msg("(Bprojcpy: arguments fail for dst buf!)");
-        return FAIL;
+        return EXFAIL;
     }
     else
     {
@@ -950,10 +950,10 @@ public int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
  * @param
  * @return
  */
-public int Bindex (UBFH * p_ub, BFLDOCC occ)
+expublic int Bindex (UBFH * p_ub, BFLDOCC occ)
 {
     UBF_LOG(log_debug, "Bindex: Not implemented - ignore!");
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -961,7 +961,7 @@ public int Bindex (UBFH * p_ub, BFLDOCC occ)
  * @param p_ub
  * @return 0 - number of fields indexed.
  */
-public BFLDOCC Bunindex (UBFH * p_ub)
+expublic BFLDOCC Bunindex (UBFH * p_ub)
 {
     UBF_LOG(log_debug, "Bunindex: Not implemented - ignore!");
     return 0;
@@ -972,7 +972,7 @@ public BFLDOCC Bunindex (UBFH * p_ub)
  * @param p_ub
  * @return 0 - size used for index
  */
-public long Bidxused (UBFH * p_ub)
+expublic long Bidxused (UBFH * p_ub)
 {
     UBF_LOG(log_debug, "Bidxused: Not implemented - ignore!");
     return 0;
@@ -984,10 +984,10 @@ public long Bidxused (UBFH * p_ub)
  * @param occ
  * @return
  */
-public int Brstrindex (UBFH * p_ub, BFLDOCC occ)
+expublic int Brstrindex (UBFH * p_ub, BFLDOCC occ)
 {
     UBF_LOG(log_debug, "Brstrindex: Not implemented - ignore!");
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -996,19 +996,19 @@ public int Brstrindex (UBFH * p_ub, BFLDOCC occ)
  * @param bfldid
  * @return
  */
-public int Bdelall (UBFH *p_ub, BFLDID bfldid)
+expublic int Bdelall (UBFH *p_ub, BFLDID bfldid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "Bdelall";
     int processed;
     API_ENTRY;
     
     UBF_LOG(log_warn, "%s: enter", fn);
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -1016,10 +1016,10 @@ public int Bdelall (UBFH *p_ub, BFLDID bfldid)
         ret=_Bproj (p_ub, &bfldid, PROJ_MODE_DELALL, &processed);
     }
 
-    if (SUCCEED==ret && 0==processed)
+    if (EXSUCCEED==ret && 0==processed)
     {
         /* Set error that none of fields have been deleted */
-        ret=FAIL;
+        ret=EXFAIL;
         _Fset_error_msg(BNOTPRES, "No fields have been deleted");
     }
     
@@ -1033,19 +1033,19 @@ public int Bdelall (UBFH *p_ub, BFLDID bfldid)
  * @param fldlist
  * @return
  */
-public int Bdelete (UBFH *p_ub, BFLDID *fldlist)
+expublic int Bdelete (UBFH *p_ub, BFLDID *fldlist)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "Bdelete";
     int processed;
     API_ENTRY;
 
     UBF_LOG(log_warn, "%s: enter", fn);
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -1053,10 +1053,10 @@ public int Bdelete (UBFH *p_ub, BFLDID *fldlist)
         ret=_Bproj (p_ub, fldlist, PROJ_MODE_DELETE, &processed);
     }
 
-    if (SUCCEED==ret && 0==processed)
+    if (EXSUCCEED==ret && 0==processed)
     {
         /* Set error that none of fields have been deleted */
-        ret=FAIL;
+        ret=EXFAIL;
         _Fset_error_msg(BNOTPRES, "No fields have been deleted");
     }
     
@@ -1069,7 +1069,7 @@ public int Bdelete (UBFH *p_ub, BFLDID *fldlist)
  * @param bfldid
  * @return 
  */
-public BFLDOCC Bfldno (BFLDID bfldid)
+expublic BFLDOCC Bfldno (BFLDID bfldid)
 {
     UBF_LOG(log_debug, "Bfldno: Mask: %d", EFFECTIVE_BITS_MASK);
     return (BFLDOCC) bfldid & EFFECTIVE_BITS_MASK;
@@ -1080,15 +1080,15 @@ public BFLDOCC Bfldno (BFLDID bfldid)
  * @param p_ub - FB to test.
  * @return TRUE/FALSE
  */
-public int Bisubf (UBFH *p_ub)
+expublic int Bisubf (UBFH *p_ub)
 {
-    int ret=TRUE;
+    int ret=EXTRUE;
     char fn[] = "Bisubf";
     API_ENTRY;
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FALSE;
+        ret=EXFALSE;
         _Bunset_error();
     }
     
@@ -1100,17 +1100,17 @@ public int Bisubf (UBFH *p_ub)
  * @param p_Fb
  * @return -1 on error or free buffer space
  */
-public long Bunused (UBFH *p_ub)
+expublic long Bunused (UBFH *p_ub)
 {
-    long ret=FAIL;
+    long ret=EXFAIL;
     char fn[] = "Bunused";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     API_ENTRY;
 
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FALSE;
+        ret=EXFALSE;
     }
     else
     {
@@ -1126,17 +1126,17 @@ public long Bunused (UBFH *p_ub)
  * @param p_ub
  * @return
  */
-public long Bsizeof (UBFH *p_ub)
+expublic long Bsizeof (UBFH *p_ub)
 {
-    long ret=FAIL;
+    long ret=EXFAIL;
     char fn[] = "Bsizeof";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     API_ENTRY;
 
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FALSE;
+        ret=EXFALSE;
     }
     else
     {
@@ -1152,7 +1152,7 @@ public long Bsizeof (UBFH *p_ub)
  * @param bfldid
  * @return NULL (on error)/field type descr
  */
-public char * Btype (BFLDID bfldid)
+expublic char * Btype (BFLDID bfldid)
 {
     int type = bfldid >> EFFECTIVE_BITS;
     API_ENTRY;
@@ -1173,17 +1173,17 @@ public char * Btype (BFLDID bfldid)
  * @param p_ub
  * @return 
  */
-public int Bfree (UBFH *p_ub)
+expublic int Bfree (UBFH *p_ub)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "Bfree";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     API_ENTRY;
     
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -1201,7 +1201,7 @@ public int Bfree (UBFH *p_ub)
  * @param v - field size
  * @return
  */
-public UBFH * Balloc (BFLDOCC f, BFLDLEN v)
+expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 {
     UBFH *p_ub=NULL;
     long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
@@ -1221,7 +1221,7 @@ public UBFH * Balloc (BFLDOCC f, BFLDLEN v)
         }
         else
         {
-            if (SUCCEED!=Binit(p_ub, alloc_size))
+            if (EXSUCCEED!=Binit(p_ub, alloc_size))
             {
                 NDRX_FREE(p_ub); /* Free up allocated memory! */
                 p_ub=NULL;
@@ -1244,7 +1244,7 @@ public UBFH * Balloc (BFLDOCC f, BFLDLEN v)
  * @param v
  * @return 
  */
-public UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
+expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
@@ -1253,7 +1253,7 @@ public UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 
     UBF_LOG(log_debug, "Brealloc: enter p_ub=%p!", p_ub);
     
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         p_ub=NULL;
@@ -1311,24 +1311,24 @@ public UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
  * @param p_ub_src - source buffer to take values out from.
  * @return SUCEED/FAIL
  */
-public int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
+expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
     char fn[] = "Bupdate";
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     API_ENTRY;
     /* Do standard validation */
     UBF_LOG(log_debug, "Entering %s", fn);
-    if (SUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
         _Bappend_error_msg("(Bupdate: arguments fail for src buf!)");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
+    else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
         _Bappend_error_msg("(Bupdate: arguments fail for dst buf!)");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -1345,24 +1345,24 @@ public int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
  * @param p_ub_src
  * @return 
  */
-public int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
+expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
     char fn[] = "Bconcat";
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     API_ENTRY;
     /* Do standard validation */
     UBF_LOG(log_debug, "Entering %s", fn);
-    if (SUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
         _Bappend_error_msg("(Bconcat: arguments fail for src buf!)");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
+    else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
         _Bappend_error_msg("(Bconcat: arguments fail for dst buf!)");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -1377,7 +1377,7 @@ public int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
  * CBfind API entry
  * @return NULL/ptr to value
  */
-public char * CBfind (UBFH * p_ub, 
+expublic char * CBfind (UBFH * p_ub, 
                     BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype)
 {
     char *fn = "CBfind";
@@ -1386,7 +1386,7 @@ public char * CBfind (UBFH * p_ub,
     UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", fn, bfldid, occ);
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         return NULL;
@@ -1409,7 +1409,7 @@ public char * CBfind (UBFH * p_ub,
  * @param extralen (IN) - extra buffer to allocate/ (OUT) - size of bufer in use.
  * @return NULL (failure)/ptr - in case of success
  */
-public char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
+expublic char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
                                     BFLDOCC occ, int usrtype, BFLDLEN *extralen)
 {
     char *ret=NULL;
@@ -1418,7 +1418,7 @@ public char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
     UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", fn, bfldid, occ);
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "CBgetalloc: arguments fail!");
         return NULL;
@@ -1444,7 +1444,7 @@ public char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
  * @param len
  * @return
  */
-public BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
+expublic BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
                                         char * buf, BFLDLEN len)
 {
     char *fn = "Bfindocc";
@@ -1455,13 +1455,13 @@ public BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
     if (NULL==buf)
     {
          _Fset_error_fmt(BEINVAL, "buf is NULL");
-         return FAIL;
+         return EXFAIL;
     }
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
 
 
@@ -1479,7 +1479,7 @@ public BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
  * @param len
  * @return
  */
-public BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
+expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
                                         char * buf, BFLDLEN len, int usrtype)
 {
     char *fn = "CBfindocc";
@@ -1490,18 +1490,18 @@ public BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
     if (NULL==buf)
     {
          _Fset_error_fmt(BEINVAL, "buf is NULL");
-         return FAIL;
+         return EXFAIL;
     }
  
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
 
     /* validate user specified type */
-    VALIDATE_USER_TYPE(usrtype, return FAIL);
+    VALIDATE_USER_TYPE(usrtype, return EXFAIL);
 
     /* validate user type */
 
@@ -1517,7 +1517,7 @@ public BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
  * @param len
  * @return NULL (on failure)/ ptr on success.
  */
-public char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen)
+expublic char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen)
 {
     char *fn = "Bgetalloc";
     API_ENTRY;
@@ -1525,7 +1525,7 @@ public char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extra
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         return NULL;
@@ -1539,7 +1539,7 @@ public char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extra
  * Bfindlast API entry
  * @return NULL/ptr to value
  */
-public char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
+expublic char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                     BFLDOCC *occ, BFLDLEN *len)
 {
     char *fn = "Bfindlast";
@@ -1548,7 +1548,7 @@ public char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         return NULL;
@@ -1562,7 +1562,7 @@ public char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
  * Bfindlast API entry
  * @return NULL/ptr to value
  */
-public int Bgetlast (UBFH *p_ub, BFLDID bfldid,
+expublic int Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len)
 {
     char *fn = "Bgetlast";
@@ -1571,10 +1571,10 @@ public int Bgetlast (UBFH *p_ub, BFLDID bfldid,
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
 
     /* Call the implementation */
@@ -1588,22 +1588,22 @@ public int Bgetlast (UBFH *p_ub, BFLDID bfldid,
  * @param outf
  * @return
  */
-public int Bfprint (UBFH *p_ub, FILE * outf)
+expublic int Bfprint (UBFH *p_ub, FILE * outf)
 {
     char *fn = "Bfprint";
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
     /* check output file */
     if (NULL==outf)
     {
         _Fset_error_msg(BEINVAL, "output file cannot be NULL!");
-        return FAIL;
+        return EXFAIL;
     }
 
     return _Bfprint (p_ub, outf);
@@ -1616,16 +1616,16 @@ public int Bfprint (UBFH *p_ub, FILE * outf)
  * @param outf
  * @return
  */
-public int Bprint (UBFH *p_ub)
+expublic int Bprint (UBFH *p_ub)
 {
     char *fn = "Bprint";
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
 
     return _Bfprint (p_ub, stdout);
@@ -1640,7 +1640,7 @@ public int Bprint (UBFH *p_ub)
  * @param from_len
  * @return
  */
-public char * Btypcvt (BFLDLEN * to_len, int to_type,
+expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len)
 {
     char *fn = "Btypcvt";
@@ -1687,22 +1687,22 @@ public char * Btypcvt (BFLDLEN * to_len, int to_type,
  * @param inf - file to read from 
  * @return SUCCEED/FAIL
  */
-public int Bextread (UBFH * p_ub, FILE *inf)
+expublic int Bextread (UBFH * p_ub, FILE *inf)
 {
     char *fn = "Bextread";
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
     /* check output file */
     if (NULL==inf)
     {
         _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
-        return FAIL;
+        return EXFAIL;
     }
     
     return _Bextread (p_ub, inf);
@@ -1713,7 +1713,7 @@ public int Bextread (UBFH * p_ub, FILE *inf)
  * @param tree - compiled expression tree
  * @param outf - file to print to tree
  */
-public void Bboolpr (char * tree, FILE *outf)
+expublic void Bboolpr (char * tree, FILE *outf)
 {
     char *fn = "Bboolpr";
     API_ENTRY;
@@ -1743,7 +1743,7 @@ public void Bboolpr (char * tree, FILE *outf)
  * @param buf
  * @return
  */
-public int Badds (UBFH *p_ub, BFLDID bfldid, char *buf)
+expublic int Badds (UBFH *p_ub, BFLDID bfldid, char *buf)
 {
     return CBadd(p_ub, bfldid, buf, 0, BFLD_STRING);
 }
@@ -1756,7 +1756,7 @@ public int Badds (UBFH *p_ub, BFLDID bfldid, char *buf)
  * @param buf
  * @return
  */
-public int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf)
+expublic int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf)
 {
     return CBchg(p_ub, bfldid, occ, buf, 0, BFLD_STRING);
 }
@@ -1769,7 +1769,7 @@ public int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf)
  * @param buf
  * @return
  */
-public int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf)
+expublic int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf)
 {
     return CBget(p_ub, bfldid, occ, buf, 0, BFLD_STRING);
 }
@@ -1782,7 +1782,7 @@ public int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf)
  * @param extralen
  * @return
  */
-public char * Bgetsa (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen)
+expublic char * Bgetsa (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen)
 {
     return CBgetalloc(p_ub, bfldid, occ, BFLD_STRING, extralen);
 }
@@ -1794,7 +1794,7 @@ public char * Bgetsa (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen)
  * @param occ
  * @return
  */
-public char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
+expublic char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 {
     return CBfind(p_ub, bfldid, occ, 0, BFLD_STRING);
 }
@@ -1805,22 +1805,22 @@ public char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param inf
  * @return
  */
-public int Bread  (UBFH * p_ub, FILE * inf)
+expublic int Bread  (UBFH * p_ub, FILE * inf)
 {
     char *fn = "Bread";
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
     /* check output file */
     if (NULL==inf)
     {
         _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
-        return FAIL;
+        return EXFAIL;
     }
 
     return _Bread (p_ub, inf);
@@ -1832,22 +1832,22 @@ public int Bread  (UBFH * p_ub, FILE * inf)
  * @param outf
  * @return
  */
-public int Bwrite (UBFH *p_ub, FILE * outf)
+expublic int Bwrite (UBFH *p_ub, FILE * outf)
 {
     char *fn = "_Bwrite";
     API_ENTRY;
 
     /* Do standard validation */
-    if (SUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
-        return FAIL;
+        return EXFAIL;
     }
     /* check output file */
     if (NULL==outf)
     {
         _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
-        return FAIL;
+        return EXFAIL;
     }
 
     return _Bwrite (p_ub, outf);
@@ -1861,14 +1861,14 @@ public int Bwrite (UBFH *p_ub, FILE * outf)
  * @param occ
  * @return 
  */
-public int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
+expublic int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 {
     API_ENTRY;
 
-    if (SUCCEED!=validate_entry(p_ub, bfldid,occ,0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid,occ,0))
     {
         UBF_LOG(log_warn, "Bget: arguments fail!");
-        return FAIL; /* <<<< RETURN HERE! */
+        return EXFAIL; /* <<<< RETURN HERE! */
     }
 
     return _Blen (p_ub, bfldid, occ);
@@ -1880,7 +1880,7 @@ public int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param functionPtr
  * @return SUCCEED/FAIL
  */
-public int Bboolsetcbf (char *funcname, 
+expublic int Bboolsetcbf (char *funcname, 
             long (*functionPtr)(UBFH *p_ub, char *funcname))
 {
     API_ENTRY;

@@ -56,27 +56,27 @@ extern int optind, optopt, opterr;
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public int G_langmode = HDR_C_LANG; /* Default mode C */
-public char G_privdata[FILENAME_MAX+1] = {EOS}; /* Private data for lang*/
-public char G_active_file[FILENAME_MAX+1] = {EOS}; /* file in progress  */
-public char *G_output_dir=".";
+expublic int G_langmode = HDR_C_LANG; /* Default mode C */
+expublic char G_privdata[FILENAME_MAX+1] = {EXEOS}; /* Private data for lang*/
+expublic char G_active_file[FILENAME_MAX+1] = {EXEOS}; /* file in progress  */
+expublic char *G_output_dir=".";
 
-public renderer_descr_t *M_renderer = NULL;
+expublic renderer_descr_t *M_renderer = NULL;
 /*---------------------------Statics------------------------------------*/
-private char **M_argv;
-private int M_argc;
-public FILE *G_outf=NULL;
+exprivate char **M_argv;
+exprivate int M_argc;
+expublic FILE *G_outf=NULL;
 
 /*
  * Mode functions
  */
-public renderer_descr_t M_renderer_tab[] =
+expublic renderer_descr_t M_renderer_tab[] =
 {
     {HDR_C_LANG, c_get_fullname, c_put_text_line, c_put_def_line, 
                  c_put_got_base_line, c_file_open, c_file_close},
     {HDR_GO_LANG, go_get_fullname, go_put_text_line, go_put_def_line, 
                  go_put_got_base_line, go_file_open, go_file_close},
-    {FAIL}
+    {EXFAIL}
 };
 
 /*---------------------------Prototypes---------------------------------*/
@@ -85,7 +85,7 @@ public renderer_descr_t M_renderer_tab[] =
  * Function for retrieving next file name
  */
 char *(*M_get_next) (int *ret);
-private int generate_files(void);
+exprivate int generate_files(void);
 
 
 /**
@@ -96,7 +96,7 @@ private int generate_files(void);
 char *get_next_from_arg (int *ret)
 {
 
-    *ret=SUCCEED;
+    *ret=EXSUCCEED;
     if (optind < M_argc)
     {
         char *fname = M_argv[optind];
@@ -132,7 +132,7 @@ char *get_next_from_env (int *ret)
         {
             _Fset_error_msg(BFTOPEN, "Field table directory not set - "
                          "check FLDTBLDIR env var");
-            *ret=FAIL;
+            *ret=EXFAIL;
             return NULL;
         }
         UBF_LOG(log_debug, "Load field dir [%s]", flddir);
@@ -142,7 +142,7 @@ char *get_next_from_env (int *ret)
         {
             _Fset_error_msg(BFTOPEN, "Field table list not set - "
                  "check FIELDTBLS env var");
-            *ret=FAIL;
+            *ret=EXFAIL;
             return NULL;
         }
 
@@ -173,7 +173,7 @@ char *get_next_from_env (int *ret)
  */
 int main(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int c;
     int dbglev;
     extern char *optarg;
@@ -198,13 +198,13 @@ int main(int argc, char **argv)
                 break;
             case ':':
                 NDRX_LOG(log_error,"-%c without filename\n", optopt);
-                ret=FAIL;
+                ret=EXFAIL;
                 break;
             case 'h': case '?':
                 printf("usage: %s [-D dbglev, legacy] [-d target directory] [field table ...]\n",
                         argv[0]);
                 
-                return FAIL;
+                return EXFAIL;
                 break;
             /* m - for mode, p - for private mode data (e.g. package name) */
             case 'm':
@@ -213,18 +213,18 @@ int main(int argc, char **argv)
                 if (HDR_MIN_LANG > G_langmode || HDR_MAX_LANG < G_langmode)
                 {
                     NDRX_LOG(log_debug, "Invalid language mode %d", G_langmode);
-                    return FAIL;
+                    return EXFAIL;
                 }
                 M_renderer = &M_renderer_tab[G_langmode];
                 break;
             case 'p':
                 strncpy(G_privdata, optarg, FILENAME_MAX);
-                G_privdata[FILENAME_MAX] = EOS;
+                G_privdata[FILENAME_MAX] = EXEOS;
                 break;
         }
     }
     
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         NDRX_LOG(log_debug, "Output directory is [%s]", G_output_dir);
         NDRX_LOG(log_debug, "Language mode [%d]", G_langmode);
@@ -246,14 +246,14 @@ int main(int argc, char **argv)
 
     ret=generate_files();
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         B_error("mkfldhdr");
     }
 
 
     NDRX_LOG(log_debug, "Finished with : %s",
-            ret==SUCCEED?"SUCCESS":"FAILURE");
+            ret==EXSUCCEED?"SUCCESS":"FAILURE");
 
     return ret;
 }
@@ -281,7 +281,7 @@ char *get_file_name(char *fname)
     {
         int len = strlen(p+1);
         strncpy(fname_conv, p+1, len);
-        fname_conv[len] = EOS;
+        fname_conv[len] = EXEOS;
 
         return fname_conv;
     }
@@ -291,9 +291,9 @@ char *get_file_name(char *fname)
  * Do the hard work - generate header files!
  * @return SUCCEED/FAIL
  */
-private int generate_files(void)
+exprivate int generate_files(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fname;
     FILE *inf=NULL, *outf=NULL;
     char out_f_name[FILENAME_MAX+1];
@@ -304,20 +304,20 @@ private int generate_files(void)
     /*
      * Process file by file
      */
-    while (SUCCEED==ret && NULL!=(fname=M_get_next(&ret)))
+    while (EXSUCCEED==ret && NULL!=(fname=M_get_next(&ret)))
     {
-        out_f_name[0] = EOS;
+        out_f_name[0] = EXEOS;
 
         /* Open field table file */
         if (NULL==(inf=NDRX_FOPEN(fname, "r")))
         {
             _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                 fname, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
         }
 
         /* Open output file */
-        if (SUCCEED==ret)
+        if (EXSUCCEED==ret)
         {
             strcpy(G_active_file, get_file_name(fname));
             
@@ -328,7 +328,7 @@ private int generate_files(void)
             {
                 _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                             out_f_name, strerror(errno));
-                ret=FAIL;
+                ret=EXFAIL;
             }
             else
             {
@@ -336,11 +336,11 @@ private int generate_files(void)
             }
         }
 
-        if (SUCCEED==ret)
+        if (EXSUCCEED==ret)
         {
             /* This will also do the check for duplicates! */
             ret=_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
-                                        M_renderer->put_got_base_line, fname, TRUE);
+                                        M_renderer->put_got_base_line, fname, EXTRUE);
         }
 
         /* close opened files. */
@@ -357,13 +357,13 @@ private int generate_files(void)
             G_outf=NULL;
         }
 
-        if (SUCCEED!=ret && EOS!=out_f_name[0])
+        if (EXSUCCEED!=ret && EXEOS!=out_f_name[0])
         {
             /* unlink last file */
             NDRX_LOG(log_debug, "Unlinking %s",out_f_name);
             unlink(out_f_name);
         }
-        else if (SUCCEED==ret)
+        else if (EXSUCCEED==ret)
         {
             NDRX_LOG(log_debug, "%s processed OK, output: %s",
                                             fname, out_f_name);

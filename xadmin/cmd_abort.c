@@ -62,44 +62,44 @@
  * @param svcnm - Service name of transaction manager.
  * @return SUCCEED/FAIL
  */
-private int call_tm(char *svcnm, char *tmxid, short tmrmid)
+exprivate int call_tm(char *svcnm, char *tmxid, short tmrmid)
 {
     UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_ABORTTRANS);
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     /* Setup the call buffer... */
     if (NULL==p_ub)
     {
         NDRX_LOG(log_error, "Failed to alloc FB!");        
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Do The TM call */
-    if (SUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
     {
         fprintf(stderr, "System error!\n");
         NDRX_LOG(log_error, "Failed to set TMXID: %s!", 
                 Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL!=tmrmid)
+    if (EXFAIL!=tmrmid)
     {
-        if (SUCCEED!=Bchg(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L))
         {
             fprintf(stderr, "System error!\n");
             NDRX_LOG(log_error, "Failed to set TMTXRMID: %s!", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
     /* printf("!!! About to call [%s]", svcnm); */
     /* This will return ATMI error */
-    if (NULL==(p_ub = atmi_xa_call_tm_generic_fb(ATMI_XA_ABORTTRANS, svcnm, FALSE, FAIL, 
+    if (NULL==(p_ub = atmi_xa_call_tm_generic_fb(ATMI_XA_ABORTTRANS, svcnm, EXFALSE, EXFAIL, 
         NULL, p_ub)))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -119,13 +119,13 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char tmxid_real[NDRX_XID_SERIAL_BUFSIZE+1];
     char srvcnm_real[MAXTIDENT+1];
-    short confirm = FALSE;
-    short tmrmid_real = FAIL;
+    short confirm = EXFALSE;
+    short tmrmid_real = EXFAIL;
     ncloptmap_t clopt[] =
     {
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
@@ -140,30 +140,30 @@ public int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     };
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Check for confirmation */
     if (!chk_confirm("Are you sure you want to abort the transaction?", confirm))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* call the transaction manager */
-    if (SUCCEED!=call_tm(srvcnm_real, tmxid_real, tmrmid_real))
+    if (EXSUCCEED!=call_tm(srvcnm_real, tmxid_real, tmrmid_real))
     {
         fprintf(stderr, "ERROR: %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     printf("OK\n");

@@ -58,12 +58,12 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_dynadvertise_t call;
-    short srvid=FAIL;
-    char svcnm[MAXTIDENT+1]={EOS};
+    short srvid=EXFAIL;
+    char svcnm[MAXTIDENT+1]={EXEOS};
     
     ncloptmap_t clopt[] =
     {
@@ -75,15 +75,15 @@ public int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     memset(&call, 0, sizeof(call));
     
-    call.srvid = FAIL;
+    call.srvid = EXFAIL;
     strncpy(call.svc_nm, svcnm, sizeof(call.svc_nm)-1);
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
@@ -96,7 +96,7 @@ public int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 out:
         return ret;
 }

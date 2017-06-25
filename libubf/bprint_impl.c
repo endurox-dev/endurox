@@ -66,9 +66,9 @@
  * @param outf - file descriptor to print to
  * @return SUCCEED/FAIL
  */
-public int _Bfprint (UBFH *p_ub, FILE * outf)
+expublic int _Bfprint (UBFH *p_ub, FILE * outf)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
    /* static __thread Bnext_state_t state; */
     BFLDID bfldid;
     BFLDLEN  len;
@@ -144,7 +144,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
                 if (NULL==tmp_buf)
                 {
                     _Fset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
 
                 /* build the printable string */
@@ -160,9 +160,9 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
                 if (NULL==tmp_buf)
                 {
                     _Fset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
-                tmp_buf[temp_len] = EOS;
+                tmp_buf[temp_len] = EXEOS;
                 p = tmp_buf;
             }
         }
@@ -178,7 +178,7 @@ public int _Bfprint (UBFH *p_ub, FILE * outf)
         {
             _Fset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
                         strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
     }
@@ -207,9 +207,9 @@ out:
  * @param inf
  * @return
  */
-public int _Bextread (UBFH * p_ub, FILE *inf)
+expublic int _Bextread (UBFH * p_ub, FILE *inf)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int line=0;
     char readbuf[EXTREAD_BUFFSIZE];
     char fldnm[EXTREAD_BUFFSIZE];
@@ -226,13 +226,13 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
     char fn[] = "_Bextread";
     
     /* Read line by line */
-    while(SUCCEED==ret && NULL!=fgets(readbuf, sizeof(readbuf), inf))
+    while(EXSUCCEED==ret && NULL!=fgets(readbuf, sizeof(readbuf), inf))
     {
         int len = strlen(readbuf);
         line++;
         bfldid=BBADFLDID;
-        value[0] = EOS;
-        fldnm[0] = EOS;
+        value[0] = EXEOS;
+        fldnm[0] = EXEOS;
         p = readbuf;
 
         if ('#'==p[0])
@@ -256,7 +256,7 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
 
             if (' '!=p[1])
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 _Fset_error_fmt(BSYNTAX, "Space does not follow the flag on "
                                             "line %d!", line);
                 break; /* <<< fail - break */
@@ -272,34 +272,34 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
         tok = strchr(p, '\t');
         if (NULL==tok)
         {
-            ret=FAIL;
+            ret=EXFAIL;
             _Fset_error_fmt(BSYNTAX, "No tab on "
                                         "line %d!", line);
         }
         else if (tok==readbuf)
         {
-            ret=FAIL;
+            ret=EXFAIL;
             _Fset_error_fmt(BSYNTAX, "Line should not start with tab on "
                                         "line %d!", line);
         }
         else if (p[strlen(p)-1]!='\n')
         {
-            ret=FAIL;
+            ret=EXFAIL;
             _Fset_error_fmt(BSYNTAX, "Line %d does not terminate with newline!", line);
         }
         else
         {
             /* seems to be ok, remove trailing newline */
-            p[strlen(p)-1]=EOS;
+            p[strlen(p)-1]=EXEOS;
         }
 
-        if (SUCCEED==ret)
+        if (EXSUCCEED==ret)
         {
             /* now read field number + value */
             int cpylen = (tok-p);
             /* Copy off field name */
             strncpy(fldnm, p, cpylen);
-            fldnm[cpylen]=EOS;
+            fldnm[cpylen]=EXEOS;
             /* Copy off value */
             strcpy(value, tok+1);
             UBF_LOG(log_debug, "Got [%s]:[%s]", fldnm, value);
@@ -307,27 +307,27 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
             /*
              * Resolve field name
              */
-            if (SUCCEED==ret)
+            if (EXSUCCEED==ret)
             {
                 bfldid = _Bfldid_int(fldnm);
                 if (BBADFLDID==bfldid)
                 {
                     _Fset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
                                                 "line %d!", fldnm, line);
-                    ret=FAIL;
+                    ret=EXFAIL;
                 }
             }
         }
 
         /* Get new field type */
-        if (SUCCEED==ret)
+        if (EXSUCCEED==ret)
         {
             fldtype=bfldid >> EFFECTIVE_BITS;
             
             /* check type */
             if (IS_TYPE_INVALID(fldtype))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 _Fset_error_fmt(BBADFLD, "BAD field's type [%d] on"
                                                 "line %d!", fldtype, line);
             }
@@ -335,30 +335,30 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
         }
         
         /* Check field type */
-        if (SUCCEED==ret && 
+        if (EXSUCCEED==ret && 
                     (BFLD_STRING == fldtype || BFLD_CARRAY == fldtype) && '='!=flag)
         {
-            if (FAIL==normalize_string(value, &len))
+            if (EXFAIL==normalize_string(value, &len))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 _Fset_error_fmt(BSYNTAX, "Cannot normalize value on line %d", line);
             }
         }
         
         /* now about to execute command */
-        if (SUCCEED==ret && 0==flag)
+        if (EXSUCCEED==ret && 0==flag)
         {
             ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY);
         }
-        else if (SUCCEED==ret && '+'==flag)
+        else if (EXSUCCEED==ret && '+'==flag)
         {
             ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY);
         }
-        else if (SUCCEED==ret && '-'==flag)
+        else if (EXSUCCEED==ret && '-'==flag)
         {
             ret=Bdel(p_ub, bfldid, 0);
         }
-        else if (SUCCEED==ret && '='==flag)
+        else if (EXSUCCEED==ret && '='==flag)
         {
             /* Resolve field to-field id */
             bfldid_from = _Bfldid_int(value);
@@ -366,7 +366,7 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
             {
                 _Fset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
                                             "line %d!", value, line);
-                ret=FAIL;
+                ret=EXFAIL;
             }
             else
             {
@@ -380,7 +380,7 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
                 }
                 else
                 {
-                    ret=FAIL;
+                    ret=EXFAIL;
                 }
             }
         } /* '='==flag */
@@ -394,7 +394,7 @@ public int _Bextread (UBFH * p_ub, FILE *inf)
        /* some other error happened!?! */
        _Fset_error_fmt(BEUNIX, "Failed to read from file with error: [%s]",
                             strerror(errno));
-       ret=FAIL;
+       ret=EXFAIL;
     }
 
     UBF_LOG(log_debug, "%s: return %d", fn, ret);

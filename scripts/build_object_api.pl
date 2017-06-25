@@ -392,7 +392,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
+expublic void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
 {
     int did_set = FALSE;
     void (*ret) (char *data, long len, long flags) = NULL;
@@ -564,7 +564,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     $func_type ret = SUCCEED;
     int did_set = FALSE;
@@ -618,7 +618,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     int did_set = FALSE;
 
@@ -663,7 +663,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     int did_set = FALSE;
 
@@ -719,7 +719,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     int did_set = FALSE;
     $func_type ret = NULL;
@@ -775,7 +775,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     $func_type ret = BBADFLDID;
     int did_set = FALSE;

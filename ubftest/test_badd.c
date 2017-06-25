@@ -51,7 +51,7 @@ Ensure(basic_setup1)
     /*printf("basic_setup\n"); */
     M_p_ub1 = malloc(DEFAULT_BUFFER);
     memset(M_p_ub1, 255, DEFAULT_BUFFER);
-    if (FAIL==Binit(M_p_ub1, DEFAULT_BUFFER))
+    if (EXFAIL==Binit(M_p_ub1, DEFAULT_BUFFER))
     {
         fprintf(stderr, "Binit failed!\n");
     }
@@ -88,81 +88,81 @@ Ensure(test_Badd_str)
 
     assert_equal(
             Badd(M_p_ub1, T_STRING_FLD, pan1, 0),
-            SUCCEED);
+            EXSUCCEED);
 
     assert_equal(
             Badd(M_p_ub1, T_STRING_FLD, pan2, 0),
-            SUCCEED);
+            EXSUCCEED);
 
     assert_equal(
             Badd(M_p_ub1, T_STRING_FLD, pan3, 0),
-            SUCCEED);
+            EXSUCCEED);
 
     assert_equal(
             Badd(M_p_ub1, T_STRING_FLD, pan4, 0),
-            SUCCEED);
+            EXSUCCEED);
 
     /* Get the data from buffer */
     assert_equal(
             Bget(M_p_ub1, T_STRING_FLD, 0, tmp_buf, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_string_equal(pan1, tmp_buf);
 
     assert_equal(
             Bget(M_p_ub1, T_STRING_FLD, 1, tmp_buf, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_string_equal(pan2, tmp_buf);
 
     assert_equal(
             Bget(M_p_ub1, T_STRING_FLD, 2, tmp_buf, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_string_equal(pan3, tmp_buf);
 
     assert_equal(
             Bget(M_p_ub1, T_STRING_FLD, 3, tmp_buf, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_string_equal(pan4, tmp_buf);
 
     /* Now add something other, some double value? */
     assert_equal(
             Badd(M_p_ub1, T_DOUBLE_4_FLD, (char *)&amttxn1, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_equal(
             Badd(M_p_ub1, T_DOUBLE_4_FLD, (char *)&amttxn2, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_equal(
             Badd(M_p_ub1, T_DOUBLE_4_FLD, (char *)&amttxn3, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_equal(
             Badd(M_p_ub1, T_DOUBLE_4_FLD, (char *)&amttxn4, 0),
-            SUCCEED);
+            EXSUCCEED);
     /* Do not have space availabel in buffer */
     assert_equal(
             Badd(M_p_ub1, T_DOUBLE_4_FLD, (char *)&amttxn5, 0),
-            FAIL);
+            EXFAIL);
     /* Compare the values from buffer */
     assert_equal(
         Bget(M_p_ub1, T_DOUBLE_4_FLD, 0, (char *)&tmp_amttxn, 0),
-        SUCCEED);
+        EXSUCCEED);
     assert_double_equal(tmp_amttxn, 10021.123);
 
     assert_equal(
             Bget(M_p_ub1, T_DOUBLE_4_FLD, 1, (char *)&tmp_amttxn, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_double_equal(tmp_amttxn, 20021.123);
 
     assert_equal(
             Bget(M_p_ub1, T_DOUBLE_4_FLD, 2, (char *)&tmp_amttxn, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_double_equal(tmp_amttxn, 321.123);
     assert_equal(
             Bget(M_p_ub1, T_DOUBLE_4_FLD, 3, (char *)&tmp_amttxn, 0),
-            SUCCEED);
+            EXSUCCEED);
     assert_double_equal(tmp_amttxn, 11.123);
     /* Do not have space in buffer! */
     assert_equal(
             Bget(M_p_ub1, T_DOUBLE_4_FLD, 4, (char *)&tmp_amttxn, 0),
-            FAIL);
+            EXFAIL);
 
     /* Summ the stuff up (+4 - EOS symbols in buffer)*/
     assert_equal(org_used+strlen(pan1)+strlen(pan2)+strlen(pan3)+strlen(pan4)+4+

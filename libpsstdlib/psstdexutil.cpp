@@ -141,7 +141,7 @@ static PSInteger _exutil_chmod(HPSCRIPTVM v)
         int mod;
         sscanf(mode, "%o", &mod);
         
-        if (SUCCEED!=chmod(file, mod))
+        if (EXSUCCEED!=chmod(file, mod))
         {
             sprintf(err, "chmod failed: %d:%s", 
                     errno, strerror(errno));
@@ -168,7 +168,7 @@ static PSInteger _exutil_mkdir(HPSCRIPTVM v)
         /* Check folder for existance and create if missing */
         if (stat(s, &sb) != 0 || !S_ISDIR(sb.st_mode))
         {
-            if (SUCCEED!=mkdir(s, 0777))
+            if (EXSUCCEED!=mkdir(s, 0777))
             {
                 sprintf(err, "mkdir failed: %d:%s", 
                         errno, strerror(errno));

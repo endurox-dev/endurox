@@ -65,7 +65,7 @@
  * @param extralen - extra size to allocate/data len returned
  * @return
  */
-public char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
+expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
                             BFLDOCC occ, BFLDLEN *extralen)
 {
     int data_type = (bfldid>>EFFECTIVE_BITS);
@@ -101,7 +101,7 @@ public char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
         else
         {
             /* put data into allocated buffer */
-            if (SUCCEED!=dtype_str->p_get_data(dtype_str, p_fld, ret, &tmp_len))
+            if (EXSUCCEED!=dtype_str->p_get_data(dtype_str, p_fld, ret, &tmp_len))
             {
                 NDRX_FREE(ret); /* free up allocated memory */
                 ret=NULL;
@@ -144,10 +144,10 @@ public char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
  * @param buflen
  * @return
  */
-public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * len)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     dtype_str_t *dtype;
     char *p;
     char *last_checked=NULL;
@@ -188,11 +188,11 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     else
     {
         _Fset_error(BNOTPRES);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/
     #ifdef UBF_API_DEBUG
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         __dbg_dtype_ext1 = &G_dtype_ext1_map[bfldid>>EFFECTIVE_BITS];
         __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "_Bget got data", buf, len);
@@ -213,10 +213,10 @@ public int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
  * @param buflen
  * @return
  */
-public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
+expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     dtype_str_t *dtype;
     char *p;
     char *last_checked = NULL;
@@ -232,7 +232,7 @@ public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
     UBF_LOG(log_debug, "%s: bfldid: %x", fnname);
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
-        get_fld_loc_binary_search(p_ub, bfldid, FAIL, &dtype, 
+        get_fld_loc_binary_search(p_ub, bfldid, EXFAIL, &dtype, 
                     UBF_BINSRCH_GET_LAST, &last_occ, NULL, &last_match);
     }
     else
@@ -240,7 +240,7 @@ public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
         get_fld_loc(p_ub, bfldid, -2, &dtype, &last_checked, &last_match, &last_occ, NULL);
     }
 
-    if (FAIL!=last_occ && !_Fis_error()) /* Exclude cases when error have been raised! */
+    if (EXFAIL!=last_occ && !_Fis_error()) /* Exclude cases when error have been raised! */
     {
         /* Have to get data type again - because in last mode it is not avaialble  */
         dtype = &G_dtype_str_map[bfldid>>EFFECTIVE_BITS];
@@ -266,11 +266,11 @@ public int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
     else
     {
         _Fset_error(BNOTPRES); /* IF error have been set this will not override! */
-        ret=FAIL;
+        ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/
     #ifdef UBF_API_DEBUG
-    if (SUCCEED==ret && NULL!=buf)
+    if (EXSUCCEED==ret && NULL!=buf)
     {
         __dbg_dtype_ext1 = &G_dtype_ext1_map[bfldid>>EFFECTIVE_BITS];
         __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "_Bget got data", buf, len);

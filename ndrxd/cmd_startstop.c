@@ -56,7 +56,7 @@
  * @param call
  * @param pm
  */
-public void reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_pm_t * pm_info = (command_reply_pm_t *)reply;
     pm_node_t *pm = (pm_node_t *)params->mod_param1;
@@ -81,9 +81,9 @@ public void reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *pa
  * @param pm
  * @return
  */
-public void startup_progress(command_startstop_t * call, pm_node_t *pm, int calltype)
+expublic void startup_progress(command_startstop_t * call, pm_node_t *pm, int calltype)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "startup_progress enter, pid: %d", pm->pid);
@@ -93,7 +93,7 @@ public void startup_progress(command_startstop_t * call, pm_node_t *pm, int call
     params.mod_param1 = (void *)pm;
     params.param2 = calltype;
 
-    if (SUCCEED!=simple_command_reply((command_call_t *)call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply((command_call_t *)call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, reply_mod, 0L, 0, NULL))
     {
@@ -108,15 +108,15 @@ public void startup_progress(command_startstop_t * call, pm_node_t *pm, int call
  * @param args
  * @return
  */
-public int cmd_start (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_start (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t *start = (command_startstop_t *)call;
     long processes_started=0;
     
     ret = app_startup(start, startup_progress, &processes_started);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
             processes_started, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
@@ -128,7 +128,7 @@ public int cmd_start (command_call_t * call, char *data, size_t len, int context
 out:
     
     /* Do not want exit ndrxd if failed...! */
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -136,9 +136,9 @@ out:
  * @param args
  * @return
  */
-public int cmd_notify (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_notify (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     srv_status_t * pm_status = (srv_status_t *)call;
     pm_pidhash_t *pm_pid;
     pm_node_t *p_pm=NULL;
@@ -207,9 +207,9 @@ out:
  * @param pm
  * @return
  */
-public void shutdown_progress(command_call_t * call, pm_node_t *pm, int calltype)
+expublic void shutdown_progress(command_call_t * call, pm_node_t *pm, int calltype)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "shutdown_progress enter");
@@ -219,7 +219,7 @@ public void shutdown_progress(command_call_t * call, pm_node_t *pm, int calltype
     params.mod_param1 = (void *)pm;
     params.param2 = calltype;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, reply_mod, 0L, 0, NULL))
     {
@@ -234,15 +234,15 @@ public void shutdown_progress(command_call_t * call, pm_node_t *pm, int calltype
  * @param args
  * @return
  */
-public int cmd_stop (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_stop (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t *stop = (command_startstop_t *)call;
     long processes_shutdown=0;
     
     ret = app_shutdown(stop, shutdown_progress, &processes_shutdown);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
             processes_shutdown, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
@@ -262,7 +262,7 @@ public int cmd_stop (command_call_t * call, char *data, size_t len, int context)
     
 out:
     /* Do not want exit if failed..! */
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 
@@ -275,17 +275,17 @@ out:
  * @param context
  * @return 
  */
-public int cmd_abort (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_abort (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     /* Do not want exit if failed..! */
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 
 /**
@@ -293,15 +293,15 @@ public int cmd_abort (command_call_t * call, char *data, size_t len, int context
  * @param args
  * @return
  */
-public int cmd_sreload (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_sreload (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t *start = (command_startstop_t *)call;
     long processes_started=0;
     
     ret = app_sreload(start, startup_progress, shutdown_progress, &processes_started);
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
             processes_started, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
@@ -313,7 +313,7 @@ public int cmd_sreload (command_call_t * call, char *data, size_t len, int conte
 out:
     
     /* Do not want exit ndrxd if failed...! */
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -321,9 +321,9 @@ out:
  * @param args
  * @return
  */
-public int cmd_sreloadi (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_sreloadi (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t *start = (command_startstop_t *)call;
     long processes_started=0;
     
@@ -334,6 +334,6 @@ public int cmd_sreloadi (command_call_t * call, char *data, size_t len, int cont
 out:
     
     /* Do not want exit ndrxd if failed...! */
-    return SUCCEED;
+    return EXSUCCEED;
 }
 

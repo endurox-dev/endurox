@@ -81,9 +81,9 @@
  * @param str
  * @return SUCCEED/FAIL
  */
-public int ndrx_string_hash_add(string_hash_t **h, char *str)
+expublic int ndrx_string_hash_add(string_hash_t **h, char *str)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     string_hash_t * tmp = NDRX_CALLOC(1, sizeof(string_hash_t));
     
     if (NULL==tmp)
@@ -92,7 +92,7 @@ public int ndrx_string_hash_add(string_hash_t **h, char *str)
         NDRX_LOG(log_error, "alloc of string_hash_t (%d) failed", 
                 sizeof(string_hash_t));
 #endif
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     if (NULL==(tmp->str = strdup(str)))
@@ -100,7 +100,7 @@ public int ndrx_string_hash_add(string_hash_t **h, char *str)
 #ifdef SYSCOMMON_ENABLE_DEBUG
         NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
 #endif
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Add stuff to hash finaly */
@@ -116,7 +116,7 @@ out:
  * @param str string to search for
  * @return NULL not found/not NULL - found
  */
-public string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str)
+expublic string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str)
 {
     string_hash_t * r = NULL;
     
@@ -130,7 +130,7 @@ public string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str)
  * @param h
  * @return 
  */
-public void ndrx_string_hash_free(string_hash_t *h)
+expublic void ndrx_string_hash_free(string_hash_t *h)
 {
     string_hash_t * r, *rt;
     /* safe iter over the list */
@@ -145,7 +145,7 @@ public void ndrx_string_hash_free(string_hash_t *h)
 /**
  * Free the list of message queues
  */
-public void ndrx_string_list_free(string_list_t* list)
+expublic void ndrx_string_list_free(string_list_t* list)
 {
     string_list_t *elt, *tmp;
     
@@ -170,16 +170,16 @@ public void ndrx_string_list_free(string_list_t* list)
  * @param string String element to add to list
  * @return SUCCEED/FAIL. If fail, list element will not be allocated
  */
-public int ndrx_string_list_add(string_list_t**list, char *string)
+expublic int ndrx_string_list_add(string_list_t**list, char *string)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     string_list_t* tmp = NULL;
     
     if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
     {
         NDRX_LOG(log_error, "alloc of string_list_t (%d) failed", 
                 sizeof(string_list_t));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Alloc the string down there */
@@ -188,7 +188,7 @@ public int ndrx_string_list_add(string_list_t**list, char *string)
         NDRX_LOG(log_error, "alloc of string_list_t qname (%d) failed: %s", 
                strlen(string)+1, strerror(errno));
         NDRX_FREE(tmp);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     strcpy(tmp->qname, string);
@@ -207,7 +207,7 @@ public int ndrx_string_list_add(string_list_t**list, char *string)
  * @param ppid  Parent PID id
  * @return List of child processes or NULL.
  */
-public string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
+expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
 {
     /*
      * Free BSD: ps -jauxxw
@@ -220,7 +220,7 @@ public string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     string_list_t* ret = NULL;
     pid_t pid;
     char path[PATH_MAX];
-    int is_error = FALSE;
+    int is_error = EXFALSE;
     
 #ifdef EX_OS_FREEBSD
     snprintf(cmd, sizeof(cmd), "ps -jauxxw");
@@ -238,12 +238,12 @@ public string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     
     while (fgets(path, sizeof(path)-1, fp) != NULL)
     {
-        if (SUCCEED==ndrx_proc_ppid_get_from_ps(path, &pid) && ppid == pid)
+        if (EXSUCCEED==ndrx_proc_ppid_get_from_ps(path, &pid) && ppid == pid)
         {
-            if (SUCCEED!=ndrx_string_list_add(&ret, path))
+            if (EXSUCCEED!=ndrx_string_list_add(&ret, path))
             {
                 NDRX_LOG(log_error, "Failed to add [%s] to list of processes", path);
-                is_error = TRUE;
+                is_error = EXTRUE;
                 goto out;
             }
         }
@@ -275,7 +275,7 @@ public string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
  * @param regex1  - match by regular expression (if any set)
  * @return String list of matched lines
  */
-public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, 
+expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, 
         char *filter3, char *filter4, char *regex1)
 {
     FILE *fp=NULL;
@@ -286,8 +286,8 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     string_list_t* tmp;
     string_list_t* ret = NULL;
     regex_t r1;
-    int r1_alloc = FALSE;
-    int is_error = FALSE;
+    int r1_alloc = EXFALSE;
+    int is_error = EXFALSE;
     
 #define MAX_FILTER      5
     char *filter[MAX_FILTER] = {filter1, filter2, filter3, filter4, regex1};
@@ -301,9 +301,9 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     snprintf(cmd, sizeof(cmd), "ps -ef");
 #endif
     
-    if (EOS!=regex1[0])
+    if (EXEOS!=regex1[0])
     {
-        if (SUCCEED!=ndrx_regcomp(&r1, regex1))
+        if (EXSUCCEED!=ndrx_regcomp(&r1, regex1))
         {
             NDRX_LOG(log_error, "ndrx_sys_ps_list: Failed to compile regex1: [%s]", regex1);
             userlog("ndrx_sys_ps_list: Failed to compile regex1: [%s]", regex1);
@@ -311,7 +311,7 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
             goto out;
         }
         
-        r1_alloc = TRUE;
+        r1_alloc = EXTRUE;
     }
     
 #ifdef SYSCOMMON_ENABLE_DEBUG
@@ -340,18 +340,18 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
         for (i = 0; i<MAX_FILTER; i++)
         {
             /* Do the regexp match.. */
-            if (EOS!=filter[i][0] && filter[i]==regex1 
-                    && SUCCEED==ndrx_regexec(&r1, path))
+            if (EXEOS!=filter[i][0] && filter[i]==regex1 
+                    && EXSUCCEED==ndrx_regexec(&r1, path))
             {
                 /* for example [/ ]cpmsrv\s */
                 ok++;
             }
-            if (EOS!=filter[i][0] && strstr(path, filter[i]))
+            if (EXEOS!=filter[i][0] && strstr(path, filter[i]))
             {
                 /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
                 ok++;
             }
-            else if (EOS==filter[i][0])
+            else if (EXEOS==filter[i][0])
             {
                 /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
                 ok++;
@@ -364,9 +364,9 @@ public string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
         
         if (MAX_FILTER==ok)
         {
-            if (SUCCEED!=ndrx_string_list_add(&ret, path))
+            if (EXSUCCEED!=ndrx_string_list_add(&ret, path))
             {
-                is_error = TRUE;
+                is_error = EXTRUE;
                 goto out;
             }
         }
@@ -397,7 +397,7 @@ out:
 /**
  * Get current system username
  */
-public char *ndrx_sys_get_cur_username(void)
+expublic char *ndrx_sys_get_cur_username(void)
 {
     uid_t uid = geteuid();
     struct passwd *pw = getpwuid(uid);
@@ -412,7 +412,7 @@ public char *ndrx_sys_get_cur_username(void)
 /**
  * List the contents of the folder
  */
-public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
+expublic string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
 {
     string_list_t* ret = NULL;
     struct dirent **namelist;
@@ -420,7 +420,7 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
     string_list_t* tmp;
     int len;
     
-    *return_status = SUCCEED;
+    *return_status = EXSUCCEED;
     
     n = scandir(path, &namelist, 0, alphasort);
     if (n < 0)
@@ -482,7 +482,7 @@ public string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
     
 exit_fail:
 
-    *return_status = FAIL;
+    *return_status = EXFAIL;
 
     if (NULL!=ret)
     {
@@ -497,13 +497,13 @@ exit_fail:
  * Kill the list
  * @param list list of ps output processes to kill
  */
-public void ndrx_proc_kill_list(string_list_t *list)
+expublic void ndrx_proc_kill_list(string_list_t *list)
 {
     string_list_t* elt = NULL;
     int signals[] = {SIGTERM, SIGKILL};
     int i;
     int max_signals = 2;
-    int was_any = FALSE;
+    int was_any = EXFALSE;
     pid_t pid;
     char *fn = "ndrx_proc_kill_list";
     NDRX_LOG(log_info, "%s enter-> %p", fn, list);
@@ -512,19 +512,19 @@ public void ndrx_proc_kill_list(string_list_t *list)
     {
         LL_FOREACH(list,elt)
         {
-            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d] (%s)", signals[i], pid, elt->qname);
 
-                 if (SUCCEED!=kill(pid, signals[i]))
+                 if (EXSUCCEED!=kill(pid, signals[i]))
                  {
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
                  else
                  {
-                    was_any = TRUE;
+                    was_any = EXTRUE;
                  }
             }    
         } /* for list entry */
@@ -540,9 +540,9 @@ public void ndrx_proc_kill_list(string_list_t *list)
  * @param pid PID of the parent
  * @return SUCCEED/FAIL
  */
-public int ndrx_proc_children_get_recursive(string_list_t**list, pid_t pid)
+expublic int ndrx_proc_children_get_recursive(string_list_t**list, pid_t pid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     string_list_t* elt = NULL;
     string_list_t* children = NULL;
     
@@ -553,17 +553,17 @@ public int ndrx_proc_children_get_recursive(string_list_t**list, pid_t pid)
     
     LL_FOREACH(children,elt)
     {
-        if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+        if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
         {
             /* Step into, search for childs */
-            if (SUCCEED!=ndrx_proc_children_get_recursive(list, pid))
+            if (EXSUCCEED!=ndrx_proc_children_get_recursive(list, pid))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
-            if (SUCCEED!=ndrx_string_list_add(list, elt->qname))
+            if (EXSUCCEED!=ndrx_string_list_add(list, elt->qname))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
     
         }
@@ -580,11 +580,11 @@ out:
  * @param pid
  * @return 
  */
-public int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
+expublic int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
 {
     char tmp[PATH_MAX+1];
     char *token;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_STRCPY_SAFE(tmp, psout);
 
@@ -592,7 +592,7 @@ public int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
     if (NULL==(token = strtok(tmp, "\t ")))
     {
         NDRX_LOG(log_error, "missing username in ps -ef output")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* get second token */
@@ -600,7 +600,7 @@ public int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing pid in ps -ef output")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }   
     else
     {
@@ -620,11 +620,11 @@ out:
  * @param pid   If succeed then PID is loaded
  * @return SUCCEED/FAIL
  */
-public int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
+expublic int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
 {
     char tmp[PATH_MAX+1];
     char *token;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_STRCPY_SAFE(tmp, psout);
 
@@ -632,7 +632,7 @@ public int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
     if (NULL==(token = strtok(tmp, "\t ")))
     {
         NDRX_LOG(log_error, "missing username in ps -ef output (1)")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* get second token */
@@ -640,7 +640,7 @@ public int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing pid in ps -ef output (2)")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* get third token */
@@ -648,7 +648,7 @@ public int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing pid in ps -ef output (3)")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     else
     {

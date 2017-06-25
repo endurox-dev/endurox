@@ -79,15 +79,15 @@ int compare (const void * a, const void * b)
 int is_fld_pres (BFLDID * array, BFLDID left, BFLDID right, BFLDID number)
 {
     int middle = 0;
-    int bsearch = FALSE;
+    int bsearch = EXFALSE;
 
-    while(bsearch == FALSE && left <= right)
+    while(bsearch == EXFALSE && left <= right)
     {
         middle = (left + right) / 2;
 
         if(number == array[middle])
         {
-            bsearch = TRUE;
+            bsearch = EXTRUE;
         }
         else
         {
@@ -108,7 +108,7 @@ int is_fld_pres (BFLDID * array, BFLDID left, BFLDID right, BFLDID number)
  * @param del_start - ptr to start of removal
  * @param del_stop - ptr to end of the removal
  */
-private void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
+exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
                                 BFLDID **p_nextfld)
 {
     char *last;
@@ -228,11 +228,11 @@ private void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
  * @param processed - ptr to int, which will return the count of chunks processed
  * @return SUCCEED/FAIL
  */
-public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
+expublic int _Bproj (UBFH * p_ub, BFLDID * fldlist,
                                     int mode, int *processed)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     BFLDID   *p_bfldid = &hdr->bfldid;
     char *p = (char *)&hdr->bfldid;
     BFLDID *del_bfldid_start = NULL; /* Mark the point when we should delete the field */
@@ -321,7 +321,7 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
             else
             {
                 UBF_LOG(log_error, "Unknown proj mode %d", mode);
-                return FAIL; /* <<< RETURN! */
+                return EXFAIL; /* <<< RETURN! */
             }
             
             /* if (NULL!=del_bfldid_start && *del_bfldid_start != *p_bfldid && !pres)*/
@@ -351,7 +351,7 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
 
             if (IS_TYPE_INVALID(type))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 _Fset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
                                         "buffer: %d", fn, type);
                 break; /* <<< BREAK; */
@@ -368,7 +368,7 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
             /* Align error */
             if (CHECK_ALIGN(p, p_ub, hdr))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
                                             fn, p);
                 break; /* <<< BREAK; */
@@ -378,7 +378,7 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
         }
 
         /* If last field was Bad field, then still we need to delete the stuff out! */
-        if (SUCCEED==ret && NULL!=del_bfldid_start && *del_bfldid_start != *p_bfldid)
+        if (EXSUCCEED==ret && NULL!=del_bfldid_start && *del_bfldid_start != *p_bfldid)
         {
 
             delete_buffer_data(p_ub, (char *)del_bfldid_start,
@@ -389,10 +389,10 @@ public int _Bproj (UBFH * p_ub, BFLDID * fldlist,
         }
     } /* Else  of use of Binit */
     
-    if (SUCCEED!=ubf_cache_update(p_ub))
+    if (EXSUCCEED!=ubf_cache_update(p_ub))
     {
         _Fset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -446,10 +446,10 @@ out:
  * @param del_start 
  * @param del_stop 
  */
-private int copy_buffer_data(UBFH *p_ub_dst,
+exprivate int copy_buffer_data(UBFH *p_ub_dst,
                         char *cpy_start, char *cpy_stop, BFLDID **p_nextfld_dst)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cpy_size;
     UBF_header_t *hdr_dst = (UBF_header_t *)p_ub_dst;
 
@@ -496,7 +496,7 @@ private int copy_buffer_data(UBFH *p_ub_dst,
             _Fset_error_fmt(BNOSPACE, "No space in dest buffer, free: "
                                       "%d bytes required: %d bytes",
                                 (hdr_dst->buf_len - hdr_dst->bytes_used), cpy_size);
-            ret=FAIL;
+            ret=EXFAIL;
         }
         else
         {                  
@@ -559,10 +559,10 @@ private int copy_buffer_data(UBFH *p_ub_dst,
  *                  then buffer is reinitialized.
  * @return SUCCEED/FAIL
  */
-public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+expublic int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                                     BFLDID * fldlist)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     UBF_header_t *hdr_src = (UBF_header_t *)p_ub_src;
     BFLDID   *p_bfldid_src = &hdr_src->bfldid;
@@ -607,9 +607,9 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 /*******************************************************************************/
     /* In this case we delete all items - run the init */
     
-    if (SUCCEED!=Binit (p_ub_dst, hdr_dst->buf_len))
+    if (EXSUCCEED!=Binit (p_ub_dst, hdr_dst->buf_len))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     if ((NULL==fldlist || BBADFLDID==*fldlist))
@@ -634,17 +634,17 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 
         /* OK stuff is sorted */
         /* Do not count in bad field by it self. It is not needed for us! */
-        while(SUCCEED==ret && BBADFLDID!=*p_bfldid_src)
+        while(EXSUCCEED==ret && BBADFLDID!=*p_bfldid_src)
         {
             mark = is_fld_pres(fldlist, 0, fld_count-1, *p_bfldid_src);
             
             if (NULL!=cpy_bfldid_start && !mark)
             {
-                if (SUCCEED!=copy_buffer_data(p_ub_dst,
+                if (EXSUCCEED!=copy_buffer_data(p_ub_dst,
                             (char *)cpy_bfldid_start,
                             (char *)p_bfldid_src, &p_bfldid_dst))
                 {
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 /* Mark that we have all done! */
                 cpy_bfldid_start=NULL; /* Mark that we have finished with this. */
@@ -666,7 +666,7 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
             {
                 _Fset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
                                         "buffer: %d", fn, type);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             /* Check type alignity */
@@ -682,7 +682,7 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
             {
                 _Fset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                             fn, p);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             p_bfldid_src = (BFLDID *)p;
 
@@ -698,17 +698,17 @@ public int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
             /* Mark that we have all done! */
             cpy_bfldid_start=NULL; /* Mark that we have finished with this. */
             
-            if (SUCCEED!=ret)
+            if (EXSUCCEED!=ret)
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     } /* Else  of use of Binit */
 
-    if (SUCCEED!=ubf_cache_update(p_ub_dst))
+    if (EXSUCCEED!=ubf_cache_update(p_ub_dst))
     {
         _Fset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:

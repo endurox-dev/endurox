@@ -56,7 +56,7 @@
  * @param slot
  * @return 
  */
-public char *ndrx_decode_msec(long t, int slot, int level, int levels)
+expublic char *ndrx_decode_msec(long t, int slot, int level, int levels)
 {
     static char text[20][128];
     char tmp[128];
@@ -144,7 +144,7 @@ public char *ndrx_decode_msec(long t, int slot, int level, int levels)
  * @param slot
  * @return 
  */
-public char *ndrx_stopwatch_decode(ndrx_stopwatch_t *timer, int slot)
+expublic char *ndrx_stopwatch_decode(ndrx_stopwatch_t *timer, int slot)
 {
     static char *na="N/A";
     
@@ -160,7 +160,7 @@ public char *ndrx_stopwatch_decode(ndrx_stopwatch_t *timer, int slot)
  * Reset timer
  * @param timer
  */
-public void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer)
+expublic void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer)
 {
     clock_gettime(CLOCK_MONOTONIC, &timer->t);
 }
@@ -171,7 +171,7 @@ public void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer)
  * @param timer2
  * @return diff in milliseconds
  */
-public long long ndrx_stopwatch_diff(ndrx_stopwatch_t *t1, ndrx_stopwatch_t *t2)
+expublic long long ndrx_stopwatch_diff(ndrx_stopwatch_t *t1, ndrx_stopwatch_t *t2)
 {
     long long t1r = ((long long)t1->t.tv_sec)*1000 + t1->t.tv_nsec/1000000; /* Convert to milliseconds */
     long long t2r = ((long long)t2->t.tv_sec)*1000 + t2->t.tv_nsec/1000000; /* Convert to milliseconds */
@@ -185,7 +185,7 @@ public long long ndrx_stopwatch_diff(ndrx_stopwatch_t *t1, ndrx_stopwatch_t *t2)
  * @param timer
  * @return time spent in milliseconds
  */
-public long ndrx_stopwatch_get_delta(ndrx_stopwatch_t *timer)
+expublic long ndrx_stopwatch_get_delta(ndrx_stopwatch_t *timer)
 {
     struct timespec t;
     long ret;
@@ -204,7 +204,7 @@ public long ndrx_stopwatch_get_delta(ndrx_stopwatch_t *timer)
  * @param timer
  * @return time spent in seconds
  */
-public long ndrx_stopwatch_get_delta_sec(ndrx_stopwatch_t *timer)
+expublic long ndrx_stopwatch_get_delta_sec(ndrx_stopwatch_t *timer)
 {
     return (ndrx_stopwatch_get_delta(timer)/1000);
 }
@@ -216,7 +216,7 @@ public long ndrx_stopwatch_get_delta_sec(ndrx_stopwatch_t *timer)
  * @param msec
  * @return 
  */
-public void ndrx_stopwatch_plus(ndrx_stopwatch_t *timer, long long msec)
+expublic void ndrx_stopwatch_plus(ndrx_stopwatch_t *timer, long long msec)
 {
     if (msec < 0)
     {
@@ -244,7 +244,7 @@ public void ndrx_stopwatch_plus(ndrx_stopwatch_t *timer, long long msec)
  * @param msec
  * @return 
  */
-public void ndrx_stopwatch_minus(ndrx_stopwatch_t *timer, long long msec)
+expublic void ndrx_stopwatch_minus(ndrx_stopwatch_t *timer, long long msec)
 {
     if (msec < 0)
     {

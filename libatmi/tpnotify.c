@@ -79,13 +79,13 @@
  * @param ex_flags So TPCALL_BROADCAST - when doing broadcast, TPCALL_BRCALL - call bridge
  * @return 
  */
-public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
+expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
         int dest_node, char *nodeid, char *usrname,  char *cltname,
         int ex_flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     tp_notif_call_t *call=(tp_notif_call_t *)buf;
     typed_buffer_descr_t *descr;
@@ -124,11 +124,11 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
             
             snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, dest_node);
 
-            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 #else
@@ -136,7 +136,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
                 G_atmi_tls->G_atmi_conf.q_prefix, dest_node);
 #endif
         
-        is_bridge=TRUE;
+        is_bridge=EXTRUE;
     }
     else if (NULL!=cltq)
     {
@@ -150,12 +150,12 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
          * Thus we need to check their node...
          */
         
-        if (SUCCEED!=ndrx_myid_convert_to_q(p_clientid_myid, send_q, 
+        if (EXSUCCEED!=ndrx_myid_convert_to_q(p_clientid_myid, send_q, 
                 sizeof(send_q)))
         {
             _TPset_error_fmt(TPEINVAL, "Failed to translate client data [%s] to Q", 
                     clientid->clientdata);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (p_clientid_myid->nodeid!=local_node)
@@ -181,7 +181,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 
@@ -189,11 +189,11 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     {
         descr = &G_buf_descr[buffer_info->type_id];
         /* prepare buffer for call */
-        if (SUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
                 &data_len, flags))
         {
             /* not good - error should be already set */
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else
@@ -247,8 +247,8 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
-        call->usrname[0] = EOS;
-        call->usrname_isnull = TRUE;
+        call->usrname[0] = EXEOS;
+        call->usrname_isnull = EXTRUE;
     }
     
     if (NULL!=cltname)
@@ -257,8 +257,8 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
-        call->cltname[0] = EOS;
-        call->cltname_isnull = TRUE;
+        call->cltname[0] = EXEOS;
+        call->cltname_isnull = EXTRUE;
     }
     
     if (NULL!=nodeid)
@@ -267,8 +267,8 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     else
     {
-        call->nodeid[0] = EOS;
-        call->nodeid_isnull = TRUE;
+        call->nodeid[0] = EXEOS;
+        call->nodeid_isnull = EXTRUE;
     }
     
     /* Reset call timer */
@@ -282,7 +282,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
-    if (SUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags, 
+    if (EXSUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags, 
             NDRX_MSGPRIO_NOTIFY)))
     {
         int err;
@@ -296,7 +296,7 @@ public int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
             CONV_ERROR_CODE(ret, err);
         }
         _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -309,13 +309,13 @@ out:
  * @param buf buffer received (full) from Q
  * @param len buffer len
  */
-public void ndrx_process_notif(char *buf, long len)
+expublic void ndrx_process_notif(char *buf, long len)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *odata = NULL;
     long olen = 0;
     typed_buffer_descr_t *call_type;
-    public buffer_obj_t * typed_buf = NULL;
+    expublic buffer_obj_t * typed_buf = NULL;
     tp_notif_call_t *notif = (tp_notif_call_t *) buf;
     
     NDRX_LOG(log_debug, "%s: Got notification from: [%s], data len: %d: ", 
@@ -339,7 +339,7 @@ public void ndrx_process_notif(char *buf, long len)
         NDRX_LOG(log_debug, "%s: data received", __func__);
         call_type = &G_buf_descr[notif->buffer_type_id];
 
-        if (SUCCEED==(call_type->pf_prepare_incoming(call_type,
+        if (EXSUCCEED==(call_type->pf_prepare_incoming(call_type,
                         notif->data,
                         notif->data_len,
                         &odata,
@@ -351,7 +351,7 @@ public void ndrx_process_notif(char *buf, long len)
         else
         {
             NDRX_LOG(log_error, "Failed to prepare incoming unsolicited notification");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else
@@ -384,9 +384,9 @@ out:
  * Just push them to in memory queue which will be later processed by _tpgetrply()
  * @return SUCCEED/FAIL
  */
-public int _tpchkunsol(void) 
+expublic int _tpchkunsol(void) 
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *pbuf = NULL;
     size_t pbuf_len;
     long rply_len;
@@ -440,7 +440,7 @@ public int _tpchkunsol(void)
                 int err = errno;
                 NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
                 userlog("Failed to alloc: %s", strerror(err));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             tmp->buf = pbuf;
@@ -451,7 +451,7 @@ public int _tpchkunsol(void)
             DL_APPEND(G_atmi_tls->memq, tmp); 
         }
         /* Note loop will be terminated if not message in Q */
-    } while (SUCCEED==ret);
+    } while (EXSUCCEED==ret);
 out:
 
     if (NULL!=pbuf)
@@ -462,7 +462,7 @@ out:
     NDRX_LOG(log_debug, "%s returns %d (applied msgs: %d)", __func__, 
             ret, num_applied);
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         return num_applied;
     }
@@ -480,30 +480,30 @@ out:
  * @param flags flags passed to tpbrodcast
  * @return TRUE node accepted, FALSE not accepted
  */
-private int match_nodeid(char *nodeid_str,  char *nodeid, 
+exprivate int match_nodeid(char *nodeid_str,  char *nodeid, 
         regex_t *regexp_nodeid, long flags)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     
     if (NULL!=nodeid)
     {
-        if (EOS==nodeid[0])
+        if (EXEOS==nodeid[0])
         {
             NDRX_LOG(log_info, "Nodeid %s (nodeid=EOS)", nodeid_str);
-            ret = TRUE;
+            ret = EXTRUE;
         }
         else if ((flags & TPREGEXMATCH ) && 
                 ndrx_regexec(regexp_nodeid, nodeid_str))
         {
             NDRX_LOG(log_info, "Nodeid %s matched local node by regexp",
                     nodeid_str);
-            ret = TRUE;
+            ret = EXTRUE;
         }
         else if (0==strcmp(nodeid, nodeid_str))
         {
             NDRX_LOG(log_info, "Nodeid %s matched by nodeid str param",
                     nodeid_str);
-            ret = TRUE;
+            ret = EXTRUE;
         }
         else
         {
@@ -516,7 +516,7 @@ private int match_nodeid(char *nodeid_str,  char *nodeid,
     {
         NDRX_LOG(log_info, "nodeid param NULL, local node %s matched for broadcast",
                     nodeid_str);
-            ret = TRUE;
+            ret = EXTRUE;
     }
     
     return ret;
@@ -531,10 +531,10 @@ private int match_nodeid(char *nodeid_str,  char *nodeid,
  * @param flags here TPREGEXMATCH flag affects node/usr/clt
  * @return SUCCEED/FAIL
  */
-public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname, 
+expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname, 
         char *data,  long len, long flags, int dispatch_local)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
     int typ;
@@ -542,21 +542,21 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     ndrx_qdet_t qdet;
     CLIENTID cltid;
     regex_t regexp_nodeid;
-    int     regexp_nodeid_comp = FALSE;
+    int     regexp_nodeid_comp = EXFALSE;
     
     regex_t regexp_usrname;
-    int     regexp_usrname_comp = FALSE;
+    int     regexp_usrname_comp = EXFALSE;
     
     regex_t regexp_cltname;
-    int     regexp_cltname_comp = FALSE;
+    int     regexp_cltname_comp = EXFALSE;
     char nodeid_str[16];
     
-    int local_node_ok = FALSE;
+    int local_node_ok = EXFALSE;
     int cltname_ok;
     
     long local_nodeid = tpgetnodeid();
     
-    char connected_nodes[CONF_NDRX_NODEID_COUNT+1] = {EOS};
+    char connected_nodes[CONF_NDRX_NODEID_COUNT+1] = {EXEOS};
     
     
     /* if the username is  */
@@ -566,46 +566,46 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         
         if (NULL!=nodeid)
         {
-            if (SUCCEED!=ndrx_regcomp(&regexp_nodeid, nodeid))
+            if (EXSUCCEED!=ndrx_regcomp(&regexp_nodeid, nodeid))
             {
                 _TPset_error_fmt(TPEINVAL, "Failed to compile nodeid=[%s] regexp",
                         __func__, nodeid);
                 NDRX_LOG(log_error, "Failed to compile nodeid=[%s]", nodeid);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             else
             {
-                regexp_nodeid_comp = TRUE;
+                regexp_nodeid_comp = EXTRUE;
             }
         }
         
         if (NULL!=usrname)
         {
-            if (SUCCEED!=ndrx_regcomp(&regexp_usrname, usrname))
+            if (EXSUCCEED!=ndrx_regcomp(&regexp_usrname, usrname))
             {
                 _TPset_error_fmt(TPEINVAL, "Failed to compile usrname=[%s] regexp",
                         __func__, nodeid);
                 NDRX_LOG(log_error, "Failed to compile usrname=[%s]", usrname);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             else
             {
-                regexp_usrname_comp = TRUE;
+                regexp_usrname_comp = EXTRUE;
             }
         }
         
         if (NULL!=cltname)
         {
-            if (SUCCEED!=ndrx_regcomp(&regexp_cltname, cltname))
+            if (EXSUCCEED!=ndrx_regcomp(&regexp_cltname, cltname))
             {
                 _TPset_error_fmt(TPEINVAL, "Failed to compile cltname=[%s] regexp",
                         __func__, cltname);
                 NDRX_LOG(log_error, "Failed to compile cltname=[%s]", cltname);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             else
             {
-                regexp_cltname_comp = TRUE;
+                regexp_cltname_comp = EXTRUE;
             }
         }
     }
@@ -626,10 +626,10 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         /* list all queues */
         qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
 
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "posix queue listing failed... continue...!");
-            ret = SUCCEED;
+            ret = EXSUCCEED;
             qlist = NULL;
         }
 
@@ -658,38 +658,38 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                         elt->qname);
 
                 /* parse q details */
-                if (SUCCEED!=ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
+                if (EXSUCCEED!=ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
                 {
                     NDRX_LOG(log_error, "Failed to parse Q details!");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
 
                 /* Check client name */
-                cltname_ok = FALSE;
+                cltname_ok = EXFALSE;
                 
                 if (NULL!=cltname)
                 {
-                    if (EOS==cltname[0])
+                    if (EXEOS==cltname[0])
                     {
                         NDRX_LOG(log_info, "Process matched broadcast [%s] "
                                 "(cltname=EOS)", 
                                 elt->qname);
-                        cltname_ok = TRUE;
+                        cltname_ok = EXTRUE;
                     }
                     else if ((flags & TPREGEXMATCH )
-                        && SUCCEED==ndrx_regexec(&regexp_cltname, qdet.binary_name))
+                        && EXSUCCEED==ndrx_regexec(&regexp_cltname, qdet.binary_name))
                     {
                         NDRX_LOG(log_info, "Process [%s]/[%s] matched broadcast "
                                 "by regexp",
                                 elt->qname, qdet.binary_name);
-                        cltname_ok = TRUE;
+                        cltname_ok = EXTRUE;
                     }
                     else if (0==strcmp(cltname, qdet.binary_name))
                     {
                         NDRX_LOG(log_info, "Process [%s]/[%s] matched by "
                                 "cltname str param [%s]",
                                 elt->qname, qdet.binary_name, cltname);
-                        cltname_ok = TRUE;
+                        cltname_ok = EXTRUE;
                     }
                     else
                     {
@@ -704,16 +704,16 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_info, "cltname param NULL, process [%s]/[%s] "
                             "matched for broadcast",
                                 elt->qname, qdet.binary_name);
-                        cltname_ok = TRUE;
+                        cltname_ok = EXTRUE;
                 }
                 
                 if (cltname_ok)
                 {
                     /* Build myid */
-                    if (SUCCEED!=ndrx_myid_convert_from_qdet(&myid, &qdet, local_nodeid))
+                    if (EXSUCCEED!=ndrx_myid_convert_from_qdet(&myid, &qdet, local_nodeid))
                     {
                         NDRX_LOG(log_error, "Failed to build MYID from QDET!");
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
 
                     /* Build my_id string */
@@ -722,7 +722,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_info, "Build client id string: [%s]",
                             cltid.clientdata);
 
-                    if (SUCCEED!=_tpnotify(&cltid, &myid, elt->qname,
+                    if (EXSUCCEED!=_tpnotify(&cltid, &myid, elt->qname,
                         data, len, flags,  0, nodeid, usrname, cltname, 0))
                     {
                         NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
@@ -744,7 +744,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     if (!dispatch_local)
     {
         NDRX_LOG(log_info, "Dispatching over any connected nodes");
-        if (SUCCEED==ndrx_shm_birdge_getnodesconnected(connected_nodes))
+        if (EXSUCCEED==ndrx_shm_birdge_getnodesconnected(connected_nodes))
         {
             int i;
             int len = strlen(connected_nodes);
@@ -759,7 +759,7 @@ public int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
                             (int)connected_nodes[i]);
 
-                    if (SUCCEED!=_tpnotify(NULL, NULL, NULL,
+                    if (EXSUCCEED!=_tpnotify(NULL, NULL, NULL,
                             data, len, flags, 
                             (long)connected_nodes[i], nodeid, usrname, cltname, 
                             (TPCALL_BRCALL | TPCALL_BROADCAST)))

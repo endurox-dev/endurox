@@ -66,7 +66,7 @@
  * @param call
  * @param pm
  */
-public void pq_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void pq_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_pq_t * pq_info = (command_reply_pq_t *)reply;
     bridgedef_svcs_t *svc = (bridgedef_svcs_t *)params->mod_param1;
@@ -88,9 +88,9 @@ public void pq_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t 
  * @param pm
  * @return
  */
-private void pq_progress(command_call_t * call, bridgedef_svcs_t *q_info)
+exprivate void pq_progress(command_call_t * call, bridgedef_svcs_t *q_info)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
     
     NDRX_LOG(log_debug, "pq_progress enter");
@@ -99,7 +99,7 @@ private void pq_progress(command_call_t * call, bridgedef_svcs_t *q_info)
     /* pass to reply process model node */
     params.mod_param1 = (void *)q_info;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, pq_reply_mod, 0L, 0, NULL))
     {
@@ -115,19 +115,19 @@ private void pq_progress(command_call_t * call, bridgedef_svcs_t *q_info)
  * @param args
  * @return
  */
-public int cmd_pq (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_pq (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridgedef_svcs_t *cur, *tmp;
     
-    pq_run_santiy(FALSE);
+    pq_run_santiy(EXFALSE);
 
     EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         pq_progress(call, cur);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
@@ -142,9 +142,9 @@ out:
  * @param run_hist - shift the history
  * @return SUCCEED/FAIL
  */
-public int pq_run_santiy(int run_hist)
+expublic int pq_run_santiy(int run_hist)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     bridgedef_svcs_t *cur, *tmp;
     int i;
     char q[NDRX_MAX_Q_SIZE+1];
@@ -171,7 +171,7 @@ public int pq_run_santiy(int run_hist)
         /* now write at POS 0, latest reading of service */
         sprintf(q, NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
         
-        if (SUCCEED!=ndrx_get_q_attr(q, &att))
+        if (EXSUCCEED!=ndrx_get_q_attr(q, &att))
         {
             curmsgs = 0; /* assume 0 */
         }
@@ -184,14 +184,14 @@ public int pq_run_santiy(int run_hist)
          * request stats for all servers:
          */
         curmsgs = 0;
-        if (SUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
+        if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
         {
             for (i=0; i<len; i++)
             {
                 sprintf(q, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
                         cur->svc_nm, srvlist[i]);
                 
-                if (SUCCEED==ndrx_get_q_attr(q, &att))
+                if (EXSUCCEED==ndrx_get_q_attr(q, &att))
                 {
                     curmsgs+= att.mq_curmsgs;
                 }

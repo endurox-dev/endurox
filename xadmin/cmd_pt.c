@@ -57,7 +57,7 @@
 /**
  * Mapping for transaction stages messages
  */
-public longstrmap_t M_txstatemap[] =
+expublic longstrmap_t M_txstatemap[] =
 {
     {XA_TX_STAGE_ACTIVE,    "ACTIVE"},
     {XA_TX_STAGE_PREPARING, "PREPARING"},
@@ -66,13 +66,13 @@ public longstrmap_t M_txstatemap[] =
     {XA_TX_STAGE_COMMITTING,  "COMMITTING"},
     {XA_TX_STAGE_COMMITTED , "COMMITTED"},
     {XA_RM_STATUS_COMMIT_HEURIS , "COMMITTED, HEURISTIC"},
-    {FAIL,                  "?"}
+    {EXFAIL,                  "?"}
 };
 
 /**
  * String mappings for RM statuses
  */
-public longstrmap_t M_rmstatus[] =
+expublic longstrmap_t M_rmstatus[] =
 {
     {XA_RM_STATUS_ACTIVE,       "JOINED"},
     {XA_RM_STATUS_PREP,         "PREPARED"},
@@ -90,9 +90,9 @@ public longstrmap_t M_rmstatus[] =
  * @param svcnm
  * @return SUCCEED/FAIL
  */
-private int print_buffer(UBFH *p_ub, char *svcnm)
+exprivate int print_buffer(UBFH *p_ub, char *svcnm)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     short tmrmid;
     short tmnodeid;
@@ -112,21 +112,21 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     long trycount, max_tries;
     
     if (
-            SUCCEED!=Bget(p_ub, TMXID, 0, (char *)tmxid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMRMID, 0, (char *)&tmrmid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&tmnodeid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&tmsrvid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMTXTOUT, 0, (char *)&tmtxtout, 0L) ||
-            SUCCEED!=Bget(p_ub, TMTXTOUT_LEFT, 0, (char *)&tmtxtout_left, 0L) ||
-            SUCCEED!=Bget(p_ub, TMTXSTAGE, 0, (char *)&tmtxstage, 0L) ||
-            SUCCEED!=Bget(p_ub, TMTXTRYCNT, 0, (char *)&trycount, 0L) ||
-            SUCCEED!=Bget(p_ub, TMTXTRYMAXCNT, 0, (char *)&max_tries, 0L)
+            EXSUCCEED!=Bget(p_ub, TMXID, 0, (char *)tmxid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMRMID, 0, (char *)&tmrmid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&tmnodeid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&tmsrvid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMTXTOUT, 0, (char *)&tmtxtout, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMTXTOUT_LEFT, 0, (char *)&tmtxtout_left, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMTXSTAGE, 0, (char *)&tmtxstage, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMTXTRYCNT, 0, (char *)&trycount, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMTXTRYMAXCNT, 0, (char *)&max_tries, 0L)
         )
     {
         fprintf(stderr, "Protocol error - TM did not return data, see logs!\n");
         NDRX_LOG(log_error, "Failed to read fields: [%s]", 
                 Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     occ = Boccur(p_ub, TMTXRMSTATUS);
@@ -138,24 +138,24 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
             "Group count: %d, timeout: %ld, time left: %ld, tries: %ld of %ld\n"
             "Known participants:\n",
             tmxid, tmnodeid, tmrmid, tmsrvid, tmtxstage, 
-            ndrx_dolongstrgmap(M_txstatemap, tmtxstage, FAIL),
+            ndrx_dolongstrgmap(M_txstatemap, tmtxstage, EXFAIL),
             svcnm, tmxid,
             occ, tmtxtout, tmtxtout_left, trycount, max_tries);
     
     for (i=0; i<occ; i++)
     {
         if (
-                SUCCEED!=Bget(p_ub, TMTXRMID, i, (char *)&tmtxrmid, 0L) ||
-                SUCCEED!=Bget(p_ub, TMTXRMSTATUS, i, (char *)&tmtxrmstatus, 0L) ||
-                SUCCEED!=Bget(p_ub, TMTXRMERRCODE, i, (char *)&tmtxrmerrcode, 0L) ||
-                SUCCEED!=Bget(p_ub, TMTXRMREASON, i, (char *)&tmtxrmreason, 0L)
+                EXSUCCEED!=Bget(p_ub, TMTXRMID, i, (char *)&tmtxrmid, 0L) ||
+                EXSUCCEED!=Bget(p_ub, TMTXRMSTATUS, i, (char *)&tmtxrmstatus, 0L) ||
+                EXSUCCEED!=Bget(p_ub, TMTXRMERRCODE, i, (char *)&tmtxrmerrcode, 0L) ||
+                EXSUCCEED!=Bget(p_ub, TMTXRMREASON, i, (char *)&tmtxrmreason, 0L)
                 )
         {
             /* TODO: need RM status human-readable version */
             fprintf(stderr, "Protocol error - TM did not return data, see logs!\n");
             NDRX_LOG(log_error, "Failed to return fields: [%s]", 
                         Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -178,7 +178,7 @@ out:
 int call_tm(char *svcnm)
 {
   UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_PRINTTRANS);
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     long revent;
     int recv_continue = 1;
@@ -189,17 +189,17 @@ int call_tm(char *svcnm)
     if (NULL==p_ub)
     {
         NDRX_LOG(log_error, "Failed to alloc FB!");        
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL == (cd = tpconnect(svcnm,
+    if (EXFAIL == (cd = tpconnect(svcnm,
                                     (char *)p_ub,
                                     0,
                                     TPNOTRAN |
                                     TPRECVONLY)))
     {
         NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
@@ -207,38 +207,38 @@ int call_tm(char *svcnm)
     while (recv_continue)
     {
         recv_continue=0;
-        if (FAIL == tprecv(cd,
+        if (EXFAIL == tprecv(cd,
                             (char **)&p_ub,
                             0L,
                             0L,
                             &revent))
         {
-            ret = FAIL;
+            ret = EXFAIL;
             tp_errno = tperrno;
             if (TPEEVENT == tp_errno)
             {
                     if (TPEV_SVCSUCC == revent)
-                            ret = SUCCEED;
+                            ret = EXSUCCEED;
                     else
                     {
                         NDRX_LOG(log_error,
                                  "Unexpected conv event %lx", revent );
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
             }
             else
             {
                 NDRX_LOG(log_error, "recv error %d", tp_errno  );
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
         {
             /*fprintf(stderr, "Response: \n");
             Bfprint(p_ub, stderr);*/
-            if (SUCCEED!=print_buffer(p_ub, svcnm))
+            if (EXSUCCEED!=print_buffer(p_ub, svcnm))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             rcv_count++;
             recv_continue=1;
@@ -262,7 +262,7 @@ out:
  * @param svcnm
  * @return TRUE/FALSE
  */
-private int tmfilter(char *svcnm)
+exprivate int tmfilter(char *svcnm)
 {
     int i, len;
     int cnt = 0;
@@ -283,9 +283,9 @@ private int tmfilter(char *svcnm)
     }
     
     if (3==cnt)
-        return TRUE;
+        return EXTRUE;
     else
-        return FALSE;
+        return EXFALSE;
 }
 
 /**
@@ -295,16 +295,16 @@ private int tmfilter(char *svcnm)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_svc_list_t *el, *tmp, *list;
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     list = ndrx_get_svc_list(tmfilter);

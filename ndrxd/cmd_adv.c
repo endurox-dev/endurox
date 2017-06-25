@@ -62,14 +62,14 @@
  * @param context
  * @return  
  */
-public int cmd_srvadv (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_srvadv (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_dynadvertise_t * adv = (command_dynadvertise_t *)call;
     pm_node_t *p_pm = get_pm_from_srvid(adv->srvid);
     pm_node_svc_t *chk=NULL;
     pm_node_svc_t *new_svc=NULL;
-    int found = FALSE;
+    int found = EXFALSE;
     
     if (NULL==p_pm)
     {
@@ -85,7 +85,7 @@ public int cmd_srvadv (command_call_t * call, char *data, size_t len, int contex
         {
             if (0==strcmp(chk->svc.svc_nm, adv->svc_nm))
             {
-                found=TRUE;
+                found=EXTRUE;
                 break;
             }
         }
@@ -103,7 +103,7 @@ public int cmd_srvadv (command_call_t * call, char *data, size_t len, int contex
         {
             NDRX_LOG(log_always, "Failed to allocate memory for new "
                                 "service: %s", strerror(errno) );
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         memset((char *)new_svc, 0, sizeof(new_svc));
@@ -118,9 +118,9 @@ public int cmd_srvadv (command_call_t * call, char *data, size_t len, int contex
         DL_APPEND(p_pm->svcs, new_svc);
         
         /* add stuff to bridge service hash */
-        if (SUCCEED!=brd_add_svc_to_hash(new_svc->svc.svc_nm))
+        if (EXSUCCEED!=brd_add_svc_to_hash(new_svc->svc.svc_nm))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         

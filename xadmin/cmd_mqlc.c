@@ -60,7 +60,7 @@
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "Nd SRVID QSPACE    QNAME     FLAGS QDEF\n");
     fprintf(stderr, "-- ----- --------- --------- ----- --------------------\n");
@@ -72,9 +72,9 @@ private void print_hdr(void)
  * @param svcnm
  * @return SUCCEED/FAIL
  */
-private int print_buffer(UBFH *p_ub, char *svcnm)
+exprivate int print_buffer(UBFH *p_ub, char *svcnm)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     short nodeid;
     short srvid;
@@ -84,18 +84,18 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     char strflags[128];
     
     if (
-            SUCCEED!=Bget(p_ub, EX_QSPACE, 0, qspace, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L) ||
-            SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-            SUCCEED!=CBget(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
-            SUCCEED!=Bget(p_ub, EX_QSTRFLAGS, 0, strflags, 0L)
+            EXSUCCEED!=Bget(p_ub, EX_QSPACE, 0, qspace, 0L) ||
+            EXSUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            EXSUCCEED!=CBget(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
+            EXSUCCEED!=Bget(p_ub, EX_QSTRFLAGS, 0, strflags, 0L)
         )
     {
         fprintf(stderr, "Protocol error - TMQ did not return data, see logs!\n");
         NDRX_LOG(log_error, "Failed to read fields: [%s]", 
                 Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }    
     
     FIX_SVC_NM_DIRECT(qspace, 9);
@@ -120,10 +120,10 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-private int call_tmq(char *svcnm)
+exprivate int call_tmq(char *svcnm)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", 1024);
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     long revent;
     int recv_continue = 1;
@@ -135,23 +135,23 @@ private int call_tmq(char *svcnm)
     if (NULL==p_ub)
     {
         NDRX_LOG(log_error, "Failed to alloc FB!");        
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to install command code");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL == (cd = tpconnect(svcnm,
+    if (EXFAIL == (cd = tpconnect(svcnm,
                                     (char *)p_ub,
                                     0,
                                     TPNOTRAN |
                                     TPRECVONLY)))
     {
         NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
@@ -159,36 +159,36 @@ private int call_tmq(char *svcnm)
     while (recv_continue)
     {
         recv_continue=0;
-        if (FAIL == tprecv(cd,
+        if (EXFAIL == tprecv(cd,
                             (char **)&p_ub,
                             0L,
                             0L,
                             &revent))
         {
-            ret = FAIL;
+            ret = EXFAIL;
             tp_errno = tperrno;
             if (TPEEVENT == tp_errno)
             {
                     if (TPEV_SVCSUCC == revent)
-                            ret = SUCCEED;
+                            ret = EXSUCCEED;
                     else
                     {
                         NDRX_LOG(log_error,
                                  "Unexpected conv event %lx", revent );
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
             }
             else
             {
                 NDRX_LOG(log_error, "recv error %d", tp_errno  );
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
         {
-            if (SUCCEED!=print_buffer(p_ub, svcnm))
+            if (EXSUCCEED!=print_buffer(p_ub, svcnm))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             rcv_count++;
             recv_continue=1;
@@ -212,16 +212,16 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_mqlc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_svc_list_t *el, *tmp, *list;
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     print_hdr();

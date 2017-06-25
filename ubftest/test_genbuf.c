@@ -52,17 +52,17 @@ Ensure(test_Bcpy)
     UBFH *p_ub_src = (UBFH *)buf1;
     UBFH *p_ub_dst = (UBFH *)buf2;
 
-    assert_equal(Binit(p_ub_src, sizeof(buf1)), SUCCEED);
-    assert_equal(Binit(p_ub_dst, sizeof(buf2)), SUCCEED);
+    assert_equal(Binit(p_ub_src, sizeof(buf1)), EXSUCCEED);
+    assert_equal(Binit(p_ub_dst, sizeof(buf2)), EXSUCCEED);
 
     /* Having no data it should copy OK */
-    assert_equal(Bcpy(p_ub_dst, p_ub_src), SUCCEED);
+    assert_equal(Bcpy(p_ub_dst, p_ub_src), EXSUCCEED);
     /* Set up some 300 bytes */
     len = sizeof(buf2);
-    assert_equal(CBchg(p_ub_src, T_CARRAY_FLD, 0, data_buf, sizeof(data_buf), BFLD_CARRAY), SUCCEED);
+    assert_equal(CBchg(p_ub_src, T_CARRAY_FLD, 0, data_buf, sizeof(data_buf), BFLD_CARRAY), EXSUCCEED);
 
     /* Now copy should fail, because of no space in buffer! */
-    assert_equal_with_message(Bcpy(p_ub_dst, p_ub_src), FAIL, "Dest have no space!");
+    assert_equal_with_message(Bcpy(p_ub_dst, p_ub_src), EXFAIL, "Dest have no space!");
 }
 
 /**

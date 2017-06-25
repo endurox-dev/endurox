@@ -62,16 +62,16 @@
  * @param svcnm
  * @return SUCCEED/FAIL
  */
-private int print_buffer(UBFH *p_ub, char *svcnm)
+exprivate int print_buffer(UBFH *p_ub, char *svcnm)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char output[CPM_OUTPUT_SIZE];
     
-    if (SUCCEED!=Bget(p_ub, EX_CPMOUTPUT, 0, (char *)output, 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_CPMOUTPUT, 0, (char *)output, 0L))
     {
         NDRX_LOG(log_error, "Failed to read fields: [%s]", 
                 Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     printf("%s\n", output);
@@ -84,10 +84,10 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-private int call_cpm(char *svcnm)
+exprivate int call_cpm(char *svcnm)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, CPM_DEF_BUFFER_SZ);
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     long revent;
     int recv_continue = 1;
@@ -98,16 +98,16 @@ private int call_cpm(char *svcnm)
     if (NULL==p_ub)
     {
         NDRX_LOG(log_error, "Failed to alloc FB!");        
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_CPMCOMMAND, 0, CPM_CMD_PC, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_CPMCOMMAND, 0, CPM_CMD_PC, 0L))
     {
         NDRX_LOG(log_error, "Failed to set EX_CPMCOMMAND to %s!", EX_CPMCOMMAND);        
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL == (cd = tpconnect(svcnm,
+    if (EXFAIL == (cd = tpconnect(svcnm,
                                     (char *)p_ub,
                                     0,
                                     TPNOTRAN |
@@ -115,7 +115,7 @@ private int call_cpm(char *svcnm)
     {
         NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
         
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
@@ -123,29 +123,29 @@ private int call_cpm(char *svcnm)
     while (recv_continue)
     {
         recv_continue=0;
-        if (FAIL == tprecv(cd,
+        if (EXFAIL == tprecv(cd,
                             (char **)&p_ub,
                             0L,
                             0L,
                             &revent))
         {
-            ret = FAIL;
+            ret = EXFAIL;
             tp_errno = tperrno;
             if (TPEEVENT == tp_errno)
             {
                     if (TPEV_SVCSUCC == revent)
-                            ret = SUCCEED;
+                            ret = EXSUCCEED;
                     else
                     {
                         NDRX_LOG(log_error,
                                  "Unexpected conv event %lx", revent );
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
             }
             else
             {
                 NDRX_LOG(log_error, "recv error %d", tp_errno  );
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
@@ -154,9 +154,9 @@ private int call_cpm(char *svcnm)
             fprintf(stderr, "Response: \n");
             Bfprint(p_ub, stderr);
             */
-            if (SUCCEED!=print_buffer(p_ub, svcnm))
+            if (EXSUCCEED!=print_buffer(p_ub, svcnm))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             rcv_count++;
             recv_continue=1;
@@ -182,9 +182,9 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     call_cpm(NDRX_SVC_CPM);
     

@@ -57,7 +57,7 @@
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "Service Name Queue last Average Historical (10 Sanity cycles) \n");
     fprintf(stderr, "------------ ---------- ------- -----------------"
@@ -70,11 +70,11 @@ private void print_hdr(void)
  * @param reply_len
  * @return
  */
-public int pq_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int pq_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     int i;
     char svc[12+1];
-    char q_hist[256] = {EOS};
+    char q_hist[256] = {EXEOS};
 
     if (NDRXD_CALL_TYPE_PQ==reply->msg_type)
     {
@@ -91,7 +91,7 @@ public int pq_rsp_process(command_reply_t *reply, size_t reply_len)
                 svc, pq_info->pq_info[1], pq_info->pq_info[0],q_hist);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -101,7 +101,7 @@ public int pq_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_pq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_pq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -119,6 +119,6 @@ public int cmd_pq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 

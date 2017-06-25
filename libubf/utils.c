@@ -62,7 +62,7 @@ char HEX_TABLE[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e',
  * @param len - length of the resource.
  * @return count of non printable chracters
  */
-public int get_nonprintable_char_tmpspace(char *str, int len)
+expublic int get_nonprintable_char_tmpspace(char *str, int len)
 {
     int ret=0;
     int i;
@@ -87,7 +87,7 @@ public int get_nonprintable_char_tmpspace(char *str, int len)
 /**
  * Builds printable version out 
  */
-public void build_printable_string(char *out, char *in, int in_len)
+expublic void build_printable_string(char *out, char *in, int in_len)
 {
     int i;
     int cur = 0;
@@ -112,7 +112,7 @@ public void build_printable_string(char *out, char *in, int in_len)
             out[cur++] = in[i];
         }
     }
-    out[cur] = EOS;
+    out[cur] = EXEOS;
 }
 
 /**
@@ -120,9 +120,9 @@ public void build_printable_string(char *out, char *in, int in_len)
  * @param c - hex digit 0..f
  * @return -1 (on FAIL)/decimal number
  */
-public int get_num_from_hex(char c)
+expublic int get_num_from_hex(char c)
 {
-    int ret=FAIL;
+    int ret=EXFAIL;
     int i;
 
     for (i=0; i< sizeof(HEX_TABLE); i++)
@@ -144,9 +144,9 @@ public int get_num_from_hex(char c)
  * that printable version
  * @param str - coded string with build_printable_string function
  */
-public int normalize_string(char *str, int *out_len)
+expublic int normalize_string(char *str, int *out_len)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int real=0;
     int data=0;
     int len = strlen(str);
@@ -158,7 +158,7 @@ public int normalize_string(char *str, int *out_len)
             if (data+1>=len)
             {
                 UBF_LOG(log_error, "String terminates after prefix \\");
-                return FAIL; /* << RETURN! */
+                return EXFAIL; /* << RETURN! */
             }
             else if (str[data+1]=='\\') /* this is simply \ */
             {
@@ -170,18 +170,18 @@ public int normalize_string(char *str, int *out_len)
             {
                 UBF_LOG(log_error, "Hex code does not follow at the"
                                                 " end of string for \\");
-                return FAIL; /* << RETURN! */
+                return EXFAIL; /* << RETURN! */
             }
             else
             {
                 /* get high, low parts */
                 high = get_num_from_hex(str[data+1]);
                 low = get_num_from_hex(str[data+2]);
-                if (FAIL==high||FAIL==low)
+                if (EXFAIL==high||EXFAIL==low)
                 {
                     UBF_LOG(log_error, "Invalid hex number 0x%c%c",
                                                     str[data+1], str[data+2]);
-                    return FAIL; /* << RETURN! */
+                    return EXFAIL; /* << RETURN! */
                 }
                 else
                 {
@@ -212,7 +212,7 @@ public int normalize_string(char *str, int *out_len)
  * @title - debug title
  * @p_ub - pointer to UBF buffer
  */
-public void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
+expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
 {
     ndrx_debug_t * dbg = debug_get_ndrx_ptr();
     if (dbg->level>=lev)

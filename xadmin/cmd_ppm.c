@@ -52,7 +52,7 @@
             {\
                 strncpy(Xbuf, Xsrc, Xlen-1);\
                 Xbuf[Xlen-1] = '+';\
-                Xbuf[Xlen] = EOS;\
+                Xbuf[Xlen] = EXEOS;\
             }\
             else\
                 strcpy(Xbuf, Xsrc);
@@ -82,7 +82,7 @@ M_descr [] =
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "Binary    SRVID PID   STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
     fprintf(stderr, "--------- ----- ----- ----- ----- -- ---- ---- ---- ---- - ---- -----\n");
@@ -94,7 +94,7 @@ private void print_hdr(void)
  * @param reply_len
  * @return 
  */
-private char *get_status_descr(long status)
+exprivate char *get_status_descr(long status)
 {
     char *ret;
     static char buf[16];
@@ -117,11 +117,11 @@ out:
 /**
  * Decode binary flags
  */
-private char *decode_flags(int flags)
+exprivate char *decode_flags(int flags)
 {
     static char buf[10];
     
-    buf[0] = EOS;
+    buf[0] = EXEOS;
     
     if (flags & SRV_KEY_FLAGS_BRIDGE)
     {
@@ -147,7 +147,7 @@ private char *decode_flags(int flags)
  * @param reply_len
  * @return
  */
-public int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     char binary[9+1];
 
@@ -172,7 +172,7 @@ public int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
                 );
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -182,7 +182,7 @@ public int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -200,6 +200,6 @@ public int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 

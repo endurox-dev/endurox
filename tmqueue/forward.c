@@ -68,14 +68,14 @@
 
 
 /*---------------------------Globals------------------------------------*/
-public pthread_t G_forward_thread;
-public int G_forward_req_shutdown = FALSE;    /* Is shutdown request? */
+expublic pthread_t G_forward_thread;
+expublic int G_forward_req_shutdown = EXFALSE;    /* Is shutdown request? */
 
 
-private pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
-private pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
+exprivate pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
+exprivate pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
-private __thread int M_is_xa_open = FALSE; /* Init flag for thread. */
+exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 
 
 MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
@@ -86,7 +86,7 @@ MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 /**
  * Lock background operations
  */
-public void forward_lock(void)
+expublic void forward_lock(void)
 {
     MUTEX_LOCK_V(M_forward_lock);
 }
@@ -94,7 +94,7 @@ public void forward_lock(void)
 /**
  * Un-lock background operations
  */
-public void forward_unlock(void)
+expublic void forward_unlock(void)
 {
     MUTEX_UNLOCK_V(M_forward_lock);
 }
@@ -103,7 +103,7 @@ public void forward_unlock(void)
  * Sleep the thread, with option to wake up (by shutdown).
  * @param sleep_sec
  */
-private void thread_sleep(int sleep_sec)
+exprivate void thread_sleep(int sleep_sec)
 {
     struct timespec wait_time;
     struct timeval now;
@@ -122,7 +122,7 @@ private void thread_sleep(int sleep_sec)
 /**
  * Wake up the sleeping thread.
  */
-public void forward_shutdown_wake(void)
+expublic void forward_shutdown_wake(void)
 {
     pthread_mutex_lock(&M_wait_mutex);
     pthread_cond_signal(&M_wait_cond);
@@ -136,7 +136,7 @@ public void forward_shutdown_wake(void)
  * 
  * @return 
  */
-private tmq_msg_t * get_next_msg(void)
+exprivate tmq_msg_t * get_next_msg(void)
 {
     tmq_msg_t * ret = NULL;
     static __thread fwd_qlist_t *list = NULL;     /* Single threaded but anyway */
@@ -156,7 +156,7 @@ private tmq_msg_t * get_next_msg(void)
         }
         
         /* Generate new list */
-        list = tmq_get_qlist(TRUE, FALSE);
+        list = tmq_get_qlist(EXTRUE, EXFALSE);
         
         if (NULL!=list)
         {
@@ -170,7 +170,7 @@ private tmq_msg_t * get_next_msg(void)
     while (NULL!=cur)
     {
         /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue(cur->qname, 0, TRUE)))
+        if (NULL==(ret=tmq_msg_dequeue(cur->qname, 0, EXTRUE)))
         {
             NDRX_LOG(log_debug, "Not messages for dequeue");
         }
@@ -191,9 +191,9 @@ out:
  * @param ptr
  * @param p_finish_off
  */
-public void thread_process_forward (void *ptr, int *p_finish_off)
+expublic void thread_process_forward (void *ptr, int *p_finish_off)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_msg_t * msg = (tmq_msg_t *)ptr;
     tmq_qconfig_t qconf;
     char *call_buf = NULL;
@@ -206,7 +206,7 @@ public void thread_process_forward (void *ptr, int *p_finish_off)
     
     if (!M_is_xa_open)
     {
-        if (SUCCEED!=tpopen()) /* init the lib anyway... */
+        if (EXSUCCEED!=tpopen()) /* init the lib anyway... */
         {
             NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
                     tpstrerror(tperrno));
@@ -214,7 +214,7 @@ public void thread_process_forward (void *ptr, int *p_finish_off)
         }
         else
         {
-            M_is_xa_open = TRUE;
+            M_is_xa_open = EXTRUE;
         }
     }
 
@@ -226,11 +226,11 @@ public void thread_process_forward (void *ptr, int *p_finish_off)
     /* Call the Service & and issue XA commands for update or delete
      *  + If message failed, forward to dead queue (if defined).
      */
-    if (SUCCEED!=tmq_qconf_get_with_default_static(msg->hdr.qname, &qconf))
+    if (EXSUCCEED!=tmq_qconf_get_with_default_static(msg->hdr.qname, &qconf))
     {
         /* might happen if we reconfigure on the fly. */
         NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Alloc the buffer of the message type according to size (use prepare incoming?)
@@ -238,7 +238,7 @@ public void thread_process_forward (void *ptr, int *p_finish_off)
     
     descr = &G_buf_descr[msg->buftyp];
 
-    if (SUCCEED!=descr->pf_prepare_incoming(descr,
+    if (EXSUCCEED!=descr->pf_prepare_incoming(descr,
                     msg->msg,
                     msg->len,
                     &call_buf,
@@ -246,17 +246,17 @@ public void thread_process_forward (void *ptr, int *p_finish_off)
                     0))
     {
         NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* call the service */
     NDRX_LOG(log_info, "Sending request to service: [%s]", qconf.svcnm);
     
-    if (FAIL == tpcall(qconf.svcnm, call_buf, call_len, (char **)&call_buf, &call_len,0))
+    if (EXFAIL == tpcall(qconf.svcnm, call_buf, call_len, (char **)&call_buf, &call_len,0))
     {
         tperr = tperrno;
         NDRX_LOG(log_error, "%s failed: %s", qconf.svcnm, tpstrerror(tperr));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_info, "Service answer ok for %s", msgid_str);
@@ -272,7 +272,7 @@ out:
     */
 
     /* start the transaction */
-    if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+    if (EXSUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
     {
         userlog("Failed to start tran: %s", tpstrerror(tperrno));
         NDRX_LOG(log_error, "Failed to start tran!");
@@ -285,7 +285,7 @@ out:
     /* 
      * just unlock the message. Increase the cou
      */
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
        /* Remove the message */
         if (msg->qctl.flags & TPQREPLYQ)
@@ -298,7 +298,7 @@ out:
             /* Send response to reply Q (load the data in FB with call details) */
             memset(&ctl, 0, sizeof(ctl));
                     
-            if (SUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
+            if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
                     call_buf, call_len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
@@ -310,7 +310,7 @@ out:
         
         cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
-        if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+        if (EXSUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
                 "Removing completed message..."))
         {
             userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
@@ -341,7 +341,7 @@ out:
                  * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
-                if (SUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
+                if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         call_buf, call_len, TPNOTRAN))
                 {
                     NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
@@ -353,7 +353,7 @@ out:
             
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
-            if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+            if (EXSUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
                     "Removing expired message..."))
             {
                 userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
@@ -367,7 +367,7 @@ out:
         
             cmd_block.hdr.command_code = TMQ_STORCMD_UPD;
             
-            if (SUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+            if (EXSUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
                     "Update message command"))
             {
                 userlog("Failed to issue update command to xa for msgid_str [%s]", 
@@ -377,7 +377,7 @@ out:
     }
     
     /* commit the transaction */
-    if (SUCCEED!=tpcommit(0))
+    if (EXSUCCEED!=tpcommit(0))
     {
         userlog("Failed to commit: %s", tpstrerror(tperrno));
         NDRX_LOG(log_error, "Failed to commit!");
@@ -392,9 +392,9 @@ out:
  * Try to complete the transactions.
  * @return  SUCCEED/FAIL
  */
-public int forward_loop(void)
+expublic int forward_loop(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_msg_t * msg;
     /*
      * We need to get the list of queues to monitor.
@@ -438,7 +438,7 @@ out:
  * Background processing of the transactions (Complete them).
  * @return 
  */
-public void * forward_process(void *arg)
+expublic void * forward_process(void *arg)
 {
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS START ********");
     
@@ -463,7 +463,7 @@ public void * forward_process(void *arg)
  * Initialize background process
  * @return
  */
-public void forward_process_init(void)
+expublic void forward_process_init(void)
 {
     struct sigaction        actions;
     

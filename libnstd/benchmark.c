@@ -64,29 +64,29 @@
  * @param param2
  * @return SUCCEED/FAIL
  */
-public int ndrx_bench_write_stats(double msgsize, double callspersec)
+expublic int ndrx_bench_write_stats(double msgsize, double callspersec)
 {
     static char *file;
     static char *config_name;
-    static int first = TRUE;
-    int ret = SUCCEED;
+    static int first = EXTRUE;
+    int ret = EXSUCCEED;
     FILE *f = NULL;
     
     if (first)
     {
         file = getenv(CONF_NDRX_BENCH_FILE);
         config_name = getenv(CONF_NDRX_BENCH_CONFIGNAME);
-        first = FALSE;
+        first = EXFALSE;
     }
     
     if (NULL!=file && NULL!=config_name)
     {
-        if( access( file, F_OK ) != FAIL )
+        if( access( file, F_OK ) != EXFAIL )
         {
             if (NULL==(f=NDRX_FOPEN(file, "a")))
             {
                 NDRX_LOG(log_error, "Failed to open [%s]: %s", file, strerror(errno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }   
         }
         else
@@ -95,7 +95,7 @@ public int ndrx_bench_write_stats(double msgsize, double callspersec)
             if (NULL==(f=NDRX_FOPEN(file, "w")))
             {
                 NDRX_LOG(log_error, "Failed to open [%s]: %s", file, strerror(errno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             fprintf(f, "\"Configuration\" \"MsgSize\" \"CallsPerSec\"\n");
@@ -105,7 +105,7 @@ public int ndrx_bench_write_stats(double msgsize, double callspersec)
     else
     {
         NDRX_LOG(log_error, "%s or %s not set!", CONF_NDRX_BENCH_FILE, CONF_NDRX_BENCH_CONFIGNAME);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:

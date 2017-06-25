@@ -49,7 +49,7 @@ void __dummy(void)
  * @param len
  * @param flags
  */
-public void     tpreturn (int rval, long rcode, char *data, long len, long flags)
+expublic void     tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     /*API_ENTRY;
 
@@ -65,7 +65,7 @@ public void     tpreturn (int rval, long rcode, char *data, long len, long flags
  * @param len
  * @param flags
  */
-public void tpforward (char *svc, char *data, long len, long flags)
+expublic void tpforward (char *svc, char *data, long len, long flags)
 {
     /*API_ENTRY;
 

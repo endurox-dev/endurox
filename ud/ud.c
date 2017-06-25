@@ -56,7 +56,7 @@
 int main(int argc, char** argv)
 {
 
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub;
     UBFH *p_ub_ret=NULL;
     char svc[XATMI_SERVICE_NAME_LENGTH+1];
@@ -68,23 +68,23 @@ int main(int argc, char** argv)
     if (NULL==(p_ub=(UBFH *)tpalloc("UBF", NULL, MAX_CALL_DATA_SIZE-sizeof(UBF_header_t))))
     {
         fprintf(stderr, "%s\n", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* Read the buffer from external source */
-    if (SUCCEED!=Bextread(p_ub, stdin))
+    if (EXSUCCEED!=Bextread(p_ub, stdin))
     {
         fprintf(stderr, "%s\n", Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* Get service name */
-    if (SUCCEED!=Bget(p_ub, SRVCNM, 0, svc, &len))
+    if (EXSUCCEED!=Bget(p_ub, SRVCNM, 0, svc, &len))
     {
         fprintf(stderr, "Failed to get SRVCNM: %s\n", Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -92,9 +92,9 @@ int main(int argc, char** argv)
     Bdel(p_ub, SRVCNM, 0);
 
     /* call the service now! */
-    if (SUCCEED!=tpcall(svc, (char *)p_ub, 0L, (char **)&p_ub_ret, &rsp_len, 0L))
+    if (EXSUCCEED!=tpcall(svc, (char *)p_ub, 0L, (char **)&p_ub_ret, &rsp_len, 0L))
     {
-        ret=FAIL;
+        ret=EXFAIL;
 
 	/* print the result */
         fprintf(stderr, "%s\n", tpstrerror(tperrno));

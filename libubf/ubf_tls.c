@@ -46,17 +46,17 @@
 /*---------------------------Globals------------------------------------*/
 __thread ubf_tls_t *G_ubf_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
-private pthread_key_t M_ubf_tls_key;
+exprivate pthread_key_t M_ubf_tls_key;
 MUTEX_LOCKDECL(M_thdata_init);
-private int M_first = TRUE;
+exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
-private void ubf_buffer_key_destruct( void *value );
+exprivate void ubf_buffer_key_destruct( void *value );
 
 /**
  * Thread destructor
  * @param value this is malloced thread TLS
  */
-private void ubf_buffer_key_destruct( void *value )
+exprivate void ubf_buffer_key_destruct( void *value )
 {
     ndrx_ubf_tls_free((void *)value);
 }
@@ -65,7 +65,7 @@ private void ubf_buffer_key_destruct( void *value )
  * Unlock, unset G_ubf_tls, return pointer to G_ubf_tls
  * @return 
  */
-public void * ndrx_ubf_tls_get(void)
+expublic void * ndrx_ubf_tls_get(void)
 {
     ubf_tls_t *tmp = G_ubf_tls;
     
@@ -92,7 +92,7 @@ public void * ndrx_ubf_tls_get(void)
  * Get the lock & set the G_ubf_tls to this one
  * @param tls
  */
-public int ndrx_ubf_tls_set(void *data)
+expublic int ndrx_ubf_tls_set(void *data)
 {
     ubf_tls_t *tls = (ubf_tls_t *)data;
     
@@ -123,7 +123,7 @@ public int ndrx_ubf_tls_set(void *data)
         G_ubf_tls = NULL;
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
     
 }
 
@@ -132,7 +132,7 @@ public int ndrx_ubf_tls_set(void *data)
  * @param tls
  * @return 
  */
-public void ndrx_ubf_tls_free(void *data)
+expublic void ndrx_ubf_tls_free(void *data)
 {
     if (NULL!=data)
     {
@@ -153,9 +153,9 @@ public void ndrx_ubf_tls_free(void *data)
  * @param auto_destroy if set to 1 then when tried exits, thread data will be made free
  * @return 
  */
-public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
+expublic void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ubf_tls_t *tls  = NULL;
     char fn[] = "ubf_context_new";
     
@@ -167,7 +167,7 @@ public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
         {
             pthread_key_create( &M_ubf_tls_key, 
                     &ubf_buffer_key_destruct );
-            M_first = FALSE;
+            M_first = EXFALSE;
         }
         MUTEX_UNLOCK_V(M_thdata_init);
     }
@@ -175,7 +175,7 @@ public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
     if (NULL==(tls = (ubf_tls_t *)NDRX_MALLOC(sizeof(ubf_tls_t))))
     {
         userlog ("%s: failed to malloc", fn);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* do the common init... */
@@ -193,7 +193,7 @@ public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
     tls->carray_buf_ptr= NULL;
     tls->carray_dat_len = 0;
     
-    tls->M_ubf_error_msg_buf[0]= EOS;
+    tls->M_ubf_error_msg_buf[0]= EXEOS;
     tls->M_ubf_error = BMINVAL;
     
     
@@ -204,12 +204,12 @@ public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
      */
     if (auto_destroy)
     {
-        tls->is_auto = TRUE;
+        tls->is_auto = EXTRUE;
         pthread_setspecific( M_ubf_tls_key, (void *)tls );
     }
     else
     {
-        tls->is_auto = FALSE;
+        tls->is_auto = EXFALSE;
     }
     
     if (auto_set)
@@ -219,7 +219,7 @@ public void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
     
 out:
 
-    if (SUCCEED!=ret && NULL!=tls)
+    if (EXSUCCEED!=ret && NULL!=tls)
     {
         ndrx_ubf_tls_free((char *)tls);
     }

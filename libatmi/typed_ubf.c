@@ -60,15 +60,15 @@
  */
 int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)idata;
     int ubf_used;
     char fn[]="UBF_prepare_outgoing";
     UBF_header_t *hdr;
-    if (FAIL==(ubf_used=Bused(p_ub)))
+    if (EXFAIL==(ubf_used=Bused(p_ub)))
     {
         _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -76,7 +76,7 @@ int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, c
     if (NULL!=olen && 0!=*olen && *olen < ubf_used)
     {
         _TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, but requested: %d", fn, *olen, ubf_used);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -103,7 +103,7 @@ out:
 int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int rcv_buf_size;
     int existing_size;
     UBFH *p_ub = (UBFH *)rcv_data;
@@ -112,10 +112,10 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     buffer_obj_t *outbufobj=NULL;
 
     NDRX_LOG(log_debug, "Entering %s", fn);
-    if (FAIL==(rcv_buf_size=Bused(p_ub)))
+    if (EXFAIL==(rcv_buf_size=Bused(p_ub)))
     {
         _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -124,7 +124,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     {
         _TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -138,7 +138,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             _TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
                                         G_buf_descr[BUF_TYPE_UBF],
                                         G_buf_descr[outbufobj->type_id]);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* If we can change data type and this does not match, then
@@ -160,10 +160,10 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         p_ub_out = (UBFH *)*odata;
         NDRX_LOG(log_debug, "%s: Output buffer exists", fn);
         
-        if (FAIL==(existing_size=Bsizeof(p_ub_out)))
+        if (EXFAIL==(existing_size=Bsizeof(p_ub_out)))
         {
             _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -184,7 +184,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             if (NULL==(new_addr=_tprealloc(*odata, rcv_buf_size)))
             {
                 NDRX_LOG(log_error, "%s: _tprealloc failed!", fn);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
@@ -212,9 +212,9 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     }
 
     /* Do the actual data copy */
-    if (SUCCEED!=Bcpy(p_ub_out, p_ub))
+    if (EXSUCCEED!=Bcpy(p_ub_out, p_ub))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRX_LOG(log_error, "Bcpy failed!");
         _TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
@@ -231,7 +231,7 @@ out:
  * @param len
  * @return
  */
-public char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
 {
     char *ret=NULL;
     char fn[] = "UBF_tpalloc";
@@ -261,7 +261,7 @@ out:
  * @param size
  * @return
  */
-public char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
+expublic char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
 {
     char *ret=NULL;
     UBFH *p_ub = (UBFH *)cur_ptr;
@@ -289,7 +289,7 @@ public char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len
  * @param descr
  * @param buf
  */
-public void UBF_tpfree(typed_buffer_descr_t *descr, char *buf)
+expublic void UBF_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
     Bfree((UBFH *)buf);
 }
@@ -302,9 +302,9 @@ public void UBF_tpfree(typed_buffer_descr_t *descr, char *buf)
  * @return TRUE/FALSE.
  * In case of error we just return FALSE as not matched!
  */
-public int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
+expublic int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
 {
-    int ret=FALSE;
+    int ret=EXFALSE;
     char *tree;
 
     /* compile the xpression */

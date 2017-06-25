@@ -64,7 +64,7 @@ int (*G_report_to_ndrxd_cb) (void) = NULL;
  * libatmisrv is reporting service status to ndrxd.
  * @param report_to_ndrxd_callback - callback func. Can be NULL, to disable cback.
  */
-public void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_cb) (void))
+expublic void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_cb) (void))
 {
     NDRX_LOG(log_warn, "Installing additional report_to_ndrxd() callback = %p", 
             report_to_ndrxd_cb);
@@ -76,9 +76,9 @@ public void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_cb) (void))
  * TODO: Test recovery case, it might not report to ndrxd that process is bridge!
  * @return
  */
-public int report_to_ndrxd(void)
+expublic int report_to_ndrxd(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
     int i, offset=0;
@@ -99,7 +99,7 @@ public int report_to_ndrxd(void)
     {
         entry = G_server_conf.service_array[i];
         /* TODO: Still some admin stuff gets over? */
-        if (entry->is_admin || EOS==entry->svc_nm[0])
+        if (entry->is_admin || EXEOS==entry->svc_nm[0])
         {
             offset++;
             continue; /* not interested in admin q */
@@ -120,15 +120,15 @@ public int report_to_ndrxd(void)
                         (command_call_t *)status, send_size,
                         ndrx_get_G_atmi_conf()->reply_q_str,
                         ndrx_get_G_atmi_conf()->reply_q,
-                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
                         ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE);
+                        EXFALSE);
     /* Bug #110 - provide bridge status after ndrxd recovery... */
-    if (SUCCEED==ret && NULL!=G_report_to_ndrxd_cb)
+    if (EXSUCCEED==ret && NULL!=G_report_to_ndrxd_cb)
     {
         NDRX_LOG(log_info, "Callback on report_to_ndrxd is set.");
         ret=G_report_to_ndrxd_cb();
@@ -142,9 +142,9 @@ public int report_to_ndrxd(void)
  * Send unsubscribe message to ndrxd
  * @return
  */
-public int unadvertse_to_ndrxd(char *svcname)
+expublic int unadvertse_to_ndrxd(char *svcname)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     command_dynadvertise_t *unadv = (command_dynadvertise_t *)buf;
     int i, offset=0;
@@ -162,20 +162,20 @@ public int unadvertse_to_ndrxd(char *svcname)
                         (command_call_t *)unadv, send_size,
                         ndrx_get_G_atmi_conf()->reply_q_str,
                         ndrx_get_G_atmi_conf()->reply_q,
-                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
                         ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE);
-    if (SUCCEED!=ret)
+                        EXFALSE);
+    if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
         if (!G_shm_srv)
         {
             NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
-            ret=SUCCEED;
+            ret=EXSUCCEED;
         }    
         else
         {
@@ -193,9 +193,9 @@ out:
  * Send advertise block to ndrxd.
  * @return
  */
-public int advertse_to_ndrxd(svc_entry_fn_t *entry)
+expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     command_dynadvertise_t *adv = (command_dynadvertise_t *)buf;
     int i, offset=0;
@@ -215,20 +215,20 @@ public int advertse_to_ndrxd(svc_entry_fn_t *entry)
                         (command_call_t *)adv, send_size,
                         ndrx_get_G_atmi_conf()->reply_q_str,
                         ndrx_get_G_atmi_conf()->reply_q,
-                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
                         ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE);
-    if (SUCCEED!=ret)
+                        EXFALSE);
+    if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
         if (!G_shm_srv)
         {
             NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
-            ret=SUCCEED;
+            ret=EXSUCCEED;
         }    
         else
         {
@@ -248,9 +248,9 @@ out:
  * @param len
  * @return 
  */
-private int get_bridges_rply_request(char *buf, long len)
+exprivate int get_bridges_rply_request(char *buf, long len)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     svc_entry_fn_t *entry = G_server_conf.service_array[ATMI_SRV_ADMIN_Q];
     command_call_t *p_adm_cmd = (command_call_t *)buf;
     /* we should re-queue back the stuff... */
@@ -270,7 +270,7 @@ private int get_bridges_rply_request(char *buf, long len)
     {
         NDRX_LOG(log_error, "Did not get reply from ndrxd int time for "
                 "bridge listing - FAIL!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;
@@ -284,9 +284,9 @@ private int get_bridges_rply_request(char *buf, long len)
  * ndrxd could update shared mem for bridges, for full refresh and for delete updates...
  * @return
  */
-public int ndrxd_get_bridges(char *nodes_out)
+expublic int ndrxd_get_bridges(char *nodes_out)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_call_t req;
     size_t  send_size=sizeof(command_call_t);
     command_reply_getbrs_t rply;
@@ -299,7 +299,7 @@ public int ndrxd_get_bridges(char *nodes_out)
     memset(&rply, 0, sizeof(rply));
     
     /* We should enter our reply Q in blocked mode (so that we get response from NDRXD)! */
-    ndrx_q_setblock(entry->q_descr, TRUE);
+    ndrx_q_setblock(entry->q_descr, EXTRUE);
 
     /*
     NDRX_LOG(log_debug, "ndrxd_get_bridges: call flags=0x%x", req.flags);
@@ -309,25 +309,25 @@ public int ndrxd_get_bridges(char *nodes_out)
                         &req, send_size,
                         entry->listen_q,
                         entry->q_descr,
-                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
                         ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
                         NULL,
-                        TRUE,
-                        FALSE,
+                        EXTRUE,
+                        EXFALSE,
                         (char *)&rply,
                         &rply_len,
                         0,
                         get_bridges_rply_request);
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
         if (!G_shm_srv)
         {
             NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
-            ret=SUCCEED;
+            ret=EXSUCCEED;
         }    
         else
         {
@@ -341,7 +341,7 @@ public int ndrxd_get_bridges(char *nodes_out)
         {
             NDRX_LOG(log_error, "Invalid reply, got len: %d expected: %d",
                     rply_len, sizeof(command_reply_getbrs_t));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -351,7 +351,7 @@ public int ndrxd_get_bridges(char *nodes_out)
 
 out:
     /* Unblock the Q */
-    ndrx_q_setblock(entry->q_descr, FALSE);
+    ndrx_q_setblock(entry->q_descr, EXFALSE);
 
     return ret;
 }
@@ -361,29 +361,29 @@ out:
  * Reply with ping response to ndrxd
  * @return
  */
-public int pingrsp_to_ndrxd(command_srvping_t *ping)
+expublic int pingrsp_to_ndrxd(command_srvping_t *ping)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     ret=cmd_generic_call(NDRXD_COM_SRVPING_RP, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)ping, sizeof(*ping),
                         ndrx_get_G_atmi_conf()->reply_q_str,
                         ndrx_get_G_atmi_conf()->reply_q,
-                        (mqd_t)FAIL,   /* do not keep open ndrxd q open */
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
                         ndrx_get_G_atmi_conf()->ndrxd_q_str,
                         0, NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE);
-    if (SUCCEED!=ret)
+                        EXFALSE);
+    if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
         if (!G_shm_srv)
         {
             NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
-            ret=SUCCEED;
+            ret=EXSUCCEED;
         }    
         else
         {

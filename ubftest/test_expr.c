@@ -46,13 +46,13 @@
 void delete_fb_test_data(UBFH *p_ub)
 {
     
-    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), SUCCEED);
-    assert_equal(Bdel(p_ub, T_LONG_FLD, 0), SUCCEED);
-    assert_equal(Bdel(p_ub, T_CHAR_FLD, 0), SUCCEED);
-    assert_equal(Bdel(p_ub, T_FLOAT_FLD, 0), SUCCEED);
-    assert_equal(Bdel(p_ub, T_DOUBLE_FLD, 0), SUCCEED);
-    assert_equal(Bdel(p_ub, T_STRING_FLD, 0), SUCCEED);
-    assert_equal(Bdel(p_ub, T_CARRAY_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_LONG_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_CHAR_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_FLOAT_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_DOUBLE_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_STRING_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_CARRAY_FLD, 0), EXSUCCEED);
 
 }
 
@@ -66,13 +66,13 @@ void load_expr_test_data_1(UBFH *p_ub)
     char carr[] = "CARRAY TEST";
     BFLDLEN len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 212;
@@ -81,13 +81,13 @@ void load_expr_test_data_1(UBFH *p_ub)
     f = 12127;
     d = 1231232.1;
     carr[0] = 'X';
-    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
 }
 
 void load_expr_test_data_2(UBFH *p_ub)
@@ -100,13 +100,13 @@ void load_expr_test_data_2(UBFH *p_ub)
     char carr[] = "ZARRAY TEST";
     BFLDLEN len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = -212;
@@ -115,13 +115,13 @@ void load_expr_test_data_2(UBFH *p_ub)
     f = -12127;
     d = -1231232.1;
     carr[0] = 'Z';
-    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
 }
 
 Ensure(test_expr_basic)
@@ -131,11 +131,11 @@ Ensure(test_expr_basic)
     char *tree = NULL;
     /*----------------------------------------------------------*/
     /* init */
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     /* Test OK */
     tree=Bboolco ("2+2*4==10 && 'abc' %% '.bc'");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(NULL, tree), TRUE);
+    assert_equal(Bboolev(NULL, tree), EXTRUE);
     Btreefree(tree);
     /*----------------------------------------------------------*/
     /* We have failure somehere! */
@@ -163,11 +163,11 @@ Ensure(test_expr_basic)
     /* Do some real test, load the environment vairables */
     load_field_table(); /* set field table environment variable */
     /* Insert data */
-    assert_equal(CBadd(p_ub, T_STRING_2_FLD, "0123456789012345", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBadd(p_ub, T_CHAR_FLD, "2", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBadd(p_ub, T_STRING_2_FLD, "0123456789012345", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub, T_CHAR_FLD, "2", 0, BFLD_STRING), EXSUCCEED);
     tree=Bboolco ("T_STRING_2_FLD=='0123456789012345' && T_CHAR_FLD==2");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(p_ub, tree), TRUE);
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
     Btreefree(tree);
     /*----------------------------------------------------------*/
     /* Reporduce the error when field is not found. In field tables */
@@ -180,7 +180,7 @@ Ensure(test_expr_basic)
     /* Test that  '0' is not becoming as 1 in math ops */
     tree=Bboolco ("!'0'+1==2");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(p_ub, tree), FALSE);
+    assert_equal(Bboolev(p_ub, tree), EXFALSE);
     Btreefree(tree);
 
 }
@@ -195,109 +195,109 @@ Ensure(test_expr_basic_logic)
     char *tree = NULL;
     double f;
     short s;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_field_table(); /* set field table environment variable */
 
     /*----------------------------------------------------------*/
     /* Basic testing of OR */
         f = 127.001;
-        assert_equal(Badd(p_ub, T_STRING_FLD, "TEST STR VAL", 0), SUCCEED);
-        assert_equal(Badd(p_ub, T_DOUBLE_FLD, (char *)&f, 0), SUCCEED);
+        assert_equal(Badd(p_ub, T_STRING_FLD, "TEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Badd(p_ub, T_DOUBLE_FLD, (char *)&f, 0), EXSUCCEED);
         /* In this case second expression should not be valuated. */
         tree=Bboolco ("T_DOUBLE_FLD==127.001 || T_STRING_FLD=='TEST STR VAL'");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
 
         /* Now should be true because of second expression  */
         f = 127.002;
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "TEST STR VAL", 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "TEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* should be true */
         f = 127.001;
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
 
         /* Now it should not true */
         f = 127.002;
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
     /* Basic AND testing */
         /* this should be true. */
         f = 127.001;
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "TEST STR VAL", 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "TEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
         tree=Bboolco ("T_DOUBLE_FLD==127.001 && T_STRING_FLD=='TEST STR VAL'");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* this should be false */
         f = 127.002;
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         /* this also should be false */
         f = 127.001;
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         /* Both false - false */
         f = 127.002;
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "XTEST STR VAL", 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
     /* Basic not (!) testing */
         s = 0; /* In this case if field is present, then value is true! */
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&f, 0), SUCCEED);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&f, 0), EXSUCCEED);
         tree=Bboolco ("T_DOUBLE_FLD || !1");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* should be true too */
         s = 1; /* In this case if field is present, then value is true! */
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&f, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         tree=Bboolco ("!1");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         s = 0;
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&f, 0), SUCCEED);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&f, 0), EXSUCCEED);
         tree=Bboolco ("!T_SHORT_FLD || T_SHORT_FLD");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         tree=Bboolco ("!T_SHORT_FLD || !T_SHORT_FLD");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
      /* Basic not XOR testing */
         tree=Bboolco ("1 ^ 1"); /* false */
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         tree=Bboolco ("0 ^ 1"); /* true */
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         tree=Bboolco ("1 ^ 0"); /* true */
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         tree=Bboolco ("0 ^ 0"); /* true */
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);       
 }
 /**
@@ -308,7 +308,7 @@ Ensure(test_expr_basic_equality)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_field_table(); /* set field table environment variable */
 
     /*----------------------------------------------------------*/
@@ -318,9 +318,9 @@ Ensure(test_expr_basic_equality)
                   "T_DOUBLE_FLD==12312312.1112 &&  "
                   "T_STRING_FLD=='TEST STR VAL' && T_CARRAY_FLD=='CARRAY TEST'");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(p_ub, tree), TRUE);
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
     load_expr_test_data_2(p_ub);
-    assert_equal(Bboolev(p_ub, tree), FALSE);
+    assert_equal(Bboolev(p_ub, tree), EXFALSE);
     Btreefree(tree); 
     /*----------------------------------------------------------*/
     load_expr_test_data_1(p_ub);
@@ -329,9 +329,9 @@ Ensure(test_expr_basic_equality)
                   "T_DOUBLE_FLD!=12312312.1112 ||  "
                   "T_STRING_FLD!='TEST STR VAL' ||   T_CARRAY_FLD!='CARRAY TEST'");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(p_ub, tree), FALSE);
+    assert_equal(Bboolev(p_ub, tree), EXFALSE);
     load_expr_test_data_2(p_ub);
-    assert_equal(Bboolev(p_ub, tree), TRUE);
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
     Btreefree(tree);
     /*----------------------------------------------------------*/
         /* Actually here is error, that expression (T_FLOAT_FLD-127.001 %% '0\\.0.*')
@@ -349,10 +349,10 @@ Ensure(test_expr_basic_equality)
                       "T_STRING_FLD %% 'TEST STR ...' && T_CARRAY_FLD  %% 'CA..AY TEST'");
         assert_not_equal(tree, NULL);
         /* Above stuff should be true. */
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
         /* should be false */
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* Test error reporting when regular expression syntax is failed */
@@ -361,7 +361,7 @@ Ensure(test_expr_basic_equality)
         assert_not_equal(tree, NULL);
         assert_not_equal(Berror, BSYNTAX);
         
-        assert_equal(Bboolev(p_ub, tree), FAIL);
+        assert_equal(Bboolev(p_ub, tree), EXFAIL);
         assert_equal(Berror, BSYNTAX);
         Btreefree(tree);
 
@@ -374,10 +374,10 @@ Ensure(test_expr_basic_equality)
         
         /* Above stuff should be false, because we have correct data */
         load_expr_test_data_1(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         load_expr_test_data_2(p_ub);
         /* should be TRUE, because we have bad data */
-        assert_equal(Bboolev(p_ub, tree), TRUE);        
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);        
         
         Btreefree(tree);
     /*----------------------------------------------------------*/
@@ -387,7 +387,7 @@ Ensure(test_expr_basic_equality)
         
         /* Above stuff should be false, because we have correct data */
         load_expr_test_data_1(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         
         Btreefree(tree);
 
@@ -401,9 +401,9 @@ Ensure(test_expr_basic_equality)
         /* should be true with no matter of which data */
 
         load_expr_test_data_1(p_ub);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* test Non existing field compare to 0, should be false */
@@ -413,7 +413,7 @@ Ensure(test_expr_basic_equality)
         while (Bpres(p_ub, T_STRING_FLD, 0))
         	Bdel(p_ub, T_STRING_FLD, 0);
 		
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
 
         Btreefree(tree);
     /*----------------------------------------------------------*/
@@ -429,7 +429,7 @@ Ensure(test_expr_basic_unary)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     long test_long;
     load_field_table(); /* set field table environment variable */
 
@@ -440,9 +440,9 @@ Ensure(test_expr_basic_unary)
                   "-T_FLOAT_FLD<-126.001 && -T_DOUBLE_FLD==0-12312312.1112 &&  "
                   "-T_STRING_FLD==0 && -T_CARRAY_FLD==0 && -1==0-1 && -1.0==0-1");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* unary + operation test */
@@ -451,9 +451,9 @@ Ensure(test_expr_basic_unary)
                   "+T_FLOAT_FLD>=126.001 && T_FLOAT_2_FLD==12127 && +T_DOUBLE_FLD==+12312312.1112 &&  "
                   "+T_STRING_FLD==0 && +T_CARRAY_FLD==0");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* test ! on fields */
@@ -464,10 +464,10 @@ Ensure(test_expr_basic_unary)
                   "!T_FLOAT_FLD && !T_DOUBLE_FLD &&  "
                   "!T_STRING_FLD && !T_CARRAY_FLD && !0 && !(!'0') && !0.0");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* now restore the data - should fail, because data available */
         load_expr_test_data_1(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* test ! on fields */
@@ -476,11 +476,11 @@ Ensure(test_expr_basic_unary)
                   "~T_FLOAT_FLD==-2 && ~T_DOUBLE_FLD==-2 &&  "
                   "~T_STRING_FLD==-2 && ~T_CARRAY_FLD==-2 && ~0==-1 && ~'0'==-2 && ~0.0==-1");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* Test with 0 in LONG field - result should be the same. */
         test_long = 0;
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&test_long, 0, BFLD_LONG), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&test_long, 0, BFLD_LONG), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
 }
 /**
@@ -491,7 +491,7 @@ Ensure(test_expr_basic_additive)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     double d = 2312.2;
     int big_test;
     load_field_table(); /* set field table environment variable */
@@ -530,14 +530,14 @@ Ensure(test_expr_basic_additive)
 #endif
             load_expr_test_data_1(p_ub);
             /* Fix up double */
-            assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-            assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"144", 0), SUCCEED);
-            assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"244", 3, BFLD_STRING), SUCCEED);
-            assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"8", 3, BFLD_STRING), SUCCEED);
+            assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+            assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"144", 0), EXSUCCEED);
+            assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"244", 3, BFLD_STRING), EXSUCCEED);
+            assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"8", 3, BFLD_STRING), EXSUCCEED);
         
-            assert_equal(Bboolev(p_ub, tree), TRUE);
+            assert_equal(Bboolev(p_ub, tree), EXTRUE);
             load_expr_test_data_2(p_ub);
-            assert_equal(Bboolev(p_ub, tree), FALSE);
+            assert_equal(Bboolev(p_ub, tree), EXFALSE);
 #if UBF_BIG_TEST
         }
 #endif
@@ -546,10 +546,10 @@ Ensure(test_expr_basic_additive)
         /* test - */
         load_expr_test_data_1(p_ub);
         /* Fix up double */
-        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"144", 0), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"-244", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"8", 3, BFLD_STRING), SUCCEED);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"144", 0), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"-244", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"8", 3, BFLD_STRING), EXSUCCEED);
         
         /* T_SHORT_FLD = 102
          * T_LONG_FLD = 10212312
@@ -577,9 +577,9 @@ Ensure(test_expr_basic_additive)
                       "-T_CARRAY_FLD+'5'==+249 && T_CARRAY_FLD-'0.5'==-244-0.5 &&"
                       "T_CARRAY_FLD-'5'=='-244'-'5'");
         
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
 }
 
@@ -591,7 +591,7 @@ Ensure(test_expr_basic_multiplicative)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     double d = 2312.2;
     int big_test;
     load_field_table(); /* set field table environment variable */
@@ -605,13 +605,13 @@ Ensure(test_expr_basic_multiplicative)
          * T_STRING_FLD = 448.33
          * T_CARRAY_FLD= 55412.11
          */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"257", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-8941", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"887441", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"448.33", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"55412.11", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"257", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-8941", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"887441", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"448.33", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"55412.11", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100*100==10000 && 100.51*1.49==149.7599 && '123'*'13'==1599 && -1*-1==1 &&"
                       "1285==T_SHORT_FLD*5 && 1310.7==T_SHORT_FLD*5.1 && "
@@ -633,20 +633,20 @@ Ensure(test_expr_basic_multiplicative)
                       "T_CARRAY_FLD*'0.7'==('38788.477'/0.7)*0.7 &&"
                       "T_SHORT_FLD %% '257.*'");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
         
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* test / */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100/100==1 && 100.10/2==50.05 "
                       "&& '122'/'2'==61 "
@@ -687,25 +687,25 @@ Ensure(test_expr_basic_multiplicative)
                       "&& T_CARRAY_FLD/'4'==20.1000"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
 
         tree=Bboolco ("100/0==0");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
 
     /*----------------------------------------------------------*/
         /* test % */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"7", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"14", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"7", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"14", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100 % 97==3"
                       "&& 10 % 3==1 "
@@ -748,9 +748,9 @@ Ensure(test_expr_basic_multiplicative)
                       "&& T_CARRAY_FLD%'100'==80"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
 }
 
@@ -762,17 +762,17 @@ Ensure(test_expr_basic_floatev)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_field_table(); /* set field table environment variable */
     /*----------------------------------------------------------*/
         /* test % */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"7", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"14", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"abc", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"7", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"14", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"abc", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), EXSUCCEED);
         /* Mod */
         tree=Bboolco ("100 % 97");
         assert_not_equal(tree, NULL);
@@ -854,19 +854,19 @@ Ensure(test_expr_basic_relational)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     double d = 2312.2;
     int big_test;
     load_field_table(); /* set field table environment variable */
     /*----------------------------------------------------------*/
         /* test < */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("10<100 "
                       "&& 100.10/2<51.05 "
@@ -910,20 +910,20 @@ Ensure(test_expr_basic_relational)
                       "&& T_CARRAY_FLD < 80.4445"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
         
         /*----------------------------------------------------------*/
         /* test > */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"80.4", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100>10 "
                       "&& 51.05>100.10/2 "
@@ -967,21 +967,21 @@ Ensure(test_expr_basic_relational)
                       "&& 80.4445>T_CARRAY_FLD"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
 
 
         /*----------------------------------------------------------*/
         /* test <= */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"abc", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"abc", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100<=100 "
                       "&& 100.10/2<=51.05 "
@@ -1025,19 +1025,19 @@ Ensure(test_expr_basic_relational)
                       "&& T_CARRAY_FLD <= 3"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         /* test >= */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"abc", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"252", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"-2980", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-0.2", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"42", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"66", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"abc", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100>=100 "
                       "&& 51.05>=100.10/2 "
@@ -1081,19 +1081,19 @@ Ensure(test_expr_basic_relational)
                       "&& 3>=T_CARRAY_FLD"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
         /*----------------------------------------------------------*/
         /* test == */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"12311", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"558211", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"6", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-10", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"12.5", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"7721", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"12a", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"12311", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"558211", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"6", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-10", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"12.5", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"7721", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"12a", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("100==100 "
                       "&& !(51.05==100.10/2) "
@@ -1146,20 +1146,20 @@ Ensure(test_expr_basic_relational)
                       "&& 12325.5==T_CARRAY_FLD+T_FLOAT_2_FLD+T_SHORT_FLD+T_DOUBLE_FLD"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
         
 
         /* test != */
-        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"12311", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"558211", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"6", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-10", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"12.5", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"7721", 3, BFLD_STRING), SUCCEED);
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"12a", 3, BFLD_STRING), SUCCEED);
+        assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)"12311", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)"558211", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)"6", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, (char *)"-10", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)"12.5", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)"7721", 3, BFLD_STRING), EXSUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)"12a", 3, BFLD_STRING), EXSUCCEED);
 
         tree=Bboolco ("!(100!=100) "
                       "&& 51.05!=100.10/2 "
@@ -1211,9 +1211,9 @@ Ensure(test_expr_basic_relational)
                       "&& !(12!=T_CARRAY_FLD)"
                 );
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         load_expr_test_data_2(p_ub);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
 }
 
@@ -1222,7 +1222,7 @@ Ensure(test_expr_basic_scopes)
     char buf[224];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     double d = 2312.2;
     load_field_table(); /* set field table environment variable */
     /*----------------------------------------------------------*/
@@ -1230,7 +1230,7 @@ Ensure(test_expr_basic_scopes)
         tree=Bboolco ("2*(5+6)==22"
                       "&& 190==(10*(5.0+2*(3+4)))");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
 }
 /**
@@ -1242,42 +1242,42 @@ Ensure(test_expr_short)
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     short short_val;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
     load_field_table(); /* set field table environment variable */
 
     /*----------------------------------------------------------*/
         /* Compare short and do some math...*/
         short_val = 137;
-        assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), SUCCEED);
+        assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), EXSUCCEED);
         tree=Bboolco ("T_SHORT_FLD==50*2+(30/2)*2+5+2");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /*----------------------------------------------------------*/
         short_val = -137;
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         /*----------------------------------------------------------*/
         short_val = 137;
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* Free up tree */
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* Compare field against regular expression */
         short_val = 4112;
-        assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), SUCCEED);
+        assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), EXSUCCEED);
         tree=Bboolco ("T_SHORT_FLD[1] %% '4..2'");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /*----------------------------------------------------------*/
         short_val = 4442;
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&short_val, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&short_val, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /*----------------------------------------------------------*/
         short_val = 1442;
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&short_val, 0), SUCCEED);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&short_val, 0), EXSUCCEED);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         
         /* Free up tree */
         Btreefree(tree);
@@ -1286,10 +1286,10 @@ Ensure(test_expr_short)
          * and do some unarray operation.
          */
         short_val = -4112;
-        assert_equal(Bchg(p_ub, T_SHORT_FLD, 5, (char *)&short_val, 0), SUCCEED);
+        assert_equal(Bchg(p_ub, T_SHORT_FLD, 5, (char *)&short_val, 0), EXSUCCEED);
         tree=Bboolco ("-T_SHORT_FLD[5] == 4110+0.8+1.2 && 0.0==-1+1");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         /* Free up tree */
         Btreefree(tree);
     /*----------------------------------------------------------*/
@@ -1306,7 +1306,7 @@ Ensure(test_bboolpr)
     UBFH *p_ub = (UBFH *)buf;
     char testbuf[640];
     int read;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     /* Simple test... */
     open_test_temp("w");
     assert_not_equal((tree=Bboolco ("2 * ( 4 + 5 ) || 5 && 'abc' %% '..b' && 2/2*4==5")), NULL);
@@ -1314,7 +1314,7 @@ Ensure(test_bboolpr)
     close_test_temp();
     open_test_temp_for_read("r");
     assert_not_equal((read=fread (testbuf, 1, sizeof(testbuf), M_test_temp_file)),0);
-    testbuf[read-1]=EOS; /* remove trainline newline */
+    testbuf[read-1]=EXEOS; /* remove trainline newline */
     close_test_temp();
     remove_test_temp();
     assert_string_equal(testbuf,"((2*(4+5)) || ((5 && ('abc' %% '..b')) && (((2/2)*4) == 5)))");
@@ -1329,7 +1329,7 @@ Ensure(test_bboolpr)
     close_test_temp();
     open_test_temp_for_read("r");
     assert_not_equal((read=fread (testbuf, 1, sizeof(testbuf), M_test_temp_file)),0);
-    testbuf[read-1]=EOS; /* remove trainline newline */
+    testbuf[read-1]=EXEOS; /* remove trainline newline */
     close_test_temp();
     remove_test_temp();
     assert_string_equal(testbuf, "((!('a' != 'b')) || (!('c' && 'b')))");
@@ -1342,7 +1342,7 @@ Ensure(test_bboolpr)
     close_test_temp();
     open_test_temp_for_read("r");
     assert_not_equal((read=fread (testbuf, 1, sizeof(testbuf), M_test_temp_file)),0);
-    testbuf[read-1]=EOS; /* remove trainline newline */
+    testbuf[read-1]=EXEOS; /* remove trainline newline */
     close_test_temp();
     remove_test_temp();
     assert_string_equal(testbuf, "(((((1 < 1) && (2 > 1)) && (2 >= 1)) && (1 <= (~2))) && (2 ^ 1))");
@@ -1369,12 +1369,12 @@ long callback_function_cond(UBFH *p_ub, char *funcname)
     short short_val;
     
     assert_string_equal(funcname, "callback_function_cond");
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0L), SUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0L), EXSUCCEED);
     
     if (137 == short_val)
-        ret=TRUE;
+        ret=EXTRUE;
     else
-        ret=FALSE;
+        ret=EXFALSE;
     
     return ret;
 }
@@ -1400,81 +1400,81 @@ Ensure(test_cbfunc)
     char *tree = NULL;
     short short_val;
     long long_val;
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
     load_field_table(); /* set field table environment variable */
     
-    assert_equal(Bboolsetcbf ("callback_function_true", callback_function_true), SUCCEED);
-    assert_equal(Bboolsetcbf ("callback_function_false", callback_function_false), SUCCEED);
-    assert_equal(Bboolsetcbf ("callback_function_cond", callback_function_cond), SUCCEED);
-    assert_equal(Bboolsetcbf ("callback_function_value", callback_function_value), SUCCEED);
+    assert_equal(Bboolsetcbf ("callback_function_true", callback_function_true), EXSUCCEED);
+    assert_equal(Bboolsetcbf ("callback_function_false", callback_function_false), EXSUCCEED);
+    assert_equal(Bboolsetcbf ("callback_function_cond", callback_function_cond), EXSUCCEED);
+    assert_equal(Bboolsetcbf ("callback_function_value", callback_function_value), EXSUCCEED);
     
 
 
     short_val = 137;
-    assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), SUCCEED);
+    assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), EXSUCCEED);
     long_val = 177788;
-    assert_equal(Badd(p_ub, T_LONG_FLD, (char *)&long_val, 0), SUCCEED);
+    assert_equal(Badd(p_ub, T_LONG_FLD, (char *)&long_val, 0), EXSUCCEED);
     
     /*----------------------------------------------------------*/
         /* This should be true */
         tree=Bboolco ("callback_function_true()");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be false */
         tree=Bboolco ("callback_function_false()");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be true as buffer contains 137 */
         tree=Bboolco ("callback_function_cond()");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be true */
         tree=Bboolco ("callback_function_value()==177788");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be false */
         tree=Bboolco ("callback_function_value()==177787");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be true too as value != 0 */
         tree=Bboolco ("callback_function_value()");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be true, too */
         tree=Bboolco ("callback_function_true()+callback_function_true()==2");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be false */
         tree=Bboolco ("callback_function_true()-callback_function_true()");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), FALSE);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be true */
         tree=Bboolco ("callback_function_value()==T_LONG_FLD");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should be true */
         tree=Bboolco ("callback_function_value()=='177788'");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* This should not compile */
@@ -1492,11 +1492,11 @@ Ensure(test_cbfunc)
         /* This should be true */
         tree=Bboolco ("T_SHORT_FLD || callback_function_false()");
         assert_not_equal(tree, NULL);
-        assert_equal(Bboolev(p_ub, tree), TRUE);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
         Btreefree(tree);
     /*----------------------------------------------------------*/
         /* Test unset function */
-        assert_equal(Bboolsetcbf ("callback_function_value", NULL), SUCCEED);
+        assert_equal(Bboolsetcbf ("callback_function_value", NULL), EXSUCCEED);
         tree=Bboolco ("callback_function_value()=='177788'");
         assert_equal(tree, NULL);
         Btreefree(tree);

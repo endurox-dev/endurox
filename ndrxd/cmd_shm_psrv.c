@@ -59,7 +59,7 @@ extern int G_max_servers;
  * @param call
  * @param pm
  */
-public void shm_psrv_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void shm_psrv_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_shm_psrv_t * shm_psrv_info = (command_reply_shm_psrv_t *)reply;
     shm_srvinfo_t *p_shm = (shm_srvinfo_t *)params->mod_param1;
@@ -86,9 +86,9 @@ public void shm_psrv_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
  * @param pm
  * @return
  */
-private void shm_psrv_progress(command_call_t * call, shm_srvinfo_t *p_shm, int slot)
+exprivate void shm_psrv_progress(command_call_t * call, shm_srvinfo_t *p_shm, int slot)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
     
     NDRX_LOG(log_debug, "startup_progress enter");
@@ -98,7 +98,7 @@ private void shm_psrv_progress(command_call_t * call, shm_srvinfo_t *p_shm, int 
     params.mod_param1 = (void *)p_shm;
     params.param2 = slot;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, shm_psrv_reply_mod, 0L, 0, NULL))
     {
@@ -113,9 +113,9 @@ private void shm_psrv_progress(command_call_t * call, shm_srvinfo_t *p_shm, int 
  * @param args
  * @return
  */
-public int cmd_shm_psrv (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_shm_psrv (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     shm_srvinfo_t *srvinfo = (shm_srvinfo_t *) G_srvinfo.mem;
     
@@ -128,7 +128,7 @@ public int cmd_shm_psrv (command_call_t * call, char *data, size_t len, int cont
         }
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

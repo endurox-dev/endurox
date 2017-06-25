@@ -44,12 +44,12 @@
  */
 Ensure(test_mkfldhdr)
 {
-    assert_equal(system("./test_mkfldhdr_cmd.sh"), SUCCEED);
-    assert_equal(system("./test_mkfldhdr_env.sh"), SUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_err_output.sh"), SUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_no_FLDTBLDIR.sh"), SUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_no_FIELDTBLS.sh"), SUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_syntax_err.sh"), SUCCEED);
+    assert_equal(system("./test_mkfldhdr_cmd.sh"), EXSUCCEED);
+    assert_equal(system("./test_mkfldhdr_env.sh"), EXSUCCEED);
+    assert_not_equal(system("./test_mkfldhdr_err_output.sh"), EXSUCCEED);
+    assert_not_equal(system("./test_mkfldhdr_no_FLDTBLDIR.sh"), EXSUCCEED);
+    assert_not_equal(system("./test_mkfldhdr_no_FIELDTBLS.sh"), EXSUCCEED);
+    assert_not_equal(system("./test_mkfldhdr_syntax_err.sh"), EXSUCCEED);
 
 }
 

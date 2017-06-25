@@ -58,35 +58,35 @@ Ensure(test000_system)
 {
     int ret;
     ret=system_dbg("test000_system/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test001_basiccall)
 {
     int ret;
     ret=system_dbg("test001_basiccall/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test002_basicforward)
 {
     int ret;
     ret=system_dbg("test002_basicforward/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test003_basicconvers)
 {
     int ret;
     ret=system_dbg("test003_basicconvers/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test004_basicevent)
 {
     int ret;
     ret=system_dbg("test004_basicevent/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 
 }
 
@@ -94,84 +94,84 @@ Ensure(test005_convconfload)
 {
     int ret;
     ret=system_dbg("test005_convconfload/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test006_ulog)
 {
     int ret;
     ret=system_dbg("test006_ulog/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test007_advertise)
 {
     int ret;
     ret=system_dbg("test007_advertise/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test008_extensions)
 {
     int ret;
     ret=system_dbg("test008_extensions/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test009_srvdie)
 {
     int ret;
     ret=system_dbg("test009_srvdie/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test010_strtracecond)
 {
     int ret;
     ret=system_dbg("test010_strtracecond/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test011_tout)
 {
     int ret;
     ret=system_dbg("test011_tout/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test012_admqfull)
 {
     int ret;
     ret=system_dbg("test012_admqfull/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test001_basiccall_dom)
 {
     int ret;
     ret=system_dbg("test001_basiccall/run-dom.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test002_basicforward_dom)
 {
     int ret;
     ret=system_dbg("test002_basicforward/run-dom.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test003_basicconvers_dom)
 {
     int ret;
     ret=system_dbg("test003_basicconvers/run-dom.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test004_basicevent_dom)
 {
     int ret;
     ret=system_dbg("test004_basicevent/run-dom.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 
 }
 
@@ -179,161 +179,161 @@ Ensure(test013_procnorsp)
 {
     int ret;
     ret=system_dbg("test013_procnorsp/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test015_threads)
 {
     int ret;
     ret=system_dbg("test015_threads/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test017_srvthread)
 {
     int ret;
     ret=system_dbg("test017_srvthread/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test018_tpacalltout)
 {
     int ret;
     ret=system_dbg("test018_tpacalltout/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test021_xafull)
 {
     int ret;
     ret=system_dbg("test021_xafull/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test022_typedstring)
 {
     int ret;
     ret=system_dbg("test022_typedstring/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test023_typedcarray)
 {
     int ret;
     ret=system_dbg("test023_typedcarray/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test024_json)
 {
     int ret;
     ret=system_dbg("test024_json/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test025_cpmsrv)
 {
     int ret;
     ret=system_dbg("test025_cpmsrv/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test026_typedjson)
 {
     int ret;
     ret=system_dbg("test026_typedjson/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test027_pscript)
 {
     int ret;
     ret=system_dbg("test027_pscript/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test028_tmq)
 {
     int ret;
     ret=system_dbg("test028_tmq/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test029_inicfg)
 {
     int ret;
     ret=system_dbg("test029_inicfg/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test030_cconfsrv)
 {
     int ret;
     ret=system_dbg("test030_cconfsrv/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test031_logging)
 {
     int ret;
     ret=system_dbg("test031_logging/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test032_oapi)
 {
     int ret;
     ret=system_dbg("test032_oapi/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test033_provision)
 {
     int ret;
     ret=system_dbg("test033_provision/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test034_shmreuse)
 {
     int ret;
     ret=system_dbg("test034_shmreuse/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test035_hkeep)
 {
     int ret;
     ret=system_dbg("test035_hkeep/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test036_tprecover)
 {
     int ret;
     ret=system_dbg("test036_tprecover/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test037_down)
 {
     int ret;
     ret=system_dbg("test037_down/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test038_tpnotify)
 {
     int ret;
     ret=system_dbg("test038_tpnotify/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test039_tpbroadcast)
 {
     int ret;
     ret=system_dbg("test039_tpbroadcast/run.sh");
-    assert_equal(ret, SUCCEED);
+    assert_equal(ret, EXSUCCEED);
 }
 
 TestSuite *atmi_test_all(void)

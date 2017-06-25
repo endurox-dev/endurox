@@ -72,19 +72,19 @@
  * @param proc_name
  * @return
  */
-public int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name)
+expublic int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name)
 {
     char   proc_file[PATH_MAX];
-    int     ret = FALSE;
-    char    cmdline[2048] = {EOS};
+    int     ret = EXFALSE;
+    char    cmdline[2048] = {EXEOS};
     int len;
-    int fd=FAIL;
+    int fd=EXFAIL;
     int i;
     /* Check for correctness - is it ndrxd */
     sprintf(proc_file, "/proc/%d/cmdline", pid);
     
     fd = open(proc_file, O_RDONLY);
-    if (FAIL==fd)
+    if (EXFAIL==fd)
     {
         NDRX_LOG(log_error, "Failed to open process file: [%s]: %s",
                 proc_file, strerror(errno));
@@ -92,7 +92,7 @@ public int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name)
     }
     
     len = read(fd, cmdline, sizeof(cmdline));
-    if (FAIL==len)
+    if (EXFAIL==len)
     {
         NDRX_LOG(log_error, "Failed to read from fd %d: [%s]: %s",
                 fd, proc_file, strerror(errno));
@@ -109,12 +109,12 @@ public int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name)
     NDRX_LOG(6, "pid: %d, cmd line: [%s]", pid, cmdline);
     if (NULL!=strstr(cmdline, proc_name))
     {
-        ret=TRUE;
+        ret=EXTRUE;
     }
 
 
 out:
-    if (FAIL!=fd)
+    if (EXFAIL!=fd)
         close(fd);	
 
     return ret;
@@ -123,7 +123,7 @@ out:
 /**
  * Return list of message queues
  */
-public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+expublic string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
     return ndrx_sys_folder_list(qpath, return_status);
 }

@@ -59,7 +59,7 @@ extern char **environ;
  * @param call
  * @param pm
  */
-public void pe_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void pe_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_pe_t * pe_info = (command_reply_pe_t *)reply;
     char *env = (char *)params->mod_param1;
@@ -71,7 +71,7 @@ public void pe_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t 
 
     /* Copy data to reply structure */
     strncpy(pe_info->env, env, EX_ENV_MAX);
-    pe_info->env[EX_ENV_MAX] = EOS;
+    pe_info->env[EX_ENV_MAX] = EXEOS;
     
     NDRX_LOG(log_debug, "magic: %ld", pe_info->rply.magic);
 }
@@ -82,9 +82,9 @@ public void pe_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t 
  * @param pm
  * @return
  */
-private void pe_progress(command_call_t * call, char *env)
+exprivate void pe_progress(command_call_t * call, char *env)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "startup_progress enter");
@@ -93,7 +93,7 @@ private void pe_progress(command_call_t * call, char *env)
     /* pass to reply process model node */
     params.mod_param1 = (void *)env;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, pe_reply_mod, 0L, 0, NULL))
     {
@@ -108,9 +108,9 @@ private void pe_progress(command_call_t * call, char *env)
  * @param args
  * @return
  */
-public int cmd_pe (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_pe (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i = 1;
     char *s = *environ;
     
@@ -121,7 +121,7 @@ public int cmd_pe (command_call_t * call, char *data, size_t len, int context)
         s = *(environ+i);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
@@ -138,12 +138,12 @@ out:
  */
 static int cmd_set_common (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_setenv_t *envcall = (command_setenv_t *)call;
     char *name;
     char *value;
     int err_ret = 0;
-    char errmsg[RPLY_ERR_MSG_MAX] = {EOS};
+    char errmsg[RPLY_ERR_MSG_MAX] = {EXEOS};
     
     name = envcall->env;
     if (NULL==(value=strchr(name, '=')))
@@ -154,19 +154,19 @@ static int cmd_set_common (command_call_t * call, char *data, size_t len, int co
         sprintf(errmsg, "Invalid argument");
         err_ret = NDRXD_EINVAL;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    *value=EOS;
+    *value=EXEOS;
     value++;
     
     NDRX_LOG(log_debug, "Setting env: name: [%s] value: [%s]", envcall->env, value);
     userlog("Setting env: name: [%s] value: [%s]", envcall->env, value);
      
-    if (EOS==*value)
+    if (EXEOS==*value)
     {
         NDRX_LOG(log_debug, "Unsetting....");
-        if (SUCCEED!=unsetenv(name))
+        if (EXSUCCEED!=unsetenv(name))
         {
             int err = errno;
             err_ret = NDRXD_EENVFAIL;
@@ -177,10 +177,10 @@ static int cmd_set_common (command_call_t * call, char *data, size_t len, int co
             
             sprintf(errmsg, "unsetenv() failed: %.200s", strerror(err));
             
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
-    else if (SUCCEED!=setenv(name, value, 1))
+    else if (EXSUCCEED!=setenv(name, value, 1))
     {
         int err = errno;
         err_ret = NDRXD_EENVFAIL;
@@ -188,18 +188,18 @@ static int cmd_set_common (command_call_t * call, char *data, size_t len, int co
         NDRX_LOG(log_error, "setenv failed for [%s]: %s", envcall->env, strerror(err));
         
         sprintf(errmsg, "setenv() failed: %.200s", strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, err_ret, errmsg))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, err_ret, errmsg))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     NDRX_LOG(log_warn, "cmd_set returns with status %d", ret);
     
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 
 /**
@@ -207,7 +207,7 @@ out:
  * @param args
  * @return
  */
-public int cmd_set (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_set (command_call_t * call, char *data, size_t len, int context)
 {
     return cmd_set_common (call, data, len, context);
 }
@@ -217,7 +217,7 @@ public int cmd_set (command_call_t * call, char *data, size_t len, int context)
  * @param args
  * @return
  */
-public int cmd_unset (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_unset (command_call_t * call, char *data, size_t len, int context)
 {
     return cmd_set_common (call, data, len, context);
 }

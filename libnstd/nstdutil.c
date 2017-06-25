@@ -64,7 +64,7 @@
  * @param b3
  * @return 
  */
-public int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
+expublic int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
 {
     
     long res1 =  a1 - b1;
@@ -88,7 +88,7 @@ public int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
  * @param t
  * @param tusec
  */
-public void ndrx_utc_tstamp2(long *t, long *tusec)
+expublic void ndrx_utc_tstamp2(long *t, long *tusec)
 {
     struct timeval tv;
     
@@ -103,7 +103,7 @@ public void ndrx_utc_tstamp2(long *t, long *tusec)
  * @param ts
  * @return 
  */
-public char * ndrx_get_strtstamp2(int slot, long t, long tusec)
+expublic char * ndrx_get_strtstamp2(int slot, long t, long tusec)
 {
     time_t tfmt;
     struct tm utc;
@@ -123,7 +123,7 @@ public char * ndrx_get_strtstamp2(int slot, long t, long tusec)
  * This assumes that platform uses 64bit long long.
  * Or we can drop the milliseconds if the platform does not handle that.
  */
-public unsigned long long ndrx_utc_tstamp(void)
+expublic unsigned long long ndrx_utc_tstamp(void)
 {
     struct timeval tv;
     unsigned long long ret;
@@ -149,7 +149,7 @@ public unsigned long long ndrx_utc_tstamp(void)
  * Return timestamp in microseconds
  * @return 
  */
-public unsigned long long ndrx_utc_tstamp_micro(void)
+expublic unsigned long long ndrx_utc_tstamp_micro(void)
 {
     struct timeval tv;
     unsigned long long ret;
@@ -175,7 +175,7 @@ public unsigned long long ndrx_utc_tstamp_micro(void)
  * @param ts
  * @return 
  */
-public char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
+expublic char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
 {
     time_t t;
     struct tm utc;
@@ -199,7 +199,7 @@ public char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
  * Get tick count in one second for current platform
  * @return 
  */
-public unsigned long long ndrx_get_micro_resolution_for_sec(void)
+expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
 {
     unsigned long long ret;    
     
@@ -222,7 +222,7 @@ public unsigned long long ndrx_get_micro_resolution_for_sec(void)
  * @param p_time - ptr to store long time, format HHMISS
  * @param p_usec - ptr to store microseconds
  */
-public void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
+expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
     struct tm       *p_tm;
     long            lret;
@@ -298,7 +298,7 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
  * @param buf_len buffer len for overrun checks
  * @return 
  */
-public char * ndrx_str_env_subs_len(char * str, int buf_size)
+expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
 {
     char *p, *p2, *p3;
     char *next = str;
@@ -337,7 +337,7 @@ public char * ndrx_str_env_subs_len(char * str, int buf_size)
             int envlen;
             /* do substitution */
             strncpy(envnm, p+2, cpylen);
-            envnm[cpylen] = EOS;
+            envnm[cpylen] = EXEOS;
             env = getenv(envnm);
             if (NULL!=env)
                 out = env;
@@ -400,7 +400,7 @@ public char * ndrx_str_env_subs_len(char * str, int buf_size)
  * @param str
  * @return 
  */
-public char * ndrx_str_env_subs(char * str)
+expublic char * ndrx_str_env_subs(char * str)
 {
     return ndrx_str_env_subs_len(str, 0);
 }
@@ -467,7 +467,7 @@ char *ndrx_decode_num(long tt, int slot, int level, int levels)
  * @param needle - chars to strip
  * @return 
  */
-public char *ndrx_str_strip(char *haystack, char *needle)
+expublic char *ndrx_str_strip(char *haystack, char *needle)
 {
     char *dest;
     char *src;
@@ -476,14 +476,14 @@ public char *ndrx_str_strip(char *haystack, char *needle)
     int have_found;
     dest = src = haystack;
 
-    for (; EOS!=*src; src++)
+    for (; EXEOS!=*src; src++)
     {
-        have_found = FALSE;
+        have_found = EXFALSE;
         for (i=0; i<len; i++)
         {
             if (*src == needle[i])
             {
-                have_found = TRUE;
+                have_found = EXTRUE;
                 continue;
             }
         }
@@ -495,7 +495,7 @@ public char *ndrx_str_strip(char *haystack, char *needle)
         }
     }
     
-    *dest = EOS;
+    *dest = EXEOS;
     
     return haystack;
 }
@@ -505,7 +505,7 @@ public char *ndrx_str_strip(char *haystack, char *needle)
  * @param str string to test
  * @return TRUE/FALSE
  */
-public int ndrx_isint(char *str)
+expublic int ndrx_isint(char *str)
 {
    if (*str == '-')
    {
@@ -514,14 +514,14 @@ public int ndrx_isint(char *str)
 
    if (!*str)
    {
-      return FALSE;
+      return EXFALSE;
    }
 
    while (*str)
    {
       if (!isdigit(*str))
       {
-         return FALSE;
+         return EXFALSE;
       }
       else
       {
@@ -529,7 +529,7 @@ public int ndrx_isint(char *str)
       }
    }
    
-   return TRUE;
+   return EXTRUE;
 }
 
 /**
@@ -538,7 +538,7 @@ public int ndrx_isint(char *str)
  * @param character
  * @return 
  */
-public int ndrx_nr_chars(char *str, char character)
+expublic int ndrx_nr_chars(char *str, char character)
 {
     char *p = str;
     int count = 0;
@@ -563,7 +563,7 @@ public int ndrx_nr_chars(char *str, char character)
  * @param endval - List end/default value
  * @return ptr to maping str
  */
-public char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
+expublic char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
 {
     do 
     {
@@ -585,7 +585,7 @@ public char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
  * @param endval - List end/default value
  * @return ptr to maping str
  */
-public char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
+expublic char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
 {
     do 
     {
@@ -604,7 +604,7 @@ public char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
  * Get thread id (not the very portable way...)
  * @return 
  */
-public uint64_t ndrx_gettid(void) 
+expublic uint64_t ndrx_gettid(void) 
 {
     pthread_t ptid = pthread_self();
     uint64_t threadId = 0;
@@ -617,7 +617,7 @@ public uint64_t ndrx_gettid(void)
  * @param filename path + filename
  * @return TRUE if exists / FALSE not exists
  */
-public int ndrx_file_exists(char *filename)
+expublic int ndrx_file_exists(char *filename)
 {
     struct stat st;
     int result = stat(filename, &st);
@@ -629,7 +629,7 @@ public int ndrx_file_exists(char *filename)
  * @param path
  * @return 
  */
-public int ndrx_file_regular(char *path)
+expublic int ndrx_file_regular(char *path)
 {
     struct stat path_stat;
     stat(path, &path_stat);
@@ -640,7 +640,7 @@ public int ndrx_file_regular(char *path)
  * Read the line
  * @return NULL or allocated stdin string read
  */
-public char * ndrx_getline(char *buf, int bufsz)
+expublic char * ndrx_getline(char *buf, int bufsz)
 {
     int len;
     fgets(buf, bufsz, stdin);
@@ -673,10 +673,10 @@ public char * ndrx_getline(char *buf, int bufsz)
  * @param file
  * @return CRC32 or FAIL (-1)
  */
-public int ndrx_get_cksum(char *file)
+expublic int ndrx_get_cksum(char *file)
 {
     unsigned char checksum = 0;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     FILE *fp = fopen(file,"rb");
     
@@ -691,17 +691,17 @@ public int ndrx_get_cksum(char *file)
     }
     else
     {
-        ret = FAIL;
+        ret = EXFAIL;
     }
     
     
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         return checksum;
     }
     else
     {
-        return FAIL;
+        return EXFAIL;
     }
 }
 
@@ -712,11 +712,11 @@ public int ndrx_get_cksum(char *file)
  * @param in_binary Binary to search for
  * @return NULL (if not found) or ptr to out_path if found
  */
-public char * ndrx_get_executable_path(char * out_path, size_t bufsz, char * in_binary)
+expublic char * ndrx_get_executable_path(char * out_path, size_t bufsz, char * in_binary)
 {
     char * systemPath = NULL;
     char * candidateDir = NULL;
-    int found = FALSE;
+    int found = EXFALSE;
     char *ret;
     
     systemPath = getenv ("PATH");
@@ -731,7 +731,7 @@ public char * ndrx_get_executable_path(char * out_path, size_t bufsz, char * in_
             
             if (access(out_path, F_OK) == 0)
             {
-                found = TRUE;
+                found = EXTRUE;
                 goto out;
             }
         }
@@ -750,7 +750,7 @@ out:
     }
     else
     {
-        out_path[0] = EOS;
+        out_path[0] = EXEOS;
         ret = NULL;
     }
     
@@ -763,7 +763,7 @@ out:
  * @param len length to copy
  * @return NULL or allocated memory
  */
-public char * ndrx_memdup(char *org, size_t len)
+expublic char * ndrx_memdup(char *org, size_t len)
 {
     char *ret;
     

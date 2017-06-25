@@ -59,7 +59,7 @@ exmemck_process_t *M_proc = NULL; /* global process list */
  * @param autocreate create entry automatically...
  * @return found/allocated config block or NULL
  */
-private exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret, 
+exprivate exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret, 
         int *p_is_new)
 {
     exmemck_config_t * ret;
@@ -70,7 +70,7 @@ private exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret,
     {
         /* Allocate the block */
         
-        if (SUCCEED!=(ret=NDRX_CALLOC(1, sizeof(exmemck_config_t))))
+        if (EXSUCCEED!=(ret=NDRX_CALLOC(1, sizeof(exmemck_config_t))))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed to allocate xmemck_config_t: %s", 
@@ -78,14 +78,14 @@ private exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret,
             
             userlog("Failed to allocate xmemck_config_t: %s", 
                     strerror(err));
-            FAIL_OUT((*p_ret));
+            EXFAIL_OUT((*p_ret));
         }
         
         NDRX_STRCPY_SAFE(ret->mask, mask);
         
         EXHASH_ADD_STR(M_config, mask, ret);
         
-        *p_is_new = TRUE;
+        *p_is_new = EXTRUE;
         
     }
 out:
@@ -105,7 +105,7 @@ out:
  * @param flags
  * @return 
  */
-public int ndrx_memck_add_mask(char *mask, 
+expublic int ndrx_memck_add_mask(char *mask, 
         long mem_limit, 
         int percent_diff_allow, 
         char *dlft_mask,
@@ -113,20 +113,20 @@ public int ndrx_memck_add_mask(char *mask,
         int interval_stop_prcnt,
         long flags)
 {
-    int ret = SUCCEED;
-    int is_new = FALSE;
+    int ret = EXSUCCEED;
+    int is_new = EXFALSE;
     
     exmemck_config_t * cfg, *dflt;
     
     NDRX_LOG(log_debug, "%s: enter, mask: [%s]", __func__, mask);
     
-    cfg = get_config(mask, TRUE, &ret, &is_new);
+    cfg = get_config(mask, EXTRUE, &ret, &is_new);
     
-    if (NULL==cfg || SUCCEED!=ret)
+    if (NULL==cfg || EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "%s: failed to get config for mask [%s]", 
                 __func__, mask);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* search for defaults */
@@ -135,7 +135,7 @@ public int ndrx_memck_add_mask(char *mask,
         NDRX_LOG(log_debug, "Making init for defaults: [%s]", dlft_mask);
         
         /* ret will succeed here always! */
-        dflt = get_config(dlft_mask, FALSE, &ret, NULL);
+        dflt = get_config(dlft_mask, EXFALSE, &ret, NULL);
         
         if (NULL!=dflt)
         {
@@ -151,27 +151,27 @@ public int ndrx_memck_add_mask(char *mask,
     }
     
     
-    if (flags>FAIL)
+    if (flags>EXFAIL)
     {
         cfg->flags = flags;
     }
     
-    if (interval_start_prcnt>FAIL)
+    if (interval_start_prcnt>EXFAIL)
     {
         cfg->interval_start_prcnt = interval_start_prcnt;
     }
     
-    if (interval_stop_prcnt >FAIL)
+    if (interval_stop_prcnt >EXFAIL)
     {
         cfg->interval_stop_prcnt = interval_stop_prcnt;
     }
     
-    if (mem_limit >FAIL)
+    if (mem_limit >EXFAIL)
     {
         cfg->mem_limit = mem_limit;
     }
     
-    if (percent_diff_allow >FAIL)
+    if (percent_diff_allow >EXFAIL)
     {
         cfg->percent_diff_allow = percent_diff_allow;
     }
@@ -185,9 +185,9 @@ out:
  * @param mask
  * @return 
  */
-public int ndrx_memck_rm(char *mask)
+expublic int ndrx_memck_rm(char *mask)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
 out:    
     return ret;
@@ -197,7 +197,7 @@ out:
  * Return statistics blocks, linked list...
  * @return 
  */
-public void* ndrx_memck_getstats(void)
+expublic void* ndrx_memck_getstats(void)
 {
     return NULL;
 }
@@ -207,9 +207,9 @@ public void* ndrx_memck_getstats(void)
  * @param mask
  * @return 
  */
-public int ndrx_memck_reset(char *mask)
+expublic int ndrx_memck_reset(char *mask)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
 out:    
     return ret;
@@ -220,9 +220,9 @@ out:
  * @param pid
  * @return 
  */
-public int ndrx_memck_reset_pid(pid_t pid)    
+expublic int ndrx_memck_reset_pid(pid_t pid)    
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
 out:    
     return ret;
@@ -234,9 +234,9 @@ out:
  * Run the one 
  * @return 
  */
-public int ndrx_memck_tick(void)
+expublic int ndrx_memck_tick(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* List all processes */
     

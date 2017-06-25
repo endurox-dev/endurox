@@ -58,9 +58,9 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     
     if (argc>=2)
@@ -68,7 +68,7 @@ public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         for (i=1; i<argc; i++)
         {
             printf("Killing [%s] ... ", argv[i]);
-            if (SUCCEED==ndrx_killall(argv[i]))
+            if (EXSUCCEED==ndrx_killall(argv[i]))
             {
                 printf("Signaled/killed\n");
             }
@@ -80,7 +80,7 @@ public int cmd_killall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     else
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
