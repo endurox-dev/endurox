@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
     int i=0;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -74,29 +74,29 @@ int main(int argc, char** argv) {
     for (i=0; i<100; i++)
     {
 
-        if (SUCCEED!=tpbegin(5, 0))
+        if (EXSUCCEED!=tpbegin(5, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD COMMIT", 0L);
 
         /* Call Svc1 */
-        if (FAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+        if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
             NDRX_LOG(log_error, "TX3SVC failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (SUCCEED!=(ret=tpcommit(0)))
+        if (EXSUCCEED!=(ret=tpcommit(0)))
         {
             NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -106,29 +106,29 @@ int main(int argc, char** argv) {
     /***************************************************************************/
     for (i=0; i<100; i++)
     {
-        if (SUCCEED!=tpbegin(5, 0))
+        if (EXSUCCEED!=tpbegin(5, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD ABORT", 0L);
 
         /* Call Svc1 */
-        if (FAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+        if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
             NDRX_LOG(log_error, "TX3SVC failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (SUCCEED!=(ret=tpabort(0)))
+        if (EXSUCCEED!=(ret=tpabort(0)))
         {
             NDRX_LOG(log_error, "TESTERROR: tpabort()==%d fail: %d:[%s]", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -138,51 +138,51 @@ int main(int argc, char** argv) {
     /***************************************************************************/
     for (i=0; i<100; i++)
     {
-        if (SUCCEED!=tpbegin(5, 0))
+        if (EXSUCCEED!=tpbegin(5, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD SVCFAIL", 0L);
 
         /* Call Svc1 */
-        if (FAIL != (ret=tpcall("RUNTXFAIL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+        if (EXFAIL != (ret=tpcall("RUNTXFAIL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
             NDRX_LOG(log_error, "RUNTXFAIL should return fail!");
         }
 
         ret=tpcommit(0);
         
-        if (SUCCEED==ret || tperrno!=TPEABORT)
+        if (EXSUCCEED==ret || tperrno!=TPEABORT)
         {
             NDRX_LOG(log_error, "TESTERROR: abort()==%d fail: %d:[%s] - must be TPEABORT!", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }    
     /***************************************************************************/
     NDRX_LOG(log_debug, "Transaction time-out (by tmsrv)");
     /***************************************************************************/
     for (i=0; i<5; i++)
     {
-        if (SUCCEED!=tpbegin(2, 0))
+        if (EXSUCCEED!=tpbegin(2, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD TOUT", 0L);
 
         /* Call Svc1 */
-        if (FAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+        if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
             NDRX_LOG(log_error, "RUNTX should return fail!");
         }
@@ -191,15 +191,15 @@ int main(int argc, char** argv) {
 
         ret=tpcommit(0);
         
-        if (SUCCEED==ret || tperrno!=TPEABORT)
+        if (EXSUCCEED==ret || tperrno!=TPEABORT)
         {
             NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s] - must be TPEABORT!", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }    
 
     /***************************************************************************/
@@ -207,52 +207,52 @@ int main(int argc, char** argv) {
     /***************************************************************************/
     for (i=0; i<100; i++)
     {
-        if (SUCCEED!=tpbegin(5, 0))
+        if (EXSUCCEED!=tpbegin(5, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD SVCFAIL", 0L);
 
         /* Call Svc1 */
-        if (FAIL != (ret=tpcall("NOTRANFAIL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN)))
+        if (EXFAIL != (ret=tpcall("NOTRANFAIL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN)))
         {
             NDRX_LOG(log_error, "TESTERROR: NOTRANFAIL should return fail!");
         }
 
         ret=tpcommit(0);
         
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s] - must be SUCCEED!", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }    
 
     /***************************************************************************/
     NDRX_LOG(log_debug, "Done...");
     /***************************************************************************/
     
-    if (SUCCEED!=tpclose())
+    if (EXSUCCEED!=tpclose())
     {
         NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
 out:
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         /* atleast try... */
-        if (SUCCEED!=tpabort(0))
+        if (EXSUCCEED!=tpabort(0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpabort() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));

@@ -54,18 +54,18 @@
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     static int counter = 0;
     char buf[100];
     UBFH *p_ub = (UBFH *)p_svc->data;
-    static char last_buf[100] = {EOS};
+    static char last_buf[100] = {EXEOS};
     
     counter++;
     
-    if (SUCCEED!=Bget(p_ub, T_STRING_FLD, 0, buf, 0L))
+    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, buf, 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD!!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /* Reset counter on non-tout */
@@ -80,7 +80,7 @@ void TESTSVFN (TPSVCINFO *p_svc)
     sleep(6);
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -94,12 +94,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
         
-    if (SUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
+    if (EXSUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize TESTSV (first)!");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

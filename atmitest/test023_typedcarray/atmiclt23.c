@@ -56,13 +56,13 @@ int main(int argc, char** argv) {
 
     long rsplen;
     int i, j;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *buf = tpalloc("CARRAY", NULL, 100);
     
     if (NULL==buf)
     {
         NDRX_LOG(log_error, "TESTERROR: failed to alloc CARRAY buffer!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     for (j=0; j<10000; j++)
@@ -72,10 +72,10 @@ int main(int argc, char** argv) {
             buf[i] = i;
         }
 
-        if (SUCCEED!=tpcall("TEST23_CARRAY", buf, TEST_REQ_SIZE, &buf, &rsplen, 0))
+        if (EXSUCCEED!=tpcall("TEST23_CARRAY", buf, TEST_REQ_SIZE, &buf, &rsplen, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to call TEST23_CARRAY");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         NDRX_LOG(log_debug, "Got message [%s] ", buf);
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
         {
             NDRX_LOG(log_error, "TESTERROR: Event is not processed by "
                     "exactly 1 service! (%d) ", ret);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* Realloc to some more... */
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 out:
 
     if (ret>=0)
-        ret=SUCCEED;
+        ret=EXSUCCEED;
 
     return ret;
 }

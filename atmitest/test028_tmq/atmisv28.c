@@ -43,16 +43,16 @@
  */
 void SVCOK (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
-    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "OK", 0L))
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "OK", 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD!");
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -65,7 +65,7 @@ out:
  */
 void FAILRND (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     static int cnt = 0;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
@@ -73,17 +73,17 @@ void FAILRND (TPSVCINFO *p_svc)
     
     if (1 == (cnt % 4) )
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "OK", 0L))
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "OK", 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD!");
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -96,11 +96,11 @@ out:
  */
 void SVCFAIL (TPSVCINFO *p_svc)
 {
-    int ret=FAIL;
+    int ret=EXFAIL;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -112,23 +112,23 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("SVCOK", SVCOK))
+    if (EXSUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize SVCOK!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
-    else if (SUCCEED!=tpadvertise("SVCFAIL", SVCFAIL))
+    else if (EXSUCCEED!=tpadvertise("SVCFAIL", SVCFAIL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize SVCFAIL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
-    else if (SUCCEED!=tpadvertise("FAILRND", FAILRND))
+    else if (EXSUCCEED!=tpadvertise("FAILRND", FAILRND))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize FAILRND!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:

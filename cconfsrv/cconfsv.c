@@ -71,7 +71,7 @@ struct cconf_req
 typedef struct cconf_req cconf_req_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private ndrx_inicfg_t *M_config = NULL;
+exprivate ndrx_inicfg_t *M_config = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -81,7 +81,7 @@ private ndrx_inicfg_t *M_config = NULL;
  * @param msg
  * @return 
  */
-private void set_error(UBFH *p_ub, short code, char *msg)
+exprivate void set_error(UBFH *p_ub, short code, char *msg)
 {
     Bchg(p_ub, EX_NERROR_CODE, 0, (char *)&code, 0);
     Bchg(p_ub, EX_NERROR_MSG, 0, (char *)msg, 0);
@@ -91,7 +91,7 @@ private void set_error(UBFH *p_ub, short code, char *msg)
  * Free data allocated by load_data();
  * @param req
  */
-private void free_data(cconf_req_t *req)
+exprivate void free_data(cconf_req_t *req)
 {
     int i;
     
@@ -128,9 +128,9 @@ private void free_data(cconf_req_t *req)
  * Load the request data
  * @param p_svc
  */
-private int load_data(UBFH *p_ub, cconf_req_t *req)
+exprivate int load_data(UBFH *p_ub, cconf_req_t *req)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int i;
     int nr_resources = Boccur(p_ub, EX_CC_RESOURCE);
     int nr_section_masks = Boccur(p_ub, EX_CC_SECTIONMASK);
@@ -138,7 +138,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
     
     NDRX_LOG(log_debug, "load_data called, resources: %d", nr_resources);
     
-    if (SUCCEED!=Bget(p_ub, EX_CC_CMD, 0, &(req->cmd), 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_CC_CMD, 0, &(req->cmd), 0L))
     {
         req->cmd = NDRX_CCONFIG_CMD_GET;
     }
@@ -150,7 +150,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
         {
             NDRX_LOG(log_error, "Failed to allocate resources: %s", strerror(errno));
             set_error(p_ub, NEMALLOC, "malloc failed for resources");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         for (i=0; i<nr_resources; i++)
@@ -160,7 +160,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
                 NDRX_LOG(log_error, "Failed to get EX_CC_RESOURCE[%d]: %s", i, 
                         Bstrerror(Berror));
                 set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         NDRX_LOG(log_debug, "Resources loaded ok...");    
@@ -173,7 +173,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
         {
             NDRX_LOG(log_error, "Failed to allocate section_masks: %s", strerror(errno));
             set_error(p_ub, NEMALLOC, "malloc failed for section_masks");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         for (i=0; i<nr_section_masks; i++)
@@ -183,7 +183,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
                 NDRX_LOG(log_error, "Failed to get EX_CC_SECTIONMASK[%d]: %s", i, 
                         Bstrerror(Berror));
                 set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         NDRX_LOG(log_debug, "Section masks loaded ok...");    
@@ -198,7 +198,7 @@ private int load_data(UBFH *p_ub, cconf_req_t *req)
             NDRX_LOG(log_error, "Failed to get EX_CC_LOOKUPSECTION: %s", 
                         Bstrerror(Berror));
             set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -218,10 +218,10 @@ out:
  * @param req
  * @return 
  */
-private int config_get(UBFH *p_ub, cconf_req_t *req)
+exprivate int config_get(UBFH *p_ub, cconf_req_t *req)
 {
     char msg[256];
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int nr_mand = Boccur(p_ub, EX_CC_MANDATORY);
     int nr_formats1 = Boccur(p_ub, EX_CC_FORMAT_KEY);
     int nr_formats2 = Boccur(p_ub, EX_CC_FORMAT_FORMAT);
@@ -248,17 +248,17 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                 nr_formats1, nr_formats2);
         set_error(p_ub, NEINVAL, "Invalid EX_CC_FORMAT_FIELD, EX_CC_FORMAT_FORMAT "
                 "count, must match.");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* add any resources */
-    if (SUCCEED!=ndrx_inicfg_get_subsect(M_config, 
+    if (EXSUCCEED!=ndrx_inicfg_get_subsect(M_config, 
         req->resources, req->lookup_sections, &out))
     {
         NDRX_LOG(log_error, "Failed to lookup for [%s]: %s", 
                 req->lookup_sections, Nstrerror(Nerror));
         set_error(p_ub, NEINVAL, Nstrerror(Nerror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
@@ -277,14 +277,14 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                 snprintf(msg, sizeof(msg), "%s", p);
                 set_error(p_ub, NEMANDATORY, msg);
                 NDRX_LOG(log_error, "Mandatory key is missing: [%s] in config result", p);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
         {
             NDRX_LOG(log_error, "Bgetalloc error: %s", Nstrerror(Nerror));
             set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -319,7 +319,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
             {
                 set_error(p_ub, NEMALLOC, strerror(errno));
                 NDRX_LOG(log_error, "Failed to strdup format");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             if ('t'!=fmt_code)
@@ -333,7 +333,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                     snprintf(msg, sizeof(msg), "Invalid format code: [%s]", format2);
                     set_error(p_ub, NEINVAL, msg);
                     NDRX_LOG(log_error, "%s", msg);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 } 
                 else if (p2==(format+1))
                 {
@@ -343,19 +343,19 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                 else
                 {
                     /* have some len */
-                    *p2 = EOS;
+                    *p2 = EXEOS;
                     min_len = atoi(format+1);
                 }
                 p2++;
                 
                 /* get out the max */
-                if (EOS==*p2)
+                if (EXEOS==*p2)
                 {
                     /* So the first dot was finished with EOS, it is invalid format */
                     snprintf(msg, sizeof(msg), "Invalid format code: [%s]", format2);
                     set_error(p_ub, NEINVAL, msg);
                     NDRX_LOG(log_error, "%s", msg);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 } 
                 else if (NULL==(p2=strrchr(p2, '.')))
                 {
@@ -363,18 +363,18 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                             "missing second dot", format2);
                     set_error(p_ub, NEINVAL, msg);
                     NDRX_LOG(log_error, "%s", msg);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 
                 p2++;
                 
-                if (EOS==*p2)
+                if (EXEOS==*p2)
                 {
                     snprintf(msg, sizeof(msg), "Invalid format code: [%s], "
                             "missing max len", format2);
                     set_error(p_ub, NEINVAL, msg);
                     NDRX_LOG(log_error, "%s", msg);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 
                 max_len = atoi(p2);
@@ -411,7 +411,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                         
                         NDRX_LOG(log_error, "Format error for key: [%s] (section %s) [%s]", 
                                 hash_key->key, hash_key->section, hash_key->val);
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                     break;
                     
@@ -423,7 +423,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                         
                         NDRX_LOG(log_error, "Invalid integer: [%s] (section %s) [%s]", 
                                 hash_key->key, hash_key->section, hash_key->val);
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 case 'n':
                     /* do no break, we want length tests for all of the types... */
@@ -434,7 +434,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                         NDRX_LOG(log_error, "Invalid floating point value: [%s]"
                                 " (section %s) [%s]", 
                                 hash_key->key, hash_key->section, hash_key->val);
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 case 's':
                     /* if is string, just check the len */
@@ -447,7 +447,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                                 "len: %d min_len: %d max_len: %d", 
                                 hash_key->key, hash_key->section, len,
                                 min_len, max_len);
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                     break;
                     
@@ -456,7 +456,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
                     snprintf(msg, sizeof(msg), "Invalid check: [%c]", fmt_code);
                     set_error(p_ub, NEINVAL, msg);
                     NDRX_LOG(log_error, "%s", msg);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                     break;
             }
         }
@@ -464,7 +464,7 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
         {
             NDRX_LOG(log_error, "Bgetalloc error: %s", Nstrerror(Nerror));
             set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
                 
     }
@@ -472,28 +472,28 @@ private int config_get(UBFH *p_ub, cconf_req_t *req)
     /* load stuff to buffer */ 
     EXHASH_ITER(hh, out, iter, iter_tmp)
     {
-        if (SUCCEED!=Badd(p_ub, EX_CC_SECTION, iter->section, 0L))
+        if (EXSUCCEED!=Badd(p_ub, EX_CC_SECTION, iter->section, 0L))
         {
             NDRX_LOG(log_error, "Failed to set EX_CC_SECTION (section: %s): %s", 
                         iter->section, Nstrerror(Nerror));
             set_error(p_ub, NEINVAL, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (SUCCEED!=Badd(p_ub, EX_CC_KEY, iter->key, 0L))
+        if (EXSUCCEED!=Badd(p_ub, EX_CC_KEY, iter->key, 0L))
         {
             NDRX_LOG(log_error, "Failed to set EX_CC_KEY (key: %s): %s", 
                         iter->key, Nstrerror(Nerror));
             set_error(p_ub, NEINVAL, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (SUCCEED!=Badd(p_ub, EX_CC_VALUE, iter->val, 0L))
+        if (EXSUCCEED!=Badd(p_ub, EX_CC_VALUE, iter->val, 0L))
         {
             NDRX_LOG(log_error, "Failed to set EX_CC_VALUE (val: %s): %s", 
                         iter->val, Nstrerror(Nerror));
             set_error(p_ub, NEINVAL, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -532,9 +532,9 @@ out:
  * @param req
  * @return 
  */
-private int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
+exprivate int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_inicfg_section_t *sections=NULL, *iter=NULL, *iter_tmp=NULL;
     ndrx_inicfg_section_keyval_t *key_iter = NULL, *key_iter_tmp = NULL;
     long revent;
@@ -545,12 +545,12 @@ private int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
         BBADFLDID
     };
     
-    if (SUCCEED!=ndrx_inicfg_iterate(M_config, req->resources, 
+    if (EXSUCCEED!=ndrx_inicfg_iterate(M_config, req->resources, 
             req->sectionmask, &sections))
     {
         NDRX_LOG(log_error, "Failed to iterate sections: %s", Nstrerror(Nerror));
         set_error(p_ub, NESYSTEM, Nstrerror(Nerror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     EXHASH_ITER(hh, sections, iter, iter_tmp)
@@ -560,47 +560,47 @@ private int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
         /* Remove all  EX_CC_SECTION/ EX_CC_KEY/ EX_CC_VALUE from buffer
          * so that we list fresh data for each section.
          */
-        if (SUCCEED!=Bdelete(p_ub, rm_list))
+        if (EXSUCCEED!=Bdelete(p_ub, rm_list))
         {
             if (Berror!=BNOTPRES)
             {
                 NDRX_LOG(log_error, "Buffer cleanup failed: %s", Bstrerror(Berror));
                 set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         
         EXHASH_ITER(hh, sections->values, key_iter, key_iter_tmp)
         {
-            if (SUCCEED!=Badd(p_ub, EX_CC_SECTION, key_iter->section, 0L))
+            if (EXSUCCEED!=Badd(p_ub, EX_CC_SECTION, key_iter->section, 0L))
             {
                 NDRX_LOG(log_error, "Failed to set EX_CC_SECTION (section: %s): %s", 
                             key_iter->section, Nstrerror(Nerror));
                 set_error(p_ub, NEINVAL, Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
-            if (SUCCEED!=Badd(p_ub, EX_CC_KEY, key_iter->key, 0L))
+            if (EXSUCCEED!=Badd(p_ub, EX_CC_KEY, key_iter->key, 0L))
             {
                 NDRX_LOG(log_error, "Failed to set EX_CC_KEY (key: %s): %s", 
                             key_iter->key, Nstrerror(Nerror));
                 set_error(p_ub, NEINVAL, Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
-            if (SUCCEED!=Badd(p_ub, EX_CC_VALUE, key_iter->val, 0L))
+            if (EXSUCCEED!=Badd(p_ub, EX_CC_VALUE, key_iter->val, 0L))
             {
                 NDRX_LOG(log_error, "Failed to set EX_CC_VALUE (val: %s): %s", 
                             key_iter->val, Nstrerror(Nerror));
                 set_error(p_ub, NEINVAL, Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         
         ndrx_debug_dump_UBF(log_debug, "CCONF listing section", p_ub);
         
         /* send the stuff way... */
-        if (FAIL == tpsend(cd,
+        if (EXFAIL == tpsend(cd,
                     (char *)p_ub,
                     0L,
                     0,
@@ -609,7 +609,7 @@ private int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
             NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                 tpstrerror(tperrno), revent);
             set_error(p_ub, NESYSTEM, tpstrerror(tperrno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
                 
         }
         else
@@ -620,13 +620,13 @@ private int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
     }
     
     /* Remove any response (so that we finish cleanly) */
-    if (SUCCEED!=Bdelete(p_ub, rm_list))
+    if (EXSUCCEED!=Bdelete(p_ub, rm_list))
     {
         if (Berror!=BNOTPRES)
         {
             NDRX_LOG(log_error, "Buffer cleanup failed: %s", Bstrerror(Berror));
             set_error(p_ub, NESYSTEM, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -643,7 +643,7 @@ out:
  */
 void CCONF (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     cconf_req_t req;
     char tmp[256];
@@ -657,7 +657,7 @@ void CCONF (TPSVCINFO *p_svc)
     {
         userlog("buffer realloc failed!");
         NDRX_LOG(log_error, "tprealloc failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ndrx_debug_dump_UBF(log_debug, "CCONF request buffer", p_ub);
@@ -665,10 +665,10 @@ void CCONF (TPSVCINFO *p_svc)
     
     memset(&req, 0, sizeof(req));
     
-    if (SUCCEED!=load_data(p_ub, &req))
+    if (EXSUCCEED!=load_data(p_ub, &req))
     {
         NDRX_LOG(log_error, "Request data failed to parse");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Add any resources */
@@ -680,12 +680,12 @@ void CCONF (TPSVCINFO *p_svc)
         {
             NDRX_LOG(log_debug, "Loading [%s]", req.resources[i]);
             /* any section please */
-            if (SUCCEED!=ndrx_inicfg_add(M_config, req.resources[i], NULL))
+            if (EXSUCCEED!=ndrx_inicfg_add(M_config, req.resources[i], NULL))
             {
                 NDRX_LOG(log_error, "Failed to add resource [%s]: %s", 
                         req.resources[i], Nstrerror(Nerror));
                 set_error(p_ub, NEINVALINI, Nstrerror(Nerror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             i++;
         }
@@ -693,7 +693,7 @@ void CCONF (TPSVCINFO *p_svc)
 
     /* refresh config - all sections please */
     NDRX_LOG(log_debug, "Refreshing configs...");
-    if (SUCCEED!=ndrx_inicfg_reload(M_config, NULL))
+    if (EXSUCCEED!=ndrx_inicfg_reload(M_config, NULL))
     {
         NDRX_LOG(log_error, "Refresh failed: %s", Nstrerror(Nerror));
         set_error(p_ub, NESYSTEM, Nstrerror(Nerror));
@@ -705,18 +705,18 @@ void CCONF (TPSVCINFO *p_svc)
     switch (req.cmd)
     {
         case NDRX_CCONFIG_CMD_GET:
-            if (SUCCEED!=config_get(p_ub, &req))
+            if (EXSUCCEED!=config_get(p_ub, &req))
             {
                 NDRX_LOG(log_error, "config_get failed!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case NDRX_CCONFIG_CMD_LIST:
             
-            if (SUCCEED!=config_list(p_ub, &req, p_svc->cd))
+            if (EXSUCCEED!=config_list(p_ub, &req, p_svc->cd))
             {
                 NDRX_LOG(log_error, "config_list failed!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         default:
@@ -731,7 +731,7 @@ out:
 
     ndrx_debug_dump_UBF(log_debug, "CCONF response buffer", p_ub);
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 (char *)p_ub,
                 0L,
@@ -743,26 +743,26 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
     
-    if (SUCCEED!=ndrx_cconfig_load_general(&M_config))
+    if (EXSUCCEED!=ndrx_cconfig_load_general(&M_config))
     {
         NDRX_LOG(log_error, "Failed to general config (Enduro/X config)!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (!M_config)
     {
         NDRX_LOG(log_error, "CCONFIG must be set in order to run cconfsrv");
-        FAIL_OUT(ret);   
+        EXFAIL_OUT(ret);   
     }
     
-    if (SUCCEED!=tpadvertise(NDRX_SVC_CCONF, CCONF))
+    if (EXSUCCEED!=tpadvertise(NDRX_SVC_CCONF, CCONF))
     {
         NDRX_LOG(log_error, "Failed to initialize CCONF!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     

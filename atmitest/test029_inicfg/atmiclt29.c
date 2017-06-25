@@ -63,13 +63,13 @@
  */
 int append_text_file(char *file, char *line)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     FILE *f = NDRX_FOPEN(file, "a");
     
     if (NULL==f)
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to open [%s]: %s", file, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     fprintf(f, "%s", line);
@@ -87,7 +87,7 @@ out:
  */
 int main(int argc, char** argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_inicfg_t *cfg;
     ndrx_inicfg_section_keyval_t *out = NULL;
     ndrx_inicfg_section_keyval_t *val;
@@ -104,41 +104,41 @@ int main(int argc, char** argv)
         if (NULL==(cfg=ndrx_inicfg_new()))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to make inicfg: %s", Nstrerror(Nerror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* any sections */
-        if (SUCCEED!=ndrx_inicfg_add(cfg, "./cfg_folder1", NULL))
+        if (EXSUCCEED!=ndrx_inicfg_add(cfg, "./cfg_folder1", NULL))
         {
              NDRX_LOG(log_error, "TESTERROR: failed to add resource: %s", Nstrerror(Nerror));
-            FAIL_OUT(ret);       
+            EXFAIL_OUT(ret);       
         }
 
-        if (SUCCEED!=ndrx_inicfg_add(cfg, "A_test.ini", NULL))
+        if (EXSUCCEED!=ndrx_inicfg_add(cfg, "A_test.ini", NULL))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to make resource: %s", Nstrerror(Nerror));
-            FAIL_OUT(ret);        
+            EXFAIL_OUT(ret);        
         }
 
-        if (SUCCEED!=ndrx_inicfg_add(cfg, "B_test.ini", NULL))
+        if (EXSUCCEED!=ndrx_inicfg_add(cfg, "B_test.ini", NULL))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to make resource: %s", Nstrerror(Nerror));
-            FAIL_OUT(ret);    
+            EXFAIL_OUT(ret);    
         }
         
-        if (SUCCEED!=ndrx_inicfg_add(cfg, "C_test.ini", NULL))
+        if (EXSUCCEED!=ndrx_inicfg_add(cfg, "C_test.ini", NULL))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to make resource: %s", Nstrerror(Nerror));
-            FAIL_OUT(ret);    
+            EXFAIL_OUT(ret);    
         }
 
 
         /* resource == NULL, any resource. */
-        if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, NULL, "mysection/subsect1/f/f", &out))
+        if (EXSUCCEED!=ndrx_inicfg_get_subsect(cfg, NULL, "mysection/subsect1/f/f", &out))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to resolve [mysection/subsect1/f/f]: %s",
                     Nstrerror(Nerror));
-            FAIL_OUT(ret);    
+            EXFAIL_OUT(ret);    
         }
 
 
@@ -152,13 +152,13 @@ int main(int argc, char** argv)
         if (NULL==(val=ndrx_keyval_hash_get(out, "MYVALUE1")))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get MYVALUE1!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (0!=strcmp(val->val, "4"))
         {
             NDRX_LOG(log_error, "TESTERROR: [mysection/subsect1/f/f] not 4!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* test multi-word param */
@@ -166,13 +166,13 @@ int main(int argc, char** argv)
         if (NULL==(val=ndrx_keyval_hash_get(out, "some multi word value")))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get [some multi word value]!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (0!=strcmp(val->val, "yes"))
         {
             NDRX_LOG(log_error, "TESTERROR: [some multi word value] not yes!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
         if (NULL==(val=ndrx_keyval_hash_get(out, "MYVALUE3")))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get MYVALUE3!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         NDRX_LOG(log_debug, "Got multi-line value [%s]", val->val);
@@ -188,13 +188,13 @@ int main(int argc, char** argv)
         if (NULL==strstr(val->val, "MULTILINE"))
         {
             NDRX_LOG(log_error, "TESTERROR: [MYVALUE3] does not contain 'MULTILINE'!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (NULL==strstr(val->val, "VALUE"))
         {
             NDRX_LOG(log_error, "TESTERROR: [MYVALUE3] does not contain 'VALUE'!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* free the list */
@@ -207,10 +207,10 @@ int main(int argc, char** argv)
         iter = NULL;
         iter_tmp = NULL;
 
-        if (SUCCEED!=ndrx_inicfg_iterate(cfg, NULL, iterfilter, &sections))
+        if (EXSUCCEED!=ndrx_inicfg_iterate(cfg, NULL, iterfilter, &sections))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to iterate config!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* print the stuff we have in config */
@@ -225,7 +225,7 @@ int main(int argc, char** argv)
                 if (NULL==(val=ndrx_keyval_hash_get(iter->values, "THIS")))
                 {
                     NDRX_LOG(log_error, "TESTERROR: Failed to get THIS of [mytest]!");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
 
                 if (0!=strcmp(val->val, "IS TEST"))
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
                     NDRX_LOG(log_error, "TESTERROR: [mytest]/THIS not "
                             "equal to 'IS TEST' but [%s]!", 
                             val->val);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
         }
@@ -249,31 +249,31 @@ int main(int argc, char** argv)
         append_text_file("C_test.ini", "COLOR=red\n");
         
         /* update/reload */
-        if (SUCCEED!=ndrx_inicfg_reload(cfg, NULL))
+        if (EXSUCCEED!=ndrx_inicfg_reload(cfg, NULL))
         {
             NDRX_LOG(log_error, "Failed to reload: %s", Nstrerror(Nerror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* out=NULL; - should be already */
         /* resource == NULL, any resource. */
-        if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, NULL, "MOTORCYCLE", &out))
+        if (EXSUCCEED!=ndrx_inicfg_get_subsect(cfg, NULL, "MOTORCYCLE", &out))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to resolve [MOTORCYCLE]: %s",
                     Nstrerror(Nerror));
-            FAIL_OUT(ret);    
+            EXFAIL_OUT(ret);    
         }
 
         if (NULL==(val=ndrx_keyval_hash_get(out, "COLOR")))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get COLOR!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (0!=strcmp(val->val, "red"))
         {
             NDRX_LOG(log_error, "TESTERROR: [COLOR] is not red, but [%s]!", val->val);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* free-up the lookup */
@@ -289,51 +289,51 @@ int main(int argc, char** argv)
     cfg = NULL;
     out = NULL;
     
-    if (SUCCEED!=ndrx_cconfig_load_general(&cfg))
+    if (EXSUCCEED!=ndrx_cconfig_load_general(&cfg))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get Enduro/X config handler: %s", Nstrerror(Nerror));
-        FAIL_OUT(ret);  
+        EXFAIL_OUT(ret);  
     }
     
-    if (SUCCEED!=ndrx_cconfig_get_cf(cfg, "@debug", &out))
+    if (EXSUCCEED!=ndrx_cconfig_get_cf(cfg, "@debug", &out))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to resolve [debug]: %s",
                 Nstrerror(Nerror));
-        FAIL_OUT(ret);    
+        EXFAIL_OUT(ret);    
     }
     
     /* there should be * */
     if (NULL==(val=ndrx_keyval_hash_get(out, "*")))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get *!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     if (0!=strcmp(val->val, "ndrx=5"))
     {
         NDRX_LOG(log_error, "TESTERROR: invalid value for debug: [%s] vs ", 
                 val->val, "ndrx=5");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* we can append the result "virtual secton" with new data: */
-    if (SUCCEED!=ndrx_cconfig_get_cf(cfg, "HELLO2", &out))
+    if (EXSUCCEED!=ndrx_cconfig_get_cf(cfg, "HELLO2", &out))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to resolve [debug]: %s",
                 Nstrerror(Nerror));
-        FAIL_OUT(ret);    
+        EXFAIL_OUT(ret);    
     }
     
     if (NULL==(val=ndrx_keyval_hash_get(out, "MY")))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get MY!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     if (0!=strcmp(val->val, "PHONE"))
     {
         NDRX_LOG(log_error, "TESTERROR: invalid value for debug: [%s]", val->val);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ndrx_keyval_hash_free(out);
@@ -344,16 +344,16 @@ int main(int argc, char** argv)
     cfg = NULL;
     out = NULL;
     
-    if (SUCCEED!=ndrx_cconfig_load())
+    if (EXSUCCEED!=ndrx_cconfig_load())
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get Enduro/X config handler: %s", Nstrerror(Nerror));
-        FAIL_OUT(ret);  
+        EXFAIL_OUT(ret);  
     }
     
-    if (SUCCEED!=ndrx_cconfig_get("HELLO2", &out))
+    if (EXSUCCEED!=ndrx_cconfig_get("HELLO2", &out))
     {
         NDRX_LOG(log_error, "TESTERROR: Enduro/X internal config must not have [HELLO2]!");
-        FAIL_OUT(ret);    
+        EXFAIL_OUT(ret);    
     }
     
     ndrx_keyval_hash_free(out);

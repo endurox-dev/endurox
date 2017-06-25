@@ -55,7 +55,7 @@
 /*
  * Active monitor configuration
  */
-public cpm_process_t *G_clt_config=NULL;
+expublic cpm_process_t *G_clt_config=NULL;
 
 MUTEX_LOCKDECL(M_config_lock) 
 /*---------------------------Statics------------------------------------*/
@@ -65,7 +65,7 @@ MUTEX_LOCKDECL(M_config_lock)
 /**
  * Lock config structure access
  */
-public void cpm_lock_config(void)
+expublic void cpm_lock_config(void)
 {
     MUTEX_LOCK_V(M_config_lock)
 }
@@ -74,7 +74,7 @@ public void cpm_lock_config(void)
 /**
  * Unlock config access routines
  */
-public void cpm_unlock_config(void)
+expublic void cpm_unlock_config(void)
 {
     MUTEX_UNLOCK_V(M_config_lock)
 }
@@ -87,7 +87,7 @@ public void cpm_unlock_config(void)
  * @param tag
  * @param subsect
  */
-public void cpm_get_key(char *key_out, char *tag, char *subsect)
+expublic void cpm_get_key(char *key_out, char *tag, char *subsect)
 {
     sprintf(key_out, "%s%c%s", tag, S_FS, subsect);
 }
@@ -97,7 +97,7 @@ public void cpm_get_key(char *key_out, char *tag, char *subsect)
  * @param subsect
  * @return ptr to client or NULL (if not found)
  */
-public cpm_process_t * cpm_client_get(char *tag, char *subsect)
+expublic cpm_process_t * cpm_client_get(char *tag, char *subsect)
 {
     cpm_process_t *r=NULL;
     
@@ -122,9 +122,9 @@ public cpm_process_t * cpm_client_get(char *tag, char *subsect)
  * @param pid
  * @return NULL or clt 
  */
-public cpm_process_t * cpm_get_client_by_pid(pid_t pid)
+expublic cpm_process_t * cpm_get_client_by_pid(pid_t pid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     
@@ -145,9 +145,9 @@ public cpm_process_t * cpm_get_client_by_pid(pid_t pid)
  * @param pid
  * @return NULL or clt 
  */
-public cpm_process_t * cpm_start_all(void)
+expublic cpm_process_t * cpm_start_all(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     
@@ -169,7 +169,7 @@ public cpm_process_t * cpm_start_all(void)
  * Set current time of the status change
  * @param p_cltproc
  */
-public void cpm_set_cur_time(cpm_process_t *p_cltproc)
+expublic void cpm_set_cur_time(cpm_process_t *p_cltproc)
 {
     time (&p_cltproc->dyn.stattime);
 }
@@ -181,9 +181,9 @@ public void cpm_set_cur_time(cpm_process_t *p_cltproc)
  * @param srvnm - name of the client
  * @return 
  */
-private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     xmlAttrPtr attr;
     
     cpm_process_t cltproc;
@@ -201,42 +201,42 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.command_line, p, PATH_MAX);
-            cltproc.stat.command_line[PATH_MAX] = EOS;
+            cltproc.stat.command_line[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "env"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.env, p, PATH_MAX);
-            cltproc.stat.env[PATH_MAX] = EOS;
+            cltproc.stat.env[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "cctag"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.cctag, p, NDRX_CCTAG_MAX);
-            cltproc.stat.cctag[NDRX_CCTAG_MAX] = EOS;
+            cltproc.stat.cctag[NDRX_CCTAG_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "wd"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.wd, p, PATH_MAX);
-            cltproc.stat.wd[PATH_MAX] = EOS;
+            cltproc.stat.wd[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "stdout"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.log_stdout, p, PATH_MAX);
-            cltproc.stat.log_stdout[PATH_MAX] = EOS;
+            cltproc.stat.log_stdout[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "stderr"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(cltproc.stat.log_stderr, p, PATH_MAX);
-            cltproc.stat.log_stderr[PATH_MAX] = EOS;
+            cltproc.stat.log_stderr[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "log"))
@@ -244,10 +244,10 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             p = (char *)xmlNodeGetContent(attr->children);
             /* Install both: */
             strncpy(cltproc.stat.log_stdout, p, PATH_MAX);
-            cltproc.stat.log_stdout[PATH_MAX] = EOS;
+            cltproc.stat.log_stdout[PATH_MAX] = EXEOS;
             
             strncpy(cltproc.stat.log_stderr, p, PATH_MAX);
-            cltproc.stat.log_stderr[PATH_MAX] = EOS;
+            cltproc.stat.log_stderr[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "autostart"))
@@ -285,11 +285,11 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     }
     
     /* Check the client config... */
-    if (EOS==cltproc.stat.command_line[0])
+    if (EXEOS==cltproc.stat.command_line[0])
     {
         NDRX_LOG(log_error, "No client name at line %hd", cur->line);
         userlog("No client name at line %hd", cur->line);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* parse tags - we should also move out (save the tag to continue with different client) */
@@ -306,7 +306,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_error, "malloc failed for p_cltproc!");
                 userlog("malloc failed for p_cltproc!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             memcpy(p_cltproc, &cltproc, sizeof(cltproc));
@@ -318,7 +318,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->tag, p, CPM_TAG_LEN);
-                    p_cltproc->tag[CPM_TAG_LEN] = EOS;
+                    p_cltproc->tag[CPM_TAG_LEN] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "subsect"))
@@ -326,7 +326,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->subsect, p, CPM_TAG_LEN);
-                    p_cltproc->subsect[CPM_SUBSECT_LEN] = EOS;
+                    p_cltproc->subsect[CPM_SUBSECT_LEN] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "env"))
@@ -334,7 +334,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.env, p, PATH_MAX);
-                    p_cltproc->stat.env[PATH_MAX] = EOS;
+                    p_cltproc->stat.env[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "cctag"))
@@ -342,7 +342,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.cctag, p, NDRX_CCTAG_MAX);
-                    p_cltproc->stat.cctag[NDRX_CCTAG_MAX] = EOS;
+                    p_cltproc->stat.cctag[NDRX_CCTAG_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "wd"))
@@ -350,21 +350,21 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.wd, p, PATH_MAX);
-                    p_cltproc->stat.wd[PATH_MAX] = EOS;
+                    p_cltproc->stat.wd[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "stdout"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.log_stdout, p, PATH_MAX);
-                    p_cltproc->stat.log_stdout[PATH_MAX] = EOS;
+                    p_cltproc->stat.log_stdout[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "stderr"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     strncpy(p_cltproc->stat.log_stderr, p, PATH_MAX);
-                    p_cltproc->stat.log_stderr[PATH_MAX] = EOS;
+                    p_cltproc->stat.log_stderr[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "log"))
@@ -372,10 +372,10 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p = (char *)xmlNodeGetContent(attr->children);
                     /* Install both: */
                     strncpy(p_cltproc->stat.log_stdout, p, PATH_MAX);
-                    p_cltproc->stat.log_stdout[PATH_MAX] = EOS;
+                    p_cltproc->stat.log_stdout[PATH_MAX] = EXEOS;
 
                     strncpy(p_cltproc->stat.log_stderr, p, PATH_MAX);
-                    p_cltproc->stat.log_stderr[PATH_MAX] = EOS;
+                    p_cltproc->stat.log_stderr[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "autostart"))
@@ -419,32 +419,32 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     );
             
             /* Check the client config... */
-            if (EOS==p_cltproc->tag[0])
+            if (EXEOS==p_cltproc->tag[0])
             {
                 NDRX_LOG(log_error, "Missing tag at line %hd", cur->line);
                 userlog("Missing tag at line %hd", cur->line);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             /* Default the subsect */
-            if (EOS==p_cltproc->subsect[0])
+            if (EXEOS==p_cltproc->subsect[0])
             {
                 strcpy(p_cltproc->subsect, "-");
             }
             
             /* Render the final command line */
-            if (SUCCEED!=setenv(NDRX_CLTTAG, p_cltproc->tag, 1))
+            if (EXSUCCEED!=setenv(NDRX_CLTTAG, p_cltproc->tag, 1))
             {
                 NDRX_LOG(log_error, "Failed to set %s on line %hd", NDRX_CLTTAG, cur->line);
                 userlog("Failed to set %s on line %hd", NDRX_CLTTAG, cur->line);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
-            if (SUCCEED!=setenv(NDRX_CLTSUBSECT, p_cltproc->subsect, 1))
+            if (EXSUCCEED!=setenv(NDRX_CLTSUBSECT, p_cltproc->subsect, 1))
             {
                 NDRX_LOG(log_error, "Failed to set %s on line %hd", NDRX_CLTSUBSECT, cur->line);
                 userlog("Failed to set %s on line %hd", NDRX_CLTSUBSECT, cur->line);
-                FAIL_OUT(ret);   
+                EXFAIL_OUT(ret);   
             }
             
             /* format the command line (final) */
@@ -469,7 +469,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 cpm_set_cur_time(p_cltproc);
 
                 /* Add to hashlist */
-                p_cltproc->is_cfg_refresh = TRUE;
+                p_cltproc->is_cfg_refresh = EXTRUE;
 
                 /* Try to get from hash, if found update the infos but keep the PID */
 
@@ -481,7 +481,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_info, "Refreshing %s/%s [%s] ...", 
                         p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
-                p_cl->is_cfg_refresh = TRUE;
+                p_cl->is_cfg_refresh = EXTRUE;
                 
                 memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
                 NDRX_FREE(p_cltproc);
@@ -491,7 +491,7 @@ private int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     
 out:
 
-    if (FAIL==ret && p_cltproc)
+    if (EXFAIL==ret && p_cltproc)
     {
         NDRX_FREE(p_cltproc);
     }
@@ -504,9 +504,9 @@ out:
  * @param cur
  * @return
  */
-private int parse_clients(xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_clients(xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     
     for (; cur ; cur=cur->next)
@@ -514,9 +514,9 @@ private int parse_clients(xmlDocPtr doc, xmlNodePtr cur)
             if (0==strcmp((char*)cur->name, "client"))
             {
                 /* Get the client name */
-                if (SUCCEED!=parse_client(doc, cur))
+                if (EXSUCCEED!=parse_client(doc, cur))
                 {
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -530,14 +530,14 @@ out:
  * @param doc
  * @return
  */
-private int parse_config(xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     if (NULL==cur)
     {
         NDRX_LOG(log_error, "Empty config?");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -546,9 +546,9 @@ private int parse_config(xmlDocPtr doc, xmlNodePtr cur)
     {
         /* Parse client */
         if (0==strcmp((char*)cur->name, "clients")
-                && SUCCEED!=parse_clients(doc, cur->children))
+                && EXSUCCEED!=parse_clients(doc, cur->children))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -565,9 +565,9 @@ out:
  * This initially loads the configuration int internal represtation of the
  * configuration file. After that from this info we will build work structures.
  */
-public int load_xml_config(char *config_file)
+expublic int load_xml_config(char *config_file)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     xmlDocPtr doc;
     xmlNodePtr root;
     
@@ -576,7 +576,7 @@ public int load_xml_config(char *config_file)
     if (!doc)
     {
         NDRX_LOG(log_error, "Failed to open or parse %s", config_file);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -584,7 +584,7 @@ public int load_xml_config(char *config_file)
     if (!(root = xmlDocGetRootElement(doc)))
     {
         NDRX_LOG(log_error, "Failed to get root XML element");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -611,35 +611,35 @@ out:
  * Load the active configuration.
  * @return 
  */
-public int load_config(void)
+expublic int load_config(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     
     static struct stat prev_attr;
     static struct stat attr;
 
-    static int first = TRUE;
-    int was_locked = FALSE;
+    static int first = EXTRUE;
+    int was_locked = EXFALSE;
     
     /* Test for the file time stamp changes */
     
     if (first)
     {
         memset(&prev_attr, 0, sizeof(prev_attr));
-        first = FALSE;
+        first = EXFALSE;
     }
     
     memset(&attr, 0, sizeof(attr));
     
-    if (SUCCEED!=stat(G_config.config_file, &attr))
+    if (EXSUCCEED!=stat(G_config.config_file, &attr))
     {
         NDRX_LOG(log_error, "Config file error [%s]: [%s]",
                 G_config.config_file, strerror(errno));
         userlog("Config file error [%s]: [%s]",
                 G_config.config_file, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=memcmp(&attr.st_mtime, &prev_attr.st_mtime, sizeof(attr.st_mtime)))
@@ -656,7 +656,7 @@ public int load_config(void)
     /* Mark config as not refreshed */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
-        c->is_cfg_refresh = FALSE;
+        c->is_cfg_refresh = EXFALSE;
     }
 
     
@@ -665,13 +665,13 @@ public int load_config(void)
      * Bug #108 01/04/2015, mvitolin
      */
     cpm_lock_config();
-    was_locked = TRUE;
+    was_locked = EXTRUE;
     
-    if (SUCCEED!=load_xml_config(G_config.config_file))
+    if (EXSUCCEED!=load_xml_config(G_config.config_file))
     {
         NDRX_LOG(log_error, "Failed to parse config");
         userlog("Failed to parse config");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Remove dead un-needed processes (killed & not in new config) */

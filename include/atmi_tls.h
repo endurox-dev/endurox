@@ -51,7 +51,7 @@ extern "C" {
 #define ATMI_TLS_MAGIG          0x39617cde
     
 #define ATMI_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_atmi_tls)) \
-    {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(TRUE, TRUE);};
+    {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(EXTRUE, EXTRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     

@@ -47,22 +47,22 @@ long M_subs_to_unsibscribe = -1;
  */
 void TEST23_CARRAY(TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *buf = p_svc->data;
-    char type[16+1]={EOS};
+    char type[16+1]={EXEOS};
     int i;
     
-    if (FAIL==tptypes(buf, type, NULL))
+    if (EXFAIL==tptypes(buf, type, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: TEST23_CARRAY cannot "
                 "determine buffer type");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(type, "CARRAY"))
     {
         NDRX_LOG(log_error, "TESTERROR: Buffer not CARRAY!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     for (i=0; i<TEST_REQ_SIZE; i++)
@@ -71,7 +71,7 @@ void TEST23_CARRAY(TPSVCINFO *p_svc)
         {
             NDRX_LOG(log_error, "TESTERROR: Buffer pos %d not equal to %d!",
                             i, i);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -91,7 +91,7 @@ void TEST23_CARRAY(TPSVCINFO *p_svc)
     
 out:
     
-    tpreturn(SUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, TEST_REPLY_SIZE, 0L);
+    tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, TEST_REPLY_SIZE, 0L);
     
 }
 
@@ -100,7 +100,7 @@ out:
  */
 void TEST23 (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
 out:
 
@@ -125,30 +125,30 @@ void TEST23_2(TPSVCINFO *p_svc)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "tpsvrinit called");
     TPEVCTL evctl;
 
     memset(&evctl, 0, sizeof(evctl));
 
-    if (SUCCEED!=tpadvertise("TEST23_CARRAY", TEST23_CARRAY))
+    if (EXSUCCEED!=tpadvertise("TEST23_CARRAY", TEST23_CARRAY))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST23_CARRAY!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST23", TEST23))
+    else if (EXSUCCEED!=tpadvertise("TEST23", TEST23))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST23 (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST23_2", TEST23_2))
+    else if (EXSUCCEED!=tpadvertise("TEST23_2", TEST23_2))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST23_2!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         goto out;
     }
@@ -157,21 +157,21 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */
-    if (FAIL==tpsubscribe("TEST23EV", NULL, &evctl, 0L))
+    if (EXFAIL==tpsubscribe("TEST23EV", NULL, &evctl, 0L))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST23 "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
 #if 0
     strcpy(evctl.name1, "TEST23_2");
     /* Subscribe to event server */
-    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST23EV", "Hello (.*) Pluto", &evctl, 0L)))
+    if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST23EV", "Hello (.*) Pluto", &evctl, 0L)))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST23 "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 #endif
     

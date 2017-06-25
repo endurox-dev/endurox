@@ -46,13 +46,13 @@ void TESTSVFN (TPSVCINFO *p_svc);
  */
 void DOADV(TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 	
     /* Advertise test service */
     ret=tpadvertise("TESTSVFN", TESTSVFN);
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -65,14 +65,14 @@ void DOADV(TPSVCINFO *p_svc)
  */
 void UNADV (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 	
     
     /* Unadvertise test service */
     ret=tpunadvertise("TESTSVFN");
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -84,7 +84,7 @@ void UNADV (TPSVCINFO *p_svc)
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     char *str = "THIS IS TEST - OK!";
 
@@ -96,18 +96,18 @@ void TESTSVFN (TPSVCINFO *p_svc)
     Bprint(p_ub);
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (FAIL==Bchg(p_ub, T_STRING_FLD, 0, (char *)str, 0))
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, (char *)str, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -119,18 +119,18 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("DOADV", DOADV))
+    if (EXSUCCEED!=tpadvertise("DOADV", DOADV))
     {
         NDRX_LOG(log_error, "Failed to initialize DOADV!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("UNADV", UNADV))
+    else if (EXSUCCEED!=tpadvertise("UNADV", UNADV))
     {
         NDRX_LOG(log_error, "Failed to initialize UNADV (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;

@@ -63,14 +63,14 @@ void RUNTXFAIL(TPSVCINFO *p_svc)
 
     p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
 
-    if (SUCCEED!=Bget(p_ub, T_STRING_FLD, 0, buf, 0))
+    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, buf, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s",
                                           Bstrerror(Berror));
         tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
     }
     
-    if (SUCCEED!=__write_to_tx_file(buf))
+    if (EXSUCCEED!=__write_to_tx_file(buf))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to call __write_to_tx_file()");
         tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
@@ -88,14 +88,14 @@ void RUNTX(TPSVCINFO *p_svc)
 
     p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
 
-    if (SUCCEED!=Bget(p_ub, T_STRING_FLD, 0, buf, 0))
+    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, buf, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s",
                                           Bstrerror(Berror));
         tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
     }
     
-    if (SUCCEED!=__write_to_tx_file(buf))
+    if (EXSUCCEED!=__write_to_tx_file(buf))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to call __write_to_tx_file()");
         tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
@@ -112,29 +112,29 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     char svcnm[16];
     int i;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (SUCCEED!=tpadvertise("RUNTX", RUNTX))
+    if (EXSUCCEED!=tpadvertise("RUNTX", RUNTX))
     {
         NDRX_LOG(log_error, "Failed to initialize RUNTX!");
     }
     
-    if (SUCCEED!=tpadvertise("RUNTXFAIL", RUNTXFAIL))
+    if (EXSUCCEED!=tpadvertise("RUNTXFAIL", RUNTXFAIL))
     {
         NDRX_LOG(log_error, "Failed to initialize RUNTXFAIL!");
     }
 
-    if (SUCCEED!=tpadvertise("NOTRANFAIL", NOTRANFAIL))
+    if (EXSUCCEED!=tpadvertise("NOTRANFAIL", NOTRANFAIL))
     {
         NDRX_LOG(log_error, "Failed to initialize NOTRANFAIL!");
     }
@@ -149,7 +149,7 @@ out:
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
-    if (SUCCEED!=tpclose())
+    if (EXSUCCEED!=tpclose())
     {
         NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));

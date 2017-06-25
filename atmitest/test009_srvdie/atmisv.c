@@ -54,7 +54,7 @@
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     char *str = "THIS IS TEST - OK!";
 
@@ -66,7 +66,7 @@ void TESTSVFN (TPSVCINFO *p_svc)
     exit (1); /* We have crashed! */
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -80,12 +80,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
         
-    if (SUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
+    if (EXSUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize TESTSV (first)!");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

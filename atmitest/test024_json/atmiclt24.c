@@ -51,7 +51,7 @@
 
 int main(int argc, char **argv)
 {
-        int ret = SUCCEED;
+        int ret = EXSUCCEED;
         char buf[1024];
         UBFH *p_fb;
         int i;
@@ -69,10 +69,10 @@ int main(int argc, char **argv)
         for (i=0; i<10000; i++)
         {
             p_fb = (UBFH *)tpalloc("UBF", NULL, 4096);
-            if (SUCCEED!=tpjsontoubf(p_fb, json))
+            if (EXSUCCEED!=tpjsontoubf(p_fb, json))
             {
                 NDRX_LOG(log_error, "TESTERROR: failed to parse json!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
@@ -80,10 +80,10 @@ int main(int argc, char **argv)
 
             memset(jsonout, 0, sizeof(jsonout));
 
-            if (SUCCEED!=tpubftojson(p_fb, jsonout, sizeof(jsonout)))
+            if (EXSUCCEED!=tpubftojson(p_fb, jsonout, sizeof(jsonout)))
             {
                 NDRX_LOG(log_error, "TESTERROR: Failed to build json!!!!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
             {
                 NDRX_LOG(log_error, "Original json differs from built! org: [%s], built: [%s]", 
                         json, jsonout);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             

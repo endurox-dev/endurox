@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     long rsplen;
     int i,j;
     long cnt = 0;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d, d2;
     double dv = 55.66;
     double dv2 = 11.66;
@@ -76,40 +76,40 @@ for (j=0; j<100000; j++)
         dv+=1;
         dv2+=1;
         
-        if (FAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TEST2_1ST_AL failed: %s",
                     tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         /* Verify the data */
-        if (FAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
+        if (EXFAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
         {
             NDRX_LOG(log_debug, "Failed to get T_DOUBLE_FLD[%d]", i);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (FAIL==Bget(p_ub, T_DOUBLE_2_FLD, i, (char *)&d2, 0))
+        if (EXFAIL==Bget(p_ub, T_DOUBLE_2_FLD, i, (char *)&d2, 0))
         {
             NDRX_LOG(log_debug, "Failed to get T_DOUBLE_2_FLD[%d]", i);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         if (fabs(dv-d) > 0.00001)
         {
             NDRX_LOG(log_debug, "T_DOUBLE_FLD: %lf!=%lf =>  FAIL", dv, d);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         if (fabs(dv2 - d2) > 0.00001)
         {
             NDRX_LOG(log_debug, "T_DOUBLE_2_FLD: %lf!=%lf =>  FAIL", dv, d);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         

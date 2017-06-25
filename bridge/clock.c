@@ -62,9 +62,9 @@
  * @param call
  * @return 
  */
-public int br_calc_clock_diff(command_call_t *call)
+expublic int br_calc_clock_diff(command_call_t *call)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     ndrx_stopwatch_t our_time;
     cmd_br_time_sync_t *their_time = (cmd_br_time_sync_t *)call;
     
@@ -85,11 +85,11 @@ public int br_calc_clock_diff(command_call_t *call)
  * Send or clock to server.
  * @return 
  */
-public int br_send_clock(void)
+expublic int br_send_clock(void)
 {
     char *fn = "br_send_clock";
     cmd_br_time_sync_t ourtime;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -113,7 +113,7 @@ out:
  * Adjust clock in packet.
  * @return 
  */
-public void br_clock_adj(tp_command_call_t *call, int is_out)
+expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 {
     N_TIMER_DUMP(log_info, "Call timer: ", call->timer);    
 #if CLOCK_DEBUG

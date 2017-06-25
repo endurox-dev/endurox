@@ -69,12 +69,12 @@ void notification_callback (char *data, long len, long flags)
  */
 int handle_replies(UBFH **pp_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long len;
     int cd;
     
     /* Read the replies... */
-    while (SUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
+    while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
             && 0!=cd)
     {
         ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
@@ -90,36 +90,36 @@ out:
  */
 int main(int argc, char** argv) 
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int i;
     char tmp[20];
     UBFH *p_ub = NULL;
     void (*prev_handler) (char *data, long len, long flags);
     
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to init!!!!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL!=(prev_handler = tpsetunsol(notification_callback)))
     {
         NDRX_LOG(log_error, "TESTERRORR: Previous handler must be NULL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (notification_callback!= tpsetunsol(notification_callback))
     {
         NDRX_LOG(log_error, "TESTERRORR: Previous handler must be "
                 "notification_callback()!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Allocate some buffer */
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to allocate test buffer!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* So we will call lots of local and remote services,
@@ -130,19 +130,19 @@ int main(int argc, char** argv)
         /* Let servers to provide back replies... */
         /* Have a fixed buffer len, so that we do not need to realloc... */
         
-        if (SUCCEED!=handle_replies(&p_ub))
+        if (EXSUCCEED!=handle_replies(&p_ub))
         {
             NDRX_LOG(log_error, "handle_replies() failed");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         snprintf(tmp, sizeof(tmp), "AA%02ld%08d", tpgetnodeid(), i);
         
-        if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
                     tmp, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* Do Some A calls... */
@@ -160,24 +160,24 @@ int main(int argc, char** argv)
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_01]: %s",
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_02]: %s",
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
     }
     
     /* Let all replies come in... */
     sleep(5);
-    if (SUCCEED!=handle_replies(&p_ub))
+    if (EXSUCCEED!=handle_replies(&p_ub))
     {
         NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Reply from both domains */
@@ -185,7 +185,7 @@ int main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "TESTERROR: M_notifs_got = %d, expected: %d", 
                 M_notifs_got, MAX_CALLS*2);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Reply from both domains */
@@ -193,7 +193,7 @@ int main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "TESTERROR: M_replies_got = %d, expected: %d", 
                 M_replies_got, MAX_CALLS*2);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:

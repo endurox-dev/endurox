@@ -152,7 +152,7 @@ extern "C" {
         NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
         userlog("%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
         errno = err;\
-        FAIL_OUT(__ret);\
+        EXFAIL_OUT(__ret);\
     }\
     if (NULL!=__p_bufsz)\
     {\
@@ -173,7 +173,7 @@ extern "C" {
         NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
         userlog("%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
         errno = err;\
-        FAIL_OUT(__ret);\
+        EXFAIL_OUT(__ret);\
     }\
     if (NULL!=__p_bufsz)\
     {\
@@ -193,7 +193,7 @@ extern "C" {
         NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
         userlog("%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
         errno = err;\
-        FAIL_OUT(__ret);\
+        EXFAIL_OUT(__ret);\
     }\
     if (NULL!=__p_bufsz)\
     {\

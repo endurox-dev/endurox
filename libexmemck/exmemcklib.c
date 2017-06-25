@@ -105,13 +105,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int ndrx_memck_add_mask(char *mask, 
-        long mem_limit, 
-        int percent_diff_allow, 
-        char *dlft_mask,
-        int interval_start_prcnt, 
-        int interval_stop_prcnt,
-        long flags)
+expublic int ndrx_memck_add(char *mask,  char *dlft_mask, exmemck_settings_t *p_settings )
 {
     int ret = EXSUCCEED;
     int is_new = EXFALSE;
@@ -142,38 +136,43 @@ expublic int ndrx_memck_add_mask(char *mask,
             /* Got defaults */
             
             NDRX_LOG(log_debug, "Got defaults...");
-            cfg->flags = dflt->flags;
-            cfg->interval_start_prcnt = dflt->interval_start_prcnt;
-            cfg->interval_stop_prcnt = dflt->interval_stop_prcnt;
-            cfg->mem_limit = dflt->mem_limit;
-            cfg->percent_diff_allow = dflt->percent_diff_allow;
+            memcpy(&(cfg->settings), &(dflt->settings), sizeof(cfg->settings));
         }
     }
     
-    
-    if (flags>EXFAIL)
+    if (EXFAIL < p_settings->flags)
     {
-        cfg->flags = flags;
+        cfg->settings.flags = p_settings->flags;
     }
     
-    if (interval_start_prcnt>EXFAIL)
+    if (EXFAIL < p_settings->interval_start_prcnt)
     {
-        cfg->interval_start_prcnt = interval_start_prcnt;
+        cfg->settings.interval_start_prcnt = p_settings->interval_start_prcnt;
     }
     
-    if (interval_stop_prcnt >EXFAIL)
+    if (EXFAIL < p_settings->interval_stop_prcnt)
     {
-        cfg->interval_stop_prcnt = interval_stop_prcnt;
+        cfg->settings.interval_stop_prcnt = p_settings->interval_stop_prcnt;
     }
     
-    if (mem_limit >EXFAIL)
+    if (EXFAIL < p_settings->mem_limit)
     {
-        cfg->mem_limit = mem_limit;
+        cfg->settings.mem_limit = p_settings->mem_limit;
     }
     
-    if (percent_diff_allow >EXFAIL)
+    if (EXFAIL < p_settings->percent_diff_allow)
     {
-        cfg->percent_diff_allow = percent_diff_allow;
+        cfg->settings.percent_diff_allow = p_settings->percent_diff_allow;
+    }
+    
+    if (NULL!=p_settings->pf_proc_exit)
+    {
+        cfg->settings.pf_proc_exit = p_settings->pf_proc_exit;
+    }
+    
+    if (NULL!=p_settings->pf_proc_leaky)
+    {
+        cfg->settings.pf_proc_leaky = p_settings->pf_proc_leaky;
     }
    
 out:    
@@ -197,8 +196,9 @@ out:
  * Return statistics blocks, linked list...
  * @return 
  */
-expublic void* ndrx_memck_getstats(void)
+expublic exmemck_process_t* ndrx_memck_getstats(void)
 {
+    /* calculate the stats and return... */
     return NULL;
 }
 
@@ -251,6 +251,8 @@ expublic int ndrx_memck_tick(void)
     /* If process is not running anymore, just report its stats via callback
      * and remove from the memory
      */
+    
+    /* Stats are calculated only on process exit or request by of stats func */
     
 out:    
     return ret;

@@ -48,12 +48,12 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#ifndef SUCCEED
-#define SUCCEED			0
+#ifndef EXSUCCEED
+#define EXSUCCEED			0
 #endif
 
-#ifndef	FAIL
-#define FAIL			-1
+#ifndef	EXFAIL
+#define EXFAIL			-1
 #endif
 
 /*---------------------------Enums--------------------------------------*/
@@ -67,22 +67,22 @@
  */
 void DYNFUNC(TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096)))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    if (FAIL==Badd(p_ub, T_STRING_2_FLD, p_svc->name, 0L))
+    if (EXFAIL==Badd(p_ub, T_STRING_2_FLD, p_svc->name, 0L))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 	
  out:
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
             0L,
             (char *)p_ub,
             0L,
@@ -95,9 +95,9 @@ void DYNFUNC(TPSVCINFO *p_svc)
  */
 void GETNEXT (TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long svcNr;
-    static int first = TRUE;
+    static int first = EXTRUE;
     UBFH *p_ub = (UBFH *)p_svc->data;
     char svcnm[MAXTIDENT+1];
     char svcnm_prev[MAXTIDENT+1];
@@ -105,9 +105,9 @@ void GETNEXT (TPSVCINFO *p_svc)
     tplogprintubf(log_info, "Got request", p_ub);
 
 
-    if (FAIL==Bget(p_ub, T_LONG_FLD, 0, (char *)&svcNr, 0L))
+    if (EXFAIL==Bget(p_ub, T_LONG_FLD, 0, (char *)&svcNr, 0L))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* Get the service number to advertise */
@@ -118,29 +118,29 @@ void GETNEXT (TPSVCINFO *p_svc)
     
     if (first)
     {
-        first = FALSE;
+        first = EXFALSE;
     }
     else
     {
         /* Unadvertise service... */
-        if (SUCCEED!=tpunadvertise(svcnm_prev))
+        if (EXSUCCEED!=tpunadvertise(svcnm_prev))
         {
             NDRX_LOG(log_error, "TESTERROR! Failed to unadvertise [%s]: %s", 
                      svcnm_prev, tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 
-    if (SUCCEED!=tpadvertise(svcnm, DYNFUNC))
+    if (EXSUCCEED!=tpadvertise(svcnm, DYNFUNC))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to advertise [%s]: %s", 
                  svcnm, tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
             0L,
             (char *)p_ub,
             0L,
@@ -155,23 +155,23 @@ out:
  */
 int init(int argc, char** argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
 
     TP_LOG(log_info, "Initialising...");
 
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         TP_LOG(log_error, "Failed to Initialise: %s", 
                 tpstrerror(tperrno));
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
 
     /* Advertise our service */
-    if (SUCCEED!=tpadvertise("GETNEXT", GETNEXT))
+    if (EXSUCCEED!=tpadvertise("GETNEXT", GETNEXT))
     {
         TP_LOG(log_error, "Failed to initialise GETNEXT!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 	

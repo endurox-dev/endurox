@@ -60,13 +60,13 @@ extern char *optarg;
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public cpmsrv_config_t G_config;
+expublic cpmsrv_config_t G_config;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private int cpm_callback_timer(void);
-private int cpm_bc(UBFH *p_ub, int cd);
-private int cpm_sc(UBFH *p_ub, int cd);
-private int cpm_pc(UBFH *p_ub, int cd);
+exprivate int cpm_callback_timer(void);
+exprivate int cpm_bc(UBFH *p_ub, int cd);
+exprivate int cpm_sc(UBFH *p_ub, int cd);
+exprivate int cpm_pc(UBFH *p_ub, int cd);
 
 /**
  * Client Process Monitor, main thread entry 
@@ -74,20 +74,20 @@ private int cpm_pc(UBFH *p_ub, int cd);
  */
 void CPMSVC (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     char cmd[2+1];
-    char tag[CPM_TAG_LEN]={EOS};
-    char subsect[CPM_SUBSECT_LEN]={EOS};
+    char tag[CPM_TAG_LEN]={EXEOS};
+    char subsect[CPM_SUBSECT_LEN]={EXEOS};
     BFLDLEN len = sizeof(cmd);
     
     p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
     
     
-    if (SUCCEED!=Bget(p_ub, EX_CPMCOMMAND, 0, cmd, &len))
+    if (EXSUCCEED!=Bget(p_ub, EX_CPMCOMMAND, 0, cmd, &len))
     {
         NDRX_LOG(log_error, "missing EX_CPMCOMMAND!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_info, "Got command: [%s]", cmd);
@@ -100,7 +100,7 @@ void CPMSVC (TPSVCINFO *p_svc)
         len=sizeof(subsect);
         Bget(p_ub, EX_CPMSUBSECT, 0, subsect, &len);
         
-        if (EOS==subsect[0])
+        if (EXEOS==subsect[0])
         {
             strcpy(subsect, "-");
         }
@@ -112,29 +112,29 @@ void CPMSVC (TPSVCINFO *p_svc)
     else 
     {
         Bchg(p_ub, EX_CPMOUTPUT, 0, "Invalid command!", 0L);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=load_config())
+    if (EXSUCCEED!=load_config())
     {
         Bchg(p_ub, EX_CPMOUTPUT, 0, "Failed to load/parse configuration file!", 0L);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0==strcmp(cmd, "bc"))
     {
         /* boot the process (just mark for startup) */
-        if (SUCCEED!=cpm_bc(p_ub, p_svc->cd))
+        if (EXSUCCEED!=cpm_bc(p_ub, p_svc->cd))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     } 
     else if (0==strcmp(cmd, "sc"))
     {
         /* stop the client process */
-        if (SUCCEED!=cpm_sc(p_ub, p_svc->cd))
+        if (EXSUCCEED!=cpm_sc(p_ub, p_svc->cd))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else if (0==strcmp(cmd, "pc"))
@@ -144,7 +144,7 @@ void CPMSVC (TPSVCINFO *p_svc)
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 (char *)p_ub,
                 0L,
@@ -156,7 +156,7 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     signed char c;
     struct sigaction sa;
     sigset_t wanted; 
@@ -167,11 +167,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_error, "%s missing env", CONF_NDRX_CONFIG);
         userlog("%s missing env", CONF_NDRX_CONFIG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    G_config.chk_interval = FAIL;
-    G_config.kill_interval = FAIL;
+    G_config.chk_interval = EXFAIL;
+    G_config.kill_interval = EXFAIL;
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "i:k:")) != -1)
@@ -191,12 +191,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
-    if (FAIL==G_config.chk_interval)
+    if (EXFAIL==G_config.chk_interval)
     {
         G_config.chk_interval = CLT_CHK_INTERVAL_DEFAULT;
     }
     
-    if (FAIL==G_config.kill_interval)
+    if (EXFAIL==G_config.kill_interval)
     {
         G_config.chk_interval = CLT_KILL_INTERVAL_DEFAULT;
     }
@@ -205,20 +205,20 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     sigemptyset(&wanted); 
 
     sigaddset(&wanted, SIGCHLD); 
-    if (SUCCEED!=pthread_sigmask(SIG_UNBLOCK, &wanted, NULL) )
+    if (EXSUCCEED!=pthread_sigmask(SIG_UNBLOCK, &wanted, NULL) )
     {
         NDRX_LOG(log_error, "pthread_sigmask failed for SIGCHLD: %s", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     /* </ seems with out this, sigaction on linux does not work... >*/
     
     sa.sa_handler = sign_chld_handler;
     sigemptyset (&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
-    if (FAIL==sigaction (SIGCHLD, &sa, 0))
+    if (EXFAIL==sigaction (SIGCHLD, &sa, 0))
     {
         NDRX_LOG(log_error, "sigaction failed for SIGCHLD: %s", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 #endif
 
@@ -228,22 +228,22 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* signal(SIGCHLD, sign_chld_handler); */
     
     /* Load initial config */
-    if (SUCCEED!=load_config())
+    if (EXSUCCEED!=load_config())
     {
         NDRX_LOG(log_error, "Failed to load client config!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tpadvertise(NDRX_SVC_CPM, CPMSVC))
+    if (EXSUCCEED!=tpadvertise(NDRX_SVC_CPM, CPMSVC))
     {
         NDRX_LOG(log_error, "Failed to initialize CPMSVC!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Register callback timer */
-    if (SUCCEED!=tpext_addperiodcb(G_config.chk_interval, cpm_callback_timer))
+    if (EXSUCCEED!=tpext_addperiodcb(G_config.chk_interval, cpm_callback_timer))
     {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                             tpstrerror(tperrno));
     }
@@ -283,17 +283,17 @@ void NDRX_INTEGRA(tpsvrdone)(void)
  * We need a timer here cause SIGCHILD causes poller interrupts.
  * @return 
  */
-private int cpm_callback_timer(void)
+exprivate int cpm_callback_timer(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
-    static int first = TRUE;
+    static int first = EXTRUE;
     static ndrx_stopwatch_t t;
     
     if (first)
     {
-        first = FALSE;
+        first = EXFALSE;
         ndrx_stopwatch_reset(&t);
     }
 
@@ -330,7 +330,7 @@ private int cpm_callback_timer(void)
     sign_chld_handler(SIGCHLD); */
     
 out:
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -339,21 +339,21 @@ out:
  * @param cd
  * @return 
  */
-private int cpm_bc(UBFH *p_ub, int cd)
+exprivate int cpm_bc(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     char tag[CPM_TAG_LEN+1];
     char subsect[CPM_SUBSECT_LEN+1];
     cpm_process_t * c;
     char debug[256];
     
-    if (SUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
     {
         NDRX_LOG(log_error, "Missing EX_CPMTAG!");
     }
     
-    if (SUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
         strcpy(subsect, "-");
     }
@@ -366,7 +366,7 @@ private int cpm_bc(UBFH *p_ub, int cd)
         NDRX_LOG(log_error, "%s", debug);
         userlog("%s!", debug);
         Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -399,22 +399,22 @@ out:
  * @param cd
  * @return 
  */
-private int cpm_sc(UBFH *p_ub, int cd)
+exprivate int cpm_sc(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     char tag[CPM_TAG_LEN+1];
     char subsect[CPM_SUBSECT_LEN+1];
     cpm_process_t * c;
     char debug[256];
     
-    if (SUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
         NDRX_LOG(log_error, "Missing EX_CPMTAG!");
     }
     
-    if (SUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
         strcpy(subsect, "-");
     }
@@ -427,7 +427,7 @@ private int cpm_sc(UBFH *p_ub, int cd)
         NDRX_LOG(log_error, "%s", debug);
         userlog("%s!", debug);
         Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -435,7 +435,7 @@ private int cpm_sc(UBFH *p_ub, int cd)
         
         if (CLT_STATE_STARTED ==  c->dyn.cur_state)
         {
-            if (SUCCEED==cpm_kill(c))
+            if (EXSUCCEED==cpm_kill(c))
             {
                 sprintf(debug, "Client process %s/%s stopped", tag, subsect);
                 NDRX_LOG(log_info, "%s", debug);
@@ -467,9 +467,9 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-private int cpm_pc(UBFH *p_ub, int cd)
+exprivate int cpm_pc(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long revent;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
@@ -512,14 +512,14 @@ private int cpm_pc(UBFH *p_ub, int cd)
             sprintf(output, "%s/%s - not started", c->tag, c->subsect);
         }
         
-        if (SUCCEED!=Bchg(p_ub, EX_CPMOUTPUT, 0, output, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, EX_CPMOUTPUT, 0, output, 0L))
         {
             NDRX_LOG(log_error, "Failed to read fields: [%s]", 
                 Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (FAIL == tpsend(cd,
+        if (EXFAIL == tpsend(cd,
                             (char *)p_ub,
                             0L,
                             0,
@@ -527,7 +527,7 @@ private int cpm_pc(UBFH *p_ub, int cd)
         {
             NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                 tpstrerror(tperrno), revent);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {

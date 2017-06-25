@@ -61,13 +61,13 @@
  */
 int do_sync (void)
 {
-    while (FAIL == access( SYNC_FILE, F_OK ) )
+    while (EXFAIL == access( SYNC_FILE, F_OK ) )
     {
         /* sleep for 0.01 sec */
         usleep(10000);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /*
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 156000);
     long rsplen;
     int i, j;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d;
     double cps;
     double dv = 55.66;
@@ -116,10 +116,10 @@ int main(int argc, char** argv) {
     {
         char tmp[128];
         sprintf(tmp, "HELLO FROM CLIENT %d abc", i);
-        if (FAIL==CBchg(p_ub, T_CARRAY_FLD, i, tmp, 0, BFLD_STRING))
+        if (EXFAIL==CBchg(p_ub, T_CARRAY_FLD, i, tmp, 0, BFLD_STRING))
             {
                 NDRX_LOG(log_debug, "Failed to get T_CARRAY_FLD[%d]", i);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
     }
@@ -131,32 +131,32 @@ int main(int argc, char** argv) {
         for (i=0; i<50; i++)
         {
             d=i;
-            if (FAIL==Bchg(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
+            if (EXFAIL==Bchg(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
             {
                 NDRX_LOG(log_debug, "Failed to get T_DOUBLE_FLD[%d]", i);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
-            if (FAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+            if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
             {
                 NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
             /* Verify the data */
-            if (FAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
+            if (EXFAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
             {
                 NDRX_LOG(log_debug, "Failed to get T_DOUBLE_FLD[%d]", i);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
             if (fabs(i - d) > 0.00001)
             {
                 NDRX_LOG(log_debug, "%lf!=%lf =>  FAIL", dv, d);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
@@ -165,58 +165,58 @@ int main(int argc, char** argv) {
         }
 
         NDRX_LOG(log_debug, "Do second call to timeout-server");
-        if (FAIL == tpcall("TIMEOUTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("TIMEOUTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TIMEOUTSV failed: %s", tpstrerror(tperrno));
             if (TPETIME!=tperrno)
             {
                 NDRX_LOG(log_debug, "No timeout err from TIMEOUTSV!!!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
         else
         {
             NDRX_LOG(log_debug, "No timeout from TIMEOUTSV!!!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         /* Do Another test, but now we will wait! */
         NDRX_LOG(log_debug, "Do third call to timeout-server, TPNOTIME");
-        if (FAIL == tpcall("TIMEOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
+        if (EXFAIL == tpcall("TIMEOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
                 &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         /* test soft-timeout service */
-        if (FAIL == tpcall("SOFTTOUT", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("SOFTTOUT", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "SOFTTOUT failed: %s", tpstrerror(tperrno));
             if (TPETIME!=tperrno)
             {
                 NDRX_LOG(log_debug, "No timeout err from SOFTTOUT!!!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
         else
         {
             NDRX_LOG(log_debug, "No timeout from SOFTTOUT!!!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         /*
          * We should be able to call serices with out passing buffer to call.
          */
-        if (FAIL==tpcall("NULLSV", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        if (EXFAIL==tpcall("NULLSV", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTERROR: NULLSV failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -226,19 +226,19 @@ int main(int argc, char** argv) {
             /*
             * Test the case when some data should be returned
             */
-            if (FAIL==tpcall("RETSOMEDATA", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+            if (EXFAIL==tpcall("RETSOMEDATA", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
             {
                 NDRX_LOG(log_error, "TESTERROR: RETSOMEDATA failed: %s", 
                         tpstrerror(tperrno));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
-            if (FAIL==Bget(p_ub, T_STRING_2_FLD, 0, buf, NULL))
+            if (EXFAIL==Bget(p_ub, T_STRING_2_FLD, 0, buf, NULL))
             {
                 NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_2_FLD: %s", 
                         Bstrerror(Berror));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -247,7 +247,7 @@ int main(int argc, char** argv) {
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid response data in "
                     "T_STRING_2_FLD, got [%s]", buf);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -257,10 +257,10 @@ int main(int argc, char** argv) {
     {
         /* p_ub = (UBFH *)tprealloc ((char *)p_ub, 1128); */
 
-        if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_small, sizeof(test_buf_small)))
+        if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_small, sizeof(test_buf_small)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -272,10 +272,10 @@ int main(int argc, char** argv) {
             /*
             * Test the case when some data should be returned
             */
-            if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+            if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
             {
                 NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -301,11 +301,11 @@ int main(int argc, char** argv) {
         /* p_ub = (UBFH *)tprealloc ((char *)p_ub, 9216); */
         tplogprintubf(log_error, "Buffer before 8K test", p_ub);
 
-        if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, 1024*8))
+        if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, 1024*8))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD: %s",
                 Bstrerror(Berror));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -317,10 +317,10 @@ int main(int argc, char** argv) {
             /*
             * Test the case when some data should be returned
             */
-            if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+            if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
             {
                 NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -343,7 +343,7 @@ int main(int argc, char** argv) {
     if (strstr(bench_mode, ":B:"))
     {
         int bench_call_num;
-        int first = TRUE;
+        int first = EXTRUE;
         
         /*start with 1 byte, then with 1 kb, then +4 kb up till 56... */
         for (j=0; j<56; j=(j==0?j=1:j+4))
@@ -357,11 +357,11 @@ int main(int argc, char** argv) {
             
             /* p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500); */
 
-            if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
+            if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
             {
                 NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d: %s",
                         callsz, Bstrerror(Berror));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             
@@ -383,10 +383,10 @@ B_warmed_up:
                 /*
                 * Test the case when some data should be returned
                 */
-                if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+                if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
                 {
                     NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -394,7 +394,7 @@ B_warmed_up:
             /*do the warmup... */
             if (first)
             {
-                first = FALSE;
+                first = EXFALSE;
                 goto B_warmed_up;
             }
 
@@ -412,10 +412,10 @@ B_warmed_up:
             
             fflush(stdout);
             
-            if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+            if (EXSUCCEED!=ndrx_bench_write_stats((double)j, cps))
             {
                 NDRX_LOG(log_always, "Failed to write stats!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     }
@@ -424,7 +424,7 @@ B_warmed_up:
     if (strstr(bench_mode, ":b:"))
     {
         int bench_call_num;
-        int first = TRUE;
+        int first = EXTRUE;
         for (j=0; j<56; j=(j==0?j=1:j+4))
         {
             int callsz = j*1024;
@@ -435,10 +435,10 @@ B_warmed_up:
 
             /* p_ub = (UBFH *)tprealloc ((char *)p_ub, callsz+500); */
 
-            if (SUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
+            if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_carray, callsz))
             {
                 NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD to %d", callsz);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             
@@ -462,27 +462,27 @@ b_warmed_up:
                 /*
                 * Test the case when some data should be returned
                 */
-                if (FAIL==tpacall("ECHO", (char *)p_ub, 0L, TPNOTIME|TPNOREPLY))
+                if (EXFAIL==tpacall("ECHO", (char *)p_ub, 0L, TPNOTIME|TPNOREPLY))
                 {
                     NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }            
             
             /* +1 call to ensure that target is processed all the stuff.. */
-            if (FAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 
+            if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 
                         TPNOTIME))
                 {
                     NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
             }
 
             /*do the warmup... */
             if (first)
             {
-                first = FALSE;
+                first = EXFALSE;
                 goto b_warmed_up;
             }
 
@@ -501,10 +501,10 @@ b_warmed_up:
             
             fflush(stdout);
             
-            if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+            if (EXSUCCEED!=ndrx_bench_write_stats((double)j, cps))
             {
                 NDRX_LOG(log_always, "Failed to write stats!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     }

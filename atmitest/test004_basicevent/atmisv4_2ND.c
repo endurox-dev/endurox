@@ -40,7 +40,7 @@
 
 void TEST4_2ND (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     static double d = 11.66;
 
@@ -52,20 +52,20 @@ void TEST4_2ND (TPSVCINFO *p_svc)
     Bprint(p_ub);
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     d+=1;
 
-    if (FAIL==Badd(p_ub, T_DOUBLE_2_FLD, (char *)&d, 0))
+    if (EXFAIL==Badd(p_ub, T_DOUBLE_2_FLD, (char *)&d, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -77,22 +77,22 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     TPEVCTL evctl;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
     memset(&evctl, 0, sizeof(evctl));
 
-    if (SUCCEED!=tpadvertise("TEST4_2ND", TEST4_2ND))
+    if (EXSUCCEED!=tpadvertise("TEST4_2ND", TEST4_2ND))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST2_2ND (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
-    else if (SUCCEED!=tpadvertise("TEST4_2ND_AL", TEST4_2ND))
+    else if (EXSUCCEED!=tpadvertise("TEST4_2ND_AL", TEST4_2ND))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST4_2ND_AL (alias)!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -100,11 +100,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     strcpy(evctl.name1, "TEST4_2ND");
     evctl.flags|=TPEVSERVICE;
     /* Subscribe to event server */
-    if (FAIL==tpsubscribe("EV..TEST", "1==1 && T_DOUBLE_FLD==5", &evctl, 0L))
+    if (EXFAIL==tpsubscribe("EV..TEST", "1==1 && T_DOUBLE_FLD==5", &evctl, 0L))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST4_1ST "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
 out:

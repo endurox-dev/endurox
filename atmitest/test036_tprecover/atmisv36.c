@@ -39,7 +39,7 @@
 
 void SVC36 (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     UBFH *p_ub = (UBFH *)p_svc->data;
     
@@ -47,7 +47,7 @@ void SVC36 (TPSVCINFO *p_svc)
     Bprint(p_ub);
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -59,13 +59,13 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("SVC36", SVC36))
+    if (EXSUCCEED!=tpadvertise("SVC36", SVC36))
     {
         NDRX_LOG(log_error, "Failed to initialize SVC36!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     

@@ -39,7 +39,7 @@
 
 void SVC38 (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char tmp[20];
     char nodeid[5];
     UBFH *p_ub = (UBFH *)p_svc->data;
@@ -48,10 +48,10 @@ void SVC38 (TPSVCINFO *p_svc)
     ndrx_debug_dump_UBF(log_error, "SVC38 got request", p_ub);
     
     
-    if (SUCCEED!=Bget(p_ub, T_STRING_FLD, 0, tmp, NULL))
+    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, tmp, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     snprintf(nodeid, sizeof(nodeid), "%02ld", tpgetnodeid());
@@ -64,18 +64,18 @@ void SVC38 (TPSVCINFO *p_svc)
     tmp[0]='B';
     tmp[1]='B';
     
-    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0))
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to setup T_STRING_FLD!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* OK we shall send notification to client, b */
     
-    if (SUCCEED!=tpnotify(&p_svc->cltid, (char *)p_ub, 0L, 0L))
+    if (EXSUCCEED!=tpnotify(&p_svc->cltid, (char *)p_ub, 0L, 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to tpnotify()!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
@@ -83,14 +83,14 @@ void SVC38 (TPSVCINFO *p_svc)
     tmp[0]='C';
     tmp[1]='C';
     
-    if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0))
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to setup T_STRING_FLD!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -102,17 +102,17 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     
     snprintf(svcnm, sizeof(svcnm), "SVC38_%02ld", tpgetnodeid());
     /* Advertise our local service... */
-    if (SUCCEED!=tpadvertise(svcnm, SVC38))
+    if (EXSUCCEED!=tpadvertise(svcnm, SVC38))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize [%s]!", svcnm);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     

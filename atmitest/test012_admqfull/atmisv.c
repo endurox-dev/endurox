@@ -54,14 +54,14 @@
  */
 void SVCOK (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "SVCOK got call");
 
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -73,15 +73,15 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int first = TRUE;
+    int first = EXTRUE;
     NDRX_LOG(log_debug, "tpsvrinit called, mode: [%s]", argv[9]);
     
-    if (SUCCEED!=tpadvertise("SVCOK", SVCOK))
+    if (EXSUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialise TESTSV!");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

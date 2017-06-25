@@ -55,41 +55,41 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
     int i, j;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     long revent;
     char tmp[126];
 
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
 for (j=0; j<1000; j++)
 {
-    if (SUCCEED!=tpbegin(5, 0))
+    if (EXSUCCEED!=tpbegin(5, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (FAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
+    if (EXFAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
     {
             NDRX_LOG(log_error, "TESTSV connect failed!: %s",
                                     tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
     }
 
     /* Recieve the stuff back */
     NDRX_LOG(log_debug, "About to tprecv!");
 
-    while (SUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
+    while (EXSUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
     {
         NDRX_LOG(log_debug, "MSG RECEIVED OK!");
     }
@@ -102,7 +102,7 @@ for (j=0; j<1000; j++)
         {
             int i=0;
             /* Start the sending stuff now! */
-            for (i=0; i<1 && SUCCEED==ret; i++)
+            for (i=0; i<1 && EXSUCCEED==ret; i++)
             {
         	sprintf(tmp, "CLT: %d\n", i);
 	        Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L);
@@ -112,10 +112,10 @@ for (j=0; j<1000; j++)
     }
 
     /* Now give the control to the server, so that he could finish up */
-    if (FAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
+    if (EXFAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
     {
         NDRX_LOG(log_debug, "Failed to give server control!!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -126,25 +126,25 @@ for (j=0; j<1000; j++)
     ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
     NDRX_LOG(log_error, "tprecv failed with revent=%ld", revent);
 
-    if (FAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
+    if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
     {
         NDRX_LOG(log_error, "Service finished with TPEV_SVCSUCC!");
-	if (SUCCEED!=(ret=tpcommit(0)))
+	if (EXSUCCEED!=(ret=tpcommit(0)))
         {
             NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
-        ret=SUCCEED;
+        ret=EXSUCCEED;
     }
     else
     {
-	if (SUCCEED!=(ret=tpabort(0)))
+	if (EXSUCCEED!=(ret=tpabort(0)))
         {
             NDRX_LOG(log_error, "TESTERROR: tpabort()==%d fail: %d:[%s]", 
                                                 ret, tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -154,18 +154,18 @@ for (j=0; j<1000; j++)
     
 out:
 
-    if (SUCCEED!=tpclose())
+    if (EXSUCCEED!=tpclose())
     {
         NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

@@ -50,34 +50,34 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private int basic_q_test(void);
-private int basic_bench_q_test();
-private int enq_q_test(char *q1, char *q2, char *q3);
-private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
-private int deqempty_q_test(void);
-private int basic_q_msgid_test(void);
-private int basic_q_corid_test(void);
-private int basic_autoq_ok(void);
-private int basic_rndfail(void);
-private int basic_enqcarray(void);
-private int basic_autoq_deadq(void);
-private int basic_rndfail(void);
+exprivate int basic_q_test(void);
+exprivate int basic_bench_q_test();
+exprivate int enq_q_test(char *q1, char *q2, char *q3);
+exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
+exprivate int deqempty_q_test(void);
+exprivate int basic_q_msgid_test(void);
+exprivate int basic_q_corid_test(void);
+exprivate int basic_autoq_ok(void);
+exprivate int basic_rndfail(void);
+exprivate int basic_enqcarray(void);
+exprivate int basic_autoq_deadq(void);
+exprivate int basic_rndfail(void);
 
 
 int main(int argc, char** argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     if (argc<=1)
     {
         NDRX_LOG(log_error, "usage: %s <test_case: basic|enq|deqa|deqc|deqe>", argv[0]);
-        return FAIL;
+        return EXFAIL;
     }
     NDRX_LOG(log_error, "\n\n\n\n\n !!!!!!!!!!!!!! TEST CASE %s !!!!!!!! \n\n\n\n\n\n", argv[1]);
     
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0==strcmp(argv[1], "basic"))
@@ -98,19 +98,19 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "deqa"))
     {
-        return deq_q_test(FALSE, FALSE, "TESTA", "TESTB", "TESTC");
+        return deq_q_test(EXFALSE, EXFALSE, "TESTA", "TESTB", "TESTC");
     }
     else if (0==strcmp(argv[1], "deqc"))
     {
-        return deq_q_test(TRUE, FALSE, "TESTA", "TESTB", "TESTC");
+        return deq_q_test(EXTRUE, EXFALSE, "TESTA", "TESTB", "TESTC");
     }
     else if (0==strcmp(argv[1], "ldeqa"))
     {
-        return deq_q_test(FALSE, TRUE, "LTESTA", "LTESTB", "LTESTC");
+        return deq_q_test(EXFALSE, EXTRUE, "LTESTA", "LTESTB", "LTESTC");
     }
     else if (0==strcmp(argv[1], "ldeqc"))
     {
-        return deq_q_test(TRUE, TRUE, "LTESTA", "LTESTB", "LTESTC");
+        return deq_q_test(EXTRUE, EXTRUE, "LTESTA", "LTESTB", "LTESTC");
     }
     else if (0==strcmp(argv[1], "deqe"))
     {
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     else
     {
         NDRX_LOG(log_error, "Invalid test case!");
-        return FAIL;
+        return EXFAIL;
     }
     
 out:
@@ -156,16 +156,16 @@ out:
 /**
  * Do the test call to the server, benchmark for docs
  */
-private int basic_bench_q_test(void)
+exprivate int basic_bench_q_test(void)
 {
 
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc;
     int i, j;
     ndrx_stopwatch_t timer;
     int call_num = 5000;
     int callsz;
-    int first= TRUE;
+    int first= EXTRUE;
     double cps;
     
     /*start with 1 byte, then with 1 kb, then +4 kb up till 56... */
@@ -185,12 +185,12 @@ warmed_up:
 
             /* enqueue the data buffer */
             memset(&qc, 0, sizeof(qc));
-            if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
                     len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             /* dequeue the data buffer + allocate the output buf. */
@@ -198,12 +198,12 @@ warmed_up:
             memset(&qc, 0, sizeof(qc));
 
             len = 10;
-            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
                     &len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             /* compare - should be equal */
@@ -212,14 +212,14 @@ warmed_up:
                 NDRX_LOG(log_error, "TESTERROR: Buffers not equal!");
                 NDRX_DUMP(log_error, "original buffer", testbuf_ref, sizeof(testbuf_ref));
                 NDRX_DUMP(log_error, "got form q", buf, len);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 
         /*do the warmup... */
         if (first)
         {
-            first = FALSE;
+            first = EXFALSE;
             goto warmed_up;
         }
 
@@ -227,19 +227,19 @@ warmed_up:
 
         fflush(stdout);
 
-        if (SUCCEED!=ndrx_bench_write_stats((double)j, cps))
+        if (EXSUCCEED!=ndrx_bench_write_stats((double)j, cps))
         {
             NDRX_LOG(log_always, "Failed to write stats!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree(buf);
         tpfree(testbuf_ref);
     }
 
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -250,10 +250,10 @@ out:
 /**
  * Do the test call to the server
  */
-private int basic_q_test(void)
+exprivate int basic_q_test(void)
 {
 
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc;
     int i;
 
@@ -280,17 +280,17 @@ private int basic_q_test(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* enqueue the data buffer */
         memset(&qc, 0, sizeof(qc));
-        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
                 len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* dequeue the data buffer + allocate the output buf. */
@@ -298,12 +298,12 @@ private int basic_q_test(void)
         memset(&qc, 0, sizeof(qc));
 
         len = 10;
-        if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
                 &len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* compare - should be equal */
@@ -312,17 +312,17 @@ private int basic_q_test(void)
             NDRX_LOG(log_error, "TESTERROR: Buffers not equal!");
             NDRX_DUMP(log_error, "original buffer", testbuf_ref, sizeof(testbuf_ref));
             NDRX_DUMP(log_error, "got form q", buf, len);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         tpfree(buf);
         tpfree(testbuf_ref);
     }
     
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -335,18 +335,18 @@ out:
  * In The same order we shall get the dequeued messages.
  * @return 
  */
-private int enq_q_test(char *q1, char *q2, char *q3)
+exprivate int enq_q_test(char *q1, char *q2, char *q3)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc;
     int i;
     
     UBFH *buf = (UBFH *)tpalloc("UBF", "", 8192);
     
-    if (SUCCEED!=tpbegin(90, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     } 
     
     /* run into one single global tx, ok?  */
@@ -354,38 +354,38 @@ private int enq_q_test(char *q1, char *q2, char *q3)
     for (i=1; i<=300; i++)
     {
         /* enqueue the data buffer */
-        if (SUCCEED!=Badd(buf, T_STRING_FLD, "TEST HELLO", 0L))
+        if (EXSUCCEED!=Badd(buf, T_STRING_FLD, "TEST HELLO", 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_FLD");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* Have a number in FB! */
         memset(&qc, 0, sizeof(qc));
         
-        if (SUCCEED!=tpenqueue("MYSPACE", q1, &qc, (char *)buf, 0, 0))
+        if (EXSUCCEED!=tpenqueue("MYSPACE", q1, &qc, (char *)buf, 0, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         memset(&qc, 0, sizeof(qc));
         
-        if (SUCCEED!=tpenqueue("MYSPACE", q2, &qc, (char *)buf, 0, 0))
+        if (EXSUCCEED!=tpenqueue("MYSPACE", q2, &qc, (char *)buf, 0, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         memset(&qc, 0, sizeof(qc));
         
-        if (SUCCEED!=tpenqueue("MYSPACE", q3, &qc, (char *)buf, 0, 0))
+        if (EXSUCCEED!=tpenqueue("MYSPACE", q3, &qc, (char *)buf, 0, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
     }
@@ -393,10 +393,10 @@ private int enq_q_test(char *q1, char *q2, char *q3)
     
 out:
 
-    if (SUCCEED==ret && SUCCEED!=tpcommit(0))
+    if (EXSUCCEED==ret && EXSUCCEED!=tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to commit!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else 
     {
@@ -412,17 +412,17 @@ out:
  * In The same order we shall get the dequeued messages.
  * @return 
  */
-private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
+exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc;
     int i, j;
     long len;
     UBFH *buf = NULL;
-    if (SUCCEED!=tpbegin(90, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     } 
     
     if (lifo)
@@ -442,11 +442,11 @@ private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
         memset(&qc, 0, sizeof(qc));
         
         buf = (UBFH *)tpalloc("UBF", "", 100);
-        if (SUCCEED!=tpdequeue("MYSPACE", q1, &qc, (char **)&buf, &len, 0))
+        if (EXSUCCEED!=tpdequeue("MYSPACE", q1, &qc, (char **)&buf, &len, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         ndrx_debug_dump_UBF(log_debug, "TESTA rcv buf", buf);
@@ -455,7 +455,7 @@ private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
         {
             NDRX_LOG(log_error, "TESTERROR: invalid count for TESTA %d vs %d", 
                     i, Boccur(buf, T_STRING_FLD));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree((char *)buf);
         
@@ -463,11 +463,11 @@ private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
         
         buf = (UBFH *)tpalloc("UBF", "", 100);
         
-        if (SUCCEED!=tpdequeue("MYSPACE", q2, &qc, (char **)&buf, &len, 0))
+        if (EXSUCCEED!=tpdequeue("MYSPACE", q2, &qc, (char **)&buf, &len, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         ndrx_debug_dump_UBF(log_debug, "TESTB rcv buf", buf);
@@ -476,7 +476,7 @@ private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
         {
             NDRX_LOG(log_error, "TESTERROR: invalid count for TESTB %d vs %d", 
                     i, Boccur(buf, T_STRING_FLD));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         tpfree((char *)buf);
@@ -493,11 +493,11 @@ private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
 
             buf = (UBFH *)tpalloc("UBF", "", 100);
 
-            if (SUCCEED!=tpdequeue("MYSPACE", q3, &qc, (char **)&buf, &len, 0))
+            if (EXSUCCEED!=tpdequeue("MYSPACE", q3, &qc, (char **)&buf, &len, 0))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             ndrx_debug_dump_UBF(log_debug, "TESTC rcv buf", buf);
@@ -506,7 +506,7 @@ private int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
             {
                 NDRX_LOG(log_error, "TESTERROR: invalid count for TESTC %d vs %d", 
                         i, Boccur(buf, T_STRING_FLD));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             tpfree((char *)buf);
@@ -519,10 +519,10 @@ out:
 
     if (do_commit)
     {
-        if (SUCCEED!=tpcommit(0))
+        if (EXSUCCEED!=tpcommit(0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to commit!");
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
     else
@@ -538,41 +538,41 @@ out:
  * Ensure that queues are empty.
  * @return 
  */
-private int deqempty_q_test(void)
+exprivate int deqempty_q_test(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc;
     long len;
     UBFH *buf = NULL;
     
-    if (SUCCEED!=tpbegin(90, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     } 
     
     buf = (UBFH *)tpalloc("UBF", "", 100);
-    if (SUCCEED==tpdequeue("MYSPACE", "TESTA", &qc, (char **)&buf, &len, 0))
+    if (EXSUCCEED==tpdequeue("MYSPACE", "TESTA", &qc, (char **)&buf, &len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: TESTA not empty!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     memset(&qc, 0, sizeof(qc));
 
-    if (SUCCEED==tpdequeue("MYSPACE", "TESTB", &qc, (char **)&buf, &len, 0))
+    if (EXSUCCEED==tpdequeue("MYSPACE", "TESTB", &qc, (char **)&buf, &len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: TESTB not empty!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 
     memset(&qc, 0, sizeof(qc));
 
-    if (SUCCEED==tpdequeue("MYSPACE", "TESTC", &qc, (char **)buf, &len, 0))
+    if (EXSUCCEED==tpdequeue("MYSPACE", "TESTC", &qc, (char **)buf, &len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: TESTC not empty!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -586,10 +586,10 @@ out:
 /**
  * Test message get by msgid
  */
-private int basic_q_msgid_test(void)
+exprivate int basic_q_msgid_test(void)
 {
 
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc1, qc2;
     int i, j;
 
@@ -605,31 +605,31 @@ private int basic_q_msgid_test(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         testbuf_ref[0]=101;
         
         /* enqueue the data buffer */
         memset(&qc1, 0, sizeof(qc1));
-        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc1, testbuf_ref, 
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc1, testbuf_ref, 
                 len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         testbuf_ref[0]=102;
         
         /* enqueue the data buffer */
         memset(&qc2, 0, sizeof(qc2));
-        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc2, testbuf_ref, 
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc2, testbuf_ref, 
                 len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc2.diagnostic, qc2.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* dequeue the data buffer + allocate the output buf. */
@@ -650,18 +650,18 @@ private int basic_q_msgid_test(void)
             }
             
             NDRX_LOG(log_info, "Calling with flags: %ld", qc2.flags);
-            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
                     &len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             if (102!=buf[0])
             {
                 NDRX_LOG(log_error, "TESTERROR: Got %d expected 102", buf[0]);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
 
             }
         }
@@ -680,18 +680,18 @@ private int basic_q_msgid_test(void)
                 /* Already reset to 0 by first dequeue */
                 qc1.flags |= TPQGETBYMSGID;
             }
-            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
                     &len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             if (101!=buf[0])
             {
                 NDRX_LOG(log_error, "TESTERROR: Got %d expected 101", buf[0]);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         
@@ -699,10 +699,10 @@ private int basic_q_msgid_test(void)
         tpfree(testbuf_ref);
     }
     
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -713,10 +713,10 @@ out:
 /**
  * Test message get by corid
  */
-private int basic_q_corid_test(void)
+exprivate int basic_q_corid_test(void)
 {
 
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc1, qc2;
     int i, j;
 
@@ -732,7 +732,7 @@ private int basic_q_corid_test(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         testbuf_ref[0]=101;
@@ -742,12 +742,12 @@ private int basic_q_corid_test(void)
         qc1.corrid[0] = 1;
         qc1.corrid[1] = 2;
         qc1.flags|=TPQCORRID;
-        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc1, testbuf_ref, 
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc1, testbuf_ref, 
                 len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         testbuf_ref[0]=102;
@@ -759,12 +759,12 @@ private int basic_q_corid_test(void)
         qc2.corrid[1] = 4;
         qc2.flags|=TPQCORRID;
         
-        if (SUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc2, testbuf_ref, 
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc2, testbuf_ref, 
                 len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc2.diagnostic, qc2.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* dequeue the data buffer + allocate the output buf. */
@@ -790,18 +790,18 @@ private int basic_q_corid_test(void)
             }
             
             NDRX_LOG(log_info, "Calling with flags: %ld", qc2.flags);
-            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
                     &len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             if (102!=buf[0])
             {
                 NDRX_LOG(log_error, "TESTERROR: Got %d expected 102", buf[0]);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
 
             }
         }
@@ -826,18 +826,18 @@ private int basic_q_corid_test(void)
                 qc1.flags |= TPQGETBYCORRID;
             }
             
-            if (SUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
                     &len, TPNOTRAN))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             if (101!=buf[0])
             {
                 NDRX_LOG(log_error, "TESTERROR: Got %d expected 101", buf[0]);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         
@@ -845,10 +845,10 @@ private int basic_q_corid_test(void)
         tpfree(testbuf_ref);
     }
     
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -860,9 +860,9 @@ out:
 /**
  * Sending to OK q
  */
-private int basic_autoq_ok(void)
+exprivate int basic_autoq_ok(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc1;
     long len = 0;
     char *p;
@@ -877,16 +877,16 @@ private int basic_autoq_ok(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         sprintf(strbuf, "HELLO FROM SENDER");
         
-        if (SUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
+        if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* enqueue the data buffer */
@@ -896,11 +896,11 @@ private int basic_autoq_ok(void)
 
         strcpy(qc1.replyqueue, "REPLYQ");
 
-        if (SUCCEED!=tpenqueue("MYSPACE", "OKQ1", &qc1, (char *)buf, 0, TPNOTRAN))
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "OKQ1", &qc1, (char *)buf, 0, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree((char *)buf);
     }
@@ -913,12 +913,12 @@ private int basic_autoq_ok(void)
 
         NDRX_LOG(log_warn, "LOOP: %d", i);
         
-        if (SUCCEED!=tpdequeue("MYSPACE", "REPLYQ", &qc1, (char **)&buf2, 
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "REPLYQ", &qc1, (char **)&buf2, 
                 &len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Verify that we have fields in place... */
@@ -926,7 +926,7 @@ private int basic_autoq_ok(void)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_2_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         sprintf(strbuf, "HELLO FROM SENDER");
@@ -934,7 +934,7 @@ private int basic_autoq_ok(void)
         if (0!=strcmp(p, strbuf))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Verify that we have fields in place... */
@@ -942,21 +942,21 @@ private int basic_autoq_ok(void)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (0!=strcmp(p, "OK"))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree((char *)buf2);
     }
 
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -967,9 +967,9 @@ out:
 /**
  * Test deadq
  */
-private int basic_autoq_deadq(void)
+exprivate int basic_autoq_deadq(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc1;
     long len = 0;
     char *p;
@@ -984,16 +984,16 @@ private int basic_autoq_deadq(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         sprintf(strbuf, "HELLO FROM SENDER");
         
-        if (SUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
+        if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* enqueue the data buffer */
@@ -1003,11 +1003,11 @@ private int basic_autoq_deadq(void)
 
         strcpy(qc1.failurequeue, "DEADQ");
 
-        if (SUCCEED!=tpenqueue("MYSPACE", "BADQ1", &qc1, (char *)buf, 0, TPNOTRAN))
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "BADQ1", &qc1, (char *)buf, 0, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree((char *)buf);
     }
@@ -1020,12 +1020,12 @@ private int basic_autoq_deadq(void)
 
         NDRX_LOG(log_warn, "LOOP: %d", i);
         
-        if (SUCCEED!=tpdequeue("MYSPACE", "DEADQ", &qc1, (char **)&buf2, 
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "DEADQ", &qc1, (char **)&buf2, 
                 &len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Verify that we have fields in place... */
@@ -1033,7 +1033,7 @@ private int basic_autoq_deadq(void)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_2_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         sprintf(strbuf, "HELLO FROM SENDER");
@@ -1041,16 +1041,16 @@ private int basic_autoq_deadq(void)
         if (0!=strcmp(p, strbuf))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         tpfree((char *)buf2);
     }
 
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -1061,9 +1061,9 @@ out:
 /**
  * Sending to OK q
  */
-private int basic_rndfail(void)
+exprivate int basic_rndfail(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc1;
     long len = 0;
     char *p;
@@ -1077,16 +1077,16 @@ private int basic_rndfail(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         sprintf(strbuf, "HELLO FROM SENDER");
         
-        if (SUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
+        if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* enqueue the data buffer */
@@ -1096,11 +1096,11 @@ private int basic_rndfail(void)
 
         strcpy(qc1.replyqueue, "REPLYQ");
 
-        if (SUCCEED!=tpenqueue("MYSPACE", "RFQ", &qc1, (char *)buf, 0, TPNOTRAN))
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "RFQ", &qc1, (char *)buf, 0, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree((char *)buf);
     }
@@ -1113,12 +1113,12 @@ private int basic_rndfail(void)
 
         NDRX_LOG(log_warn, "LOOP: %d", i);
         
-        if (SUCCEED!=tpdequeue("MYSPACE", "REPLYQ", &qc1, (char **)&buf2, 
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "REPLYQ", &qc1, (char **)&buf2, 
                 &len, TPNOTRAN))
         {
             NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Verify that we have fields in place... */
@@ -1126,7 +1126,7 @@ private int basic_rndfail(void)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_2_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         sprintf(strbuf, "HELLO FROM SENDER");
@@ -1134,7 +1134,7 @@ private int basic_rndfail(void)
         if (0!=strcmp(p, strbuf))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Verify that we have fields in place... */
@@ -1142,21 +1142,21 @@ private int basic_rndfail(void)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
                     Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (0!=strcmp(p, "OK"))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         tpfree((char *)buf2);
     }
 
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -1168,9 +1168,9 @@ out:
 /**
  * Add some binary data to Q
  */
-    private int basic_enqcarray(void)
+    exprivate int basic_enqcarray(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPQCTL qc1;
     long len = 0;
     char *buf = tpalloc("CARRAY", "", 8);
@@ -1179,7 +1179,7 @@ out:
     {
         NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
                 tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     buf[0] = 0;
     buf[1] = 1;
@@ -1201,19 +1201,19 @@ out:
     qc1.flags|=TPQFAILUREQ;
     strcpy(qc1.failurequeue, "TESTFAIL");
 
-    if (SUCCEED!=tpenqueue("MYSPACE", "BINQ", &qc1, buf, len, TPNOTRAN))
+    if (EXSUCCEED!=tpenqueue("MYSPACE", "BINQ", &qc1, buf, len, TPNOTRAN))
     {
         NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                 tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     tpfree((char *)buf);
 
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

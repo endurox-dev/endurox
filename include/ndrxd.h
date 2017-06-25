@@ -45,7 +45,7 @@ extern "C" {
 #include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define PARSE_SECTION_FAIL         FAIL
+#define PARSE_SECTION_FAIL         EXFAIL
 #define PARSE_SECTION_CONFIG      0
 #define PARSE_SECTION_SERVERS     1
 

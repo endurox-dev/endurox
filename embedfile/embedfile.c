@@ -56,18 +56,18 @@
  */
 int main(int argc, char** argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     FILE *in=NULL, *out=NULL;
     int c;
     int len = 0;
     char *inf, *outfpfx;
-    char outf[PATH_MAX+1] = {EOS};
+    char outf[PATH_MAX+1] = {EXEOS};
     int counter = 0;
 
     if (argc<3)
     {
         fprintf(stderr, "syntax: %s <input file> <output file>\n", argv[0]);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     inf = argv[INF];
@@ -78,13 +78,13 @@ int main(int argc, char** argv)
     if (NULL==(in=fopen(inf, "rb")))
     {
         fprintf(stderr, "Failed to open [%s]: \n", inf);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(out=fopen(outf, "wb")))
     {
         fprintf(stderr, "Failed to open [%s]: \n", outf);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* write header */
@@ -129,7 +129,7 @@ out:
         fclose(out);
     }
     
-    if (SUCCEED!=ret) 
+    if (EXSUCCEED!=ret) 
     {
         unlink(argv[OUTF]);
     }

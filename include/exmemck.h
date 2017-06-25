@@ -39,8 +39,12 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 #include <exhash.h>
+#include <nstopwatch.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define EXMEMCK_STATUS_OK              0x0000   /* OK, no memory leaks detected */
+#define EXMEMCK_STATUS_LEAKY_RSS       0x0001   /* Leak detected, RSS           */
+#define EXMEMCK_STATUS_LEAKY_VSZ       0x0002   /* Leak detected, VSZ           */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -48,6 +52,21 @@ extern "C" {
  * 1. Configuration
  * 2. Per process statistics 
  */
+    
+struct exmemck_settings
+{
+    long mem_limit;
+    int percent_diff_allow;
+    int interval_start_prcnt;
+    int interval_stop_prcnt;
+    long flags;
+    int interval_mon;       /* Interval into which monitor memory (with out exit).. */
+    /* Have a callback for status notification */
+    char *(*pf_proc_exit) (pid_t pid, char *ps_out);
+    char *(*pf_proc_leaky) (pid_t pid, char *ps_out);
+};
+
+typedef struct exmemck_settings exmemck_settings_t;
 
 /**
  * Memory check config
@@ -55,13 +74,10 @@ extern "C" {
 struct exmemck_config
 {
     char mask[PATH_MAX+1]; 
-    
-    long mem_limit;
-    int percent_diff_allow;
     char dlft_mask[PATH_MAX+1]; 
-    int interval_start_prcnt;
-    int interval_stop_prcnt;
-    long flags;
+    
+    exmemck_settings_t settings;
+    ndrx_stopwatch_t mon_watch; /*monitor stopwatch if set interval mon*/
 
     EX_hash_handle hh;
 };
@@ -87,8 +103,16 @@ struct exmemck_process
     char psout[PATH_MAX+1];     /* ps string we are monitoring      */
     
     exmemck_config_t *p_config; /* when removing config, exmemck_process shall be removed too */
-    exmemck_statentry_t *stats; /* Array of statistics               */
+    exmemck_statentry_t *stats; /* Array of statistics              */
     int nr_of_stats;           /* Number array elements...          */
+    
+    int status;                 /* Calculated status                */
+    
+    long avg_first_halve_rss;   /* first halve average bytes        */
+    long avg_second_halve_rss;  /* second halve average bytes       */
+    
+    long avg_first_halve_vsz;   /* first halve average bytes        */
+    long avg_second_halve_vsz;  /* second halve average bytes       */
     
     EX_hash_handle hh;         /* makes this structure hashable     */
 };

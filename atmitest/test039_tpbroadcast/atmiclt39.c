@@ -48,7 +48,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private int M_shutdown = FALSE;
+exprivate int M_shutdown = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -68,28 +68,28 @@ void notification_callback (char *data, long len, long flags)
  */
 int run_broadcast(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     UBFH *p_ub = NULL;
     char tmp[32];
     int i;
     
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to init!!!!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL!=tpsetunsol(notification_callback))
     {
         NDRX_LOG(log_error, "TESTERRORR: Previous handler must be NULL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
       
     /* Allocate some buffer */
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to allocate test buffer!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /**
@@ -103,11 +103,11 @@ int run_broadcast(void)
         
         snprintf(tmp, sizeof(tmp), "AA%02ld%08d", tpgetnodeid(), i);
         
-        if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
                     tmp, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (i % 100)
@@ -116,17 +116,17 @@ int run_broadcast(void)
         }
         
         /* generic broadcast applied to all machines... */
-        if (SUCCEED!=tpbroadcast(NULL, NULL, NULL, (char *)p_ub, 0L, 0L))
+        if (EXSUCCEED!=tpbroadcast(NULL, NULL, NULL, (char *)p_ub, 0L, 0L))
         {
             NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (FAIL==tpchkunsol())
+        if (EXFAIL==tpchkunsol())
         {
             NDRX_LOG(log_error, "TESTERROR: tpchkunsol() failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -139,11 +139,11 @@ int run_broadcast(void)
         
         snprintf(tmp, sizeof(tmp), "BB%02ld%08d", tpgetnodeid(), i);
         
-        if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
                     tmp, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (i % 100)
@@ -152,17 +152,17 @@ int run_broadcast(void)
         }
         
         /* generic broadcast applied to all machines... */
-        if (SUCCEED!=tpbroadcast(NULL, NULL, "^.*B.*", (char *)p_ub, 0L, TPREGEXMATCH))
+        if (EXSUCCEED!=tpbroadcast(NULL, NULL, "^.*B.*", (char *)p_ub, 0L, TPREGEXMATCH))
         {
             NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (FAIL==tpchkunsol())
+        if (EXFAIL==tpchkunsol())
         {
             NDRX_LOG(log_error, "TESTERROR: tpchkunsol() failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -175,11 +175,11 @@ int run_broadcast(void)
         
         snprintf(tmp, sizeof(tmp), "CC%02ld%08d", tpgetnodeid(), i);
         
-        if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
                     tmp, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (i % 100)
@@ -188,17 +188,17 @@ int run_broadcast(void)
         }
         
         /* generic broadcast applied to all machines... */
-        if (SUCCEED!=tpbroadcast("2", NULL, NULL, (char *)p_ub, 0L, 0L))
+        if (EXSUCCEED!=tpbroadcast("2", NULL, NULL, (char *)p_ub, 0L, 0L))
         {
             NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (FAIL==tpchkunsol())
+        if (EXFAIL==tpchkunsol())
         {
             NDRX_LOG(log_error, "TESTERROR: tpchkunsol() failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
     }
@@ -212,11 +212,11 @@ int run_broadcast(void)
         
         snprintf(tmp, sizeof(tmp), "DD%02ld%08d", tpgetnodeid(), i);
         
-        if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
                     tmp, Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (i % 100)
@@ -225,17 +225,17 @@ int run_broadcast(void)
         }
         
         /* generic broadcast applied to all machines... */
-        if (SUCCEED!=tpbroadcast(NULL, NULL, "atmicltC39", (char *)p_ub, 0L, 0L))
+        if (EXSUCCEED!=tpbroadcast(NULL, NULL, "atmicltC39", (char *)p_ub, 0L, 0L))
         {
             NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (FAIL==tpchkunsol())
+        if (EXFAIL==tpchkunsol())
         {
             NDRX_LOG(log_error, "TESTERROR: tpchkunsol() failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -254,18 +254,18 @@ out:
  */
 int bc_listen(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     if (NULL!=tpsetunsol(notification_callback))
     {
         NDRX_LOG(log_error, "TESTERRORR: Previous handler must be NULL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     while (!M_shutdown)
     {
         int applied;
-        while (FAIL!=(applied=tpchkunsol()))
+        while (EXFAIL!=(applied=tpchkunsol()))
         {
             if (applied > 0)
             {
@@ -275,11 +275,11 @@ int bc_listen(void)
             usleep(100000);
         }
         
-        if (FAIL==applied)
+        if (EXFAIL==applied)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to call tpchkunsol(): %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -289,7 +289,7 @@ out:
 
 void sighandler(int signum)
 {
-    M_shutdown = TRUE;
+    M_shutdown = EXTRUE;
 }
 
 /**
@@ -297,13 +297,13 @@ void sighandler(int signum)
  */
 int main(int argc, char** argv) 
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPINIT init;
     
     if (argc<2)
     {
         NDRX_LOG(log_error, "usage: %s <broadcast|listen|mutted|>")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     signal(SIGINT, sighandler);
@@ -321,10 +321,10 @@ int main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "Running: listen");
         /* no flags.. */
-        if (SUCCEED!=tpinit(&init))
+        if (EXSUCCEED!=tpinit(&init))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to init!!!!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         ret = bc_listen();
@@ -333,10 +333,10 @@ int main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "Running: mutted");
         init.flags|=TPU_IGN;
-        if (SUCCEED!=tpinit(&init))
+        if (EXSUCCEED!=tpinit(&init))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to init!!!!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         ret = bc_listen();
@@ -344,7 +344,7 @@ int main(int argc, char** argv)
     
 out:
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "TESTERROR: main() finishing with error %d!", ret);
     }

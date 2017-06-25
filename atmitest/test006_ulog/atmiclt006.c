@@ -49,13 +49,13 @@
  * Do the test call to the server
  */
 int main(int argc, char** argv) {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    if (SUCCEED!=(ret=userlog("HELLO WORLD FROM USER LOG!!!  %d-%s", 123, "PARAM")))
+    if (EXSUCCEED!=(ret=userlog("HELLO WORLD FROM USER LOG!!!  %d-%s", 123, "PARAM")))
     {
         goto out;
     }
-    if (SUCCEED!=(ret=userlog("This is log file line 2")))
+    if (EXSUCCEED!=(ret=userlog("This is log file line 2")))
     {
         goto out;
     }

@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
     int i=0;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     for (i=0; i<100; i++)
     {
@@ -68,40 +68,40 @@ int main(int argc, char** argv) {
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get new context (%p): %s",
                     ctx1, tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
-        if (SUCCEED!=Otpopen(&ctx1))
+        if (EXSUCCEED!=Otpopen(&ctx1))
         {
             NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (SUCCEED!=Otpbegin(&ctx1, 60, 0))
+        if (EXSUCCEED!=Otpbegin(&ctx1, 60, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Otpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (SUCCEED!=Otpabort(&ctx1, 0))
+        if (EXSUCCEED!=Otpabort(&ctx1, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Otpabort() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
 
         /* So for some reason we do not  */
-        if (SUCCEED!=Otpclose(&ctx1))
+        if (EXSUCCEED!=Otpclose(&ctx1))
         {
             NDRX_LOG(log_error, "TESTERROR: Otpclose() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 

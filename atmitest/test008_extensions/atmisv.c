@@ -89,7 +89,7 @@ char *test_ptr = "THIS IS TEST";
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     char *str = "THIS IS TEST - OK!";
 
@@ -101,18 +101,18 @@ void TESTSVFN (TPSVCINFO *p_svc)
     Bprint(p_ub);
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (FAIL==Bchg(p_ub, T_STRING_FLD, 0, (char *)str, 0))
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, (char *)str, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -127,7 +127,7 @@ out:
  */
 int poll_connect_22(int fd, uint32_t events, void *ptr1)
 {
-    int ret=SUCCEED;    
+    int ret=EXSUCCEED;    
     int so_error=0;
     int sz;
     char buf[2048];
@@ -176,7 +176,7 @@ out:
 int b4poll_cb(void)
 {
     NDRX_LOG(log_warn, "B4POLL_CALLED");
-    return SUCCEED;
+    return EXSUCCEED;
 }
 /**
  * Periodical callback function
@@ -186,7 +186,7 @@ int b4poll_cb(void)
  */
 int periodical_cb(void)
 {
-    static int first=TRUE;
+    static int first=EXTRUE;
     NDRX_LOG(log_debug, "PERIODCB_OK");
     
     if (first)
@@ -214,14 +214,14 @@ int periodical_cb(void)
 
         connect(sock, (struct sockaddr *)&address, sizeof(address));
         
-        if (SUCCEED!=tpext_addpollerfd(sock, 
+        if (EXSUCCEED!=tpext_addpollerfd(sock, 
                 POLL_FLAGS,
                 (void *)test_ptr, poll_connect_22))
         {
             NDRX_LOG(log_error, "TESTERROR: tpext_addpollerfd failed!");
         }
         
-        first=FALSE;
+        first=EXFALSE;
         
         /*
          * Lets have multiple connections!!
@@ -237,7 +237,7 @@ int periodical_cb(void)
     }
     
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /*
@@ -249,17 +249,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
 
     /* Step 1: add periodical call */
-    if (SUCCEED!=tpext_addperiodcb(1, periodical_cb))
+    if (EXSUCCEED!=tpext_addperiodcb(1, periodical_cb))
     {
         NDRX_LOG(log_error, "TESTERROR: tpext_addperiodcb failed!");
     }
     
-    if (SUCCEED!=tpext_addb4pollcb(b4poll_cb))
+    if (EXSUCCEED!=tpext_addb4pollcb(b4poll_cb))
     {
         NDRX_LOG(log_error, "TESTERROR: tpext_addb4pollcb failed!");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

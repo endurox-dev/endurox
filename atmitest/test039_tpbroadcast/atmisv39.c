@@ -39,12 +39,12 @@
 
 void SVC39 (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -56,17 +56,17 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     
     snprintf(svcnm, sizeof(svcnm), "SVC39_%02ld", tpgetnodeid());
     /* Advertise our local service... */
-    if (SUCCEED!=tpadvertise(svcnm, SVC39))
+    if (EXSUCCEED!=tpadvertise(svcnm, SVC39))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize [%s]!", svcnm);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     

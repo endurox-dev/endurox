@@ -57,14 +57,14 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
     int i=0;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     TPTRANID tranid;
     
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -74,21 +74,21 @@ int main(int argc, char** argv) {
     for (i=0; i<100; i++)
     {
 
-        if (SUCCEED!=tpbegin(60, 0))
+        if (EXSUCCEED!=tpbegin(60, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD COMMIT", 0L);
 
         /* Call Svc1 */
-        if (FAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+        if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
             NDRX_LOG(log_error, "TX3SVC failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 

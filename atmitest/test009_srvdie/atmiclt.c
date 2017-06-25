@@ -54,10 +54,10 @@ int main(int argc, char** argv) {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int tpcall_err;
     
-    if (FAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (EXFAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "TESTSVFN failed: %s", tpstrerror(tperrno));
         

@@ -59,20 +59,20 @@ threadpool M_thpool; /* threads for service */
 /* threaded function... */
 void _TH_TESTSVFN (void *ptr, int *p_finish_off)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d;
     int i;
     thread_server_t *thread_data = (thread_server_t *)ptr;
     UBFH *p_ub = (UBFH *)thread_data->buffer;
     
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         NDRX_LOG(log_error, "Failed to init worker client");
         exit(1);
     }
     
     /* restore context. */
-    if (SUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
+    if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
     {
         NDRX_LOG(log_error, "Failed to set context");
         exit(1);
@@ -90,30 +90,30 @@ void _TH_TESTSVFN (void *ptr, int *p_finish_off)
     Bprint(p_ub);*/
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    if (FAIL==Bget(p_ub, T_DOUBLE_FLD, Boccur(p_ub, T_DOUBLE_FLD)-1, (char *)&d, 0))
+    if (EXFAIL==Bget(p_ub, T_DOUBLE_FLD, Boccur(p_ub, T_DOUBLE_FLD)-1, (char *)&d, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     d+=1;
 
-    if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
+    if (EXFAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    if (FAIL==ret)
+    if (EXFAIL==ret)
         NDRX_LOG(log_debug, "ALARM!!! WE GOT FAIL TESTERROR!!!!!");
 
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -129,7 +129,7 @@ out:
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
     pthread_t thread;
     pthread_attr_t attr; 
@@ -174,7 +174,7 @@ void TESTSVFN (TPSVCINFO *p_svc)
     
     
 out:
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         /* serve next.. */
         tpcontinue();
@@ -194,21 +194,21 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
         /* service request handlers */
     if (NULL==(M_thpool = thpool_init(10)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: 10)!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     
-    if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
 out:    

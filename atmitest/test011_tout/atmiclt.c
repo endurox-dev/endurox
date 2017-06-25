@@ -54,22 +54,22 @@ int main(int argc, char** argv) {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int tpcall_err;
     
     if (argc > 1)
     {
         /* No time-out */
-        if (SUCCEED!=Badd(p_ub, T_STRING_FLD, "NOTOUT", 0))
+        if (EXSUCCEED!=Badd(p_ub, T_STRING_FLD, "NOTOUT", 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         NDRX_LOG(log_debug, "No time-out mode");
         
-        if (FAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 
+        if (EXFAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 
                 TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTERROR: UNEXPECTED ERROR: %s", 
@@ -79,14 +79,14 @@ int main(int argc, char** argv) {
     }
     else 
     {
-        if (SUCCEED!=Badd(p_ub, T_STRING_FLD, "TIMEOUT", 0))
+        if (EXSUCCEED!=Badd(p_ub, T_STRING_FLD, "TIMEOUT", 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
-        if (FAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
+        if (EXFAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
         {
             NDRX_LOG(log_error, "TESTSVFN failed: %s", tpstrerror(tperrno));
 

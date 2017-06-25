@@ -45,13 +45,13 @@ extern "C" {
 #define BR_DEFAULT_THPOOL_SIZE          5 /* Default threadpool size */
 #define BR_THREAD_ENTRY if (!G_thread_init) \
          { \
-                if (SUCCEED==tpinit(NULL))\
+                if (EXSUCCEED==tpinit(NULL))\
                 { \
-                    G_thread_init=TRUE; \
+                    G_thread_init=EXTRUE; \
                 } \
                 else \
                 { \
-                    FAIL_OUT(ret);\
+                    EXFAIL_OUT(ret);\
                 } \
          }
 /*---------------------------Enums--------------------------------------*/
@@ -128,7 +128,7 @@ extern int br_send_clock(void);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
-public int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
+extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
 
 #ifdef	__cplusplus
 }

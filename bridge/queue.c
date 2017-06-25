@@ -71,7 +71,7 @@ in_msg_t *M_in_q = NULL;            /* Linked list with incoming message in Q */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-private int br_got_message_from_q_th(void *ptr, int *p_finish_off);
+exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off);
 
 /**
  * Enqueue the message for delayed send.
@@ -80,15 +80,15 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off);
  * @param from_q
  * @return 
  */
-private int br_add_to_q(char *buf, int len, int pack_type)
+exprivate int br_add_to_q(char *buf, int len, int pack_type)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     in_msg_t *msg;
     
     if (NULL==(msg=NDRX_CALLOC(1, sizeof(in_msg_t))))
     {
         NDRX_ERR_MALLOC(sizeof(in_msg_t));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*fill in the details*/
@@ -113,9 +113,9 @@ out:
  * @param pack_type
  * @return 
  */
-private int br_generate_error_to_net(char *buf, int len, int pack_type, long rcode)
+exprivate int br_generate_error_to_net(char *buf, int len, int pack_type, long rcode)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     switch(pack_type)
     {
@@ -150,7 +150,7 @@ out:
 /**
  * So we got q send error.
  */
-private int br_process_error(char *buf, int len, int err, in_msg_t* from_q, int pack_type)
+exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q, int pack_type)
 {
     long rcode = TPESVCERR;
     
@@ -190,17 +190,17 @@ private int br_process_error(char *buf, int len, int err, in_msg_t* from_q, int 
         }
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
  * Send stuff directly to NDRXD
  */
-public int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q)
+expublic int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
-    if (SUCCEED!=(ret=generic_q_send(ndrx_get_G_atmi_conf()->ndrxd_q_str, 
+    if (EXSUCCEED!=(ret=generic_q_send(ndrx_get_G_atmi_conf()->ndrxd_q_str, 
             (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
@@ -208,24 +208,24 @@ public int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q)
     }
     
 out:
-    return SUCCEED;    
+    return EXSUCCEED;    
 }
 
 /**
  * Submit to service. We should do this via Q
  */
-public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from_q)
+expublic int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from_q)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char svc_q[NDRX_MAX_Q_SIZE+1];
-    int is_bridge = FALSE;
+    int is_bridge = EXFALSE;
     
     if (ATMI_COMMAND_EVPOST==call->command_id)
     {
-        if (SUCCEED!=_get_evpost_sendq(svc_q, sizeof(svc_q), call->extradata))
+        if (EXSUCCEED!=_get_evpost_sendq(svc_q, sizeof(svc_q), call->extradata))
         {
             NDRX_LOG(log_error, "Failed figure out postage Q");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -234,18 +234,18 @@ public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from
         /* Resolve the service in SHM 
          *   sprintf(svc_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, call->name); */
                                                                                 
-        if (SUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge))
+        if (EXSUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge))
         {
             NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
                     call->name);
             userlog("Failed to get local service [%s] for bridge call!", call->name);
             br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
     NDRX_LOG(log_debug, "Calling service: %s", svc_q);
-    if (SUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
+    if (EXSUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
@@ -253,7 +253,7 @@ public int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from
     /* TODO: Check the result, if called failed, then reply back with error? */
     
 out:
-    return SUCCEED;    
+    return EXSUCCEED;    
 }
 
 /**
@@ -263,26 +263,26 @@ out:
  * @param from_q
  * @return 
  */
-public int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* from_q)
+expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* from_q)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char svcnm[MAXTIDENT];
-    int is_bridge = FALSE;
+    int is_bridge = EXFALSE;
     char svc_q[NDRX_MAX_Q_SIZE+1];
     
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
 
-    if (SUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge))
     {
         NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
                 svcnm);
         userlog("Failed to get local service [%s] for bridge call!", svcnm);
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "Calling broadcast server: %s", svc_q);
-    if (SUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
+    if (EXSUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
@@ -291,7 +291,7 @@ public int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* 
     /* TODO: Check the result, if called failed, then reply back with error? */
     
 out:
-    return SUCCEED;    
+    return EXSUCCEED;    
 }
 
 
@@ -302,14 +302,14 @@ out:
  * @param from_q
  * @return 
  */
-public int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from_q)
+expublic int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from_q)
 {
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     /* TODO: We have problem here, because of missing reply_to */
     if (!from_q)
     {
-        if (SUCCEED!=fill_reply_queue(call->callstack, call->reply_to, reply_to))
+        if (EXSUCCEED!=fill_reply_queue(call->callstack, call->reply_to, reply_to))
         {
             NDRX_LOG(log_error, "Failed to send message to ndrxd!");
             goto out;
@@ -317,7 +317,7 @@ public int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from
     }
     
     NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);
-    if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
+    if (EXSUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to %s!", reply_to);
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TORPLYQ);
@@ -325,7 +325,7 @@ public int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from
     }
     
 out:
-    return SUCCEED;    
+    return EXSUCCEED;    
 }
 
 /**
@@ -336,11 +336,11 @@ out:
  * @param msg_type
  * @return 
  */
-public int br_got_message_from_q(char *buf, int len, char msg_type)
+expublic int br_got_message_from_q(char *buf, int len, char msg_type)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     xatmi_brmessage_t *thread_data;
-    int finish_off = FALSE;
+    int finish_off = EXFALSE;
     char *fn = "br_got_message_from_q";
     
     if (0==G_bridge_cfg.threadpoolsize)
@@ -348,7 +348,7 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
         xatmi_brmessage_t thread_data_stat;
         
         NDRX_LOG(log_debug, "%s: single thread mode", fn);
-        thread_data_stat.threaded=FALSE;
+        thread_data_stat.threaded=EXFALSE;
         thread_data_stat.buf = buf;
         thread_data_stat.len = len;
         thread_data_stat.msg_type = msg_type;
@@ -368,23 +368,23 @@ public int br_got_message_from_q(char *buf, int len, char msg_type)
         
         userlog("Failed to allocate xatmi_brmessage_t: %s", 
                 strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     thread_data->buf = ndrx_memdup(buf, len);
-    thread_data->threaded=TRUE;
+    thread_data->threaded=EXTRUE;
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    if (SUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
+    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
             (void*)br_got_message_from_q_th, 
             (void *)thread_data))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 out:
             
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         if (NULL!=thread_data)
         {
@@ -408,9 +408,9 @@ out:
  * @param msg_type
  * @return 
  */
-private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
+exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     /* Get threaded data */
     xatmi_brmessage_t *p_xatmimsg = (xatmi_brmessage_t *)ptr;
     char *buf = p_xatmimsg->buf;
@@ -435,12 +435,12 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
                 
                 NDRX_LOG(log_debug, "TPCALL/CONNECT from Q");
                 /* Adjust the clock */
-                br_clock_adj((tp_command_call_t *)buf, TRUE);
+                br_clock_adj((tp_command_call_t *)buf, EXTRUE);
                 /* Send stuff to network, adjust clock.*/
                 ret=br_send_to_net(buf, len, BR_NET_CALL_MSG_TYPE_ATMI, 
                         gen_command->command_id);
                 
-                if (SUCCEED!=ret)
+                if (EXSUCCEED!=ret)
                 {
                     /* Generate TPNOENT */
                 }
@@ -460,16 +460,16 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
                 NDRX_LOG(log_debug, "TPREPLY/CONVERSATION from Q");
                 
                 /* Adjust the clock */
-                br_clock_adj((tp_command_call_t *)buf, TRUE);
+                br_clock_adj((tp_command_call_t *)buf, EXTRUE);
                 
                 ret=br_send_to_net(buf, len, BR_NET_CALL_MSG_TYPE_ATMI, 
                         gen_command->command_id);
                 
-                if (SUCCEED!=ret)
+                if (EXSUCCEED!=ret)
                 {
                     NDRX_LOG(log_error, "Failed to send reply to "
                             "net - nothing todo");
-                    ret=SUCCEED;
+                    ret=EXSUCCEED;
                 }
                
                 break;
@@ -492,11 +492,11 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
                 ret=br_send_to_net(buf, len, BR_NET_CALL_MSG_TYPE_NOTIF, 
                         gen_command->command_id);
                 
-                if (SUCCEED!=ret)
+                if (EXSUCCEED!=ret)
                 {
                     NDRX_LOG(log_error, "Failed to send reply to "
                             "net - nothing todo");
-                    ret=SUCCEED;
+                    ret=EXSUCCEED;
                 }       
                 break;
         }
@@ -509,9 +509,9 @@ private int br_got_message_from_q_th(void *ptr, int *p_finish_off)
          * we do not want to send any spam to other machine, do we?
          * Hmm but lets try out?
          */
-        if (SUCCEED!=br_send_to_net(buf, len, msg_type, call->command))
+        if (EXSUCCEED!=br_send_to_net(buf, len, msg_type, call->command))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:

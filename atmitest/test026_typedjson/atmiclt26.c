@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
     long rsplen;
     int i;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     long l;
     char tmp[128];
     
@@ -68,52 +68,52 @@ int main(int argc, char** argv) {
         if (NULL==p_ub)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to alloc UBF buffer!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
-        if (SUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "HELLO FROM UBF", 0L))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "HELLO FROM UBF", 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (FAIL==tpcall("TEST26_UBF2JSON", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
+        if (EXFAIL==tpcall("TEST26_UBF2JSON", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: TEST26_UBF2JSON failed: %s", 
                     tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         NDRX_LOG(log_info, "Got response:");
         Bprint(p_ub);
 
-        if (SUCCEED!=Bget(p_ub, T_STRING_FLD, 1, tmp, 0L))
+        if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 1, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         if (0!=strcmp(tmp, "HELLO FROM JSON!"))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid response [%s]!", tmp);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        if (SUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&l, 0L))
+        if (EXSUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&l, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         if (1001!=l)
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid response [%ld]!", l);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -128,16 +128,16 @@ int main(int argc, char** argv) {
         if (NULL==json)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to alloc JSON buffer!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         strcpy(json, "{\"T_STRING_FLD\":[\"HELLO UBF FROM JSON 1!\", \"HELLO UBF FROM JSON 2!\"]}");
 
-        if (FAIL==tpcall("TEST26_JSON2UBF", (char *)json, 0L, (char **)&json, &rsplen, 0))
+        if (EXFAIL==tpcall("TEST26_JSON2UBF", (char *)json, 0L, (char **)&json, &rsplen, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: TEST26_UBF2JSON failed: %s", 
                     tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
         if (0!=strcmp(json, "{\"T_STRING_FLD\":[\"HELLO UBF FROM JSON 1!\",\"HELLO UBF FROM JSON 2!\",\"HELLO FROM UBF!\"]}"))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid response [%s]", json);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         tpfree((char *)json);
@@ -160,22 +160,22 @@ int main(int argc, char** argv) {
         if (NULL==json)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to alloc JSON buffer!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         strcpy(json, "Some ][ very bad json{");
 
-        if (SUCCEED==tpcall("TEST26_JSON2UBF", (char *)json, 0L, (char **)&json, &rsplen, 0))
+        if (EXSUCCEED==tpcall("TEST26_JSON2UBF", (char *)json, 0L, (char **)&json, &rsplen, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: TEST26_UBF2JSON must FAIL!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         if (tperrno!=TPESVCERR)
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid error code [%d]", tperrno);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
 out:
 
     if (ret>=0)
-        ret=SUCCEED;
+        ret=EXSUCCEED;
 
     return ret;
 }

@@ -44,7 +44,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-int M_cd=FAIL;
+int M_cd=EXFAIL;
 UBFH *M_p_ub=NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -53,15 +53,15 @@ UBFH *M_p_ub=NULL;
  * Open configuration download
  * @return
  */
-private short cnf_openf(void)
+exprivate short cnf_openf(void)
 {
-    short   ret = SUCCEED;
+    short   ret = EXSUCCEED;
     long    len;
     long    revent;
     char    *p;
     char    termcode[64];
     /* expect SENDONLY to pass rply */
-    if (FAIL == tprecv(M_cd, (char **)&M_p_ub, &len, 0L, &revent))
+    if (EXFAIL == tprecv(M_cd, (char **)&M_p_ub, &len, 0L, &revent))
     {
         if (TPEEVENT == tperrno )
         {
@@ -78,14 +78,14 @@ private short cnf_openf(void)
                         "TESTERROR: Unexpected conv event %lx",
                          revent );
                 }
-                ret = FAIL;
+                ret = EXFAIL;
                 goto out;
             }
         }
         else
         {
             NDRX_LOG(log_error, "Conv receive err %d", tperrno );
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -93,16 +93,16 @@ private short cnf_openf(void)
     /*
      * Get the key stuff
      */
-    if (FAIL==Bget(M_p_ub, T_STRING_2_FLD, 0, termcode, NULL))
+    if (EXFAIL==Bget(M_p_ub, T_STRING_2_FLD, 0, termcode, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_2_FLD[0]");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else if (0!=strcmp(termcode, "TERMINAL_T"))
     {
         NDRX_LOG(log_error, "TESTERROR: Got invalid T_STRING_2_FLD=[%s]",
                                         termcode);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
 out:
@@ -117,22 +117,22 @@ out:
  */
 int send_config_data(BFLDID fld, char *data)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     long revent;
     tpfree((char *)M_p_ub);
 
     if ( !(M_p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)) )
     {
         NDRX_LOG(log_error, "TESTERROR: FML alloc failed");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
-    else if (SUCCEED == CBchg(M_p_ub, fld, 0,
+    else if (EXSUCCEED == CBchg(M_p_ub, fld, 0,
                                             data,
                                             0L,
                                             BFLD_STRING) )
     {
-            if (FAIL == tpsend(M_cd,
+            if (EXFAIL == tpsend(M_cd,
                                     (char *)M_p_ub,
                                     0L,
                                     TPNOTIME,       /* DIRTY HACK   */
@@ -158,34 +158,34 @@ out:
  */
 void CONVSV (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     M_p_ub = (UBFH *)p_svc->data;
     M_cd = p_svc->cd; /* Our call descriptor (server side) */
-    char databuf[512] = {EOS};
+    char databuf[512] = {EXEOS};
 
     NDRX_LOG(log_debug, "CONVSV got call");
 
-    if (FAIL==cnf_openf())
+    if (EXFAIL==cnf_openf())
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to open config!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     for (i=0; i<100; i++)
     {
         snprintf(databuf, sizeof(databuf), "svc send %d", i);
-        if (FAIL==send_config_data(T_STRING_FLD, databuf))
+        if (EXFAIL==send_config_data(T_STRING_FLD, databuf))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to send config!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)NULL,
                 0L,
@@ -197,13 +197,13 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("CONVSV", CONVSV))
+    if (EXSUCCEED!=tpadvertise("CONVSV", CONVSV))
     {
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;

@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
     int i;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     
     CBadd(p_ub, T_DOUBLE_FLD, "5", 0, BFLD_STRING);
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
         if (ret!=6)
         {
             NDRX_LOG(log_error, "Applied event count is not 6 (which is %d)", ret);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     {
         NDRX_LOG(log_error, "TESTERROR: First post of TEST2EV did not return 3 (%d) ",
                                     ret);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     sleep(10); /* << because server may not complete the unsubscribe! */
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     {
         NDRX_LOG(log_error, "TESTERROR: Second post of TEST2EV did not return 0 (%d) ",
                                     ret);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -110,7 +110,7 @@ out:
 
 
     if (ret>=0)
-        ret=SUCCEED;
+        ret=EXSUCCEED;
 
 
     return ret;

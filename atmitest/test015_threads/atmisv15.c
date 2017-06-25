@@ -72,7 +72,7 @@ void RETSOMEDATA(TPSVCINFO *p_svc)
             tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
         }
 
-        if (SUCCEED!=Bchg(p_ub, T_STRING_2_FLD, 0, "RESPONSE DATA 1", 0))
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_2_FLD, 0, "RESPONSE DATA 1", 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set s: T_STRING_2_FLD%s",
                                             Bstrerror(Berror));
@@ -106,13 +106,13 @@ void ECHO(TPSVCINFO *p_svc)
  */
 void TIMEOUTSV (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     /* Make some deadly sleep! */
     sleep(4);
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -121,7 +121,7 @@ void TIMEOUTSV (TPSVCINFO *p_svc)
 
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     static double d = 55.66;
 
@@ -133,20 +133,20 @@ void TESTSVFN (TPSVCINFO *p_svc)
     Bprint(p_ub);*/
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* d+=1; */
 
-    if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
+    if (EXFAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -155,14 +155,14 @@ out:
 
 int get_infos(UBFH **pp_ub, char *command)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char data_out[1035];
     FILE *fp;
     int len;
 
     if (NULL==(*pp_ub = (UBFH *)tprealloc((char *)*pp_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -171,7 +171,7 @@ int get_infos(UBFH **pp_ub, char *command)
     if (fp == NULL)
     {
 	NDRX_LOG(log_error, "Failed to run command!");
-	ret=FAIL;
+	ret=EXFAIL;
         goto out;
     }
 
@@ -186,9 +186,9 @@ int get_infos(UBFH **pp_ub, char *command)
 		data_out[len-1] = 0;
 	}
 
-        if (FAIL==Badd(*pp_ub, T_STRING_FLD, data_out, 0))
+        if (EXFAIL==Badd(*pp_ub, T_STRING_FLD, data_out, 0))
         {  
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -206,20 +206,20 @@ out:
  */
 void UNIXINFO (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "UNIXINFO got call");
-    if (SUCCEED!=get_infos(&p_ub, "uname -a") ||
-    	SUCCEED!=get_infos(&p_ub, "uptime"))
+    if (EXSUCCEED!=get_infos(&p_ub, "uname -a") ||
+    	EXSUCCEED!=get_infos(&p_ub, "uptime"))
     {
-    	ret=FAIL;
+    	ret=EXFAIL;
     }
 
 out:
     /* Forward to info2 server!!! */
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         tpforward(  "UNIX2",
                     (char *)p_ub,
@@ -228,7 +228,7 @@ out:
     }
     else
     {
-        tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+        tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                     0L,
                     (char *)p_ub,
                     0L,
@@ -241,19 +241,19 @@ out:
  */
 void UNIX2 (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "UNIX2 got call");
-    if (SUCCEED!=get_infos(&p_ub, "uname -a") ||
-	SUCCEED!=get_infos(&p_ub, "uptime"))
+    if (EXSUCCEED!=get_infos(&p_ub, "uname -a") ||
+	EXSUCCEED!=get_infos(&p_ub, "uptime"))
     {
-    	ret=FAIL;
+    	ret=EXFAIL;
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -265,48 +265,48 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TIMEOUTSV", TIMEOUTSV))
+    if (EXSUCCEED!=tpadvertise("TIMEOUTSV", TIMEOUTSV))
     {
         NDRX_LOG(log_error, "Failed to initialize TIMEOUTSV!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
+    else if (EXSUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
+    else if (EXSUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (second)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("NULLSV", NULLSV))
+    else if (EXSUCCEED!=tpadvertise("NULLSV", NULLSV))
     {
         NDRX_LOG(log_error, "Failed to initialize NULLSV!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("ECHO", ECHO))
+    else if (EXSUCCEED!=tpadvertise("ECHO", ECHO))
     {
         NDRX_LOG(log_error, "Failed to initialize ECHO!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("RETSOMEDATA", RETSOMEDATA))
+    else if (EXSUCCEED!=tpadvertise("RETSOMEDATA", RETSOMEDATA))
     {
         NDRX_LOG(log_error, "Failed to initialize RETSOMEDATA!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("UNIXINFO", UNIXINFO))
+    else if (EXSUCCEED!=tpadvertise("UNIXINFO", UNIXINFO))
     {
         NDRX_LOG(log_error, "Failed to initialize UNIXINFO!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("UNIX2", UNIX2))
+    else if (EXSUCCEED!=tpadvertise("UNIX2", UNIX2))
     {
         NDRX_LOG(log_error, "Failed to initialize UNIX2!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;
