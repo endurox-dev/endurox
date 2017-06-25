@@ -1202,6 +1202,103 @@ Thus as we see from the sample run it did call the server and got back the respo
 successfully generated and runtime provisioned.
 
 
+== Using unsolicited messages
+
+Enduro/X supports unsolicited messages. The idea is that server
+process (or other client processes which have a handler to client) 
+can send unsolicited messages to clients. The client processes consumes these
+messages and invokes the callback function. The callback is invoked in case if
+callback handler is set by *tpsetunsol(3)* function.
+
+The unsolicited messages are posted by XATMI services by using *tpnotify(3)*. This
+function gets the Client ID (extracted from service call parameter structure, 
+field TPSVCINFO.cltid:
+
+--------------------------------------------------------------------------------
+
+void SOMESERVICE (TPSVCINFO *p_svc)
+{
+    ...
+    if (0!=tpnotify(&p_svc->cltid, (char *)p_ub, 0L, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to tpnotify()!");
+        ...
+    }
+    ...
+
+}
+
+--------------------------------------------------------------------------------
+
+Unsolicited messages can be broadcast to client processes by servers and client
+by using *tpbroadcast(3)*. The broadcast takes Enduro/X cluster node id 
+('lmid' param) and client name ('cltname' param). The match of the client processes
+are made by either field present (exact match), field not present (match all) or
+match by regular expression.
+
+Function signatures are following:
+
+--------------------------------------------------------------------------------
+
+int tpnotify(CLIENTID *clientid, char *data, long len, long flags);
+int tpbroadcast(char *lmid, char *usrname, char *cltname, char *data, long len, long flags);
+
+--------------------------------------------------------------------------------
+
+
+=== Unsolicited message callback processing
+
+The callback function receives XATMI buffer which was provided to the *tpnotify(3)*
+or *tpbroadcast(3)*. When callback processes these messages, there is limited availability
+of the operations that can be performed within the callback. The limitation is
+due to fact, that unsolicited messages are provided from internals of the XATMI
+runtime and for example doing *tpcall(3)* might cause recursive invocation of
+the callback handler and can cause stack overflow. The following list of XATMI
+functions are available during the callback processing:
+
+. *tpalloc(3)*
+
+. *tpfree(3)*
+
+. *tpgetlev(3)*
+
+. *tprealloc(3)*
+
+. *tptypes(3)*
+
+If more advanced processing is required, the user might create a new thread, copy
+the XATMI buffer and pass it to the thread. Copy of the buffer is required due to
+fact, that buffer is automatic made free when callback function returns.
+
+=== Networked operations
+
+When sending the message to the client to different Enduro/X cluster node, then
+the transport of the notification is performed by *tpbridge(8)* bridge process,
+but remote dispatching is performed by special XATMI server named *tpbrdcstsv(8)*.
+To overall notifications are processed in this way:
+
+
+[dia, tpnotify.dia, tpnotify.png, x450]
+-------------------------------
+-------------------------------
+
+the picture contains:
+
+. Local tpnotify() - orange color
+
+. Local and remote tpbroadcast() - gray color
+
+. Remote tpnotify() - green
+
+=== Unsolicited message applications
+
+Unsolicited messages can be used for XATMI service reporting back progress of some
+particular work the client. Thus the *tpcall(3)* is not interrupted, but some
+feedback can be received and processed.
+
+Sample usage can be seen in Enduro/X ATMI test cases 38 and 39.
+
+
 numbered!:
 
 [bibliography]
