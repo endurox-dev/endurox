@@ -262,13 +262,148 @@ out:
  * if finding out that it is leaking, call the callback if defined.
  * Set the status...
  */
-exprivate int calc_stat(exmemck_process_t *proc)
+exprivate void calc_stat(exmemck_process_t *proc)
 {
     int ret = EXSUCCEED;
+    int i;
+    double start;
+    int start_i;
+    double stop;
+    int stop_i;
+    long rss;
+    long vsz;
+    
+    long diff_rss;
+    long diff_vsz;
+    
+    double rss_increase_prcnt;
+    double vsz_increase_prcnt;
+    
+    int first_halve_start;
+    int second_halve_start;
+    int second_halve_finish;
+    
+    NDRX_LOG(log_debug, "%s: enter, pid=%d", __func__, proc->pid);
+    
+    /* read the statistics entry... */
+    start = (double)proc->nr_of_stats * 
+            ((double)proc->p_config->settings.interval_start_prcnt)/100.0f;
+    stop = (double)proc->nr_of_stats * 
+            ((double)proc->p_config->settings.interval_stop_prcnt)/100.0f;
+    
+    start_i = (int)start;
+    stop_i = (int)stop;
+    
+    
+    first_halve_start = start_i;
+    second_halve_start = start_i + (stop_i - start_i)/2;
+    second_halve_finish = stop_i;
+    
+    if (first_halve_start == second_halve_start)
+    {
+        NDRX_LOG(log_debug, "No stats available for pid=%d (start==stop)", proc->pid);
+        goto out;
+    }
+    
+    /* first halve */
+    rss = 0;
+    vsz = 0;
+    
+    NDRX_LOG(log_debug, "first halve loop [%d..%d]", first_halve_start, 
+            second_halve_start-1);
+    for (i=first_halve_start; i<second_halve_start; i++)
+    {
+        rss+=proc->stats[i].rss;
+        vsz+=proc->stats[i].vsz;
+    }
+    
+    proc->avg_first_halve_rss = rss / (second_halve_start - first_halve_start + 1);
+    proc->avg_first_halve_vsz = vsz / (second_halve_start - first_halve_start + 1);
+    
+    /* second halve */
+    rss = 0;
+    vsz = 0;
+    
+    NDRX_LOG(log_debug, "second halve loop [%d..%d]", first_halve_start, 
+            second_halve_start-1);
+    for (i=second_halve_start; i<second_halve_finish; i++)
+    {
+        rss+=proc->stats[i].rss;
+        vsz+=proc->stats[i].vsz;
+    }
+    
+    proc->avg_second_halve_rss = rss / (second_halve_finish - second_halve_start + 1);
+    proc->avg_second_halve_vsz = vsz / (second_halve_finish - second_halve_start + 1);
+    
+    diff_rss = proc->avg_second_halve_rss - proc->avg_first_halve_rss;
+    diff_vsz = proc->avg_second_halve_vsz - proc->avg_second_halve_vsz;
+    
+    /* recalc the flags */
+    
+    proc->status&=(~EXMEMCK_STATUS_LEAKY_RSS);
+    proc->status&=(~EXMEMCK_STATUS_LEAKY_VSZ);
+    
+    
+    rss_increase_prcnt = ((double)diff_rss)/((double)proc->avg_second_halve_rss);
+    vsz_increase_prcnt = ((double)diff_vsz)/((double)proc->avg_second_halve_vsz);
+    
+    if ( rss_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
+    {
+        NDRX_LOG(log_warn, "pid %d leaky RSS: increase %lf%% allow: %d%%", 
+                rss_increase_prcnt, proc->p_config->settings.percent_diff_allow);
+        proc->status|=EXMEMCK_STATUS_LEAKY_RSS;
+    }
+    
+    if ( vsz_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
+    {
+        NDRX_LOG(log_warn, "pid %d leaky VSZ: increase %lf%% allow: %d%%", 
+                vsz_increase_prcnt, proc->p_config->settings.percent_diff_allow);
+        proc->status|=EXMEMCK_STATUS_LEAKY_VSZ;
+    }
+    
+    NDRX_LOG(log_debug, "Process %d avg stats, first halve 4k pages: rss=%ld, vsz=%ld "
+            "second halve: rss=%ld, vsz=%ld, rss_diff=%ld, vsz_diff=%ld, rss incr %d%%, "
+            "vsz incr %d%%, rss_leak=%s, vsz_leak=%s (ps: %s)", 
+            proc->pid,
+            proc->avg_first_halve_rss, proc->avg_first_halve_vsz, 
+            proc->avg_second_halve_rss, proc->avg_second_halve_vsz, 
+            diff_rss, diff_vsz,
+            rss_increase_prcnt, vsz_increase_prcnt,
+            (proc->status&EXMEMCK_STATUS_LEAKY_RSS)?"yes":"no", 
+            (proc->status&EXMEMCK_STATUS_LEAKY_VSZ)?"yes":"no",
+            proc->psout);
+    
+    
+    if ((proc->status&EXMEMCK_STATUS_LEAKY_RSS) ||
+            (proc->status&EXMEMCK_STATUS_LEAKY_VSZ))
+    {
+        NDRX_LOG(log_error, "Process leaky! Invoke callback if set -> [%s]",
+                proc->psout);
+        if (NULL!=proc->p_config->settings.pf_proc_leaky)
+        {
+            proc->p_config->settings.pf_proc_leaky(proc);
+        }
+    }
     
 out:
+    NDRX_LOG(log_debug, "%s: returns");
+}
+
+/**
+ * Lookup process by pid
+ * @param pid
+ * @return 
+ */
+exprivate exmemck_process_t* get_proc(pid_t pid)
+{
+    int pid_i = (int)pid;
+    exmemck_process_t *ret=NULL;
+    
+    EXHASH_FIND_INT(M_proc, &pid_i, ret);    
+    
     return ret;
 }
+
 /**
  * Get statistics for single process
  * @param pid
@@ -276,7 +411,14 @@ out:
  */
 expublic exmemck_process_t* ndrx_memck_getstats_single(pid_t pid)
 {
+    exmemck_process_t* ret;
     
+    if (NULL!=(ret = get_proc(pid)))
+    {
+        calc_stat(ret);
+    }
+    
+    return ret;
 }
 
 /**
@@ -285,8 +427,18 @@ expublic exmemck_process_t* ndrx_memck_getstats_single(pid_t pid)
  */
 expublic exmemck_process_t* ndrx_memck_getstats(void)
 {
-    /* calculate the stats and return... */
-    return NULL;
+    /* calculate the stats and return... */    
+    exmemck_process_t* el, *elt;
+    
+    NDRX_LOG(log_debug, "%s - enter", __func__);
+    
+    EXHASH_ITER(hh, M_proc, el, elt)
+    {
+        calc_stat(el);
+    }
+    
+    
+    return M_proc;
 }
 
 /**
@@ -294,12 +446,27 @@ expublic exmemck_process_t* ndrx_memck_getstats(void)
  * @param mask
  * @return 
  */
-expublic int ndrx_memck_reset(char *mask)
+expublic void ndrx_memck_reset(char *mask)
 {
-    int ret = EXSUCCEED;
+    exmemck_config_t * cfg = get_config(mask, EXFALSE, NULL, NULL);
+    exmemck_process_t *el, *elt;
     
-out:    
-    return ret;
+    if (NULL!=cfg)
+    {
+        EXHASH_ITER(hh, M_proc, el, elt)
+        {
+            if (el->p_config == cfg)
+            {
+                /* Matched process, resetting */
+                NDRX_LOG(log_debug, "Resetting config for pid=%d (psout: [%s])",
+                        el->pid, el->psout);
+                
+                NDRX_FREE(el->stats);
+                el->nr_of_stats = 0;
+            }
+        }
+    }
+    
 }
 
 /**
@@ -307,15 +474,20 @@ out:
  * @param pid
  * @return 
  */
-expublic int ndrx_memck_reset_pid(pid_t pid)    
+expublic void ndrx_memck_reset_pid(pid_t pid)    
 {
-    int ret = EXSUCCEED;
+    exmemck_process_t* proc = get_proc(pid);
     
-out:    
-    return ret;
+    if (NULL!=proc)
+    {
+        /* Matched process, resetting */
+        NDRX_LOG(log_debug, "Resetting config for pid=%d (psout: [%s])",
+                proc->pid, proc->psout);
+
+        NDRX_FREE(proc->stats);
+        proc->nr_of_stats = 0;
+    }   
 }
-
-
 
 /**
  * Run the one 
@@ -327,10 +499,7 @@ expublic int ndrx_memck_tick(void)
     
     /* List all processes that matches the mask */
     
-    
-    
     /* Check them against monitoring table */
-    
     
     /* Check them against monitoring config */
     

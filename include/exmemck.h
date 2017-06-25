@@ -48,6 +48,8 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
+typedef struct exmemck_process exmemck_process_t;
+    
 /* So we need two structures here:
  * 1. Configuration
  * 2. Per process statistics 
@@ -62,8 +64,8 @@ struct exmemck_settings
     long flags;
     int interval_mon;       /* Interval into which monitor memory (with out exit).. */
     /* Have a callback for status notification */
-    char *(*pf_proc_exit) (pid_t pid, char *ps_out);
-    char *(*pf_proc_leaky) (pid_t pid, char *ps_out);
+    void (*pf_proc_exit) (exmemck_process_t *proc);
+    void (*pf_proc_leaky) (exmemck_process_t *proc);
 };
 
 typedef struct exmemck_settings exmemck_settings_t;
@@ -116,7 +118,6 @@ struct exmemck_process
     
     EX_hash_handle hh;         /* makes this structure hashable     */
 };
-typedef struct exmemck_process exmemck_process_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
