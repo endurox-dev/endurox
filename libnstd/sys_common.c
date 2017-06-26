@@ -655,7 +655,7 @@ out:
         pclose(fp);
     }
 
-    if (line==line_no)
+    if (line!=line_no)
     {
         NDRX_LOG(log_error, "Extract lines: %d, but requested: %d", 
                 line, line_no);

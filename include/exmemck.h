@@ -113,9 +113,11 @@ struct exmemck_process
     
     int status;                 /* Calculated status                */
     
+    int avg_first_count;       /* number of records for first halve */
     long avg_first_halve_rss;   /* first halve average bytes        */
     long avg_second_halve_rss;  /* second halve average bytes       */
     
+    int avg_second_count;       /* number of records for second halve */
     long avg_first_halve_vsz;   /* first halve average bytes        */
     long avg_second_halve_vsz;  /* second halve average bytes       */
     
@@ -127,7 +129,15 @@ struct exmemck_process
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
+extern NDRX_API int ndrx_memck_add(char *mask,  char *dlft_mask, 
+        exmemck_settings_t *p_settings);
+extern NDRX_API int ndrx_memck_rm(char *mask);
+extern NDRX_API void ndrx_memck_rmall(void);
+extern NDRX_API exmemck_process_t* ndrx_memck_getstats_single(pid_t pid);
+extern NDRX_API exmemck_process_t* ndrx_memck_getstats(void);
+extern NDRX_API void ndrx_memck_reset(char *mask);
+extern NDRX_API void ndrx_memck_reset_pid(pid_t pid);
+extern NDRX_API int ndrx_memck_tick(void);
 
 #if defined(__cplusplus)
 }

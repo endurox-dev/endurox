@@ -285,6 +285,7 @@ ENDIF()
 
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
+add_subdirectory (xmemck) # Enduro X memcory checking tool
 add_subdirectory (bridge) # Cluster bridge server
 add_subdirectory (tmsrv) # Transaction Manager server for XA transactions
 add_subdirectory (tmqueue) # Persistant Queue server

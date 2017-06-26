@@ -46,6 +46,7 @@
 #include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define MIN_STATS   2       /* min number of colleted RAM stats for halves */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -65,14 +66,15 @@ exmemck_process_t *M_proc = NULL; /* global process list */
 exprivate exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret, 
         int *p_is_new)
 {
-    exmemck_config_t * ret;
+    int stat = EXSUCCEED;
+    exmemck_config_t * ret = NULL;
     
     EXHASH_FIND_STR(M_config, mask, ret);
     
     if (NULL==ret && autocreate)
     {
         /* Allocate the block */
-        if (EXSUCCEED!=(ret=NDRX_CALLOC(1, sizeof(exmemck_config_t))))
+        if (NULL==(ret=NDRX_CALLOC(1, sizeof(exmemck_config_t))))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed to allocate xmemck_config_t: %s", 
@@ -80,7 +82,7 @@ exprivate exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret,
             
             userlog("Failed to allocate xmemck_config_t: %s", 
                     strerror(err));
-            EXFAIL_OUT((*p_ret));
+            EXFAIL_OUT(stat);
         }
         
         NDRX_STRCPY_SAFE(ret->mask, mask);
@@ -92,15 +94,19 @@ exprivate exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret,
         {
             NDRX_LOG(log_error, "Failed to compile mask [%s]", mask);
             ret = NULL;
+            stat = EXFAIL;
             goto out;
         }
         
         *p_is_new = EXTRUE;
         
+        NDRX_LOG(log_debug, "allocate new config: [%s] %d", 
+                ret->mask, ret->settings.mem_limit);
     }
+    
 out:
 
-    if (EXSUCCEED!=ret && NULL!=ret)
+    if (EXSUCCEED!=stat && NULL!=ret)
     {
         EXHASH_DEL(M_config, ret);
         NDRX_FREE(ret);
@@ -115,7 +121,7 @@ out:
 exprivate void dump_config(exmemck_config_t * cfg)
 {
     NDRX_LOG(log_debug, "=== Config entry, mask: [%s] ======", cfg->mask);
-    NDRX_LOG(log_debug, "inheritted defaults from mask: [%s]", cfg->dlft_mask);
+    NDRX_LOG(log_debug, "inherited defaults from mask: [%s]", cfg->dlft_mask);
     NDRX_LOG(log_debug, "mem_limit                    : [%ld]", cfg->settings.mem_limit);
     NDRX_LOG(log_debug, "percent_diff_allow           : [%ld]", cfg->settings.percent_diff_allow);
     NDRX_LOG(log_debug, "interval_start_prcnt         : [%ld]", cfg->settings.interval_start_prcnt);
@@ -274,6 +280,19 @@ out:
 }
 
 /**
+ * Remove all masks...
+ */
+expublic void ndrx_memck_rmall(void)
+{
+    exmemck_config_t * el, *elt;
+    
+    EXHASH_ITER(hh, M_config, el, elt)
+    {
+        ndrx_memck_rm(el->mask);
+    }
+}
+
+/**
  * Calculate statistics for single process
  * if finding out that it is leaking, call the callback if defined.
  * Set the status...
@@ -327,10 +346,12 @@ exprivate void calc_stat(exmemck_process_t *proc)
     
     NDRX_LOG(log_debug, "first halve loop [%d..%d]", first_halve_start, 
             second_halve_start-1);
+    proc->avg_first_count = 0;
     for (i=first_halve_start; i<second_halve_start; i++)
     {
         rss+=proc->stats[i].rss;
         vsz+=proc->stats[i].vsz;
+        proc->avg_first_count++;
     }
     
     proc->avg_first_halve_rss = rss / (second_halve_start - first_halve_start + 1);
@@ -340,12 +361,28 @@ exprivate void calc_stat(exmemck_process_t *proc)
     rss = 0;
     vsz = 0;
     
-    NDRX_LOG(log_debug, "second halve loop [%d..%d]", first_halve_start, 
-            second_halve_start-1);
+    NDRX_LOG(log_debug, "second halve loop [%d..%d]", second_halve_start, 
+            second_halve_finish-1);
+    proc->avg_second_count = 0;
     for (i=second_halve_start; i<second_halve_finish; i++)
     {
         rss+=proc->stats[i].rss;
         vsz+=proc->stats[i].vsz;
+        proc->avg_second_count++;
+    }
+    
+    if (proc->avg_first_count < MIN_STATS)
+    {
+        NDRX_LOG(log_info, "Too short of stats for first halve: %d, min: %d", 
+                proc->avg_first_count, MIN_STATS);
+        goto out;
+    }
+    
+    if (proc->avg_second_count < MIN_STATS)
+    {
+        NDRX_LOG(log_info, "Too short of stats for second halve: %d, min: %d", 
+                proc->avg_second_count, MIN_STATS);
+        goto out;
     }
     
     proc->avg_second_halve_rss = rss / (second_halve_finish - second_halve_start + 1);
@@ -360,8 +397,8 @@ exprivate void calc_stat(exmemck_process_t *proc)
     proc->status&=(~EXMEMCK_STATUS_LEAKY_VSZ);
     
     
-    rss_increase_prcnt = ((double)diff_rss)/((double)proc->avg_second_halve_rss);
-    vsz_increase_prcnt = ((double)diff_vsz)/((double)proc->avg_second_halve_vsz);
+    rss_increase_prcnt = ((double)diff_rss)/((double)proc->avg_second_halve_rss) * 100;
+    vsz_increase_prcnt = ((double)diff_vsz)/((double)proc->avg_second_halve_vsz) * 100;
     
     if ( rss_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
     {
@@ -378,8 +415,8 @@ exprivate void calc_stat(exmemck_process_t *proc)
     }
     
     NDRX_LOG(log_debug, "Process %d avg stats, first halve 4k pages: rss=%ld, vsz=%ld "
-            "second halve: rss=%ld, vsz=%ld, rss_diff=%ld, vsz_diff=%ld, rss incr %d%%, "
-            "vsz incr %d%%, rss_leak=%s, vsz_leak=%s (ps: %s)", 
+            "second halve: rss=%ld, vsz=%ld, rss_diff=%ld, vsz_diff=%ld, rss incr %lf%%, "
+            "vsz incr %lf%%, rss_leak=%s, vsz_leak=%s (ps: %s)", 
             proc->pid,
             proc->avg_first_halve_rss, proc->avg_first_halve_vsz, 
             proc->avg_second_halve_rss, proc->avg_second_halve_vsz, 
@@ -402,7 +439,7 @@ exprivate void calc_stat(exmemck_process_t *proc)
     }
     
 out:
-    NDRX_LOG(log_debug, "%s: returns");
+    NDRX_LOG(log_debug, "%s: returns", __func__);
 }
 
 /**
@@ -490,7 +527,7 @@ expublic void ndrx_memck_reset(char *mask)
  * @param pid
  * @return 
  */
-expublic void ndrx_memck_reset_pid(pid_t pid)    
+expublic void ndrx_memck_reset_pid(pid_t pid)
 {
     exmemck_process_t* proc = get_proc(pid);
     
@@ -506,7 +543,7 @@ expublic void ndrx_memck_reset_pid(pid_t pid)
 }
 
 /**
- * Run the one 
+ * Run the one cycle
  * @return 
  */
 expublic int ndrx_memck_tick(void)
@@ -532,7 +569,7 @@ expublic int ndrx_memck_tick(void)
         /* Check them against monitoring table */
         DL_FOREACH(sprocs, sproc)
         {
-            if (EXSUCCEED==ndrx_regcomp(&el->mask_regex, sproc->qname))
+            if (EXSUCCEED==ndrx_regexec(&el->mask_regex, sproc->qname))
             {
                 NDRX_LOG(log_debug, "Process: [%s] matched for monitoring...", 
                         sproc->qname);
@@ -568,7 +605,8 @@ expublic int ndrx_memck_tick(void)
                     is_new = EXTRUE;
                     
                     proc->pid = (int)pid;
-                    
+                    proc->p_config = el; /* Add config link.. */
+                    NDRX_STRCPY_SAFE(proc->psout, sproc->qname);
                     EXHASH_ADD_INT(M_proc, pid, proc);
                 }
                 
@@ -618,6 +656,7 @@ expublic int ndrx_memck_tick(void)
             NDRX_LOG(log_warn, "Process pid=%d psout=[%s] - exited, generating stats",
                     elp->pid, elp->psout);
             calc_stat(elp);
+            rm_proc(elp);
         }
     }
     
