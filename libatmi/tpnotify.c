@@ -282,7 +282,7 @@ expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
-    if (EXSUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags, 
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 
             NDRX_MSGPRIO_NOTIFY)))
     {
         int err;
@@ -401,7 +401,7 @@ expublic int _tpchkunsol(void)
     NDRX_LOG(log_debug, "Into %s", __func__);
     do
     {
-        rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
+        rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                 G_atmi_tls->G_atmi_conf.reply_q_str,
                 &(G_atmi_tls->G_atmi_conf.reply_q_attr),
                 pbuf, pbuf_len, &prio, TPNOBLOCK);

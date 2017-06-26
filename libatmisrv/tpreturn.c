@@ -269,7 +269,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
      * the closest reply node... We might event not to pop the stack.
      * But each node searches for closest path, from right to left.
      */
-    if (EXFAIL==generic_q_send(reply_to, (char *)call, data_len, flags, 0))
+    if (EXFAIL==ndrx_generic_q_send(reply_to, (char *)call, data_len, flags, 0))
     {
         NDRX_LOG(log_error, "ATTENTION!! Reply to queue [%s] failed!",
                                             reply_to);
@@ -279,7 +279,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     /* Wait for ack if we run in conversation */
     if (CONV_IN_CONVERSATION==p_accept_conn->status)
     {
-        get_ack(p_accept_conn, flags);
+        ndrx_get_ack(p_accept_conn, flags);
 
         /* If this is conversation, then we should release conversation queue */
         normal_connection_shutdown(p_accept_conn, EXFALSE);
@@ -460,7 +460,7 @@ expublic void _tpforward (char *svc, char *data,
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
                     call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
         
-    if (EXSUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
     {
         /* reply FAIL back to caller! */
         int err;

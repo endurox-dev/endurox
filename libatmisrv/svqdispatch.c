@@ -984,7 +984,7 @@ expublic int process_admin_req(char *buf, long len, int *shutdown_req)
         
         for (i=ATMI_SRV_Q_ADJUST; i<G_server_conf.adv_service_count; i++)
         {
-            if (EXSUCCEED!=generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
+            if (EXSUCCEED!=ndrx_generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
                     (char *)&shut_msg, sizeof(shut_msg), 0))
             {
                 NDRX_LOG(log_debug, "Failed to send self notification to %s q",

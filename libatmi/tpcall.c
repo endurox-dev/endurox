@@ -563,7 +563,7 @@ expublic int _tpacall (char *svc, char *data,
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
-    if (EXSUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
     {
         int err;
 
@@ -662,7 +662,7 @@ expublic int _tpgetrply (int *cd,
             NDRX_LOG(log_info, "Waiting on OS Q...");
             
             /* receive the reply back */
-            rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
+            rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                     G_atmi_tls->G_atmi_conf.reply_q_str,
                     &(G_atmi_tls->G_atmi_conf.reply_q_attr),
                     pbuf, pbuf_len, &prio, flags);

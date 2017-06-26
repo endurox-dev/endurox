@@ -40,6 +40,7 @@ extern "C" {
 #include <ndrx_config.h>
 #include <exhash.h>
 #include <nstopwatch.h>
+#include <regex.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define EXMEMCK_STATUS_OK              0x0000   /* OK, no memory leaks detected */
@@ -66,6 +67,7 @@ struct exmemck_settings
     /* Have a callback for status notification */
     void (*pf_proc_exit) (exmemck_process_t *proc);
     void (*pf_proc_leaky) (exmemck_process_t *proc);
+   
 };
 
 typedef struct exmemck_settings exmemck_settings_t;
@@ -76,7 +78,8 @@ typedef struct exmemck_settings exmemck_settings_t;
 struct exmemck_config
 {
     char mask[PATH_MAX+1]; 
-    char dlft_mask[PATH_MAX+1]; 
+    char dlft_mask[PATH_MAX+1];
+    regex_t mask_regex;         /* compiled mask */
     
     exmemck_settings_t settings;
     ndrx_stopwatch_t mon_watch; /*monitor stopwatch if set interval mon*/
@@ -115,6 +118,8 @@ struct exmemck_process
     
     long avg_first_halve_vsz;   /* first halve average bytes        */
     long avg_second_halve_vsz;  /* second halve average bytes       */
+    
+    int proc_exists;        /* check for process existence... */
     
     EX_hash_handle hh;         /* makes this structure hashable     */
 };

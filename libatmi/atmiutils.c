@@ -229,7 +229,7 @@ expublic mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
  * @param len
  * @return
  */
-expublic int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
+expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
     int use_tout;
@@ -268,9 +268,9 @@ out:
  * @param flags
  * @return 
  */
-expublic int generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
+expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
 {
-    return generic_q_send_2(queue, data, len, flags, EXFAIL, msg_prio);
+    return ndrx_generic_q_send_2(queue, data, len, flags, EXFAIL, msg_prio);
 }
 
 /**
@@ -284,7 +284,7 @@ expublic int generic_q_send(char *queue, char *data, long len, long flags, unsig
  * @param msg_prio - message priority see, NDRX_MSGPRIO_*
  * @return SUCCEED/FAIL
  */
-expublic int generic_q_send_2(char *queue, char *data, long len, long flags, 
+expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, 
         long tout, unsigned int msg_prio)
 {
     int ret=EXSUCCEED;
@@ -382,7 +382,7 @@ out:
  * @param prio - priority of message
  * @return GEN_QUEUE_ERR_NO_DATA/FAIL/data len
  */
-expublic long generic_q_receive(mqd_t q_descr, char *q_str, 
+expublic long ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
         struct mq_attr *reply_q_attr,
         char *buf, long buf_max, 
         unsigned *prio, long flags)
@@ -511,7 +511,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_error, "Sending data to [%s], fd=%d, call flags=0x%x", 
                                 admin_q_str, admin_queue, call->flags);
-            if (EXSUCCEED!=generic_qfd_send(admin_queue, (char *)call, call_size, flags))
+            if (EXSUCCEED!=ndrx_generic_qfd_send(admin_queue, (char *)call, call_size, flags))
             {
                 NDRX_LOG(log_error, "Failed to send msg to ndrxd!");
 
@@ -526,7 +526,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_info, "Sending data to [%s] call flags=0x%x", 
                                     admin_q_str, call->flags);
-            if (EXSUCCEED!=generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
+            if (EXSUCCEED!=ndrx_generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
             {
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
@@ -555,7 +555,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     {
         command_call_t *test_call = (command_call_t *)msg_buffer_max;
         /* Error could be also -2..! */
-        if (0>(reply_len=generic_q_receive(reply_queue, NULL, NULL,
+        if (0>(reply_len=ndrx_generic_q_receive(reply_queue, NULL, NULL,
                 msg_buffer_max, sizeof(msg_buffer_max), &prio, flags)))
         {
             NDRX_LOG(log_error, "Failed to receive reply from ndrxd!");
@@ -861,7 +861,7 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
 
     if (NULL==buf)
     {
-        if (EXSUCCEED!=(ret=generic_q_send(reply_to, (char *)call, 
+        if (EXSUCCEED!=(ret=ndrx_generic_q_send(reply_to, (char *)call, 
                 sizeof(*call), flags, 0)))
         {
             NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
@@ -1001,7 +1001,7 @@ expublic void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     NDRX_LOG(log_error, "Dumping error reply about to send:");
     ndrx_dump_call_struct(log_error, &call);
 
-    if (EXSUCCEED!=(ret=generic_q_send(tp_call->reply_to, (char *)&call, 
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(tp_call->reply_to, (char *)&call, 
             sizeof(call), flags, 0)))
     {
         NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 

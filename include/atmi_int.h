@@ -599,10 +599,10 @@ extern NDRX_API int G_srv_id;
 /* Utilities */
 extern NDRX_API int ndrx_load_common_env(void);
 extern NDRX_API int ndrx_load_new_env(char *file);
-extern NDRX_API int generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
-extern NDRX_API int generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
-extern NDRX_API int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
-extern NDRX_API long generic_q_receive(mqd_t q_descr, char *q_str, 
+extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
+extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
+extern NDRX_API int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
+extern NDRX_API long ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
         struct mq_attr *reply_q_attr,
         char *buf, long buf_max, 
         unsigned *prio, long flags);
@@ -685,7 +685,7 @@ extern NDRX_API int svc_fail_to_start(void);
 extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, int killq);
 extern NDRX_API int close_open_client_connections(void);
 extern NDRX_API int have_open_connection(void);
-extern NDRX_API int get_ack(tp_conversation_control_t *conv, long flags);
+extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);
 
 /* Extended version of tpcall, accepts extradata (31+1) symbols */
 extern NDRX_API int tpcallex (char *svc, char *idata, long ilen,

@@ -75,7 +75,7 @@ expublic int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name)
     char path[PATH_MAX];
     int ret = EXFALSE;
     
-    sprintf(cmd, "ps -p %d -o comm=", pid);
+    snprintf(cmd, sizeof(cmd), "ps -p %d -o comm=", pid);
     
     NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
     
@@ -164,7 +164,7 @@ expublic char * ndrx_sys_get_proc_name_by_ps(void)
     
     if (first)
     {
-        sprintf(cmd, "ps -p %d -o comm=", getpid());
+        snprintf(cmd, sizeof(cmd), "ps -p %d -o comm=", getpid());
 /* avoid recursive lookup by debug config
         NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
 */
@@ -220,7 +220,7 @@ out:
 
             if (EXEOS!=*p)
             {
-                strcpy(out, p);
+                NDRX_STRCPY_SAFE(out, p);
             }
 
             first = EXFALSE;

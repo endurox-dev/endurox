@@ -200,7 +200,7 @@ expublic int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q)
 {
     int ret=EXSUCCEED;
     
-    if (EXSUCCEED!=(ret=generic_q_send(ndrx_get_G_atmi_conf()->ndrxd_q_str, 
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(ndrx_get_G_atmi_conf()->ndrxd_q_str, 
             (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
@@ -245,7 +245,7 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* fr
     }
     
     NDRX_LOG(log_debug, "Calling service: %s", svc_q);
-    if (EXSUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
@@ -282,7 +282,7 @@ expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t
     }
     
     NDRX_LOG(log_debug, "Calling broadcast server: %s", svc_q);
-    if (EXSUCCEED!=(ret=generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
@@ -317,7 +317,7 @@ expublic int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* fr
     }
     
     NDRX_LOG(log_debug, "Reply to Q: %s", reply_to);
-    if (EXSUCCEED!=(ret=generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to %s!", reply_to);
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TORPLYQ);

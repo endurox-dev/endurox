@@ -39,6 +39,9 @@
 #include "thlock.h"
 #include "userlog.h"
 #include "ndebug.h"
+#include "utlist.h"
+#include "exregex.h"
+#include "sys_unix.h"
 #include <exmemck.h>
 #include <errno.h>
 /*---------------------------Externs------------------------------------*/
@@ -69,7 +72,6 @@ exprivate exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret,
     if (NULL==ret && autocreate)
     {
         /* Allocate the block */
-        
         if (EXSUCCEED!=(ret=NDRX_CALLOC(1, sizeof(exmemck_config_t))))
         {
             int err = errno;
@@ -85,10 +87,24 @@ exprivate exmemck_config_t * get_config(char *mask, int autocreate, int *p_ret,
         
         EXHASH_ADD_STR(M_config, mask, ret);
         
+        
+        if (EXSUCCEED!=ndrx_regcomp(&ret->mask_regex, mask))
+        {
+            NDRX_LOG(log_error, "Failed to compile mask [%s]", mask);
+            ret = NULL;
+            goto out;
+        }
+        
         *p_is_new = EXTRUE;
         
     }
 out:
+
+    if (EXSUCCEED!=ret && NULL!=ret)
+    {
+        EXHASH_DEL(M_config, ret);
+        NDRX_FREE(ret);
+    }
 
     return ret;
 }
@@ -490,27 +506,96 @@ expublic void ndrx_memck_reset_pid(pid_t pid)
 }
 
 /**
+ * Read the memory block
+ * @param proc
+ * @return 
+ */
+exprivate int read_memory_info(exmemck_process_t* proc)
+{
+    int ret = EXSUCCEED;
+    
+    return ret;
+}
+
+/**
  * Run the one 
  * @return 
  */
 expublic int ndrx_memck_tick(void)
 {
     int ret = EXSUCCEED;
+    exmemck_config_t *el, *elt;
+    /* List all processes */
+    string_list_t* sprocs = ndrx_sys_ps_list("", "", "", "", "");
+    string_list_t* sproc;
+    pid_t pid;
+    exmemck_process_t* proc;
+    exmemck_process_t* elp, *elpt;
+    int is_new;
     
-    /* List all processes that matches the mask */
+    EXHASH_ITER(hh, M_proc, elp, elpt)
+    {
+        elp->proc_exists = EXFALSE;
+    }
     
-    /* Check them against monitoring table */
-    
-    /* Check them against monitoring config */
-    
-    /* Add process statistics, if found in table, the add func shall create new
-     * entry or append existing entry */
-    
-    /* If process is not running anymore, just report its stats via callback
-     * and remove from the memory
-     */
-    
-    /* Stats are calculated only on process exit or request by of stats func */
+    EXHASH_ITER(hh, M_config, el, elt)
+    {
+        /* Check them against monitoring table */
+        DL_FOREACH(sprocs, sproc)
+        {
+            if (EXSUCCEED==ndrx_regcomp(&el->mask_regex, sproc->qname))
+            {
+                NDRX_LOG(log_debug, "Process: [%s] matched for monitoring...", 
+                        sproc->qname);
+                if (EXSUCCEED!=ndrx_proc_pid_get_from_ps(sproc->qname, &pid))
+                {
+                    NDRX_LOG(log_error, "Failed to extract pid from [%s]", 
+                            sproc->qname);
+                    continue;
+                }
+                NDRX_LOG(log_debug, "got pid: [%d]", pid);
+               
+                is_new = EXFALSE;
+                proc = get_proc(pid);
+               
+                if (NULL==proc)
+                {
+                    NDRX_LOG(log_debug, "Process not found -> allocating");
+                    
+                    if (NULL==(proc=NDRX_CALLOC(1, sizeof(exmemck_process_t))))
+                    {
+                        int err = errno;
+                        NDRX_LOG(log_error, "Failed calloc exmemck_process_t: %s", 
+                                strerror(err));
+                        
+                        userlog("Failed calloc exmemck_process_t: %s", 
+                                strerror(err));
+                        EXFAIL_OUT(ret);
+                    }
+                    is_new = EXTRUE;
+                    
+                    proc->pid = (int)pid;
+                    
+                    EXHASH_ADD_INT(M_proc, pid, proc);
+                }
+                
+                proc->proc_exists = EXTRUE;
+                
+                /* Read the memory entry */
+            }
+        } /* for each process... */
+        
+        /* Check them against monitoring config */
+
+        /* Add process statistics, if found in table, the add func shall create new
+         * entry or append existing entry */
+
+        /* If process is not running anymore, just report its stats via callback
+         * and remove from the memory
+         */
+
+        /* Stats are calculated only on process exit or request by of stats func */
+    }
     
 out:    
     return ret;

@@ -544,7 +544,7 @@ exprivate int send_ack(tp_conversation_control_t *conv, long flags)
     ack.command_id = ATMI_COMMAND_CONVACK;
     ack.cd=conv->cd;
     
-    if (EXSUCCEED!=(ret=generic_qfd_send(conv->reply_q, (char *)&ack, sizeof(ack), flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(conv->reply_q, (char *)&ack, sizeof(ack), flags)))
     {
         int err;
         
@@ -568,7 +568,7 @@ out:
  * @param cd
  * @return
  */
-expublic int get_ack(tp_conversation_control_t *conv, long flags)
+expublic int ndrx_get_ack(tp_conversation_control_t *conv, long flags)
 {
 #if CONV_USE_ACK
     int ret=EXSUCCEED;
@@ -584,7 +584,7 @@ expublic int get_ack(tp_conversation_control_t *conv, long flags)
         goto out;
     }
     NDRX_LOG(log_debug, "Waiting for ACK");
-    rply_len = generic_q_receive(conv->my_listen_q, buf, sizeof(buf), &prio, flags);
+    rply_len = ndrx_generic_q_receive(conv->my_listen_q, buf, sizeof(buf), &prio, flags);
     
     if (rply_len<sizeof(tp_conv_ack_t))
     {
@@ -770,7 +770,7 @@ expublic int _tpconnect (char *svc, char *data, long len, long flags)
             send_qstr, call->callseq);
 
     /* And then we call out the service. */
-    if (EXSUCCEED!=(ret=generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
     {
         int err;
         
@@ -1041,7 +1041,7 @@ expublic int _tprecv (int cd, char * *data,
         }
 
         /* receive the reply back */
-        rply_len = generic_q_receive(conv->my_listen_q, NULL, NULL, 
+        rply_len = ndrx_generic_q_receive(conv->my_listen_q, NULL, NULL, 
                 rply_buf, rply_bufsz, &prio, flags);
 
         
@@ -1471,7 +1471,7 @@ expublic int _tpsend (int cd, char *data, long len, long flags, long *revent,
     }
     
     /* And then we call out the service. */
-    if (EXSUCCEED!=(ret=generic_qfd_send(conv->reply_q, (char *)call, data_len, flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(conv->reply_q, (char *)call, data_len, flags)))
     {
         int err;
 
@@ -1495,7 +1495,7 @@ expublic int _tpsend (int cd, char *data, long len, long flags, long *revent,
         conv->msgseqout++;
     }
 
-    if (conv->handshaked && EXSUCCEED!=get_ack(conv, flags))
+    if (conv->handshaked && EXSUCCEED!=ndrx_get_ack(conv, flags))
     {
         ret=EXFAIL;
         goto out;

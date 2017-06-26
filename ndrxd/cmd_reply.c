@@ -105,7 +105,7 @@ expublic int simple_command_reply(command_call_t * call,
         p_mod(reply, &send_size, mod_params);
     
     /* Do reply with ATMI helper function */
-    ret = generic_q_send_2(call->reply_queue, 
+    ret = ndrx_generic_q_send_2(call->reply_queue, 
             (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT, 0);
     
     if (EXSUCCEED!=ret)

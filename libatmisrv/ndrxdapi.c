@@ -259,7 +259,7 @@ exprivate int get_bridges_rply_request(char *buf, long len)
     if (ATMI_COMMAND_EVPOST==p_adm_cmd->command_id)
     {
         NDRX_LOG(log_debug, "Resubmitting event postage to admin Q");
-        ret = generic_qfd_send(entry->q_descr, buf, len, 0);
+        ret = ndrx_generic_qfd_send(entry->q_descr, buf, len, 0);
     }
     else
     {
