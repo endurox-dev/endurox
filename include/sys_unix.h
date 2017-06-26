@@ -261,6 +261,7 @@ extern NDRX_API int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid);
 
 extern NDRX_API void ndrx_proc_kill_list(string_list_t *list);
 extern NDRX_API int ndrx_proc_children_get_recursive(string_list_t **list, pid_t pid);
+extern NDRX_API int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos);
     
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);

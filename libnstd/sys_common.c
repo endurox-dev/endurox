@@ -615,6 +615,56 @@ out:
 }
 
 /**
+ * Extract line output from command
+ * @param cmd
+ * @param buf
+ * @param busz
+ * @return 
+ */
+expublic int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz)
+{
+    int ret = EXSUCCEED;
+    FILE *fp=NULL;
+    int line = 0;
+    NDRX_LOG(log_debug, "%s: About to run: [%s]", __func__, cmd);
+    
+    fp = popen(cmd, "r");
+    if (fp == NULL)
+    {
+#ifdef SYSCOMMON_ENABLE_DEBUG
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+#endif
+        EXFAIL_OUT(ret);
+    }
+    
+    while (fgets(buf, bufsz, fp) != NULL)
+    {
+        line ++;
+        
+        if (line==line_no)
+        {
+            break;
+        }
+    }
+
+out:
+
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+
+    if (line==line_no)
+    {
+        NDRX_LOG(log_error, "Extract lines: %d, but requested: %d", 
+                line, line_no);
+        ret=EXFAIL;
+    }
+    return ret;   
+}
+
+/**
  * Get child process from ps -ef or ps -jauxxw for bsd
  * @param psout ps string
  * @param pid   If succeed then PID is loaded
@@ -672,35 +722,104 @@ out:
 expublic int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos)
 {
     int ret = EXSUCCEED;
-    
-    
-    
+    char cmd[128];
+    char line[PATH_MAX+1];
+    long  meminfo[16];
+    int toks;
 /*
 All unix:
-ps -o rss,vsz -p1
 
-
-# ps -o rss,vsz -p 1
+$ ps -o rss,vsz -p 1
 RSS  VSZ
 132 5388
 
-
-
-
-aix:
-bash-4.3# ps v 1
+ * aix:
+$ ps v 1
       PID    TTY STAT  TIME PGIN  SIZE   RSS   LIM  TSIZ   TRS %CPU %MEM COMMAND
         1      - A     0:38  298   708   208 32768    30    32  0.0  0.0 /etc/i
 
 +
-
-bash-4.3# ps -o vsz -p 1
+$ ps -o vsz -p 1
   VSZ
   708
 */
     
+#ifdef EX_OS_AIX
+    snprintf(cmd, sizeof(cmd), "ps v %d", pid);
+    
+    if (EXSUCCEED!=ndrx_proc_get_line(2, cmd, line, sizeof(line)))
+    {
+        NDRX_LOG(log_error, "Failed to get rss infos from  [%s]", cmd);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Parsing output: [%s]", line);
+    
+    toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
+            sizeof(long), N_DIM(meminfo));
+    
+    if (toks<7)
+    {
+        NDRX_LOG(log_error, "Invalid tokens, expected at least 7, got %d", toks);
+       EXFAIL_OUT(ret);
+    }
+    
+    p_infos->rss = meminfo[6];
+    
+    snprintf(cmd, sizeof(cmd), "ps -o vsz -p %d", pid);
+    
+    if (EXSUCCEED!=ndrx_proc_get_line(2, cmd, line, sizeof(line)))
+    {
+        NDRX_LOG(log_error, "Failed to get rss infos from  [%s]", cmd);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Parsing output: [%s]", line);
+    
+    toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
+            sizeof(long), N_DIM(meminfo));
+    
+    if (toks!=1)
+    {
+       NDRX_LOG(log_error, "Invalid tokens, expected at least 1, got %d", toks);
+       EXFAIL_OUT(ret);
+    }
+    
+    p_infos->vsz = meminfo[0];  
+    
+#else
+    
+    snprintf(cmd, sizeof(cmd), "ps -o rss,vsz -p%d", pid);
+    
+    if (EXSUCCEED!=ndrx_proc_get_line(2, cmd, line, sizeof(line)))
+    {
+        NDRX_LOG(log_error, "Failed to get rss/vsz infos from  [%s]", cmd);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Parsing output: [%s]", line);
+    
+    toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
+            sizeof(long), N_DIM(meminfo));
+    
+    if (2!=toks)
+    {
+        NDRX_LOG(log_error, "Invalid tokens, expected 2, got %d", toks);
+       EXFAIL_OUT(ret);
+    }
+    
+    p_infos->rss = meminfo[0];
+    p_infos->vsz = meminfo[1];
+    
+#endif
+    
+ 
+    NDRX_LOG(log_info, "extracted rss=%ld vsz=%ld", p_infos->rss, p_infos->vsz);
     
 out:
+    
+    NDRX_LOG(log_debug, "%s: returns %d", __func__, ret);
+
     return ret;
 }
 

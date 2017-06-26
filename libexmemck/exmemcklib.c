@@ -506,18 +506,6 @@ expublic void ndrx_memck_reset_pid(pid_t pid)
 }
 
 /**
- * Read the memory block
- * @param proc
- * @return 
- */
-exprivate int read_memory_info(exmemck_process_t* proc)
-{
-    int ret = EXSUCCEED;
-    
-    return ret;
-}
-
-/**
  * Run the one 
  * @return 
  */
@@ -532,6 +520,7 @@ expublic int ndrx_memck_tick(void)
     exmemck_process_t* proc;
     exmemck_process_t* elp, *elpt;
     int is_new;
+    ndrx_proc_info_t infos;
     
     EXHASH_ITER(hh, M_proc, elp, elpt)
     {
@@ -560,6 +549,10 @@ expublic int ndrx_memck_tick(void)
                
                 if (NULL==proc)
                 {
+                    /* Add process statistics, if found in table, 
+                     * the add func shall create new
+                     * entry or append existing entry 
+                     */
                     NDRX_LOG(log_debug, "Process not found -> allocating");
                     
                     if (NULL==(proc=NDRX_CALLOC(1, sizeof(exmemck_process_t))))
@@ -582,19 +575,50 @@ expublic int ndrx_memck_tick(void)
                 proc->proc_exists = EXTRUE;
                 
                 /* Read the memory entry */
+                if (EXSUCCEED!=ndrx_proc_get_infos((pid_t)proc->pid, &infos))
+                {
+                    /* pid might be exited, thus ignore error */
+                    NDRX_LOG(log_warn, "Failed to get stats for pid %d", 
+                            proc->pid);
+                    continue;
+                } 
+                
+                /* Append the statistics entry... */
+                proc->nr_of_stats++;
+                proc->stats = NDRX_REALLOC(proc->stats, 
+                        proc->nr_of_stats*sizeof(*proc->stats));
+                
+                if (NULL==proc->stats)
+                {
+                    int err = errno;
+                    
+                    NDRX_LOG(log_error, "Failed to alloc stats, size: %d: %s", 
+                            proc->nr_of_stats*sizeof(*proc->stats), strerror(err));
+                    
+                    userlog("Failed to alloc stats, size: %d: %s", 
+                            proc->nr_of_stats*sizeof(*proc->stats), strerror(err));
+                    
+                    EXFAIL_OUT(ret);
+                }
+                
+                proc->stats[proc->nr_of_stats-1].rss = infos.rss;
+                proc->stats[proc->nr_of_stats-1].vsz = infos.vsz;
+                
             }
         } /* for each process... */
-        
-        /* Check them against monitoring config */
-
-        /* Add process statistics, if found in table, the add func shall create new
-         * entry or append existing entry */
-
-        /* If process is not running anymore, just report its stats via callback
-         * and remove from the memory
-         */
-
-        /* Stats are calculated only on process exit or request by of stats func */
+    }
+    
+    /* If process is not running anymore, just report its stats via callback
+     * and remove from the memory
+     */
+    EXHASH_ITER(hh, M_proc, elp, elpt)
+    {
+        if (!elp->proc_exists)
+        {
+            NDRX_LOG(log_warn, "Process pid=%d psout=[%s] - exited, generating stats",
+                    elp->pid, elp->psout);
+            calc_stat(elp);
+        }
     }
     
 out:    

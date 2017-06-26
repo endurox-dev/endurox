@@ -45,6 +45,8 @@
 
 #include "nstdutil.h"
 #include "ndebug.h"
+#include "userlog.h"
+#include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -776,5 +778,58 @@ expublic char * ndrx_memdup(char *org, size_t len)
     return NULL;
 }
 
+/**
+ * Extract tokens from string
+ * @param str
+ * @param fmt   Format string for scanf
+ * @param tokens
+ * @param tokens_elmsz
+ * @param len
+ * @return 0 - no tokens extracted
+ */
+expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
+        int tokens_elmsz, int len)
+{
+    int ret = 0;
+    char *str = NDRX_STRDUP(str1);
+    char *ptr;
+    char *token;
+    char *str_first = str;
+    
+    if (NULL==str)
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to duplicate [%s]: %s", str1, strerror(err));
+        userlog("Failed to duplicate [%s]: %s", str1, strerror(err));
+        goto out;
+    }
+    
+    while ((token = strtok_r(str_first, "\t ", &ptr)))
+    {
+        if (NULL!=str_first)
+        {
+            str_first = NULL; /* now loop over the string */
+        }
+        
+        if (ret<len)
+        {
+            sscanf(token, fmt, tokens);
+            tokens+=tokens_elmsz;
+        }
+        else
+        {
+            break;
+        }
+        
+        ret++;
+    }
+    
+out:
 
+    if (NULL!=str)
+    {
+        NDRX_FREE(str);
+    }
+    return ret;
+}
 
