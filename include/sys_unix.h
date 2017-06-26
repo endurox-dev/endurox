@@ -203,6 +203,17 @@ struct string_hash
     EX_hash_handle hh;
 };
 
+/**
+ * Memory infos...
+ */
+typedef struct ndrx_proc_info ndrx_proc_info_t;
+struct ndrx_proc_info
+{
+    long rss;
+    long vsz;
+};
+
+
 
 #ifdef EX_OS_DARWIN
 typedef int clockid_t;

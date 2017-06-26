@@ -662,4 +662,46 @@ out:
     return ret;
 }
 
+/**
+ * Get process information
+ * WARNING! This generates SIGCHLD - try to avoid to use in user libraries...
+ * @param pid
+ * @param p_infos return structure
+ * @return 
+ */
+expublic int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos)
+{
+    int ret = EXSUCCEED;
+    
+    
+    
+/*
+All unix:
+ps -o rss,vsz -p1
+
+
+# ps -o rss,vsz -p 1
+RSS  VSZ
+132 5388
+
+
+
+
+aix:
+bash-4.3# ps v 1
+      PID    TTY STAT  TIME PGIN  SIZE   RSS   LIM  TSIZ   TRS %CPU %MEM COMMAND
+        1      - A     0:38  298   708   208 32768    30    32  0.0  0.0 /etc/i
+
++
+
+bash-4.3# ps -o vsz -p 1
+  VSZ
+  708
+*/
+    
+    
+out:
+    return ret;
+}
+
 

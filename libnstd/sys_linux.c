@@ -81,7 +81,7 @@ expublic int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name)
     int fd=EXFAIL;
     int i;
     /* Check for correctness - is it ndrxd */
-    sprintf(proc_file, "/proc/%d/cmdline", pid);
+    snprintf(proc_file, sizeof(proc_file), "/proc/%d/cmdline", pid);
     
     fd = open(proc_file, O_RDONLY);
     if (EXFAIL==fd)
