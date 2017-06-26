@@ -36,6 +36,7 @@
 #include <regex.h>
 #include <utlist.h>
 
+#include <ndrx_config.h>
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
@@ -446,7 +447,11 @@ out:
 expublic int tmq_reload_conf(char *cf)
 {
     FILE *f = NULL;
+#ifdef HAVE_GETLINE
     char *line = NULL;
+#else
+    char line[PATH_MAX];
+#endif
     size_t len = 0;
     int ret = EXSUCCEED;
     ssize_t read;
@@ -471,7 +476,12 @@ expublic int tmq_reload_conf(char *cf)
             EXFAIL_OUT(ret);
         }
 
+#ifdef HAVE_GETLINE
         while (EXFAIL!=(read = getline(&line, &len, f))) 
+#else
+        len = sizeof(line);
+        while (NULL!=fgets(line, len, f))
+#endif
         {
             ndrx_str_strip(line, " \n\r\t");
 
@@ -486,7 +496,9 @@ expublic int tmq_reload_conf(char *cf)
                 EXFAIL_OUT(ret);
             }
         }
+#ifdef HAVE_GETLINE
         NDRX_FREE(line);
+#endif
     }
     
     

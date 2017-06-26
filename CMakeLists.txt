@@ -117,7 +117,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
         set(EX_USE_POLL "1")
 	if ("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
 		message("SUN Studio compiler (building for 64bit) ")
-		SET(CMAKE_C_FLAGS "-errtags -fast -m64 -xc99=all")
+		SET(CMAKE_C_FLAGS "-errtags -fast -m64 -xc99=all -erroff=E_EMPTY_MBR_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
 		SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m64")
 		# Add Sun Studio C runtime
 		SET(RT_LIB ${RT_LIB} Crun)

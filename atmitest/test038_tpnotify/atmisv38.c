@@ -36,6 +36,7 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <test.fd.h>
+#include <ubfutil.h>
 
 void SVC38 (TPSVCINFO *p_svc)
 {

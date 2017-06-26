@@ -218,6 +218,12 @@ out:
                 l--;
             }
 
+            while ('/'==p[0])
+            {
+               p++;
+            }
+
+
             if (EXEOS!=*p)
             {
                 NDRX_STRCPY_SAFE(out, p);
