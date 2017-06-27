@@ -41,5 +41,14 @@ if [[ "$OS" == "Linux" ]]; then
 	fi
 fi
 
+# start memcheck
+
 (./atmiunit1 2>&1) > test.out
+
+RET=$?
+
+# stop memcheck
+
+
+# grep the stats, >>> LEAK found, return error
 
