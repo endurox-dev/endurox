@@ -208,6 +208,16 @@ extern "C" {
 #define NDRX_XA_FLAG_RECON  "RECON"  /* Reconnect on tpbegin(), xa_start() if fails */
 #define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /* Test the line */
 #define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /* List of error codes for retry */
+    
+#define NDRX_BANNER \
+    fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, \
+                    __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
+    fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
+    fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
+    fprintf(stderr, "Copyright (C) 2017 Mavimax Ltd. All Rights Reserved.\n\n");\
+    fprintf(stderr, "This software is released under one of the following licenses:\n");\
+    fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**

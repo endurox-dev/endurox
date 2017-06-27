@@ -42,13 +42,29 @@ if [[ "$OS" == "Linux" ]]; then
 fi
 
 # start memcheck
+xmemck -n atmiunit1 -m atmi -m tp 2>./memck.log 1>./memck.out & 
 
+MEMCK_PID=$!
+
+pushd .
 (./atmiunit1 2>&1) > test.out
+popd
 
 RET=$?
 
 # stop memcheck
-
+kill -2 $MEMCK_PID
 
 # grep the stats, >>> LEAK found, return error
+echo "==== Leak info ====" >> test.out
+cat memck.out >> test.out
+echo "===================" >> test.out
+
+# Catch memory leaks...
+if [ "X`grep '>>> LEAK' memck.out`" != "X" ]; then
+        echo "Memory leak detected!"
+        RET=-2
+fi
+
+exit $RET
 

@@ -64,6 +64,7 @@ struct exmemck_settings
     int interval_stop_prcnt;
     long flags;
     int interval_mon;       /* Interval into which monitor memory (with out exit).. */
+    char negative_mask[PATH_MAX];   /* Negative mask (must not match), optional */
     /* Have a callback for status notification */
     void (*pf_proc_exit) (exmemck_process_t *proc);
     void (*pf_proc_leaky) (exmemck_process_t *proc);
@@ -80,6 +81,8 @@ struct exmemck_config
     char mask[PATH_MAX+1]; 
     char dlft_mask[PATH_MAX+1];
     regex_t mask_regex;         /* compiled mask */
+    int neg_mask_used;          /* Is negative mask used? */
+    regex_t neg_mask_regex;     /* compiled negative mask */
     
     exmemck_settings_t settings;
     ndrx_stopwatch_t mon_watch; /*monitor stopwatch if set interval mon*/
@@ -120,6 +123,9 @@ struct exmemck_process
     int avg_second_count;       /* number of records for second halve */
     long avg_first_halve_vsz;   /* first halve average bytes        */
     long avg_second_halve_vsz;  /* second halve average bytes       */
+    
+    double rss_increase_prcnt;
+    double vsz_increase_prcnt;
     
     int proc_exists;        /* check for process existence... */
     

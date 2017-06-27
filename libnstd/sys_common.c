@@ -663,6 +663,12 @@ out:
                 line, line_no);
         ret=EXFAIL;
     }
+
+    if (EXSUCCEED==ret)
+    {
+        ndrx_chomp(buf);
+    }
+
     return ret;   
 }
 

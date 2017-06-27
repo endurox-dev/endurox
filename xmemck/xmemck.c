@@ -48,6 +48,8 @@
 #include <ubf_int.h>
 #include <fdatatype.h>
 #include <exmemck.h>
+#include <ndrx_config.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/    
 /*---------------------------Enums--------------------------------------*/
@@ -71,9 +73,12 @@ expublic void intHandler(int sig)
  */
 expublic void xmem_print_leaky(exmemck_process_t *proc)
 {
-    fprintf(stdout, ">>> LEAK pid=%d! rss: %ld -> %ld, vsz %ld -> %ld: [%s]\n",
+    fprintf(stdout, ">>> LEAK pid=%d! rss: %ld -> %ld (+%lf%%), vsz %ld -> %ld (+%lf%%): [%s]\n",
             proc->pid, proc->avg_first_halve_rss, proc->avg_second_halve_rss,
-            proc->avg_first_halve_vsz, proc->avg_second_halve_vsz, proc->psout);
+            proc->rss_increase_prcnt,
+            proc->avg_first_halve_vsz, proc->avg_second_halve_vsz, 
+            proc->vsz_increase_prcnt,
+            proc->psout);
     
     fflush(stdout);
 }
@@ -95,19 +100,22 @@ int main(int argc, char** argv)
     int ret = EXSUCCEED;
     int c;
     int period = 1;
-    
+    int had_mask = EXFALSE;
     exmemck_settings_t settings;
     
     memset(&settings, sizeof(settings), 0);
     
     settings.pf_proc_exit = xmem_print_exit;
     settings.pf_proc_leaky = xmem_print_leaky;
+    settings.percent_diff_allow = 5; /* Allow 5% incr */
+    settings.interval_start_prcnt = 40;
+    settings.interval_stop_prcnt = 90;
     
     signal(SIGINT, intHandler);
     signal(SIGTERM, intHandler);
     
     
-    while ((c = getopt(argc, argv, "p:d:s:t:m:")) != -1)
+    while ((c = getopt(argc, argv, "n:p:d:s:t:m:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -134,6 +142,12 @@ int main(int argc, char** argv)
                 NDRX_LOG(log_debug, "Percent interval stop: %d%%", 
                         settings.interval_stop_prcnt);
                 break;
+            case 'n':
+                NDRX_STRCPY_SAFE(settings.negative_mask, optarg);
+                
+                NDRX_LOG(log_debug, "Negative mask set to [%s]", 
+                        settings.negative_mask);
+                break;
             case 'm':
                 NDRX_LOG(log_debug, "Adding mask: [%s]", 
                         optarg);
@@ -144,11 +158,24 @@ int main(int argc, char** argv)
                             optarg);
                     EXFAIL_OUT(ret);
                 }
+                
+                settings.negative_mask[0] = EXEOS; /* reset mask */
+                
+                had_mask = EXTRUE;
                 break;
         }
     }
     
-    /* printf("Enduro/X memory leak checker starting...\n"); */
+    if (!had_mask)
+    {
+        NDRX_BANNER;
+        
+        fprintf(stderr, "Enduro/X memory check usage:\n");
+        fprintf(stderr, "%s [-p period in sec, default 1] [-d allow_increase_delta_percent, default 5] \\\n"
+                "[-s start_percent, default 40] [-t stop_percent, default 90] [-n negative_regex_mask] "
+                "-m proc_mask_to_monitor1 [-m mask2] ... \n", argv[0]);
+        exit(EXFAIL);
+    }
     
     while (M_keep_running)
     {

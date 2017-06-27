@@ -792,13 +792,7 @@ int main(int argc, char** argv) {
     /* Print the copyright notice: */
     if (is_tty())
     {
-        fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, 
-                    __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);
-        fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");
-        fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");
-        fprintf(stderr, "Copyright (C) 2017 Mavimax Ltd. All Rights Reserved.\n\n");
-        fprintf(stderr, "This software is released under one of the following licenses:\n");
-        fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
+        NDRX_BANNER;
     }
 
     /* Main command loop */

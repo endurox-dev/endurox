@@ -178,6 +178,19 @@ expublic int ndrx_memck_add(char *mask,  char *dlft_mask, exmemck_settings_t *p_
         }
     }
     
+    if (EXEOS!=p_settings->negative_mask[0])
+    {
+        NDRX_STRCPY_SAFE(cfg->settings.negative_mask, p_settings->negative_mask);
+        /* Compile the mask */
+        if (EXSUCCEED!=ndrx_regcomp(&cfg->neg_mask_regex, cfg->settings.negative_mask))
+        {
+            NDRX_LOG(log_error, "Failed to compile negative mask [%s]", 
+                    cfg->settings.negative_mask);
+            EXFAIL_OUT(ret);
+        }
+        cfg->neg_mask_used = EXTRUE;
+    }
+    
     if (EXFAIL < p_settings->flags)
     {
         cfg->settings.flags = p_settings->flags;
@@ -311,9 +324,6 @@ exprivate void calc_stat(exmemck_process_t *proc)
     long diff_rss;
     long diff_vsz;
     
-    double rss_increase_prcnt;
-    double vsz_increase_prcnt;
-    
     int first_halve_start;
     int second_halve_start;
     int second_halve_finish;
@@ -389,7 +399,7 @@ exprivate void calc_stat(exmemck_process_t *proc)
     proc->avg_second_halve_vsz = vsz / (second_halve_finish - second_halve_start + 1);
     
     diff_rss = proc->avg_second_halve_rss - proc->avg_first_halve_rss;
-    diff_vsz = proc->avg_second_halve_vsz - proc->avg_second_halve_vsz;
+    diff_vsz = proc->avg_second_halve_vsz - proc->avg_first_halve_vsz;
     
     /* recalc the flags */
     
@@ -397,20 +407,21 @@ exprivate void calc_stat(exmemck_process_t *proc)
     proc->status&=(~EXMEMCK_STATUS_LEAKY_VSZ);
     
     
-    rss_increase_prcnt = ((double)diff_rss)/((double)proc->avg_second_halve_rss) * 100;
-    vsz_increase_prcnt = ((double)diff_vsz)/((double)proc->avg_second_halve_vsz) * 100;
+    proc->rss_increase_prcnt = ((double)diff_rss)/((double)proc->avg_second_halve_rss) * 100;
+    proc->vsz_increase_prcnt = ((double)diff_vsz)/((double)proc->avg_second_halve_vsz) * 100;
     
-    if ( rss_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
+    
+    if ( proc->rss_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
     {
         NDRX_LOG(log_warn, "pid %d leaky RSS: increase %lf%% allow: %d%%", 
-                proc->pid, rss_increase_prcnt, proc->p_config->settings.percent_diff_allow);
+                proc->pid, proc->rss_increase_prcnt, proc->p_config->settings.percent_diff_allow);
         proc->status|=EXMEMCK_STATUS_LEAKY_RSS;
     }
     
-    if ( vsz_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
+    if ( proc->vsz_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
     {
         NDRX_LOG(log_warn, "pid %d leaky VSZ: increase %lf%% allow: %d%%", 
-                proc->pid, vsz_increase_prcnt, proc->p_config->settings.percent_diff_allow);
+                proc->pid, proc->vsz_increase_prcnt, proc->p_config->settings.percent_diff_allow);
         proc->status|=EXMEMCK_STATUS_LEAKY_VSZ;
     }
     
@@ -421,7 +432,7 @@ exprivate void calc_stat(exmemck_process_t *proc)
             proc->avg_first_halve_rss, proc->avg_first_halve_vsz, 
             proc->avg_second_halve_rss, proc->avg_second_halve_vsz, 
             diff_rss, diff_vsz,
-            rss_increase_prcnt, vsz_increase_prcnt,
+            proc->rss_increase_prcnt, proc->vsz_increase_prcnt,
             (proc->status&EXMEMCK_STATUS_LEAKY_RSS)?"yes":"no", 
             (proc->status&EXMEMCK_STATUS_LEAKY_VSZ)?"yes":"no",
             proc->psout);
@@ -569,7 +580,11 @@ expublic int ndrx_memck_tick(void)
         /* Check them against monitoring table */
         DL_FOREACH(sprocs, sproc)
         {
-            if (EXSUCCEED==ndrx_regexec(&el->mask_regex, sproc->qname))
+            if (EXSUCCEED==ndrx_regexec(&el->mask_regex, sproc->qname) &&
+                    /* So match if neg mask not used
+                     * or if used and not matched... */
+                    ((!el->neg_mask_used) || 
+                    (EXSUCCEED!=ndrx_regexec(&el->neg_mask_regex, sproc->qname))))
             {
                 NDRX_LOG(log_debug, "Process: [%s] matched for monitoring...", 
                         sproc->qname);
@@ -579,6 +594,15 @@ expublic int ndrx_memck_tick(void)
                             sproc->qname);
                     continue;
                 }
+                
+                /* if self proc -> continue not monitored... */
+                
+                if (pid==getpid())
+                {
+                    NDRX_LOG(log_debug, "No self monitor...");
+                    continue;
+                }
+                
                 NDRX_LOG(log_debug, "got pid: [%d]", pid);
                
                 is_new = EXFALSE;
