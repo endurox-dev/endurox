@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
     int c;
-    int period;
+    int period = 1;
     
     exmemck_settings_t settings;
     
