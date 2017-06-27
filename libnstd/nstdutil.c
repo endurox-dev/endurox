@@ -428,25 +428,25 @@ char *ndrx_decode_num(long tt, int slot, int level, int levels)
 
     if ((double)t/DEC_K < 1.0) /* Less that thousand */
     {
-        sprintf(tmp, "%ld", t);
+        snprintf(tmp, sizeof(tmp), "%ld", t);
     }
     else if ((double)t/DEC_M < 1.0) /* less than milliion */
     {
-        sprintf(tmp, "%ldK", t/DEC_K);
+        snprintf(tmp, sizeof(tmp), "%ldK", t/DEC_K);
         
         if (level<levels)
             next_t = t%DEC_K;
     }
     else if ((double)t/DEC_B < 1.0) /* less that billion */
     {
-        sprintf(tmp, "%ldM", t/DEC_M);
+        snprintf(tmp, sizeof(tmp), "%ldM", t/DEC_M);
         
         if (level<levels)
             next_t = t%DEC_M;
     }
     else if ((double)t/DEC_T < 1.0) /* less than trillion */
     {
-        sprintf(tmp, "%ldB", t/DEC_B);
+        snprintf(tmp, sizeof(tmp), "%ldB", t/DEC_B);
         
         if (level<levels)
             next_t = t%DEC_B;
@@ -833,3 +833,18 @@ out:
     return ret;
 }
 
+/**
+ * Remove trailing newlines
+ * @param str
+ * @return 
+ */
+expublic void ndrx_chomp(char *str)
+{
+	int len = strlen(str);
+	
+	while (len>1 && (str[len-1]=='\n' || str[len-1]=='\r'))
+	{
+		str[len-1] = EXEOS;
+		len--;
+	}
+}

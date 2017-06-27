@@ -343,9 +343,9 @@ expublic void ndrx_init_debug(void)
     G_tp_debug.dbg_f_ptr = stderr;
     G_stdout_debug.dbg_f_ptr = stdout;
     
-    strcpy(G_ubf_debug.module, "UBF ");
-    strcpy(G_ndrx_debug.module, "NDRX");
-    strcpy(G_tp_debug.module, "USER");
+    NDRX_STRCPY_SAFE(G_ubf_debug.module, "UBF ");
+    NDRX_STRCPY_SAFE(G_ndrx_debug.module, "NDRX");
+    NDRX_STRCPY_SAFE(G_tp_debug.module, "USER");
     
     G_ubf_debug.code = LOG_CODE_UBF;
     G_ndrx_debug.code = LOG_CODE_NDRX;
@@ -767,7 +767,8 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
 
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
-    sprintf(line_start, "%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+    snprintf(line_start, sizeof(line_start), 
+	"%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
         (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec/1000), line_print, line);

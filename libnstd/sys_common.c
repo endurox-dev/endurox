@@ -364,6 +364,8 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
         
         if (MAX_FILTER==ok)
         {
+            /* Remove trailing newline */
+            ndrx_chomp(path);
             if (EXSUCCEED!=ndrx_string_list_add(&ret, path))
             {
                 is_error = EXTRUE;

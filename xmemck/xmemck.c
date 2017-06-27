@@ -74,6 +74,8 @@ expublic void xmem_print_leaky(exmemck_process_t *proc)
     fprintf(stdout, ">>> LEAK pid=%d! rss: %ld -> %ld, vsz %ld -> %ld: [%s]\n",
             proc->pid, proc->avg_first_halve_rss, proc->avg_second_halve_rss,
             proc->avg_first_halve_vsz, proc->avg_second_halve_vsz, proc->psout);
+    
+    fflush(stdout);
 }
 
 /**
@@ -145,6 +147,8 @@ int main(int argc, char** argv)
                 break;
         }
     }
+    
+    /* printf("Enduro/X memory leak checker starting...\n"); */
     
     while (M_keep_running)
     {

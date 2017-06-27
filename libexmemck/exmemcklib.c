@@ -403,14 +403,14 @@ exprivate void calc_stat(exmemck_process_t *proc)
     if ( rss_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
     {
         NDRX_LOG(log_warn, "pid %d leaky RSS: increase %lf%% allow: %d%%", 
-                rss_increase_prcnt, proc->p_config->settings.percent_diff_allow);
+                proc->pid, rss_increase_prcnt, proc->p_config->settings.percent_diff_allow);
         proc->status|=EXMEMCK_STATUS_LEAKY_RSS;
     }
     
     if ( vsz_increase_prcnt > (double)proc->p_config->settings.percent_diff_allow)
     {
         NDRX_LOG(log_warn, "pid %d leaky VSZ: increase %lf%% allow: %d%%", 
-                vsz_increase_prcnt, proc->p_config->settings.percent_diff_allow);
+                proc->pid, vsz_increase_prcnt, proc->p_config->settings.percent_diff_allow);
         proc->status|=EXMEMCK_STATUS_LEAKY_VSZ;
     }
     
