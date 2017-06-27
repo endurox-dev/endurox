@@ -831,6 +831,12 @@ out:
         /* later should be handled by transaction initiator! */
         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
     }
+
+    /* free up the system buffer */
+    if (NULL!=pbuf)
+    {
+        NDRX_FREE(pbuf);
+    }
                 
     NDRX_LOG(log_debug, "%s return %d", fn, ret);
     /* mvitolin 12/12/2015 - according to spec we must return 
@@ -844,13 +850,6 @@ out:
     {
         return ret;
     }
-    
-    /* free up the system buffer */
-    if (NULL!=pbuf)
-    {
-        NDRX_FREE(pbuf);
-    }
-    
 }
 
 /**

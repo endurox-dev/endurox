@@ -42,7 +42,7 @@ if [[ "$OS" == "Linux" ]]; then
 fi
 
 # start memcheck
-xmemck -n atmiunit1 -m atmi -m tp 2>./memck.log 1>./memck.out & 
+xmemck -d15 -n atmiunit1 -m atmi -m tp 2>./memck.log 1>./memck.out & 
 
 MEMCK_PID=$!
 
