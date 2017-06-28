@@ -216,6 +216,11 @@ expublic int ndrx_memck_add(char *mask,  char *dlft_mask, exmemck_settings_t *p_
         cfg->settings.percent_diff_allow = p_settings->percent_diff_allow;
     }
     
+    if (EXFAIL < p_settings->min_values)
+    {
+        cfg->settings.min_values = p_settings->min_values;
+    }
+    
     if (NULL!=p_settings->pf_proc_exit)
     {
         cfg->settings.pf_proc_exit = p_settings->pf_proc_exit;
@@ -381,17 +386,17 @@ exprivate void calc_stat(exmemck_process_t *proc)
         proc->avg_second_count++;
     }
     
-    if (proc->avg_first_count < MIN_STATS)
+    if (proc->avg_first_count < proc->p_config->settings.min_values)
     {
         NDRX_LOG(log_info, "Too short of stats for first halve: %d, min: %d", 
-                proc->avg_first_count, MIN_STATS);
+                proc->avg_first_count, proc->p_config->settings.min_values);
         goto out;
     }
     
-    if (proc->avg_second_count < MIN_STATS)
+    if (proc->avg_second_count < proc->p_config->settings.min_values)
     {
         NDRX_LOG(log_info, "Too short of stats for second halve: %d, min: %d", 
-                proc->avg_second_count, MIN_STATS);
+                proc->avg_second_count, proc->p_config->settings.min_values);
         goto out;
     }
     

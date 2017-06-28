@@ -65,6 +65,7 @@ struct exmemck_settings
     long flags;
     int interval_mon;       /* Interval into which monitor memory (with out exit).. */
     char negative_mask[PATH_MAX];   /* Negative mask (must not match), optional */
+    int min_values;              /* minimum values for each halve */
     /* Have a callback for status notification */
     void (*pf_proc_exit) (exmemck_process_t *proc);
     void (*pf_proc_leaky) (exmemck_process_t *proc);

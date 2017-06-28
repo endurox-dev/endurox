@@ -110,12 +110,13 @@ int main(int argc, char** argv)
     settings.percent_diff_allow = 5; /* Allow 5% incr */
     settings.interval_start_prcnt = 40;
     settings.interval_stop_prcnt = 90;
+    settings.min_values = 20;
     
     signal(SIGINT, intHandler);
     signal(SIGTERM, intHandler);
     
     
-    while ((c = getopt(argc, argv, "n:p:d:s:t:m:")) != -1)
+    while ((c = getopt(argc, argv, "n:p:d:s:t:m:v:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -141,6 +142,12 @@ int main(int argc, char** argv)
                 
                 NDRX_LOG(log_debug, "Percent interval stop: %d%%", 
                         settings.interval_stop_prcnt);
+                break;
+            case 'v':
+                settings.min_values = atoi(optarg);
+                
+                NDRX_LOG(log_debug, "Minimum values : %d", 
+                        settings.min_values);
                 break;
             case 'n':
                 NDRX_STRCPY_SAFE(settings.negative_mask, optarg);
