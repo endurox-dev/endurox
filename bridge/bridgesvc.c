@@ -267,12 +267,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "Using common network protocol.");
                 break;
             case 'g':
-                strcpy(G_bridge_cfg.gpg_recipient, optarg);
+                NDRX_STRCPY_SAFE(G_bridge_cfg.gpg_recipient, optarg);
                 NDRX_LOG(log_debug, "Using GPG Encryption, recipient: [%s]", 
 					G_bridge_cfg.gpg_recipient);
                 break;
             case 's':
-                strcpy(G_bridge_cfg.gpg_signer, optarg);
+                NDRX_STRCPY_SAFE(G_bridge_cfg.gpg_signer, optarg);
                 NDRX_LOG(log_debug, "Using GPG Encryption, signer: [%s]", 
 					G_bridge_cfg.gpg_signer);
                 break;
@@ -300,7 +300,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
-    if (G_bridge_cfg.threadpoolsize < 0)
+    if (G_bridge_cfg.threadpoolsize < 1)
     {
         NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
                 "(%d) defaulting to %d", 

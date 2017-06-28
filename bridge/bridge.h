@@ -104,7 +104,7 @@ typedef struct
     char *buf;
     int len;
     exnetcon_t *net;
-    int threaded; /* Do we run in threaded mode? */
+    /*int threaded;  Do we run in threaded mode? */
     int buf_malloced; /* buffer is malloced? */
     cmd_br_net_call_t *call; /* Intermediate field */
 } net_brmessage_t;

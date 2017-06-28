@@ -15,6 +15,7 @@ SYNOPSIS
 <endurox>
 	<appconfig>
 		<sanity>SANITY_SECONDS</sanity>
+		<checkpm>CHECKPM_STY</checkpm>
 		<brrefresh>BRIDGE_REFRESH_TIME</brrefresh>
 		<restart_min>MIN_RESTART_TIME</restart_min>
 		<restart_step>RESTART_STEP</restart_step>
@@ -119,6 +120,11 @@ DEBUG CONFIGURATION FILE SYNTAX
 	Number of seconds after which perform system sanity checks. This number
 	should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
 	is time by which 'ndrxd' sleeps periodically.
+*CHECKPM_STY*::
+        This is number of sanity cycles into which check dead processes from the
+        process model. This makes the actual checking of th PID existence system.
+        Thus if ndrxd is started in learning mode and will not receive signals
+        of the dead servers, then by setting it will discover exited processes.
 *BRIDGE_REFRESH_TIME*::
 	Number of sanity units in which 'tpbridge' refresh should be send to other node.
 	If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2

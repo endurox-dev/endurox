@@ -180,24 +180,7 @@ expublic int br_process_msg(exnetcon_t *net, char *buf, int len)
 {
     int ret = EXSUCCEED;
     net_brmessage_t *thread_data;
-    net_brmessage_t thread_data_stat;
     char *fn = "br_process_msg";
-    
-    thread_data_stat.buf_malloced = EXFALSE;
-    
-    if (0==G_bridge_cfg.threadpoolsize)
-    {
-        int finish_off = EXFALSE;
-        
-        NDRX_LOG(log_debug, "%s: single thread mode", fn);
-        
-        thread_data_stat.buf = buf;
-        thread_data_stat.len = len;
-        thread_data_stat.net = net;
-        thread_data_stat.threaded = EXFALSE;
-        
-        return br_process_msg_th((void *)&thread_data_stat, &finish_off); /* <<<< RETURN!!!! */
-    }
     
     thread_data = NDRX_MALLOC(sizeof(net_brmessage_t));
     
@@ -214,7 +197,7 @@ expublic int br_process_msg(exnetcon_t *net, char *buf, int len)
     
     NDRX_LOG(log_debug, "%s: multi thread mode - dispatching to worker", fn);
     
-    thread_data->threaded = EXTRUE;
+    thread_data->buf_malloced = EXTRUE;
     thread_data->buf = ndrx_memdup(buf, len);
     
     thread_data->len = len;
@@ -237,11 +220,6 @@ out:
             }
             NDRX_FREE(thread_data);
         }
-    }
-
-    if (thread_data_stat.buf_malloced)
-    {
-        NDRX_FREE(thread_data_stat.buf);
     }
 
     return ret;
@@ -375,18 +353,10 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
             NDRX_LOG(log_debug, "Msg Decrypt OK, len: %d", clr_len);
 	}
 	
-        if (p_netmsg->threaded)
-        {
-            /* So this was buffer by memdup.. */
-            NDRX_FREE(p_netmsg->buf);
-            p_netmsg->buf = tmp_clr;
-        }
-        else
-        {
-            p_netmsg->buf = tmp_clr;
-            p_netmsg->buf_malloced = EXTRUE;
-        }
-        
+        /* So this was buffer by memdup.. */
+        NDRX_FREE(p_netmsg->buf);
+        p_netmsg->buf = tmp_clr;
+
         p_netmsg->len = clr_len;
 	p_netmsg->call = (cmd_br_net_call_t *)p_netmsg->buf;
     }
@@ -406,10 +376,8 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
         }
         
         /* If allocated previously  */
-        if (p_netmsg->buf_malloced)
-        {
-            NDRX_FREE(p_netmsg->buf);
-        }
+        NDRX_FREE(p_netmsg->buf);
+        
         p_netmsg->buf = tmp;
         p_netmsg->len = tmp_len;
         p_netmsg->buf_malloced = EXTRUE;
@@ -533,12 +501,13 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
          
     }
 out:
-                
-    if (p_netmsg->threaded)
+              
+    if (NULL!=p_netmsg->buf)
     {
         NDRX_FREE(p_netmsg->buf);
-        NDRX_FREE(p_netmsg);
     }
+
+    NDRX_FREE(p_netmsg);
 
     return ret;
 }

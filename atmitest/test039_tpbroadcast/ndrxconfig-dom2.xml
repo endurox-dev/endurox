@@ -3,13 +3,8 @@
     <appconfig>
         <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
         <!-- Sanity check time, sec -->
-        <sanity>1</sanity>
-        <!-- If process have been state changed to other than dead, exit or not running
-        but PID of program does not exists in system, then send internel message, then 
-        program have been stopped.
-        In Seconds.
-        -->
-        <checkpm>5</checkpm>
+        <sanity>5</sanity>
+        <checkpm>1</checkpm>
         <!--  <sanity> timer, end -->
 
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
@@ -69,9 +64,11 @@
             <sysopt>-e ${TESTDIR}/tpbrdcstsv-dom2.log -r</sysopt>
         </server>
         <server name="tpbridge">
+            <min>1</min>
             <max>1</max>
             <srvid>101</srvid>
-            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
+            <!-- <fullpath>/usr/local/bin/xtpbridge</fullpath> -->
+            <sysopt>-e ${TESTDIR}/tpbridge-dom2.log -r</sysopt>
             <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30 -P0</appopt>
         </server>
     </servers>

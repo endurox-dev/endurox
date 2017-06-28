@@ -519,11 +519,17 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             }
             
             /* format the process model entry */
-            strcpy(p_pm->binary_name, p_conf->binary_name);
+            NDRX_STRCPY_SAFE(p_pm->binary_name, p_conf->binary_name);
             /* get the path of the binary... */
             if (p_conf->reloadonchange)
             {
-                if (NULL==ndrx_get_executable_path(p_pm->binary_path, 
+                
+                if (EXEOS!=p_pm->conf->fullpath[0])
+                {
+                    NDRX_LOG(log_debug, "Reusing full path from config...");
+                    NDRX_STRCPY_SAFE(p_pm->binary_path, p_pm->conf->fullpath);
+                }
+                else if (NULL==ndrx_get_executable_path(p_pm->binary_path, 
                         sizeof(p_pm->binary_path), p_pm->binary_name))
                 {
                     NDRX_LOG(log_error, "Failed to get path for executable [%s] "
@@ -549,26 +555,30 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             }
             p_pm->autokill = p_conf->autokill;
             
-            sprintf(p_pm->clopt, "-k %s -i %d %s", ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
+            snprintf(p_pm->clopt, sizeof(p_pm->clopt), "-k %s -i %d %s", 
+                    ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
 
             /* now check the hash table for server instance entry */
             if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
             {
                 /* Invalid srvid  */
-                NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "Invalid server id `%d'", p_pm->srvid);
+                NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "Invalid server id `%d'", 
+                        p_pm->srvid);
                 ret = EXFAIL;
                 goto out;
             }
             else if (NULL!=p_pm_hash[p_pm->srvid])
             {
                 /* Duplicate srvid */
-                NDRXD_set_error_fmt(NDRXD_ESRVCIDDUP, "Duplicate server id `%d'", p_pm->srvid);
+                NDRXD_set_error_fmt(NDRXD_ESRVCIDDUP, "Duplicate server id `%d'", 
+                        p_pm->srvid);
                 ret = EXFAIL;
                 goto out;
             }
             else
             {
-                NDRX_LOG(log_debug, "adding %s:%d", p_pm->binary_name, p_pm->srvid);
+                NDRX_LOG(log_debug, "adding %s:%d", p_pm->binary_name, 
+                        p_pm->srvid);
                 /* Add it to has & model? */
                 DL_APPEND(*p_pm_model, p_pm);
                 /* Add it to the hash */
@@ -609,7 +619,7 @@ expublic char * get_srv_admin_q(pm_node_t * p_pm)
 {
     static char ret[NDRX_MAX_Q_SIZE+1];
     
-    sprintf(ret, NDRX_ADMIN_FMT, G_sys_config.qprefix, p_pm->binary_name, 
+    snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, p_pm->binary_name, 
             p_pm->srvid, p_pm->pid);
     
     return ret;
@@ -791,9 +801,16 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         usleep(9000);
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
-        strcpy(cmd_str, p_pm->clopt);
+        NDRX_STRCPY_SAFE(cmd_str, p_pm->clopt);
 
-        cmd[0] = p_pm->binary_name;
+        if (EXEOS!=p_pm->conf->fullpath[0])
+        {
+            cmd[0] = p_pm->conf->fullpath;
+        }
+        else
+        {
+            cmd[0] = p_pm->binary_name;
+        }
         numargs=1;
 
         token = strtok(cmd_str, separators);
@@ -826,7 +843,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
         }
         
-        if (EXSUCCEED != execvp (p_pm->binary_name, cmd))
+        if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
 

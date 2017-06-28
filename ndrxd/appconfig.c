@@ -828,11 +828,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp((char*)cur->name, "cctag"))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->cctag, p, sizeof(p_srvnode->cctag)-1);
+            NDRX_STRCPY_SAFE(p_srvnode->cctag, p);
             /* process env */
-            ndrx_str_env_subs(p_srvnode->cctag);
-            /* Ensure that we terminate... */
-            p_srvnode->cctag[sizeof(p_srvnode->cctag)-1] = EXEOS;
+            ndrx_str_env_subs_len(p_srvnode->cctag, sizeof(p_srvnode->cctag));
             xmlFree(p);
         }
         else if (0==strcmp((char*)cur->name, "protected"))
@@ -880,6 +878,17 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                               p_srvnode->reloadonchange?'Y':'N');
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "fullpath"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            NDRX_STRCPY_SAFE(p_srvnode->fullpath, p);
+            /* process env */
+            ndrx_str_env_subs_len(p_srvnode->fullpath, sizeof(p_srvnode->fullpath));
+            xmlFree(p);
+            
+            NDRX_LOG(log_debug, "fullpath: [%s]", p_srvnode->fullpath);
+        }
+        
     }
     sprintf(p_srvnode->clopt, "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     strcpy(p_srvnode->binary_name, srvnm);
@@ -956,7 +965,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
-	    "RESPAWN=\"%c\"",
+	    "RESPAWN=\"%c\" FULLPATH=\"%s\"",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, p_srvnode->ping_max,
@@ -965,7 +974,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->srvstopwait,
                     p_srvnode->cctag,
                     p_srvnode->reloadonchange?'Y':'N',
-		    p_srvnode->respawn?'Y':'N'
+		    p_srvnode->respawn?'Y':'N',
+                    p_srvnode->fullpath
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 

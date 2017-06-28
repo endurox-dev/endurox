@@ -65,8 +65,8 @@ expublic void reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *
     /* calculate new send size */
     *send_size += (sizeof(command_reply_pm_t) - sizeof(command_reply_t));
 
-    strcpy(pm_info->binary_name, pm->binary_name);
-    strcpy(pm_info->clopt, pm->clopt);
+    NDRX_STRCPY_SAFE(pm_info->binary_name, pm->binary_name);
+    NDRX_STRCPY_SAFE(pm_info->clopt, pm->clopt);
     pm_info->srvid = pm->srvid;
     pm_info->state = pm->state;
     pm_info->pid = pm->pid;

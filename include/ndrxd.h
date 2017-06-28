@@ -68,6 +68,7 @@ typedef struct conf_server_node conf_server_node_t;
 struct conf_server_node
 {
     char binary_name[MAXTIDENT+1]; /* Name of the binary */
+    char fullpath[PATH_MAX+1]; /* full path to executable, optional */
     int srvid;
     int min;
     int max;

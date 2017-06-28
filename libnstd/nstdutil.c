@@ -709,7 +709,7 @@ expublic int ndrx_get_cksum(char *file)
 
 /**
  * Get the path from executable
- * @param out_path  Out buffer
+ * @param out_path  Out buffer (full binary name where lives...)
  * @param bufsz Out buffer size
  * @param in_binary Binary to search for
  * @return NULL (if not found) or ptr to out_path if found
