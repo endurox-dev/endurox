@@ -1,6 +1,5 @@
 /* 
-** Send buffer from stdin to specified service,
-** i.e. using SRVCNM.
+** Memory leak tracker
 **
 ** @file xmemck.c
 ** 
