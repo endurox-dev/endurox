@@ -39,6 +39,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CALLS       10000
