@@ -428,7 +428,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         exnet_close_shut(&G_bridge_cfg.net);
     }
     
-    if (M_init_ok && G_bridge_cfg.threadpoolsize > 0)
+    if (M_init_ok)
     {
         /* Terminate the threads */
         for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
