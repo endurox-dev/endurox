@@ -65,10 +65,10 @@
  * @param p_tl - transaction log
  * @return TPreturn code.
  */
-public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op,
+expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op,
                         short rmid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int i;
     int again;
     rmstatus_driver_t* vote_txstage;
@@ -87,9 +87,9 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         int op_ret = 0;
         int op_reason = 0;
         int op_tperrno = 0;
-        was_retry = FALSE;
+        was_retry = EXFALSE;
         
-        again = FALSE;
+        again = EXFALSE;
         
         if (NULL==(descr = xa_stage_get_descr(p_tl->txstage)))
         {
@@ -105,7 +105,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         for (i=0; i<NDRX_MAX_RMS; i++)
         {
             /* Skipt not joined... */
-            if (!p_tl->rmstatus[i].rmstatus || (FAIL!=rmid && i+1!=rmid))
+            if (!p_tl->rmstatus[i].rmstatus || (EXFAIL!=rmid && i+1!=rmid))
                 continue;
 
             NDRX_LOG(log_info, "RMID: %hd status %c", 
@@ -121,7 +121,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
                     break;
                 case XA_OP_PREPARE:
                     NDRX_LOG(log_error, "Prepare RMID %d", i+1);
-                    if (SUCCEED!=(op_ret = tm_prepare_combined(p_xai, i+1)))
+                    if (EXSUCCEED!=(op_ret = tm_prepare_combined(p_xai, i+1)))
                     {
                         op_reason = atmi_xa_get_reason();
                         op_tperrno = tperrno;
@@ -129,7 +129,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
                     break;
                 case XA_OP_COMMIT:
                     NDRX_LOG(log_error, "Commit RMID %d", i+1);
-                    if (SUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1)))
+                    if (EXSUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1)))
                     {
                         op_reason = atmi_xa_get_reason();
                         op_tperrno = tperrno;
@@ -137,7 +137,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
                     break;
                 case XA_OP_ROLLBACK:
                     NDRX_LOG(log_error, "Rollback RMID %d", i+1);
-                    if (SUCCEED!=(op_ret = tm_rollback_combined(p_xai, i+1)))
+                    if (EXSUCCEED!=(op_ret = tm_rollback_combined(p_xai, i+1)))
                     {
                         op_reason = atmi_xa_get_reason();
                         op_tperrno = tperrno;
@@ -154,7 +154,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
             
             if (op_reason==XA_RETRY) 
             {
-                was_retry = TRUE;   
+                was_retry = EXTRUE;   
             }
             
             /* Now get the transition of the state/vote */
@@ -198,7 +198,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
                 
                 new_txstage = vote_txstage->next_txstage;
                 /* switch the stage */
-                again = TRUE;
+                again = EXTRUE;
                 break;
             }
                     
@@ -270,7 +270,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         if (new_txstage!=descr->txstage && new_txstage!=XA_TX_STAGE_MAX_NEVER)
         {
             tms_log_stage(p_tl, new_txstage);
-            again = TRUE;
+            again = EXTRUE;
         }
         
         if (was_retry)
@@ -282,7 +282,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
             
             if (try<G_tmsrv_cfg.xa_retries)
             {
-                again = TRUE;
+                again = EXTRUE;
                 NDRX_LOG(log_warn, "Retry on XA_RETRY");
             }
         }
@@ -308,7 +308,7 @@ public int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op
         /* move transaction to background */
         NDRX_LOG(log_info, "Transaction not completed - leave "
                 "to background");
-        p_tl->is_background = TRUE;
+        p_tl->is_background = EXTRUE;
         /* Unlock the transaction */
         tms_unlock_entry(p_tl);
     }

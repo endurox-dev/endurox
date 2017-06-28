@@ -57,7 +57,7 @@
  * @param reply_len
  * @return
  */
-public int at_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int at_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     return cmd_generic_listcall(reply->userfld1, NDRXD_SRC_ADMIN,
                             NDRXD_CALL_TYPE_GENERIC,
@@ -69,7 +69,7 @@ public int at_rsp_process(command_reply_t *reply, size_t reply_len)
                             0, NULL,
                             NULL,
                             G_call_args,
-                            TRUE);
+                            EXTRUE);
 }
 
 /**
@@ -79,7 +79,7 @@ public int at_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret;
     command_call_t call;
@@ -96,7 +96,7 @@ public int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                             argc, argv,
                             p_have_next,
                             G_call_args,
-                            FALSE);
+                            EXFALSE);
     
     return ret;
 }

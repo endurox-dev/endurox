@@ -48,7 +48,7 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-char M_ndrxd_error_msg_buf[MAX_NDRXD_ERROR_LEN+1] = {EOS};
+char M_ndrxd_error_msg_buf[MAX_NDRXD_ERROR_LEN+1] = {EXEOS};
 int M_ndrxd_error = NDRXD_EMINVAL;
 
 /* Do we need this to be in message catalogue?
@@ -88,9 +88,9 @@ struct err_msg
  * Printer error to stderr
  * @param str
  */
-public void NDRXD_error (char *str)
+expublic void NDRXD_error (char *str)
 {
-	if (EOS!=M_ndrxd_error_msg_buf[0])
+	if (EXEOS!=M_ndrxd_error_msg_buf[0])
 		fprintf(stderr, "%s:%d:%s (%s)\n", str, M_ndrxd_error, NDRXD_ERROR_DESCRIPTION(M_ndrxd_error),
                                             M_ndrxd_error_msg_buf);
 	else
@@ -102,11 +102,11 @@ public void NDRXD_error (char *str)
  * This is not thread safe (as all other functions).
  * @param error_code
  */
-public char * ndrxd_strerror (int err)
+expublic char * ndrxd_strerror (int err)
 {
     static char errbuf[MAX_NDRXD_ERROR_LEN+1];
 
-    if (EOS!=M_ndrxd_error_msg_buf[0])
+    if (EXEOS!=M_ndrxd_error_msg_buf[0])
     {
 		snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
                                 err,
@@ -127,7 +127,7 @@ public char * ndrxd_strerror (int err)
  * ATMI standard
  * @return - pointer to int holding error code?
  */
-public int * _ndrxd_getNDRXD_errno_addr (void)
+expublic int * _ndrxd_getNDRXD_errno_addr (void)
 {
 	return &M_ndrxd_error;
 }
@@ -138,13 +138,13 @@ public int * _ndrxd_getNDRXD_errno_addr (void)
  * @param msg
  * @return
  */
-public void NDRXD_set_error(int error_code)
+expublic void NDRXD_set_error(int error_code)
 {
     if (!M_ndrxd_error)
     {
         NDRX_LOG(log_warn, "NDRXD_set_error: %d (%s)",
                                 error_code, NDRXD_ERROR_DESCRIPTION(error_code));
-        M_ndrxd_error_msg_buf[0] = EOS;
+        M_ndrxd_error_msg_buf[0] = EXEOS;
         M_ndrxd_error = error_code;
     }
 }
@@ -155,7 +155,7 @@ public void NDRXD_set_error(int error_code)
  * @param msg
  * @return
  */
-public void NDRXD_set_error_msg(int error_code, char *msg)
+expublic void NDRXD_set_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
@@ -168,7 +168,7 @@ public void NDRXD_set_error_msg(int error_code, char *msg)
 
         NDRX_LOG(log_warn, "NDRXD_set_error_msg: %d (%s) [%s]", error_code,
                                 NDRXD_ERROR_DESCRIPTION(error_code), msg);
-        M_ndrxd_error_msg_buf[0] = EOS;
+        M_ndrxd_error_msg_buf[0] = EXEOS;
         strncat(M_ndrxd_error_msg_buf, msg, err_len);
         M_ndrxd_error = error_code;
     }
@@ -181,9 +181,9 @@ public void NDRXD_set_error_msg(int error_code, char *msg)
  * @param fmt - format stirng
  * @param ... - format details
  */
-public void NDRXD_set_error_fmt(int error_code, const char *fmt, ...)
+expublic void NDRXD_set_error_fmt(int error_code, const char *fmt, ...)
 {
-    char msg[MAX_NDRXD_ERROR_LEN+1] = {EOS};
+    char msg[MAX_NDRXD_ERROR_LEN+1] = {EXEOS};
     va_list ap;
 
     if (!M_ndrxd_error)
@@ -204,16 +204,16 @@ public void NDRXD_set_error_fmt(int error_code, const char *fmt, ...)
 /**
  * Unset any error data currently in use
  */
-public void NDRXD_unset_error(void)
+expublic void NDRXD_unset_error(void)
 {
-	M_ndrxd_error_msg_buf[0]=EOS;
+	M_ndrxd_error_msg_buf[0]=EXEOS;
 	M_ndrxd_error = BMINVAL;
 }
 /**
  * Return >0 if error is set
  * @return
  */
-public int NDRXD_is_error(void)
+expublic int NDRXD_is_error(void)
 {
     return M_ndrxd_error;
 }
@@ -222,7 +222,7 @@ public int NDRXD_is_error(void)
  * Append error message
  * @param msg
  */
-public void NDRXD_append_error_msg(char *msg)
+expublic void NDRXD_append_error_msg(char *msg)
 {
     int free_space = MAX_NDRXD_ERROR_LEN-strlen(M_ndrxd_error_msg_buf);
     int app_error_len = strlen(msg);

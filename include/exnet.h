@@ -40,7 +40,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <ntimer.h>
+#include <nstopwatch.h>
 /*------------------------------Externs---------------------------------------*/
 extern int G_recv_tout;				/* Was there timeout on recieve? */
 /*------------------------------Macros----------------------------------------*/
@@ -77,10 +77,10 @@ struct exnetcon
     int  dl;                   /* Data left in databuffer                */
     int recv_tout;              /* Last system call error for receive	  */
     int len_pfx;           /* Length prefix                          */
-    ndrx_timer_t rcv_timer;        /* Receive timer...  */
-    ndrx_timer_t connect_time;    /* Time of connection in transit..... */
+    ndrx_stopwatch_t rcv_timer;        /* Receive timer...  */
+    ndrx_stopwatch_t connect_time;    /* Time of connection in transit..... */
     int periodic_zero;          /* send zero length message in seconds */
-    ndrx_timer_t last_zero;        /* Last time send zero length message */
+    ndrx_stopwatch_t last_zero;        /* Last time send zero length message */
     
     /* Server settings */
     int backlog;            /* Incomming connection queue len (backlog) */

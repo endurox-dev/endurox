@@ -98,10 +98,10 @@ struct err_msg
  * Printer error to stderr
  * @param str
  */
-public void B_error (char *str)
+expublic void B_error (char *str)
 {
     UBF_TLS_ENTRY;
-    if (EOS!=G_ubf_tls->M_ubf_error_msg_buf[0])
+    if (EXEOS!=G_ubf_tls->M_ubf_error_msg_buf[0])
     {
         fprintf(stderr, "%s:%d:%s (%s)\n", str, G_ubf_tls->M_ubf_error, 
                 UBF_ERROR_DESCRIPTION(G_ubf_tls->M_ubf_error),
@@ -119,11 +119,11 @@ public void B_error (char *str)
  * This is not thread safe (as all other functions).
  * @param error_code
  */
-public char * Bstrerror (int err)
+expublic char * Bstrerror (int err)
 {
     UBF_TLS_ENTRY;
 
-    if (EOS!=G_ubf_tls->M_ubf_error_msg_buf[0])
+    if (EXEOS!=G_ubf_tls->M_ubf_error_msg_buf[0])
     {
         snprintf(G_ubf_tls->errbuf, sizeof(G_ubf_tls->errbuf), 
                 "%d:%s (last error %d: %s)",
@@ -145,7 +145,7 @@ public char * Bstrerror (int err)
  * ATMI standard
  * @return - pointer to int holding error code?
  */
-public int * _Bget_Ferror_addr (void)
+expublic int * _Bget_Ferror_addr (void)
 {
     UBF_TLS_ENTRY;
     return &G_ubf_tls->M_ubf_error;
@@ -157,14 +157,14 @@ public int * _Bget_Ferror_addr (void)
  * @param msg
  * @return
  */
-public void _Fset_error(int error_code)
+expublic void _Fset_error(int error_code)
 {
     UBF_TLS_ENTRY;
     if (!G_ubf_tls->M_ubf_error)
     {
         UBF_LOG(log_warn, "_Fset_error: %d (%s)", 
                                 error_code, UBF_ERROR_DESCRIPTION(error_code));
-        G_ubf_tls->M_ubf_error_msg_buf[0] = EOS;
+        G_ubf_tls->M_ubf_error_msg_buf[0] = EXEOS;
         G_ubf_tls->M_ubf_error = error_code;
     }
 }
@@ -175,7 +175,7 @@ public void _Fset_error(int error_code)
  * @param msg
  * @return
  */
-public void _Fset_error_msg(int error_code, char *msg)
+expublic void _Fset_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
@@ -190,7 +190,7 @@ public void _Fset_error_msg(int error_code, char *msg)
 
         UBF_LOG(log_warn, "_Fset_error_msg: %d (%s) [%s]", error_code,
                                 UBF_ERROR_DESCRIPTION(error_code), msg);
-        G_ubf_tls->M_ubf_error_msg_buf[0] = EOS;
+        G_ubf_tls->M_ubf_error_msg_buf[0] = EXEOS;
         strncat(G_ubf_tls->M_ubf_error_msg_buf, msg, err_len);
         G_ubf_tls->M_ubf_error = error_code;
     }
@@ -203,9 +203,9 @@ public void _Fset_error_msg(int error_code, char *msg)
  * @param fmt - format stirng
  * @param ... - format details
  */
-public void _Fset_error_fmt(int error_code, const char *fmt, ...)
+expublic void _Fset_error_fmt(int error_code, const char *fmt, ...)
 {
-    char msg[MAX_ERROR_LEN+1] = {EOS};
+    char msg[MAX_ERROR_LEN+1] = {EXEOS};
     va_list ap;
     UBF_TLS_ENTRY;
     
@@ -227,17 +227,17 @@ public void _Fset_error_fmt(int error_code, const char *fmt, ...)
 /**
  * Unset any error data currently in use
  */
-public void _Bunset_error(void)
+expublic void _Bunset_error(void)
 {
     UBF_TLS_ENTRY;
-    G_ubf_tls->M_ubf_error_msg_buf[0]=EOS;
+    G_ubf_tls->M_ubf_error_msg_buf[0]=EXEOS;
     G_ubf_tls->M_ubf_error = BMINVAL;
 }
 /**
  * Return >0 if error is set
  * @return 
  */
-public int _Fis_error(void)
+expublic int _Fis_error(void)
 {
     UBF_TLS_ENTRY;
     return G_ubf_tls->M_ubf_error;
@@ -247,7 +247,7 @@ public int _Fis_error(void)
  * Append error message
  * @param msg
  */
-public void _Bappend_error_msg(char *msg)
+expublic void _Bappend_error_msg(char *msg)
 {
     int free_space;
     int app_error_len = strlen(msg);
@@ -265,7 +265,7 @@ public void _Bappend_error_msg(char *msg)
  * @param err
  * @param rp
  */
-public void report_regexp_error(char *fun_nm, int err, regex_t *rp)
+expublic void report_regexp_error(char *fun_nm, int err, regex_t *rp)
 {
     char *errmsg;
     int errlen;

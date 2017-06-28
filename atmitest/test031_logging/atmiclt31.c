@@ -53,7 +53,7 @@
 
 void do_thread_work1 ( void *ptr )
 {
-    if (SUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, FAIL, "file=./clt-tp-th1.log tp=5", "TEST", NULL))
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, EXFAIL, "file=./clt-tp-th1.log tp=5", "TEST", NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
                 Nstrerror(Nerror));
@@ -69,7 +69,7 @@ void do_thread_work1 ( void *ptr )
 
 void do_thread_work2 ( void *ptr )
 {
-    if (SUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, FAIL, "file=./clt-tp-th2.log tp=5", "TEST", NULL))
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, EXFAIL, "file=./clt-tp-th2.log tp=5", "TEST", NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
                 Nstrerror(Nerror));
@@ -89,17 +89,17 @@ void do_thread_work2 ( void *ptr )
  */
 int test_request_file(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
     int i;
     long rsplen;
     char testfname[PATH_MAX+1];
     char testfname_should_be[PATH_MAX+1];
 
-    if (SUCCEED==p_ub)
+    if (EXSUCCEED==p_ub)
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to allocate p_ub: %s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     for (i=0; i<1000; i++)
@@ -108,23 +108,23 @@ int test_request_file(void)
          * It shall close the previous file (thus if we have a problem there
          * will be memory leak of file descriptors...
          */
-        if (SUCCEED!=tplogsetreqfile((char **)&p_ub, NULL, "SETREQFILE"))
+        if (EXSUCCEED!=tplogsetreqfile((char **)&p_ub, NULL, "SETREQFILE"))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set request file:%s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         tplog(log_debug, "Hello from atmicl31!");
         
         /* test tploggetbufreqfile() must match the name we know */
-        testfname[0] = EOS;
+        testfname[0] = EXEOS;
         
-        if (SUCCEED!=tploggetbufreqfile((char *)p_ub, testfname, sizeof(testfname)))
+        if (EXSUCCEED!=tploggetbufreqfile((char *)p_ub, testfname, sizeof(testfname)))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get current logger: %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         sprintf(testfname_should_be, "./logs/request_%d.log", i+1);
@@ -136,7 +136,7 @@ int test_request_file(void)
         {
             TP_LOG(log_error, "TESTERROR: Request file should be [%s] but got [%s]!!!", 
                 testfname_should_be, testfname);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Test tploggetreqfile() */
@@ -145,33 +145,33 @@ int test_request_file(void)
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to get current request log file: %s", 
                     tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (0!=strcmp(testfname_should_be, testfname))
         {
             TP_LOG(log_error, "TESTERROR: Request file should be [%s] but got [%s]!!!", 
                 testfname_should_be, testfname);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* Add some data to buffer */
         if (0==(i % 100))
         {
-            if (SUCCEED!=Badd(p_ub, T_STRING_FLD, "HELLO WORLD!", 0L))
+            if (EXSUCCEED!=Badd(p_ub, T_STRING_FLD, "HELLO WORLD!", 0L))
             {
                 NDRX_LOG(log_error, "TESTERROR: Failed to add T_STRING_FLD:%s", 
                     Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         
         /* About to call service */
         tplog(log_warn, "Calling TEST31_1ST!");
-        if (FAIL == tpcall("TEST31_1ST", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("TEST31_1ST", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TEST31_1ST failed: %s", tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         tplog(log_warn, "back from TEST31_1ST call!");     
@@ -179,10 +179,10 @@ int test_request_file(void)
         tplogprintubf(log_info, "Buffer before cleanup", p_ub);
         
         /* delete the request file from buffer */
-        if (SUCCEED!=tplogdelbufreqfile((char *)p_ub))
+        if (EXSUCCEED!=tplogdelbufreqfile((char *)p_ub))
         {
             NDRX_LOG(log_error, "tplogdelbufreqfile() failed: %s", tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         tplogprintubf(log_info, "Buffer after cleanup", p_ub);
@@ -203,29 +203,29 @@ out:
  */
 int main(int argc, char** argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     pthread_t thread1, thread2;  /* thread variables */
     
     /* 
      * Enduro/X logging 
      */
-    if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
-            FAIL, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
+            EXFAIL, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure Enduro/X logger: %s", 
                 Nstrerror(Nerror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*
      * User TP log 
      */
-    if (SUCCEED!=tplogconfig(LOG_FACILITY_TP, FAIL, "file=./clt-tp.log tp=6", "TEST", NULL))
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP, EXFAIL, "file=./clt-tp.log tp=6", "TEST", NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
                 Nstrerror(Nerror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* write some stuff in user log */
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
     
     tplog(6, "hello from main thread");
     
-    if (SUCCEED!=test_request_file())
+    if (EXSUCCEED!=test_request_file())
     {
         tplog(5, "TESTERROR: test_request_file() failed!");
     }

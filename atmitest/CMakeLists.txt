@@ -79,6 +79,8 @@ add_subdirectory (test034_shmreuse)
 add_subdirectory (test035_hkeep)
 add_subdirectory (test036_tprecover)
 add_subdirectory (test037_down)
+add_subdirectory (test038_tpnotify)
+add_subdirectory (test039_tpbroadcast)
 
 ################################################################################
 # Master test case driver

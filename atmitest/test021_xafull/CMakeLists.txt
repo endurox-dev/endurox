@@ -54,6 +54,7 @@ add_executable (atmi.sv21 atmisv21.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt21 atmiclt21.c)
 add_executable (atmiclt21-105 atmiclt21-105.c)
 add_executable (atmiclt21-try atmiclt21-try.c)
+add_executable (atmiclt21-startfail atmiclt21-startfail.c)
 
 # Conversations
 add_executable (convsv21 convsv21.c ../../libatmisrv/rawmain_integra.c)
@@ -71,6 +72,7 @@ target_link_libraries (atmi.sv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pth
 target_link_libraries (atmiclt21 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 target_link_libraries (atmiclt21-105 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 target_link_libraries (atmiclt21-try atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
+target_link_libraries (atmiclt21-startfail atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 
 # Conversations test
 target_link_libraries (convsv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pthread m)
@@ -85,6 +87,7 @@ target_link_libraries (atmiclt21-oapi atmiclt atmi ubf nstd ${RT_LIB} xadrv pthr
 set_target_properties(atmi.sv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21-105 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt21-startfail PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Conversation test
 set_target_properties(convsv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
@@ -111,6 +114,7 @@ add_library (xadrv_s-105 SHARED
                 xabackend_common.c
             )
 
+
 add_library (xadrv_s-tryok SHARED
                 xabackend_s-tryok.c
                 xabackend_common.c
@@ -118,6 +122,11 @@ add_library (xadrv_s-tryok SHARED
 
 add_library (xadrv_s-tryfail SHARED
                 xabackend_s-tryfail.c
+                xabackend_common.c
+             )
+             
+add_library (xadrv_s-startfail SHARED
+                xabackend_s-startfail.c
                 xabackend_common.c
             )
 
@@ -133,6 +142,7 @@ if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(xadrv_s-105 atmi ubf nstd)
     target_link_libraries(xadrv_s-tryok atmi ubf nstd)
     target_link_libraries(xadrv_s-tryfail atmi ubf nstd)
+    target_link_libraries(xadrv_s-startfail atmi ubf nstd)
     target_link_libraries(xadrv_d atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(xadrv atmi ubf nstd)
@@ -140,6 +150,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(xadrv_s-105 atmi ubf nstd)
     target_link_libraries(xadrv_s-tryok atmi ubf nstd)
     target_link_libraries(xadrv_s-tryfail atmi ubf nstd)
+    target_link_libraries(xadrv_s-startfail atmi ubf nstd)
     target_link_libraries(xadrv_d atmi ubf nstd)
 endif()
 ################################################################################

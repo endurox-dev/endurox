@@ -267,15 +267,16 @@ add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
 add_subdirectory (libexnet)
+add_subdirectory (libexmemck)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (libps) # Platform script
 	add_subdirectory (libpsstdlib) # Platform script standard library
 ENDIF()
 
-
 add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
+add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
@@ -284,6 +285,7 @@ ENDIF()
 
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
+add_subdirectory (xmemck) # Enduro X memcory checking tool
 add_subdirectory (bridge) # Cluster bridge server
 add_subdirectory (tmsrv) # Transaction Manager server for XA transactions
 add_subdirectory (tmqueue) # Persistant Queue server

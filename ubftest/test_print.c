@@ -117,13 +117,13 @@ void load_print_test_data(UBFH *p_ub)
     carr[3] = 3;
     BFLDLEN len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = -1;
@@ -134,16 +134,16 @@ void load_print_test_data(UBFH *p_ub)
     carr[0] = 'Y';
     len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
 
     l = -4;
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 4, (char *)&l, 0), SUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 4, (char *)&l, 0), EXSUCCEED);
 
     s = 212;
     l = 212;
@@ -151,13 +151,13 @@ void load_print_test_data(UBFH *p_ub)
     f = 1227;
     d = 1232.1;
     carr[0] = 0;
-    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 1, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 2, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 3, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 4, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 5, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 6, (char *)string2, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 7, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 1, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 2, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 3, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 4, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 5, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 6, (char *)string2, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 7, (char *)carr, len), EXSUCCEED);
 }
 
 
@@ -174,13 +174,13 @@ Ensure(test_bfprint)
     char filename[]="/tmp/ubf-test-XXXXXX";
     char readbuf[1024];
     int line_counter=0;
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
 
     load_print_test_data(p_ub);
     load_field_table();
-    assert_not_equal(mkstemp(filename), FAIL);
+    assert_not_equal(mkstemp(filename), EXFAIL);
     assert_not_equal((f=fopen(filename, "w")), NULL);
-    assert_equal(Bfprint(p_ub, f), SUCCEED);
+    assert_equal(Bfprint(p_ub, f), EXSUCCEED);
     fclose(f);
 
     /* Re-open file in read mode end re-compare the buffer. */
@@ -201,10 +201,10 @@ Ensure(test_bfprint)
     fclose(f);
 
     /* remove the file */
-    assert_equal(unlink(filename), SUCCEED);
+    assert_equal(unlink(filename), EXSUCCEED);
 
     /* cannot print on null file */
-    assert_equal(Bfprint(p_ub, NULL), FAIL);
+    assert_equal(Bfprint(p_ub, NULL), EXFAIL);
     assert_equal(Berror, BEINVAL);
     
 }
@@ -225,9 +225,9 @@ Ensure(test_bprint)
     int fstdout;
     char filename[]="/tmp/ubf-test-XXXXXX";
 
-    assert_not_equal(mkstemp(filename), FAIL);
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+    assert_not_equal(mkstemp(filename), EXFAIL);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
     load_print_test_data(p_ub);
     /* nothing much to test here... */
@@ -239,11 +239,11 @@ Ensure(test_bprint)
 
     /* OK, if we have that output, try to extread it! */
     assert_not_equal((f=fopen(filename, "r")), NULL);
-    assert_equal(Bextread(p_ub2, f), SUCCEED);
+    assert_equal(Bextread(p_ub2, f), EXSUCCEED);
     /* compare readed buffer */
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
     /* Remove test file */
-    assert_equal(unlink(filename), SUCCEED);
+    assert_equal(unlink(filename), EXSUCCEED);
 }
 
 /**
@@ -260,28 +260,28 @@ Ensure(test_bextread_bfldid)
     FILE *f;
     char filename[]="/tmp/ubf-test-XXXXXX";
 
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
     load_print_test_data(p_ub);
     set_up_dummy_data(p_ub);
     
 
-    assert_not_equal(mkstemp(filename), FAIL);
+    assert_not_equal(mkstemp(filename), EXFAIL);
 
     assert_not_equal((f=fopen(filename, "w")), NULL);
-    assert_equal(Bfprint(p_ub, f), SUCCEED);
+    assert_equal(Bfprint(p_ub, f), EXSUCCEED);
     fclose(f);
 
     /* read stuff form file */
     assert_not_equal((f=fopen(filename, "r")), NULL);
-    assert_equal(Bextread(p_ub2, f), SUCCEED);
+    assert_equal(Bextread(p_ub2, f), EXSUCCEED);
     fclose(f);
     
     /* compare readed buffer */
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
     /* Remove test file */
-    assert_equal(unlink(filename), SUCCEED);
+    assert_equal(unlink(filename), EXSUCCEED);
 }
 
 /**
@@ -298,27 +298,27 @@ Ensure(test_bextread_fldnm)
     FILE *f;
     char filename[]="/tmp/ubf-test-XXXXXX";
 
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
     load_print_test_data(p_ub);
     set_up_dummy_data(p_ub);
     load_field_table();
 
-    assert_not_equal(mkstemp(filename), FAIL);
+    assert_not_equal(mkstemp(filename), EXFAIL);
     assert_not_equal((f=fopen(filename, "w")), NULL);
-    assert_equal(Bfprint(p_ub, f), SUCCEED);
+    assert_equal(Bfprint(p_ub, f), EXSUCCEED);
     fclose(f);
 
     /* read stuff form file */
     assert_not_equal((f=fopen(filename, "r")), NULL);
-    assert_equal(Bextread(p_ub2, f), SUCCEED);
+    assert_equal(Bextread(p_ub2, f), EXSUCCEED);
     fclose(f);
 
     /* compare readed buffer */
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
     /* Remove test file */
-    assert_equal(unlink(filename), SUCCEED);
+    assert_equal(unlink(filename), EXSUCCEED);
 }
 /**
  * Testing extread for errors
@@ -403,7 +403,7 @@ Ensure(test_bextread_chk_errors)
 
     /*--------------------------------------------------------*/
     /* test the newline is missing at the end */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(missing_new_line_at_end);
     close_test_temp();
@@ -416,7 +416,7 @@ Ensure(test_bextread_chk_errors)
 
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BSYNTAX);
     close_test_temp();
 
@@ -424,14 +424,14 @@ Ensure(test_bextread_chk_errors)
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* test the newline is missing at the end */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(no_field_name);
     close_test_temp();
     
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BSYNTAX);
     close_test_temp();
 
@@ -439,14 +439,14 @@ Ensure(test_bextread_chk_errors)
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* test the newline is missing at the end */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(no_value_seperator);
     close_test_temp();
 
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BSYNTAX);
     close_test_temp();
 
@@ -454,14 +454,14 @@ Ensure(test_bextread_chk_errors)
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* test bad prefixing */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(prefix_error_hex);
     close_test_temp();
 
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BSYNTAX);
     close_test_temp();
 
@@ -469,14 +469,14 @@ Ensure(test_bextread_chk_errors)
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* invalid hex number provided */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(invalid_hex_number);
     close_test_temp();
 
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BSYNTAX);
     close_test_temp();
 
@@ -484,7 +484,7 @@ Ensure(test_bextread_chk_errors)
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* Empty line also is not supported */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(empty_line_error);
     close_test_temp();
@@ -492,35 +492,35 @@ Ensure(test_bextread_chk_errors)
     /* syntax error should fail */
     /* to be backwards compatible we just ignore this stuff... */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), SUCCEED);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXSUCCEED);
     /* assert_equal(Berror, BSYNTAX); */
     close_test_temp();
     /* now open the file */
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* Field id not found */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(invalid_field_id);
     close_test_temp();
 
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BBADNAME);
     close_test_temp();
     /* now open the file */
     remove_test_temp();
     /*--------------------------------------------------------*/
     /* Invalid bfldid syntax */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(invalid_field_id_syntax);
     close_test_temp();
 
     /* syntax error should fail */
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BBADFLD);
     close_test_temp();
     /* now open the file */
@@ -553,23 +553,23 @@ Ensure(test_bextread_comments)
 
     /*--------------------------------------------------------*/
     /* Testing comment. */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(comment_test);
     close_test_temp();
     
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), SUCCEED);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXSUCCEED);
 
     /* Ensure that fields are missing */
-    assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), FALSE);
-    assert_equal(Bpres(p_ub, T_STRING_FLD, 0), FALSE);
-    assert_equal(Bpres(p_ub, T_STRING_FLD, 1), FALSE);
+    assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_STRING_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_STRING_FLD, 1), EXFALSE);
 
     /* Ensure that we have what we expect */
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 88);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&l, 0), SUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(l, -1);
     close_test_temp();
     
@@ -603,23 +603,23 @@ Ensure(test_bextread_minus)
     /* load field table */
     load_field_table();
     
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(test_minus);
     close_test_temp();
 
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), SUCCEED);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXSUCCEED);
     close_test_temp();
 
     /* now open the file */
     remove_test_temp();
 
     /* Load reference data into buffer 2 */
-    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "123", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_DOUBLE_FLD, 0, "0.1", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "123", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_DOUBLE_FLD, 0, "0.1", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal */
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
@@ -652,23 +652,23 @@ Ensure(test_bextread_plus)
     /* load field table */
     load_field_table();
 
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(test_plus);
     close_test_temp();
 
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), SUCCEED);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXSUCCEED);
     close_test_temp();
     /* now open the file */
     remove_test_temp();
     
     /* Load reference data into buffer 2 */
-    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "123", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_DOUBLE_FLD, 0, "0.1", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "CDE", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "123", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_DOUBLE_FLD, 0, "0.1", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "CDE", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal */
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
@@ -709,34 +709,34 @@ Ensure(test_bextread_eq)
     /* load field table */
     load_field_table();
 
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
-    assert_equal(Binit(p_ub2, sizeof(fb2)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(test_eq);
     close_test_temp();
 
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), SUCCEED);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXSUCCEED);
     close_test_temp();
     /* now open the file */
     remove_test_temp();
 
     /* Load reference data into buffer 2 */
-    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "t999", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_LONG_FLD, 0, "124545", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_CHAR_FLD, 0, "a", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "777.11", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_DOUBLE_FLD, 0, "888", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "ABC", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_CARRAY_FLD, 0, "EFGH", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "t999", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_LONG_FLD, 0, "124545", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_CHAR_FLD, 0, "a", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "777.11", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_DOUBLE_FLD, 0, "888", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "ABC", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_CARRAY_FLD, 0, "EFGH", 0, BFLD_STRING), EXSUCCEED);
 
-    assert_equal(CBchg(p_ub2, T_SHORT_2_FLD, 0, "t999", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_LONG_2_FLD, 0, "124545", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_CHAR_2_FLD, 0, "a", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_FLOAT_2_FLD, 0, "777.11", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_DOUBLE_2_FLD, 0, "888", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_STRING_2_FLD, 0, "ABC", 0, BFLD_STRING), SUCCEED);
-    assert_equal(CBchg(p_ub2, T_CARRAY_2_FLD, 0, "EFGH", 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub2, T_SHORT_2_FLD, 0, "t999", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_LONG_2_FLD, 0, "124545", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_CHAR_2_FLD, 0, "a", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_FLOAT_2_FLD, 0, "777.11", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_DOUBLE_2_FLD, 0, "888", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_STRING_2_FLD, 0, "ABC", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_CARRAY_2_FLD, 0, "EFGH", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal  - ignore for now...
     assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
@@ -773,13 +773,13 @@ Ensure(test_bextread_eq_err)
     };
     /* load field table */
     load_field_table();
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     open_test_temp("w");
     write_to_temp(test_eq_err);
     close_test_temp();
 
     open_test_temp_for_read("r");
-    assert_equal(Bextread(p_ub, M_test_temp_file), FAIL);
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
     assert_equal(Berror, BBADNAME);
     close_test_temp();
     /* now open the file */

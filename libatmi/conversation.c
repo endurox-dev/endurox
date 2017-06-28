@@ -76,72 +76,13 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-int M_had_open_con = FALSE;
+int M_had_open_con = EXFALSE;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr);
-private mqd_t open_reply_q(char *q, struct mq_attr *q_attr);
-private void rcv_hash_delall(tp_conversation_control_t *conv);
-private char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq);
-/**
- * Fix queue attributes to match the requested mode.
- * @param conv
- * @param flags
- * @return SUCCEED/FAIL
- */
-private int setup_queue_attrs(struct mq_attr *p_q_attr,
-                                mqd_t listen_q,
-                                char *listen_q_str, 
-                                long flags)
-{
-    int ret=SUCCEED;
-    int change_flags = FALSE;
-    struct mq_attr new;
-    char fn[] = "setup_queue_attrs";
-
-    NDRX_LOG(log_debug, "ATTRS BEFORE: %d", p_q_attr->mq_flags);
-
-    if (flags & TPNOBLOCK && !(p_q_attr->mq_flags & O_NONBLOCK))
-    {
-        /* change attributes non block mode*/
-        new = *p_q_attr;
-        new.mq_flags |= O_NONBLOCK;
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
-                                            listen_q_str);
-    }
-    else if (!(flags & TPNOBLOCK) && (p_q_attr->mq_flags & O_NONBLOCK))
-    {
-        /* change attributes to block mode */
-        new = *p_q_attr;
-        new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
-                                            listen_q_str);
-    }
-
-    if (change_flags)
-    {
-        if (FAIL==ndrx_mq_setattr(listen_q, &new,
-                            p_q_attr))
-        {
-            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
-                                fn, listen_q_str, listen_q, strerror(errno));
-            ret=FAIL;
-            goto out;
-        }
-        else
-        {
-            /* Save new attrs */
-            *p_q_attr = new;
-        }
-    }
-
-    NDRX_LOG(log_debug, "ATTRS AFTER: %d", p_q_attr->mq_flags);
-    
-out:
-    return ret;
-}
+exprivate mqd_t open_conv_q(char *q,  struct mq_attr *q_attr);
+exprivate mqd_t open_reply_q(char *q, struct mq_attr *q_attr);
+exprivate void rcv_hash_delall(tp_conversation_control_t *conv);
+exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq);
 
 /**
  * Closes any connection made as client.
@@ -149,31 +90,31 @@ out:
  * tpreturn!
  * Try to close all queues, if have some error, report it
  */
-public int close_open_client_connections(void)
+expublic int close_open_client_connections(void)
 {
     int i;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     ATMI_TLS_ENTRY;
     
     /* nothing to do, we do not have opened any client connections! */
     if (!M_had_open_con)
     {
-        return SUCCEED;
+        return EXSUCCEED;
     }
 
     for (i=0; i<MAX_CONNECTIONS; i++)
     {
         if (CONV_IN_CONVERSATION==G_atmi_tls->G_tp_conversation_status[i].status)
         {
-            if (FAIL==_tpdiscon(i))
+            if (EXFAIL==_tpdiscon(i))
             {
                 NDRX_LOG(log_warn, "Failed to close connection [%d]", i);
-                ret=FAIL;
+                ret=EXFAIL;
             }
         }
     }
-    M_had_open_con = FALSE;
+    M_had_open_con = EXFALSE;
     
     return ret;
 }
@@ -183,23 +124,23 @@ public int close_open_client_connections(void)
  * Return TRUE if we have any open connection
  * @return TRUE/FALSE
  */
-public int have_open_connection(void)
+expublic int have_open_connection(void)
 {
     int i;
-    int ret=FALSE;
+    int ret=EXFALSE;
     ATMI_TLS_ENTRY;
     
     /* nothing to do, we do not have opened any client connections! */
     if (!M_had_open_con)
     {
-        return FALSE;
+        return EXFALSE;
     }
 
     for (i=0; i<MAX_CONNECTIONS; i++)
     {
         if (CONV_IN_CONVERSATION==G_atmi_tls->G_tp_conversation_status[i].status)
         {
-            ret=TRUE;
+            ret=EXTRUE;
             break;
         }
     }
@@ -216,13 +157,13 @@ public int have_open_connection(void)
  * This assumes that we have already set last call data.
  * TODO: Error if already in conversation?
  */
-public int accept_connection(void)
+expublic int accept_connection(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     tp_conversation_control_t *conv;
     char fn[] = "accept_connection";
     long revent;
-    int q_opened=FALSE;
+    int q_opened=EXFALSE;
     char their_qstr[NDRX_MAX_Q_SIZE+1];
     ATMI_TLS_ENTRY;
     
@@ -250,14 +191,14 @@ public int accept_connection(void)
                     );
     
     /* TODO: Firstly we should open the queue on which to listen right? */
-    if ((mqd_t)FAIL==(conv->my_listen_q =
+    if ((mqd_t)EXFAIL==(conv->my_listen_q =
                     open_conv_q(conv->my_listen_q_str, &conv->my_q_attr)))
     {
         NDRX_LOG(log_error, "%s: Failed to open listen queue", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
-    q_opened=TRUE;
+    q_opened=EXTRUE;
 
     /* 2. Connect to their reply queue */
     strcpy(conv->reply_q_str, G_atmi_tls->G_last_call.reply_to);
@@ -281,11 +222,11 @@ public int accept_connection(void)
 
             sprintf(tmpsvc, NDRX_SVC_BRIDGE, (int)G_atmi_tls->G_last_call.callstack[0]);
 
-            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 #endif
@@ -299,40 +240,40 @@ public int accept_connection(void)
     
     NDRX_LOG(log_debug, "Connecting to: [%s]", their_qstr);
     
-    if ((mqd_t)FAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
+    if ((mqd_t)EXFAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
     {
         NDRX_LOG(log_error, "%s: Cannot connect to reply queue [%s] - "
                                         "cannot accept connection!", 
                                         fn, their_qstr);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* 3. Send back reply to their queue */
     NDRX_LOG(log_debug, "About to send handshake back to client...");
-    if (SUCCEED!=_tpsend(G_atmi_tls->G_last_call.cd, NULL, 0, 0, &revent,
+    if (EXSUCCEED!=_tpsend(G_atmi_tls->G_last_call.cd, NULL, 0, 0, &revent,
                             ATMI_COMMAND_CONNRPLY))
     {
         NDRX_LOG(log_error, "%s: Failed to reply for acceptance!");
-        ret=FAIL;
+        ret=EXFAIL;
 
     }
     
 out:
 
     /* Close down the queue if we fail but queue was opened! */
-    if (SUCCEED!=ret && q_opened)
+    if (EXSUCCEED!=ret && q_opened)
     {
-        if (FAIL==ndrx_mq_close(conv->my_listen_q))
+        if (EXFAIL==ndrx_mq_close(conv->my_listen_q))
         {
             NDRX_LOG(log_warn, "Failed to close %s:%s",
                         conv->my_listen_q_str, strerror(errno));
         }
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
-        conv->handshaked=TRUE;
+        conv->handshaked=EXTRUE;
     }
 
     NDRX_LOG(log_debug, "%s: returns %d", fn, ret);
@@ -344,7 +285,7 @@ out:
  * @param cd
  * @return NULL/connection control
  */
-public tp_conversation_control_t*  get_current_connection(int cd)
+expublic tp_conversation_control_t*  get_current_connection(int cd)
 {
     tp_conversation_control_t *ret=NULL;
     char fn[] = "get_current_connection";
@@ -377,16 +318,16 @@ public tp_conversation_control_t*  get_current_connection(int cd)
  * Close connection (Normally!)
  * @return SUCCEED/FAIL
  */
-public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq)
+expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int killq)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "normal_connection_shutdown";
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s: Closing [%s]", fn, conv->my_listen_q_str);
 
     /* close down the queue */
-    if (SUCCEED!=ndrx_mq_close(conv->my_listen_q))
+    if (EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
     {
         NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_close [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
@@ -397,7 +338,7 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     }
     
     /* Remove the queue */
-    if (killq && SUCCEED!=ndrx_mq_unlink(conv->my_listen_q_str))
+    if (killq && EXSUCCEED!=ndrx_mq_unlink(conv->my_listen_q_str))
     {
         NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                         fn, conv->my_listen_q_str, strerror(errno));
@@ -412,7 +353,7 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     NDRX_LOG(log_debug, "%s: Closing [%s]", fn, conv->reply_q_str);
 
     /* close down the queue */
-    if (SUCCEED!=ndrx_mq_close(conv->reply_q))
+    if (EXSUCCEED!=ndrx_mq_close(conv->reply_q))
     {
         NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_close [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
@@ -424,7 +365,7 @@ public int normal_connection_shutdown(tp_conversation_control_t *conv, int killq
     
     /* Remove the queue */
     NDRX_LOG(log_warn, "UNLINKING: %s %d", conv->reply_q_str, killq);
-    if (killq && SUCCEED!=ndrx_mq_unlink(conv->reply_q_str))
+    if (killq && EXSUCCEED!=ndrx_mq_unlink(conv->reply_q_str))
     {
         NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                         fn, conv->reply_q_str, strerror(errno));
@@ -459,7 +400,7 @@ out:
  * each thread have it's own cd.
  * @return
  */
-private int conv_get_cd(long flags)
+exprivate int conv_get_cd(long flags)
 {
     ATMI_TLS_ENTRY;
     
@@ -487,22 +428,22 @@ private int conv_get_cd(long flags)
             G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status)
     {
         NDRX_LOG(log_debug, "All connection descriptors have been taken - FAIL!");
-        G_atmi_tls->conv_cd=FAIL;
+        G_atmi_tls->conv_cd=EXFAIL;
     }
     else
     {
         NDRX_LOG(log_debug, "Got free connection descriptor %d", G_atmi_tls->conv_cd);
     }
     
-    if (FAIL!=G_atmi_tls->conv_cd && 
+    if (EXFAIL!=G_atmi_tls->conv_cd && 
             !(flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_debug, "Registering conv cd=%d under global "
                 "transaction!", G_atmi_tls->conv_cd);
-        if (SUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), 
+        if (EXSUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), 
                 G_atmi_tls->conv_cd))
         {
-            G_atmi_tls->conv_cd=FAIL;
+            G_atmi_tls->conv_cd=EXFAIL;
         }
     }
 
@@ -514,21 +455,21 @@ private int conv_get_cd(long flags)
  * @param q
  * @return SUCCEED/FAIL
  */
-private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
+exprivate mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
 {
-    mqd_t ret=(mqd_t)FAIL;
+    mqd_t ret=(mqd_t)EXFAIL;
     char fn[] = "open_conv_q";
 
     ret = ndrx_mq_open_at (q, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR, NULL);
 
-    if ((mqd_t)FAIL==ret)
+    if ((mqd_t)EXFAIL==ret)
     {
         _TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s", fn, q, strerror(errno));
         goto out;
     }
 
         /* read queue attributes */
-    if (FAIL==ndrx_mq_getattr(ret, q_attr))
+    if (EXFAIL==ndrx_mq_getattr(ret, q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                                 fn, q, ret, strerror(errno));
@@ -537,7 +478,7 @@ private mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
         /* unlink the queue */
         ndrx_mq_unlink(q);
 
-        ret=(mqd_t)FAIL;
+        ret=(mqd_t)EXFAIL;
         goto out;
     }
 
@@ -552,21 +493,21 @@ out:
  * @param q_attr
  * @return
  */
-private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
+exprivate mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
 {
-    mqd_t ret=(mqd_t)FAIL;
+    mqd_t ret=(mqd_t)EXFAIL;
     char fn[] = "open_reply_q";
 
     ret = ndrx_mq_open_at (q, O_RDWR, S_IWUSR | S_IRUSR, NULL);
 
-    if ((mqd_t)FAIL==ret)
+    if ((mqd_t)EXFAIL==ret)
     {
         _TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s", fn, q, strerror(errno));
         goto out;
     }
 
     /* read queue attributes */
-    if (FAIL==ndrx_mq_getattr(ret, q_attr))
+    if (EXFAIL==ndrx_mq_getattr(ret, q_attr))
     {
         _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                                 fn, q, ret, strerror(errno));
@@ -577,7 +518,7 @@ private mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
         /* unlink the queue */
         ndrx_mq_unlink(q);
 #endif
-        ret=(mqd_t)FAIL;
+        ret=(mqd_t)EXFAIL;
         goto out;
     }
     
@@ -592,10 +533,10 @@ out:
  * @param conv - conversation descriptor
  * @return
  */
-private int send_ack(tp_conversation_control_t *conv, long flags)
+exprivate int send_ack(tp_conversation_control_t *conv, long flags)
 {
 #if CONV_USE_ACK
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     tp_conv_ack_t ack;
     char fn[]="get_ack";
     
@@ -603,7 +544,7 @@ private int send_ack(tp_conversation_control_t *conv, long flags)
     ack.command_id = ATMI_COMMAND_CONVACK;
     ack.cd=conv->cd;
     
-    if (SUCCEED!=(ret=generic_qfd_send(conv->reply_q, (char *)&ack, sizeof(ack), flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(conv->reply_q, (char *)&ack, sizeof(ack), flags)))
     {
         int err;
         
@@ -611,14 +552,14 @@ private int send_ack(tp_conversation_control_t *conv, long flags)
 
         _TPset_error_fmt(err, "%s: Failed to send ACK, os err: %s", fn, strerror(ret));
 
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "ACK sent for cd %d", conv->cd);
 out:
     return ret;
 #else
-    return SUCCEED;
+    return EXSUCCEED;
 #endif
 }
 
@@ -627,27 +568,27 @@ out:
  * @param cd
  * @return
  */
-public int get_ack(tp_conversation_control_t *conv, long flags)
+expublic int ndrx_get_ack(tp_conversation_control_t *conv, long flags)
 {
 #if CONV_USE_ACK
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     tp_conv_ack_t *ack = (tp_conv_ack_t *)buf;
     long rply_len;
     unsigned prio;
 
-    if (SUCCEED!=setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
+    if (EXSUCCEED!=ndrx_setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
                                     conv->my_listen_q_str, 0L))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "Waiting for ACK");
-    rply_len = generic_q_receive(conv->my_listen_q, buf, sizeof(buf), &prio, flags);
+    rply_len = ndrx_generic_q_receive(conv->my_listen_q, buf, sizeof(buf), &prio, flags);
     
     if (rply_len<sizeof(tp_conv_ack_t))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPESYSTEM, "Invalid ACK reply, len: %d expected %d",
                     rply_len, sizeof(tp_command_generic_t));
         goto out;
@@ -655,13 +596,13 @@ public int get_ack(tp_conversation_control_t *conv, long flags)
 
     if (ack->cd!=conv->cd)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPESYSTEM, "Invalid ACK reply, waiting for cd %d got %d",
                     conv->cd, ack->cd);
     }
     else if (ATMI_COMMAND_CONVACK!=ack->command_id)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPESYSTEM, "Invalid ACK command %hd",
                     ack->command_id);
     }
@@ -674,7 +615,7 @@ public int get_ack(tp_conversation_control_t *conv, long flags)
 out:
     return ret;
 #else
-    return SUCCEED;
+    return EXSUCCEED;
 #endif
 }
 
@@ -697,9 +638,9 @@ out:
  * @param flags
  * @return
  */
-public int _tpconnect (char *svc, char *data, long len, long flags)
+expublic int _tpconnect (char *svc, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     char fn[] = "_tpconnect";
     typed_buffer_descr_t *descr;
@@ -720,21 +661,21 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     NDRX_LOG(log_debug, "%s: called", fn);
 
     /* Check service availability */
-    if (SUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
                 fn, svc);
         goto out;
     }
     
     /* Get free connection */
-    if (FAIL==(cd=conv_get_cd(flags)))
+    if (EXFAIL==(cd=conv_get_cd(flags)))
     {
         _TPset_error_msg(TPELIMIT, "Could not get free connection descriptor");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -750,20 +691,20 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     if (NULL!=data)
     {
         /* fill up the details */
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         descr = &G_buf_descr[buffer_info->type_id];
 
         /* prepare buffer for call */
-        if (SUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
         {
             /* not good - error should be already set */
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         call->buffer_type_id = buffer_info->type_id;
@@ -786,11 +727,11 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     strcpy(call->reply_to, reply_qstr);
 
     /* TODO: Firstly we should open the queue on which to listen right? */
-    if ((mqd_t)FAIL==(conv->my_listen_q =
+    if ((mqd_t)EXFAIL==(conv->my_listen_q =
                     open_conv_q(reply_qstr, &conv->my_q_attr)))
     {
         NDRX_LOG(log_error, "%s: Failed to open listen queue", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -799,7 +740,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     call->command_id = ATMI_COMMAND_CONNECT;
 
     strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
-    call->name[XATMI_SERVICE_NAME_LENGTH] = EOS;
+    call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     call->flags = flags | TPCONV; /* This is conversational call... */
     /* Prepare role flags */
     
@@ -823,13 +764,13 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
         atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);   
     }
     /* Reset call timer...! */
-    ndrx_timer_reset(&call->timer);
+    ndrx_stopwatch_reset(&call->timer);
 
     NDRX_LOG(log_debug, "Sending request to: %s, callseq: %hu", 
             send_qstr, call->callseq);
 
     /* And then we call out the service. */
-    if (SUCCEED!=(ret=generic_q_send(send_qstr, (char *)call, data_len, flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
     {
         int err;
         
@@ -843,7 +784,7 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
         }
 
         _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
-        ret=FAIL;
+        ret=EXFAIL;
 
         goto out;
     }
@@ -867,14 +808,14 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
      */
     memset(buf, 0, sizeof(buf));
 
-    if (SUCCEED!=_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
+    if (EXSUCCEED!=_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
         /* We should have */
         if (ATMI_COMMAND_CONNRPLY!=command_id)
         {
             _TPset_error_fmt(TPESYSTEM, "%s: Invalid connect handshake reply %d", 
                                 fn, command_id);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -893,27 +834,27 @@ public int _tpconnect (char *svc, char *data, long len, long flags)
     NDRX_LOG(log_debug, "Got reply queue for conversation: [%s] - trying to open [%s]",
                                     conv->reply_q_str, their_qstr);
     
-    if ((mqd_t)FAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
+    if ((mqd_t)EXFAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
     {
         NDRX_LOG(log_error, "Cannot establish connection - failed to "
                                     "open reply queue [%s]", conv->reply_q_str);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* Put down the flag that we have open connection */
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
-        M_had_open_con = TRUE;
+        M_had_open_con = EXTRUE;
     }
 
-    conv->handshaked=TRUE;
+    conv->handshaked=EXTRUE;
     
 out:
     /* TODO: Kill conversation if FAILED!!!! */
     NDRX_LOG(log_debug, "%s: ret= %d cd=%d", fn, ret);
 
-    if (FAIL!=ret)
+    if (EXFAIL!=ret)
     	return cd;
     else
         return ret;
@@ -927,11 +868,11 @@ out:
  * @param buf
  * @return 
  */
-private int rcv_hash_add(tp_conversation_control_t *conv,
+exprivate int rcv_hash_add(tp_conversation_control_t *conv,
            unsigned short msgseq, char *buf)
 {
     
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *tmp;
     tpconv_buffer_t * el = NDRX_CALLOC(1, sizeof(tpconv_buffer_t));
     
@@ -950,7 +891,7 @@ private int rcv_hash_add(tp_conversation_control_t *conv,
     {
         _TPset_error_fmt(TPESYSTEM, "%s: Failed to allocate mem: %s", 
                 __func__, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     el->msgseq = (int)msgseq;
@@ -969,7 +910,7 @@ out:
  * @param msgseq
  * @return NULL if item not found, buffer if found
  */
-private char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq)
+exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq)
 {
     char *ret = NULL;
     tpconv_buffer_t * el;
@@ -993,7 +934,7 @@ private char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgse
  * @param msgseq
  * @return 
  */
-private void rcv_hash_delall(tp_conversation_control_t *conv)
+exprivate void rcv_hash_delall(tp_conversation_control_t *conv)
 {
     tpconv_buffer_t *el = NULL;
     tpconv_buffer_t *elt = NULL;
@@ -1019,11 +960,11 @@ private void rcv_hash_delall(tp_conversation_control_t *conv)
  * @param revent
  * @return
  */
-public int _tprecv (int cd, char * *data, 
+expublic int _tprecv (int cd, char * *data, 
                         long *len, long flags, long *revent,
                         short *command_id)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "_tprecv";
     long rply_len;
     unsigned prio;
@@ -1031,9 +972,9 @@ public int _tprecv (int cd, char * *data,
     char *rply_buf; /* Allocate dynamically! */
     tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
-    int answ_ok = FALSE;
+    int answ_ok = EXFALSE;
     tp_conversation_control_t *conv;
-    ndrx_timer_t t;
+    ndrx_stopwatch_t t;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", fn);
 
@@ -1041,14 +982,14 @@ public int _tprecv (int cd, char * *data,
     
     if (!(flags & TPNOTIME))
     {
-        ndrx_timer_reset(&t);
+        ndrx_stopwatch_reset(&t);
     }
     
     /* choose the connection */
     if (NULL==(conv=get_current_connection(cd)))
     {
         _TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d", fn, cd);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* Check are we allowed to receive? */
@@ -1056,14 +997,14 @@ public int _tprecv (int cd, char * *data,
     {
         _TPset_error_fmt(TPEPROTO, "%s: Not allowed to receive "
                                     "because flags say: TPSENDONLY!", fn);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* Change the attributes of the queue to match required */
-    if (SUCCEED!=setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
+    if (EXSUCCEED!=ndrx_setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
                                     conv->my_listen_q_str, flags))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Check the message in hash?! */
@@ -1088,7 +1029,7 @@ public int _tprecv (int cd, char * *data,
     while (!answ_ok)
     {
         long spent;
-        if (!(flags & TPNOTIME) && (spent=ndrx_timer_get_delta_sec(&t)) > G_atmi_env.time_out)
+        if (!(flags & TPNOTIME) && (spent=ndrx_stopwatch_get_delta_sec(&t)) > G_atmi_env.time_out)
         {
             NDRX_LOG(log_error, "%s: call expired (spent: %ld sec, tout: %ld sec)", 
                     __func__, spent, G_atmi_env.time_out);
@@ -1096,24 +1037,24 @@ public int _tprecv (int cd, char * *data,
             _TPset_error_fmt(TPETIME, "%s: call expired (spent: %ld sec, tout: %ld sec)", 
                     __func__, spent, G_atmi_env.time_out);
             
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* receive the reply back */
-        rply_len = generic_q_receive(conv->my_listen_q, rply_buf, rply_bufsz, 
-                                        &prio, flags);
+        rply_len = ndrx_generic_q_receive(conv->my_listen_q, NULL, NULL, 
+                rply_buf, rply_bufsz, &prio, flags);
 
         
         if (GEN_QUEUE_ERR_NO_DATA==rply_len)
         {
             /* there is no data in reply, nothing to do & nothing to return */
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        else if (FAIL==rply_len)
+        else if (EXFAIL==rply_len)
         {
             /* we have failed */
             NDRX_LOG(log_debug, "%s failed to receive answer", fn);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else
@@ -1137,15 +1078,15 @@ inject_message:
             /* Check the sequence number */
             if (rply->msgseq!=conv->msgseqin)
             {
-                answ_ok=FALSE;
+                answ_ok=EXFALSE;
                 NDRX_LOG(log_info, "Message out of sequence, expected: %hu, "
                         "got: %hu - suspending to hash",
                         conv->msgseqin, rply->msgseq);
                 
                 /* TODO: Add reply message to the hash of the waiting msgs... */
-                if (SUCCEED!=rcv_hash_add(conv, rply->msgseq, rply_buf))
+                if (EXSUCCEED!=rcv_hash_add(conv, rply->msgseq, rply_buf))
                 {
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 
                 /* Realloc system buffer */
@@ -1157,16 +1098,16 @@ inject_message:
             }
             else
             {
-                answ_ok=TRUE;
+                answ_ok=EXTRUE;
                 conv->msgseqin++;
                 NDRX_LOG(log_info, "msgseq %hu received as expected", 
                         rply->msgseq);
             }
 
             /* Send ACK? */
-            if (conv->handshaked && FAIL==send_ack(conv, flags))
+            if (conv->handshaked && EXFAIL==send_ack(conv, flags))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             *command_id=rply->command_id;
@@ -1179,19 +1120,19 @@ inject_message:
             {
                 _TPset_error_msg(rply->rcode, "Server failed to generate reply");
                 conv->revent = *revent = TPEV_SVCERR; /* Server failed. */
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             } /* Forced close received. */
             else if (ATMI_COMMAND_DISCONN==rply->command_id)
             {
                 conv->revent = *revent=TPEV_DISCONIMM;
-                if (FAIL==normal_connection_shutdown(conv, FALSE))
+                if (EXFAIL==normal_connection_shutdown(conv, EXFALSE))
                 {
                     NDRX_LOG(log_error, "Failed to close conversation");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
-                ret=FAIL; /* anyway! */
+                ret=EXFAIL; /* anyway! */
                 _TPset_error(TPEEVENT); /* We have event! */
             }
             else if (ATMI_COMMAND_CONNRPLY==rply->command_id)
@@ -1217,7 +1158,7 @@ inject_message:
                                     flags);
                     
                     /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
-                    if (ret==FAIL)
+                    if (ret==EXFAIL)
                     {
                         goto out;
                     }
@@ -1228,7 +1169,7 @@ inject_message:
                 if (TPSUCCESS!=rply->rval)
                 {
                     _TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
 #endif
@@ -1255,12 +1196,12 @@ inject_message:
                     /*
                      * Gracefully shutdown the connection
                      */
-                    if (SUCCEED!=normal_connection_shutdown(conv, TRUE))
+                    if (EXSUCCEED!=normal_connection_shutdown(conv, EXTRUE))
                     {
-                        ret=FAIL;
+                        ret=EXFAIL;
                         goto out;
                     }
-                    ret=FAIL; /* anyway! */
+                    ret=EXFAIL; /* anyway! */
                     _TPset_error(TPEEVENT); /* We have event! */
                     goto out;
                 }
@@ -1269,7 +1210,7 @@ inject_message:
                 {
                     NDRX_LOG(log_debug, "Sender program issued TPRECVONLY "
                                     "- so we become TPSENDONLY!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     conv->revent = *revent = TPEV_SENDONLY;
 
                     _TPset_error_fmt(TPEEVENT, "Got event TPEV_SENDONLY");
@@ -1307,13 +1248,13 @@ out:
             
             /* Update known RMs */
             if ( !(rply->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY) &&
-                    EOS!=rply->tmknownrms[0] &&
-                    SUCCEED!=atmi_xa_update_known_rms(
+                    EXEOS!=rply->tmknownrms[0] &&
+                    EXSUCCEED!=atmi_xa_update_known_rms(
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
                         rply->tmknownrms))
             {
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }   
     }
@@ -1328,7 +1269,7 @@ out:
  * With this we catch the cases when server have been illegally made tpreturn!
  * @return
  */
-private void process_unsolicited_messages(int cd)
+exprivate void process_unsolicited_messages(int cd)
 {
     short command_id=ATMI_COMMAND_CONNUNSOL;
     char *data=NULL;
@@ -1336,7 +1277,7 @@ private void process_unsolicited_messages(int cd)
     long revent;
 
     /* Flush down all messages */
-    while (SUCCEED==_tprecv (cd, &data, &len, TPNOBLOCK, &revent, &command_id))
+    while (EXSUCCEED==_tprecv (cd, &data, &len, TPNOBLOCK, &revent, &command_id))
     {
         NDRX_LOG(log_debug, "Ignoring unsolicited message!");
         /* Free up data */
@@ -1356,10 +1297,10 @@ private void process_unsolicited_messages(int cd)
  * @param command_id
  * @return 
  */
-public int _tpsend (int cd, char *data, long len, long flags, long *revent,
+expublic int _tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "_tpsend";
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info=NULL;
@@ -1377,13 +1318,13 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     if (NULL==(conv=get_current_connection(cd)))
     {
         _TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d", fn, cd);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* Check are we allowed to receive? */
     if (ATMI_COMMAND_CONVDATA==command_id && conv->flags & TPRECVONLY)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPEPROTO, "%s: Not allowed to receive "
                                     "because flags say: TPRECVONLY!", fn);
         goto out;
@@ -1403,10 +1344,10 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     /* Change the mode in which we run.\
      * We may receive message in async mode.
      */
-    if (SUCCEED!=setup_queue_attrs(&conv->reply_q_attr, conv->reply_q,
+    if (EXSUCCEED!=ndrx_setup_queue_attrs(&conv->reply_q_attr, conv->reply_q,
                                     conv->reply_q_str, flags))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1418,7 +1359,7 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
      */
     if (CONV_IN_CONVERSATION!=conv->status)
     {
-        ret=FAIL;
+        ret=EXFAIL;
 
         /* If it exited with SUCCEED, then it is ERR. */
         if (conv->revent == TPEV_SVCSUCC)
@@ -1434,8 +1375,8 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
                                 "cd %d. Returning event %ld", cd, *revent);
 
         /* close our listening queue */
-        normal_connection_shutdown(conv, FALSE);
-        ret=FAIL;
+        normal_connection_shutdown(conv, EXFALSE);
+        ret=EXFAIL;
         _TPset_error(TPEEVENT); /* Set that we have event for caller! */
         goto out;
     }
@@ -1446,20 +1387,20 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     if (NULL!=data)
     {
         /* fill up the details */
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         descr = &G_buf_descr[buffer_info->type_id];
 
         /* prepare buffer for call */
-        if (SUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
         {
             /* not good - error should be already set */
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -1530,7 +1471,7 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
     }
     
     /* And then we call out the service. */
-    if (SUCCEED!=(ret=generic_qfd_send(conv->reply_q, (char *)call, data_len, flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(conv->reply_q, (char *)call, data_len, flags)))
     {
         int err;
 
@@ -1544,7 +1485,7 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
         }
 
         _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
-        ret=FAIL;
+        ret=EXFAIL;
 
         goto out;
     }
@@ -1554,9 +1495,9 @@ public int _tpsend (int cd, char *data, long len, long flags, long *revent,
         conv->msgseqout++;
     }
 
-    if (conv->handshaked && SUCCEED!=get_ack(conv, flags))
+    if (conv->handshaked && EXSUCCEED!=ndrx_get_ack(conv, flags))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1572,9 +1513,9 @@ out:
  * @param cd
  * @return SUCCEED/FAIL
  */
-public int _tpdiscon (int cd)
+expublic int _tpdiscon (int cd)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     long revent;
     tp_conversation_control_t *conv;
     char fn[]="_tpdiscon";
@@ -1583,21 +1524,21 @@ public int _tpdiscon (int cd)
     if (NULL==(conv=get_current_connection(cd)))
     {
         _TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d", fn, cd);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* Send disconnect command to server */
-    if (FAIL==_tpsend (cd, NULL, 0L, 0L, &revent, ATMI_COMMAND_DISCONN))
+    if (EXFAIL==_tpsend (cd, NULL, 0L, 0L, &revent, ATMI_COMMAND_DISCONN))
     {
         NDRX_LOG(log_debug, "Failed to send disconnect to server - IGNORE!");
     }
 
     /* Close down then connection (We close down this only if we are server!)*/
     
-    if (FAIL==normal_connection_shutdown(conv, TRUE))
+    if (EXFAIL==normal_connection_shutdown(conv, EXTRUE))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

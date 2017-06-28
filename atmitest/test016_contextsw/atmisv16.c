@@ -41,7 +41,7 @@
 #include <string.h>
 
 /* store fist two callers */
-CLIENTID M_cltid[2] = {EOS, EOS};
+CLIENTID M_cltid[2] = {EXEOS, EXEOS};
 
 /**
  * This will check the client id for first & second call,
@@ -50,7 +50,7 @@ CLIENTID M_cltid[2] = {EOS, EOS};
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     static int call_num = 0;
     
@@ -74,13 +74,13 @@ void TESTSVFN (TPSVCINFO *p_svc)
                     call_num, call_num %2, M_cltid[call_num %2].clientdata,
                     p_svc->cltid.clientdata);
             
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
 out:
     call_num++;
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -92,13 +92,13 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;

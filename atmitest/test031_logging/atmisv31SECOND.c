@@ -40,7 +40,7 @@
 
 void TEST31_2ND (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     tplogprintubf(log_debug, "TEST31_2ND got request", p_ub);
@@ -54,7 +54,7 @@ void TEST31_2ND (TPSVCINFO *p_svc)
 out:
     tplogclosereqfile();
     tplog(log_warn, "Returning... (logging from main)");
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -68,12 +68,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TEST31_2ND", TEST31_2ND))
+    if (EXSUCCEED!=tpadvertise("TEST31_2ND", TEST31_2ND))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST31_2ND (first)!");
     }
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

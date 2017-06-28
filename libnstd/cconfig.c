@@ -57,10 +57,10 @@
 /* These should be semaphore mutex globals... */
 ndrx_inicfg_t *G_cconfig = NULL; /* Common-config handler */
 char *G_cctag = NULL;
-int G_tried_to_load = FALSE; /* did we try to load the config? */
+int G_tried_to_load = EXFALSE; /* did we try to load the config? */
 /*---------------------------Statics------------------------------------*/
 
-private char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
+exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
                         NDRX_CONF_SECTION_DEBUG, 
                         NDRX_CONF_SECTION_QUEUE, 
                         NULL};
@@ -73,9 +73,9 @@ MUTEX_LOCKDECL(M_load_lock);
  * @param section
  * @return 
  */
-public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_section_keyval_t **out)
+expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_section_keyval_t **out)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int len;
     char *tmp1 = NULL; /* lookup section  */
     char *tmp2 = NULL; /* token cctag */
@@ -99,14 +99,14 @@ public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_se
         if (NULL==(tmp1 = NDRX_MALLOC(len+1)))
         {
             userlog("%s: tmp1 malloc failed: %s", fn, strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
 
         if (NULL==(tmp2 = NDRX_MALLOC(strlen(G_cctag)+1)))
         {
             userlog("%s: tmp2 malloc failed: %s", fn, strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         strcpy(tmp2, G_cctag);
@@ -120,25 +120,25 @@ public int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_se
             strcat(tmp1, NDRX_INICFG_SUBSECT_SPERATOR_STR);
             strcat(tmp1, token_cctag);
 
-            if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, 
+            if (EXSUCCEED!=ndrx_inicfg_get_subsect(cfg, 
                                 NULL,  /* all config files */
                                 tmp1,  /* global section */
                                 out))
             {
                 userlog("%s: %s", fn, Nstrerror(Nerror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             token_cctag = strtok_r(NULL, NDRX_INICFG_SUBSECT_SPERATOR_STR, &saveptr1);
         }
     }/* Direct lookup if no cctag */
-    else if (SUCCEED!=ndrx_inicfg_get_subsect(cfg, 
+    else if (EXSUCCEED!=ndrx_inicfg_get_subsect(cfg, 
                                 NULL,  /* all config files */
                                 section,  /* global section */
                                 out))
     {
         userlog("%s: %s", fn, Nstrerror(Nerror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -163,7 +163,7 @@ out:
  * @param out
  * @return 
  */
-public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
+expublic int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
 {
     return ndrx_cconfig_get_cf(G_cconfig, section,  out);
 }
@@ -172,11 +172,11 @@ public int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
  * Load config (for Enduro/X only)
  * @return 
  */
-private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
+exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int slot = 0;
-    int have_config = FALSE;
+    int have_config = EXFALSE;
     char fn[] = "ndrx_cconfig_load";
     char *config_resources[]= { NULL, 
                           NULL, 
@@ -189,7 +189,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     if (NULL!=*cfg)
     {
         /* config already loaded... */
-        return SUCCEED;
+        return EXSUCCEED;
     }
     
     ndrx_inicfg_section_keyval_t *keyvals = NULL, *keyvals_iter = NULL, 
@@ -227,7 +227,7 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     if (NULL==(*cfg = ndrx_inicfg_new()))
     {
         userlog("%s: %s", fn, Nstrerror(Nerror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Load the stuff */
@@ -238,30 +238,30 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
 #ifdef CCONFIG_ENABLE_DEBUG
         userlog("have config at slot [%d] [%s]", slot, config_resources[slot]);
 #endif
-        have_config = TRUE;
-        if (SUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
+        have_config = EXTRUE;
+        if (EXSUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
                 (is_internal?(char **)M_sections:NULL)))
         {
             userlog("%s: %s", fn, Nstrerror(Nerror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         slot++;
     }
 
    if (NULL==config_resources[0])
    {
-        have_config = FALSE;
+        have_config = EXFALSE;
         goto out;
    }
     
     if (is_internal)
     {
         /* Get globals & transfer to setenv() */
-        if (SUCCEED!=ndrx_cconfig_get_cf(*cfg, NDRX_CONF_SECTION_GLOBAL, &keyvals))
+        if (EXSUCCEED!=ndrx_cconfig_get_cf(*cfg, NDRX_CONF_SECTION_GLOBAL, &keyvals))
         {
             userlog("%s: %s lookup failed: %s", fn, 
                     NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* Loop over and load the stuff... */
@@ -271,11 +271,11 @@ private int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
             userlog("settings %s=%s", keyvals_iter->key, keyvals_iter->val);
 #endif
 
-            if (SUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, TRUE))
+            if (EXSUCCEED!=setenv(keyvals_iter->key, keyvals_iter->val, EXTRUE))
             {
                 userlog("%s: failed to set %s=%s: %s", fn, 
                     keyvals_iter->key, keyvals_iter->val, strerror(errno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 #ifdef CCONFIG_ENABLE_DEBUG
             userlog("test value %s\n", getenv(keyvals_iter->key));
@@ -290,7 +290,7 @@ out:
         ndrx_keyval_hash_free(keyvals);
         keyvals = NULL;
     }
-    if (SUCCEED!=ret || !have_config)
+    if (EXSUCCEED!=ret || !have_config)
     {
         if (NULL!=*cfg)
         {
@@ -302,9 +302,9 @@ out:
         }
     }
 
-    if (SUCCEED==ret && is_internal)
+    if (EXSUCCEED==ret && is_internal)
     {
-        G_tried_to_load = TRUE;
+        G_tried_to_load = EXTRUE;
     }
 
     return ret;
@@ -313,11 +313,11 @@ out:
  * Internal for Enduro/X - load the config
  * @return 
  */
-public int ndrx_cconfig_load(void)
+expublic int ndrx_cconfig_load(void)
 {
     /* this might be called from debug... */
-    static int first = TRUE;
-    static int first_ret = SUCCEED;
+    static int first = EXTRUE;
+    static int first_ret = EXSUCCEED;
     /* protect against multi-threading */
     MUTEX_LOCK_V(M_load_lock);
     
@@ -328,9 +328,9 @@ public int ndrx_cconfig_load(void)
             G_cctag = getenv(NDRX_CCTAG);
         }
 
-        first_ret = _ndrx_cconfig_load(&G_cconfig, TRUE);
+        first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
         
-        first = FALSE;
+        first = EXFALSE;
     }
     
     MUTEX_UNLOCK_V(M_load_lock);
@@ -344,38 +344,38 @@ public int ndrx_cconfig_load(void)
  * @param cfg double ptr to config object
  * @return 
  */
-public int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg)
+expublic int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg)
 {
     if (NULL==G_cctag)
     {
         G_cctag = getenv(NDRX_CCTAG);
     }
     
-    return _ndrx_cconfig_load(cfg, FALSE);
+    return _ndrx_cconfig_load(cfg, EXFALSE);
 }
 
 /**
  * Reload Enduro/X CConfig
  * @return 
  */
-public int ndrx_cconfig_reload(void)
+expublic int ndrx_cconfig_reload(void)
 {
     char fn[]="ndrx_cconfig_reload";
-    if (SUCCEED!=ndrx_inicfg_reload(G_cconfig, M_sections))
+    if (EXSUCCEED!=ndrx_inicfg_reload(G_cconfig, M_sections))
     {
         userlog("%s: %s lookup to reload: %s", fn, 
                 NDRX_CONF_SECTION_GLOBAL, Nstrerror(Nerror));
-        return FAIL;
+        return EXFAIL;
     }
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
  * Access to to atmi lib env globals
  * @return 
  */
-public ndrx_inicfg_t *ndrx_get_G_cconfig(void)
+expublic ndrx_inicfg_t *ndrx_get_G_cconfig(void)
 {
 #ifdef CCONFIG_ENABLE_DEBUG
     userlog("returning G_cconfig %p", G_cconfig);

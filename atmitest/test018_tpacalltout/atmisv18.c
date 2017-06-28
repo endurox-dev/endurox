@@ -54,7 +54,7 @@
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
    
     /* serve next.. */
@@ -87,18 +87,18 @@ void ECHO(TPSVCINFO *p_svc)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TESTSV", TESTSVFN))
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSVFN))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("ECHO", ECHO))
+    else if (EXSUCCEED!=tpadvertise("ECHO", ECHO))
     {
         NDRX_LOG(log_error, "Failed to initialize ECHO!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;

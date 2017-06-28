@@ -53,14 +53,14 @@
 /*
  * Generic reply provider
  */
-public int simple_command_reply(command_call_t * call,
+expublic int simple_command_reply(command_call_t * call,
                         int status, long flags,
                         mod_param_t *mod_params,
                         void (*p_mod)(command_reply_t *reply, size_t *send_size,
                                         mod_param_t *mod_params),
                         long userfld1, int error_code, char *error_msg)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_reply_t *reply;
     char reply_buf[ATMI_MSG_MAX_SIZE];
     size_t send_size = sizeof(command_reply_t);
@@ -71,7 +71,7 @@ public int simple_command_reply(command_call_t * call,
     if (call->flags & NDRXD_CALL_FLAGS_DEADQ)
     {
         NDRX_LOG(log_error, "Reply queue already dead - no reply back!");
-        return FAIL;
+        return EXFAIL;
     }
 
     /* form up the reply */
@@ -97,7 +97,7 @@ public int simple_command_reply(command_call_t * call,
         reply->error_code = ndrxd_errno;
         /* Append with error message */
         strncpy(reply->error_msg, ndrxd_strerror(reply->error_code), RPLY_ERR_MSG_MAX-1);
-        reply->error_msg[RPLY_ERR_MSG_MAX-1] = EOS;
+        reply->error_msg[RPLY_ERR_MSG_MAX-1] = EXEOS;
     }
 
     /* apply modifications? */
@@ -105,14 +105,14 @@ public int simple_command_reply(command_call_t * call,
         p_mod(reply, &send_size, mod_params);
     
     /* Do reply with ATMI helper function */
-    ret = generic_q_send_2(call->reply_queue, 
-            (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT);
+    ret = ndrx_generic_q_send_2(call->reply_queue, 
+            (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT, 0);
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "Marking reply queue as dead!");
         call->flags|=NDRXD_CALL_FLAGS_DEADQ;
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;

@@ -43,7 +43,7 @@
 
 void TEST32_1ST (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     long l;
     TPCONTEXT_T c;
@@ -53,26 +53,26 @@ void TEST32_1ST (TPSVCINFO *p_svc)
     if (TPMULTICONTEXTS!=tpgetctxt(&c, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get context!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=OBget(&c, p_ub, T_LONG_FLD, 0, (char *)&l, 0L))
+    if (EXSUCCEED!=OBget(&c, p_ub, T_LONG_FLD, 0, (char *)&l, 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD[0]!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_info, "got l = %ld", l);
     
-    if (SUCCEED!=OBchg(&c, p_ub, T_LONG_FLD, 1, (char *)&l, 0L))
+    if (EXSUCCEED!=OBchg(&c, p_ub, T_LONG_FLD, 1, (char *)&l, 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_FLD[1]!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
 
-    Otpreturn(&c, SUCCEED==ret?TPSUCCESS:TPFAIL,
+    Otpreturn(&c, EXSUCCEED==ret?TPSUCCESS:TPFAIL,
             0L,
             (char *)p_ub,
             0L,
@@ -87,12 +87,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
     
-    if (SUCCEED!=tpadvertise("TEST32_1ST", TEST32_1ST))
+    if (EXSUCCEED!=tpadvertise("TEST32_1ST", TEST32_1ST))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize TEST32_1ST (first)!");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

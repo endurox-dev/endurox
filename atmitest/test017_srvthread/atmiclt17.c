@@ -40,7 +40,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -57,21 +57,21 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9217);
     long rsplen;
     int i;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d;
     int j;
     int calls = 0;
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     double cps;
 
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     for (j = 0; j<100; j++)
     {
         UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9217);
 
     double dv = 55.66;
 
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     int call_num = MAX_ASYNC_CALLS *4;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
@@ -83,25 +83,25 @@ int main(int argc, char** argv) {
         calls++;
         dv+=1;
         
-        if (FAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TESTERROR TESTSV failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         /* Verify the data */
-        if (FAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
+        if (EXFAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
         {
             NDRX_LOG(log_error, "TESTERROR Failed to get T_DOUBLE_FLD[%d]", i);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         if (fabs(dv - d) > 0.00001)
         {
             NDRX_LOG(log_error, "TESTERROR %lf!=%lf =>  FAIL", dv, d);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
            tpfree((char *)p_ub);
     }
    
-    cps = (double)(calls)/(double)ndrx_timer_get_delta_sec(&timer);
+    cps = (double)(calls)/(double)ndrx_stopwatch_get_delta_sec(&timer);
     printf("Performance - Nr calls: %d calls per sec: %lf\n", calls, cps);
     
 out:

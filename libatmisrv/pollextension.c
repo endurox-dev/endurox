@@ -61,9 +61,9 @@ pollextension_rec_t * G_pollext=NULL;
  * @param b
  * @return 0 - equal/ -1 - not equal
  */
-private int ext_find_poller_cmp(pollextension_rec_t *a, pollextension_rec_t *b)
+exprivate int ext_find_poller_cmp(pollextension_rec_t *a, pollextension_rec_t *b)
 {
-    return (a->fd==b->fd?SUCCEED:FAIL);
+    return (a->fd==b->fd?EXSUCCEED:EXFAIL);
 }
 
 
@@ -72,7 +72,7 @@ private int ext_find_poller_cmp(pollextension_rec_t *a, pollextension_rec_t *b)
  * @param ptr
  * @return NULL - buffer not found/ptr - buffer found
  */
-public pollextension_rec_t * ext_find_poller(int fd)
+expublic pollextension_rec_t * ext_find_poller(int fd)
 {
     pollextension_rec_t *ret=NULL, eltmp;
 
@@ -89,10 +89,10 @@ public pollextension_rec_t * ext_find_poller(int fd)
  * @param p_pollevent
  * @return 
  */
-public int _tpext_addpollerfd(int fd, uint32_t events, 
+expublic int _tpext_addpollerfd(int fd, uint32_t events, 
         void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1))
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pollextension_rec_t * pollext = NULL;
     pollextension_rec_t * existing = NULL;
     struct ndrx_epoll_event ev;
@@ -100,7 +100,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     if (NULL==G_server_conf.service_array)
     {
         _TPset_error_fmt(TPEPROTO, "Cannot add custom poller at init stage!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -110,7 +110,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     {
         _TPset_error_fmt(TPEMATCH, "Poller for fd %d already exists", fd);
         NDRX_LOG(log_error, "Poller for fd %d already exists!", fd);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -119,7 +119,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     {
         _TPset_error_fmt(TPEOS, "failed to malloc pollextension_rec_t (%d bytes): %s", 
                 sizeof(pollextension_rec_t), strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }    
     
@@ -127,11 +127,11 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
     ev.events = events; /* hmmm what to do? */
     ev.data.fd = fd;
     
-    if (FAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
+    if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             fd, &ev))
     {
         _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -151,7 +151,7 @@ public int _tpext_addpollerfd(int fd, uint32_t events,
 out:
 
     /* Free resources if dead on arrival */
-    if (SUCCEED!=ret && NULL!=pollext)
+    if (EXSUCCEED!=ret && NULL!=pollext)
     {
         NDRX_FREE(pollext);
     }
@@ -166,15 +166,15 @@ out:
  * @param p_pollevent
  * @return 
  */
-public int _tpext_delpollerfd(int fd)
+expublic int _tpext_delpollerfd(int fd)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pollextension_rec_t * existing = NULL;
     
     if (NULL==G_server_conf.service_array)
     {
         _TPset_error_fmt(TPEPROTO, "Cannot remove custom poller at init stage!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -183,17 +183,17 @@ public int _tpext_delpollerfd(int fd)
     if (NULL==existing)
     {
         _TPset_error_fmt(TPEMATCH, "No polling extension found for fd %d", fd);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* OK, stuff found, remove from Epoll */
-    if (FAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
+    if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                         fd, NULL))
     {
         _TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
                 fd, ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -213,9 +213,9 @@ out:
  * @param p_pollevent
  * @return 
  */
-public int _tpext_addperiodcb(int secs, int (*p_periodcb)(void))
+expublic int _tpext_addperiodcb(int secs, int (*p_periodcb)(void))
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     G_server_conf.p_periodcb = p_periodcb;
     G_server_conf.periodcb_sec = secs;
@@ -231,9 +231,9 @@ out:
  * Disable periodical callback.
  * @return 
  */
-public int _tpext_delperiodcb(void)
+expublic int _tpext_delperiodcb(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "Disabling periodical callback, was: 0x%lx",
             G_server_conf.p_periodcb);
@@ -251,9 +251,9 @@ out:
  * @param p_pollevent
  * @return 
  */
-public int _tpext_addb4pollcb(int (*p_b4pollcb)(void))
+expublic int _tpext_addb4pollcb(int (*p_b4pollcb)(void))
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     G_server_conf.p_b4pollcb = p_b4pollcb;
     NDRX_LOG(log_debug, "Registering before poll callback func ptr "
@@ -268,9 +268,9 @@ out:
  * Disable before poll callback.
  * @return 
  */
-public int _tpext_delb4pollcb(void)
+expublic int _tpext_delb4pollcb(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "Disabling before poll callback, was: 0x%lx",
             G_server_conf.p_b4pollcb);

@@ -55,7 +55,7 @@ Ensure(test_Balloc_Bfree)
         /* Put some data into memory so that we can test */
         set_up_dummy_data(p_ub);
         do_dummy_data_test(p_ub);
-        assert_equal(Bfree(p_ub), SUCCEED);
+        assert_equal(Bfree(p_ub), EXSUCCEED);
 
     }
 }
@@ -70,13 +70,13 @@ Ensure(test_Brealloc)
     p_ub=Balloc(1, 30);
     assert_not_equal(p_ub, NULL);
 
-    assert_equal(Badd(p_ub, T_STRING_FLD, BIG_TEST_STRING, 0), FAIL);
+    assert_equal(Badd(p_ub, T_STRING_FLD, BIG_TEST_STRING, 0), EXFAIL);
     assert_equal(Berror, BNOSPACE);
 
     /* Now reallocate, space should be bigger! */
     p_ub=Brealloc(p_ub, 1, strlen(BIG_TEST_STRING)+1+2/* align */);
     assert_not_equal(p_ub, NULL);
-    assert_equal(Badd(p_ub, T_STRING_FLD, BIG_TEST_STRING, 0), SUCCEED);
+    assert_equal(Badd(p_ub, T_STRING_FLD, BIG_TEST_STRING, 0), EXSUCCEED);
     
     /* should not allow to reallocate to 0! */
     assert_equal(Brealloc(p_ub, 1, 0), NULL);
@@ -86,7 +86,7 @@ Ensure(test_Brealloc)
     assert_equal(Brealloc(p_ub, 1, strlen(BIG_TEST_STRING)+1), NULL);
     assert_equal(Berror, BEINVAL);
 
-    assert_equal(SUCCEED, Bfree(p_ub));
+    assert_equal(EXSUCCEED, Bfree(p_ub));
 
 }
 

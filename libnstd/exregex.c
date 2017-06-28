@@ -62,11 +62,11 @@
  * @param expr  Expression to compile
  * @return SUCCEED/FAIL
  */
-public int ndrx_regcomp(regex_t *p_re, char *expr)
+expublic int ndrx_regcomp(regex_t *p_re, char *expr)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
-    if (SUCCEED!=(ret=regcomp(p_re, expr, REG_EXTENDED | REG_NOSUB)))
+    if (EXSUCCEED!=(ret=regcomp(p_re, expr, REG_EXTENDED | REG_NOSUB)))
     {
         char *errmsg;
         int errlen;
@@ -79,7 +79,7 @@ public int ndrx_regcomp(regex_t *p_re, char *expr)
         NDRX_LOG(log_error, "Failed to eventexpr [%s]: %s", expr, errbuf);
 
         NDRX_FREE(errmsg);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -95,7 +95,7 @@ public int ndrx_regcomp(regex_t *p_re, char *expr)
  * @param data data to evaluate
  * @return SUCCEED is matched, any other not matched
  */
-public int ndrx_regexec(regex_t *p_re, char *data)
+expublic int ndrx_regexec(regex_t *p_re, char *data)
 {
     return regexec(p_re, data, (size_t) 0, NULL, 0);
 }
@@ -104,7 +104,7 @@ public int ndrx_regexec(regex_t *p_re, char *data)
  * Free up regexp
  * @param p_re
  */
-public void ndrx_regfree(regex_t *p_re)
+expublic void ndrx_regfree(regex_t *p_re)
 {
     regfree(p_re);
 }

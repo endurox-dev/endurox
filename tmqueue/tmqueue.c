@@ -68,14 +68,14 @@ extern char *optarg;
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public tmqueue_cfg_t G_tmqueue_cfg;
+expublic tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
-private int M_init_ok = FALSE;
+exprivate int M_init_ok = EXFALSE;
 
 /*---------------------------Prototypes---------------------------------*/
-private int tx_tout_check(void);
-private void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
-private void tm_chk_one_free_thread_notif(void *ptr, int *p_finish_off);
+exprivate int tx_tout_check(void);
+exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
+exprivate void tm_chk_one_free_thread_notif(void *ptr, int *p_finish_off);
 
 /**
  * Tmqueue service entry (working thread)
@@ -86,10 +86,10 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     /* Ok we should not handle the commands 
      * TPBEGIN...
      */
-    int ret=SUCCEED;
-    static __thread int first = TRUE;
+    int ret=EXSUCCEED;
+    static __thread int first = EXTRUE;
     thread_server_t *thread_data = (thread_server_t *)ptr;
-    char cmd = EOS;
+    char cmd = EXEOS;
     int cd;
     
     /**************************************************************************/
@@ -100,8 +100,8 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     /* Do the ATMI init */
     if (first)
     {
-        first = FALSE;
-        if (SUCCEED!=tpinit(NULL))
+        first = EXFALSE;
+        if (EXSUCCEED!=tpinit(NULL))
         {
             NDRX_LOG(log_error, "Failed to init worker client");
             userlog("tmqueue: Failed to init worker client");
@@ -110,7 +110,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     }
     
     /* restore context. */
-    if (SUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
+    if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
     {
         userlog("tmqueue: Failed to set context");
         NDRX_LOG(log_error, "Failed to set context");
@@ -134,7 +134,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     if (Bget(p_ub, EX_QCMD, 0, (char *)&cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to read command code!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     NDRX_LOG(log_info, "Got command code: [%c]", cmd);
@@ -144,65 +144,65 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_ENQUEUE:
             
             /* start new tran... */
-            if (SUCCEED!=tmq_enqueue(p_ub))
+            if (EXSUCCEED!=tmq_enqueue(p_ub))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_DEQUEUE:
             
             /* start new tran... */
-            if (SUCCEED!=tmq_dequeue(&p_ub))
+            if (EXSUCCEED!=tmq_dequeue(&p_ub))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_NOTIFY:
             
-            if (SUCCEED!=tex_mq_notify(p_ub))
+            if (EXSUCCEED!=tex_mq_notify(p_ub))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_MQLQ:
             
-            if (SUCCEED!=tmq_mqlq(p_ub, cd))
+            if (EXSUCCEED!=tmq_mqlq(p_ub, cd))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_MQLC:
             
-            if (SUCCEED!=tmq_mqlc(p_ub, cd))
+            if (EXSUCCEED!=tmq_mqlc(p_ub, cd))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_MQLM:
             
-            if (SUCCEED!=tmq_mqlm(p_ub, cd))
+            if (EXSUCCEED!=tmq_mqlm(p_ub, cd))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         case TMQ_CMD_MQRC:
             
-            if (SUCCEED!=tmq_mqrc(p_ub))
+            if (EXSUCCEED!=tmq_mqrc(p_ub))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             break;
         case TMQ_CMD_MQCH:
             
-            if (SUCCEED!=tmq_mqch(p_ub))
+            if (EXSUCCEED!=tmq_mqch(p_ub))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
-            ret=FAIL;
+            ret=EXFAIL;
             break;
     }
     
@@ -210,7 +210,7 @@ out:
 
     ndrx_debug_dump_UBF(log_info, "TMQUEUE return buffer:", p_ub);
 
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -223,26 +223,26 @@ out:
  */
 void TMQUEUE (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
     long size;
     char btype[16];
     char stype[16];
     thread_server_t *thread_data = NDRX_MALLOC(sizeof(thread_server_t));
-    char cmd = EOS;
+    char cmd = EXEOS;
     
     if (NULL==thread_data)
     {
         userlog("Failed to malloc memory - %s!", strerror(errno));
         NDRX_LOG(log_error, "Failed to malloc memory");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0==(size = tptypes (p_svc->data, btype, stype)))
     {
         NDRX_LOG(log_error, "Zero buffer received!");
         userlog("Zero buffer received!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
@@ -253,7 +253,7 @@ void TMQUEUE (TPSVCINFO *p_svc)
     if (NULL==thread_data->buffer)
     {
         NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* copy off the data */
@@ -266,13 +266,13 @@ void TMQUEUE (TPSVCINFO *p_svc)
     if (NULL==(thread_data->context_data = tpsrvgetctxdata()))
     {
         NDRX_LOG(log_error, "Failed to get context data!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (Bget(p_ub, EX_QCMD, 0, (char *)&cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to read command code!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -288,7 +288,7 @@ void TMQUEUE (TPSVCINFO *p_svc)
     }
     
 out:
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         /* serve next.. */ 
         tpcontinue();
@@ -309,7 +309,7 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     signed char c;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
@@ -333,10 +333,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 /* Add the queue */
                 strcpy(G_tmqueue_cfg.qconfig, optarg);
                 NDRX_LOG(log_error, "Loading q config: [%s]", G_tmqueue_cfg.qconfig);
-                if (SUCCEED!=tmq_reload_conf(G_tmqueue_cfg.qconfig))
+                if (EXSUCCEED!=tmq_reload_conf(G_tmqueue_cfg.qconfig))
                 {
                     NDRX_LOG(log_error, "Failed to read config for: [%s]", G_tmqueue_cfg.qconfig);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 break;
             case 's': 
@@ -362,17 +362,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     if (ndrx_get_G_cconfig())
     {
-        if (SUCCEED!=tmq_reload_conf(NULL))
+        if (EXSUCCEED!=tmq_reload_conf(NULL))
         {
             NDRX_LOG(log_error, "Failed to read CCONFIG's @queue section!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
-    if (EOS==G_tmqueue_cfg.qspace[0])
+    if (EXEOS==G_tmqueue_cfg.qspace[0])
     {
         NDRX_LOG(log_error, "qspace not set (-m <qspace name> flag)");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Check the parameters & default them if needed */
@@ -419,15 +419,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* we should open the XA  */
     NDRX_LOG(log_debug, "About to Open XA Entry!");
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Recover the messages from disk */
-    if (SUCCEED!=tmq_load_msgs())
+    if (EXSUCCEED!=tmq_load_msgs())
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*
@@ -443,16 +443,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
      */
     sprintf(svcnm, NDRX_SVC_TMQ, tpgetnodeid(), tpgetsrvid());
     
-    if (SUCCEED!=tpadvertise(svcnm, TMQUEUE))
+    if (EXSUCCEED!=tpadvertise(svcnm, TMQUEUE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    if (SUCCEED!=tpadvertise(G_tmqueue_cfg.qspacesvc, TMQUEUE))
+    if (EXSUCCEED!=tpadvertise(G_tmqueue_cfg.qspacesvc, TMQUEUE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* service request handlers */
@@ -460,14 +460,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.threadpoolsize);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(G_tmqueue_cfg.notifthpool = thpool_init(G_tmqueue_cfg.notifpoolsize)))
     {
         NDRX_LOG(log_error, "Failed to initialize udpate thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.notifpoolsize);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* q forward handlers */
@@ -475,7 +475,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to initialize fwd thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.fwdpoolsize);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Start the background processing */
@@ -494,7 +494,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
-    G_forward_req_shutdown = TRUE;
+    G_forward_req_shutdown = EXTRUE;
     
     if (M_init_ok)
     {

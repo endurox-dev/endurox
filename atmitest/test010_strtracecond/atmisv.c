@@ -50,9 +50,9 @@
 #include <test.fd.h>
 
 
-extern public void (*___G_test_delayed_startup)(void);
+extern expublic void (*___G_test_delayed_startup)(void);
 
-public void G_test_delayed_startup(void)
+expublic void G_test_delayed_startup(void)
 {
     sleep (40);
 }
@@ -62,14 +62,14 @@ public void G_test_delayed_startup(void)
  */
 void SVCBAD (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "SVCBAD got call");
 
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -81,14 +81,14 @@ out:
  */
 void SVCOK (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "SVCBAD got call");
 
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -100,13 +100,13 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int first = TRUE;
+    int first = EXTRUE;
     NDRX_LOG(log_debug, "tpsvrinit called, mode: [%s]", argv[9]);
     
     if (0==strcmp(argv[9], "BAD"))
     {
         
-        if (SUCCEED!=tpadvertise("SVCBAD", SVCBAD))
+        if (EXSUCCEED!=tpadvertise("SVCBAD", SVCBAD))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to initialise SVCBAD!");
         }
@@ -117,13 +117,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     else
     {
-        if (SUCCEED!=tpadvertise("SVCOK", SVCOK))
+        if (EXSUCCEED!=tpadvertise("SVCOK", SVCOK))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to initialise TESTSV!");
         }
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

@@ -57,22 +57,22 @@
  * @param c_struct c struct
  * @return SUCCEED/FAIL
  */
-public int atmi_cvt_c_to_ubf(ubf_c_map_t *map, void *c_struct, UBFH *p_ub, long *rules)
+expublic int atmi_cvt_c_to_ubf(ubf_c_map_t *map, void *c_struct, UBFH *p_ub, long *rules)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     while (BBADFLDID!=map->ftype)
     {
         if (*rules & UBFUTIL_EXPORT)
         {
             char *data_ptr = (char *)(c_struct+map->offset);
-            if (SUCCEED!=CBchg(p_ub, map->fld, map->occ, data_ptr, map->buf_size, 
+            if (EXSUCCEED!=CBchg(p_ub, map->fld, map->occ, data_ptr, map->buf_size, 
                     map->ftype))
             {
                 int be = Berror;
                 NDRX_LOG(log_error, "Failed to install field %d:[%s] to UBF buffer: %s", 
                         Bfname(map->fld), Bstrerror(be));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         rules++;
@@ -89,9 +89,9 @@ out:
  * @param c_struct c struct
  * @return SUCCEED/FAIL
  */
-public int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, long *rules)
+expublic int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, long *rules)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     BFLDLEN len;
     while (BBADFLDID!=map->fld)
     {
@@ -99,7 +99,7 @@ public int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, long 
         {
             char *data_ptr = (char *)(c_struct+map->offset);
             len = map->buf_size; /* have the buffer size */
-            if (SUCCEED!=CBget(p_ub, map->fld, map->occ, data_ptr, &len, map->ftype))
+            if (EXSUCCEED!=CBget(p_ub, map->fld, map->occ, data_ptr, &len, map->ftype))
             {
                 int be = Berror;
                 NDRX_LOG(log_error, "Failed to get field %d:[%s] from UBF buffer: %s", 
@@ -111,7 +111,7 @@ public int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, long 
                 }
                 else
                 {
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
         }

@@ -56,11 +56,11 @@
  * @param svc
  * @return 
  */
-public int readv_request(int srvid, char *svc)
+expublic int readv_request(int srvid, char *svc)
 {
     pm_node_t * p_pm;
     command_dynadvertise_t call_srv;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     memset(&call_srv, 0, sizeof(call_srv));
     
@@ -75,13 +75,13 @@ public int readv_request(int srvid, char *svc)
         (command_call_t *)&call_srv, sizeof(call_srv),
         G_command_state.listenq_str,
         G_command_state.listenq,
-        (mqd_t)FAIL,
+        (mqd_t)EXFAIL,
         get_srv_admin_q(p_pm),
         0, NULL,
         NULL,
         NULL,
         NULL,
-        FALSE);
+        EXFALSE);
     
     return ret;
 }
@@ -92,9 +92,9 @@ public int readv_request(int srvid, char *svc)
  * @param args
  * @return 
  */
-public int cmd_xadreadv (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_xadreadv (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_dynadvertise_t *readv_xa = (command_dynadvertise_t *)call;
     command_dynadvertise_t call_srv;
     pm_node_t * p_pm;
@@ -105,7 +105,7 @@ public int cmd_xadreadv (command_call_t * call, char *data, size_t len, int cont
     {
         NDRXD_set_error_fmt(NDRXD_EINVPARAM, "Invalid server id %d",
                                     readv_xa->srvid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -115,7 +115,7 @@ public int cmd_xadreadv (command_call_t * call, char *data, size_t len, int cont
     {
         NDRXD_set_error_fmt(NDRXD_EINVPARAM, "Server with ID %d not found", 
                                     readv_xa->srvid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /*Fill some details for readvertise*/
@@ -127,21 +127,21 @@ public int cmd_xadreadv (command_call_t * call, char *data, size_t len, int cont
             (command_call_t *)&call_srv, sizeof(call_srv),
             G_command_state.listenq_str,
             G_command_state.listenq,
-            (mqd_t)FAIL,
+            (mqd_t)EXFAIL,
             get_srv_admin_q(p_pm),
             0, NULL,
             NULL,
             NULL,
             NULL,
-            FALSE);
+            EXFALSE);
 out:
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     NDRX_LOG(log_warn, "cmd_readv_xadmin returns with status %d", ret);
     
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 

@@ -41,11 +41,11 @@ extern "C" {
 #include <atmi.h>
 #include <atmi_int.h>
 #include <ndrxdcmn.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define PARSE_SECTION_FAIL         FAIL
+#define PARSE_SECTION_FAIL         EXFAIL
 #define PARSE_SECTION_CONFIG      0
 #define PARSE_SECTION_SERVERS     1
 
@@ -68,6 +68,7 @@ typedef struct conf_server_node conf_server_node_t;
 struct conf_server_node
 {
     char binary_name[MAXTIDENT+1]; /* Name of the binary */
+    char fullpath[PATH_MAX+1]; /* full path to executable, optional */
     int srvid;
     int min;
     int max;
@@ -131,7 +132,7 @@ struct pm_node
     int exec_seq_try;       /* Sequental start try           */
     long rsptimer;           /* Sanity cycle counter for (start/ping/stop)     */
     long pingtimer;    /* Timer which counts ping intervals              */
-    ndrx_timer_t pingroundtrip; /* Ping  roundtrip tipe         */
+    ndrx_stopwatch_t pingroundtrip; /* Ping  roundtrip tipe         */
     int pingseq;            /* Last ping sequence sent       */
             
     int num_term_sigs;      /* Number of times to send term sig, before -9 */
@@ -237,7 +238,7 @@ typedef struct
     /* NDRXD restart: */
     short restarting;  /* In restart mode, after restart_to_check expired, 
                         * process becomes in normal mode */
-    ndrx_timer_t time_from_restart; /* Time counter, how long we are restarting/learning */
+    ndrx_stopwatch_t time_from_restart; /* Time counter, how long we are restarting/learning */
 } sys_config_t;
 
 /**

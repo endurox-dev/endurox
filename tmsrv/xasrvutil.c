@@ -65,7 +65,7 @@ MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
  * Generate new transaction id
  * @param xid
  */
-public void atmi_xa_new_xid(XID *xid)
+expublic void atmi_xa_new_xid(XID *xid)
 {
     exuuid_t uuid_val;
     unsigned char rmid =  (unsigned char)G_atmi_env.xa_rmid;

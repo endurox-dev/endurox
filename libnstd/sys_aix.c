@@ -70,7 +70,7 @@
  * Return list of message queues (actually it is list of named pipes
  * as work around for missing posix queue listing functions.
  */
-public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+expublic string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
     return ndrx_sys_folder_list(qpath, return_status);
 }
@@ -79,20 +79,20 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
  * Get by process name by getprocss() aix call
  * @return 
  */
-public char * ndrx_sys_get_proc_name_getprocs(void)
+expublic char * ndrx_sys_get_proc_name_getprocs(void)
 {
     static char out[PATH_MAX] = "unknown";
     struct procentry64 pr;
 /*    struct fdsinfo64 f;*/
     char *p;
     int l;
-    static int first = TRUE;
+    static int first = EXTRUE;
     
     if (first)
     {
         pid_t self = getpid();
         
-        if (FAIL!=getprocs64(&pr, (int)sizeof(pr), NULL, 0, &self, 1))
+        if (EXFAIL!=getprocs64(&pr, (int)sizeof(pr), NULL, 0, &self, 1))
         {
             p = pr.pi_comm;
             
@@ -100,17 +100,17 @@ public char * ndrx_sys_get_proc_name_getprocs(void)
             
             if (l>0 && '\n'==p[l-1])
             {
-                p[l-1] = EOS;
+                p[l-1] = EXEOS;
                 l--;
             }
             
             if (l>0 && '\r'==p[l-1])
             {
-                p[l-1] = EOS;
+                p[l-1] = EXEOS;
                 l--;
             }
 
-            if (EOS!=*p)
+            if (EXEOS!=*p)
             {
                 strcpy(out, p);
             }
@@ -120,7 +120,7 @@ public char * ndrx_sys_get_proc_name_getprocs(void)
             NDRX_LOG(log_error, "getprocs64 failed: %s",
                 strerror(errno));
         }
-        first = FALSE;
+        first = EXFALSE;
     }    
     return out;
 }

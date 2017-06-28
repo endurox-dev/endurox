@@ -80,6 +80,8 @@ add_library (atmi SHARED
                 oubf.c
                 ondebug.c
                 onerror.c
+                tpnotify.c
+                identifiers.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

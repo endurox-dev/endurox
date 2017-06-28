@@ -34,16 +34,17 @@ extern "C" {
 #define TPSENDONLY	0x00000800
 #define TPRECVONLY	0x00001000
 #define TPACK		0x00002000
-#define TPTRANSUSPEND	0x00040000	/* Suspend current transaction */
+#define TPTRANSUSPEND	0x00040000	/* Suspend current transaction          */
 #define TPSOFTTIMEOUT	0x00080000	/* Soft timout condition -> ret TPETIME */
-#define TPSOFTENOENT    0x00100000	/* Simulate that service is not found */
-#define TPNOAUTBUF      0x00200000	/* Don't restore autbuf in srv context */
-#define RESERVED_BIT1   0x00400000  /* RFU, tux compatiblity */
+#define TPSOFTENOENT    0x00100000	/* Simulate that service is not found   */
+#define TPNOAUTBUF      0x00200000	/* Don't restore autbuf in srv context  */
+#define RESERVED_BIT1   0x00400000      /* RFU, tux compatiblity */
+#define TPREGEXMATCH    0x00800000      /* Use regular expressoins for match    */
 
-#define TPEVSERVICE	    0x00000001
+#define TPEVSERVICE	0x00000001
 #define TPEVQUEUE       0x00000002 /* RFU */
 #define TPEVTRAN        0x00000004 /* RFU */
-#define TPEVPERSIST	    0x00000008
+#define TPEVPERSIST	0x00000008
 
 #define NDRX_XID_SERIAL_BUFSIZE     48 /* Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /* Number of resource managers supported */
@@ -66,14 +67,17 @@ extern "C" {
 /*
  * Posix Queue processing path prefixes
  */
-#define NDRX_FMT_SEP      ','                   /* Seperator in qnames */
-#define NDRX_FMT_SEP_STR  ","                   /* Seperator in qnames */
+#define NDRX_FMT_SEP      ','                   /* Seperator in qnames      */
+#define NDRX_FMT_SEP_STR  ","                   /* Seperator in qnames      */
 #define NDRX_NDRXD        "%s,sys,bg,ndrxd"
+#define NDRX_QTYPE_NDRXD    1                   /* ndrxd backend q          */
 #define NDRX_NDRXCLT      "%s,sys,bg,xadmin,%d"
-#define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin," /* Prefix for sanity check */
+#define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin," /* Prefix for sanity check    */
 
 
 #define NDRX_SVC_QFMT     "%s,svc,%s"            /* Q format in epoll mode (one q multiple servers) */
+#define NDRX_SVC_QFMT_PFX "%s,svc,"              /* Service Q prefix */
+#define NDRX_QTYPE_SVC      2                    /* Service Q */
 #define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%hd"       /* Q format in poll mode (use server id) */
 #define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
 
@@ -81,6 +85,8 @@ extern "C" {
 #define NDRX_SVC_BRIDGE_STATLEN   9              /* Static len of bridge name */
 #define NDRX_SVC_BRIDGE   "@TPBRIDGE%03d"        /* Bridge service format */
 #define NDRX_SVC_QBRDIGE  "%s,svc,@TPBRIDGE%03d" /* Bridge service Q format */
+    
+#define NDRX_SVC_TPBROAD   "@TPBRDCST%03ld"     /* notify/broadcast remote dispatcher */
 
 #define NDRX_SVC_RM       "@TM-%d"              /* resource_id */
 #define NDRX_SVC_TM       "@TM-%d-%d"           /* Node_idresource_id */
@@ -88,20 +94,29 @@ extern "C" {
     
 #define NDRX_SVC_TMQ       "@TMQ-%ld-%d"        /* Node_id,srvid */
 /* QSPACE service format */
-#define NDRX_SVC_QSPACE    "@QSP%s"            /* Q space format string (for service) */
+#define NDRX_SVC_QSPACE    "@QSP%s"             /* Q space format string (for service) */
     
 #define NDRX_SVC_CPM      "@CPMSVC"             /* Client Process Monitor svc */
     
-#define NDRX_SVC_CCONF      "@CCONF"             /* Common-config server */
+#define NDRX_SVC_CCONF      "@CCONF"            /* Common-config server */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin," /* Prefix for sanity check. */
-
-#define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d"
+#define NDRX_QTYPE_SRVADM   3                   /* Server Admin Q */
+    
+#define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d" /* qpfx, procname, serverid, pid */
 #define NDRX_SVR_QREPLY_PFX "%s,srv,reply," /* Prefix for sanity check. */
+#define NDRX_QTYPE_SRVRPLY  4                   /* Server Reply Q */
 
 /* this may end up in "112233-" if client is not properly initialised */
-#define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld"
+/* NOTE: Myid contains also node_id, the client Q does not contain it
+ * as it is local
+ */
+#define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld" /* pfx, name, pid, context id*/
+/* client rply q parse  */
+#define NDRX_CLT_QREPLY_PARSE "%s clt reply %s %d %ld" /* pfx, name, pid, context_id*/
+    
 #define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /* Prefix for sanity check */
+#define NDRX_QTYPE_CLTRPLY  5                   /* Client Reply Q */
 #define NDRX_CLT_QREPLY_CHK   ",clt,reply," /* (verify that it is reply q) */
 
 #define NDRX_ADMIN_SVC     "%s-%d"
@@ -109,8 +124,10 @@ extern "C" {
 /* This queue basically links two process IDs for conversation */
 #define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d" /* Conversation initiator */
 #define NDRX_CONV_INITATOR_Q_PFX "%s,cnv,c," /* Prefix for sanity check. */
+#define NDRX_QTYPE_CONVINIT 6                   /* Conv initiator Q */
 #define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /* Conversation server Q */
 #define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /* Prefix for sanity check. */
+#define NDRX_QTYPE_CONVSRVQ 7                   /* Conv server Q */
 
 #define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d" /* binary name, server id, pid, contextid, nodeid */
 #define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d" /* binary name, server id, pid, contextid, nodeid for parse */
@@ -169,6 +186,7 @@ extern "C" {
 #define CONF_NDRX_XA_CLOSE_STR   "NDRX_XA_CLOSE_STR"/* XA Close string          */
 #define CONF_NDRX_XA_DRIVERLIB   "NDRX_XA_DRIVERLIB"/* Enduro RM Library        */
 #define CONF_NDRX_XA_RMLIB       "NDRX_XA_RMLIB"    /* RM library               */
+#define CONF_NDRX_XA_FLAGS       "NDRX_XA_FLAGS"    /* Enduro/X Specific flags  */
 #define CONF_NDRX_XA_LAZY_INIT   "NDRX_XA_LAZY_INIT"/* 0 - load libs on 
                                                       init, 1 - load at use     */
 #define CONF_NDRX_NRSEMS         "NDRX_NRSEMS"      /* Number of semaphores used for
@@ -228,10 +246,10 @@ extern "C" {
 
     
 /* Tpinit flags (RFU) */
-#define TPU_MASK	0x00000007	
-#define TPU_SIG		0x00000001	
-#define TPU_DIP		0x00000002	
-#define TPU_IGN		0x00000004	
+#define TPU_MASK	0x00000007
+#define TPU_SIG		0x00000001	/* RFU */
+#define TPU_DIP		0x00000002
+#define TPU_IGN		0x00000004  /* Ignore unsol messages */
     
 /* for compatiblity with Tuxedo */
 #define TPSA_FASTPATH	0x00000008	
@@ -413,7 +431,7 @@ extern "C" {
 /* client/caller identifier */
 struct clientid_t
 {
-    char    clientdata[NDRX_MAX_ID_SIZE];          
+    char    clientdata[NDRX_MAX_ID_SIZE];
 };
 typedef struct clientid_t CLIENTID;
 
@@ -558,9 +576,9 @@ extern NDRX_API int * _exget_tperrno_addr (void);
 extern NDRX_API long * _exget_tpurcode_addr (void);
 extern NDRX_API int tpinit(TPINIT *tpinfo);
 extern NDRX_API int tpchkauth(void);
-extern NDRX_API void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) 
-        (char *data, long len, long flags);
+extern NDRX_API void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags);
 extern NDRX_API int tpnotify(CLIENTID *clientid, char *data, long len, long flags);
+extern NDRX_API int tpbroadcast(char *lmid, char *usrname, char *cltname, char *data,  long len, long flags);
 extern NDRX_API int tpchkunsol(void);
 
 /* in external application: */

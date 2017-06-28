@@ -41,7 +41,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
     int i=0;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -72,29 +72,29 @@ int main(int argc, char** argv) {
     NDRX_LOG(log_debug, "Testing Bug #105");
     /***************************************************************************/
 
-    if (SUCCEED!=tpbegin(5, 0))
+    if (EXSUCCEED!=tpbegin(5, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD COMMIT", 0L);
 
     /* Call Svc1 */
-    if (FAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
+    if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
     {
         NDRX_LOG(log_error, "TX3SVC failed: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (SUCCEED==tpcommit(0))
+    if (EXSUCCEED==tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
                                             ret, tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         NDRX_LOG(log_error, "TESTERROR: Expected TPETIME, Got tpcommit()==%d fail: %d:[%s]", 
                                             ret, tperrno, tpstrerror(tperrno));
         
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
    
@@ -111,19 +111,19 @@ int main(int argc, char** argv) {
     NDRX_LOG(log_debug, "Done...");
     /***************************************************************************/
     
-    if (SUCCEED!=tpclose())
+    if (EXSUCCEED!=tpclose())
     {
         NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
 out:
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         /* atleast try... */
-        if (SUCCEED!=tpabort(0))
+        if (EXSUCCEED!=tpabort(0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpabort() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));

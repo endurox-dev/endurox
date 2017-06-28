@@ -51,7 +51,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-private event_entry_t *M_subscribers=NULL;
+exprivate event_entry_t *M_subscribers=NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -61,7 +61,7 @@ private event_entry_t *M_subscribers=NULL;
  * @param my_id
  * @return
  */
-private long remove_by_my_id (long subscription, char *my_id)
+exprivate long remove_by_my_id (long subscription, char *my_id)
 {
     event_entry_t *elt, *tmp;
     long deleted  = 0;
@@ -98,7 +98,7 @@ private long remove_by_my_id (long subscription, char *my_id)
  * @param regex entry
  * @return SUCCEED/FAIL
  */
-private int compile_eventexpr(event_entry_t *p_ee)
+exprivate int compile_eventexpr(event_entry_t *p_ee)
 {
     return ndrx_regcomp(&(p_ee->re), p_ee->eventexpr);
 }
@@ -108,9 +108,9 @@ private int compile_eventexpr(event_entry_t *p_ee)
  * @param p_svc
  * @param dispatch_over_bridges
  */
-private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
+exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
 {
-       int ret=SUCCEED;
+       int ret=EXSUCCEED;
     char *data = p_svc->data;
     event_entry_t *elt, *tmp;
     long numdisp = 0;
@@ -151,20 +151,20 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                                 elt->subscriberNr, elt->eventexpr);
 
         /* Check do we have event match? */
-        if (SUCCEED==regexec(&elt->re, last_call->extradata, (size_t) 0, NULL, 0))
+        if (EXSUCCEED==regexec(&elt->re, last_call->extradata, (size_t) 0, NULL, 0))
         {
             NDRX_LOG(log_debug, "Event matched");
             
             /* Check do we have special rules for this? */
-            if (EOS!=elt->filter[0])
+            if (EXEOS!=elt->filter[0])
             {
                 NDRX_LOG(log_debug, "Using filter: [%s]", elt->filter);
             }
 
             /* If filter matched, or no filter, then call the service */
-            if ((EOS!=elt->filter[0] && 
+            if ((EXEOS!=elt->filter[0] && 
                        descr->pf_test(descr, p_svc->data, p_svc->len, elt->filter)) ||
-                EOS==elt->filter[0])
+                EXEOS==elt->filter[0])
             {
                 NDRX_LOG(log_debug, "Dispatching event");
                 if (elt->flags & TPEVSERVICE)
@@ -174,8 +174,8 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                                                     elt->name1, elt->my_id);
 
                     /* todo: Call in async: Do we need to pass there original flags? */
-                    if (FAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
-                                    elt->flags | TPNOREPLY, elt->my_id, FAIL, TRUE)))
+                    if (EXFAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
+                                    elt->flags | TPNOREPLY, elt->my_id, EXFAIL, EXTRUE)))
                     {
                         NDRX_LOG(log_error, "Failed to call service [%s/%s]: %s"
                                 " - unsubscribing %ld",
@@ -209,11 +209,11 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     
     if (dispatch_over_bridges)
     {
-        char nodes[CONF_NDRX_NODEID_COUNT+1] = {EOS};
+        char nodes[CONF_NDRX_NODEID_COUNT+1] = {EXEOS};
         int i = 0;
         long olen;
         NDRX_LOG(log_debug, "Dispatching events over the bridges...!");
-        if (SUCCEED==ndrx_shm_birdge_getnodesconnected(nodes))
+        if (EXSUCCEED==ndrx_shm_birdge_getnodesconnected(nodes))
         {
             while (nodes[i])
             {
@@ -229,7 +229,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     }
 
                     tmp_data = tpalloc(buf_type, 
-                            (buf_subtype[0]==EOS?NULL:buf_subtype), buf_len);
+                            (buf_subtype[0]==EXEOS?NULL:buf_subtype), buf_len);
                 }
                 else
                 {
@@ -244,7 +244,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     break;
                 }
                 
-                if (FAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
+                if (EXFAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
                         0, last_call->extradata, nodeid, TPCALL_BRCALL)))
                 {
@@ -269,7 +269,7 @@ private void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     }
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 numdisp,
                 NULL,
                 0L,
@@ -288,7 +288,7 @@ out:
  */
 void TPEVDOPOST(TPSVCINFO *p_svc)
 {
-    process_postage(p_svc, FALSE);
+    process_postage(p_svc, EXFALSE);
 }
 
 /**
@@ -302,7 +302,7 @@ void TPEVDOPOST(TPSVCINFO *p_svc)
 void TPEVPOST (TPSVCINFO *p_svc)
 {
     /* We dispatch calls over the all bridges! */
-    process_postage(p_svc, TRUE);
+    process_postage(p_svc, EXTRUE);
 }
 
 /**
@@ -314,7 +314,7 @@ void TPEVPOST (TPSVCINFO *p_svc)
  */
 void TPEVUNSUBS (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     long subscriberNr = 0;
     long deleted = 0;
@@ -324,11 +324,11 @@ void TPEVUNSUBS (TPSVCINFO *p_svc)
 
 
     /* This field must be here! */
-    if (FAIL==CBget(p_ub, EV_SUBSNR, 0, (char *)&subscriberNr, NULL, BFLD_LONG))
+    if (EXFAIL==CBget(p_ub, EV_SUBSNR, 0, (char *)&subscriberNr, NULL, BFLD_LONG))
     {
         NDRX_LOG(log_error, "Failed to get EV_SUBSNR/subscriberNr: %s",
                                         Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "About to remove subscription: %ld, my_id: %s",
@@ -337,7 +337,7 @@ void TPEVUNSUBS (TPSVCINFO *p_svc)
    deleted=remove_by_my_id(subscriberNr, ndrx_get_G_last_call()->my_id);
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 deleted,
                 NULL,
                 0L,
@@ -357,7 +357,7 @@ out:
  */
 void TPEVSUBS (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     event_entry_t *p_ee;
     BFLDLEN len;
@@ -370,7 +370,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to allocate %d bytes: %s!",
                                         sizeof(event_entry_t), strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -378,31 +378,31 @@ void TPEVSUBS (TPSVCINFO *p_svc)
 
     strcpy(p_ee->my_id, ndrx_get_G_last_call()->my_id);
     len=sizeof(p_ee->eventexpr);
-    if (Bpres(p_ub, EV_MASK, 0) && FAIL==Bget(p_ub, EV_MASK, 0,
+    if (Bpres(p_ub, EV_MASK, 0) && EXFAIL==Bget(p_ub, EV_MASK, 0,
                             p_ee->eventexpr, &len))
     {
         NDRX_LOG(log_error, "Failed to get EV_MASK/eventexpr: %s",
                                         Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     len=sizeof(p_ee->filter);
-    if (Bpres(p_ub, EV_FILTER, 0) && FAIL==Bget(p_ub, EV_FILTER, 0,
+    if (Bpres(p_ub, EV_FILTER, 0) && EXFAIL==Bget(p_ub, EV_FILTER, 0,
                             p_ee->filter, &len))
     {
         NDRX_LOG(log_error, "Failed to get EV_FILTER/filter: %s",
                                         Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     /* This field must be here! */
-    if (FAIL==CBget(p_ub, EV_FLAGS, 0, (char *)&p_ee->flags, NULL, BFLD_LONG))
+    if (EXFAIL==CBget(p_ub, EV_FLAGS, 0, (char *)&p_ee->flags, NULL, BFLD_LONG))
     {
         NDRX_LOG(log_error, "Failed to get EV_FLAGS/flags: %s",
                                         Bstrerror(Berror));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -410,11 +410,11 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     if (p_ee->flags & TPEVSERVICE)
     {
         len=sizeof(p_ee->name1);
-        if (SUCCEED!=CBget(p_ub, EV_SRVCNM, 0, p_ee->name1, &len, BFLD_STRING))
+        if (EXSUCCEED!=CBget(p_ub, EV_SRVCNM, 0, p_ee->name1, &len, BFLD_STRING))
         {
             NDRX_LOG(log_error, "Failed to get EV_SRVCNM/name1: %s",
                                             Bstrerror(Berror));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -422,14 +422,14 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "tpsubscribe() unsupported flags: %ld",
                                         p_ee->flags);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* Compile the regular expression */
-    if (SUCCEED!=compile_eventexpr(p_ee))
+    if (EXSUCCEED!=compile_eventexpr(p_ee))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     p_ee->subscriberNr=subscriberNr; /* start with 0 */
@@ -444,7 +444,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     DL_APPEND(M_subscribers, p_ee);
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 p_ee->subscriberNr,
                 NULL,
                 0L,
@@ -456,35 +456,35 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVSUBS, TPEVSUBS))
+    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVSUBS, TPEVSUBS))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVSUBS!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (SUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, TPEVUNSUBS))
+    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, TPEVUNSUBS))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVUNSUBS!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
-    if (SUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVPOST, TPEVPOST))
+    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVPOST, TPEVPOST))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVPOST!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    if (SUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVDOPOST, TPEVDOPOST))
+    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVDOPOST, TPEVDOPOST))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVDOPOST!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 

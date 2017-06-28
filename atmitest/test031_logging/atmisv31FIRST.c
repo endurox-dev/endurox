@@ -40,13 +40,13 @@
 
 void TEST31_1ST (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
-    if (SUCCEED!=tplogsetreqfile((char **)&p_ub, NULL, NULL))
+    if (EXSUCCEED!=tplogsetreqfile((char **)&p_ub, NULL, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set request file! :%s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Just print the buffer */
@@ -57,7 +57,7 @@ void TEST31_1ST (TPSVCINFO *p_svc)
 
 out:
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         tplog(log_warn, "Request ok, forwarding to 2ND service");
         tplogclosereqfile();
@@ -84,7 +84,7 @@ out:
  */
 void SETREQFILE(TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     char filename[256];
     static int req_no = 0;
@@ -98,14 +98,14 @@ void SETREQFILE(TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "TESTERROR: realloc failed: %s", 
                 filename, tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tplogsetreqfile((char **)&p_ub, filename, NULL))
+    if (EXSUCCEED!=tplogsetreqfile((char **)&p_ub, filename, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set request file to [%s]:%s", 
                 filename, tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     tplog(log_debug, "Hello from SETREQFILE!");
@@ -115,7 +115,7 @@ void SETREQFILE(TPSVCINFO *p_svc)
     tplog(log_debug, "SETREQFILE closed req file - logging in main");
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -130,23 +130,23 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* configure main logger */
-    if (SUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 
-            FAIL, "file=./1sv.log tp=5 ndrx=5 ubf=0", "1SRV", NULL))
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 
+            EXFAIL, "file=./1sv.log tp=5 ndrx=5 ubf=0", "1SRV", NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure logger!");
     }
 
-    if (SUCCEED!=tpadvertise("TEST31_1ST", TEST31_1ST))
+    if (EXSUCCEED!=tpadvertise("TEST31_1ST", TEST31_1ST))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize TEST31_1ST (first)!");
     }
-    else if (SUCCEED!=tpadvertise("SETREQFILE", SETREQFILE))
+    else if (EXSUCCEED!=tpadvertise("SETREQFILE", SETREQFILE))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize SETREQFILE!");
     }
     
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

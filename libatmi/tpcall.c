@@ -42,6 +42,7 @@
 #include <fcntl.h>
 
 #include <atmi.h>
+#include <userlog.h>
 #include <ndebug.h>
 #include <tperror.h>
 #include <typed_buf.h>
@@ -49,6 +50,7 @@
 
 #include "../libatmisrv/srv_int.h"
 #include "ndrxd.h"
+#include "utlist.h"
 #include <thlock.h>
 #include <xa_cmn.h>
 #include <atmi_shm.h>
@@ -62,14 +64,14 @@ EX_SPIN_LOCKDECL(M_cd_lock);
 EX_SPIN_LOCKDECL(M_callseq_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private void unlock_call_descriptor(int cd, short status);
+exprivate void unlock_call_descriptor(int cd, short status);
 
 /**
  * Dump to the log Command call buffer
  * @param lev Debug level
  * @param call call struct addr
  */
-public void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
+expublic void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
 {
     ndrx_debug_t * dbg = debug_get_ndrx_ptr();
     if (dbg->level>=lev)
@@ -110,9 +112,9 @@ public void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
  * @param cd
  * @return 
  */
-private int call_check_tout(int cd)
+exprivate int call_check_tout(int cd)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     time_t t;
     int t_diff;
     /* ATMI_TLS_ENTRY; - already called by parent processes - already called by parent processes  */
@@ -136,7 +138,7 @@ private int call_check_tout(int cd)
         /* mark cd as free (will mark as cancelled) */
         unlock_call_descriptor(cd, CALL_CANCELED);
         
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 out:
@@ -146,7 +148,7 @@ out:
 /**
  * Function for extra debug.
  */
-private void call_dump_descriptors(void)
+exprivate void call_dump_descriptors(void)
 {
     int i;
     time_t t = time(NULL);
@@ -183,13 +185,13 @@ private void call_dump_descriptors(void)
  * @param cd_out - return failed cd...
  * @return 
  */
-private int call_scan_tout(int cd, int *cd_out)
+exprivate int call_scan_tout(int cd, int *cd_out)
 {
     /* for performance reasons shouldn't we keep in HASH list 
      * the list of open call descriptors, iterate them and check for
      * time-out condition
      */
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int i;
     long delta = 0;
     /* ATMI_TLS_ENTRY; - already called by parent*/
@@ -201,17 +203,17 @@ private int call_scan_tout(int cd, int *cd_out)
     
     /* Check that it is time for scan... */
     if (G_atmi_tls->tpcall_first || 
-            (delta=ndrx_timer_get_delta(&G_atmi_tls->tpcall_start)) >=1000 || 
+            (delta=ndrx_stopwatch_get_delta(&G_atmi_tls->tpcall_start)) >=1000 || 
                 /* incase of overflow: */
                 delta < 0)
     {
         /* we should scan the stuff. */
         if (0 < cd)
         {
-            if (SUCCEED!=call_check_tout(cd))
+            if (EXSUCCEED!=call_check_tout(cd))
             {
                 *cd_out = cd;
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -219,17 +221,17 @@ private int call_scan_tout(int cd, int *cd_out)
         {
             for (i=1; i<MAX_ASYNC_CALLS; i++)
             {
-                if (SUCCEED!=call_check_tout(i))
+                if (EXSUCCEED!=call_check_tout(i))
                 {
                     *cd_out = i;
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
         }
         /* if all ok, schedule after 1 sec. */
-        ndrx_timer_reset(&G_atmi_tls->tpcall_start);
-        G_atmi_tls->tpcall_first = FALSE; /* only when all ok... */
+        ndrx_stopwatch_reset(&G_atmi_tls->tpcall_start);
+        G_atmi_tls->tpcall_first = EXFALSE; /* only when all ok... */
     } /* if check time... */
     
 out:
@@ -243,7 +245,7 @@ out:
  * @param p_callseq ptr to return next number into
  * @return 
  */
-public unsigned short ndrx_get_next_callseq_shared(void)
+expublic unsigned short ndrx_get_next_callseq_shared(void)
 {
     static volatile unsigned short shared_callseq=0;
     
@@ -258,11 +260,11 @@ public unsigned short ndrx_get_next_callseq_shared(void)
  * Returns free call descriptro
  * @return >0 (ok), -1 = FAIL
  */
-private int get_call_descriptor_and_lock(unsigned short *p_callseq,
+exprivate int get_call_descriptor_and_lock(unsigned short *p_callseq,
         time_t timestamp, long flags)
 {
     int start_cd = G_atmi_tls->tpcall_get_cd; /* mark where we began */
-    int ret = FAIL;
+    int ret = EXFAIL;
     unsigned short callseq=0;
     
     /* ATMI_TLS_ENTRY; - already got from caller */
@@ -290,7 +292,7 @@ private int get_call_descriptor_and_lock(unsigned short *p_callseq,
     {
         NDRX_LOG(log_debug, "All call descriptors have been taken - FAIL!");
         /* MUTEX_UNLOCK_V(M_cd_lock); */
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -315,9 +317,9 @@ private int get_call_descriptor_and_lock(unsigned short *p_callseq,
         {
             NDRX_LOG(log_debug, "Registering cd=%d under global "
                     "transaction!", ret);
-            if (SUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds), ret))
+            if (EXSUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds), ret))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     }
@@ -332,7 +334,7 @@ out:
  * @param cd
  * @return
  */
-private void unlock_call_descriptor(int cd, short status)
+exprivate void unlock_call_descriptor(int cd, short status)
 {
     /* ATMI_TLS_ENTRY; - already done by caller */
     
@@ -352,7 +354,7 @@ private void unlock_call_descriptor(int cd, short status)
  * Cancel the call descriptor if was expected
  * @param call
  */
-public void cancel_if_expected(tp_command_call_t *call)
+expublic void cancel_if_expected(tp_command_call_t *call)
 {
     ATMI_TLS_ENTRY;
     
@@ -371,7 +373,7 @@ public void cancel_if_expected(tp_command_call_t *call)
     }
 }
 /**
- * Do asynchronus call.
+ * Do asynchronous call.
  * If it is evpost (is_evpost) htne extradata must be loaded with `my_id' from then
  * server. We will parse it out get the target queue message must be put!
  * 
@@ -382,11 +384,11 @@ public void cancel_if_expected(tp_command_call_t *call)
  *                  or tpcall wrapper)
  * @return call descriptor
  */
-public int _tpacall (char *svc, char *data,
+expublic int _tpacall (char *svc, char *data,
                 long len, long flags, char *extradata, 
                 int dest_node, int ex_flags, TPTRANID *p_tranid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     tp_command_call_t *call=(tp_command_call_t *)buf;
     typed_buffer_descr_t *descr;
@@ -421,38 +423,37 @@ public int _tpacall (char *svc, char *data,
             int tmp_is_bridge;
             char tmpsvc[MAXTIDENT+1];
             
-            sprintf(tmpsvc, NDRX_SVC_BRIDGE, dest_node);
+            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, dest_node);
 
-            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 #else
-        sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, dest_node);
+        snprintf(send_q, sizeof(send_q), NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, dest_node);
 #endif
-        
-        is_bridge=TRUE;
+        is_bridge=EXTRUE;
     }
     else if (ex_flags & TPCALL_EVPOST)
     {
-        if (SUCCEED!=_get_evpost_sendq(send_q, extradata))
+        if (EXSUCCEED!=_get_evpost_sendq(send_q, sizeof(send_q), extradata))
         {
             NDRX_LOG(log_error, "%s: Cannot get send Q for server: [%s]", 
                     fn, extradata);
-            ret=FAIL;
             _TPset_error_fmt(TPENOENT, "%s: Cannot get send Q for server: [%s]", 
                     fn, extradata);
-            goto out;
+            EXFAIL_OUT(ret);
         }
     }
-    else if (SUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge))
+    else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
                 fn, svc);
         goto out;
@@ -460,11 +461,10 @@ public int _tpacall (char *svc, char *data,
 
     if (NULL!=data)
     {
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
-            ret=FAIL;
-            goto out;
+            EXFAIL_OUT(ret);
         }
     }
 
@@ -472,11 +472,11 @@ public int _tpacall (char *svc, char *data,
     {
         descr = &G_buf_descr[buffer_info->type_id];
         /* prepare buffer for call */
-        if (SUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
+                &data_len, flags))
         {
             /* not good - error should be already set */
-            ret=FAIL;
-            goto out;
+            EXFAIL_OUT(ret);
         }
     }
     else
@@ -494,7 +494,7 @@ public int _tpacall (char *svc, char *data,
     else
         call->buffer_type_id = buffer_info->type_id;
 
-    strcpy(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
+    NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
     if (!(ex_flags & TPCALL_EVPOST))
     {
         call->command_id = ATMI_COMMAND_TPCALL;
@@ -505,12 +505,12 @@ public int _tpacall (char *svc, char *data,
     }
     
     strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
-    call->name[XATMI_SERVICE_NAME_LENGTH] = EOS;
+    call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     call->flags = flags;
     
     if (NULL!=extradata)
     {
-        strcpy(call->extradata, extradata);
+        NDRX_STRCPY_SAFE(call->extradata, extradata);
     }
 
     timestamp = time(NULL);
@@ -524,9 +524,9 @@ public int _tpacall (char *svc, char *data,
         atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);
         
         if (call->flags & TPTRANSUSPEND && NULL!=p_tranid &&
-                SUCCEED!=_tpsuspend(p_tranid, 0, FALSE))
+                EXSUCCEED!=_tpsuspend(p_tranid, 0, EXFALSE))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -534,7 +534,7 @@ public int _tpacall (char *svc, char *data,
     if (!(flags & TPNOREPLY))
     {
         /* get the call descriptor */
-        if (FAIL==(tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
+        if (EXFAIL==(tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
                 timestamp, flags)))
         {
             NDRX_LOG(log_error, "Do not have resources for "
@@ -542,7 +542,7 @@ public int _tpacall (char *svc, char *data,
             _TPset_error_fmt(TPELIMIT, "%s:All call descriptor entries have been used "
                                 "(check why they do not free up? Maybe need to "
                                 "use tpcancel()?)", fn);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else
@@ -555,15 +555,15 @@ public int _tpacall (char *svc, char *data,
     call->timestamp = timestamp;
     
     /* Reset call timer */
-    ndrx_timer_reset(&call->timer);
+    ndrx_stopwatch_reset(&call->timer);
     
-    strcpy(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
+    NDRX_STRCPY_SAFE(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
     NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d callseq=%u", 
             send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq);
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
-    if (SUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
     {
         int err;
 
@@ -576,7 +576,7 @@ public int _tpacall (char *svc, char *data,
             CONV_ERROR_CODE(ret, err);
         }
         _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
-        ret=FAIL;
+        ret=EXFAIL;
 
         /* unlock call descriptor */
         unlock_call_descriptor(tpcall_cd, CALL_NOT_ISSUED);
@@ -601,88 +601,90 @@ out:
  * @param flags
  * @return
  */
-public int _tpgetrply (int *cd,
+expublic int _tpgetrply (int *cd,
                        int cd_exp,
                        char * *data ,
                        long *len, long flags,
                        TPTRANID *p_tranid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "_tpgetrply";
-    int change_flags = FALSE;
-    struct mq_attr new;
     long rply_len;
     unsigned prio;
-    char rply_buf[ATMI_MSG_MAX_SIZE];
-    tp_command_call_t *rply=(tp_command_call_t *)rply_buf;
+    /*char rply_buf[ATMI_MSG_MAX_SIZE];*/
+    char *pbuf = NULL;
+    int pbuf_len;
+    tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
-    int answ_ok = FALSE;
-    int is_abort_only = FALSE; /* Should we abort global tx (if open) */
+    int answ_ok = EXFALSE;
+    int is_abort_only = EXFALSE; /* Should we abort global tx (if open) */
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s enter, flags %ld", fn, flags);
     
-    if (flags & TPNOBLOCK && !(G_atmi_tls->G_atmi_conf.q_attr.mq_flags & O_NONBLOCK))
-    {
-        /* change attributes non block mode*/
-        new = G_atmi_tls->G_atmi_conf.q_attr;
-        new.mq_flags |= O_NONBLOCK;
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
-                                            G_atmi_tls->G_atmi_conf.reply_q_str);
-    }
-    else if (!(flags & TPNOBLOCK) && (G_atmi_tls->G_atmi_conf.q_attr.mq_flags & O_NONBLOCK))
-    {
-        /* change attributes to block mode */
-        new = G_atmi_tls->G_atmi_conf.q_attr;
-        new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change_flags = TRUE;
-        NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
-                                            G_atmi_tls->G_atmi_conf.reply_q_str);
-    }
-    
-    if (change_flags)
-    {
-        if (FAIL==ndrx_mq_setattr(G_atmi_tls->G_atmi_conf.reply_q, &new,
-                            &G_atmi_tls->G_atmi_conf.q_attr))
-        {
-            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
-                                fn, G_atmi_tls->G_atmi_conf.reply_q_str, 
-                                G_atmi_tls->G_atmi_conf.reply_q, strerror(errno));
-            ret=FAIL;
-            goto out;
-        }
-    }
-
+    /* Allocate the buffer, dynamically... */
+    NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
+        
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
     /**
      * We will drop any answers not registered for this call
      */
+    rply  = (tp_command_call_t *)pbuf;
     while (!answ_ok)
     {
-        
-        /* receive the reply back */
-        rply_len = generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, rply_buf,
-                                        sizeof(rply_buf), &prio, flags);
+        /* We shall check that we do not have something in memq...
+         * if so then switch the buffers and make current free
+         */
+        if (NULL!=G_atmi_tls->memq)
+        {
+            NDRX_LOG(log_info, "Got message from memq...");
+            /* grab the buffer of mem linked list */
+            NDRX_FREE(pbuf);
+            
+            /* the buffer is allocated already by sysalloc, thus
+             * continue to use this buffer and free up our working buf.
+             */
+            pbuf = G_atmi_tls->memq->buf;
+            pbuf_len = G_atmi_tls->memq->len;
+            rply_len = G_atmi_tls->memq->data_len;
+            
+            /* delete first elem in the list */
+            DL_DELETE(G_atmi_tls->memq, G_atmi_tls->memq);
+            NDRX_FREE(G_atmi_tls->memq);
+            
+            /* Switch to received buffer... */
+            rply  = (tp_command_call_t *)pbuf;
+            
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Waiting on OS Q...");
+            
+            /* receive the reply back */
+            rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
+                    G_atmi_tls->G_atmi_conf.reply_q_str,
+                    &(G_atmi_tls->G_atmi_conf.reply_q_attr),
+                    pbuf, pbuf_len, &prio, flags);
+        }
         
         /* In case  if we did receive any response (in non blocked mode
          * or we did get fail in blocked mode with TPETIME, then we should
          * look up the table for which really we did get the time-out.
          */
         if ((flags & TPNOBLOCK && GEN_QUEUE_ERR_NO_DATA==rply_len) || 
-                (FAIL==rply_len && TPETIME==tperrno))
+                (EXFAIL==rply_len && TPETIME==tperrno))
         {
             if (flags & TPGETANY)
             {
-                if (SUCCEED!=(ret = call_scan_tout(FAIL, cd)))
+                if (EXSUCCEED!=(ret = call_scan_tout(EXFAIL, cd)))
                 {
                     goto out;
                 }
             }
             else
             {
-                if (SUCCEED!=(ret = call_scan_tout(cd_exp, cd)))
+                if (EXSUCCEED!=(ret = call_scan_tout(cd_exp, cd)))
                 {
                     goto out;
                 }
@@ -695,15 +697,26 @@ public int _tpgetrply (int *cd,
             *cd = 0;
             goto out;
         }
-        else if (FAIL==rply_len)
+        else if (EXFAIL==rply_len)
         {
             /* we have failed */
             NDRX_LOG(log_debug, "%s failed to receive answer", fn);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else
         {
+            if (ATMI_COMMAND_TPNOTIFY==rply->command_id ||
+                    ATMI_COMMAND_BROADCAST==rply->command_id)
+            {
+                NDRX_LOG(log_debug, "%s message received -> _tpnotify", 
+                        (ATMI_COMMAND_TPNOTIFY==rply->command_id?"Notification":"Broadcast"));
+                /* process the notif... */
+                ndrx_process_notif(pbuf, rply_len);
+                
+                /* And continue... */
+                continue;
+            }
             NDRX_LOG(log_debug, "accept any: %s", (flags & TPGETANY)?"yes":"no" );
 
             /* if answer is not expected, then we receive again! */
@@ -726,10 +739,9 @@ public int _tpgetrply (int *cd,
 
                 NDRX_LOG(log_warn, "Reply cd: %d, timestamp :%d callseq: %u from %s - expected OK!",
                         rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
-                answ_ok=TRUE;
+                answ_ok=EXTRUE;
                 /* Free up call descriptor!! */
                 unlock_call_descriptor(rply->cd, CALL_NOT_ISSUED);
-                
             }
             else
             {
@@ -745,7 +757,7 @@ public int _tpgetrply (int *cd,
             if (TMTXFLAGS_IS_ABORT_ONLY & rply->tmtxflags)
             {
                 NDRX_LOG(log_warn, "Reply contains SYS_XA_ABORT_ONLY!");
-                is_abort_only = TRUE;
+                is_abort_only = EXTRUE;
             }
             /* TODO: check incoming type! */
             /* we have an answer - prepare buffer */
@@ -753,7 +765,7 @@ public int _tpgetrply (int *cd,
             if (rply->sysflags & SYS_FLAG_REPLY_ERROR)
             {
                 _TPset_error_msg(rply->rcode, "Server failed to generate reply");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             else
@@ -774,7 +786,7 @@ public int _tpgetrply (int *cd,
                 G_atmi_tls->M_svc_return_code = rply->rcode;
 
                 /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
-                if (ret==FAIL)
+                if (ret==EXFAIL)
                 {
                     goto out;
                 }
@@ -784,7 +796,7 @@ public int _tpgetrply (int *cd,
                 if (TPSUCCESS!=rply->rval)
                 {
                     _TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -796,35 +808,41 @@ out:
     if (flags & TPTRANSUSPEND && p_tranid && p_tranid->tmxid[0])
     {
         /* resume the transaction */
-        if (SUCCEED!=_tpresume(p_tranid, 0) && SUCCEED==ret)
+        if (EXSUCCEED!=_tpresume(p_tranid, 0) && EXSUCCEED==ret)
         {
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo && 
             0==strcmp(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, rply->tmxid) &&
-            SUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
+            EXSUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
             rply->tmknownrms))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     if ( !(flags & TPNOTRAN) &&  /* Do not abort, if TPNOTRAN specified. */
 	G_atmi_tls->G_atmi_xa_curtx.txinfo &&
-	(SUCCEED!=ret || is_abort_only))
+	(EXSUCCEED!=ret || is_abort_only))
     {
         NDRX_LOG(log_warn, "Marking current transaction as abort only!");
         
         /* later should be handled by transaction initiator! */
         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
     }
+
+    /* free up the system buffer */
+    if (NULL!=pbuf)
+    {
+        NDRX_FREE(pbuf);
+    }
                 
     NDRX_LOG(log_debug, "%s return %d", fn, ret);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
      */
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         return G_atmi_tls->M_svc_return_code;
     }
@@ -848,11 +866,11 @@ out:
  * @param flags
  * @return
  */
-public int _tpcall (char *svc, char *idata, long ilen,
+expublic int _tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "_tpcall";
     int cd_req = 0;
     int cd_rply = 0;
@@ -873,14 +891,14 @@ public int _tpcall (char *svc, char *idata, long ilen,
         p_tranid = NULL;
     }
     
-    if (FAIL==(cd_req=_tpacall (svc, idata, ilen, flags, extradata, 
+    if (EXFAIL==(cd_req=_tpacall (svc, idata, ilen, flags, extradata, 
             dest_node, ex_flags, p_tranid)))
     {
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
-    else if (SUCCEED!=(ret=_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
+    else if (EXSUCCEED!=(ret=_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
             p_tranid)))
     {
         NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
@@ -892,7 +910,7 @@ public int _tpcall (char *svc, char *idata, long ilen,
      */
     if (cd_req!=cd_rply)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
                                         fn, cd_req, cd_rply);
         goto out;
@@ -910,9 +928,9 @@ out:
  * @param
  * @return
  */
-public int _tpcancel (int cd)
+expublic int _tpcancel (int cd)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[]="_tpcancel";
     ATMI_TLS_ENTRY;
     
@@ -922,7 +940,7 @@ public int _tpcancel (int cd)
     {
         _TPset_error_fmt(TPEBADDESC, "%s: Invalid call descriptor %d, should be 0<cd<%d",
                                         fn, cd, MAX_ASYNC_CALLS);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /* Mark call as cancelled, so that we could re-use it later. */
@@ -937,7 +955,7 @@ out:
  * ATMI standard
  * @return - pointer to int holding error code?
  */
-public long * _exget_tpurcode_addr (void)
+expublic long * _exget_tpurcode_addr (void)
 {
     ATMI_TLS_ENTRY;
     return &G_atmi_tls->M_svc_return_code;
@@ -949,80 +967,63 @@ public long * _exget_tpurcode_addr (void)
  * @param extradata
  * @return 
  */
-public int _get_evpost_sendq(char *send_q, char *extradata)
+expublic int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata)
 {
-    int ret=SUCCEED;
-    char tmp[NDRX_MAX_ID_SIZE];
-    char binary[NDRX_MAX_ID_SIZE] = {EOS};
-    int srvid = FAIL;
-    int pid = FAIL;
-    int nodeid = FAIL;
-    long contextid = FAIL;
+    int ret=EXSUCCEED;
     char fn[] = "get_evpost_sendq";
-    int i, len;
+    TPMYID myid;
     ATMI_TLS_ENTRY;
-    if (NULL==extradata || EOS==extradata[0] || NULL==send_q)
+    if (NULL==extradata || EXEOS==extradata[0] || NULL==send_q)
     {
         NDRX_LOG(log_error, "Invalid arguments");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     NDRX_LOG(log_debug, "%s: server's id=[%s]", fn, extradata);
     
-    send_q[0] = EOS;
-    
-    strcpy(tmp, extradata);
-    
-    len = strlen(extradata);
-    
-    for (i=0; i<len; i++)
+    if (EXSUCCEED!=ndrx_myid_parse(extradata, &myid, EXFALSE))
     {
-        if (NDRX_FMT_SEP==tmp[i])
-            tmp[i]=' ';
+        NDRX_LOG(log_error, "Failed to parse my_id string [%s]", extradata);
+        /* Do fail? */
+        goto out;
     }
-    
-    sscanf(tmp, NDRX_MY_ID_SRV_PARSE, binary, &srvid, &pid, &contextid, &nodeid);
     
     NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d contextid=%ld nodeid=%d",
-            binary, srvid, pid, contextid, nodeid);
+            myid.binary_name, myid.srv_id, myid.pid, myid.contextid, myid.nodeid);
+   
     
-    /*check is parsed ok?*/
-    if (EOS==binary[0] || FAIL==srvid || FAIL==pid || FAIL==nodeid)
-    {
-        NDRX_LOG(log_warn, "Invalid server's my id: binary=[%s] "
-                        "srvid=%d pid=%d nodeid=%d",
-                        binary, srvid, pid, nodeid );
-    }
-    
-    if (G_atmi_env.our_nodeid!=nodeid)
+    if (G_atmi_env.our_nodeid!=myid.nodeid)
     {
         NDRX_LOG(log_debug, "Server is located on different server, "
                 "our nodeid=%d their=%d",
-                G_atmi_env.our_nodeid, nodeid);
+                G_atmi_env.our_nodeid, myid.nodeid);
 #ifdef EX_USE_POLL
         /* poll() mode: */
         {
             int is_bridge;
             char tmpsvc[MAXTIDENT+1];
 
-            sprintf(tmpsvc, NDRX_SVC_BRIDGE, nodeid);
+            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, myid.nodeid);
 
-            if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &is_bridge))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &is_bridge))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 #else
-        sprintf(send_q, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, nodeid);
+        snprintf(send_q, send_q_bufsz, NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, myid.nodeid);
 #endif
     }
     else
     {
         NDRX_LOG(log_debug, "This is local server");
-        sprintf(send_q, NDRX_ADMIN_FMT, G_atmi_tls->G_atmi_conf.q_prefix, binary, srvid, pid);
+        snprintf(send_q, send_q_bufsz, NDRX_ADMIN_FMT, 
+                G_atmi_tls->G_atmi_conf.q_prefix, myid.binary_name, 
+                myid.srv_id, myid.pid);
     }
     
 out:
@@ -1032,5 +1033,6 @@ out:
 
     return ret;
 }
+
 
 

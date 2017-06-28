@@ -46,19 +46,19 @@
 /*---------------------------Globals------------------------------------*/
 __thread atmi_tls_t *G_atmi_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
-private pthread_key_t M_atmi_tls_key;
-private pthread_key_t M_atmi_switch_key; /* switch the structure */
+exprivate pthread_key_t M_atmi_tls_key;
+exprivate pthread_key_t M_atmi_switch_key; /* switch the structure */
 
 MUTEX_LOCKDECL(M_thdata_init);
-private int M_first = TRUE;
+exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
-private void atmi_buffer_key_destruct( void *value );
+exprivate void atmi_buffer_key_destruct( void *value );
 
 /**
  * Thread destructor
  * @param value this is malloced thread TLS
  */
-private void atmi_buffer_key_destruct( void *value )
+exprivate void atmi_buffer_key_destruct( void *value )
 {
     ndrx_atmi_tls_free((void *)value);
 }
@@ -67,7 +67,7 @@ private void atmi_buffer_key_destruct( void *value )
  * Unlock, unset G_atmi_tls, return pointer to G_atmi_tls
  * @return 
  */
-public void * ndrx_atmi_tls_get(long priv_flags)
+expublic void * ndrx_atmi_tls_get(long priv_flags)
 {
     atmi_tls_t *tls = G_atmi_tls;
     char *fn = "ndrx_atmi_tls_get";
@@ -90,12 +90,12 @@ public void * ndrx_atmi_tls_get(long priv_flags)
         
         if (priv_flags & CTXT_PRIV_TRAN)
         {
-            tls->global_tx_suspended = FALSE;
+            tls->global_tx_suspended = EXFALSE;
             
             if (tls->G_atmi_xa_curtx.txinfo)
             {
                 tls->M_atmi_error = 0;
-                if (SUCCEED!=_tpsuspend(&tls->tranid, 0, TRUE))
+                if (EXSUCCEED!=_tpsuspend(&tls->tranid, 0, EXTRUE))
                 {
                     userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
                             tpstrerror(tperrno));
@@ -113,7 +113,7 @@ public void * ndrx_atmi_tls_get(long priv_flags)
                 }
                 else
                 {
-                    tls->global_tx_suspended = TRUE;
+                    tls->global_tx_suspended = EXTRUE;
                 }        
             }
         }
@@ -132,9 +132,9 @@ out:
  * Get the lock & set the G_atmi_tls to this one
  * @param tls
  */
-public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
+expublic int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_tls_t *tls = (atmi_tls_t *)data;
     char *fn = "ndrx_atmi_tls_set";
    
@@ -173,13 +173,13 @@ public int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
             {   
                 /* reset error */
                 tls->M_atmi_error = 0;
-                if (SUCCEED!=_tpresume(&tls->tranid, 0))
+                if (EXSUCCEED!=_tpresume(&tls->tranid, 0))
                 {
                     userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
                 }
                 else
                 {
-                    tls->global_tx_suspended = FALSE;
+                    tls->global_tx_suspended = EXFALSE;
                 }
             }
         }
@@ -206,7 +206,7 @@ out:
  * @param tls
  * @return 
  */
-public void ndrx_atmi_tls_free(void *data)
+expublic void ndrx_atmi_tls_free(void *data)
 {
     if (NULL!=data)
     {
@@ -228,9 +228,9 @@ public void ndrx_atmi_tls_free(void *data)
  * @param auto_destroy if set to 1 then when tried exits, thread data will be made free
  * @return 
  */
-public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
+expublic void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_tls_t *tls  = NULL;
     char fn[] = "atmi_context_new";
     
@@ -242,7 +242,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
         {
             pthread_key_create( &M_atmi_tls_key, 
                     &atmi_buffer_key_destruct );
-            M_first = FALSE;
+            M_first = EXFALSE;
         }
         MUTEX_UNLOCK_V(M_thdata_init);
     }
@@ -250,7 +250,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     if (NULL==(tls = (atmi_tls_t *)NDRX_MALLOC(sizeof(atmi_tls_t))))
     {
         userlog ("%s: failed to malloc", fn);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* do the common init... */
@@ -259,10 +259,15 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     
     /* init.c */    
     tls->conv_cd=1;/*  first available */
+    
+    /* reset client info  */
+    memset(&tls->client_init_data, 0, sizeof(tls->client_init_data));
+    
     /* tls->callseq = 0; ???? */
     tls->G_atmi_is_init= 0;/*  Is environment initialised */
     memset (tls->G_call_state, 0, sizeof(tls->G_call_state));
     tls->tpcall_get_cd=MAX_ASYNC_CALLS-2; /* first available, we want test overlap!*/
+    tls->memq = NULL; /* In memory messages when tpchkunsol are performed... */
     /* tls->tpcall_callseq=0; */
     
     
@@ -270,18 +275,21 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     
     /* tpcall.c */
     tls->M_svc_return_code = 0;
-    tls->tpcall_first = TRUE;
+    tls->tpcall_first = EXTRUE;
     
     /* tperror.c */
-    tls->M_atmi_error_msg_buf[0] = EOS;
+    tls->M_atmi_error_msg_buf[0] = EXEOS;
     tls->M_atmi_error = TPMINVAL;
     tls->M_atmi_reason = NDRX_XA_ERSN_NONE;
-    tls->errbuf[0] = EOS;
-    tls->is_associated_with_thread = FALSE;
+    tls->errbuf[0] = EXEOS;
+    tls->is_associated_with_thread = EXFALSE;
     /* xa.c */
-    tls->M_is_curtx_init = FALSE;
-    tls->global_tx_suspended = FALSE;
+    tls->M_is_curtx_init = EXFALSE;
+    tls->global_tx_suspended = EXFALSE;
     memset(&tls->G_atmi_xa_curtx, 0, sizeof(tls->G_atmi_xa_curtx));
+    
+    /* unsol msgs */
+    tls->p_unsol_handler = NULL;
     
     pthread_mutex_init(&tls->mutex, NULL);
     
@@ -290,12 +298,12 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
      */
     if (auto_destroy)
     {
-        tls->is_auto = TRUE;
+        tls->is_auto = EXTRUE;
         pthread_setspecific( M_atmi_tls_key, (void *)tls );
     }
     else
     {
-        tls->is_auto = FALSE;
+        tls->is_auto = EXFALSE;
     }
     
     if (auto_set)
@@ -305,7 +313,7 @@ public void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     
 out:
 
-    if (SUCCEED!=ret && NULL!=tls)
+    if (EXSUCCEED!=ret && NULL!=tls)
     {
         ndrx_atmi_tls_free((char *)tls);
     }
@@ -320,7 +328,7 @@ out:
  * @param flags
  * @return 
  */
-public void _tpfreectxt(TPCONTEXT_T context)
+expublic void _tpfreectxt(TPCONTEXT_T context)
 {
     atmi_tls_t * ctx = (atmi_tls_t *)context;
     
@@ -355,9 +363,9 @@ public void _tpfreectxt(TPCONTEXT_T context)
  * @param priv_flags private flags (for sharing the functionality)
  * @return 
  */
-public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
+expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_tls_t * ctx;
     char *fn="_tpsetctxt";
     
@@ -408,7 +416,7 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         {
             _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid atmi magic: "
                     "expected: %x got %x!", ATMI_TLS_MAGIG, ctx->magic);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (priv_flags & CTXT_PRIV_NSTD && NULL!=ctx->p_nstd_tls 
@@ -416,7 +424,7 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         {
             _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid nstd magic: "
                     "expected: %x got %x!", NSTD_TLS_MAGIG, ctx->p_nstd_tls->magic);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         if (priv_flags & CTXT_PRIV_UBF && NULL!=ctx->p_ubf_tls 
@@ -424,7 +432,7 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         {
             _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid ubf magic: "
                     "expected: %x got %x!", UBF_TLS_MAGIG, ctx->p_ubf_tls->magic);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -440,28 +448,28 @@ public int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     
     
     if (priv_flags & CTXT_PRIV_NSTD && NULL!=ctx->p_nstd_tls &&
-            SUCCEED!=ndrx_nstd_tls_set((void *)ctx->p_nstd_tls))
+            EXSUCCEED!=ndrx_nstd_tls_set((void *)ctx->p_nstd_tls))
     {
         _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libnstd context");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (priv_flags & CTXT_PRIV_UBF &&  NULL!=ctx->p_ubf_tls &&
-            SUCCEED!=ndrx_ubf_tls_set((void *)ctx->p_ubf_tls))
+            EXSUCCEED!=ndrx_ubf_tls_set((void *)ctx->p_ubf_tls))
     {
         _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libubf context");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (priv_flags & CTXT_PRIV_ATMI)
     {
-        if (SUCCEED!=ndrx_atmi_tls_set((void *)ctx, flags, priv_flags))
+        if (EXSUCCEED!=ndrx_atmi_tls_set((void *)ctx, flags, priv_flags))
         {
             _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libatmi context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        ctx->is_associated_with_thread = TRUE;
+        ctx->is_associated_with_thread = EXTRUE;
     }
     
 out:
@@ -479,7 +487,7 @@ out:
  * @param flags
  * @return 
  */
-public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
+expublic int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
 {
     int ret = TPMULTICONTEXTS; /* default */
     atmi_tls_t * ctx;
@@ -510,13 +518,13 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
     if (NULL==context)
     {
         _TPset_error_msg(TPEINVAL, "_tpgetctxt: context must not be NULL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=flags)
     {
         _TPset_error_msg(TPEINVAL, "_tpgetctxt: flags must be 0!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* if not using ATMI, then use existing context object */
@@ -532,7 +540,7 @@ public int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
     if (NULL!=ctx)
     {
         /* Dis associate */
-        ctx->is_associated_with_thread = FALSE;
+        ctx->is_associated_with_thread = EXFALSE;
 
         if (priv_flags & CTXT_PRIV_NSTD)
         {

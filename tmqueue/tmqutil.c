@@ -67,7 +67,7 @@
  * @param p_nodeid
  * @param p_srvid
  */
-public void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
+expublic void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
 {
     *p_nodeid = 0;
     *p_srvid = 0;
@@ -85,7 +85,7 @@ public void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
  * @param msgidstr_out
  * @return msgidstr_out
  */
-public char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
+expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
 {
     size_t out_len;
     
@@ -93,7 +93,7 @@ public char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
     
     atmi_xa_base64_encode((unsigned char *)corid_in, TMCORRIDLEN_STR, &out_len, corid_str_out);
 
-    corid_str_out[out_len] = EOS;
+    corid_str_out[out_len] = EXEOS;
     
     NDRX_LOG(log_debug, "CORID after serialize: [%s]", corid_str_out);
     

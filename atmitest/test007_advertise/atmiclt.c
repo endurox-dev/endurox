@@ -54,46 +54,46 @@ int main(int argc, char** argv) {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
-    int ret=SUCCEED;
-    char buf[128]={EOS};
+    int ret=EXSUCCEED;
+    char buf[128]={EXEOS};
     
     if (0==strcmp(argv[1], "DOADV"))
     {
-        if (FAIL == tpcall("DOADV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("DOADV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TESTERROR: DOADV failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
     else if (0==strcmp(argv[1], "UNADV"))
     {
-        if (FAIL == tpcall("UNADV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("UNADV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TESTERROR: UNADV failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
     else if (0==strcmp(argv[1], "TEST"))
     {
-        if (FAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
             NDRX_LOG(log_error, "TESTSVFN failed: %s", tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* Verify the data */
-        if (FAIL==Bget(p_ub, T_STRING_FLD, 0, (char *)buf, 0))
+        if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, (char *)buf, 0))
         {
             NDRX_LOG(log_debug, "Failed to get T_STRING_FLD[0]");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else if (0!=strcmp(buf, "THIS IS TEST - OK!"))
         {
             NDRX_LOG(log_debug, "Call test failed");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     {
         NDRX_LOG(log_error, "ERROR: Invalid command, valid ones are: DOADV, UNADV, TEST");
                 
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 

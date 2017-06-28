@@ -61,7 +61,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private __thread int M_is_xa_open = FALSE;
+exprivate __thread int M_is_xa_open = EXFALSE;
 MUTEX_LOCKDECL(M_tstamp_lock);
 /*---------------------------Prototypes---------------------------------*/
 
@@ -74,14 +74,14 @@ MUTEX_LOCKDECL(M_tstamp_lock);
  * @param p_ub
  * @return 
  */
-public int tmq_enqueue(UBFH *p_ub)
+expublic int tmq_enqueue(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_msg_t *p_msg = NULL;
     char *data = NULL;
     BFLDLEN len = 0;
     TPQCTL qctl_out;
-    int local_tx = FALSE;
+    int local_tx = EXFALSE;
     
     /* To guarentee unique order in same Q space...: */
     static long t_sec = 0;
@@ -95,7 +95,7 @@ public int tmq_enqueue(UBFH *p_ub)
     
     if (!M_is_xa_open)
     {
-        if (SUCCEED!=tpopen()) /* init the lib anyway... */
+        if (EXSUCCEED!=tpopen()) /* init the lib anyway... */
         {
             NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
                     tpstrerror(tperrno));
@@ -103,14 +103,14 @@ public int tmq_enqueue(UBFH *p_ub)
         }
         else
         {
-            M_is_xa_open = TRUE;
+            M_is_xa_open = EXTRUE;
         }
     }
             
     if (!tpgetlev())
     {
         NDRX_LOG(log_debug, "Not in global transaction, starting local...");
-        if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+        if (EXSUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
         {
             NDRX_LOG(log_error, "Failed to start global tx!");
             userlog("Failed to start global tx!");
@@ -118,7 +118,7 @@ public int tmq_enqueue(UBFH *p_ub)
         else
         {
             NDRX_LOG(log_debug, "Transaction started ok...");
-            local_tx = TRUE;
+            local_tx = EXTRUE;
         }
     }
     
@@ -132,7 +132,7 @@ public int tmq_enqueue(UBFH *p_ub)
         strcpy(qctl_out.diagmsg, "Missing EX_DATA!");
         qctl_out.diagnostic = QMEINVAL;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*
@@ -148,7 +148,7 @@ public int tmq_enqueue(UBFH *p_ub)
         strcpy(qctl_out.diagmsg, "Failed to malloc tmq_msg_t!");
         qctl_out.diagnostic = QMEOS;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     memset(p_msg, 0, sizeof(tmq_msg_t));
@@ -158,28 +158,28 @@ public int tmq_enqueue(UBFH *p_ub)
     
     NDRX_DUMP(log_debug, "Got message for Q: ", p_msg->msg, p_msg->len);
     
-    if (SUCCEED!=Bget(p_ub, EX_QNAME, 0, p_msg->hdr.qname, 0))
+    if (EXSUCCEED!=Bget(p_ub, EX_QNAME, 0, p_msg->hdr.qname, 0))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_QNAME");
         
         strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_QNAME!");
         qctl_out.diagnostic = QMEINVAL;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
+    if (EXSUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_DATA_BUFTYP");
         
         strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_DATA_BUFTYP!");
         qctl_out.diagnostic = QMEINVAL;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Restore back the C structure */
-    if (SUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
+    if (EXSUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed convert ctl "
                 "to internal UBF buf!");
@@ -190,7 +190,7 @@ public int tmq_enqueue(UBFH *p_ub)
                 "to internal UBF buf!");
         qctl_out.diagnostic = QMESYSTEM;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Build up the message. */
@@ -226,7 +226,7 @@ public int tmq_enqueue(UBFH *p_ub)
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
             p_msg->hdr.qname);
     
-    if (SUCCEED!=tmq_msg_add(p_msg, FALSE))
+    if (EXSUCCEED!=tmq_msg_add(p_msg, EXFALSE))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to enqueue!");
         userlog("tmq_enqueue: failed to enqueue!");
@@ -235,7 +235,7 @@ public int tmq_enqueue(UBFH *p_ub)
         
         qctl_out.diagnostic = QMESYSTEM;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -245,7 +245,7 @@ out:
         NDRX_FREE(data);
     }
 
-    if (SUCCEED!=ret && NULL!=p_msg)
+    if (EXSUCCEED!=ret && NULL!=p_msg)
     {
         NDRX_LOG(log_warn, "About to free p_msg!");
         NDRX_FREE(p_msg);
@@ -253,19 +253,19 @@ out:
 
     if (local_tx)
     {
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "Aborting transaction");
             tpabort(0);
         } else
         {
             NDRX_LOG(log_info, "Committing transaction!");
-            if (SUCCEED!=tpcommit(0))
+            if (EXSUCCEED!=tpcommit(0))
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
                 strcpy(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
-                ret=FAIL;
+                ret=EXFAIL;
             }
         }
     }
@@ -274,7 +274,7 @@ out:
      * Not sure about existing ones (seems like they will stay in buffer)
      * i.e. request fields
      */
-    if (SUCCEED!=tmq_tpqctl_to_ubf_enqrsp(p_ub, &qctl_out))
+    if (EXSUCCEED!=tmq_tpqctl_to_ubf_enqrsp(p_ub, &qctl_out))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to generate response buffer!");
         userlog("tmq_enqueue: failed to generate response buffer!");
@@ -288,15 +288,15 @@ out:
  * @param p_ub
  * @return 
  */
-public int tmq_dequeue(UBFH **pp_ub)
+expublic int tmq_dequeue(UBFH **pp_ub)
 {
     /* Search for not locked message, lock it, issue command to disk for
      * delete & return the message to buffer (also needs to resize the buffer correctly)
      */
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_msg_t *p_msg = NULL;
     TPQCTL qctl_out, qctl_in;
-    int local_tx = FALSE;
+    int local_tx = EXFALSE;
     char qname[TMQNAMELEN+1];
     long buf_realoc_size;
     
@@ -307,7 +307,7 @@ public int tmq_dequeue(UBFH **pp_ub)
     
     if (!M_is_xa_open)
     {
-        if (SUCCEED!=tpopen()) /* init the lib anyway... */
+        if (EXSUCCEED!=tpopen()) /* init the lib anyway... */
         {
             NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
                     tpstrerror(tperrno));
@@ -315,23 +315,23 @@ public int tmq_dequeue(UBFH **pp_ub)
         }
         else
         {
-            M_is_xa_open = TRUE;
+            M_is_xa_open = EXTRUE;
         }
     }
     
     memset(&qctl_in, 0, sizeof(qctl_in));
     
-    if (SUCCEED!=tmq_tpqctl_from_ubf_deqreq(*pp_ub, &qctl_in))
+    if (EXSUCCEED!=tmq_tpqctl_from_ubf_deqreq(*pp_ub, &qctl_in))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to read request qctl!");
         userlog("tmq_dequeue: failed to read request qctl!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (!tpgetlev())
     {
         NDRX_LOG(log_debug, "Not in global transaction, starting local...");
-        if (SUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+        if (EXSUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
         {
             NDRX_LOG(log_error, "Failed to start global tx!");
             userlog("Failed to start global tx!");
@@ -339,19 +339,19 @@ public int tmq_dequeue(UBFH **pp_ub)
         else
         {
             NDRX_LOG(log_debug, "Transaction started ok...");
-            local_tx = TRUE;
+            local_tx = EXTRUE;
         }
     }
     
     memset(&qctl_out, 0, sizeof(qctl_out));
     
-    if (SUCCEED!=Bget(*pp_ub, EX_QNAME, 0, qname, 0))
+    if (EXSUCCEED!=Bget(*pp_ub, EX_QNAME, 0, qname, 0))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to get EX_QNAME");
         strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to get EX_QNAME!");
         qctl_out.diagnostic = QMEINVAL;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Get FB size (current) */
@@ -369,7 +369,7 @@ public int tmq_dequeue(UBFH **pp_ub)
                     msgid_str);
             strcpy(qctl_out.diagmsg, "tmq_dequeue: no message found for given msgid");
             qctl_out.diagnostic = QMENOMSG;
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else if (qctl_in.flags & TPQGETBYCORRID)
@@ -384,16 +384,16 @@ public int tmq_dequeue(UBFH **pp_ub)
                     corid_str);
             strcpy(qctl_out.diagmsg, "tmq_dequeue: no message found for given msgid");
             qctl_out.diagnostic = QMENOMSG;
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
-    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, FALSE)))
+    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE)))
     {
         NDRX_LOG(log_error, "tmq_dequeue: no message in Q [%s]", qname);
         strcpy(qctl_out.diagmsg, "tmq_dequeue: no message in Q!");
         qctl_out.diagnostic = QMENOMSG;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Use the original metadata */
@@ -405,10 +405,10 @@ public int tmq_dequeue(UBFH **pp_ub)
     {
         NDRX_LOG(log_error, "Failed to allocate buffer to size: %ld", buf_realoc_size);
         userlog("Failed to allocate buffer to size: %ld", buf_realoc_size);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(*pp_ub, EX_DATA, 0, p_msg->msg, p_msg->len))
+    if (EXSUCCEED!=Bchg(*pp_ub, EX_DATA, 0, p_msg->msg, p_msg->len))
     {
         NDRX_LOG(log_error, "failed to set EX_DATA!");
         userlog("failed to set EX_DATA!");
@@ -422,25 +422,25 @@ public int tmq_dequeue(UBFH **pp_ub)
             tmq_unlock_msg_by_msgid(p_msg->qctl.msgid);
         }
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Unlock msg if it was peek */
     if (TPQPEEK & qctl_in.flags && 
-            SUCCEED!=tmq_unlock_msg_by_msgid(p_msg->qctl.msgid))
+            EXSUCCEED!=tmq_unlock_msg_by_msgid(p_msg->qctl.msgid))
     {
         NDRX_LOG(log_error, "Failed to unlock msg!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(*pp_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
+    if (EXSUCCEED!=Bchg(*pp_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to set EX_DATA_BUFTYP");
         
         strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to set EX_DATA_BUFTYP!");
         qctl_out.diagnostic = QMEINVAL;
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
@@ -448,7 +448,7 @@ out:
 
     if (local_tx)
     {
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "Aborting transaction");
             tpabort(0);
@@ -456,12 +456,12 @@ out:
         else
         {
             NDRX_LOG(log_info, "Committing transaction!");
-            if (SUCCEED!=tpcommit(0))
+            if (EXSUCCEED!=tpcommit(0))
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
                 strcpy(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
-                ret=FAIL;
+                ret=EXFAIL;
             }
         }
     }
@@ -470,7 +470,7 @@ out:
      * Not sure about existing ones (seems like they will stay in buffer)
      * i.e. request fields
      */
-    if (SUCCEED!=tmq_tpqctl_to_ubf_deqrsp(*pp_ub, &qctl_out))
+    if (EXSUCCEED!=tmq_tpqctl_to_ubf_deqrsp(*pp_ub, &qctl_out))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to generate response buffer!");
         userlog("tmq_dequeue: failed to generate response buffer!");
@@ -484,22 +484,22 @@ out:
  * @param p_ub
  * @return 
  */
-public int tex_mq_notify(UBFH *p_ub)
+expublic int tex_mq_notify(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     union tmq_upd_block b;
     BFLDLEN len = sizeof(b);
      
-    if (SUCCEED!=Bget(p_ub, EX_DATA, 0, (char *)&b, &len))
+    if (EXSUCCEED!=Bget(p_ub, EX_DATA, 0, (char *)&b, &len))
     {
         NDRX_LOG(log_error, "Failed to get EX_DATA: %s", Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tmq_unlock_msg(&b))
+    if (EXSUCCEED!=tmq_unlock_msg(&b))
     {
         NDRX_LOG(log_error, "Failed to unlock message...");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -515,9 +515,9 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int tmq_mqlq(UBFH *p_ub, int cd)
+expublic int tmq_mqlq(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long revent;
     fwd_qlist_t *el, *tmp, *list;
     short nodeid = tpgetnodeid();
@@ -525,7 +525,7 @@ public int tmq_mqlq(UBFH *p_ub, int cd)
     char *fn = "tmq_printqueue";
     /* Get list of queues */
     
-    if (NULL==(list = tmq_get_qlist(FALSE, TRUE)))
+    if (NULL==(list = tmq_get_qlist(EXFALSE, EXTRUE)))
     {
         NDRX_LOG(log_info, "%s: No queues found", fn);
     }
@@ -543,22 +543,22 @@ public int tmq_mqlq(UBFH *p_ub, int cd)
                 
         NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
         
-        if (SUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNUMMSG, 0, (char *)&msgs, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNUMLOCKED, 0, (char *)&locked, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNUMSUCCEED, 0, (char *)&el->succ, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNUMFAIL, 0, (char *)&el->fail, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNUMENQ, 0, (char *)&el->numenq, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QNUMDEQ, 0, (char *)&el->numdeq, 0L) 
+        if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNUMMSG, 0, (char *)&msgs, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNUMLOCKED, 0, (char *)&locked, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNUMSUCCEED, 0, (char *)&el->succ, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNUMFAIL, 0, (char *)&el->fail, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNUMENQ, 0, (char *)&el->numenq, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QNUMDEQ, 0, (char *)&el->numdeq, 0L) 
                 )
         {
             NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        if (FAIL == tpsend(cd,
+        if (EXFAIL == tpsend(cd,
                             (char *)p_ub,
                             0L,
                             0,
@@ -566,7 +566,7 @@ public int tmq_mqlq(UBFH *p_ub, int cd)
         {
             NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                 tpstrerror(tperrno), revent);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -588,9 +588,9 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int tmq_mqlc(UBFH *p_ub, int cd)
+expublic int tmq_mqlc(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long revent;
     fwd_qlist_t *el, *tmp, *list;
     short nodeid = tpgetnodeid();
@@ -598,10 +598,10 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
     char *fn = "tmq_mqlc";
     char qdef[TMQ_QDEF_MAX];
     char flags[128];
-    int is_default = FALSE;
+    int is_default = EXFALSE;
     /* Get list of queues */
     
-    if (NULL==(list = tmq_get_qlist(FALSE, TRUE)))
+    if (NULL==(list = tmq_get_qlist(EXFALSE, EXTRUE)))
     {
         NDRX_LOG(log_info, "%s: No queues found", fn);
     }
@@ -612,12 +612,12 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
     
     DL_FOREACH_SAFE(list,el,tmp)
     {
-        is_default = FALSE;
-        if (SUCCEED==tmq_build_q_def(el->qname, &is_default, qdef))
+        is_default = EXFALSE;
+        if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef))
         {
             NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
             
-            flags[0] = EOS;
+            flags[0] = EXEOS;
             
             if (is_default)
             {
@@ -625,18 +625,18 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
             }
             
 
-            if (SUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
-                SUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
-                SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-                SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-                SUCCEED!=CBchg(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
-                SUCCEED!=Bchg(p_ub, EX_QSTRFLAGS, 0, flags, 0L)
+            if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+                EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
+                EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+                EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+                EXSUCCEED!=CBchg(p_ub, EX_DATA, 0, qdef, 0L, BFLD_STRING) ||
+                EXSUCCEED!=Bchg(p_ub, EX_QSTRFLAGS, 0, flags, 0L)
                 )
             {
                 NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
-            if (FAIL == tpsend(cd,
+            if (EXFAIL == tpsend(cd,
                                 (char *)p_ub,
                                 0L,
                                 0,
@@ -644,7 +644,7 @@ public int tmq_mqlc(UBFH *p_ub, int cd)
             {
                 NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                     tpstrerror(tperrno), revent);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             else
             {
@@ -667,9 +667,9 @@ out:
  * @param cd
  * @return 
  */
-public int tmq_mqlm(UBFH *p_ub, int cd)
+expublic int tmq_mqlm(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long revent;
     tmq_memmsg_t *el, *tmp, *list;
     short nodeid = tpgetnodeid();
@@ -681,10 +681,10 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
 
     /* Get list of queues */
     
-    if (SUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L))
+    if (EXSUCCEED!=Bget(p_ub, EX_QNAME, 0, qname, 0L))
     {
         NDRX_LOG(log_error, "Failed to get qname");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(list = tmq_get_msglist(qname)))
@@ -700,31 +700,31 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
     {
         if (el->msg->lockthreadid)
         {
-            is_locked = TRUE;
+            is_locked = EXTRUE;
         }
         else
         {
-            is_locked = FALSE;
+            is_locked = EXFALSE;
         }
         
         tmq_msgid_serialize(el->msg->hdr.msgid, msgid_str);
         
-        if (SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
-            SUCCEED!=Bchg(p_ub, EX_TSTAMP1_STR, 0, 
+        if (EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
+            EXSUCCEED!=Bchg(p_ub, EX_TSTAMP1_STR, 0, 
                 ndrx_get_strtstamp2(0, el->msg->msgtstamp, el->msg->msgtstamp_usec), 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_TSTAMP2_STR, 0, 
+            EXSUCCEED!=Bchg(p_ub, EX_TSTAMP2_STR, 0, 
                 ndrx_get_strtstamp2(1, el->msg->trytstamp, el->msg->trytstamp_usec), 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QMSGTRIES, 0, (char *)&el->msg->trycounter, 0L) ||
-            SUCCEED!=Bchg(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
+            EXSUCCEED!=Bchg(p_ub, EX_QMSGTRIES, 0, (char *)&el->msg->trycounter, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
                 )
         {
             NDRX_LOG(log_error, "failed to setup FB: %s", Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (FAIL == tpsend(cd,
+        if (EXFAIL == tpsend(cd,
                             (char *)p_ub,
                             0L,
                             0,
@@ -732,7 +732,7 @@ public int tmq_mqlm(UBFH *p_ub, int cd)
         {
             NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                 tpstrerror(tperrno), revent);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -754,9 +754,9 @@ out:
  * @param p_ub
  * @return 
  */
-public int tmq_mqrc(UBFH *p_ub)
+expublic int tmq_mqrc(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     /* if have CC */
     if (ndrx_get_G_cconfig())
@@ -775,16 +775,16 @@ out:
  * @param p_ub
  * @return 
  */
-public int tmq_mqch(UBFH *p_ub)
+expublic int tmq_mqch(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char conf[512];
     BFLDLEN len = sizeof(conf);
     
-    if (SUCCEED!=CBget(p_ub, EX_DATA, 0, conf, &len, BFLD_STRING))
+    if (EXSUCCEED!=CBget(p_ub, EX_DATA, 0, conf, &len, BFLD_STRING))
     {
         NDRX_LOG(log_error, "Failed to get EX_DATA!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret = tmq_qconf_addupd(conf, NULL);

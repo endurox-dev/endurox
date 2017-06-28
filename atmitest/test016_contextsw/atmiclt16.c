@@ -47,7 +47,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/    
@@ -67,25 +67,25 @@ void do_thread_work ( void *ptr )
     UBFH *p_ub;
     long slot = (long)ptr;
     long rsplen;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     TPCONTEXT_T test_ctx;
     
-    if (SUCCEED!=tpsetctxt(M_ctx[slot], 0))
+    if (EXSUCCEED!=tpsetctxt(M_ctx[slot], 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to tpsetctxt(): %s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 9216)))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to tpalloc(): %s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "TESTERROR: TESTSV failed: %s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -99,7 +99,7 @@ out:
     if (TPMULTICONTEXTS!=tpgetctxt(&M_ctx[slot], 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to tpgetctxt(): %s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* it must be NULL context afterwards */
@@ -107,7 +107,7 @@ out:
     {
         NDRX_LOG(log_error, "TESTERROR: tpgetctxt() must be in NULLCONTEXT, "
                 "but got: %d", ret);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     return;
@@ -120,21 +120,21 @@ int main(int argc, char** argv)
 {
     int i;
     pthread_t thread1;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     for (i =0; i< 2; i++)
     {
-        if (SUCCEED!=tpinit(NULL))
+        if (EXSUCCEED!=tpinit(NULL))
         {
             NDRX_LOG(log_error, "TESTERROR: tpinit fail: %s", tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         /* get the first context */
         if (TPMULTICONTEXTS!=tpgetctxt(&M_ctx[i], 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpgetctxt fail: %s", tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     

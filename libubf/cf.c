@@ -52,7 +52,7 @@
         int cpy_len = in_len > CF_TEMP_BUF_MAX?CF_TEMP_BUF_MAX: in_len;\
         UBF_LOG(log_error, "[%10.10s]", input_buf);\
         strncpy(tmp, input_buf, cpy_len); \
-        tmp[cpy_len] = EOS
+        tmp[cpy_len] = EXEOS
 
 /*
  * This generally checks fixed data type lenghts, i.e. if converting out
@@ -187,7 +187,7 @@ char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_buf, int i
 char * conv_same(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 
-public conv_type_t G_conv_fn_short[] =
+expublic conv_type_t G_conv_fn_short[] =
 {
     {BFLD_SHORT, BFLD_SHORT, conv_same},
     {BFLD_SHORT, BFLD_LONG, conv_short_long},
@@ -197,7 +197,7 @@ public conv_type_t G_conv_fn_short[] =
     {BFLD_SHORT, BFLD_STRING, conv_short_string},
     {BFLD_SHORT, BFLD_CARRAY, conv_short_carr}
 };
-public conv_type_t G_conv_fn_long[] =
+expublic conv_type_t G_conv_fn_long[] =
 {
     {BFLD_LONG, BFLD_SHORT, conv_long_short},
     {BFLD_LONG, BFLD_LONG, conv_same},
@@ -208,7 +208,7 @@ public conv_type_t G_conv_fn_long[] =
     {BFLD_LONG, BFLD_CARRAY, conv_long_carr}
 };
 
-public conv_type_t G_conv_fn_char[] =
+expublic conv_type_t G_conv_fn_char[] =
 {
 
     {BFLD_CHAR, BFLD_SHORT, conv_char_short},
@@ -221,7 +221,7 @@ public conv_type_t G_conv_fn_char[] =
 
 };
 
-public conv_type_t G_conv_fn_float[] =
+expublic conv_type_t G_conv_fn_float[] =
 {
     {BFLD_FLOAT, BFLD_SHORT, conv_float_short},
     {BFLD_FLOAT, BFLD_LONG, conv_float_long},
@@ -232,7 +232,7 @@ public conv_type_t G_conv_fn_float[] =
     {BFLD_FLOAT, BFLD_CARRAY, conv_float_carr}
 };
 
-public conv_type_t G_conv_fn_double[] =
+expublic conv_type_t G_conv_fn_double[] =
 {
     {BFLD_DOUBLE, BFLD_SHORT, conv_double_short},
     {BFLD_DOUBLE, BFLD_LONG, conv_double_long},
@@ -243,7 +243,7 @@ public conv_type_t G_conv_fn_double[] =
     {BFLD_DOUBLE, BFLD_CARRAY, conv_double_carr}
 };
 
-public conv_type_t G_conv_fn_string[] =
+expublic conv_type_t G_conv_fn_string[] =
 {
     {BFLD_STRING, BFLD_SHORT, conv_string_short},
     {BFLD_STRING, BFLD_LONG, conv_string_long},
@@ -254,7 +254,7 @@ public conv_type_t G_conv_fn_string[] =
     {BFLD_STRING, BFLD_CARRAY, conv_string_carr}
 };
 
-public conv_type_t G_conv_fn_carr[] =
+expublic conv_type_t G_conv_fn_carr[] =
 {
     {BFLD_CARRAY, BFLD_SHORT, conv_carr_short},
     {BFLD_CARRAY, BFLD_LONG, conv_carr_long},
@@ -277,7 +277,7 @@ public conv_type_t G_conv_fn_carr[] =
  * @param extra_len - extra len to allocate for buffer (usable only in CB_MODE_ALLOC mode)
  * @return
  */
-public char * get_cbuf(int in_from_type, int in_to_type,
+expublic char * get_cbuf(int in_from_type, int in_to_type,
                         char *in_temp_buf, char *in_data, int in_len,
                         char **out_alloc_buf,
                         int *alloc_size,
@@ -385,7 +385,7 @@ public char * get_cbuf(int in_from_type, int in_to_type,
  * @param olen
  * @return
  */
-public char * ubf_convert(int from_type, int cnv_dir, char *input_buf, int in_len,
+expublic char * ubf_convert(int from_type, int cnv_dir, char *input_buf, int in_len,
                         int to_type, char *output_buf , int *out_len)
 {
     conv_type_t* conv_tab = NULL;
@@ -720,7 +720,7 @@ char * conv_char_string(struct conv_type *t, int cnv_dir, char *input_buf, int i
     else
     {
         output_buf[0] = ptr[0];
-        output_buf[1] = EOS;
+        output_buf[1] = EXEOS;
 
         if (NULL!=out_len)
             *out_len = 2;
@@ -1129,7 +1129,7 @@ char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_buf, int i
     }
 
     strncpy(output_buf, input_buf, input_carrlen);
-    output_buf[input_carrlen] = EOS;
+    output_buf[input_carrlen] = EXEOS;
 
     if (NULL!=out_len)
         *out_len = input_carrlen+1; /* We have to count in EOS! */

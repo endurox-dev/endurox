@@ -43,7 +43,7 @@ extern "C" {
 #include <atmi.h>
 #include <ndrxdcmn.h>
 #include <stdint.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <sys/sem.h>
 #include <exhash.h>
 #include <ndrstandard.h>
@@ -70,7 +70,9 @@ extern "C" {
 #define ATMI_COMMAND_CONVACK    9
 #define ATMI_COMMAND_SHUTDOWN   10
 #define ATMI_COMMAND_EVPOST     11
-#define ATMI_COMMAND_SELF_SD    12      /* Self shutdown */
+#define ATMI_COMMAND_SELF_SD    12      /* Self shutdown                */
+#define ATMI_COMMAND_TPNOTIFY   13      /* Notification message         */
+#define ATMI_COMMAND_BROADCAST  14      /* Broadcast notification       */
 
 /* Call states */
 #define CALL_NOT_ISSUED         0
@@ -111,9 +113,10 @@ extern "C" {
 #define TPRECOVERSVC        "TPRECOVER"     /* Recovery administrative service */
     
 /* Special flags for tpcallex */
-#define TPCALL_EVPOST           0x0001          /* Event posting */
-#define TPCALL_BRCALL           0x0002          /* Bridge call   */
-    
+#define TPCALL_EVPOST           0x0001          /* Event posting    */
+#define TPCALL_BRCALL           0x0002          /* Bridge call      */
+#define TPCALL_BROADCAST        0x0004          /* Broadcast call   */
+
 /* XA TM reason codes */
 /* Lower reason includes XA error code. */    
 #define NDRX_XA_ERSN_BASE            2000
@@ -132,7 +135,6 @@ extern "C" {
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
-
 #define NDRX_CONF_MSGSEQ_START       65530   /* Have a high number for wrap test */    
     
 /* Memory allocation helpers */
@@ -150,7 +152,28 @@ extern "C" {
         NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
         userlog("%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
         errno = err;\
-        FAIL_OUT(__ret);\
+        EXFAIL_OUT(__ret);\
+    }\
+    if (NULL!=__p_bufsz)\
+    {\
+        *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+    }\
+}
+    
+ /**
+ * Allocate buffer, if fail set ATMI error, and goto out
+ */
+#define NDRX_SYSBUF_MALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
+{\
+    __buf = NDRX_MALLOC(G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+    if (NULL==__buf)\
+    {\
+        int err = errno;\
+        _TPset_error_fmt(TPEOS, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
+        NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
+        userlog("%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
+        errno = err;\
+        EXFAIL_OUT(__ret);\
     }\
     if (NULL!=__p_bufsz)\
     {\
@@ -170,14 +193,31 @@ extern "C" {
         NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
         userlog("%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
         errno = err;\
-        FAIL_OUT(__ret);\
+        EXFAIL_OUT(__ret);\
     }\
     if (NULL!=__p_bufsz)\
     {\
         *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
     }\
 }
+    
 
+#define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
+#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio     */
+
+#define NDRX_XA_FLAG_RECON  "RECON"  /* Reconnect on tpbegin(), xa_start() if fails */
+#define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /* Test the line */
+#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /* List of error codes for retry */
+    
+#define NDRX_BANNER \
+    fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, \
+                    __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
+    fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
+    fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
+    fprintf(stderr, "Copyright (C) 2017 Mavimax Ltd. All Rights Reserved.\n\n");\
+    fprintf(stderr, "This software is released under one of the following licenses:\n");\
+    fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -279,7 +319,7 @@ struct atmi_lib_conf
     char reply_q_str[NDRX_MAX_Q_SIZE+1]; /* Provide reply q better debug */
     mqd_t reply_q; /* Reply queue */
     /* queue attributes */
-    struct mq_attr q_attr; /* Queue attributes. */
+    struct mq_attr reply_q_attr; /* Queue attributes of replyq */
     /*
      * ID string. For example:
      * srv.testsrv-1
@@ -322,8 +362,15 @@ struct atmi_lib_env
     char xa_close_str[PATH_MAX];/* XA Close string          */
     char xa_driverlib[PATH_MAX];/* Enduro RM Library/driver */
     char xa_rmlib[PATH_MAX];    /* RM library               */
-    int  xa_lazy_init;/* Should we                */
-    struct xa_switch_t * xa_sw; /* handler to XA switch */
+    int  xa_lazy_init;          /* Should we  init lately?  */
+    char xa_flags[PATH_MAX];    /* Specific flags for XA    */
+    struct xa_switch_t * xa_sw; /* handler to XA switch     */
+    
+    
+    char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
+    int xa_recon_times;         /* Number of times to retry the recon    */
+    long xa_recon_usleep;       /* Microseconds to sleep between retries */
+    
     /* </XA Protocol configuration> */
     
     int     nrsems; /* number of sempahores for poll() mode of service mem */
@@ -331,6 +378,8 @@ struct atmi_lib_env
     int     maxsvcsrvs; /* Max servers per service (only for poll() mode) */
     
     char    qprefix[NDRX_MAX_Q_SIZE+1]; /* Queue prefix (common, finally!) */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /* Includes separator at the end */
+    int     qprefix_match_len;              /* Includes number bytes to match */
     char    qpath[PATH_MAX+1]; /* Queue path (common, finally!) */
     
 };
@@ -377,7 +426,7 @@ struct tp_command_call
     /* message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
     /* call timer so that we do not operate with timed-out calls. */
-    ndrx_timer_t timer;    
+    ndrx_stopwatch_t timer;    
     
     /* <XA section begin> */
     ATMI_XA_TX_INFO_FIELDS;
@@ -391,6 +440,56 @@ struct tp_command_call
 };
 typedef struct tp_command_call tp_command_call_t;
 
+/*
+ * Notification message
+ */
+struct tp_notif_call
+{
+    /* <standard comms header:> */
+    short command_id;
+    char proto_ver[4];
+    int proto_magic;
+    /* </standard comms header> */
+    
+    /* See clientid_t, same fields */
+    char destclient[NDRX_MAX_ID_SIZE];      /* Destination client ID */
+    
+    /* fields from boradcast */
+    char nodeid[MAXTIDENT*2]; /* In case of using regex */
+    int nodeid_isnull;        /* Is NULL */
+    char usrname[MAXTIDENT*2]; /* In case of using regex */
+    int usrname_isnull;        /* Is NULL */
+    char cltname[MAXTIDENT*2]; /* In case of using regex */
+    int cltname_isnull;        /* Is NULL */
+    
+    short buffer_type_id;
+    /* See clientid_t, same fields, end */
+    char reply_to[NDRX_MAX_Q_SIZE+1];
+    /* Zero terminated string... (might contain special symbols)*/
+    char callstack[CONF_NDRX_NODEID_COUNT+1];
+    char my_id[NDRX_MAX_ID_SIZE]; /* ID of caller */
+    long sysflags; /* internal flags of the call */
+    int cd;
+    int rval;
+    long rcode; /* should be preset on reply only */
+    long flags; /* should be preset on reply only */
+    time_t timestamp; /* provide time stamp of the call */
+    unsigned short callseq;
+    /* message sequence for conversational over multithreaded bridges*/
+    unsigned short msgseq;
+    /* call timer so that we do not operate with timed-out calls. */
+    ndrx_stopwatch_t timer;    
+    
+    /* Have a ptr to auto-buffer: */
+    buffer_obj_t * autobuf;
+    
+    long destnodeid; /* Dest node to which we are sending the msg */
+    
+    long data_len;
+    char data[0];
+    
+};
+typedef struct tp_notif_call tp_notif_call_t;
 
 /**
  * Conversational buffer by message sequence number
@@ -479,6 +578,24 @@ struct atmi_svc_list
     atmi_svc_list_t *next;
 };
 
+/**
+ * Enduro/X Queue details
+ * parsed all attributes of the queue in single struct
+ * Used only those attribs which match the q type.
+ * Currently holds only those fields which are needed for certain system
+ * functions, for example client reply Q details for tpbroadcast..
+ */
+struct ndrx_qdet
+{
+    int qtype; /* queue type, see  NDRX_QTYPE_* */
+    char qprefix[NDRX_MAX_Q_SIZE+1]; 
+    char binary_name[MAXTIDENT+2];
+    pid_t pid;
+    long contextid;
+};
+
+typedef struct ndrx_qdet ndrx_qdet_t;
+
 /* This may have some issues with alignment and this make
  * actual size smaller than 1 char */
 #define MAX_CALL_DATA_SIZE (ATMI_MSG_MAX_SIZE-sizeof(tp_command_call_t))
@@ -492,12 +609,19 @@ extern NDRX_API int G_srv_id;
 /* Utilities */
 extern NDRX_API int ndrx_load_common_env(void);
 extern NDRX_API int ndrx_load_new_env(char *file);
-extern NDRX_API int generic_q_send(char *queue, char *data, long len, long flags);
-extern NDRX_API int generic_q_send_2(char *queue, char *data, long len, long flags, long tout);
-extern NDRX_API int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
-extern NDRX_API long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags);
+extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
+extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
+extern NDRX_API int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
+extern NDRX_API long ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
+        struct mq_attr *reply_q_attr,
+        char *buf, long buf_max, 
+        unsigned *prio, long flags);
+    
 extern NDRX_API int ndrx_get_q_attr(char *q, struct mq_attr *p_att);
-
+extern NDRX_API int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
+                                mqd_t listen_q,
+                                char *listen_q_str, 
+                                long flags);
 extern NDRX_API mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern NDRX_API mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag);
 extern NDRX_API void ndrx_mq_fix_mass_send(int *cntr);
@@ -515,6 +639,15 @@ extern NDRX_API int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_init
 extern NDRX_API int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator);
 extern NDRX_API int ndrx_myid_is_alive(TPMYID *p_myid);
 extern NDRX_API void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg);
+extern NDRX_API int ndrx_myid_convert_to_q(TPMYID *p_myid, char *rply_q, int rply_q_buflen);
+
+extern NDRX_API int ndrx_myid_convert_from_qdet(TPMYID *p_myid, ndrx_qdet_t *qdet, long nodeid);
+extern NDRX_API void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id);
+extern NDRX_API int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr);
+extern NDRX_API void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg);
+extern NDRX_API int ndrx_q_type_get(char *q);
+
+extern NDRX_API int ndrx_atmiutil_init(void);
 
 /* Base64 encode/decode with file system valid output */
 extern NDRX_API char * atmi_xa_base64_encode(unsigned char *data,
@@ -531,6 +664,15 @@ extern NDRX_API unsigned char *atmi_xa_base64_decode(unsigned char *data,
 extern NDRX_API int _tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
                 TPTRANID *p_tran);
+extern NDRX_API int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
+        char *cltq, /* client q already built by broadcast */
+        char *data, long len, long flags, 
+        int dest_node, char *nodeid, char *usrname,  char *cltname,
+        int ex_flags);
+extern NDRX_API int _tpchkunsol(void);
+extern NDRX_API int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
+        char *data,  long len, long flags, int dispatch_local);
+extern NDRX_API void ndrx_process_notif(char *buf, long len);
 extern NDRX_API char * _tprealloc (char *buf, long len);
 extern NDRX_API long	_tptypes (char *ptr, char *type, char *subtype);
 extern NDRX_API char * _tpalloc (typed_buffer_descr_t *known_type,
@@ -553,7 +695,7 @@ extern NDRX_API int svc_fail_to_start(void);
 extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, int killq);
 extern NDRX_API int close_open_client_connections(void);
 extern NDRX_API int have_open_connection(void);
-extern NDRX_API int get_ack(tp_conversation_control_t *conv, long flags);
+extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);
 
 /* Extended version of tpcall, accepts extradata (31+1) symbols */
 extern NDRX_API int tpcallex (char *svc, char *idata, long ilen,
@@ -568,7 +710,7 @@ extern NDRX_API long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, l
 extern NDRX_API int _tppost(char *eventname, char *data, long len, long flags);
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
-extern NDRX_API int _get_evpost_sendq(char *send_q, char *extradata);
+extern NDRX_API int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata);
 
 extern NDRX_API char * atmi_base64_encode(unsigned char *data, size_t input_length, 
         size_t *output_length, char *encoded_data);

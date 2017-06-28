@@ -54,36 +54,36 @@
 int test_normal_case(void)
 {
   UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     long revent;
     int recv_continue = 1;
     int tp_errno;
     int rcv_count = 0;
-    if (FAIL == (cd = tpconnect("CONVSV",
+    if (EXFAIL == (cd = tpconnect("CONVSV",
                                     NULL,
                                     0,
                                     TPNOTRAN | /* untl XA   */
                                     TPSENDONLY)))
     {
         NDRX_LOG(log_error, "TESTERROR: connect error %d", tperrno );
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
 
     /* Now send configuration paramters */
 
-    if (FAIL==Bchg(p_ub, T_STRING_2_FLD, 0, "TERMINAL_T", 0L))
+    if (EXFAIL==Bchg(p_ub, T_STRING_2_FLD, 0, "TERMINAL_T", 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD: %d",
                                         Berror );
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
 
     /* Send the configuration stuff to the server */
-    if (FAIL == tpsend(cd, (char *)p_ub, 0L, TPRECVONLY, &revent))
+    if (EXFAIL == tpsend(cd, (char *)p_ub, 0L, TPRECVONLY, &revent))
     {
         tp_errno = tperrno;
         if (TPEEVENT == tp_errno)
@@ -95,53 +95,53 @@ int test_normal_case(void)
         {
                 NDRX_LOG(log_error, "send error %d", tp_errno );
         }
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
 
     while (recv_continue)
     {
         recv_continue=0;
-        if (FAIL == tprecv(cd,
+        if (EXFAIL == tprecv(cd,
                             (char **)&p_ub,
                             0L,
                             0L,
                             &revent))
         {
-            ret = FAIL;
+            ret = EXFAIL;
             tp_errno = tperrno;
             if (TPEEVENT == tp_errno)
             {
                     if (TPEV_SENDONLY == revent)
                     {
-                            if (FAIL == tpsend(cd, NULL,
+                            if (EXFAIL == tpsend(cd, NULL,
                                              0L, TPRECVONLY, &revent))
                             {
                                     NDRX_LOG(log_error,
                                              "TESTERROR: Send failed %d", tperrno);
-                                    ret=FAIL;
+                                    ret=EXFAIL;
                                     goto out;
                             }
                             else
                             {
                                     recv_continue=1;
-                                    ret = SUCCEED;
+                                    ret = EXSUCCEED;
                             }
                     }
                     else if (TPEV_SVCSUCC == revent)
-                            ret = SUCCEED;
+                            ret = EXSUCCEED;
                     else
                     {
                             NDRX_LOG(log_error,
                                      "TESTERROR: Unexpected conv event %lx", revent );
-                            ret=FAIL;
+                            ret=EXFAIL;
                             goto out;
                     }
             }
             else
             {
                     NDRX_LOG(log_error, "TESTERROR: recv error %d", tp_errno  );
-                    ret = FAIL;
+                    ret = EXFAIL;
                     goto out;
             }
         }
@@ -156,7 +156,7 @@ int test_normal_case(void)
     if (100!=rcv_count)
     {
         NDRX_LOG(log_error, "TESTERROR: Did not receive 100x config details, but %d!!!", rcv_count);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -170,7 +170,7 @@ out:
  */
 int test_clt_abort_case(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
 out:
     return ret;
@@ -179,11 +179,11 @@ out:
  * Do the test call to the server
  */
 int main(int argc, char** argv) {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
-    if (FAIL==test_normal_case())
+    if (EXFAIL==test_normal_case())
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

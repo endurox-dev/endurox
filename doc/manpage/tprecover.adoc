@@ -15,7 +15,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This is special ATMI system process which is started in standrd way by
+This is special ATMI system process which is started in standard way by
 'ndrxd' process application server boot. This service shall be run in single
 instance (min=1 and max=1). The process performs monitoring of the
 'ndrxd' executable. If it sees that 'ndrxd' process is dead, then

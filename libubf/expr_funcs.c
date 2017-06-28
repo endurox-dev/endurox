@@ -61,7 +61,7 @@ v->dyn_alloc=0;\
 }
 
 #ifdef UBF_DEBUG
-#define DUMP_VALUE_BLOCK(TEXT, V) if (SUCCEED==ret) dump_val(TEXT, V)
+#define DUMP_VALUE_BLOCK(TEXT, V) if (EXSUCCEED==ret) dump_val(TEXT, V)
 #else
 #define DUMP_VALUE_BLOCK(TEXT, V) {}
 #endif
@@ -162,7 +162,7 @@ char *M_subtypes_sign_only[] =
 };
 
 /*---------------------------Prototypes---------------------------------*/
-public void _Btreefree_no_recurse (char *tree);
+expublic void _Btreefree_no_recurse (char *tree);
 int get_bfldid(bfldid_t *p_fl);
 int is_float_val(value_block_t *v);
 /*
@@ -182,7 +182,7 @@ int is_float_val(value_block_t *v);
 void yyerror(char *s, ...)
 {
     /* Log only first error! */
-    if (FAIL!=G_error)
+    if (EXFAIL!=G_error)
     {
         va_list ap;
         va_start(ap, s);
@@ -202,7 +202,7 @@ void yyerror(char *s, ...)
           _Fset_error_msg(BSYNTAX, errbuf+2);
         }
 
-        G_error = FAIL;
+        G_error = EXFAIL;
     }
 }
 
@@ -219,7 +219,7 @@ int add_resource(char *p)
     M_cur_mem = malloc (sizeof(struct list_node));
 
     if (NULL==M_cur_mem)
-            return FAIL; /* <<< RETURN FAIL! */
+            return EXFAIL; /* <<< RETURN FAIL! */
 
     if (NULL!=tmp)
         tmp->next = M_cur_mem;
@@ -232,7 +232,7 @@ int add_resource(char *p)
         M_first_mem=M_cur_mem;
     }
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -274,7 +274,7 @@ void remove_resouces(void)
  * This must be maintained to gether with Btreefree()!
  * @param tree
  */
-public void _Btreefree_no_recurse (char *tree)
+expublic void _Btreefree_no_recurse (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
@@ -331,7 +331,7 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
     }
     else
     {
-        if (SUCCEED!=add_resource((char *)a))
+        if (EXSUCCEED!=add_resource((char *)a))
         {
             yyerror("out of space");
             _Fset_error_msg(BMALLOC, "out of memory for resource list");
@@ -369,7 +369,7 @@ struct ast * newfld(bfldid_t f)
     }
     else
     {
-        if (SUCCEED!=add_resource((char *)a))
+        if (EXSUCCEED!=add_resource((char *)a))
         {
             yyerror("out of space");
             _Fset_error_msg(BMALLOC, "out of memory for resource list");
@@ -424,7 +424,7 @@ functionPtr_t get_func(char *funcname)
  */
 int set_func(char *funcname, functionPtr_t functionPtr)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     func_hash_t *tmp;
     
     UBF_LOG(log_warn, "registering callback: [%s]:%p", 
@@ -448,7 +448,7 @@ int set_func(char *funcname, functionPtr_t functionPtr)
         {
             yyerror("out of space");
             _Fset_error_msg(BMALLOC, "out of memory for new func_hash_t");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -476,7 +476,7 @@ struct ast * newfunc(char *funcname)
   }
   else
   {
-      if (SUCCEED!=add_resource((char *)a))
+      if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
           _Fset_error_msg(BMALLOC, "out of memory for resource list");
@@ -500,7 +500,7 @@ struct ast * newfunc(char *funcname)
   }
   
   strncpy(a->funcname, funcname, len-2);
-  a->funcname[len-2] = EOS;
+  a->funcname[len-2] = EXEOS;
   
   G_node_count++;
 
@@ -537,7 +537,7 @@ struct ast * newstring(char *str)
     }
     else
     {
-      if (SUCCEED!=add_resource((char *)a))
+      if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
           _Fset_error_msg(BMALLOC, "out of memory for resource list");
@@ -573,7 +573,7 @@ struct ast * newfloat(double d)
     }
     else
     {
-      if (SUCCEED!=add_resource((char *)a))
+      if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
           _Fset_error_msg(BMALLOC, "out of memory for resource list");
@@ -609,7 +609,7 @@ struct ast * newlong(long l)
     }
     else
     {
-      if (SUCCEED!=add_resource((char *)a))
+      if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
           _Fset_error_msg(BMALLOC, "out of memory for resource list");
@@ -639,7 +639,7 @@ struct ast * newlong(long l)
  */
 int get_float(value_block_t *v)
 {
-	int ret=SUCCEED;
+	int ret=EXSUCCEED;
     if (VALUE_TYPE_FLOAT==v->value_type)
     {
         /* do nothing. */
@@ -658,7 +658,7 @@ int get_float(value_block_t *v)
     {
         UBF_LOG(log_error, "get_float: Unknown value type %d\n",
                                     v->value_type);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 	
 	return ret;
@@ -697,7 +697,7 @@ void dump_val(char *text, value_block_t *v)
  */
 int conv_to_string(char *buf, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     v->strval = buf;
     
@@ -715,7 +715,7 @@ int conv_to_string(char *buf, value_block_t *v)
     {
     UBF_LOG(log_error, "conv_to_string: Unknown value type %d\n",
                             v->value_type);
-    ret=FAIL;
+    ret=EXFAIL;
     }
 
     return ret;
@@ -728,7 +728,7 @@ int conv_to_string(char *buf, value_block_t *v)
  */
 int conv_to_long(value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     if (VALUE_TYPE_STRING==v->value_type || VALUE_TYPE_FLD_STR==v->value_type)
     {
@@ -742,7 +742,7 @@ int conv_to_long(value_block_t *v)
     {
         UBF_LOG(log_error,"conv_to_long: Unknown value type %d\n",
                                 v->value_type);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     return ret;
@@ -759,22 +759,22 @@ int conv_to_long(value_block_t *v)
  */
 int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_t *rval, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     v->value_type = VALUE_TYPE_LONG;
 
-    if (VALUE_TYPE_FLOAT!=lval->value_type && SUCCEED!=get_float(lval))
+    if (VALUE_TYPE_FLOAT!=lval->value_type && EXSUCCEED!=get_float(lval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && VALUE_TYPE_FLOAT!=rval->value_type &&
-                            SUCCEED!=get_float(rval))
+    if (EXSUCCEED==ret && VALUE_TYPE_FLOAT!=rval->value_type &&
+                            EXSUCCEED!=get_float(rval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         UBF_LOG(log_debug, "flt CMP (%s/%s): [%lf] vs [%lf]",
                         M_nodetypes[type], M_subtypes[sub_type], lval->floatval, rval->floatval);
@@ -785,19 +785,19 @@ int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_
         }
         else if (NODE_TYPE_RELOP==type && RELOP_LESS==sub_type) /* RELOP_LESS -> [x < y]*/
         {
-            v->longval = v->boolval = (lval->floatval<rval->floatval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->floatval<rval->floatval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_LESS_EQUAL==sub_type) /* RELOP_LESS_EQUAL -> [x <= y]*/
         {
-            v->longval = v->boolval = (lval->floatval<=rval->floatval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->floatval<=rval->floatval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_GREATER==sub_type) /* RELOP_GREATER -> [x > y]*/
         {
-            v->longval = v->boolval = (lval->floatval>rval->floatval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->floatval>rval->floatval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_GREATER_EQUAL==sub_type) /* RELOP_GREATER_EQUAL -> [x >= y]*/
         {
-            v->longval = v->boolval = (lval->floatval>=rval->floatval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->floatval>=rval->floatval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_ADDOP==type || NODE_TYPE_MULTOP==type)
         {
@@ -827,14 +827,14 @@ int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_
                 /* Make these cases as false - original system do this such */
                 v->value_type = VALUE_TYPE_LONG;
                 UBF_LOG(log_warn, "ERROR! No mod support for floats!");
-                v->longval = v->boolval = FALSE;
+                v->longval = v->boolval = EXFALSE;
             }
             
             /* Set TRUE/FALSE flag */
             if (v->floatval)
-                v->boolval=TRUE;
+                v->boolval=EXTRUE;
             else
-                v->boolval=FALSE;
+                v->boolval=EXFALSE;
         }
     } /*if (SUCCEED==ret)*/
     
@@ -855,21 +855,21 @@ int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_
  */
 int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t *rval, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     v->value_type = VALUE_TYPE_LONG;
 
-    if ((VALUE_TYPE_LONG!=lval->value_type) && SUCCEED!=conv_to_long(lval))
+    if ((VALUE_TYPE_LONG!=lval->value_type) && EXSUCCEED!=conv_to_long(lval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && (VALUE_TYPE_LONG!=rval->value_type) &&
-            SUCCEED!=conv_to_long(rval))
+    if (EXSUCCEED==ret && (VALUE_TYPE_LONG!=rval->value_type) &&
+            EXSUCCEED!=conv_to_long(rval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         UBF_LOG(log_debug, "lng CMP (%s/%s): [%ld] vs [%ld]",
                         M_nodetypes[type], M_subtypes[sub_type], lval->longval, rval->longval);
@@ -880,19 +880,19 @@ int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t
         }
         else if (NODE_TYPE_RELOP==type && RELOP_LESS==sub_type) /* RELOP_LESS -> [x < y]*/
         {
-            v->longval = v->boolval = (lval->longval<rval->longval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->longval<rval->longval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_LESS_EQUAL==sub_type) /* RELOP_LESS_EQUAL -> [x <= y]*/
         {
-            v->longval = v->boolval = (lval->longval<=rval->longval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->longval<=rval->longval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_GREATER==sub_type) /* RELOP_GREATER -> [x > y]*/
         {
-            v->longval = v->boolval = (lval->longval>rval->longval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->longval>rval->longval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_GREATER_EQUAL==sub_type) /* RELOP_GREATER_EQUAL -> [x >= y]*/
         {
-            v->longval = v->boolval = (lval->longval>=rval->longval?TRUE:FALSE);
+            v->longval = v->boolval = (lval->longval>=rval->longval?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_ADDOP==type || NODE_TYPE_MULTOP==type)
         {
@@ -927,9 +927,9 @@ int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t
             }
             /* Set TRUE/FALSE flag */
             if (v->longval)
-                v->boolval=TRUE;
+                v->boolval=EXTRUE;
             else
-                v->boolval=FALSE;
+                v->boolval=EXFALSE;
         }
     }
 
@@ -941,7 +941,7 @@ int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t
 
 int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t *rval, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int result;
     char lval_buf[64]; /* should be enought for all data types */
     char rval_buf[64]; /* should be enought for all data types */
@@ -949,19 +949,19 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t 
 
     if (VALUE_TYPE_FLD_STR!=lval->value_type &&
             VALUE_TYPE_STRING!=lval->value_type &&
-            SUCCEED!=conv_to_string(lval_buf, lval))
+            EXSUCCEED!=conv_to_string(lval_buf, lval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && VALUE_TYPE_FLD_STR!=rval->value_type &&
+    if (EXSUCCEED==ret && VALUE_TYPE_FLD_STR!=rval->value_type &&
             VALUE_TYPE_STRING!=rval->value_type &&
-            SUCCEED!=conv_to_string(rval_buf, rval))
+            EXSUCCEED!=conv_to_string(rval_buf, rval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         result=strcmp(lval->strval, rval->strval);
 
@@ -970,29 +970,29 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t 
 
         if (NODE_TYPE_EQOP==type)
         {
-            v->longval = v->boolval = result==0?TRUE:FALSE;
+            v->longval = v->boolval = result==0?EXTRUE:EXFALSE;
         }
         else if (NODE_TYPE_RELOP==type && RELOP_LESS==sub_type) /* RELOP_LESS -> [x < y]*/
         {
-            v->longval = v->boolval = (result<0?TRUE:FALSE);
+            v->longval = v->boolval = (result<0?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_LESS_EQUAL==sub_type) /* RELOP_LESS_EQUAL -> [x <= y]*/
         {
-            v->longval = v->boolval = (result<=0?TRUE:FALSE);
+            v->longval = v->boolval = (result<=0?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_GREATER==sub_type) /* RELOP_GREATER -> [x > y]*/
         {
-            v->longval = v->boolval = (result>0?TRUE:FALSE);
+            v->longval = v->boolval = (result>0?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_RELOP==type && RELOP_GREATER_EQUAL==sub_type) /* RELOP_GREATER_EQUAL -> [x >= y]*/
         {
-            v->longval = v->boolval = (result>=0?TRUE:FALSE);
+            v->longval = v->boolval = (result>=0?EXTRUE:EXFALSE);
         }
         else if (NODE_TYPE_ADDOP==type || NODE_TYPE_MULTOP==type)
         {
             /* Make these cases as false - original system do this such */
             UBF_LOG(log_warn, "ERROR! No math support for strings!");
-            v->longval = v->boolval = FALSE;
+            v->longval = v->boolval = EXFALSE;
         }
 
         UBF_LOG(log_debug, "Result bool: %d long:%ld", v->boolval, rval->longval);
@@ -1010,28 +1010,28 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t 
  */
 int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     value_block_t lval, rval;
     memset(&lval, 0, sizeof(lval));
     memset(&rval, 0, sizeof(rval));
     /* Get the values out of the child stuff */
-    if (SUCCEED!=eval(p_ub, l, &lval))
+    if (EXSUCCEED!=eval(p_ub, l, &lval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret && SUCCEED!=eval(p_ub, r, &rval))
+    if (EXSUCCEED==ret && EXSUCCEED!=eval(p_ub, r, &rval))
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         if (lval.is_null || rval.is_null)
         {
             /* Not equal... */
             UBF_LOG(log_debug, "LVAR or LVAL is NULL => False");
-            v->longval = v->boolval = FALSE;
+            v->longval = v->boolval = EXFALSE;
             goto out;
         }
 	
@@ -1124,7 +1124,7 @@ int get_bfldid(bfldid_t *p_fl)
 /* This will not use recursion on eval. We will take data out of AST by selves! */
 int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char l_buf[MAX_TEXT+1];
     char *p_l=NULL;
     char *p_r=NULL;
@@ -1138,7 +1138,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     if (NODE_TYPE_FLD==l->nodetype)
     {
         /* Get the value of field */
-        if (SUCCEED==ret && SUCCEED!=(ret=CBget(p_ub, lf->fld.bfldid, lf->fld.occ,
+        if (EXSUCCEED==ret && EXSUCCEED!=(ret=CBget(p_ub, lf->fld.bfldid, lf->fld.occ,
                                     l_buf, &len, BFLD_STRING)))
         {
             if (BNOTPRES==Berror)
@@ -1147,20 +1147,20 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
                 /* This is OK */
                 UBF_LOG(log_warn, "Field not present [%s]", lf->fld.fldnm);
                 v->value_type=VALUE_TYPE_LONG;
-                v->longval=v->boolval=FALSE;
-                v->is_null=TRUE; /* Cannot do compare! */
+                v->longval=v->boolval=EXFALSE;
+                v->is_null=EXTRUE; /* Cannot do compare! */
 
-                return SUCCEED; /* <<< RETURN!!! Nothing to do. */
+                return EXSUCCEED; /* <<< RETURN!!! Nothing to do. */
             }
             else
             {
                 UBF_LOG(log_warn, "Failed to get [%s] - %s",
                                         lf->fld.fldnm, Bstrerror(Berror));
-                ret=FAIL;
+                ret=EXFAIL;
             }
 
         }
-        else if (SUCCEED==ret)
+        else if (EXSUCCEED==ret)
         {
             p_l = l_buf;
         }
@@ -1174,15 +1174,15 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     {
         /* cannot handle other items, but should be already handled by parser! */
         _Fset_error_msg(BSYNTAX, "Left side of regex must be const string or FB field");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     /* Right string must be quoted const string! */
-    if (SUCCEED==ret && NODE_TYPE_STR==r->nodetype)
+    if (EXSUCCEED==ret && NODE_TYPE_STR==r->nodetype)
     {
             p_r = rs->str;
     } /* We do not have correct right side - FAIL */
-    else if (SUCCEED==ret)
+    else if (EXSUCCEED==ret)
     {
     /* We must handle this by parser */
             UBF_LOG(log_error, "Right side of regexp must be const string! "
@@ -1190,7 +1190,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     _Fset_error_msg(BSYNTAX, "Right side of regex must be const string");
     }
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         regex_t *re = &(rs->regex.re);
         int err;
@@ -1201,10 +1201,10 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
         if (!rs->regex.compiled)
         {
             UBF_LOG(log_debug, "Compiling regex");
-            if (SUCCEED!=(err=regcomp(re, p_r, REG_EXTENDED | REG_NOSUB)))
+            if (EXSUCCEED!=(err=regcomp(re, p_r, REG_EXTENDED | REG_NOSUB)))
             {
                 report_regexp_error("regcomp", err, re);
-                ret=FAIL;
+                ret=EXFAIL;
             }
             else
             {
@@ -1213,16 +1213,16 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
             }
         }
 
-        if (SUCCEED==ret && SUCCEED==regexec(re, p_l, (size_t) 0, NULL, 0))
+        if (EXSUCCEED==ret && EXSUCCEED==regexec(re, p_l, (size_t) 0, NULL, 0))
         {
             v->value_type=VALUE_TYPE_LONG;
-            v->longval=v->boolval=TRUE;
+            v->longval=v->boolval=EXTRUE;
             UBF_LOG(log_debug, "REGEX: matched!");
         }
-        else if (SUCCEED==ret)
+        else if (EXSUCCEED==ret)
         {
             v->value_type=VALUE_TYPE_LONG;
-            v->longval=v->boolval=FALSE;
+            v->longval=v->boolval=EXFALSE;
             UBF_LOG(log_debug, "REGEX: NOT matched!");
         }
     }
@@ -1238,7 +1238,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
  */
 int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     struct ast_func *func = (struct ast_func *)a;
     char *fn = "read_unary_func";
 
@@ -1250,9 +1250,9 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
     v->longval=func->f(p_ub, func->funcname);
 
     if (v->longval)
-        v->boolval=TRUE;
+        v->boolval=EXTRUE;
     else
-        v->boolval=FALSE;
+        v->boolval=EXFALSE;
     
     /* Dump out the final value */
     DUMP_VALUE_BLOCK("read_unary_fb", v);
@@ -1268,7 +1268,7 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
  */
 int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     struct ast_fld *fld = (struct ast_fld *)a;
     BFLDID bfldid;
     BFLDOCC occ;
@@ -1287,7 +1287,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 	 * short/long -> long
 	 * all true if field present.
 	 */
-	if (SUCCEED==ret)
+	if (EXSUCCEED==ret)
 	{
             fld_type=Bfldtype(bfldid);
 
@@ -1296,8 +1296,8 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 UBF_LOG(log_debug, "Field [%s] not present in fb",
                                                     fld->fld.fldnm);
                 v->value_type = VALUE_TYPE_LONG;
-                v->longval=v->boolval=FALSE;
-                v->is_null=TRUE;
+                v->longval=v->boolval=EXFALSE;
+                v->is_null=EXTRUE;
             }
             /* In this case it is just a TRUE. */
             else if (BFLD_STRING==fld_type || BFLD_CARRAY==fld_type || BFLD_CHAR==fld_type)
@@ -1308,14 +1308,14 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 {
                     UBF_LOG(log_error, "Error malloc fail!");
                     _Fset_error_fmt(BMALLOC, "Error malloc fail! (cannot allocate %d)", len);
-                    ret=FAIL;
+                    ret=EXFAIL;
                 }
                 else
                 {
                     v->dyn_alloc = 1; /* ensure that FREE_UP_UB_BUF can capture these */
                 }
 
-                if (SUCCEED==ret && SUCCEED!=CBget(p_ub, bfldid, occ,
+                if (EXSUCCEED==ret && EXSUCCEED!=CBget(p_ub, bfldid, occ,
                                 (char *)v->strval, &len, BFLD_STRING))
                 {
                     if (BNOTPRES==Berror)
@@ -1325,14 +1325,14 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                                                      " - downgrade to FALSE!",
                                                      fld->fld.fldnm);
                         v->value_type = VALUE_TYPE_FLD_STR;
-                        v->longval=v->boolval=FALSE;
-                        v->is_null=TRUE;
+                        v->longval=v->boolval=EXFALSE;
+                        v->is_null=EXTRUE;
                     }
                     else /* on all other errors we are going to FAIL! */
                     {
                         UBF_LOG(log_warn, "Failed to get [%s] - %s",
                             fld->fld.fldnm, Bstrerror(Berror));
-                        ret=FAIL;
+                        ret=EXFAIL;
                     }
                     /* Lets free memory right right here, why not? */
 
@@ -1340,16 +1340,16 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                     v->dyn_alloc = 0;
                     v->strval = NULL;
                 }
-                else if (SUCCEED==ret)
+                else if (EXSUCCEED==ret)
                 {
                     v->value_type = VALUE_TYPE_FLD_STR;
-                    v->boolval=TRUE;
+                    v->boolval=EXTRUE;
                 }
 
             }
             else if (BFLD_SHORT==fld_type || BFLD_LONG==fld_type)
             {
-                if (SUCCEED!=CBget(p_ub, bfldid, occ, 
+                if (EXSUCCEED!=CBget(p_ub, bfldid, occ, 
                                 (char *)&v->longval, NULL, BFLD_LONG))
                 {
                     if (BNOTPRES==Berror)
@@ -1359,25 +1359,25 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                                 " - downgrade to FALSE!",
                                 fld->fld.fldnm);
                         v->value_type = VALUE_TYPE_LONG;
-                        v->longval=v->boolval=FALSE;
-                        v->is_null=TRUE;
+                        v->longval=v->boolval=EXFALSE;
+                        v->is_null=EXTRUE;
                     }
                     else /* on all other errors we are going to FAIL! */
                     {
                         UBF_LOG(log_warn, "Failed to get [%s] - %s",
                             fld->fld.fldnm, Bstrerror(Berror));
-                        ret=FAIL;
+                        ret=EXFAIL;
                     }
                 }
                 else
                 {
                         v->value_type = VALUE_TYPE_LONG;
-                        v->boolval=TRUE;
+                        v->boolval=EXTRUE;
                 }
             }
             else if (BFLD_FLOAT==fld_type || BFLD_DOUBLE==fld_type)
             {
-                if (SUCCEED!=CBget(p_ub, bfldid, occ, 
+                if (EXSUCCEED!=CBget(p_ub, bfldid, occ, 
                                 (char *)&v->floatval, NULL, BFLD_DOUBLE))
                 {
                     if (BNOTPRES==Berror)
@@ -1387,20 +1387,20 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                                 " - downgrade to FALSE!",
                                 fld->fld.fldnm);
                         v->value_type = VALUE_TYPE_LONG;
-                        v->longval=v->boolval=FALSE;
-                        v->is_null=TRUE;
+                        v->longval=v->boolval=EXFALSE;
+                        v->is_null=EXTRUE;
                     }
                     else /* on all other errors we are going to FAIL! */
                     {
                         UBF_LOG(log_warn, "Failed to get [%s] - %s",
                             fld->fld.fldnm, Bstrerror(Berror));
-                        ret=FAIL;
+                        ret=EXFAIL;
                     }
                 }
                 else
                 {
                     v->value_type = VALUE_TYPE_FLOAT;
-                    v->boolval=TRUE;
+                    v->boolval=EXTRUE;
                 }
             }
 	}
@@ -1421,9 +1421,9 @@ int is_float(char *s)
 {
     if (strpbrk(s, ".,eE")) /* this will work faster than multiple strchrs */
     {
-        return TRUE;
+        return EXTRUE;
     }
-    return FALSE;
+    return EXFALSE;
 }
 /**
  * Detect is float value type block.
@@ -1433,12 +1433,12 @@ int is_float(char *s)
 int is_float_val(value_block_t *v)
 {
     if ( VALUE_TYPE_FLOAT==v->value_type )
-        return TRUE;
+        return EXTRUE;
 
     if ( VALUE_TYPE_FLD_STR==v->value_type || VALUE_TYPE_STRING==v->value_type)
         return is_float(v->strval);
     
-    return FALSE;
+    return EXFALSE;
 }
 
 /**
@@ -1453,19 +1453,19 @@ int is_float_val(value_block_t *v)
  */
 int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     value_block_t pri;
     /* Data keepers */
     double f;
     long  l;
-    int is_long=TRUE;
+    int is_long=EXTRUE;
     char fn[] = "process_unary()";
 
     memset(&pri, 0, sizeof(pri));
 	
     UBF_LOG(log_debug, "Entering %s", fn);
 
-    if (SUCCEED==eval(p_ub, a->r, &pri))
+    if (EXSUCCEED==eval(p_ub, a->r, &pri))
     {
 
         if (VALUE_TYPE_FLD_STR==pri.value_type || 
@@ -1474,34 +1474,34 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
             if (is_float(pri.strval))
             {
                 f = atof(pri.strval);
-                is_long = FALSE;
+                is_long = EXFALSE;
                 UBF_LOG(log_warn, "Treating unary field as "
                                     "float [%f]!", f);
             }
             else
             {
                 l = atol(pri.strval);
-                is_long = TRUE;
+                is_long = EXTRUE;
                 UBF_LOG(log_warn, "Treating unary "
                         "field as long [%ld]", l);
             }
         }
         else if (VALUE_TYPE_FLOAT==pri.value_type)
         {
-            is_long=FALSE;
+            is_long=EXFALSE;
             f = pri.floatval;
         }
         else if (VALUE_TYPE_LONG==pri.value_type)
         {
             /* it must be long */
-            is_long=TRUE;
+            is_long=EXTRUE;
             l = pri.longval;
         }
         else
         {
             UBF_LOG(log_warn, "Unknown value type %d", 
                                 pri.value_type);
-            return FAIL;
+            return EXFAIL;
         }
 
         if ((op==UNARY_CMPL || op==UNARY_INV) && !is_long)
@@ -1556,7 +1556,7 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
     }
     else
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
     /* Ensure that we clean up dynamically allocated FB resources! */
     FREE_UP_UB_BUF((&pri));
@@ -1579,7 +1579,7 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
  */
 int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     value_block_t l, r;
     char fn[] = "eval";
     memset(v, 0, sizeof(*v));
@@ -1589,13 +1589,13 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
     if (!v)
     {
         _Fset_error_msg(BNOTFLD, "internal error, null ret value");
-            return FAIL; /* <<< RETURN HERE! */
+            return EXFAIL; /* <<< RETURN HERE! */
     }
 
     if(!a)
     {
         _Fset_error_msg(BNOTFLD, "internal error, null eval");
-        return FAIL; /* <<< RETURN HERE! */
+        return EXFAIL; /* <<< RETURN HERE! */
     }
     
     UBF_LOG(log_debug, "%s: id: %02d type: %s sub-type %s", fn,
@@ -1609,13 +1609,13 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
             /* So that do we really need to evaluate other side 
              * to keep c style working!
              */
-            if (SUCCEED==ret && !l.boolval)
+            if (EXSUCCEED==ret && !l.boolval)
                     ret=eval(p_ub, a->r, &r);
 
-            if (SUCCEED==ret)
+            if (EXSUCCEED==ret)
             {
                 v->value_type=VALUE_TYPE_LONG;
-                v->longval = v->boolval = (l.boolval || r.boolval)?TRUE:FALSE;
+                v->longval = v->boolval = (l.boolval || r.boolval)?EXTRUE:EXFALSE;
             }
             DUMP_VALUE_BLOCK("NODE_TYPE_OR", v);
             break;
@@ -1624,35 +1624,35 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
             /* Right side needs only if left is true
              * keeping c style
              */
-            if (SUCCEED==ret && l.boolval)
+            if (EXSUCCEED==ret && l.boolval)
             {
                 ret=eval( p_ub, a->r, &r);
             }
 
-            if (SUCCEED==ret)
+            if (EXSUCCEED==ret)
             {
                 v->value_type=VALUE_TYPE_LONG;
 
-                v->longval = v->boolval = (l.boolval && r.boolval)?TRUE:FALSE;
+                v->longval = v->boolval = (l.boolval && r.boolval)?EXTRUE:EXFALSE;
             }
             DUMP_VALUE_BLOCK("NODE_TYPE_AND", v);
             break;
         case NODE_TYPE_XOR:
             ret = eval( p_ub, a->l, &l);
 
-            if (SUCCEED==ret)
+            if (EXSUCCEED==ret)
             {
                 ret = eval( p_ub, a->r, &r);
             }
 
-            if (SUCCEED==ret)
+            if (EXSUCCEED==ret)
             {
                 v->value_type=VALUE_TYPE_LONG;
 
                 if ((l.boolval && !r.boolval) || (!l.boolval && r.boolval))
-                    v->boolval=TRUE;
+                    v->boolval=EXTRUE;
                 else
-                    v->boolval=FALSE;
+                    v->boolval=EXFALSE;
             }
             DUMP_VALUE_BLOCK("NODE_TYPE_XOR", v);
             break;
@@ -1664,7 +1664,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                     break;
                 case EQOP_NOT_EQUAL:
                     ret = op_equal(p_ub, NODE_TYPE_EQOP, NODE_SUB_TYPE_DEF, a->l, a->r, v);
-                    if (SUCCEED==ret)
+                    if (EXSUCCEED==ret)
                     {
                         /* Inverse the result. */
                         v->boolval = !v->boolval;
@@ -1677,7 +1677,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                     break;
                 case EQOP_REGEX_NOT_EQUAL:
                     ret=regexp_eval(p_ub, a->l, a->r, v);
-                    if (SUCCEED==ret)
+                    if (EXSUCCEED==ret)
                     {
                         /* Inverse the result. */
                         v->boolval = !v->boolval;
@@ -1713,7 +1713,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
              * stack full of those.
              */
             v->value_type = VALUE_TYPE_STRING;
-            v->boolval = TRUE; 
+            v->boolval = EXTRUE; 
             {
                 struct ast_string *s = (struct ast_string *)a;
                 /* Make pointer to point to the AST str value. */
@@ -1731,9 +1731,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 v->floatval = a_f->d;
                 /* Set the boolean value of this stuff */
                 if (v->floatval)
-                    v->boolval = TRUE;
+                    v->boolval = EXTRUE;
                 else
-                    v->boolval = FALSE;
+                    v->boolval = EXFALSE;
             }
             /* dump the final value */
              DUMP_VALUE_BLOCK("VALUE_TYPE_FLOAT", v);
@@ -1746,9 +1746,9 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 v->longval = a_long->l;
                 /* Set the boolean value of this stuff */
                 if (v->longval)
-                    v->boolval = TRUE;
+                    v->boolval = EXTRUE;
                 else
-                    v->boolval = FALSE;
+                    v->boolval = EXFALSE;
             }
             /* dump the final value */
             DUMP_VALUE_BLOCK("VALUE_TYPE_LONG", v);
@@ -1763,7 +1763,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
 /* =========================API FUNCTIONS=====================================*/
 /* ===========================================================================*/
 
-public char * _Bboolco (char * expr)
+expublic char * _Bboolco (char * expr)
 {
 
     char *ret=NULL;
@@ -1797,7 +1797,7 @@ public char * _Bboolco (char * expr)
         M_first_mem=NULL;
         M_cur_mem=NULL;
 
-        if (SUCCEED==yyparse() && NULL!=G_p_root_node && FAIL!=G_error)
+        if (EXSUCCEED==yyparse() && NULL!=G_p_root_node && EXFAIL!=G_error)
         {
             ret=(char *)G_p_root_node;
             remove_resouce_list();
@@ -1816,9 +1816,9 @@ public char * _Bboolco (char * expr)
     return ret;
 }
 
-public int _Bboolev (UBFH * p_ub, char *tree)
+expublic int _Bboolev (UBFH * p_ub, char *tree)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     value_block_t v;
     struct ast *a = (struct ast *)tree;
     memset(&v, 0, sizeof(v));
@@ -1826,25 +1826,25 @@ public int _Bboolev (UBFH * p_ub, char *tree)
     if (NULL==tree)
     {
         _Fset_error_msg(BEINVAL, "NULL tree passed for eval!");
-        return FAIL; /* <<< RETURN */
+        return EXFAIL; /* <<< RETURN */
     }
     /*
      * Evaluate the parse tree
      */
-    if (SUCCEED==eval(p_ub, a, &v))
+    if (EXSUCCEED==eval(p_ub, a, &v))
     {
         if (v.boolval)
         {
-            ret=TRUE;
+            ret=EXTRUE;
         }
         else
         {
-            ret=FALSE;
+            ret=EXFALSE;
         }
     }
     else
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     FREE_UP_UB_BUF((&v));
@@ -1858,7 +1858,7 @@ public int _Bboolev (UBFH * p_ub, char *tree)
  * @param tree
  * @return
  */
-public double _Bfloatev (UBFH * p_ub, char *tree)
+expublic double _Bfloatev (UBFH * p_ub, char *tree)
 {
     double ret=0.0;
     value_block_t v;
@@ -1868,12 +1868,12 @@ public double _Bfloatev (UBFH * p_ub, char *tree)
     if (NULL==tree)
     {
         _Fset_error_msg(BEINVAL, "NULL tree passed for eval!");
-        return FAIL; /* <<< RETURN */
+        return EXFAIL; /* <<< RETURN */
     }
     /*
      * Evaluate the parse tree
      */
-    if (SUCCEED==eval(p_ub, a, &v))
+    if (EXSUCCEED==eval(p_ub, a, &v))
     {
         if (VALUE_TYPE_FLOAT!=v.value_type)
             get_float(&v);
@@ -1881,7 +1881,7 @@ public double _Bfloatev (UBFH * p_ub, char *tree)
     }
     else
     {
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     FREE_UP_UB_BUF((&v));
@@ -1894,7 +1894,7 @@ public double _Bfloatev (UBFH * p_ub, char *tree)
  * is not needed.
  * @param tree
  */
-public void _Btreefree (char *tree)
+expublic void _Btreefree (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
@@ -1947,9 +1947,9 @@ public void _Btreefree (char *tree)
  * @param tree - evaluation tree
  * @param outf - file to print to 
  */
-public void _Bboolpr (char * tree, FILE *outf)
+expublic void _Bboolpr (char * tree, FILE *outf)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
@@ -2022,11 +2022,11 @@ public void _Bboolpr (char * tree, FILE *outf)
 /*
  * Set callback function
  */
-public int _Bboolsetcbf (char *funcname, 
+expublic int _Bboolsetcbf (char *funcname, 
         long (*functionPtr)(UBFH *p_ub, char *funcname))
 {
 
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "_Bsetcbfunc";
     int len;
     
@@ -2036,7 +2036,7 @@ public int _Bboolsetcbf (char *funcname,
     if (NULL==funcname || (len=strlen(funcname)) < 3 || len > MAX_FUNC_NAME-2)
     {
         _Fset_error_fmt(BBADNAME, "Bad function name passed [%s]", funcname);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

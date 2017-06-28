@@ -62,21 +62,21 @@
  * @param call
  * @return 
  */
-public int br_tpcall_pushstack(tp_command_call_t *call)
+expublic int br_tpcall_pushstack(tp_command_call_t *call)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char us = (char)G_bridge_cfg.nodeid;
     int len = strlen(call->callstack);
     
     if (len+1>CONF_NDRX_NODEID_COUNT)
     {
         NDRX_LOG(log_error, "Stack too deep! TODO: Reply with SYSERR back to caller!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* We are OK, just stack us */
     call->callstack[len] = us;
-    call->callstack[len+1] = EOS;
+    call->callstack[len+1] = EXEOS;
     
     br_dump_nodestack(call->callstack, "Stack after node push");
 out:

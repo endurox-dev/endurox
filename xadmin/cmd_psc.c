@@ -56,7 +56,7 @@
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT\n");
     fprintf(stderr, "-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----\n");
@@ -68,7 +68,7 @@ private void print_hdr(void)
  * @param reply_len
  * @return
  */
-public int psc_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int psc_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     int i;
     char binary[9+1];
@@ -96,7 +96,7 @@ public int psc_rsp_process(command_reply_t *reply, size_t reply_len)
         }
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -106,7 +106,7 @@ public int psc_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -124,6 +124,6 @@ public int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 

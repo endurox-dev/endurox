@@ -59,6 +59,7 @@ set | grep TEST
 (./atmi.sv1 -t10 -i 123 2>&1) > ./atmisv1.log &
 sleep 1
 (./atmiclt1 2>&1) > ./atmiclt1.log
+#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt1 2>&1) > ./atmiclt1.log
 
 RET=$?
 

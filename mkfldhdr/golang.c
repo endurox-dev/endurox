@@ -58,7 +58,7 @@
  * Get the c lang output file name
  * @param data
  */
-public void go_get_fullname(char *data)
+expublic void go_get_fullname(char *data)
 {
     sprintf(data, "%s/%s.go", G_output_dir, G_active_file);
 }
@@ -68,9 +68,9 @@ public void go_get_fullname(char *data)
  * @param text
  * @return
  */
-public int go_put_text_line (char *text)
+expublic int go_put_text_line (char *text)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     if (0==strncmp(text, "#ifndef", 7) || 
         0==strncmp(text, "#define", 7) ||
@@ -86,7 +86,7 @@ public int go_put_text_line (char *text)
     if (ferror(G_outf))
     {
         _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -98,10 +98,10 @@ out:
  * @param base
  * @return
  */
-public int go_put_got_base_line(char *base)
+expublic int go_put_got_base_line(char *base)
 {
 
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     fprintf(G_outf, "/*\tfname\tbfldid            */\n"
                     "/*\t-----\t-----            */\n"
@@ -112,7 +112,7 @@ public int go_put_got_base_line(char *base)
     if (ferror(G_outf))
     {
         _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     return ret;
@@ -123,9 +123,9 @@ public int go_put_got_base_line(char *base)
  * @param def
  * @return
  */
-public int go_put_def_line (UBF_field_def_t *def)
+expublic int go_put_def_line (UBF_field_def_t *def)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int type = def->bfldid>>EFFECTIVE_BITS;
     BFLDID number = def->bfldid & EFFECTIVE_BITS_MASK;
 
@@ -137,7 +137,7 @@ public int go_put_def_line (UBF_field_def_t *def)
     if (ferror(G_outf))
     {
         _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     return ret;
@@ -148,10 +148,10 @@ public int go_put_def_line (UBF_field_def_t *def)
  * @param fname
  * @return 
  */
-public int go_file_open (char *fname)
+expublic int go_file_open (char *fname)
 {
     
-    if (EOS!=G_privdata[0])
+    if (EXEOS!=G_privdata[0])
     {
         fprintf(G_outf, "package %s\n\n", G_privdata);
     }
@@ -160,7 +160,7 @@ public int go_file_open (char *fname)
         fprintf(G_outf, "package %s\n\n", G_active_file);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -168,7 +168,7 @@ public int go_file_open (char *fname)
  * @param fname
  * @return 
  */
-public int go_file_close (char *fname)
+expublic int go_file_close (char *fname)
 {
     fprintf(G_outf, ")\n");
 
@@ -177,9 +177,9 @@ public int go_file_close (char *fname)
     {
         _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", 
                 strerror(errno));
-        return FAIL;
+        return EXFAIL;
     }
     
-    return SUCCEED;   
+    return EXSUCCEED;   
 }
 

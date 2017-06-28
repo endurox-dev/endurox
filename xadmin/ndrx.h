@@ -72,7 +72,7 @@ extern char *G_cmd_argv[MAX_ARGS];
         {\
             strncpy(Xbuf, Xsrc, Xlen-1);\
             Xbuf[Xlen-1] = '+';\
-            Xbuf[Xlen] = EOS;\
+            Xbuf[Xlen] = EXEOS;\
         }\
         else\
             strcpy(Xbuf, Xsrc);
@@ -81,7 +81,7 @@ extern char *G_cmd_argv[MAX_ARGS];
         if (strlen(Xbuf) > Xlen)\
         {\
             Xbuf[Xlen-1] = '+';\
-            Xbuf[Xlen] = EOS;\
+            Xbuf[Xlen] = EXEOS;\
         }
 
 #define XADMIN_INVALID_OPTIONS_MSG      "Invalid options, see `help'.\n"

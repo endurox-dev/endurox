@@ -59,10 +59,10 @@
  * olen - the actual lenght of data that should sent. Also this may represent
  *          space for the buffer to copy to.
  */
-public int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
+expublic int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
                     char *obuf, long *olen, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int str_used;
     char fn[]="STRING_prepare_outgoing";
     
@@ -73,7 +73,7 @@ public int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     {
         _TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
                 "but requested: %d", fn, *olen, str_used);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -94,10 +94,10 @@ out:
  * odata - ptr to handler. Existing buffer may be reused or re-allocated
  * olen - output data length
  */
-public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+expublic int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int rcv_buf_size;
     int existing_size;
     
@@ -110,11 +110,11 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
    
     
     /* Figure out the passed in buffer */
-    if (NULL!=*odata && NULL==(outbufobj=find_buffer(*odata)))
+    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         _TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -128,7 +128,7 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             _TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
                                         G_buf_descr[BUF_TYPE_STRING],
                                         G_buf_descr[outbufobj->type_id]);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* If we can change data type and this does not match, then
@@ -169,7 +169,7 @@ public int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             if (NULL==(new_addr=_tprealloc(*odata, rcv_buf_size)))
             {
                 NDRX_LOG(log_error, "%s: _tprealloc failed!", fn);
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
 
@@ -211,7 +211,7 @@ out:
  * @param len
  * @return
  */
-public char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
 {
     char *ret;
     char fn[] = "STRING_tpalloc";
@@ -223,7 +223,7 @@ public char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
 
     /* Allocate STRING buffer */
     ret=(char *)NDRX_MALLOC(len);
-    ret[0] = EOS;
+    ret[0] = EXEOS;
     
 out:
     return ret;
@@ -235,7 +235,7 @@ out:
  * @param size
  * @return
  */
-public char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
+expublic char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
 {
     char *ret=NULL;
     char fn[] = "STRING_tprealloc";
@@ -257,7 +257,7 @@ public char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
  * @param descr
  * @param buf
  */
-public void STRING_tpfree(typed_buffer_descr_t *descr, char *buf)
+expublic void STRING_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
     NDRX_FREE(buf);
 }
@@ -270,16 +270,16 @@ public void STRING_tpfree(typed_buffer_descr_t *descr, char *buf)
  * @return TRUE/FALSE.
  * In case of error we just return FALSE as not matched!
  */
-public int STRING_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
+expublic int STRING_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
 {
-    int ret=FALSE;
+    int ret=EXFALSE;
     regex_t re; /* compiled regex */
     
-    if (SUCCEED==(ret=regcomp(&re, expr, REG_EXTENDED | REG_NOSUB)))
+    if (EXSUCCEED==(ret=regcomp(&re, expr, REG_EXTENDED | REG_NOSUB)))
     {
-        if (SUCCEED==regexec(&re, buf, (size_t) 0, NULL, 0))
+        if (EXSUCCEED==regexec(&re, buf, (size_t) 0, NULL, 0))
         {
-            ret = TRUE;
+            ret = EXTRUE;
         }
         regfree(&re);
     }

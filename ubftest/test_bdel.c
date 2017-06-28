@@ -49,13 +49,13 @@ void load_fdel_test_data_1(UBFH *p_ub)
     char carr[] = "CARRAY TEST";
     BFLDLEN len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 212;
@@ -64,43 +64,43 @@ void load_fdel_test_data_1(UBFH *p_ub)
     f = 12127;
     d = 1231232.1;
     carr[0] = 'X';
-    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
 }
 
 Ensure(test_fdel_simple)
 {
     char fb[500];
     UBFH *p_ub = (UBFH *)fb;
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     /* Load test data for fdel test */
     load_fdel_test_data_1(p_ub);
     set_up_dummy_data(p_ub);
     
-    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_SHORT_FLD, 0));
 
-    assert_equal(Bdel(p_ub, T_LONG_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_LONG_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_LONG_FLD, 0));
 
-    assert_equal(Bdel(p_ub, T_CHAR_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_CHAR_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_CHAR_FLD, 0));
 
-    assert_equal(Bdel(p_ub, T_FLOAT_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_FLOAT_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_FLOAT_FLD, 0));
 
-    assert_equal(Bdel(p_ub, T_DOUBLE_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_DOUBLE_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_DOUBLE_FLD, 0));
 
-    assert_equal(Bdel(p_ub, T_STRING_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_STRING_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_STRING_FLD, 0));
 
-    assert_equal(Bdel(p_ub, T_CARRAY_FLD, 0), SUCCEED);
+    assert_equal(Bdel(p_ub, T_CARRAY_FLD, 0), EXSUCCEED);
     assert_false(Bpres(p_ub, T_CARRAY_FLD, 0));
 
     do_dummy_data_test(p_ub);

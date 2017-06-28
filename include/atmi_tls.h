@@ -51,9 +51,24 @@ extern "C" {
 #define ATMI_TLS_MAGIG          0x39617cde
     
 #define ATMI_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_atmi_tls)) \
-    {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(TRUE, TRUE);};
+    {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(EXTRUE, EXTRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+/**
+ * Memory base Q (current with static buffer)
+ * but we could migrate to dynamically allocated buffers...
+ */
+typedef struct tpmemq tpmemq_t;
+struct tpmemq
+{    
+    char *buf;
+    size_t len;
+    size_t data_len;
+    /* Linked list */
+    tpmemq_t *prev;
+    tpmemq_t *next;
+};
     
 /**
  * ATMI library TLS
@@ -81,11 +96,14 @@ typedef struct
     /* tpcall.c */
     long M_svc_return_code;/*=0; */
     int tpcall_first; /* = TRUE; */
-    ndrx_timer_t tpcall_start;
+    ndrx_stopwatch_t tpcall_start;
     call_descriptor_state_t G_call_state[MAX_ASYNC_CALLS];
     int tpcall_get_cd; /* first available, we want test overlap!*/
     /* unsigned tpcall_callseq; */
     /*int tpcall_cd;  = 0; */
+    
+    /* We need a enqueued list of messages */
+    tpmemq_t *memq; /* Message enqueued in memory... */
     
     /* tperror.c */
     char M_atmi_error_msg_buf[MAX_TP_ERROR_LEN+1]; /* = {EOS}; */
@@ -112,6 +130,11 @@ typedef struct
     ubf_tls_t *p_ubf_tls;
     
     int is_associated_with_thread; /* Is current context associated with thread? */
+    
+    /* unsolicited notification processing */
+    void (*p_unsol_handler) (char *data, long len, long flags);
+    
+    TPINIT client_init_data;
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/

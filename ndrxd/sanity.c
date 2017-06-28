@@ -46,7 +46,7 @@
 #include <ndrstandard.h>
 #include <ndrxd.h>
 #include <atmi_int.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 
 #include <ndebug.h>
 #include <cmd_processor.h>
@@ -61,25 +61,25 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public unsigned G_sanity_cycle = 0;
+expublic unsigned G_sanity_cycle = 0;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-private int check_server(char *qname);
-private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle);
-private int check_cnvclt(char *qname);
-private int check_cnvsrv(char *qname);
-private int check_long_startup(void);
-private int check_dead_processes(void);
+exprivate int check_server(char *qname);
+exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle);
+exprivate int check_cnvclt(char *qname);
+exprivate int check_cnvsrv(char *qname);
+exprivate int check_long_startup(void);
+exprivate int check_dead_processes(void);
 /**
  * Master process for sanity checking.
  * @return SUCCEED/FAIL
  */
-public int do_sanity_check(void)
+expublic int do_sanity_check(void)
 {
-    int ret=SUCCEED;
-    static ndrx_timer_t timer;
-    static int first = TRUE;    
+    int ret=EXSUCCEED;
+    static ndrx_stopwatch_t timer;
+    static int first = EXTRUE;    
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
     static char    client_prefix[NDRX_MAX_Q_SIZE+1];
@@ -95,7 +95,7 @@ public int do_sanity_check(void)
     static int     cnvsrv_prefix_len;
     
     
-    int wasrun = FALSE;
+    int wasrun = EXFALSE;
     
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
@@ -108,47 +108,53 @@ public int do_sanity_check(void)
     
     if (first)
     {
-        ndrx_timer_reset(&timer);
+        ndrx_stopwatch_reset(&timer);
         /* Initialise q prefixes, +1 for skipping initial / */
-        sprintf(client_prefix, NDRX_CLT_QREPLY_PFX, G_sys_config.qprefix);
+        snprintf(client_prefix, sizeof(client_prefix), NDRX_CLT_QREPLY_PFX, 
+                G_sys_config.qprefix);
         client_prefix_len=strlen(client_prefix);
         NDRX_LOG(log_debug, "client_prefix=[%s]/%d", client_prefix, 
                             client_prefix_len);
         
-        sprintf(xadmin_prefix, NDRX_NDRXCLT_PFX, G_sys_config.qprefix);
+        snprintf(xadmin_prefix, sizeof(xadmin_prefix),
+                NDRX_NDRXCLT_PFX, G_sys_config.qprefix);
         xadmin_prefix_len=strlen(xadmin_prefix);
         NDRX_LOG(log_debug, "xadmin_prefix=[%s]/%d", xadmin_prefix, 
                             xadmin_prefix_len);
         
-        sprintf(server_prefix, NDRX_SVR_QREPLY_PFX, G_sys_config.qprefix);
+        snprintf(server_prefix, sizeof(server_prefix), NDRX_SVR_QREPLY_PFX, 
+                G_sys_config.qprefix);
         server_prefix_len=strlen(server_prefix);
         NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                             server_prefix_len);
 	
-	sprintf(cnvclt_prefix, NDRX_CONV_INITATOR_Q_PFX, G_sys_config.qprefix);
+	snprintf(cnvclt_prefix, sizeof(cnvclt_prefix), NDRX_CONV_INITATOR_Q_PFX, 
+                G_sys_config.qprefix);
+        
         cnvclt_prefix_len=strlen(cnvclt_prefix);
         NDRX_LOG(log_debug, "cnvclt_prefix=[%s]/%d", cnvclt_prefix, 
                             cnvclt_prefix_len);
 	
-	sprintf(cnvsrv_prefix, NDRX_CONV_SRV_Q_PFX, G_sys_config.qprefix);
+	snprintf(cnvsrv_prefix, sizeof(cnvsrv_prefix), NDRX_CONV_SRV_Q_PFX, 
+                G_sys_config.qprefix);
         cnvsrv_prefix_len=strlen(cnvsrv_prefix);
         NDRX_LOG(log_debug, "cnvsrv_prefix=[%s]/%d", cnvsrv_prefix, 
                             cnvsrv_prefix_len);
 	
-        first=FALSE;
+        first=EXFALSE;
     }
      
-    if (ndrx_timer_get_delta_sec(&timer)>=G_app_config->sanity)
+    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity)
     {
-        wasrun = TRUE;
+        wasrun = EXTRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
          
         qlist = ndrx_sys_mqueue_list_make(G_sys_config.qpath, &ret);
 
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "posix queue listing failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         LL_FOREACH(qlist,elt)
@@ -157,12 +163,12 @@ public int do_sanity_check(void)
             if (0==strncmp(elt->qname, client_prefix, 
                     client_prefix_len))
             {
-                check_client(elt->qname, FALSE, G_sanity_cycle);
+                check_client(elt->qname, EXFALSE, G_sanity_cycle);
             }
             else if (0==strncmp(elt->qname, xadmin_prefix, 
                     xadmin_prefix_len)) 
             {
-                check_client(elt->qname, TRUE, G_sanity_cycle);
+                check_client(elt->qname, EXTRUE, G_sanity_cycle);
             } 
             /* TODO: We might want to monitor admin queues too! */
             else if (0==strncmp(elt->qname, server_prefix, 
@@ -190,9 +196,9 @@ public int do_sanity_check(void)
         
         brd_send_periodrefresh();
         /* Time for PM checking! */
-        if (SUCCEED!=check_dead_processes())
+        if (EXSUCCEED!=check_dead_processes())
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -202,7 +208,7 @@ public int do_sanity_check(void)
         /* update queue statistics (if enabled) */
         if (G_app_config->gather_pq_stats)
         {
-            pq_run_santiy(TRUE);
+            pq_run_santiy(EXTRUE);
         }
     }
     
@@ -215,7 +221,7 @@ out:
 
     /* Reset timer on run */
     if (wasrun)
-        ndrx_timer_reset(&timer);
+        ndrx_stopwatch_reset(&timer);
 
     return ret;
 }
@@ -226,33 +232,33 @@ out:
  * @param process
  * @param p_pid
  */
-private void parse_q(char *qname, int is_server, char *process, pid_t *p_pid, 
+exprivate void parse_q(char *qname, int is_server, char *process, pid_t *p_pid, 
                     int *server_id, int is_xadmin)
 {   
     char buf[NDRX_MAX_Q_SIZE+1];
     char *p;
     int len;
     
-    strcpy(buf, qname);
+    NDRX_STRCPY_SAFE(buf, qname);
     
     /* We are client, thus needs to skip the context */
     if (!is_server && !is_xadmin)
     {
         p = strrchr(buf, NDRX_FMT_SEP);
-        *p=EOS;
+        *p=EXEOS;
     }
     
     /* get over with pid */
     p = strrchr(buf, NDRX_FMT_SEP);
     *p_pid = atoi(p+1);
-    *p=EOS;
+    *p=EXEOS;
     
     if (is_server)
     {
         /* Return server id, if we are server! */
         p=strrchr(buf, NDRX_FMT_SEP);
         *server_id = atoi(p+1);
-        *p=EOS;
+        *p=EXEOS;
     }
     
     /* Fix up with process name */
@@ -268,15 +274,15 @@ private void parse_q(char *qname, int is_server, char *process, pid_t *p_pid,
  * @param qname
  * @return 
  */
-private int unlink_dead_queue(char *qname)
+exprivate int unlink_dead_queue(char *qname)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char    q_str[NDRX_MAX_Q_SIZE+1];
     char    *p;
     
     if ('/'!=qname[0])
     {
-        strcpy(q_str, "/");
+        NDRX_STRCPY_SAFE(q_str, "/");
         strcat(q_str, qname);
         p = q_str;
     }
@@ -286,11 +292,11 @@ private int unlink_dead_queue(char *qname)
     }
     
     NDRX_LOG(log_warn, "Unlinking queue [%s]", p);
-    if (SUCCEED!=ndrx_mq_unlink(p))
+    if (EXSUCCEED!=ndrx_mq_unlink(p))
     {
         NDRX_LOG(log_error, "Failed to unlink dead queue [%s]: %s", 
                 p, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     return ret;
@@ -304,15 +310,16 @@ private int unlink_dead_queue(char *qname)
  * @param rplyq if null, then reply queue will be built from scratch.
  * @return 
  */
-public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq)
+expublic int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq)
 {
     char    q_str[NDRX_MAX_Q_SIZE+1];
-    int     rplyq_unlink = FALSE;
+    int     rplyq_unlink = EXFALSE;
     char    *p;
 
     if (NULL==rplyq)
     {
-        sprintf(q_str, NDRX_SVR_QREPLY, G_sys_config.qprefix, process, srv_id, pid);
+        snprintf(q_str, sizeof(q_str), NDRX_SVR_QREPLY, 
+                G_sys_config.qprefix, process, srv_id, pid);
         
         p = q_str;
         if (!ndrx_q_exists(q_str)) 
@@ -322,13 +329,13 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
         }
         else
         {
-            rplyq_unlink=TRUE;
+            rplyq_unlink=EXTRUE;
         }
     }
     else
     {
         p = rplyq;
-        rplyq_unlink=TRUE;
+        rplyq_unlink=EXTRUE;
     }
 
     if (rplyq_unlink)
@@ -336,7 +343,8 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
         unlink_dead_queue(p);
     }
 
-    sprintf(q_str, NDRX_ADMIN_FMT, G_sys_config.qprefix, process, srv_id, pid);
+    snprintf(q_str, sizeof(q_str), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
+            process, srv_id, pid);
     /* Note - admin_q_str already contains / in front! */
     /*If exists admin queue, but process does not exists, then remove admin q too! */
 
@@ -350,7 +358,7 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
         unlink_dead_queue(q_str);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 /**
  * Check running servers...
@@ -358,17 +366,17 @@ public int remove_server_queues(char *process, pid_t pid, int srv_id, char *rply
  * Also if dead q is unlinked. The process will be removed by check PM.
  * @return 
  */
-private int check_server(char *qname)
+exprivate int check_server(char *qname)
 {
     char    process[NDRX_MAX_Q_SIZE+1];
     pid_t pid;
     int     srv_id;
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     
-    parse_q(qname, TRUE, process, &pid, &srv_id, FALSE);
+    parse_q(qname, EXTRUE, process, &pid, &srv_id, EXFALSE);
     
     if (!ndrx_sys_is_process_running(pid, process))
     {      
@@ -381,11 +389,11 @@ private int check_server(char *qname)
         status->srvinfo.srvid = srv_id;
         NDRX_LOG(log_debug, "Sending self notification "
                             "about dead process...");
-        if (SUCCEED!=self_notify(status, FALSE))
+        if (EXSUCCEED!=self_notify(status, EXFALSE))
         {
             NDRX_LOG(log_warn, "Failed to send self notification "
                     "- exit dead process check for a while!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -407,25 +415,25 @@ out:
  * ---------------- => DONE
  * @return 
  */
-private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
+exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
 {
-    char    process[NDRX_MAX_Q_SIZE+1];
+    char process[NDRX_MAX_Q_SIZE+1];
     pid_t pid;
     /* Used for cache, so that we do not check multi threaded process
      * multiple times... */
     static unsigned prev_sanity_cycle;
-    static int first = TRUE;
+    static int first = EXTRUE;
     static char prev_process[NDRX_MAX_Q_SIZE+1];
     static pid_t prev_pid;
-    static int prev_was_unlink=FALSE;
+    static int prev_was_unlink=EXFALSE;
     
     if (first)
     {
         prev_sanity_cycle = sanity_cycle-1;
-        first=FALSE;
+        first=EXFALSE;
     }
     
-    parse_q(qname, FALSE, process, &pid, 0, is_xadmin);
+    parse_q(qname, EXFALSE, process, &pid, 0, is_xadmin);
     
     if (sanity_cycle == prev_sanity_cycle &&
             0==strcmp(process, prev_process) &&
@@ -444,7 +452,7 @@ private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
     
     /* Fill the prev stuff */
     prev_pid = pid;
-    strcpy(prev_process, process);
+    NDRX_STRCPY_SAFE(prev_process, process);
     prev_sanity_cycle = sanity_cycle;
     
     if (!ndrx_sys_is_process_running(pid, process))
@@ -452,18 +460,18 @@ private int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
         userlog("Client process [%s], pid %d died", process, pid);
         
         unlink_dead_queue(qname);
-        prev_was_unlink = TRUE;
+        prev_was_unlink = EXTRUE;
         
         /* Remove any conv queues... */
         
     }
     else
     {
-        prev_was_unlink = FALSE;
+        prev_was_unlink = EXFALSE;
     }
     
 out:
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /* TODO: We might want to check queues against shared memory... but not sure
@@ -476,17 +484,17 @@ out:
  * @param p_pm
  * @return 
  */
-private int send_kill(pm_node_t *p_pm, int sig, int delta)
+exprivate int send_kill(pm_node_t *p_pm, int sig, int delta)
 {
     NDRX_LOG(log_warn, "Killing PID: %d/%s/%d with signal -%d", 
             p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
-    if (SUCCEED!=kill(p_pm->pid, sig))
+    if (EXSUCCEED!=kill(p_pm->pid, sig))
     {
         NDRX_LOG(log_error, "Failed to kill PID %d with error: %s",
                 p_pm->pid, strerror(errno));
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -494,12 +502,12 @@ private int send_kill(pm_node_t *p_pm, int sig, int delta)
  * I.e. if they do not start in time, they will be killed!
  * @return 
  */
-private int check_long_startup(void)
+exprivate int check_long_startup(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *p_pm;
     int delta;
-    int cksum_reload_sent = FALSE; /* for now single binary only at one cycle */
+    int cksum_reload_sent = EXFALSE; /* for now single binary only at one cycle */
     
     DL_FOREACH(G_process_model, p_pm)
     {
@@ -536,7 +544,7 @@ private int check_long_startup(void)
                 {
                     NDRX_LOG(log_debug, "Startup too long - "
                                                     "requesting kill");
-                    p_pm->killreq=TRUE;
+                    p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->pingtime &&
                     (delta=p_pm->rsptimer) > p_pm->conf->ping_max)
@@ -544,14 +552,14 @@ private int check_long_startup(void)
                     NDRX_LOG(log_debug, "Ping response not in time - "
                                         "requesting kill (ping_time=%d delta=%d ping_max=%d)",
 					p_pm->conf->pingtime, delta, p_pm->conf->ping_max);
-                    p_pm->killreq=TRUE;
+                    p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_STOPPING==p_pm->state &&
                     (delta = p_pm->rsptimer) > p_pm->conf->end_max)
                 {
                     NDRX_LOG(log_debug, "Server did not exit in time "
                                                             "- requesting kill");
-                    p_pm->killreq=TRUE;
+                    p_pm->killreq=EXTRUE;
                 }
             }
             
@@ -591,7 +599,7 @@ private int check_long_startup(void)
         /* TODO: We need some hash list here so we caulcate checsums only one binary
          * not the all instances. And only issue one update per checksum change.
          */
-        if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0] 
+        if (p_pm->conf->reloadonchange && EXEOS!=p_pm->binary_path[0] 
                 && !cksum_reload_sent
                 && ndrx_file_exists(p_pm->binary_path))
         {
@@ -599,12 +607,12 @@ private int check_long_startup(void)
             {
                 NDRX_LOG(log_warn, "Cksums differ reload...");
                 /* Send reload command */
-                if (SUCCEED!=self_sreload(p_pm))
+                if (EXSUCCEED!=self_sreload(p_pm))
                 {
                     NDRX_LOG(log_warn, "Failed to send self notification "
                             "about changed process - ignore!");
                 }
-                cksum_reload_sent=TRUE;
+                cksum_reload_sent=EXTRUE;
             }
         }
         
@@ -620,9 +628,9 @@ out:
  * If self q is full, it will be removed by next try.
  * @return 
  */
-private int check_dead_processes(void)
+exprivate int check_dead_processes(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *p_pm;
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
@@ -649,11 +657,11 @@ private int check_dead_processes(void)
                 NDRX_LOG(log_debug, "Sending self notification "
                                     "about dead process...");
                 
-                if (SUCCEED!=self_notify(status, FALSE))
+                if (EXSUCCEED!=self_notify(status, EXFALSE))
                 {
                     NDRX_LOG(log_warn, "Failed to send self notification "
                             "- exit dead process check for a while!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -668,9 +676,9 @@ out:
  * This checks the shared memory of services with linked lists for each proces in PM
  * @return 
  */
-private int check_svc_shm(void)
+exprivate int check_svc_shm(void)
 {
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /*
@@ -717,14 +725,14 @@ Test exiting with:
  * in our cluster node are dead.
  * @return 
  */
-private int check_cnvclt(char *qname)
+exprivate int check_cnvclt(char *qname)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPMYID myid;
     
-    if (SUCCEED==ndrx_cvnq_parse_client(qname, &myid))
+    if (EXSUCCEED==ndrx_cvnq_parse_client(qname, &myid))
     {
-        if (FALSE==ndrx_myid_is_alive(&myid))
+        if (EXFALSE==ndrx_myid_is_alive(&myid))
         {
             ndrx_myid_dump(log_debug, &myid, "process is dead, remove the queue");
             
@@ -741,18 +749,18 @@ out:
  * @param qname queue name
  * @return SUCCEED
  */
-private int check_cnvsrv(char *qname)
+exprivate int check_cnvsrv(char *qname)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     TPMYID myid1, myid2;
     
     /* check start with srv, or ctl, then detect the length of the halve
      * and parse other part.
      * We are interested in other part, if it is dead, then kill the Q.
      */
-    if (SUCCEED==ndrx_cvnq_parse_server(qname, &myid1, &myid2))
+    if (EXSUCCEED==ndrx_cvnq_parse_server(qname, &myid1, &myid2))
     {
-        if (FALSE==ndrx_myid_is_alive(&myid2))
+        if (EXFALSE==ndrx_myid_is_alive(&myid2))
         {
             ndrx_myid_dump(log_debug, &myid2, "process is dead, remove the queue");
             unlink_dead_queue(qname);

@@ -67,7 +67,7 @@ srv_conf_t G_server_conf;
  */
 int parse_svc_arg(char *arg)
 {
-    char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EOS};
+    char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char *p;
     svc_entry_t *entry=NULL;
 
@@ -80,7 +80,7 @@ int parse_svc_arg(char *arg)
         strncpy(alias_name, p+1, XATMI_SERVICE_NAME_LENGTH);
         alias_name[XATMI_SERVICE_NAME_LENGTH] = 0;
         /* Put the EOS in place of : */
-        *p=EOS;
+        *p=EXEOS;
     }
     
     /* Now loop through services and add them to the list. 
@@ -94,13 +94,13 @@ int parse_svc_arg(char *arg)
         {
                 _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
                                     sizeof(svc_entry_t));
-                return FAIL; /* <<< return FAIL! */
+                return EXFAIL; /* <<< return FAIL! */
         }
 
         strncpy(entry->svc_nm, p, XATMI_SERVICE_NAME_LENGTH);
-        entry->svc_nm[XATMI_SERVICE_NAME_LENGTH] = EOS;
+        entry->svc_nm[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
 
-        if (EOS!=alias_name[0])
+        if (EXEOS!=alias_name[0])
         {
             strcpy(entry->svc_alias, alias_name);
         }
@@ -114,13 +114,13 @@ int parse_svc_arg(char *arg)
         p = strtok(NULL, ",/");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /*
  * Lookup conversion function registered for hash
  */
-public long xcvt_lookup(char *fn_nm)
+expublic long xcvt_lookup(char *fn_nm)
 {
     xbufcvt_entry_t *entry=NULL;
     
@@ -141,10 +141,10 @@ public long xcvt_lookup(char *fn_nm)
  */
 int parse_xcvt_arg(char *arg)
 {
-    char cvtfunc[XATMI_SERVICE_NAME_LENGTH+1]={EOS};
+    char cvtfunc[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char *p;
     xbufcvt_entry_t *entry=NULL;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long flags = 0;
     NDRX_LOG(log_debug, "Parsing function buffer convert entry: [%s]", arg);
     
@@ -153,7 +153,7 @@ int parse_xcvt_arg(char *arg)
         /* Conversion function name */
         strncpy(cvtfunc, p+1, XATMI_SERVICE_NAME_LENGTH);
         cvtfunc[XATMI_SERVICE_NAME_LENGTH] = 0;
-        *p=EOS;
+        *p=EXEOS;
         
         /* Verify that function is correct */
         if (0==strcmp(cvtfunc, BUF_CVT_INCOMING_JSON2UBF_STR))
@@ -169,13 +169,13 @@ int parse_xcvt_arg(char *arg)
         {
             NDRX_LOG(log_error, "Invalid automatic buffer conversion function (%s)!", 
                     cvtfunc);
-            FAIL_OUT(ret);    
+            EXFAIL_OUT(ret);    
         }
     }
     else
     {
         NDRX_LOG(log_error, "Invalid argument for -x (%s) missing `:'", arg);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     p = strtok(arg, ",");
@@ -186,7 +186,7 @@ int parse_xcvt_arg(char *arg)
         {
                 _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
                                     sizeof(svc_entry_t));
-                return FAIL; /* <<< return FAIL! */
+                return EXFAIL; /* <<< return FAIL! */
         }
 
         strncpy(entry->fn_nm, p, XATMI_SERVICE_NAME_LENGTH);
@@ -217,30 +217,30 @@ out:
  */
 int ndrx_init(int argc, char** argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     extern char *optarg;
     extern int optind, optopt, opterr;
     int c;
     int dbglev;
     char *p;
-    char key[NDRX_MAX_KEY_SIZE]={EOS};
+    char key[NDRX_MAX_KEY_SIZE]={EXEOS};
 
     /* set pre-check values */
     memset(&G_server_conf, 0, sizeof(G_server_conf));
     /* Set default advertise all */
     G_server_conf.advertise_all = 1;
-    G_server_conf.time_out = FAIL;
+    G_server_conf.time_out = EXFAIL;
     
     /* Load common atmi library environment variables */
-    if (SUCCEED!=ndrx_load_common_env())
+    if (EXSUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:N--")) != FAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:N--")) != EXFAIL)
     {
         switch(c)
         {
@@ -307,7 +307,7 @@ int ndrx_init(int argc, char** argv)
     }
     
     /* Override the timeout with system value, if FAIL i.e. -t was not present */
-    if (FAIL==G_server_conf.time_out)
+    if (EXFAIL==G_server_conf.time_out)
     {
         /* Get timeout */
         if (NULL!=(p=getenv("NDRX_TOUT")))
@@ -318,7 +318,7 @@ int ndrx_init(int argc, char** argv)
         {
             _TPset_error_msg(TPEINVAL, "Error: Missing evn param: NDRX_TOUT, "
                     "cannot determine default timeout!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -330,7 +330,7 @@ int ndrx_init(int argc, char** argv)
     if (G_server_conf.srv_id<1)
     {
         _TPset_error_msg(TPEINVAL, "Error: server ID (-i) must be >= 1");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -347,7 +347,7 @@ int ndrx_init(int argc, char** argv)
         strncpy(G_server_conf.binary_name, argv[0], MAXTIDENT);
     }
 
-    G_server_conf.binary_name[MAXTIDENT] = EOS;
+    G_server_conf.binary_name[MAXTIDENT] = EXEOS;
 
     /*
      * Read queue prefix (This is mandatory to have)
@@ -356,7 +356,7 @@ int ndrx_init(int argc, char** argv)
     if (NULL==(p=getenv("NDRX_QPREFIX")))
     {
         _TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else
@@ -381,14 +381,14 @@ out:
  */
 int ndrx_main(int argc, char** argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     /* do internal initialization, get configuration, request for admin q */
-    if (SUCCEED!=ndrx_init(argc, argv))
+    if (EXSUCCEED!=ndrx_init(argc, argv))
     {
         NDRX_LOG(log_error, "ndrx_init() fail");
         userlog("ndrx_init() fail");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*
@@ -399,55 +399,55 @@ int ndrx_main(int argc, char** argv)
     /*
      * Initialize services
      */
-    if (SUCCEED!=tpsvrinit(argc, argv))
+    if (EXSUCCEED!=tpsvrinit(argc, argv))
     {
         NDRX_LOG(log_error, "tpsvrinit() fail");
         userlog("tpsvrinit() fail");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /*
      * Push the services out!
      */
-    if (SUCCEED!=build_advertise_list())
+    if (EXSUCCEED!=build_advertise_list())
     {
         NDRX_LOG(log_error, "tpsvrinit() fail");
         userlog("tpsvrinit() fail");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* initialize the library */
-    if (SUCCEED!=initialize_atmi_library())
+    if (EXSUCCEED!=initialize_atmi_library())
     {
         NDRX_LOG(log_error, "initialize_atmi_library() fail");
         userlog("initialize_atmi_library() fail");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*
      * Open the queues
      */
-    if (SUCCEED!=sv_open_queue())
+    if (EXSUCCEED!=sv_open_queue())
     {
         NDRX_LOG(log_error, "initialize_atmi_library() fail");
         userlog("initialize_atmi_library() fail");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Do lib updates after Q open... */
-    if (SUCCEED!=tp_internal_init_upd_replyq(G_server_conf.service_array[1]->q_descr,
+    if (EXSUCCEED!=tp_internal_init_upd_replyq(G_server_conf.service_array[1]->q_descr,
                 G_server_conf.service_array[1]->listen_q))
     {
         NDRX_LOG(log_error, "tp_internal_init_upd_replyq() fail");
         userlog("tp_internal_init_upd_replyq() fail");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* As we can run even without ndrxd, then we ignore the result of send op */
     report_to_ndrxd();
 
     /* run process here! */
-    if (SUCCEED!=(ret=sv_wait_for_request()))
+    if (EXSUCCEED!=(ret=sv_wait_for_request()))
     {
         NDRX_LOG(log_error, "sv_wait_for_request() fail %d", ret);
         userlog("sv_wait_for_request() fail %d", ret);
@@ -467,7 +467,7 @@ out:
     /*
      * Print error message on exit. 
      */
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         printf("Error: %s\n", tpstrerror(tperrno));
     }

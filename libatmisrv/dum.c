@@ -52,7 +52,7 @@
 /**
  * Link time dummy
  */
-public void tpsvrdone (void)
+expublic void tpsvrdone (void)
 {
     NDRX_LOG(log_error, "tpsvrdone - ATMI dummy");
 }
@@ -63,10 +63,10 @@ public void tpsvrdone (void)
  * @param
  * @return
  */
-public int tpsvrinit (int argc, char **argv)
+expublic int tpsvrinit (int argc, char **argv)
 {
     NDRX_LOG(log_error, "tpsvrinit - ATMI dummy");
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 

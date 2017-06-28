@@ -60,9 +60,9 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
@@ -79,7 +79,7 @@ public int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                     {
                         printf("Removing [%s] ...", elt->qname);
 
-                        if (SUCCEED==ndrx_mq_unlink(elt->qname))
+                        if (EXSUCCEED==ndrx_mq_unlink(elt->qname))
                         {
                             printf("SUCCEED\n");
                         }
@@ -94,7 +94,7 @@ public int cmd_qrm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     }
     else
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -111,9 +111,9 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
@@ -131,7 +131,7 @@ public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                         printf("Removing [%s] ...", elt->qname);
 
 
-                        if (SUCCEED==ndrx_mq_unlink(elt->qname))
+                        if (EXSUCCEED==ndrx_mq_unlink(elt->qname))
                         {
                             printf("SUCCEED\n");
                         }
@@ -146,7 +146,7 @@ public int cmd_qrmall(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     }
     else
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:

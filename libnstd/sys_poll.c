@@ -87,7 +87,7 @@
 
 #define EX_EPOLL_API_ENTRY      {NSTD_TLS_ENTRY; \
             G_nstd_tls->M_last_err = 0; \
-            G_nstd_tls->M_last_err_msg[0] = EOS;}
+            G_nstd_tls->M_last_err_msg[0] = EXEOS;}
 
 /* The index of the "read" end of the pipe */
 #define READ 0
@@ -152,8 +152,8 @@ typedef struct ndrx_epoll_set ndrx_epoll_set_t;
 
 typedef struct ndrx_pipe_mqd_hash ndrx_pipe_mqd_hash_t;
 
-private ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
-private ndrx_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
+exprivate ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
+exprivate ndrx_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
 
 
 MUTEX_LOCKDECL(M_psets_lock);
@@ -168,17 +168,17 @@ MUTEX_LOCKDECL(M_psets_lock);
  * - Once create is called, we prepare unnamed pipe2() for notify callback.
  */
 
-private pthread_t M_signal_thread; /* Signalled thread */
-private int M_signal_first = TRUE; /* is first init for signal thread */
+exprivate pthread_t M_signal_thread; /* Signalled thread */
+exprivate int M_signal_first = EXTRUE; /* is first init for signal thread */
 
 /*---------------------------Prototypes---------------------------------*/
-private ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd);
-private int signal_install_notifications_all(ndrx_epoll_set_t *s);
-private void slipSigHandler (int sig);
-private int signal_handle_event(void);
+exprivate ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd);
+exprivate int signal_install_notifications_all(ndrx_epoll_set_t *s);
+exprivate void slipSigHandler (int sig);
+exprivate int signal_handle_event(void);
 
 
-private void *sigthread_enter(void *arg)
+exprivate void *sigthread_enter(void *arg)
 {
     NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
     signal_handle_event();
@@ -187,7 +187,7 @@ private void *sigthread_enter(void *arg)
 }
 
 
-private void slipSigHandler (int sig)
+exprivate void slipSigHandler (int sig)
 {
     pthread_t thread;
     pthread_attr_t pthread_custom_attr;
@@ -205,7 +205,7 @@ private void slipSigHandler (int sig)
  * Return the compiled poll mode
  * @return 
  */
-public char * ndrx_epoll_mode(void)
+expublic char * ndrx_epoll_mode(void)
 {
     static char *mode = "poll";
     
@@ -216,9 +216,9 @@ public char * ndrx_epoll_mode(void)
  * Handle event
  * @return 
  */
-private int signal_handle_event(void)
+exprivate int signal_handle_event(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     ndrx_epoll_set_t *s, *stmp;
     ndrx_epoll_mqds_t* m, *mtmp;
@@ -234,7 +234,7 @@ private int signal_handle_event(void)
             struct mq_attr att;
 
             /* read the attributes of the Q */
-            if (SUCCEED!= ndrx_mq_getattr(m->mqd, &att))
+            if (EXSUCCEED!= ndrx_mq_getattr(m->mqd, &att))
             {
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d (%s)",  
                         m->mqd, strerror(errno));
@@ -243,7 +243,7 @@ private int signal_handle_event(void)
 
             if (att.mq_curmsgs > 0)
             {
-                if (FAIL==write (s->wakeup_pipe[WRITE], (char *)&m->mqd, 
+                if (EXFAIL==write (s->wakeup_pipe[WRITE], (char *)&m->mqd, 
                         sizeof(m->mqd)))
                 {
                     NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
@@ -253,7 +253,7 @@ private int signal_handle_event(void)
         }
 
         /* Install all notifs */
-        if (SUCCEED!=signal_install_notifications_all(s))
+        if (EXSUCCEED!=signal_install_notifications_all(s))
         {
             NDRX_LOG(log_warn, "Failed to install notifs for set: %d", s->fd);
         }
@@ -270,11 +270,11 @@ out:
  * TODO: We need a hash of events in PIPE! To avoid duplicate events to pipe...
  * @return 
  */
-private void * signal_process(void *arg)
+exprivate void * signal_process(void *arg)
 {
     sigset_t blockMask;
     char *fn = "signal_process";
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int sig;
     
 
@@ -289,7 +289,7 @@ private void * signal_process(void *arg)
     {
         
         NDRX_LOG(log_debug, "%s - before sigwait()", fn);
-        if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
@@ -308,14 +308,14 @@ out:
 /**
  * Install notifications for all Qs
  */
-private int signal_install_notifications_all(ndrx_epoll_set_t *s)
+exprivate int signal_install_notifications_all(ndrx_epoll_set_t *s)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_epoll_mqds_t* m, *mtmp;
     
     EXHASH_ITER(hh, s->mqds, m, mtmp)
     {
-        if (FAIL==ndrx_mq_notify(m->mqd, &m->sev))
+        if (EXFAIL==ndrx_mq_notify(m->mqd, &m->sev))
         {
             int err = errno;
 	    if (EBUSY!=err)
@@ -333,7 +333,7 @@ out:
  * not thread safe.
  * @return
  */
-public void ndrx_epoll_sys_init(void)
+expublic void ndrx_epoll_sys_init(void)
 {
     sigset_t blockMask;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
@@ -372,7 +372,7 @@ public void ndrx_epoll_sys_init(void)
     pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             signal_process, NULL);
-    M_signal_first = FALSE;
+    M_signal_first = EXFALSE;
     
 }
 
@@ -380,7 +380,7 @@ public void ndrx_epoll_sys_init(void)
  * Un-initialize polling lib
  * @return
  */
-public void ndrx_epoll_sys_uninit(void)
+expublic void ndrx_epoll_sys_uninit(void)
 {
     char *fn = "ndrx_epoll_sys_uninit";
 
@@ -392,14 +392,14 @@ public void ndrx_epoll_sys_uninit(void)
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
-    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
     }
     else
     {
-        void * res = SUCCEED;
-        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        void * res = EXSUCCEED;
+        if (EXSUCCEED!=pthread_join(M_signal_thread, &res))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
                     strerror(errno));
@@ -425,7 +425,7 @@ public void ndrx_epoll_sys_uninit(void)
  * TODO: we need to lock the ndrx_epoll sets as we do the lookup in thread.
  * @param sv
  */
-private void ndrx_ndrx_mq_notify_func(union sigval sv)
+exprivate void ndrx_ndrx_mq_notify_func(union sigval sv)
 {
     mqd_t mqdes = *((mqd_t *) sv.sival_ptr);
 
@@ -460,7 +460,7 @@ private void ndrx_ndrx_mq_notify_func(union sigval sv)
 
     /* Install handler back */
 
-    if (FAIL==ndrx_mq_notify(mqdes, &mqd_h->sev))
+    if (EXFAIL==ndrx_mq_notify(mqdes, &mqd_h->sev))
     {
         NDRX_LOG(log_error, "Failed to register notification for mqd %d (%s)!!!", 
                 mqdes, strerror(errno));
@@ -474,9 +474,9 @@ out:
 /**
  * We basically will use unix error codes
  */
-private void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
+exprivate void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
 {
-    char msg[ERROR_BUFFER+1] = {EOS};
+    char msg[ERROR_BUFFER+1] = {EXEOS};
     va_list ap;
     
     NSTD_TLS_ENTRY;
@@ -497,7 +497,7 @@ private void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
 /**
  * Find FD in hash
  */
-private ndrx_epoll_fds_t* fd_find(ndrx_epoll_set_t *pset, int fd)
+exprivate ndrx_epoll_fds_t* fd_find(ndrx_epoll_set_t *pset, int fd)
 {
     ndrx_epoll_fds_t*ret = NULL;
     
@@ -509,7 +509,7 @@ private ndrx_epoll_fds_t* fd_find(ndrx_epoll_set_t *pset, int fd)
 /**
  * FInd q descriptor in hash
  */
-private ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd)
+exprivate ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd)
 {
     ndrx_epoll_mqds_t*ret = NULL;
     
@@ -521,7 +521,7 @@ private ndrx_epoll_mqds_t* mqd_find(ndrx_epoll_set_t *pset, mqd_t mqd)
 /**
  * Find polling set
  */
-private ndrx_epoll_set_t* pset_find(int epfd)
+exprivate ndrx_epoll_set_t* pset_find(int epfd)
 {
     ndrx_epoll_set_t *ret = NULL;
     
@@ -538,9 +538,9 @@ private ndrx_epoll_set_t* pset_find(int epfd)
  * @param event
  * @return 
  */
-public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
+expublic int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     ndrx_epoll_fds_t * tmp = NULL;
     char *fn = "ndrx_epoll_ctl";
@@ -554,7 +554,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
     {
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         ndrx_epoll_set_err(ENOSYS, "ndrx_epoll set %d not found", epfd);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (EX_EPOLL_CTL_ADD == op)
@@ -569,14 +569,14 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                     fd, set->fd);
             NDRX_LOG(log_error, "fd %d already exists in ndrx_epoll set (epfd %d)", 
                  fd, set->fd);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (NULL==(tmp = NDRX_CALLOC(1, sizeof(*tmp))))
         {
             ndrx_epoll_set_err(errno, "Failed to alloc FD hash entry");
             NDRX_LOG(log_error, "Failed to alloc FD hash entry");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         tmp->fd = fd;
@@ -593,7 +593,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                     set->nrfds, sizeof(struct pollfd)*set->nrfds);
             NDRX_LOG(log_error, "Failed to realloc %d/%d", 
                     set->nrfds, sizeof(struct pollfd)*set->nrfds);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         set->fdtab[set->nrfds-1].fd = fd;
@@ -611,7 +611,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                     fd, set->fd);
             NDRX_LOG(log_error, "fd %d not found in ndrx_epoll set (epfd %d)", 
                     fd, set->fd);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* Remove fd from set->fdtab & from hash */
@@ -652,7 +652,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
                     NDRX_LOG(log_error, "Failed to realloc %d/%d", 
                             set->nrfds, sizeof(struct pollfd)*set->nrfds);
                     
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
         }
@@ -662,7 +662,7 @@ public int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *eve
         ndrx_epoll_set_err(EINVAL, "Invalid operation %d", op);
         NDRX_LOG(log_error, "Invalid operation %d", op);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -682,9 +682,9 @@ out:
  * @param event
  * @return 
  */
-public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_event *event)
+expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_event *event)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     ndrx_epoll_mqds_t * tmp = NULL;
     char *fn = "ndrx_epoll_ctl_mq";
@@ -698,7 +698,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
         ndrx_epoll_set_err(ENOSYS, "ndrx_epoll set %d not found", epfd);
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (EX_EPOLL_CTL_ADD == op)
@@ -712,7 +712,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
                     mqd, set->fd);
             NDRX_LOG(log_error, "fd %d already exists in ndrx_epoll set (epfd %d)", 
                     mqd, set->fd);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (NULL==(tmp = NDRX_CALLOC(1, sizeof(*tmp))))
@@ -720,7 +720,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
             ndrx_epoll_set_err(errno, "Failed to alloc FD hash entry");
             NDRX_LOG(log_error, "Failed to alloc FD hash entry");
             
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         tmp->mqd = mqd;
@@ -744,10 +744,10 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
         tmp->sev.sigev_notify_attributes = NULL;
         tmp->sev.sigev_value.sival_ptr = &tmp->mqd;
         
-        if (FAIL==ndrx_mq_notify(mqd, &tmp->sev))
+        if (EXFAIL==ndrx_mq_notify(mqd, &tmp->sev))
         {
             ndrx_epoll_set_err(errno, "Failed to register notification for mqd %d", mqd);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
 #endif
@@ -768,7 +768,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
             NDRX_LOG(log_error, "fd %d not found in ndrx_epoll set (epfd %d)", 
                     mqd, set->fd);
             
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* Remove fd from set->fdtab & from hash */
@@ -781,7 +781,7 @@ public int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_even
         
         NDRX_LOG(log_error, "Invalid operation %d", op);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -798,9 +798,9 @@ out:
  * @param size
  * @return 
  */
-public int ndrx_epoll_create(int size)
+expublic int ndrx_epoll_create(int size)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int i = 1;
     ndrx_epoll_set_t *set;
     
@@ -821,7 +821,7 @@ public int ndrx_epoll_create(int size)
                 
         
         set = NULL;
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_info, "Creating ndrx_epoll set: %d", i);
@@ -832,7 +832,7 @@ public int ndrx_epoll_create(int size)
         
         NDRX_LOG(log_error, "Failed to alloc: %d bytes", sizeof(*set));
 
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 	/* O_NONBLOCK */
@@ -840,23 +840,23 @@ public int ndrx_epoll_create(int size)
     {
         ndrx_epoll_set_err(errno, "pipe failed");
         NDRX_LOG(log_error, "pipe failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    if (FAIL==fcntl(set->wakeup_pipe[READ], F_SETFL, 
+    if (EXFAIL==fcntl(set->wakeup_pipe[READ], F_SETFL, 
 		fcntl(set->wakeup_pipe[READ], F_GETFL) | O_NONBLOCK))
     {
         ndrx_epoll_set_err(errno, "fcntl READ pipe set O_NONBLOCK failed");
         NDRX_LOG(log_error, "fcntl READ pipe set O_NONBLOCK failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    if (FAIL==fcntl(set->wakeup_pipe[WRITE], F_SETFL, 
+    if (EXFAIL==fcntl(set->wakeup_pipe[WRITE], F_SETFL, 
 		fcntl(set->wakeup_pipe[WRITE], F_GETFL) | O_NONBLOCK))
     {
         ndrx_epoll_set_err(errno, "fcntl WRITE pipe set O_NONBLOCK failed");
         NDRX_LOG(log_error, "fcntl WRITE pipe set O_NONBLOCK failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     set->nrfds = 1; /* initially only pipe wait */
@@ -865,7 +865,7 @@ public int ndrx_epoll_create(int size)
     {
         ndrx_epoll_set_err(errno, "calloc for pollfd failed");
         NDRX_LOG(log_error, "calloc for pollfd failed");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* So wait for events here in the pip form Q thread */
@@ -881,7 +881,7 @@ public int ndrx_epoll_create(int size)
     
 out:
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         if (NULL!=set && set->wakeup_pipe[READ])
         {
@@ -898,7 +898,7 @@ out:
             NDRX_FREE((char *)set);
         }
         
-        return FAIL;
+        return EXFAIL;
         
     }
 
@@ -908,9 +908,9 @@ out:
 /**
  * Close the epoll set
  */
-public int ndrx_epoll_close(int epfd)
+expublic int ndrx_epoll_close(int epfd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     
     ndrx_epoll_fds_t* f, *ftmp;
@@ -930,7 +930,7 @@ public int ndrx_epoll_close(int epfd)
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     MUTEX_UNLOCK_V(M_psets_lock);
     
@@ -964,7 +964,7 @@ public int ndrx_epoll_close(int epfd)
     
     
 out:
-    return FAIL;
+    return EXFAIL;
 }
 
 /**
@@ -981,9 +981,9 @@ out:
  * @param timeout
  * @return 
  */
-public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int numevents = 0;
     ndrx_epoll_set_t* set = NULL;
     char *fn = "ndrx_epoll_wait";
@@ -1005,7 +1005,7 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
         
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     MUTEX_UNLOCK_V(M_psets_lock); /*  <<< release the lock */
@@ -1030,11 +1030,11 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
             struct mq_attr att;
 
             /* read the attributes of the Q */
-            if (SUCCEED!= ndrx_mq_getattr(m->mqd, &att))
+            if (EXSUCCEED!= ndrx_mq_getattr(m->mqd, &att))
             {
                 ndrx_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             if (att.mq_curmsgs > 0)
@@ -1048,7 +1048,7 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
                     events[numevents-1].data.mqd = m->mqd;
                     /* take from pipe */
                     events[numevents-1].events = set->fdtab[PIPE_POLL_IDX].revents;
-                    events[numevents-1].is_mqd = TRUE;
+                    events[numevents-1].is_mqd = EXTRUE;
                 }
                 else
                 {
@@ -1089,12 +1089,12 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
              * Put them anyway.. (if we slipped something...)
              */
 
-            if (SUCCEED!=signal_install_notifications_all(set))
+            if (EXSUCCEED!=signal_install_notifications_all(set))
             {
-                ndrx_epoll_set_err(EOS, "Failed to install notifs!");
+                ndrx_epoll_set_err(EXEOS, "Failed to install notifs!");
                 NDRX_LOG(log_error, "Failed to install notifs!");
                 MUTEX_UNLOCK_V(M_psets_lock);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             MUTEX_UNLOCK_V(M_psets_lock);
@@ -1129,13 +1129,13 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
                 int err;
                 mqd_t mqdes = 0;
                 while (numevents < maxevents && 
-                        FAIL!=(ret=read(set->wakeup_pipe[READ], (char *)&mqdes, 
+                        EXFAIL!=(ret=read(set->wakeup_pipe[READ], (char *)&mqdes, 
                         sizeof(mqdes))))
                 {
 		    struct mq_attr att;
                     /* read the attributes of the Q */
                     /* we get some strange lock-ups on solaris, thus ignore empty q wakeups... */
-                    if (SUCCEED!= ndrx_mq_getattr(mqdes, &att))
+                    if (EXSUCCEED!= ndrx_mq_getattr(mqdes, &att))
                     {
                         /*ndrx_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
                         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  
@@ -1150,37 +1150,37 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
 
                         events[numevents-1].data.mqd = mqdes;
                         events[numevents-1].events = set->fdtab[i].revents;
-                        events[numevents-1].is_mqd = TRUE;
+                        events[numevents-1].is_mqd = EXTRUE;
                     }
                     
                 }
                 
                 err = errno;
                 
-                if (FAIL==ret)
+                if (EXFAIL==ret)
                 {
                     if (EAGAIN == err || EWOULDBLOCK == err)
                     {
-                        ret = SUCCEED;
+                        ret = EXSUCCEED;
                     }
                     else
                     {
                         ndrx_epoll_set_err(err, "Failed to read notify unnamed pipe!");
                         NDRX_LOG(log_error, "Failed to read notify unnamed pipe!");
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 }
                 else if (ret!=sizeof(mqdes))
                 {
-                    ndrx_epoll_set_err(EOS, "Error ! Expected piped read size %d but got %d!", 
+                    ndrx_epoll_set_err(EXEOS, "Error ! Expected piped read size %d but got %d!", 
                             ret, sizeof(mqdes));
                     NDRX_LOG(log_error, "Error ! Expected piped read size %d but got %d!", 
                             ret, sizeof(mqdes));
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 else
                 {
-                    ret = SUCCEED; /* ok */
+                    ret = EXSUCCEED; /* ok */
                 }
                 
             }
@@ -1192,7 +1192,7 @@ public int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxeve
                 
                 events[numevents-1].data.fd =set->fdtab[i].fd;
                 events[numevents-1].events = set->fdtab[i].revents;
-                events[numevents-1].is_mqd = FALSE;
+                events[numevents-1].is_mqd = EXFALSE;
             }
             else
             {
@@ -1205,13 +1205,13 @@ out:
 
     NDRX_LOG(log_info, "%s ret=%d numevents=%d", fn, ret, numevents);
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         return numevents;
     }
     else
     {
-        return FAIL;
+        return EXFAIL;
     }
 }
 
@@ -1219,7 +1219,7 @@ out:
  * Return errno for ndrx_poll() operation
  * @return 
  */
-public int ndrx_epoll_errno(void)
+expublic int ndrx_epoll_errno(void)
 {
     NSTD_TLS_ENTRY;
     return G_nstd_tls->M_last_err;
@@ -1230,7 +1230,7 @@ public int ndrx_epoll_errno(void)
  * @param err
  * @return 
  */
-public char * ndrx_poll_strerror(int err)
+expublic char * ndrx_poll_strerror(int err)
 {
     NSTD_TLS_ENTRY;
     

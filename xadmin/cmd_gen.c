@@ -89,7 +89,7 @@ struct gen_hash
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-private gen_hash_t *M_gen_res = NULL; /* gen resources */
+exprivate gen_hash_t *M_gen_res = NULL; /* gen resources */
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -98,7 +98,7 @@ private gen_hash_t *M_gen_res = NULL; /* gen resources */
  * @param sub_command
  * @return 
  */
-private gen_hash_t * gen_get(char *command)
+exprivate gen_hash_t * gen_get(char *command)
 {
     gen_hash_t *ret = NULL;
     
@@ -114,21 +114,21 @@ private gen_hash_t * gen_get(char *command)
  * @param command
  * @return 
  */
-private int reg_cmd(char *command, const char *stock, const char *fname)
+exprivate int reg_cmd(char *command, const char *stock, const char *fname)
 {
     gen_hash_t *gen;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     if (NULL==(gen = NDRX_MALLOC(sizeof(gen_hash_t))))
     {
         int err = errno;
         NDRX_LOG(log_error, "Failed to alloc gen_hash_t: %s", strerror(err));
         userlog("Failed to alloc gen_hash_t: %s", strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     strncpy(gen->command, command, sizeof(gen->command));
-    gen->command[sizeof(gen->command)-1] = EOS;
+    gen->command[sizeof(gen->command)-1] = EXEOS;
     
     if (stock)
     {
@@ -137,7 +137,7 @@ private int reg_cmd(char *command, const char *stock, const char *fname)
             int err = errno;
             NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
             userlog("Failed to alloc: %s", strerror(err));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -148,7 +148,7 @@ private int reg_cmd(char *command, const char *stock, const char *fname)
             int err = errno;
             NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
             userlog("Failed to alloc: %s", strerror(err));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -161,7 +161,7 @@ private int reg_cmd(char *command, const char *stock, const char *fname)
     
 out:
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         if (gen)
         {
@@ -187,12 +187,12 @@ out:
  * Or path to file (path loaded from config)
  * @return SUCCEED/FAIL
  */
-public int cmd_gen_load_scripts(void)
+expublic int cmd_gen_load_scripts(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_inicfg_section_keyval_t *val;
     string_list_t* flist, *elt= NULL;
-    int return_status = SUCCEED;
+    int return_status = EXSUCCEED;
     
     char tmp[PATH_MAX+1];
     char path[PATH_MAX+1];
@@ -202,14 +202,14 @@ public int cmd_gen_load_scripts(void)
     
     
     /* 1. List strings in memory, start with "gen_001" */
-    if (SUCCEED!=reg_cmd("go server", G_resource_gen_go_server, NULL)
-        || SUCCEED!=reg_cmd("go client", G_resource_gen_go_client, NULL)
-        || SUCCEED!=reg_cmd("c server", G_resource_gen_c_server, NULL)
-        || SUCCEED!=reg_cmd("c client", G_resource_gen_c_client, NULL)
-        || SUCCEED!=reg_cmd("ubf tab", G_resource_gen_ubf_tab, NULL)
+    if (EXSUCCEED!=reg_cmd("go server", G_resource_gen_go_server, NULL)
+        || EXSUCCEED!=reg_cmd("go client", G_resource_gen_go_client, NULL)
+        || EXSUCCEED!=reg_cmd("c server", G_resource_gen_c_server, NULL)
+        || EXSUCCEED!=reg_cmd("c client", G_resource_gen_c_client, NULL)
+        || EXSUCCEED!=reg_cmd("ubf tab", G_resource_gen_ubf_tab, NULL)
        )
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* 2. List strings on disk, if have such config string */
@@ -231,7 +231,7 @@ public int cmd_gen_load_scripts(void)
                     )
                 {
                     strncpy(tmp, elt->qname, sizeof(tmp));
-                    tmp[sizeof(tmp)-1] = EOS;
+                    tmp[sizeof(tmp)-1] = EXEOS;
                     
                     
                     start = strstr(tmp, "gen_");
@@ -246,7 +246,7 @@ public int cmd_gen_load_scripts(void)
                     
                     p = strrchr(tmp, '.');
                     
-                    *p = EOS; /* do not care the suffix */
+                    *p = EXEOS; /* do not care the suffix */
                     
                     /* replace _ with space*/   
                     len = strlen(start);
@@ -280,9 +280,9 @@ public int cmd_gen_load_scripts(void)
                             start, path);
 #endif
                     
-                    if (SUCCEED!=reg_cmd(start, NULL, path))
+                    if (EXSUCCEED!=reg_cmd(start, NULL, path))
                     {
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
 
                 }
@@ -301,7 +301,7 @@ out:
  * This will list available commands for help callback.
  * @return 
  */
-public int cmd_gen_help(void)
+expublic int cmd_gen_help(void)
 {
     gen_hash_t *val = NULL, *val_tmp = NULL;
     
@@ -312,7 +312,7 @@ public int cmd_gen_help(void)
     
     fprintf(stdout, "\n");
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -341,9 +341,9 @@ PSInteger file_lexfeedASCII(PSUserPointer file)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     const PSChar *s;
     HPSCRIPTVM v = NULL;
     PSInteger res;
@@ -388,21 +388,21 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         if (NULL==(gen = gen_get(tmp)))
         {
             fprintf(stderr, "Unknown gen sub-command: [%s]\n", tmp);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else 
     {
         fprintf(stderr, "Invalid arguments, format: gen <language> <type>\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* make full command for defaults lookup */
     snprintf(tmp, sizeof(tmp), "gen %s %s", argv[1], argv[2]);
     
-    if (SUCCEED!=add_defaults_from_config(v, tmp))
+    if (EXSUCCEED!=add_defaults_from_config(v, tmp))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (argc>3)
@@ -412,7 +412,7 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
             /* load defaults */
             if (0==strcmp(argv[i], "-d"))
             {
-                PSBool isDefaulted = TRUE;
+                PSBool isDefaulted = EXTRUE;
                 ps_pushstring(v, "isDefaulted", -1); /* 4 */
                 ps_pushbool(v, isDefaulted);
                 ps_newslot(v, -3, PSFalse );/* 3 */
@@ -423,10 +423,10 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                 /* pass in value definition (as string) 
                  * format <key>=<value>
                  */
-                if (SUCCEED!=load_value(v, argv[i]+2))
+                if (EXSUCCEED!=load_value(v, argv[i]+2))
                 {
                     fprintf(stderr, "Invalid value\n");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             else if (0==strncmp(argv[i], "-v", 2))
@@ -435,16 +435,16 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                 if (i+1<argc)
                 {
                     i++;
-                    if (SUCCEED!=load_value(v, argv[i]))
+                    if (EXSUCCEED!=load_value(v, argv[i]))
                     {
                         fprintf(stderr, "Invalid value\n");
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 }
                 else
                 {
                     fprintf(stderr, "Invalid command line missing value at end.\n");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             
@@ -467,7 +467,7 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
             if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
             {
                 fprintf(stderr, _SC("Error [%s]\n"),err);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
@@ -489,7 +489,7 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
                {
                    fprintf(stderr, _SC("Error [%s]\n"),err);
-                   FAIL_OUT(ret);
+                   EXFAIL_OUT(ret);
                }
             }
             else
@@ -501,7 +501,7 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         {
             fprintf(stderr, "Failed to read script file: [%s]:%s", 
                     gen->fname, strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 
@@ -513,7 +513,7 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
         {
             printf(_SC("Error [%s]\n"),err);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -522,11 +522,11 @@ public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     
     if (res>=0)
     {
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }
     else
     {
-        ret = FAIL;
+        ret = EXFAIL;
     }
     
     ps_pop(v,3); /* pops the roottable and the function */
@@ -551,10 +551,10 @@ out:
  * Pscript not supported
  * @return FAIL
  */
-public int cmd_gen_help(void)
+expublic int cmd_gen_help(void)
 {
     fprintf(stderr, "Pscript not compiled for this platform!\n");
-    return FAIL;
+    return EXFAIL;
 }
 
 /**
@@ -564,19 +564,19 @@ public int cmd_gen_help(void)
  * @param argv
  * @return FAIL
  */
-public int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     fprintf(stderr, "Pscript not compiled for this platform!\n");
-    return FAIL;
+    return EXFAIL;
 }
 
 /**
  * Dummy for non pscript systems
  * @return SUCCEED
  */
-public int cmd_gen_load_scripts(void)
+expublic int cmd_gen_load_scripts(void)
 {
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 #endif

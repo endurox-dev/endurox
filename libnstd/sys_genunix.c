@@ -67,15 +67,15 @@
  * @param proc_name
  * @return
  */
-public int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name)
+expublic int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name)
 {
     /* CAUSES STALL ON AIX. */
     FILE *fp=NULL;
     char cmd[128];
     char path[PATH_MAX];
-    int ret = FALSE;
+    int ret = EXFALSE;
     
-    sprintf(cmd, "ps -p %d -o comm=", pid);
+    snprintf(cmd, sizeof(cmd), "ps -p %d -o comm=", pid);
     
     NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
     
@@ -92,7 +92,7 @@ public int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name)
     {
         if (strstr(path, proc_name))
         {
-            ret=TRUE;
+            ret=EXTRUE;
             goto out;
         }
     }
@@ -116,24 +116,24 @@ out:
  * @param proc_name
  * @return
  */
-public int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name)
+expublic int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     
     if (kill(pid, 0) == 0)
     {
         /* process is running or a zombie */
-        ret = TRUE;
+        ret = EXTRUE;
     }
     else if (errno == ESRCH)
     {
         /* no such process with the given pid is running */
-        ret = FALSE;
+        ret = EXFALSE;
     }
     else
     {
        NDRX_LOG(log_error, "Failed to test processes: %s", strerror(errno));
-       ret = FALSE; /* some other error, assume process running... */ 
+       ret = EXFALSE; /* some other error, assume process running... */ 
     }
 
     NDRX_LOG(log_debug, "process %s status: %s", proc_name, 
@@ -150,21 +150,21 @@ public int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name)
  * @param proc_name
  * @return
  */
-public char * ndrx_sys_get_proc_name_by_ps(void)
+expublic char * ndrx_sys_get_proc_name_by_ps(void)
 {
     static char out[PATH_MAX] = "unknown";
     FILE *fp=NULL;
     char path[PATH_MAX];
-    char cmd[128] = {EOS};
-    int ret = SUCCEED;
-    static int first = TRUE;
+    char cmd[128] = {EXEOS};
+    int ret = EXSUCCEED;
+    static int first = EXTRUE;
     char *p = NULL;
     int err;
     int l;
     
     if (first)
     {
-        sprintf(cmd, "ps -p %d -o comm=", getpid());
+        snprintf(cmd, sizeof(cmd), "ps -p %d -o comm=", getpid());
 /* avoid recursive lookup by debug config
         NDRX_LOG(log_debug, "About to check pid: [%s]", cmd);
 */
@@ -173,7 +173,7 @@ public char * ndrx_sys_get_proc_name_by_ps(void)
         fp = popen(cmd, "r");
         if (fp == NULL)
         {
-            first = FALSE; /* avoid recursive lookup by debug lib*/
+            first = EXFALSE; /* avoid recursive lookup by debug lib*/
  /*           NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));*/
             goto out;
         }
@@ -182,7 +182,7 @@ public char * ndrx_sys_get_proc_name_by_ps(void)
         if (fgets(path, sizeof(path)-1, fp) == NULL)
         {
             err = errno;
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -197,9 +197,9 @@ out:
             pclose(fp);
         }
 
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
-            first = FALSE;
+            first = EXFALSE;
 /*            NDRX_LOG(log_error, "Failed to get proc name: %s", strerror(err));*/
         }
         else
@@ -208,22 +208,28 @@ out:
             
             if (l>0 && '\n'==p[l-1])
             {
-                p[l-1] = EOS;
+                p[l-1] = EXEOS;
                 l--;
             }
             
             if (l>0 && '\r'==p[l-1])
             {
-                p[l-1] = EOS;
+                p[l-1] = EXEOS;
                 l--;
             }
 
-            if (EOS!=*p)
+            while ('/'==p[0])
             {
-                strcpy(out, p);
+               p++;
             }
 
-            first = FALSE;
+
+            if (EXEOS!=*p)
+            {
+                NDRX_STRCPY_SAFE(out, p);
+            }
+
+            first = EXFALSE;
 
 /*            NDRX_LOG(log_debug, "current process name [%s]", out);*/
         }

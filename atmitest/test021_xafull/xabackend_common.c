@@ -61,7 +61,7 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
 {
     struct xa_switch_t * sw = NULL;
     void *handle = NULL;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "%s", descr);
     
     sw = (struct xa_switch_t * )dlsym( RTLD_DEFAULT, symbol );
@@ -76,7 +76,7 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
         {
             NDRX_LOG(log_error, "Failed to load XA Resource Manager lib [%s]: %s", 
                 G_atmi_env.xa_rmlib, dlerror());
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* reslove symbol now... */
@@ -84,12 +84,12 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
         {
             NDRX_LOG(log_error, "Enduro/X Test XA switch `%s' handler "
                     "not found!", symbol);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
 out:
-    if (SUCCEED!=ret && NULL!=handle)
+    if (EXSUCCEED!=ret && NULL!=handle)
     {
         /* close the handle */
         dlclose(handle);

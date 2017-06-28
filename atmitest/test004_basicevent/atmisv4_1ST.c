@@ -42,7 +42,7 @@ long M_subs_to_unsibscribe = -1;
 
 void TEST4_1ST (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     static double d = 55.66;
 
@@ -54,15 +54,15 @@ void TEST4_1ST (TPSVCINFO *p_svc)
     Bprint(p_ub);
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     d+=1;
 
-    if (FAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
+    if (EXFAIL==Badd(p_ub, T_DOUBLE_FLD, (char *)&d, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 out:
@@ -101,30 +101,30 @@ void TEST4_1ST_2(TPSVCINFO *p_svc)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "tpsvrinit called");
     TPEVCTL evctl;
 
     memset(&evctl, 0, sizeof(evctl));
 
-    if (SUCCEED!=tpadvertise("TEST4_1ST", TEST4_1ST))
+    if (EXSUCCEED!=tpadvertise("TEST4_1ST", TEST4_1ST))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST4_1ST (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST4_1ST_AL", TEST4_1ST))
+    else if (EXSUCCEED!=tpadvertise("TEST4_1ST_AL", TEST4_1ST))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST4_1ST_AL (alias)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST4_1ST_2", TEST4_1ST_2))
+    else if (EXSUCCEED!=tpadvertise("TEST4_1ST_2", TEST4_1ST_2))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST4_1ST_2!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         goto out;
     }
@@ -133,38 +133,38 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */
-    if (FAIL==tpsubscribe("EV..TEST", NULL, &evctl, 0L))
+    if (EXFAIL==tpsubscribe("EV..TEST", NULL, &evctl, 0L))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST4_1ST "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     strcpy(evctl.name1, "TEST4_1ST_2");
     /* Subscribe to event server */
-    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV", NULL, &evctl, 0L)))
+    if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV", NULL, &evctl, 0L)))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST4_1ST "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     strcpy(evctl.name1, "TEST4_1ST_2");
     /* Subscribe to event server */
-    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV2", NULL, &evctl, 0L)))
+    if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV2", NULL, &evctl, 0L)))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST4_1ST "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     strcpy(evctl.name1, "TEST4_1ST_2");
     /* Subscribe to event server */
-    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV3", NULL, &evctl, 0L)))
+    if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV3", NULL, &evctl, 0L)))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST4_1ST "
                                         "to EV..TEST event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
 out:

@@ -63,11 +63,11 @@ extern const char G_resource_Exfields[];
  * @param argv
  * @return TRUE/FALSE
  */
-public int chk_confirm(char *message, short is_confirmed)
+expublic int chk_confirm(char *message, short is_confirmed)
 {
-    int ret=FALSE;
+    int ret=EXFALSE;
     char buffer[128];
-    int ans_ok = FALSE;
+    int ans_ok = EXFALSE;
     
     if (!is_confirmed)
     {
@@ -82,15 +82,15 @@ public int chk_confirm(char *message, short is_confirmed)
                     /* do nothing */
                 }
 
-                if (toupper(buffer[0])=='Y' && '\n'==buffer[1] && EOS==buffer[2])
+                if (toupper(buffer[0])=='Y' && '\n'==buffer[1] && EXEOS==buffer[2])
                 {
-                    ret=TRUE;
-                    ans_ok=TRUE;
+                    ret=EXTRUE;
+                    ans_ok=EXTRUE;
                 }
-                else if (toupper(buffer[0])=='N' && '\n'==buffer[1] && EOS==buffer[2])
+                else if (toupper(buffer[0])=='N' && '\n'==buffer[1] && EXEOS==buffer[2])
                 {
-                    ret=FALSE;
-                    ans_ok=TRUE;
+                    ret=EXFALSE;
+                    ans_ok=EXTRUE;
                 }
 
             } while (!ans_ok);
@@ -102,7 +102,7 @@ public int chk_confirm(char *message, short is_confirmed)
     }
     else
     {
-        ret=TRUE;
+        ret=EXTRUE;
     }
     
     return ret;
@@ -115,10 +115,10 @@ public int chk_confirm(char *message, short is_confirmed)
  * @param argv
  * @return 
  */
-public int chk_confirm_clopt(char *message, int argc, char **argv)
+expublic int chk_confirm_clopt(char *message, int argc, char **argv)
 {
-    int ret = SUCCEED;
-    short confirm = FALSE;
+    int ret = EXSUCCEED;
+    short confirm = EXFALSE;
     
     ncloptmap_t clopt[] =
     {
@@ -128,10 +128,10 @@ public int chk_confirm_clopt(char *message, int argc, char **argv)
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
@@ -148,7 +148,7 @@ out:
  * @param s
  * @param ...
  */
-public void printfunc(HPSCRIPTVM v,const PSChar *s,...)
+expublic void printfunc(HPSCRIPTVM v,const PSChar *s,...)
 {
     va_list vl;
     va_start(vl, s);
@@ -163,7 +163,7 @@ public void printfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param s
  * @param ...
  */
-public void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
+expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
 {
     va_list vl;
     va_start(vl, s);
@@ -178,9 +178,9 @@ public void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param key_val_string
  * @return 
  */
-public int load_value(HPSCRIPTVM v, char *key_val_string)
+expublic int load_value(HPSCRIPTVM v, char *key_val_string)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *p;
     int len = strlen(key_val_string);
     
@@ -189,28 +189,28 @@ public int load_value(HPSCRIPTVM v, char *key_val_string)
     if (!len)
     {
         fprintf(stderr, "Empty value string!\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==p)
     {
         fprintf(stderr, "Missing '=' in value [%s]!\n", key_val_string);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (p==key_val_string)
     {
         fprintf(stderr, "Missing value [%s]!\n", key_val_string);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (p==key_val_string)
     {
         fprintf(stderr, "Missing value [%s]!\n", key_val_string);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    *p = EOS;
+    *p = EXEOS;
     p++;
     
     /* fprintf(stderr, "Setting value: %s\n", p); */
@@ -227,9 +227,9 @@ out:
  * Add defaults from config file
  * @return 
  */
-public int add_defaults_from_config(HPSCRIPTVM v, char *section)
+expublic int add_defaults_from_config(HPSCRIPTVM v, char *section)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_inicfg_section_keyval_t *val;
     char *ptr = NULL;
     char *p;
@@ -241,7 +241,7 @@ public int add_defaults_from_config(HPSCRIPTVM v, char *section)
         if (NULL==(ptr = strdup(val->val)))
         {
             userlog("Malloc failed: %s", strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* OK token the string and do override */
@@ -252,7 +252,7 @@ public int add_defaults_from_config(HPSCRIPTVM v, char *section)
         {
             if (0==strcmp(p, "-d"))
             {
-                PSBool isDefaulted = TRUE;
+                PSBool isDefaulted = EXTRUE;
                 ps_pushstring(v, "isDefaulted", -1); /* 4 */
                 ps_pushbool(v, isDefaulted);
                 ps_newslot(v, -3, PSFalse );/* 3 */
@@ -264,16 +264,16 @@ public int add_defaults_from_config(HPSCRIPTVM v, char *section)
                 {
                     userlog("Invalid default settings for provision command [%s]", 
                             val->val);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 
                 /* pass in value definition (as string) 
                  * format <key>=<value>
                  */
-                if (SUCCEED!=load_value(v, p+2))
+                if (EXSUCCEED!=load_value(v, p+2))
                 {
                     userlog("Invalid value\n");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             else if (0==strncmp(p, "-v", 2))
@@ -283,18 +283,18 @@ public int add_defaults_from_config(HPSCRIPTVM v, char *section)
                 /* next value is key */
                 if (NULL!=p)
                 {
-                    if (SUCCEED!=load_value(v, p))
+                    if (EXSUCCEED!=load_value(v, p))
                     {
                         userlog("Invalid value on provision defaults [%s]", 
                                 val->val);
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 }
                 else
                 {
                     userlog("Invalid command line missing value at end [%s]", 
                             val->val);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             
@@ -309,7 +309,7 @@ out:
         free(ptr);
     }
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         fprintf(stderr, "Failed to process defaults - invalid config [%s], see ULOG\n", 
                 G_xadmin_config_file);
@@ -334,7 +334,7 @@ static PSInteger _xadmin_getExfields(HPSCRIPTVM v)
 /**
  * Provide the Exfields function to root table.
  */
-public int register_getExfields(HPSCRIPTVM v)
+expublic int register_getExfields(HPSCRIPTVM v)
 {
     
     ps_pushstring(v,"getExfields",-1);

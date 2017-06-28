@@ -72,8 +72,9 @@ void sign_chld_handler(int sig)
 
     if (0!=(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
     {
-        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
-                                           chldpid, stat_loc);
+/*        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
+                                           chldpid, stat_loc); - this too 
+        can cause some lockups... */
 
         /* TODO: If this is last pid, then set state in idle? */
         G_config.ndrxd_stat=NDRXD_STAT_NOT_STARTED;
@@ -90,22 +91,22 @@ void sign_chld_handler(int sig)
  * @return FALSE - not running
  *         TRUE - running or malfunction.
  */
-public int is_ndrxd_running(void)
+expublic int is_ndrxd_running(void)
 {
-    int ret = FALSE;
-    int queue_ok = FALSE;
+    int ret = EXFALSE;
+    int queue_ok = EXFALSE;
     FILE *f = NULL;
     pid_t    pid;
-    char    pidbuf[64] = {EOS};
+    char    pidbuf[64] = {EXEOS};
 
     /* Reset to default - not running! */
     G_config.ndrxd_stat = NDRXD_STAT_NOT_STARTED;
 
     /* Check queue first  */
-    if ((mqd_t)FAIL==G_config.ndrxd_q)
+    if ((mqd_t)EXFAIL==G_config.ndrxd_q)
         G_config.ndrxd_q = ndrx_mq_open_at_wrp (G_config.ndrxd_q_str, O_WRONLY);
 
-    if ((mqd_t)FAIL==G_config.ndrxd_q)
+    if ((mqd_t)EXFAIL==G_config.ndrxd_q)
     {
         NDRX_LOG(log_warn, "Failed to open admin queue [%s]: %s",
                 G_config.ndrxd_q_str, strerror(errno));
@@ -143,9 +144,9 @@ public int is_ndrxd_running(void)
 
     if (ndrx_sys_is_process_running(pid, "ndrxd"))
     {
-        if ((mqd_t)FAIL!=G_config.ndrxd_q)
+        if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
-            ret=TRUE;
+            ret=EXTRUE;
             G_config.ndrxd_stat = NDRXD_STAT_RUNNING;
         }
         else
@@ -166,11 +167,11 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, "EnduroX back-end (ndrxd) is not running\n");
-        if ((mqd_t)FAIL!=G_config.ndrxd_q)
+        fprintf(stderr, "Enduro/X back-end (ndrxd) is not running\n");
+        if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);
-            G_config.ndrxd_q = (mqd_t)FAIL;
+            G_config.ndrxd_q = (mqd_t)EXFAIL;
             
             if (ndrx_chk_ndrxd())
             {
@@ -195,9 +196,9 @@ out:
  * Start idle instance of daemon process
  * @return
  */
-public int start_daemon_idle(void)
+expublic int start_daemon_idle(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pid_t pid;
     char    key[NDRX_MAX_KEY_SIZE+3+1];
     /* clone our self */
@@ -226,7 +227,7 @@ public int start_daemon_idle(void)
         }
 
 
-        if (SUCCEED != execvp ("ndrxd", cmd))
+        if (EXSUCCEED != execvp ("ndrxd", cmd))
         {
             fprintf(stderr, "Failed to start server - ndrxd!\n");
             exit(1);
@@ -235,7 +236,7 @@ public int start_daemon_idle(void)
     else
     {
         int i;
-        int started=FALSE;
+        int started=EXFALSE;
         /* this is parent for child, wait 1 sec */
         sleep(1);
         started=is_ndrxd_running();
@@ -251,7 +252,7 @@ public int start_daemon_idle(void)
         if (started)
         {
             fprintf(stderr, "ndrxd idle instance started.\n");
-            G_config.is_idle = TRUE;
+            G_config.is_idle = EXTRUE;
         }
         else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
         {

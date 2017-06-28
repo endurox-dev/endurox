@@ -60,7 +60,7 @@ typedef struct conv_type conv_type_t;
 extern char * ubf_convert(int cnv_dir, int from_type, char *input_buf, int in_len,
                         int to_type, char *output_buf , int *out_len);
 
-public char * get_cbuf(int in_from_type, int in_to_type,
+extern char * get_cbuf(int in_from_type, int in_to_type,
                         char *in_temp_buf, char *in_data, int in_len,
                         char **out_alloc_buf, int *alloc_size, int mode,
                         int extra_len);

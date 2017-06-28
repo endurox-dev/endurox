@@ -57,7 +57,7 @@
  * @param call
  * @param pm
  */
-public void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_ppm_t * ppm_info = (command_reply_ppm_t *)reply;
     pm_node_t *p_pm = (pm_node_t *)params->mod_param1;
@@ -92,9 +92,9 @@ public void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t
  * @param pm
  * @return
  */
-private void ppm_progress(command_call_t * call, pm_node_t *pm)
+exprivate void ppm_progress(command_call_t * call, pm_node_t *pm)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
 
     NDRX_LOG(log_debug, "startup_progress enter");
@@ -103,7 +103,7 @@ private void ppm_progress(command_call_t * call, pm_node_t *pm)
     /* pass to reply process model node */
     params.mod_param1 = (void *)pm;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, ppm_reply_mod, 0L, 0, NULL))
     {
@@ -118,9 +118,9 @@ private void ppm_progress(command_call_t * call, pm_node_t *pm)
  * @param args
  * @return
  */
-public int cmd_ppm (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_ppm (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *pm;
     
     /* list all services from all servers, right? */
@@ -129,7 +129,7 @@ public int cmd_ppm (command_call_t * call, char *data, size_t len, int context)
             ppm_progress(call, pm);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

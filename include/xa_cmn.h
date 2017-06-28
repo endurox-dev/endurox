@@ -43,7 +43,7 @@ extern "C" {
     
 #include <ndrxdcmn.h>
 #include <stdint.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -114,11 +114,11 @@ extern "C" {
     
 #define XA_TX_ZERO(X)\
     X->tmtxflags = 0;\
-    X->tmxid[0] = EOS;\
+    X->tmxid[0] = EXEOS;\
     X->tmrmid = 0;\
     X->tmnodeid = 0;\
     X->tmsrvid = 0;\
-    X->tmknownrms[0] = EOS;
+    X->tmknownrms[0] = EXEOS;
     
     
 #define TMTXFLAGS_DYNAMIC_REG      0x00000001  /* TX initiator uses dyanmic reg */
@@ -227,7 +227,7 @@ struct atmi_xa_log
     /* background processing: */
     long trycount;       /* Number of attempts */
     /* Have a timer for active transaction (to watch for time-outs)  */
-    ndrx_timer_t ttimer;   /* transaction timer */
+    ndrx_stopwatch_t ttimer;   /* transaction timer */
     long txtout;  /* Number of seconds for timeout */
     
     int is_background;  /* Is background responsible for tx? */

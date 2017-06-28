@@ -55,14 +55,14 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
+exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "Nd SRVID MSGID (STR/Base64 mod)                       TSTAMP (UTC)      TRIES L\n");
     fprintf(stderr, "-- ----- -------------------------------------------- ----------------- ----- -\n");
@@ -74,9 +74,9 @@ private void print_hdr(void)
  * @param svcnm
  * @return SUCCEED/FAIL
  */
-private int print_buffer(UBFH *p_ub, char *svcnm)
+exprivate int print_buffer(UBFH *p_ub, char *svcnm)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     short nodeid;
     short srvid;
@@ -89,19 +89,19 @@ private int print_buffer(UBFH *p_ub, char *svcnm)
     short is_locked;
     
     if (
-            SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
-            SUCCEED!=Bget(p_ub, EX_TSTAMP1_STR, 0, tstamp1, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_TSTAMP2_STR, 0, tstamp2, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QMSGTRIES, 0, (char *)&tires, 0L) ||
-            SUCCEED!=Bget(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
+            EXSUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, EX_QMSGIDSTR, 0, msgid_str, 0L)  ||
+            EXSUCCEED!=Bget(p_ub, EX_TSTAMP1_STR, 0, tstamp1, 0L) ||
+            EXSUCCEED!=Bget(p_ub, EX_TSTAMP2_STR, 0, tstamp2, 0L) ||
+            EXSUCCEED!=Bget(p_ub, EX_QMSGTRIES, 0, (char *)&tires, 0L) ||
+            EXSUCCEED!=Bget(p_ub, EX_QMSGLOCKED, 0, (char *)&is_locked, 0L)
         )
     {
         fprintf(stderr, "Protocol error - TMQ did not return data, see logs!\n");
         NDRX_LOG(log_error, "Failed to read fields: [%s]", 
                 Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }    
        
     fprintf(stdout, "%-2d %-5d %-44.44s %-17.17s %-5.5s %s",
@@ -123,10 +123,10 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-private int call_tmq(char *svcnm, char *qname)
+exprivate int call_tmq(char *svcnm, char *qname)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", 1024);
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int cd;
     long revent;
     int recv_continue = 1;
@@ -138,29 +138,29 @@ private int call_tmq(char *svcnm, char *qname)
     if (NULL==p_ub)
     {
         NDRX_LOG(log_error, "Failed to alloc FB!");        
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to install command code");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
     {
         NDRX_LOG(log_error, "Failed to install qname");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL == (cd = tpconnect(svcnm,
+    if (EXFAIL == (cd = tpconnect(svcnm,
                                     (char *)p_ub,
                                     0,
                                     TPNOTRAN |
                                     TPRECVONLY)))
     {
         NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
@@ -168,36 +168,36 @@ private int call_tmq(char *svcnm, char *qname)
     while (recv_continue)
     {
         recv_continue=0;
-        if (FAIL == tprecv(cd,
+        if (EXFAIL == tprecv(cd,
                             (char **)&p_ub,
                             0L,
                             0L,
                             &revent))
         {
-            ret = FAIL;
+            ret = EXFAIL;
             tp_errno = tperrno;
             if (TPEEVENT == tp_errno)
             {
                     if (TPEV_SVCSUCC == revent)
-                            ret = SUCCEED;
+                            ret = EXSUCCEED;
                     else
                     {
                         NDRX_LOG(log_error,
                                  "Unexpected conv event %lx", revent );
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
             }
             else
             {
                 NDRX_LOG(log_error, "recv error %d", tp_errno  );
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
         {
-            if (SUCCEED!=print_buffer(p_ub, svcnm))
+            if (EXSUCCEED!=print_buffer(p_ub, svcnm))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             rcv_count++;
             recv_continue=1;
@@ -219,7 +219,7 @@ out:
  * @param svcnm
  * @return TRUE/FALSE
  */
-private int mqfilter_qspace(char *svcnm)
+exprivate int mqfilter_qspace(char *svcnm)
 {
     int i, len;
     int cnt = 0;
@@ -231,10 +231,10 @@ private int mqfilter_qspace(char *svcnm)
     
     if (0==strcmp(svcnm, tmp))
     {
-        return TRUE;
+        return EXTRUE;
     }
     
-    return FALSE;
+    return EXFALSE;
 }
 
 
@@ -245,9 +245,9 @@ private int mqfilter_qspace(char *svcnm)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqlm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_mqlm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_svc_list_t *el, *tmp, *list;
     char qname[TMQNAMELEN+1];
     
@@ -261,18 +261,18 @@ public int cmd_mqlm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     print_hdr();

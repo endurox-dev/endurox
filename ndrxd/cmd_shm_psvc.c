@@ -58,7 +58,7 @@
  * @param call
  * @param pm
  */
-public void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
 {
     command_reply_shm_psvc_t * shm_psvc_info = (command_reply_shm_psvc_t *)reply;
     shm_svcinfo_t *p_shm = (shm_svcinfo_t *)params->mod_param1;
@@ -109,9 +109,9 @@ public void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
  * @param pm
  * @return
  */
-private void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, int slot)
+exprivate void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, int slot)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     mod_param_t params;
     
     NDRX_LOG(log_debug, "startup_progress enter");
@@ -121,7 +121,7 @@ private void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, int 
     params.mod_param1 = (void *)p_shm;
     params.param2 = slot;
 
-    if (SUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
                             /* hook up the reply */
                             &params, shm_psvc_reply_mod, 0L, 0, NULL))
     {
@@ -137,22 +137,22 @@ private void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, int 
  * @param args
  * @return
  */
-public int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     
     /* We assume shm is OK! */
     for (i=0; i<G_max_svcs; i++)
     {
-        if (EOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
+        if (EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
         {
             shm_psvc_progress(call, SHM_SVCINFO_INDEX(svcinfo, i), i);
         }
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }

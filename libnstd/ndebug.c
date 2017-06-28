@@ -86,7 +86,7 @@ ndrx_debug_t G_ubf_debug;
 ndrx_debug_t G_ndrx_debug;
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
-volatile int G_ndrx_debug_first = TRUE;
+volatile int G_ndrx_debug_first = EXTRUE;
 MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -94,7 +94,7 @@ MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
  * Initialize operating thread number.
  * note default is zero.
  */
-public void ndrx_dbg_setthread(long threadnr)
+expublic void ndrx_dbg_setthread(long threadnr)
 {
     NSTD_TLS_ENTRY;
     G_nstd_tls->M_threadnr = threadnr;
@@ -103,7 +103,7 @@ public void ndrx_dbg_setthread(long threadnr)
 /**
  * Lock the debug output
  */
-public void ndrx_dbg_lock(void)
+expublic void ndrx_dbg_lock(void)
 {
     MUTEX_LOCK_V(M_dbglock);
 }
@@ -111,7 +111,7 @@ public void ndrx_dbg_lock(void)
 /**
  * Unlock the debug output
  */
-public void ndrx_dbg_unlock(void)
+expublic void ndrx_dbg_unlock(void)
 {
     MUTEX_UNLOCK_V(M_dbglock);
 }
@@ -121,7 +121,7 @@ public void ndrx_dbg_unlock(void)
  * @param dbg_ptr
  * @return 
  */
-private ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
+exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 {
     if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
     {
@@ -147,15 +147,15 @@ private ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
  * @param tok2 (config string for CConfig or update mode)
  * @return 
  */
-public int ndrx_init_parse_line(char *in_tok1, char *in_tok2, 
+expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2, 
         int *p_finish_off, ndrx_debug_t *dbg_ptr)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *saveptr=NULL;
     char *name;
     char *tok;
-    int ccmode = FALSE;
-    int upd_mode = FALSE; /* user update mode */
+    int ccmode = EXFALSE;
+    int upd_mode = EXFALSE; /* user update mode */
     char *p;
     /* have a own copies of params as we do the token over them... */
     char *tok1 = NULL;
@@ -166,7 +166,7 @@ public int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         if (NULL==(tok1 = strdup(in_tok1)))
         {
             userlog("Failed to strdup(): %s", strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -175,17 +175,17 @@ public int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         if (NULL==(tok2 = strdup(in_tok2)))
         {
             userlog("Failed to strdup(): %s", strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
     if (NULL==tok1 && tok2!=NULL)
     {
-        upd_mode = TRUE;
+        upd_mode = EXTRUE;
     } 
     else if (NULL!=tok2)
     {
-        ccmode = TRUE;
+        ccmode = EXTRUE;
     }
     
     if (ccmode)
@@ -246,7 +246,7 @@ public int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             {
                 /* Setup integration flags */
                 strncpy(G_tp_debug.iflags, p+1, sizeof(G_tp_debug.iflags)-1);
-                G_tp_debug.iflags[sizeof(G_tp_debug.iflags)-1] = EOS;
+                G_tp_debug.iflags[sizeof(G_tp_debug.iflags)-1] = EXEOS;
             }
             else if (0==strncmp("lines", tok, cmplen))
             {
@@ -325,12 +325,12 @@ out:
 /**
  * This initializes debug out form ndebug.conf
  */
-public void ndrx_init_debug(void)
+expublic void ndrx_init_debug(void)
 {
     char *cfg_file = getenv("NDRX_DEBUG_CONF");
     FILE *f;
     char *p;
-    int finish_off = FALSE;
+    int finish_off = EXFALSE;
     ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
@@ -343,9 +343,9 @@ public void ndrx_init_debug(void)
     G_tp_debug.dbg_f_ptr = stderr;
     G_stdout_debug.dbg_f_ptr = stdout;
     
-    strcpy(G_ubf_debug.module, "UBF ");
-    strcpy(G_ndrx_debug.module, "NDRX");
-    strcpy(G_tp_debug.module, "USER");
+    NDRX_STRCPY_SAFE(G_ubf_debug.module, "UBF ");
+    NDRX_STRCPY_SAFE(G_ndrx_debug.module, "NDRX");
+    NDRX_STRCPY_SAFE(G_tp_debug.module, "USER");
     
     G_ubf_debug.code = LOG_CODE_UBF;
     G_ndrx_debug.code = LOG_CODE_NDRX;
@@ -381,7 +381,7 @@ public void ndrx_init_debug(void)
                 }
                 if (buf[strlen(buf)-1]=='\n')
                 {
-                    buf[strlen(buf)-1]=EOS;
+                    buf[strlen(buf)-1]=EXEOS;
                 }
 
                 ndrx_init_parse_line(buf, NULL, &finish_off, NULL);
@@ -410,7 +410,7 @@ public void ndrx_init_debug(void)
     {
         /* CCONFIG in use, get the section */
         ndrx_cconfig_load(); /* load the global section... */
-        if (SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_DEBUG, &conf))
+        if (EXSUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_DEBUG, &conf))
         {
             /* 1. get he line by common & process */
             if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
@@ -427,7 +427,7 @@ public void ndrx_init_debug(void)
     }
 
     /* open debug file.. */
-    if (EOS!=G_ndrx_debug.filename[0])
+    if (EXEOS!=G_ndrx_debug.filename[0])
     {
         ndrx_str_env_subs_len(G_ndrx_debug.filename, sizeof(G_ndrx_debug.filename));
         /* Opens the file descriptors */
@@ -457,14 +457,14 @@ public void ndrx_init_debug(void)
         ndrx_keyval_hash_free(conf);
     }
     
-    G_ndrx_debug_first = FALSE;
+    G_ndrx_debug_first = EXFALSE;
 }
 
 /**
  * Return current NDRX debug level.
  * @return - debug level..
  */
-public ndrx_debug_t * debug_get_ndrx_ptr(void)
+expublic ndrx_debug_t * debug_get_ndrx_ptr(void)
 {
     /* NSTD_TLS_ENTRY; */
     NDRX_DBG_INIT_ENTRY;
@@ -476,7 +476,7 @@ public ndrx_debug_t * debug_get_ndrx_ptr(void)
  * Return TP pointer
  * @return 
  */
-public ndrx_debug_t * debug_get_tp_ptr(void)
+expublic ndrx_debug_t * debug_get_tp_ptr(void)
 {
     /* NSTD_TLS_ENTRY; */
     NDRX_DBG_INIT_ENTRY;
@@ -488,7 +488,7 @@ public ndrx_debug_t * debug_get_tp_ptr(void)
  * Return current UBF debug level.
  * @return
  */
-public ndrx_debug_t * debug_get_ubf_ptr(void)
+expublic ndrx_debug_t * debug_get_ubf_ptr(void)
 {   /* NSTD_TLS_ENTRY; */
     NDRX_DBG_INIT_ENTRY;
     
@@ -499,7 +499,7 @@ public ndrx_debug_t * debug_get_ubf_ptr(void)
  * Return current NDRX debug level.
  * @return - debug level..
  */
-public int debug_get_ndrx_level(void)
+expublic int debug_get_ndrx_level(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return G_ndrx_debug.level;
@@ -509,7 +509,7 @@ public int debug_get_ndrx_level(void)
  * Return current UBF debug level.
  * @return 
  */
-public int debug_get_ubf_level(void)
+expublic int debug_get_ubf_level(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return G_ubf_debug.level;
@@ -519,7 +519,7 @@ public int debug_get_ubf_level(void)
  * Return current UBF debug level.
  * @return 
  */
-public int debug_get_tp_level(void)
+expublic int debug_get_tp_level(void)
 {
     NDRX_DBG_INIT_ENTRY;
     return G_tp_debug.level;
@@ -538,7 +538,7 @@ public int debug_get_tp_level(void)
  * @param ptr2 - buffer2
  * @param len - buffer size
  */
-public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
+expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *comment, void *ptr, void *ptr2, long len)
 {
     
@@ -658,7 +658,7 @@ public void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char 
  * @param ptr - buffer1
  * @param len - buffer size
  */
-public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
+expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *comment, void *ptr, long len)
 {
     int i;
@@ -729,7 +729,7 @@ public void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file
  * @param fmt - format
  * @param ... - varargs
  */
-public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
+expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
         long line, const char *func, char *fmt, ...)
 {
     va_list ap;
@@ -740,7 +740,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     ndrx_debug_t *org_ptr = dbg_ptr;
     long  thread_nr = 0;
     static __thread uint64_t ostid = 0;
-    static __thread int first = TRUE;
+    static __thread int first = EXTRUE;
     /* NSTD_TLS_ENTRY; */
     
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
@@ -754,7 +754,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     if (first)
     {
         ostid = ndrx_gettid();
-        first = FALSE;
+        first = EXFALSE;
     }
     
     dbg_ptr = get_debug_ptr(dbg_ptr);
@@ -767,7 +767,8 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
 
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
-    sprintf(line_start, "%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+    snprintf(line_start, sizeof(line_start), 
+	"%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
         (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec/1000), line_print, line);
@@ -788,7 +789,7 @@ public void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
  * Debug buffer is set to default 0, can be overriden by <KEY>+DBGBUF
  * @param module - module form which debug is initialized
  */
-public void ndrx_dbg_init(char *module, char *config_key)
+expublic void ndrx_dbg_init(char *module, char *config_key)
 {
    NDRX_DBG_INIT_ENTRY;
 }
@@ -801,7 +802,7 @@ public void ndrx_dbg_init(char *module, char *config_key)
  * @param func
  * @return 
  */
-public void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func)
+expublic void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func)
 {
     void *ret;
     int errnosv;
@@ -813,10 +814,7 @@ public void *ndrx_malloc_dbg(size_t size, long line, const char *file, const cha
     
     errno = errnosv;
     
-    
     return ret;
-    
-    
 }
 
 /**
@@ -827,7 +825,7 @@ public void *ndrx_malloc_dbg(size_t size, long line, const char *file, const cha
  * @param func
  * @return 
  */
-public void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func)
+expublic void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func)
 {
     userlog("[%p] => free(ptr=%p):%s %s:%ld", ptr, ptr, func, file, line);
     free(ptr);
@@ -841,7 +839,7 @@ public void ndrx_free_dbg(void *ptr, long line, const char *file, const char *fu
  * @param func
  * @return 
  */
-public void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, const char *file, const char *func)
+expublic void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, const char *file, const char *func)
 {
     void *ret;
     int errnosv;
@@ -864,7 +862,7 @@ public void *ndrx_calloc_dbg(size_t nmemb, size_t size, long line, const char *f
  * @param func
  * @return 
  */
-public void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *file, const char *func)
+expublic void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *file, const char *func)
 {   
     void *ret;
     int errnosv;
@@ -887,7 +885,7 @@ public void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const char *fil
  * @param mode
  * @return 
  */
-public FILE *ndrx_fopen_dbg(const char *path, const char *mode, 
+expublic FILE *ndrx_fopen_dbg(const char *path, const char *mode, 
         long line, const char *file, const char *func)
 {
     FILE *ret;
@@ -911,7 +909,7 @@ public FILE *ndrx_fopen_dbg(const char *path, const char *mode,
  * @param fp
  * @return 
  */
-public int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *func)
+expublic int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *func)
 {
     int ret;
     int errnosv;
@@ -929,3 +927,21 @@ public int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *fu
     
 }
 
+/**
+ * Debug version of strdup();
+ * @return 
+ */
+expublic char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const char *func)
+{
+    char *ret;
+    int errnosv;
+    
+    ret=strdup(ptr);
+    errnosv = errno;
+    
+    userlog("[%p] <= strdup(ptr=%p):%s %s:%ld", ret, ptr, func, file, line);
+    
+    errno = errnosv;
+    
+    return ret;
+}

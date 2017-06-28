@@ -69,7 +69,7 @@ int start_daemon_recover(void);
  */
 void TPRECOVER (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     NDRX_LOG(log_debug, "TPRECOVER got call");
@@ -79,7 +79,7 @@ void TPRECOVER (TPSVCINFO *p_svc)
 
     
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 (char *)p_ub,
                 0L,
@@ -92,15 +92,15 @@ out:
  * we kill the ndrxd and restart it...!
  * @return 
  */
-public int poll_timer(void)
+expublic int poll_timer(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     if (!ndrx_chk_ndrxd())
     {
         NDRX_LOG(log_error, "ndrxd process missing - respawn!");
-        if (SUCCEED!=start_daemon_recover())
+        if (EXSUCCEED!=start_daemon_recover())
         {
-           FAIL_OUT(ret);
+           EXFAIL_OUT(ret);
         }
     }
     else
@@ -118,7 +118,7 @@ out:
  */
 int start_daemon_recover(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pid_t pid;
     char    key[NDRX_MAX_KEY_SIZE+3+1];
     /* Log filename for ndrxd */
@@ -148,7 +148,7 @@ int start_daemon_recover(void)
             dup(fileno(f));
         }
 
-        if (SUCCEED != execvp ("ndrxd", cmd))
+        if (EXSUCCEED != execvp ("ndrxd", cmd))
         {
             fprintf(stderr, "Failed to start server - ndrxd!\n");
             exit(1);
@@ -177,7 +177,7 @@ void handle_sigchld(int sig)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int c;
     extern char *optarg;
 
@@ -195,7 +195,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
             default:
                 NDRX_LOG(log_error, "Unknown param %c - 0x%x", c, c);
-		FAIL_OUT(ret);
+		EXFAIL_OUT(ret);
                 break;
         }
     }
@@ -204,17 +204,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     /* Register timer check.... */
     NDRX_LOG(log_warn, "Config: ndrxd check time: %d sec", M_check);
-    if (SUCCEED!=tpext_addperiodcb((int)M_check, poll_timer))
+    if (EXSUCCEED!=tpext_addperiodcb((int)M_check, poll_timer))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
             tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    if (SUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX TPRECOVERSVC, TPRECOVER))
+    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX TPRECOVERSVC, TPRECOVER))
     {
         NDRX_LOG(log_error, "Failed to initialize TPRECOVER!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:

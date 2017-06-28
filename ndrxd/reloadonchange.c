@@ -45,7 +45,7 @@
 #include <ndrstandard.h>
 #include <ndrxd.h>
 #include <atmi_int.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 
 #include <ndebug.h>
 #include <cmd_processor.h>
@@ -75,7 +75,7 @@ struct roc_exe_registry
 
 /*---------------------------Globals------------------------------------*/
 
-private roc_exe_registry_t* M_binreg = NULL;
+exprivate roc_exe_registry_t* M_binreg = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -83,11 +83,11 @@ private roc_exe_registry_t* M_binreg = NULL;
  * Calculate checksum for binary if exists.
  * @param checksum object
  */
-private void roc_calc_tstamp(roc_exe_registry_t *bin, unsigned sanity_cycle)
+exprivate void roc_calc_tstamp(roc_exe_registry_t *bin, unsigned sanity_cycle)
 {
     struct stat file_stat;
     
-    if (SUCCEED==stat(bin->binary_path, &file_stat))
+    if (EXSUCCEED==stat(bin->binary_path, &file_stat))
     {
         bin->mtime = file_stat.st_mtime;
         bin->sanity_cycle = sanity_cycle;   
@@ -100,7 +100,7 @@ private void roc_calc_tstamp(roc_exe_registry_t *bin, unsigned sanity_cycle)
  * @param path full path to binary
  * @return NULL (if failure of mem) or ptr to object
  */
-private roc_exe_registry_t *rco_get_binary(char *binary_path, unsigned sanity_cycle)
+exprivate roc_exe_registry_t *rco_get_binary(char *binary_path, unsigned sanity_cycle)
 {
     roc_exe_registry_t *ret = NULL;
     
@@ -134,7 +134,7 @@ out:
  * (removed from config?)
  * @return 
  */
-public int roc_is_reload_in_progress(unsigned sanity_cycle)
+expublic int roc_is_reload_in_progress(unsigned sanity_cycle)
 {
     roc_exe_registry_t *el = NULL;
     roc_exe_registry_t *elt = NULL;
@@ -157,12 +157,12 @@ public int roc_is_reload_in_progress(unsigned sanity_cycle)
             else
             {
                 NDRX_LOG(log_error, "%s - enqueued for reload", el->binary_path);
-                return TRUE;
+                return EXTRUE;
             }
         }
     }
     
-    return FALSE; 
+    return EXFALSE; 
 }
 
 /**
@@ -171,16 +171,16 @@ public int roc_is_reload_in_progress(unsigned sanity_cycle)
  * @param sanity_cycle
  * @return TRUE if needs to issue reload, FALSE if checksums not changed
  */
-public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
+expublic int roc_check_binary(char *binary_path, unsigned sanity_cycle)
 {
-    int ret= FALSE;
+    int ret= EXFALSE;
     roc_exe_registry_t *bin = NULL;
     time_t old_mtime;
     
     /* check the table if reload needed then no calculation needed */
     if (roc_is_reload_in_progress(sanity_cycle))
     {
-        ret=FALSE;
+        ret=EXFALSE;
         goto out;
     }
     
@@ -188,7 +188,7 @@ public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
     if (NULL==(bin=rco_get_binary(binary_path, sanity_cycle)))
     {
         NDRX_LOG(log_error, "Failed to get RCO binary (%s) - memory issues", binary_path);
-        ret=FALSE;
+        ret=EXFALSE;
         goto out;
     }
     
@@ -197,7 +197,7 @@ public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
     {
         /* no cksum changed... as already calculated. */
         NDRX_LOG(log_debug, "Already checked at this cycle... (cached)");
-        ret=FALSE;
+        ret=EXFALSE;
         goto out;
     }
     
@@ -209,9 +209,9 @@ public int roc_check_binary(char *binary_path, unsigned sanity_cycle)
     if (old_mtime!=bin->mtime)
     {
         NDRX_LOG(log_warn, "Binary [%s] timestamp changed", binary_path);
-        bin->reload_issued = TRUE; /* so will issue reload */
+        bin->reload_issued = EXTRUE; /* so will issue reload */
         
-        ret = TRUE;
+        ret = EXTRUE;
         goto out;
     }
     
@@ -228,7 +228,7 @@ out:
  * @param path
  * @return 
  */
-public void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle)
+expublic void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle)
 {
     roc_exe_registry_t * bin = rco_get_binary(binary_path, sanity_cycle);
     
@@ -242,6 +242,6 @@ public void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle)
         NDRX_LOG(log_error, "Marking binary [%s]/%d as reloaded!",
                 binary_path, bin->reload_issued);
                 
-        bin->reload_issued = FALSE;
+        bin->reload_issued = EXFALSE;
     }
 }

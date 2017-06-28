@@ -57,7 +57,7 @@
  * @param state
  * @return
  */
-private char *proc_state_to_str(long state, short msg_type)
+exprivate char *proc_state_to_str(long state, short msg_type)
 {
 
     static char *started = "Started";
@@ -115,7 +115,7 @@ private char *proc_state_to_str(long state, short msg_type)
  * @param reply_len
  * @return
  */
-public int ss_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int ss_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     command_reply_pm_t * pm_info = (command_reply_pm_t*)reply;
 
@@ -154,7 +154,7 @@ public int ss_rsp_process(command_reply_t *reply, size_t reply_len)
             NDRX_LOG(log_error, "Ignoring unknown message!");
             break;
     }
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -165,13 +165,13 @@ public int ss_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t call;
-    short srvid=FAIL;
-    char srvnm[MAXTIDENT+1]={EOS};
-    short confirm = FALSE;
+    short srvid=EXFAIL;
+    char srvnm[MAXTIDENT+1]={EXEOS};
+    short confirm = EXFALSE;
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -191,25 +191,25 @@ public int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     else
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+        if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
         {
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
     memset(&call, 0, sizeof(call));
     
-    if (FAIL!=srvid && EOS!=srvnm[0])
+    if (EXFAIL!=srvid && EXEOS!=srvnm[0])
     {
         fprintf(stderr, "-i and -s cannot be combined!\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL==srvid && EOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
           !chk_confirm("Are you sure you want to start application?", confirm))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* prepare for call */
@@ -226,7 +226,7 @@ public int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 out:
     return ret;
 }
@@ -240,14 +240,14 @@ out:
  * @param p_have_next
  * @return 
  */
-public int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t call;
-    short srvid=FAIL;
-    char srvnm[MAXTIDENT+1]={EOS};
-    short confirm = FALSE;
-    short complete = FALSE;
+    short srvid=EXFAIL;
+    char srvnm[MAXTIDENT+1]={EXEOS};
+    short confirm = EXFALSE;
+    short complete = EXFALSE;
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -270,31 +270,31 @@ public int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     else
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+        if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
         {
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
     memset(&call, 0, sizeof(call));
     
-    if (FAIL!=srvid && EOS!=srvnm[0])
+    if (EXFAIL!=srvid && EXEOS!=srvnm[0])
     {
         fprintf(stderr, "-i and -s cannot be combined!\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if ((FAIL!=srvid || EOS!=srvnm[0]) && call.complete_shutdown)
+    if ((EXFAIL!=srvid || EXEOS!=srvnm[0]) && call.complete_shutdown)
     {
         fprintf(stderr, "-i or -s cannot be combined with -c!\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL==srvid && EOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
           !chk_confirm("Are you sure you want to stop application?", confirm))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* prepare for call */
@@ -312,7 +312,7 @@ public int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                     argc, argv,
                     p_have_next,
                     G_call_args,
-                    FALSE);
+                    EXFALSE);
 out:
     return ret;
 }
@@ -327,13 +327,13 @@ out:
  * @param p_have_next
  * @return 
  */
-public int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     cmd_mapping_t cmd;
-    short srvid=FAIL;
-    char srvnm[MAXTIDENT+1]={EOS};
-    short confirm = FALSE;
+    short srvid=EXFAIL;
+    char srvnm[MAXTIDENT+1]={EXEOS};
+    short confirm = EXFALSE;
     
     /* just verify that content is ok: */
     ncloptmap_t clopt[] =
@@ -351,10 +351,10 @@ public int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_ne
     if (argc>=2 && '-'==argv[1][0])
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+        if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
         {
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -362,7 +362,7 @@ public int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_ne
     memset(&cmd, 0, sizeof(cmd));
     
     cmd.ndrxd_cmd = NDRXD_COM_STOP_RQ;
-    if (SUCCEED==(ret=cmd_stop(&cmd, argc, argv, p_have_next)))
+    if (EXSUCCEED==(ret=cmd_stop(&cmd, argc, argv, p_have_next)))
     {
         cmd.ndrxd_cmd = NDRXD_COM_START_RQ;
         ret = cmd_start(&cmd, argc, argv, p_have_next);
@@ -381,15 +381,15 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_cabort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_cabort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     if (!chk_confirm_clopt("Are you sure you want to abort app domain start/stop?", argc, argv))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -403,7 +403,7 @@ public int cmd_cabort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 out:
     return ret;
 }
@@ -416,13 +416,13 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t call;
-    short srvid=FAIL;
-    char srvnm[MAXTIDENT+1]={EOS};
-    short confirm = FALSE;
+    short srvid=EXFAIL;
+    char srvnm[MAXTIDENT+1]={EXEOS};
+    short confirm = EXFALSE;
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -443,25 +443,25 @@ public int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     else
     {
         /* parse command line */
-        if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+        if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
         {
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
     memset(&call, 0, sizeof(call));
     
-    if (FAIL!=srvid && EOS!=srvnm[0])
+    if (EXFAIL!=srvid && EXEOS!=srvnm[0])
     {
         fprintf(stderr, "-i and -s cannot be combined!\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL==srvid && EOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
           !chk_confirm("Are you sure you want to start application?", confirm))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* prepare for call */
@@ -478,7 +478,7 @@ public int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 out:
     return ret;
 }

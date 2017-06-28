@@ -77,9 +77,9 @@ UBF_field_def_t ** M_fldnmhash2 = NULL; /* FLD NM hash */
 int M_hash2_size = 16000; /* Default size for Hash2 */
 
 /*---------------------------Prototypes---------------------------------*/
-private void _bfldidhash_add(UBF_field_def_t *p_fld);
-private void _fldnmexhash_add(UBF_field_def_t *p_fld);
-private int _ubf_load_fld_def(int base,
+exprivate void _bfldidhash_add(UBF_field_def_t *p_fld);
+exprivate void _fldnmexhash_add(UBF_field_def_t *p_fld);
+exprivate int _ubf_load_fld_def(int base,
                               char *fldinfo,
                               int (*put_def_line) (UBF_field_def_t *def),
                               int check_dup,
@@ -94,9 +94,9 @@ static int str_keys_equal_fn ( void *key1, void *key2 );
  * Hash 2 structure init
  * @return SUCCEED/FAIL
  */
-private int init_hash_area(void)
+exprivate int init_hash_area(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     int malloc_size = sizeof(ft_node_t *)*M_hash2_size;
     int i;
@@ -122,7 +122,7 @@ private int init_hash_area(void)
         {
             _Fset_error_fmt(BMALLOC, "Failed to malloc bfldidhash2, requested: %d bytes err: %s",
                         malloc_size, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -151,7 +151,7 @@ private int init_hash_area(void)
         {
             _Fset_error_fmt(BMALLOC, "Failed to malloc fldnmhash2, requested: %d bytes err: %s",
                         malloc_size, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -185,7 +185,7 @@ out:
 /**
  * Add Field ID Hash record
  */
-private void _bfldidhash_add(UBF_field_def_t *p_fld)
+exprivate void _bfldidhash_add(UBF_field_def_t *p_fld)
 {
     int hash_key = p_fld->bfldid % M_hash2_size; /* Simple mod based hash */
     
@@ -198,15 +198,15 @@ private void _bfldidhash_add(UBF_field_def_t *p_fld)
  * @param b
  * @return 0 - equal/ -1 - not equal
  */
-private int UBF_field_def_id_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
+exprivate int UBF_field_def_id_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
 {
-    return (a->bfldid==b->bfldid?SUCCEED:FAIL);
+    return (a->bfldid==b->bfldid?EXSUCCEED:EXFAIL);
 }
 
 /**
  * Get field entry from int hash
  */
-public UBF_field_def_t * _bfldidhash_get(BFLDID id)
+expublic UBF_field_def_t * _bfldidhash_get(BFLDID id)
 {
     /* Get the linear array key */
     int hash_key = id % M_hash2_size; /* Simple mod based hash */
@@ -222,7 +222,7 @@ public UBF_field_def_t * _bfldidhash_get(BFLDID id)
 /**
  * Add Field Name Hash record
  */
-private void _fldnmexhash_add(UBF_field_def_t *p_fld)
+exprivate void _fldnmexhash_add(UBF_field_def_t *p_fld)
 {
     /* Get the linear array key */
     int hash_key = str_hash_from_key_fn(p_fld->fldname) % M_hash2_size;
@@ -240,7 +240,7 @@ private void _fldnmexhash_add(UBF_field_def_t *p_fld)
  * @param b
  * @return 0 - equal/ -1 - not equal
  */
-private int UBF_field_def_nm_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
+exprivate int UBF_field_def_nm_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
 {
     return strcmp(a->fldname, b->fldname);
 }
@@ -249,7 +249,7 @@ private int UBF_field_def_nm_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
  * Get field name entry from hash table.
  * @returns - NULL not found or ptr to UBF_field_def_t
  */
-public UBF_field_def_t * _fldnmhash_get(char *key)
+expublic UBF_field_def_t * _fldnmhash_get(char *key)
 {
     /* Get the linear array key */
     int hash_key = str_hash_from_key_fn(key) % M_hash2_size;
@@ -271,7 +271,7 @@ public UBF_field_def_t * _fldnmhash_get(char *key)
  * And second hash we use field name as key
  *
  */
-private int _ubf_load_def_table(void)
+exprivate int _ubf_load_def_table(void)
 {
     char *flddir=NULL;
     char *flds=NULL;
@@ -280,14 +280,14 @@ private int _ubf_load_def_table(void)
     char tmp_flds[FILENAME_MAX+1];
     char tmp[FILENAME_MAX+1];
 
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     flddir = getenv(FLDTBLDIR);
     if (NULL==flddir)
     {
         _Fset_error_msg(BFTOPEN, "Field table directory not set - "
                                  "check FLDTBLDIR env var");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     UBF_LOG(log_debug, "Load field dir [%s]", flddir);
@@ -297,7 +297,7 @@ private int _ubf_load_def_table(void)
     {
         _Fset_error_msg(BFTOPEN, "Field table list not set - "
                  "check FIELDTBLS env var");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -307,7 +307,7 @@ private int _ubf_load_def_table(void)
 
     strcpy(tmp_flds, flds);
     p=strtok(tmp_flds, ",");
-    while (NULL!=p && SUCCEED==ret)
+    while (NULL!=p && EXSUCCEED==ret)
     {
         sprintf(tmp, "%s/%s", flddir, p);
         /* Open field table file */
@@ -315,11 +315,11 @@ private int _ubf_load_def_table(void)
         {
             _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
                                 strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        ret=_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, FALSE);
+        ret=_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
 
         /* Close file */
         NDRX_FCLOSE(fp);
@@ -335,7 +335,7 @@ out:
  * Initialized loader.
  * @return
  */
-public int _ubf_loader_init(void)
+expublic int _ubf_loader_init(void)
 {
     return init_hash_area(); /* << V2 */
 }
@@ -345,21 +345,21 @@ public int _ubf_loader_init(void)
  * @param fp
  * @return
  */
-public int _ubf_load_def_file(FILE *fp, 
+expublic int _ubf_load_def_file(FILE *fp, 
                 int (*put_text_line) (char *text), /* callback for putting text line */
                 int (*put_def_line) (UBF_field_def_t *def),  /* callback for writting defintion */
                 int (*put_got_base_line) (char *base), /* callback for base line */
                 char *fname,
                 int check_dup)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int base=0;
     char tmp[FILENAME_MAX+1];
     char fldname[UBFFLDMAX+1];
     int line=0;
     
     /* Load into hash */
-    while (SUCCEED==ret && NULL!=fgets(tmp, 1024, fp))
+    while (EXSUCCEED==ret && NULL!=fgets(tmp, 1024, fp))
     {
         line++;
         
@@ -401,14 +401,14 @@ public int _ubf_load_def_file(FILE *fp,
 /**
  * Parse field info table & load into hashes.
  */
-private int _ubf_load_fld_def(int base, 
+exprivate int _ubf_load_fld_def(int base, 
                               char *fldinfo,
                               int (*put_def_line) (UBF_field_def_t *def),
                               int check_dup,
                               char *fname,
                               int line)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char ftype[32]={'\0'};
     UBF_field_def_t *fld, *fld2;
     UBF_field_def_t *reserved;
@@ -422,14 +422,14 @@ private int _ubf_load_fld_def(int base,
     if (NULL==fld || NULL==fld2)
     {
         _Fset_error_msg(BMALLOC, "Failed to allocate field def space!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     sscanf(fldinfo, "%s%d%s", fld->fldname, &(fld->bfldid), ftype);
     fld->bfldid+=base;
     /* Map type */
-    while(EOS!=p->fldname[0])
+    while(EXEOS!=p->fldname[0])
     {
         if (0==strcmp(p->fldname, ftype))
         {
@@ -448,11 +448,11 @@ private int _ubf_load_fld_def(int base,
     UBF_LOG(log_dump, "Adding [%s] - id [%d] - [%s]",
                             fld->fldname, fld->bfldid, fldinfo);
 
-    if (EOS==p->fldname[0])
+    if (EXEOS==p->fldname[0])
     {
         _Fset_error_fmt(BFTSYNTAX, "Failed to find data type for [%s] in %s:%d!",
                                     ftype, fname, line);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -466,21 +466,21 @@ private int _ubf_load_fld_def(int base,
                                 "[%s]:%d %s:%d!",
                                 fld->fldname, reserved->fldname, number,
                                 fname, line);
-                ret=FAIL;
+                ret=EXFAIL;
             }
 
-            if (SUCCEED==ret && NULL!=(reserved=_bfldidhash_get(fld->bfldid)))
+            if (EXSUCCEED==ret && NULL!=(reserved=_bfldidhash_get(fld->bfldid)))
             {
                 /* ERROR! Name already taken */
                 _Fset_error_fmt(BFTSYNTAX, "Duplicate ID [%s]:%d already taken by [%s]:%d "
                                     "%s:%d!",
                                  fld->fldname, number, reserved->fldname, number,
                                  fname, line);
-                ret=FAIL;
+                ret=EXFAIL;
             }
         }
 
-        if (SUCCEED==ret)
+        if (EXSUCCEED==ret)
         {
             _bfldidhash_add(fld);
             *fld2 = *fld;
@@ -491,7 +491,7 @@ private int _ubf_load_fld_def(int base,
     /*
      * Call callback for putting data line.
      */
-    if (SUCCEED==ret && NULL!=put_def_line)
+    if (EXSUCCEED==ret && NULL!=put_def_line)
     {
         ret=put_def_line(fld);
     }
@@ -527,11 +527,11 @@ static int str_keys_equal_fn ( void *key1, void *key2 )
  * Checks and reads type table (.fd files)
  * @return SUCCEED/FAIL
  */
-public int prepare_type_tables(void)
+expublic int prepare_type_tables(void)
 {
     MUTEX_LOCK;
     {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 #if FIELD_TABLE_NO_RETRY
     static int first=1;
     static int status;
@@ -562,12 +562,12 @@ public int prepare_type_tables(void)
 /**
  * Internal version of Bfname. Does not set error.
  */
-public char * _Bfname_int (BFLDID bfldid)
+expublic char * _Bfname_int (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
     UBF_TLS_ENTRY;
 
-    if (SUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=prepare_type_tables())
     {
         if (BFTOPEN==Berror || BFTSYNTAX==Berror)
         {
@@ -597,7 +597,7 @@ public char * _Bfname_int (BFLDID bfldid)
  * @param fldnm
  * @return BADFLD in failure/BFLDID
  */
-private BFLDID get_from_bfldidstr(char *fldnm)
+exprivate BFLDID get_from_bfldidstr(char *fldnm)
 {
     BFLDID ret;
     sscanf(fldnm, "((BFLDID32)%d)", &ret);
@@ -610,12 +610,12 @@ private BFLDID get_from_bfldidstr(char *fldnm)
  * Return BFLDID from name! (internal version, parses ((BFLDID)%d)
  * Does not reports errors.
  */
-public BFLDID _Bfldid_int (char *fldnm)
+expublic BFLDID _Bfldid_int (char *fldnm)
 {
     UBF_field_def_t *p_fld=NULL;
     BFLDID bfldid;
 
-    if (SUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=prepare_type_tables())
     {
         /* extending support for BFLDID syntax for read. */
         if (0==strncmp(fldnm, "((BFLDID32)", 10))

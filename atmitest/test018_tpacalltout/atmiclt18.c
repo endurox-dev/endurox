@@ -41,7 +41,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9218);
     long rsplen;
     int i;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d;
     int cd_got;
     int cd[3];
@@ -77,26 +77,26 @@ int main(int argc, char** argv) {
     for (i = 0; i<3; i++)
     {
         cd_got = cd[i];
-        if (SUCCEED==(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK)))
+        if (EXSUCCEED==(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK)))
         {
             NDRX_LOG(log_error, "TESTERROR The call was ok to server "
                     "- must be tout!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
-        ret = SUCCEED;
+        ret = EXSUCCEED;
         if (cd_got != cd[i])
         {
             NDRX_LOG(log_error, "TESTERROR cd %d <> go_cd %d", cd, cd_got);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         if (tperrno!=TPETIME)
         {
             NDRX_LOG(log_error, "Te error should be time-out!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -104,18 +104,18 @@ int main(int argc, char** argv) {
     /* the the case when we get reply back, this should not be a timeout. */
     cd[0] = tpacall("ECHO", (char *)p_ub, 0L, 0L);
     sleep(1);
-    if (SUCCEED!=(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
+    if (EXSUCCEED!=(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
     {
         NDRX_LOG(log_error, "TESTERROR Normal reply fails!!!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     sleep(10);
-    if (SUCCEED!=(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
+    if (EXSUCCEED!=(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
     {
         NDRX_LOG(log_error, "TESTERROR Normal reply fails!!!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
     {
         NDRX_LOG(log_error, "TESTERROR Got invalid response! "
                 "cd[0] = %d got_cd = %d", cd[0], cd_got);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

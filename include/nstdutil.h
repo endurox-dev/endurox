@@ -97,6 +97,10 @@ extern NDRX_API char * ndrx_get_executable_path(char * out_path, size_t bufsz,
         char * in_binary);
 extern NDRX_API int ndrx_get_cksum(char *file);
 extern NDRX_API char * ndrx_memdup(char *org, size_t len);
+extern NDRX_API int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
+        int tokens_elmsz, int len);
+extern NDRX_API void ndrx_chomp(char *str);
+extern NDRX_API int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz);
 
 /* Mapping functions: */
 extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);

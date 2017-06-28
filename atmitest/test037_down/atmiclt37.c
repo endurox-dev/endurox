@@ -53,10 +53,10 @@
 int main(int argc, char** argv) 
 {
     
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to init!!!!");
-        exit(FAIL);
+        exit(EXFAIL);
     }
     
     /* Create some child... 

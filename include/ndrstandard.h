@@ -49,71 +49,63 @@ extern "C" {
 /* wtf */
 #endif
 
-#ifndef FAIL
-#define FAIL		-1
+#ifndef EXFAIL
+#define EXFAIL		-1
 #endif
     
-#ifndef SUCCEED
-#define SUCCEED		0
+#ifndef EXSUCCEED
+#define EXSUCCEED		0
 #endif
 
-#ifndef public
-#define public
+#ifndef expublic
+#define expublic
 #endif
     
-#ifndef private
-#define private     	static
+#ifndef exprivate
+#define exprivate     	static
+#endif
+
+#ifndef EXEOS
+#define EXEOS             '\0'
 #endif
     
-
-#ifndef EOS
-#define EOS             '\0'
-#endif
-    
-#ifndef BYTE
-#define BYTE(x) ((x) & 0xff)
+#ifndef EXBYTE
+#define EXBYTE(x) ((x) & 0xff)
 #endif
 
-
-#ifndef  __cplusplus
-#ifndef bool
-typedef int         bool;
-#endif
+#ifndef EXFALSE
+#define EXFALSE        0
 #endif
 
-#ifndef FALSE
-#define FALSE        0
-#endif
-
-#ifndef TRUE
-#define TRUE         1
+#ifndef EXTRUE
+#define EXTRUE         1
 #endif
 
 #define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
 
-#ifndef FAIL_OUT
-#define FAIL_OUT(X)    {X=FAIL; goto out;}
+#ifndef EXFAIL_OUT
+#define EXFAIL_OUT(X)    {X=EXFAIL; goto out;}
 #endif
 
 
-#ifndef OFFSET
+#ifndef EXOFFSET
 #ifdef SYS64BIT
-#define OFFSET(s,e)   ((long) &(((s *)0)->e) )
+#define EXOFFSET(s,e)   ((long) &(((s *)0)->e) )
 #else
-#define OFFSET(s,e)   ((const int) &(((s *)0)->e) )
+#define EXOFFSET(s,e)   ((const int) &(((s *)0)->e) )
 #endif
 #endif
 
 
-#ifndef ELEM_SIZE
-#define ELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
+#ifndef EXELEM_SIZE
+#define EXELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
 #endif
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 
 #define NDRX_STRCPY_SAFE(X, Y) {strncpy(X, Y, sizeof(X)-1);\
-                          X[sizeof(X)-1]=EOS;}
+                          X[sizeof(X)-1]=EXEOS;}
 /*
  * So we use these two macros where we need know that more times they will be
  * true, than false. This makes some boost for CPU code branching.

@@ -74,14 +74,14 @@ MUTEX_LOCKDECL(M_q_cache_lock); /* lock the queue cache */
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-private qcache_hash_t *M_qcache = NULL; /* queue cache for non shm mode. */
+exprivate qcache_hash_t *M_qcache = NULL; /* queue cache for non shm mode. */
 
 /**
  * Check is server running
  */
-public int ndrx_chk_server(char *procname, short srvid)
+expublic int ndrx_chk_server(char *procname, short srvid)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     char test_string3[NDRX_MAX_KEY_SIZE+4];
     char test_string4[64];
     string_list_t * list;
@@ -95,7 +95,7 @@ public int ndrx_chk_server(char *procname, short srvid)
     if (NULL!=list)
     {
         NDRX_LOG(log_debug, "process %s -i %hd running ok", procname, srvid);
-        ret = TRUE;
+        ret = EXTRUE;
     }
     else
     {
@@ -112,9 +112,9 @@ public int ndrx_chk_server(char *procname, short srvid)
 /**
  * Check is `ndrxd' daemon running
  */
-public int ndrx_chk_ndrxd(void)
+expublic int ndrx_chk_ndrxd(void)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     char test_string3[NDRX_MAX_KEY_SIZE+4];
     string_list_t * list;
      
@@ -126,7 +126,7 @@ public int ndrx_chk_ndrxd(void)
     if (NULL!=list)
     {
         NDRX_LOG(log_debug, "process `ndrxd' running ok");
-        ret = TRUE;
+        ret = EXTRUE;
     }
     else
     {
@@ -147,21 +147,21 @@ public int ndrx_chk_ndrxd(void)
  * @param th
  * @return 
  */
-public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th)
+expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th)
 {
     char tmp[NDRX_MAX_Q_SIZE+1];
     char *token;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
-    pfx[0] = EOS;
-    proc[0] = EOS;
+    pfx[0] = EXEOS;
+    proc[0] = EXEOS;
     *pid = 0;
     *th = 0;
 
     if (NULL==strstr(q, NDRX_CLT_QREPLY_CHK))
     {
         NDRX_LOG(log_debug, "[%s] - not client Q", q);
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
             
@@ -177,7 +177,7 @@ public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th
     else
     {
         NDRX_LOG(log_error, "missing pfx")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
@@ -185,14 +185,14 @@ public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing clt")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     token = strtok(NULL, NDRX_FMT_SEP_STR);
     if (NULL==token)
     {
         NDRX_LOG(log_error, "missing reply")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     token = strtok(NULL, NDRX_FMT_SEP_STR);
@@ -204,7 +204,7 @@ public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th
     else
     {
         NDRX_LOG(log_error, "missing proc name")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     token = strtok(NULL, NDRX_FMT_SEP_STR);
@@ -216,7 +216,7 @@ public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th
     else
     {
         NDRX_LOG(log_error, "missing proc pid")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     token = strtok(NULL, NDRX_FMT_SEP_STR);
@@ -228,7 +228,7 @@ public int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *th
     else
     {
         NDRX_LOG(log_error, "missing proc th")
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -242,9 +242,9 @@ out:
 /**
  * Kill the system running (the xadmin dies last...)
  */
-public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
+expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
 #define DOWN_KILL_SIG   1
     int signals[] = {SIGTERM, SIGKILL};
     int i;
@@ -268,7 +268,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     char *shm[] = {srvinfo, svcinfo, brinfo};
     char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
     int max_signals = 2;
-    int was_any = FALSE;
+    int was_any = EXFALSE;
     pid_t my_pid = getpid();
     char *username;
     NDRX_LOG(log_warn, "****** Forcing system down ******");
@@ -290,10 +290,10 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     /* list all queues */
     qlist = ndrx_sys_mqueue_list_make(qpath, &ret);
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "posix queue listing failed... continue...!");
-        ret = SUCCEED;
+        ret = EXSUCCEED;
         qlist = NULL;
     }
     
@@ -307,7 +307,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     NDRX_LOG(log_debug, "Killing the ndrxd and tprecover...");
     do
     {
-        was_any = FALSE;
+        was_any = EXFALSE;
         
         ndrxdlist = ndrx_sys_ps_list(username, test_string2, 
                 "", "", "[\\s/ ]*ndrxd[\\s ]");
@@ -317,38 +317,38 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
         
         LL_FOREACH(ndrxdlist,elt)
         {
-            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
             {
                  NDRX_LOG(log_error, "! killing (ndrxd)  sig=%d "
                          "pid=[%d] (%s)", signals[DOWN_KILL_SIG], pid, elt->qname);
 
-                 if (SUCCEED!=kill(pid, signals[DOWN_KILL_SIG]))
+                 if (EXSUCCEED!=kill(pid, signals[DOWN_KILL_SIG]))
                  {
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
                  else
                  {
-                    was_any = TRUE;
+                    was_any = EXTRUE;
                  }
             }
         }
         
         LL_FOREACH(srvlist,elt)
         {
-            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
             {
                  NDRX_LOG(log_error, "! killing (tprecover)  sig=%d "
                          "pid=[%d] (%s)", signals[DOWN_KILL_SIG], pid, elt->qname);
 
-                 if (SUCCEED!=kill(pid, signals[DOWN_KILL_SIG]))
+                 if (EXSUCCEED!=kill(pid, signals[DOWN_KILL_SIG]))
                  {
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
                  else
                  {
-                    was_any = TRUE;
+                    was_any = EXTRUE;
                  }
             }
         }
@@ -374,19 +374,19 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     LL_FOREACH(cpmsrvs,elt2)
     {
         /* List the children of the cpmsrv... */
-        if (SUCCEED==ndrx_proc_pid_get_from_ps(elt2->qname, &ppid))
+        if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt2->qname, &ppid))
         {
             
             NDRX_LOG(log_warn, "CPMSRV PID = %d, extracting children", ppid);
             
             qclts = ndrx_sys_ps_getchilds(ppid);
-            was_any = FALSE;
+            was_any = EXFALSE;
             
             NDRX_LOG(log_warn, "! Children extracted, about kill the cpmsrv...");
             /* At this moment we must kill the CPM, as it will spawn the children 
              * The children list extract and parent can be killed
              */
-            if (SUCCEED!=kill(ppid, signals[0]))
+            if (EXSUCCEED!=kill(ppid, signals[0]))
             {
                 NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                         signals[i], ppid, strerror(errno));
@@ -394,7 +394,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
 
             sleep(EX_KILL_SLEEP_SECS);
             
-            if (SUCCEED!=kill(ppid, signals[1]))
+            if (EXSUCCEED!=kill(ppid, signals[1]))
             {
                 NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                         signals[i], ppid, strerror(errno));
@@ -408,7 +408,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
                     /* Parse out process name & pid */
                     NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
 
-                    if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+                    if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
                     {
                         if (0==i)
                         {
@@ -418,12 +418,12 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
                         NDRX_LOG(log_error, "! killing  sig=%d "
                                 "pid=[%d] mypid=[%d]", signals[i], pid, my_pid);
 
-                        if (SUCCEED!=kill(pid, signals[i]))
+                        if (EXSUCCEED!=kill(pid, signals[i]))
                         {
                             NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                                     signals[i], pid, strerror(errno));
                         }
-                        was_any = TRUE;
+                        was_any = EXTRUE;
                     }
                 }
                 
@@ -453,7 +453,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     /* 
      * kill all servers 
      */
-    was_any = FALSE;
+    was_any = EXFALSE;
     NDRX_LOG(log_warn, "Removing server processes for user [%s] and key [%s]", 
         username, test_string2);
     
@@ -467,17 +467,17 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid))
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d] (%s)", signals[i], pid, elt->qname);
                  
-                 if (SUCCEED!=kill(pid, signals[i]))
+                 if (EXSUCCEED!=kill(pid, signals[i]))
                  {
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
-                 was_any = TRUE;
+                 was_any = EXTRUE;
             }
         }
         if (0==i && was_any)
@@ -507,7 +507,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing q: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_parse_clt_q(elt->qname, pfx, proc, &pid, &th) &&
+            if (EXSUCCEED==ndrx_parse_clt_q(elt->qname, pfx, proc, &pid, &th) &&
                     0!=strcmp(proc, "xadmin"))
             {
                 if (0==i)
@@ -517,14 +517,14 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
                 
                 NDRX_LOG(log_error, "! killing  sig=%d pfx=[%s] proc=[%s] "
                         "pid=[%d] th=[%ld]", signals[i], pfx, proc, pid, th);
-                if (SUCCEED!=kill(pid, signals[i]))
+                if (EXSUCCEED!=kill(pid, signals[i]))
                 {
                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                             signals[i], pid, strerror(errno));
                 }
                 else
                 {
-                   was_any = TRUE;
+                   was_any = EXTRUE;
                 }
             }
         }
@@ -542,7 +542,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
 
     /* remove all xadmins... */
     NDRX_LOG(log_warn, "Removing other xadmins...");
-    was_any = FALSE;
+    was_any = EXFALSE;
     xadminlist = ndrx_sys_ps_list(username, "xadmin", 
         "", "", "");
     
@@ -553,19 +553,19 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=my_pid)
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=my_pid)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d] mypid=[%d]", signals[i], pid, my_pid);
                  
-                 if (SUCCEED!=kill(pid, signals[i]))
+                 if (EXSUCCEED!=kill(pid, signals[i]))
                  {
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
                  else
                  {
-                    was_any = TRUE;
+                    was_any = EXTRUE;
                  }
             }
         }
@@ -591,7 +591,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
         /* Parse out process name & pid */
         NDRX_LOG(log_warn, "Removing q: [%s]", elt->qname);
 
-        if (SUCCEED!=ndrx_mq_unlink(elt->qname))
+        if (EXSUCCEED!=ndrx_mq_unlink(elt->qname))
         {
             NDRX_LOG(log_error, "failed to remove q [%s]: %s",
                     elt->qname, strerror(errno));
@@ -604,7 +604,7 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     {
         NDRX_LOG(log_warn, "Unlinking [%s]", shm[i]);
         
-        if (SUCCEED!=shm_unlink(shm[i]))
+        if (EXSUCCEED!=shm_unlink(shm[i]))
         {
             NDRX_LOG(log_warn, "shm_unlink [%s] failed: %s (ignore)...", 
                     shm[i], strerror(errno));
@@ -617,9 +617,9 @@ public int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     
     NDRX_LOG(log_warn, "Removing ndrxd pid file");
     
-    if (NULL!=ndrxd_pid_file && EOS!=ndrxd_pid_file[0])
+    if (NULL!=ndrxd_pid_file && EXEOS!=ndrxd_pid_file[0])
     {
-        if (SUCCEED!=unlink(ndrxd_pid_file))
+        if (EXSUCCEED!=unlink(ndrxd_pid_file))
         {
             NDRX_LOG(log_error, "Failed to unlink [%s]: %s", 
                     ndrxd_pid_file, strerror(errno));
@@ -651,16 +651,16 @@ out:
  * @param m
  * @return 
  */
-public int ndrx_killall(char *mask)
+expublic int ndrx_killall(char *mask)
 {
     string_list_t* plist = NULL;
     string_list_t* elt = NULL;
     int signals[] = {SIGTERM, SIGKILL};
     pid_t pid;
-    int was_any = FALSE;
+    int was_any = EXFALSE;
     int i;
     
-    int ret = FAIL;
+    int ret = EXFAIL;
     
     plist = ndrx_sys_ps_list(mask, "", "", "", "");
     
@@ -671,18 +671,18 @@ public int ndrx_killall(char *mask)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (SUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
                  
-                 if (SUCCEED!=kill(pid, signals[i]))
+                 if (EXSUCCEED!=kill(pid, signals[i]))
                  {
                      NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
                              signals[i], pid, strerror(errno));
                  }
-                 was_any = TRUE;
-                 ret = SUCCEED;
+                 was_any = EXTRUE;
+                 ret = EXSUCCEED;
             }
         }
         if (0==i && was_any)
@@ -701,17 +701,17 @@ public int ndrx_killall(char *mask)
  * @param qpath
  * @return TRUE/FALSE
  */
-public int ndrx_q_exists(char *qpath)
+expublic int ndrx_q_exists(char *qpath)
 {
     mqd_t tmp = ndrx_mq_open(qpath, O_RDONLY, O_NONBLOCK, NULL);
     
-    if ((mqd_t)FAIL!=tmp)
+    if ((mqd_t)EXFAIL!=tmp)
     {
         ndrx_mq_close(tmp);
-        return TRUE;
+        return EXTRUE;
     }
     
-    return FALSE;
+    return EXFALSE;
 }
 
 /**
@@ -719,7 +719,7 @@ public int ndrx_q_exists(char *qpath)
  * @param q
  * @return SUCCEED (found & replaced)/FAIL
  */
-private int chk_cached_svc(char *svcq, char *svcq_full)
+exprivate int chk_cached_svc(char *svcq, char *svcq_full)
 {
     qcache_hash_t * ret = NULL;
    
@@ -752,9 +752,9 @@ out:
     MUTEX_UNLOCK_V(M_q_cache_lock);
     
     if (NULL==ret)
-        return FAIL;
+        return EXFAIL;
     else
-        return SUCCEED;
+        return EXSUCCEED;
 }
 
 /**
@@ -763,7 +763,7 @@ out:
  * @param fullq
  * @return 
  */
-private int add_cached_svc(char *svcq, char *svcq_full)
+exprivate int add_cached_svc(char *svcq, char *svcq_full)
 {
     qcache_hash_t * ret = NDRX_CALLOC(1, sizeof(qcache_hash_t));
     
@@ -775,17 +775,17 @@ private int add_cached_svc(char *svcq, char *svcq_full)
         userlog("Failed to alloc qcache_hash_t: %s", strerror(errno));
     }
     
-    strcpy(ret->svcq, svcq);
-    strcpy(ret->svcq_full, svcq_full);
+    NDRX_STRCPY_SAFE(ret->svcq, svcq);
+    NDRX_STRCPY_SAFE(ret->svcq_full, svcq_full);
     
     EXHASH_ADD_STR( M_qcache, svcq, ret );
     
     MUTEX_UNLOCK_V(M_q_cache_lock);
     
     if (NULL!=ret)
-        return SUCCEED;
+        return EXSUCCEED;
     else
-        return FAIL;
+        return EXFAIL;
 }
 
 /**
@@ -793,29 +793,28 @@ private int add_cached_svc(char *svcq, char *svcq_full)
  * @param q
  * @return SUCCEED/FAIL
  */
-public int ndrx_get_cached_svc_q(char *q)
+expublic int ndrx_get_cached_svc_q(char *q)
 {
-    int ret=SUCCEED;
-    int found = FALSE;
+    int ret=EXSUCCEED;
+    int found = EXFALSE;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
     char svcq[NDRX_MAX_Q_SIZE+1];
     
-    strcpy(svcq, q);
+    NDRX_STRCPY_SAFE(svcq, q);
     
-    if (SUCCEED==chk_cached_svc(svcq, q))
+    if (EXSUCCEED==chk_cached_svc(svcq, q))
     {
         NDRX_LOG(log_info, "Got cached service: [%s]", q);
-        return SUCCEED;
+        return EXSUCCEED;
     }
-    
     
     qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "posix queue listing failed!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     strcat(q, NDRX_FMT_SEP_STR);
@@ -827,7 +826,7 @@ public int ndrx_get_cached_svc_q(char *q)
         {
             strcpy(q, elt->qname);
             NDRX_LOG(log_debug, "Non shm mode, found Q: [%s]", q);
-            found = TRUE;
+            found = EXTRUE;
             break;
         }
     }
@@ -835,7 +834,7 @@ public int ndrx_get_cached_svc_q(char *q)
     if (!found)
     {
         NDRX_LOG(log_error, "No servers for [%s] according to Q list", q);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* save the server in cache... */

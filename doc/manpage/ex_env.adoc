@@ -101,6 +101,16 @@ Mandatory Env. Variables
 *NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
 	Set to '1' if XA sub-system should be initialized on first transactions. 
         If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
+*NDRX_XA_FLAGS*='XADMIN_XA_FLAGS'::
+	Special for XA sub-system. It is semicolon separated tags with values.
+	currently tag 'RECON' is defined.
+	'RECON' tag defines the number of attempts
+	of xa_close()/xa_open() and doing xa_start() again in case if original
+	xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
+	closed the connection. The format for the tag is:
+	'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number of attempts>:<sleep between attempts milli-sec>'
+	example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
+	3x attempts, sleep 100 milliseconds between attempts.
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
 	Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
 	The minimum is recommended something about 7. Every service name in shared memory is hashed 
@@ -280,7 +290,7 @@ NDRX_XA_LAZY_INIT=1
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
@@ -293,5 +303,5 @@ Enduro/X is created by Madars Vitolins.
 
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, Ltd.
 

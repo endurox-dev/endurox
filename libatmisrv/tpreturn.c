@@ -66,9 +66,9 @@
  * @param len
  * @param flags
  */
-public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
+expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE]; /* physical place where to put the reply */
     tp_command_call_t *call=(tp_command_call_t *)buf;
     char fn[] = "_tpreturn";
@@ -77,7 +77,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     NDRX_LOG(log_debug, "%s enter", fn);
     long data_len;
     int return_status=0;
-    char reply_to[NDRX_MAX_Q_SIZE+1] = {EOS};
+    char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
     atmi_lib_conf_t *p_atmi_lib_conf = ndrx_get_G_atmi_conf();
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     tp_command_call_t * last_call;
@@ -161,13 +161,13 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     if ((TPFAIL==rval || TPSUCCESS==rval) && NULL!=data)
     {
         /* try convert the data */
-        if (NULL==(buffer_info = find_buffer(data)))
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
             NDRX_LOG(log_error, "Err: No buffer as %p registered in system", data);
             /* set reply fail FLAG */
             call->sysflags |=SYS_FLAG_REPLY_ERROR;
             call->rcode = TPESVCERR;
-            ret=FAIL;
+            ret=EXFAIL;
         }
         else
         {
@@ -176,7 +176,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             {
                 NDRX_LOG(log_debug, "about reverse xcvt...");
                 /* Convert buffer back.. */
-                if (SUCCEED!=typed_xcvt(&buffer_info, last_call->sysflags, TRUE))
+                if (EXSUCCEED!=typed_xcvt(&buffer_info, last_call->sysflags, EXTRUE))
                 {
                     NDRX_LOG(log_debug, "Failed to convert buffer back to "
                             "callers format: %llx", last_call->sysflags);
@@ -185,7 +185,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
                     /* set reply fail FLAG */
                     call->sysflags |=SYS_FLAG_REPLY_ERROR;
                     call->rcode = TPESVCERR;
-                    ret=FAIL;
+                    ret=EXFAIL;
                 }
                 else
                 {
@@ -194,17 +194,17 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
                 }
             }
             
-            if (FAIL!=ret)
+            if (EXFAIL!=ret)
             {
                 descr = &G_buf_descr[buffer_info->type_id];
                 /* build reply data here */
-                if (FAIL==descr->pf_prepare_outgoing(descr, data, 
+                if (EXFAIL==descr->pf_prepare_outgoing(descr, data, 
                         len, call->data, &call->data_len, flags))
                 {
                     /* set reply fail FLAG */
                     call->sysflags |=SYS_FLAG_REPLY_ERROR;
                     call->rcode = TPESYSTEM;
-                    ret=FAIL;
+                    ret=EXFAIL;
                 }
                 else
                 {
@@ -231,14 +231,14 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         NDRX_LOG(log_error, "TPSOFTTIMEOUT present -> returning service error TPETIME!");
         call->sysflags |=SYS_FLAG_REPLY_ERROR;
         call->rcode = TPETIME;
-        ret=FAIL;
+        ret=EXFAIL;
     } 
     else if (flags & TPSOFTENOENT)
     {
         NDRX_LOG(log_error, "TPSOFTENOENT present -> returning service error TPENOENT!");
         call->sysflags |=SYS_FLAG_REPLY_ERROR;
         call->rcode = TPENOENT;
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     /* keep the timer from last call. */
@@ -246,7 +246,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     
     /* Get the reply order... */
     strcpy(call->callstack, last_call->callstack);
-    if (SUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
+    if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
         goto return_to_main;
@@ -269,7 +269,7 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
      * the closest reply node... We might event not to pop the stack.
      * But each node searches for closest path, from right to left.
      */
-    if (FAIL==generic_q_send(reply_to, (char *)call, data_len, flags))
+    if (EXFAIL==ndrx_generic_q_send(reply_to, (char *)call, data_len, flags, 0))
     {
         NDRX_LOG(log_error, "ATTENTION!! Reply to queue [%s] failed!",
                                             reply_to);
@@ -279,10 +279,10 @@ public void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     /* Wait for ack if we run in conversation */
     if (CONV_IN_CONVERSATION==p_accept_conn->status)
     {
-        get_ack(p_accept_conn, flags);
+        ndrx_get_ack(p_accept_conn, flags);
 
         /* If this is conversation, then we should release conversation queue */
-        normal_connection_shutdown(p_accept_conn, FALSE);
+        normal_connection_shutdown(p_accept_conn, EXFALSE);
     }
 
 return_to_main:
@@ -313,7 +313,7 @@ return_to_main:
     if (!(last_call->sysflags & SYS_SRV_THREAD))
     {        
         return_status|=RETURN_TYPE_TPRETURN;
-         if (FAIL==ret)
+         if (EXFAIL==ret)
              return_status|=RETURN_FAILED;
 
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
@@ -348,10 +348,10 @@ return_to_main:
  *                  or tpcall wrapper)
  * @return SUCCEED/FAIL
  */
-public void _tpforward (char *svc, char *data,
+expublic void _tpforward (char *svc, char *data,
                 long len, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char buf[ATMI_MSG_MAX_SIZE];
     tp_command_call_t *call=(tp_command_call_t *)buf;
     typed_buffer_descr_t *descr;
@@ -383,20 +383,20 @@ public void _tpforward (char *svc, char *data,
         _TPset_error_fmt(TPEPROTO, "tpforward no allowed for conversation server!");
     }
 
-    if (NULL==(buffer_info = find_buffer(data)))
+    if (NULL==(buffer_info = ndrx_find_buffer(data)))
     {
         _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     descr = &G_buf_descr[buffer_info->type_id];
 
     /* prepare buffer for call */
-    if (SUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+    if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
     {
         /* not good - error should be already set */
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -410,7 +410,7 @@ public void _tpforward (char *svc, char *data,
     call->command_id = ATMI_COMMAND_TPCALL;
 
     strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
-    call->name[XATMI_SERVICE_NAME_LENGTH] = EOS;
+    call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     call->flags = flags;
     call->cd = last_call->cd; /* <<< another difference from call! */
     call->timestamp = last_call->timestamp;
@@ -446,11 +446,11 @@ public void _tpforward (char *svc, char *data,
     }
 
     /* Check is service available? */
-    if (SUCCEED!=ndrx_shm_get_svc(call->name, send_q, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(call->name, send_q, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 call->name);
-        ret=FAIL;
+        ret=EXFAIL;
         _TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
                 fn, call->name);
                 /* we should reply back, that call failed, so that client does not wait */
@@ -460,7 +460,7 @@ public void _tpforward (char *svc, char *data,
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
                     call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
         
-    if (SUCCEED!=(ret=generic_q_send(send_q, (char *)call, data_len, flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
     {
         /* reply FAIL back to caller! */
         int err;
@@ -477,7 +477,7 @@ public void _tpforward (char *svc, char *data,
 
         _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
         userlog("%s: Failed to send, os err: %s", fn, strerror(ret));
-        ret=FAIL;
+        ret=EXFAIL;
 
         /* we should reply back, that call failed, so that client does not wait */
         reply_with_failure(flags, last_call, NULL, NULL, TPESVCERR);
@@ -508,7 +508,7 @@ out:
     if (!(last_call->sysflags & SYS_SRV_THREAD))
     {
         return_status|=RETURN_TYPE_TPFORWARD;
-        if (FAIL==ret)
+        if (EXFAIL==ret)
             return_status|=RETURN_FAILED;
         
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
@@ -538,7 +538,7 @@ out:
  * Task is copied to thread.
  * The main thread goes back to polling.
  */
-public void _tpcontinue (void)
+expublic void _tpcontinue (void)
 {
     /* mvitolin 11.01.2017 
      * We can do thing when we are not running in integration mode!

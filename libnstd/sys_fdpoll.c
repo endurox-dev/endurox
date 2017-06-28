@@ -61,7 +61,7 @@
 
 #define EX_EPOLL_API_ENTRY      {NSTD_TLS_ENTRY; \
             G_nstd_tls->M_last_err = 0; \
-            G_nstd_tls->M_last_err_msg[0] = EOS;}
+            G_nstd_tls->M_last_err_msg[0] = EXEOS;}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -81,7 +81,7 @@ typedef struct ndrx_epoll_set ndrx_epoll_set_t;
 
 /*---------------------------Globals------------------------------------*/
 
-private ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
+exprivate ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
 MUTEX_LOCKDECL(M_psets_lock);
 
 /*---------------------------Statics------------------------------------*/
@@ -93,7 +93,7 @@ MUTEX_LOCKDECL(M_psets_lock);
  * @param epfd poll set to lookup
  * @return Poll set struct
  */
-private ndrx_epoll_set_t* pset_find(int epfd)
+exprivate ndrx_epoll_set_t* pset_find(int epfd)
 {
     ndrx_epoll_set_t *ret = NULL;
     
@@ -108,7 +108,7 @@ private ndrx_epoll_set_t* pset_find(int epfd)
  * @param fd    File Descriptor to find
  * @return FD or FAIL
  */
-private int fd_find(ndrx_epoll_set_t *pset, int fd)
+exprivate int fd_find(ndrx_epoll_set_t *pset, int fd)
 {
     int i;
     
@@ -120,16 +120,16 @@ private int fd_find(ndrx_epoll_set_t *pset, int fd)
         }
     }
     
-    return FAIL;
+    return EXFAIL;
 }
 
 
 /**
  * We basically will use unix error codes
  */
-private void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
+exprivate void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
 {
-    char msg[ERROR_BUFFER+1] = {EOS};
+    char msg[ERROR_BUFFER+1] = {EXEOS};
     va_list ap;
     
     NSTD_TLS_ENTRY;
@@ -150,7 +150,7 @@ private void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
 /**
  * Nothing to init for epoll()
  */
-public inline void ndrx_epoll_sys_init(void)
+expublic inline void ndrx_epoll_sys_init(void)
 {
     return;
 }
@@ -158,7 +158,7 @@ public inline void ndrx_epoll_sys_init(void)
 /**
  * Nothing to un-init for epoll()
  */
-public inline void ndrx_epoll_sys_uninit(void)
+expublic inline void ndrx_epoll_sys_uninit(void)
 {
     return;
 }
@@ -167,7 +167,7 @@ public inline void ndrx_epoll_sys_uninit(void)
  * Return the compiled poll mode
  * @return 
  */
-public inline char * ndrx_epoll_mode(void)
+expublic inline char * ndrx_epoll_mode(void)
 {
     static char *mode = "fdpoll";
     
@@ -181,9 +181,9 @@ public inline char * ndrx_epoll_mode(void)
  * @param event
  * @return 
  */
-public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
+expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
 {   
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     char *fn = "ndrx_epoll_ctl";
     
@@ -195,7 +195,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
     {
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         ndrx_epoll_set_err(ENOSYS, "ndrx_epoll set %d not found", epfd);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (EX_EPOLL_CTL_ADD == op)
@@ -203,14 +203,14 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
         NDRX_LOG(log_info, "%s: Add operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
         
         /* test & add to FD hash */
-        if (FAIL!=fd_find(set, fd))
+        if (EXFAIL!=fd_find(set, fd))
         {
 
             ndrx_epoll_set_err(EINVAL, "fd %d already exists in ndrx_epoll set (epfd %d)", 
                     fd, set->fd);
             NDRX_LOG(log_error, "fd %d already exists in ndrx_epoll set (epfd %d)", 
                  fd, set->fd);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* resize/realloc events list, add fd */
@@ -224,7 +224,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
                     set->nrfds, sizeof(struct pollfd)*set->nrfds);
             NDRX_LOG(log_error, "Failed to realloc %d/%d", 
                     set->nrfds, sizeof(struct pollfd)*set->nrfds);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         set->fdtab[set->nrfds-1].fd = fd;
@@ -233,18 +233,18 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
     }
     else if (EX_EPOLL_CTL_DEL == op)
     {
-        int found = FALSE;
+        int found = EXFALSE;
         int i;
         NDRX_LOG(log_info, "%s: Delete operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
         
         /* test & add to FD hash */
-        if (FAIL==fd_find(set, fd))
+        if (EXFAIL==fd_find(set, fd))
         {
             ndrx_epoll_set_err(EINVAL, "fd %d not found in ndrx_epoll set (epfd %d)", 
                     fd, set->fd);
             NDRX_LOG(log_error, "fd %d not found in ndrx_epoll set (epfd %d)", 
                     fd, set->fd);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /* Remove fd from set->fdtab & from hash */
@@ -279,10 +279,10 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
                     NDRX_LOG(log_error, "Failed to realloc %d/%d", 
                             set->nrfds, sizeof(struct pollfd)*set->nrfds);
                     
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 
-                found = TRUE;
+                found = EXTRUE;
                 
                 break;
             }
@@ -299,7 +299,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
         ndrx_epoll_set_err(EINVAL, "Invalid operation %d", op);
         NDRX_LOG(log_error, "Invalid operation %d", op);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -319,7 +319,7 @@ out:
  * @param event
  * @return 
  */
-public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
+expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
 {
     return ndrx_epoll_ctl(epfd, op, (int)fd, event);
 }
@@ -329,9 +329,9 @@ public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epol
  * @param size
  * @return 
  */
-public inline int ndrx_epoll_create(int size)
+expublic inline int ndrx_epoll_create(int size)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int i = 1;
     ndrx_epoll_set_t *set;
     
@@ -350,7 +350,7 @@ public inline int ndrx_epoll_create(int size)
                 
         
         set = NULL;
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_info, "Creating ndrx_epoll set: %d", i);
@@ -361,7 +361,7 @@ public inline int ndrx_epoll_create(int size)
         
         NDRX_LOG(log_error, "Failed to alloc: %d bytes", sizeof(*set));
 
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     set->nrfds = 0;
@@ -376,7 +376,7 @@ public inline int ndrx_epoll_create(int size)
     
 out:
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
             
         if (NULL!=set)
@@ -384,7 +384,7 @@ out:
             NDRX_FREE((char *)set);
         }
         
-        return FAIL;        
+        return EXFAIL;        
     }
 
     return i;
@@ -393,9 +393,9 @@ out:
 /**
  * Close Epoll set.
  */
-public inline int ndrx_epoll_close(int epfd)
+expublic inline int ndrx_epoll_close(int epfd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     
     NDRX_LOG(log_debug, "ndrx_epoll_close(%d) enter", epfd);
@@ -412,7 +412,7 @@ public inline int ndrx_epoll_close(int epfd)
         NDRX_LOG(log_error, "ndrx_epoll_close set %d not found", epfd);
         
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     MUTEX_UNLOCK_V(M_psets_lock);
     
@@ -427,7 +427,7 @@ public inline int ndrx_epoll_close(int epfd)
     MUTEX_UNLOCK_V(M_psets_lock);
     
 out:
-    return FAIL;
+    return EXFAIL;
 }
 
 /**
@@ -438,9 +438,9 @@ out:
  * @param timeout
  * @return 
  */
-public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int numevents = 0;
     ndrx_epoll_set_t* set = NULL;
     char *fn = "ndrx_epoll_wait";
@@ -460,7 +460,7 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
         
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     MUTEX_UNLOCK_V(M_psets_lock); /*  <<< release the lock */
@@ -497,7 +497,7 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
             
             events[numevents-1].data.fd = set->fdtab[i].fd;
             events[numevents-1].events = set->fdtab[i].revents;
-            events[numevents-1].is_mqd = FAIL;
+            events[numevents-1].is_mqd = EXFAIL;
 	}
     }
     
@@ -505,13 +505,13 @@ out:
 
     NDRX_LOG(log_info, "%s ret=%d numevents=%d", fn, ret, numevents);
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         return numevents;
     }
     else
     {
-        return FAIL;
+        return EXFAIL;
     }
 }
 
@@ -519,7 +519,7 @@ out:
  * Return errno for ndrx_poll() operation
  * @return 
  */
-public int ndrx_epoll_errno(void)
+expublic int ndrx_epoll_errno(void)
 {
     NSTD_TLS_ENTRY;
     return G_nstd_tls->M_last_err;
@@ -530,7 +530,7 @@ public int ndrx_epoll_errno(void)
  * @param err
  * @return 
  */
-public char * ndrx_poll_strerror(int err)
+expublic char * ndrx_poll_strerror(int err)
 {
     NSTD_TLS_ENTRY;
     

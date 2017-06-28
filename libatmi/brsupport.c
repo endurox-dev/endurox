@@ -60,12 +60,12 @@
  * Dump node stack
  * @param stack
  */
-public void br_dump_nodestack(char *stack, char *msg)
+expublic void br_dump_nodestack(char *stack, char *msg)
 {
     int i=0;
     int nodeid;
     char node_stack_str[CONF_NDRX_NODEID_COUNT*4];
-    node_stack_str[0] = EOS;
+    node_stack_str[0] = EXEOS;
     char tmp[10];
     int len = strlen(stack);
     
@@ -87,16 +87,16 @@ public void br_dump_nodestack(char *stack, char *msg)
  * @param call
  * @return 
  */
-public int fill_reply_queue(char *nodestack, 
+expublic int fill_reply_queue(char *nodestack, 
             char *org_reply_to, char *reply_to)
 {
     int i;
     int len;
     int nodeid;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     ATMI_TLS_ENTRY;
     
-    *reply_to = EOS;
+    *reply_to = EXEOS;
     /* So we are going to do reply, we should scan the reply stack
      * chose the bridge, and reduce the callstack
      */
@@ -117,26 +117,26 @@ public int fill_reply_queue(char *nodestack,
                 
                 sprintf(tmpsvc, NDRX_SVC_BRIDGE, nodeid);
                 
-                if (SUCCEED!=ndrx_shm_get_svc(tmpsvc, reply_to, &is_bridge))
+                if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, reply_to, &is_bridge))
                 {
                     NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                             tmpsvc);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
 #else
                 /* epoll/fdpoll/kqueue mode direct call: */
                 sprintf(reply_to, NDRX_SVC_QBRDIGE, G_atmi_tls->G_atmi_conf.q_prefix, nodeid);
 #endif
                 
-                nodestack[i] = EOS;
+                nodestack[i] = EXEOS;
                 br_dump_nodestack(nodestack, "Node stack after bridge select");
                 break;
             }
         }
         
-        if (EOS==*reply_to)
+        if (EXEOS==*reply_to)
         {
-            ret=FAIL;
+            ret=EXFAIL;
             NDRX_LOG(log_error, "No bridge to send reply to!");
         }
     }

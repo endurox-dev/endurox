@@ -311,6 +311,137 @@ sub gen_sig {
 }
 
 ################################################################################
+# Have some extra debug, common
+################################################################################
+
+sub debug_entry {
+
+	$func_name = shift;
+	$priv_flags = shift;
+	
+my $debug_entry = <<"END_MESSAGE";
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: $func_name() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        ($priv_flags) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        ($priv_flags) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        ($priv_flags) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        ($priv_flags) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        ($priv_flags) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        ($priv_flags) & CTXT_PRIV_IGN );
+#endif
+
+END_MESSAGE
+
+	return $debug_entry;
+
+}
+
+sub debug_return {
+
+	$func_name = shift;
+
+my $debug_return = <<"END_MESSAGE";
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: $func_name() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+END_MESSAGE
+
+	return $debug_return;
+}
+
+################################################################################
+# Write tpsetunsol object API header func, special case (complex hdr)
+################################################################################
+
+sub write_h_tpsetunsol {
+    print $M_h_fd "extern NDRX_API void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags);\n";
+}
+
+################################################################################
+# Write tpsetunsol object API func, special case (complex hdr)
+################################################################################
+
+sub write_c_tpsetunsol {
+    
+    $func_name = "tpsetunsol";
+    $priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN";
+    
+    $oapi_debug_entry = debug_entry($func_name, $priv_flags);
+    $oapi_debug_return = debug_return($func_name);
+    
+$message = <<"END_MESSAGE";
+
+/**
+ * Object-API wrapper for $func_name() - Auto generated.
+ */
+expublic void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
+{
+    int did_set = FALSE;
+    void (*ret) (char *data, long len, long flags) = NULL;
+
+$oapi_debug_entry 
+    
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
+    {
+        /* set the context */
+        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+            $priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to set context");
+            ret = NULL;
+            goto out;
+        }
+        did_set = TRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! $func_name() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+    
+    ret = tpsetunsol(disp);
+
+    if (did_set)
+    {
+        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+                $priv_flags))
+        {
+            userlog("ERROR! $func_name() failed to get context");
+            ret = NULL;
+            goto out;
+        }
+    }
+out:
+$oapi_debug_return
+    return ret; 
+}
+
+END_MESSAGE
+
+	print $M_c_fd $message;
+}
+
+
+################################################################################
 # Write C object API header func
 ################################################################################
 sub write_h {
@@ -331,7 +462,7 @@ sub write_c {
     my @func_arg_name = @{$_[5]};
     my @func_arg_def = @{$_[6]};
     
-    
+    $M_func_name = $func_name;
     #
     # Generate function call
     #
@@ -358,7 +489,7 @@ sub write_c {
     
     $invoke = "$invoke)";
     
-    my $M_priv_flags = "";
+    $priv_flags = "";
     #
     # Calculate the flags, all UBF operations receive only UBF & TLS contexts
     # ATMI have ATMI too, plus somes have a TRAN
@@ -394,70 +525,29 @@ sub write_c {
             ||$func_name=~/^tpterm$/
         )
         {
-            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN";
+            $priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN";
         }
         else
         {
-            $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN";
+            $priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN";
         }
         
     }
     elsif($M_name=~/oubf/)
     {
-        $M_priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN";
+        $priv_flags = "CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN";
     }
     elsif($M_name=~/onerror/)
     {
-        $M_priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
+        $priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
     }
     elsif($M_name=~/ondebug/)
     {
-        $M_priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
+        $priv_flags = "CTXT_PRIV_NSTD | CTXT_PRIV_IGN";
     }
     
-
-#
-# Have some extra debug
-#
-$oapi_debug_entry = <<"END_MESSAGE";
-
-#ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "ENTRY: $func_name() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
-    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
-        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
-
-    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
-        ($M_priv_flags) & CTXT_PRIV_NSTD );
-
-    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
-        ($M_priv_flags) & CTXT_PRIV_UBF );
-
-    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
-        ($M_priv_flags) & CTXT_PRIV_ATMI );
-
-    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
-        ($M_priv_flags) & CTXT_PRIV_TRAN );
-
-    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
-        ($M_priv_flags) & CTXT_PRIV_NOCHK );
-
-    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
-        ($M_priv_flags) & CTXT_PRIV_IGN );
-#endif
-
-END_MESSAGE
-
-
-$oapi_debug_return = <<"END_MESSAGE";
-
-#ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "RETURN: $func_name() returns, context: %p, current: %p",
-        *p_ctxt, G_atmi_tls);
-#endif
-
-END_MESSAGE
-
-
+    $oapi_debug_entry = debug_entry($func_name, $priv_flags);
+    $oapi_debug_return = debug_return($func_name);
 
     if ($func_type=~m/^int$/ 
         || $func_type=~m/^BFLDOCC$/
@@ -474,7 +564,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     $func_type ret = SUCCEED;
     int did_set = FALSE;
@@ -485,7 +575,7 @@ $oapi_debug_entry
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
             FAIL_OUT(ret);
@@ -504,7 +594,7 @@ $oapi_debug_entry
     if (did_set)
     {
         if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
             FAIL_OUT(ret);
@@ -528,7 +618,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     int did_set = FALSE;
 
@@ -539,7 +629,7 @@ $oapi_debug_entry
     {
          /* set the context */
         if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
         }
@@ -573,7 +663,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     int did_set = FALSE;
 
@@ -584,7 +674,7 @@ $oapi_debug_entry
     {
          /* set the context */
         if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
         }
@@ -602,7 +692,7 @@ $oapi_debug_entry
     if (did_set)
     {
         if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
         }
@@ -629,7 +719,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     int did_set = FALSE;
     $func_type ret = NULL;
@@ -640,7 +730,7 @@ $oapi_debug_entry
     {
         /* set the context */
         if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
             ret = NULL;
@@ -660,7 +750,7 @@ $oapi_debug_entry
     if (did_set)
     {
         if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-                $M_priv_flags))
+                $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
             ret = NULL;
@@ -685,7 +775,7 @@ $message = <<"END_MESSAGE";
 /**
  * Object-API wrapper for $func_name() - Auto generated.
  */
-public $sig 
+expublic $sig 
 {
     $func_type ret = BBADFLDID;
     int did_set = FALSE;
@@ -696,7 +786,7 @@ $oapi_debug_entry
     {
         /* set the context */
         if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
             ret = BBADFLDID;
@@ -716,7 +806,7 @@ $oapi_debug_entry
     if (did_set)
     {
         if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
-            $M_priv_flags))
+            $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
             ret = BBADFLDID;
@@ -782,6 +872,25 @@ NEXT: while( my $line = <$info>)
         $func_args_list = remove_white_space($func_args_list);
 
         print "Processing line [$line] M_name = [$M_name]\n";
+        
+        #
+        # Special case for tpsetunsol
+        #
+        if ($line =~ m/.*tpsetunsol.*/)
+        {
+		if ($M_name =~ m/^oatmi$/)
+		{
+			# This is ours..
+			write_h_tpsetunsol();
+			write_c_tpsetunsol();
+			next NEXT;
+		}
+		else
+		{
+			print "skip - next\n";
+			next NEXT;
+		}
+        }
 
         #
         # Skip the specific symbols, per output module

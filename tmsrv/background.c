@@ -61,12 +61,12 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public pthread_t G_bacground_thread;
-public int G_bacground_req_shutdown = FALSE;    /* Is shutdown request? */
+expublic pthread_t G_bacground_thread;
+expublic int G_bacground_req_shutdown = EXFALSE;    /* Is shutdown request? */
 
 
-private pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
-private pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
+exprivate pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
+exprivate pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
 
 MUTEX_LOCKDECL(M_background_lock); /* Background operations sync        */
@@ -77,7 +77,7 @@ MUTEX_LOCKDECL(M_background_lock); /* Background operations sync        */
 /**
  * Lock background operations
  */
-public void background_lock(void)
+expublic void background_lock(void)
 {
     MUTEX_LOCK_V(M_background_lock);
 }
@@ -85,7 +85,7 @@ public void background_lock(void)
 /**
  * Un-lock background operations
  */
-public void background_unlock(void)
+expublic void background_unlock(void)
 {
     MUTEX_UNLOCK_V(M_background_lock);
 }
@@ -94,9 +94,9 @@ public void background_unlock(void)
  * Read the logfiles from the disk (if any we have there...)
  * @return 
  */
-public int background_read_log(void)
+expublic int background_read_log(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     struct dirent **namelist = NULL;
     int n;
     int len;
@@ -113,7 +113,7 @@ public int background_read_log(void)
     {
        NDRX_LOG(log_error, "Transaction directory [%s: %s", 
                G_tmsrv_cfg.tlog_dir, strerror(errno));
-       ret=FAIL;
+       ret=EXFAIL;
        goto out;
     }
     else 
@@ -140,13 +140,13 @@ public int background_read_log(void)
                sprintf(fnamefull, "%s/%s", G_tmsrv_cfg.tlog_dir, namelist[n]->d_name);
                NDRX_LOG(log_warn, "Resuming transaction: [%s]", 
                        fnamefull);
-               if (SUCCEED!=tms_load_logfile(fnamefull, 
+               if (EXSUCCEED!=tms_load_logfile(fnamefull, 
                        namelist[n]->d_name+len, &pp_tl))
                {
                    NDRX_LOG(log_warn, "Faled to resume transaction: [%s]", 
                        fnamefull);
                    NDRX_FREE(namelist[n]); /* mem leak fixes */
-                   FAIL_OUT(ret);
+                   EXFAIL_OUT(ret);
                }
            }
            NDRX_FREE(namelist[n]);
@@ -167,7 +167,7 @@ out:
  * Sleep the thread, with option to wake up (by shutdown).
  * @param sleep_sec
  */
-private void thread_sleep(int sleep_sec)
+exprivate void thread_sleep(int sleep_sec)
 {
     struct timespec wait_time;
     struct timeval now;
@@ -186,7 +186,7 @@ private void thread_sleep(int sleep_sec)
 /**
  * Wake up the sleeping thread.
  */
-public void background_wakeup(void)
+expublic void background_wakeup(void)
 {
     pthread_mutex_lock(&M_wait_mutex);
     pthread_cond_signal(&M_wait_cond);
@@ -198,9 +198,9 @@ public void background_wakeup(void)
  * Try to complete the transactions.
  * @return  SUCCEED/FAIL
  */
-public int background_loop(void)
+expublic int background_loop(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_log_list_t *tx_list;
     atmi_xa_log_list_t *el, *tmp;
     atmi_xa_tx_info_t xai;
@@ -251,7 +251,7 @@ public int background_loop(void)
                 /* If we have transaction in background, then do something with it
                  * The master_op does not matter, as we ignore the error code.
                  */
-                tm_drive(&xai, p_tl, XA_OP_COMMIT, FAIL);
+                tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL);
             }
             else
             {
@@ -279,7 +279,7 @@ out:
  * Background processing of the transactions (Complete them).
  * @return 
  */
-public void * background_process(void *arg)
+expublic void * background_process(void *arg)
 {
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS START ********");
     
@@ -304,7 +304,7 @@ public void * background_process(void *arg)
  * Initialize background process
  * @return
  */
-public void background_process_init(void)
+expublic void background_process_init(void)
 {
 
     pthread_attr_t pthread_custom_attr;

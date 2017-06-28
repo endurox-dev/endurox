@@ -77,9 +77,9 @@ extern const char G_resource_provision[];
  * @param argv
  * @return SUCCEED
  */
-public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     const PSChar *s;
     HPSCRIPTVM v;
     PSInteger res;
@@ -110,9 +110,9 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     ps_pushstring(v, "args", -1); /* 2 */
     ps_newtable(v); /* 3 */
     
-    if (SUCCEED!=add_defaults_from_config(v, "provision"))
+    if (EXSUCCEED!=add_defaults_from_config(v, "provision"))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (argc>=2)
@@ -122,7 +122,7 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
             /* load defaults */
             if (0==strcmp(argv[i], "-d"))
             {
-                PSBool isDefaulted = TRUE;
+                PSBool isDefaulted = EXTRUE;
                 ps_pushstring(v, "isDefaulted", -1); /* 4 */
                 ps_pushbool(v, isDefaulted);
                 ps_newslot(v, -3, PSFalse );/* 3 */
@@ -133,10 +133,10 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
                 /* pass in value definition (as string) 
                  * format <key>=<value>
                  */
-                if (SUCCEED!=load_value(v, argv[i]+2))
+                if (EXSUCCEED!=load_value(v, argv[i]+2))
                 {
                     fprintf(stderr, "Invalid value\n");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             else if (0==strncmp(argv[i], "-v", 2))
@@ -145,16 +145,16 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
                 if (i+1<argc)
                 {
                     i++;
-                    if (SUCCEED!=load_value(v, argv[i]))
+                    if (EXSUCCEED!=load_value(v, argv[i]))
                     {
                         fprintf(stderr, "Invalid value\n");
-                        FAIL_OUT(ret);
+                        EXFAIL_OUT(ret);
                     }
                 }
                 else
                 {
                     fprintf(stderr, "Invalid command line missing value at end.\n");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             
@@ -176,7 +176,7 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
         if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
         {
             fprintf(stderr, _SC("Error [%s]\n"),err);
-            return FAIL;
+            return EXFAIL;
         }
     }
     else
@@ -192,7 +192,7 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
         if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
         {
             printf(_SC("Error [%s]\n"),err);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -201,11 +201,11 @@ public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     
     if (res>=0)
     {
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }
     else
     {
-        ret = FAIL;
+        ret = EXFAIL;
     }
     
     ps_pop(v,3); /* pops the roottable and the function */
@@ -224,10 +224,10 @@ out:
  * @param argv
  * @return SUCCEED
  */
-public int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     fprintf(stderr, "Pscript not compiled for this platform!\n");
-    return FAIL;
+    return EXFAIL;
 }
 
 #endif

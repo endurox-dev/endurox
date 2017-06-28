@@ -80,7 +80,7 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
  * @param process_model_hash
  * @param process_model_pid_hash
  */
-private void config_free(config_t **app_config, pm_node_t **process_model,
+exprivate void config_free(config_t **app_config, pm_node_t **process_model,
             pm_node_t ***process_model_hash, pm_pidhash_t ***process_model_pid_hash)
 {
     NDRX_LOG(log_debug, "Free up config memory...");
@@ -134,19 +134,19 @@ private void config_free(config_t **app_config, pm_node_t **process_model,
  * This should also build the main process model i.e. get ready for startup!
  * @return SUCCED/FAIL
  */
-public int load_active_config(config_t **app_config, pm_node_t **process_model,
+expublic int load_active_config(config_t **app_config, pm_node_t **process_model,
             pm_node_t ***process_model_hash, pm_pidhash_t ***process_model_pid_hash)
 {
-    int ret=SUCCEED;
-    int cfg_ok = FALSE;
+    int ret=EXSUCCEED;
+    int cfg_ok = EXFALSE;
 
     if (*app_config!=NULL)
     {
         NDRX_LOG(log_debug, "Active configuration present - nothing to do");
         /* Reply to caller, that active configuration present */
         NDRXD_set_error(NDRXD_ECFGLDED);
-        ret=FAIL;
-        cfg_ok = TRUE;
+        ret=EXFAIL;
+        cfg_ok = EXTRUE;
         goto out;
     }
     else
@@ -155,12 +155,12 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
         *app_config = NDRX_CALLOC(1, sizeof(config_t));
     }
 
-    if (SUCCEED!=load_config(*app_config, G_sys_config.config_file))
+    if (EXSUCCEED!=load_config(*app_config, G_sys_config.config_file))
     {
         NDRX_LOG(log_debug, "Failed to load configuration");
         /* Reply to caller that config failed to load */
         NDRXD_set_error(NDRXD_ECFGINVLD);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -173,7 +173,7 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
     if (NULL==*process_model_hash)
     {
         NDRXD_set_error_msg(NDRXD_EOS, "Failed to allocate *process_model_hash");
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
 
@@ -183,23 +183,23 @@ public int load_active_config(config_t **app_config, pm_node_t **process_model,
     {
         NDRXD_set_error_fmt(NDRXD_EOS, "Failed to allocate *process_model_pid_hash - %d bytes",
                                 ndrx_get_G_atmi_env()->max_servers * sizeof(pm_pidhash_t *) );
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
 
-    if (SUCCEED!=build_process_model((*app_config)->monitor_config,
+    if (EXSUCCEED!=build_process_model((*app_config)->monitor_config,
                                 &*process_model, /* proces model linked list */
                                 *process_model_hash/* Hash table models */))
     {
         NDRXD_set_error_msg(NDRXD_EOS, "Failed to allocate *process_model_hash");
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
 
 out:
 
     /* Release memory, if config not loaded */
-    if (SUCCEED!=ret && !cfg_ok)
+    if (EXSUCCEED!=ret && !cfg_ok)
     {
         config_free(app_config, process_model, process_model_hash, process_model_pid_hash);
     }
@@ -215,9 +215,9 @@ out:
  * @param cur
  * @return
  */
-private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     char tmp[PATH_MAX];
     
@@ -267,7 +267,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 strncpy(config->default_env, p, sizeof(config->default_env)-1);
                 
                 /* Ensure that we terminate... */
-                config->default_env[sizeof(config->default_env)-1] = EOS;
+                config->default_env[sizeof(config->default_env)-1] = EXEOS;
                 
                 /* process env */
                 ndrx_str_env_subs(config->default_env);
@@ -314,7 +314,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 if (strlen(p)>=sizeof(config->default_exportsvcs))
                 {
                     NDRX_LOG(log_warn, "Trimming default exportsvcs");
-                    p[sizeof(config->default_exportsvcs)-3] = EOS;
+                    p[sizeof(config->default_exportsvcs)-3] = EXEOS;
                 }
                 sprintf(config->default_exportsvcs, ",%s,", p);
                 NDRX_LOG(log_debug, "exportsvcs: [%s]", 
@@ -328,7 +328,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 if (strlen(p)>=sizeof(config->default_blacklistsvcs))
                 {
                     NDRX_LOG(log_warn, "Trimming default blacklistsvcs");
-                    p[sizeof(config->default_blacklistsvcs)-3] = EOS;
+                    p[sizeof(config->default_blacklistsvcs)-3] = EXEOS;
                 }
                 sprintf(config->default_blacklistsvcs, ",%s,", p);
                 NDRX_LOG(log_debug, "blacklistsvcs: [%s]", 
@@ -365,7 +365,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 strncpy(config->default_cctag, p, sizeof(config->default_cctag)-1);
                 
                 /* Ensure that we terminate... */
-                config->default_cctag[sizeof(config->default_cctag)-1] = EOS;
+                config->default_cctag[sizeof(config->default_cctag)-1] = EXEOS;
                 
                 /* process env */
                 ndrx_str_env_subs_len(config->default_cctag, sizeof(config->default_cctag));
@@ -425,7 +425,7 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (!config->default_start_max)
     {
         NDRX_LOG(log_debug, "appconfig: `start_max' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }/* - Optional param. Default 0. 
     else if (!config->default_pingtime)
@@ -438,13 +438,13 @@ private int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     else if (config->default_pingtime && !config->default_ping_max)
     {
         NDRX_LOG(log_debug, "appconfig: `ping_max' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else if (!config->default_end_max)
     {
         NDRX_LOG(log_debug, "appconfig: `end_max' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -476,9 +476,9 @@ out:
  * @param cur
  * @return
  */
-private int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     
     if (NULL!=cur)
@@ -566,31 +566,31 @@ private int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (!config->sanity)
     {
         NDRX_LOG(log_debug, "appconfig: `sanity' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     } 
     else if (!config->restart_min)
     {
         NDRX_LOG(log_debug, "appconfig: `restart_min' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else if (!config->restart_step)
     {
         NDRX_LOG(log_debug, "appconfig: `restart_step' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else if (!config->restart_max)
     {
         NDRX_LOG(log_debug, "appconfig: `restart_max' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else if (!config->restart_to_check)
     {
         NDRX_LOG(log_debug, "appconfig: `restart_to_check' not set!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -618,15 +618,15 @@ out:
  * @param srvnm - name of the server
  * @return 
  */
-private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     xmlAttrPtr attr;
-    char srvnm[MAXTIDENT+1]={EOS};
+    char srvnm[MAXTIDENT+1]={EXEOS};
     char tmp[128];
 #if 0
     
-    int srvid = FAIL;
+    int srvid = EXFAIL;
 #endif
     conf_server_node_t *p_srvnode=NULL;
     char *p;
@@ -636,24 +636,24 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (NULL==p_srvnode)
     {
         NDRX_LOG(log_error, "malloc failed for srvnode!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     memset(p_srvnode, 0, sizeof(conf_server_node_t));
-    p_srvnode->srvid = FAIL;
-    p_srvnode->min = FAIL;
-    p_srvnode->max = FAIL;
-    p_srvnode->autokill = FAIL;
-    p_srvnode->start_max = FAIL;
+    p_srvnode->srvid = EXFAIL;
+    p_srvnode->min = EXFAIL;
+    p_srvnode->max = EXFAIL;
+    p_srvnode->autokill = EXFAIL;
+    p_srvnode->start_max = EXFAIL;
                     
-    p_srvnode->pingtime = FAIL;
-    p_srvnode->ping_max = FAIL;
-    p_srvnode->end_max = FAIL;
-    p_srvnode->killtime = FAIL;
-    p_srvnode->exportsvcs[0] = EOS;
-    p_srvnode->isprotected = FAIL;
-    p_srvnode->reloadonchange = FAIL;
-    p_srvnode->respawn = FAIL;
+    p_srvnode->pingtime = EXFAIL;
+    p_srvnode->ping_max = EXFAIL;
+    p_srvnode->end_max = EXFAIL;
+    p_srvnode->killtime = EXFAIL;
+    p_srvnode->exportsvcs[0] = EXEOS;
+    p_srvnode->isprotected = EXFAIL;
+    p_srvnode->reloadonchange = EXFAIL;
+    p_srvnode->respawn = EXFAIL;
 
 
     for (attr=cur->properties; attr; attr = attr->next)
@@ -662,15 +662,15 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(attr->children);
             strncpy(srvnm, p, MAXTIDENT);
-            srvnm[MAXTIDENT] = EOS;
+            srvnm[MAXTIDENT] = EXEOS;
             xmlFree(p);
         }
     }
     /**/
-    if (EOS==srvnm[0])
+    if (EXEOS==srvnm[0])
     {
         NDRX_LOG(log_error, "No server name at line %hd", cur->line);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -755,7 +755,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (strlen(p)>=sizeof(p_srvnode->exportsvcs)-3)
             {
                 NDRX_LOG(log_warn, "Trimming server exportsvcs");
-                p[sizeof(p_srvnode->exportsvcs)-3] = EOS;
+                p[sizeof(p_srvnode->exportsvcs)-3] = EXEOS;
             }
             sprintf(p_srvnode->exportsvcs, ",%s,", p);
             NDRX_LOG(log_debug, "exportsvcs: [%s]", 
@@ -769,7 +769,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (strlen(p)>=sizeof(p_srvnode->blacklistsvcs)-3)
             {
                 NDRX_LOG(log_warn, "blacklistsvcs server blacklistsvcs");
-                p[sizeof(p_srvnode->exportsvcs)-3] = EOS;
+                p[sizeof(p_srvnode->exportsvcs)-3] = EXEOS;
             }
             sprintf(p_srvnode->blacklistsvcs, ",%s,", p);
             NDRX_LOG(log_debug, "blacklistsvcs: [%s]", 
@@ -783,7 +783,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             /* process env */
             ndrx_str_env_subs(p_srvnode->SYSOPT);
             /* Ensure that we terminate... */
-            p_srvnode->SYSOPT[sizeof(p_srvnode->SYSOPT)-1] = EOS;
+            p_srvnode->SYSOPT[sizeof(p_srvnode->SYSOPT)-1] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp("appopt", (char *)cur->name))
@@ -793,7 +793,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             /* process env */
             ndrx_str_env_subs_len(p_srvnode->APPOPT, sizeof(p_srvnode->APPOPT));
             /* Ensure that we terminate... */
-            p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EOS;
+            p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp("env", (char *)cur->name))
@@ -802,7 +802,7 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             strncpy(p_srvnode->env, p, sizeof(p_srvnode->env)-1);
 
             /* Ensure that we terminate... */
-            p_srvnode->env[sizeof(p_srvnode->env)-1] = EOS;
+            p_srvnode->env[sizeof(p_srvnode->env)-1] = EXEOS;
 
             /* process env */
             ndrx_str_env_subs(p_srvnode->env);
@@ -828,11 +828,9 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp((char*)cur->name, "cctag"))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->cctag, p, sizeof(p_srvnode->cctag)-1);
+            NDRX_STRCPY_SAFE(p_srvnode->cctag, p);
             /* process env */
-            ndrx_str_env_subs(p_srvnode->cctag);
-            /* Ensure that we terminate... */
-            p_srvnode->cctag[sizeof(p_srvnode->cctag)-1] = EOS;
+            ndrx_str_env_subs_len(p_srvnode->cctag, sizeof(p_srvnode->cctag));
             xmlFree(p);
         }
         else if (0==strcmp((char*)cur->name, "protected"))
@@ -880,44 +878,55 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                               p_srvnode->reloadonchange?'Y':'N');
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "fullpath"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            NDRX_STRCPY_SAFE(p_srvnode->fullpath, p);
+            /* process env */
+            ndrx_str_env_subs_len(p_srvnode->fullpath, sizeof(p_srvnode->fullpath));
+            xmlFree(p);
+            
+            NDRX_LOG(log_debug, "fullpath: [%s]", p_srvnode->fullpath);
+        }
+        
     }
     sprintf(p_srvnode->clopt, "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     strcpy(p_srvnode->binary_name, srvnm);
 
-    if (FAIL==p_srvnode->max)
+    if (EXFAIL==p_srvnode->max)
         p_srvnode->max=config->default_max;
 
-    if (FAIL==p_srvnode->min)
+    if (EXFAIL==p_srvnode->min)
         p_srvnode->min=config->default_min;
     
-    if (FAIL==p_srvnode->autokill)
+    if (EXFAIL==p_srvnode->autokill)
         p_srvnode->autokill=config->default_autokill;
     
     /* Process control params: */
-    if (FAIL==p_srvnode->start_max)
+    if (EXFAIL==p_srvnode->start_max)
         p_srvnode->start_max=config->default_start_max;
     
-    if (FAIL==p_srvnode->end_max)
+    if (EXFAIL==p_srvnode->end_max)
         p_srvnode->end_max=config->default_end_max;
     
-    if (FAIL==p_srvnode->pingtime)
+    if (EXFAIL==p_srvnode->pingtime)
         p_srvnode->pingtime=config->default_pingtime;
     
-    if (FAIL==p_srvnode->ping_max)
+    if (EXFAIL==p_srvnode->ping_max)
         p_srvnode->ping_max=config->default_ping_max;
     
     /* Copy default env override */
-    if (EOS==p_srvnode->env[0] && EOS!=config->default_env[0])
+    if (EXEOS==p_srvnode->env[0] && EXEOS!=config->default_env[0])
         strcpy(p_srvnode->env, config->default_env);
     
-    if (FAIL==p_srvnode->killtime)
+    if (EXFAIL==p_srvnode->killtime)
         p_srvnode->killtime=config->default_killtime;
     
     /* it could be empty for defaults too - then no problem.  */
-    if (EOS==p_srvnode->exportsvcs[0])
+    if (EXEOS==p_srvnode->exportsvcs[0])
         strcpy(p_srvnode->exportsvcs, config->default_exportsvcs);
     
-    if (EOS==p_srvnode->blacklistsvcs[0])
+    if (EXEOS==p_srvnode->blacklistsvcs[0])
         strcpy(p_srvnode->blacklistsvcs, config->default_blacklistsvcs);
     
     if (!p_srvnode->srvstartwait)
@@ -926,37 +935,37 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (!p_srvnode->srvstopwait)
         p_srvnode->srvstopwait=config->default_srvstopwait;
     
-    if (EOS==p_srvnode->cctag[0])
+    if (EXEOS==p_srvnode->cctag[0])
         strcpy(p_srvnode->cctag, config->default_cctag);
     
-    if (FAIL==p_srvnode->isprotected)
+    if (EXFAIL==p_srvnode->isprotected)
         p_srvnode->isprotected = config->default_isprotected;
     
-    if (FAIL==p_srvnode->reloadonchange)
+    if (EXFAIL==p_srvnode->reloadonchange)
         p_srvnode->reloadonchange = config->default_reloadonchange;
     
-    if (FAIL==p_srvnode->respawn)
+    if (EXFAIL==p_srvnode->respawn)
         p_srvnode->respawn = config->default_respawn;
     
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
         NDRX_LOG(log_error, "`ping_max' not set for server! at line %hd", 
                 cur->line);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
-    if (FAIL==p_srvnode->srvid)
+    if (EXFAIL==p_srvnode->srvid)
     {
         NDRX_LOG(log_error, "No srvid near of line %hd", cur->line);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
-	    "RESPAWN=\"%c\"",
+	    "RESPAWN=\"%c\" FULLPATH=\"%s\"",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, p_srvnode->ping_max,
@@ -965,12 +974,13 @@ private int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->srvstopwait,
                     p_srvnode->cctag,
                     p_srvnode->reloadonchange?'Y':'N',
-		    p_srvnode->respawn?'Y':'N'
+		    p_srvnode->respawn?'Y':'N',
+                    p_srvnode->fullpath
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 
 out:
-    if (FAIL==ret && p_srvnode)
+    if (EXFAIL==ret && p_srvnode)
         NDRX_FREE(p_srvnode);
     return ret;
 }
@@ -980,9 +990,9 @@ out:
  * @param cur
  * @return
  */
-private int parse_servers(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_servers(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *p;
     
     for (; cur ; cur=cur->next)
@@ -990,9 +1000,9 @@ private int parse_servers(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (0==strcmp((char*)cur->name, "server"))
             {
                 /* Get the server name */
-                if (SUCCEED!=parse_server(config, doc, cur))
+                if (EXSUCCEED!=parse_server(config, doc, cur))
                 {
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -1006,15 +1016,15 @@ out:
  * @param doc
  * @return
  */
-private int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
-    int ret=SUCCEED;
-    int appconfig_found=FALSE;
+    int ret=EXSUCCEED;
+    int appconfig_found=EXFALSE;
 
     if (NULL==cur)
     {
         NDRX_LOG(log_error, "Empty config?");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1023,22 +1033,22 @@ private int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     {
         
         if (0==strcmp((char*)cur->name, "defaults")
-                && SUCCEED!=parse_defaults(config, doc, cur->children))
+                && EXSUCCEED!=parse_defaults(config, doc, cur->children))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else if (0==strcmp((char*)cur->name, "servers")
-                && SUCCEED!=parse_servers(config, doc, cur->children))
+                && EXSUCCEED!=parse_servers(config, doc, cur->children))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else if (0==strcmp((char*)cur->name, "appconfig")
-                && (appconfig_found=TRUE)
-                && SUCCEED!=parse_appconfig(config, doc, cur->children))
+                && (appconfig_found=EXTRUE)
+                && EXSUCCEED!=parse_appconfig(config, doc, cur->children))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 #if 0
@@ -1054,7 +1064,7 @@ private int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (!appconfig_found)
     {
         NDRX_LOG(log_error, "<appconfig> section not found in config!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1068,9 +1078,9 @@ out:
  * This initially loads the configuration int internal represtation of the
  * configuration file. After that from this info we will build work structures.
  */
-public int load_config(config_t *config, char *config_file)
+expublic int load_config(config_t *config, char *config_file)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     xmlDocPtr doc;
     xmlNodePtr root;
 #if 0
@@ -1079,7 +1089,7 @@ public int load_config(config_t *config, char *config_file)
     if(!reader) {
         NDRX_LOG(log_error, "Failed to open [%s] with error: %s",
                                         config_file, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 #endif
@@ -1088,7 +1098,7 @@ public int load_config(config_t *config, char *config_file)
     if (!doc)
     {
         NDRX_LOG(log_error, "Failed to open or parse %s", config_file);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1096,7 +1106,7 @@ public int load_config(config_t *config, char *config_file)
     if (!(root = xmlDocGetRootElement(doc)))
     {
         NDRX_LOG(log_error, "Failed to get root XML element");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1134,13 +1144,13 @@ out:
  * ---It will be removed from pmodel, but it must be shutdown, otherwise it is error.
  * @return
  */
-public int test_config(int reload, command_call_t * call, 
+expublic int test_config(int reload, command_call_t * call, 
         void (*p_reload_error)(command_call_t * call, int srvid, 
         char *old_bin, char *new_bin, int error))
 {
-    int ret=SUCCEED;
-    int new_error=FALSE;
-    int old_error=FALSE;
+    int ret=EXSUCCEED;
+    int new_error=EXFALSE;
+    int old_error=EXFALSE;
     /*
      * Active monitor configuration
      */
@@ -1168,18 +1178,18 @@ public int test_config(int reload, command_call_t * call,
 
     pm_node_t *old, *new;
 
-    if (SUCCEED!=load_active_config(&t_app_config, &t_process_model,
+    if (EXSUCCEED!=load_active_config(&t_app_config, &t_process_model,
                 &t_process_model_hash, &t_process_model_pid_hash))
     {
         NDRX_LOG(log_error, "Failed to load new configuration & build pmodel!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     /* If not active config present, then we have nothing to do */
     if (NULL==G_app_config)
     {
         NDRX_LOG(log_debug, "Active config not loaded, nothing to do.");
-        return SUCCEED;
+        return EXSUCCEED;
     }
     
     /* I think we need two loops:
@@ -1226,7 +1236,7 @@ public int test_config(int reload, command_call_t * call,
                             "serverid=%d is in non shutdown state (%d)! New binary for this id is [%s]",
                             old->binary_name, new->srvid, old->state, new->binary_name);
                 }
-                new_error=TRUE;
+                new_error=EXTRUE;
             }
             else
             {
@@ -1270,7 +1280,7 @@ public int test_config(int reload, command_call_t * call,
                             "serverid=%d is in non shutdown state (%d)!",
                             old->binary_name, old->srvid, old->state);
                 }
-                old_error=TRUE;
+                old_error=EXTRUE;
             }
             else
             {
@@ -1283,7 +1293,7 @@ public int test_config(int reload, command_call_t * call,
 
     if (old_error || new_error)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1315,11 +1325,11 @@ public int test_config(int reload, command_call_t * call,
                 /* So that we do not unlink the list later when old pm is freed */
                 old->svcs = NULL;
                 /* Add stuff to new pidhash! */
-                if (SUCCEED!=add_to_pid_hash(t_process_model_pid_hash, new))
+                if (EXSUCCEED!=add_to_pid_hash(t_process_model_pid_hash, new))
                 {
                     NDRX_LOG(log_error, "Failed to register "
                                                 "process in new pidhash!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -1354,7 +1364,7 @@ public int test_config(int reload, command_call_t * call,
 
 out:
 
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         config_free(&t_app_config, &t_process_model, &t_process_model_hash, &t_process_model_pid_hash);
     }

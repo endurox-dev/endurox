@@ -1,5 +1,5 @@
 /* 
-** EnduroX server main entry point
+** Enduro/X server main entry point
 **
 ** @file svqdispatch.c
 ** 
@@ -49,23 +49,23 @@
 #include "xa_cmn.h"
 #include <atmi_int.h>
 #include <typed_buf.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <atmi_shm.h>
 #include <gencall.h>
 #include <tperror.h>
 #include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /* THIS IS HOOK FOR TESTING!! */
-public void (*___G_test_delayed_startup)(void) = NULL;
+expublic void (*___G_test_delayed_startup)(void) = NULL;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public int G_shutdown_req = 0;
+expublic int G_shutdown_req = 0;
 
 /* Only for poll() mode: */
-public int G_shutdown_nr_wait = 0;   /* Number of self shutdown messages to wait */
-public int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  */
+expublic int G_shutdown_nr_wait = 0;   /* Number of self shutdown messages to wait */
+expublic int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  */
 
 /* Used no-long-jump systems, this should be thread object based.
  * Here we will not use context as the one thread that start the processing
@@ -73,7 +73,7 @@ public int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  */
  * Also maybe not so actual here, as we expect that main poller will run only
  * in one thread.
  */
-public int G_atmisrv_reply_type = 0; 
+expublic int G_atmisrv_reply_type = 0; 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -81,13 +81,13 @@ public int G_atmisrv_reply_type = 0;
  * Open queues for listening.
  * @return 
  */
-public int sv_open_queue(void)
+expublic int sv_open_queue(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i;
     svc_entry_fn_t *entry;
     struct ndrx_epoll_event ev;
-    int use_sem = FALSE;
+    int use_sem = EXFALSE;
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
         entry = G_server_conf.service_array[i];
@@ -100,15 +100,15 @@ public int sv_open_queue(void)
         /* ###################### CRITICAL SECTION ############################### */
         
         /* Acquire semaphore here.... */
-        if (G_shm_srv && EOS!=entry->svc_nm[0]) 
+        if (G_shm_srv && EXEOS!=entry->svc_nm[0]) 
         {
-            use_sem = TRUE;
+            use_sem = EXTRUE;
         }
         
-        if (use_sem && SUCCEED!=ndrx_lock_svc_op(__func__))
+        if (use_sem && EXSUCCEED!=ndrx_lock_svc_op(__func__))
         {
             NDRX_LOG(log_error, "Failed to lock sempahore");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -121,7 +121,7 @@ public int sv_open_queue(void)
 #ifdef EX_USE_POLL
         /* for poll mode, we must ensure that queue does not exists before start
          */
-        if (SUCCEED!=ndrx_mq_unlink(entry->listen_q))
+        if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
         {
             NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
                     ndrx_poll_strerror(ndrx_epoll_errno()))
@@ -134,7 +134,7 @@ public int sv_open_queue(void)
         /*
          * Check are we ok or failed?
          */
-        if ((mqd_t)FAIL==entry->q_descr)
+        if ((mqd_t)EXFAIL==entry->q_descr)
         {
             /* Release semaphore! */
             if (use_sem) 
@@ -142,7 +142,7 @@ public int sv_open_queue(void)
             
             _TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                         entry->listen_q, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -153,23 +153,23 @@ public int sv_open_queue(void)
         }
 
         /* Release semaphore! */
-        if (G_shm_srv && EOS!=entry->svc_nm[0]) ndrx_unlock_svc_op(__func__);
+        if (G_shm_srv && EXEOS!=entry->svc_nm[0]) ndrx_unlock_svc_op(__func__);
         /* ###################### CRITICAL SECTION, END ########################## */
         
         /* Save the time when stuff is open! */
-        ndrx_timer_reset(&entry->qopen_time);
+        ndrx_stopwatch_reset(&entry->qopen_time);
 
         NDRX_LOG(log_debug, "Got file descriptor: %d", entry->q_descr);
     }
     
     /* Register for (e-)polling */
     G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
-    if (FAIL==G_server_conf.epollfd)
+    if (EXFAIL==G_server_conf.epollfd)
     {
         _TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
                                 G_server_conf.adv_service_count,
                                 ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -179,7 +179,7 @@ public int sv_open_queue(void)
     if (NULL==G_server_conf.events)
     {
         _TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -197,11 +197,11 @@ public int sv_open_queue(void)
         ev.data.mqd = G_server_conf.service_array[i]->q_descr;
 #endif
         
-        if (FAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
+        if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
             _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -214,9 +214,9 @@ out:
  * Serve service call
  * @return
  */
-public int sv_serve_call(int *service, int *status)
+expublic int sv_serve_call(int *service, int *status)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *request_buffer = NULL;
     long req_len = 0;
     int reply_type;
@@ -224,13 +224,13 @@ public int sv_serve_call(int *service, int *status)
     tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
     buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
     long call_age;
-    int generate_rply = FALSE;
+    int generate_rply = EXFALSE;
     tp_command_call_t * last_call;
-    *status=SUCCEED;
+    *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     atmi_lib_env_t * env = ndrx_get_G_atmi_env();
     
-    call_age = ndrx_timer_get_delta_sec(&call->timer);
+    call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
 
     NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d callseq: %u, "
 			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
@@ -244,7 +244,7 @@ public int sv_serve_call(int *service, int *status)
     {
         NDRX_LOG(log_warn, "Received call already expired! "
                 "call age = %ld s, timeout = %d s", call_age, env->time_out);
-        *status=FAIL;
+        *status=EXFAIL;
         goto out;
     }
 
@@ -262,8 +262,8 @@ public int sv_serve_call(int *service, int *status)
             NDRX_LOG(log_always, "Invalid buffer type received %hd"
                                         "min = %d max %d",
                             call->buffer_type_id, BUF_TYPE_MIN, BUF_TYPE_MAX);
-            *status=FAIL;
-            generate_rply = TRUE;
+            *status=EXFAIL;
+            generate_rply = EXTRUE;
             goto out;
         }
         call_type = &G_buf_descr[call->buffer_type_id];
@@ -275,18 +275,18 @@ public int sv_serve_call(int *service, int *status)
                         &req_len,
                         0L);
 
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
 
             /* TODO: Reply with failure - TPEOTYPE - type not supported! */
-            *status=FAIL;
-            generate_rply = TRUE;
+            *status=EXFAIL;
+            generate_rply = EXTRUE;
             goto out;
         }
         else
         {
             /* this must succeed */
-            outbufobj=find_buffer(request_buffer);
+            outbufobj=ndrx_find_buffer(request_buffer);
             outbufobj->autoalloc = 1; /* We have stuff autoallocated! */
             NDRX_LOG(log_debug, "Buffer=%p autoalloc=%hd", 
                     outbufobj->buf, outbufobj->autoalloc);
@@ -304,20 +304,20 @@ public int sv_serve_call(int *service, int *status)
 
         svcinfo.data = request_buffer;
         svcinfo.len = req_len;
-        strcpy(svcinfo.name, call->name);
+        NDRX_STRCPY_SAFE(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         
         /* set the client id to caller */
-        strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
+        NDRX_STRCPY_SAFE(svcinfo.cltid.clientdata, (char *)call->my_id);
         last_call = ndrx_get_G_last_call();
         memcpy(last_call, call, sizeof(tp_command_call_t));
                              /* save last call info to ATMI library
                               * (this does excludes data by default) */
         
         /* Register global tx */
-        if (EOS!=call->tmxid[0] && 
-                SUCCEED!=_tp_srv_join_or_new_from_call(call, FALSE))
+        if (EXEOS!=call->tmxid[0] && 
+                EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to start/join global tx!");
             
@@ -325,8 +325,8 @@ public int sv_serve_call(int *service, int *status)
              * return TPFAIL, and we should notify master, that this RM is
              * failed!!!!
              */
-            *status=FAIL;
-            generate_rply = TRUE;
+            *status=EXFAIL;
+            generate_rply = EXTRUE;
             goto out;
         }
         
@@ -346,7 +346,7 @@ public int sv_serve_call(int *service, int *status)
         {
             G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
             /* put reply address */
-            strcpy(G_shm_srv->last_reply_q, call->reply_to);
+            NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
         }
         
         /* We need to convert buffer here (if function set...) */
@@ -369,14 +369,14 @@ public int sv_serve_call(int *service, int *status)
             last_call->sysflags|= G_server_conf.service_array[no]->xcvtflags;
             call->sysflags |= G_server_conf.service_array[no]->xcvtflags;
             
-            if (SUCCEED!=typed_xcvt(&outbufobj, call->sysflags, FALSE))
+            if (EXSUCCEED!=typed_xcvt(&outbufobj, call->sysflags, EXFALSE))
             {
                 NDRX_LOG(log_debug, "Failed to convert buffer service "
                             "format: %llx", last_call->sysflags);
                 userlog("Failed to convert buffer service "
                             "format: %llx", last_call->sysflags);
-                *status=FAIL;
-                generate_rply = TRUE;
+                *status=EXFAIL;
+                generate_rply = EXTRUE;
                 goto out;
             }
             else
@@ -389,9 +389,9 @@ public int sv_serve_call(int *service, int *status)
         last_call->autobuf = outbufobj;
         
         /* For golang integration we need to know at service the function name */
-        strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
+        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         
-        if (FAIL!=*status) /* Dot not invoke if failed! */
+        if (EXFAIL!=*status) /* Dot not invoke if failed! */
         {
             G_server_conf.service_array[no]->p_func(&svcinfo);
         }
@@ -409,7 +409,7 @@ public int sv_serve_call(int *service, int *status)
             if (G_atmisrv_reply_type & RETURN_FAILED || 
                     G_atmisrv_reply_type & RETURN_SVC_FAIL)
             {
-                *status=FAIL;
+                *status=EXFAIL;
             }
         }
         else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
@@ -427,7 +427,7 @@ public int sv_serve_call(int *service, int *status)
                 NDRX_LOG(log_error, "PROTO error - no reply from service [%s]",
                                                 call->name);
                 /* reply with failure back */
-                *status=FAIL;
+                *status=EXFAIL;
                 goto out;
             }
         }
@@ -438,7 +438,7 @@ public int sv_serve_call(int *service, int *status)
                                         reply_type);
         if (reply_type & RETURN_FAILED || reply_type & RETURN_SVC_FAIL)
         {
-            *status=FAIL;
+            *status=EXFAIL;
         }
     }
     
@@ -473,33 +473,33 @@ out:
  * TODO: we need XA handling here too!
  * @return
  */
-public int sv_serve_connect(int *service, int *status)
+expublic int sv_serve_connect(int *service, int *status)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *request_buffer = NULL;
     long req_len = 0;
     int reply_type;
     typed_buffer_descr_t *call_type;
     tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-    *status=SUCCEED;
+    *status=EXSUCCEED;
     long call_age;
     atmi_lib_env_t *env = ndrx_get_G_atmi_env();
     tp_command_call_t * last_call = ndrx_get_G_last_call();
 
-    *status=SUCCEED;
+    *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     
     NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %hu",
                                         call->cd, call->timestamp, call->callseq);
     
-    call_age = ndrx_timer_get_delta_sec(&call->timer);
+    call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
     
     if (env->time_out>0 && call_age >= env->time_out && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
                 "call age = %ld s, timeout = %d s", call_age, env->time_out);
-        *status=FAIL;
+        *status=EXFAIL;
         goto out;
     }
     
@@ -517,7 +517,7 @@ public int sv_serve_connect(int *service, int *status)
                         &req_len,
                         0L);
     
-        if (SUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
 
             /* TODO: Reply with failure - TPEOTYPE - type not supported! */
@@ -547,11 +547,11 @@ public int sv_serve_connect(int *service, int *status)
             svcinfo.len = 0;
         }
 
-        strcpy(svcinfo.name, call->name);
+        NDRX_STRCPY_SAFE(svcinfo.name, call->name);
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         /* set the client id to caller */
-        strcpy(svcinfo.cltid.clientdata, (char *)call->my_id);
+        NDRX_STRCPY_SAFE(svcinfo.cltid.clientdata, (char *)call->my_id);
         
         
         *last_call = *call; /* save last call info to ATMI library
@@ -559,7 +559,7 @@ public int sv_serve_connect(int *service, int *status)
         
         if (NULL!=request_buffer)
         {
-            last_call->autobuf=find_buffer(request_buffer);
+            last_call->autobuf=ndrx_find_buffer(request_buffer);
             last_call->autobuf->autoalloc = 1; 
         }
         else
@@ -574,16 +574,16 @@ public int sv_serve_connect(int *service, int *status)
         svcinfo.cd+=MAX_CONNECTIONS;
         last_call->cd+=MAX_CONNECTIONS;
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
-                                               call->cd, svcinfo.cd, MAX_CONNECTIONS);
+                                        call->cd, svcinfo.cd, MAX_CONNECTIONS);
 
 
         /* At this point we should build up conversation queues
          * Open for read their queue, and open for write our queue to listen
          * on.
          */
-        if (FAIL==accept_connection())
+        if (EXFAIL==accept_connection())
         {
-            ret=FAIL;
+            ret=EXFAIL;
 
             /* Try hardly to send SVCFAIL/ERR response back! */
             reply_with_failure(0, last_call, NULL, NULL, TPESVCERR);
@@ -592,8 +592,8 @@ public int sv_serve_connect(int *service, int *status)
         }
 
         /* Register global tx */
-        if (EOS!=call->tmxid[0] && 
-                SUCCEED!=_tp_srv_join_or_new_from_call(call, FALSE))
+        if (EXEOS!=call->tmxid[0] && 
+                EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to start/join global tx!");
             
@@ -601,7 +601,7 @@ public int sv_serve_connect(int *service, int *status)
              * return TPFAIL, and we should notify master, that this RM is
              * failed!!!!
              */
-            *status=FAIL;
+            *status=EXFAIL;
         }
         
         /* If we run in abort only mode and do some forwards & etc.
@@ -621,10 +621,10 @@ public int sv_serve_connect(int *service, int *status)
         {
             G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
             /* put reply address */
-            strcpy(G_shm_srv->last_reply_q, call->reply_to);
+            NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
         }
         /* For golang integration we need to know at service the function name */
-        strcpy(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
+        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
         G_server_conf.service_array[no]->p_func(&svcinfo);
         
         /*Needs some patch for go-lang that we do not use long jumps...
@@ -643,7 +643,7 @@ public int sv_serve_connect(int *service, int *status)
             if (G_atmisrv_reply_type & RETURN_FAILED || 
                     G_atmisrv_reply_type & RETURN_SVC_FAIL)
             {
-                *status=FAIL;
+                *status=EXFAIL;
             }
         }
         else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
@@ -661,7 +661,7 @@ public int sv_serve_connect(int *service, int *status)
                 NDRX_LOG(log_error, "PROTO error - no reply from service [%s]",
                                                 call->name);
                 /* reply with failure back */
-                *status=FAIL;
+                *status=EXFAIL;
             }
         }
     }
@@ -672,7 +672,7 @@ public int sv_serve_connect(int *service, int *status)
         
         if (reply_type & RETURN_FAILED || reply_type & RETURN_SVC_FAIL)
         {
-            *status=FAIL;
+            *status=EXFAIL;
         }
         
     }
@@ -696,15 +696,14 @@ out:
  * @param len
  * @return
  */
-public int sv_server_request(char *buf, int len)
+expublic int sv_server_request(char *buf, int len)
 {
-    int ret=SUCCEED;
-
+    int ret=EXSUCCEED;
     tp_command_generic_t *gen_command = (tp_command_generic_t *)G_server_conf.last_call.buf_ptr;
-    ndrx_timer_t timer;
+    ndrx_stopwatch_t timer;
     /* take time */
-    ndrx_timer_reset(&timer);
-    int service = FAIL;
+    ndrx_stopwatch_reset(&timer);
+    int service = EXFAIL;
     int status;
     
     /*if we are bridge, then no more processing required!*/
@@ -712,10 +711,10 @@ public int sv_server_request(char *buf, int len)
     {
         if (NULL!=G_server_conf.p_qmsg)
         {
-            if (SUCCEED!=G_server_conf.p_qmsg(buf, len, BR_NET_CALL_MSG_TYPE_ATMI))
+            if (EXSUCCEED!=G_server_conf.p_qmsg(buf, len, BR_NET_CALL_MSG_TYPE_ATMI))
             {
                 NDRX_LOG(log_error, "Failed to process ATMI request on bridge!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
         else
@@ -780,27 +779,113 @@ public int sv_server_request(char *buf, int len)
                 ndrx_dump_call_struct(log_error, call);
             }
             break;
+        case ATMI_COMMAND_TPNOTIFY:
+        case ATMI_COMMAND_BROADCAST:
+            {
+                /* Got broadcast message, just use ATMI lib internal
+                 * dispatcher...
+                 */
+                tp_notif_call_t *notif = (tp_notif_call_t*)G_server_conf.last_call.buf_ptr;
+                char *request_buffer = NULL;
+                long req_len = 0;
+                typed_buffer_descr_t *call_type;
+                
+                call_type = &G_buf_descr[notif->buffer_type_id];
+                
+                NDRX_LOG(log_info, "Doing local %s... (buffer type %hd)",
+                     (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"),
+                        notif->buffer_type_id);
+                
+                /* How about prepare incoming buffer? */
+                
+                if (0==notif->data_len ||
+                        EXSUCCEED==call_type->pf_prepare_incoming(call_type,
+                        notif->data,
+                        notif->data_len,
+                        &request_buffer,
+                        &req_len,
+                        0L))
+                {
+                    NDRX_LOG(log_debug, "ATMI Command id: %d", 
+                            gen_command->command_id);
+                    if (ATMI_COMMAND_TPNOTIFY==gen_command->command_id)
+                    {
+                        TPMYID myid;
+                        CLIENTID *clt;
+                    
+                        /* NDRX_LOG(log_debug, "Doing notify..."); */
+                        clt = (CLIENTID *)notif->destclient; /* same char arr.. */
+                        
+                        if (EXSUCCEED!=ndrx_myid_parse(notif->destclient, &myid, EXFALSE))
+                        {
+                            NDRX_LOG(log_error, "Failed to parse client: [%s]",
+                                    notif->destclient);
+                            EXFAIL_OUT(ret);
+                        }
+                        
+                        ret=_tpnotify((CLIENTID *)notif->destclient, /* basically clientid */
+                                &myid, 
+                                NULL, 
+                                request_buffer, 
+                                req_len, 
+                                notif->flags,
+                                myid.nodeid,
+                                (notif->nodeid_isnull?NULL:notif->nodeid),
+                                (notif->usrname_isnull?NULL:notif->usrname),
+                                (notif->cltname_isnull?NULL:notif->cltname),
+                                 0L);
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_debug, "Doing tpbroadcast... flags = %ld, is regexp=%d", 
+                                notif->flags, notif->flags&TPREGEXMATCH);
+                        
+                        NDRX_LOG(log_debug, "notif->nodeid_isnull: %d (%s)", 
+                                notif->nodeid_isnull, notif->nodeid);
+                        NDRX_LOG(log_debug, "notif->usrname_isnull: %d (%s)", 
+                                notif->usrname_isnull, notif->usrname);
+                        NDRX_LOG(log_debug, "notif->cltname_isnull: %d (%s)", 
+                                notif->cltname_isnull, notif->cltname);
+                        
+                        ret=_tpbroadcast_local((notif->nodeid_isnull?NULL:notif->nodeid),
+                                (notif->usrname_isnull?NULL:notif->usrname),
+                                (notif->cltname_isnull?NULL:notif->cltname),
+                                request_buffer, req_len, notif->flags, EXTRUE);
+                    }
+                    
+                    if (NULL!=request_buffer)
+                    {
+                        tpfree(request_buffer);
+                    }
+                    
+                    if (EXSUCCEED!=ret)
+                    {
+                        NDRX_LOG(log_error, "Local notification/broadcast failed");
+                    }
+                }
+                
+            }
+            break;
         default:
             NDRX_LOG(log_error, "Unknown command ID: %hd", gen_command->command_id);
             
             /* Dump the message to log... */
             NDRX_DUMP(log_error, "Command content", buf,  len);
             
-            ret=FAIL;
-            goto out;
+            EXFAIL_OUT(ret);
             break;
     }
 
     /* Update stats, if ptr available */
-    if (FAIL!=service && G_shm_srv)
+    if (EXFAIL!=service && G_shm_srv)
     {
-        unsigned result = ndrx_timer_get_delta(&timer);
+        unsigned result = ndrx_stopwatch_get_delta(&timer);
 
         /* reset back to avail. */
         G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
         G_shm_srv->status = NDRXD_SVC_STATUS_AVAIL;
 
-        /* update timeing */
+        /* update timing */
         /* min, if this is first time, then update directly */
         if (0==G_shm_srv->svc_succeed[service] && 0==G_shm_srv->svc_fail[service])
         {
@@ -817,7 +902,7 @@ public int sv_server_request(char *buf, int len)
         
         G_shm_srv->last_rsp_msec[service]=result;
 
-        if (status==SUCCEED)
+        if (status==EXSUCCEED)
         {
             /* Loop over to zero */
             if (INT_MAX==G_shm_srv->svc_succeed[service])
@@ -872,9 +957,9 @@ out:
  * @param shutdown_req
  * @return SUCCEED/FAIL
  */
-public int process_admin_req(char *buf, long len, int *shutdown_req)
+expublic int process_admin_req(char *buf, long len, int *shutdown_req)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     tp_command_generic_t shut_msg; /* shutdown msg */
     int i;
 
@@ -886,7 +971,7 @@ public int process_admin_req(char *buf, long len, int *shutdown_req)
         
         NDRX_LOG(log_warn, "Shutdown requested by [%s]", 
                                         call->reply_queue);
-        *shutdown_req=TRUE;
+        *shutdown_req=EXTRUE;
 #ifdef EX_USE_POLL
         /* TODO: We shall send request to all open service queues
          * to do the shutdown. This is only for poll() mode.
@@ -899,7 +984,7 @@ public int process_admin_req(char *buf, long len, int *shutdown_req)
         
         for (i=ATMI_SRV_Q_ADJUST; i<G_server_conf.adv_service_count; i++)
         {
-            if (SUCCEED!=generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
+            if (EXSUCCEED!=ndrx_generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
                     (char *)&shut_msg, sizeof(shut_msg), 0))
             {
                 NDRX_LOG(log_debug, "Failed to send self notification to %s q",
@@ -958,10 +1043,10 @@ public int process_admin_req(char *buf, long len, int *shutdown_req)
         {
             if (NULL!=G_server_conf.p_qmsg)
             {
-                if (SUCCEED!=G_server_conf.p_qmsg(buf, len, BR_NET_CALL_MSG_TYPE_NDRXD))
+                if (EXSUCCEED!=G_server_conf.p_qmsg(buf, len, BR_NET_CALL_MSG_TYPE_NDRXD))
                 {
                     NDRX_LOG(log_error, "Failed to process ATMI request on bridge!");
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
             }
             else
@@ -980,9 +1065,9 @@ out:
  * Enter server in waiting state
  * @return
  */
-public int sv_wait_for_request(void)
+expublic int sv_wait_for_request(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int nfds, n, len, j;
     unsigned prio;
     char msg_buf[ATMI_MSG_MAX_SIZE];
@@ -991,8 +1076,8 @@ public int sv_wait_for_request(void)
     pollextension_rec_t *ext;
     int evfd;
     mqd_t evmqd;
-    ndrx_timer_t   dbg_time;   /* Generally this is used for debug. */
-    ndrx_timer_t   periodic_cb;
+    ndrx_stopwatch_t   dbg_time;   /* Generally this is used for debug. */
+    ndrx_stopwatch_t   periodic_cb;
     command_call_t *p_adm_cmd = (command_call_t *)msg_buf;
     tp_command_call_t *call =  (tp_command_call_t*)msg_buf;
     
@@ -1002,14 +1087,14 @@ public int sv_wait_for_request(void)
     }
     else
     {
-        tout=FAIL; /* Timeout disabled */
+        tout=EXFAIL; /* Timeout disabled */
     }
     
-    ndrx_timer_reset(&dbg_time);
-    ndrx_timer_reset(&periodic_cb);
+    ndrx_stopwatch_reset(&dbg_time);
+    ndrx_stopwatch_reset(&periodic_cb);
     
     /* THIS IS MAIN SERVER LOOP! */
-    while(SUCCEED==ret && (!G_shutdown_req || 
+    while(EXSUCCEED==ret && (!G_shutdown_req || 
             /* if shutdown request then wait for all queued jobs to finish. */
             G_shutdown_nr_got <  G_shutdown_nr_wait))
     {
@@ -1017,9 +1102,9 @@ public int sv_wait_for_request(void)
         
         /* Invoke before poll function */
         if (G_server_conf.p_b4pollcb
-                && SUCCEED!=G_server_conf.p_b4pollcb())
+                && EXSUCCEED!=G_server_conf.p_b4pollcb())
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -1027,13 +1112,13 @@ public int sv_wait_for_request(void)
          * so we just put timer there if tout used, and no timer if no tout use.
          * If tout used, then 60 sec will be ok for dbug
          */
-        if (FAIL==tout || ndrx_timer_get_delta_sec(&dbg_time) >= 60)
+        if (EXFAIL==tout || ndrx_stopwatch_get_delta_sec(&dbg_time) >= 60)
         {
             NDRX_LOG(log_debug, "About to poll - timeout=%d millisec", 
                                                 tout);
-            if (FAIL!=tout)
+            if (EXFAIL!=tout)
             {
-                ndrx_timer_reset(&dbg_time);
+                ndrx_stopwatch_reset(&dbg_time);
             }
         }
         
@@ -1042,13 +1127,13 @@ public int sv_wait_for_request(void)
         
         /* Print stuff if there is no timeout set or there is some value out there */
         
-        if (nfds || FAIL==tout)
+        if (nfds || EXFAIL==tout)
         {
             NDRX_LOG(log_debug, "Poll says: %d", nfds);
         }
         
         /* If there are zero FDs &  */
-        if (FAIL==nfds)
+        if (EXFAIL==nfds)
         {
             int err = errno;
             _TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
@@ -1059,23 +1144,23 @@ public int sv_wait_for_request(void)
                 continue;
             }
             
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
 		}
         /* We should use timer here because, if there are service requests at
          * constant time (less than poll time), then callback will be never called! */
-        else if (FAIL!=tout && 
-                ndrx_timer_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
+        else if (EXFAIL!=tout && 
+                ndrx_stopwatch_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
         {
             if (NULL!=G_server_conf.p_periodcb &&
-                    SUCCEED!=(ret=G_server_conf.p_periodcb()))
+                    EXSUCCEED!=(ret=G_server_conf.p_periodcb()))
             {
                 NDRX_LOG(log_error, "Periodical callback function "
                         "failed!!! With ret=%d", ret);
                 goto out;
             }
             
-            ndrx_timer_reset(&periodic_cb);
+            ndrx_stopwatch_reset(&periodic_cb);
         }
         
         /*
@@ -1086,7 +1171,7 @@ public int sv_wait_for_request(void)
          */
         for (n = 0; n < nfds; n++)
         {
-            int is_mq_only = FAIL;
+            int is_mq_only = EXFAIL;
             evfd = G_server_conf.events[n].data.fd;
             evmqd = G_server_conf.events[n].data.mqd;
 
@@ -1101,7 +1186,7 @@ public int sv_wait_for_request(void)
                         n, G_server_conf.events[n].data.u32, evfd, evmqd, is_mq_only, G_pollext);
             
             /* Check poller extension */
-            if (NULL!=G_pollext && (FAIL==is_mq_only || FALSE==is_mq_only) )
+            if (NULL!=G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
             {
                 ext=ext_find_poller(evfd);
                 
@@ -1110,7 +1195,7 @@ public int sv_wait_for_request(void)
                     NDRX_LOG(log_info, "FD found in extension list, invoking");
                     
                     ret = ext->p_pollevent(evfd, G_server_conf.events[n].events, ext->ptr1);
-                    if (SUCCEED!=ret)
+                    if (EXSUCCEED!=ret)
                     {
                         NDRX_LOG(log_error, "p_pollevent at 0x%lx failed!!!",
                                 ext->p_pollevent);
@@ -1124,12 +1209,12 @@ public int sv_wait_for_request(void)
             }
             
             /* ignore fds  */
-            if (FALSE==is_mq_only)
+            if (EXFALSE==is_mq_only)
             {
                 continue;
             }
             
-            if (FAIL==(len=ndrx_mq_receive (evmqd,
+            if (EXFAIL==(len=ndrx_mq_receive (evmqd,
                 (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
             {
                 if (EAGAIN==errno)
@@ -1143,7 +1228,7 @@ public int sv_wait_for_request(void)
                 }
                 else
                 {
-                    ret=FAIL;
+                    ret=EXFAIL;
                     _TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", strerror(errno));
                 }
             }
@@ -1156,7 +1241,7 @@ public int sv_wait_for_request(void)
 
                 /* TODO: We could use hashtable to lookup for lookup*/
                 /* figure out target structure */
-                G_server_conf.last_call.no=FAIL;
+                G_server_conf.last_call.no=EXFAIL;
                 for (j=0; j<G_server_conf.adv_service_count; j++)
                 {
                     if (evmqd==G_server_conf.service_array[j]->q_descr)
@@ -1179,7 +1264,7 @@ public int sv_wait_for_request(void)
                     /* If this was even post, then we should adjust last call no */
                     if (ATMI_COMMAND_EVPOST==p_adm_cmd->command_id)
                     {
-                        G_server_conf.last_call.no = FAIL;
+                        G_server_conf.last_call.no = EXFAIL;
                         for (j=0; j<G_server_conf.adv_service_count; j++)
                         {
                             if (0==strcmp(G_server_conf.service_array[j]->svc_nm,
@@ -1189,7 +1274,7 @@ public int sv_wait_for_request(void)
                                break;
                             }
                         }
-                        if (FAIL==G_server_conf.last_call.no)
+                        if (EXFAIL==G_server_conf.last_call.no)
                         {
                             NDRX_LOG(log_error, "Failed to find service: [%s] "
                                     "- ignore event call!", call->name);
@@ -1198,14 +1283,15 @@ public int sv_wait_for_request(void)
                     }
                     
                     /* This normally should not happen! */
-                    if (FAIL==G_server_conf.last_call.no)
+                    if (EXFAIL==G_server_conf.last_call.no)
                     {
                         _TPset_error_fmt(TPESYSTEM, "No service entry for call descriptor %d",
                                     evmqd);
-                        ret=FAIL;
+                        ret=EXFAIL;
                         goto out;
                     }
-
+                    
+                    /* Save on the big message copy... */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
 

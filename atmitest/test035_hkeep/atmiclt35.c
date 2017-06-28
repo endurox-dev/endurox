@@ -56,7 +56,7 @@ void do_thread_work ( void *ptr )
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     long rsplen;
     int i;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d;
     double dv = 55.66;
     int cd;
@@ -70,18 +70,18 @@ void do_thread_work ( void *ptr )
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
 
 
-    if (FAIL==(cd=tpconnect((char *)ptr, (char *)p_ub, 0L, TPRECVONLY)))
+    if (EXFAIL==(cd=tpconnect((char *)ptr, (char *)p_ub, 0L, TPRECVONLY)))
     {
             NDRX_LOG(log_error, "TESTSV connect failed!: %s",
                                     tpstrerror(tperrno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
     }
 
     /* Recieve the stuff back */
     NDRX_LOG(log_debug, "About to tprecv!");
 
-    while (SUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
+    while (EXSUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
     {
         received++;
         NDRX_LOG(log_debug, "MSG RECEIVED OK!");
@@ -99,7 +99,7 @@ void do_thread_work ( void *ptr )
         {
             int i=0;
             /* Start the sending stuff now! */
-            for (i=0; i<100 && SUCCEED==ret; i++)
+            for (i=0; i<100 && EXSUCCEED==ret; i++)
             {
                 ret=tpsend(cd, (char *)p_ub, 0L, 0L, &revent);
             }
@@ -107,10 +107,10 @@ void do_thread_work ( void *ptr )
     }
 
     /* Now give the control to the server, so that he could finish up */
-    if (FAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
+    if (EXFAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
     {
         NDRX_LOG(log_debug, "TESTERROR: Failed to give server control!!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -121,16 +121,16 @@ void do_thread_work ( void *ptr )
     ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
     NDRX_LOG(log_error, "tprecv failed with revent=%ld", revent);
 
-    if (FAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
+    if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
     {
         NDRX_LOG(log_error, "Service finished with TPEV_SVCSUCC!");
-        ret=SUCCEED;
+        ret=EXSUCCEED;
     }
     
-    if (SUCCEED!=tpterm())
+    if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "TESTERROR: tpterm failed with: %s", tpstrerror(tperrno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

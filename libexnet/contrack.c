@@ -67,7 +67,7 @@ exnetcon_t *M_netlist = NULL;
  * Add connection from linked list
  * @param 
  */
-public void exnet_add_con(exnetcon_t *net)
+expublic void exnet_add_con(exnetcon_t *net)
 {
     /* Add stuff to linked list */
     DL_APPEND(M_netlist, net);
@@ -78,7 +78,7 @@ public void exnet_add_con(exnetcon_t *net)
  * Outside process shall do delete.
  * @param 
  */
-public void exnet_del_con(exnetcon_t *net)
+expublic void exnet_del_con(exnetcon_t *net)
 {
     /* delete stuff from linked list */
     DL_DELETE(M_netlist, net);   
@@ -87,7 +87,7 @@ public void exnet_del_con(exnetcon_t *net)
 /**
  * Get the head of the linked list.
  */
-public exnetcon_t * extnet_get_con_head(void)
+expublic exnetcon_t * extnet_get_con_head(void)
 {
     return M_netlist;
 }

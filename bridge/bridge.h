@@ -45,13 +45,13 @@ extern "C" {
 #define BR_DEFAULT_THPOOL_SIZE          5 /* Default threadpool size */
 #define BR_THREAD_ENTRY if (!G_thread_init) \
          { \
-                if (SUCCEED==tpinit(NULL))\
+                if (EXSUCCEED==tpinit(NULL))\
                 { \
-                    G_thread_init=TRUE; \
+                    G_thread_init=EXTRUE; \
                 } \
                 else \
                 { \
-                    FAIL_OUT(ret);\
+                    EXFAIL_OUT(ret);\
                 } \
          }
 /*---------------------------Enums--------------------------------------*/
@@ -79,7 +79,7 @@ struct in_msg
     int pack_type;
     char buffer[ATMI_MSG_MAX_SIZE];
     int len;
-    ndrx_timer_t trytime;  /* Time in Q */
+    ndrx_stopwatch_t trytime;  /* Time in Q */
     in_msg_t *prev, *next;
 };
 
@@ -104,7 +104,7 @@ typedef struct
     char *buf;
     int len;
     exnetcon_t *net;
-    int threaded; /* Do we run in threaded mode? */
+    /*int threaded;  Do we run in threaded mode? */
     int buf_malloced; /* buffer is malloced? */
     cmd_br_net_call_t *call; /* Intermediate field */
 } net_brmessage_t;
@@ -116,6 +116,7 @@ extern __thread int G_thread_init;
 /*---------------------------Prototypes---------------------------------*/
 extern int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q);
 extern int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from_q);
+extern int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* from_q);
 extern int br_got_message_from_q(char *buf, int len, char msg_type);
 extern int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from_q);
     
@@ -127,7 +128,7 @@ extern int br_send_clock(void);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
-public int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
+extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
 
 #ifdef	__cplusplus
 }

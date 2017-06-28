@@ -39,7 +39,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <atmi_int.h>
 #include <sys/param.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -273,8 +273,9 @@ extern "C" {
 /*
  * Values for cmd_br_net_call_t.msg_type
  */
-#define BR_NET_CALL_MSG_TYPE_ATMI       'A'      /* This is ATMI call          */
-#define BR_NET_CALL_MSG_TYPE_NDRXD      'X'      /* This is EnduroX call       */
+#define BR_NET_CALL_MSG_TYPE_ATMI       'A' /* This is ATMI call                */
+#define BR_NET_CALL_MSG_TYPE_NOTIF      'N' /* This is ATMI, notif/broadcast    */
+#define BR_NET_CALL_MSG_TYPE_NDRXD      'X' /* This is EnduroX call             */
 
 #define BR_NET_CALL_MAGIC               0x6A12CC51L /* Magic of the netcall  */
     
@@ -420,7 +421,7 @@ typedef struct
     int srvid;
     char svc_nm[MAXTIDENT+1];       /* Service name */
     char fn_nm[MAXTIDENT+1];        /* Function name */
-    ndrx_timer_t   qopen_time;         /* Timer when q was open */
+    ndrx_stopwatch_t   qopen_time;         /* Timer when q was open */
 
 } command_dynadvertise_t;
 
@@ -497,7 +498,7 @@ typedef struct
 {
     /* Clock sync */
     command_call_t call;
-    ndrx_timer_t time;
+    ndrx_stopwatch_t time;
 } cmd_br_time_sync_t;
 
 /**
@@ -674,7 +675,7 @@ typedef struct
 {
     char svc_nm[MAXTIDENT+1];       /* Service name */
     char fn_nm[MAXTIDENT+1];        /* Function name */
-    ndrx_timer_t   qopen_time;         /* Timer when q was open */
+    ndrx_stopwatch_t   qopen_time;         /* Timer when q was open */
 } svc_inf_t;
 
 /**

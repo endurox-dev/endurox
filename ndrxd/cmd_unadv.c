@@ -56,9 +56,9 @@
  * @param args
  * @return 
  */
-public int cmd_xadunadv (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_xadunadv (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_dynadvertise_t *unadv_xa = (command_dynadvertise_t *)call;
     command_dynadvertise_t call_srv;
     pm_node_t * p_pm;
@@ -69,7 +69,7 @@ public int cmd_xadunadv (command_call_t * call, char *data, size_t len, int cont
     {
         NDRXD_set_error_fmt(NDRXD_EINVPARAM, "Invalid server id %d",
                                     unadv_xa->srvid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -82,22 +82,22 @@ public int cmd_xadunadv (command_call_t * call, char *data, size_t len, int cont
             (command_call_t *)&call_srv, sizeof(call_srv),
             G_command_state.listenq_str,
             G_command_state.listenq,
-            (mqd_t)FAIL,
+            (mqd_t)EXFAIL,
             get_srv_admin_q(p_pm),
             0, NULL,
             NULL,
             NULL,
             NULL,
-            FALSE);
+            EXFALSE);
 out:
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
 
     NDRX_LOG(log_warn, "cmd_unadv_xadmin returns with status %d", ret);
     
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 
 /**
@@ -109,9 +109,9 @@ out:
  * @param context
  * @return  
  */
-public int cmd_srvunadv (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_srvunadv (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_dynadvertise_t * unadv = (command_dynadvertise_t *)call;
     pm_node_t *p_pm = get_pm_from_srvid(unadv->srvid);
     

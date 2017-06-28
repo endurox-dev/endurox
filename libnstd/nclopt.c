@@ -67,11 +67,11 @@ extern char *optarg;
  * @param argv - argument list
  * @return SUCCEED/FAIL
  */
-public int nstd_parse_clopt(ncloptmap_t *opts, int print_values, 
+expublic int nstd_parse_clopt(ncloptmap_t *opts, int print_values, 
         int argc, char **argv, int ignore_unk)
 {
-    int ret = SUCCEED;
-    char clopt_string[1024]={EOS};
+    int ret = EXSUCCEED;
+    char clopt_string[1024]={EXEOS};
     int len=0;
     signed char c; /* fix for rpi */
     ncloptmap_t *p = opts;
@@ -81,21 +81,21 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
     while (0!=p->key)
     {
         clopt_string[len]=p->key;
-        p->have_loaded = FALSE;
+        p->have_loaded = EXFALSE;
         len++;
         if (p->flags & NCLOPT_HAVE_VALUE)
         {
             clopt_string[len]=':';
             len++;
         }
-        clopt_string[len]=EOS;
+        clopt_string[len]=EXEOS;
         p++;
     }
     
     NDRX_LOG(log_debug, "clopt_string built: [%s] argc: [%d]", 
             clopt_string, argc);
 
-    while ((c = getopt(argc, argv, clopt_string)) != FAIL)
+    while ((c = getopt(argc, argv, clopt_string)) != EXFAIL)
     {
         
         /* search for key... */
@@ -115,7 +115,7 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
             {
                 NDRX_LOG(log_error, "Unknown command line option: [%c]", 
                         c);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             else
             {
@@ -127,7 +127,7 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
         if (!(p->flags & NCLOPT_HAVE_VALUE))
         {
             short *val = (short *)p->ptr;
-            *val = TRUE;
+            *val = EXTRUE;
             NDRX_LOG(log_debug, "%c (%s) = [TRUE]", c, p->descr);
         }
         else
@@ -198,7 +198,7 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
                         {
                             NDRX_LOG(log_error, "Clopt [%c] invalid len: %d",
                                             c, tmp);
-                            FAIL_OUT(ret);
+                            EXFAIL_OUT(ret);
                         }
                         strcpy((char *)p->ptr, optarg);
 
@@ -212,7 +212,7 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
             }
         }
         
-        p->have_loaded = TRUE;
+        p->have_loaded = EXTRUE;
     }
     
     /* Now cross check is all mandatory fields loaded... */
@@ -223,7 +223,7 @@ public int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
         {
             NDRX_LOG(log_error, "Missing command line option %c (%s)!",
                     p->key, p->descr);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         p++;

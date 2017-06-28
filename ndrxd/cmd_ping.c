@@ -56,9 +56,9 @@
  * @param args
  * @return 
  */
-public int srv_send_ping (pm_node_t *p_pm)
+expublic int srv_send_ping (pm_node_t *p_pm)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     command_srvping_t ping;
     
@@ -73,26 +73,26 @@ public int srv_send_ping (pm_node_t *p_pm)
     }
     ping.seq = p_pm->pingseq;
     ping.srvid = p_pm->srvid;
-    ndrx_timer_reset(&p_pm->pingroundtrip);
+    ndrx_stopwatch_reset(&p_pm->pingroundtrip);
     
     /* Call the server */
-    if (SUCCEED!=(ret = cmd_generic_callfl(NDRXD_COM_SRVPING_RQ, NDRXD_SRC_ADMIN,
+    if (EXSUCCEED!=(ret = cmd_generic_callfl(NDRXD_COM_SRVPING_RQ, NDRXD_SRC_ADMIN,
             NDRXD_CALL_TYPE_GENERIC,
             (command_call_t *)&ping, sizeof(ping),
             G_command_state.listenq_str,
             G_command_state.listenq,
-            (mqd_t)FAIL,
+            (mqd_t)EXFAIL,
             get_srv_admin_q(p_pm),
             0, NULL,
             NULL,
             NULL,
             NULL,
-            FALSE,
+            EXFALSE,
             TPNOBLOCK)))
     {
         NDRX_LOG(log_error, "Failed to send ping command to server id=%d!", 
                 ping.srvid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -110,9 +110,9 @@ out:
  * @param context
  * @return  
  */
-public int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     command_srvping_t * ping = (command_srvping_t *)call;
     pm_node_t *p_pm = get_pm_from_srvid(ping->srvid);
@@ -120,13 +120,13 @@ public int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int co
     if (NULL==p_pm)
     {
         NDRX_LOG(log_error, "No such server with id: %d", ping->srvid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else if (p_pm->pingseq == ping->seq)
     {
         NDRX_LOG(log_error, "Server id=%d ok, binary: [%s] ping reply seq: %d, rsptime: %s", 
-                ping->srvid, p_pm->binary_name, ping->seq, ndrx_timer_decode(&p_pm->pingroundtrip, 0));
+                ping->srvid, p_pm->binary_name, ping->seq, ndrx_stopwatch_decode(&p_pm->pingroundtrip, 0));
         p_pm->rsptimer = SANITY_CNT_START;
     }
     else
@@ -138,5 +138,5 @@ public int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int co
     
 out:
     /* Ignore the error */
-    return SUCCEED;
+    return EXSUCCEED;
 }

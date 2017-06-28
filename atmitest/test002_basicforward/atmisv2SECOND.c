@@ -39,7 +39,7 @@
 
 void TEST2_2ND (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     static double d = 11.66;
 
@@ -51,20 +51,20 @@ void TEST2_2ND (TPSVCINFO *p_svc)
     Bprint(p_ub);
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 8192))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     d+=1;
 
-    if (FAIL==Badd(p_ub, T_DOUBLE_2_FLD, (char *)&d, 0))
+    if (EXFAIL==Badd(p_ub, T_DOUBLE_2_FLD, (char *)&d, 0))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -78,15 +78,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TEST2_2ND", TEST2_2ND))
+    if (EXSUCCEED!=tpadvertise("TEST2_2ND", TEST2_2ND))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST2_2ND (first)!");
     }
-    else if (SUCCEED!=tpadvertise("TEST2_2ND_AL", TEST2_2ND))
+    else if (EXSUCCEED!=tpadvertise("TEST2_2ND_AL", TEST2_2ND))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST2_2ND_AL (alias)!");
     }
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

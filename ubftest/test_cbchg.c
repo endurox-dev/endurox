@@ -55,42 +55,42 @@ Ensure(test_Bchg_short_org)
     char carray[128]="26411";
 
     /* init */
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
 
     /* short-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 123);
     do_dummy_data_test(p_ub);
     /* long-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 102);
     do_dummy_data_test(p_ub);
     /* char-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 55); /* 55 - ascii code for '7' */
     do_dummy_data_test(p_ub);
     /* float-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 11);
     do_dummy_data_test(p_ub);
     /* double-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 1443);
     do_dummy_data_test(p_ub);
     /* string-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 31255);
     do_dummy_data_test(p_ub);
     /* carray-to-short */
-    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), SUCCEED);
-    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 26411);
     do_dummy_data_test(p_ub);
 }
@@ -112,42 +112,42 @@ Ensure(test_Bchg_long_org)
     char carray[128]="2641133";
 
     /* init */
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
 
     /* short-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 123);
     do_dummy_data_test(p_ub);
     /* long-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 102);
     do_dummy_data_test(p_ub);
     /* char-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 55); /* 55 - ascii code for '7' */
     do_dummy_data_test(p_ub);
     /* float-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 11123341);
     do_dummy_data_test(p_ub);
     /* double-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 14431234);
     do_dummy_data_test(p_ub);
     /* string-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 3125511);
     do_dummy_data_test(p_ub);
     /* carray-to-long */
-    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), SUCCEED);
-    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 2641133);
     do_dummy_data_test(p_ub);
 }
@@ -169,42 +169,42 @@ Ensure(test_Bchg_char_org)
     char carray[128]="6";
 
     /* init */
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
 
     /* short-to-char */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 1);
     do_dummy_data_test(p_ub);
     /* long-to-char */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 2);
     do_dummy_data_test(p_ub);
     /* char-to-long */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 55); /* 55 - ascii code for '7' */
     do_dummy_data_test(p_ub);
     /* float-to-char */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 3);
     do_dummy_data_test(p_ub);
     /* double-to-char */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 4);
     do_dummy_data_test(p_ub);
     /* string-to-char */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 53);
     do_dummy_data_test(p_ub);
     /* carray-to-char */
-    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), SUCCEED);
-    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 54);
     do_dummy_data_test(p_ub);
 }
@@ -227,54 +227,54 @@ Ensure(test_Bchg_float_org)
     BFLDLEN len; /* Testing len only for few, because thos other should work fine w/out them */
 
     /* init */
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
 
     /* short-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 12321);
     do_dummy_data_test(p_ub);
     assert_equal(sizeof(test_val), len);
     /* long-to-float */
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 10223112);
     do_dummy_data_test(p_ub);
     /* char-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
     assert_double_equal(test_val, 55); /* 55 - ascii code for '7' */
     do_dummy_data_test(p_ub);
     assert_equal(len, sizeof(test_val));
     len=sizeof(test_val)-1;
     /* validate the error output! */
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), FAIL);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), EXFAIL);
     assert_equal(Berror, BNOSPACE);
     /* Check the case when buffer is too short! */
     /* float-to-float */
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 111233.41);
     do_dummy_data_test(p_ub);
     /* double-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
     assert_double_equal(test_val, 144.31234);
     do_dummy_data_test(p_ub);
     assert_equal(len, sizeof(test_val));
     /* string-to-float */
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 3125.511);
     do_dummy_data_test(p_ub);
     /* carray-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), SUCCEED);
-    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
     assert_double_equal(test_val, -264.1133f);
     do_dummy_data_test(p_ub);
     assert_equal(len, sizeof(test_val));
@@ -298,50 +298,50 @@ Ensure(test_Bchg_double_org)
     BFLDLEN len; /* Testing len only for few, because thos other should work fine w/out them */
     
     /* init */
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
 
     /* short-to-float */
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 22321);
     do_dummy_data_test(p_ub);
     /* long-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
     assert_double_equal(test_val, 20223112);
     do_dummy_data_test(p_ub);
     assert_equal(sizeof(test_val), len);
 
     /* char-to-float */
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 52); /* 55 - ascii code for '7' */
     do_dummy_data_test(p_ub);
     /* float-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
     assert_double_equal(test_val, 211233.41);
     do_dummy_data_test(p_ub);
     assert_equal(sizeof(test_val), len);
     /* double-to-float */
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 244.31234);
     do_dummy_data_test(p_ub);
     /* string-to-float */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
     assert_double_equal(test_val, 2125.511);
     do_dummy_data_test(p_ub);
     assert_equal(sizeof(test_val), len);
 
     /* carray-to-float */
-    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), SUCCEED);
-    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, -2264.1133);
     do_dummy_data_test(p_ub);
 }
@@ -368,7 +368,7 @@ Ensure(test_Bchg_string_org)
     int str_len_tmp;
     int big_loop;
     
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
     /*
      * Initialize character array to some dummy value
@@ -385,45 +385,45 @@ Ensure(test_Bchg_string_org)
     len=sizeof(test_val);
     /* short-to-string */
 
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_string_equal(test_val, "22321");
     assert_equal(len, 6);
 
     do_dummy_data_test(p_ub);
     /* long-to-string */
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), EXSUCCEED);
     assert_string_equal(test_val, "20223112");
     do_dummy_data_test(p_ub);
     /* char-to-string */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_string_equal(test_val, "4"); /* 55 - ascii code for '7' */
     assert_equal(len, 2);
     do_dummy_data_test(p_ub);
     /* float-to-string (test on Tuxedo) */
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), EXSUCCEED);
     assert_equal(strncmp(test_val, "211233.41", 8),0);
     do_dummy_data_test(p_ub);
     /* double-to-string (test un Tuxedo?) */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, "244.31234",9),0);
     assert_true(len>9);
     do_dummy_data_test(p_ub);
     /* string-to-string */
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), EXSUCCEED);
     assert_string_equal(test_val, string);
     do_dummy_data_test(p_ub);
     /* carray-to-string */
     len=sizeof(test_val);
-    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)carray, sizeof(carray), BFLD_CARRAY), SUCCEED);
-    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)carray, sizeof(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, carray, sizeof(carray)), 0);
     assert_equal(len, sizeof(carray)+1);
     do_dummy_data_test(p_ub);
@@ -432,9 +432,9 @@ Ensure(test_Bchg_string_org)
     for (big_loop=0; big_loop<10;big_loop++)
     {
         str_len_tmp=strlen(BIG_TEST_STRING);
-        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)BIG_TEST_STRING, str_len_tmp, BFLD_CARRAY), SUCCEED);
+        assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)BIG_TEST_STRING, str_len_tmp, BFLD_CARRAY), EXSUCCEED);
         len = sizeof(string_big);
-        assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)string_big, &len), SUCCEED);
+        assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)string_big, &len), EXSUCCEED);
         assert_equal(len, str_len_tmp+1);
         assert_equal(strncmp(string_big, BIG_TEST_STRING, str_len_tmp), 0);
     }
@@ -463,7 +463,7 @@ Ensure(test_Bchg_carray_org)
     int str_len_tmp;
     int big_loop;
     
-    assert_equal(Binit(p_ub, sizeof(buf)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
     /*
      * Initialize character array to some dummy value
@@ -478,51 +478,51 @@ Ensure(test_Bchg_carray_org)
     string[sizeof(string)-1] = 0;
 
     /* short-to-carray */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val,  "22321", 5), 0);
     assert_equal(len, 5);
     do_dummy_data_test(p_ub);
     /* long-to-carray */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&long_val, 0, BFLD_LONG), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val,  "20223112", 8), 0);
     assert_equal(len, 8);
     do_dummy_data_test(p_ub);
     /* char-to-carray */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val,  "4", 1), 0); /* 55 - ascii code for '7' */
     assert_equal(len, 1);
     do_dummy_data_test(p_ub);
     /* float-to-carray (test on Tuxedo) */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, "211233.41", 8),0);
     assert_true(len>=8);
     do_dummy_data_test(p_ub);
     /* double-to-carray (test un Tuxedo?) */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, "244.31234",9),0);
     assert_true(len>=9);
     do_dummy_data_test(p_ub);
     /* string-to-carray */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)string, 0, BFLD_STRING), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, string, strlen(string)),0);
 
     do_dummy_data_test(p_ub);
     /* carray-to-carray */
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)carray, sizeof(carray), BFLD_CARRAY), SUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)carray, sizeof(carray), BFLD_CARRAY), EXSUCCEED);
     len=sizeof(carray);
-    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), SUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, carray, sizeof(carray)), 0);
     do_dummy_data_test(p_ub);
 
@@ -531,9 +531,9 @@ Ensure(test_Bchg_carray_org)
 
     for (big_loop=0; big_loop<10;big_loop++)
     {
-        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)BIG_TEST_STRING, str_len_tmp, BFLD_CARRAY), SUCCEED);
+        assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)BIG_TEST_STRING, str_len_tmp, BFLD_CARRAY), EXSUCCEED);
         len = sizeof(carray_big);
-        assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)carray_big, &len), SUCCEED);
+        assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)carray_big, &len), EXSUCCEED);
         assert_equal(len, str_len_tmp);
         assert_equal(strncmp(carray_big, BIG_TEST_STRING, str_len_tmp), 0);
     }
@@ -547,8 +547,8 @@ Ensure(test_Bchg_simple)
     int len = sizeof(buf);
     
     UBFH *p_ub = (UBFH *)fb;
-    assert_equal(Binit(p_ub, len), SUCCEED);
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, buf, len-64, BFLD_CARRAY), SUCCEED);
+    assert_equal(Binit(p_ub, len), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, buf, len-64, BFLD_CARRAY), EXSUCCEED);
 }
 
 TestSuite *ubf_cfchg_tests(void)

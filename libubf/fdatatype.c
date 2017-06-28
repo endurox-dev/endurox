@@ -110,7 +110,7 @@ int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
 /**
  * We operate with 32 bit align.
  */
-public dtype_str_t G_dtype_str_map[] =
+expublic dtype_str_t G_dtype_str_map[] =
 {
     /* str type   typeid       default size align elm fb size       put data in fb   get data size   get data from fb */
 	{"short",	BFLD_SHORT,  BFLD_SHORT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 0 */
@@ -126,7 +126,7 @@ public dtype_str_t G_dtype_str_map[] =
 /**
  * We operate with 32 bit align.
  */
-public dtype_ext1_t G_dtype_ext1_map[] =
+expublic dtype_ext1_t G_dtype_ext1_map[] =
 {
     /* type,    get default,  put empty deflt, dump,    datoff, tmpbuf fn, alloc buf */
     {BFLD_SHORT, g_dflt_empty, put_empty_dftl, dump_short, 4, tbuf_short, tallocdlft, cmp_short},     /* 0 */
@@ -228,7 +228,7 @@ int put_data_dflt(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len)
     if (align > 0)
         memset(dflt->d+t->size, 0, align);
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -251,7 +251,7 @@ int put_data_string(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len
         memset(str->str + tlen, 0, align);
     }
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len)
@@ -272,7 +272,7 @@ int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len
         }
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /******************************************************************************/
@@ -357,20 +357,20 @@ int get_d_size_carray (struct dtype_str *t, char *data, int len, int *payload_si
 int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_generic_t *dflt = (void *)fb;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     if (NULL!=len && *len < t->size)
     {
         /* Set error, that string buffer too short */
         _Fset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
                                 "output: %d", t->size, *len);
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     memcpy(buf, dflt->d, t->size);
 
     /* Return the size to caller */
-    if (SUCCEED==ret && NULL!=len)
+    if (EXSUCCEED==ret && NULL!=len)
     {
         *len = t->size;
     }
@@ -390,23 +390,23 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_string_t *str = (UBF_string_t *)fb;
     int data_len = strlen(str->str)+1;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     if (NULL!=len && *len < data_len)
     {
         /* Set error, that string buffer too short */
         _Fset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
                                 "output: %d", data_len, *len);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
         strcpy(buf, str->str);
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }
     
     /* Return the size to caller */
-    if (SUCCEED==ret && NULL!=len)
+    if (EXSUCCEED==ret && NULL!=len)
     {
         *len = data_len;
     }
@@ -425,14 +425,14 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
 int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_carray_t *carr = (UBF_carray_t *)fb;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     if (NULL!=len && *len>0 && *len < carr->dlen)
     {
         /* Set error, that string buffer too short */
         _Fset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
                                 "output: %d", carr->dlen, *len);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -498,7 +498,7 @@ int g_carr_empty(struct dtype_ext1* t)
  */
 int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int elem_size = G_dtype_str_map[t->fld_type].aligned_size;
     
     UBF_generic_t *fld = (UBF_generic_t *)fb;
@@ -516,7 +516,7 @@ int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid)
  */
 int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     UBF_string_t *fld = (UBF_string_t *)fb;
     fld->bfldid = bfldid;
@@ -535,7 +535,7 @@ int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid)
  */
 int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     UBF_carray_t *fld = (UBF_carray_t *)fb;
     fld->bfldid = bfldid;
@@ -835,7 +835,7 @@ int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
  */
 int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "cmp_string";
 
     if (0==len2)
@@ -867,13 +867,13 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
             if (NULL==cashed_string)
             {
                 _Fset_error_fmt(BMALLOC, "Failed to allocate %d bytes", tmp_len);
-                ret=FAIL;
+                ret=EXFAIL;
             }
 
             if (NULL==tmp_regex)
             {
                 _Fset_error_fmt(BMALLOC, "Failed to allocate %d bytes", tmp_len);
-                ret=FAIL;
+                ret=EXFAIL;
             }
             else
             {
@@ -884,24 +884,24 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
                 tmp_regex[tmp_len+1] = '\0'; /* put ending EOS */
             }
 
-            if (SUCCEED==ret)
+            if (EXSUCCEED==ret)
             {
                 UBF_LOG(log_debug, "%s:Compiling regex [%s]", fn, tmp_regex);
             }
 
-            if (SUCCEED==ret && SUCCEED!=(err=regcomp(&re, tmp_regex, REG_EXTENDED | REG_NOSUB)))
+            if (EXSUCCEED==ret && EXSUCCEED!=(err=regcomp(&re, tmp_regex, REG_EXTENDED | REG_NOSUB)))
             {
                 report_regexp_error("regcomp", err, &re);
-                ret=FAIL;
+                ret=EXFAIL;
             }
-            else if (SUCCEED==ret)
+            else if (EXSUCCEED==ret)
             {
                 strcpy(cashed_string, val2);
                 UBF_LOG(log_debug, "%s:REGEX: Compiled OK", fn);
             }
 
             /* Free up allocated cache */
-            if (FAIL==ret)
+            if (EXFAIL==ret)
             {
                 if (NULL!=cashed_string)
                 {
@@ -917,10 +917,10 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
             }
         }
 
-		if (SUCCEED==ret && SUCCEED==regexec(&re, val1, (size_t) 0, NULL, 0))
+		if (EXSUCCEED==ret && EXSUCCEED==regexec(&re, val1, (size_t) 0, NULL, 0))
 		{
             UBF_LOG(log_debug, "%s:REGEX: Matched", fn);
-            ret=TRUE;
+            ret=EXTRUE;
 		}
         else
         {

@@ -54,7 +54,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public shm_srvinfo_t *G_shm_srv = NULL;    /* ptr to shared memory block of the server */
+expublic shm_srvinfo_t *G_shm_srv = NULL;    /* ptr to shared memory block of the server */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -74,7 +74,7 @@ int svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b)
  * @param svc
  * @return
  */
-private svc_entry_fn_t* resolve_service_entry(char *svc)
+exprivate svc_entry_fn_t* resolve_service_entry(char *svc)
 {
     svc_entry_fn_t *ret=NULL, eltmp;
 
@@ -91,9 +91,9 @@ private svc_entry_fn_t* resolve_service_entry(char *svc)
  * @param resolved
  * @return
  */
-private int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry_fn_t *resolved)
+exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry_fn_t *resolved)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     svc_entry_fn_t *svc_fn, *entry;
 
@@ -111,7 +111,7 @@ private int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry
     {
         _TPset_error_fmt(TPENOENT, "There is no entry for [%s]",
                         svn_nm_srch);
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -124,7 +124,7 @@ private int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry
 
             _TPset_error_fmt(TPEOS, "Failed to allocate %d bytes for service entry",
                                 sizeof(svc_entry_fn_t));
-            ret=FAIL;
+            ret=EXFAIL;
         }
         else
         {
@@ -156,9 +156,9 @@ private int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry
  * Builds linear array
  * @return
  */
-private int build_service_array_list(void)
+exprivate int build_service_array_list(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int i=0;
     svc_entry_fn_t *f_tmp, *f_el;
             
@@ -172,7 +172,7 @@ private int build_service_array_list(void)
     if (NULL==G_server_conf.service_array)
     {
         _TPset_error_fmt(TPEOS, "Failed to allocate: %s", strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
     }
     else
     {
@@ -187,9 +187,9 @@ private int build_service_array_list(void)
     return ret;
 }
 
-private int add_specific_queue(char *qname, int is_admin)
+exprivate int add_specific_queue(char *qname, int is_admin)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     svc_entry_fn_t *entry;
     /* phase 0. Generate admin q */
@@ -232,9 +232,9 @@ private int add_specific_queue(char *qname, int is_admin)
  * 
  * @return
  */
-public int build_advertise_list(void)
+expublic int build_advertise_list(void)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     svc_entry_t *s_tmp, *s_el;
     svc_entry_fn_t *f_tmp, *f_el;
     pid_t mypid = getpid();
@@ -246,28 +246,28 @@ public int build_advertise_list(void)
     char replyq[NDRX_MAX_Q_SIZE+1];
 
     /* Server admin queue */
-    sprintf(adminq, NDRX_ADMIN_FMT, G_server_conf.q_prefix,
+    snprintf(adminq, sizeof(adminq), NDRX_ADMIN_FMT, G_server_conf.q_prefix,
                                 G_server_conf.binary_name, 
                                 G_server_conf.srv_id, mypid);
     ret=add_specific_queue(adminq, 1);
     
-    if (FAIL==ret)
+    if (EXFAIL==ret)
         goto out;
 
     /* Server reply queue */
-    sprintf(replyq, NDRX_SVR_QREPLY, G_server_conf.q_prefix,
+    snprintf(replyq, sizeof(replyq), NDRX_SVR_QREPLY, G_server_conf.q_prefix,
                                     G_server_conf.binary_name, 
                                     G_server_conf.srv_id, mypid);
     
     ret=add_specific_queue(replyq, 0);
-    if (FAIL==ret)
+    if (EXFAIL==ret)
         goto out;
 
     /* phase 1. check all command line specified */
     DL_FOREACH_SAFE(G_server_conf.svc_list, s_el, s_tmp)
     {
         /* In this case we are only interested in aliases */
-        if (EOS!=s_el->svc_alias[0])
+        if (EXEOS!=s_el->svc_alias[0])
         {
             svn_nm_srch=s_el->svc_alias;
             svn_nm_add=s_el->svc_nm;
@@ -278,7 +278,7 @@ public int build_advertise_list(void)
             svn_nm_add=s_el->svc_nm;
         }
 
-        if (SUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
+        if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
         {
             NDRX_LOG(log_error, "Phase 1 advertise FAIL!");
             goto out;
@@ -294,7 +294,7 @@ public int build_advertise_list(void)
             svn_nm_srch=f_el->svc_nm;
             svn_nm_add=f_el->svc_nm;
 
-             if (SUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
+             if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
              {
                  NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
                  goto out;
@@ -313,10 +313,10 @@ out:
  * Initialize common ATMI library
  * @return SUCCED/FAIL
  */
-public int initialize_atmi_library(void)
+expublic int initialize_atmi_library(void)
 {
-    int ret=SUCCEED;
-    int sem_fail = FALSE;
+    int ret=EXSUCCEED;
+    int sem_fail = EXFALSE;
     atmi_lib_conf_t conf;
     pid_t pid = getpid();
     memset(&conf, 0, sizeof(conf));
@@ -335,7 +335,7 @@ public int initialize_atmi_library(void)
     */
     
     strcpy(conf.q_prefix, G_server_conf.q_prefix);
-    if (SUCCEED!=(ret=tp_internal_init(&conf)))
+    if (EXSUCCEED!=(ret=tp_internal_init(&conf)))
     {
         goto out;
     }
@@ -355,7 +355,7 @@ out:
  * Un-initialize all stuff
  * @return void
  */
-public void un_initialize(void)
+expublic void un_initialize(void)
 {
     int i;
     /* We should close the queues and detach shared memory!
@@ -365,7 +365,7 @@ public void un_initialize(void)
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
         /* just close it, no error check */
-        if(SUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
+        if(EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
         {
 
             NDRX_LOG(log_error, "Failed to close q descr %d: %d/%s",
@@ -377,7 +377,7 @@ public void un_initialize(void)
             NDRX_LOG(log_debug, "Removing queue: %s",
                                 G_server_conf.service_array[i]->listen_q);
 
-            if (SUCCEED!=ndrx_mq_unlink(G_server_conf.service_array[i]->listen_q))
+            if (EXSUCCEED!=ndrx_mq_unlink(G_server_conf.service_array[i]->listen_q))
             {
                 NDRX_LOG(log_error, "Failed to remove queue %s: %d/%s",
                                         G_server_conf.service_array[i]->listen_q,
@@ -417,9 +417,9 @@ public void un_initialize(void)
  * if -A missing, -s specified, then advertise those by -s only
  * @return SUCCEED/FAIL
  */
-public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+expublic int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
     
     _TPunset_error();
@@ -429,7 +429,7 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
     {
             _TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
                                 sizeof(svc_entry_fn_t));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
     }
     else
@@ -438,12 +438,12 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
         /* fill entry details */
         memset(entry, 0, sizeof(svc_entry_fn_t));
         strncpy(entry->svc_nm, svc_nm, XATMI_SERVICE_NAME_LENGTH);
-        entry->svc_nm[XATMI_SERVICE_NAME_LENGTH]=EOS;
+        entry->svc_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
         strncpy(entry->fn_nm, fn_nm, XATMI_SERVICE_NAME_LENGTH);
         /* At this point we need to check the convert flags... */
         entry->xcvtflags = xcvt_lookup(entry->fn_nm);
         
-        entry->fn_nm[XATMI_SERVICE_NAME_LENGTH]=EOS;
+        entry->fn_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
         entry->p_func = p_func;
         entry->is_admin = 0;
         
@@ -473,7 +473,7 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
                                         "already advertised, "
                                         "but pointing to different function - "
                                         "FAIL", svc_nm);
-                    ret=FAIL;
+                    ret=EXFAIL;
                 }
                 NDRX_FREE(entry);
             }
@@ -490,9 +490,9 @@ public int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_
         else
         {
             NDRX_LOG(log_warn, "Processing dynamic advertise");
-            if (FAIL==dynamic_advertise(entry, svc_nm, p_func, fn_nm))
+            if (EXFAIL==dynamic_advertise(entry, svc_nm, p_func, fn_nm))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 NDRX_FREE(entry);
                 goto out;
             }
@@ -511,10 +511,10 @@ out:
  * @param svcname
  * @return 
  */
-public int	tpunadvertise (char *svcname)
+expublic int	tpunadvertise (char *svcname)
 {
-    int ret=SUCCEED;
-    char svc_nm[XATMI_SERVICE_NAME_LENGTH+1] = {EOS};
+    int ret=EXSUCCEED;
+    char svc_nm[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
     svc_entry_fn_t eltmp;
     svc_entry_fn_t *existing=NULL;
     char *thisfn="tpunadvertise";
@@ -522,16 +522,16 @@ public int	tpunadvertise (char *svcname)
     _TPunset_error();
     
     /* Validate argument */
-    if (NULL==svcname || EOS==svcname[0])
+    if (NULL==svcname || EXEOS==svcname[0])
     {
         _TPset_error_fmt(TPEINVAL, "%s: invalid svcname empty or null!", thisfn);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     /* Crosscheck buffer. */
     strncpy(svc_nm, svcname, XATMI_SERVICE_NAME_LENGTH);
-    svc_nm[XATMI_SERVICE_NAME_LENGTH] = EOS;
+    svc_nm[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     
     
     /* Search for service entry */
@@ -553,15 +553,15 @@ public int	tpunadvertise (char *svcname)
             * then send info to server.
             */
             _TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", thisfn, svc_nm);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
     else
     {
-        if (SUCCEED!=dynamic_unadvertise(svcname, NULL, NULL))
+        if (EXSUCCEED!=dynamic_unadvertise(svcname, NULL, NULL))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -579,9 +579,9 @@ out:
  * @param sz
  * @return 
  */
-public int array_remove_element(void *arr, int elem, int len, int sz)
+expublic int array_remove_element(void *arr, int elem, int len, int sz)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     if (elem<len-1)
     {

@@ -57,8 +57,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private pthread_t M_signal_thread; /* Signalled thread */
-private int M_signal_thread_set = FALSE; /* Signal thread is set */
+exprivate pthread_t M_signal_thread; /* Signalled thread */
+exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -67,7 +67,7 @@ private int M_signal_thread_set = FALSE; /* Signal thread is set */
  * Handle the child signal
  * @return
  */
-public void sign_chld_handler(int sig)
+expublic void sign_chld_handler(int sig)
 {
     pid_t chldpid;
     int stat_loc;
@@ -106,7 +106,7 @@ public void sign_chld_handler(int sig)
  * We will let mainthread to do all internal struct related work!
  * @return Got child exit
  */
-private void * check_child_exit(void *arg)
+exprivate void * check_child_exit(void *arg)
 {
     pid_t chldpid;
     int stat_loc;
@@ -127,7 +127,7 @@ private void * check_child_exit(void *arg)
  */
 #ifndef EX_OS_DARWIN
         NDRX_LOG(log_debug, "about to sigwait()");
-        if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
@@ -176,7 +176,7 @@ private void * check_child_exit(void *arg)
  * not thread safe.
  * @return
  */
-public void ndrxd_sigchld_init(void)
+expublic void ndrxd_sigchld_init(void)
 {
     sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
@@ -213,7 +213,7 @@ public void ndrxd_sigchld_init(void)
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             check_child_exit, NULL);
 
-    M_signal_thread_set = TRUE;
+    M_signal_thread_set = EXTRUE;
 }
 #endif
 
@@ -222,7 +222,7 @@ public void ndrxd_sigchld_init(void)
  * Un-initialize sigchild monitor thread
  * @return
  */
-public void ndrxd_sigchld_uninit(void)
+expublic void ndrxd_sigchld_uninit(void)
 {
     char *fn = "ndrxd_sigchld_uninit";
 
@@ -239,14 +239,14 @@ public void ndrxd_sigchld_uninit(void)
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
-    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
     }
     else
     {
-        void * res = SUCCEED;
-        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        void * res = EXSUCCEED;
+        if (EXSUCCEED!=pthread_join(M_signal_thread, &res))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
                     strerror(errno));
@@ -263,7 +263,7 @@ public void ndrxd_sigchld_uninit(void)
         }
     }
     
-    M_signal_thread_set = FALSE;
+    M_signal_thread_set = EXFALSE;
     NDRX_LOG(log_debug, "finished ok");
 out:
     return;
@@ -273,13 +273,13 @@ out:
  * Killall client running
  * @return SUCCEED
  */
-public int cpm_killall(void)
+expublic int cpm_killall(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     int is_any_running;
-    ndrx_timer_t t;
+    ndrx_stopwatch_t t;
     char *sig_str[3]={"SIGINT","SIGTERM", "SIGKILL"};
     int sig[3]={SIGINT,SIGTERM, SIGKILL};
     int i;
@@ -301,11 +301,11 @@ public int cpm_killall(void)
                 /* if we kill with -9, then kill all childrent too
                  * this is lengthly operation, thus only for emergency kill only
                  */
-                was_chld_kill = FALSE;
+                was_chld_kill = EXFALSE;
                 if ((SIGKILL==sig[i] && (c->stat.flags & CPM_F_KILL_LEVEL_LOW)) ||
                         c->stat.flags & CPM_F_KILL_LEVEL_HIGH)
                 {
-                    was_chld_kill = TRUE;
+                    was_chld_kill = EXTRUE;
                     ndrx_proc_children_get_recursive(&cltchildren, c->dyn.pid);
                 }
                 
@@ -323,8 +323,8 @@ public int cpm_killall(void)
 
         if (i<2) /*no wait for kill... */
         {
-            is_any_running = FALSE;
-            ndrx_timer_reset(&t);
+            is_any_running = EXFALSE;
+            ndrx_stopwatch_reset(&t);
             do
             {
                 /* sign_chld_handler(0); */
@@ -333,7 +333,7 @@ public int cpm_killall(void)
                 {
                     if (CLT_STATE_STARTED==c->dyn.cur_state)
                     {
-                        is_any_running = TRUE;
+                        is_any_running = EXTRUE;
                         break;
                     }
                 }
@@ -344,12 +344,12 @@ public int cpm_killall(void)
                 }
             }
             while (is_any_running && 
-                    ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+                    ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
         }
     }
     
     NDRX_LOG(log_debug, "cpm_killall done");
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -360,10 +360,10 @@ public int cpm_killall(void)
  * @param c
  * @return 
  */
-public int cpm_kill(cpm_process_t *c)
+expublic int cpm_kill(cpm_process_t *c)
 {
-    int ret = SUCCEED;
-    ndrx_timer_t t;
+    int ret = EXSUCCEED;
+    ndrx_stopwatch_t t;
     string_list_t* cltchildren = NULL;
         
     NDRX_LOG(log_warn, "Stopping %s/%s - %s", c->tag, c->subsect, c->stat.command_line);
@@ -383,7 +383,7 @@ public int cpm_kill(cpm_process_t *c)
         cltchildren=NULL;
     }
     
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     do
     {
         /* sign_chld_handler(0); */
@@ -392,7 +392,7 @@ public int cpm_kill(cpm_process_t *c)
             usleep(CLT_STEP_INTERVAL);
         }
     } while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -416,7 +416,7 @@ public int cpm_kill(cpm_process_t *c)
     }
     
     
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     do
     {
         /* sign_chld_handler(0); */
@@ -425,7 +425,7 @@ public int cpm_kill(cpm_process_t *c)
             usleep(CLT_STEP_INTERVAL);
         }
     } while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -456,7 +456,7 @@ public int cpm_kill(cpm_process_t *c)
         cltchildren=NULL;
     }
 
-    ndrx_timer_reset(&t);
+    ndrx_stopwatch_reset(&t);
     do
     {
         /* sign_chld_handler(0); */
@@ -467,7 +467,7 @@ public int cpm_kill(cpm_process_t *c)
         }
     }
     while (CLT_STATE_STARTED==c->dyn.cur_state && 
-            ndrx_timer_get_delta_sec(&t) < G_config.kill_interval);
+            ndrx_stopwatch_get_delta_sec(&t) < G_config.kill_interval);
     
     if (CLT_STATE_STARTED!=c->dyn.cur_state)
         goto out;
@@ -484,7 +484,7 @@ out:
  * @param c
  * @return 
  */
-public int cpm_exec(cpm_process_t *c)
+expublic int cpm_exec(cpm_process_t *c)
 {
     pid_t pid;
     char cmd_str[PATH_MAX];
@@ -494,12 +494,12 @@ public int cpm_exec(cpm_process_t *c)
     int numargs = 0;
     int fd_stdout;
     int fd_stderr;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
 
     NDRX_LOG(log_warn, "*********processing for startup %s *********", 
             c->stat.command_line);
     
-    c->dyn.was_started = TRUE; /* We tried to start... */
+    c->dyn.was_started = EXTRUE; /* We tried to start... */
     
     /* clone our self */
     pid = fork();
@@ -521,18 +521,18 @@ public int cpm_exec(cpm_process_t *c)
         cmd[numargs] = NULL;
     
         /*  Override environment, if there is such thing */
-        if (EOS!=c->stat.env[0])
+        if (EXEOS!=c->stat.env[0])
         {
-            if (SUCCEED!=ndrx_load_new_env(c->stat.env))
+            if (EXSUCCEED!=ndrx_load_new_env(c->stat.env))
             {
                 userlog("Failed to load custom env from: %s!", c->stat.env);
                 exit(1);
             }
         }
         
-        if (EOS!=c->stat.cctag[0])
+        if (EXEOS!=c->stat.cctag[0])
         {
-            if (SUCCEED!=setenv(NDRX_CCTAG, c->stat.cctag, TRUE))
+            if (EXSUCCEED!=setenv(NDRX_CCTAG, c->stat.cctag, EXTRUE))
             {
                 userlog("Cannot set [%s] to [%s]: %s", 
                         NDRX_CCTAG, c->stat.cctag, strerror(errno));
@@ -541,9 +541,9 @@ public int cpm_exec(cpm_process_t *c)
         }
         
         /* Change working dir */
-        if (EOS!=c->stat.wd[0])
+        if (EXEOS!=c->stat.wd[0])
         {
-            if (SUCCEED!=chdir(c->stat.wd))
+            if (EXSUCCEED!=chdir(c->stat.wd))
             {
                 int err = errno;
                 
@@ -556,16 +556,16 @@ public int cpm_exec(cpm_process_t *c)
         }
         
         /* make stdout go to file */
-        if (EOS!=c->stat.log_stdout[0] &&
-                FAIL!=(fd_stdout = open(c->stat.log_stdout, 
+        if (EXEOS!=c->stat.log_stdout[0] &&
+                EXFAIL!=(fd_stdout = open(c->stat.log_stdout, 
                O_WRONLY| O_CREAT  | O_APPEND, S_IRUSR | S_IWUSR)))
         {
             dup2(fd_stdout, 1); 
             close(fd_stdout);
         }
         
-        if (EOS!=c->stat.log_stderr[0] &&
-                FAIL!=(fd_stderr = open(c->stat.log_stderr, 
+        if (EXEOS!=c->stat.log_stderr[0] &&
+                EXFAIL!=(fd_stderr = open(c->stat.log_stderr, 
                 O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)))
         {
             dup2(fd_stderr, 2);   /* make stderr go to file */
@@ -576,7 +576,7 @@ public int cpm_exec(cpm_process_t *c)
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
         
-        if (SUCCEED != execvp (cmd[0], cmd))
+        if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed to start client, error: %d, %s", 
@@ -584,7 +584,7 @@ public int cpm_exec(cpm_process_t *c)
             exit (err);
         }
     }
-    else if (FAIL!=pid)
+    else if (EXFAIL!=pid)
     {
         cpm_set_cur_time(c);
         c->dyn.pid = pid;

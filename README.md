@@ -133,6 +133,8 @@ The number here are lower because messages are being saved to disk. Also interna
 - Version 3.5.7 release on 23/04/2017. Fixed Bug #148 (Bdelall corrupts ubf buffer)
 Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is restarted for recovery)
 
+- Version 3.5.9 released on 22/06/2017. Bug fix #160 - retry xa_start with xa_close/xa_open. New env variable NDRX_XA_FLAGS, tag "RECON".
+
 # Build configurations
 
 ## Configure make with: 

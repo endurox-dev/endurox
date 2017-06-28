@@ -65,7 +65,7 @@
 /**
  * Nothing to init for epoll()
  */
-public inline void ndrx_epoll_sys_init(void)
+expublic inline void ndrx_epoll_sys_init(void)
 {
     return;
 }
@@ -73,7 +73,7 @@ public inline void ndrx_epoll_sys_init(void)
 /**
  * Nothing to un-init for epoll()
  */
-public inline void ndrx_epoll_sys_uninit(void)
+expublic inline void ndrx_epoll_sys_uninit(void)
 {
     return;
 }
@@ -82,7 +82,7 @@ public inline void ndrx_epoll_sys_uninit(void)
  * Return the compiled poll mode
  * @return 
  */
-public inline char * ndrx_epoll_mode(void)
+expublic inline char * ndrx_epoll_mode(void)
 {
     static char *mode = "kqueue";
     
@@ -96,9 +96,9 @@ public inline char * ndrx_epoll_mode(void)
  * @param event
  * @return 
  */
-public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
+expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
 {   
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *fn = "ndrx_epoll_ctl";
     struct kevent ev;
     
@@ -124,7 +124,7 @@ public inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_eve
     {
         NDRX_LOG(log_error, "Invalid operation %d", op);
 	errno = EINVAL;
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -142,9 +142,9 @@ out:
  * @param event
  * @return 
  */
-public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
+expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *fn = "ndrx_epoll_ctl";
     struct kevent ev;
     void *tmp = fd;
@@ -173,7 +173,7 @@ public inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epol
     {
         NDRX_LOG(log_error, "Invalid operation %d", op);
         errno = EINVAL;
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
 out:
@@ -189,7 +189,7 @@ out:
  * @param size
  * @return 
  */
-public inline int ndrx_epoll_create(int size)
+expublic inline int ndrx_epoll_create(int size)
 {
     return kqueue();
 }
@@ -197,7 +197,7 @@ public inline int ndrx_epoll_create(int size)
 /**
  * Close Epoll set.
  */
-public inline int ndrx_epoll_close(int epfd)
+expublic inline int ndrx_epoll_close(int epfd)
 {
     return close(epfd);
 }
@@ -210,9 +210,9 @@ public inline int ndrx_epoll_close(int epfd)
  * @param timeout
  * @return 
  */
-public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int err_saved;
     int numevents = 0;
     char *fn = "ndrx_epoll_wait";
@@ -249,12 +249,12 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
         {
             /* the mqueue hanlder is encoded here (ptr to fd..)*/
             events[numevents-1].data.mqd = (mqd_t)tevent.udata;
-            events[numevents-1].is_mqd = TRUE;
+            events[numevents-1].is_mqd = EXTRUE;
         }
         else
         {
            events[numevents-1].data.fd = tevent.ident;
-           events[numevents-1].is_mqd = FALSE;
+           events[numevents-1].is_mqd = EXFALSE;
         }
         /* will provide back both flags & flag flags... */
         events[numevents-1].events = tevent.flags;
@@ -265,21 +265,21 @@ public inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int
     }
     else
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
 
     NDRX_LOG(log_info, "%s ret=%d numevents=%d", fn, ret, numevents);
 
-    if (SUCCEED==ret)
+    if (EXSUCCEED==ret)
     {
         return numevents;
     }
     else
     {
         errno = err_saved;
-        return FAIL;
+        return EXFAIL;
     }
 }
 
@@ -288,7 +288,7 @@ out:
  * Return errno for ndrx_poll() operation
  * @return 
  */
-public inline int ndrx_epoll_errno(void)
+expublic inline int ndrx_epoll_errno(void)
 {
     return errno;
 }
@@ -298,7 +298,7 @@ public inline int ndrx_epoll_errno(void)
  * @param err
  * @return 
  */
-public inline char * ndrx_poll_strerror(int err)
+expublic inline char * ndrx_poll_strerror(int err)
 {
     return strerror(err);
 }

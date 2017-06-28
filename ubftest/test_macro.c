@@ -47,15 +47,15 @@ Ensure(test_macros)
     UBFH *p_ub = (UBFH *)fb;
     char test_buf[64];
     char *p;
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
 
-    assert_equal(Badds (p_ub, T_SHORT_FLD, "321"), SUCCEED);
-    assert_equal(Bchgs (p_ub, T_LONG_FLD, 10, "88889"), SUCCEED);
-    assert_equal(Bchgs (p_ub, T_CARRAY_FLD, 5, "THIS IS TEST VALUE"), SUCCEED);
+    assert_equal(Badds (p_ub, T_SHORT_FLD, "321"), EXSUCCEED);
+    assert_equal(Bchgs (p_ub, T_LONG_FLD, 10, "88889"), EXSUCCEED);
+    assert_equal(Bchgs (p_ub, T_CARRAY_FLD, 5, "THIS IS TEST VALUE"), EXSUCCEED);
     
-    assert_equal(Bgets (p_ub, T_LONG_FLD, 10, test_buf), SUCCEED);
+    assert_equal(Bgets (p_ub, T_LONG_FLD, 10, test_buf), EXSUCCEED);
     assert_string_equal(test_buf, "88889");
-    assert_equal(Bgets (p_ub, T_SHORT_FLD, 0, test_buf), SUCCEED);
+    assert_equal(Bgets (p_ub, T_SHORT_FLD, 0, test_buf), EXSUCCEED);
     assert_string_equal(test_buf, "321");
 
     /* Get with allocate */

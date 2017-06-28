@@ -64,19 +64,19 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqrc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_mqrc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_svc_list_t *el, *tmp, *list;
     UBFH *p_ub = NULL;
     char cmd = TMQ_CMD_MQRC;
     long rsplen;
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     list = ndrx_get_svc_list(mqfilter);
@@ -88,18 +88,18 @@ public int cmd_mqrc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         if (NULL==p_ub)
         {
             fprintf(stderr, "Failed to alloc call buffer%s\n", tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
         {
             fprintf(stderr, "Failed to set command: %s\n", Bstrerror(Berror));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         printf("Updating %s ... ", list->svcnm);
         
-        if (SUCCEED!=tpcall(list->svcnm, (char *)p_ub, 0L, 
+        if (EXSUCCEED!=tpcall(list->svcnm, (char *)p_ub, 0L, 
                 (char **)&p_ub, &rsplen, TPNOTRAN))
         {
             printf("Failed: %s\n", tpstrerror(tperrno));

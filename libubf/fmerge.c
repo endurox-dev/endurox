@@ -64,9 +64,9 @@
  * @param p_ub_src
  * @return
  */
-public int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
+expublic int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub_dst;
     char *p_fld;
     BFLDID bfldid = BFIRSTFLDID;
@@ -79,21 +79,21 @@ public int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     memset(&state, 0, sizeof(state));
     chg_state.last_checked = &hdr->bfldid;
             
-    while(SUCCEED==ret &&
+    while(EXSUCCEED==ret &&
         1==(nxt_stat=_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
          * Update the occurrence in target buffer.
          */
-        if (SUCCEED!=(ret=_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state)))
+        if (EXSUCCEED!=(ret=_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]", 
                                 _Bfname_int(bfldid), occ);
         }
     }
 
-    if (FAIL==nxt_stat)
-        ret=FAIL;
+    if (EXFAIL==nxt_stat)
+        ret=EXFAIL;
 
     return ret;
 }
@@ -104,9 +104,9 @@ public int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
  * @param p_ub_src
  * @return
  */
-public int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
+expublic int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub_dst;
     char *p_fld;
     BFLDID bfldid = BFIRSTFLDID;
@@ -122,21 +122,21 @@ public int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 
     memset(&state, 0, sizeof(state));
 
-    while(SUCCEED==ret &&
+    while(EXSUCCEED==ret &&
                1==(nxt_stat=_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
          * Add new occurrances to the buffer.
          */
-        if (SUCCEED!=(ret=_Badd(p_ub_dst, bfldid, p_fld, len, &add_state)))
+        if (EXSUCCEED!=(ret=_Badd(p_ub_dst, bfldid, p_fld, len, &add_state)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]",
                                                 _Bfname_int(bfldid), occ);
         }
     }
 
-    if (FAIL==nxt_stat)
-        ret=FAIL;
+    if (EXFAIL==nxt_stat)
+        ret=EXFAIL;
 
     return ret;
 }

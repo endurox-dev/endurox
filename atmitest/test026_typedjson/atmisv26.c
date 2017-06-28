@@ -45,33 +45,33 @@
  */
 void TEST26_UBF2JSON(TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *buf = p_svc->data;
-    char type[16+1]={EOS};
+    char type[16+1]={EXEOS};
     
-    if (FAIL==tptypes(buf, type, NULL))
+    if (EXFAIL==tptypes(buf, type, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: TEST26_UBF2JSON cannot "
                 "determine buffer type");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(type, "JSON"))
     {
         NDRX_LOG(log_error, "TESTERROR: Buffer not JSON, but [%s]!", type);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(buf, "{\"T_STRING_FLD\":\"HELLO FROM UBF\"}"))
     {
         NDRX_LOG(log_error, "TESTERROR: Invalid request!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL== (buf = tprealloc(buf, 1024)))
     {
         NDRX_LOG(log_error, "TESTERROR: realloc fail!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     strcpy(buf, "{\"T_STRING_FLD\":[\"HELLO FROM UBF\", \"HELLO FROM JSON!\"], "
@@ -81,7 +81,7 @@ void TEST26_UBF2JSON(TPSVCINFO *p_svc)
     
 out:
     
-    tpreturn(SUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
+    tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
     
 }
 
@@ -90,59 +90,59 @@ out:
  */
 void TEST26_JSON2UBF(TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     UBFH *buf = (UBFH *)p_svc->data;
     char tmp[1024];
-    char type[16+1]={EOS};
+    char type[16+1]={EXEOS};
     
-    if (FAIL==tptypes((char *)buf, type, NULL))
+    if (EXFAIL==tptypes((char *)buf, type, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: TEST26_JSON2UBF cannot "
                 "determine buffer type");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(type, "UBF"))
     {
         NDRX_LOG(log_error, "TESTERROR: Buffer not UBF buf: %s!", type);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bget(buf, T_STRING_FLD, 0, tmp, 0L))
+    if (EXSUCCEED!=Bget(buf, T_STRING_FLD, 0, tmp, 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: T_STRING_FLD[0] not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(tmp, "HELLO UBF FROM JSON 1!"))
     {
         NDRX_LOG(log_error, "TESTERROR: Invalid request value [%s] in T_STRING_FLD[0]",
                 tmp);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bget(buf, T_STRING_FLD, 1, tmp, 0L))
+    if (EXSUCCEED!=Bget(buf, T_STRING_FLD, 1, tmp, 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: T_STRING_FLD[1] not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(tmp, "HELLO UBF FROM JSON 2!"))
     {
         NDRX_LOG(log_error, "TESTERROR: Invalid request value [%s] in T_STRING_FLD[1]",
                 tmp);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(buf, T_STRING_FLD, 2, "HELLO FROM UBF!", 0L))
+    if (EXSUCCEED!=Bchg(buf, T_STRING_FLD, 2, "HELLO FROM UBF!", 0L))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_FLD!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
     
-    tpreturn(SUCCEED==ret?TPSUCCESS:TPFAIL, 0, (char *)buf, 0L, 0L);
+    tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, (char *)buf, 0L, 0L);
     
 }
 
@@ -151,20 +151,20 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("TEST26_UBF2JSON", TEST26_UBF2JSON))
+    if (EXSUCCEED!=tpadvertise("TEST26_UBF2JSON", TEST26_UBF2JSON))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST26_UBF2JSON!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
-    if (SUCCEED!=tpadvertise("TEST26_JSON2UBF", TEST26_JSON2UBF))
+    if (EXSUCCEED!=tpadvertise("TEST26_JSON2UBF", TEST26_JSON2UBF))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST26_JSON2UBF!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
 out:

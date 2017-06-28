@@ -1,6 +1,5 @@
 /* 
 ** Utility functions for ATMI (generic send, etc...)
-** TODO: Add timed sends.
 ** We might want to monitor with `stat' the disk inode of the queue
 ** and we could cache the opened queues, so that we do not open them
 ** every time.
@@ -85,7 +84,7 @@
             memset((char *)&__attr, 0, sizeof(__attr));\
             ndrx_mq_getattr(X, &__attr);\
             NDRX_LOG(log_error, "mq_flags=%ld mq_maxmsg=%ld mq_msgsize=%ld mq_curmsgs=%ld",\
-                                __attr.mq_flags, __attr.mq_maxmsg, __attr.mq_msgsize, __attr.mq_curmsgs);}
+                    __attr.mq_flags, __attr.mq_maxmsg, __attr.mq_msgsize, __attr.mq_curmsgs);}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -104,7 +103,7 @@
  * Might think in future increase msg_max size...!
  * @return 
  */
-public void ndrx_mq_fix_mass_send(int *cntr)
+expublic void ndrx_mq_fix_mass_send(int *cntr)
 {
     *cntr = *cntr + 1;
     /* Have some backup */
@@ -121,18 +120,18 @@ public void ndrx_mq_fix_mass_send(int *cntr)
  * @param q_descr
  * @return 
  */
-public int ndrx_q_setblock(mqd_t q_descr, int blocked)
+expublic int ndrx_q_setblock(mqd_t q_descr, int blocked)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     struct mq_attr new;
     struct mq_attr old;
-    int change = FALSE;
+    int change = EXFALSE;
     
-    if (SUCCEED!= ndrx_mq_getattr(q_descr, &old))
+    if (EXSUCCEED!= ndrx_mq_getattr(q_descr, &old))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d, err: %s", 
                 q_descr, strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -142,7 +141,7 @@ public int ndrx_q_setblock(mqd_t q_descr, int blocked)
         memcpy(&new, &old, sizeof(new));
         NDRX_LOG(log_warn, "Switching qd %d to non-blocked", q_descr);
         new.mq_flags |= O_NONBLOCK;
-        change = TRUE;
+        change = EXTRUE;
     }
     /*blocked requested & but currently Q is not blocked => change attribs*/
     else if (blocked && old.mq_flags & O_NONBLOCK)
@@ -150,17 +149,17 @@ public int ndrx_q_setblock(mqd_t q_descr, int blocked)
         memcpy(&new, &old, sizeof(new));
         NDRX_LOG(log_warn, "Switching qd %d to blocked", q_descr);
         new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-        change = TRUE;
+        change = EXTRUE;
     }
     
     if (change)
     {
-        if (FAIL==ndrx_mq_setattr(q_descr, &new,
+        if (EXFAIL==ndrx_mq_setattr(q_descr, &new,
                             &old))
         {
             NDRX_LOG(log_error, "Failed to set attribs for qd %d: %s", 
                     q_descr, strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -176,7 +175,8 @@ out:
  * @param attr
  * @return
  */
-public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
+expublic mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, 
+        struct mq_attr *attr)
 {
     struct mq_attr attr_int;
     struct mq_attr * p_at;
@@ -200,7 +200,7 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq
 
     ret=ndrx_mq_open(name, oflag, mode, p_at);
 
-    NDRX_LOG(6, "ndrx_mq_open_at(name=%s) returns %lx (mq_maxmsg: %d mq_msgsize: %d)",
+    NDRX_LOG(6, "ndrx_mq_open_at(name=%s) returns 0x%lx (mq_maxmsg: %d mq_msgsize: %d)",
 	name, (long int) ret, p_at->mq_maxmsg, p_at->mq_msgsize);
 
     return ret;
@@ -212,7 +212,7 @@ public mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq
  * @param oflag
  * @return
  */
-public mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
+expublic mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
 {
     
     return ndrx_mq_open_at(name, oflag, 0, NULL);
@@ -229,9 +229,9 @@ public mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
  * @param len
  * @return
  */
-public int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
+expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int use_tout;
     struct timespec abs_timeout;
     SET_TOUT_CONF;
@@ -239,8 +239,8 @@ public int generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 restart:
 
     SET_TOUT_VALUE;
-    if ((!use_tout && FAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && FAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -268,9 +268,9 @@ out:
  * @param flags
  * @return 
  */
-public int generic_q_send(char *queue, char *data, long len, long flags)
+expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
 {
-    return generic_q_send_2(queue, data, len, flags, FAIL);
+    return ndrx_generic_q_send_2(queue, data, len, flags, EXFAIL, msg_prio);
 }
 
 /**
@@ -280,13 +280,15 @@ public int generic_q_send(char *queue, char *data, long len, long flags)
  * @param svc
  * @param data
  * @param len
- * @tout - time-out in seconds.
- * @return
+ * @param tout - time-out in seconds.
+ * @param msg_prio - message priority see, NDRX_MSGPRIO_*
+ * @return SUCCEED/FAIL
  */
-public int generic_q_send_2(char *queue, char *data, long len, long flags, long tout)
+expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, 
+        long tout, unsigned int msg_prio)
 {
-    int ret=SUCCEED;
-    mqd_t q_descr=(mqd_t)FAIL;
+    int ret=EXSUCCEED;
+    mqd_t q_descr=(mqd_t)EXFAIL;
     int use_tout;
     struct timespec abs_timeout;
     long add_flags = 0;
@@ -304,13 +306,13 @@ public int generic_q_send_2(char *queue, char *data, long len, long flags, long 
 restart_open:
     q_descr = ndrx_mq_open_at_wrp (queue, O_WRONLY | add_flags);
 
-    if ((mqd_t)FAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
+    if ((mqd_t)EXFAIL==q_descr && EINTR==errno && flags & TPSIGRSTRT)
     {
         NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_open");
         goto restart_open;
     }
     
-    if ((mqd_t)FAIL==q_descr)
+    if ((mqd_t)EXFAIL==q_descr)
     {
         NDRX_LOG(log_error, "Failed to open queue [%s] with error: %s",
                                         queue, strerror(errno));
@@ -338,8 +340,8 @@ restart_send:
 
     NDRX_LOG(6, "use timeout: %d config: %d", 
                 use_tout, G_atmi_env.time_out);
-    if ((!use_tout && FAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && FAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
@@ -357,7 +359,7 @@ restart_send:
 
 restart_close:
     /* Generally we ingore close */
-    if (FAIL==ndrx_mq_close(q_descr))
+    if (EXFAIL==ndrx_mq_close(q_descr))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -373,24 +375,39 @@ out:
 /**
  * Generic queue receiver
  * @param q_descr - queue descriptro
+ * @param q_str - string queue, can be NULL, then attribs not set
+ * @param reply_q_attr - current queue attributes, can be null, then attribs not set
  * @param buf - where to put received data
  * @param buf_max - buffer size
  * @param prio - priority of message
  * @return GEN_QUEUE_ERR_NO_DATA/FAIL/data len
  */
-public long generic_q_receive(mqd_t q_descr, char *buf, long buf_max, unsigned *prio, long flags)
+expublic long ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
+        struct mq_attr *reply_q_attr,
+        char *buf, long buf_max, 
+        unsigned *prio, long flags)
 {
-    long ret=SUCCEED;
+    long ret=EXSUCCEED;
     int use_tout;
-    struct timespec abs_timeout;
+    struct timespec abs_timeout;   
+    
     SET_TOUT_CONF;
+    
+    if (NULL!=q_str && NULL!=reply_q_attr)
+    {
+        if (EXSUCCEED!=ndrx_setup_queue_attrs(reply_q_attr, q_descr, q_str, flags))
+        {
+            NDRX_LOG(log_error, "%s: Failed to setup queue attribs, flags=%ld", flags);
+            EXFAIL_OUT(ret);
+        }
+    }
     
 restart:
     SET_TOUT_VALUE;
     NDRX_LOG(6, "use timeout: %d config: %d qdescr: %lx", use_tout,
 		G_atmi_env.time_out, (long int)q_descr);
-    if ((!use_tout && FAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
-         (use_tout && FAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
+    if ((!use_tout && EXFAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
+         (use_tout && EXFAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -412,9 +429,11 @@ restart:
 
             _TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%d): %s",
 			(long int)q_descr, ret, strerror(ret));
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
+    
+out:
     return ret;
 }
 
@@ -422,14 +441,14 @@ restart:
  * Initialize generic structure (used for network send.)
  * @param call
  */
-public void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
+expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, char *reply_q)
 {
         call->command = ndrxd_cmd;
         call->magic = NDRX_MAGIC;
         call->msg_src = msg_src;
         call->msg_type = msg_type;
-        strcpy(call->reply_queue, reply_q);
+        NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
         call->caller_nodeid = G_atmi_env.our_nodeid;
 }
 
@@ -441,7 +460,7 @@ public void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
  * @param p_have_next
  * @return SUCCEED/FAIL
  */
-public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -453,15 +472,15 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             void (*p_put_output)(char *text),
                             int need_reply,
                             int reply_only,
-                            char *rply_buf_out,             /* might be a null  */
-                            int *rply_buf_out_len,          /* if above is set, then must not be null */
+                            char *rply_buf_out,    /* might be a null  */
+                            int *rply_buf_out_len, /* if above is set, then must not be null */
                             int flags,
         /* TODO Might want to add checks before calling rply_request func...
          * for magic and command code. */
                             int (*p_rply_request)(char *buf, long len)
         )
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_reply_t *reply;
     unsigned prio = 0;
     char    msg_buffer_max[ATMI_MSG_MAX_SIZE];
@@ -476,7 +495,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     {
         NDRX_LOG(log_error, "User buffer address specified in params, "
                 "but rply_buf_out_len is NULL!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (!reply_only)
@@ -485,21 +504,21 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         call->magic = NDRX_MAGIC;
         call->msg_src = msg_src;
         call->msg_type = msg_type;
-        strcpy(call->reply_queue, reply_q);
+        NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
         call->caller_nodeid = G_atmi_env.our_nodeid;
 
-        if ((mqd_t)FAIL!=admin_queue)
+        if ((mqd_t)EXFAIL!=admin_queue)
         {
             NDRX_LOG(log_error, "Sending data to [%s], fd=%d, call flags=0x%x", 
                                 admin_q_str, admin_queue, call->flags);
-            if (SUCCEED!=generic_qfd_send(admin_queue, (char *)call, call_size, flags))
+            if (EXSUCCEED!=ndrx_generic_qfd_send(admin_queue, (char *)call, call_size, flags))
             {
                 NDRX_LOG(log_error, "Failed to send msg to ndrxd!");
 
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
 
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -507,12 +526,12 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_info, "Sending data to [%s] call flags=0x%x", 
                                     admin_q_str, call->flags);
-            if (SUCCEED!=generic_q_send(admin_q_str, (char *)call, call_size, flags))
+            if (EXSUCCEED!=ndrx_generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
             {
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
 
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
         }
@@ -536,7 +555,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     {
         command_call_t *test_call = (command_call_t *)msg_buffer_max;
         /* Error could be also -2..! */
-        if (0>(reply_len=generic_q_receive(reply_queue,
+        if (0>(reply_len=ndrx_generic_q_receive(reply_queue, NULL, NULL,
                 msg_buffer_max, sizeof(msg_buffer_max), &prio, flags)))
         {
             NDRX_LOG(log_error, "Failed to receive reply from ndrxd!");
@@ -544,15 +563,15 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Failed to receive reply from ndrxd!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         else if (test_call->command % 2 == 0 && NULL!=p_rply_request)
         {
-            if (SUCCEED!=p_rply_request(msg_buffer_max, reply_len))
+            if (EXSUCCEED!=p_rply_request(msg_buffer_max, reply_len))
             {
                 NDRX_LOG(log_error, "Failed to process request!");
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             else
@@ -569,7 +588,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Invalid reply size from ndrxd!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* Check the reply msg */
@@ -577,13 +596,14 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
 
         if (NDRX_MAGIC!=reply->magic)
         {
-            NDRX_LOG(log_error, "Got invalid response from ndrxd: invalid magic (expected: %ld, got: %ld)!",
+            NDRX_LOG(log_error, "Got invalid response from ndrxd: invalid magic "
+                    "(expected: %ld, got: %ld)!",
                     NDRX_MAGIC, reply->magic);
 
             if (NULL!=p_put_output)
                 p_put_output("Invalid response - invalid header!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -596,12 +616,12 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             if (NULL!=p_put_output)
                 p_put_output("Invalid response - invalid response command code!");
 
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
         /* check reply status: */
-        if (SUCCEED==reply->status)
+        if (EXSUCCEED==reply->status)
         {
             if (NULL!=p_rsp_process)
             {
@@ -620,7 +640,7 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                     NDRX_LOG(log_warn, "Received packet size %d longer "
                             "than user buffer in rply_buf_len %d", 
                             reply_len, *rply_buf_out_len);
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 else
                 {
@@ -632,7 +652,8 @@ public int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         else
         {
             char buf[2048];
-            sprintf(buf, "fail, code: %d: %s", reply->error_code, reply->error_msg);
+            snprintf(buf, sizeof(buf), "fail, code: %d: %s", 
+                    reply->error_code, reply->error_msg);
             NDRX_LOG(log_warn, "%s", buf);
 
             if (NULL!=p_put_output)
@@ -652,7 +673,7 @@ out:
  * This is wrapper for cmd_generic_call_2,
  * Full request.
  */
-public int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -675,7 +696,7 @@ public int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             p_rsp_process,
                             p_put_output,
                             need_reply,
-                            FALSE,
+                            EXFALSE,
                             NULL, NULL, TPNOTIME, NULL);
 }
 
@@ -683,7 +704,7 @@ public int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
  * This is wrapper for cmd_generic_call_2,
  * This exposes flags to user.
  */
-public int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -707,7 +728,7 @@ public int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             p_rsp_process,
                             p_put_output,
                             need_reply,
-                            FALSE,
+                            EXFALSE,
                             NULL, NULL, flags, NULL);
 }
 
@@ -716,7 +737,7 @@ public int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
  * Full request.
  * Including output buffers.
  */
-public int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
+expublic int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
                             char *reply_q,
                             mqd_t reply_queue, /* listen for answer on this! */
@@ -802,14 +823,14 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
  * Send error reply back to originator.
  * Fix this function to send error message over the bridge.
  */
-public int reply_with_failure(long flags, tp_command_call_t *last_call,
+expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
             char *buf, int *len, long rcode)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "reply_with_failure";
     tp_command_call_t call_b;
     tp_command_call_t *call;
-    char reply_to[NDRX_MAX_Q_SIZE+1] = {EOS};
+    char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
 
     if (NULL==buf)
     {
@@ -827,12 +848,12 @@ public int reply_with_failure(long flags, tp_command_call_t *last_call,
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;
     /* Give some info which server replied - for bridge we need target put here! */
-    strcpy(call->reply_to, last_call->reply_to);
+    NDRX_STRCPY_SAFE(call->reply_to, last_call->reply_to);
     call->sysflags |=SYS_FLAG_REPLY_ERROR;
     call->rcode = rcode;
-    strcpy(call->callstack, last_call->callstack);
+    NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     
-    if (SUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
+    if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
         goto out;
@@ -840,9 +861,11 @@ public int reply_with_failure(long flags, tp_command_call_t *last_call,
 
     if (NULL==buf)
     {
-        if (SUCCEED!=(ret=generic_q_send(reply_to, (char *)call, sizeof(*call), flags)))
+        if (EXSUCCEED!=(ret=ndrx_generic_q_send(reply_to, (char *)call, 
+                sizeof(*call), flags, 0)))
         {
-            NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", fn, strerror(ret));
+            NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
+                    fn, strerror(ret));
             goto out;
         }
     }
@@ -862,30 +885,30 @@ out:
  * @param p_att - attributes 
  * @return SUCCEED/FAIL
  */
-public int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
+expublic int ndrx_get_q_attr(char *q, struct mq_attr *p_att)
 {
-    int ret=SUCCEED;
-    mqd_t q_descr=(mqd_t)FAIL;
+    int ret=EXSUCCEED;
+    mqd_t q_descr=(mqd_t)EXFAIL;
     
     /* read the stats of the queue */
-    if ((mqd_t)FAIL==(q_descr = ndrx_mq_open_at_wrp(q, 0)))
+    if ((mqd_t)EXFAIL==(q_descr = ndrx_mq_open_at_wrp(q, 0)))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: [%s], err: %s", 
                 q, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     /* read the attributes of the Q */
-    if (SUCCEED!= ndrx_mq_getattr(q_descr, p_att))
+    if (EXSUCCEED!= ndrx_mq_getattr(q_descr, p_att))
     {
         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d, err: %s", 
                 q_descr, strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
     
-    if ((mqd_t)FAIL!=q_descr)
+    if ((mqd_t)EXFAIL!=q_descr)
     {
         ndrx_mq_close(q_descr);
     }
@@ -898,7 +921,7 @@ out:
  * @param start_with - service name start.
  * @return 
  */
-public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
+expublic atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
 {
     atmi_svc_list_t *ret = NULL;
     atmi_svc_list_t *tmp;
@@ -917,7 +940,7 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
         /* we might have in old service in SHM (with no actual servers) thus 
          * skip such.
          */
-        if (EOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0] && 
+        if (EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0] && 
                 (SHM_SVCINFO_INDEX(svcinfo, i)->srvs || SHM_SVCINFO_INDEX(svcinfo, i)->csrvs) )
         {
             /* Check filter, if ok - add to list! */
@@ -933,7 +956,7 @@ public atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
                     
                     goto out;
                 }
-                strcpy(tmp->svcnm, SHM_SVCINFO_INDEX(svcinfo, i)->service);
+                NDRX_STRCPY_SAFE(tmp->svcnm, SHM_SVCINFO_INDEX(svcinfo, i)->service);
                 LL_APPEND(ret, tmp);
             }   
         }
@@ -950,10 +973,10 @@ out:
  * @param rcode Error code
  * @param reply_to_q Sender id
  */
-public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
+expublic void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
         long rcode, char *reply_to_q)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char fn[] = "ndrx_reply_with_failure";
     tp_command_call_t call;
 
@@ -969,7 +992,7 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     call.timestamp = tp_call->timestamp;
     call.callseq = tp_call->callseq;
     /* Give some info which server replied */
-    strcpy(call.reply_to, reply_to_q);
+    NDRX_STRCPY_SAFE(call.reply_to, reply_to_q);
     call.sysflags |=SYS_FLAG_REPLY_ERROR;
     /* Generate no entry, because we removed the queue
      * yeah, it might be too late for TPNOENT, but this is real error */
@@ -978,372 +1001,72 @@ public void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags,
     NDRX_LOG(log_error, "Dumping error reply about to send:");
     ndrx_dump_call_struct(log_error, &call);
 
-    if (SUCCEED!=(ret=generic_q_send(tp_call->reply_to, (char *)&call, sizeof(call), flags)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(tp_call->reply_to, (char *)&call, 
+            sizeof(call), flags, 0)))
     {
-        NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", fn, strerror(ret));
+        NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
+                fn, strerror(ret));
     }
 }
 
+
 /**
- * Parse Q. This will parse only the id, it will ignore the Q prefix
- * @param qname full queue named
- * @param p_myid parsed ID
+ * Fix queue attributes to match the requested mode.
+ * @param conv
+ * @param flags
  * @return SUCCEED/FAIL
  */
-public int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid)
+expublic int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
+                                mqd_t listen_q,
+                                char *listen_q_str, 
+                                long flags)
 {
-    int ret = SUCCEED;
-    char *p;
-    
-    /* can be, example:
-    - /dom2,cnv,c,srv,atmisv35,11,32159,0,2,1
-    - /dom1,cnv,c,clt,atmiclt35,32218,5,1,1
-     */
-    
-    if (NULL==(p = strchr(qname, NDRX_FMT_SEP)))
-    {
-        NDRX_LOG(log_error, "Invalid conversational initiator/client Q (1): [%s]", 
-                qname);
-        FAIL_OUT(ret);
-    }
-    p++;
-    
-    if (0!=strncmp(p, "cnv"NDRX_FMT_SEP_STR, 4))
-    {
-        NDRX_LOG(log_error, "Invalid conversational initiator/client Q (2): [%s]", 
-                qname);
-        FAIL_OUT(ret);
-    }
-    p+=4;
-    
-    if (0!=strncmp(p, "c"NDRX_FMT_SEP_STR, 2))
-    {
-        NDRX_LOG(log_error, "Invalid conversational initiator/client Q (3): [%s]", 
-                qname);
-        FAIL_OUT(ret);
-    }
-    p+=2;
-    
-    ret = ndrx_myid_parse(p, p_myid, TRUE);
-    
-    
-out:
-    
-    return ret;
-}
+    int ret=EXSUCCEED;
+    int change_flags = EXFALSE;
+    struct mq_attr new;
+    char fn[] = "ndrx_setup_queue_attrs";
 
+    /* NDRX_LOG(log_debug, "ATTRS BEFORE: %d", p_q_attr->mq_flags); */
 
-/**
- * Step forward number of separators
- * @param qname
- * @param num
- * @return 
- */
-private char * move_forward(char *qname, int num)
-{
-    char *p = qname;
-    int i;
-    
-    for (i=0; i<num; i++)
+    if (flags & TPNOBLOCK && !(p_q_attr->mq_flags & O_NONBLOCK))
     {
-        if (NULL==(p=strchr(p, NDRX_FMT_SEP)))
+        /* change attributes non block mode*/
+        new = *p_q_attr;
+        new.mq_flags |= O_NONBLOCK;
+        change_flags = EXTRUE;
+        NDRX_LOG(log_debug, "Changing queue [%s] to non blocked",
+                                            listen_q_str);
+    }
+    else if (!(flags & TPNOBLOCK) && (p_q_attr->mq_flags & O_NONBLOCK))
+    {
+        /* change attributes to block mode */
+        new = *p_q_attr;
+        new.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
+        change_flags = EXTRUE;
+        NDRX_LOG(log_debug, "Changing queue [%s] to blocked",
+                                            listen_q_str);
+    }
+
+    if (change_flags)
+    {
+        if (EXFAIL==ndrx_mq_setattr(listen_q, &new,
+                            NULL))
         {
-            NDRX_LOG(log_error, "Search for %d %c seps in [%s], step %d- fail",
-                    num, NDRX_FMT_SEP, qname, i);
+            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
+                                fn, listen_q_str, listen_q, strerror(errno));
+            ret=EXFAIL;
             goto out;
         }
-        p++;
+        else
+        {
+            /* Save new attrs */
+            *p_q_attr = new;
+        }
     }
+
+    /* NDRX_LOG(log_debug, "ATTRS AFTER: %d", p_q_attr->mq_flags); */
     
 out:
-    return p;
-       
-}
-/**
- * Parse conversational server Q. Which is compiled of two initiator and acceptor:
- * e.g. 
- * - /dom2,cnv,s,srv,atmisv35,13,32163,0,2,1,srv,atmisv35,14,32165,0,2
- * - /dom2,cnv,s,clt,atmiclt35,32218,2,1,1,srv,atmisv35,11,32159,0,2
- * @param qname
- * @param p_myid_first
- * @param p_myid_second
- * @return 
- */
-public int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *p_myid_second)
-{
-    int ret = SUCCEED;
-    char tmpq[NDRX_MAX_Q_SIZE+1];
-    char *p;
-    char *p2;
-    /* we might want to get specs about count of separator commas 
-     * symbols in each of the ids. Thus we could step forward for compiled
-     * Q identifiers.
-     */
-    
-    NDRX_STRCPY_SAFE(tmpq, qname);
-    
-    /* /dom2,cnv,s,clt,atmiclt35,32218,2,1,1,srv,atmisv35,11,32159,0,2 */
-    
-    if (NULL==(p = strchr(tmpq, NDRX_FMT_SEP)))
-    {
-        NDRX_LOG(log_error, "Invalid conversational server Q (1): [%s]", 
-                qname);
-        FAIL_OUT(ret);
-    }
-    p++;
-    
-    if (0!=strncmp(p, "cnv"NDRX_FMT_SEP_STR, 4))
-    {
-        NDRX_LOG(log_error, "Invalid conversational server Q (2): [%s]", 
-                qname);
-        FAIL_OUT(ret);
-    }
-    p+=4;
-    
-    if (0!=strncmp(p, "s"NDRX_FMT_SEP_STR, 2))
-    {
-        NDRX_LOG(log_error, "Invalid conversational server Q (3): [%s]", 
-                qname);
-        FAIL_OUT(ret);
-    }
-    p+=2;
-    
-    if (0==strncmp(p, "srv"NDRX_FMT_SEP_STR, 4))
-    {
-        /* +1 because we want to get till the end of the our component */
-        if (NULL==(p2=move_forward(p, NDRX_MY_ID_SRV_CNV_NRSEPS+1)))
-        {
-            NDRX_LOG(log_error, "Failed to decode server myid seps count: [%s]",
-                   p);
-        }
-        p2--;
-        *p2 = EOS;
-        p2++;
-        
-        if (strlen(p2)==0)
-        {
-            NDRX_LOG(log_error, "Invalid server queue");
-            FAIL_OUT(ret);
-        }
-    }
-    else if (0==strncmp(p, "clt"NDRX_FMT_SEP_STR, 4))
-    {
-        /* +1 because we want to get till the end of the our component */
-        if (NULL==(p2=move_forward(p, NDRX_MY_ID_CLT_CNV_NRSEPS+1)))
-        {
-            NDRX_LOG(log_error, "Failed to decode client myid seps count: [%s]",
-                   p);
-        }
-        p2--;
-        *p2 = EOS;
-        p2++;
-        
-        if (strlen(p2)==0)
-        {
-            NDRX_LOG(log_error, "Invalid client queue of server q [%s]", qname);
-            FAIL_OUT(ret);
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Cannot detect myid type of conversational Q: "
-                "[%s]", qname);
-        FAIL_OUT(ret);
-    }
-    
-    NDRX_LOG(log_debug, "Parsing Q: [%s] first part: [%s] "
-            "second part: [%s]",qname, p, p2);
-    if (SUCCEED!=ndrx_myid_parse(p, p_myid_first, TRUE) || 
-            SUCCEED!=ndrx_myid_parse(p2, p_myid_second, FALSE))
-    {
-        NDRX_LOG(log_error, "Failed to parse Q: [%s] first part: [%s] "
-            "second part: [%s]",qname, p, p2);
-        FAIL_OUT(ret);
-    }
-    
-out:
-    NDRX_LOG(log_error, "ndrx_parse_cnv_srv_q returns with %d", ret);
     return ret;
-}
-
-/**
- * Prase myid (it will detect client or server)
- * @param my_id myid string
- * @param out parsed myid
- * @return SUCCEED/FAIL
- */
-public int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator)
-{
-    int ret = SUCCEED;
-    
-    if (0==strncmp(my_id, "srv"NDRX_FMT_SEP_STR, 4))
-    {
-        NDRX_LOG(log_debug, "Parsing server myid: [%s]", my_id);
-        return ndrx_myid_parse_srv(my_id, out, iscnv_initator);
-    }
-    else if (0==strncmp(my_id, "clt"NDRX_FMT_SEP_STR, 4))
-    {
-        NDRX_LOG(log_debug, "Parsing client myid: [%s]", my_id);
-        return ndrx_myid_parse_clt(my_id, out, iscnv_initator);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Cannot detect myid type: [%s]", my_id);
-        ret=FAIL;
-    }
-    
-    return ret;
-}
-
-
-/**
- * Parse client id
- * @param my_id client id string
- * @param out client id out struct
- * @return SUCCEED
- */
-public int ndrx_myid_parse_clt(char *my_id, TPMYID *out, int iscnv_initator)
-{
-    int ret = SUCCEED;
-    int len;
-    int i;
-    char tmp[NDRX_MAX_Q_SIZE+1];
-    
-    NDRX_STRCPY_SAFE(tmp, my_id);
-    len = strlen(tmp);
-    for (i=0; i<len; i++)
-    {
-        if (NDRX_FMT_SEP==tmp[i])
-            tmp[i]=' ';
-    }
-    
-    NDRX_LOG(log_debug, "Parsing: [%s]", tmp);
-    if (iscnv_initator)
-    {
-        sscanf(tmp, NDRX_MY_ID_CLT_CNV_PARSE, 
-                out->binary_name
-                ,&(out->pid)
-                ,&(out->contextid)
-                ,&(out->nodeid)
-                ,&(out->cd));
-        out->isconv = TRUE;
-    }
-    else 
-    {
-
-        sscanf(tmp, NDRX_MY_ID_CLT_PARSE, 
-                out->binary_name
-                ,&(out->pid)
-                ,&(out->contextid)
-                ,&(out->nodeid));
-        out->isconv = FALSE;
-    }
-
-    out->tpmyidtyp = TPMYIDTYP_CLIENT;
-    
-    ndrx_myid_dump(log_debug, out, "Parsed myid");
-    
-    return ret;
-}
-
-/**
- * Parse myid of the server process
- * @param my_id myid/NDRX_MY_ID_SRV formatted id
- * @param out filled structure of the parse id
- * @return SUCCEED
- */
-public int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
-{
-    int ret = SUCCEED;
-    int len;
-    int i;
-    char tmp[NDRX_MAX_Q_SIZE+1];
-    
-    NDRX_STRCPY_SAFE(tmp, my_id);
-    len = strlen(tmp);
-    for (i=0; i<len; i++)
-    {
-        if (NDRX_FMT_SEP==tmp[i])
-            tmp[i]=' ';
-    }
-    
-    NDRX_LOG(log_debug, "Parsing: [%s]", tmp);
-    if (iscnv_initator)
-    {
-        sscanf(tmp, NDRX_MY_ID_SRV_CNV_PARSE, 
-                out->binary_name
-                ,&(out->srv_id)
-                ,&(out->pid)
-                ,&(out->contextid)
-                ,&(out->nodeid)
-                ,&(out->cd));
-        out->isconv = TRUE;
-    }
-    else
-    {
-        sscanf(tmp, NDRX_MY_ID_SRV_PARSE, 
-                out->binary_name
-                ,&(out->srv_id)
-                ,&(out->pid)
-                ,&(out->contextid)
-                ,&(out->nodeid));
-        out->isconv = FALSE;
-    }
-    
-    out->tpmyidtyp = TPMYIDTYP_SERVER;
-    
-    ndrx_myid_dump(log_debug, out, "Parsed myid output");
-    
-    return ret;
-}
-
-/**
- * Check is process a live
- * @param 
- * @return FAIL (not our node)/TRUE (live)/FALSE (dead)
- */
-public int ndrx_myid_is_alive(TPMYID *p_myid)
-{
-    if (tpgetnodeid()==G_atmi_env.our_nodeid)
-    {
-        /* cltname same pos as server proc name */
-        return ndrx_sys_is_process_running(p_myid->pid, p_myid->binary_name);
-    }
-    else
-    {
-        return FAIL;
-    }
-}
-
-/**
- * Dump the MYID struct to the log
- * @param p_myid ptr to myid
- * @param lev debug level to print of
- */
-public void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
-{
-    
-    NDRX_LOG(lev, "=== %s ===", msg);
-    
-    NDRX_LOG(lev, "binary_name:[%s]", p_myid->binary_name);
-    NDRX_LOG(lev, "pid        :%d", p_myid->pid);
-    NDRX_LOG(lev, "contextid  :%ld", p_myid->contextid);
-    NDRX_LOG(lev, "nodeid     :%d", p_myid->nodeid);
-    NDRX_LOG(lev, "typ        :%s (%d)", 
-            p_myid->tpmyidtyp==TPMYIDTYP_SERVER?"server":"client", 
-            p_myid->tpmyidtyp);
-    
-    if (p_myid->tpmyidtyp==TPMYIDTYP_SERVER)
-    {
-        NDRX_LOG(lev, "srv_id     :%d", p_myid->srv_id);
-    }
-    NDRX_LOG(lev, "cnv initia :%s", p_myid->isconv?"TRUE":"FALSE");
-    
-    if (p_myid->isconv)
-    {
-        NDRX_LOG(lev, "cd         :%d", p_myid->cd);
-    }
-    NDRX_LOG(lev, "=================");
-            
 }
 

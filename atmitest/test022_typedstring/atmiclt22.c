@@ -56,23 +56,23 @@ int main(int argc, char** argv) {
 
     long rsplen;
     int i, j;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *buf = tpalloc("STRING", NULL, 30);
     
     if (NULL==buf)
     {
         NDRX_LOG(log_error, "TESTERROR: failed to alloc STRING buffer!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     for (j=0; j<10000; j++)
     {
         strcpy(buf, "HELLO WORLD");
 
-        if (SUCCEED!=tpcall("TEST22_STRING", buf, 0, &buf, &rsplen, 0))
+        if (EXSUCCEED!=tpcall("TEST22_STRING", buf, 0, &buf, &rsplen, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: failed to call TEST22_STRING");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
         NDRX_LOG(log_debug, "Got message [%s] ", buf);
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        if (EOS!=buf[TEST_REPLY_SIZE])
+        if (EXEOS!=buf[TEST_REPLY_SIZE])
         {
             NDRX_LOG(log_error, "TESTERROR: Not EOS!");
         }
@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
         {
             NDRX_LOG(log_error, "TESTERROR: Event is not processed by "
                     "exactly 1 service! (%d) ", ret);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         /* Realloc to some more... */
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
 out:
 
     if (ret>=0)
-        ret=SUCCEED;
+        ret=EXSUCCEED;
 
     return ret;
 }

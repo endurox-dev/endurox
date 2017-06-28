@@ -60,9 +60,9 @@
  * @param args
  * @return SUCCEED?
  */
-public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     srv_status_t * srvinfo = (srv_status_t *)call;
     pm_node_t * p_pm;
     pm_node_t * p_pm_chk;
@@ -134,7 +134,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
             /* Assume we inter in running state, thus reset ping timer */
             p_pm->pingtimer = SANITY_CNT_START; /* reset rsp timer */
             p_pm->rsptimer = SANITY_CNT_START;
-            p_pm->killreq = FALSE;
+            p_pm->killreq = EXFALSE;
             
             p_pm->exec_seq_try = 0; /* Reset counter as we are good */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
@@ -149,7 +149,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
             /* Assume we inter in running state, thus reset ping timer */
             p_pm->pingtimer = SANITY_CNT_START;
             p_pm->rsptimer = SANITY_CNT_START; /* reset rsp timer */
-            p_pm->killreq = FALSE;
+            p_pm->killreq = EXFALSE;
             
             remove_startfail_process(p_pm_chk, NULL, NULL);
             /* reset shared memory! */
@@ -181,7 +181,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
         p_pm->state = srvinfo->srvinfo.state;
         p_pm->reqstate = NDRXD_PM_RUNNING_OK;/* If process is now running, 
                                               * then assume we want it keep running! */
-        p_pm->killreq = FALSE;
+        p_pm->killreq = EXFALSE;
         
         /* reset ping timer */
         p_pm->pingtimer = SANITY_CNT_START;
@@ -207,7 +207,7 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
         {
             NDRXD_set_error_fmt(NDRXD_EOS, "Failed to allocate pm_node_svc_t(%d)!",
                                             sizeof(pm_node_svc_t));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -218,9 +218,9 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
         /* Add this to the list */
         DL_APPEND(p_pm->svcs, svc_info);
         /* add stuff to bridge service hash */
-        if (SUCCEED!=brd_add_svc_to_hash(svc_info->svc.svc_nm))
+        if (EXSUCCEED!=brd_add_svc_to_hash(svc_info->svc.svc_nm))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }
@@ -228,9 +228,9 @@ public int cmd_srvinfo (command_call_t * call, char *data, size_t len, int conte
     if (srvinfo->srvinfo.flags & SRV_KEY_FLAGS_BRIDGE)
     {
         NDRX_LOG(log_debug, "Server is bridge - update bridge table");
-        if (SUCCEED!=brd_addupd_bridge(srvinfo))
+        if (EXSUCCEED!=brd_addupd_bridge(srvinfo))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
     }

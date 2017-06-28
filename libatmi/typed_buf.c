@@ -51,18 +51,18 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-private buffer_obj_t * find_buffer_int(char *ptr);
+exprivate buffer_obj_t * find_buffer_int(char *ptr);
 /*
  * Buffers allocated by process
  */
-public buffer_obj_t *G_buffers=NULL;
+expublic buffer_obj_t *G_buffers=NULL;
 
 MUTEX_LOCKDECL(M_lock); /* This will allow multiple reads */
 
 /*
  * Buffer descriptors
  */
-public typed_buffer_descr_t G_buf_descr[] =
+expublic typed_buffer_descr_t G_buf_descr[] =
 {
     {BUF_TYPE_UBF,   "UBF",     "FML",     NULL, UBF_prepare_outgoing, UBF_prepare_incoming,
                                 UBF_tpalloc, UBF_tprealloc, UBF_tpfree, UBF_test},
@@ -84,7 +84,7 @@ public typed_buffer_descr_t G_buf_descr[] =
     {BUF_TYPE_STRING,"STRING",  NULL,      NULL, /* todo:  */NULL, /* todo: */NULL, NULL},
     {BUF_TYPE_CARRAY,"CARRAY",  "X_OCTET", NULL, /* todo:  */NULL, /* todo: */NULL, NULL},
 #endif
-    {FAIL}
+    {EXFAIL}
 };
 
 /*---------------------------Statics------------------------------------*/
@@ -97,9 +97,9 @@ public typed_buffer_descr_t G_buf_descr[] =
  * @param b
  * @return 0 - equal/ -1 - not equal
  */
-private int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
+exprivate int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
 {
-    return (a->buf==b->buf?SUCCEED:FAIL);
+    return (a->buf==b->buf?EXSUCCEED:EXFAIL);
 }
 
 /**
@@ -110,7 +110,7 @@ private int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
  * @param ptr
  * @return NULL - buffer not found/ptr - buffer found
  */
-public buffer_obj_t * find_buffer(char *ptr)
+expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -134,7 +134,7 @@ public buffer_obj_t * find_buffer(char *ptr)
  * @param ptr
  * @return NULL - buffer not found/ptr - buffer found
  */
-private buffer_obj_t * find_buffer_int(char *ptr)
+exprivate buffer_obj_t * find_buffer_int(char *ptr)
 {
     buffer_obj_t *ret=NULL;
 
@@ -154,24 +154,24 @@ private buffer_obj_t * find_buffer_int(char *ptr)
  * @param subtype - may be NULL
  * @return NULL/or ptr to G_buf_descr[X]
  */
-private typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
+exprivate typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
 {
     typed_buffer_descr_t *p=G_buf_descr;
     typed_buffer_descr_t *ret = NULL;
 
-    while (FAIL!=p->type_id)
+    while (EXFAIL!=p->type_id)
     {
         if ((NULL!=p->type && 0==strcmp(p->type, type)) || 
                         (NULL!=p->alias && 0==strcmp(p->alias, type)) ||
                         p->type == type /*NULL buffer*/)
         {
             /* check subtype (if used) */
-            if ((NULL!=p->subtype && (NULL==subtype || EOS==subtype[0])) ||
-                        (NULL==p->subtype && NULL!=subtype && EOS!=subtype[0]))
+            if ((NULL!=p->subtype && (NULL==subtype || EXEOS==subtype[0])) ||
+                        (NULL==p->subtype && NULL!=subtype && EXEOS!=subtype[0]))
             {
                 /* search for next */
             } /* Assume empty string subtype as empty/null */
-            else if (NULL!=p->subtype && NULL!=subtype && EOS!=subtype[0])
+            else if (NULL!=p->subtype && NULL!=subtype && EXEOS!=subtype[0])
             {
                 /* compare subtypes */
                 if (0==strcmp(p->subtype, subtype))
@@ -198,7 +198,7 @@ private typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
  * @param len
  * @return
  */
-public char * _tpalloc (typed_buffer_descr_t *known_type,
+expublic char * _tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len)
 {
     MUTEX_LOCK_V(M_lock);
@@ -271,7 +271,7 @@ out:
  * @param
  * @return
  */
-public char * _tprealloc (char *buf, long len)
+expublic char * _tprealloc (char *buf, long len)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -319,7 +319,7 @@ out:
 /**
  * Free up allocated buffers
  */
-public void free_up_buffers(void)
+expublic void free_up_buffers(void)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -345,7 +345,7 @@ public void free_up_buffers(void)
  * Remove the buffer
  * @param buf
  */
-public void _tpfree (char *buf, buffer_obj_t *known_buffer)
+expublic void _tpfree (char *buf, buffer_obj_t *known_buffer)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -381,7 +381,7 @@ public void _tpfree (char *buf, buffer_obj_t *known_buffer)
  * @param buf ATMI allocated buffer
  * @return TRUE (1) if auto buffer, 0 manual buffer, -1 if error (unknown buffer)
  */
-public int _tpisautobuf(char *buf)
+expublic int _tpisautobuf(char *buf)
 {
     int ret;
     
@@ -400,7 +400,7 @@ public int _tpisautobuf(char *buf)
         {
             _TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
                 "not allocated by tpalloc()!");
-            ret=FAIL;
+            ret=EXFAIL;
         }
         
     MUTEX_UNLOCK_V(M_lock);
@@ -413,7 +413,7 @@ public int _tpisautobuf(char *buf)
 /**
  * This does free up auto-allocated buffers.
  */
-public void free_auto_buffers(void)
+expublic void free_auto_buffers(void)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -451,11 +451,11 @@ public void free_auto_buffers(void)
  * @param subtype
  * @return 
  */
-public long _tptypes (char *ptr, char *type, char *subtype)
+expublic long _tptypes (char *ptr, char *type, char *subtype)
 {
     MUTEX_LOCK_V(M_lock);
     {
-    long ret=SUCCEED;
+    long ret=EXSUCCEED;
     
     typed_buffer_descr_t *buf_type = NULL;
 
@@ -465,7 +465,7 @@ public long _tptypes (char *ptr, char *type, char *subtype)
     {
         _TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
                 "not allocated by tpalloc()!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     else

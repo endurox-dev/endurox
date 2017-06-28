@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>   /* memcmp,strlen */
 #include <stddef.h>   /* ptrdiff_t */
 #include <stdlib.h>   /* exit() */
+#include <ndebug.h>
 
 /* These macros use decltype or the earlier __typeof GNU extension.
    As decltype is only available in newer compilers (VS2010 or gcc 4.3+
@@ -68,8 +69,8 @@ typedef unsigned char uint8_t;
 #define EXHASH_VERSION 1.9.4
 
 #define exhash_fatal(msg) exit(-1)        /* fatal error (out of memory,etc) */
-#define exhash_malloc(sz) malloc(sz)      /* malloc fcn                      */
-#define exhash_free(ptr,sz) free(ptr)     /* free fcn                        */
+#define exhash_malloc(sz) NDRX_MALLOC(sz)      /* malloc fcn                 */
+#define exhash_free(ptr,sz) NDRX_FREE(ptr)     /* free fcn                   */
 
 #define exhash_noexpand_fyi(tbl)          /* can be defined to log noexpand  */
 #define exhash_expand_fyi(tbl)            /* can be defined to log expands   */

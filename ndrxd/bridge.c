@@ -46,7 +46,7 @@
 #include <nstdutil.h>
 #include <exhash.h>
 #include <bridge_int.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cmd_processor.h>
 #include <atmi_shm.h>
 /*---------------------------Externs------------------------------------*/
@@ -61,7 +61,7 @@ bridgedef_svcs_t *G_bridge_svc_diff= NULL; /* Service diff to be sent to nodes,
                                             * procssed before G_bridge_svc_hash, 
                                             * because we need the point from what 
                                             * to make a diff */
-private int M_build_diff = FALSE;           /* Diff mode enabled        */
+exprivate int M_build_diff = EXFALSE;           /* Diff mode enabled        */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -70,7 +70,7 @@ private int M_build_diff = FALSE;           /* Diff mode enabled        */
  * Remove bridge service hash & remove stuff from shared mem.
  * @param 
  */
-public void brd_remove_bridge_services(bridgedef_t *cur)
+expublic void brd_remove_bridge_services(bridgedef_t *cur)
 {
     bridgedef_svcs_t *r = NULL;
     bridgedef_svcs_t *rtmp = NULL;
@@ -90,7 +90,7 @@ public void brd_remove_bridge_services(bridgedef_t *cur)
  * @param nodeid
  * @return 
  */
-public int brd_del_bridge(int nodeid)
+expublic int brd_del_bridge(int nodeid)
 {
     bridgedef_t* cur = brd_get_bridge(nodeid);
     
@@ -98,7 +98,7 @@ public int brd_del_bridge(int nodeid)
     {
         NDRX_LOG(log_error, "Failed to remove bridge %d - "
                 "node not found", nodeid);
-        return FAIL;
+        return EXFAIL;
     }
     else
     {
@@ -108,7 +108,7 @@ public int brd_del_bridge(int nodeid)
         NDRX_FREE(cur);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -116,12 +116,12 @@ public int brd_del_bridge(int nodeid)
  * @param srvinfo
  * @return 
  */
-public int brd_addupd_bridge(srv_status_t * srvinfo)
+expublic int brd_addupd_bridge(srv_status_t * srvinfo)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "brd_addupd_bridge";
     bridgedef_t *cur;
-    int add=FALSE;
+    int add=EXFALSE;
     if (NULL!=(cur=brd_get_bridge(srvinfo->srvinfo.nodeid)))
     {
         NDRX_LOG(log_warn, "Bridge %d already exists - updating", 
@@ -137,11 +137,11 @@ public int brd_addupd_bridge(srv_status_t * srvinfo)
             
             NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
                     sizeof(bridgedef_t), strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         cur->nodeid = srvinfo->srvinfo.nodeid;
-        add=TRUE;
+        add=EXTRUE;
     }
     
     cur->srvid = srvinfo->srvinfo.srvid;
@@ -165,7 +165,7 @@ out:
  * @param nodeid - node id.
  * @return 
  */
-public bridgedef_t* brd_get_bridge(int nodeid)
+expublic bridgedef_t* brd_get_bridge(int nodeid)
 {
     bridgedef_t *ret = NULL;
     
@@ -180,7 +180,7 @@ public bridgedef_t* brd_get_bridge(int nodeid)
  * @param buf where to put the message.
  * @return 
  */
-public int brd_build_refresh_msg(bridgedef_svcs_t *svcs, 
+expublic int brd_build_refresh_msg(bridgedef_svcs_t *svcs, 
                 bridge_refresh_t *ref, char mode)
 {
     bridgedef_svcs_t *r = NULL;
@@ -195,7 +195,7 @@ public int brd_build_refresh_msg(bridgedef_svcs_t *svcs,
     EXHASH_ITER(hh, svcs, r, rtmp)
     {
         ref->svcs[ref->count].count = r->count;
-        strcpy(ref->svcs[ref->count].svc_nm, r->svc_nm);
+        NDRX_STRCPY_SAFE(ref->svcs[ref->count].svc_nm, r->svc_nm);
         ref->svcs[ref->count].mode = mode;
         
         NDRX_LOG(log_debug, "Built refresh line: count: %d svc_nm: [%s] mode: %c",
@@ -205,7 +205,7 @@ public int brd_build_refresh_msg(bridgedef_svcs_t *svcs,
         ref->count++;
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -213,9 +213,9 @@ public int brd_build_refresh_msg(bridgedef_svcs_t *svcs,
  * @param refresh
  * @return 
  */
-public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refresh)
+expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refresh)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int send_size;
     bridgedef_t *br = NULL;
     pm_node_t *srv = NULL;
@@ -238,7 +238,7 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
     if (NULL==br)
     {
         NDRX_LOG(log_error, "Invalid nodeid %d!!!", nodeid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -247,12 +247,12 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
     if (NULL==srv)
     {
         NDRX_LOG(log_error, "Invalid server id %d!!!", br->srvid);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     /* Check is per server filter enabled? */
-    if (EOS!=srv->conf->exportsvcs[0] || EOS!=srv->conf->blacklistsvcs[0])
+    if (EXEOS!=srv->conf->exportsvcs[0] || EXEOS!=srv->conf->blacklistsvcs[0])
     {
         int i;
         NDRX_LOG(6, "filtering by exportsvcs or blacklistsvcs");
@@ -267,7 +267,7 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
         {
             char search_svc[MAXTIDENT+3];
             search_svc[0]=',';
-            search_svc[1]=EOS;
+            search_svc[1]=EXEOS;
             
             strcat(search_svc, refresh->svcs[i].svc_nm);
             strcat(search_svc, ",");
@@ -275,7 +275,7 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
             /*
              * If blacklist set, then filter out blacklisted services
              */
-            if (EOS!=srv->conf->blacklistsvcs[0] && strstr(srv->conf->blacklistsvcs, 
+            if (EXEOS!=srv->conf->blacklistsvcs[0] && strstr(srv->conf->blacklistsvcs, 
                     search_svc))
             {
                 NDRX_LOG(6, "svc %s blacklisted for export", refresh->svcs[i].svc_nm);
@@ -284,7 +284,7 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
             /* If export list empty - export all
              * If export list set, then only those in the list
              */
-            else if (EOS==srv->conf->exportsvcs[0] || strstr(srv->conf->exportsvcs, 
+            else if (EXEOS==srv->conf->exportsvcs[0] || strstr(srv->conf->exportsvcs, 
                     search_svc))
             {
                 NDRX_LOG(6, "svc %s ok for export", refresh->svcs[i].svc_nm);
@@ -307,13 +307,13 @@ public int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *refre
             (command_call_t *)p_refresh, send_size,
             G_command_state.listenq_str,
             G_command_state.listenq,
-            (mqd_t)FAIL,
+            (mqd_t)EXFAIL,
             get_srv_admin_q(srv),
             0, NULL,
             NULL,
             NULL,
             NULL,
-            FALSE);
+            EXFALSE);
     
 out:
 
@@ -326,9 +326,9 @@ out:
  * @param nodeid
  * @return 
  */
-public int brd_connected(int nodeid)
+expublic int brd_connected(int nodeid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridgedef_t *cur = brd_get_bridge(nodeid);
     char buf[ATMI_MSG_MAX_SIZE];
     bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
@@ -339,16 +339,16 @@ public int brd_connected(int nodeid)
     if (NULL!=cur)
     {
         pm_node_t * p_pm = get_pm_from_srvid(cur->srvid);
-        cur->connected = TRUE;
+        cur->connected = EXTRUE;
         p_pm->flags|=SRV_KEY_FLAGS_CONNECTED;
         
         if (cur->flags & SRV_KEY_FLAGS_SENDREFERSH)
         {
             NDRX_LOG(log_debug, "About to send to node %d full refresh", nodeid);
-            if (SUCCEED==brd_build_refresh_msg(G_bridge_svc_hash, refresh, 
+            if (EXSUCCEED==brd_build_refresh_msg(G_bridge_svc_hash, refresh, 
                     BRIDGE_REFRESH_MODE_FULL))
             {
-                if (SUCCEED==(ret = brd_send_update(nodeid, cur, refresh)))
+                if (EXSUCCEED==(ret = brd_send_update(nodeid, cur, refresh)))
                 {
                     /* Reset full refresh timer */
                     cur->lastrefresh_sent = SANITY_CNT_START;
@@ -365,7 +365,7 @@ public int brd_connected(int nodeid)
         NDRX_LOG(log_warn, "Unknown bridge nodeid %d!!!", nodeid);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -373,7 +373,7 @@ public int brd_connected(int nodeid)
  * @param nodeid
  * @return 
  */
-public int brd_discconnected(int nodeid)
+expublic int brd_discconnected(int nodeid)
 {
     bridgedef_t *cur = brd_get_bridge(nodeid);
     bridgedef_svcs_t *r = NULL;
@@ -381,13 +381,13 @@ public int brd_discconnected(int nodeid)
         
     if (NULL!=cur)
     {   pm_node_t * p_pm = get_pm_from_srvid(cur->srvid);
-        cur->connected = FALSE;
+        cur->connected = EXFALSE;
         /* Clear connected flag. */
         p_pm->flags&=(~SRV_KEY_FLAGS_CONNECTED);
         
         /* ###################### CRITICAL SECTION ###################### */
         /* So we make this part critical... */
-        if (SUCCEED!=ndrx_lock_svc_op(__func__))
+        if (EXSUCCEED!=ndrx_lock_svc_op(__func__))
         {
             goto out;
         }
@@ -396,7 +396,7 @@ public int brd_discconnected(int nodeid)
         {
             /* Remove from shm */
             ndrx_shm_install_svc_br(r->svc_nm, 0, 
-                        TRUE, nodeid, 0, BRIDGE_REFRESH_MODE_FULL, 0);
+                        EXTRUE, nodeid, 0, BRIDGE_REFRESH_MODE_FULL, 0);
             
             /* Delete from hash */
             EXHASH_DEL(cur->theyr_services, r);
@@ -415,7 +415,7 @@ public int brd_discconnected(int nodeid)
     }
     
 out:
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -426,9 +426,9 @@ out:
  * @param svc
  * @return 
  */
-public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff)
+expublic int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridgedef_svcs_t *r=NULL;
     
     EXHASH_FIND_STR( *svcs, svc, r);
@@ -459,7 +459,7 @@ public int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int diff
             {
                 NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
                         sizeof(*r), strerror(errno));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             r->count=-1; /* should be 1 */
@@ -481,7 +481,7 @@ out:
  * This also builds the diff
  * @param svc
  */
-public void brd_del_svc_from_hash(char *svc)
+expublic void brd_del_svc_from_hash(char *svc)
 {
     char *fn = "brd_del_svc_from_hash";
     /* Nothing to do if not clustered... 
@@ -506,10 +506,10 @@ public void brd_del_svc_from_hash(char *svc)
     
     if (M_build_diff)
     {
-        brd_del_svc_from_hash_g(&G_bridge_svc_diff, svc, TRUE);
+        brd_del_svc_from_hash_g(&G_bridge_svc_diff, svc, EXTRUE);
     }
     
-    brd_del_svc_from_hash_g(&G_bridge_svc_hash, svc, FALSE);
+    brd_del_svc_from_hash_g(&G_bridge_svc_hash, svc, EXFALSE);
 }
 
 /**
@@ -518,9 +518,9 @@ public void brd_del_svc_from_hash(char *svc)
  * @param svc
  * @return 
  */
-public int brd_add_svc_to_hash(char *svc)
+expublic int brd_add_svc_to_hash(char *svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     /* We ignore special services like bridge.. */
     if (0==strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN) ||
@@ -533,20 +533,20 @@ public int brd_add_svc_to_hash(char *svc)
     )
     {
         NDRX_LOG(log_debug, "IGNORING %s", svc);
-        return SUCCEED;
+        return EXSUCCEED;
     }
     
     NDRX_LOG(log_debug, "ADDING %s", svc);
     
-    if (SUCCEED!=brd_add_svc_to_hash_g(&G_bridge_svc_diff, svc))
+    if (EXSUCCEED!=brd_add_svc_to_hash_g(&G_bridge_svc_diff, svc))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret=brd_add_svc_to_hash_g(&G_bridge_svc_hash, svc);
     
 out:
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -555,9 +555,9 @@ out:
  * @param sh
  * @return 
  */
-public int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
+expublic int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridgedef_svcs_t *r=NULL;
     
     /* Try to get, if stuff in hash, increase counter */
@@ -574,7 +574,7 @@ public int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
         {
             NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
                     sizeof(*r), strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         r->count++; /* should be 1 */
@@ -591,7 +591,7 @@ out:
 /**
  * Erase service hash list...
  */
-public void brd_erase_svc_hash_g(bridgedef_svcs_t *svcs)
+expublic void brd_erase_svc_hash_g(bridgedef_svcs_t *svcs)
 {
     bridgedef_svcs_t *cur, *tmp;
     
@@ -605,9 +605,9 @@ public void brd_erase_svc_hash_g(bridgedef_svcs_t *svcs)
 /**
  * Add svc to bridge svc hash 
  */
-public int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
+expublic int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     bridgedef_svcs_t *r=NULL;
     bridgedef_svcs_t *tmp=NULL;
     
@@ -626,7 +626,7 @@ public int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
         {
             NDRX_LOG(log_error, "Failed to allocate %d bytes: %s", 
                     sizeof(*r), strerror(errno));
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         strcpy(r->svc_nm, svc);
@@ -646,7 +646,7 @@ out:
  * @param count
  * @return 
  */
-public void brd_del_svc_brhash(bridgedef_t *cur, bridgedef_svcs_t *s, char *svc)
+expublic void brd_del_svc_brhash(bridgedef_t *cur, bridgedef_svcs_t *s, char *svc)
 {
     bridgedef_svcs_t *r=NULL;
     
@@ -673,7 +673,7 @@ public void brd_del_svc_brhash(bridgedef_t *cur, bridgedef_svcs_t *s, char *svc)
  * @param svc
  * @return 
  */
-public bridgedef_svcs_t * brd_get_svc_brhash(bridgedef_t *cur, char *svc)
+expublic bridgedef_svcs_t * brd_get_svc_brhash(bridgedef_t *cur, char *svc)
 {
     bridgedef_svcs_t *r=NULL;
     EXHASH_FIND_STR( cur->theyr_services, svc, r);
@@ -688,7 +688,7 @@ public bridgedef_svcs_t * brd_get_svc_brhash(bridgedef_t *cur, char *svc)
  * @param svc
  * @return 
  */
-public bridgedef_svcs_t * brd_get_svc(bridgedef_svcs_t * svcs, char *svc)
+expublic bridgedef_svcs_t * brd_get_svc(bridgedef_svcs_t * svcs, char *svc)
 {
     bridgedef_svcs_t *r=NULL;
     EXHASH_FIND_STR( svcs, svc, r);
@@ -700,7 +700,7 @@ public bridgedef_svcs_t * brd_get_svc(bridgedef_svcs_t * svcs, char *svc)
 /**
  * remove service diff
  */
-private void brd_clear_diff(void)
+exprivate void brd_clear_diff(void)
 {
     bridgedef_svcs_t *cur, *tmp;
     
@@ -715,12 +715,12 @@ private void brd_clear_diff(void)
 /**
  * Begin diff build
  */
-public void brd_begin_diff(void)
+expublic void brd_begin_diff(void)
 {
     if (!ndrx_get_G_atmi_env()->is_clustered)
         return;
     
-    M_build_diff = TRUE;
+    M_build_diff = EXTRUE;
     /* clear hashlist */
     brd_clear_diff();
 }
@@ -728,19 +728,19 @@ public void brd_begin_diff(void)
 /**
  * dispatch the diff to all nodes.
  */
-public void brd_end_diff(void)
+expublic void brd_end_diff(void)
 {
     bridgedef_t *r = NULL;
     bridgedef_t *rtmp = NULL;
     char buf[ATMI_MSG_MAX_SIZE];
     bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
-    int first = TRUE;
+    int first = EXTRUE;
     
     /* Nothing to do. */
     if (!ndrx_get_G_atmi_env()->is_clustered)
         return;
     
-    M_build_diff = FALSE;
+    M_build_diff = EXFALSE;
     
     /* TODO: Send stuff to everybody */
     EXHASH_ITER(hh, G_bridge_hash, r, rtmp)
@@ -757,7 +757,7 @@ public void brd_end_diff(void)
                 memset(buf, 0, sizeof(buf));
                 brd_build_refresh_msg(G_bridge_svc_diff, refresh, 
                         BRIDGE_REFRESH_MODE_DIFF);
-                first=FALSE;
+                first=EXFALSE;
                 
                 if (0==refresh->count)
                 {
@@ -767,7 +767,7 @@ public void brd_end_diff(void)
                 }
             }
             
-            if (SUCCEED!=brd_send_update(r->nodeid, r, refresh))
+            if (EXSUCCEED!=brd_send_update(r->nodeid, r, refresh))
             {
                 NDRX_LOG(log_warn, "Failed to send update to node %d", 
                         r->nodeid);
@@ -789,7 +789,7 @@ public void brd_end_diff(void)
 /**
  * Periodic houseekping function
  */
-public void brd_send_periodrefresh(void)
+expublic void brd_send_periodrefresh(void)
 {
     bridgedef_t *cur = NULL;
     bridgedef_t *rtmp = NULL;
@@ -814,10 +814,10 @@ public void brd_send_periodrefresh(void)
             NDRX_LOG(log_debug, "About to send to node %d full refresh", 
                     cur->nodeid);
             
-            if (SUCCEED==brd_build_refresh_msg(G_bridge_svc_hash, refresh, 
+            if (EXSUCCEED==brd_build_refresh_msg(G_bridge_svc_hash, refresh, 
                     BRIDGE_REFRESH_MODE_FULL))
             {
-                if (SUCCEED == brd_send_update(cur->nodeid, cur, refresh))
+                if (EXSUCCEED == brd_send_update(cur->nodeid, cur, refresh))
                 {
                     /* Reset full refresh timer */
                     cur->lastrefresh_sent = SANITY_CNT_START;

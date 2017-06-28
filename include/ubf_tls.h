@@ -46,7 +46,7 @@ extern "C" {
     
 #define UBF_TLS_MAGIG          0x150519be
 #define UBF_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_ubf_tls)) \
-        {G_ubf_tls=(ubf_tls_t *)ndrx_ubf_tls_new(TRUE, TRUE);};
+        {G_ubf_tls=(ubf_tls_t *)ndrx_ubf_tls_new(EXTRUE, EXTRUE);};
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

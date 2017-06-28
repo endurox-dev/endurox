@@ -75,9 +75,9 @@
  * @param p_ub
  * @return 
  */
-public int tm_tpabort(UBFH *p_ub)
+expublic int tm_tpabort(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl = NULL;
     int i;
@@ -85,7 +85,7 @@ public int tm_tpabort(UBFH *p_ub)
     NDRX_LOG(log_debug, "tm_tpabort() called");
     
     /* 1. get transaction from hash */
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
         NDRX_LOG(log_error, "Failed to read transaction data");
         /* - will assume that completed OK!
@@ -95,7 +95,7 @@ public int tm_tpabort(UBFH *p_ub)
         atmi_xa_set_error_fmt(p_ub, TPEINVAL, NDRX_XA_ERSN_NOTX, 
                 "Transaction with xid [%s] not logged - probably was tout+abort", 
                 xai.tmxid);
-        ret=SUCCEED;
+        ret=EXSUCCEED;
         goto out;
     }
     
@@ -106,25 +106,25 @@ public int tm_tpabort(UBFH *p_ub)
                 xai.tmxid);
         atmi_xa_set_error_fmt(p_ub, TPEPROTO, NDRX_XA_ERSN_NOTX, 
                 "Transaction with xid [%s] not logged", xai.tmxid);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Switch the state to aborting... */
 
-    if (SUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_ABORTING))    
+    if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_ABORTING))    
     {
         NDRX_LOG(log_error, "Failed to log ABORTING stage!");
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_LOGFAIL, 
                 "Cannot log [%s] tx!", xai.tmxid);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Call internal version of abort */
-    if (SUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, FAIL)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMCOMMITFAIL, 
                 "Distributed transaction process did not finish completely");
-        ret = SUCCEED;
+        ret = EXSUCCEED;
     }
         
 out:
@@ -139,24 +139,24 @@ out:
  * @param p_ub
  * @return 
  */
-public int tm_tpcommit(UBFH *p_ub)
+expublic int tm_tpcommit(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl = NULL;
     int i;
-    int do_abort = FALSE;
+    int do_abort = EXFALSE;
     short reason;
     
     NDRX_LOG(log_debug, "tm_tpcommit() called");
     
     /* 1. get transaction from hash */
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
         NDRX_LOG(log_error, "Failed to read transaction data");
         atmi_xa_set_error_msg(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                 "Invalid transaction data (missing fields)");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* read tx from hash */
@@ -170,34 +170,34 @@ public int tm_tpcommit(UBFH *p_ub)
          */
         atmi_xa_set_error_fmt(p_ub, TPEABORT, NDRX_XA_ERSN_NOTX, 
                 "Transaction with xid [%s] not logged - probably was tout+abort", xai.tmxid);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Open log file */
-    if (SUCCEED!=tms_open_logfile(p_tl, "w"))
+    if (EXSUCCEED!=tms_open_logfile(p_tl, "w"))
     {
         NDRX_LOG(log_error, "Failed to open log file");
         atmi_xa_set_error_msg(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                 "Failed to open log file");
-        do_abort = TRUE;
-        FAIL_OUT(ret);
+        do_abort = EXTRUE;
+        EXFAIL_OUT(ret);
     }
     
     /* Log that we start commit... */
-    if (SUCCEED!=tms_log_info(p_tl) ||
-            SUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_PREPARING))    
+    if (EXSUCCEED!=tms_log_info(p_tl) ||
+            EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_PREPARING))    
     {
         NDRX_LOG(log_error, "Failed to log tx - abort!");
-        do_abort = TRUE;
-        FAIL_OUT(ret);
+        do_abort = EXTRUE;
+        EXFAIL_OUT(ret);
     }
     
     /* Drive - it will auto-rollback if needed... */
-    if (SUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, FAIL)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
     {
         atmi_xa_set_error_msg(p_ub, ret, NDRX_XA_ERSN_RMCOMMITFAIL, 
                 "Transaction did not complete fully");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -211,10 +211,10 @@ out:
         tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
 
         /* Call internal version of abort */
-        if (SUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, FAIL)))
+        if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
         {
             atmi_xa_override_error(p_ub, ret);
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
 
@@ -227,21 +227,21 @@ out:
  * @param p_ub
  * @return 
  */
-public int tm_tpbegin(UBFH *p_ub)
+expublic int tm_tpbegin(UBFH *p_ub)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     XID xid; /* handler for new XID */
     atmi_xa_tx_info_t xai;
-    int do_rollback=FALSE;
+    int do_rollback=EXFALSE;
     char xid_str[NDRX_XID_SERIAL_BUFSIZE];
     long txtout;
     long tmflags;
     NDRX_LOG(log_debug, "tm_tpbegin() called");
     
-    if (SUCCEED!=Bget(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
+    if (EXSUCCEED!=Bget(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
     {
         NDRX_LOG(log_error, "Failed to read TMTXFLAGS!");
-        FAIL_OUT(ret);   
+        EXFAIL_OUT(ret);   
     }
     
     atmi_xa_new_xid(&xid);
@@ -249,7 +249,7 @@ public int tm_tpbegin(UBFH *p_ub)
     /* we should start new transaction... (only if static...) */
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
-        if (SUCCEED!=(ret = atmi_xa_start_entry(&xid, 0)))
+        if (EXSUCCEED!=(ret = atmi_xa_start_entry(&xid, 0)))
         {
             NDRX_LOG(log_error, "Failed to start new transaction!");
             atmi_xa_set_error_fmt(p_ub, TPETRAN, NDRX_XA_ERSN_NONE, 
@@ -259,11 +259,11 @@ public int tm_tpbegin(UBFH *p_ub)
         }
         
         xai.tmknownrms[0] = G_atmi_env.xa_rmid;
-        xai.tmknownrms[1] = EOS;
+        xai.tmknownrms[1] = EXEOS;
     }
     else
     {
-        xai.tmknownrms[0] = EOS;
+        xai.tmknownrms[0] = EXEOS;
     }
     
     atmi_xa_serialize_xid(&xid, xid_str);
@@ -276,7 +276,7 @@ public int tm_tpbegin(UBFH *p_ub)
     
     
     /* Currently time-out is handled only locally by TM */
-    if (SUCCEED!=Bget(p_ub, TMTXTOUT, 0, (char *)&txtout, 0L) || 0>=txtout)
+    if (EXSUCCEED!=Bget(p_ub, TMTXTOUT, 0, (char *)&txtout, 0L) || 0>=txtout)
     {
         txtout = G_tmsrv_cfg.dflt_timeout;
         NDRX_LOG(log_debug, "TX tout defaulted to: %ld", txtout);
@@ -288,7 +288,7 @@ public int tm_tpbegin(UBFH *p_ub)
     /* Only for static... */
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
-        if (SUCCEED!=(ret = atmi_xa_end_entry(&xid)))
+        if (EXSUCCEED!=(ret = atmi_xa_end_entry(&xid)))
         {
             NDRX_LOG(log_error, "Failed to end XA api!");
             atmi_xa_set_error_fmt(p_ub, TPETRAN, NDRX_XA_ERSN_NONE, 
@@ -298,24 +298,24 @@ public int tm_tpbegin(UBFH *p_ub)
         }
     }
     
-    if (SUCCEED!=atmi_xa_load_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_load_tx_info(p_ub, &xai))
     {
         NDRX_LOG(log_error, "Failed to load tx info!");
         atmi_xa_set_error_fmt(p_ub, TPETRAN, NDRX_XA_ERSN_NONE, 
                     "Failed to return tx info!");
-        do_rollback = TRUE;
-        ret=FAIL;
+        do_rollback = EXTRUE;
+        ret=EXFAIL;
         goto out;
     }
     
     /* Log into journal */
-    if (SUCCEED!=tms_log_start(&xai, txtout, tmflags))
+    if (EXSUCCEED!=tms_log_start(&xai, txtout, tmflags))
     {
         NDRX_LOG(log_error, "Failed to log the transaction!");
         atmi_xa_set_error_fmt(p_ub, TPETRAN, NDRX_XA_ERSN_LOGFAIL, 
                     "Failed to log the transaction!");
-        do_rollback = TRUE;
-        ret=FAIL;
+        do_rollback = EXTRUE;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -339,33 +339,33 @@ out:
  * @param p_ub
  * @return 
  */
-public int tm_tmregister(UBFH *p_ub)
+expublic int tm_tmregister(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     short   callerrm;
-    int is_already_logged = FALSE;
+    int is_already_logged = EXFALSE;
     atmi_xa_tx_info_t xai;
     long tmflags = 0;
     
-    if (SUCCEED!=Bget(p_ub, TMCALLERRM, 0, (char *)&callerrm, 0L))
+    if (EXSUCCEED!=Bget(p_ub, TMCALLERRM, 0, (char *)&callerrm, 0L))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Missing TMCALLERRM field: %s!", Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged))
+    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
                     "Failed to log new RM!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (is_already_logged)
@@ -373,11 +373,11 @@ public int tm_tmregister(UBFH *p_ub)
         tmflags|=TMTXFLAGS_RMIDKNOWN;
     }
     
-    if (SUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 
                     "Failed to set TMTXFLAGS!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -390,23 +390,23 @@ out:
  * @param p_ub
  * @return 
  */
-public int tm_tmprepare(UBFH *p_ub)
+expublic int tm_tmprepare(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     
     NDRX_LOG(log_debug, "tm_tmprepare called.");
     /* read xai from FB... */
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=(ret = tm_prepare_local(p_ub, &xai)))
+    if (EXSUCCEED!=(ret = tm_prepare_local(p_ub, &xai)))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -418,23 +418,23 @@ out:
  * @param p_ub
  * @return 
  */
-public int tm_tmcommit(UBFH *p_ub)
+expublic int tm_tmcommit(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     
     NDRX_LOG(log_debug, "tm_tmcommit called.");
     /* read xai from FB... */
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=(ret = tm_commit_local(p_ub, &xai)))
+    if (EXSUCCEED!=(ret = tm_commit_local(p_ub, &xai)))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -446,23 +446,23 @@ out:
  * @param p_ub
  * @return 
  */
-public int tm_tmabort(UBFH *p_ub)
+expublic int tm_tmabort(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     
     NDRX_LOG(log_debug, "tm_tmabort called.");
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* read xai from FB... */
-    if (SUCCEED!=(ret = tm_rollback_local(p_ub, &xai)))
+    if (EXSUCCEED!=(ret = tm_rollback_local(p_ub, &xai)))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -478,9 +478,9 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int tm_tpprinttrans(UBFH *p_ub, int cd)
+expublic int tm_tpprinttrans(UBFH *p_ub, int cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long revent;
     atmi_xa_log_list_t *tx_list;
     atmi_xa_log_list_t *el, *tmp;
@@ -495,15 +495,15 @@ public int tm_tpprinttrans(UBFH *p_ub, int cd)
         
         /* Erase FB & setup the info there... */
         Bproj(p_ub, NULL); /* clear the FB! */
-        if (SUCCEED!=tms_log_cpy_info_to_fb(p_ub, &(el->p_tl)))
+        if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, &(el->p_tl)))
         {
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         
         /* Bfprint(p_ub, stderr); */
         
-        if (FAIL == tpsend(cd,
+        if (EXFAIL == tpsend(cd,
                             (char *)p_ub,
                             0L,
                             0,
@@ -511,7 +511,7 @@ public int tm_tpprinttrans(UBFH *p_ub, int cd)
         {
             NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                 tpstrerror(tperrno), revent);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -535,12 +535,12 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int tm_aborttrans(UBFH *p_ub)
+expublic int tm_aborttrans(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
-    short tmrmid = FAIL;
+    short tmrmid = EXFAIL;
     atmi_xa_tx_info_t xai;
     /* We should try to abort transaction
      Thus basically we need to lock the transaction on which we work on.
@@ -548,12 +548,12 @@ public int tm_aborttrans(UBFH *p_ub)
      */
     background_lock();
     
-    if (SUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
+    if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
     {
         NDRX_LOG(log_error, "Failed to read TMXID: %s", 
                 Bstrerror(Berror));
         atmi_xa_set_error_msg(p_ub, TPESYSTEM, 0, "Protocol error, missing TMXID!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* optional */
@@ -565,7 +565,7 @@ public int tm_aborttrans(UBFH *p_ub)
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
                 tmxid);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Try to abort stuff... */
@@ -577,11 +577,11 @@ public int tm_aborttrans(UBFH *p_ub)
     
     /* Switch transaction to aborting (if not already) */
     tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
-    if (SUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, tmrmid)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, tmrmid)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMERR, 
                 "Failed to abort transaction");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -599,9 +599,9 @@ out:
  * @param cd - call descriptor
  * @return 
  */
-public int tm_committrans(UBFH *p_ub)
+expublic int tm_committrans(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     atmi_xa_tx_info_t xai;
@@ -611,12 +611,12 @@ public int tm_committrans(UBFH *p_ub)
      */
     background_lock();
     
-    if (SUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
+    if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
     {
         NDRX_LOG(log_error, "Failed to read TMXID: %s", 
                 Bstrerror(Berror));
         atmi_xa_set_error_msg(p_ub, TPESYSTEM, 0, "Protocol error, missing TMXID!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Lookup for log. And then try to commit... */
@@ -625,7 +625,7 @@ public int tm_committrans(UBFH *p_ub)
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
                 tmxid);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Try to commit stuff, only if stage is prepared...! */
@@ -635,17 +635,17 @@ public int tm_committrans(UBFH *p_ub)
                 "Transaction not in PREPARED stage!");
         /* we shall unlock the transaction here! */
         tms_unlock_entry(p_tl);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* init xai for tl... */
     XA_TX_COPY((&xai), p_tl);
     
-    if (SUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, FAIL)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMCOMMITFAIL, 
                 "Failed to commit transaction!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

@@ -75,10 +75,10 @@ extern char *optarg;
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-public bridge_cfg_t G_bridge_cfg;
-public __thread int G_thread_init = FALSE; /* Was thread init done?     */
+expublic bridge_cfg_t G_bridge_cfg;
+expublic __thread int G_thread_init = EXFALSE; /* Was thread init done?     */
 /*---------------------------Statics------------------------------------*/
-private int M_init_ok = FALSE;
+exprivate int M_init_ok = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -86,9 +86,9 @@ private int M_init_ok = FALSE;
  * @param is_connected TRUE connected, FALSE not connected
  * @return SUCCEED/FAIL 
  */
-private int br_send_status(int is_connected)
+exprivate int br_send_status(int is_connected)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     bridge_info_t gencall;
 
@@ -105,30 +105,30 @@ private int br_send_status(int is_connected)
                     (command_call_t *)&gencall, sizeof(bridge_info_t),
                     ndrx_get_G_atmi_conf()->reply_q_str,
                     ndrx_get_G_atmi_conf()->reply_q,
-                    (mqd_t)FAIL,   /* do not keep open ndrxd q open */
+                    (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
                     ndrx_get_G_atmi_conf()->ndrxd_q_str,
                     0, NULL,
                     NULL,
                     NULL,
                     NULL,
-                    FALSE);
+                    EXFALSE);
     
     return ret;
 }
 /**
  * Connection have been established
  */
-public int br_connected(exnetcon_t *net)
+expublic int br_connected(exnetcon_t *net)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     G_bridge_cfg.con = net;
     NDRX_LOG(log_debug, "Net=%p", G_bridge_cfg.net);
     
     /* Send our clock to other node. */
-    if (SUCCEED==br_send_clock())
+    if (EXSUCCEED==br_send_clock())
     {
-        ret=br_send_status(TRUE);
+        ret=br_send_status(EXTRUE);
     }
     return ret;
 }
@@ -136,13 +136,13 @@ public int br_connected(exnetcon_t *net)
 /**
  * Bridge is disconnected.
  */
-public int br_disconnected(exnetcon_t *net)
+expublic int br_disconnected(exnetcon_t *net)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     G_bridge_cfg.con = NULL;
     
-    ret=br_send_status(FALSE);
+    ret=br_send_status(EXFALSE);
     
     return ret;  
 }
@@ -152,19 +152,19 @@ public int br_disconnected(exnetcon_t *net)
  * we get back correct bridge state.
  * @return SUCCEED/FAIL
  */
-public int br_report_to_ndrxd_cb(void)
+expublic int br_report_to_ndrxd_cb(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_LOG(log_warn, "br_report_to_ndrxd_cb: Reporting to ndrxd bridge status: %s", 
             (G_bridge_cfg.con?"Connected":"Disconnected"));
     if (G_bridge_cfg.con)
     {
-        ret=br_send_status(TRUE);
+        ret=br_send_status(EXTRUE);
     }
     else
     {
-        ret=br_send_status(FALSE);
+        ret=br_send_status(EXFALSE);
     }
     
     return ret;
@@ -174,7 +174,7 @@ public int br_report_to_ndrxd_cb(void)
  * Periodic poll callback.
  * @return 
  */
-public int poll_timer(void)
+expublic int poll_timer(void)
 {
     return exnet_periodic();
 }
@@ -202,12 +202,12 @@ void TPBRIDGE (TPSVCINFO *p_svc)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int c;
     int i;
-    int is_server = FAIL;
-    char addr[EXNET_ADDR_LEN] = {EOS};
-    int port=FAIL;
+    int is_server = EXFAIL;
+    char addr[EXNET_ADDR_LEN] = {EXEOS};
+    int port=EXFAIL;
     int rcvtimeout = ndrx_get_G_atmi_env()->time_out;
     int backlog = 100;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
@@ -215,9 +215,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int periodic_zero = 0; /* send zero lenght messages periodically */
     NDRX_LOG(log_debug, "tpsvrinit called");
     
-    G_bridge_cfg.nodeid = FAIL;
+    G_bridge_cfg.nodeid = EXFAIL;
     G_bridge_cfg.timediff = 0;
-    
+    G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     /* Parse command line  */
     while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:")) != -1)
     {
@@ -263,16 +263,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                                 periodic_zero);
                 break;
             case 'f':
-                G_bridge_cfg.common_format = TRUE;
+                G_bridge_cfg.common_format = EXTRUE;
                 NDRX_LOG(log_debug, "Using common network protocol.");
                 break;
             case 'g':
-                strcpy(G_bridge_cfg.gpg_recipient, optarg);
+                NDRX_STRCPY_SAFE(G_bridge_cfg.gpg_recipient, optarg);
                 NDRX_LOG(log_debug, "Using GPG Encryption, recipient: [%s]", 
 					G_bridge_cfg.gpg_recipient);
                 break;
             case 's':
-                strcpy(G_bridge_cfg.gpg_signer, optarg);
+                NDRX_STRCPY_SAFE(G_bridge_cfg.gpg_signer, optarg);
                 NDRX_LOG(log_debug, "Using GPG Encryption, signer: [%s]", 
 					G_bridge_cfg.gpg_signer);
                 break;
@@ -285,13 +285,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 {
                     NDRX_LOG(log_debug, "Server mode enabled - "
                             "will wait for call");
-                    is_server = TRUE;
+                    is_server = EXTRUE;
                 }
                 else
                 {
                     NDRX_LOG(log_debug, "Client mode enabled - "
                             "will connect to server");
-                    is_server = FALSE;
+                    is_server = EXFALSE;
                 }
                 break;
             default:
@@ -300,36 +300,39 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
-    if (G_bridge_cfg.threadpoolsize <= 0)
+    if (G_bridge_cfg.threadpoolsize < 1)
     {
+        NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
+                "(%d) defaulting to %d", 
+                G_bridge_cfg.threadpoolsize, BR_DEFAULT_THPOOL_SIZE);
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
     }
     
     NDRX_LOG(log_info, "Threadpool size set to: %d", G_bridge_cfg.threadpoolsize);
     
     /* Check configuration */
-    if (FAIL==G_bridge_cfg.nodeid)
+    if (EXFAIL==G_bridge_cfg.nodeid)
     {
         NDRX_LOG(log_error, "Flag -n not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (EOS==addr[0])
+    if (EXEOS==addr[0])
     {
         NDRX_LOG(log_error, "Flag -i not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL==port)
+    if (EXFAIL==port)
     {
         NDRX_LOG(log_error, "Flag -p not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (FAIL==is_server)
+    if (EXFAIL==is_server)
     {
         NDRX_LOG(log_error, "Flag -T not set!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Reset network structs */
@@ -341,27 +344,27 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
     
     /* Then configure the lib - we will have only one client session! */
-    if (SUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
+    if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
         4, is_server, backlog, 1, periodic_zero))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Register timer check.... */
-    if (SUCCEED==ret &&
-            SUCCEED!=tpext_addperiodcb(check, poll_timer))
+    if (EXSUCCEED==ret &&
+            EXSUCCEED!=tpext_addperiodcb(check, poll_timer))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                         tpstrerror(tperrno));
     }
     
     /* Register poller callback.... */
-    if (SUCCEED==ret &&
-            SUCCEED!=tpext_addb4pollcb(b4poll))
+    if (EXSUCCEED==ret &&
+            EXSUCCEED!=tpext_addb4pollcb(b4poll))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRX_LOG(log_error, "tpext_addb4pollcb failed: %s",
                         tpstrerror(tperrno));
     }
@@ -371,10 +374,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     snprintf(G_bridge_cfg.svc, sizeof(G_bridge_cfg.svc), NDRX_SVC_BRIDGE, G_bridge_cfg.nodeid);
     
-    if (SUCCEED!=tpadvertise(G_bridge_cfg.svc, TPBRIDGE))
+    if (EXSUCCEED!=tpadvertise(G_bridge_cfg.svc, TPBRIDGE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", G_bridge_cfg.svc);
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -382,10 +385,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_bridge_cfg.threadpoolsize);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    M_init_ok = TRUE;
+    M_init_ok = EXTRUE;
     
 out:
     return ret;
@@ -396,11 +399,11 @@ out:
  * @param arg
  * @param p_finish_off
  */
-public void tp_thread_shutdown(void *ptr, int *p_finish_off)
+expublic void tp_thread_shutdown(void *ptr, int *p_finish_off)
 {
     NDRX_LOG(log_info, "tp_thread_shutdown - enter");
     tpterm();
-    *p_finish_off = TRUE;
+    *p_finish_off = EXTRUE;
     NDRX_LOG(log_info, "tp_thread_shutdown - ok");
 }
 
@@ -425,7 +428,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         exnet_close_shut(&G_bridge_cfg.net);
     }
     
-    if (M_init_ok && G_bridge_cfg.threadpoolsize > 0)
+    if (M_init_ok)
     {
         /* Terminate the threads */
         for (i=0; i<G_bridge_cfg.threadpoolsize; i++)

@@ -87,13 +87,13 @@
 /*---------------------------Globals------------------------------------*/
 
 /* Handler for MSG Hash. */
-public tmq_memmsg_t *G_msgid_hash = NULL;
+expublic tmq_memmsg_t *G_msgid_hash = NULL;
 
 /* Handler for Correlator ID hash */
-public tmq_memmsg_t *G_corid_hash = NULL;
+expublic tmq_memmsg_t *G_corid_hash = NULL;
 
 /* Handler for Q hash */
-public tmq_qhash_t *G_qhash = NULL;
+expublic tmq_qhash_t *G_qhash = NULL;
 
 /*
  * Any public operations must be locked
@@ -101,23 +101,23 @@ public tmq_qhash_t *G_qhash = NULL;
 MUTEX_LOCKDECL(M_q_lock);
 
 /* Configuration section */
-public tmq_qconfig_t *G_qconf = NULL; 
+expublic tmq_qconfig_t *G_qconf = NULL; 
 
 MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-private tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
-private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
+exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
+exprivate tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
 
 /**
  * Setup queue header
  * @param hdr header to setup
  * @param qname queue name
  */
-public int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
+expublic int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     strcpy(hdr->qspace, qspace);
    /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
@@ -139,7 +139,7 @@ out:
  * Note this initializes the msgid.
  * @param msgid value to return
  */
-public void tmq_msgid_gen(char *msgid)
+expublic void tmq_msgid_gen(char *msgid)
 {
     exuuid_t uuid_val;
     short node_id = (short) ndrx_get_G_atmi_env()->our_nodeid;
@@ -172,9 +172,9 @@ public void tmq_msgid_gen(char *msgid)
  * @param key
  * @param value
  */
-private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
+exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
 {
-    int ret = SUCCEED; 
+    int ret = EXSUCCEED; 
     
     NDRX_LOG(log_info, "loading q param: [%s] = [%s]", key, value);
     
@@ -188,7 +188,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     if (0==strcmp(key, TMQ_QC_SVCNM))
     {
         strncpy(qconf->svcnm, value, sizeof(qconf->svcnm)-1);
-        qconf->svcnm[sizeof(qconf->svcnm)-1] = EOS;
+        qconf->svcnm[sizeof(qconf->svcnm)-1] = EXEOS;
     }
     else if (0==strcmp(key, TMQ_QC_TRIES))
     {
@@ -197,18 +197,18 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         qconf->tries = ival;
     }
     else if (0==strcmp(key, TMQ_QC_AUTOQ))
     {
-        qconf->autoq = FALSE;
+        qconf->autoq = EXFALSE;
         
         if (value[0]=='y' || value[0]=='Y')
         {
-            qconf->autoq = TRUE;
+            qconf->autoq = EXTRUE;
         }
     }
     else if (0==strcmp(key, TMQ_QC_WAITINIT))
@@ -218,7 +218,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         qconf->waitinit = ival;
@@ -230,7 +230,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         qconf->waitretry = ival;
@@ -242,7 +242,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         qconf->waitretryinc = ival;
@@ -254,7 +254,7 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         {
             NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
                     value, key);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         qconf->waitretrymax = ival;
@@ -283,13 +283,13 @@ private int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         {
             NDRX_LOG(log_error, "Not supported Q mode (must be fifo or lifo)", 
                     value, key);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     else
     {
         NDRX_LOG(log_error, "Unknown Q config setting = [%s]", key);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -302,7 +302,7 @@ out:
  * @param name queue name
  * @return NULL or ptr to q config.
  */
-private tmq_qconfig_t * tmq_qconf_get(char *qname)
+exprivate tmq_qconfig_t * tmq_qconf_get(char *qname)
 {
     tmq_qconfig_t *ret = NULL;
     
@@ -319,7 +319,7 @@ private tmq_qconfig_t * tmq_qconf_get(char *qname)
  * @param p_is_defaulted returns 1 if queue uses defaults Q
  * @return  NULL or ptr to config
  */
-private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
+exprivate tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
 {
     
     tmq_qconfig_t * ret = tmq_qconf_get(qname);
@@ -335,7 +335,7 @@ private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaul
         }
         else if (NULL!=p_is_defaulted)
         {
-            *p_is_defaulted = TRUE;
+            *p_is_defaulted = EXTRUE;
         }
     }
             
@@ -349,15 +349,15 @@ private tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaul
  * @param p_is_defaulted
  * @return 
  */
-public int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
+expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
 {
     tmq_qconfig_t * qdef = NULL;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     MUTEX_LOCK_V(M_q_lock);
     if (NULL==(qdef=tmq_qconf_get_with_default(qname, p_is_defaulted)))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     sprintf(out_buf, "%s,svcnm=%s,autoq=%s,tries=%d,waitinit=%d,waitretry=%d,"
@@ -385,9 +385,9 @@ out:
  * @param qconf_out where to store/copy the q def data
  * @return SUCCEED/FAIL
  */
-public int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out)
+expublic int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_qconfig_t * tmp = NULL;
     
     MUTEX_LOCK_V(M_q_lock);
@@ -402,7 +402,7 @@ public int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_o
         {
             NDRX_LOG(log_error, "Default Q config [%s] not found!", TMQ_DEFAULT_Q);
             userlog("Default Q config [%s] not found! Please add !", TMQ_DEFAULT_Q);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
     }
@@ -420,9 +420,9 @@ out:
  * @param name
  * @return 
  */
-private int tmq_qconf_delete(char *qname)
+exprivate int tmq_qconf_delete(char *qname)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_qconfig_t *qconf;
     
     if (NULL!=(qconf=tmq_qconf_get(qname)))
@@ -444,7 +444,7 @@ out:
  * @param cf
  * @return 
  */
-public int tmq_reload_conf(char *cf)
+expublic int tmq_reload_conf(char *cf)
 {
     FILE *f = NULL;
 #ifdef HAVE_GETLINE
@@ -453,18 +453,18 @@ public int tmq_reload_conf(char *cf)
     char line[PATH_MAX];
 #endif
     size_t len = 0;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ssize_t read;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
     if (NULL!=ndrx_get_G_cconfig() && 
-            SUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_QUEUE, &csection))
+            EXSUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_QUEUE, &csection))
     {
         EXHASH_ITER(hh, csection, val, val_tmp)
         {
-            if (SUCCEED!=tmq_qconf_addupd(val->val, val->key))
+            if (EXSUCCEED!=tmq_qconf_addupd(val->val, val->key))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     }
@@ -473,11 +473,11 @@ public int tmq_reload_conf(char *cf)
         if (NULL==(f=NDRX_FOPEN(cf, "r")))
         {
             NDRX_LOG(log_error, "Failed to open [%s]:%s", cf, strerror(errno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
 
 #ifdef HAVE_GETLINE
-        while (FAIL!=(read = getline(&line, &len, f))) 
+        while (EXFAIL!=(read = getline(&line, &len, f))) 
 #else
         len = sizeof(line);
         while (NULL!=fgets(line, len, f))
@@ -486,14 +486,14 @@ public int tmq_reload_conf(char *cf)
             ndrx_str_strip(line, " \n\r\t");
 
             /* Ignore comments & newlines */
-            if ('#'==*line || EOS==*line)
+            if ('#'==*line || EXEOS==*line)
             {
                 continue;
             }
 
-            if (SUCCEED!=tmq_qconf_addupd(line, NULL))
+            if (EXSUCCEED!=tmq_qconf_addupd(line, NULL))
             {
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
 #ifdef HAVE_GETLINE
@@ -525,16 +525,16 @@ out:
  * @param name optional name (already parsed)
  * @return  SUCCEED/FAIL
  */
-public int tmq_qconf_addupd(char *qconfstr, char *name)
+expublic int tmq_qconf_addupd(char *qconfstr, char *name)
 {
     tmq_qconfig_t * qconf;
     tmq_qconfig_t * dflt;
     char * p;
     char * p2;
-    int got_default = FALSE;
-    int qupdate = FALSE;
+    int got_default = EXFALSE;
+    int qupdate = EXFALSE;
     char buf[MAX_TOKEN_SIZE];
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_LOG(log_info, "Add new Q: [%s]", qconfstr);
     
@@ -553,7 +553,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
     {
         NDRX_LOG(log_info, "Got token: [%s]", p);
         strncpy(buf, p, sizeof(qconf->qname)-1);
-        buf[sizeof(qconf->qname)-1] = EOS;
+        buf[sizeof(qconf->qname)-1] = EXEOS;
         
         NDRX_LOG(log_debug, "Q name: [%s]", buf);
         
@@ -567,7 +567,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
             if (NULL!=(dflt=tmq_qconf_get(TMQ_DEFAULT_Q)))
             {
                 memcpy(qconf, dflt, sizeof(*dflt));
-                got_default = TRUE;
+                got_default = EXTRUE;
             }
             
             strcpy(qconf->qname, buf);
@@ -575,13 +575,13 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
         else
         {
             NDRX_LOG(log_info, "Q found, updating: [%s]", buf);
-            qupdate = TRUE;
+            qupdate = EXTRUE;
         }
     }
     else
     {
         NDRX_LOG(log_error, "Missing Q name");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==name)
@@ -598,7 +598,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
         NDRX_LOG(log_info, "Got pair [%s]", p);
         
         strncpy(buf, p, sizeof(buf)-1);
-        buf[sizeof(buf)-1] = EOS;
+        buf[sizeof(buf)-1] = EXEOS;
         
         p2 = strchr(buf, '=');
         
@@ -608,28 +608,28 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
             
             userlog("Error defining queue (%s) expected in '=' in token (%s)", 
                     qconfstr, buf);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        *p2 = EOS;
+        *p2 = EXEOS;
         p2++;
         
-        if (EOS==*p2)
+        if (EXEOS==*p2)
         {
             NDRX_LOG(log_error, "Empty value for token [%s]", buf);
             userlog("Error defining queue (%s) invalid value for token (%s)", 
                     qconfstr, buf);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         /*
          * Load the value into structure
          */
-        if (SUCCEED!=load_param(qconf, buf, p2))
+        if (EXSUCCEED!=load_param(qconf, buf, p2))
         {
             NDRX_LOG(log_error, "Failed to load token [%s]/[%s]", buf, p2);
             userlog("Error defining queue (%s) failed to load token [%s]/[%s]", 
                     buf, p2);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         p = strtok (NULL, ",");
@@ -641,7 +641,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
     {
         NDRX_LOG(log_error, "Missing [%s] param", TMQ_QC_NAME);
         /* TODO: Return some diagnostics... => EX_QDIAGNOSTIC invalid qname */
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     /* If autoq, then service must be set. */
 
@@ -653,7 +653,7 @@ public int tmq_qconf_addupd(char *qconfstr, char *name)
 out:
 
     /* kill the record if invalid. */
-    if (SUCCEED!=ret && NULL!=qconf && !qupdate)
+    if (EXSUCCEED!=ret && NULL!=qconf && !qupdate)
     {
         NDRX_LOG(log_warn, "qconf -> free");
         NDRX_FREE(qconf);
@@ -669,7 +669,7 @@ out:
  * @param qname
  * @return 
  */
-private tmq_qhash_t * tmq_qhash_get(char *qname)
+exprivate tmq_qhash_t * tmq_qhash_get(char *qname)
 {
     tmq_qhash_t * ret = NULL;
    
@@ -683,7 +683,7 @@ private tmq_qhash_t * tmq_qhash_get(char *qname)
  * @param qname
  * @return 
  */
-private tmq_qhash_t * tmq_qhash_new(char *qname)
+exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
 {
     tmq_qhash_t * ret = NDRX_CALLOC(1, sizeof(tmq_qhash_t));
     
@@ -710,10 +710,10 @@ out:
  * @param msg
  * @return 
  */
-public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
+expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
 {
-    int ret = SUCCEED;
-    int is_locked = FALSE;
+    int ret = EXSUCCEED;
+    int is_locked = EXFALSE;
     tmq_qhash_t *qhash;
     tmq_memmsg_t *mmsg = NDRX_CALLOC(1, sizeof(tmq_memmsg_t));
     tmq_qconfig_t * qconf;
@@ -721,7 +721,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     char corid_str[TMCORRIDLEN_STR+1];
     
     MUTEX_LOCK_V(M_q_lock);
-    is_locked = TRUE;
+    is_locked = EXTRUE;
     
     qhash = tmq_qhash_get(msg->hdr.qname);
     qconf = tmq_qconf_get_with_default(msg->hdr.qname, NULL);
@@ -730,14 +730,14 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     {
         NDRX_LOG(log_error, "Failed to alloc tmq_memmsg_t: %s", strerror(errno));
         userlog("Failed to alloc tmq_memmsg_t: %s", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==qconf)
     {
         NDRX_LOG(log_error, "queue config not found! Cannot enqueue!");
         userlog("queue config not found! Cannot enqueue!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (msg->qctl.flags & TPQCORRID)
@@ -749,7 +749,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
         {
             NDRX_LOG(log_error, "Message with corid [%s] already exists!", corid_str);
             userlog("Message with corid [%s] already exists!", corid_str);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -760,7 +760,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     {
         NDRX_LOG(log_error, "Failed to get/create qhash entry for Q [%s]", 
                 msg->hdr.qname);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Add the message to end of the queue */
@@ -784,7 +784,7 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
      * us and that might cause stall.
      */
     MUTEX_UNLOCK_V(M_q_lock);
-    is_locked = FALSE;
+    is_locked = EXFALSE;
     
     /* Decide do we need to add the msg to disk?! 
      * Needs to send a command to XA sub-system to prepare msg/command to disk,
@@ -796,10 +796,10 @@ public int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
         /* for recovery no need to put command as we read from command file */
         if (!is_recovery)
         {
-            if (SUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
+            if (EXSUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
             {
                 NDRX_LOG(log_error, "Failed to add message to persistent store!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
         }
     }
@@ -818,7 +818,7 @@ out:
     /* NOT SURE IS THIS GOOD as this might cause segmentation fault.
      * as added to mem, but failed to write to disk.
      */
-    if (SUCCEED!=ret && mmsg!=NULL)
+    if (EXSUCCEED!=ret && mmsg!=NULL)
     {
         NDRX_FREE(mmsg);
     }
@@ -837,9 +837,9 @@ out:
  * @param node
  * @return 
  */
-private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
+exprivate int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     int retry_inc;
     unsigned long long next_try;
     long utc_sec, utc_usec;
@@ -874,7 +874,7 @@ private int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
     if (next_try<=utc_sec)
     {
         NDRX_LOG(log_debug, "Message accepted for dequeue...");
-        ret=TRUE;
+        ret=EXTRUE;
     }
     else
     {
@@ -890,7 +890,7 @@ out:
  * @param qname queue to lookup.
  * @return NULL (no msg), or ptr to msg
  */
-public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
+expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
 {
     tmq_qhash_t *qhash;
     tmq_memmsg_t *node = NULL;
@@ -998,7 +998,7 @@ public tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
         memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
         block.hdr.command_code = TMQ_STORCMD_DEL;
 
-        if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
+        if (EXSUCCEED!=tmq_storage_write_cmd_block(&block, 
                 "Removing dequeued message"))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
@@ -1019,7 +1019,7 @@ out:
  * @param msgid
  * @return 
  */
-public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
+expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
 {
     tmq_msg_t * ret = NULL;
     union tmq_block block;
@@ -1055,7 +1055,7 @@ public tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
     
     if (!(flags & TPQPEEK))
     {
-        if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
+        if (EXSUCCEED!=tmq_storage_write_cmd_block(&block, 
                 "Removing dequeued message"))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
@@ -1076,7 +1076,7 @@ out:
  * @param msgid
  * @return 
  */
-public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
+expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
 {
     tmq_msg_t * ret = NULL;
     union tmq_block block;
@@ -1111,7 +1111,7 @@ public tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
     {    
         block.hdr.command_code = TMQ_STORCMD_DEL;
 
-        if (SUCCEED!=tmq_storage_write_cmd_block(&block, 
+        if (EXSUCCEED!=tmq_storage_write_cmd_block(&block, 
                 "Removing dequeued message"))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
@@ -1132,7 +1132,7 @@ out:
  * @param msgid
  * @return 
  */
-private tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str)
+exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str)
 {
     tmq_memmsg_t *ret;
     
@@ -1147,7 +1147,7 @@ private tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str)
  * @param corid_str
  * @return 
  */
-private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str)
+exprivate tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str)
 {
     tmq_memmsg_t *ret;
     
@@ -1161,7 +1161,7 @@ private tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str)
  * @param corid correlator (binary)
  * @return ptr to memmsg if found or NULL
  */
-private tmq_memmsg_t* tmq_get_msg_by_corid(char *corid)
+exprivate tmq_memmsg_t* tmq_get_msg_by_corid(char *corid)
 {
     tmq_memmsg_t *ret;
     char corid_str[TMCORRIDLEN_STR+1];
@@ -1180,7 +1180,7 @@ private tmq_memmsg_t* tmq_get_msg_by_corid(char *corid)
  * 
  * @param msg
  */
-private void tmq_remove_msg(tmq_memmsg_t *mmsg)
+exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
 {
     char msgid_str[TMMSGIDLEN_STR+1];   
     tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str);
@@ -1217,9 +1217,9 @@ private void tmq_remove_msg(tmq_memmsg_t *mmsg)
  * @param p_b
  * @return 
  */
-public int tmq_unlock_msg(union tmq_upd_block *b)
+expublic int tmq_unlock_msg(union tmq_upd_block *b)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_memmsg_t* mmsg;
     
@@ -1234,7 +1234,7 @@ public int tmq_unlock_msg(union tmq_upd_block *b)
     if (NULL==mmsg)
     {   
         NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     switch (b->hdr.command_code)
@@ -1255,7 +1255,7 @@ public int tmq_unlock_msg(union tmq_upd_block *b)
             break;
         default:
             NDRX_LOG(log_info, "Unknown command [%c]", b->hdr.command_code);
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
             break; 
     }
     
@@ -1269,9 +1269,9 @@ out:
  * @param msgid
  * @return 
  */
-public int tmq_unlock_msg_by_msgid(char *msgid)
+expublic int tmq_unlock_msg_by_msgid(char *msgid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_memmsg_t* mmsg;
     
@@ -1286,7 +1286,7 @@ public int tmq_unlock_msg_by_msgid(char *msgid)
     if (NULL==mmsg)
     {   
         NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     mmsg->msg->lockthreadid = 0;
@@ -1302,9 +1302,9 @@ out:
  * @param msgid
  * @return 
  */
-public int tmq_lock_msg(char *msgid)
+expublic int tmq_lock_msg(char *msgid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_memmsg_t* mmsg;
     
@@ -1319,7 +1319,7 @@ public int tmq_lock_msg(char *msgid)
     if (NULL==mmsg)
     {   
         NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Lock the message */
@@ -1335,26 +1335,26 @@ out:
  * @param p_block
  * @return 
  */
-private int process_block(union tmq_block **p_block)
+exprivate int process_block(union tmq_block **p_block)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     switch((*p_block)->hdr.command_code)
     {
         case TMQ_STORCMD_NEWMSG:
             
-            if (SUCCEED!=tmq_msg_add((tmq_msg_t *)(*p_block), TRUE))
+            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t *)(*p_block), EXTRUE))
             {
                 NDRX_LOG(log_error, "Failed to enqueue!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             *p_block = NULL;
             break;
         default:
-            if (SUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
+            if (EXSUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
             {
                 NDRX_LOG(log_error, "Failed to lock message!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             break;
     }
@@ -1375,7 +1375,7 @@ out:
  * @param q2
  * @return 
  */
-private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
+exprivate int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
 {
     
     return ndrx_compare3(q1->msg->msgtstamp, q1->msg->msgtstamp_usec, q1->msg->msgtstamp_cntr, 
@@ -1387,7 +1387,7 @@ private int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
  * Return list of auto queues
  * @return NULL or list
  */
-public fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
+expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
 {
     fwd_qlist_t * ret = NULL;
     fwd_qlist_t * tmp = NULL;
@@ -1459,7 +1459,7 @@ out:
  * Return list of messages in the q
  * @return NULL or list
  */
-public tmq_memmsg_t *tmq_get_msglist(char *qname)
+expublic tmq_memmsg_t *tmq_get_msglist(char *qname)
 {
     tmq_qhash_t *qhash;
     tmq_memmsg_t *node;
@@ -1524,9 +1524,9 @@ out:
  * Sort Qs
  * @return SUCCEED/FAIL 
  */
-public int tmq_sort_queues(void)
+expublic int tmq_sort_queues(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     tmq_qhash_t *q, *qtmp;
     
     MUTEX_LOCK_V(M_q_lock);
@@ -1550,16 +1550,16 @@ out:
  * @param b
  * @return 
  */
-public int tmq_load_msgs(void)
+expublic int tmq_load_msgs(void)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_LOG(log_info, "Reading messages from disk...");
     /* populate all queues - from XA source */
-    if (SUCCEED!=tmq_storage_get_blocks(process_block,  (short)tpgetnodeid(), 
+    if (EXSUCCEED!=tmq_storage_get_blocks(process_block,  (short)tpgetnodeid(), 
             (short)tpgetsrvid()))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* sort all queues (by submission time) */
@@ -1578,7 +1578,7 @@ out:
  * @param fail_diff
  * @return 
  */
-public int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff)
+expublic int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff)
 {
     tmq_qhash_t  *q;
     MUTEX_LOCK_V(M_q_lock);
@@ -1593,7 +1593,7 @@ out:
             
     MUTEX_UNLOCK_V(M_q_lock);
 
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -1603,7 +1603,7 @@ out:
  * @param p_locked
  * @return 
  */
-public void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
+expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
 {
     tmq_qhash_t  *q;        
     tmq_memmsg_t *node;

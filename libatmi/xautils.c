@@ -98,18 +98,18 @@ static char *decoding_table_normal = NULL;
 static int mod_table[] = {0, 2, 1};
 
 /*---------------------------Prototypes---------------------------------*/
-private char * build_decoding_table(char *encoding_table);
+exprivate char * build_decoding_table(char *encoding_table);
 
 /* private void base64_cleanup(void); */
 
-private char * b64_encode(const unsigned char *data,
+exprivate char * b64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data, 
                     char *encoding_table);
 
 
-private unsigned char *b64_decode(unsigned char *data,
+exprivate unsigned char *b64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -123,7 +123,7 @@ private unsigned char *b64_decode(unsigned char *data,
  * @param encoded_data
  * @return 
  */
-public char * atmi_xa_base64_encode(unsigned char *data,
+expublic char * atmi_xa_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data) 
@@ -140,7 +140,7 @@ public char * atmi_xa_base64_encode(unsigned char *data,
  * @param decoded_data
  * @return 
  */
-public unsigned char *atmi_xa_base64_decode(unsigned char *data,
+expublic unsigned char *atmi_xa_base64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data)
@@ -201,7 +201,7 @@ unsigned char *atmi_base64_decode(const char *data,
  * @param output_length
  * @return 
  */
-private char * b64_encode(const unsigned char *data,
+exprivate char * b64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data, 
@@ -244,7 +244,7 @@ private char * b64_encode(const unsigned char *data,
  * @param output_length
  * @return 
  */
-private unsigned char *b64_decode(unsigned char *data,
+exprivate unsigned char *b64_decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -287,7 +287,7 @@ private unsigned char *b64_decode(unsigned char *data,
 /**
  * Build encoding table
  */
-private char * build_decoding_table(char *encoding_table)
+exprivate char * build_decoding_table(char *encoding_table)
 {
     int i;
     char *ptr = NDRX_MALLOC(256);
@@ -302,7 +302,7 @@ private char * build_decoding_table(char *encoding_table)
 /**
  * Cleanup table
  */
-private void base64_cleanup(void)
+exprivate void base64_cleanup(void)
 {
     NDRX_FREE(decoding_table);
 }
@@ -316,7 +316,7 @@ private void base64_cleanup(void)
  * @param p_nodeid return nodeid
  * @param p_srvid return serverid
  */
-public void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
+expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
 {
     
     memcpy((char *)p_nodeid, xid->data + sizeof(exuuid_t) + sizeof(unsigned char), 
@@ -333,7 +333,7 @@ public void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
  * @param p_nodeid
  * @param p_srvid
  */
-public void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid)
+expublic void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid)
 {
     XID xid;
     memset(&xid, 0, sizeof(xid));
@@ -345,9 +345,9 @@ public void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_sr
  * @param xid
  * @param xid_str_out
  */
-public char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
+expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     unsigned char tmp[XIDDATASIZE+64];
     int tot_len;
     int data_len = xid->gtrid_length+xid->bqual_length;
@@ -380,7 +380,7 @@ public char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     NDRX_DUMP(log_debug, "XID data for serialization", tmp, tot_len);
     
     atmi_xa_base64_encode(tmp, tot_len, &out_len, xid_str_out);
-    xid_str_out[out_len] = EOS;
+    xid_str_out[out_len] = EXEOS;
     
     NDRX_LOG(log_debug, "Serialized xid: [%s]", xid_str_out);    
     
@@ -391,7 +391,7 @@ public char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
 /**
  * Deserialize - make system XID
  */
-public XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
+expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
 {
     unsigned char tmp[XIDDATASIZE+64];
     size_t tot_len = 0;
@@ -445,7 +445,7 @@ public XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
  * @param tmxid - xid in string format
  * @return ptr or NULL
  */
-public atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
+expublic atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
 {
     atmi_xa_tx_info_t *ret = NULL;
     ATMI_TLS_ENTRY;
@@ -463,7 +463,7 @@ public atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
  * @param tmsrvid
  * @return ptr to entry or NULL
  */
-public atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
+expublic atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
         short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms)
 {
     atmi_xa_tx_info_t * tmp = NDRX_CALLOC(1, sizeof(atmi_xa_tx_info_t));
@@ -491,7 +491,7 @@ out:
  * Remove transaction from list of transaction in progress
  * @param p_txinfo
  */
-public void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
+expublic void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
 {
     ATMI_TLS_ENTRY;
     
@@ -512,7 +512,7 @@ public void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
  * @param call
  * @return 
  */
-public atmi_xa_tx_info_t * atmi_xa_curtx_from_call(tp_command_call_t *call)
+expublic atmi_xa_tx_info_t * atmi_xa_curtx_from_call(tp_command_call_t *call)
 {
     atmi_xa_tx_info_t * ret = NULL;
     /* Firstly we should do the lookup (maybe already registered?)
@@ -532,7 +532,7 @@ public atmi_xa_tx_info_t * atmi_xa_curtx_from_call(tp_command_call_t *call)
  * @param call
  * @return 
  */
-public void atmi_xa_xai_from_call(atmi_xa_tx_info_t * p_xai, tp_command_call_t *p_call)
+expublic void atmi_xa_xai_from_call(atmi_xa_tx_info_t * p_xai, tp_command_call_t *p_call)
 {
     strcpy(p_xai->tmxid, p_call->tmxid);
     p_xai->tmrmid = p_call->tmrmid;
@@ -552,20 +552,20 @@ public void atmi_xa_xai_from_call(atmi_xa_tx_info_t * p_xai, tp_command_call_t *
  * @param tmsrvid
  * @return 
  */
-public int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
-    char test[100] = {EOS};
-    if (SUCCEED!=Bchg(p_ub, TMXID, 0, p_xai->tmxid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMRMID, 0, (char *)&p_xai->tmrmid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&p_xai->tmnodeid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&p_xai->tmsrvid, 0L) ||
-            SUCCEED!=Bchg(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L)
+    int ret = EXSUCCEED;
+    char test[100] = {EXEOS};
+    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, p_xai->tmxid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMRMID, 0, (char *)&p_xai->tmrmid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&p_xai->tmnodeid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&p_xai->tmsrvid, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L)
             )
     {
         NDRX_LOG(log_error, "Failed to setup TMXID/TMRMID/TMNODEID/"
                 "TMSRVID/TMKNOWNRMS! - %s", Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     Bget(p_ub, TMKNOWNRMS, 0, test, 0L);
@@ -580,20 +580,20 @@ out:
  * @param p_xai
  * @return 
  */
-public int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
-    if (SUCCEED!=Bget(p_ub, TMXID, 0, p_xai->tmxid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMRMID, 0, (char *)&p_xai->tmrmid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&p_xai->tmnodeid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&p_xai->tmsrvid, 0L) ||
-            SUCCEED!=Bget(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L)
+    if (EXSUCCEED!=Bget(p_ub, TMXID, 0, p_xai->tmxid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMRMID, 0, (char *)&p_xai->tmrmid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&p_xai->tmnodeid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&p_xai->tmsrvid, 0L) ||
+            EXSUCCEED!=Bget(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L)
             )
     {
         NDRX_LOG(log_error, "Failed to setup TMXID/TMRMID/TMNODEID/"
                 "TMSRVID/TMKNOWNRMS! - %s", Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -606,7 +606,7 @@ out:
  * @param p_xai
  * @return 
  */
-public void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai)
+expublic void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai)
 {
     XA_TX_COPY(call, p_xai);
 }
@@ -616,11 +616,11 @@ public void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *
  * @param tmknownrms
  * @return 
  */
-public void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms)
+expublic void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms)
 {
     int i;
     int cnt = strlen(tmknownrms);
-    char tmp[128]={EOS};
+    char tmp[128]={EXEOS};
     
     for (i=0; i<cnt; i++)
     {
@@ -640,7 +640,7 @@ public void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms)
  * Reset current transaction info (remove current transaction)
  * @return 
  */
-public void atmi_xa_reset_curtx(void)
+expublic void atmi_xa_reset_curtx(void)
 {
     ATMI_TLS_ENTRY;
     
@@ -656,13 +656,13 @@ public void atmi_xa_reset_curtx(void)
  * @param tmknownrms
  * @return 
  */
-public int atmi_xa_is_current_rm_known(char *tmknownrms)
+expublic int atmi_xa_is_current_rm_known(char *tmknownrms)
 {
     if (NULL==strchr(tmknownrms, (unsigned char)G_atmi_env.xa_rmid))
     {
-        return FALSE;
+        return EXFALSE;
     }
-    return TRUE;
+    return EXTRUE;
 }
 
 /**
@@ -671,12 +671,12 @@ public int atmi_xa_is_current_rm_known(char *tmknownrms)
  * @param src_tmknownrms
  * @return 
  */
-public int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms)
+expublic int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms)
 {
     int i;
     int len = strlen(src_tmknownrms);
     int len2;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_LOG(log_error, "src len: %d", len);
     
@@ -690,13 +690,13 @@ public int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms)
             {
                 NDRX_LOG(log_error, "Too much RMs: src: [%s] dest: [%s]!", 
                         src_tmknownrms, dst_tmknownrms);
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             NDRX_LOG(log_info, "1--> %c", dst_tmknownrms[len2]);
             NDRX_LOG(log_info, "2--> %c", src_tmknownrms[i]);
             
             dst_tmknownrms[len2] = src_tmknownrms[i];
-            dst_tmknownrms[len2+1] = EOS;
+            dst_tmknownrms[len2+1] = EXEOS;
         }
     }
     
@@ -708,9 +708,9 @@ out:
  * Update known RMs, with info from xai
  * @param p_xai
  */
-public int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai)
+expublic int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     int cnt;
     ATMI_TLS_ENTRY;
     
@@ -724,7 +724,7 @@ public int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai)
                     NDRX_MAX_RMS);
             userlog("Maximum Resource Manager reached (%d) - Cannot join process "
                     "to XA transaction", NDRX_MAX_RMS);
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
@@ -744,9 +744,9 @@ out:
  * @param p_xai
  * @return 
  */
-public int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
+expublic int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ATMI_TLS_ENTRY;
     
     /* Lookup the hash add if found ok switch ptr 
@@ -759,7 +759,7 @@ public int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
             
     {
         NDRX_LOG(log_error, "Set current transaction failed!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -773,21 +773,21 @@ out:
  * @param p_xai
  * @return 
  */
-public int atmi_xa_set_curtx_from_tm(UBFH *p_ub)
+expublic int atmi_xa_set_curtx_from_tm(UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     
-    if (SUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     /* transfer stuff to current context */
-    if (SUCCEED!=atmi_xa_set_curtx_from_xai(&xai))
+    if (EXSUCCEED!=atmi_xa_set_curtx_from_xai(&xai))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -800,10 +800,10 @@ out:
  * @param pp_ub
  * @return NULL (error) or allocated FB
  */
-public UBFH * atmi_xa_alloc_tm_call(char cmd)
+expublic UBFH * atmi_xa_alloc_tm_call(char cmd)
 {
     UBFH *p_ub = NULL;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     ATMI_TLS_ENTRY;
     
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, TM_CALL_FB_SZ)))
@@ -811,37 +811,37 @@ public UBFH * atmi_xa_alloc_tm_call(char cmd)
         /* TM error should be already set */
         NDRX_LOG(log_error, "Failed to allocate TM call FB (%d)", 
                 TM_CALL_FB_SZ);
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     
     /* install caller error */
-    if (SUCCEED!=Bchg(p_ub, TMPROCESSID, 0, G_atmi_tls->G_atmi_conf.my_id, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, TMPROCESSID, 0, G_atmi_tls->G_atmi_conf.my_id, 0L))
     {
         _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMPROCESSID) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
         
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     
     /* install command code */
-    if (SUCCEED!=Bchg(p_ub, TMCMD, 0, &cmd, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, TMCMD, 0, &cmd, 0L))
     {
         _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMCMD) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
         
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     
     /* Install caller RM code */
-    if (SUCCEED!=Bchg(p_ub, TMCALLERRM, 0, (char *)&G_atmi_env.xa_rmid, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, TMCALLERRM, 0, (char *)&G_atmi_env.xa_rmid, 0L))
     {
         _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMCALLERRM) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
         
-        ret = FAIL;
+        ret = EXFAIL;
         goto out;
     }
     
@@ -849,7 +849,7 @@ public UBFH * atmi_xa_alloc_tm_call(char cmd)
     
 out:
 
-    if (SUCCEED!=ret && NULL!=p_ub)
+    if (EXSUCCEED!=ret && NULL!=p_ub)
     {
         tpfree((char *)p_ub);
     }
@@ -863,9 +863,9 @@ out:
  * @param p_ub
  * @return 
  */
-public int atmi_xa_tm_admincall(char cmd, UBFH *p_ub)
+expublic int atmi_xa_tm_admincall(char cmd, UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     
     
@@ -882,7 +882,7 @@ out:
  * @param p_xai
  * @return 
  */
-public UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid, 
+expublic UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai)
 {
     UBFH *p_ub = atmi_xa_alloc_tm_call(cmd);
@@ -896,10 +896,10 @@ public UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
  * @p_xai - optional, NULL if not set
  * @return SUCCEED/FAIL
  */
-public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
+expublic UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long rsplen;
     char svcnm[MAXTIDENT+1];
     
@@ -907,13 +907,13 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
 
     if (NULL==p_ub)
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Load the data into FB (if available) */
-    if (NULL!=p_xai && SUCCEED!=atmi_xa_load_tx_info(p_ub, p_xai))
+    if (NULL!=p_xai && EXSUCCEED!=atmi_xa_load_tx_info(p_ub, p_xai))
     {
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (svcnm_spec)
@@ -955,7 +955,7 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
         else
         {
             NDRX_LOG(log_error, "No transaction RM info to call!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -964,7 +964,7 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
     
     ndrx_debug_dump_UBF(log_info, "Request buffer:", p_ub);
     
-    if (FAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
+    if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
     {
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
         /* TODO: Needs to set the XA error code!! 
@@ -986,12 +986,12 @@ public UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any
     {
         NDRX_LOG(log_error, "Failed to call RM: %d:[%s] ", 
                             tperrno, tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
             
 out:
             
-    if (SUCCEED!=ret && NULL!=p_ub)
+    if (EXSUCCEED!=ret && NULL!=p_ub)
     {
         atmi_error_t err;
         
@@ -1012,7 +1012,7 @@ out:
  * TODO: add cache.
  * @return 
  */
-public XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
+expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
 {
     unsigned char rmid = (unsigned char)G_atmi_env.xa_rmid; /* max 255...! */
     ATMI_TLS_ENTRY;
@@ -1037,9 +1037,9 @@ public XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
  * @param cd
  * @return 
  */
-public int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int in_cd)
+expublic int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int in_cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     atmi_xa_tx_cd_t *cdt = NDRX_CALLOC(1, sizeof(atmi_xa_tx_cd_t));
     
@@ -1049,7 +1049,7 @@ public int atmi_xa_cd_reg(atmi_xa_tx_cd_t **cds, int in_cd)
                 "binding to global tx!", strerror(errno));
         userlog("Failed to malloc: %s data for cd "
                 "binding to global tx!", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     cdt->cd = in_cd;
@@ -1066,7 +1066,7 @@ out:
  * @param cd
  * @return 
  */
-public atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int in_cd)
+expublic atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int in_cd)
 {
     atmi_xa_tx_cd_t *ret = NULL;
     EXHASH_FIND_INT( (*cds), &in_cd, ret);    
@@ -1078,9 +1078,9 @@ public atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int in_cd)
  * @param p_xai
  * @return 
  */
-public int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds)
+expublic int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds)
 {
-    int ret = FALSE;
+    int ret = EXFALSE;
     atmi_xa_tx_cd_t *el = NULL;
     atmi_xa_tx_cd_t *elt = NULL;
     
@@ -1088,7 +1088,7 @@ public int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds)
     EXHASH_ITER(hh, (*cds), el, elt)
     {
         NDRX_LOG(log_error, "Found cd=%d linked to tx!", el->cd);
-        ret = TRUE;
+        ret = EXTRUE;
     }
     
 out:
@@ -1100,9 +1100,9 @@ out:
  * @param p_xai
  * @param cd
  */
-public void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int in_cd)
+expublic void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int in_cd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     atmi_xa_tx_cd_t *el = atmi_xa_cd_find(cds, in_cd);
     
@@ -1119,9 +1119,9 @@ public void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int in_cd)
  * @param p_xai
  * @return 
  */
-public int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds)
+expublic int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     atmi_xa_tx_cd_t *el = NULL;
     atmi_xa_tx_cd_t *elt = NULL;

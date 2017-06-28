@@ -80,7 +80,7 @@
 #include <ubf.h>
 #include <ndebug.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 
 #include <xa.h>
 #include <atmi_int.h>
@@ -101,16 +101,16 @@
 /*---------------------------Statics------------------------------------*/
 
 /* Shared between threads: */
-private int M_is_open = FALSE;
-private int M_rmid = FAIL;
+exprivate int M_is_open = EXFALSE;
+exprivate int M_rmid = EXFAIL;
 
-private char M_folder[PATH_MAX] = {EOS}; /* Where to store the q data */
-private char M_folder_active[PATH_MAX] = {EOS}; /* Active transactions */
-private char M_folder_prepared[PATH_MAX] = {EOS}; /* Prepared transactions */
-private char M_folder_committed[PATH_MAX] = {EOS}; /* Committed transactions */
+exprivate char M_folder[PATH_MAX] = {EXEOS}; /* Where to store the q data */
+exprivate char M_folder_active[PATH_MAX] = {EXEOS}; /* Active transactions */
+exprivate char M_folder_prepared[PATH_MAX] = {EXEOS}; /* Prepared transactions */
+exprivate char M_folder_committed[PATH_MAX] = {EXEOS}; /* Committed transactions */
 
 /* Per thread data: */
-private __thread int M_is_reg = FALSE; /* Dynamic registration done? */
+exprivate __thread int M_is_reg = EXFALSE; /* Dynamic registration done? */
 /*
  * Due to fact that we might have multiple queued messages per resource manager
  * we will name the transaction files by this scheme:
@@ -118,46 +118,46 @@ private __thread int M_is_reg = FALSE; /* Dynamic registration done? */
  * we will start the processing from N back to 1 so that if we crash and retry
  * the operation, we can handle all messages in system.
  */
-private __thread char M_filename_base[PATH_MAX+1] = {EOS}; /* base name of the file */
-private __thread char M_filename_active[PATH_MAX+1] = {EOS}; /* active file name */
-private __thread char M_filename_prepared[PATH_MAX+1] = {EOS}; /* prepared file name */
+exprivate __thread char M_filename_base[PATH_MAX+1] = {EXEOS}; /* base name of the file */
+exprivate __thread char M_filename_active[PATH_MAX+1] = {EXEOS}; /* active file name */
+exprivate __thread char M_filename_prepared[PATH_MAX+1] = {EXEOS}; /* prepared file name */
 /*---------------------------Prototypes---------------------------------*/
 
-public int xa_open_entry_stat(char *xa_info, int rmid, long flags);
-public int xa_close_entry_stat(char *xa_info, int rmid, long flags);
-public int xa_start_entry_stat(XID *xid, int rmid, long flags);
-public int xa_end_entry_stat(XID *xid, int rmid, long flags);
-public int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
-public int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
-public int xa_commit_entry_stat(XID *xid, int rmid, long flags);
-public int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
-public int xa_forget_entry_stat(XID *xid, int rmid, long flags);
-public int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags);
+expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
+expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags);
+expublic int xa_start_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_end_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
+expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags);
 
-public int xa_open_entry_dyn(char *xa_info, int rmid, long flags);
-public int xa_close_entry_dyn(char *xa_info, int rmid, long flags);
-public int xa_start_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_end_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_rollback_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_prepare_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_commit_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags);
-public int xa_forget_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags);
+expublic int xa_open_entry_dyn(char *xa_info, int rmid, long flags);
+expublic int xa_close_entry_dyn(char *xa_info, int rmid, long flags);
+expublic int xa_start_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_end_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_rollback_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_commit_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags);
+expublic int xa_forget_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags);
 
-public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
-public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
-public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
-public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
+expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
+expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
+expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
+expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-private int read_tx_block(FILE *f, char *block, int len);
-private int read_tx_from_file(char *fname, char *block, int len);
+exprivate int read_tx_block(FILE *f, char *block, int len);
+exprivate int read_tx_from_file(char *fname, char *block, int len);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -200,7 +200,7 @@ struct xa_switch_t ndrxqdynsw =
  * @param rmid
  * @return 
  */
-private char *set_filename_base(XID *xid, int rmid)
+exprivate char *set_filename_base(XID *xid, int rmid)
 {
     atmi_xa_serialize_xid(xid, M_filename_base);
     
@@ -221,7 +221,7 @@ private char *set_filename_base(XID *xid, int rmid)
  * @param rmid
  * @param filename where to store the output file name
  */
-private void set_filenames(void)
+exprivate void set_filenames(void)
 {
     int i;
     
@@ -244,7 +244,7 @@ private void set_filenames(void)
  * Return max file number
  * @return 0 (no files), >=1 got something
  */
-private int get_filenames_max(void)
+exprivate int get_filenames_max(void)
 {
     int i=0;
     char filename_active[PATH_MAX+1];
@@ -276,7 +276,7 @@ private int get_filenames_max(void)
  * @param folder
  * @return path to file
  */
-private char *get_filename_i(int i, char *folder, int slot)
+exprivate char *get_filename_i(int i, char *folder, int slot)
 {
     static __thread char filename[2][PATH_MAX+1];
     
@@ -290,7 +290,7 @@ private char *get_filename_i(int i, char *folder, int slot)
  * @param fname
  * @return 
  */
-private char *get_file_name_final(char *fname)
+exprivate char *get_file_name_final(char *fname)
 {
     static __thread char buf[PATH_MAX+1];
     
@@ -308,9 +308,9 @@ private char *get_file_name_final(char *fname)
  * @param to_folder
  * @return 
  */
-private int file_move(int i, char *from_folder, char *to_folder)
+exprivate int file_move(int i, char *from_folder, char *to_folder)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *f;
     char *t;
     
@@ -321,12 +321,12 @@ private int file_move(int i, char *from_folder, char *to_folder)
     NDRX_LOG(log_error, "Rename [%s]->[%s]", 
                 f,t);
 
-    if (SUCCEED!=rename(f, t))
+    if (EXSUCCEED!=rename(f, t))
     {
         NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
                 f,t,
                 strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -339,22 +339,22 @@ out:
  * @param to_filename_only dest only filename
  * @return SUCCEED/FAIL
  */
-private int file_move_final(char *from_filename, char *to_filename_only)
+exprivate int file_move_final(char *from_filename, char *to_filename_only)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     char *to_filename = get_file_name_final(to_filename_only);
     
     NDRX_LOG(log_debug, "Rename [%s] -> [%s]", from_filename, to_filename);
     
-    if (SUCCEED!=rename(from_filename, to_filename))
+    if (EXSUCCEED!=rename(from_filename, to_filename))
     {
         int err = errno;
         NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
                 from_filename, to_filename, strerror(err));
         userlog("Failed to rename [%s]->[%s]: %s", 
                 from_filename, to_filename, strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -367,17 +367,17 @@ out:
  * @param filename full file name (with path)
  * @return 
  */
-private int file_unlink(char *filename)
+exprivate int file_unlink(char *filename)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     NDRX_LOG(log_info, "Unlinking [%s]", filename);
-    if (SUCCEED!=unlink(filename))
+    if (EXSUCCEED!=unlink(filename))
     {
         NDRX_LOG(log_error, "Failed to unlink [%s]: %s", 
                 filename, strerror(errno));
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -391,9 +391,9 @@ out:
  * @param p_hdr
  * @return 
  */
-private int send_unlock_notif(union tmq_upd_block *p_upd)
+exprivate int send_unlock_notif(union tmq_upd_block *p_upd)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     long rsplen;
     char cmd = TMQ_CMD_NOTIFY;
     char tmp[TMMSGIDLEN_STR+1];
@@ -403,19 +403,19 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
     if (NULL==p_ub)
     {
         NDRX_LOG(log_error, "Failed to allocate notif buffer");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_DATA, 0, (char *)p_upd, sizeof(*p_upd)))
+    if (EXSUCCEED!=Bchg(p_ub, EX_DATA, 0, (char *)p_upd, sizeof(*p_upd)))
     {
         NDRX_LOG(log_error, "Failed to setup EX_DATA!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
         NDRX_LOG(log_error, "Failed to setup EX_QMSGID!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* We need to send also internal command (what we are doing with the struct) */
@@ -432,16 +432,16 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
             
     if (p_upd->hdr.flags & TPQASYNC)
     {
-        if (FAIL == tpacall(svcnm, (char *)p_ub, 0L, TPNOTRAN))
+        if (EXFAIL == tpacall(svcnm, (char *)p_ub, 0L, TPNOTRAN))
         {
             NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
-    else if (FAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
+    else if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
     {
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     out:
 
@@ -458,7 +458,7 @@ private int send_unlock_notif(union tmq_upd_block *p_upd)
  * @param p_upd
  * @return 
  */
-private int send_unlock_notif_upd(tmq_msg_upd_t *p_upd)
+exprivate int send_unlock_notif_upd(tmq_msg_upd_t *p_upd)
 {
     union tmq_upd_block block;
     
@@ -474,7 +474,7 @@ private int send_unlock_notif_upd(tmq_msg_upd_t *p_upd)
  * @param p_hdr
  * @return 
  */
-private int send_unlock_notif_hdr(tmq_cmdheader_t *p_hdr)
+exprivate int send_unlock_notif_hdr(tmq_cmdheader_t *p_hdr)
 {
     union tmq_upd_block block;
     
@@ -493,39 +493,39 @@ private int send_unlock_notif_hdr(tmq_cmdheader_t *p_hdr)
  * @param flags
  * @return 
  */
-public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     if (M_is_open)
     {
         NDRX_LOG(log_warn, "xa_open_entry() - already open!");
         return XA_OK;
     }
 #define DIR_PERM 0755
-    M_is_open = TRUE;
+    M_is_open = EXTRUE;
     M_rmid = rmid;
     
     /* The xa_info is directory, where to store the data...*/
     strncpy(M_folder, xa_info, sizeof(M_folder)-2);
-    M_folder[sizeof(M_folder)-1] = EOS;
+    M_folder[sizeof(M_folder)-1] = EXEOS;
     
     NDRX_LOG(log_error, "Q data directory: [%s]", xa_info);
     
     /* The xa_info is directory, where to store the data...*/
     strncpy(M_folder_active, xa_info, sizeof(M_folder_active)-8);
-    M_folder_active[sizeof(M_folder_active)-7] = EOS;
+    M_folder_active[sizeof(M_folder_active)-7] = EXEOS;
     strcat(M_folder_active, "/active");
     
     strncpy(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
-    M_folder_prepared[sizeof(M_folder_prepared)-9] = EOS;
+    M_folder_prepared[sizeof(M_folder_prepared)-9] = EXEOS;
     strcat(M_folder_prepared, "/prepared");
     
     strncpy(M_folder_committed, xa_info, sizeof(M_folder_committed)-11);
-    M_folder_committed[sizeof(M_folder_committed)-10] = EOS;
+    M_folder_committed[sizeof(M_folder_committed)-10] = EXEOS;
     strcat(M_folder_committed, "/committed");
     
     /* Test the directories */
-    if (SUCCEED!=(ret=mkdir(M_folder, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -539,7 +539,7 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
         }
     }
     
-    if (SUCCEED!=(ret=mkdir(M_folder_active, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder_active, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -553,7 +553,7 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
         }
     }
     
-    if (SUCCEED!=(ret=mkdir(M_folder_prepared, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder_prepared, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -567,7 +567,7 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
         }
     }
     
-    if (SUCCEED!=(ret=mkdir(M_folder_committed, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder_committed, DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -592,11 +592,11 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
  * @param flags
  * @return 
  */
-public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     NDRX_LOG(log_error, "xa_close_entry() called");
     
-    M_is_open = FALSE;
+    M_is_open = EXFALSE;
     return XA_OK;
 }
 
@@ -608,7 +608,7 @@ public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long 
  * @param flags
  * @return 
  */
-public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     set_filename_base(xid, rmid);
     
@@ -628,7 +628,7 @@ public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags
  * @param flags
  * @return 
  */
-public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -638,14 +638,14 @@ public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
     
     if (M_is_reg)
     {
-        if (SUCCEED!=ax_unreg(rmid, 0))
+        if (EXSUCCEED!=ax_unreg(rmid, 0))
         {
             NDRX_LOG(log_error, "ERROR! xa_end_entry() - "
                     "ax_unreg() fail!");
             return XAER_RMERR;
         }
         
-        M_is_reg = FALSE;
+        M_is_reg = EXFALSE;
     }
     
 out:
@@ -661,7 +661,7 @@ out:
  * @param flags
  * @return 
  */
-public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     int i, j;
     int names_max;
@@ -695,7 +695,7 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
             if (ndrx_file_exists(fname))
             {
                 NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
-                if (SUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b)))
+                if (EXSUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b)))
                 {
                     /* Send the notification */
                     if (TMQ_STORCMD_NEWMSG == b.hdr.command_code)
@@ -736,7 +736,7 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
  * @param flags
  * @return 
  */
-public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     int i;
     int names_max;
@@ -752,7 +752,7 @@ public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
     
     for (i=names_max; i>=1; i--)
     {
-        if (SUCCEED!=file_move(i, M_folder_active, M_folder_prepared))
+        if (EXSUCCEED!=file_move(i, M_folder_active, M_folder_prepared))
         {
             return XAER_RMERR;
         }
@@ -779,7 +779,7 @@ public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
  * @param flags
  * @return 
  */
-public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     union tmq_block block;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -803,7 +803,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         
         fname=get_filename_i(i, M_folder_prepared, 0);
         
-        if (SUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block)))
+        if (EXSUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block)))
         {
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
             goto xa_err;
@@ -812,13 +812,13 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         /* Do the task... */
         if (TMQ_STORCMD_NEWMSG == block.hdr.command_code)
         {
-            if (SUCCEED!=file_move_final(fname, 
+            if (EXSUCCEED!=file_move_final(fname, 
                     tmq_msgid_serialize(block.hdr.msgid, msgid_str)))
             {
                 goto xa_err;
             }
             
-            if (SUCCEED!=send_unlock_notif_hdr(&block.hdr))
+            if (EXSUCCEED!=send_unlock_notif_hdr(&block.hdr))
             {
                 goto xa_err;
             }
@@ -841,14 +841,14 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
                 goto xa_err;
             }
             
-            if (SUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd)))
+            if (EXSUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd)))
             {
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
                 goto xa_err;
             }
             
             /* seek the start */
-            if (SUCCEED!=fseek (f, 0 , SEEK_SET ))
+            if (EXSUCCEED!=fseek (f, 0 , SEEK_SET ))
             {
                 NDRX_LOG(log_error, "Seekset failed: %s", strerror(errno));
                 goto xa_err;
@@ -876,13 +876,13 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             /* remove the update file */
             NDRX_LOG(log_info, "Removing update command file: [%s]", fname);
             
-            if (SUCCEED!=unlink(fname))
+            if (EXSUCCEED!=unlink(fname))
             {
                 NDRX_LOG(log_error, "Failed to remove update file [%s]: %s", 
                         fname, strerror(errno));
             }
             
-            if (SUCCEED!=send_unlock_notif_upd(&block.upd))
+            if (EXSUCCEED!=send_unlock_notif_upd(&block.upd))
             {
                 goto xa_err;
             }
@@ -893,7 +893,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             fname_msg = get_file_name_final(tmq_msgid_serialize(block.hdr.msgid, msgid_str));
             NDRX_LOG(log_info, "Removing message file: [%s]", fname_msg);
             
-            if (SUCCEED!=unlink(fname_msg))
+            if (EXSUCCEED!=unlink(fname_msg))
             {
                 NDRX_LOG(log_error, "Failed to remove update file [%s]: %s", 
                         fname_msg, strerror(errno));
@@ -901,7 +901,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             
             NDRX_LOG(log_info, "Removing delete command file file: [%s]", fname);
             
-            if (SUCCEED!=unlink(fname))
+            if (EXSUCCEED!=unlink(fname))
             {
                 NDRX_LOG(log_error, "Failed to remove update file [%s]: %s", 
                         fname, strerror(errno));
@@ -909,7 +909,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
             
             /* Remove the message (it must be marked for delete)
              */
-            if (SUCCEED!=send_unlock_notif_hdr(&block.hdr))
+            if (EXSUCCEED!=send_unlock_notif_hdr(&block.hdr))
             {
                 goto xa_err;
             }
@@ -944,10 +944,10 @@ xa_err:
  * @param p_len
  * @return 
  */
-private int read_tx_block(FILE *f, char *block, int len)
+exprivate int read_tx_block(FILE *f, char *block, int len)
 {
     int act_read;
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     if (len!=(act_read=fread(block, 1, len, f)))
     {
@@ -958,7 +958,7 @@ private int read_tx_block(FILE *f, char *block, int len)
         
         userlog("ERROR! Filed to read tx file: req_read=%d, read=%d: %s",
                 len, act_read, strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -972,9 +972,9 @@ out:
  * @param len length to read
  * @return 
  */
-private int read_tx_from_file(char *fname, char *block, int len)
+exprivate int read_tx_from_file(char *fname, char *block, int len)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     FILE *f = NULL;
     
     if (NULL==(f = NDRX_FOPEN(fname, "r+b")))
@@ -985,7 +985,7 @@ private int read_tx_from_file(char *fname, char *block, int len)
 
         userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
                 fname, strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret = read_tx_block(f, block, len);
@@ -1006,9 +1006,9 @@ out:
  * @param len
  * @return SUCCEED/FAIL
  */
-private int write_to_tx_file(char *block, int len)
+exprivate int write_to_tx_file(char *block, int len)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     XID xid;
     size_t ret_len;
     FILE *f = NULL;
@@ -1021,16 +1021,16 @@ private int write_to_tx_file(char *block, int len)
         if (TM_JOIN!=ax_ret && TM_OK!=ax_ret)
         {
             NDRX_LOG(log_error, "ERROR! xa_reg() failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
         if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, M_rmid, 0))
         {
             NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
         
-        M_is_reg = TRUE;
+        M_is_reg = EXTRUE;
     }
     
     set_filenames();
@@ -1045,7 +1045,7 @@ private int write_to_tx_file(char *block, int len)
         
         userlog( "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
                 M_filename_active, strerror(err));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Write th block */
@@ -1058,7 +1058,7 @@ private int write_to_tx_file(char *block, int len)
         userlog("ERROR! Filed to write to tx file: req_len=%d, written=%d: %s",
                 len, ret_len, strerror(err));
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -1085,9 +1085,9 @@ out:
  * @param msg message (the structure is projected on larger memory block to fit in the whole msg
  * @return SUCCEED/FAIL
  */
-public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
+expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char tmp[TMMSGIDLEN_STR+1];
     
     /*
@@ -1101,7 +1101,7 @@ public int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     NDRX_DUMP(log_debug, "Writing new message to disk", 
                 (char *)msg, sizeof(*msg)+msg->len);
     
-    if (SUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len))
+    if (EXSUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
@@ -1123,9 +1123,9 @@ out:
  * @param p_block ptr to union of commands
  * @return SUCCEED/FAIL
  */
-public int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
+expublic int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
     
     NDRX_LOG(log_info, "Writing command block: %s msg [%s]", descr, 
@@ -1134,7 +1134,7 @@ public int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
     NDRX_DUMP(log_debug, "Writing command block to disk", 
                 (char *)p_block, sizeof(*p_block));
     
-    if (SUCCEED!=write_to_tx_file((char *)p_block, sizeof(*p_block)))
+    if (EXSUCCEED!=write_to_tx_file((char *)p_block, sizeof(*p_block)))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
                 tmq_msgid_serialize(p_block->hdr.msgid, msgid_str));
@@ -1151,9 +1151,9 @@ out:
  * @param msgid_out
  * @return SUCCEED/FAIL
  */
-private int tmq_get_msgid_from_filename(char *filename_in, char *msgid_out)
+exprivate int tmq_get_msgid_from_filename(char *filename_in, char *msgid_out)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
     tmq_msgid_deserialize(filename_in, msgid_out);
     
@@ -1167,10 +1167,10 @@ out:
  * @param process_block callback function to process the data block
  * @return SUCCEED/FAIL
  */
-public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block),
+expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block),
             short nodeid, short srvid)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     struct dirent **namelist = NULL;
     int n;
     int j;
@@ -1188,7 +1188,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
         {
            NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
                    folders[j], strerror(errno));
-           FAIL_OUT(ret);
+           EXFAIL_OUT(ret);
         }
         
         while (n--)
@@ -1204,9 +1204,9 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             if (0==j) /*  For committed folder we can detect stuff from filename */
             {
                 /* early filter... */
-                if (SUCCEED!=tmq_get_msgid_from_filename(namelist[n]->d_name, msgid))
+                if (EXSUCCEED!=tmq_get_msgid_from_filename(namelist[n]->d_name, msgid))
                 {
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 
                 tmq_msgid_get_info(msgid, &msg_nodeid, &msg_srvid);
@@ -1230,7 +1230,7 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             {
                 NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
                    filename, strerror(errno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             /* Read header */            
@@ -1238,14 +1238,14 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             {
                 NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
                    filename, strerror(errno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
-            if (SUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block)))
+            if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block)))
             {
                 NDRX_LOG(log_error, "Failed to read [%s]: %s", 
                    filename, strerror(errno));
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
             
             /* Late filter 
@@ -1273,14 +1273,14 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
                 {
                     NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
                        (sizeof(tmq_msg_t) + p_block->msg.len), strerror(errno));
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 /* Read some more */
-                if (SUCCEED!=read_tx_block(f, p_block->msg.msg, p_block->msg.len))
+                if (EXSUCCEED!=read_tx_block(f, p_block->msg.msg, p_block->msg.len))
                 {
                     NDRX_LOG(log_error, "Failed to read [%s]: %s", 
                        filename, strerror(errno));
-                    FAIL_OUT(ret);
+                    EXFAIL_OUT(ret);
                 }
                 /* unlock the message */
                 p_block->msg.lockthreadid = 0;
@@ -1295,10 +1295,10 @@ public int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
             /* Process message block 
              * It is up to caller to free the mem & make null
              */
-            if (SUCCEED!=process_block(&p_block))
+            if (EXSUCCEED!=process_block(&p_block))
             {
                 NDRX_LOG(log_error, "Failed to process block!");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             NDRX_FREE(namelist[n]);
@@ -1338,7 +1338,7 @@ out:
  * @param flags
  * @return 
  */
-public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
+expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -1358,7 +1358,7 @@ public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rm
  * @param flags
  * @return 
  */
-public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     
     if (!M_is_open)
@@ -1380,7 +1380,7 @@ public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
  * @param flags
  * @return 
  */
-public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
+expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -1394,85 +1394,85 @@ public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, i
 
 
 /* Static entries */
-public int xa_open_entry_stat( char *xa_info, int rmid, long flags)
+expublic int xa_open_entry_stat( char *xa_info, int rmid, long flags)
 {
     return xa_open_entry(&ndrxqstatsw, xa_info, rmid, flags);
 }
-public int xa_close_entry_stat(char *xa_info, int rmid, long flags)
+expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags)
 {
     return xa_close_entry(&ndrxqstatsw, xa_info, rmid, flags);
 }
-public int xa_start_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_start_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_start_entry(&ndrxqstatsw, xid, rmid, flags);
 }
-public int xa_end_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_end_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_end_entry(&ndrxqstatsw, xid, rmid, flags);
 }
-public int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_rollback_entry(&ndrxqstatsw, xid, rmid, flags);
 }
-public int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_prepare_entry(&ndrxqstatsw, xid, rmid, flags);
 }
-public int xa_commit_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_commit_entry(&ndrxqstatsw, xid, rmid, flags);
 }
-public int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
+expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
 {
     return xa_recover_entry(&ndrxqstatsw, xid, count, rmid, flags);
 }
-public int xa_forget_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_forget_entry(&ndrxqstatsw, xid, rmid, flags);
 }
-public int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
+expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
 {
     return xa_complete_entry(&ndrxqstatsw, handle, retval, rmid, flags);
 }
 
 /* Dynamic entries */
-public int xa_open_entry_dyn( char *xa_info, int rmid, long flags)
+expublic int xa_open_entry_dyn( char *xa_info, int rmid, long flags)
 {
     return xa_open_entry(&ndrxqdynsw, xa_info, rmid, flags);
 }
-public int xa_close_entry_dyn(char *xa_info, int rmid, long flags)
+expublic int xa_close_entry_dyn(char *xa_info, int rmid, long flags)
 {
     return xa_close_entry(&ndrxqdynsw, xa_info, rmid, flags);
 }
-public int xa_start_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_start_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_start_entry(&ndrxqdynsw, xid, rmid, flags);
 }
-public int xa_end_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_end_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_end_entry(&ndrxqdynsw, xid, rmid, flags);
 }
-public int xa_rollback_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_rollback_entry(&ndrxqdynsw, xid, rmid, flags);
 }
-public int xa_prepare_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_prepare_entry(&ndrxqdynsw, xid, rmid, flags);
 }
-public int xa_commit_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_commit_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_commit_entry(&ndrxqdynsw, xid, rmid, flags);
 }
-public int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags)
+expublic int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags)
 {
     return xa_recover_entry(&ndrxqdynsw, xid, count, rmid, flags);
 }
-public int xa_forget_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_forget_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_forget_entry(&ndrxqdynsw, xid, rmid, flags);
 }
-public int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags)
+expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags)
 {
     return xa_complete_entry(&ndrxqdynsw, handle, retval, rmid, flags);
 }

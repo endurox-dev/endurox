@@ -91,7 +91,7 @@
 /**
  * About to remove incoming connection.
  */
-public void exnet_remove_incoming(exnetcon_t *net)
+expublic void exnet_remove_incoming(exnetcon_t *net)
 {
     close(net->sock);
     net->my_server->incomming_cons--;
@@ -105,9 +105,9 @@ public void exnet_remove_incoming(exnetcon_t *net)
  * @param net
  * @return 
  */
-public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
+expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     exnetcon_t *srv = (exnetcon_t *)ptr1;
     struct sockaddr_in clt_address;
     int client_fd;
@@ -121,7 +121,7 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     if ( (client_fd = accept(srv->sock, (struct sockaddr *)&clt_address, &clilen) ) < 0 )
     {
         NDRX_LOG(log_error, "Error calling accept()");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
     NDRX_LOG(log_error, "New incoming connection: fd=%d", client_fd);
@@ -144,17 +144,17 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     {
         NDRX_LOG(log_error, "Failed to allocate client structure! %s", 
                 strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     memcpy(client, srv, sizeof(exnetcon_t));
     
     /* Update the structure */
-    client->is_server=FALSE;
-    client->is_incoming = TRUE;
+    client->is_server=EXFALSE;
+    client->is_incoming = EXTRUE;
     client->sock = client_fd;
     client->my_server = srv;
-    client->is_connected = TRUE;
+    client->is_connected = EXTRUE;
     memcpy(&client->address, &clt_address, sizeof(clt_address));
     
     /* We could get IP address & port of the call save in client struct & dump do log. */
@@ -163,7 +163,7 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     {
         NDRX_LOG(log_error, "Failed to get client IP address! %s", 
                 strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     strcpy(client->addr, ip_ptr);
     /*Get port number*/
@@ -171,26 +171,26 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     NDRX_LOG(log_warn, "Got call from: %s:%u", client->addr, client->port);
     
     /* Call custom callback, if there is such */
-    if (NULL!=client->p_connected && SUCCEED!=client->p_connected(client))
+    if (NULL!=client->p_connected && EXSUCCEED!=client->p_connected(client))
     {
         NDRX_LOG(log_error, "Connected notification "
                 "callback failed!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=exnet_configure_client_sock(client))
+    if (EXSUCCEED!=exnet_configure_client_sock(client))
     {
         NDRX_LOG(log_error, "Failed to configure client socket");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Install poller extension? */
-    if (SUCCEED!=tpext_addpollerfd(client->sock,
+    if (EXSUCCEED!=tpext_addpollerfd(client->sock,
         POLL_FLAGS,
         client, exnet_poll_cb))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -199,7 +199,7 @@ public int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
 out:
 
-    if (SUCCEED!=ret && client)
+    if (EXSUCCEED!=ret && client)
     {
         NDRX_FREE(client);
     }
@@ -214,9 +214,9 @@ out:
  * @param net
  * @return 
  */
-public int exnet_bind(exnetcon_t *net)
+expublic int exnet_bind(exnetcon_t *net)
 {
-	int ret=SUCCEED;
+	int ret=EXSUCCEED;
     char *fn = "exnet_bind";
     
     NDRX_LOG(log_debug, "%s - enter", fn);
@@ -225,7 +225,7 @@ public int exnet_bind(exnetcon_t *net)
     {
         NDRX_LOG(log_error, "Failed to create socket: %s",
                                 strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /*  Bind our socket addresss to the 
@@ -233,7 +233,7 @@ public int exnet_bind(exnetcon_t *net)
     if ( bind(net->sock, (struct sockaddr *) &net->address, sizeof(net->address)) < 0 )
     {
         NDRX_LOG(log_error, "Error calling bind(): %s", strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
             
     }
     
@@ -241,16 +241,16 @@ public int exnet_bind(exnetcon_t *net)
     {
         NDRX_LOG(log_error, "Error calling listen(): %s", 
                 strerror(errno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Install poller extension? */
-    if (SUCCEED!=tpext_addpollerfd(net->sock,
+    if (EXSUCCEED!=tpext_addpollerfd(net->sock,
         POLL_FLAGS,
         net, exnetsvpollevent))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     

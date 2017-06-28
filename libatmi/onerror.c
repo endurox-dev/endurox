@@ -56,9 +56,9 @@
 /**
  * Object-API wrapper for Nstrerror() - Auto generated.
  */
-public char * ONstrerror(TPCONTEXT_T *p_ctxt, int err) 
+expublic char * ONstrerror(TPCONTEXT_T *p_ctxt, int err) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     char * ret = NULL;
 
 
@@ -91,14 +91,14 @@ public char * ONstrerror(TPCONTEXT_T *p_ctxt, int err)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Nstrerror() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -134,9 +134,9 @@ out:
 /**
  * Object-API wrapper for _Nget_Nerror_addr() - Auto generated.
  */
-public int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt) 
+expublic int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt) 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     int * ret = NULL;
 
 
@@ -169,14 +169,14 @@ public int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _Nget_Nerror_addr() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {

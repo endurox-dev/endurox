@@ -56,9 +56,9 @@
 /**
  * API version of USERLOG
  */
-public int userlog (char *data, ...)
+expublic int userlog (char *data, ...)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     /* TODO: Might need semaphore for first init... */
     static int first = 1;
     static char *out_f = NULL;
@@ -67,7 +67,7 @@ public int userlog (char *data, ...)
     char  pre[100];
     int fopened=0;
     struct timeval  time_val;
-    char full_name[FILENAME_MAX] = {EOS};
+    char full_name[FILENAME_MAX] = {EXEOS};
     long ldate, ltime, lusec;
     int print_label = 0;
     pid_t pid;
@@ -140,7 +140,7 @@ out:
  * Write the userlog message by const string
  * @param msg
  */
-public int userlog_const (const char *msg)
+expublic int userlog_const (const char *msg)
 {
     return userlog("%s", msg);
 }

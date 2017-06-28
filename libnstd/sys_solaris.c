@@ -70,7 +70,7 @@
  * "/n00b,srv,admin,atmi.sv1,123,2229")
  * the qpath must point to /tmp
  */
-public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+expublic string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
     string_list_t* ret = NULL;
     struct dirent **namelist;
@@ -78,7 +78,7 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
     string_list_t* tmp;
     int len;
     
-    *return_status = SUCCEED;
+    *return_status = EXSUCCEED;
     
     n = scandir(qpath, &namelist, 0, alphasort);
     if (n < 0)
@@ -133,7 +133,7 @@ public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
     
 exit_fail:
 
-    *return_status = FAIL;
+    *return_status = EXFAIL;
 
     if (NULL!=ret)
     {

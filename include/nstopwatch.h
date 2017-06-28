@@ -1,7 +1,7 @@
 /* 
 ** Timer handler
 **
-** @file ntimer.h
+** @file nstopwatch.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,8 +30,8 @@
 ** -----------------------------------------------------------------------------
 */
 
-#ifndef NTIMER_H
-#define	NTIMER_H
+#ifndef NSTOPWATCH_H
+#define	NSTOPWATCH_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -56,21 +56,21 @@ typedef struct
 {
     /*struct timeval  timeval;*/
     struct timespec t;
-} ndrx_timer_t;
+} ndrx_stopwatch_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_timer_reset(ndrx_timer_t *timer);
-extern NDRX_API long ndrx_timer_get_delta(ndrx_timer_t *timer);
-extern NDRX_API long ndrx_timer_get_delta_sec(ndrx_timer_t *timer);
+extern NDRX_API void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer);
+extern NDRX_API long ndrx_stopwatch_get_delta(ndrx_stopwatch_t *timer);
+extern NDRX_API long ndrx_stopwatch_get_delta_sec(ndrx_stopwatch_t *timer);
 extern NDRX_API char *ndrx_decode_msec(long t, int slot, int level, int levels);
-extern NDRX_API char *ndrx_timer_decode(ndrx_timer_t *timer, int slot);
-extern NDRX_API long long ndrx_timer_diff(ndrx_timer_t *t1, ndrx_timer_t *t2);
-extern NDRX_API void ndrx_timer_minus(ndrx_timer_t *timer, long long msec);
-extern NDRX_API void ndrx_timer_plus(ndrx_timer_t *timer, long long msec);
+extern NDRX_API char *ndrx_stopwatch_decode(ndrx_stopwatch_t *timer, int slot);
+extern NDRX_API long long ndrx_stopwatch_diff(ndrx_stopwatch_t *t1, ndrx_stopwatch_t *t2);
+extern NDRX_API void ndrx_stopwatch_minus(ndrx_stopwatch_t *timer, long long msec);
+extern NDRX_API void ndrx_stopwatch_plus(ndrx_stopwatch_t *timer, long long msec);
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* NTIMER_H */
+#endif	/* NSTOPWATCH_H */
 

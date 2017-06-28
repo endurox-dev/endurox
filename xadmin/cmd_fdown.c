@@ -58,22 +58,22 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
 
     if (!chk_confirm_clopt("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
                     "THE APP SESSION?", argc, argv))
     {
-        return FAIL;
+        return EXFAIL;
     }
     else
     {
         /* quit automatically, as all resources are being removed! */
-        *p_have_next = FALSE;
+        *p_have_next = EXFALSE;
         
-        ndrx_down_sys(G_config.qprefix, G_config.qpath, FALSE);
-        ndrx_down_sys(G_config.qprefix, G_config.qpath, TRUE); /* second loop with TRUE... */
+        ndrx_down_sys(G_config.qprefix, G_config.qpath, EXFALSE);
+        ndrx_down_sys(G_config.qprefix, G_config.qpath, EXTRUE); /* second loop with TRUE... */
     }
     
 out:

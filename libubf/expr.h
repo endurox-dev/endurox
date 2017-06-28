@@ -46,12 +46,12 @@ extern "C" {
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#ifndef TRUE
-#define TRUE	1
+#ifndef EXTRUE
+#define EXTRUE	1
 #endif 
 
-#ifndef FALSE
-#define FALSE	0
+#ifndef EXFALSE
+#define EXFALSE	0
 #endif 
 
 #define MAX_TEXT	511

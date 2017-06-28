@@ -52,13 +52,13 @@ void load_get_test_data(UBFH *p_ub)
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
@@ -69,16 +69,16 @@ void load_get_test_data(UBFH *p_ub)
     carr[0] = 'Y';
     len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
 
     l = 888;
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 4, (char *)&l, 0), SUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 4, (char *)&l, 0), EXSUCCEED);
 
     s = 212;
     l = 212;
@@ -86,13 +86,13 @@ void load_get_test_data(UBFH *p_ub)
     f = 12127;
     d = 1231232.1;
     carr[0] = 'X';
-    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
 }
 
 /**
@@ -109,13 +109,13 @@ void load_get_test_data_2(UBFH *p_ub)
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
 
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 2, (char *)&c, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 3, (char *)&f, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 4, (char *)&d, 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 5, (char *)"TEST STR VAL", 0), SUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 6, (char *)carr, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, 2, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 3, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 4, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 5, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 6, (char *)carr, len), EXSUCCEED);
 
 }
 
@@ -126,7 +126,7 @@ Ensure(test_cbgetalloc)
 {
     char fb[1048];
     UBFH *p_ub = (UBFH *)fb;
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_find_test_data(p_ub);
     short *s1,*s2,*s3,*s4,*s5,*s6,*s7;
     long *l1,*l2,*l3,*l4,*l5,*l6,*l7;
@@ -308,7 +308,7 @@ Ensure(test_cbgetalloc)
     assert_double_equal(*(d1=(double *)CBgetalloc(p_ub, T_LONG_FLD, 4, BFLD_DOUBLE, 0)), 888);
 
     /* Now play with big buffer data */
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 4, BIG_TEST_STRING, strlen(BIG_TEST_STRING)),SUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 4, BIG_TEST_STRING, strlen(BIG_TEST_STRING)),EXSUCCEED);
     /* now match the string */
     assert_string_equal((str1=CBgetalloc(p_ub, T_CARRAY_2_FLD, 4, BFLD_STRING, 0)), BIG_TEST_STRING);
     free(d1);free(str1);
@@ -334,7 +334,7 @@ Ensure(test_bgetalloc)
     char test17[BGETALLOC_TEST_17]; /* have some random memory data. */
     BFLDLEN len=0;
 
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_get_test_data(p_ub);
 
     /* Test as short */
@@ -396,9 +396,9 @@ Ensure(test_bgetalloc)
     assert_equal(Berror, BNOTPRES);
     
     /* Test case for http://www.endurox.org/issues/17 */
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     len = BGETALLOC_TEST_17;
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, test17, len), SUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, test17, len), EXSUCCEED);
     assert_not_equal((carr1=Bgetalloc(p_ub, T_CARRAY_FLD, 0, &len)), NULL);
     assert_equal(len, BGETALLOC_TEST_17);
     assert_equal(memcmp(test17, carr1, BGETALLOC_TEST_17), 0);
@@ -423,56 +423,56 @@ Ensure(test_bgetlast)
     BFLDLEN len;
     BFLDOCC occ;
 
-    assert_equal(Binit(p_ub, sizeof(fb)), SUCCEED);
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_get_test_data_2(p_ub);
 
     /* Test as short */
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_SHORT_FLD, &occ, (char *)&s1, 0), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_SHORT_FLD, &occ, (char *)&s1, 0), EXFAIL);
     assert_equal(s1, 88);
     assert_equal(occ, 0);
 
     /* Test as long */
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_LONG_FLD, &occ, (char *)&l1, 0), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_LONG_FLD, &occ, (char *)&l1, 0), EXFAIL);
     assert_equal(l1, -1021);
     assert_equal(occ, 1);
 
      /* Test as char */
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_CHAR_FLD, &occ, (char *)&c1, 0), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_CHAR_FLD, &occ, (char *)&c1, 0), EXFAIL);
     assert_equal(c1, 'c');
     assert_equal(occ, 2);
 
     /* Test as float */
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_FLOAT_FLD, &occ, (char *)&f1, 0), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_FLOAT_FLD, &occ, (char *)&f1, 0), EXFAIL);
     assert_double_equal(f1, 17.31);
     assert_equal(occ, 3);
 
     /* Test as double */
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_DOUBLE_FLD, &occ, (char *)&d1, 0), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_DOUBLE_FLD, &occ, (char *)&d1, 0), EXFAIL);
     assert_double_equal(d1, 12312.1111);
     assert_equal(occ, 4);
 
     /* Test as string */
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_STRING_FLD, &occ, str1, 0), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_STRING_FLD, &occ, str1, 0), EXFAIL);
     assert_string_equal(str1, "TEST STR VAL");
     assert_equal(occ, 5);
 
     /* Test as carray */
     len = sizeof(carr1);
     occ=-1;
-    assert_not_equal(Bgetlast(p_ub, T_CARRAY_FLD, &occ, carr1, &len), FAIL);
+    assert_not_equal(Bgetlast(p_ub, T_CARRAY_FLD, &occ, carr1, &len), EXFAIL);
     assert_equal(len, 24);
     assert_equal(strncmp(carr1, "CARRAY1 TEST STRING DATA", 24), 0);
     assert_equal(occ, 6);
 
     /* Test the case when data is not found! */
     occ=-1;
-    assert_equal(Bgetlast(p_ub, T_STRING_2_FLD, &occ, str1, 0), FAIL);
+    assert_equal(Bgetlast(p_ub, T_STRING_2_FLD, &occ, str1, 0), EXFAIL);
     assert_equal(Berror, BNOTPRES);
     assert_equal(occ, -1);
 }

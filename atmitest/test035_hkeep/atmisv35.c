@@ -40,7 +40,7 @@
 
 void CONVSV (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     long revent;
     static double d = 55.66;
     int i;
@@ -54,7 +54,7 @@ void CONVSV (TPSVCINFO *p_svc)
 
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 6000))) /* allocate some stuff for more data to put in  */
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -63,9 +63,9 @@ void CONVSV (TPSVCINFO *p_svc)
     for (i=0; i<100; i++)
     {
         sprintf(tmp, "SRV SND: %d", i);
-        if (FAIL==Badd(p_ub, T_STRING_FLD, (char *)tmp, 0))
+        if (EXFAIL==Badd(p_ub, T_STRING_FLD, (char *)tmp, 0))
         {
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
 
@@ -73,7 +73,7 @@ void CONVSV (TPSVCINFO *p_svc)
         {
             NDRX_LOG(log_debug, "Doing some send!");
             /* Lets send some data back to client */
-            if (FAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, 0L, &revent))
+            if (EXFAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, 0L, &revent))
             {
                 NDRX_LOG(log_error, "Failed to send to client!");
             }
@@ -84,11 +84,11 @@ void CONVSV (TPSVCINFO *p_svc)
 	if (strcmp(p_svc->name, "CONVSV2"))
 	{
 		NDRX_LOG(log_info, "Try to connect to CONVSV!!!");
-		if (FAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
+		if (EXFAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
 		{
 			NDRX_LOG(log_error, "TESTERROR: connect failed!: %s",
 						tpstrerror(tperrno));
-			ret=FAIL;
+			ret=EXFAIL;
 			goto out;
 		}
 	}
@@ -97,14 +97,14 @@ void CONVSV (TPSVCINFO *p_svc)
     }
 
     /* Now we will become as listeners, OK? */
-    if (FAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, TPRECVONLY, &revent))
+    if (EXFAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, TPRECVONLY, &revent))
     {
         NDRX_LOG(log_error, "Failed to send to client!");
         goto out;
     }
 
     /* now wait for messages to come in! */
-    while (SUCCEED==tprecv(p_svc->cd, (char **)&p_ub, 0L, 0L, &revent))
+    while (EXSUCCEED==tprecv(p_svc->cd, (char **)&p_ub, 0L, 0L, &revent))
     {
         NDRX_LOG(log_debug, "Sent MSG OK!");
     }
@@ -121,12 +121,12 @@ void CONVSV (TPSVCINFO *p_svc)
         else
         {
             NDRX_LOG(log_debug, "Did not get TPEV_SENDONLY!!!");
-            ret=FAIL;
+            ret=EXFAIL;
         }
     }
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -138,13 +138,13 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (SUCCEED!=tpadvertise("CONVSV", CONVSV))
+    if (EXSUCCEED!=tpadvertise("CONVSV", CONVSV))
     {
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
     

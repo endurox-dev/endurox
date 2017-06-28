@@ -43,7 +43,7 @@
 #include <atmi_int.h>
 #include <gencall.h>
 
-#include "ntimer.h"
+#include "nstopwatch.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -57,7 +57,7 @@
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "SLOT  SRVID LAST FLGS STATUS LAST CMD LAST CALLER   \n");
     fprintf(stderr, "----- ----- --------- ------ -------- --------------\n");
@@ -69,7 +69,7 @@ private void print_hdr(void)
  * @param reply_len
  * @return
  */
-public int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     int i;
     char binary[9+1];
@@ -84,7 +84,7 @@ public int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len)
                 );
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -94,7 +94,7 @@ public int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_shm_psrv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_shm_psrv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -112,6 +112,6 @@ public int cmd_shm_psrv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 

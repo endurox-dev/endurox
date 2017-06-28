@@ -1,0 +1,117 @@
+TPBROADCAST(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpbroadcast - Broadcast unsolicited messages to matched XATMI clients
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpbroadcast(char *'lmid', char *'usrname', char *'cltname', char *'data', 
+	long 'len', long 'flags');
+
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi 
+-lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used for sending unsolicited message to multiple clients at once. 
+The target clients can be matched by following options:
+
+- 'lmid' Cluster node id to send the message to. If field is set to empty string 
+(first byte 0x00) then any cluster node id is matched. If string value is given
+then numeric value is expected and is matched against the connected cluster nodes.
+Either local or remote. This field can be set to regular expression, 
+in that case 'flags' should contain the 'TPREGEXMATCH'. Maximum
+statement length is *MAXTIDENT**2-1.
+
+- 'usrname' is reserved for future use. Currently not supported.
+
+- 'cltname' is process name (executable name) that should be matched. If 'cltname'
+is NULL or empty string, then it is matched. If string is given then exact executable
+is matched for delivery. If binary runs in multiple copies, all of them will
+receive notification. The field can be set to regular expression, in that case
+flags must contain 'TPREGEXMATCH'. The max length of 'cltname' string can be 
+*MAXTIDENT**2-1.
+
+
+Any combination is possible between 'lmid' and 'cltname'. Any matched process that
+will fulfill the matching requirements will receive the message.
+
+The data sent in broadcast is set in variable 'data' which is XATMI
+buffer allocated by *tpalloc(3)* (or auto buffer). The complementary 'len' is
+used only for buffer types which do not contain length descriptor internally (i.e.
+*CARRAY* buffer type).
+
+The 'data' field can be NULL. In this situation matched client callbacks will be called,
+but no data will be sent to client. 
+
+In case when 'lmid' is matched on another node, then full broadcast request with
+all parameters are sent to remote machines '@TPBROADNNN' service (advertised by 
+*tpbrdcstsv(8)*). When dispatched, the remote '@TPBROADNNN' will process the local
+matchings of the clients processes and will do the broadcast locally.
+
+*Valid flags*
+
+*TPNOBLOCK* Do not block on full client queue, instead return error.
+
+*TPNOTIME* Do not timeout when waiting on full queue (*TPNOBLOCK* is not set).
+
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler.
+This affects only underlaying mq_* function calls.
+
+*TPREGEXMATCH*  Match 'lmid' (cluster node id) and 'cltname' by assuming that
+these are regular expressions.
+
+
+RETURN VALUE
+------------
+On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* 
+set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call. Note that Enduro/X does not analyze the errors
+returned by each individual delivery to the client process, thus the function will
+try to delivery to all of the clients the notification. If some of them were 
+exited or for example client reply (delivery) queue was full and *TPNOBLOCK*
+was set or *TPNOTIME* was not set, then error is logged to Enduro/X 'ndrx' logger
+and ULOG, but *tpbroadcast(3)* will return success.
+
+*TPEINVAL* Environment variables not configured, see *ex_env(5)* page, or invalid
+parameters have been passed to the function, for example 'clientid', 'lmtid' or 
+'username' are set and they are invalid regular expressions (i.e. with *TPREGEXMATCH*
+set).
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
+
+
+EXAMPLE
+-------
+See *atmitest/test039_tpbroadcast/atmiclt39.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpsetunsol(3)* *tpnotify(3)* *tpchkunsol(3)* *tpinit(3)* *tpbrdcstsv(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

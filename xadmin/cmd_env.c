@@ -44,7 +44,7 @@
 #include <atmi_int.h>
 #include <gencall.h>
 
-#include "ntimer.h"
+#include "nstopwatch.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,7 +58,7 @@
  * @param reply_len
  * @return
  */
-public int pe_rsp_process(command_reply_t *reply, size_t reply_len)
+expublic int pe_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     if (NDRXD_CALL_TYPE_PE==reply->msg_type)
     {
@@ -66,7 +66,7 @@ public int pe_rsp_process(command_reply_t *reply, size_t reply_len)
         fprintf(stdout, "%s\n", pe_info->env);
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -76,7 +76,7 @@ public int pe_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
     memset(&call, 0, sizeof(call));
@@ -92,7 +92,7 @@ public int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 }
 
 /**
@@ -103,9 +103,9 @@ public int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
  * @param p_have_next
  * @return 
  */
-public int cmd_set(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_set(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_setenv_t call;
     int i=1;
     
@@ -126,7 +126,7 @@ public int cmd_set(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     else
     {
         fprintf(stderr, "Invalid value, format set 'ENV_VAR=VALUE'\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
@@ -139,7 +139,7 @@ public int cmd_set(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 out:
     return ret;
 }
@@ -153,9 +153,9 @@ out:
  * @param p_have_next
  * @return 
  */
-public int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_setenv_t call;
     
     memset(&call, 0, sizeof(call));
@@ -163,18 +163,18 @@ public int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     if (argc>=2)
     {
         strncpy(call.env, argv[1], EX_ENV_MAX-1);
-        call.env[EX_ENV_MAX-1]=EOS;
+        call.env[EX_ENV_MAX-1]=EXEOS;
         if (NULL!=strchr(call.env, '='))
         {
                 fprintf(stderr, "Invalid format\n");
-                FAIL_OUT(ret);
+                EXFAIL_OUT(ret);
         }
         strcat(call.env,"=");
     }
     else
     {
         fprintf(stderr, "Missing ENV name\n");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
@@ -187,7 +187,7 @@ public int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        FALSE);
+                        EXFALSE);
 out:
     return ret;
 }

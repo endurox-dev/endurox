@@ -44,7 +44,7 @@
 #include <atmi_int.h>
 #include <gencall.h>
 
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <nclopt.h>
 #include <sys_unix.h>
 #include <utlist.h>
@@ -61,7 +61,7 @@
  * Print header
  * @return
  */
-private void print_hdr(void)
+exprivate void print_hdr(void)
 {
     fprintf(stderr, "Msg queued Q name\n");
     fprintf(stderr, "---------- ---------------------------------"
@@ -75,11 +75,11 @@ private void print_hdr(void)
  * @param argv
  * @return SUCCEED
  */
-public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     int n;
-    short print_all = FALSE;
+    short print_all = EXFALSE;
     struct mq_attr att;
     char q[512];
     string_list_t* qlist = NULL;
@@ -92,10 +92,10 @@ public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Print header at first step! */
@@ -103,10 +103,10 @@ public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     
     qlist = ndrx_sys_mqueue_list_make(G_config.qpath, &ret);
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "posix queue listing failed!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     LL_FOREACH(qlist,elt)
@@ -120,7 +120,7 @@ public int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                 continue;
             }
         }
-        if (SUCCEED!=ndrx_get_q_attr(elt->qname, &att))
+        if (EXSUCCEED!=ndrx_get_q_attr(elt->qname, &att))
         {
             /* skip this one... */
             continue;

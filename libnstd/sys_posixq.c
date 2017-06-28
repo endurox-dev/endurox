@@ -65,14 +65,14 @@
 #define API_ENTRY  if (M_first)\
     {\
         strcpy(M_qpath, getenv(CONF_NDRX_QPATH));\
-        M_first = FALSE;\
+        M_first = EXFALSE;\
     }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-static int M_first = TRUE;
-static char M_qpath[PATH_MAX] = {EOS};
+static int M_first = EXTRUE;
+static char M_qpath[PATH_MAX] = {EXEOS};
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -80,7 +80,7 @@ static char M_qpath[PATH_MAX] = {EOS};
  * - Firstly open the queue,
  * - The open fifo file
  */
-public mqd_t ndrx_mq_open_with_registry(const char *name, int oflag, 
+expublic mqd_t ndrx_mq_open_with_registry(const char *name, int oflag, 
         mode_t mode, struct mq_attr *attr)
 {
     mqd_t ret;
@@ -94,9 +94,9 @@ public mqd_t ndrx_mq_open_with_registry(const char *name, int oflag,
     
     ret = mq_open(name, oflag, mode, attr);
     
-    if ((mqd_t)FAIL!=ret && (oflag & O_CREAT))
+    if ((mqd_t)EXFAIL!=ret && (oflag & O_CREAT))
     {
-        if (SUCCEED!=mkfifo(regpath, S_IWUSR | S_IRUSR))
+        if (EXSUCCEED!=mkfifo(regpath, S_IWUSR | S_IRUSR))
         {
             err = errno;
             NDRX_LOG(log_error, "Failed to open fifo file [%s]: %s", 
@@ -108,10 +108,10 @@ public mqd_t ndrx_mq_open_with_registry(const char *name, int oflag,
             }
             else
             {
-                ret=(mqd_t)FAIL;
+                ret=(mqd_t)EXFAIL;
                 errno = err;
                 NDRX_LOG(log_error, "Removing queue...");
-                if (SUCCEED!=mq_unlink(name))
+                if (EXSUCCEED!=mq_unlink(name))
                 {
                     NDRX_LOG(log_error, "Failed to mq_unlink [%s]: %s", 
                             name, strerror(errno));
@@ -128,7 +128,7 @@ public mqd_t ndrx_mq_open_with_registry(const char *name, int oflag,
  * - Remove the queue
  * - Then remove fifo file
  */
-public int ndrx_mq_unlink_with_registry (const char *name)
+expublic int ndrx_mq_unlink_with_registry (const char *name)
 {   
     char regpath[PATH_MAX];
     int ret, err;
@@ -138,13 +138,13 @@ public int ndrx_mq_unlink_with_registry (const char *name)
     
     NDRX_LOG(log_debug, "deleting, registry path built: [%s]", regpath);
     
-    if (SUCCEED!=(ret = mq_unlink(name)))
+    if (EXSUCCEED!=(ret = mq_unlink(name)))
     {
         err = errno;
         NDRX_LOG(log_error, "Failed to mq_unlink [%s]: %s", name, strerror(err));
     }
     
-    if (SUCCEED!=unlink(regpath))
+    if (EXSUCCEED!=unlink(regpath))
     {
         NDRX_LOG(log_error, "Failed to unlink [%s]: %s", regpath, strerror(errno));
     }

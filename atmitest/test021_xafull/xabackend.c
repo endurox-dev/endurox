@@ -51,7 +51,7 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
-#include <ntimer.h>
+#include <nstopwatch.h>
 
 #include <xa.h>
 #include <atmi_int.h>
@@ -62,47 +62,65 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-int M_is_open = FALSE;
-int M_is_reg = FALSE; /* Dynamic registration done? */
-int M_rmid = FAIL;
+int M_is_open = EXFALSE;
+int M_is_reg = EXFALSE; /* Dynamic registration done? */
+int M_rmid = EXFAIL;
 FILE *M_f = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
-public int xa_open_entry_stat(char *xa_info, int rmid, long flags);
-public int xa_close_entry_stat(char *xa_info, int rmid, long flags);
-public int xa_start_entry_stat(XID *xid, int rmid, long flags);
-public int xa_end_entry_stat(XID *xid, int rmid, long flags);
-public int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
-public int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
-public int xa_prepare_entry_stat105(XID *xid, int rmid, long flags);
-public int xa_commit_entry_stat(XID *xid, int rmid, long flags);
-public int xa_commit_entry_stat_tryok(XID *xid, int rmid, long flags);
-public int xa_commit_entry_stat_tryfail(XID *xid, int rmid, long flags);
-public int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
-public int xa_forget_entry_stat(XID *xid, int rmid, long flags);
-public int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags);
+expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
+expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags);
+expublic int xa_start_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_start_entry_statstartfail(XID *xid, int rmid, long flags);
+expublic int xa_end_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry_stat105(XID *xid, int rmid, long flags);
+expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_commit_entry_stat_tryok(XID *xid, int rmid, long flags);
+expublic int xa_commit_entry_stat_tryfail(XID *xid, int rmid, long flags);
+expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
+expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags);
+expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags);
 
-public int xa_open_entry_dyn(char *xa_info, int rmid, long flags);
-public int xa_close_entry_dyn(char *xa_info, int rmid, long flags);
-public int xa_start_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_end_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_rollback_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_prepare_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_commit_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags);
-public int xa_forget_entry_dyn(XID *xid, int rmid, long flags);
-public int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags);
+expublic int xa_open_entry_dyn(char *xa_info, int rmid, long flags);
+expublic int xa_close_entry_dyn(char *xa_info, int rmid, long flags);
+expublic int xa_start_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_end_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_rollback_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_commit_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags);
+expublic int xa_forget_entry_dyn(XID *xid, int rmid, long flags);
+expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags);
 
-public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
-public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
-public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
-public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
+expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
+expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
+expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
+expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
+
+struct xa_switch_t ndrxstatsw_startfail = 
+{ 
+    .name = "ndrxstatsw_startfail",
+    .flags = TMNOFLAGS,
+    .version = 0,
+    .xa_open_entry = xa_open_entry_stat,
+    .xa_close_entry = xa_close_entry_stat,
+    .xa_start_entry = xa_start_entry_statstartfail,
+    .xa_end_entry = xa_end_entry_stat,
+    .xa_rollback_entry = xa_rollback_entry_stat,
+    .xa_prepare_entry = xa_prepare_entry_stat,
+    .xa_commit_entry = xa_commit_entry_stat,
+    .xa_recover_entry = xa_recover_entry_stat,
+    .xa_forget_entry = xa_forget_entry_stat,
+    .xa_complete_entry = xa_complete_entry_stat
+};
 
 struct xa_switch_t ndrxstatswtryfail = 
 { 
@@ -137,6 +155,7 @@ struct xa_switch_t ndrxstatswtryok =
     .xa_forget_entry = xa_forget_entry_stat,
     .xa_complete_entry = xa_complete_entry_stat
 };
+
 
 struct xa_switch_t ndrxstatsw105 = 
 { 
@@ -192,17 +211,17 @@ struct xa_switch_t ndrxdynsw =
 /**
  * will use NDRX_TEST_RM_DIR env variable...
  */
-private char *get_file_name(XID *xid, int rmid, char *folder)
+exprivate char *get_file_name(XID *xid, int rmid, char *folder)
 {
     static char buf[2048];
     char xid_str[128];
-    static int first = TRUE;
-    static char test_root[FILENAME_MAX+1] = {EOS};
+    static int first = EXTRUE;
+    static char test_root[FILENAME_MAX+1] = {EXEOS};
     
     if (first)
     {
         strcpy(test_root, getenv("NDRX_TEST_RM_DIR"));
-        first = FALSE;
+        first = EXFALSE;
     }
     
     atmi_xa_serialize_xid(xid, xid_str);
@@ -221,21 +240,21 @@ private char *get_file_name(XID *xid, int rmid, char *folder)
  * @param to_folder
  * @return 
  */
-private int file_move(XID *xid, int rmid, char *from_folder, char *to_folder)
+exprivate int file_move(XID *xid, int rmid, char *from_folder, char *to_folder)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     
-    char from_file[FILENAME_MAX+1] = {EOS};
-    char to_file[FILENAME_MAX+1] = {EOS};
+    char from_file[FILENAME_MAX+1] = {EXEOS};
+    char to_file[FILENAME_MAX+1] = {EXEOS};
     
     strcpy(from_file, get_file_name(xid, rmid, from_folder));
     strcpy(to_file, get_file_name(xid, rmid, to_folder));
     
     
-    if (SUCCEED!=rename(from_file, to_file))
+    if (EXSUCCEED!=rename(from_file, to_file))
     {
         NDRX_LOG(log_error, "Failed to rename: %s", strerror(errno));
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -250,14 +269,14 @@ out:
  * @param flags
  * @return 
  */
-public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     if (M_is_open)
     {
         NDRX_LOG(log_error, "TESTERROR!!! xa_open_entry() - already open!");
         return XAER_RMERR;
     }
-    M_is_open = TRUE;
+    M_is_open = EXTRUE;
     M_rmid = rmid;
              
     return XA_OK;
@@ -270,7 +289,7 @@ public int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long f
  * @param flags
  * @return 
  */
-public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     NDRX_LOG(log_error, "xa_close_entry() called");
     
@@ -282,7 +301,7 @@ public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long 
         return XAER_RMERR;
     }
     
-    M_is_open = FALSE;
+    M_is_open = EXFALSE;
     return XA_OK;
 }
 
@@ -295,7 +314,7 @@ public int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long 
  * @param flags
  * @return 
  */
-public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     char *file = get_file_name(xid, rmid, "active");
     
@@ -316,7 +335,7 @@ public int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags
     return XA_OK;
 }
 
-public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     
     if (!M_is_open)
@@ -335,14 +354,14 @@ public int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
     
     if (M_is_reg)
     {
-        if (SUCCEED!=ax_unreg(rmid, 0))
+        if (EXSUCCEED!=ax_unreg(rmid, 0))
         {
             NDRX_LOG(log_error, "TESTERROR!!! xa_end_entry() - "
                     "ax_unreg() fail!");
             return XAER_RMERR;
         }
         
-        M_is_reg = FALSE;
+        M_is_reg = EXFALSE;
     }
     
 out:
@@ -354,7 +373,7 @@ out:
     return XA_OK;
 }
 
-public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -362,8 +381,8 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
         return XAER_RMERR;
     }
     
-    if (SUCCEED!=file_move(xid, rmid, "active", "aborted") &&
-            SUCCEED!=file_move(xid, rmid, "prepared", "aborted"))
+    if (EXSUCCEED!=file_move(xid, rmid, "active", "aborted") &&
+            EXSUCCEED!=file_move(xid, rmid, "prepared", "aborted"))
     {
         return XAER_NOTA;
     }
@@ -371,7 +390,7 @@ public int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     return XA_OK;
 }
 
-public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -379,7 +398,7 @@ public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
         return XAER_RMERR;
     }
     
-    if (SUCCEED!=file_move(xid, rmid, "active", "prepared"))
+    if (EXSUCCEED!=file_move(xid, rmid, "active", "prepared"))
     {
         return XAER_RMERR;
     }
@@ -388,7 +407,7 @@ public int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
     
 }
 
-public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -397,7 +416,7 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
     }
     
     
-    if (SUCCEED!=file_move(xid, rmid, "prepared", "committed"))
+    if (EXSUCCEED!=file_move(xid, rmid, "prepared", "committed"))
     {
         return XAER_RMERR;
     }
@@ -410,42 +429,42 @@ public int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
  * @param buf
  * @return 
  */
-public int __write_to_tx_file(char *buf)
+expublic int __write_to_tx_file(char *buf)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     XID xid;
     int len = strlen(buf);
     
     if (G_atmi_env.xa_sw->flags & TMREGISTER && !M_is_reg)
     {
-        if (SUCCEED!=ax_reg(M_rmid, &xid, 0))
+        if (EXSUCCEED!=ax_reg(M_rmid, &xid, 0))
         {
             NDRX_LOG(log_error, "TESTERROR!!! xa_reg() failed!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
         if (XA_OK!=xa_start_entry(G_atmi_env.xa_sw, &xid, M_rmid, 0))
         {
             NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() failed!");
-            ret=FAIL;
+            ret=EXFAIL;
             goto out;
         }
         
-        M_is_reg = TRUE;
+        M_is_reg = EXTRUE;
     }
     
     if (NULL==M_f)
     {
         NDRX_LOG(log_error, "TESTERROR!!! write with no tx file!!!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
     if (fprintf(M_f, "%s", buf) < len)
     {
         NDRX_LOG(log_error, "TESTERROR!!! Failed to write to transaction!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
     
@@ -462,7 +481,7 @@ out:
  * @param flags
  * @return 
  */
-public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
+expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -482,7 +501,7 @@ public int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rm
  * @param flags
  * @return 
  */
-public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     
     if (!M_is_open)
@@ -504,7 +523,7 @@ public int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
  * @param flags
  * @return 
  */
-public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
+expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -518,27 +537,54 @@ public int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, i
 
 
 /* Static entries */
-public int xa_open_entry_stat( char *xa_info, int rmid, long flags)
+expublic int xa_open_entry_stat( char *xa_info, int rmid, long flags)
 {
     return xa_open_entry(&ndrxstatsw, xa_info, rmid, flags);
 }
-public int xa_close_entry_stat(char *xa_info, int rmid, long flags)
+expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags)
 {
     return xa_close_entry(&ndrxstatsw, xa_info, rmid, flags);
 }
-public int xa_start_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_start_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_start_entry(&ndrxstatsw, xid, rmid, flags);
 }
-public int xa_end_entry_stat(XID *xid, int rmid, long flags)
+
+/**
+ * For test case #160, retry to reconnect...
+ * So on every 3 start we return SUCCEED;
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
+expublic int xa_start_entry_statstartfail(XID *xid, int rmid, long flags)
+{
+    static __thread int cntr = 0;
+    cntr++;
+    
+    if (0!=cntr%3)
+    {
+        NDRX_LOG(log_error, "start FAIL (%d) - close connection too...", cntr);
+        M_is_open = EXFALSE;
+        return XAER_RMERR;
+    }
+    else
+    {
+        return xa_start_entry(&ndrxstatsw, xid, rmid, flags);
+    }
+    
+}
+
+expublic int xa_end_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_end_entry(&ndrxstatsw, xid, rmid, flags);
 }
-public int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_rollback_entry(&ndrxstatsw, xid, rmid, flags);
 }
-public int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
 }
@@ -550,17 +596,17 @@ public int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
  * @param flags
  * @return 
  */
-public int xa_prepare_entry_stat105(XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry_stat105(XID *xid, int rmid, long flags)
 {
     int ret =  xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
     
     /* seems have issues with freebsd ... abort();*/
-    exit(FAIL);
+    exit(EXFAIL);
     
     return ret;
 }
 
-public int xa_commit_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_commit_entry(&ndrxstatsw, xid, rmid, flags);
 }
@@ -572,7 +618,7 @@ public int xa_commit_entry_stat(XID *xid, int rmid, long flags)
  * @param flags
  * @return 
  */
-public int xa_commit_entry_stat_tryok(XID *xid, int rmid, long flags)
+expublic int xa_commit_entry_stat_tryok(XID *xid, int rmid, long flags)
 {
     static int try=0;
     char *fn = "xa_commit_entry_stat_tryok";
@@ -599,7 +645,7 @@ public int xa_commit_entry_stat_tryok(XID *xid, int rmid, long flags)
  * @param flags
  * @return 
  */
-public int xa_commit_entry_stat_tryfail(XID *xid, int rmid, long flags)
+expublic int xa_commit_entry_stat_tryfail(XID *xid, int rmid, long flags)
 {
     static int try=0;
     char *fn = "xa_commit_entry_stat_tryfail";
@@ -617,57 +663,57 @@ public int xa_commit_entry_stat_tryfail(XID *xid, int rmid, long flags)
     }
 }
 
-public int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
+expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
 {
     return xa_recover_entry(&ndrxstatsw, xid, count, rmid, flags);
 }
-public int xa_forget_entry_stat(XID *xid, int rmid, long flags)
+expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags)
 {
     return xa_forget_entry(&ndrxstatsw, xid, rmid, flags);
 }
-public int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
+expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
 {
     return xa_complete_entry(&ndrxstatsw, handle, retval, rmid, flags);
 }
 
 /* Dynamic entries */
-public int xa_open_entry_dyn( char *xa_info, int rmid, long flags)
+expublic int xa_open_entry_dyn( char *xa_info, int rmid, long flags)
 {
     return xa_open_entry(&ndrxdynsw, xa_info, rmid, flags);
 }
-public int xa_close_entry_dyn(char *xa_info, int rmid, long flags)
+expublic int xa_close_entry_dyn(char *xa_info, int rmid, long flags)
 {
     return xa_close_entry(&ndrxdynsw, xa_info, rmid, flags);
 }
-public int xa_start_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_start_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_start_entry(&ndrxdynsw, xid, rmid, flags);
 }
-public int xa_end_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_end_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_end_entry(&ndrxdynsw, xid, rmid, flags);
 }
-public int xa_rollback_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_rollback_entry(&ndrxdynsw, xid, rmid, flags);
 }
-public int xa_prepare_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_prepare_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_prepare_entry(&ndrxdynsw, xid, rmid, flags);
 }
-public int xa_commit_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_commit_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_commit_entry(&ndrxdynsw, xid, rmid, flags);
 }
-public int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags)
+expublic int xa_recover_entry_dyn(XID *xid, long count, int rmid, long flags)
 {
     return xa_recover_entry(&ndrxdynsw, xid, count, rmid, flags);
 }
-public int xa_forget_entry_dyn(XID *xid, int rmid, long flags)
+expublic int xa_forget_entry_dyn(XID *xid, int rmid, long flags)
 {
     return xa_forget_entry(&ndrxdynsw, xid, rmid, flags);
 }
-public int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags)
+expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flags)
 {
     return xa_complete_entry(&ndrxdynsw, handle, retval, rmid, flags);
 }

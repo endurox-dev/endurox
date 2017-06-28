@@ -67,9 +67,9 @@
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     short srvid;
     short nodeid;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -96,10 +96,10 @@ public int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Have a number in FB! */
@@ -112,52 +112,52 @@ public int cmd_mqmv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     memcpy(qc.msgid, msgid, TMMSGIDLEN);
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Connect to XA */
-    if (SUCCEED!=tpopen())
+    if (EXSUCCEED!=tpopen())
     {
         fprintf(stderr, "Failed to open XA sub-system: %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tpbegin(ndrx_get_G_atmi_env()->time_out, 0))
+    if (EXSUCCEED!=tpbegin(ndrx_get_G_atmi_env()->time_out, 0))
     {
         fprintf(stderr, "Failed to start XA transaction: %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     
     buf = tpalloc("STRING", "", 1);
     
-    if (SUCCEED!=tpdequeueex(nodeid, srvid, "*N/A*", &qc, (char **)&buf, &len, 0))
+    if (EXSUCCEED!=tpdequeueex(nodeid, srvid, "*N/A*", &qc, (char **)&buf, &len, 0))
     {
         fprintf(stderr, "dequeue failed %s diag: %ld:%s\n", 
                 tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
         NDRX_LOG(log_error, "failed %s diag: %ld:%s", 
                 tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tpenqueue(dest_qspace, dest_qname, &qc, (char *)buf, len, 0))
+    if (EXSUCCEED!=tpenqueue(dest_qspace, dest_qname, &qc, (char *)buf, len, 0))
     {
         fprintf(stderr, "enqueue failed %s diag: %ld:%s\n", 
                 tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
         NDRX_LOG(log_error, "failed %s diag: %ld:%s", 
                 tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
         
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=tpcommit(0))
+    if (EXSUCCEED!=tpcommit(0))
     {
         fprintf(stderr, "Commit failed: %s\n", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     printf("Committed\n");

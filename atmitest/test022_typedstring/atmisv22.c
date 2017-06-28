@@ -47,28 +47,28 @@ long M_subs_to_unsibscribe = -1;
  */
 void TEST22_STRING(TPSVCINFO *p_svc)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char *buf = p_svc->data;
-    char type[16+1]={EOS};
+    char type[16+1]={EXEOS};
     int i;
     
-    if (FAIL==tptypes(buf, type, NULL))
+    if (EXFAIL==tptypes(buf, type, NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: TEST22_STRING cannot "
                 "determine buffer type");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(type, "STRING"))
     {
         NDRX_LOG(log_error, "TESTERROR: Buffer not STRING!");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(buf, "HELLO WORLD"))
     {
         NDRX_LOG(log_error, "TESTERROR: Incoming string not \"HELLO WORLD\"");
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     if (NULL== (buf = tprealloc(buf, TEST_REPLY_SIZE+1)))
@@ -83,13 +83,13 @@ void TEST22_STRING(TPSVCINFO *p_svc)
         buf[i]=i%255+1;
     }
     
-    buf[TEST_REPLY_SIZE] = EOS;
+    buf[TEST_REPLY_SIZE] = EXEOS;
     
     NDRX_LOG(log_debug, "Sending buffer: [%s]", buf);
     
 out:
     
-    tpreturn(SUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
+    tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
     
 }
 
@@ -98,7 +98,7 @@ out:
  */
 void TEST22 (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
 out:
 
@@ -123,30 +123,30 @@ void TEST22_2(TPSVCINFO *p_svc)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "tpsvrinit called");
     TPEVCTL evctl;
 
     memset(&evctl, 0, sizeof(evctl));
 
-    if (SUCCEED!=tpadvertise("TEST22_STRING", TEST22_STRING))
+    if (EXSUCCEED!=tpadvertise("TEST22_STRING", TEST22_STRING))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST22_STRING!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST22", TEST22))
+    else if (EXSUCCEED!=tpadvertise("TEST22", TEST22))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST22 (first)!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
-    else if (SUCCEED!=tpadvertise("TEST22_2", TEST22_2))
+    else if (EXSUCCEED!=tpadvertise("TEST22_2", TEST22_2))
     {
         NDRX_LOG(log_error, "Failed to initialize TEST22_2!");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
-    if (SUCCEED!=ret)
+    if (EXSUCCEED!=ret)
     {
         goto out;
     }
@@ -155,20 +155,20 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */
-    if (FAIL==tpsubscribe("TEST22EV", "Hello (.*) Mars", &evctl, 0L))
+    if (EXFAIL==tpsubscribe("TEST22EV", "Hello (.*) Mars", &evctl, 0L))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST22 "
                                         "to TEST22EV event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
 
     strcpy(evctl.name1, "TEST22_2");
     /* Subscribe to event server */
-    if (FAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST22EV", "Hello (.*) Pluto", &evctl, 0L)))
+    if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST22EV", "Hello (.*) Pluto", &evctl, 0L)))
     {
         NDRX_LOG(log_error, "Failed to subscribe TEST22 "
                                         "to TEST22EV event failed");
-        ret=FAIL;
+        ret=EXFAIL;
     }
     
 out:

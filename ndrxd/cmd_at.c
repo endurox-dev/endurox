@@ -55,9 +55,9 @@
  * @param args
  * @return
  */
-public int cmd_at (command_call_t * call, char *data, size_t len, int context)
+expublic int cmd_at (command_call_t * call, char *data, size_t len, int context)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     long cmd_in_progress;
 
     if (NULL!=G_last_interactive_call)
@@ -73,11 +73,11 @@ public int cmd_at (command_call_t * call, char *data, size_t len, int context)
     }
     else
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRXD_set_error(NDRXD_ENONICONTEXT);
     }
 
-    if (SUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, cmd_in_progress,
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, cmd_in_progress,
             0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
@@ -85,6 +85,6 @@ public int cmd_at (command_call_t * call, char *data, size_t len, int context)
 
     NDRX_LOG(log_warn, "cmd_config_load returns with status %d", ret);
 
-    return SUCCEED; /* Do not want to break the system! */
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 

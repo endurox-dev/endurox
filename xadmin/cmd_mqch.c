@@ -55,7 +55,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-private char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
+exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -65,9 +65,9 @@ private char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
  * @param argv
  * @return SUCCEED
  */
-public int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = SUCCEED;
+    int ret = EXSUCCEED;
     char qconf[512];
     short srvid, nodeid;
     UBFH *p_ub = NULL;
@@ -87,18 +87,18 @@ public int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, TRUE,  argc, argv, FALSE))
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* we need to init TP subsystem... */
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s", tpstrerror(tperrno));
         NDRX_LOG(log_error, "Failed to tpinit(): %s", tpstrerror(tperrno))
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     /* Setup the FB & call the server.. */
@@ -108,28 +108,28 @@ public int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     {
         fprintf(stderr, "Failed to alloc call buffer%s", tpstrerror(tperrno));
         NDRX_LOG(log_error,"Failed to alloc call buffer%s", tpstrerror(tperrno));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
 
-    if (SUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
         fprintf(stderr, "Failed to set command: %s", Bstrerror(Berror));
         NDRX_LOG(log_error,"Failed to set command: %s", Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
-    if (SUCCEED!=CBchg(p_ub, EX_DATA, 0, qconf, 0L, BFLD_STRING))
+    if (EXSUCCEED!=CBchg(p_ub, EX_DATA, 0, qconf, 0L, BFLD_STRING))
     {
         fprintf(stderr, "Failed to set data: %s", Bstrerror(Berror));
         NDRX_LOG(log_error,"Failed to set data: %s", Bstrerror(Berror));
-        FAIL_OUT(ret);
+        EXFAIL_OUT(ret);
     }
     
     sprintf(qspacesvc, NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
     
     NDRX_LOG(log_info, "Calling: %s", qspacesvc);
 
-    if (SUCCEED!=tpcall(qspacesvc, (char *)p_ub, 0L, 
+    if (EXSUCCEED!=tpcall(qspacesvc, (char *)p_ub, 0L, 
             (char **)&p_ub, &rsplen, TPNOTRAN))
     {
         NDRX_LOG(log_error,"Failed: %s", tpstrerror(tperrno));

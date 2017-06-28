@@ -80,7 +80,7 @@ extern int _Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
                                 get_fld_loc_info_t *last_start);
 extern int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len, get_fld_loc_info_t *last_start);
-extern bool have_buffer_size(UBFH *p_ub, int add_size, bool set_err);
+extern int have_buffer_size(UBFH *p_ub, int add_size, int set_err);
 extern int validate_entry(UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, int mode);
 extern char * _Bfind (UBFH * p_ub, BFLDID bfldid,
                                         BFLDOCC occ, BFLDLEN * len,

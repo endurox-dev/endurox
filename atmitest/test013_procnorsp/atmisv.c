@@ -52,7 +52,7 @@
 
 #define LONG_SLEEP          3600
 
-private int M_long_shut = 0;
+exprivate int M_long_shut = 0;
 
 
 /*
@@ -60,13 +60,13 @@ private int M_long_shut = 0;
  */
 void TESTSVFN (TPSVCINFO *p_svc)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     NDRX_LOG(log_debug, "TESTSVFN got call");
 
 out:
-    tpreturn(  ret==SUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -79,7 +79,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
  
     FILE *f;
-    char str[100]={EOS,EOS};
+    char str[100]={EXEOS,EXEOS};
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     if (argc<10)
@@ -94,13 +94,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (NULL==(f=NDRX_FOPEN("case_type", "r")))
     {
         NDRX_LOG(log_error, "Failed to open case_type: %s", strerror(errno));
-        exit(FAIL);
+        exit(EXFAIL);
     }
     
     if (NULL==fgets (str, sizeof(str) , f))
     {
         NDRX_LOG(log_error, "Failed to read case_type: %s", strerror(errno));
-        exit(FAIL);
+        exit(EXFAIL);
     }
     
     NDRX_FCLOSE(f);
@@ -115,7 +115,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         else if (0==strcmp(argv[9], "x__long_stop"))
         {
             NDRX_LOG(log_error, "Will do long sleep in shutdown!");
-            M_long_shut = TRUE;
+            M_long_shut = EXTRUE;
         }
     }
     else
@@ -123,12 +123,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Normal process");
     }
         
-    if (SUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
+    if (EXSUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize TESTSV (first)!");
     }
     
-    return SUCCEED;
+    return EXSUCCEED;
 }
 
 /**

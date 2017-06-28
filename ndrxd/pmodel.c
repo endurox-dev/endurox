@@ -47,7 +47,7 @@
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
-#include <ntimer.h>
+#include <nstopwatch.h>
 #include <cmd_processor.h>
 #include <pthread.h>
 #include <nstdutil.h>
@@ -60,8 +60,8 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-private pthread_t M_signal_thread; /* Signalled thread */
-private int M_signal_thread_set = FALSE; /* Signal thread is set */
+exprivate pthread_t M_signal_thread; /* Signalled thread */
+exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -69,15 +69,15 @@ private int M_signal_thread_set = FALSE; /* Signal thread is set */
  * Initiate process reload
  * @return
  */
-public int self_sreload(pm_node_t *p_pm)
+expublic int self_sreload(pm_node_t *p_pm)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_startstop_t call;
 
     
     memset(&call, 0, sizeof(call));
     
-    call.srvid = FAIL;
+    call.srvid = EXFAIL;
     strcpy(call.binary_name, p_pm->binary_name);
     
     NDRX_LOG(log_debug, "Sending sreload command that [%s] must be reloaded, rq [%s]",
@@ -90,15 +90,15 @@ public int self_sreload(pm_node_t *p_pm)
                         NDRXD_CALL_TYPE_GENERIC,
                         (command_call_t *)&call, sizeof(call),
                         G_command_state.listenq_str,
-                        (mqd_t)FAIL,
-                        (mqd_t)FAIL,
+                        (mqd_t)EXFAIL,
+                        (mqd_t)EXFAIL,
                         G_command_state.listenq_str,
                         0, 
                         NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE, TPNOBLOCK);
+                        EXFALSE, TPNOBLOCK);
     
 out:
     return ret;
@@ -109,9 +109,9 @@ out:
  * Report to ndrxd, that process had sigchld
  * @return
  */
-public int self_notify(srv_status_t *status, int block)
+expublic int self_notify(srv_status_t *status, int block)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     size_t  send_size = sizeof(srv_status_t);
 
     NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
@@ -123,15 +123,15 @@ public int self_notify(srv_status_t *status, int block)
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)status, send_size,
                         G_command_state.listenq_str,
-                        (mqd_t)FAIL,
-                        (mqd_t)FAIL,
+                        (mqd_t)EXFAIL,
+                        (mqd_t)EXFAIL,
                         G_command_state.listenq_str,
                         0, 
                         NULL,
                         NULL,
                         NULL,
                         NULL,
-                        FALSE, TPNOBLOCK);
+                        EXFALSE, TPNOBLOCK);
     
 out:
     return ret;
@@ -142,7 +142,7 @@ out:
  * @param chldpid
  * @param stat_loc
  */
-private void handle_child(pid_t chldpid, int stat_loc)
+exprivate void handle_child(pid_t chldpid, int stat_loc)
 {
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
@@ -176,7 +176,7 @@ private void handle_child(pid_t chldpid, int stat_loc)
             status->srvinfo.state = NDRXD_PM_DIED;
         }
         /* NDRX_LOG(log_warn, "Sending notification"); */
-        self_notify(status, FALSE);
+        self_notify(status, EXFALSE);
     }
 }
 
@@ -185,7 +185,7 @@ private void handle_child(pid_t chldpid, int stat_loc)
  * We will let mainthread to do all internal struct related work!
  * @return Got child exit
  */
-private void * check_child_exit(void *arg)
+exprivate void * check_child_exit(void *arg)
 {
     pid_t chldpid;
     int stat_loc;
@@ -206,7 +206,7 @@ private void * check_child_exit(void *arg)
  */
 #ifndef EX_OS_DARWIN
         NDRX_LOG(log_debug, "about to sigwait()");
-        if (SUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
@@ -238,12 +238,12 @@ private void * check_child_exit(void *arg)
  * We will let mainthread to do all internal struct related work!
  * @return Got child exit
  */
-public int thread_check_child_exit(void)
+expublic int thread_check_child_exit(void)
 {
     pid_t chldpid;
     int stat_loc;
     struct rusage rusage;
-    int ret=FALSE;
+    int ret=EXFALSE;
     char buf[ATMI_MSG_MAX_SIZE];
     srv_status_t *status = (srv_status_t *)buf;
 
@@ -263,7 +263,7 @@ public int thread_check_child_exit(void)
  * @param arg
  * @return
  */
-private void *sigthread_enter(void *arg)
+exprivate void *sigthread_enter(void *arg)
 {
     NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
     thread_check_child_exit();
@@ -296,7 +296,7 @@ void sign_chld_handler(int sig)
  * not thread safe.
  * @return
  */
-public void ndrxd_sigchld_init(void)
+expublic void ndrxd_sigchld_init(void)
 {
     sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
@@ -333,14 +333,14 @@ public void ndrxd_sigchld_init(void)
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             check_child_exit, NULL);
 
-    M_signal_thread_set = TRUE;
+    M_signal_thread_set = EXTRUE;
 }
 
 /**
  * Un-initialize sigchild monitor thread
  * @return
  */
-public void ndrxd_sigchld_uninit(void)
+expublic void ndrxd_sigchld_uninit(void)
 {
     char *fn = "ndrxd_sigchld_uninit";
 
@@ -358,14 +358,14 @@ public void ndrxd_sigchld_uninit(void)
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
-    if (SUCCEED!=pthread_cancel(M_signal_thread))
+    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
     }
     else
     {
-        void * res = SUCCEED;
-        if (SUCCEED!=pthread_join(M_signal_thread, &res))
+        void * res = EXSUCCEED;
+        if (EXSUCCEED!=pthread_join(M_signal_thread, &res))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
                     strerror(errno));
@@ -382,7 +382,7 @@ public void ndrxd_sigchld_uninit(void)
         }
     }
     
-    M_signal_thread_set = FALSE;
+    M_signal_thread_set = EXFALSE;
     NDRX_LOG(log_debug, "finished ok");
 out:
     return;
@@ -393,10 +393,10 @@ out:
  * @param pid_hash
  * @return SUCCEED/FAIL
  */
-public int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
+expublic int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
 {
     int hash_key = p_pm->pid % ndrx_get_G_atmi_env()->max_servers;
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_pidhash_t *pm_pid  = NDRX_MALLOC(sizeof(pm_pidhash_t));
     memset(pm_pid, 0, sizeof(pm_pidhash_t));
 
@@ -405,7 +405,7 @@ public int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
     /* check error */
     if (NULL==pm_pid)
     {
-        ret=FAIL;
+        ret=EXFAIL;
         NDRXD_set_error_fmt(NDRXD_EOS, "failed to allocate pm_pidhash_t (%d bytes): %s",
                             sizeof(pm_pidhash_t), strerror(errno));
         goto out;
@@ -424,9 +424,9 @@ out:
  * Delete from PIDhash
  * @return SUCCEED/FAIL
  */
-public int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid)
+expublic int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
 
     if (NULL!=pm_pid)
     {
@@ -451,15 +451,15 @@ out:
  * @param b
  * @return 0 - equal/ -1 - not equal
  */
-private int pid_hash_cmp(pm_pidhash_t *a, pm_pidhash_t *b)
+exprivate int pid_hash_cmp(pm_pidhash_t *a, pm_pidhash_t *b)
 {
-    return (a->pid==b->pid?SUCCEED:FAIL);
+    return (a->pid==b->pid?EXSUCCEED:EXFAIL);
 }
 
 /**
  * Get field entry from int hash
  */
-public pm_pidhash_t *pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid)
+expublic pm_pidhash_t *pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid)
 {
     /* Get the linear array key */
     int hash_key = pid % ndrx_get_G_atmi_env()->max_servers; /* Simple mod based hash */
@@ -492,11 +492,11 @@ public pm_pidhash_t *pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid)
  * - That probably could be done in another stange, there we should check existing
  * ones, if some process names are different, then reject!?!?
  */
-public int build_process_model(conf_server_node_t *p_server_conf,
+expublic int build_process_model(conf_server_node_t *p_server_conf,
                                 pm_node_t **p_pm_model, /* proces model linked list */
                                 pm_node_t **p_pm_hash/* Hash table models */)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     conf_server_node_t *p_conf;
     pm_node_t   *p_pm;
 
@@ -514,16 +514,22 @@ public int build_process_model(conf_server_node_t *p_server_conf,
                 /* Set return error code? */
                 NDRXD_set_error_fmt(NDRXD_EOS, "Failed to allocate pm_node_t: `%s'",
                                                     strerror(errno));
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             
             /* format the process model entry */
-            strcpy(p_pm->binary_name, p_conf->binary_name);
+            NDRX_STRCPY_SAFE(p_pm->binary_name, p_conf->binary_name);
             /* get the path of the binary... */
             if (p_conf->reloadonchange)
             {
-                if (NULL==ndrx_get_executable_path(p_pm->binary_path, 
+                
+                if (EXEOS!=p_pm->conf->fullpath[0])
+                {
+                    NDRX_LOG(log_debug, "Reusing full path from config...");
+                    NDRX_STRCPY_SAFE(p_pm->binary_path, p_pm->conf->fullpath);
+                }
+                else if (NULL==ndrx_get_executable_path(p_pm->binary_path, 
                         sizeof(p_pm->binary_path), p_pm->binary_name))
                 {
                     NDRX_LOG(log_error, "Failed to get path for executable [%s] "
@@ -545,30 +551,34 @@ public int build_process_model(conf_server_node_t *p_server_conf,
             /* This must autostart! */
             if (p_conf->min > cnt)
             {
-                p_pm->autostart=TRUE;
+                p_pm->autostart=EXTRUE;
             }
             p_pm->autokill = p_conf->autokill;
             
-            sprintf(p_pm->clopt, "-k %s -i %d %s", ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
+            snprintf(p_pm->clopt, sizeof(p_pm->clopt), "-k %s -i %d %s", 
+                    ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
 
             /* now check the hash table for server instance entry */
             if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
             {
                 /* Invalid srvid  */
-                NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "Invalid server id `%d'", p_pm->srvid);
-                ret = FAIL;
+                NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "Invalid server id `%d'", 
+                        p_pm->srvid);
+                ret = EXFAIL;
                 goto out;
             }
             else if (NULL!=p_pm_hash[p_pm->srvid])
             {
                 /* Duplicate srvid */
-                NDRXD_set_error_fmt(NDRXD_ESRVCIDDUP, "Duplicate server id `%d'", p_pm->srvid);
-                ret = FAIL;
+                NDRXD_set_error_fmt(NDRXD_ESRVCIDDUP, "Duplicate server id `%d'", 
+                        p_pm->srvid);
+                ret = EXFAIL;
                 goto out;
             }
             else
             {
-                NDRX_LOG(log_debug, "adding %s:%d", p_pm->binary_name, p_pm->srvid);
+                NDRX_LOG(log_debug, "adding %s:%d", p_pm->binary_name, 
+                        p_pm->srvid);
                 /* Add it to has & model? */
                 DL_APPEND(*p_pm_model, p_pm);
                 /* Add it to the hash */
@@ -587,7 +597,7 @@ out:
  * @param srvid
  * @return
  */
-public pm_node_t * get_pm_from_srvid(int srvid)
+expublic pm_node_t * get_pm_from_srvid(int srvid)
 {
     if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers)
     {
@@ -605,11 +615,11 @@ public pm_node_t * get_pm_from_srvid(int srvid)
  * @param p_pm
  * @return 
  */
-public char * get_srv_admin_q(pm_node_t * p_pm)
+expublic char * get_srv_admin_q(pm_node_t * p_pm)
 {
     static char ret[NDRX_MAX_Q_SIZE+1];
     
-    sprintf(ret, NDRX_ADMIN_FMT, G_sys_config.qprefix, p_pm->binary_name, 
+    snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, p_pm->binary_name, 
             p_pm->srvid, p_pm->pid);
     
     return ret;
@@ -625,9 +635,9 @@ public char * get_srv_admin_q(pm_node_t * p_pm)
  *                 with PID of pm_pid.
  * @return
  */
-public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid)
+expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_svc_t *elt, *tmp;
     
     if (NULL==p_pm)
@@ -644,7 +654,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
          * This might happen in cases if binary was externally started or some 
          * kind of delays in startup caused two instances to be started?
          */
-        if (FAIL!=pm_pid->pid && 0!=pm_pid->pid)
+        if (EXFAIL!=pm_pid->pid && 0!=pm_pid->pid)
         {
             delete_from_pid_hash(G_process_model_pid_hash,
                                 pid_hash_get(G_process_model_pid_hash, pm_pid->pid));
@@ -657,7 +667,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
     if (NULL==svcnm)
     {
         /* Remote from pidhash */
-        if (FAIL!=p_pm->pid && 0!=p_pm->pid)
+        if (EXFAIL!=p_pm->pid && 0!=p_pm->pid)
         {
             delete_from_pid_hash(G_process_model_pid_hash,
                                 pid_hash_get(G_process_model_pid_hash, p_pm->pid));
@@ -666,7 +676,7 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
         p_pm->num_term_sigs=0;
      
         /* Reset kill request */
-        p_pm->killreq = FALSE;
+        p_pm->killreq = EXFALSE;
         
         /* Remove any queues used... */
         remove_server_queues(p_pm->binary_name, p_pm->pid, p_pm->srvid, NULL);
@@ -695,9 +705,9 @@ public int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *
             
             /* ###################### CRITICAL SECTION ###################### */
             /* So we make this part critical... */
-            if (SUCCEED!=ndrx_lock_svc_op(__func__))
+            if (EXSUCCEED!=ndrx_lock_svc_op(__func__))
             {
-                ret=FAIL;
+                ret=EXFAIL;
                 goto out;
             }
             
@@ -740,13 +750,13 @@ out:
  * @param pm
  * @return SUCCEED/FAIL
  */
-public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
+expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
             int no_wait,
             int *abort)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pid_t pid;
 
     /* prepare args for execution... */
@@ -777,7 +787,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTING);
     
     /* calculate the checksum of the process */
-    if (p_pm->conf->reloadonchange && EOS!=p_pm->binary_path[0])
+    if (p_pm->conf->reloadonchange && EXEOS!=p_pm->binary_path[0])
     {
         roc_mark_as_reloaded(p_pm->binary_path, G_sanity_cycle);
     }
@@ -791,9 +801,16 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         usleep(9000);
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
-        strcpy(cmd_str, p_pm->clopt);
+        NDRX_STRCPY_SAFE(cmd_str, p_pm->clopt);
 
-        cmd[0] = p_pm->binary_name;
+        if (EXEOS!=p_pm->conf->fullpath[0])
+        {
+            cmd[0] = p_pm->conf->fullpath;
+        }
+        else
+        {
+            cmd[0] = p_pm->binary_name;
+        }
         numargs=1;
 
         token = strtok(cmd_str, separators);
@@ -806,9 +823,9 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         cmd[numargs] = NULL;
         
         /*  Override environment, if there is such thing */
-        if (EOS!=p_pm->conf->env[0])
+        if (EXEOS!=p_pm->conf->env[0])
         {
-            if (SUCCEED!=ndrx_load_new_env(p_pm->conf->env))
+            if (EXSUCCEED!=ndrx_load_new_env(p_pm->conf->env))
             {
                 fprintf(stderr, "Failed to load custom env from: %s!\n", 
                         p_pm->conf->env);
@@ -816,9 +833,9 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
         }
         
-        if (EOS!=p_pm->conf->cctag[0])
+        if (EXEOS!=p_pm->conf->cctag[0])
         {
-            if (SUCCEED!=setenv(NDRX_CCTAG, p_pm->conf->cctag, TRUE))
+            if (EXSUCCEED!=setenv(NDRX_CCTAG, p_pm->conf->cctag, EXTRUE))
             {
                 fprintf(stderr, "Cannot set [%s] to [%s]: %s\n", 
                         NDRX_CCTAG, p_pm->conf->cctag, strerror(errno));
@@ -826,7 +843,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
         }
         
-        if (SUCCEED != execvp (p_pm->binary_name, cmd))
+        if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
 
@@ -838,10 +855,10 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 exit(1);
         }
     }
-    else if (FAIL!=pid)
+    else if (EXFAIL!=pid)
     {
-        ndrx_timer_t timer;
-        int finished = FALSE;
+        ndrx_stopwatch_t timer;
+        int finished = EXFALSE;
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
@@ -864,7 +881,7 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             /* this is parent for child - sleep some seconds, then check for PID... */
             /* TODO: Replace sleep with wait call from service - wait for message? */
             /*usleep(250000);  250 milli seconds */
-            ndrx_timer_reset(&timer);
+            ndrx_stopwatch_reset(&timer);
 
             do
             {
@@ -872,19 +889,19 @@ public int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 /* do command processing for now */
                 command_wait_and_run(&finished, abort);
                 /* check the status? */
-            } while (ndrx_timer_get_delta(&timer) < p_pm->conf->srvstartwait && 
+            } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
                             NDRXD_PM_STARTING==p_pm->state && !(*abort));
             
             if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
             {
-                ndrx_timer_t sleep_timer;
-                ndrx_timer_reset(&sleep_timer);
+                ndrx_stopwatch_t sleep_timer;
+                ndrx_stopwatch_reset(&sleep_timer);
                 
                 do
                 {
                     NDRX_LOG(log_debug, "In process after start sleep...");
                     command_wait_and_run(&finished, abort);
-                } while (ndrx_timer_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
+                } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
                 
             }
             
@@ -929,15 +946,15 @@ out:
  * @param p_pm
  * @return SUCCEED/FAIL
  */
-public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
+expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_shutdown_progress)(command_call_t *call, pm_node_t *pm, int calltype),
             long *p_processes_shutdown,
             int *abort)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     command_call_t call;
-    ndrx_timer_t timer;
-    int finished = FALSE;
+    ndrx_stopwatch_t timer;
+    int finished = EXFALSE;
     char srv_queue[NDRX_MAX_Q_SIZE+1];
     char fn[] = "stop_process";
 
@@ -980,25 +997,25 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     NDRX_LOG(log_debug, "%s: calling up: [%s]", fn, srv_queue);
     
     /* Then get listing... */
-    if (SUCCEED!=(ret=cmd_generic_call_2(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_ADMIN,
+    if (EXSUCCEED!=(ret=cmd_generic_call_2(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_ADMIN,
                     NDRXD_CALL_TYPE_GENERIC,
                     &call, sizeof(call),
                     G_command_state.listenq_str,
                     G_command_state.listenq,
-                    (mqd_t)FAIL,
+                    (mqd_t)EXFAIL,
                     srv_queue,
                     0, NULL,
                     NULL,
                     NULL,
                     NULL,
-                    FALSE,
-                    FALSE,
+                    EXFALSE,
+                    EXFALSE,
                     NULL, NULL, TPNOTIME, NULL)))
     {
         /*goto out; Ignore this condition, just get the status of binary... */
     }
 
-    ndrx_timer_reset(&timer);
+    ndrx_stopwatch_reset(&timer);
     do
     {
         NDRX_LOG(log_debug, "Waiting for response from srv... state: %d",
@@ -1006,7 +1023,7 @@ public int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* do command processing for now */
         command_wait_and_run(&finished, abort);
         /* check the status? */
-    } while (ndrx_timer_get_delta(&timer) < p_pm->conf->srvstopwait &&
+    } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstopwait &&
                     !PM_NOT_RUNNING(p_pm->state) &&
                     !(*abort));
 
@@ -1031,26 +1048,26 @@ out:
  * initiate configuration load.
  * @return SUCCEED/FAIL
  */
-public int app_startup(command_startstop_t *call,
+expublic int app_startup(command_startstop_t *call,
         void (*p_startup_progress)(command_startstop_t *call, pm_node_t *pm, int calltype),
         long *p_processes_started) /* have some progress feedback */
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *p_pm;
-    int abort = FALSE;
+    int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
 
-    if (NULL==G_app_config && SUCCEED!=load_active_config(&G_app_config,
+    if (NULL==G_app_config && EXSUCCEED!=load_active_config(&G_app_config,
                 &G_process_model, &G_process_model_hash, &G_process_model_pid_hash))
     {
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
     /* OK, now loop throught the stuff */
     G_sys_config.stat_flags |= NDRXD_STATE_DOMSTART;
 
-    if (FAIL!=call->srvid)
+    if (EXFAIL!=call->srvid)
     {
         /* Check the servid... */
         if (call->srvid>=0 && call->srvid<ndrx_get_G_atmi_env()->max_servers)
@@ -1060,7 +1077,7 @@ public int app_startup(command_startstop_t *call,
             if (NULL!=p_pm_srvid)
             {
                 start_process(call, p_pm_srvid, p_startup_progress,
-                                    p_processes_started, FALSE, &abort);
+                                    p_processes_started, EXFALSE, &abort);
             }
             else
             {
@@ -1077,18 +1094,18 @@ public int app_startup(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    (EOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
+                    (EXEOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
             {
                 start_process(call, p_pm, p_startup_progress, 
-                        p_processes_started, FALSE, &abort);
+                        p_processes_started, EXFALSE, &abort);
                 
                 if (abort)
                 {
                     NDRX_LOG(log_warn, "Aborting app domain startup!");
                     NDRXD_set_error_fmt(NDRXD_EABORT, "App domain startup aborted!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -1104,13 +1121,13 @@ out:
  * App domain must be started in order to do shutdown.
  * @return SUCCEED/FAIL
  */
-public int app_shutdown(command_startstop_t *call,
+expublic int app_shutdown(command_startstop_t *call,
         /* have some progress feedback */
         void (*p_shutdown_progress)(command_call_t *call, pm_node_t *pm, int calltype),
         long *p_processes_shutdown)
 {
-    int ret=SUCCEED;
-    int abort=FALSE;
+    int ret=EXSUCCEED;
+    int abort=EXFALSE;
     pm_node_t *p_pm;
     
     NDRX_LOG(log_warn, "Stopping application domain");
@@ -1119,7 +1136,7 @@ public int app_shutdown(command_startstop_t *call,
     /* OK, now loop throught the stuff 
     G_sys_config.stat_flags |= NDRXD_STATE_SHUTDOWN;
 */
-    if (FAIL!=call->srvid)
+    if (EXFAIL!=call->srvid)
     {
         /* Check the servid... */
         if (call->srvid>=0 && call->srvid<ndrx_get_G_atmi_env()->max_servers)
@@ -1147,8 +1164,8 @@ public int app_shutdown(command_startstop_t *call,
         DL_REVFOREACH(G_process_model, p_pm, i)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    (EOS==call->binary_name[0] &&  /* or If full shutdown requested */
+            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                    (EXEOS==call->binary_name[0] &&  /* or If full shutdown requested */
                     /* is if binary is not protected, or we run complete shutdown... */
                     (!p_pm->conf->isprotected || call->complete_shutdown))) 
             {
@@ -1159,7 +1176,7 @@ public int app_shutdown(command_startstop_t *call,
                 {
                     NDRX_LOG(log_warn, "Aborting app domain shutdown!");
                     NDRXD_set_error_fmt(NDRXD_EABORT, "App domain shutdown aborted!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -1181,17 +1198,17 @@ out:
  * Test process mode, it should be shutdown...!
  * @return 
  */
-public int is_srvs_down(void)
+expublic int is_srvs_down(void)
 {
     pm_node_t *p_pm;
-    int is_down = TRUE;
+    int is_down = EXTRUE;
     
     DL_FOREACH(G_process_model, p_pm)
     {
         if (PM_RUNNING(p_pm->state))
         {
             NDRX_LOG(6, "All servers not down...");
-            is_down=FALSE;
+            is_down=EXFALSE;
         }
     } /* DL_FORACH pm. */
     
@@ -1202,14 +1219,14 @@ public int is_srvs_down(void)
  * Reload services...
  * @return SUCCEED/FAIL
  */
-public int app_sreload(command_startstop_t *call,
+expublic int app_sreload(command_startstop_t *call,
         void (*p_startup_progress)(command_startstop_t *call, pm_node_t *pm, int calltype),
         void (*p_shutdown_progress)(command_call_t *call, pm_node_t *pm, int calltype),
         long *p_processes_started) /* have some progress feedback */
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     pm_node_t *p_pm;
-    int abort = FALSE;
+    int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
 
     /*
@@ -1224,7 +1241,7 @@ public int app_sreload(command_startstop_t *call,
     if (NULL==G_app_config)
     {
         NDRX_LOG(log_error, "No configuration loaded!");
-        ret=FAIL;
+        ret=EXFAIL;
         goto out;
     }
 
@@ -1232,7 +1249,7 @@ public int app_sreload(command_startstop_t *call,
     G_sys_config.stat_flags |= NDRXD_STATE_DOMSTART;
      * */
 
-    if (FAIL!=call->srvid)
+    if (EXFAIL!=call->srvid)
     {
         /* Check the servid... */
         if (call->srvid>=0 && call->srvid<ndrx_get_G_atmi_env()->max_servers)
@@ -1249,14 +1266,14 @@ public int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm_srvid, p_startup_progress,
-                                        p_processes_started, FALSE, &abort);
+                                        p_processes_started, EXFALSE, &abort);
                 }
                 
                 if (abort)
                 {
                     NDRX_LOG(log_warn, "Aborting app domain startup!");
                     NDRXD_set_error_fmt(NDRXD_EABORT, "App domain startup aborted!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
@@ -1275,9 +1292,9 @@ public int app_sreload(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    (EOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
+                    (EXEOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 
@@ -1286,14 +1303,14 @@ public int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm, p_startup_progress, 
-                            p_processes_started, FALSE, &abort);
+                            p_processes_started, EXFALSE, &abort);
                 }
                 
                 if (abort)
                 {
                     NDRX_LOG(log_warn, "Aborting app domain startup!");
                     NDRXD_set_error_fmt(NDRXD_EABORT, "App domain startup aborted!");
-                    ret=FAIL;
+                    ret=EXFAIL;
                     goto out;
                 }
             }
