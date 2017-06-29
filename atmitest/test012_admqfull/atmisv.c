@@ -74,7 +74,7 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int first = EXTRUE;
-    NDRX_LOG(log_debug, "tpsvrinit called, mode: [%s]", argv[9]);
+ /*   NDRX_LOG(log_debug, "tpsvrinit called, mode: [%s]", argv[9]); cause core on solaris 10 */
     
     if (EXSUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
