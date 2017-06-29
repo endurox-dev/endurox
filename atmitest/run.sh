@@ -41,6 +41,9 @@ if [[ "$OS" == "Linux" ]]; then
 	fi
 fi
 
+# Load env for xmemck
+. ../sampleconfig/setndrx
+
 # start memcheck
 xmemck -v20 -d30 -s60 -t95 -n 'atmiunit1|tpbridge' -m atmi -d55 -m tpbridge -m tmsrv 2>./memck.log 1>./memck.out & 
 
