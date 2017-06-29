@@ -178,6 +178,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 # let the messages to completes it's processing...
+echo "Waiting for completion..."
 sleep 90
 
 #

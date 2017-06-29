@@ -116,7 +116,9 @@ int run_broadcast(void)
         }
         
         /* generic broadcast applied to all machines... */
-        if (EXSUCCEED!=tpbroadcast(NULL, NULL, NULL, (char *)p_ub, 0L, 0L))
+        /* seems like we are doing broadcasts to tpbridge threads too..
+         * thus will send only to atmi matched clients... */
+        if (EXSUCCEED!=tpbroadcast(NULL, NULL, "atmi", (char *)p_ub, 0L, TPREGEXMATCH))
         {
             NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
                     tpstrerror(tperrno));
@@ -188,7 +190,7 @@ int run_broadcast(void)
         }
         
         /* generic broadcast applied to all machines... */
-        if (EXSUCCEED!=tpbroadcast("2", NULL, NULL, (char *)p_ub, 0L, 0L))
+        if (EXSUCCEED!=tpbroadcast("2", NULL, "atmi", (char *)p_ub, 0L, TPREGEXMATCH))
         {
             NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
                     tpstrerror(tperrno));
