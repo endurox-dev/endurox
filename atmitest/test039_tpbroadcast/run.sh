@@ -178,7 +178,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 # let the messages to completes it's processing...
-sleep 30
+sleep 90
 
 #
 # Broadcast of AA message to all clients
