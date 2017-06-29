@@ -493,7 +493,7 @@ exprivate int match_nodeid(char *nodeid_str,  char *nodeid,
             ret = EXTRUE;
         }
         else if ((flags & TPREGEXMATCH ) && 
-                ndrx_regexec(regexp_nodeid, nodeid_str))
+                EXSUCCEED==ndrx_regexec(regexp_nodeid, nodeid_str))
         {
             NDRX_LOG(log_info, "Nodeid %s matched local node by regexp",
                     nodeid_str);
