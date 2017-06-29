@@ -5,7 +5,7 @@
 ## @file run.sh
 ## 
 ## -----------------------------------------------------------------------------
-## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Enduro/X Middleware PlatfoRm for Distributed Transaction Processing
 ## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
@@ -55,6 +55,8 @@ export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
 
 set | grep NDRX_
 set | grep TEST
+
+rm *.log
 
 (./atmi.sv1 -t10 -i 123 2>&1) > ./atmisv1.log &
 sleep 1
