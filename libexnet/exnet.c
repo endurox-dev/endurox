@@ -64,6 +64,7 @@
 #include <utlist.h>
 
 #include <atmi_int.h>
+#include <ndrx_config.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -595,6 +596,10 @@ expublic int exnet_configure_client_sock(exnetcon_t *net)
         goto out;
     }
 
+/* this is not workin on solaris 10... */
+#if EX_OS_SUNOS && EX_LSB_RELEASE_VER_MAJOR == 5 && EX_LSB_RELEASE_VER_MINOR == 10
+    NDRX_LOG(log_warn, "Solaris 10 - SO_RCVTIMEO not suppported.");
+#else
     memset(&tv, 0, sizeof(tv));
     tv.tv_sec = net->rcvtimeout;
     NDRX_LOG(log_debug, "Setting SO_RCVTIMEO=%d", tv.tv_sec);
@@ -605,6 +610,7 @@ expublic int exnet_configure_client_sock(exnetcon_t *net)
             ret=EXFAIL;
             goto out;
     }
+#endif
     
 out:
     return ret;

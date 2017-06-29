@@ -221,7 +221,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Parse command line  */
     while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:")) != -1)
     {
-        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
         {
             case 'r':
