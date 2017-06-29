@@ -41,6 +41,11 @@
 
 #cmakedefine EX_OS_DARWIN @EX_OS_DARWIN@
 
+#cmakedefine EX_LSB_RELEASE_VER @EX_LSB_RELEASE_VER@
+
+#cmakedefine EX_LSB_RELEASE_VER_MAJOR @EX_LSB_RELEASE_VER_MAJOR@
+#cmakedefine EX_LSB_RELEASE_VER_MINOR @EX_LSB_RELEASE_VER_MINOR@
+
 /* Use emulated message queue: */
 #cmakedefine EX_USE_EMQ @EX_USE_EMQ@
 

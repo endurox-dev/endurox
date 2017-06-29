@@ -197,9 +197,6 @@ ENDIF()
 # Output the project version
 set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
 
-configure_file ("${PROJECT_SOURCE_DIR}/include/ndrx_config.h.in"
-                "${PROJECT_BINARY_DIR}/include/ndrx_config.h" )
-
 ################################################################################
 # Install dir config
 ################################################################################
@@ -356,6 +353,12 @@ endif()
 
 message("CPack:Debug: LSB_RELEASE OS  = ${LSB_RELEASE_OUTPUT_OS}")
 message("CPack:Debug: LSB_RELEASE VER = ${LSB_RELEASE_OUTPUT_VER}")
+set(EX_LSB_RELEASE_VER ${LSB_RELEASE_OUTPUT_VER})
+
+string(REPLACE "_" ";" LSB_VERSION_LIST ${LSB_RELEASE_OUTPUT_VER})
+
+list(GET LSB_VERSION_LIST 0 EX_LSB_RELEASE_VER_MAJOR)
+list(GET LSB_VERSION_LIST 1 EX_LSB_RELEASE_VER_MINOR)
 
 
 # Support only for Linux
@@ -363,6 +366,11 @@ MESSAGE( "CPack:Debug: CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME} )
 MESSAGE( "CPack:Debug: CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 set(CPACK_MONOLITHIC_INSTALL 1)
 
+#
+# Generate configuration 
+#
+configure_file ("${PROJECT_SOURCE_DIR}/include/ndrx_config.h.in"
+                "${PROJECT_BINARY_DIR}/include/ndrx_config.h" )
 
 # Test the available generators and then configure output
 find_program(RPMPROG "rpmbuild")
