@@ -62,6 +62,17 @@ extern "C" {
 #define  ndrx_mq_receive      emq_receive
 #define  ndrx_mq_send         emq_send
 #define  ndrx_mq_setattr      emq_setattr
+	
+#elsif #EX_OS_SUNOS
+	
+#define  ndrx_mq_timedreceive sol_timedreceive
+#define  ndrx_mq_timedsend    sol_timedsend
+#define  ndrx_mq_close        sol_close
+#define  ndrx_mq_getattr      sol_getattr
+#define  ndrx_mq_notify       sol_notify
+#define  ndrx_mq_receive      sol_receive
+#define  ndrx_mq_send         sol_send
+#define  ndrx_mq_setattr      sol_setattr	
 
 #else
 
