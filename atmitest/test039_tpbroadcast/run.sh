@@ -179,7 +179,7 @@ fi
 
 # let the messages to completes it's processing...
 echo "Waiting for completion..."
-sleep 90
+sleep 180
 
 #
 # Broadcast of AA message to all clients
