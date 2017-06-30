@@ -150,9 +150,9 @@ expublic int     sol_mq_close(mqd_t __mqdes)
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret = mq_close(__mqdes)) && errno==EBUSY)
+	while (EXSUCCEED!=(ret = mq_close(__mqdes)) && errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);*/
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;	
@@ -162,9 +162,9 @@ expublic int     sol_mq_getattr(mqd_t __mqdes, struct mq_attr * __mqstat)
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret = mq_getattr(__mqdes, __mqstat)) && errno==EBUSY)
+	while (EXSUCCEED!=(ret = mq_getattr(__mqdes, __mqstat)) && errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+	/*	NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -174,9 +174,9 @@ expublic int     sol_mq_notify(mqd_t __mqdes, const struct sigevent * __notifica
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret =mq_notify(__mqdes, __notification)) && errno==EBUSY)
+	while (EXSUCCEED!=(ret =mq_notify(__mqdes, __notification)) && errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -192,9 +192,9 @@ restart:
 	ret = mq_open(__name, __oflag, argp);
 	va_end(argp);
 	
-	if (EXFAIL==ret && EBUSY==errno)
+	if (EXFAIL==(int)ret && EBUSY==errno)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 		goto restart;
 	}
@@ -202,15 +202,15 @@ restart:
 	return ret;	
 }
 
-expublic ssize_t sol_mq_receive(mqd_t __mqdes, char *__msg_ptr, size_t __msg_len, 
+expublic int sol_mq_receive(mqd_t __mqdes, char *__msg_ptr, size_t __msg_len, 
 				unsigned int *__msg_prio)
 {
-	ssize_t ret;
+	int ret;
 	
 	while (EXFAIL==(ret =mq_receive(__mqdes, __msg_ptr, __msg_len, __msg_prio)) && 
 		errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -221,10 +221,10 @@ expublic int     sol_mq_send(mqd_t __mqdes, const char *__msg_ptr, size_t __msg_
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret =sol_mq_send(__mqdes, __msg_ptr, __msg_len, __msg_prio)) &&
+	while (EXSUCCEED!=(ret =mq_send(__mqdes, __msg_ptr, __msg_len, __msg_prio)) &&
 		errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -236,10 +236,10 @@ expublic int     sol_mq_setattr(mqd_t __mqdes,
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret =sol_mq_setattr(__mqdes, __mqstat, __omqstat)) &&
+	while (EXSUCCEED!=(ret =mq_setattr(__mqdes, __mqstat, __omqstat)) &&
 		errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -249,10 +249,10 @@ expublic int     sol_mq_unlink(const char *__name)
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret =mq_unlink(__name)) &&
+	while (EXSUCCEED!=(ret =mq_unlink(__name)) &&
 		errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -262,24 +262,25 @@ expublic int sol_mq_timedsend(mqd_t __mqdes, const char *ptr, size_t len,
 {
 	int ret;
 	
-	while (EXSUCCED!=(ret =mq_timedsend(__mqdes, ptr, len, prio, __abs_timeout)) &&
+	while (EXSUCCEED!=(ret =mq_timedsend(__mqdes, ptr, len, prio, __abs_timeout)) &&
 		errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
 }
 
-expublic  ssize_t sol_mq_timedreceive(mqd_t __mqdes, char *ptr, size_t maxlen, 
-				      unsigned int *priop, const struct timespec * __abs_timeout)
+expublic  int sol_mq_timedreceive(mqd_t mqdes, char *restrict msg_ptr,
+     size_t  msg_len,  unsigned  *restrict msg_prio, const struct
+     timespec *restrict abs_timeout)
 {
-	ssize_t ret;
+	int ret;
 	
-	while (EXFAIL==(ret =mq_timedsend(__mqdes, ptr, maxlen, priop, __abs_timeout)) &&
+	while (EXFAIL==(ret =mq_timedsend(mqdes, msg_ptr, msg_len, msg_prio, abs_timeout)) &&
 		errno==EBUSY)
 	{
-		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);*/
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
