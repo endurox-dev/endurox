@@ -638,6 +638,7 @@ expublic int _tpgetrply (int *cd,
          */
         if (NULL!=G_atmi_tls->memq)
         {
+            tpmemq_t * tmp;
             NDRX_LOG(log_info, "Got message from memq...");
             /* grab the buffer of mem linked list */
             NDRX_FREE(pbuf);
@@ -650,8 +651,10 @@ expublic int _tpgetrply (int *cd,
             rply_len = G_atmi_tls->memq->data_len;
             
             /* delete first elem in the list */
-            DL_DELETE(G_atmi_tls->memq, G_atmi_tls->memq);
-            NDRX_FREE(G_atmi_tls->memq);
+            /* Bug #163, seems like were killing the whole linked list... */
+            tmp = G_atmi_tls->memq;
+            DL_DELETE(G_atmi_tls->memq, tmp );
+            NDRX_FREE(tmp );
             
             /* Switch to received buffer... */
             rply  = (tp_command_call_t *)pbuf;
