@@ -51,9 +51,9 @@ add_library (exmemck SHARED
 	)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(xmemck atmi ubf nstd)
+    target_link_libraries(exmemck atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(xmemck atmi ubf nstd)
+    target_link_libraries(exmemck atmi ubf nstd)
 endif()
 
 install (TARGETS 
