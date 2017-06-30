@@ -29,6 +29,58 @@ Install the compiler from purchased copy or just take a trial version from HP-UX
 - https://h20392.www2.hpe.com/portal/swdepot/displayProductInfo.do?productNumber=B9007AAEVAL
 
 === Packages to be installed
+Once way would be to install all the packages manually, but thanks to HP, you
+can use depohelper script which will install all packages automatically.
+
+Download the corresponding scripts from:
+
+http://hpux.connect.org.uk/hppd/cgi-bin/search?term=depothelper
+
+http://www.thegeekstuff.com/2010/10/hpux-depothelper/
+
+If you have some issues with swinstall:
+
+
+- https://community.hpe.com/t5/System-Administration/Swinstall-swlist-Could-not-contact-host/td-p/5075728
+
+
+- https://community.hpe.com/t5/General/No-depot-software-at-location-var-spool-sw/td-p/4587988
+
+
+Install depo helper first:
+
+---------------------------------------------------------------------
+
+# swinstall -s /root/depothelper-2.00-ia64-11.31.depot \*
+
+---------------------------------------------------------------------
+
+Then install packages needed:
+
+If you get something like this, then probably internet is now working on your server (gateway
+or DNS):
+
+- https://community.hpe.com/t5/Patches/Package-installation-using-Depothelper/td-p/6136275
+
+
+---------------------------------------------------------------------
+
+
+# /usr/local/bin/depothelper git
+==============================================================================================================================================
+Package-version      Comment              Download        Install
+==============================================================================================================================================
+ia64-11.31           Package list         FAILED          Not installed       
+==============================================================================================================================================
+ERROR: Can't get list of ia64-11.31 packages from hpux.connect.org.uk - aborted
+
+---------------------------------------------------------------------
+
+
+
+
+
+
 ...
 
 === Getting the source code
