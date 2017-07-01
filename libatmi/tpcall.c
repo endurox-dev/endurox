@@ -630,7 +630,6 @@ expublic int _tpgetrply (int *cd,
     /**
      * We will drop any answers not registered for this call
      */
-    rply  = (tp_command_call_t *)pbuf;
     while (!answ_ok)
     {
         /* We shall check that we do not have something in memq...
@@ -669,6 +668,7 @@ expublic int _tpgetrply (int *cd,
                     G_atmi_tls->G_atmi_conf.reply_q_str,
                     &(G_atmi_tls->G_atmi_conf.reply_q_attr),
                     pbuf, pbuf_len, &prio, flags);
+            rply  = (tp_command_call_t *)pbuf;
         }
         
         /* In case  if we did receive any response (in non blocked mode
