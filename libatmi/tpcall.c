@@ -620,10 +620,10 @@ expublic int _tpgetrply (int *cd,
     int is_abort_only = EXFALSE; /* Should we abort global tx (if open) */
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s enter, flags %ld", fn, flags);
-    
     /* Allocate the buffer, dynamically... */
     NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
+
+    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p", fn, flags, pbuf);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
@@ -651,14 +651,13 @@ expublic int _tpgetrply (int *cd,
             rply_len = G_atmi_tls->memq->data_len;
             
             /* delete first elem in the list */
-            /* Bug #163, seems like were killing the whole linked list... */
             tmp = G_atmi_tls->memq;
-            DL_DELETE(G_atmi_tls->memq, tmp );
-            NDRX_FREE(tmp );
+            DL_DELETE(G_atmi_tls->memq, tmp);
+            NDRX_FREE(tmp);
             
             /* Switch to received buffer... */
             rply  = (tp_command_call_t *)pbuf;
-            
+            NDRX_LOG(log_debug, "from memq: pbuf=%p", pbuf);
         }
         else
         {
@@ -720,7 +719,12 @@ expublic int _tpgetrply (int *cd,
                 /* And continue... */
                 continue;
             }
-            NDRX_LOG(log_debug, "accept any: %s", (flags & TPGETANY)?"yes":"no" );
+            NDRX_LOG(log_debug, "accept any: %s, cd=%d atmi_tls=%p cmd=%hd rplybuf=%p (pbuf=%p)",
+			(flags & TPGETANY)?"yes":"no", rply->cd, G_atmi_tls, rply->command_id, rply, pbuf);
+
+/*
+            NDRX_DUMP(log_dump, "Received...", (char *)rply, rply_len);
+*/
 
             /* if answer is not expected, then we receive again! */
             if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[rply->cd].status &&
