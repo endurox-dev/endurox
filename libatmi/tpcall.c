@@ -719,8 +719,15 @@ expublic int _tpgetrply (int *cd,
                 /* And continue... */
                 continue;
             }
-            NDRX_LOG(log_debug, "accept any: %s, cd=%d atmi_tls=%p cmd=%hd rplybuf=%p (pbuf=%p)",
-			(flags & TPGETANY)?"yes":"no", rply->cd, G_atmi_tls, rply->command_id, rply, pbuf);
+
+            NDRX_LOG(log_debug, "accept any: %s, cd=%d (name: [%s], my_id: [%s]) atmi_tls=%p cmd=%hd rplybuf=%p (pbuf=%p)",
+			(flags & TPGETANY)?"yes":"no", rply->cd, 
+			rply->my_id, rply->name, G_atmi_tls, rply->command_id, rply, pbuf);
+
+
+/*
+		ndrx_dump_call_struct(log_info, rply);
+*/
 
 /*
             NDRX_DUMP(log_dump, "Received...", (char *)rply, rply_len);
@@ -826,7 +833,7 @@ out:
             EXSUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
             rply->tmknownrms))
     {
-        EXFAIL_OUT(ret);
+        ret = EXFAIL;
     }
 
     if ( !(flags & TPNOTRAN) &&  /* Do not abort, if TPNOTRAN specified. */
