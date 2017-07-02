@@ -118,6 +118,8 @@ MAX_CALLS=10000 # Same as in atmiclt38.c constant...
 echo "Running off client"
 set_dom1;
 (./atmiclt38 2>&1) > ./atmiclt-dom1.log
+#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt38 2>&1) > ./atmiclt-dom1.log
+
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then
