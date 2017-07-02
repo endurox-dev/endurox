@@ -609,11 +609,10 @@ expublic int _tpgetrply (int *cd,
 {
     int ret=EXSUCCEED;
     char fn[] = "_tpgetrply";
+    char *pbuf = NULL;
     long rply_len;
     unsigned prio;
-    /*char rply_buf[ATMI_MSG_MAX_SIZE];*/
-    char *pbuf = NULL;
-    int pbuf_len;
+    long pbuf_len;
     tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
@@ -630,6 +629,7 @@ expublic int _tpgetrply (int *cd,
     /**
      * We will drop any answers not registered for this call
      */
+    rply  = (tp_command_call_t *)pbuf;
     while (!answ_ok)
     {
         /* We shall check that we do not have something in memq...
@@ -666,8 +666,7 @@ expublic int _tpgetrply (int *cd,
             rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                     G_atmi_tls->G_atmi_conf.reply_q_str,
                     &(G_atmi_tls->G_atmi_conf.reply_q_attr),
-                    pbuf, pbuf_len, &prio, flags);
-            rply  = (tp_command_call_t *)pbuf;
+                    (char *)rply, pbuf_len, &prio, flags);
         }
         
         /* In case  if we did receive any response (in non blocked mode
@@ -720,18 +719,11 @@ expublic int _tpgetrply (int *cd,
                 continue;
             }
 
-            NDRX_LOG(log_debug, "accept any: %s, cd=%d (name: [%s], my_id: [%s]) atmi_tls=%p cmd=%hd rplybuf=%p (pbuf=%p)",
+            NDRX_LOG(log_debug, "accept any: %s, cd=%d (name: [%s], my_id: [%s]) "
+			"atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%ld",
 			(flags & TPGETANY)?"yes":"no", rply->cd, 
-			rply->my_id, rply->name, G_atmi_tls, rply->command_id, rply, pbuf);
-
-
-/*
-		ndrx_dump_call_struct(log_info, rply);
-*/
-
-/*
-            NDRX_DUMP(log_dump, "Received...", (char *)rply, rply_len);
-*/
+			rply->my_id, rply->name, G_atmi_tls, rply->command_id, pbuf, 
+			rply_len);
 
             /* if answer is not expected, then we receive again! */
             if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[rply->cd].status &&
