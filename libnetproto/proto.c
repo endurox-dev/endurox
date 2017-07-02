@@ -1511,6 +1511,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     int  *p_fld_len;
     int  xatmi_fld_len;
     char debug[PMSGMAX];
+     tp_command_call_t *more_debug;
     
     NDRX_LOG(log_debug, "Enter field: [%s] max_struct: %ld", 
                         cur->cname, *max_struct);
@@ -1732,10 +1733,13 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 			ndrx_debug_dump_UBF(log_debug, "Restored buffer", p_ub);
                         
                         /*  have some debug */
-                        {
-                            tp_command_call_t *more_debug = 
-                                    (tp_command_call_t *)(ex_buf + sizeof(cmd_br_net_call_t));
-                            
+                            more_debug = 
+                                (tp_command_call_t *)(ex_buf + sizeof(cmd_br_net_call_t));
+                        
+                            if (ATMI_COMMAND_TPCALL == more_debug->command_id || 
+                                    ATMI_COMMAND_EVPOST == more_debug->command_id || 
+                                    ATMI_COMMAND_CONNECT == more_debug->command_id)
+                            {
                             NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
                                     more_debug->timer.t.tv_sec, 
                                     more_debug->timer.t.tv_nsec,

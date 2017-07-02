@@ -281,8 +281,9 @@ expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t
         EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG(log_debug, "Calling broadcast server: %s", svc_q);
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
+    NDRX_LOG(log_debug, "Calling broadcast server: %s with flags %ld", 
+            svc_q, call->flags);
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, call->flags, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
         br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
