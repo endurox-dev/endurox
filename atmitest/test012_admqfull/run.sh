@@ -72,7 +72,7 @@ export NDRX_DQMAX=50
 
 
 # Default process count for Q full tests
-export TEST_PROCS=500
+export TEST_PROCS=900
 
 # OSX hangs at 500 procs running, thus reduce test to 200
 if [ "$(uname)" == "Darwin" ]; then
