@@ -150,7 +150,7 @@ date
 xadmin psc
 
 # Wait for respawn, now it should be respawned...
-sleep 100
+sleep 300
 
 echo "After sleeping of kill -9"
 date
