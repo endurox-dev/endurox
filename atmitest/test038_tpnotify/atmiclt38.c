@@ -173,12 +173,16 @@ int main(int argc, char** argv)
         
     }
     
-    /* Let all replies come in... */
-    sleep(5);
-    if (EXSUCCEED!=handle_replies(&p_ub))
+    for (i=0; i<10; i++)
     {
-        NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
-        EXFAIL_OUT(ret);
+        /* Let all replies come in... */
+        NDRX_LOG(log_info, "Waiting for replies... cycle (%d/10)", i+1);
+        sleep(10);
+        if (EXSUCCEED!=handle_replies(&p_ub))
+        {
+             NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
+             EXFAIL_OUT(ret);
+        }
     }
     
     /* Reply from both domains */
