@@ -1139,7 +1139,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxe
                     {
                         /*ndrx_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);*/
                         NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  
-                                m->mqd);
+                                mqdes);
                         /* FAIL_OUT(ret);*/
                     }
                     else if (att.mq_curmsgs > 0)
