@@ -120,7 +120,11 @@ int process (void)
 
 	/* Call sample server... */
 	
+#ifdef EX_OS_SUNOS
+	for (i=0; i<24000; i++)
+#else
 	for (i=0; i<100000; i++)
+#endif
 	{
 		if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
 		{
