@@ -72,7 +72,7 @@ export NDRX_DQMAX=50
 
 
 # Default process count for Q full tests
-export TEST_PROCS=900
+export TEST_PROCS=400
 
 # OSX hangs at 500 procs running, thus reduce test to 200
 if [ "$(uname)" == "Darwin" ]; then
@@ -100,7 +100,7 @@ function go_out {
 # Time-out processing.
 ###################################
 #Time to wait for stuck processes before killing them                           
-export ALARMTIME=500
+export ALARMTIME=900
 
 PARENTPID=$$
 
