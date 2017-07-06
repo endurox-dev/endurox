@@ -13,14 +13,22 @@ About manual
 ...
 
 == Installation process
-...
+Install the open source packages from:  http://hpux.connect.org.uk/. Following
+packages are needed:
 
-. git
-. cmake
-. flex
-. bison
-. libxml2
-. gcc (if try GNU Compiler Chain)
+. git (e.g. http://hpux.connect.org.uk/hppd/hpux/Development/Tools/git-2.13.2)
+
+. cmake (Needs to install from sources, bellow)
+
+. flex (e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/flex-2.6.4/)
+
+. bison  (e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/bison-3.0.4/)
+
+. libxml2 (.e.g http://hpux.connect.org.uk/hppd/hpux/Gnome/libxml2-2.9.4/)
+
+. gcc (if try GNU Compiler Chain .e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/gcc-4.2.3/,
+http://hpux.connect.org.uk/hppd/hpux/Gnu/libgcc-4.2.3/) 
+
 . aCC (if running with HP-UX native compiler)
  
 
