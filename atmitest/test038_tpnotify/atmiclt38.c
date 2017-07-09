@@ -42,13 +42,14 @@
 #include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MAX_CALLS       10000
+#define MAX_CALLS       1000
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 int M_replies_got = 0;
 int M_notifs_got = 0;
+int M_calls_made = 0;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -74,7 +75,7 @@ int handle_replies(UBFH **pp_ub)
     long len;
     int cd;
     
-    /* Read the replies... */
+    /* Process notifs... */
     while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
             && 0!=cd)
     {
@@ -163,6 +164,7 @@ int main(int argc, char** argv)
                     tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
+        M_calls_made++;
         
         if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
         {
@@ -170,14 +172,14 @@ int main(int argc, char** argv)
                     tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
-        
+        M_calls_made++;
     }
     
-    for (i=0; i<10; i++)
+    while (M_replies_got < M_calls_made || M_replies_got < M_calls_made)
     {
         /* Let all replies come in... */
-        NDRX_LOG(log_info, "Waiting for replies... cycle (%d/10)", i+1);
-        sleep(10);
+        NDRX_LOG(log_info, "Waiting for replies...");
+        usleep(100000); /* 0.1 sec */
         if (EXSUCCEED!=handle_replies(&p_ub))
         {
              NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
@@ -186,18 +188,18 @@ int main(int argc, char** argv)
     }
     
     /* Reply from both domains */
-    if (MAX_CALLS*2!=M_notifs_got)
+    if (M_calls_made!=M_notifs_got)
     {
         NDRX_LOG(log_error, "TESTERROR: M_notifs_got = %d, expected: %d", 
-                M_notifs_got, MAX_CALLS*2);
+                M_notifs_got, M_calls_made);
         EXFAIL_OUT(ret);
     }
     
     /* Reply from both domains */
-    if (MAX_CALLS*2!=M_replies_got)
+    if (M_calls_made!=M_replies_got)
     {
         NDRX_LOG(log_error, "TESTERROR: M_replies_got = %d, expected: %d", 
-                M_replies_got, MAX_CALLS*2);
+                M_replies_got, M_calls_made);
         EXFAIL_OUT(ret);
     }
     

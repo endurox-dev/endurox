@@ -126,15 +126,22 @@ expublic void ndrx_dbg_unlock(void)
  */
 exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 {
-   
+    static __thread int recursive = EXFALSE;
+    long flags = 0;
     /* If tls is enabled and we run threaded modes */
-    userlog("Is threaded=>%d", dbg_ptr->is_threaded);
-    if (NULL!=G_nstd_tls)
+    if (NULL!=G_nstd_tls && !recursive)
     {
         if (dbg_ptr->is_threaded &&
-                ( ((dbg_ptr->flags & LOG_FACILITY_NDRX) && NULL==G_nstd_tls->threadlog_ndrx.dbg_f_ptr) ||
-                  ((dbg_ptr->flags & LOG_FACILITY_UBF) && NULL==G_nstd_tls->threadlog_ubf.dbg_f_ptr) ||
-                  ((dbg_ptr->flags & LOG_FACILITY_TP) && NULL==G_nstd_tls->threadlog_tp.dbg_f_ptr) 
+                ( 
+                  ((dbg_ptr->flags & LOG_FACILITY_NDRX) && NULL==G_nstd_tls->threadlog_ndrx.dbg_f_ptr 
+                        /* assign target logger */
+                        && (flags = LOG_FACILITY_NDRX_THREAD)) ||
+                  ((dbg_ptr->flags & LOG_FACILITY_UBF) && NULL==G_nstd_tls->threadlog_ubf.dbg_f_ptr 
+                        /* assign target logger */
+                        && (flags = LOG_FACILITY_UBF_THREAD)) ||
+                  ((dbg_ptr->flags & LOG_FACILITY_TP) && NULL==G_nstd_tls->threadlog_tp.dbg_f_ptr 
+                         /* assign target logger */
+                        && (flags = LOG_FACILITY_TP_THREAD))
                 )
             )
         {
@@ -143,16 +150,22 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
             /* format new line... */
             snprintf(new_file, sizeof(new_file), dbg_ptr->filename_th_template, 
                     (unsigned)G_nstd_tls->M_threadnr);
+            
             /* configure the thread based logger.. */
-            if (EXFAIL==tplogconfig(dbg_ptr->flags, 
+            
+            recursive = EXTRUE; /* forbid recursive function call.. when doing some logging... */
+            if (EXFAIL==tplogconfig(flags, 
                     dbg_ptr->level, NULL, dbg_ptr->module, new_file))
             {
                 userlog("Failed to configure thread based logger for thread %d file %s: %s",
                         G_nstd_tls->M_threadnr, new_file, Nstrerror(Nerror));
             }
+            
+            recursive = EXFALSE; /* forbid recursive function call.. when doing some logging... */
+            
         }
 
-        if (NULL!=G_nstd_tls)
+        if (NULL!=G_nstd_tls && !recursive)
         {
             if (dbg_ptr == &G_tp_debug && NULL!=G_nstd_tls->requestlog_tp.dbg_f_ptr)
             {
@@ -398,13 +411,15 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
 
         if (len+len2 <= sizeof(tmp_ptr->filename))
         {
-            strcpy(tmp_ptr->filename_th_template, tmp_ptr->filename);
+            NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmp_ptr->filename);
+            ndrx_str_env_subs_len(tmp_ptr->filename_th_template, 
+                    sizeof(tmp_ptr->filename_th_template));
             
             /* Thread based logfile name... */
             if (NULL!=(p = strrchr(tmp_ptr->filename_th_template, '.')))
             {
                 /* insert the" .%u", move other part to the back..*/
-                memmove(p, p+len2, len2);
+                memmove(p+len2, p, 4);
                 strncpy(p, ".%u", len2);
             }
             else

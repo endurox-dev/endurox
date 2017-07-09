@@ -131,6 +131,20 @@ exprivate int logfile_change_name(int logger, char *filename)
         case LOG_FACILITY_TP_REQUEST:
             /* set request file shall do th thread init/init level.. */
             l = &G_nstd_tls->requestlog_tp;
+            break;    
+        case LOG_FACILITY_NDRX_THREAD:
+            l = &G_nstd_tls->threadlog_ndrx;
+            break;
+        case LOG_FACILITY_NDRX_REQUEST:
+            /* set request file shall do th thread init/init level.. */
+            l = &G_nstd_tls->requestlog_ndrx;
+            break;
+        case LOG_FACILITY_UBF_THREAD:
+            l = &G_nstd_tls->threadlog_ubf;
+            break;
+        case LOG_FACILITY_UBF_REQUEST:
+            /* set request file shall do th thread init/init level.. */
+            l = &G_nstd_tls->requestlog_ubf;
             break;
         default:
             _Nset_error_fmt(NEINVAL, "tplogfileset: Invalid logger: %d", logger);
@@ -171,7 +185,11 @@ exprivate int logfile_change_name(int logger, char *filename)
     }
     else if (NULL==(l->dbg_f_ptr = NDRX_FOPEN(l->filename, "a")))
     {
-        NDRX_LOG(log_error,"Failed to open %s: %s\n",l->filename, strerror(errno));
+        int err = errno;
+        userlog("Failed to open %s: %s",l->filename, strerror(err));
+        
+        _Nset_error_fmt(NESYSTEM, "Failed to open %s: %s",l->filename, strerror(err));
+        
         l->filename[0] = EXEOS;
         l->dbg_f_ptr = stderr;
     }
@@ -313,7 +331,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (EXFAIL==G_nstd_tls->threadlog_ndrx.level)
             {
                 memcpy(&G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
-                G_nstd_tls->threadlog_tp.code = LOG_CODE_NDRX_REQUEST;
+                G_nstd_tls->threadlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
             }
             l = &G_nstd_tls->threadlog_ndrx;
         }
@@ -334,7 +352,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (EXFAIL==G_nstd_tls->threadlog_ubf.level)
             {
                 memcpy(&G_nstd_tls->threadlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
-                G_nstd_tls->threadlog_tp.code = LOG_CODE_NDRX_REQUEST;
+                G_nstd_tls->threadlog_ubf.code = LOG_CODE_NDRX_REQUEST;
             }
             l = &G_nstd_tls->threadlog_ubf;
         }
@@ -376,7 +394,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
              * Check if file is changed? If changed, then we shall
              * close the old file & open newone...
              */
-            strcpy(tmp_filename, l->filename);
+            NDRX_STRCPY_SAFE(tmp_filename, l->filename);
             if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
             {
                 _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
