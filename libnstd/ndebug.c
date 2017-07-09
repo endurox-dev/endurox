@@ -87,7 +87,9 @@ ndrx_debug_t G_ndrx_debug;
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = EXTRUE;
-MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
+volatile unsigned M_thread_nr = 0;
+MUTEX_LOCKDECL(M_dbglock);
+MUTEX_LOCKDECL(M_thread_nr_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -160,6 +162,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
     /* have a own copies of params as we do the token over them... */
     char *tok1 = NULL;
     char *tok2 = NULL;
+    ndrx_debug_t *tmp_ptr;
     
     if (NULL!=in_tok1)
     {
@@ -302,12 +305,96 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     strcpy(G_ubf_debug.filename, p+1);
                     strcpy(G_ndrx_debug.filename, p+1);
                 }
+            } /* Feature #167 */
+            else if (0==strncmp("threaded", tok, cmplen))
+            {
+                int val = EXFALSE;
+                
+                if (*(p+1) == 'Y' || *(p+1) == 'y')
+                {
+                    val = EXTRUE;
+                }
+                
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->is_threaded = val;
+                }
+                else
+                {
+                    G_tp_debug.is_threaded = val;
+                    G_ubf_debug.is_threaded = val;
+                    G_ndrx_debug.is_threaded = val;
+                }
             }
             
             tok=strtok_r (NULL,"\t ", &saveptr);
         }
     }
     
+    if (NULL!=dbg_ptr)
+    {
+        tmp_ptr = dbg_ptr;
+    }
+    else
+    {
+        tmp_ptr = &G_ndrx_debug;
+    }
+
+    /* fix the debug  
+     * Feature #167
+     */
+    if (tmp_ptr->is_threaded && EXEOS!=tmp_ptr->filename[0])
+    {
+        int len;
+        int len2;
+        char *p;
+        char thnum[128];
+        /* create the file name 
+         * If current file name is:
+         * - TEST.LOG, then threaded name would be TEST.1.LOG
+         * - LOGILFE, then threaded name would be LOGFILE.1
+         */
+        MUTEX_LOCK_V(M_thread_nr_lock);
+        M_thread_nr++;
+        
+        if (NULL!=dbg_ptr)
+        {
+            dbg_ptr->threadnr = M_thread_nr;
+        }
+        else
+        {
+            G_tp_debug.threadnr = G_ubf_debug.threadnr=G_ndrx_debug.threadnr=M_thread_nr;
+        }
+        MUTEX_UNLOCK_V(M_thread_nr_lock);
+
+        /* so fix filename here... */
+        snprintf(thnum, sizeof(thnum), ".%u", tmp_ptr->threadnr);
+
+        len = strlen(tmp_ptr->filename);
+        len2 = strlen(thnum);
+
+        if (len+len2 <= sizeof(tmp_ptr->filename))
+        {
+            if (NULL!=(p = strrchr(tmp_ptr->filename, '.')))
+            {
+                /* insert the .%d, move other part to the back..*/
+                memmove(p, p+len2, len2);
+                strncpy(p, thnum, len2);
+            }
+            else
+            {
+                /* add the .%d */
+                strcat(tmp_ptr->filename, thnum);
+            }
+
+            if (NULL!=dbg_ptr)
+            {
+                strcpy(G_ubf_debug.filename, G_ndrx_debug.filename);
+                strcpy(G_tp_debug.filename, G_ndrx_debug.filename);
+            }
+        }
+    }
+
 out:
     if (NULL!=tok1)
     {
@@ -327,9 +414,8 @@ out:
  */
 expublic void ndrx_init_debug(void)
 {
-    char *cfg_file = getenv("NDRX_DEBUG_CONF");
+    char *cfg_file = getenv(CONF_NDRX_DEBUG_CONF);
     FILE *f;
-    char *p;
     int finish_off = EXFALSE;
     ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
@@ -425,10 +511,10 @@ expublic void ndrx_init_debug(void)
             }   
         }
     }
-
+    
     /* open debug file.. */
     if (EXEOS!=G_ndrx_debug.filename[0])
-    {
+    {        
         ndrx_str_env_subs_len(G_ndrx_debug.filename, sizeof(G_ndrx_debug.filename));
         /* Opens the file descriptors */
         if (!(G_ndrx_debug.dbg_f_ptr = fopen(G_ndrx_debug.filename, "a")))
@@ -446,7 +532,7 @@ expublic void ndrx_init_debug(void)
     /*
      Expected file syntax is:
      * file=/tmp/common.log ndrx=5 ubf=5 buf=1
-     ndrxd file=/tmp/ndrxd.log
+     ndrxd file=/tmp/ndrxd.log  threaded=y
      xadmin file=/tmp/xadmin.log
      ...
      */
