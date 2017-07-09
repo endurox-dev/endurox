@@ -188,15 +188,43 @@ expublic void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     tls->M_last_err_msg[0] = EXEOS;
     
     /* disable log handlers: */
-    memset(&tls->threadlog, 0, sizeof(tls->threadlog));
-    memset(&tls->requestlog, 0, sizeof(tls->requestlog));
+    memset(&tls->threadlog_tp, 0, sizeof(tls->threadlog_tp));
+    memset(&tls->requestlog_tp, 0, sizeof(tls->requestlog_tp));
     
-    tls->threadlog.level = EXFAIL;
-    tls->requestlog.level = EXFAIL;
+    memset(&tls->threadlog_ndrx, 0, sizeof(tls->threadlog_ndrx));
+    memset(&tls->requestlog_ndrx, 0, sizeof(tls->requestlog_ndrx));
     
-    tls->threadlog.code = LOG_CODE_TP_THREAD;
-    tls->requestlog.code = LOG_CODE_TP_REQUEST;
+    memset(&tls->threadlog_ubf, 0, sizeof(tls->threadlog_ubf));
+    memset(&tls->requestlog_ubf, 0, sizeof(tls->requestlog_ubf));
     
+    tls->threadlog_tp.level = EXFAIL;
+    tls->requestlog_tp.level = EXFAIL;
+    tls->threadlog_ndrx.level = EXFAIL;
+    tls->requestlog_ndrx.level = EXFAIL;
+    tls->threadlog_ubf.level = EXFAIL;
+    tls->requestlog_ubf.level = EXFAIL;
+    
+    tls->threadlog_tp.flags = LOG_FACILITY_TP_THREAD;
+    tls->requestlog_tp.flags = LOG_FACILITY_TP_REQUEST;
+    tls->threadlog_ndrx.flags = LOG_FACILITY_NDRX_THREAD;
+    tls->requestlog_ndrx.flags = LOG_FACILITY_NDRX_REQUEST;
+    tls->threadlog_ubf.flags = LOG_FACILITY_UBF_THREAD;
+    tls->requestlog_ubf.flags = LOG_FACILITY_UBF_REQUEST;
+    
+    tls->threadlog_tp.code = LOG_CODE_TP_THREAD;
+    tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
+    tls->threadlog_ndrx.code = LOG_CODE_NDRX_THREAD;
+    tls->requestlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
+    tls->threadlog_ndrx.code = LOG_CODE_UBF_THREAD;
+    tls->requestlog_ndrx.code = LOG_CODE_UBF_REQUEST;
+    
+    NDRX_STRCPY_SAFE(tls->threadlog_ubf.module, "UBF ");
+    NDRX_STRCPY_SAFE(tls->threadlog_ndrx.module, "NDRX");
+    NDRX_STRCPY_SAFE(tls->threadlog_tp.module, "USER");
+   
+    NDRX_STRCPY_SAFE(tls->requestlog_ubf.module, "UBF ");
+    NDRX_STRCPY_SAFE(tls->requestlog_ndrx.module, "NDRX");
+    NDRX_STRCPY_SAFE(tls->requestlog_tp.module, "USER");
     
     pthread_mutex_init(&tls->mutex, NULL);
     

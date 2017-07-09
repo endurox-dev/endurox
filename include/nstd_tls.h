@@ -82,8 +82,16 @@ typedef struct
     char poll_strerr[ERROR_BUFFER_POLL];
     
     /* ndebug.c */
-    ndrx_debug_t threadlog; /* thread private logging */
-    ndrx_debug_t requestlog; /* logfile on per request-basis */
+    ndrx_debug_t threadlog_tp; /* thread private logging */
+    
+    ndrx_debug_t requestlog_tp; /* logfile on per request-basis */
+
+
+    ndrx_debug_t threadlog_ndrx; /* thread private logging */  
+    ndrx_debug_t requestlog_ndrx; /* logfile on per request-basis */
+    
+    ndrx_debug_t threadlog_ubf; /* thread private logging */  
+    ndrx_debug_t requestlog_ubf; /* logfile on per request-basis */
     
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* we should have lock inside */
