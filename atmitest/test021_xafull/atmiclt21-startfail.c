@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 
     for (i=0; i<1000; i++)
     {
-        ret=tpbegin(5, 0);
+        ret=tpbegin(20, 0);
         
         if (argc>1) /* we have "fail" flag */
         {

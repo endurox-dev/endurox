@@ -51,8 +51,6 @@ if [ "$(uname)" == "Darwin" ]; then
     SUFFIX="dylib"
 fi
 
-
-
 ################################################################################
 # Bug 160, xa_start fails due to closed connection, recon
 ################################################################################
@@ -108,7 +106,7 @@ unset NDRX_XA_FLAGS
 ################################################################################
 
 echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
-export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.so
+export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.$SUFFIX
 ./run-dom.sh || exit $?
 
 echo "Doing static registration tests... (Bug #123 - try fail commit \
