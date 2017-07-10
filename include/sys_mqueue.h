@@ -52,7 +52,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if 1==EX_USE_EMQ
+#ifdef EX_USE_EMQ
 
 #define  ndrx_mq_timedreceive emq_timedreceive
 #define  ndrx_mq_timedsend    emq_timedsend
@@ -63,7 +63,7 @@ extern "C" {
 #define  ndrx_mq_send         emq_send
 #define  ndrx_mq_setattr      emq_setattr
 	
-#elif 1==EX_OS_SUNOS
+#elsif EX_OS_SUNOS
 	
 #define  ndrx_mq_timedreceive sol_timedreceive
 #define  ndrx_mq_timedsend    sol_timedsend
@@ -101,6 +101,11 @@ extern int ndrx_mq_unlink_with_registry (const char *name);
 
 #define  ndrx_mq_open         emq_open
 #define  ndrx_mq_unlink       emq_unlink
+
+#elsif EX_OS_SUNOS
+
+#define  ndrx_mq_open         sol_open
+#define  ndrx_mq_unlink       sol_unlink
 
 #else
 
