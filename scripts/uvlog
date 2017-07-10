@@ -44,8 +44,8 @@ use Time::Local;
 #
 # Mask used for line detection date/time value extraction
 #
-my $M_line_mask = '^.*:.*:[0-6]:[0-9]*:[0-9a-fA-F]*:[0-9]{3}:([0-9]{8}):([0-9]{9}):';
-my $M_line_front = '^(.*:.*:[0-6]:[0-9]*:[0-9a-fA-F]*:[0-9]{3}:[0-9]{8}:[0-9]{9}):';
+my $M_line_mask = '^.*:.*:[0-6]:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:([0-9]{8}):([0-9]{9}):';
+my $M_line_front = '^(.*:.*:[0-6]:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:[0-9]{8}:[0-9]{9}):';
 
 my $M_last_tstamp = -1; # Last timestamp of printed line, to calculate timediff.
 
@@ -54,7 +54,7 @@ my $M_time_diff_cur = 0; # current time diff
 # Globals
 ################################################################################
 my @M_files;
-my @M_files_done;
+my @M_files_eof;
 my @M_lines_buffered;
 my @M_lines_enqueued;
 
@@ -87,7 +87,7 @@ sub read_line {
         {
             print STDERR "Defined..\n";
             chomp $line;
-            print STDERR "Got line: [$line]\n";
+            print STDERR "Got line: [$line] - ".length($M_lines_enqueued[$idx])."\n";
             
             if ($line =~ /$M_line_mask/)
             {
@@ -96,23 +96,24 @@ sub read_line {
                 {
                     # buffer up the line...
                     $M_lines_buffered[$idx] = $line;
+                    # We are done... but the incomplete lines might be still there
+                    $done = 1;
                 }
                 else
                 {
                     $M_lines_enqueued[$idx] = $line;
-                    # We are done... but the incomplete lines might be still there
-                    $done = 1;
                 }
             }
             # So if we have original record.
             elsif (length($M_lines_enqueued[$idx]))
             {
-                $M_lines_enqueued[$idx] = $M_lines_enqueued[$idx].'\n'.$line;
+                print STDERR "Adding aux line...\n";
+                $M_lines_enqueued[$idx] = $M_lines_enqueued[$idx]."\n".$line;
             }
         }
         else
         {
-            print STDERR "Not defined..\n";
+            print STDERR "Not defined.. $idx\n";
             $M_files_eof[$idx] = 1;
         }
     }
@@ -146,9 +147,9 @@ sub enqueue_lines {
         print STDERR "enqueue_lines: $i\n";
         my $fh = $M_files[$i];
         
-        print STDERR "enqueue_lines: $i 2\n";
+        print STDERR "enqueue_lines: $i 2 len=".length($M_lines_enqueued[$i])." eof:".$M_files_eof[$i]." file: ".$ARGV[$i]."\n";
         
-        if (0==length($M_lines_enqueued[$i]) && !$M_files_eof[$idx])
+        if (0==length($M_lines_enqueued[$i]) && !$M_files_eof[$i])
         {
             print STDERR "enqueue_lines: $i - reading line...\n";
             # Read the line...
@@ -240,8 +241,8 @@ sub print_line  {
 
     my ($line_front) = ($time =~ /\Q$M_line_front/);
 
-    my $lead = sprintf("%03d.%03d|%-8.8s", 
-        ($M_time_diff_cur % 1000), ($M_time_diff_cur / 1000), $ARGV[$idx]);
+    my $lead = sprintf("%03d.%03d|%-14.14s", 
+        ($M_time_diff_cur / 1000), ($M_time_diff_cur % 1000), substr($ARGV[$idx], -14));
 
     $line_front = $lead.'|'.$line_front;
 
@@ -265,7 +266,7 @@ sub print_line  {
 # Open handles
 ################################################################################
 
-print STDERR "YOPT: Done open handles\n";
+print STDERR "DEBUG: Done open handles\n";
 
 my $idx = 0;
 for my $i (0 .. $#ARGV)
@@ -281,23 +282,23 @@ for my $i (0 .. $#ARGV)
     $M_files_eof[$i] = 0;
 }
 
-print STDERR "YOPT: Done open handles\n";
+print STDERR "DEBUG: Done open handles\n";
 
 ################################################################################
 # Main loop
 ################################################################################
 
 # Enqueue lines
-print STDERR "YOPT: About to enqueue lines...\n";
+print STDERR "DEBUG: About to enqueue lines...\n";
 enqueue_lines();
 
 do
 {    
     # Get the oldest line
-    print STDERR "YOPT: Get oldes line...\n";
+    print STDERR "DEBUG: Get oldes line...\n";
     my $idx = get_oldest_line();
 
-    print STDERR "YOPT: Got oldest line at $idx -> $M_lines_enqueued[$idx]\n";
+    print STDERR "DEBUG: Got oldest line at $idx -> $M_lines_enqueued[$idx]\n";
     
     # This should print the filename, timestamp, and calculate the time diff
     # from previous line.
@@ -307,9 +308,9 @@ do
     }
 
     # Enqueue lines
-    print STDERR "YOPT: About to enqueue lines...\n";
+    print STDERR "DEBUG: About to enqueue lines...\n";
     enqueue_lines();
-    print STDERR "YOPT: enqueued_lines\n";
+    print STDERR "DEBUG: enqueued_lines\n";
 
 } while (is_lines_enqueued());
 
