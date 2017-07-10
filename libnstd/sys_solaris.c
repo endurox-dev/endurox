@@ -59,7 +59,7 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define SOL_RND_SLEEP	1000
+#define SOL_RND_SLEEP	1000 /* 0.001 sec */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -146,11 +146,15 @@ exit_fail:
     return ret;   
 }
 
-expublic int     sol_mq_close(mqd_t __mqdes)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_close(mqd_t mqdes)
 {
 	int ret;
 	
-	while (EXSUCCEED!=(ret = mq_close(__mqdes)) && errno==EBUSY)
+	while (EXSUCCEED!=(ret = mq_close(mqdes)) && errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);*/
 		usleep(SOL_RND_SLEEP);
@@ -158,11 +162,15 @@ expublic int     sol_mq_close(mqd_t __mqdes)
 	return ret;	
 }
 
-expublic int     sol_mq_getattr(mqd_t __mqdes, struct mq_attr * __mqstat)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int  sol_mq_getattr(mqd_t mqdes, struct mq_attr * attr)
 {
 	int ret;
 	
-	while (EXSUCCEED!=(ret = mq_getattr(__mqdes, __mqstat)) && errno==EBUSY)
+	while (EXSUCCEED!=(ret = mq_getattr(mqdes, attr)) && errno==EBUSY)
 	{
 	/*	NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
@@ -170,11 +178,15 @@ expublic int     sol_mq_getattr(mqd_t __mqdes, struct mq_attr * __mqstat)
 	return ret;
 }
 
-expublic int     sol_mq_notify(mqd_t __mqdes, const struct sigevent * __notification)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp)
 {
 	int ret;
 	
-	while (EXSUCCEED!=(ret =mq_notify(__mqdes, __notification)) && errno==EBUSY)
+	while (EXSUCCEED!=(ret =mq_notify(mqdes, sevp)) && errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
 		usleep(SOL_RND_SLEEP);
@@ -182,14 +194,18 @@ expublic int     sol_mq_notify(mqd_t __mqdes, const struct sigevent * __notifica
 	return ret;
 }
 
-expublic mqd_t   sol_mq_open(const char * __name, int __oflag, ...)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic mqd_t   sol_mq_open(const char * name, int __oflag, ...)
 {
 	mqd_t  ret;
 	va_list argp;
 	
 restart:
 	va_start(argp, __oflag);
-	ret = mq_open(__name, __oflag, argp);
+	ret = mq_open(name, __oflag, argp);
 	va_end(argp);
 	
 	if (EXFAIL==(int)ret && EBUSY==errno)
@@ -202,12 +218,16 @@ restart:
 	return ret;	
 }
 
-expublic int sol_mq_receive(mqd_t __mqdes, char *__msg_ptr, size_t __msg_len, 
-				unsigned int *__msg_prio)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, 
+				unsigned int *msg_prio)
 {
 	int ret;
 	
-	while (EXFAIL==(ret =mq_receive(__mqdes, __msg_ptr, __msg_len, __msg_prio)) && 
+	while (EXFAIL==(ret =mq_receive(mqdes, msg_ptr, msg_len, msg_prio)) && 
 		errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
@@ -216,12 +236,16 @@ expublic int sol_mq_receive(mqd_t __mqdes, char *__msg_ptr, size_t __msg_len,
 	return ret;
 }
 
-expublic int     sol_mq_send(mqd_t __mqdes, const char *__msg_ptr, size_t __msg_len,
-                    unsigned int __msg_prio)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
+                    unsigned int msg_prio)
 {
 	int ret;
 	
-	while (EXSUCCEED!=(ret =mq_send(__mqdes, __msg_ptr, __msg_len, __msg_prio)) &&
+	while (EXSUCCEED!=(ret =mq_send(mqdes, msg_ptr, msg_len, msg_prio)) &&
 		errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
@@ -230,13 +254,17 @@ expublic int     sol_mq_send(mqd_t __mqdes, const char *__msg_ptr, size_t __msg_
 	return ret;
 }
 
-expublic int     sol_mq_setattr(mqd_t __mqdes,
-                       const struct mq_attr * __mqstat,
-                       struct mq_attr * __omqstat)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_setattr(mqd_t mqdes,
+                       const struct mq_attr * newattr,
+                       struct mq_attr * oldattr)
 {
 	int ret;
 	
-	while (EXSUCCEED!=(ret =mq_setattr(__mqdes, __mqstat, __omqstat)) &&
+	while (EXSUCCEED!=(ret =mq_setattr(mqdes, newattr, oldattr)) &&
 		errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
@@ -245,24 +273,15 @@ expublic int     sol_mq_setattr(mqd_t __mqdes,
 	return ret;
 }
 
-expublic int     sol_mq_unlink(const char *__name)
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_unlink(const char *name)
 {
 	int ret;
 	
-	while (EXSUCCEED!=(ret =mq_unlink(__name)) &&
-		errno==EBUSY)
-	{
-/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
-		usleep(SOL_RND_SLEEP);
-	}
-	return ret;
-}	
-expublic int sol_mq_timedsend(mqd_t __mqdes, const char *ptr, size_t len, 
-			      unsigned int prio, const struct timespec *__abs_timeout)
-{
-	int ret;
-	
-	while (EXSUCCEED!=(ret =mq_timedsend(__mqdes, ptr, len, prio, __abs_timeout)) &&
+	while (EXSUCCEED!=(ret =mq_unlink(name)) &&
 		errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
@@ -271,6 +290,28 @@ expublic int sol_mq_timedsend(mqd_t __mqdes, const char *ptr, size_t len,
 	return ret;
 }
 
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
+expublic int sol_mq_timedsend(mqd_t mqdes, const char *msg_ptr, size_t len, 
+			      unsigned int msg_prio, const struct timespec *abs_timeout)
+{
+	int ret;
+	
+	while (EXSUCCEED!=(ret =mq_timedsend(mqdes, msg_ptr, len, msg_prio, abs_timeout)) &&
+		errno==EBUSY)
+	{
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
+		usleep(SOL_RND_SLEEP);
+	}
+	return ret;
+}
+
+/**
+ * Wrapper for solaris bugfix Bug #128
+ * On undocumented error EBUSY, retry the call. Seems to help.
+ */
 expublic  int sol_mq_timedreceive(mqd_t mqdes, char *restrict msg_ptr,
      size_t  msg_len,  unsigned  *restrict msg_prio, const struct
      timespec *restrict abs_timeout)

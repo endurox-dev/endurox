@@ -64,17 +64,27 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 /*
  * Logging settings
  */
-#define LOG_FACILITY_NDRX       0x00001 /* settings for ATMI logging             */
-#define LOG_FACILITY_UBF        0x00002 /* settings for UBF logging              */
-#define LOG_FACILITY_TP         0x00004 /* settings for TP logging               */
-#define LOG_FACILITY_TP_THREAD  0x00008 /* settings for TP, thread based logging */
-#define LOG_FACILITY_TP_REQUEST 0x00010 /* Request logging, thread based         */
+#define LOG_FACILITY_NDRX           0x00001 /* settings for ATMI logging        */
+#define LOG_FACILITY_UBF            0x00002 /* settings for UBF logging         */
+#define LOG_FACILITY_TP             0x00004 /* settings for TP logging          */
+#define LOG_FACILITY_TP_THREAD      0x00008 /* settings for TP, thread based logging */
+#define LOG_FACILITY_TP_REQUEST     0x00010 /* tp, Request logging, thread based*/
+#define LOG_FACILITY_NDRX_THREAD    0x00020 /* ndrx thread logging              */
+#define LOG_FACILITY_UBF_THREAD     0x00040 /* ubf thread logging               */
+#define LOG_FACILITY_NDRX_REQUEST   0x00080 /* ndrx request logging             */
+#define LOG_FACILITY_UBF_REQUEST    0x00100 /* ubf request logging              */
     
 #define LOG_CODE_NDRX       'N'
 #define LOG_CODE_UBF        'U'
 #define LOG_CODE_TP         't'
 #define LOG_CODE_TP_THREAD  'T'
 #define LOG_CODE_TP_REQUEST 'R'
+
+#define LOG_CODE_NDRX_THREAD  'n'
+#define LOG_CODE_NDRX_REQUEST 'm'
+
+#define LOG_CODE_UBF_THREAD  'u'
+#define LOG_CODE_UBF_REQUEST 'v'
     
 #define NDRX_DBG_MAX_LEV log_dump
 /* Have double check on G_ndrx_debug_first, as on after getting first mutex, object

@@ -52,14 +52,18 @@ typedef struct
     int   level;
     FILE *dbg_f_ptr;
     char filename[PATH_MAX];
+    char filename_th_template[PATH_MAX]; /* template for thread logging... */
     pid_t pid;
-    int buf_lines;
+    int buf_lines; 
     int buffer_size;
     int lines_written;
     char module[4+1]; /* 4 symbols of the module  */
     int is_user; /* set to 1 if we run in user log mode, 2 if request file */
     char code; /* code of the logger */
     char iflags[16]; /* integration flags */
+    int is_threaded; /* are we separating logs by threads? */
+    unsigned threadnr; /* thread number to which we are logging */
+    long flags;         /* logger code initially */
 } ndrx_debug_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

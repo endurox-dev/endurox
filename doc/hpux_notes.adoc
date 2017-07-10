@@ -7,20 +7,31 @@ v1.0, 2017-04:
 
 About manual
 ------------
-...
+This document describes Enduro/X building process on hp-ux 11i version 3. Tutorial
+is prepared for Itaninum platform, but should be valid for PA-RISC too.
 
 == Overview
-...
+This installation process will highlet the packages to be installed and will point o
 
 == Installation process
-...
+Install the open source packages from:  http://hpux.connect.org.uk/. Following
+packages are needed:
 
-. git
-. cmake
-. flex
-. bison
-. libxml2
-. gcc (if try GNU Compiler Chain)
+. git (e.g. http://hpux.connect.org.uk/hppd/hpux/Development/Tools/git-2.13.2)
+
+. cmake (Needs to install from sources, bellow)
+
+. flex (e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/flex-2.6.4/)
+
+. bison  (e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/bison-3.0.4/)
+
+. libxml2 (.e.g http://hpux.connect.org.uk/hppd/hpux/Gnome/libxml2-2.9.4/)
+
+. wget - needed for package download
+
+. gcc (if try GNU Compiler Chain .e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/gcc-4.2.3/,
+http://hpux.connect.org.uk/hppd/hpux/Gnu/libgcc-4.2.3/) 
+
 . aCC (if running with HP-UX native compiler)
  
 
@@ -28,7 +39,10 @@ About manual
 Install the compiler from purchased copy or just take a trial version from HP-UX:
 - https://h20392.www2.hpe.com/portal/swdepot/displayProductInfo.do?productNumber=B9007AAEVAL
 
+But seems that site is closed now.
+
 === Packages to be installed
+
 Once way would be to install all the packages manually, but thanks to HP, you
 can use depohelper script which will install all packages automatically.
 
@@ -76,14 +90,64 @@ ERROR: Can't get list of ia64-11.31 packages from hpux.connect.org.uk - aborted
 
 ---------------------------------------------------------------------
 
-
-
-
+We solved this by manually installing the packages.
 
 
 ...
 
-=== Getting the source code
+=== Installing Cmake
+
+The CMake is not available for HP depot, thus we will compile it from sources:
+
+
+---------------------------------------------------------------------
+
+# /usr/local/bin/wget --no-check-certificate https://cmake.org/files/v3.9/cmake-3.9.0-rc5.tar.gz
+# gzip -d cmake-3.9.0-rc5.tar.gz
+# tar -xf cmake-3.9.0-rc5.tar
+# export PATH=$PATH:/usr/local/bin
+# cd cmake-3.9.0-rc5
+# ./configure
+# make 
+# make install
+
+---------------------------------------------------------------------
+
+if you get something like this:
+
+
+-------------------------------------------------------------------------------
+
+
+[ 26%] Building C object Utilities/cmliblzma/CMakeFiles/cmliblzma.dir/liblzma/simple/arm.c.o
+(Bundled) cc: warning 922: "-Aa" is unsupported in the bundled compiler, ignored.
+(Bundled) cc: warning 922: "-Ae" is unsupported in the bundled compiler, ignored.
+"/root/cmake-3.9.0-rc5/Utilities/cmliblzma/liblzma/simple/simple_private.h", line 64: error #2070: 
+          incomplete type is not allowed
+        uint8_t buffer[];
+
+        
+-------------------------------------------------------------------------------
+
+Then you may try to fix the code in editor and change those empty arrays to declared with 1 element:
+
+-------------------------------------------------------------------------------
+
+
+        /// Temporary buffer
+        uint8_t buffer[1];
+};
+"/root/cmake-3.9.0-rc5/Utilities/cmliblzma/liblzma/simple/simple_private.h" 75 lines, 225
+5 characters
+
+
+-------------------------------------------------------------------------------
+
+
+
+
+
+=== Getting the Enduro/X source code
 ...
 
 

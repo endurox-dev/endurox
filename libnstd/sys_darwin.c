@@ -70,20 +70,18 @@ static uint64_t mt_timestart = 0;
  * Return list of message queues (actually it is list of named pipes
  * as work around for missing posix queue listing functions.
  */
-public string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+expublic string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
 {
     return ndrx_sys_folder_list(qpath, return_status);
 }
 
-
-
 /* TODO be more careful in a multithreaded environement */
-public int clock_gettime(clockid_t clk_id, struct timespec *tp)
+expublic int clock_gettime(clockid_t clk_id, struct timespec *tp)
 {
     kern_return_t retval = KERN_SUCCESS;
     if( clk_id == TIMER_ABSTIME)
     {
-        if (!mt_timestart) { // only one timer, initilized on the first call to the TIMER
+        if (!mt_timestart) { /* only one timer, initilized on the first call to the TIMER */
             mach_timebase_info_data_t tb = { 0 };
             mach_timebase_info(&tb);
             mt_timebase = tb.numer;
@@ -95,7 +93,7 @@ public int clock_gettime(clockid_t clk_id, struct timespec *tp)
         tp->tv_sec = diff * MT_NANO;
         tp->tv_nsec = diff - (tp->tv_sec * MT_GIGA);
     }
-    else // other clk_ids are mapped to the coresponding mach clock_service
+    else /* other clk_ids are mapped to the coresponding mach clock_service */
     {
         clock_serv_t cclock;
         mach_timespec_t mts;

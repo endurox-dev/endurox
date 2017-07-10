@@ -81,8 +81,8 @@ exprivate void logfile_close(FILE *p)
     num = 3;
     if (NULL!=G_nstd_tls)
     {
-        fd_arr[3] = &G_nstd_tls->threadlog;
-        fd_arr[4] = &G_nstd_tls->requestlog;
+        fd_arr[3] = &G_nstd_tls->threadlog_tp;
+        fd_arr[4] = &G_nstd_tls->requestlog_tp;
         num = 5;
     }
     
@@ -126,11 +126,25 @@ exprivate int logfile_change_name(int logger, char *filename)
             l = &G_tp_debug;
             break;
         case LOG_FACILITY_TP_THREAD:
-            l = &G_nstd_tls->threadlog;
+            l = &G_nstd_tls->threadlog_tp;
             break;
         case LOG_FACILITY_TP_REQUEST:
             /* set request file shall do th thread init/init level.. */
-            l = &G_nstd_tls->requestlog;
+            l = &G_nstd_tls->requestlog_tp;
+            break;    
+        case LOG_FACILITY_NDRX_THREAD:
+            l = &G_nstd_tls->threadlog_ndrx;
+            break;
+        case LOG_FACILITY_NDRX_REQUEST:
+            /* set request file shall do th thread init/init level.. */
+            l = &G_nstd_tls->requestlog_ndrx;
+            break;
+        case LOG_FACILITY_UBF_THREAD:
+            l = &G_nstd_tls->threadlog_ubf;
+            break;
+        case LOG_FACILITY_UBF_REQUEST:
+            /* set request file shall do th thread init/init level.. */
+            l = &G_nstd_tls->requestlog_ubf;
             break;
         default:
             _Nset_error_fmt(NEINVAL, "tplogfileset: Invalid logger: %d", logger);
@@ -171,7 +185,11 @@ exprivate int logfile_change_name(int logger, char *filename)
     }
     else if (NULL==(l->dbg_f_ptr = NDRX_FOPEN(l->filename, "a")))
     {
-        NDRX_LOG(log_error,"Failed to open %s: %s\n",l->filename, strerror(errno));
+        int err = errno;
+        userlog("Failed to open %s: %s",l->filename, strerror(err));
+        
+        _Nset_error_fmt(NESYSTEM, "Failed to open %s: %s",l->filename, strerror(err));
+        
         l->filename[0] = EXEOS;
         l->dbg_f_ptr = stderr;
     }
@@ -200,20 +218,20 @@ expublic void tplogsetreqfile_direct(char *filename)
     API_ENTRY; /* set TLS too */
     
     /* Level not set, then there was no init */
-    if (EXFAIL==G_nstd_tls->requestlog.level)
+    if (EXFAIL==G_nstd_tls->requestlog_tp.level)
     {
         /* file is null, we want to copy off the settings  */
-        if (NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+        if (NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
         {
-            memcpy(&G_nstd_tls->requestlog, 
-                    &G_nstd_tls->threadlog, sizeof(G_nstd_tls->threadlog));
+            memcpy(&G_nstd_tls->requestlog_tp, 
+                    &G_nstd_tls->threadlog_tp, sizeof(G_nstd_tls->threadlog_tp));
         }
         else
         {
             /* Copy from TPlog */
-            memcpy(&G_nstd_tls->requestlog, &G_tp_debug, sizeof(G_tp_debug));
+            memcpy(&G_nstd_tls->requestlog_tp, &G_tp_debug, sizeof(G_tp_debug));
         }
-        G_nstd_tls->requestlog.code = LOG_CODE_TP_REQUEST;
+        G_nstd_tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
     }
     
     /* ok now open then file */
@@ -230,12 +248,12 @@ expublic void tplogclosereqfile(void)
     /* Only if we have a TLS... */
     if (G_nstd_tls)
     {
-        if (G_nstd_tls->requestlog.dbg_f_ptr)
+        if (G_nstd_tls->requestlog_tp.dbg_f_ptr)
         {
-            logfile_close(G_nstd_tls->requestlog.dbg_f_ptr);
+            logfile_close(G_nstd_tls->requestlog_tp.dbg_f_ptr);
         }
-        G_nstd_tls->requestlog.filename[0] = EXEOS;
-        G_nstd_tls->requestlog.dbg_f_ptr = NULL;
+        G_nstd_tls->requestlog_tp.filename[0] = EXEOS;
+        G_nstd_tls->requestlog_tp.dbg_f_ptr = NULL;
     }
 }
 
@@ -260,7 +278,11 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
                     LOG_FACILITY_UBF, 
                     LOG_FACILITY_TP,
                     LOG_FACILITY_TP_THREAD,
-                    LOG_FACILITY_TP_REQUEST
+                    LOG_FACILITY_TP_REQUEST,
+                    LOG_FACILITY_NDRX_THREAD,
+                    LOG_FACILITY_NDRX_REQUEST,
+                    LOG_FACILITY_UBF_THREAD,
+                    LOG_FACILITY_UBF_REQUEST    
     };
     int i;
     
@@ -285,22 +307,64 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
         {
             /* if thread was not set, then inherit the all stuff from tp
              */
-            if (EXFAIL==G_nstd_tls->threadlog.level)
+            if (EXFAIL==G_nstd_tls->threadlog_tp.level)
             {
-                memcpy(&G_nstd_tls->threadlog, &G_tp_debug, sizeof(G_tp_debug));
-                G_nstd_tls->threadlog.code = LOG_CODE_TP_THREAD;
+                memcpy(&G_nstd_tls->threadlog_tp, &G_tp_debug, sizeof(G_tp_debug));
+                G_nstd_tls->threadlog_tp.code = LOG_CODE_TP_THREAD;
             }
-            l = &G_nstd_tls->threadlog;
+            l = &G_nstd_tls->threadlog_tp;
         }
         else if (loggers[i] == LOG_FACILITY_TP_REQUEST && logger & (LOG_FACILITY_TP_REQUEST))
         {
-            if (EXFAIL==G_nstd_tls->requestlog.level)
+            if (EXFAIL==G_nstd_tls->requestlog_tp.level)
             {
-                memcpy(&G_nstd_tls->requestlog, &G_tp_debug, sizeof(G_tp_debug));
-                G_nstd_tls->requestlog.code = LOG_CODE_TP_REQUEST;
+                memcpy(&G_nstd_tls->requestlog_tp, &G_tp_debug, sizeof(G_tp_debug));
+                G_nstd_tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
             }
             
-            l = &G_nstd_tls->requestlog;
+            l = &G_nstd_tls->requestlog_tp;
+        }
+        else if (loggers[i] == LOG_FACILITY_NDRX_THREAD && (logger & LOG_FACILITY_NDRX_THREAD))
+        {
+            /* if thread was not set, then inherit the all stuff from tp
+             */
+            if (EXFAIL==G_nstd_tls->threadlog_ndrx.level)
+            {
+                memcpy(&G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
+                G_nstd_tls->threadlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
+            }
+            l = &G_nstd_tls->threadlog_ndrx;
+        }
+        else if (loggers[i] == LOG_FACILITY_NDRX_REQUEST && logger & (LOG_FACILITY_NDRX_REQUEST))
+        {
+            if (EXFAIL==G_nstd_tls->requestlog_ndrx.level)
+            {
+                memcpy(&G_nstd_tls->requestlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
+                G_nstd_tls->requestlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
+            }
+            
+            l = &G_nstd_tls->requestlog_ndrx;
+        }
+        else if (loggers[i] == LOG_FACILITY_UBF_THREAD && (logger & LOG_FACILITY_UBF_THREAD))
+        {
+            /* if thread was not set, then inherit the all stuff from tp
+             */
+            if (EXFAIL==G_nstd_tls->threadlog_ubf.level)
+            {
+                memcpy(&G_nstd_tls->threadlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
+                G_nstd_tls->threadlog_ubf.code = LOG_CODE_NDRX_REQUEST;
+            }
+            l = &G_nstd_tls->threadlog_ubf;
+        }
+        else if (loggers[i] == LOG_FACILITY_UBF_REQUEST && logger & (LOG_FACILITY_UBF_REQUEST))
+        {
+            if (EXFAIL==G_nstd_tls->requestlog_ubf.level)
+            {
+                memcpy(&G_nstd_tls->requestlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
+                G_nstd_tls->requestlog_ubf.code = LOG_CODE_UBF_REQUEST;
+            }
+            
+            l = &G_nstd_tls->requestlog_ubf;
         }
         else
         {
@@ -313,7 +377,11 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
 
         if (NULL!=module && EXEOS!=module[0] && 
                 loggers[i] != LOG_FACILITY_NDRX &&
-                loggers[i] != LOG_FACILITY_UBF
+                loggers[i] != LOG_FACILITY_UBF &&
+                loggers[i] != LOG_FACILITY_NDRX_THREAD &&
+                loggers[i] != LOG_FACILITY_UBF_THREAD &&
+                loggers[i] != LOG_FACILITY_NDRX_REQUEST &&
+                loggers[i] != LOG_FACILITY_UBF_REQUEST
             )
         {
             strncpy(l->module, module, 4);
@@ -326,7 +394,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
              * Check if file is changed? If changed, then we shall
              * close the old file & open newone...
              */
-            strcpy(tmp_filename, l->filename);
+            NDRX_STRCPY_SAFE(tmp_filename, l->filename);
             if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
             {
                 _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
@@ -375,12 +443,12 @@ out:
  */
 expublic void tplogclosethread(void)
 {
-    if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+    if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
     {
-        logfile_close(G_nstd_tls->threadlog.dbg_f_ptr);
-        G_nstd_tls->threadlog.level = EXFAIL;
-        G_nstd_tls->threadlog.filename[0] = EXEOS;
-        G_nstd_tls->threadlog.dbg_f_ptr = NULL;
+        logfile_close(G_nstd_tls->threadlog_tp.dbg_f_ptr);
+        G_nstd_tls->threadlog_tp.level = EXFAIL;
+        G_nstd_tls->threadlog_tp.filename[0] = EXEOS;
+        G_nstd_tls->threadlog_tp.dbg_f_ptr = NULL;
     }
 }
 
@@ -393,7 +461,7 @@ expublic int tploggetreqfile(char *filename, int bufsize)
 {
     int ret = EXFALSE;
     
-    if (NULL==G_nstd_tls->requestlog.dbg_f_ptr)
+    if (NULL==G_nstd_tls->requestlog_tp.dbg_f_ptr)
     {
         ret=EXFALSE;
         goto out;
@@ -405,12 +473,12 @@ expublic int tploggetreqfile(char *filename, int bufsize)
     {
         if (bufsize>0)
         {
-            strncpy(filename, G_nstd_tls->requestlog.filename, bufsize-1);
+            strncpy(filename, G_nstd_tls->requestlog_tp.filename, bufsize-1);
             filename[bufsize-1] = EXEOS;
         }
         else
         {
-            strcpy(filename, G_nstd_tls->requestlog.filename);
+            strcpy(filename, G_nstd_tls->requestlog_tp.filename);
         }
     }
     

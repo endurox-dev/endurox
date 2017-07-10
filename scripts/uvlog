@@ -1,0 +1,323 @@
+#!/usr/bin/perl
+## 
+## @(#) Enduro/X log analyzer - join all the log files in the chronological order
+##
+## @file evlog
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+
+use Time::Local;
+
+# The output format of the log could be like:
+#sss.fff|last 8 chars of file-name|<the log line>
+#sss.fff|last 8 chars of file-name|<the log line continues... (i.e. repeate of header, but dump data)>
+# sss.fff -> time diff from pervious line
+################################################################################
+# Config
+################################################################################
+
+#
+# Mask used for line detection date/time value extraction
+#
+my $M_line_mask = '^.*:.*:[0-6]:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:([0-9]{8}):([0-9]{9}):';
+my $M_line_front = '^(.*:.*:[0-6]:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:[0-9]{8}:[0-9]{9}):';
+
+my $M_last_tstamp = -1; # Last timestamp of printed line, to calculate timediff.
+
+my $M_time_diff_cur = 0; # current time diff
+################################################################################
+# Globals
+################################################################################
+my @M_files;
+my @M_files_eof;
+my @M_lines_buffered;
+my @M_lines_enqueued;
+
+##
+# Read one line from file
+# @param idx File index
+# @return the line read (can include newlines).
+##
+sub read_line {
+    my $idx = shift;
+    my $done = 0;
+    
+    # Take the current line from buffer
+    $M_lines_enqueued[$idx] = $M_lines_buffered[$idx];
+    
+    # Clear the buffer
+    $M_lines_buffered[$idx] = "";
+    
+    # Read stuff into @M_lines_enqueued
+    
+    # Gives something like GLOB(0x23d6a08) if not using my $fh..
+    my $fh = $M_files[$idx];
+    while (!$M_files_eof[$idx] && !$done)
+    {
+        print STDERR "About to read line...\n";
+        my $line = <$fh>;
+        print STDERR "Read..\n";
+        
+        if (defined $line)
+        {
+            print STDERR "Defined..\n";
+            chomp $line;
+            print STDERR "Got line: [$line] - ".length($M_lines_enqueued[$idx])."\n";
+            
+            if ($line =~ /$M_line_mask/)
+            {
+                print STDERR "Line matched pattern...\n";
+                if (length($M_lines_enqueued[$idx]))
+                {
+                    # buffer up the line...
+                    $M_lines_buffered[$idx] = $line;
+                    # We are done... but the incomplete lines might be still there
+                    $done = 1;
+                }
+                else
+                {
+                    $M_lines_enqueued[$idx] = $line;
+                }
+            }
+            # So if we have original record.
+            elsif (length($M_lines_enqueued[$idx]))
+            {
+                print STDERR "Adding aux line...\n";
+                $M_lines_enqueued[$idx] = $M_lines_enqueued[$idx]."\n".$line;
+            }
+        }
+        else
+        {
+            print STDERR "Not defined.. $idx\n";
+            $M_files_eof[$idx] = 1;
+        }
+    }
+    print STDERR "read_line done..\n";
+}
+
+##
+# Check is any line enqueued
+##
+sub is_lines_enqueued {
+
+    for ($i=0; $i<(scalar @M_lines_enqueued); $i++)
+    {
+        #if any line...
+        if (length(@M_lines_enqueued[$i]))
+        {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+##
+# Ensure that all readable lines are enqueued..
+##
+sub enqueue_lines {
+    
+    for ($i=0; $i<(scalar @M_files); $i++)
+    {
+        print STDERR "enqueue_lines: $i\n";
+        my $fh = $M_files[$i];
+        
+        print STDERR "enqueue_lines: $i 2 len=".length($M_lines_enqueued[$i])." eof:".$M_files_eof[$i]." file: ".$ARGV[$i]."\n";
+        
+        if (0==length($M_lines_enqueued[$i]) && !$M_files_eof[$i])
+        {
+            print STDERR "enqueue_lines: $i - reading line...\n";
+            # Read the line...
+            read_line($i);
+            
+            print STDERR "enqueue_lines: $i - line read ok\n";
+        }
+    }
+    print STDERR "enqueue_lines: return\n";
+}
+
+#
+# Get the line tstamp...
+#
+sub get_line_tstamp {
+    my $idx = shift;
+
+    my ($date, $time) = ($M_lines_enqueued[$idx] =~/$M_line_mask/);
+    my ($year, $month, $day) = ($date=~/([0-9]{4})([0-9]{2})([0-9]{2})/);
+    my ($hour, $minute, $second, $fff) = ($time =~/^([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{3})/);
+
+    
+    print STDERR "date=$date time=$time year=$year month=$month day=$day\n";
+    print STDERR "hour=$hour minute=$minute second=$second fff=$fff\n";
+        
+    my $epoch = timelocal($second,$minute,$hour,$day,$month-1,$year);
+
+    $epoch = $epoch* 1000 + $fff;
+    
+    print STDERR "Extracted epoch: [$epoch] for the $idx\n";
+
+    return $epoch;
+}
+
+##
+# Return oldest line from the array..
+##
+sub get_oldest_line {
+
+    my $old_idx = -1;
+    my $old_time = 99999999999999999999999;
+
+    
+    print STDERR "Into get_oldest_line()\n";
+    
+    for ($i=0; $i<(scalar @M_lines_enqueued); $i++)
+    {
+    
+        print STDERR "Into get_oldest_line() -> $i\n";
+    
+        # Extract time EPOCH
+        if (length($M_lines_enqueued[$i]))
+        {
+            my $tmp = get_line_tstamp($i);
+
+            if ($tmp < $old_time)
+            {
+                $old_idx = $i;
+                $old_time = $tmp;
+            }
+        }
+    }
+
+    if ($old_idx > -1)
+    {
+        if ($M_last_tstamp > 0)
+        {
+            $M_time_diff_cur = $old_time - $M_last_tstamp;
+            print STDERR "Timediff = $M_time_diff_cur old_time=$old_time\n";
+        }
+        $M_last_tstamp = $old_time;
+        return $old_idx;
+    }
+    else
+    {
+        $M_time_diff_cur = 0;
+        $M_last_tstamp = 0;
+
+        return -1;
+    }
+}
+
+##
+# Print the line by index
+##
+sub print_line  {
+
+    my $idx = shift;
+
+    my ($line_front) = ($time =~ /\Q$M_line_front/);
+
+    my $lead = sprintf("%03d.%03d|%-14.14s", 
+        ($M_time_diff_cur / 1000), ($M_time_diff_cur % 1000), substr($ARGV[$idx], -14));
+
+    $line_front = $lead.'|'.$line_front;
+
+    my $first = 1;
+    foreach (split(/\n/, $M_lines_enqueued[$idx]))
+    {
+        if ($first)
+        {
+                printf("$lead|$_\n");
+        }
+        else
+        {
+                printf("$line_front|$_\n");
+        }
+    }
+    
+    $M_lines_enqueued[$idx] = "";
+}
+
+################################################################################
+# Open handles
+################################################################################
+
+print STDERR "DEBUG: Done open handles\n";
+
+my $idx = 0;
+for my $i (0 .. $#ARGV)
+{
+    my $file = $ARGV[$i];
+    print STDERR "Got name: [$file]\n";
+    
+    open $M_files[$i], '<', $file or die "Error opening file $file: $!";
+    #push @M_files, $fh;
+
+    $M_lines_enqueued[$i] = "";
+    $M_lines_buffered[$i] = "";
+    $M_files_eof[$i] = 0;
+}
+
+print STDERR "DEBUG: Done open handles\n";
+
+################################################################################
+# Main loop
+################################################################################
+
+# Enqueue lines
+print STDERR "DEBUG: About to enqueue lines...\n";
+enqueue_lines();
+
+do
+{    
+    # Get the oldest line
+    print STDERR "DEBUG: Get oldes line...\n";
+    my $idx = get_oldest_line();
+
+    print STDERR "DEBUG: Got oldest line at $idx -> $M_lines_enqueued[$idx]\n";
+    
+    # This should print the filename, timestamp, and calculate the time diff
+    # from previous line.
+    if ($idx>-1)
+    {
+        print_line($idx);
+    }
+
+    # Enqueue lines
+    print STDERR "DEBUG: About to enqueue lines...\n";
+    enqueue_lines();
+    print STDERR "DEBUG: enqueued_lines\n";
+
+} while (is_lines_enqueued());
+
+
+################################################################################
+# Close handles
+################################################################################
+foreach my $handle (@M_files) {
+    close $handle;
+}

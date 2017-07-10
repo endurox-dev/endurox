@@ -87,7 +87,9 @@ ndrx_debug_t G_ndrx_debug;
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = EXTRUE;
-MUTEX_LOCKDECL(M_dbglock);	/* For spinlock */
+volatile unsigned M_thread_nr = 0;
+MUTEX_LOCKDECL(M_dbglock);
+MUTEX_LOCKDECL(M_thread_nr_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -117,26 +119,83 @@ expublic void ndrx_dbg_unlock(void)
 }
 
 /**
- * Return the logger according to curren thread settings.
+ * Return the logger according to current thread settings.
+ * Note the internals should no call the logging. as this will cause recursive loop...
  * @param dbg_ptr
  * @return 
  */
 exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 {
-    if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog.dbg_f_ptr)
+    static __thread int recursive = EXFALSE;
+    long flags = 0;
+    /* If tls is enabled and we run threaded modes */
+    if (NULL!=G_nstd_tls && !recursive)
     {
-        return &G_nstd_tls->threadlog;
-    }
-    else if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->requestlog.dbg_f_ptr)
-    {
-        return &G_nstd_tls->requestlog;
-    }
-    else
-    {
-        return dbg_ptr;
-    }
-}
+        if (dbg_ptr->is_threaded &&
+                ( 
+                  ((dbg_ptr->flags & LOG_FACILITY_NDRX) && NULL==G_nstd_tls->threadlog_ndrx.dbg_f_ptr 
+                        /* assign target logger */
+                        && (flags = LOG_FACILITY_NDRX_THREAD)) ||
+                  ((dbg_ptr->flags & LOG_FACILITY_UBF) && NULL==G_nstd_tls->threadlog_ubf.dbg_f_ptr 
+                        /* assign target logger */
+                        && (flags = LOG_FACILITY_UBF_THREAD)) ||
+                  ((dbg_ptr->flags & LOG_FACILITY_TP) && NULL==G_nstd_tls->threadlog_tp.dbg_f_ptr 
+                         /* assign target logger */
+                        && (flags = LOG_FACILITY_TP_THREAD))
+                )
+            )
+        {
+            char new_file[PATH_MAX];
 
+            /* format new line... */
+            snprintf(new_file, sizeof(new_file), dbg_ptr->filename_th_template, 
+                    (unsigned)G_nstd_tls->M_threadnr);
+            
+            /* configure the thread based logger.. */
+            
+            recursive = EXTRUE; /* forbid recursive function call.. when doing some logging... */
+            if (EXFAIL==tplogconfig(flags, 
+                    dbg_ptr->level, NULL, dbg_ptr->module, new_file))
+            {
+                userlog("Failed to configure thread based logger for thread %d file %s: %s",
+                        G_nstd_tls->M_threadnr, new_file, Nstrerror(Nerror));
+            }
+            
+            recursive = EXFALSE; /* forbid recursive function call.. when doing some logging... */
+            
+        }
+
+        if (NULL!=G_nstd_tls && !recursive)
+        {
+            if (dbg_ptr == &G_tp_debug && NULL!=G_nstd_tls->requestlog_tp.dbg_f_ptr)
+            {
+                return &G_nstd_tls->requestlog_tp;
+            }
+            else if (dbg_ptr == &G_tp_debug && NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
+            {
+                return &G_nstd_tls->threadlog_tp;
+            }
+            else if (dbg_ptr == &G_ndrx_debug && NULL!=G_nstd_tls->requestlog_ndrx.dbg_f_ptr)
+            {
+                return &G_nstd_tls->requestlog_ndrx;
+            }
+            else if (dbg_ptr == &G_ndrx_debug && NULL!=G_nstd_tls->threadlog_ndrx.dbg_f_ptr)
+            {
+                return &G_nstd_tls->threadlog_ndrx;
+            }
+            else if (dbg_ptr == &G_ubf_debug && NULL!=G_nstd_tls->requestlog_ubf.dbg_f_ptr)
+            {
+                return &G_nstd_tls->requestlog_ubf;
+            }
+            else if (dbg_ptr == &G_ubf_debug && NULL!=G_nstd_tls->threadlog_ubf.dbg_f_ptr)
+            {
+                return &G_nstd_tls->threadlog_ubf;
+            }
+        }
+    }
+    
+    return dbg_ptr;
+}
 
 /**
  * Parser sharing the functionality with common config & old style debug.conf
@@ -160,6 +219,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
     /* have a own copies of params as we do the token over them... */
     char *tok1 = NULL;
     char *tok2 = NULL;
+    ndrx_debug_t *tmp_ptr;
     
     if (NULL!=in_tok1)
     {
@@ -302,12 +362,83 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     strcpy(G_ubf_debug.filename, p+1);
                     strcpy(G_ndrx_debug.filename, p+1);
                 }
+            } /* Feature #167 */
+            else if (0==strncmp("threaded", tok, cmplen))
+            {
+                int val = EXFALSE;
+                
+                if (*(p+1) == 'Y' || *(p+1) == 'y')
+                {
+                    val = EXTRUE;
+                }
+                
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->is_threaded = val;
+                }
+                else
+                {
+                    G_tp_debug.is_threaded = val;
+                    G_ubf_debug.is_threaded = val;
+                    G_ndrx_debug.is_threaded = val;
+                }
             }
             
             tok=strtok_r (NULL,"\t ", &saveptr);
         }
     }
     
+    if (NULL!=dbg_ptr)
+    {
+        tmp_ptr = dbg_ptr;
+    }
+    else
+    {
+        tmp_ptr = &G_ndrx_debug;
+    }
+
+    /* Configure template for threads...
+     * Feature #167
+     */
+    if (tmp_ptr->is_threaded && EXEOS!=tmp_ptr->filename[0])
+    {
+        int len;
+        int len2;
+        char *p;
+        
+        len = strlen(tmp_ptr->filename_th_template);
+        len2 = 3; /* len of .%u */
+
+        if (len+len2 <= sizeof(tmp_ptr->filename))
+        {
+            NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmp_ptr->filename);
+            ndrx_str_env_subs_len(tmp_ptr->filename_th_template, 
+                    sizeof(tmp_ptr->filename_th_template));
+            
+            /* Thread based logfile name... */
+            if (NULL!=(p = strrchr(tmp_ptr->filename_th_template, '.')))
+            {
+                /* insert the" .%u", move other part to the back..*/
+                memmove(p+len2, p, 4);
+                strncpy(p, ".%u", len2);
+            }
+            else
+            {
+                /* add the .%d */
+                strcat(tmp_ptr->filename_th_template, ".%u");
+            }
+            
+            if (NULL!=dbg_ptr)
+            {
+                strcpy(G_ubf_debug.filename_th_template, 
+                        G_ndrx_debug.filename_th_template);
+                
+                strcpy(G_tp_debug.filename_th_template, 
+                        G_ndrx_debug.filename_th_template);
+            }
+        }
+    }
+
 out:
     if (NULL!=tok1)
     {
@@ -327,9 +458,8 @@ out:
  */
 expublic void ndrx_init_debug(void)
 {
-    char *cfg_file = getenv("NDRX_DEBUG_CONF");
+    char *cfg_file = getenv(CONF_NDRX_DEBUG_CONF);
     FILE *f;
-    char *p;
     int finish_off = EXFALSE;
     ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
@@ -350,6 +480,10 @@ expublic void ndrx_init_debug(void)
     G_ubf_debug.code = LOG_CODE_UBF;
     G_ndrx_debug.code = LOG_CODE_NDRX;
     G_tp_debug.code = LOG_CODE_TP;
+    
+    G_ubf_debug.flags = LOG_FACILITY_UBF;
+    G_ndrx_debug.flags = LOG_FACILITY_NDRX;
+    G_tp_debug.flags = LOG_FACILITY_TP;
     
     G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
     
@@ -425,10 +559,10 @@ expublic void ndrx_init_debug(void)
             }   
         }
     }
-
+    
     /* open debug file.. */
     if (EXEOS!=G_ndrx_debug.filename[0])
-    {
+    {        
         ndrx_str_env_subs_len(G_ndrx_debug.filename, sizeof(G_ndrx_debug.filename));
         /* Opens the file descriptors */
         if (!(G_ndrx_debug.dbg_f_ptr = fopen(G_ndrx_debug.filename, "a")))
@@ -446,7 +580,7 @@ expublic void ndrx_init_debug(void)
     /*
      Expected file syntax is:
      * file=/tmp/common.log ndrx=5 ubf=5 buf=1
-     ndrxd file=/tmp/ndrxd.log
+     ndrxd file=/tmp/ndrxd.log  threaded=y
      xadmin file=/tmp/xadmin.log
      ...
      */
@@ -552,6 +686,12 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
     /* NSTD_TLS_ENTRY; */
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
     dbg_ptr = get_debug_ptr(dbg_ptr);
+    
+    if (dbg_ptr->level < lev)
+    {
+        return; /* the level is lowered by thread/request logger */
+    }
+        
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
     
     if (0==len)
@@ -644,6 +784,7 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
     }
     print_line[0] = 0;
     print_line2[0] = 0;
+    
 }
 
 /**
@@ -669,6 +810,11 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
     /* NDRX_DBG_INIT_ENTRY; - called by master macro */
     
     dbg_ptr = get_debug_ptr(dbg_ptr);
+    
+    if (dbg_ptr->level < lev)
+    {
+        return; /* the level is lowered by thread/request logger */
+    }
     
     __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
     
@@ -758,6 +904,11 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     }
     
     dbg_ptr = get_debug_ptr(dbg_ptr);
+    
+    if (dbg_ptr->level < lev)
+    {
+        return; /* the level is lowered by thread/request logger */
+    }
     
     if ((len=strlen(file)) > 8)
         line_print = (char *)file+len-8;
