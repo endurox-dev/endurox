@@ -61,14 +61,8 @@ rm *.log
 (./atmi.sv18 -t10 -i 125 2>&1) > ./atmisv18.log &
 sleep 1
 (./atmiclt18 2>&1) > ./atmiclt18.log 
-
-#sleep 5 # let other to complete... (sync..)
-RETP=`ps -ef | grep atmiclt18 | grep -v grep`
-while [[ "X$RET" != "X" ]]; do
-    RETP=`ps -ef | grep atmiclt18 | grep -v grep`
-done 
-
 RET=$?
+
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

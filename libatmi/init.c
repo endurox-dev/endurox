@@ -906,7 +906,8 @@ expublic int tpinit (TPINIT * init_data)
         EXFAIL_OUT(ret);
     }
 
-    NDRX_LOG(log_debug, "Client queue [%s] opened.", conf.reply_q_str);
+    NDRX_LOG(log_debug, "Client queue [%s] opened mqd_t=%d.",
+		conf.reply_q_str, conf.reply_q);
 
     if (NULL!=init_data)
     {

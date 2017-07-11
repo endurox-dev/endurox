@@ -660,7 +660,8 @@ expublic int _tpgetrply (int *cd,
         }
         else
         {
-            NDRX_LOG(log_info, "Waiting on OS Q...");
+            NDRX_LOG(log_info, "Waiting on OS Q mqd_t=%d...",
+			G_atmi_tls->G_atmi_conf.reply_q);
             
             /* receive the reply back */
             rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
