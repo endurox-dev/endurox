@@ -227,13 +227,13 @@ extern int clock_gettime(clockid_t clk_id, struct timespec *tp);
 #endif
 
 
-#ifdef EX_OS_SUNOS
+#if 1==EX_OS_SUNOS
 
 
 extern int     sol_mq_close(mqd_t __mqdes);
 extern int     sol_mq_getattr(mqd_t __mqdes, struct mq_attr * __mqstat);
-extern int     sol_mq_notify(mqd_t __mqdes, const struct sigevent * __notification);
-extern mqd_t   sol_mq_open(const char * __name, int __oflag, ...);
+extern int     sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp);
+extern mqd_t   sol_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern int sol_mq_receive(mqd_t __mqdes, char *__msg_ptr, size_t __msg_len, 
 				unsigned int *__msg_prio);
 extern int     sol_mq_send(mqd_t __mqdes, const char *__msg_ptr, size_t __msg_len,

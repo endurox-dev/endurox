@@ -52,6 +52,7 @@
 #include <nstdutil.h>
 #include <limits.h>
 
+#include <mqueue.h>
 #include <sys_unix.h>
 
 #include <utlist.h>
@@ -186,6 +187,7 @@ expublic int sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp)
 {
 	int ret;
 	
+	NDRX_LOG(log_warn, "%s: mqdes=%d", __func__, mqdes);
 	while (EXSUCCEED!=(ret =mq_notify(mqdes, sevp)) && errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
@@ -198,15 +200,12 @@ expublic int sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp)
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic mqd_t   sol_mq_open(const char * name, int __oflag, ...)
+expublic mqd_t   sol_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
 {
 	mqd_t  ret;
-	va_list argp;
 	
 restart:
-	va_start(argp, __oflag);
-	ret = mq_open(name, __oflag, argp);
-	va_end(argp);
+	ret = mq_open(name, oflag, mode, attr);
 	
 	if (EXFAIL==(int)ret && EBUSY==errno)
 	{

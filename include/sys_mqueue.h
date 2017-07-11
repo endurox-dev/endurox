@@ -69,7 +69,8 @@ extern "C" {
 #define  ndrx_mq_timedsend    sol_mq_timedsend
 #define  ndrx_mq_close        sol_mq_close
 #define  ndrx_mq_getattr      sol_mq_getattr
-#define  ndrx_mq_notify       sol_mq_notify
+/* #define  ndrx_mq_notify       sol_mq_notify - not working correctly. */
+#define  ndrx_mq_notify       mq_notify
 #define  ndrx_mq_receive      sol_mq_receive
 #define  ndrx_mq_send         sol_mq_send
 #define  ndrx_mq_setattr      sol_mq_setattr	

@@ -60,7 +60,6 @@
 #include <ndebug.h>
 #include <nstdutil.h>
 #include <limits.h>
-#include <sys_mqueue.h>
 #include <sys_unix.h>
 
 #include <exhash.h>
@@ -315,7 +314,7 @@ exprivate int signal_install_notifications_all(ndrx_epoll_set_t *s)
     
     EXHASH_ITER(hh, s->mqds, m, mtmp)
     {
-        if (EXFAIL==ndrx_mq_notify(m->mqd, &m->sev))
+        if (EXFAIL==ndrx_mq_notify(m->mqd, &(m->sev)))
         {
             int err = errno;
 	    if (EBUSY!=err)
