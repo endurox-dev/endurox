@@ -152,6 +152,7 @@ int main(int argc, char** argv) {
         ret=EXFAIL;
         goto out;
     }
+    ret=EXSUCCEED;
     
     /* Test for full service queue, we shall get TPEBLOCK back */
     
@@ -179,7 +180,7 @@ int main(int argc, char** argv) {
     {
         NDRX_LOG(log_error, "TESTERROR: expected TPEBLOCK condition in previous run!");
         ret=EXFAIL;
-                goto out;
+        goto out;
     }
     
 out:
