@@ -65,14 +65,14 @@ extern "C" {
 	
 #elif 1==EX_OS_SUNOS
 	
-#define  ndrx_mq_timedreceive sol_timedreceive
-#define  ndrx_mq_timedsend    sol_timedsend
-#define  ndrx_mq_close        sol_close
-#define  ndrx_mq_getattr      sol_getattr
-#define  ndrx_mq_notify       sol_notify
-#define  ndrx_mq_receive      sol_receive
-#define  ndrx_mq_send         sol_send
-#define  ndrx_mq_setattr      sol_setattr	
+#define  ndrx_mq_timedreceive sol_mq_timedreceive
+#define  ndrx_mq_timedsend    sol_mq_timedsend
+#define  ndrx_mq_close        sol_mq_close
+#define  ndrx_mq_getattr      sol_mq_getattr
+#define  ndrx_mq_notify       sol_mq_notify
+#define  ndrx_mq_receive      sol_mq_receive
+#define  ndrx_mq_send         sol_mq_send
+#define  ndrx_mq_setattr      sol_mq_setattr	
 
 #else
 
@@ -104,8 +104,8 @@ extern int ndrx_mq_unlink_with_registry (const char *name);
 
 #elif 1==EX_OS_SUNOS
 
-#define  ndrx_mq_open         sol_open
-#define  ndrx_mq_unlink       sol_unlink
+#define  ndrx_mq_open         sol_mq_open
+#define  ndrx_mq_unlink       sol_mq_unlink
 
 #else
 
