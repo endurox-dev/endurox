@@ -694,8 +694,14 @@ expublic int _tpgetrply (int *cd,
 
         if (GEN_QUEUE_ERR_NO_DATA==rply_len)
         {
-            /* there is no data in reply, nothing to do & nothing to return */
-            *cd = 0;
+            /* Bug #168
+             * there is no data in reply, nothing to do & nothing to return 
+             * Maybe we need to return TPEBLOCK?
+             */
+            /* *cd = 0; */
+            _TPset_error_msg(TPEBLOCK, "TPENOBLOCK was specified in flags and "
+                    "no message is in queue");
+            ret=EXFAIL;
             goto out;
         }
         else if (EXFAIL==rply_len)

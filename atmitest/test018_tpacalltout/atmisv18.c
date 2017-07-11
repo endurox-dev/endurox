@@ -71,8 +71,6 @@ void TESTSVFN (TPSVCINFO *p_svc)
  */
 void ECHO(TPSVCINFO *p_svc)
 {
-    int first=1;
-
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     sleep(5);
@@ -81,6 +79,19 @@ void ECHO(TPSVCINFO *p_svc)
     tpreturn (TPSUCCESS, 0L, (char *)p_ub, 0L, 0L);
 }
 
+/**
+ * Blocky service will do long processings...
+ * @param p_svc
+ */
+void BLOCKY(TPSVCINFO *p_svc)
+{
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    sleep(9999);
+    
+    /* Return OK */
+    tpreturn (TPSUCCESS, 0L, (char *)p_ub, 0L, 0L);
+}
 
 /*
  * Do initialization
@@ -98,6 +109,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     else if (EXSUCCEED!=tpadvertise("ECHO", ECHO))
     {
         NDRX_LOG(log_error, "Failed to initialize ECHO!");
+        ret=EXFAIL;
+    }
+    else if (EXSUCCEED!=tpadvertise("BLOCKY", BLOCKY))
+    {
+        NDRX_LOG(log_error, "Failed to initialize BLOCKY!");
         ret=EXFAIL;
     }
     

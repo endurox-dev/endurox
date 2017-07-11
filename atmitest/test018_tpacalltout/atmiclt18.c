@@ -1,5 +1,5 @@
 /* 
-** Simple thread server caller.
+** Test for NOBLOCK operations
 **
 ** @file atmiclt18.c
 ** 
@@ -59,9 +59,9 @@ int main(int argc, char** argv) {
     long rsplen;
     int i;
     int ret=EXSUCCEED;
-    double d;
     int cd_got;
     int cd[3];
+    int got_send_block;
     
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
@@ -104,9 +104,17 @@ int main(int argc, char** argv) {
     /* the the case when we get reply back, this should not be a timeout. */
     cd[0] = tpacall("ECHO", (char *)p_ub, 0L, 0L);
     sleep(1);
-    if (EXSUCCEED!=(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
+    if (EXSUCCEED==(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK | TPGETANY)))
     {
-        NDRX_LOG(log_error, "TESTERROR Normal reply fails!!!");
+        NDRX_LOG(log_error, "TESTERROR Must be TPEBLOCK");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (tperrno!=TPEBLOCK)
+    {
+        NDRX_LOG(log_error, "TESTERROR! got tperror=%d %s expected TPENOBLOCK %d", 
+                tperrno, tpstrerror(tperrno), TPEBLOCK);
         ret=EXFAIL;
         goto out;
     }
@@ -127,9 +135,60 @@ int main(int argc, char** argv) {
         goto out;
     }
     
-    tpfree((char *)p_ub);
+    /* test for noblock op -> queue empty... */    
+    if (EXSUCCEED==(ret = tpgetrply(&cd_got, (char **)&p_ub, &rsplen, TPNOBLOCK)))
+    {
+        NDRX_LOG(log_error, "TESTERROR Queue must be empty!");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    NDRX_LOG(log_debug, "got tperror=%d %s", tperrno, tpstrerror(tperrno));
+    
+    if (tperrno!=TPEBLOCK)
+    {
+        NDRX_LOG(log_error, "TESTERROR! got tperror=%d %s expected TPENOBLOCK %d", 
+                tperrno, tpstrerror(tperrno), TPEBLOCK);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* Test for full service queue, we shall get TPEBLOCK back */
+    
+    got_send_block = EXFALSE;
+    for (i=0; i<10000; i++)
+    {
+        if (EXFAIL==tpacall("BLOCKY", (char *)p_ub, 0L, TPNOBLOCK))
+        {
+            if (tperrno!=TPEBLOCK)
+            {
+                NDRX_LOG(log_error, "TESTERROR! got tperror=%d %s expected TPENOBLOCK %d", 
+                        tperrno, tpstrerror(tperrno), TPEBLOCK);
+                ret=EXFAIL;
+                goto out;
+            }
+            else
+            {
+                got_send_block = EXTRUE;
+                break;
+            }
+        }
+    }
+    
+    if (!got_send_block)
+    {
+        NDRX_LOG(log_error, "TESTERROR: expected TPEBLOCK condition in previous run!");
+        ret=EXFAIL;
+                goto out;
+    }
     
 out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
     tpterm();
     NDRX_LOG(log_error, "RESULT: %d", ret);
     return ret;

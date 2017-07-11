@@ -94,6 +94,10 @@ extern "C" {
             {\
                 _err=TPETIME;\
             }\
+            else if (EAGAIN==_ret)\
+            {\
+                _err=TPEBLOCK;\
+            }\
             else\
             {\
                 _err=TPEOS;\

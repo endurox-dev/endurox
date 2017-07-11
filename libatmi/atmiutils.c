@@ -353,8 +353,8 @@ restart_send:
         {
             PRINT_Q_INFO(q_descr);
         }
-        NDRX_LOG(log_error, "Failed to send data to queue [%s] with error: %s",
-                                        queue, strerror(ret));
+        NDRX_LOG(log_error, "Failed to send data to queue [%s] with error: %d:%s",
+                                        queue, ret, strerror(ret));
     }
 
 restart_close:
