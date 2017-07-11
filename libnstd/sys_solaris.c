@@ -318,7 +318,7 @@ expublic  int sol_mq_timedreceive(mqd_t mqdes, char *restrict msg_ptr,
 {
 	int ret;
 	
-	while (EXFAIL==(ret =mq_timedsend(mqdes, msg_ptr, msg_len, msg_prio, abs_timeout)) &&
+	while (EXFAIL==(ret =mq_timedreceive(mqdes, msg_ptr, msg_len, msg_prio, abs_timeout)) &&
 		errno==EBUSY)
 	{
 /*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);*/
