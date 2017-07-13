@@ -175,7 +175,8 @@ int main(int argc, char** argv)
         M_calls_made++;
     }
     
-    while (M_replies_got < M_calls_made || M_replies_got < M_calls_made)
+    i=0; /* try for 30 sec... */
+    while (i<300 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
     {
         /* Let all replies come in... */
         NDRX_LOG(log_info, "Waiting for replies...");
@@ -185,6 +186,8 @@ int main(int argc, char** argv)
              NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
              EXFAIL_OUT(ret);
         }
+	
+	i++;
     }
     
     /* Reply from both domains */
