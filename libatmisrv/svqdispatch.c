@@ -232,10 +232,10 @@ expublic int sv_serve_call(int *service, int *status)
     
     call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
 
-    NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d callseq: %u, "
+    NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d (id: %d%d) callseq: %u, "
 			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
                         " reply_to: %s",
-                    	call->cd, call->timestamp, call->callseq, 
+                    	call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, 
 			call->name, call->flags, call_age, call->data_len,
                         call->my_id, call->reply_to);
     

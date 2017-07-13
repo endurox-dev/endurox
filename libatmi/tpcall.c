@@ -303,8 +303,8 @@ exprivate int get_call_descriptor_and_lock(unsigned short *p_callseq,
         NDRX_LOG(log_debug, "Got free call descriptor %d, callseq: %u",
                                             ret, callseq);
 
-        NDRX_LOG(log_debug, "cd %d locked to %d timestamp callseq: %u",
-                                        ret, timestamp, callseq);
+        NDRX_LOG(log_debug, "cd %d locked to %d timestamp (id: %d%d) callseq: %u",
+                                        ret, timestamp, ret,timestamp, callseq);
         G_atmi_tls->G_call_state[ret].status = CALL_WAITING_FOR_ANS;
         G_atmi_tls->G_call_state[ret].timestamp = timestamp;
         G_atmi_tls->G_call_state[ret].callseq = callseq;
