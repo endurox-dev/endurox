@@ -416,18 +416,11 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     int i;
     NDRX_LOG(log_debug, "tpsvrdone called");
     
-    if (NULL!=G_bridge_cfg.con)
-        
-    {
-        exnet_close_shut(G_bridge_cfg.con);
-    }
-    
-    /* If we were server, then close server socket too */
-    if (G_bridge_cfg.net.is_server)
-    {
-        exnet_close_shut(&G_bridge_cfg.net);
-    }
-    
+    /* Bug #170
+     * Shutdown threads and only then close connection
+     * Otherwise we remove connection and threads are generating core at shutdown.
+     * as network object is gone..
+     */
     if (M_init_ok)
     {
         /* Terminate the threads */
@@ -440,6 +433,18 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         /* Wait for threads to finish */
         thpool_wait(G_bridge_cfg.thpool);
         thpool_destroy(G_bridge_cfg.thpool);
-        
     }
+    
+    if (NULL!=G_bridge_cfg.con)
+        
+    {
+        exnet_close_shut(G_bridge_cfg.con);
+    }
+    
+    /* If we were server, then close server socket too */
+    if (G_bridge_cfg.net.is_server)
+    {
+        exnet_close_shut(&G_bridge_cfg.net);
+    }
+    
 }
