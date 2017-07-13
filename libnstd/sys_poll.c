@@ -635,7 +635,8 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *e
                 
                 set->nrfds--;
                 
-                NDRX_LOG(log_info, "set nrfds decremented to %d", set->nrfds);
+                NDRX_LOG(log_info, "set nrfds decremented to %d fdtab=%p", 
+			 set->nrfds, set->fdtab);
                 
                 if (0==set->nrfds)
                 {
