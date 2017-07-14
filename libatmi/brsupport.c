@@ -115,7 +115,7 @@ expublic int fill_reply_queue(char *nodestack,
                 int is_bridge;
                 char tmpsvc[MAXTIDENT+1];
                 
-                sprintf(tmpsvc, NDRX_SVC_BRIDGE, nodeid);
+                snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, nodeid);
                 
                 if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, reply_to, &is_bridge))
                 {
