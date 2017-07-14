@@ -626,8 +626,8 @@ extern NDRX_API int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
                                 mqd_t listen_q,
                                 char *listen_q_str, 
                                 long flags);
-extern NDRX_API mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
-extern NDRX_API mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag);
+extern NDRX_API mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode, struct mq_attr *attr);
+extern NDRX_API mqd_t ndrx_mq_open_at_wrp(char *name, int oflag);
 extern NDRX_API void ndrx_mq_fix_mass_send(int *cntr);
 extern NDRX_API int ndrx_q_setblock(mqd_t q_descr, int blocked);
 

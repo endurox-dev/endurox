@@ -183,14 +183,14 @@ expublic int  sol_mq_getattr(mqd_t mqdes, struct mq_attr * attr)
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic int sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp)
+expublic int sol_mq_notify(mqd_t mqdes, struct sigevent * sevp)
 {
 	int ret;
 	
 	NDRX_LOG(log_warn, "%s: mqdes=%d", __func__, mqdes);
 	while (EXSUCCEED!=(ret =mq_notify(mqdes, sevp)) && errno==EBUSY)
 	{
-/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
+		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__);
 		usleep(SOL_RND_SLEEP);
 	}
 	return ret;
@@ -200,7 +200,7 @@ expublic int sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp)
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic mqd_t   sol_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr)
+expublic mqd_t   sol_mq_open(char *name, int oflag, mode_t mode, struct mq_attr *attr)
 {
 	mqd_t  ret;
 	
@@ -239,7 +239,7 @@ expublic int sol_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic int sol_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
+expublic int sol_mq_send(mqd_t mqdes, char *msg_ptr, size_t msg_len,
                     unsigned int msg_prio)
 {
 	int ret;
@@ -258,7 +258,7 @@ expublic int sol_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
 expublic int sol_mq_setattr(mqd_t mqdes,
-                       const struct mq_attr * newattr,
+                       struct mq_attr * newattr,
                        struct mq_attr * oldattr)
 {
 	int ret;
@@ -276,7 +276,7 @@ expublic int sol_mq_setattr(mqd_t mqdes,
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic int sol_mq_unlink(const char *name)
+expublic int sol_mq_unlink(char *name)
 {
 	int ret;
 	
@@ -293,8 +293,8 @@ expublic int sol_mq_unlink(const char *name)
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic int sol_mq_timedsend(mqd_t mqdes, const char *msg_ptr, size_t len, 
-			      unsigned int msg_prio, const struct timespec *abs_timeout)
+expublic int sol_mq_timedsend(mqd_t mqdes, char *msg_ptr, size_t len, 
+			      unsigned int msg_prio, struct timespec *abs_timeout)
 {
 	int ret;
 	
@@ -311,9 +311,9 @@ expublic int sol_mq_timedsend(mqd_t mqdes, const char *msg_ptr, size_t len,
  * Wrapper for solaris bugfix Bug #128
  * On undocumented error EBUSY, retry the call. Seems to help.
  */
-expublic  int sol_mq_timedreceive(mqd_t mqdes, char *restrict msg_ptr,
-     size_t  msg_len,  unsigned  *restrict msg_prio, const struct
-     timespec *restrict abs_timeout)
+expublic  int sol_mq_timedreceive(mqd_t mqdes, char *msg_ptr,
+     size_t  msg_len,  unsigned  *msg_prio, struct
+     timespec *abs_timeout)
 {
 	int ret;
 	

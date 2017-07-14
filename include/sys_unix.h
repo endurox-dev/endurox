@@ -229,23 +229,24 @@ extern int clock_gettime(clockid_t clk_id, struct timespec *tp);
 
 #if 1==EX_OS_SUNOS
 
+extern NDRX_API int sol_mq_timedreceive(mqd_t mqdes, char *msg_ptr,
+     size_t  msg_len,  unsigned  *msg_prio, struct
+     timespec *abs_timeout);
+extern NDRX_API int sol_mq_timedsend(mqd_t mqdes, char *msg_ptr, size_t len, 
+                              unsigned int msg_prio, struct timespec *abs_timeout);
+extern NDRX_API int sol_mq_unlink(char *name);
+extern NDRX_API int sol_mq_setattr(mqd_t mqdes,
+                       struct mq_attr * newattr,
+                       struct mq_attr * oldattr);
+extern NDRX_API int sol_mq_send(mqd_t mqdes, char *msg_ptr, size_t msg_len,
+                    unsigned int msg_prio);
+extern NDRX_API int sol_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, 
+                                unsigned int *msg_prio);
+extern NDRX_API mqd_t sol_mq_open(char *name, int oflag, mode_t mode, struct mq_attr *attr);
+extern NDRX_API int sol_mq_notify(mqd_t mqdes, struct sigevent * sevp);
+extern NDRX_API int sol_mq_getattr(mqd_t mqdes, struct mq_attr * attr);
+extern NDRX_API int sol_mq_close(mqd_t mqdes);
 
-extern NDRX_API int     sol_mq_close(mqd_t __mqdes);
-extern NDRX_API int     sol_mq_getattr(mqd_t __mqdes, struct mq_attr * __mqstat);
-extern NDRX_API int     sol_mq_notify(mqd_t mqdes, const struct sigevent * sevp);
-extern NDRX_API mqd_t   sol_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
-extern NDRX_API int sol_mq_receive(mqd_t __mqdes, char *__msg_ptr, size_t __msg_len, 
-				unsigned int *__msg_prio);
-extern NDRX_API int sol_mq_send(mqd_t __mqdes, const char *__msg_ptr, size_t __msg_len,
-                    unsigned int __msg_prio);
-extern NDRX_API int sol_mq_setattr(mqd_t __mqdes,
-                       const struct mq_attr * __mqstat,
-                       struct mq_attr * __omqstat);
-extern NDRX_API int sol_mq_unlink(const char *__name);
-extern NDRX_API int sol_mq_timedsend(mqd_t __mqdes, const char *ptr, size_t len, 
-		      unsigned int prio, const struct timespec *__abs_timeout);
-extern NDRX_API int sol_mq_timedreceive(mqd_t __mqdes, char *ptr, size_t maxlen, 
-				      unsigned *priop, const struct timespec * __abs_timeout);
 
 #endif
 

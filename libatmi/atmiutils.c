@@ -175,7 +175,7 @@ out:
  * @param attr
  * @return
  */
-expublic mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode, 
+expublic mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode, 
         struct mq_attr *attr)
 {
     struct mq_attr attr_int;
@@ -212,7 +212,7 @@ expublic mqd_t ndrx_mq_open_at(const char *name, int oflag, mode_t mode,
  * @param oflag
  * @return
  */
-expublic mqd_t ndrx_mq_open_at_wrp(const char *name, int oflag)
+expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
 {
     
     return ndrx_mq_open_at(name, oflag, 0, NULL);
