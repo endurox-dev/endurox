@@ -64,6 +64,7 @@ SYNOPSIS
 			<cctag>COMMON_CONFIG_TAG</cctag>
 			<protected>PROTECTED_SERVER</protected>
 			<reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
+            <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
 		</server>
 		...
 		<server name="SERVER_BINARY_NAME_N">
@@ -288,6 +289,15 @@ DEBUG CONFIGURATION FILE SYNTAX
 *ATMI_SERVER_BLACKLIST_SERVICES*::
 	Enduro/X server specific list of services that must not be exported. This list is only for 
 	*tpbridge* servers. Blacklist have higher priority over the Export list.
+*ATMI_SERVER_FULL_PATH*::
+    This is full path of the XATMI server binary. At the porcess startup this overrides
+    the server binary name at *SERVER_BINARY_NAME*. *ATMI_SERVER_FULL_PATH* is used only
+    for process startup. This is intended for testing, if server wrapper scripts
+    needs to be started. But as the *ndrxd* will do the sanity checks against the process
+    names, for time of the testing this needs to be disabled. Thus to do the testings with
+    full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
+    of process model checks, the ndrxd will find out that wrapped binary name does not
+    contain the *SERVER_BINARY_NAME*, thus will reboot the process.
 *CLT_COMMAND_LINE*::
 	Executable name and arguments for client program. Command line basically is a format
 	string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
