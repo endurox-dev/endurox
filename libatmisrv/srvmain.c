@@ -461,7 +461,7 @@ out:
     /*
      * un-initalize polling sub-system
      */
-    ndrx_epoll_sys_init();
+    ndrx_epoll_sys_uninit();
     
     un_initialize();
     /*
