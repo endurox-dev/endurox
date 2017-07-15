@@ -153,25 +153,28 @@ exprivate void call_dump_descriptors(void)
     int i;
     time_t t = time(NULL);
     int t_diff;
+    int cnt=0;
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_warn, "***List of call descriptors waiting for answer***");
-    NDRX_LOG(log_warn, "timeout(system wide): %d curr_tstamp: %ld", 
+    NDRX_LOG(log_debug, "***List of call descriptors waiting for answer***");
+    NDRX_LOG(log_debug, "timeout(system wide): %d curr_tstamp: %ld", 
                             G_atmi_env.time_out, t);
-    NDRX_LOG(log_warn, "cd\tcallseq\tlocked_at\tdiff");
+    NDRX_LOG(log_debug, "cd\tcallseq\tlocked_at\tdiff");
         
     for (i=1; i<MAX_ASYNC_CALLS; i++)
     {
         if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[i].status)
         {
             t_diff = t - G_atmi_tls->G_call_state[i].timestamp;
-            NDRX_LOG(log_warn, "%d\t%u\t%ld\t%d", 
+            NDRX_LOG(log_debug, "%d\t%u\t%ld\t%d", 
                     i, G_atmi_tls->G_call_state[i].callseq, 
                     G_atmi_tls->G_call_state[i].timestamp, t_diff);
+            cnt++;
         }
     }
     
-    NDRX_LOG(log_warn, "*************************************************");
+    NDRX_LOG(log_warn, "cds waiting for answer: %d", cnt);
+    NDRX_LOG(log_debug, "*************************************************");
 }
 
 #define CALL_TOUT_DEBUG

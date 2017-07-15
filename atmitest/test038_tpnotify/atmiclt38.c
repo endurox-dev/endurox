@@ -69,18 +69,35 @@ void notification_callback (char *data, long len, long flags)
  * Read the replies from ATMI subsystem.
  * @return SUCCEED/FAIL
  */
-int handle_replies(UBFH **pp_ub)
+int handle_replies(UBFH **pp_ub, int num)
 {
     int ret = EXSUCCEED;
     long len;
     int cd;
+    int i;
     
     /* Process notifs... */
+    if (0==num)
+    {
     while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
             && 0!=cd)
     {
         ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
         M_replies_got++;
+    }
+    }
+    else
+    {
+	for (i=0; i<num; i++)
+	{
+		if (EXSUCCEED!=tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY))
+		{
+			NDRX_LOG(log_error, "TESTERROR! Failed to get rply!");
+			EXFAIL_OUT(ret);
+		}
+		ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
+                M_replies_got++;
+	}
     }
     
 out:
@@ -127,16 +144,10 @@ int main(int argc, char** argv)
     /* So we will call lots of local and remote services,
      * The service must send back notification.
      */
-    for (i=0; i<MAX_CALLS; i++)
+    for (i=1; i<MAX_CALLS+1; i++)
     {
         /* Let servers to provide back replies... */
         /* Have a fixed buffer len, so that we do not need to realloc... */
-        
-        if (EXSUCCEED!=handle_replies(&p_ub))
-        {
-            NDRX_LOG(log_error, "handle_replies() failed");
-            EXFAIL_OUT(ret);
-        }
         
         snprintf(tmp, sizeof(tmp), "AA%02ld%08d", tpgetnodeid(), i);
         
@@ -149,14 +160,6 @@ int main(int argc, char** argv)
         
         /* Do Some A calls... */
         
-        if (i % 100)
-        {
-            usleep(500);
-        }
-        /* Local service 
-        if (tpacall())
-         * */
-        
         /* Remote service & local services */
         if (tpacall("SVC38_01", (char *)p_ub, 0L, 0L)<=0)
         {
@@ -165,7 +168,7 @@ int main(int argc, char** argv)
             EXFAIL_OUT(ret);
         }
         M_calls_made++;
-        
+
         if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_02]: %s",
@@ -173,15 +176,23 @@ int main(int argc, char** argv)
             EXFAIL_OUT(ret);
         }
         M_calls_made++;
+	if (0==i%25)
+	{	
+        	if (EXSUCCEED!=handle_replies(&p_ub, 50))
+        	{
+            		NDRX_LOG(log_error, "handle_replies() failed");
+            		EXFAIL_OUT(ret);
+        	}
+	}
     }
     
     i=0; /* try for 30 sec... */
-    while (i<300 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
+    while (i<30000 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
     {
         /* Let all replies come in... */
         NDRX_LOG(log_info, "Waiting for replies...");
-        usleep(100000); /* 0.1 sec */
-        if (EXSUCCEED!=handle_replies(&p_ub))
+        usleep(10000); /* 0.1 sec */
+        if (EXSUCCEED!=handle_replies(&p_ub,  0))
         {
              NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
              EXFAIL_OUT(ret);
