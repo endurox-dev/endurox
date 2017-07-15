@@ -898,7 +898,9 @@ expublic int tpinit (TPINIT * init_data)
 
     NDRX_STRCPY_SAFE(conf.reply_q_str, reply_q);
     /* now try to open the queue, by default we will have blocked access */
+    NDRX_LOG(log_debug, "About to open client queue [%s]", reply_q);
     conf.reply_q = ndrx_mq_open_at(reply_q, O_RDONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
+    NDRX_LOG(log_debug, "After client Q open: %d", conf.reply_q);
     if ((mqd_t)EXFAIL==conf.reply_q)
     {
         _TPset_error_fmt(TPEOS, "Failed to open queue [%s] errno: %s", 

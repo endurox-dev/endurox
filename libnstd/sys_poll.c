@@ -431,7 +431,7 @@ exprivate void ndrx_ndrx_mq_notify_func(union sigval sv)
     ndrx_epoll_set_t *s, *stmp;
     ndrx_epoll_mqds_t* mqd_h;
 
-    NDRX_LOG(log_debug, "ndrx_ndrx_mq_notify_func() called mqd %d\n", mqdes);
+    NDRX_LOG(log_debug, "ndrx_ndrx_mq_notify_func() called mqd %d", mqdes);
 
     MUTEX_LOCK_V(M_psets_lock);
 
@@ -484,7 +484,7 @@ exprivate void ndrx_epoll_set_err(int error_code, const char *fmt, ...)
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
 
-    strcpy(G_nstd_tls->M_last_err_msg, msg);
+    NDRX_STRCPY_SAFE(G_nstd_tls->M_last_err_msg, msg);
     G_nstd_tls->M_last_err = error_code;
 
     NDRX_LOG(log_warn, "ndrx_epoll_set_err: %d (%s) (%s)",
@@ -601,7 +601,8 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *e
     else if (EX_EPOLL_CTL_DEL == op)
     {
         int i;
-        NDRX_LOG(log_info, "%s: Delete operation on ndrx_epoll set %d, fd %d", fn, epfd, fd);
+        NDRX_LOG(log_info, "%s: Delete operation on ndrx_epoll set %d, fd %d", 
+                fn, epfd, fd);
         
         /* test & add to FD hash */
         if (NULL==(tmp=fd_find(set, fd)))
