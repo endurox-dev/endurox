@@ -111,6 +111,7 @@ extern int ndrx_mq_unlink_with_registry (char *name);
 #elif 1==EX_OS_SUNOS
 
 #define  ndrx_mq_open         sol_mq_open
+/*#define  ndrx_mq_open         mq_open*/
 /* #define  ndrx_mq_unlink       sol_mq_unlink -gets infinite ebusy */
 #define  ndrx_mq_unlink       mq_unlink
 

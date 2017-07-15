@@ -60,7 +60,7 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define SOL_RND_SLEEP	1000 /* 0.001 sec */
+#define SOL_RND_SLEEP	10000 /* 0.01 sec */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -203,17 +203,14 @@ expublic inline int sol_mq_notify(mqd_t mqdes, struct sigevent * sevp)
 expublic inline mqd_t   sol_mq_open(char *name, int oflag, mode_t mode, struct mq_attr *attr)
 {
 	mqd_t  ret;
-	
-restart:
-	ret = mq_open(name, oflag, mode, attr);
-	
-	if (EXFAIL==(int)ret && EBUSY==errno)
-	{
-		/* NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
-		usleep(SOL_RND_SLEEP);
-		goto restart;
-	}
 
+	while (EXFAIL==(int)(ret = mq_open(name, oflag, mode, attr)) && 
+		errno==EBUSY)
+	{
+/*		NDRX_LOG(log_warn, "%s: got EBUSY - restarting call...", __func__); */
+		usleep(SOL_RND_SLEEP);
+	}
+	
 	return ret;	
 }
 
