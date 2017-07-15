@@ -229,7 +229,7 @@ extern int clock_gettime(clockid_t clk_id, struct timespec *tp);
 
 #if 1==EX_OS_SUNOS
 
-extern NDRX_API int sol_mq_timedreceive(mqd_t mqdes, char *msg_ptr,
+extern NDRX_API ssize_t sol_mq_timedreceive(mqd_t mqdes, char *msg_ptr,
      size_t  msg_len,  unsigned  *msg_prio, struct
      timespec *abs_timeout);
 extern NDRX_API int sol_mq_timedsend(mqd_t mqdes, char *msg_ptr, size_t len, 
@@ -240,7 +240,7 @@ extern NDRX_API int sol_mq_setattr(mqd_t mqdes,
                        struct mq_attr * oldattr);
 extern NDRX_API int sol_mq_send(mqd_t mqdes, char *msg_ptr, size_t msg_len,
                     unsigned int msg_prio);
-extern NDRX_API int sol_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, 
+extern NDRX_API ssize_t sol_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, 
                                 unsigned int *msg_prio);
 extern NDRX_API mqd_t sol_mq_open(char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern NDRX_API int sol_mq_notify(mqd_t mqdes, struct sigevent * sevp);
