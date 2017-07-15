@@ -64,7 +64,7 @@ expublic shm_srvinfo_t *G_shm_srv = NULL;    /* ptr to shared memory block of th
  * @param b
  * @return
  */
-int svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b)
+exprivate int svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b)
 {
     return strcmp(a->svc_nm,b->svc_nm);
 }
@@ -78,7 +78,7 @@ exprivate svc_entry_fn_t* resolve_service_entry(char *svc)
 {
     svc_entry_fn_t *ret=NULL, eltmp;
 
-    strcpy(eltmp.svc_nm, svc);
+    NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
     DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, svc_entry_fn_cmp);
 
     return ret;
@@ -131,14 +131,16 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
             /* Fill up the details & let it run! */
             memcpy(entry, svc_fn, sizeof(svc_entry_fn_t));
             /* Set service name */
-            strcpy(entry->svc_nm, svn_nm_add);
+            NDRX_STRCPY_SAFE(entry->svc_nm, svn_nm_add);
             
             /* Set queue on which to listen */
 #ifdef EX_USE_POLL
-            sprintf(entry->listen_q, NDRX_SVC_QFMT_SRVID, G_server_conf.q_prefix, 
+            snprintf(entry->listen_q, sizeof(entry->listen_q), NDRX_SVC_QFMT_SRVID, 
+                    G_server_conf.q_prefix, 
                     entry->svc_nm, (short)G_server_conf.srv_id);
 #else
-            sprintf(entry->listen_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, entry->svc_nm);
+            snprintf(entry->listen_q, sizeof(entry->listen_q), NDRX_SVC_QFMT, 
+                    G_server_conf.q_prefix, entry->svc_nm);
 #endif
 
             /* Add to list! */
@@ -187,6 +189,12 @@ exprivate int build_service_array_list(void)
     return ret;
 }
 
+/**
+ * Add system (Enduro/X) internals specific queue 
+ * @param qname queue name
+ * @param is_admin is admin, else it is reply q
+ * @return EXSUCCEED/EXFAIL
+ */
 exprivate int add_specific_queue(char *qname, int is_admin)
 {
     int ret=EXSUCCEED;
@@ -206,7 +214,7 @@ exprivate int add_specific_queue(char *qname, int is_admin)
         memset(entry, 0, sizeof(svc_entry_fn_t));
         entry->p_func=NULL;
         entry->is_admin = is_admin;
-        strcpy(entry->listen_q, qname);
+        NDRX_STRCPY_SAFE(entry->listen_q, qname);
         /*
         sprintf(entry->listen_q, NDRX_ADMIN_FMT, G_server_conf.q_prefix,
                                 G_server_conf.binary_name, G_server_conf.srv_id);
@@ -232,7 +240,7 @@ exprivate int add_specific_queue(char *qname, int is_admin)
  * 
  * @return
  */
-expublic int build_advertise_list(void)
+expublic int atmisrv_build_advertise_list(void)
 {
     int ret=EXSUCCEED;
     svc_entry_t *s_tmp, *s_el;
@@ -313,16 +321,16 @@ out:
  * Initialize common ATMI library
  * @return SUCCED/FAIL
  */
-expublic int initialize_atmi_library(void)
+expublic int atmisrv_initialize_atmi_library(void)
 {
     int ret=EXSUCCEED;
-    int sem_fail = EXFALSE;
     atmi_lib_conf_t conf;
     pid_t pid = getpid();
     memset(&conf, 0, sizeof(conf));
 
     /* Generate my_id */
-    sprintf(conf.my_id, NDRX_MY_ID_SRV, G_server_conf.binary_name, 
+    snprintf(conf.my_id, sizeof(conf.my_id), NDRX_MY_ID_SRV, 
+            G_server_conf.binary_name, 
             G_server_conf.srv_id, pid, 
             G_atmi_tls->G_atmi_conf.contextid, 
             G_atmi_env.our_nodeid);
@@ -334,7 +342,7 @@ expublic int initialize_atmi_library(void)
     strcpy(conf.reply_q_str, G_server_conf.service_array[1]->listen_q);
     */
     
-    strcpy(conf.q_prefix, G_server_conf.q_prefix);
+    NDRX_STRCPY_SAFE(conf.q_prefix, G_server_conf.q_prefix);
     if (EXSUCCEED!=(ret=tp_internal_init(&conf)))
     {
         goto out;
@@ -355,36 +363,40 @@ out:
  * Un-initialize all stuff
  * @return void
  */
-expublic void un_initialize(void)
+expublic void atmisrv_un_initialize(void)
 {
     int i;
     /* We should close the queues and detach shared memory!
      * Also we will not remove service queues, because we do not
      * what other instances do. This is up to ndrxd!
      */
-    for (i=0; i<G_server_conf.adv_service_count; i++)
+    if (NULL!=G_server_conf.service_array)
     {
-        /* just close it, no error check */
-        if(EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
+        for (i=0; i<G_server_conf.adv_service_count; i++)
         {
-
-            NDRX_LOG(log_error, "Failed to close q descr %d: %d/%s",
-                                        G_server_conf.service_array[i]->q_descr,
-                                        errno, strerror(errno));
-        }
-        if (ATMI_SRV_ADMIN_Q==i || ATMI_SRV_REPLY_Q==i)
-        {
-            NDRX_LOG(log_debug, "Removing queue: %s",
-                                G_server_conf.service_array[i]->listen_q);
-
-            if (EXSUCCEED!=ndrx_mq_unlink(G_server_conf.service_array[i]->listen_q))
+            /* just close it, no error check */
+            if(EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
             {
-                NDRX_LOG(log_error, "Failed to remove queue %s: %d/%s",
-                                        G_server_conf.service_array[i]->listen_q,
-                                        errno, strerror(errno));
+
+                NDRX_LOG(log_error, "Failed to close q descr %d: %d/%s",
+                                            G_server_conf.service_array[i]->q_descr,
+                                            errno, strerror(errno));
             }
-        }
-    }/* for */
+
+            if (ATMI_SRV_ADMIN_Q==i || ATMI_SRV_REPLY_Q==i)
+            {
+                NDRX_LOG(log_debug, "Removing queue: %s",
+                                    G_server_conf.service_array[i]->listen_q);
+
+                if (EXSUCCEED!=ndrx_mq_unlink(G_server_conf.service_array[i]->listen_q))
+                {
+                    NDRX_LOG(log_error, "Failed to remove queue %s: %d/%s",
+                                            G_server_conf.service_array[i]->listen_q,
+                                            errno, strerror(errno));
+                }
+            }
+        }/* for */
+    }
 
     /* Now detach shared memory block */
     ndrxd_shm_close_all();
@@ -417,7 +429,7 @@ expublic void un_initialize(void)
  * if -A missing, -s specified, then advertise those by -s only
  * @return SUCCEED/FAIL
  */
-expublic int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
 {
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
@@ -448,7 +460,7 @@ expublic int	tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         entry->is_admin = 0;
         
         /* search for existing entry */
-        strcpy(eltmp.svc_nm, entry->svc_nm);
+        NDRX_STRCPY_SAFE(eltmp.svc_nm, entry->svc_nm);
 
         if (NULL==G_server_conf.service_array)
         {
@@ -511,7 +523,7 @@ out:
  * @param svcname
  * @return 
  */
-expublic int	tpunadvertise (char *svcname)
+expublic int tpunadvertise(char *svcname)
 {
     int ret=EXSUCCEED;
     char svc_nm[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
@@ -535,7 +547,7 @@ expublic int	tpunadvertise (char *svcname)
     
     
     /* Search for service entry */
-    strcpy(eltmp.svc_nm, svc_nm);
+    NDRX_STRCPY_SAFE(eltmp.svc_nm, svc_nm);
 
     if (NULL==G_server_conf.service_array)
     {
@@ -552,7 +564,8 @@ expublic int	tpunadvertise (char *svcname)
             * Firstly we re-configure polling, then delete allocated structs
             * then send info to server.
             */
-            _TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", thisfn, svc_nm);
+            _TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", 
+                    thisfn, svc_nm);
             ret=EXFAIL;
             goto out;
         }
@@ -579,7 +592,7 @@ out:
  * @param sz
  * @return 
  */
-expublic int array_remove_element(void *arr, int elem, int len, int sz)
+expublic int atmisrv_array_remove_element(void *arr, int elem, int len, int sz)
 {
     int ret=EXSUCCEED;
     

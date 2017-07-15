@@ -409,7 +409,7 @@ int ndrx_main(int argc, char** argv)
     /*
      * Push the services out!
      */
-    if (EXSUCCEED!=build_advertise_list())
+    if (EXSUCCEED!=atmisrv_build_advertise_list())
     {
         NDRX_LOG(log_error, "tpsvrinit() fail");
         userlog("tpsvrinit() fail");
@@ -417,7 +417,7 @@ int ndrx_main(int argc, char** argv)
     }
 
     /* initialize the library */
-    if (EXSUCCEED!=initialize_atmi_library())
+    if (EXSUCCEED!=atmisrv_initialize_atmi_library())
     {
         NDRX_LOG(log_error, "initialize_atmi_library() fail");
         userlog("initialize_atmi_library() fail");
@@ -463,7 +463,7 @@ out:
      */
     ndrx_epoll_sys_uninit();
     
-    un_initialize();
+    atmisrv_un_initialize();
     /*
      * Print error message on exit. 
      */

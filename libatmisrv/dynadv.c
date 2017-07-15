@@ -192,7 +192,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         
         len = G_server_conf.adv_service_count;
         
-        if (EXSUCCEED!=array_remove_element((void *)(G_server_conf.service_array), pos, 
+        if (EXSUCCEED!=atmisrv_array_remove_element((void *)(G_server_conf.service_array), pos, 
                     len, sizeof(svc_entry_fn_t *)))
         {
             NDRX_LOG(log_error, "Failed to shift memory for "
@@ -216,7 +216,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         ent=NULL;
 
         service = pos - ATMI_SRV_Q_ADJUST;
-        if (EXSUCCEED!=array_remove_element((void *)G_shm_srv->svc_fail, service, 
+        if (EXSUCCEED!=atmisrv_array_remove_element((void *)G_shm_srv->svc_fail, service, 
                     MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->svc_fail))))
         {
             NDRX_LOG(log_error, "Failed to shift memory for G_shm_srv->svc_succeed!");
@@ -235,7 +235,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         if (G_shm_srv)
         {
             /* Shift shared memory, adjust the stuff by: ATMI_SRV_Q_ADJUST*/
-            if (EXSUCCEED!=array_remove_element((void *)(G_shm_srv->svc_succeed), service, 
+            if (EXSUCCEED!=atmisrv_array_remove_element((void *)(G_shm_srv->svc_succeed), service, 
                         MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->svc_succeed))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for G_shm_srv->svc_succeed!");
@@ -243,7 +243,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
                 goto out;
             }
 
-            if (EXSUCCEED!=array_remove_element((void *)&(G_shm_srv->min_rsp_msec), 
+            if (EXSUCCEED!=atmisrv_array_remove_element((void *)&(G_shm_srv->min_rsp_msec), 
                      service, MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->min_rsp_msec))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for "
@@ -252,7 +252,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
                 goto out;
             }
 
-            if (EXSUCCEED!=array_remove_element((void *)(G_shm_srv->max_rsp_msec), 
+            if (EXSUCCEED!=atmisrv_array_remove_element((void *)(G_shm_srv->max_rsp_msec), 
                         service, MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->max_rsp_msec))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for "
@@ -261,7 +261,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
                 goto out;
             }
 
-            if (EXSUCCEED!=array_remove_element((void *)(G_shm_srv->last_rsp_msec), 
+            if (EXSUCCEED!=atmisrv_array_remove_element((void *)(G_shm_srv->last_rsp_msec), 
                         service,  MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->last_rsp_msec))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for 1"
@@ -270,7 +270,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
                 goto out;
             }
 
-            if (EXSUCCEED!=array_remove_element((void *)&(G_shm_srv->svc_status), 
+            if (EXSUCCEED!=atmisrv_array_remove_element((void *)&(G_shm_srv->svc_status), 
                         service, MAX_SVC_PER_SVR, sizeof(*(G_shm_srv->svc_status))))
             {
                 NDRX_LOG(log_error, "Failed to shift memory for "

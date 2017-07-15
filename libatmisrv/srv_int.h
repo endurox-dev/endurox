@@ -237,11 +237,11 @@ extern NDRX_API int process_admin_req(char *buf, long len,
 /* auto buffer convert: */
 extern NDRX_API long xcvt_lookup(char *fn_nm);
 
-extern NDRX_API int build_advertise_list(void);
-extern NDRX_API int initialize_atmi_library(void);
-extern NDRX_API void un_initialize(void);
+extern NDRX_API int atmisrv_build_advertise_list(void);
+extern NDRX_API int atmisrv_initialize_atmi_library(void);
+extern NDRX_API void atmisrv_un_initialize(void);
 
-extern NDRX_API int array_remove_element(void *arr, int elem, int len, int sz);
+extern NDRX_API int atmisrv_array_remove_element(void *arr, int elem, int len, int sz);
 
 #ifdef	__cplusplus
 }
