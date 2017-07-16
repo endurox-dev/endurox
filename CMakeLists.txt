@@ -374,7 +374,7 @@ configure_file ("${PROJECT_SOURCE_DIR}/include/ndrx_config.h.in"
 
 # Test the available generators and then configure output
 find_program(RPMPROG "rpmbuild")
-find_program(APTPROG "apt")
+find_program(APTPROG "dpkg")
 
 # avoid file /usr/share/man from install of endurox-3.5.1-1.x86_64 conflicts with file from package filesystem-3.2-21.el7.x86_64
 # problems...

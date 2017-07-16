@@ -72,14 +72,13 @@ extern "C" {
 #define  ndrx_mq_timedsend    sol_mq_timedsend
 #define  ndrx_mq_receive      sol_mq_receive
 #define  ndrx_mq_send         sol_mq_send
-
 #define  ndrx_mq_close        sol_mq_close
 #define  ndrx_mq_getattr      sol_mq_getattr
 /*#define  ndrx_mq_notify       sol_mq_notify */
-#define  ndrx_mq_notify       mq_notify/* use base version as it may return EBUSY*/
+#define  ndrx_mq_notify       mq_notify /* use base version as it may return EBUSY normally */
 #define  ndrx_mq_receive      sol_mq_receive
 #define  ndrx_mq_send         sol_mq_send
-#define  ndrx_mq_setattr      sol_mq_setattr	
+#define  ndrx_mq_setattr      sol_mq_setattr
 
 #else
 
@@ -96,8 +95,8 @@ extern "C" {
     
 #if 1==USE_FS_REGISTRY
 
-extern mqd_t ndrx_mq_open_with_registry(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
-extern int ndrx_mq_unlink_with_registry (const char *name);
+extern mqd_t ndrx_mq_open_with_registry(char *name, int oflag, mode_t mode, struct mq_attr *attr);
+extern int ndrx_mq_unlink_with_registry (char *name);
 
 #define  ndrx_mq_open         ndrx_mq_open_with_registry
 #define  ndrx_mq_unlink       ndrx_mq_unlink_with_registry
@@ -112,7 +111,9 @@ extern int ndrx_mq_unlink_with_registry (const char *name);
 #elif 1==EX_OS_SUNOS
 
 #define  ndrx_mq_open         sol_mq_open
-#define  ndrx_mq_unlink       sol_mq_unlink
+/*#define  ndrx_mq_open         mq_open*/
+/* #define  ndrx_mq_unlink       sol_mq_unlink -gets infinite ebusy */
+#define  ndrx_mq_unlink       mq_unlink
 
 #else
 
