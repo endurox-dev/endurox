@@ -187,7 +187,7 @@ int main(int argc, char** argv)
     }
     
     i=0; /* try for 30 sec... */
-    while (i<30000 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
+    while (i<60000 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
     {
         /* Let all replies come in... */
         NDRX_LOG(log_info, "Waiting for replies...");
