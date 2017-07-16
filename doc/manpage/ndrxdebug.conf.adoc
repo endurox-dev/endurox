@@ -5,21 +5,22 @@ NDRXDEBUG.CONF(5)
 
 NAME
 ----
-ndrxdebug.conf - EnduroX Runtime Debug configuration
+ndrxdebug.conf - Enduro/X Runtime Debug configuration
 
 
 SYNOPSIS
 --------
-BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL] [bufsz=DEBUG_BUFFER_SIZE] file=[LOG_FILE]
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL] 
+[bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] file=[LOG_FILE]
 
 
 DESCRIPTION
 -----------
 'debug.conf' a file specified by 'NDRX_DEBUG_CONF' env variable configures
-EnduroX platform logging for each of the seperate executable. The logging is
+EnduroX platform logging for each of the separate executable. The logging is
 done from two sources. One source is UBF and another is ATMI (ndrx). For each
-of the sources debug level can be set for each seperate binary. Debug file
-or stderr also can be specified for each of the seperate binaries.
+of the sources debug level can be set for each separate binary. Debug file
+or stderr also can be specified for each of the separate binaries.
 
 
 DEBUG CONFIGURATION FILE SYNTAX
@@ -30,16 +31,24 @@ DEBUG CONFIGURATION FILE SYNTAX
 	default configuration. It is recommended to put it in start of the file. Any
 	binary afterwards in file will override defaults.
 *NDRX_DEBUG_LEVEL*::
-	ATMI debug level. 0..5. 0=No loging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
+	ATMI debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
 	5=Program detail.
 *UBF_DEBUG_LEVEL*::
-	UBF debug level. 0..5. 0=No loging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
+	UBF debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
 	5=Program detail.
 *TP_DEBUG_LEVEL*::
 	This is tplog(3) user logging level. 0..5. 0=No loging.
         1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
 *DEBUG_BUFFER_SIZE*::
-	Number of lines to buffer before writting out to disk.
+	Number of lines to buffer before writing out to disk.
+*THREADED*::
+    Value is can be set to "Y" or "N". The default is "N". In case of "N" then 
+    logging of the process debug output is sent to the 'LOG_FILE'. All threads
+    are doing logging to single file. If set to "Y", then for each XATMI client
+    there will be open new log file. The log file names are assigned by following
+    approach: Say 'LOG_FILE' = *TEST.LOG*, then new thread log will go to
+    *TEST.X.LOG* (.e.g *TEST.1.LOG*). If 'LOG_FILE' = *TEST_LOG*, then new thread
+    will perform logging to "TEST_LOG.1"
 *LOG_FILE*::
 	Log file. If empty then 'stderr' will be used.
 *COMMENTS*::
@@ -56,13 +65,13 @@ Sample configuration:
 xadmin 		file=${NDRX_APPHOME}/tmp/XADMIN
 ndrxd 		file=${NDRX_APPHOME}/tmp/NDRXD
 myclient	file=${NDRX_APPHOME}/tmp/MYCLIENT
-myserver	file=${NDRX_APPHOME}/tmp/MYSERVER
+myserver	file=${NDRX_APPHOME}/tmp/MYSERVER threaded=y
 ud		file=${NDRX_APPHOME}/tmp/NDRX
 ---------------------------------------------------------------------
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
@@ -70,7 +79,7 @@ SEE ALSO
 
 AUTHOR
 ------
-EnduroX is created by Madars Vitolins.
+Enduro/X is created by Madars Vitolins.
 
 
 COPYING
