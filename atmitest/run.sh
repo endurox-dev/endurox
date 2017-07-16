@@ -29,6 +29,10 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
+
+# kill childs when master exist...
+shopt -s huponexit
+
 OS=`uname`
 
 if [[ "$OS" == "Linux" ]]; then
