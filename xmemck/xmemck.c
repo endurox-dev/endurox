@@ -178,8 +178,8 @@ int main(int argc, char** argv)
         
         fprintf(stderr, "Enduro/X memory check usage:\n");
         fprintf(stderr, "%s [-p period in sec, default 1] [-d allow_increase_delta_percent, default 5] \\\n"
-                "[-s start_percent, default 40] [-t stop_percent, default 90] [-n negative_regex_mask] "
-                "-m proc_mask_to_monitor1 [-m mask2] ... \n", argv[0]);
+                "[-s start_percent, default 40] [-t stop_percent, default 90] [-n negative_regex_mask] \\\n"
+                "[-v min_values, default 20] -m proc_mask_to_monitor1 [-m mask2] ... \n", argv[0]);
         exit(EXFAIL);
     }
     
