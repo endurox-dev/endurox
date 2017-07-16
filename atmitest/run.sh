@@ -49,9 +49,8 @@ xmemck -v20 -d30 -s60 -t95 -n 'atmiunit1|tpbridge|tmsrv' -m atmi -d70 -m tpbridg
 
 pushd .
 (./atmiunit1 2>&1) > test.out
-popd
-
 RET=$?
+popd
 
 # stop memcheck
 xadmin killall memck
