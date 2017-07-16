@@ -192,6 +192,7 @@ char *M_noinit[] = {
     ,"h"
     ,"killall"
     ,"gen"
+    ,"echo"
 };
 
 /**
