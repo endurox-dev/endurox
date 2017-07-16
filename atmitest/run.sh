@@ -50,6 +50,9 @@ fi
 
 # start memcheck
 xmemck -v20 -d30 -s60 -t95 -n 'atmiunit1|tpbridge|tmsrv' -m atmi -d70 -m tpbridge -m tmsrv 2>./memck.log 1>./memck.out & 
+MEMCK_PID=$!
+
+echo "Memck pid = $MEMCK_PID"
 
 pushd .
 (./atmiunit1 2>&1) > test.out
@@ -57,7 +60,9 @@ RET=$?
 popd
 
 # stop memcheck
-xadmin killall memck
+# bash will stop?
+#xadmin killall xmemck
+kill -9 $MEMCK_PID
 
 # grep the stats, >>> LEAK found, return error
 echo "==== Leak info ====" >> test.out
