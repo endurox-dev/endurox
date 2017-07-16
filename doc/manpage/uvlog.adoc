@@ -1,0 +1,94 @@
+UVLOG(8)
+========
+:doctype: manpage
+
+
+NAME
+----
+uvlog - Ultra Vision LOG viewer
+
+
+SYNOPSIS
+--------
+*uvlog* [filename]...
+
+
+DESCRIPTION
+-----------
+This is perl scrip which reads the multiple log files. Does open then and merge
+the output lines chronologically between all files. The time stamp used for output
+merging is standard Enduro/X logging format. The lines which do not start with
+the Enduro/X format, are joined to the last matched line. The joined log is
+printed to *stdout* and the debug of the *uvlog* it self is printed to *stderr*.
+
+For example assume *file1.log* is following:
+
+--------------------------------------------------------------------------------
+m:NDRX:5:31720:7f8eba996700:006:20170711:122923293:autils.c:0385:Serialized xid: [YZT3oRAFXaXhDxTvSQy6R7a5gY5zwQEBADIA]
+m:NDRX:5:31720:7f8eba996700:006:20170711:122923293:/tmapi.c:0286:TX tout: 60
+m:NDRX:3:31720:7f8eba996700:006:20170711:122923294:perror.c:0392:atmi_xa_set_error_msg: 0 (TPMINVAL) [Success]
+m:NDRX:4:31720:7f8eba996700:006:20170711:122923294:/utils.c:0220:TPTMSRV return buffer:
+TMNODEID        1
+TMRMID  1
+TMSRVID 50
+TMERR_CODE      0
+--------------------------------------------------------------------------------
+
+And *file2.log* is following:
+
+--------------------------------------------------------------------------------
+m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:ed_buf.c:0252:_tpalloc: type=NULL len=120 allocated=0x1caadc0
+m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:spatch.c:0292:Buffer=0x1caadc0 autoalloc=1
+m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:verapi.c:0315:tpsrvgetctxdata: returning 0x1cab090 (last call cd: 16382)
+m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:return.c:0557:Long jumping to continue!
+m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:spatch.c:0438:Got back from reply/forward (16)
+--------------------------------------------------------------------------------
+
+The joined output is acquired in following way:
+
+--------------------------------------------------------------------------------
+$ uvlog file1.log file2.log  2>/dev/null
+000.000|file1.log     |m:NDRX:5:31720:7f8eba996700:006:20170711:122923293:autils.c:0385:Serialized xid: [YZT3oRAFXaXhDxTvSQy6R7a5gY5zwQEBADIA]
+000.000|file1.log     |m:NDRX:5:31720:7f8eba996700:006:20170711:122923293:/tmapi.c:0286:TX tout: 60
+000.000|file2.log     |m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:ed_buf.c:0252:_tpalloc: type=NULL len=120 allocated=0x1caadc0
+000.000|file2.log     |m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:spatch.c:0292:Buffer=0x1caadc0 autoalloc=1
+000.000|file2.log     |m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:verapi.c:0315:tpsrvgetctxdata: returning 0x1cab090 (last call cd: 16382)
+000.000|file2.log     |m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:return.c:0557:Long jumping to continue!
+000.000|file2.log     |m:NDRX:5:31720:7f8ebdb897c0:000:20170711:122923293:spatch.c:0438:Got back from reply/forward (16)
+000.001|file1.log     |m:NDRX:3:31720:7f8eba996700:006:20170711:122923294:perror.c:0392:atmi_xa_set_error_msg: 0 (TPMINVAL) [Success]
+000.000|file1.log     |m:NDRX:4:31720:7f8eba996700:006:20170711:122923294:/utils.c:0220:TPTMSRV return buffer:
+000.000|file1.log     |TMNODEID        1
+000.000|file1.log     |TMRMID  1
+000.000|file1.log     |TMSRVID 50
+000.000|file1.log     |TMERR_CODE      0
+--------------------------------------------------------------------------------
+
+The first column of the output contains time difference between previous and
+current line.
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tplog(3)*, *ex_overview*
+
+AUTHOR
+------
+Enduro/X is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Mavimax, ltd.
+
