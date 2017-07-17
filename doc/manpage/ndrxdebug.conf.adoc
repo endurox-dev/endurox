@@ -10,8 +10,7 @@ ndrxdebug.conf - Enduro/X Runtime Debug configuration
 
 SYNOPSIS
 --------
-BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL] 
-[bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] file=[LOG_FILE]
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] file=[LOG_FILE]
 
 
 DESCRIPTION
@@ -38,7 +37,7 @@ DEBUG CONFIGURATION FILE SYNTAX
 	5=Program detail.
 *TP_DEBUG_LEVEL*::
 	This is tplog(3) user logging level. 0..5. 0=No loging.
-        1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
+    1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
 *DEBUG_BUFFER_SIZE*::
 	Number of lines to buffer before writing out to disk.
 *THREADED*::
@@ -48,7 +47,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     there will be open new log file. The log file names are assigned by following
     approach: Say 'LOG_FILE' = *TEST.LOG*, then new thread log will go to
     *TEST.X.LOG* (.e.g *TEST.1.LOG*). If 'LOG_FILE' = *TEST_LOG*, then new thread
-    will perform logging to "TEST_LOG.1"
+    will perform logging to "TEST_LOG.1".
 *LOG_FILE*::
 	Log file. If empty then 'stderr' will be used.
 *COMMENTS*::
@@ -58,6 +57,7 @@ DEBUG CONFIGURATION FILE SYNTAX
 EXAMPLE
 -------
 Sample configuration:
+
 ---------------------------------------------------------------------
 # Global config:
 * ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file=
@@ -84,5 +84,5 @@ Enduro/X is created by Madars Vitolins.
 
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, Ltd
 
