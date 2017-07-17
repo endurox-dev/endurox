@@ -165,21 +165,34 @@ is set with keyword 'tp'. Facility is defined with macros 'LOG_FACILITY_TP_THREA
 per thread/request basis. The log level is set with keyword 'tp'. 
 Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
 
+- 'NDRX_THREAD', logging code 'n' - logs the Enduro/X internals on thread basis.
+
+- 'UBF_THREAD', logging code 'u' - logs UBF internals on thread basis.
+
+- 'NDRX_REQUEST', logging code 'm' - logs the Enduro/X internals on per request basis.
+
+- 'UBF_REQUEST', logging code 'v' - logs UBF internals on per request basis.
+
 === Hierarchy of the  loggers (facilities)
 
 The loggers output the debug content in following order of the facilities status
 (i.e. definition of current logger):
 
-- If 'TP_REQUEST' is open (debug file set), then all logging (NDRX, UBF, TP) will go here.
-The debug level is shared at application level with NDRX, UBF and TP facilities.
+- If 'TP_REQUEST' is open (debug file set), then all logging (TP) will go here.
 There will be no impact if 'TP_REQUEST' log level is different.
 The request logging can be open by *tplogsetreqfile(3)*. 
 Logger can be closed by *tplogclosereqfile(3)*.
 
-- If 'TP_THREAD' is open (debug file set), then all logs including NDRX, UBF 
-and TP will log here. Thread logger can be open by doing
+- If 'TP_THREAD' is open (debug file set), then all logs of TP will log here. 
+Thread logger can be open by doing
 *tplogconfig(LOG_FACILITY_TP_THREAD, ...)*. Thread logger can be 
 closed by *tplogclosethread(3)*
+
+- The above principles applies to NDRX_THREAD/REQUEST and UBF_THREAD/REQUEST too.
+
+- NOTE: That that Thread and request logger might have lower or the same 
+log levels as for main loggers. The higher log level than main log level will be
+ignored.
 
 If there is no TP_REQUEST or TP_THREAD facilities open, then logging is done on 
 per process basis, where there are 3 facilities which are always open:
@@ -378,7 +391,9 @@ Where:
 
 - 'LOGGER_FACILITY' - is logger code which to which message is logged, i.e. 
 'N' - NDRX process based logger, 'U' - UBF process based logger, 
-'t' - TP log, process based, 'T' - thread based logger, 'R' - request logger.
+'t' - TP log, process based, 'T' - TP thread based logger, 'R' - TP request logger,
+'n' - Enduro/X internals (NDRX) thread logger, 'm' - Enduro/X internals (NDRX)
+request logger, 'u' - UBF thread logger, 'v' - UBF request logger.
 
 - 'MODULE' - 4 char long logger, 'NDRX' and 'UBF ' or user given code by 
 *tplogconfig(3)*. Default is 'USER'.
