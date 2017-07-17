@@ -31,7 +31,7 @@
 ##
 
 # kill childs when master exist...
-shopt -s huponexit
+#shopt -s huponexit
 
 OS=`uname`
 
