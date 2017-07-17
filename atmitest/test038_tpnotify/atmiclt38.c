@@ -187,11 +187,11 @@ int main(int argc, char** argv)
     }
     
     i=0; /* try for 30 sec... */
-    while (i<60000 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
+    while (i<100000 && (M_replies_got < M_calls_made || M_replies_got < M_calls_made))
     {
         /* Let all replies come in... */
         NDRX_LOG(log_info, "Waiting for replies...");
-        usleep(10000); /* 0.1 sec */
+        usleep(1000); /* 0.01 sec */
         if (EXSUCCEED!=handle_replies(&p_ub,  0))
         {
              NDRX_LOG(log_error, "TESTERROR: handle_replies() failed");
