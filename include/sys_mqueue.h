@@ -63,8 +63,7 @@ extern "C" {
 #define  ndrx_mq_send         emq_send
 #define  ndrx_mq_setattr      emq_setattr
 	
-/*
-#elif 1==EX_OS_SUNOS
+#elif 2==EX_OS_SUNOS
 	
 /* Only selected functions which appears
  * to return EBUSY- 16
@@ -80,7 +79,6 @@ extern "C" {
 #define  ndrx_mq_receive      sol_mq_receive
 #define  ndrx_mq_send         sol_mq_send
 #define  ndrx_mq_setattr      sol_mq_setattr
-*/
 
 #else
 
@@ -110,15 +108,12 @@ extern int ndrx_mq_unlink_with_registry (char *name);
 #define  ndrx_mq_open         emq_open
 #define  ndrx_mq_unlink       emq_unlink
 
-/*
-#elif 1==EX_OS_SUNOS
+#elif 2==EX_OS_SUNOS
 
 #define  ndrx_mq_open         sol_mq_open
 /*#define  ndrx_mq_open         mq_open*/
 /* #define  ndrx_mq_unlink       sol_mq_unlink -gets infinite ebusy */
 #define  ndrx_mq_unlink       mq_unlink
-
-*/
 
 #else
 
