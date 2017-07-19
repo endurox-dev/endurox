@@ -97,6 +97,8 @@ typedef struct
     /* we should have lock inside */
     pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
     
+    int user_field_1; /* used for testing where TLS is needed... */
+    
 } nstd_tls_t;
 
 /*---------------------------Globals------------------------------------*/

@@ -84,6 +84,8 @@ cd conf
 
 . settest1
 
+xadmin down -y
+
 xadmin start -y || exit 1
 
 xadmin psc
