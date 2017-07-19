@@ -226,6 +226,8 @@ expublic void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     NDRX_STRCPY_SAFE(tls->requestlog_ndrx.module, "NDRX");
     NDRX_STRCPY_SAFE(tls->requestlog_tp.module, "USER");
     
+    tls->user_field_1 = 0;
+    
     pthread_mutex_init(&tls->mutex, NULL);
     
     /* set callback, when thread dies, we need to get the destructor 

@@ -560,12 +560,16 @@ expublic int xa_start_entry_stat(XID *xid, int rmid, long flags)
  */
 expublic int xa_start_entry_statstartfail(XID *xid, int rmid, long flags)
 {
+    /*
     static __thread int cntr = 0;
     cntr++;
+    */
+    G_nstd_tls->user_field_1++;
     
-    if (0!=cntr%3)
+    if (0!=G_nstd_tls->user_field_1%3)
     {
-        NDRX_LOG(log_error, "start FAIL (%d) - close connection too...", cntr);
+        NDRX_LOG(log_error, "start FAIL (%d) - close connection too...", 
+                G_nstd_tls->user_field_1);
         M_is_open = EXFALSE;
         return XAER_RMERR;
     }
