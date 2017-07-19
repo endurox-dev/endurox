@@ -518,6 +518,8 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
                 goto out;
             }
             
+            p_pm->conf = p_conf; /* keep the reference to config entry */
+
             /* format the process model entry */
             NDRX_STRCPY_SAFE(p_pm->binary_name, p_conf->binary_name);
             /* get the path of the binary... */
@@ -543,7 +545,6 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
                 }
             }
             
-            p_pm->conf = p_conf; /* keep the reference to config entry */
             p_pm->srvid = p_conf->srvid+cnt;
             /* Request state is stopped */
             p_pm->reqstate = NDRXD_PM_NOT_STARTED;
