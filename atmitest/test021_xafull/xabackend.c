@@ -52,6 +52,7 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include <nstopwatch.h>
+#include <nstdutil.h>
 
 #include <xa.h>
 #include <atmi_int.h>
@@ -564,9 +565,10 @@ expublic int xa_start_entry_statstartfail(XID *xid, int rmid, long flags)
     static __thread int cntr = 0;
     cntr++;
     */
-    G_nstd_tls->user_field_1++;
+    nstd_tls_t *tls = (nstd_tls_t *)ndrx_nstd_tls_get();
+    tls->user_field_1++;
     
-    if (0!=G_nstd_tls->user_field_1%3)
+    if (0!=tls->user_field_1%3)
     {
         NDRX_LOG(log_error, "start FAIL (%d) - close connection too...", 
                 G_nstd_tls->user_field_1);
