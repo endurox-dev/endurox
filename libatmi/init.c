@@ -236,7 +236,7 @@ expublic int ndrx_load_common_env(void)
     }
     else
     {
-        strcpy(G_atmi_env.rnd_key, p);
+        NDRX_STRCPY_SAFE(G_atmi_env.rnd_key, p);
         NDRX_LOG(log_debug, "Random key set to: [%s]", G_atmi_env.rnd_key);
     }
 
