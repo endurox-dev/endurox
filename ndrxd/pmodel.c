@@ -993,7 +993,7 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         p_shutdown_progress((command_call_t*)cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STOPPING);
 
     /* Form a call queue, probably we need move all stuff to atmienv!  */
-    sprintf(srv_queue, NDRX_ADMIN_FMT, G_sys_config.qprefix, 
+    snprintf(srv_queue, sizeof(srv_queue), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
             p_pm->binary_name, p_pm->srvid, p_pm->pid);
     NDRX_LOG(log_debug, "%s: calling up: [%s]", fn, srv_queue);
     

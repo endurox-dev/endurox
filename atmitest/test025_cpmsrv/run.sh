@@ -219,13 +219,32 @@ fi
 echo "Processes in system: "
 $PSCMD
 
-CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
+#CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
+#echo "$PSCMD procs: $CNT"
+#if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
+        #echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
+        #go_out 7
+#fi
+
+CNT=0
+while read -r line ; do
+    echo "Processing [$line]"
+    # your code goes here
+    MATCH=`echo $line | grep whileproc.sh`
+    
+    if [ "X$MATCH" != "X" ]; then
+        echo "MATCH: [$MATCH]"
+        CNT=$((CNT+1))
+    else
+        echo "NOT MATCH: [$MATCH]"
+    fi
+done < <($PSCMD)
+
 echo "$PSCMD procs: $CNT"
 if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
         go_out 7
 fi
-
 
 # test signle binary shutdown 
 xadmin sc -t IGNORE
