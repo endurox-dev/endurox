@@ -64,6 +64,10 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 export NDRX_TOUT=13
 # Test process count
 PROC_COUNT=100
+#
+# Having some bash forks...
+#
+PROC_COUNT_DIFFALLOW=103
 
 PSCMD="ps -ef"
 if [ "$(uname)" == "FreeBSD" ]; then
@@ -226,22 +230,42 @@ $PSCMD
         #go_out 7
 #fi
 
+#
+# Having some issues when bash is doing forks inside the test script -> whileproc.sh
+# Thus filter by cpmsrv pid in ps line...
+#
+CPM_PID=0
+if [ "$(uname)" == "FreeBSD" ]; then
+        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+else
+        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+fi
+
 CNT=0
-while read -r line ; do
-    echo "Processing [$line]"
-    # your code goes here
-    MATCH=`echo $line | grep whileproc.sh`
+if [ "$(uname)" == "Linux" ]; then
+	while read -r line ; do
+    		echo "Processing [$line]"
+    		# your code goes here
+    		MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
     
-    if [ "X$MATCH" != "X" ]; then
-        echo "MATCH: [$MATCH]"
-        CNT=$((CNT+1))
-    else
-        echo "NOT MATCH: [$MATCH]"
-    fi
-done < <($PSCMD)
+    		if [ "X$MATCH" != "X" ]; then
+        		echo "MATCH: [$MATCH]"
+        		CNT=$((CNT+1))
+    		else
+        		echo "NOT MATCH: [$MATCH]"
+    		fi
+	done < <($PSCMD)
+
+	PROC_COUNT_DIFFALLOW=$PROC_COUNT
+
+else
+
+	CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
+fi
 
 echo "$PSCMD procs: $CNT"
-if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
+
+if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
         go_out 7
 fi
