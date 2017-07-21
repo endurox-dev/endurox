@@ -226,11 +226,23 @@ $PSCMD
         #go_out 7
 #fi
 
+#
+# Having some issues when bash is doing forks inside the test script -> whileproc.sh
+# Thus filter by cpmsrv pid in ps line...
+#
+CPM_PID=0
+if [ "$(uname)" == "FreeBSD" ]; then
+        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+else
+        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+fi
+
+
 CNT=0
 while read -r line ; do
     echo "Processing [$line]"
     # your code goes here
-    MATCH=`echo $line | grep whileproc.sh`
+    MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
     
     if [ "X$MATCH" != "X" ]; then
         echo "MATCH: [$MATCH]"
@@ -241,7 +253,7 @@ while read -r line ; do
 done < <($PSCMD)
 
 echo "$PSCMD procs: $CNT"
-if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
+if [ "$CNT" -ne "$PROC_COUNT" ]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
         go_out 7
 fi
