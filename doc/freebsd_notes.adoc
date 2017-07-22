@@ -65,9 +65,10 @@ EOF
 ---------------------------------------------------------------------
 
 Enduor/X testing framework uses '/bin/bash' in scripting, thus we must
-get it working:
+get it working. Also perl is assumed to to be '/usr/bin/perl'. Thus:
 ---------------------------------------------------------------------
 # ln -s /usr/local/bin/bash /bin/bash
+# ln -s /usr/local/bin/perl /usr/bin/perl
 ---------------------------------------------------------------------
 
 *reboot* to apply new settigns (limits & mqueue mount)
