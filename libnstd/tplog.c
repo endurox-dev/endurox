@@ -64,7 +64,7 @@
  */
 exprivate void logfile_close(FILE *p)
 {
-    ndrx_debug_t *fd_arr[5];
+    ndrx_debug_t *fd_arr[9];
     int i;
     int cnt = 0;
     int num;
@@ -83,7 +83,15 @@ exprivate void logfile_close(FILE *p)
     {
         fd_arr[3] = &G_nstd_tls->threadlog_tp;
         fd_arr[4] = &G_nstd_tls->requestlog_tp;
-        num = 5;
+        
+        
+        fd_arr[5] = &G_nstd_tls->threadlog_ndrx;
+        fd_arr[6] = &G_nstd_tls->requestlog_ndrx;
+        
+        fd_arr[7] = &G_nstd_tls->threadlog_ubf;
+        fd_arr[8] = &G_nstd_tls->requestlog_ubf;
+        
+        num = 9;
     }
     
     for (i=0; i<num; i++)
@@ -161,7 +169,7 @@ exprivate int logfile_change_name(int logger, char *filename)
         }
         else
         {
-            strcpy(l->filename, filename);
+            NDRX_STRCPY_SAFE(l->filename, filename);
         }
     }
     else
@@ -423,7 +431,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
         if (NULL!=new_file && EXEOS!=new_file[0] && 0!=strcmp(new_file, l->filename))
         {            
             /* open new log file... (to what ever level we run...) */
-            strcpy(l->filename, new_file);
+            NDRX_STRCPY_SAFE(l->filename, new_file);
             if (EXSUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
             {
                 _Nset_error_msg(NESYSTEM, "Failed to change log name");
