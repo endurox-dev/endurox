@@ -216,7 +216,7 @@ expublic int start_daemon_idle(void)
             ndrx_mq_close(G_config.reply_queue);
 
         /* this is child - start EnduroX back-end*/
-        sprintf(key, NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
+        snprintf(key, sizeof(key), NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
 
         /* Open log file */
@@ -227,6 +227,13 @@ expublic int start_daemon_idle(void)
         }
         else
         {
+		
+	    /* Bug #176 */
+            if (EXSUCCEED!=fcntl(fileno(f), F_SETFD, FD_CLOEXEC))
+            {
+                userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
+            }
+	    
             /* Redirect stdout, stderr to log file */
             close(1);
             close(2);

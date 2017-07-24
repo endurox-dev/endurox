@@ -1050,11 +1050,6 @@ expublic FILE *ndrx_fopen_dbg(const char *path, const char *mode,
     ret = fopen(path, mode);
     errnosv = errno;
    
-    if (EXSUCCEED!=fcntl(fileno(ret), F_SETFD, FD_CLOEXEC))
-    {
-        userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
-    }
-    
     userlog("[%p] <= fopen(path=%s, mode=%s):%s %s:%ld", ret,  path, mode,
             func, file, line);
     

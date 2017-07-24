@@ -33,6 +33,7 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <utlist.h>
@@ -273,11 +274,18 @@ int ndrx_init(int argc, char** argv)
             case 'e':
             {
                 FILE *f;
-                strcpy(G_server_conf.err_output, optarg);
+                NDRX_STRCPY_SAFE(G_server_conf.err_output, optarg);
 
                 /* Open error log, OK? */
+		/* Do we need to close this on exec? */
                 if (NULL!=(f=NDRX_FOPEN(G_server_conf.err_output, "a")))
                 {
+                     /* Bug #176 */
+                     if (EXSUCCEED!=fcntl(fileno(f), F_SETFD, FD_CLOEXEC))
+                     {
+                         userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
+                     }
+
                     /* Redirect stdout & stderr to error file */
                     close(1);
                     close(2);
