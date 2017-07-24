@@ -101,7 +101,7 @@ The given example monitors following:
 
 - (-m tmsrv) Monitor process named *tmsrv*
 
-When leak is detected, the following infos is printed in the log/stderr:
+When leak is detected, the following infos is printed to stdout:
 
 --------------------------------------------------------------------------------
 
@@ -130,8 +130,7 @@ AUTHOR
 ------
 Enduro/X is created by Madars Vitolins.
 
-
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, Ltd.
 

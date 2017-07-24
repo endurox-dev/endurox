@@ -51,6 +51,7 @@
 
 
 #include "cpmsrv.h"
+#include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -506,6 +507,9 @@ expublic int cpm_exec(cpm_process_t *c)
 
     if( pid == 0)
     {
+        /* close parent resources... Bug #176 */
+	atmisrv_un_initialize(EXTRUE);
+        
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
 

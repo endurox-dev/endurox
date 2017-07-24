@@ -239,7 +239,7 @@ extern NDRX_API long xcvt_lookup(char *fn_nm);
 
 extern NDRX_API int atmisrv_build_advertise_list(void);
 extern NDRX_API int atmisrv_initialize_atmi_library(void);
-extern NDRX_API void atmisrv_un_initialize(void);
+extern NDRX_API void atmisrv_un_initialize(int fork_uninit);
 
 extern NDRX_API int atmisrv_array_remove_element(void *arr, int elem, int len, int sz);
 

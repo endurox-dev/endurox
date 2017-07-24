@@ -572,6 +572,11 @@ expublic void ndrx_init_debug(void)
         }
         else
         {   
+            /* close descriptors of fork: Bug #176 */
+	    if (EXSUCCEED!=fcntl(fileno(G_ndrx_debug.dbg_f_ptr), F_SETFD, FD_CLOEXEC))
+            {
+                userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
+            }
             setvbuf(G_ndrx_debug.dbg_f_ptr, NULL, _IOFBF, G_ndrx_debug.buffer_size);
             G_tp_debug.dbg_f_ptr = G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr;
         }
@@ -1043,9 +1048,8 @@ expublic FILE *ndrx_fopen_dbg(const char *path, const char *mode,
     int errnosv;
     
     ret = fopen(path, mode);
-    
     errnosv = errno;
-            
+   
     userlog("[%p] <= fopen(path=%s, mode=%s):%s %s:%ld", ret,  path, mode,
             func, file, line);
     

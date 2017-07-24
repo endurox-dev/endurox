@@ -363,7 +363,7 @@ out:
  * Un-initialize all stuff
  * @return void
  */
-expublic void atmisrv_un_initialize(void)
+expublic void atmisrv_un_initialize(int fork_uninit)
 {
     int i;
     /* We should close the queues and detach shared memory!
@@ -383,7 +383,7 @@ expublic void atmisrv_un_initialize(void)
                                             errno, strerror(errno));
             }
 
-            if (ATMI_SRV_ADMIN_Q==i || ATMI_SRV_REPLY_Q==i)
+            if (!fork_uninit && (ATMI_SRV_ADMIN_Q==i || ATMI_SRV_REPLY_Q==i))
             {
                 NDRX_LOG(log_debug, "Removing queue: %s",
                                     G_server_conf.service_array[i]->listen_q);
