@@ -798,6 +798,14 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     if( pid == 0)
     {
+        /* Bug #176: close parent resources - not needed any more... */
+        ndrxd_shm_close_all();
+    	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
+        {
+            NDRX_LOG(log_error, "Failed to close: [%s] err: %s",
+                                     G_command_state.listenq_str, strerror(errno));
+        }
+
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
         /* this is child - start EnduroX back-end*/

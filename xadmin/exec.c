@@ -207,6 +207,14 @@ expublic int start_daemon_idle(void)
     if( pid == 0)
     {
         FILE *f;
+
+        /*Bug #176 close resources */
+        if (G_config.ndrxd_q != (mqd_t)EXFAIL)
+            ndrx_mq_close(G_config.ndrxd_q);
+
+        if (G_config.reply_queue != (mqd_t)EXFAIL)
+            ndrx_mq_close(G_config.reply_queue);
+
         /* this is child - start EnduroX back-end*/
         sprintf(key, NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
