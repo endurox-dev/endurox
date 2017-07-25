@@ -1270,6 +1270,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
             /* if it is message, the re-alloc  */
             if (TMQ_STORCMD_NEWMSG==p_block->hdr.command_code)
             {
+                int bytes_extra;
+                int bytes_to_read;
                 if (NULL==(p_block = NDRX_REALLOC(p_block, sizeof(tmq_msg_t) + p_block->msg.len)))
                 {
                     NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
@@ -1277,11 +1279,33 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                     EXFAIL_OUT(ret);
                 }
                 /* Read some more */
-                if (EXSUCCEED!=read_tx_block(f, p_block->msg.msg, p_block->msg.len))
+                /* Bug #178
+                 * Under raspberry-pi looks like msg.msg is closer to the start than
+                 * whole message, and problem is that two bytes gets lost or over
+                 * written. Thus needs some kind of correction - advance the
+                 * pointer to msg over the extra bytes we have read.
+                 * Also needs correction against size to read.
+                 */
+                bytes_extra = sizeof(*p_block)-sizeof(tmq_msg_t);
+                bytes_to_read = p_block->msg.len - bytes_extra;
+                
+                NDRX_LOG(log_info, "bytes_extra=%d bytes_to_read=%d", 
+                        bytes_extra, bytes_to_read);
+                
+                if (bytes_to_read > 0)
                 {
-                    NDRX_LOG(log_error, "Failed to read [%s]: %s", 
-                       filename, strerror(errno));
-                    EXFAIL_OUT(ret);
+                    if (EXSUCCEED!=read_tx_block(f, 
+                            p_block->msg.msg+(sizeof(*p_block)-sizeof(tmq_msg_t)), 
+                            bytes_to_read))
+                    {
+                        NDRX_LOG(log_error, "Failed to read [%s]: %s", 
+                           filename, strerror(errno));
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                else
+                {
+                    NDRX_LOG(log_info, "Full message already read by command block!");
                 }
                 /* unlock the message */
                 p_block->msg.lockthreadid = 0;
