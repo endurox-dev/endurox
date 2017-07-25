@@ -34,6 +34,8 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
+#include <fcntl.h>
+
 #include <sys_mqueue.h>
 #include <sys/param.h>
 #include <sys_mqueue.h>

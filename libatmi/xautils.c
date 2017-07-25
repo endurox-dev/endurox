@@ -475,11 +475,11 @@ expublic atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
         goto out;
     }
     
-    strcpy(tmp->tmxid, tmxid);
+    NDRX_STRCPY_SAFE(tmp->tmxid, tmxid);
     tmp->tmrmid = tmrmid;
     tmp->tmnodeid = tmnodeid;
     tmp->tmsrvid = tmsrvid;
-    strcpy(tmp->tmknownrms, tmknownrms);
+    NDRX_STRCPY_SAFE(tmp->tmknownrms, tmknownrms);
     
     EXHASH_ADD_STR( G_atmi_tls->G_atmi_xa_curtx.tx_tab, tmxid, tmp );
     
