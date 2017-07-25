@@ -321,7 +321,7 @@ out:
  * Initialize common ATMI library
  * @return SUCCED/FAIL
  */
-expublic int atmisrv_initialize_atmi_library(void)
+expublic int atmisrv_initialise_atmi_library(void)
 {
     int ret=EXSUCCEED;
     atmi_lib_conf_t conf;

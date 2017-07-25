@@ -105,7 +105,7 @@ int parse_svc_arg(char *arg)
 
         if (EXEOS!=alias_name[0])
         {
-            strcpy(entry->svc_alias, alias_name);
+            NDRX_STRCPY_SAFE(entry->svc_alias, alias_name);
         }
         
         /*
@@ -249,7 +249,7 @@ int ndrx_init(int argc, char** argv)
         {
             case 'k':
                 /* just ignore the key... */
-                strcpy(key, optarg);
+                NDRX_STRCPY_SAFE(key, optarg);
                 break;
             case 's':
                 ret=parse_svc_arg(optarg);
@@ -285,7 +285,8 @@ int ndrx_init(int argc, char** argv)
                      /* Bug #176 */
                      if (EXSUCCEED!=fcntl(fileno(f), F_SETFD, FD_CLOEXEC))
                      {
-                         userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
+                         userlog("WARNING: Failed to set FD_CLOEXEC: %s", 
+				 strerror(errno));
                      }
 
                     /* Redirect stdout & stderr to error file */
@@ -320,7 +321,7 @@ int ndrx_init(int argc, char** argv)
     if (EXFAIL==G_server_conf.time_out)
     {
         /* Get timeout */
-        if (NULL!=(p=getenv("NDRX_TOUT")))
+        if (NULL!=(p=getenv(CONF_NDRX_TOUT)))
         {
             G_server_conf.time_out = atoi(p);
         }
@@ -371,7 +372,7 @@ int ndrx_init(int argc, char** argv)
     }
     else
     {
-        strcpy(G_server_conf.q_prefix, p);
+        NDRX_STRCPY_SAFE(G_server_conf.q_prefix, p);
     }
 
     G_srv_id = G_server_conf.srv_id;
@@ -393,7 +394,7 @@ int ndrx_main(int argc, char** argv)
 {
     int ret=EXSUCCEED;
 
-    /* do internal initialization, get configuration, request for admin q */
+    /* do internal initialisation, get configuration, request for admin q */
     if (EXSUCCEED!=ndrx_init(argc, argv))
     {
         NDRX_LOG(log_error, "ndrx_init() fail");
@@ -402,12 +403,12 @@ int ndrx_main(int argc, char** argv)
     }
     
     /*
-     * Initialize polling subsystem
+     * Initialise polling subsystem
      */
     ndrx_epoll_sys_init();
     
     /*
-     * Initialize services
+     * Initialise services
      */
     if (EXSUCCEED!=tpsvrinit(argc, argv))
     {
@@ -426,11 +427,11 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
 
-    /* initialize the library */
-    if (EXSUCCEED!=atmisrv_initialize_atmi_library())
+    /* initialise the library */
+    if (EXSUCCEED!=atmisrv_initialise_atmi_library())
     {
-        NDRX_LOG(log_error, "initialize_atmi_library() fail");
-        userlog("initialize_atmi_library() fail");
+        NDRX_LOG(log_error, "initialise_atmi_library() fail");
+        userlog("initialise_atmi_library() fail");
         EXFAIL_OUT(ret);
     }
     
@@ -439,8 +440,8 @@ int ndrx_main(int argc, char** argv)
      */
     if (EXSUCCEED!=sv_open_queue())
     {
-        NDRX_LOG(log_error, "initialize_atmi_library() fail");
-        userlog("initialize_atmi_library() fail");
+        NDRX_LOG(log_error, "sv_open_queue() fail");
+        userlog("sv_open_queue() fail");
         EXFAIL_OUT(ret);
     }
     
