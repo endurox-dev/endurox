@@ -1287,7 +1287,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                  * Also needs correction against size to read.
                  * This assumes that "tmq_msg_t" is largest structure...
                  */
-                bytes_extra = sizeof(*p_block)-EXOFFSET(tmq_msg_t, tmq_msg_t.msg);
+                bytes_extra = sizeof(*p_block)-EXOFFSET(tmq_msg_t, msg);
                 bytes_to_read = p_block->msg.len - bytes_extra;
                 
                 NDRX_LOG(log_info, "bytes_extra=%d bytes_to_read=%d", 
