@@ -1296,7 +1296,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 if (bytes_to_read > 0)
                 {
                     if (EXSUCCEED!=read_tx_block(f, 
-                            p_block->msg.msg+(sizeof(*p_block)-sizeof(tmq_msg_t)), 
+                            p_block->msg.msg+bytes_extra, 
                             bytes_to_read))
                     {
                         NDRX_LOG(log_error, "Failed to read [%s]: %s", 
