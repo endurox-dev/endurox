@@ -129,7 +129,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
         NDRX_LOG(log_error, "Missing EX_DATA!");
         userlog("Missing EX_DATA!");
         
-        strcpy(qctl_out.diagmsg, "Missing EX_DATA!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "Missing EX_DATA!");
         qctl_out.diagnostic = QMEINVAL;
         
         EXFAIL_OUT(ret);
@@ -145,7 +145,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
         NDRX_LOG(log_error, "Failed to malloc tmq_msg_t!");
         userlog("Failed to malloc tmq_msg_t!");
         
-        strcpy(qctl_out.diagmsg, "Failed to malloc tmq_msg_t!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "Failed to malloc tmq_msg_t!");
         qctl_out.diagnostic = QMEOS;
         
         EXFAIL_OUT(ret);
@@ -162,7 +162,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_QNAME");
         
-        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_QNAME!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_QNAME!");
         qctl_out.diagnostic = QMEINVAL;
         
         EXFAIL_OUT(ret);
@@ -172,7 +172,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_DATA_BUFTYP");
         
-        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_DATA_BUFTYP!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_DATA_BUFTYP!");
         qctl_out.diagnostic = QMEINVAL;
         
         EXFAIL_OUT(ret);
@@ -186,7 +186,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
         userlog("tmq_enqueue: failed convert ctl "
                 "to internal UBF buf!");
         
-        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed convert ctl "
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed convert ctl "
                 "to internal UBF buf!");
         qctl_out.diagnostic = QMESYSTEM;
         
@@ -231,7 +231,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
         NDRX_LOG(log_error, "tmq_enqueue: failed to enqueue!");
         userlog("tmq_enqueue: failed to enqueue!");
         
-        strcpy(qctl_out.diagmsg, "tmq_enqueue: failed to enqueue!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed to enqueue!");
         
         qctl_out.diagnostic = QMESYSTEM;
         
@@ -348,7 +348,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     if (EXSUCCEED!=Bget(*pp_ub, EX_QNAME, 0, qname, 0))
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to get EX_QNAME");
-        strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to get EX_QNAME!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: failed to get EX_QNAME!");
         qctl_out.diagnostic = QMEINVAL;
         
         EXFAIL_OUT(ret);
@@ -367,7 +367,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             
             NDRX_LOG(log_error, "tmq_dequeue: no message found for given msgid [%s]", 
                     msgid_str);
-            strcpy(qctl_out.diagmsg, "tmq_dequeue: no message found for given msgid");
+            NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: no message "
+                    "found for given msgid");
             qctl_out.diagnostic = QMENOMSG;
             EXFAIL_OUT(ret);
         }
@@ -382,7 +383,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             
             NDRX_LOG(log_error, "tmq_dequeue: no message found for given msgid [%s]", 
                     corid_str);
-            strcpy(qctl_out.diagmsg, "tmq_dequeue: no message found for given msgid");
+            NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: no message "
+                    "found for given msgid");
             qctl_out.diagnostic = QMENOMSG;
             EXFAIL_OUT(ret);
         }
@@ -390,7 +392,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE)))
     {
         NDRX_LOG(log_error, "tmq_dequeue: no message in Q [%s]", qname);
-        strcpy(qctl_out.diagmsg, "tmq_dequeue: no message in Q!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: no message in Q!");
         qctl_out.diagnostic = QMENOMSG;
         
         EXFAIL_OUT(ret);
@@ -413,7 +415,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
         NDRX_LOG(log_error, "failed to set EX_DATA!");
         userlog("failed to set EX_DATA!");
         
-        strcpy(qctl_out.diagmsg, "failed to set EX_DATA!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "failed to set EX_DATA!");
         qctl_out.diagnostic = QMEINVAL;
         
         /* Unlock msg if it was peek */
@@ -437,7 +439,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to set EX_DATA_BUFTYP");
         
-        strcpy(qctl_out.diagmsg, "tmq_dequeue: failed to set EX_DATA_BUFTYP!");
+        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: failed to "
+                "set EX_DATA_BUFTYP!");
         qctl_out.diagnostic = QMEINVAL;
         
         EXFAIL_OUT(ret);
@@ -460,7 +463,7 @@ out:
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
-                strcpy(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
                 ret=EXFAIL;
             }
         }
