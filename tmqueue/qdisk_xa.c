@@ -1223,7 +1223,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 }
             }
             
-            sprintf(filename, "%s/%s", folders[j], namelist[n]->d_name);
+            snprintf(filename, sizeof(filename), "%s/%s", folders[j], 
+                    namelist[n]->d_name);
             NDRX_LOG(log_warn, "Loading [%s]", filename);
 
             if (NULL==(f=NDRX_FOPEN(filename, "rb")))

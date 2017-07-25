@@ -119,7 +119,7 @@ expublic int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
 {
     int ret = EXSUCCEED;
     
-    strcpy(hdr->qspace, qspace);
+    NDRX_STRCPY_SAFE(hdr->qspace, qspace);
    /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
     hdr->command_code = TMQ_STORCMD_NEWMSG;
     strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
@@ -570,7 +570,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
                 got_default = EXTRUE;
             }
             
-            strcpy(qconf->qname, buf);
+            NDRX_STRCPY_SAFE(qconf->qname, buf);
         }
         else
         {
@@ -694,7 +694,7 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
         goto out;
     }
     
-    strcpy(ret->qname, qname);
+    NDRX_STRCPY_SAFE(ret->qname, qname);
     
     EXHASH_ADD_STR( G_qhash, qname, ret );
     
@@ -770,14 +770,14 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
     NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
     
-    strcpy(mmsg->msgid_str, msgid_str);
+    NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
     EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
         NDRX_LOG(log_debug, "Adding to G_corid_hash [%s]", corid_str);
         
-        strcpy(mmsg->corid_str, corid_str);
+        NDRX_STRCPY_SAFE(mmsg->corid_str, corid_str);
         EXHASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
     }
     /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
@@ -810,8 +810,10 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     
     qhash->numenq++;
     
-    NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] queue (DEBUG: locked %ld)",
-            tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname, mmsg->msg->lockthreadid);
+    NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] "
+            "queue (DEBUG: locked %ld)",
+            tmq_msgid_serialize(msg->hdr.msgid, msgid_str), msg->hdr.qname, 
+            mmsg->msg->lockthreadid);
     
 out:
                 
@@ -1413,7 +1415,7 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
                 goto out;
             }
             NDRX_LOG(log_debug, "tmq_get_qlist: %s", q->qname);
-            strcpy(tmp->qname, q->qname);
+            NDRX_STRCPY_SAFE(tmp->qname, q->qname);
             tmp->succ = q->succ;
             tmp->fail = q->fail;
             
@@ -1444,7 +1446,7 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
                     goto out;
                 }
                 NDRX_LOG(log_debug, "tmq_get_qlist: %s", qc->qname);
-                strcpy(tmp->qname, qc->qname);
+                NDRX_STRCPY_SAFE(tmp->qname, qc->qname);
                 DL_APPEND(ret, tmp);
             }
         }
@@ -1547,8 +1549,7 @@ out:
 /**
  * Load the messages from QSPACE (after startup)...
  * This does not need a lock, because it uses other globals
- * @param b
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int tmq_load_msgs(void)
 {
