@@ -181,6 +181,10 @@ echo "Starting to issue calls:"
 
 RET=$?
 
+echo "*** LSOF ***"
+lsof 2>/dev/null
+echo "*** LSOF ***"
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"

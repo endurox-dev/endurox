@@ -50,6 +50,8 @@ xadmin killall atmisv4_1ST 2>/dev/null
 xadmin killall atmisv4_2ND 2>/dev/null
 xadmin killall tpevsrv 2>/dev/null
 
+xadmin qrmall /
+
 # Start event server
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
 # NOTE: WE HAVE MEM LEAK HERE:
