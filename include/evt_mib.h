@@ -1,7 +1,7 @@
 /* 
-** Enduro/X application server administration interface
+** Event MIB compatiblity
 **
-** @file tpadm.h
+** @file evt_mib.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,8 +30,8 @@
 ** -----------------------------------------------------------------------------
 */
 
-#ifndef TPADM_H
-#define	TPADM_H
+#ifndef EVT_MIB_H
+#define	EVT_MIB_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -39,7 +39,6 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <Excompat.h>
-#include <ubf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -47,12 +46,10 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags);
-
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* TPADM_H */
+#endif	/* EVT_MIB_H */
 

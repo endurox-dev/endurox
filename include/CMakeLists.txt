@@ -64,9 +64,12 @@ install (FILES
     oatmi.h
     oatmisrv.h
     Exfields.h
+    Excompat.h
     tpadm.h
+    evt_mib.h
     DESTINATION include)
 
 install (FILES
     Exfields
+    Excompat
     DESTINATION share/endurox/ubftab)
