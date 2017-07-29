@@ -136,7 +136,10 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 - Version 3.5.9 released on 22/06/2017. Bug fix #160 - retry xa_start with xa_close/xa_open. New env variable NDRX_XA_FLAGS, tag "RECON".
 
 - Version 4.0.1 released on 29/06/2017. Multi-threaded bridge implementation. tpnotify(), tpbroadcast(), tpsetunsol(), tpchkunsol() API implementation.
+
 - Version 4.0.2 released on 19/07/2017. Fixed ndrxd core dump issue Bug #174.
+
+- Version 4.0.3 released on 29/07/2017. Feature #162 - added evt_mib.h
 
 # Build configurations
 
