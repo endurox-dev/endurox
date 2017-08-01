@@ -54,7 +54,7 @@ expublic void     tpreturn (int rval, long rcode, char *data, long len, long fla
     /*API_ENTRY;
 
      return _tpreturn(rval, rcode, data, len, flags); */
-    _TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
+    ndrx_TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
     return;
 }
 
@@ -70,7 +70,7 @@ expublic void tpforward (char *svc, char *data, long len, long flags)
     /*API_ENTRY;
 
     _tpforward (svc, data, len, flags);*/
-    _TPset_error_fmt(TPEPROTO, "tpforward - not available for clients!!!");
+    ndrx_TPset_error_fmt(TPEPROTO, "tpforward - not available for clients!!!");
     return;
 }
 

@@ -418,7 +418,7 @@ extern "C" {
 #define TPAPPAUTH        2        /* RFU: system and application authentication  */
     
 
-#define TPUNSOLERR	_ndrx_tmunsolerr_handler
+#define TPUNSOLERR	ndrx_ndrx_tmunsolerr_handler
     
 /**
  * Internal process identifier
@@ -620,8 +620,8 @@ extern NDRX_API int tpsetctxt(TPCONTEXT_T context, long flags);
 extern NDRX_API TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set);
 extern NDRX_API void tpfreectxt(TPCONTEXT_T context);
 
-extern int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags);
-extern int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags);
+extern int ndrx_tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags);
+extern int ndrx_tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags);
     
 extern NDRX_API int tplogsetreqfile(char **data, char *filename, char *filesvc);
 extern NDRX_API int tploggetbufreqfile(char *data, char *filename, int bufsize);
@@ -635,7 +635,7 @@ extern NDRX_API void ndrx_atmi_tls_free(void *data);
 extern NDRX_API void * ndrx_atmi_tls_new(int auto_destroy, int auto_set);
 
 /* Error code - function for unsol: */
-extern NDRX_API void _ndrx_tmunsolerr_handler(char *data, long len, long flags);
+extern NDRX_API void ndrx_ndrx_tmunsolerr_handler(char *data, long len, long flags);
 
 #if defined(__cplusplus)
 }

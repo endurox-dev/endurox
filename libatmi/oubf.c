@@ -91,7 +91,7 @@ expublic int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _Bget_Ferror_addr() failed to set context");
@@ -111,7 +111,7 @@ expublic int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _Bget_Ferror_addr() failed to get context");
@@ -169,7 +169,7 @@ expublic int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Blen() failed to set context");
@@ -188,7 +188,7 @@ expublic int OBlen(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Blen() failed to get context");
@@ -245,7 +245,7 @@ expublic int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBadd() failed to set context");
@@ -264,7 +264,7 @@ expublic int OCBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char * buf, 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBadd() failed to get context");
@@ -321,7 +321,7 @@ expublic int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBchg() failed to set context");
@@ -340,7 +340,7 @@ expublic int OCBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBchg() failed to get context");
@@ -397,7 +397,7 @@ expublic int OCBget(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBget() failed to set context");
@@ -416,7 +416,7 @@ expublic int OCBget(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBget() failed to get context");
@@ -473,7 +473,7 @@ expublic int OBdel(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdel() failed to set context");
@@ -492,7 +492,7 @@ expublic int OBdel(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdel() failed to get context");
@@ -549,7 +549,7 @@ expublic int OBpres(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bpres() failed to set context");
@@ -568,7 +568,7 @@ expublic int OBpres(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bpres() failed to get context");
@@ -625,7 +625,7 @@ expublic int OBproj(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID * fldlist)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bproj() failed to set context");
@@ -644,7 +644,7 @@ expublic int OBproj(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID * fldlist)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bproj() failed to get context");
@@ -701,7 +701,7 @@ expublic int OBprojcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src, BF
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprojcpy() failed to set context");
@@ -720,7 +720,7 @@ expublic int OBprojcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src, BF
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprojcpy() failed to get context");
@@ -777,7 +777,7 @@ expublic BFLDID OBfldid(TPCONTEXT_T *p_ctxt, char *fldnm)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldid() failed to set context");
@@ -797,7 +797,7 @@ expublic BFLDID OBfldid(TPCONTEXT_T *p_ctxt, char *fldnm)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldid() failed to get context");
@@ -855,7 +855,7 @@ expublic char * OBfname(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfname() failed to set context");
@@ -875,7 +875,7 @@ expublic char * OBfname(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfname() failed to get context");
@@ -933,7 +933,7 @@ expublic int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bcpy() failed to set context");
@@ -952,7 +952,7 @@ expublic int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bcpy() failed to get context");
@@ -1009,7 +1009,7 @@ expublic int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchg() failed to set context");
@@ -1028,7 +1028,7 @@ expublic int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchg() failed to get context");
@@ -1085,7 +1085,7 @@ expublic int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Binit() failed to set context");
@@ -1104,7 +1104,7 @@ expublic int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Binit() failed to get context");
@@ -1161,7 +1161,7 @@ expublic int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *oc
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bnext() failed to set context");
@@ -1180,7 +1180,7 @@ expublic int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *oc
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bnext() failed to get context");
@@ -1237,7 +1237,7 @@ expublic int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bget() failed to set context");
@@ -1256,7 +1256,7 @@ expublic int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bget() failed to get context");
@@ -1313,7 +1313,7 @@ expublic char * OBboolco(TPCONTEXT_T *p_ctxt, char * expr)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolco() failed to set context");
@@ -1333,7 +1333,7 @@ expublic char * OBboolco(TPCONTEXT_T *p_ctxt, char * expr)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolco() failed to get context");
@@ -1391,7 +1391,7 @@ expublic char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC 
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfind() failed to set context");
@@ -1411,7 +1411,7 @@ expublic char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfind() failed to get context");
@@ -1469,7 +1469,7 @@ expublic int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolev() failed to set context");
@@ -1488,7 +1488,7 @@ expublic int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolev() failed to get context");
@@ -1545,7 +1545,7 @@ expublic double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfloatev() failed to set context");
@@ -1564,7 +1564,7 @@ expublic double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfloatev() failed to get context");
@@ -1621,7 +1621,7 @@ expublic int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BF
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badd() failed to set context");
@@ -1640,7 +1640,7 @@ expublic int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BF
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badd() failed to get context");
@@ -1696,7 +1696,7 @@ expublic void OB_error(TPCONTEXT_T *p_ctxt, char *str)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! B_error() failed to set context");
@@ -1714,7 +1714,7 @@ expublic void OB_error(TPCONTEXT_T *p_ctxt, char *str)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! B_error() failed to get context");
@@ -1770,7 +1770,7 @@ expublic char * OBstrerror(TPCONTEXT_T *p_ctxt, int err)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bstrerror() failed to set context");
@@ -1790,7 +1790,7 @@ expublic char * OBstrerror(TPCONTEXT_T *p_ctxt, int err)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bstrerror() failed to get context");
@@ -1848,7 +1848,7 @@ expublic BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bmkfldid() failed to set context");
@@ -1868,7 +1868,7 @@ expublic BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bmkfldid() failed to get context");
@@ -1926,7 +1926,7 @@ expublic BFLDOCC OBoccur(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Boccur() failed to set context");
@@ -1945,7 +1945,7 @@ expublic BFLDOCC OBoccur(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Boccur() failed to get context");
@@ -2002,7 +2002,7 @@ expublic long OBused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bused() failed to set context");
@@ -2021,7 +2021,7 @@ expublic long OBused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bused() failed to get context");
@@ -2078,7 +2078,7 @@ expublic int OBfldtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldtype() failed to set context");
@@ -2097,7 +2097,7 @@ expublic int OBfldtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldtype() failed to get context");
@@ -2154,7 +2154,7 @@ expublic int OBdelall(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelall() failed to set context");
@@ -2173,7 +2173,7 @@ expublic int OBdelall(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelall() failed to get context");
@@ -2230,7 +2230,7 @@ expublic int OBdelete(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldlist)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelete() failed to set context");
@@ -2249,7 +2249,7 @@ expublic int OBdelete(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldlist)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bdelete() failed to get context");
@@ -2306,7 +2306,7 @@ expublic BFLDOCC OBfldno(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldno() failed to set context");
@@ -2325,7 +2325,7 @@ expublic BFLDOCC OBfldno(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfldno() failed to get context");
@@ -2382,7 +2382,7 @@ expublic long OBunused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunused() failed to set context");
@@ -2401,7 +2401,7 @@ expublic long OBunused(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunused() failed to get context");
@@ -2458,7 +2458,7 @@ expublic long OBsizeof(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bsizeof() failed to set context");
@@ -2477,7 +2477,7 @@ expublic long OBsizeof(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bsizeof() failed to get context");
@@ -2534,7 +2534,7 @@ expublic char * OBtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btype() failed to set context");
@@ -2554,7 +2554,7 @@ expublic char * OBtype(TPCONTEXT_T *p_ctxt, BFLDID bfldid)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btype() failed to get context");
@@ -2612,7 +2612,7 @@ expublic int OBfree(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfree() failed to set context");
@@ -2631,7 +2631,7 @@ expublic int OBfree(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfree() failed to get context");
@@ -2688,7 +2688,7 @@ expublic UBFH * OBalloc(TPCONTEXT_T *p_ctxt, BFLDOCC f, BFLDLEN v)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Balloc() failed to set context");
@@ -2708,7 +2708,7 @@ expublic UBFH * OBalloc(TPCONTEXT_T *p_ctxt, BFLDOCC f, BFLDLEN v)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Balloc() failed to get context");
@@ -2766,7 +2766,7 @@ expublic UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brealloc() failed to set context");
@@ -2786,7 +2786,7 @@ expublic UBFH * OBrealloc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brealloc() failed to get context");
@@ -2844,7 +2844,7 @@ expublic int OBupdate(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bupdate() failed to set context");
@@ -2863,7 +2863,7 @@ expublic int OBupdate(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bupdate() failed to get context");
@@ -2920,7 +2920,7 @@ expublic int OBconcat(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bconcat() failed to set context");
@@ -2939,7 +2939,7 @@ expublic int OBconcat(TPCONTEXT_T *p_ctxt, UBFH *p_ub_dst, UBFH *p_ub_src)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bconcat() failed to get context");
@@ -2996,7 +2996,7 @@ expublic char * OCBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfind() failed to set context");
@@ -3016,7 +3016,7 @@ expublic char * OCBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfind() failed to get context");
@@ -3074,7 +3074,7 @@ expublic char * OCBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFL
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBgetalloc() failed to set context");
@@ -3094,7 +3094,7 @@ expublic char * OCBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFL
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBgetalloc() failed to get context");
@@ -3152,7 +3152,7 @@ expublic BFLDOCC OCBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfindocc() failed to set context");
@@ -3171,7 +3171,7 @@ expublic BFLDOCC OCBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! CBfindocc() failed to get context");
@@ -3228,7 +3228,7 @@ expublic BFLDOCC OBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char *
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindocc() failed to set context");
@@ -3247,7 +3247,7 @@ expublic BFLDOCC OBfindocc(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,char *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindocc() failed to get context");
@@ -3304,7 +3304,7 @@ expublic char * OBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLD
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetalloc() failed to set context");
@@ -3324,7 +3324,7 @@ expublic char * OBgetalloc(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLD
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetalloc() failed to get context");
@@ -3382,7 +3382,7 @@ expublic char * OBfindlast(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid,BFLDO
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindlast() failed to set context");
@@ -3402,7 +3402,7 @@ expublic char * OBfindlast(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid,BFLDO
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfindlast() failed to get context");
@@ -3460,7 +3460,7 @@ expublic int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *o
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetlast() failed to set context");
@@ -3479,7 +3479,7 @@ expublic int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *o
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetlast() failed to get context");
@@ -3536,7 +3536,7 @@ expublic int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprint() failed to set context");
@@ -3555,7 +3555,7 @@ expublic int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bprint() failed to get context");
@@ -3612,7 +3612,7 @@ expublic int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfprint() failed to set context");
@@ -3631,7 +3631,7 @@ expublic int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfprint() failed to get context");
@@ -3688,7 +3688,7 @@ expublic char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btypcvt() failed to set context");
@@ -3708,7 +3708,7 @@ expublic char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btypcvt() failed to get context");
@@ -3766,7 +3766,7 @@ expublic int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bextread() failed to set context");
@@ -3785,7 +3785,7 @@ expublic int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bextread() failed to get context");
@@ -3841,7 +3841,7 @@ expublic void OBboolpr(TPCONTEXT_T *p_ctxt, char * tree, FILE *outf)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolpr() failed to set context");
@@ -3859,7 +3859,7 @@ expublic void OBboolpr(TPCONTEXT_T *p_ctxt, char * tree, FILE *outf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolpr() failed to get context");
@@ -3915,7 +3915,7 @@ expublic int OBread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE * inf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bread() failed to set context");
@@ -3934,7 +3934,7 @@ expublic int OBread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE * inf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bread() failed to get context");
@@ -3991,7 +3991,7 @@ expublic int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bwrite() failed to set context");
@@ -4010,7 +4010,7 @@ expublic int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bwrite() failed to get context");
@@ -4066,7 +4066,7 @@ expublic void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btreefree() failed to set context");
@@ -4084,7 +4084,7 @@ expublic void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Btreefree() failed to get context");
@@ -4140,7 +4140,7 @@ expublic int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPt
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolsetcbf() failed to set context");
@@ -4159,7 +4159,7 @@ expublic int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPt
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bboolsetcbf() failed to get context");
@@ -4216,7 +4216,7 @@ expublic int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badds() failed to set context");
@@ -4235,7 +4235,7 @@ expublic int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Badds() failed to get context");
@@ -4292,7 +4292,7 @@ expublic int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchgs() failed to set context");
@@ -4311,7 +4311,7 @@ expublic int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bchgs() failed to get context");
@@ -4368,7 +4368,7 @@ expublic int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgets() failed to set context");
@@ -4387,7 +4387,7 @@ expublic int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgets() failed to get context");
@@ -4444,7 +4444,7 @@ expublic char * OBgetsa(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC 
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetsa() failed to set context");
@@ -4464,7 +4464,7 @@ expublic char * OBgetsa(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bgetsa() failed to get context");
@@ -4522,7 +4522,7 @@ expublic char * OBfinds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC 
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfinds() failed to set context");
@@ -4542,7 +4542,7 @@ expublic char * OBfinds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bfinds() failed to get context");
@@ -4600,7 +4600,7 @@ expublic int OBisubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bisubf() failed to set context");
@@ -4619,7 +4619,7 @@ expublic int OBisubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bisubf() failed to get context");
@@ -4676,7 +4676,7 @@ expublic int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bindex() failed to set context");
@@ -4695,7 +4695,7 @@ expublic int OBindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bindex() failed to get context");
@@ -4752,7 +4752,7 @@ expublic BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunindex() failed to set context");
@@ -4771,7 +4771,7 @@ expublic BFLDOCC OBunindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bunindex() failed to get context");
@@ -4828,7 +4828,7 @@ expublic long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bidxused() failed to set context");
@@ -4847,7 +4847,7 @@ expublic long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Bidxused() failed to get context");
@@ -4904,7 +4904,7 @@ expublic int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brstrindex() failed to set context");
@@ -4923,7 +4923,7 @@ expublic int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Brstrindex() failed to get context");
@@ -4980,7 +4980,7 @@ expublic int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_set() failed to set context");
@@ -4999,7 +4999,7 @@ expublic int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_set() failed to get context");
@@ -5055,7 +5055,7 @@ expublic void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_free() failed to set context");
@@ -5073,7 +5073,7 @@ expublic void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_ubf_tls_free() failed to get context");

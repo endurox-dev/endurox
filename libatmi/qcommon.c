@@ -348,7 +348,7 @@ expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
  * @param flags flags (for tpcall)
  * @return SUCCEED/FAIL
  */
-expublic int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags)
 {
     int ret = EXSUCCEED;
@@ -367,45 +367,45 @@ expublic int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, T
     
     if (NULL==data)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: data is null!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: data is null!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==qspace || (EXEOS==*qspace && !nodeid && !srvid))
     {
-        _TPset_error_msg(TPEINVAL,  "_tpenqueue: empty or NULL qspace!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: empty or NULL qspace!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==qname || EXEOS==*qname)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpenqueue: empty or NULL qname!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: empty or NULL qname!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==ctl)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpenqueue: NULL ctl!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: NULL ctl!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (EXFAIL==tptypes(data, NULL, NULL))
     {
-        _TPset_error_msg(TPEINVAL,  "_tpenqueue: data buffer not allocated by "
-                "tpalloc()");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: data buffer not allocated by "
+                "tpalloc()", __func__);
         EXFAIL_OUT(ret);
     }
     
 
     if (NULL==(buffer_info = ndrx_find_buffer(data)))
     {
-        _TPset_error_fmt(TPEINVAL, "Buffer not known to system!");
+        ndrx_TPset_error_fmt(TPEINVAL, "Buffer not known to system!");
         EXFAIL_OUT(ret);
     }
 
     if (NULL==(descr = &G_buf_descr[buffer_info->type_id]))
     {
-        _TPset_error_fmt(TPEINVAL, "Invalid buffer id");
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid buffer id");
         EXFAIL_OUT(ret);
         
     }
@@ -425,8 +425,8 @@ expublic int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, T
     
     if (NULL == (p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ+tmp_len)))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to allocate req buffer: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to allocate req buffer: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
@@ -434,37 +434,37 @@ expublic int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, T
     if (EXSUCCEED!=tmq_tpqctl_to_ubf_enqreq(p_ub, ctl))
     {
         
-        _TPset_error_fmt(TPEINVAL,  "_tpenqueue: failed convert ctl "
-                "to internal UBF buf!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: failed convert ctl "
+                "to internal UBF buf!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=Bchg(p_ub, EX_DATA, 0, tmp, tmp_len))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set data field: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set data field: %s", 
+                Bstrerror(Berror), __func__);
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=Bchg(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftype, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set buftyp field: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set buftyp field: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
     /* Setup the command in EX_QCMD */
     if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set cmd field: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set cmd field: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpenqueue: Failed to set qname field: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set qname field: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
@@ -484,7 +484,7 @@ expublic int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, T
     {
         int tpe = tperrno;
         
-        _TPsave_error(&errbuf);/* save the error */
+        ndrx_TPsave_error(&errbuf);/* save the error */
         
         NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
         if (TPESVCFAIL!=tpe)
@@ -503,8 +503,8 @@ expublic int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, T
     if (EXSUCCEED!=tmq_tpqctl_from_ubf_enqrsp(p_ub, ctl))
     {
         
-        _TPset_error_msg(TPEINVAL,  "_tpenqueue: failed convert ctl "
-                "to internal UBF buf!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: failed convert ctl "
+                "to internal UBF buf!", __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -521,10 +521,11 @@ out:
         if (ctl->diagnostic)
         {
             errbuf.atmi_error = TPEDIAGNOSTIC;
-            strcpy(errbuf.atmi_error_msg_buf, "error details in TPQCTL diag fields");
+            NDRX_STRCPY_SAFE(errbuf.atmi_error_msg_buf, 
+                    "error details in TPQCTL diag fields");
         }
         
-        _TPrestore_error(&errbuf);
+        ndrx_TPrestore_error(&errbuf);
     }
     else
     {
@@ -532,7 +533,7 @@ out:
     }
 
 
-    NDRX_LOG(log_info, "_tpenqueue: return %d", ret);
+    NDRX_LOG(log_info, "%s: return %d", __func__, ret);
 
     return ret;    
 }
@@ -549,7 +550,7 @@ out:
  * @param flags flags (for tpcall)
  * @return SUCCEED/FAIL
  */
-expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char **data, long *len, long flags)
 {
     int ret = EXSUCCEED;
@@ -565,46 +566,46 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
     
     if (NULL==qspace || (EXEOS==*qspace && !nodeid && !srvid))
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: empty or NULL qspace!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: empty or NULL qspace!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==qname || EXEOS==*qname)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: empty or NULL qname!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: empty or NULL qname!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==ctl)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: NULL ctl!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: NULL ctl!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==data)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: data is null!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: data is null!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==len)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: len is null!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: len is null!", __func__);
         EXFAIL_OUT(ret);
     }
     
     if (EXFAIL==tptypes(*data, NULL, NULL))
     {
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: data buffer not allocated by "
-                "tpalloc()");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: data buffer not allocated by "
+                "tpalloc()", __func__);
         EXFAIL_OUT(ret);
     }
     
     /* Alloc the request buffer */
     if (NULL == p_ub)
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to allocate req buffer: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to allocate req buffer: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
@@ -612,8 +613,8 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
     if (EXSUCCEED!=tmq_tpqctl_to_ubf_deqreq(p_ub, ctl))
     {
         
-        _TPset_error_fmt(TPEINVAL,  "_tpdequeue: failed convert ctl "
-                "to internal UBF buf!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: failed convert ctl "
+                "to internal UBF buf!", __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -621,16 +622,16 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
     
     if (EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to set qname field: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set qname field: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
     /* Setup the command in EX_QCMD */
     if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to set cmd field: %s", 
-                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set cmd field: %s", 
+                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
@@ -639,18 +640,18 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
     
     if (EXEOS!=*qspace)
     {
-        sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+        snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_QSPACE, qspace);
     }
     else
     {
-        sprintf(qspacesvc, NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
+        snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
     }
     
     if (EXFAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
     {
         int tpe = tperrno;
             
-        _TPsave_error(&errbuf);/* save the error */
+        ndrx_TPsave_error(&errbuf);/* save the error */
                 
         NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
         if (TPESVCFAIL!=tpe)
@@ -674,22 +675,22 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
         
         if (EXSUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftyp, 0L))
         {
-            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA_BUFTYP: %s", 
-                    Bstrerror(Berror));
+            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to get EX_DATA_BUFTYP: %s", 
+                    __func__, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
         
         if (NULL==(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
         {
-            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: Failed to get EX_DATA: %s", 
-                    Bstrerror(Berror));
+            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to get EX_DATA: %s", 
+                    __func__, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
         
         if (!BUF_IS_TYPEID_VALID(buftyp))
         {
-            _TPset_error_fmt(TPESYSTEM,  "_tpdequeue: inalid buffer type id recieved %hd", 
-                    buftyp);
+            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: inalid buffer type id recieved %hd", 
+                    __func__, buftyp);
             EXFAIL_OUT(ret);
         }
         
@@ -703,8 +704,8 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
                         flags);
         if (EXSUCCEED!=ret)
         {
-            _TPset_error_fmt(TPEINVAL,  "_tpdequeue: Failed to prepare incoming buffer: %s", 
-                    Bstrerror(Berror));
+            ndrx_TPset_error_fmt(TPEINVAL,  "%s: Failed to prepare incoming buffer: %s", 
+                    __func__, Bstrerror(Berror));
             
             NDRX_FREE(data_extra);
             EXFAIL_OUT(ret);
@@ -716,8 +717,8 @@ expublic int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, T
     if (EXSUCCEED!=tmq_tpqctl_from_ubf_deqrsp(p_ub, ctl))
     {
         
-        _TPset_error_msg(TPEINVAL,  "_tpdequeue: failed convert ctl "
-                "to internal UBF buf!");
+        ndrx_TPset_error_fmt(TPEINVAL,  "%s: failed convert ctl "
+                "to internal UBF buf!", __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -734,14 +735,15 @@ out:
         if (ctl->diagnostic)
         {
             errbuf.atmi_error = TPEDIAGNOSTIC;
-            strcpy(errbuf.atmi_error_msg_buf, "error details in TPQCTL diag fields");
+            NDRX_STRCPY_SAFE(errbuf.atmi_error_msg_buf, 
+                    "error details in TPQCTL diag fields");
         }
         
-        _TPrestore_error(&errbuf);
+        ndrx_TPrestore_error(&errbuf);
     }
 
 
-    NDRX_LOG(log_info, "_tpdequeue: return %d", ret);
+    NDRX_LOG(log_info, "%s: return %d", __func__, ret);
 
     return ret;    
 }

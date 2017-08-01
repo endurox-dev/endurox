@@ -99,7 +99,7 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     
     if (NULL==G_server_conf.service_array)
     {
-        _TPset_error_fmt(TPEPROTO, "Cannot add custom poller at init stage!");
+        ndrx_TPset_error_fmt(TPEPROTO, "Cannot add custom poller at init stage!");
         ret=EXFAIL;
         goto out;
     }
@@ -108,7 +108,7 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     existing = ext_find_poller(fd);
     if (NULL!=existing)
     {
-        _TPset_error_fmt(TPEMATCH, "Poller for fd %d already exists", fd);
+        ndrx_TPset_error_fmt(TPEMATCH, "Poller for fd %d already exists", fd);
         NDRX_LOG(log_error, "Poller for fd %d already exists!", fd);
         ret=EXFAIL;
         goto out;
@@ -117,7 +117,7 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     pollext = NDRX_MALLOC(sizeof(pollextension_rec_t));
     if (NULL==pollext)
     {
-        _TPset_error_fmt(TPEOS, "failed to malloc pollextension_rec_t (%d bytes): %s", 
+        ndrx_TPset_error_fmt(TPEOS, "failed to malloc pollextension_rec_t (%d bytes): %s", 
                 sizeof(pollextension_rec_t), strerror(errno));
         ret=EXFAIL;
         goto out;
@@ -130,7 +130,7 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             fd, &ev))
     {
-        _TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
+        ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=EXFAIL;
         goto out;
     }
@@ -173,7 +173,7 @@ expublic int _tpext_delpollerfd(int fd)
     
     if (NULL==G_server_conf.service_array)
     {
-        _TPset_error_fmt(TPEPROTO, "Cannot remove custom poller at init stage!");
+        ndrx_TPset_error_fmt(TPEPROTO, "Cannot remove custom poller at init stage!");
         ret=EXFAIL;
         goto out;
     }
@@ -182,7 +182,7 @@ expublic int _tpext_delpollerfd(int fd)
     existing = ext_find_poller(fd);
     if (NULL==existing)
     {
-        _TPset_error_fmt(TPEMATCH, "No polling extension found for fd %d", fd);
+        ndrx_TPset_error_fmt(TPEMATCH, "No polling extension found for fd %d", fd);
         ret=EXFAIL;
         goto out;
     }
@@ -191,7 +191,7 @@ expublic int _tpext_delpollerfd(int fd)
     if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                         fd, NULL))
     {
-        _TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
+        ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
                 fd, ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=EXFAIL;
         goto out;

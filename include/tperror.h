@@ -60,17 +60,17 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API void _TPset_error(int error_code);
-extern NDRX_API void _TPset_error_msg(int error_code, char *msg);
-extern NDRX_API void _TPset_error_fmt(int error_code, const char *fmt, ...);
-extern NDRX_API void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...);
-extern NDRX_API void _TPunset_error(void);
-extern NDRX_API int _TPis_error(void);
-extern NDRX_API void _TPappend_error_msg(char *msg);
-extern NDRX_API void _TPoverride_code(int error_code);
+extern NDRX_API void ndrx_TPset_error(int error_code);
+extern NDRX_API void ndrx_TPset_error_msg(int error_code, char *msg);
+extern NDRX_API void ndrx_TPset_error_fmt(int error_code, const char *fmt, ...);
+extern NDRX_API void ndrx_TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...);
+extern NDRX_API void ndrx_TPunset_error(void);
+extern NDRX_API int ndrx_TPis_error(void);
+extern NDRX_API void ndrx_TPappend_error_msg(char *msg);
+extern NDRX_API void ndrx_TPoverride_code(int error_code);
 
-extern NDRX_API void _TPsave_error(atmi_error_t *p_err);
-extern NDRX_API void _TPrestore_error(atmi_error_t *p_err);
+extern NDRX_API void ndrx_TPsave_error(atmi_error_t *p_err);
+extern NDRX_API void ndrx_TPrestore_error(atmi_error_t *p_err);
 
 /* xa error handling */
 extern NDRX_API void atmi_xa_set_error(UBFH *p_ub, short error_code, short reason);

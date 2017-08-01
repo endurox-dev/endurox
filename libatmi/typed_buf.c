@@ -198,7 +198,7 @@ exprivate typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
  * @param len
  * @return
  */
-expublic char * _tpalloc (typed_buffer_descr_t *known_type,
+expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len)
 {
     MUTEX_LOCK_V(M_lock);
@@ -207,15 +207,14 @@ expublic char * _tpalloc (typed_buffer_descr_t *known_type,
     int i=0;
     typed_buffer_descr_t *usr_type = NULL;
     buffer_obj_t *node;
-    char fn[] = "_tpalloc";
     
-    NDRX_LOG(log_debug, "%s: type=%s len=%d", fn, (NULL==type?"NULL":type), len);
+    NDRX_LOG(log_debug, "%s: type=%s len=%d",  __func__, (NULL==type?"NULL":type), len);
     
     if (NULL==known_type)
     {
         if (NULL==(usr_type = get_buffer_descr(type, subtype)))
         {
-            _TPset_error_fmt(TPEOTYPE, "Unknown type (%s)/subtype(%s)", 
+            ndrx_TPset_error_fmt(TPEOTYPE, "Unknown type (%s)/subtype(%s)", 
                     (NULL==type?"NULL":type), (NULL==subtype?"NULL":subtype));
             ret=NULL;
             goto out;
@@ -237,7 +236,7 @@ expublic char * _tpalloc (typed_buffer_descr_t *known_type,
     /* now append the memory list with allocated block */
     if (NULL==(node=(buffer_obj_t *)NDRX_MALLOC(sizeof(buffer_obj_t))))
     {
-        _TPset_error_fmt(TPEOS, "%s: Failed to allocate buffer list node: %s", fn,
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate buffer list node: %s",  __func__,
                                         strerror(errno));
         ret=NULL;
 
@@ -249,7 +248,7 @@ expublic char * _tpalloc (typed_buffer_descr_t *known_type,
 
     node->buf = ret;
     NDRX_LOG(log_debug, "%s: type=%s len=%d allocated=%p", 
-            fn, (NULL==type?"NULL":type), len, ret);
+             __func__, (NULL==type?"NULL":type), len, ret);
     node->size = len;
     
     node->type_id = usr_type->type_id;
@@ -271,25 +270,24 @@ out:
  * @param
  * @return
  */
-expublic char * _tprealloc (char *buf, long len)
+expublic char * ndrx_tprealloc (char *buf, long len)
 {
     MUTEX_LOCK_V(M_lock);
     {
     char *ret=NULL;
     buffer_obj_t * node;
-    char fn[] = "_tprealloc";
     typed_buffer_descr_t *buf_type = NULL;
 
-    NDRX_LOG(log_debug, "_tprealloc buf=%p, len=%ld", buf, len);
+    NDRX_LOG(log_debug, "%s buf=%p, len=%ld",  __func__, buf, len);
     if (NULL==(node=find_buffer_int(buf)))
     {
-         _TPset_error_fmt(TPEINVAL, "%s: Buffer %p is not know to system", fn, buf);
+         ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p is not know to system",  __func__, buf);
         ret=NULL;
         goto out;
     }
     
     NDRX_LOG(log_debug, "%s buf=%p autoalloc=%hd", 
-                        fn, buf, node->autoalloc);
+                         __func__, buf, node->autoalloc);
 
     buf_type = &G_buf_descr[node->type_id];
 
@@ -345,7 +343,7 @@ expublic void free_up_buffers(void)
  * Remove the buffer
  * @param buf
  */
-expublic void _tpfree (char *buf, buffer_obj_t *known_buffer)
+expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -381,7 +379,7 @@ expublic void _tpfree (char *buf, buffer_obj_t *known_buffer)
  * @param buf ATMI allocated buffer
  * @return TRUE (1) if auto buffer, 0 manual buffer, -1 if error (unknown buffer)
  */
-expublic int _tpisautobuf(char *buf)
+expublic int ndrx_tpisautobuf(char *buf)
 {
     int ret;
     
@@ -398,7 +396,7 @@ expublic int _tpisautobuf(char *buf)
         }
         else
         {
-            _TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
+            ndrx_TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
                 "not allocated by tpalloc()!");
             ret=EXFAIL;
         }
@@ -451,7 +449,7 @@ expublic void free_auto_buffers(void)
  * @param subtype
  * @return 
  */
-expublic long _tptypes (char *ptr, char *type, char *subtype)
+expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
 {
     MUTEX_LOCK_V(M_lock);
     {
@@ -463,7 +461,7 @@ expublic long _tptypes (char *ptr, char *type, char *subtype)
     
     if (NULL==buf)
     {
-        _TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
+        ndrx_TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
                 "not allocated by tpalloc()!");
         ret=EXFAIL;
         goto out;

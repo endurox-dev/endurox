@@ -92,7 +92,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         NDRX_LOG(log_debug, "tpreturn is not available for clients "
                 "(is_client=%d, cd=%d)!!!", p_atmi_lib_conf->is_client, 
                 last_call->cd);
-        _TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
+        ndrx_TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
         return; /* <<<< RETURN */
     }
 
@@ -299,13 +299,13 @@ return_to_main:
             last_call->autobuf=NULL;
         }
          NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
-        _tpfree(data, NULL);
+        ndrx_tpfree(data, NULL);
     }
 
     if (NULL!=last_call->autobuf)
     {
          NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
-        _tpfree(last_call->autobuf->buf, NULL);
+        ndrx_tpfree(last_call->autobuf->buf, NULL);
         last_call->autobuf = NULL;
     }
 
@@ -380,12 +380,12 @@ expublic void _tpforward (char *svc, char *data,
     if (CONV_IN_CONVERSATION==p_accept_conn->status ||
             have_open_connection())
     {
-        _TPset_error_fmt(TPEPROTO, "tpforward no allowed for conversation server!");
+        ndrx_TPset_error_fmt(TPEPROTO, "tpforward no allowed for conversation server!");
     }
 
     if (NULL==(buffer_info = ndrx_find_buffer(data)))
     {
-        _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
+        ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
         ret=EXFAIL;
         goto out;
     }
@@ -442,7 +442,7 @@ expublic void _tpforward (char *svc, char *data,
     /* Hmm we can free up the data? - do it here because we still need buffer_info!*/
     if (NULL!=data)
     {
-        _tpfree(data, NULL);
+        ndrx_tpfree(data, NULL);
     }
 
     /* Check is service available? */
@@ -451,7 +451,7 @@ expublic void _tpforward (char *svc, char *data,
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 call->name);
         ret=EXFAIL;
-        _TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
+        ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
                 fn, call->name);
                 /* we should reply back, that call failed, so that client does not wait */
         reply_with_failure(flags, last_call, NULL, NULL, TPESVCERR);
@@ -475,7 +475,7 @@ expublic void _tpforward (char *svc, char *data,
             CONV_ERROR_CODE(ret, err);
         }
 
-        _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
+        ndrx_TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
         userlog("%s: Failed to send, os err: %s", fn, strerror(ret));
         ret=EXFAIL;
 
@@ -492,13 +492,13 @@ out:
             last_call->autobuf=NULL;
         }
          NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
-        _tpfree(data, NULL);
+        ndrx_tpfree(data, NULL);
     }
 
     if (last_call->autobuf)
     {
          NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
-        _tpfree(last_call->autobuf->buf, NULL);
+        ndrx_tpfree(last_call->autobuf->buf, NULL);
         last_call->autobuf = NULL;
     }
 

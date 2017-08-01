@@ -569,7 +569,7 @@ out:
  * Close open client session
  * @return
  */
-expublic int _tpterm (void)
+expublic int ndrx_tpterm (void)
 {
     int ret=EXSUCCEED;
     char fn[] = "_tpterm";
@@ -588,7 +588,7 @@ expublic int _tpterm (void)
     if (!G_atmi_tls->G_atmi_conf.is_client)
     {
         ret=EXFAIL;
-        _TPset_error_msg(TPEPROTO, "tpterm called from server!");
+        ndrx_TPset_error_msg(TPEPROTO, "tpterm called from server!");
         goto out;
     }
 
@@ -596,7 +596,7 @@ expublic int _tpterm (void)
     if (EXSUCCEED!=close_open_client_connections())
     {
         ret=EXFAIL;
-        _TPset_error_msg(TPESYSTEM, "Failed to close conversations!");
+        ndrx_TPset_error_msg(TPESYSTEM, "Failed to close conversations!");
         goto out;
     }
 
@@ -664,7 +664,7 @@ expublic int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str)
     NDRX_STRCPY_SAFE(G_atmi_tls->G_atmi_conf.reply_q_str, reply_q_str);
     if (EXFAIL==ndrx_mq_getattr(reply_q, &G_atmi_tls->G_atmi_conf.reply_q_attr))
     {
-        _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue fd %d: %s",
                             fn, reply_q, strerror(errno));
         ret=EXFAIL;
         goto out;
@@ -738,7 +738,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
     if (init_data->reply_q && EXFAIL==ndrx_mq_getattr(init_data->reply_q, 
             &G_atmi_tls->G_atmi_conf.reply_q_attr))
     {
-        _TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
                             fn, init_data->reply_q_str, init_data->reply_q, strerror(errno));
         ret=EXFAIL;
         goto out;
@@ -842,7 +842,7 @@ expublic int tpinit (TPINIT * init_data)
     /* Load the queue prefix */
     if (NULL==(p=getenv("NDRX_QPREFIX")))
     {
-        _TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
+        ndrx_TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
         ret=EXFAIL;
         goto out;
     }
@@ -903,7 +903,7 @@ expublic int tpinit (TPINIT * init_data)
     NDRX_LOG(log_debug, "After client Q open: %d", conf.reply_q);
     if ((mqd_t)EXFAIL==conf.reply_q)
     {
-        _TPset_error_fmt(TPEOS, "Failed to open queue [%s] errno: %s", 
+        ndrx_TPset_error_fmt(TPEOS, "Failed to open queue [%s] errno: %s", 
                     conf.reply_q_str, strerror(errno));
         EXFAIL_OUT(ret);
     }

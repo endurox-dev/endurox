@@ -818,7 +818,7 @@ expublic UBFH * atmi_xa_alloc_tm_call(char cmd)
     /* install caller error */
     if (EXSUCCEED!=Bchg(p_ub, TMPROCESSID, 0, G_atmi_tls->G_atmi_conf.my_id, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMPROCESSID) %d:[%s]", 
+        ndrx_TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMPROCESSID) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
         
         ret = EXFAIL;
@@ -828,7 +828,7 @@ expublic UBFH * atmi_xa_alloc_tm_call(char cmd)
     /* install command code */
     if (EXSUCCEED!=Bchg(p_ub, TMCMD, 0, &cmd, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMCMD) %d:[%s]", 
+        ndrx_TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMCMD) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
         
         ret = EXFAIL;
@@ -838,7 +838,7 @@ expublic UBFH * atmi_xa_alloc_tm_call(char cmd)
     /* Install caller RM code */
     if (EXSUCCEED!=Bchg(p_ub, TMCALLERRM, 0, (char *)&G_atmi_env.xa_rmid, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMCALLERRM) %d:[%s]", 
+        ndrx_TPset_error_fmt(TPESYSTEM,  "Failed to setup TM call buffer (TMCALLERRM) %d:[%s]", 
                                         Berror, Bstrerror(Berror));
         
         ret = EXFAIL;
@@ -982,7 +982,7 @@ expublic UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_a
         atmi_xa2tperr(p_ub);
     }
             
-    if (_TPis_error())
+    if (ndrx_TPis_error())
     {
         NDRX_LOG(log_error, "Failed to call RM: %d:[%s] ", 
                             tperrno, tpstrerror(tperrno));
@@ -996,9 +996,9 @@ out:
         atmi_error_t err;
         
         /* Save the original error/needed later! */
-        _TPsave_error(&err);
+        ndrx_TPsave_error(&err);
         tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
-        _TPrestore_error(&err);
+        ndrx_TPrestore_error(&err);
         p_ub = NULL;
     }
 

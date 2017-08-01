@@ -90,7 +90,7 @@ expublic void Otplogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogdumpdiff() failed to set context");
@@ -108,7 +108,7 @@ expublic void Otplogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogdumpdiff() failed to get context");
@@ -163,7 +163,7 @@ expublic void Otplogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr,
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogdump() failed to set context");
@@ -181,7 +181,7 @@ expublic void Otplogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogdump() failed to get context");
@@ -236,7 +236,7 @@ expublic void Otplog(TPCONTEXT_T *p_ctxt, int lev, char *message)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplog() failed to set context");
@@ -254,7 +254,7 @@ expublic void Otplog(TPCONTEXT_T *p_ctxt, int lev, char *message)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplog() failed to get context");
@@ -309,7 +309,7 @@ expublic void Otplogex(TPCONTEXT_T *p_ctxt, int lev, char *file, long line, char
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogex() failed to set context");
@@ -327,7 +327,7 @@ expublic void Otplogex(TPCONTEXT_T *p_ctxt, int lev, char *file, long line, char
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogex() failed to get context");
@@ -383,7 +383,7 @@ expublic char * Otploggetiflags(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tploggetiflags() failed to set context");
@@ -403,7 +403,7 @@ expublic char * Otploggetiflags(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tploggetiflags() failed to get context");
@@ -460,7 +460,7 @@ expublic void Ondrxlogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrxlogdumpdiff() failed to set context");
@@ -478,7 +478,7 @@ expublic void Ondrxlogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrxlogdumpdiff() failed to get context");
@@ -533,7 +533,7 @@ expublic void Ondrxlogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *pt
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrxlogdump() failed to set context");
@@ -551,7 +551,7 @@ expublic void Ondrxlogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *pt
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrxlogdump() failed to get context");
@@ -606,7 +606,7 @@ expublic void Ondrxlog(TPCONTEXT_T *p_ctxt, int lev, char *message)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrxlog() failed to set context");
@@ -624,7 +624,7 @@ expublic void Ondrxlog(TPCONTEXT_T *p_ctxt, int lev, char *message)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrxlog() failed to get context");
@@ -679,7 +679,7 @@ expublic void Oubflogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void 
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ubflogdumpdiff() failed to set context");
@@ -697,7 +697,7 @@ expublic void Oubflogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ubflogdumpdiff() failed to get context");
@@ -752,7 +752,7 @@ expublic void Oubflogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ubflogdump() failed to set context");
@@ -770,7 +770,7 @@ expublic void Oubflogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ubflogdump() failed to get context");
@@ -825,7 +825,7 @@ expublic void Oubflog(TPCONTEXT_T *p_ctxt, int lev, char *message)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ubflog() failed to set context");
@@ -843,7 +843,7 @@ expublic void Oubflog(TPCONTEXT_T *p_ctxt, int lev, char *message)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ubflog() failed to get context");
@@ -899,7 +899,7 @@ expublic int Otploggetreqfile(TPCONTEXT_T *p_ctxt, char *filename, int bufsize)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tploggetreqfile() failed to set context");
@@ -918,7 +918,7 @@ expublic int Otploggetreqfile(TPCONTEXT_T *p_ctxt, char *filename, int bufsize)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tploggetreqfile() failed to get context");
@@ -975,7 +975,7 @@ expublic int Otplogconfig(TPCONTEXT_T *p_ctxt, int logger, int lev, char *debug_
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogconfig() failed to set context");
@@ -994,7 +994,7 @@ expublic int Otplogconfig(TPCONTEXT_T *p_ctxt, int logger, int lev, char *debug_
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogconfig() failed to get context");
@@ -1050,7 +1050,7 @@ expublic void Otplogclosereqfile(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogclosereqfile() failed to set context");
@@ -1068,7 +1068,7 @@ expublic void Otplogclosereqfile(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogclosereqfile() failed to get context");
@@ -1123,7 +1123,7 @@ expublic void Otplogclosethread(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogclosethread() failed to set context");
@@ -1141,7 +1141,7 @@ expublic void Otplogclosethread(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogclosethread() failed to get context");
@@ -1196,7 +1196,7 @@ expublic void Otplogsetreqfile_direct(TPCONTEXT_T *p_ctxt, char *filename)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogsetreqfile_direct() failed to set context");
@@ -1214,7 +1214,7 @@ expublic void Otplogsetreqfile_direct(TPCONTEXT_T *p_ctxt, char *filename)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogsetreqfile_direct() failed to get context");

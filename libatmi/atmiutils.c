@@ -427,7 +427,7 @@ restart:
 
             CONV_ERROR_CODE(ret, err);
 
-            _TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%d): %s",
+            ndrx_TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%d): %s",
 			(long int)q_descr, ret, strerror(ret));
             ret=EXFAIL;
         }
@@ -1052,7 +1052,7 @@ expublic int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
         if (EXFAIL==ndrx_mq_setattr(listen_q, &new,
                             NULL))
         {
-            _TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
+            ndrx_TPset_error_fmt(TPEOS, "%s: Failed to change attributes for queue [%s] fd %d: %s",
                                 fn, listen_q_str, listen_q, strerror(errno));
             ret=EXFAIL;
             goto out;

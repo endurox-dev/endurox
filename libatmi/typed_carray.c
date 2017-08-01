@@ -69,7 +69,7 @@ expublic int CARRAY_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
     /* Check that we have space enought to prepare for send */
     if (NULL!=olen && 0!=*olen && *olen < ilen)
     {
-        _TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
                 "but requested: %d", fn, *olen, ilen);
         ret=EXFAIL;
         goto out;
@@ -110,7 +110,7 @@ expublic int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
     /* Figure out the passed in buffer */
     if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
-        _TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
+        ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);
         ret=EXFAIL;
         goto out;
@@ -123,7 +123,7 @@ expublic int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
         if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_CARRAY)
         {
             /* Raise error! */
-            _TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
+            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
                                         G_buf_descr[BUF_TYPE_CARRAY],
                                         G_buf_descr[outbufobj->type_id]);
             ret=EXFAIL;
@@ -137,7 +137,7 @@ expublic int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
         {
             NDRX_LOG(log_warn, "User buffer %d is different, "
                     "free it up and re-allocate as CARRAY", G_buf_descr[outbufobj->type_id]);
-            _tpfree(*odata, outbufobj);
+            ndrx_tpfree(*odata, outbufobj);
             *odata=NULL;
         }
     }
@@ -164,7 +164,7 @@ expublic int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
             char *new_addr;
             NDRX_LOG(log_debug, "%s: Reallocating", fn);
             
-            if (NULL==(new_addr=_tprealloc(*odata, rcv_buf_size)))
+            if (NULL==(new_addr=ndrx_tprealloc(*odata, rcv_buf_size)))
             {
                 NDRX_LOG(log_error, "%s: _tprealloc failed!", fn);
                 ret=EXFAIL;
@@ -181,7 +181,7 @@ expublic int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
                                          "allocating new!", fn);
 
-        *odata = _tpalloc(&G_buf_descr[BUF_TYPE_CARRAY], NULL, NULL, rcv_len);
+        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_CARRAY], NULL, NULL, rcv_len);
 
         if (NULL==*odata)
         {

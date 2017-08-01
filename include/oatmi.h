@@ -98,6 +98,6 @@ extern NDRX_API int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *fil
 extern NDRX_API int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename, int bufsize);
 extern NDRX_API int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data);
 extern NDRX_API void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_ub);
-extern NDRX_API void O_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags);
+extern NDRX_API void Ondrx_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags);
 #endif  /* __OATMI_H */
 

@@ -130,7 +130,7 @@ exprivate int call_check_tout(int cd)
                 cd, G_atmi_tls->G_call_state[cd].callseq, 
                 G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
         
-        _TPset_error_fmt(TPETIME, "cd %d (callseq %u) timeout condition - generating error "
+        ndrx_TPset_error_fmt(TPETIME, "cd %d (callseq %u) timeout condition - generating error "
                 "(locked at: %ld current tstamp: %ld, diff: %d, timeout_value: %d)", 
                 cd, G_atmi_tls->G_call_state[cd].callseq, 
                 G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
@@ -387,7 +387,7 @@ expublic void cancel_if_expected(tp_command_call_t *call)
  *                  or tpcall wrapper)
  * @return call descriptor
  */
-expublic int _tpacall (char *svc, char *data,
+expublic int ndrx_tpacall (char *svc, char *data,
                 long len, long flags, char *extradata, 
                 int dest_node, int ex_flags, TPTRANID *p_tranid)
 {
@@ -396,14 +396,13 @@ expublic int _tpacall (char *svc, char *data,
     tp_command_call_t *call=(tp_command_call_t *)buf;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
-    char fn[] = "_tpacall";
     long data_len = MAX_CALL_DATA_SIZE;
     char send_q[NDRX_MAX_Q_SIZE+1];
     time_t timestamp;
     int is_bridge;
     int tpcall_cd;
     ATMI_TLS_ENTRY;
-    NDRX_LOG(log_debug, "%s enter", fn);
+    NDRX_LOG(log_debug, "%s enter", __func__);
 
     
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
@@ -446,9 +445,9 @@ expublic int _tpacall (char *svc, char *data,
         if (EXSUCCEED!=_get_evpost_sendq(send_q, sizeof(send_q), extradata))
         {
             NDRX_LOG(log_error, "%s: Cannot get send Q for server: [%s]", 
-                    fn, extradata);
-            _TPset_error_fmt(TPENOENT, "%s: Cannot get send Q for server: [%s]", 
-                    fn, extradata);
+                     __func__, extradata);
+            ndrx_TPset_error_fmt(TPENOENT, "%s: Cannot get send Q for server: [%s]", 
+                     __func__, extradata);
             EXFAIL_OUT(ret);
         }
     }
@@ -457,8 +456,8 @@ expublic int _tpacall (char *svc, char *data,
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);
         ret=EXFAIL;
-        _TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
-                fn, svc);
+        ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
+                 __func__, svc);
         goto out;
     }
 
@@ -466,7 +465,7 @@ expublic int _tpacall (char *svc, char *data,
     {
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
-            _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
+            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
             EXFAIL_OUT(ret);
         }
     }
@@ -527,7 +526,7 @@ expublic int _tpacall (char *svc, char *data,
         atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);
         
         if (call->flags & TPTRANSUSPEND && NULL!=p_tranid &&
-                EXSUCCEED!=_tpsuspend(p_tranid, 0, EXFALSE))
+                EXSUCCEED!=ndrx_tpsuspend(p_tranid, 0, EXFALSE))
         {
             EXFAIL_OUT(ret);
         }
@@ -542,9 +541,9 @@ expublic int _tpacall (char *svc, char *data,
         {
             NDRX_LOG(log_error, "Do not have resources for "
                                 "track this call!");
-            _TPset_error_fmt(TPELIMIT, "%s:All call descriptor entries have been used "
+            ndrx_TPset_error_fmt(TPELIMIT, "%s:All call descriptor entries have been used "
                                 "(check why they do not free up? Maybe need to "
-                                "use tpcancel()?)", fn);
+                                "use tpcancel()?)", __func__);
             EXFAIL_OUT(ret);
         }
     }
@@ -578,7 +577,7 @@ expublic int _tpacall (char *svc, char *data,
         {
             CONV_ERROR_CODE(ret, err);
         }
-        _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
+        ndrx_TPset_error_fmt(err, "%s: Failed to send, os err: %s", __func__, strerror(ret));
         ret=EXFAIL;
 
         /* unlock call descriptor */
@@ -591,7 +590,7 @@ expublic int _tpacall (char *svc, char *data,
     ret=tpcall_cd;
 
 out:
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
+    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }
 
@@ -604,7 +603,7 @@ out:
  * @param flags
  * @return
  */
-expublic int _tpgetrply (int *cd,
+expublic int ndrx_tpgetrply (int *cd,
                        int cd_exp,
                        char * *data ,
                        long *len, long flags,
@@ -625,7 +624,7 @@ expublic int _tpgetrply (int *cd,
     /* Allocate the buffer, dynamically... */
     NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
 
-    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p", fn, flags, pbuf);
+    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p", __func__, flags, pbuf);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
@@ -703,7 +702,7 @@ expublic int _tpgetrply (int *cd,
              * Maybe we need to return TPEBLOCK?
              */
             /* *cd = 0; */
-            _TPset_error_msg(TPEBLOCK, "TPENOBLOCK was specified in flags and "
+            ndrx_TPset_error_msg(TPEBLOCK, "TPENOBLOCK was specified in flags and "
                     "no message is in queue");
             ret=EXFAIL;
             goto out;
@@ -711,7 +710,7 @@ expublic int _tpgetrply (int *cd,
         else if (EXFAIL==rply_len)
         {
             /* we have failed */
-            NDRX_LOG(log_debug, "%s failed to receive answer", fn);
+            NDRX_LOG(log_debug, "%s failed to receive answer", __func__);
             ret=EXFAIL;
             goto out;
         }
@@ -749,7 +748,7 @@ expublic int _tpgetrply (int *cd,
                             "reply from %s, cd status %hd",
                         rply->cd, cd_exp, rply->timestamp, rply->callseq, rply->reply_to,
                             G_atmi_tls->G_call_state[rply->cd].status);
-                    _tpcancel(rply->cd);
+                    ndrx_tpcancel(rply->cd);
                     continue;
                 }
 
@@ -780,7 +779,7 @@ expublic int _tpgetrply (int *cd,
             *cd = rply->cd;
             if (rply->sysflags & SYS_FLAG_REPLY_ERROR)
             {
-                _TPset_error_msg(rply->rcode, "Server failed to generate reply");
+                ndrx_TPset_error_msg(rply->rcode, "Server failed to generate reply");
                 ret=EXFAIL;
                 goto out;
             }
@@ -811,7 +810,7 @@ expublic int _tpgetrply (int *cd,
                  */
                 if (TPSUCCESS!=rply->rval)
                 {
-                    _TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
+                    ndrx_TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
                     ret=EXFAIL;
                     goto out;
                 }
@@ -824,7 +823,7 @@ out:
     if (flags & TPTRANSUSPEND && p_tranid && p_tranid->tmxid[0])
     {
         /* resume the transaction */
-        if (EXSUCCEED!=_tpresume(p_tranid, 0) && EXSUCCEED==ret)
+        if (EXSUCCEED!=ndrx_tpresume(p_tranid, 0) && EXSUCCEED==ret)
         {
             ret=EXFAIL;
         }
@@ -854,7 +853,7 @@ out:
         NDRX_FREE(pbuf);
     }
                 
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
+    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
      */
@@ -882,17 +881,16 @@ out:
  * @param flags
  * @return
  */
-expublic int _tpcall (char *svc, char *idata, long ilen,
+expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags)
 {
     int ret=EXSUCCEED;
-    char fn[] = "_tpcall";
     int cd_req = 0;
     int cd_rply = 0;
     TPTRANID tranid, *p_tranid;
     
-    NDRX_LOG(log_debug, "%s: enter", fn);
+    NDRX_LOG(log_debug, "%s: enter", __func__);
 
     flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
                         * because we do want anser back! */
@@ -907,14 +905,14 @@ expublic int _tpcall (char *svc, char *idata, long ilen,
         p_tranid = NULL;
     }
     
-    if (EXFAIL==(cd_req=_tpacall (svc, idata, ilen, flags, extradata, 
+    if (EXFAIL==(cd_req=ndrx_tpacall (svc, idata, ilen, flags, extradata, 
             dest_node, ex_flags, p_tranid)))
     {
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
         ret=EXFAIL;
         goto out;
     }
-    else if (EXSUCCEED!=(ret=_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
+    else if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
             p_tranid)))
     {
         NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
@@ -927,14 +925,14 @@ expublic int _tpcall (char *svc, char *idata, long ilen,
     if (cd_req!=cd_rply)
     {
         ret=EXFAIL;
-        _TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
-                                        fn, cd_req, cd_rply);
+        ndrx_TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
+                                         __func__, cd_req, cd_rply);
         goto out;
     }
 
 
 out:
-    NDRX_LOG(log_debug, "%s: return %d cd %d", fn, ret, cd_rply);
+    NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
 
     return ret;
 }
@@ -944,18 +942,17 @@ out:
  * @param
  * @return
  */
-expublic int _tpcancel (int cd)
+expublic int ndrx_tpcancel (int cd)
 {
     int ret=EXSUCCEED;
-    char fn[]="_tpcancel";
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "tpcancel issued for %d", cd);
 
     if (cd<1||cd>=MAX_ASYNC_CALLS)
     {
-        _TPset_error_fmt(TPEBADDESC, "%s: Invalid call descriptor %d, should be 0<cd<%d",
-                                        fn, cd, MAX_ASYNC_CALLS);
+        ndrx_TPset_error_fmt(TPEBADDESC, "%s: Invalid call descriptor %d, should be 0<cd<%d",
+                                         __func__, cd, MAX_ASYNC_CALLS);
         ret=EXFAIL;
         goto out;
     }
@@ -996,7 +993,7 @@ expublic int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradat
         goto out;
     }
     
-    NDRX_LOG(log_debug, "%s: server's id=[%s]", fn, extradata);
+    NDRX_LOG(log_debug, "%s: server's id=[%s]", __func__, extradata);
     
     if (EXSUCCEED!=ndrx_myid_parse(extradata, &myid, EXFALSE))
     {
@@ -1045,7 +1042,7 @@ expublic int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradat
 out:
                 
     NDRX_LOG(log_debug, "%s returns send_q=[%s] ret=%d", 
-                    fn, send_q, ret);
+                     __func__, send_q, ret);
 
     return ret;
 }

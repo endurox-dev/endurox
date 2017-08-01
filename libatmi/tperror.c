@@ -203,7 +203,7 @@ expublic int * _exget_tperrno_addr (void)
  * @param msg
  * @return
  */
-expublic void _TPset_error(int error_code)
+expublic void ndrx_TPset_error(int error_code)
 {
     ATMI_TLS_ENTRY;
     if (!G_atmi_tls->M_atmi_error)
@@ -222,7 +222,7 @@ expublic void _TPset_error(int error_code)
  * @param msg
  * @return
  */
-expublic void _TPset_error_msg(int error_code, char *msg)
+expublic void ndrx_TPset_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
@@ -247,7 +247,7 @@ expublic void _TPset_error_msg(int error_code, char *msg)
  * Override the current error code.
  * @param error_code
  */
-expublic void _TPoverride_code(int error_code)
+expublic void ndrx_TPoverride_code(int error_code)
 {
     ATMI_TLS_ENTRY;
     G_atmi_tls->M_atmi_error = error_code;
@@ -260,7 +260,7 @@ expublic void _TPoverride_code(int error_code)
  * @param fmt - format stirng
  * @param ... - format details
  */
-expublic void _TPset_error_fmt(int error_code, const char *fmt, ...)
+expublic void ndrx_TPset_error_fmt(int error_code, const char *fmt, ...)
 {
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
     va_list ap;
@@ -288,7 +288,7 @@ expublic void _TPset_error_fmt(int error_code, const char *fmt, ...)
  * @param fmt
  * @param ...
  */
-expublic void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...)
+expublic void ndrx_TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...)
 {
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
     va_list ap;
@@ -313,7 +313,7 @@ expublic void _TPset_error_fmt_rsn(int error_code, short reason, const char *fmt
 /**
  * Unset any error data currently in use
  */
-expublic void _TPunset_error(void)
+expublic void ndrx_TPunset_error(void)
 {
     ATMI_TLS_ENTRY;
     
@@ -325,7 +325,7 @@ expublic void _TPunset_error(void)
  * Return >0 if error is set
  * @return 
  */
-expublic int _TPis_error(void)
+expublic int ndrx_TPis_error(void)
 {
     ATMI_TLS_ENTRY;
     return G_atmi_tls->M_atmi_error;
@@ -335,7 +335,7 @@ expublic int _TPis_error(void)
  * Append error message
  * @param msg
  */
-expublic void _TPappend_error_msg(char *msg)
+expublic void ndrx_TPappend_error_msg(char *msg)
 {
     int free_space;
     int app_error_len = strlen(msg);
@@ -491,13 +491,13 @@ expublic void atmi_xa2tperr(UBFH *p_ub)
     /* unset the ATMI error. */
     if (Bpres(p_ub, TMERR_CODE, 0))
     {
-        _TPunset_error();
+        ndrx_TPunset_error();
 
         Bget(p_ub, TMERR_CODE, 0, (char *)&code, 0L);
         Bget(p_ub, TMERR_MSG, 0, msg, 0L);
         Bget(p_ub, TMERR_REASON, 0, (char *)&reason, 0L);
 
-        _TPset_error_msg((int)code, msg);
+        ndrx_TPset_error_msg((int)code, msg);
 
         /* Append with reason code. */
         if (!G_atmi_tls->M_atmi_reason)
@@ -550,7 +550,7 @@ expublic void atmi_xa_approve(UBFH *p_ub)
  * Save current error
  * @param p_err
  */
-expublic void _TPsave_error(atmi_error_t *p_err)
+expublic void ndrx_TPsave_error(atmi_error_t *p_err)
 {
     ATMI_TLS_ENTRY;
     
@@ -563,7 +563,7 @@ expublic void _TPsave_error(atmi_error_t *p_err)
  * Restore current error
  * @param p_err
  */
-expublic void _TPrestore_error(atmi_error_t *p_err)
+expublic void ndrx_TPrestore_error(atmi_error_t *p_err)
 {
     ATMI_TLS_ENTRY;
     G_atmi_tls->M_atmi_error = p_err->atmi_error;

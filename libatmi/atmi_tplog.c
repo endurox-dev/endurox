@@ -91,7 +91,7 @@ exprivate int tplog_compare_set_file(char *new_file)
  * @param title title of the dump
  * @param p_ub UBF buffer
  */
-expublic void _tplogprintubf(int lev, char *title, UBFH *p_ub)
+expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
 {
     ndrx_debug_t * dbg = debug_get_tp_ptr();
     if (dbg->level>=lev)
@@ -109,7 +109,7 @@ expublic void _tplogprintubf(int lev, char *title, UBFH *p_ub)
  * @param filesvc Service name to call for requesting the filename
  * @return SUCCEED/FAIL
  */
-expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
+expublic int ndrx_tplogsetreqfile(char **data, char *filename, char *filesvc)
 {
     int ret = EXSUCCEED;
     char btype[16] = {EXEOS};
@@ -127,7 +127,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
      */
     if (NULL!=*data)
     {
-        if (EXFAIL==_tptypes(*data, btype, stype))
+        if (EXFAIL==ndrx_tptypes(*data, btype, stype))
         {
             EXFAIL_OUT(ret);
         }
@@ -145,7 +145,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                 {
                     NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
-                    _TPset_error_fmt(TPESYSTEM, "Failed to get EX_NREQLOGFILE: %s", 
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
@@ -165,7 +165,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                             NDRX_LOG(log_error, "Failed to set EX_NREQLOGFILE: %s", 
                                     Bstrerror(Berror));
                             
-                            _TPset_error_fmt(TPESYSTEM, "Failed to set EX_NREQLOGFILE: %s", 
+                            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EX_NREQLOGFILE: %s", 
                                 Bstrerror(Berror));
                             
                             EXFAIL_OUT(ret);
@@ -181,7 +181,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                 {
                     NDRX_LOG(log_warn, "Cannot set request log file: "
                             "no name in buffer, no name in 'filename'!");
-                    _TPset_error_msg(TPEINVAL, "Cannot set request log file: "
+                    ndrx_TPset_error_msg(TPEINVAL, "Cannot set request log file: "
                             "no name in buffer, no name in 'filename'!");
                     EXFAIL_OUT(ret);
                 }
@@ -197,7 +197,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                     NDRX_LOG(log_error, "Failed to set EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
 
-                    _TPset_error_fmt(TPESYSTEM, "Failed to set EX_NREQLOGFILE: %s", 
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EX_NREQLOGFILE: %s", 
                         Bstrerror(Berror));
 
                     EXFAIL_OUT(ret);
@@ -220,7 +220,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
                     /* call self again... 
                      * Only now with out request service
                      */
-                    if (EXSUCCEED!=_tplogsetreqfile(data, filename, NULL))
+                    if (EXSUCCEED!=ndrx_tplogsetreqfile(data, filename, NULL))
                     {
                         EXFAIL_OUT(ret);
                     }
@@ -230,7 +230,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
             {
                 NDRX_LOG(log_warn, "Cannot set request log file: "
                             "empty name in buffer, no name in 'filename'!");
-                _TPset_error_msg(TPEINVAL, "Cannot set request log file: "
+                ndrx_TPset_error_msg(TPEINVAL, "Cannot set request log file: "
                         "empty name in buffer, no name in 'filename'!");
                 EXFAIL_OUT(ret);
             }
@@ -253,7 +253,7 @@ expublic int _tplogsetreqfile(char **data, char *filename, char *filesvc)
     {
         NDRX_LOG(log_warn, "Cannot set request log file: "
                             "no buffer and no name in 'filename'!");
-        _TPset_error_msg(TPEINVAL, "Cannot set request log file: "
+        ndrx_TPset_error_msg(TPEINVAL, "Cannot set request log file: "
                 "no buffer and no name in 'filename'!");
         EXFAIL_OUT(ret);
     }
@@ -269,7 +269,7 @@ out:
  * @param filename
  * @return 
  */
-expublic int _tploggetbufreqfile(char *data, char *filename, int bufsize)
+expublic int ndrx_tploggetbufreqfile(char *data, char *filename, int bufsize)
 {
     int ret = EXSUCCEED;
     char btype[16] = {EXEOS};
@@ -279,7 +279,7 @@ expublic int _tploggetbufreqfile(char *data, char *filename, int bufsize)
     
     if (NULL!=data)
     {
-        if (EXFAIL==_tptypes(data, btype, stype))
+        if (EXFAIL==ndrx_tptypes(data, btype, stype))
         {
             EXFAIL_OUT(ret);
         }
@@ -297,28 +297,28 @@ expublic int _tploggetbufreqfile(char *data, char *filename, int bufsize)
                 {
                     NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
-                    _TPset_error_fmt(TPENOENT, "Failed to get EX_NREQLOGFILE: %s", 
+                    ndrx_TPset_error_fmt(TPENOENT, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 } 
             }
             else
             {
-                _TPset_error_fmt(TPENOENT, "No file exists: %s", 
+                ndrx_TPset_error_fmt(TPENOENT, "No file exists: %s", 
                             Bstrerror(Berror));
                 EXFAIL_OUT(ret);
             }
         }
         else
         {
-            _TPset_error_fmt(TPEINVAL, "Not UBF buffer: %s", 
+            ndrx_TPset_error_fmt(TPEINVAL, "Not UBF buffer: %s", 
                             Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
     }
     else
     {
-        _TPset_error_fmt(TPEINVAL, "Null buffer: %s", 
+        ndrx_TPset_error_fmt(TPEINVAL, "Null buffer: %s", 
                             Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
@@ -334,7 +334,7 @@ out:
  * @param filename
  * @return 
  */
-expublic int _tplogdelbufreqfile(char *data)
+expublic int ndrx_tplogdelbufreqfile(char *data)
 {
     int ret = EXSUCCEED;
     char btype[16] = {EXEOS};
@@ -343,7 +343,7 @@ expublic int _tplogdelbufreqfile(char *data)
     
     if (NULL!=data)
     {
-        if (EXFAIL==_tptypes(data, btype, stype))
+        if (EXFAIL==ndrx_tptypes(data, btype, stype))
         {
             EXFAIL_OUT(ret);
         }
@@ -360,28 +360,28 @@ expublic int _tplogdelbufreqfile(char *data)
                 {
                     NDRX_LOG(log_error, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
-                    _TPset_error_fmt(TPENOENT, "Failed to get EX_NREQLOGFILE: %s", 
+                    ndrx_TPset_error_fmt(TPENOENT, "Failed to get EX_NREQLOGFILE: %s", 
                             Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 } 
             }
             else
             {
-                _TPset_error_fmt(TPENOENT, "No file exists: %s", 
+                ndrx_TPset_error_fmt(TPENOENT, "No file exists: %s", 
                             Bstrerror(Berror));
                 EXFAIL_OUT(ret);
             }
         }
         else
         {
-            _TPset_error_fmt(TPEINVAL, "Not UBF buffer: %s", 
+            ndrx_TPset_error_fmt(TPEINVAL, "Not UBF buffer: %s", 
                             Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
     }
     else
     {
-        _TPset_error_fmt(TPEINVAL, "Null buffer: %s", 
+        ndrx_TPset_error_fmt(TPEINVAL, "Null buffer: %s", 
                             Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
