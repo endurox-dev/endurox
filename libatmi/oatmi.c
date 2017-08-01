@@ -91,7 +91,7 @@ expublic int Otpacall(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpacall() failed to set context");
@@ -110,7 +110,7 @@ expublic int Otpacall(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpacall() failed to get context");
@@ -167,7 +167,7 @@ expublic char * Otpalloc(TPCONTEXT_T *p_ctxt, char *type, char *subtype, long si
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpalloc() failed to set context");
@@ -187,7 +187,7 @@ expublic char * Otpalloc(TPCONTEXT_T *p_ctxt, char *type, char *subtype, long si
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpalloc() failed to get context");
@@ -245,7 +245,7 @@ expublic int Otpcall(TPCONTEXT_T *p_ctxt, char *svc, char *idata, long ilen, cha
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpcall() failed to set context");
@@ -264,7 +264,7 @@ expublic int Otpcall(TPCONTEXT_T *p_ctxt, char *svc, char *idata, long ilen, cha
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpcall() failed to get context");
@@ -321,7 +321,7 @@ expublic int Otpcancel(TPCONTEXT_T *p_ctxt, int cd)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpcancel() failed to set context");
@@ -340,7 +340,7 @@ expublic int Otpcancel(TPCONTEXT_T *p_ctxt, int cd)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpcancel() failed to get context");
@@ -397,7 +397,7 @@ expublic int Otpconnect(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, lo
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpconnect() failed to set context");
@@ -416,7 +416,7 @@ expublic int Otpconnect(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, lo
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpconnect() failed to get context");
@@ -473,7 +473,7 @@ expublic int Otpdiscon(TPCONTEXT_T *p_ctxt, int cd)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpdiscon() failed to set context");
@@ -492,7 +492,7 @@ expublic int Otpdiscon(TPCONTEXT_T *p_ctxt, int cd)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpdiscon() failed to get context");
@@ -548,7 +548,7 @@ expublic void Otpfree(TPCONTEXT_T *p_ctxt, char *ptr)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpfree() failed to set context");
@@ -566,7 +566,7 @@ expublic void Otpfree(TPCONTEXT_T *p_ctxt, char *ptr)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpfree() failed to get context");
@@ -622,7 +622,7 @@ expublic int Otpisautobuf(TPCONTEXT_T *p_ctxt, char *buf)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpisautobuf() failed to set context");
@@ -641,7 +641,7 @@ expublic int Otpisautobuf(TPCONTEXT_T *p_ctxt, char *buf)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpisautobuf() failed to get context");
@@ -698,7 +698,7 @@ expublic int Otpgetrply(TPCONTEXT_T *p_ctxt, int *cd, char **data, long *len, lo
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpgetrply() failed to set context");
@@ -717,7 +717,7 @@ expublic int Otpgetrply(TPCONTEXT_T *p_ctxt, int *cd, char **data, long *len, lo
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpgetrply() failed to get context");
@@ -774,7 +774,7 @@ expublic char * Otprealloc(TPCONTEXT_T *p_ctxt, char *ptr, long size)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tprealloc() failed to set context");
@@ -794,7 +794,7 @@ expublic char * Otprealloc(TPCONTEXT_T *p_ctxt, char *ptr, long size)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tprealloc() failed to get context");
@@ -852,7 +852,7 @@ expublic int Otprecv(TPCONTEXT_T *p_ctxt, int cd, char **data, long *len, long f
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tprecv() failed to set context");
@@ -871,7 +871,7 @@ expublic int Otprecv(TPCONTEXT_T *p_ctxt, int cd, char **data, long *len, long f
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tprecv() failed to get context");
@@ -928,7 +928,7 @@ expublic int Otpsend(TPCONTEXT_T *p_ctxt, int cd, char *data, long len, long fla
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpsend() failed to set context");
@@ -947,7 +947,7 @@ expublic int Otpsend(TPCONTEXT_T *p_ctxt, int cd, char *data, long len, long fla
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpsend() failed to get context");
@@ -1004,7 +1004,7 @@ expublic long Otptypes(TPCONTEXT_T *p_ctxt, char *ptr, char *type, char *subtype
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tptypes() failed to set context");
@@ -1023,7 +1023,7 @@ expublic long Otptypes(TPCONTEXT_T *p_ctxt, char *ptr, char *type, char *subtype
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tptypes() failed to get context");
@@ -1080,7 +1080,7 @@ expublic int Otpabort(TPCONTEXT_T *p_ctxt, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpabort() failed to set context");
@@ -1099,7 +1099,7 @@ expublic int Otpabort(TPCONTEXT_T *p_ctxt, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpabort() failed to get context");
@@ -1156,7 +1156,7 @@ expublic int Otpbegin(TPCONTEXT_T *p_ctxt, unsigned long timeout, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpbegin() failed to set context");
@@ -1175,7 +1175,7 @@ expublic int Otpbegin(TPCONTEXT_T *p_ctxt, unsigned long timeout, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpbegin() failed to get context");
@@ -1232,7 +1232,7 @@ expublic int Otpcommit(TPCONTEXT_T *p_ctxt, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpcommit() failed to set context");
@@ -1251,7 +1251,7 @@ expublic int Otpcommit(TPCONTEXT_T *p_ctxt, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpcommit() failed to get context");
@@ -1308,7 +1308,7 @@ expublic int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long fl
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpconvert() failed to set context");
@@ -1327,7 +1327,7 @@ expublic int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long fl
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpconvert() failed to get context");
@@ -1384,7 +1384,7 @@ expublic int Otpsuspend(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsuspend() failed to set context");
@@ -1403,7 +1403,7 @@ expublic int Otpsuspend(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsuspend() failed to get context");
@@ -1460,7 +1460,7 @@ expublic int Otpresume(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpresume() failed to set context");
@@ -1479,7 +1479,7 @@ expublic int Otpresume(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpresume() failed to get context");
@@ -1536,7 +1536,7 @@ expublic int Otpopen(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpopen() failed to set context");
@@ -1555,7 +1555,7 @@ expublic int Otpopen(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpopen() failed to get context");
@@ -1612,7 +1612,7 @@ expublic int Otpclose(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpclose() failed to set context");
@@ -1631,7 +1631,7 @@ expublic int Otpclose(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpclose() failed to get context");
@@ -1688,7 +1688,7 @@ expublic int Otpgetlev(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpgetlev() failed to set context");
@@ -1707,7 +1707,7 @@ expublic int Otpgetlev(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpgetlev() failed to get context");
@@ -1764,7 +1764,7 @@ expublic char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpstrerror() failed to set context");
@@ -1784,7 +1784,7 @@ expublic char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpstrerror() failed to get context");
@@ -1842,7 +1842,7 @@ expublic long Otpgetnodeid(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpgetnodeid() failed to set context");
@@ -1861,7 +1861,7 @@ expublic long Otpgetnodeid(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpgetnodeid() failed to get context");
@@ -1918,7 +1918,7 @@ expublic long Otpsubscribe(TPCONTEXT_T *p_ctxt, char *eventexpr, char *filter, T
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsubscribe() failed to set context");
@@ -1937,7 +1937,7 @@ expublic long Otpsubscribe(TPCONTEXT_T *p_ctxt, char *eventexpr, char *filter, T
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsubscribe() failed to get context");
@@ -1994,7 +1994,7 @@ expublic int Otpunsubscribe(TPCONTEXT_T *p_ctxt, long subscription, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpunsubscribe() failed to set context");
@@ -2013,7 +2013,7 @@ expublic int Otpunsubscribe(TPCONTEXT_T *p_ctxt, long subscription, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpunsubscribe() failed to get context");
@@ -2070,7 +2070,7 @@ expublic int Otppost(TPCONTEXT_T *p_ctxt, char *eventname, char *data, long len,
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tppost() failed to set context");
@@ -2089,7 +2089,7 @@ expublic int Otppost(TPCONTEXT_T *p_ctxt, char *eventname, char *data, long len,
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tppost() failed to get context");
@@ -2146,7 +2146,7 @@ expublic int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _exget_tperrno_addr() failed to set context");
@@ -2166,7 +2166,7 @@ expublic int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _exget_tperrno_addr() failed to get context");
@@ -2224,7 +2224,7 @@ expublic long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _exget_tpurcode_addr() failed to set context");
@@ -2244,7 +2244,7 @@ expublic long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _exget_tpurcode_addr() failed to get context");
@@ -2302,7 +2302,7 @@ expublic int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpinit() failed to set context");
@@ -2321,7 +2321,7 @@ expublic int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpinit() failed to get context");
@@ -2378,7 +2378,7 @@ expublic int Otpchkauth(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpchkauth() failed to set context");
@@ -2397,7 +2397,7 @@ expublic int Otpchkauth(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpchkauth() failed to get context");
@@ -2454,7 +2454,7 @@ expublic void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsetunsol() failed to set context");
@@ -2474,7 +2474,7 @@ expublic void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsetunsol() failed to get context");
@@ -2532,7 +2532,7 @@ expublic int Otpnotify(TPCONTEXT_T *p_ctxt, CLIENTID *clientid, char *data, long
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpnotify() failed to set context");
@@ -2551,7 +2551,7 @@ expublic int Otpnotify(TPCONTEXT_T *p_ctxt, CLIENTID *clientid, char *data, long
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpnotify() failed to get context");
@@ -2608,7 +2608,7 @@ expublic int Otpbroadcast(TPCONTEXT_T *p_ctxt, char *lmid, char *usrname, char *
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpbroadcast() failed to set context");
@@ -2627,7 +2627,7 @@ expublic int Otpbroadcast(TPCONTEXT_T *p_ctxt, char *lmid, char *usrname, char *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpbroadcast() failed to get context");
@@ -2684,7 +2684,7 @@ expublic int Otpchkunsol(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpchkunsol() failed to set context");
@@ -2703,7 +2703,7 @@ expublic int Otpchkunsol(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpchkunsol() failed to get context");
@@ -2760,7 +2760,7 @@ expublic int Otpterm(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpterm() failed to set context");
@@ -2779,7 +2779,7 @@ expublic int Otpterm(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpterm() failed to get context");
@@ -2836,7 +2836,7 @@ expublic int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpjsontoubf() failed to set context");
@@ -2855,7 +2855,7 @@ expublic int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpjsontoubf() failed to get context");
@@ -2912,7 +2912,7 @@ expublic int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int buf
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpubftojson() failed to set context");
@@ -2931,7 +2931,7 @@ expublic int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int buf
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpubftojson() failed to get context");
@@ -2988,7 +2988,7 @@ expublic int Otpenqueue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpenqueue() failed to set context");
@@ -3007,7 +3007,7 @@ expublic int Otpenqueue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpenqueue() failed to get context");
@@ -3064,7 +3064,7 @@ expublic int Otpdequeue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpdequeue() failed to set context");
@@ -3083,7 +3083,7 @@ expublic int Otpdequeue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpdequeue() failed to get context");
@@ -3140,7 +3140,7 @@ expublic int Otpenqueueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpenqueueex() failed to set context");
@@ -3159,7 +3159,7 @@ expublic int Otpenqueueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpenqueueex() failed to get context");
@@ -3216,7 +3216,7 @@ expublic int Otpdequeueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpdequeueex() failed to set context");
@@ -3235,7 +3235,7 @@ expublic int Otpdequeueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpdequeueex() failed to get context");
@@ -3292,7 +3292,7 @@ expublic int Otpgetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T *context, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpgetctxt() failed to set context");
@@ -3311,7 +3311,7 @@ expublic int Otpgetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T *context, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpgetctxt() failed to get context");
@@ -3368,7 +3368,7 @@ expublic int Otpsetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpsetctxt() failed to set context");
@@ -3387,7 +3387,7 @@ expublic int Otpsetctxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpsetctxt() failed to get context");
@@ -3443,7 +3443,7 @@ expublic void Otpfreectxt(TPCONTEXT_T *p_ctxt, TPCONTEXT_T context)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpfreectxt() failed to set context");
@@ -3511,7 +3511,7 @@ expublic int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *filename, 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogsetreqfile() failed to set context");
@@ -3530,7 +3530,7 @@ expublic int Otplogsetreqfile(TPCONTEXT_T *p_ctxt, char **data, char *filename, 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogsetreqfile() failed to get context");
@@ -3587,7 +3587,7 @@ expublic int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tploggetbufreqfile() failed to set context");
@@ -3606,7 +3606,7 @@ expublic int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *filename
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tploggetbufreqfile() failed to get context");
@@ -3663,7 +3663,7 @@ expublic int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogdelbufreqfile() failed to set context");
@@ -3682,7 +3682,7 @@ expublic int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogdelbufreqfile() failed to get context");
@@ -3738,7 +3738,7 @@ expublic void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogprintubf() failed to set context");
@@ -3756,7 +3756,7 @@ expublic void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tplogprintubf() failed to get context");
@@ -3774,15 +3774,15 @@ out:
 }
 
 /**
- * Object-API wrapper for _ndrx_tmunsolerr_handler() - Auto generated.
+ * Object-API wrapper for ndrx_ndrx_tmunsolerr_handler() - Auto generated.
  */
-expublic void O_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags) 
+expublic void Ondrx_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags) 
 {
     int did_set = EXFALSE;
 
 
 #ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "ENTRY: _ndrx_tmunsolerr_handler() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: ndrx_ndrx_tmunsolerr_handler() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
     NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
         ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
 
@@ -3811,34 +3811,34 @@ expublic void O_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long le
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
-            userlog("ERROR! _ndrx_tmunsolerr_handler() failed to set context");
+            userlog("ERROR! ndrx_ndrx_tmunsolerr_handler() failed to set context");
         }
         did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
-        userlog("WARNING! _ndrx_tmunsolerr_handler() context %p thinks that it is assocated "
+        userlog("WARNING! ndrx_ndrx_tmunsolerr_handler() context %p thinks that it is assocated "
                 "with current thread, but thread is associated with %p context!",
                 p_ctxt, G_atmi_tls);
     }
 
-    _ndrx_tmunsolerr_handler(data, len, flags);
+    ndrx_ndrx_tmunsolerr_handler(data, len, flags);
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
-            userlog("ERROR! _ndrx_tmunsolerr_handler() failed to get context");
+            userlog("ERROR! ndrx_ndrx_tmunsolerr_handler() failed to get context");
         }
     }
 out:
 
 #ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "RETURN: _ndrx_tmunsolerr_handler() returns, context: %p, current: %p",
+    NDRX_LOG(log_debug, "RETURN: ndrx_ndrx_tmunsolerr_handler() returns, context: %p, current: %p",
         *p_ctxt, G_atmi_tls);
 #endif
 

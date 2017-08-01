@@ -91,7 +91,7 @@ expublic char * ONstrerror(TPCONTEXT_T *p_ctxt, int err)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Nstrerror() failed to set context");
@@ -111,7 +111,7 @@ expublic char * ONstrerror(TPCONTEXT_T *p_ctxt, int err)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! Nstrerror() failed to get context");
@@ -169,7 +169,7 @@ expublic int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _Nget_Nerror_addr() failed to set context");
@@ -189,7 +189,7 @@ expublic int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD | CTXT_PRIV_IGN))
         {
             userlog("ERROR! _Nget_Nerror_addr() failed to get context");

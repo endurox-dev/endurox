@@ -91,7 +91,7 @@ expublic int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpadvertise_full() failed to set context");
@@ -110,7 +110,7 @@ expublic int Otpadvertise_full(TPCONTEXT_T *p_ctxt, char *svc_nm, void (*p_func)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpadvertise_full() failed to get context");
@@ -166,7 +166,7 @@ expublic void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, l
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpreturn() failed to set context");
@@ -184,7 +184,7 @@ expublic void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *data, l
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN| CTXT_PRIV_TRAN))
         {
             userlog("ERROR! tpreturn() failed to get context");
@@ -240,7 +240,7 @@ expublic int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpunadvertise() failed to set context");
@@ -259,7 +259,7 @@ expublic int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpunadvertise() failed to get context");
@@ -315,7 +315,7 @@ expublic void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, l
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpforward() failed to set context");
@@ -333,7 +333,7 @@ expublic void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, l
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpforward() failed to get context");
@@ -389,7 +389,7 @@ expublic char * Otpsrvgetctxdata(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsrvgetctxdata() failed to set context");
@@ -409,7 +409,7 @@ expublic char * Otpsrvgetctxdata(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsrvgetctxdata() failed to get context");
@@ -467,7 +467,7 @@ expublic int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsrvsetctxdata() failed to set context");
@@ -486,7 +486,7 @@ expublic int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpsrvsetctxdata() failed to get context");
@@ -542,7 +542,7 @@ expublic void Otpcontinue(TPCONTEXT_T *p_ctxt)
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpcontinue() failed to set context");
@@ -560,7 +560,7 @@ expublic void Otpcontinue(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpcontinue() failed to get context");
@@ -616,7 +616,7 @@ expublic int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, vo
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_addpollerfd() failed to set context");
@@ -635,7 +635,7 @@ expublic int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, vo
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_addpollerfd() failed to get context");
@@ -692,7 +692,7 @@ expublic int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_delpollerfd() failed to set context");
@@ -711,7 +711,7 @@ expublic int Otpext_delpollerfd(TPCONTEXT_T *p_ctxt, int fd)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_delpollerfd() failed to get context");
@@ -768,7 +768,7 @@ expublic int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_addperiodcb() failed to set context");
@@ -787,7 +787,7 @@ expublic int Otpext_addperiodcb(TPCONTEXT_T *p_ctxt, int secs, int (*p_periodcb)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_addperiodcb() failed to get context");
@@ -844,7 +844,7 @@ expublic int Otpext_delperiodcb(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_delperiodcb() failed to set context");
@@ -863,7 +863,7 @@ expublic int Otpext_delperiodcb(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_delperiodcb() failed to get context");
@@ -920,7 +920,7 @@ expublic int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void))
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_addb4pollcb() failed to set context");
@@ -939,7 +939,7 @@ expublic int Otpext_addb4pollcb(TPCONTEXT_T *p_ctxt, int (*p_b4pollcb)(void))
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_addb4pollcb() failed to get context");
@@ -996,7 +996,7 @@ expublic int Otpext_delb4pollcb(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_delb4pollcb() failed to set context");
@@ -1015,7 +1015,7 @@ expublic int Otpext_delb4pollcb(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpext_delb4pollcb() failed to get context");
@@ -1072,7 +1072,7 @@ expublic int Otpgetsrvid(TPCONTEXT_T *p_ctxt)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpgetsrvid() failed to set context");
@@ -1091,7 +1091,7 @@ expublic int Otpgetsrvid(TPCONTEXT_T *p_ctxt)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! tpgetsrvid() failed to get context");
@@ -1148,7 +1148,7 @@ expublic int Ondrx_main(TPCONTEXT_T *p_ctxt, int argc, char **argv)
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_main() failed to set context");
@@ -1167,7 +1167,7 @@ expublic int Ondrx_main(TPCONTEXT_T *p_ctxt, int argc, char **argv)
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_main() failed to get context");

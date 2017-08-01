@@ -109,7 +109,7 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
 
     if (NULL==svc_fn)
     {
-        _TPset_error_fmt(TPENOENT, "There is no entry for [%s]",
+        ndrx_TPset_error_fmt(TPENOENT, "There is no entry for [%s]",
                         svn_nm_srch);
         ret=EXFAIL;
     }
@@ -122,7 +122,7 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
             NDRX_LOG(log_error, "Failed to allocate %d bytes for service entry",
                                             sizeof(svc_entry_fn_t));
 
-            _TPset_error_fmt(TPEOS, "Failed to allocate %d bytes for service entry",
+            ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %d bytes for service entry",
                                 sizeof(svc_entry_fn_t));
             ret=EXFAIL;
         }
@@ -173,7 +173,7 @@ exprivate int build_service_array_list(void)
     
     if (NULL==G_server_conf.service_array)
     {
-        _TPset_error_fmt(TPEOS, "Failed to allocate: %s", strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate: %s", strerror(errno));
         ret=EXFAIL;
     }
     else
@@ -206,7 +206,7 @@ exprivate int add_specific_queue(char *qname, int is_admin)
         NDRX_LOG(log_error, "Failed to allocate %d bytes for admin service entry",
                                         sizeof(svc_entry_fn_t));
 
-        _TPset_error_fmt(TPEOS, "Failed to allocate %d bytes for admin service entry",
+        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %d bytes for admin service entry",
                             sizeof(svc_entry_fn_t));
     }
     else
@@ -434,12 +434,12 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
     
-    _TPunset_error();
+    ndrx_TPunset_error();
 
     /* allocate memory for entry */
     if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
     {
-            _TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
+            ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
                                 sizeof(svc_entry_fn_t));
             ret=EXFAIL;
             goto out;
@@ -481,7 +481,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
                                         "already advertised, "
                                         "but pointing to different "
                                         "function - FAIL", svc_nm);
-                    _TPset_error_fmt(TPEMATCH, "ERROR: Service with name [%s] "
+                    ndrx_TPset_error_fmt(TPEMATCH, "ERROR: Service with name [%s] "
                                         "already advertised, "
                                         "but pointing to different function - "
                                         "FAIL", svc_nm);
@@ -531,12 +531,12 @@ expublic int tpunadvertise(char *svcname)
     svc_entry_fn_t *existing=NULL;
     char *thisfn="tpunadvertise";
     
-    _TPunset_error();
+    ndrx_TPunset_error();
     
     /* Validate argument */
     if (NULL==svcname || EXEOS==svcname[0])
     {
-        _TPset_error_fmt(TPEINVAL, "%s: invalid svcname empty or null!", thisfn);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: invalid svcname empty or null!", thisfn);
         ret=EXFAIL;
         goto out;
     }
@@ -564,7 +564,7 @@ expublic int tpunadvertise(char *svcname)
             * Firstly we re-configure polling, then delete allocated structs
             * then send info to server.
             */
-            _TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", 
+            ndrx_TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", 
                     thisfn, svc_nm);
             ret=EXFAIL;
             goto out;

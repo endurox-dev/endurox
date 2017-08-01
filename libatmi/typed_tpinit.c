@@ -63,7 +63,7 @@ expublic char	* TPINIT_tpalloc (typed_buffer_descr_t *descr, long len)
     if (NULL==ret)
     {
         NDRX_LOG(log_error, "%s: Failed to allocate TPINIT buffer!", fn);
-        _TPset_error_fmt(TPEOS, "TPINIT failed to allocate: %d bytes", sizeof(TPINIT));
+        ndrx_TPset_error_fmt(TPEOS, "TPINIT failed to allocate: %d bytes", sizeof(TPINIT));
         goto out;
     }
 

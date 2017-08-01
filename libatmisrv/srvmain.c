@@ -95,7 +95,7 @@ int parse_svc_arg(char *arg)
         /* allocate memory for entry */
         if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
         {
-                _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
+                ndrx_TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
                                     sizeof(svc_entry_t));
                 return EXFAIL; /* <<< return FAIL! */
         }
@@ -187,7 +187,7 @@ int parse_xcvt_arg(char *arg)
         /* allocate memory for entry */
         if ( (entry = (xbufcvt_entry_t*)NDRX_MALLOC(sizeof(xbufcvt_entry_t))) == NULL)
         {
-                _TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
+                ndrx_TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
                                     sizeof(svc_entry_t));
                 return EXFAIL; /* <<< return FAIL! */
         }
@@ -327,7 +327,7 @@ int ndrx_init(int argc, char** argv)
         }
         else
         {
-            _TPset_error_msg(TPEINVAL, "Error: Missing evn param: NDRX_TOUT, "
+            ndrx_TPset_error_msg(TPEINVAL, "Error: Missing evn param: NDRX_TOUT, "
                     "cannot determine default timeout!");
             ret=EXFAIL;
             goto out;
@@ -340,7 +340,7 @@ int ndrx_init(int argc, char** argv)
     /* Validate the configuration */
     if (G_server_conf.srv_id<1)
     {
-        _TPset_error_msg(TPEINVAL, "Error: server ID (-i) must be >= 1");
+        ndrx_TPset_error_msg(TPEINVAL, "Error: server ID (-i) must be >= 1");
         ret=EXFAIL;
         goto out;
     }
@@ -366,7 +366,7 @@ int ndrx_init(int argc, char** argv)
 
     if (NULL==(p=getenv("NDRX_QPREFIX")))
     {
-        _TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
+        ndrx_TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
         ret=EXFAIL;
         goto out;
     }

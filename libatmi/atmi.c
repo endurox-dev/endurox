@@ -46,7 +46,7 @@
 #include <ubf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define API_ENTRY {_TPunset_error(); \
+#define API_ENTRY {ndrx_TPunset_error(); \
     ATMI_TLS_ENTRY;\
     if (!G_atmi_tls->G_atmi_is_init) { \
         /* this means this is dirty client call, do the init */\
@@ -84,7 +84,7 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!
      causes problems with serice async replies!, See doc for tpacall! */
             
-    ret=_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL); /* no reply queue */
+    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL); /* no reply queue */
     
 out:
     return ret;
@@ -115,7 +115,7 @@ expublic int tpacallex (char *svc, char *data,
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!
      causes problems with serice async replies!, See doc for tpacall! */
             
-    ret=_tpacall(svc, data, len, flags, extradata, dest_node, ex_flags, NULL); /* no reply queue */
+    ret=ndrx_tpacall(svc, data, len, flags, extradata, dest_node, ex_flags, NULL); /* no reply queue */
     
 out:
     return ret;
@@ -131,7 +131,7 @@ out:
 expublic char * tpalloc (char *type, char *subtype, long len)
 {
     char *ret=NULL;
-    int entry_status=EXSUCCEED;
+    /* int entry_status=EXSUCCEED; */
     
 /* Allow to skip initalization - this for for clt init (using tpalloc for buffer request)
     API_ENTRY;
@@ -141,7 +141,7 @@ expublic char * tpalloc (char *type, char *subtype, long len)
         goto out;
     }
  */   
-    ret=_tpalloc(NULL, type, subtype, len);
+    ret=ndrx_tpalloc(NULL, type, subtype, len);
 
 out:
     return ret;
@@ -166,7 +166,7 @@ expublic char * tprealloc (char *buf, long len)
         goto out;
     }
     
-    ret=_tprealloc(buf, len);
+    ret=ndrx_tprealloc(buf, len);
     
 out:
     return ret;
@@ -189,7 +189,6 @@ expublic int tpcall (char *svc, char *idata, long ilen,
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
-    TPTRANID tranid;
     API_ENTRY;
 
     if (EXSUCCEED!=entry_status)
@@ -201,7 +200,7 @@ expublic int tpcall (char *svc, char *idata, long ilen,
     /* Check some other parameters */
     if (olen==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "olen cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "olen cannot be null");
         ret=EXFAIL;
         goto out;
     }
@@ -209,19 +208,19 @@ expublic int tpcall (char *svc, char *idata, long ilen,
     /* Check some other parameters */
     if (odata==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "odata cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "odata cannot be null");
         ret=EXFAIL;
         goto out;
     }
     
     if (flags & TPNOREPLY)
     {
-        _TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
+        ndrx_TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
         ret=EXFAIL;
         goto out;
     }
 
-    ret=_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0);
+    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0);
     
 out:
     return ret;
@@ -249,35 +248,35 @@ expublic int tpgetrply (int *cd, char **data, long *len, long flags)
 
     if (cd==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "cd cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "cd cannot be null");
         ret=EXFAIL;
         goto out;
     }
 
     if (data==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "data cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "data cannot be null");
         ret=EXFAIL;
         goto out;
     }
 
     if (len==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "len cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "len cannot be null");
         ret=EXFAIL;
         goto out;
     }
 
     if (flags & TPGETANY)
-        ret=_tpgetrply (cd, EXFAIL, data, len, flags, NULL);
+        ret=ndrx_tpgetrply (cd, EXFAIL, data, len, flags, NULL);
     else if (*cd <= 0 )
     {
-        _TPset_error_msg(TPEINVAL, "*cd <= 0");
+        ndrx_TPset_error_msg(TPEINVAL, "*cd <= 0");
         ret=EXFAIL;
         goto out;
     }
     else
-        ret=_tpgetrply (cd, *cd, data, len, flags, NULL);
+        ret=ndrx_tpgetrply (cd, *cd, data, len, flags, NULL);
         
 out:
     return ret;
@@ -311,7 +310,7 @@ expublic int tpcallex (char *svc, char *idata, long ilen,
     /* Check some other parameters */
     if (olen==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "olen cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "olen cannot be null");
         ret=EXFAIL;
         goto out;
     }
@@ -319,19 +318,19 @@ expublic int tpcallex (char *svc, char *idata, long ilen,
     /* Check some other parameters */
     if (odata==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "odata cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "odata cannot be null");
         ret=EXFAIL;
         goto out;
     }
     
     if (flags & TPNOREPLY)
     {
-        _TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
+        ndrx_TPset_error_msg(TPEINVAL, "TPNOREPLY cannot be used with tpcall()");
         ret=EXFAIL;
         goto out;
     }
 
-    ret=_tpcall (svc, idata, ilen, odata, olen, flags, extradata, dest_node, ex_flags);
+    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, extradata, dest_node, ex_flags);
 
 out:
     return ret;
@@ -353,7 +352,7 @@ expublic int tpabort (long flags)
         goto out;
     }
     
-    ret=_tpabort(flags);
+    ret=ndrx_tpabort(flags);
     
 out:
     return ret;
@@ -375,7 +374,7 @@ expublic int tpbegin (unsigned long timeout, long flags)
         goto out;
     }
     
-    ret=_tpbegin(timeout, flags);
+    ret=ndrx_tpbegin(timeout, flags);
     
 out:
     return ret;
@@ -397,7 +396,7 @@ expublic int tpcommit (long flags)
         goto out;
     }
     
-    ret=_tpcommit(flags);
+    ret=ndrx_tpcommit(flags);
     
 out:
     return ret;
@@ -419,7 +418,7 @@ expublic int tpopen (void)
         goto out;
     }
     
-    ret=_tpopen();
+    ret=ndrx_tpopen();
     
 out:
     return ret;
@@ -442,7 +441,7 @@ expublic int tpclose (void)
         goto out;
     }
     
-    ret=_tpclose();
+    ret=ndrx_tpclose();
     
 out:
     return ret;
@@ -454,7 +453,7 @@ out:
  */
 expublic int tpgetlev (void)
 {
-    _TPunset_error(); /* this elary does TLS entry */
+    ndrx_TPunset_error(); /* this early does TLS entry */
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
@@ -482,7 +481,7 @@ expublic int tpcancel (int cd)
         goto out;
     }
 
-    ret=_tpcancel (cd);
+    ret=ndrx_tpcancel (cd);
 
 out:
     return ret;
@@ -494,11 +493,11 @@ out:
  */
 expublic void tpfree (char *buf)
 {
-    _TPunset_error();
+    ndrx_TPunset_error();
 
     if (NULL!=buf)
     {
-        _tpfree(buf, NULL);
+        ndrx_tpfree(buf, NULL);
     }
     else
     {
@@ -513,15 +512,15 @@ expublic void tpfree (char *buf)
  */
 expublic int tpisautobuf (char *buf)
 {
-    _TPunset_error();
+    ndrx_TPunset_error();
 
     if (NULL!=buf)
     {
-        return _tpisautobuf(buf);
+        return ndrx_tpisautobuf(buf);
     }
     else
     {
-        _TPset_error_msg(TPEINVAL, "Null buffer passed to tpisautobuf()!");
+        ndrx_TPset_error_msg(TPEINVAL, "Null buffer passed to tpisautobuf()!");
         return EXFAIL;
     }
 }
@@ -536,8 +535,8 @@ expublic int tpisautobuf (char *buf)
  */
 expublic int tpterm (void)
 {
-    _TPunset_error();
-    return _tpterm();
+    ndrx_TPunset_error();
+    return ndrx_tpterm();
 }
 
 /**
@@ -560,7 +559,7 @@ expublic int tpconnect (char *svc, char *data, long len, long flags)
         goto out;
     }
     
-    ret=_tpconnect (svc, data, len, flags);
+    ret=ndrx_tpconnect (svc, data, len, flags);
 
 out:
     return ret;
@@ -590,7 +589,7 @@ expublic int tprecv (int cd, char * *data,
         goto out;
     }
 
-    ret=_tprecv (cd, data, len, flags, revent, &command_id);
+    ret=ndrx_tprecv (cd, data, len, flags, revent, &command_id);
 
 out:
     return ret;
@@ -618,7 +617,7 @@ expublic int tpsend (int cd, char *data, long len, long flags,
         goto out;
     }
 
-    ret=_tpsend (cd, data, len, flags, revent, ATMI_COMMAND_CONVDATA);
+    ret=ndrx_tpsend (cd, data, len, flags, revent, ATMI_COMMAND_CONVDATA);
 
 out:
     return ret;
@@ -645,7 +644,7 @@ expublic int tpdiscon (int cd)
         goto out;
     }
 
-    ret=_tpdiscon (cd);
+    ret=ndrx_tpdiscon (cd);
 
 out:
     return ret;
@@ -671,7 +670,7 @@ int tppost(char *eventname, char *data, long len, long flags)
         goto out;
     }
 
-    ret=_tppost(eventname, data, len, flags);
+    ret=ndrx_tppost(eventname, data, len, flags);
 
 out:
     return ret;
@@ -692,7 +691,7 @@ long tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
         goto out;
     }
 
-    ret=_tpsubscribe(eventexpr, filter, ctl, flags);
+    ret=ndrx_tpsubscribe(eventexpr, filter, ctl, flags);
 
 out:
     return ret;
@@ -713,7 +712,7 @@ int tpunsubscribe(long subscription, long flags)
         goto out;
     }
 
-    ret=_tpunsubscribe(subscription, flags);
+    ret=ndrx_tpunsubscribe(subscription, flags);
 
 out:
     return ret;
@@ -752,7 +751,7 @@ expublic int tpsuspend (TPTRANID *tranid, long flags)
         goto out;
     }
     
-    ret = _tpsuspend (tranid, flags, EXFALSE);
+    ret = ndrx_tpsuspend (tranid, flags, EXFALSE);
     
 out:
     return ret;
@@ -776,7 +775,7 @@ expublic int tpresume (TPTRANID *tranid, long flags)
         goto out;
     }
     
-    ret = _tpresume (tranid, flags);
+    ret = ndrx_tpresume (tranid, flags);
     
 out:
     return ret;
@@ -804,12 +803,12 @@ expublic long tptypes (char *ptr, char *type, char *subtype)
     
     if (ptr==NULL)
     {
-        _TPset_error_msg(TPEINVAL, "ptr cannot be null");
+        ndrx_TPset_error_msg(TPEINVAL, "ptr cannot be null");
         ret=EXFAIL;
         goto out;
     }
 
-    ret=_tptypes(ptr, type, subtype);
+    ret=ndrx_tptypes(ptr, type, subtype);
 
 out:
     return ret;
@@ -846,7 +845,7 @@ out:
  */
 expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
 {
-    return _tpjsontoubf(p_ub, buffer);
+    return ndrx_tpjsontoubf(p_ub, buffer);
 }
 
 /**
@@ -858,7 +857,7 @@ expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
  */
 expublic int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
 {
-    return _tpubftojson(p_ub, buffer, bufsize);
+    return ndrx_tpubftojson(p_ub, buffer, bufsize);
 }
 
 /**
@@ -876,7 +875,7 @@ expublic int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long
         goto out;
     }
     
-    ret=_tpenqueue (qspace, 0, 0, qname, ctl, data, len, flags);
+    ret=ndrx_tpenqueue (qspace, 0, 0, qname, ctl, data, len, flags);
 
 out:
     return ret;
@@ -898,7 +897,7 @@ expublic int tpdequeue (char *qspace, char *qname, TPQCTL *ctl, char **data, lon
         goto out;
     }
     
-    ret=_tpdequeue (qspace, 0, 0, qname, ctl, data, len, flags);
+    ret=ndrx_tpdequeue (qspace, 0, 0, qname, ctl, data, len, flags);
 
 out:
     return ret;
@@ -919,7 +918,7 @@ expublic int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, c
         goto out;
     }
     
-    ret=_tpenqueue ("", nodeid, srvid, qname, ctl, data, len, flags);
+    ret=ndrx_tpenqueue ("", nodeid, srvid, qname, ctl, data, len, flags);
 
 out:
     return ret;
@@ -941,7 +940,7 @@ expublic int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, c
         goto out;
     }
     
-    ret=_tpdequeue ("", nodeid, srvid, qname, ctl, data, len, flags);
+    ret=ndrx_tpdequeue ("", nodeid, srvid, qname, ctl, data, len, flags);
 
 out:
     return ret;
@@ -1009,7 +1008,7 @@ expublic tp_conversation_control_t *ndrx_get_G_accepted_connection(void)
  */
 expublic void tpfreectxt(TPCONTEXT_T context)
 {
-    _tpfreectxt(context);
+    ndrx_tpfreectxt(context);
 }
 
 /**
@@ -1030,7 +1029,7 @@ expublic int tpsetctxt(TPCONTEXT_T context, long flags)
         goto out;
     }
     
-    ret = _tpsetctxt(context, flags, (CTXT_PRIV_NSTD|CTXT_PRIV_UBF|
+    ret = ndrx_tpsetctxt(context, flags, (CTXT_PRIV_NSTD|CTXT_PRIV_UBF|
             CTXT_PRIV_ATMI|CTXT_PRIV_TRAN));
     
 out:
@@ -1055,7 +1054,7 @@ expublic int tpgetctxt(TPCONTEXT_T *context, long flags)
         goto out;
     }
     
-    ret = _tpgetctxt(context, flags, (CTXT_PRIV_NSTD|CTXT_PRIV_UBF|
+    ret = ndrx_tpgetctxt(context, flags, (CTXT_PRIV_NSTD|CTXT_PRIV_UBF|
             CTXT_PRIV_ATMI|CTXT_PRIV_TRAN));
     
 out:
@@ -1108,7 +1107,7 @@ expublic int tplogsetreqfile(char **data, char *filename, char *filesvc)
         EXFAIL_OUT(ret);
     }
     
-    ret = _tplogsetreqfile(data, filename, filesvc);
+    ret = ndrx_tplogsetreqfile(data, filename, filesvc);
     
 out:
     return ret;
@@ -1122,7 +1121,7 @@ out:
  */
 expublic void tplogprintubf(int lev, char *title, UBFH *p_ub)
 {
-    _tplogprintubf(lev, title, p_ub);
+    ndrx_tplogprintubf(lev, title, p_ub);
 }
 
 /**
@@ -1142,7 +1141,7 @@ expublic int tploggetbufreqfile(char *data, char *filename, int bufsize)
         EXFAIL_OUT(ret);
     }
     
-    ret = _tploggetbufreqfile(data, filename, bufsize);
+    ret = ndrx_tploggetbufreqfile(data, filename, bufsize);
     
 out:
     return ret;
@@ -1164,7 +1163,7 @@ expublic int tplogdelbufreqfile(char *data)
         EXFAIL_OUT(ret);
     }
     
-    ret = _tplogdelbufreqfile(data);
+    ret = ndrx_tplogdelbufreqfile(data);
     
 out:
     return ret;
@@ -1189,7 +1188,7 @@ expublic int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags)
         ret=EXFAIL;
         goto out;
     }   
-    _TPset_error_msg(TPENOENT, "TODO: tpadmcall: Not yet implemented.");
+    ndrx_TPset_error_msg(TPENOENT, "TODO: tpadmcall: Not yet implemented.");
     ret = EXFAIL;
 
 out:
@@ -1211,7 +1210,7 @@ expublic int tpchkauth(void)
         ret=EXFAIL;
         goto out;
     }   
-    _TPset_error_msg(TPENOENT, "TODO: tpchkauth: Not yet implemented.");
+    ndrx_TPset_error_msg(TPENOENT, "TODO: tpchkauth: Not yet implemented.");
     ret = EXFAIL;
 
 out:
@@ -1242,7 +1241,7 @@ expublic int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
     if (NULL==clientid)
     {
         NDRX_LOG(log_error, "%s: clientid is NULL!", __func__);
-        _TPset_error_msg(TPEINVAL, "clientid is NULL!");
+        ndrx_TPset_error_msg(TPEINVAL, "clientid is NULL!");
         
         EXFAIL_OUT(ret);
     }
@@ -1250,12 +1249,12 @@ expublic int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
     if (EXSUCCEED!=ndrx_myid_parse(clientid->clientdata, &myid, EXFALSE))
     {
         NDRX_LOG(log_error, "%s: Failed to parse my_id!", __func__);
-        _TPset_error_fmt(TPEINVAL, "Failed to parse: [%s]", clientid->clientdata);
+        ndrx_TPset_error_fmt(TPEINVAL, "Failed to parse: [%s]", clientid->clientdata);
         
         EXFAIL_OUT(ret);
     }
        
-    if (EXSUCCEED!=_tpnotify(clientid, &myid, NULL, data, len, flags,
+    if (EXSUCCEED!=ndrx_tpnotify(clientid, &myid, NULL, data, len, flags,
             myid.nodeid, NULL, NULL, NULL, 0L))
     {
         NDRX_LOG(log_error, "_tpnotify - failed!");
@@ -1303,9 +1302,9 @@ out:
  * @param len
  * @param flags
  */
-expublic void _ndrx_tmunsolerr_handler (char *data, long len, long flags)
+expublic void ndrx_ndrx_tmunsolerr_handler (char *data, long len, long flags)
 {
-    NDRX_LOG(log_debug, "_ndrx_tmunsolerr_handler() - TPUNSOLERR called");
+    NDRX_LOG(log_debug, "ndrx_ndrx_tmunsolerr_handler() - TPUNSOLERR called");
 }
 
 /**
@@ -1323,9 +1322,9 @@ expublic int tpchkunsol(void)
         EXFAIL_OUT(ret);
     }   
     
-    if (_tpchkunsol()<0)
+    if (ndrx_tpchkunsol()<0)
     {
-        NDRX_LOG(log_error, "_tpchkunsol failed");
+        NDRX_LOG(log_error, "ndrx_tpchkunsol failed");
         EXFAIL_OUT(ret);
     }
 
@@ -1356,10 +1355,10 @@ expublic int tpbroadcast(char *lmid, char *usrname, char *cltname,
         EXFAIL_OUT(ret);
     }   
     
-    if (EXSUCCEED!=_tpbroadcast_local(lmid, usrname, cltname, 
+    if (EXSUCCEED!=ndrx_tpbroadcast_local(lmid, usrname, cltname, 
             data,  len, flags, 0))
     {
-        NDRX_LOG(log_error, "_tpbroadcast_local failed");
+        NDRX_LOG(log_error, "ndrx_tpbroadcast_local failed");
         EXFAIL_OUT(ret);
     }
 

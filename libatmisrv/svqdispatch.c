@@ -140,7 +140,7 @@ expublic int sv_open_queue(void)
             if (use_sem) 
                 ndrx_unlock_svc_op(__func__);
             
-            _TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
+            ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                         entry->listen_q, strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -166,7 +166,7 @@ expublic int sv_open_queue(void)
     G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
     if (EXFAIL==G_server_conf.epollfd)
     {
-        _TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
+        ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
                                 G_server_conf.adv_service_count,
                                 ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=EXFAIL;
@@ -178,7 +178,7 @@ expublic int sv_open_queue(void)
                                             G_server_conf.max_events);
     if (NULL==G_server_conf.events)
     {
-        _TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", strerror(errno));
         ret=EXFAIL;
         goto out;
     }
@@ -200,7 +200,7 @@ expublic int sv_open_queue(void)
         if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
-            _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
+            ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
             ret=EXFAIL;
             goto out;
         }
@@ -823,7 +823,7 @@ expublic int sv_server_request(char *buf, int len)
                             EXFAIL_OUT(ret);
                         }
                         
-                        ret=_tpnotify((CLIENTID *)notif->destclient, /* basically clientid */
+                        ret=ndrx_tpnotify((CLIENTID *)notif->destclient, /* basically clientid */
                                 &myid, 
                                 NULL, 
                                 request_buffer, 
@@ -847,7 +847,7 @@ expublic int sv_server_request(char *buf, int len)
                         NDRX_LOG(log_debug, "notif->cltname_isnull: %d (%s)", 
                                 notif->cltname_isnull, notif->cltname);
                         
-                        ret=_tpbroadcast_local((notif->nodeid_isnull?NULL:notif->nodeid),
+                        ret=ndrx_tpbroadcast_local((notif->nodeid_isnull?NULL:notif->nodeid),
                                 (notif->usrname_isnull?NULL:notif->usrname),
                                 (notif->cltname_isnull?NULL:notif->cltname),
                                 request_buffer, req_len, notif->flags, EXTRUE);
@@ -1136,7 +1136,7 @@ expublic int sv_wait_for_request(void)
         if (EXFAIL==nfds)
         {
             int err = errno;
-            _TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
+            ndrx_TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
                     ndrx_poll_strerror(ndrx_epoll_errno()));
             
             if (EINTR==err)
@@ -1229,7 +1229,7 @@ expublic int sv_wait_for_request(void)
                 else
                 {
                     ret=EXFAIL;
-                    _TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", strerror(errno));
+                    ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", strerror(errno));
                 }
             }
             else
@@ -1285,7 +1285,7 @@ expublic int sv_wait_for_request(void)
                     /* This normally should not happen! */
                     if (EXFAIL==G_server_conf.last_call.no)
                     {
-                        _TPset_error_fmt(TPESYSTEM, "No service entry for call descriptor %d",
+                        ndrx_TPset_error_fmt(TPESYSTEM, "No service entry for call descriptor %d",
                                     evmqd);
                         ret=EXFAIL;
                         goto out;

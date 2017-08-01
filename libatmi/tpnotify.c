@@ -79,7 +79,7 @@
  * @param ex_flags So TPCALL_BROADCAST - when doing broadcast, TPCALL_BRCALL - call bridge
  * @return 
  */
-expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
+expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
         int dest_node, char *nodeid, char *usrname,  char *cltname,
@@ -92,14 +92,13 @@ expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     buffer_obj_t *buffer_info;
     long data_len = MAX_CALL_DATA_SIZE;
     char send_q[NDRX_MAX_Q_SIZE+1];
-    char *fn = "_tpnotify";
     time_t timestamp;
     int is_bridge;
     int tpcall_cd;
     long local_node = tpgetnodeid();
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s enter", fn);
+    NDRX_LOG(log_debug, "%s enter", __func__);
 
     /* Might want to remove in future... but it might be dangerous!*/
     memset(call, 0, sizeof(tp_notif_call_t));
@@ -153,7 +152,7 @@ expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         if (EXSUCCEED!=ndrx_myid_convert_to_q(p_clientid_myid, send_q, 
                 sizeof(send_q)))
         {
-            _TPset_error_fmt(TPEINVAL, "Failed to translate client data [%s] to Q", 
+            ndrx_TPset_error_fmt(TPEINVAL, "Failed to translate client data [%s] to Q", 
                     clientid->clientdata);
             EXFAIL_OUT(ret);
         }
@@ -167,7 +166,7 @@ expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
             /* Will do call in recursive way so that cluster code picks up
              * this dispatch...
              */
-            return _tpnotify(clientid, p_clientid_myid, 
+            return ndrx_tpnotify(clientid, p_clientid_myid, 
                         cltq, /* client q already built by broadcast */
                         data, len, flags, 
                         p_clientid_myid->nodeid, 
@@ -180,7 +179,7 @@ expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     {
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
-            _TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
+            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
             EXFAIL_OUT(ret);
         }
     }
@@ -295,12 +294,12 @@ expublic int _tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         {
             CONV_ERROR_CODE(ret, err);
         }
-        _TPset_error_fmt(err, "%s: Failed to send, os err: %s", fn, strerror(ret));
+        ndrx_TPset_error_fmt(err, "%s: Failed to send, os err: %s", __func__, strerror(ret));
         EXFAIL_OUT(ret);
     }
     
 out:
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
+    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }
 
@@ -384,7 +383,7 @@ out:
  * Just push them to in memory queue which will be later processed by _tpgetrply()
  * @return SUCCEED/FAIL
  */
-expublic int _tpchkunsol(void) 
+expublic int ndrx_tpchkunsol(void) 
 {
     int ret = EXSUCCEED;
     char *pbuf = NULL;
@@ -531,7 +530,7 @@ exprivate int match_nodeid(char *nodeid_str,  char *nodeid,
  * @param flags here TPREGEXMATCH flag affects node/usr/clt
  * @return SUCCEED/FAIL
  */
-expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname, 
+expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname, 
         char *data,  long len, long flags, int dispatch_local)
 {
     int ret = EXSUCCEED;
@@ -568,7 +567,7 @@ expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         {
             if (EXSUCCEED!=ndrx_regcomp(&regexp_nodeid, nodeid))
             {
-                _TPset_error_fmt(TPEINVAL, "Failed to compile nodeid=[%s] regexp",
+                ndrx_TPset_error_fmt(TPEINVAL, "Failed to compile nodeid=[%s] regexp",
                         __func__, nodeid);
                 NDRX_LOG(log_error, "Failed to compile nodeid=[%s]", nodeid);
                 EXFAIL_OUT(ret);
@@ -583,7 +582,7 @@ expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         {
             if (EXSUCCEED!=ndrx_regcomp(&regexp_usrname, usrname))
             {
-                _TPset_error_fmt(TPEINVAL, "Failed to compile usrname=[%s] regexp",
+                ndrx_TPset_error_fmt(TPEINVAL, "Failed to compile usrname=[%s] regexp",
                         __func__, nodeid);
                 NDRX_LOG(log_error, "Failed to compile usrname=[%s]", usrname);
                 EXFAIL_OUT(ret);
@@ -598,7 +597,7 @@ expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         {
             if (EXSUCCEED!=ndrx_regcomp(&regexp_cltname, cltname))
             {
-                _TPset_error_fmt(TPEINVAL, "Failed to compile cltname=[%s] regexp",
+                ndrx_TPset_error_fmt(TPEINVAL, "Failed to compile cltname=[%s] regexp",
                         __func__, cltname);
                 NDRX_LOG(log_error, "Failed to compile cltname=[%s]", cltname);
                 EXFAIL_OUT(ret);
@@ -722,7 +721,7 @@ expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_info, "Build client id string: [%s]",
                             cltid.clientdata);
 
-                    if (EXSUCCEED!=_tpnotify(&cltid, &myid, elt->qname,
+                    if (EXSUCCEED!=ndrx_tpnotify(&cltid, &myid, elt->qname,
                         data, len, flags,  0, nodeid, usrname, cltname, 0))
                     {
                         NDRX_LOG(log_debug, "Failed to notify [%s] with buffer len: %d", 
@@ -759,7 +758,7 @@ expublic int _tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
                             (int)connected_nodes[i]);
 
-                    if (EXSUCCEED!=_tpnotify(NULL, NULL, NULL,
+                    if (EXSUCCEED!=ndrx_tpnotify(NULL, NULL, NULL,
                             data, len, flags, 
                             (long)connected_nodes[i], nodeid, usrname, cltname, 
                             (TPCALL_BRCALL | TPCALL_BROADCAST)))

@@ -44,7 +44,7 @@
 #include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define API_ENTRY {_TPunset_error();}
+#define API_ENTRY {ndrx_TPunset_error();}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -117,14 +117,14 @@ expublic int tpext_addpollerfd(int fd, uint32_t events,
     
     if (EXFAIL==fd)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - invalid fd, %d", fn, fd);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - invalid fd, %d", fn, fd);
         ret=EXFAIL;
         goto out;
     }
     
     if (NULL==p_pollevent)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - invalid p_pollevent=NULL!", fn);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - invalid p_pollevent=NULL!", fn);
         ret=EXFAIL;
         goto out;
     }
@@ -148,7 +148,7 @@ expublic int tpext_delpollerfd(int fd)
     
     if (EXFAIL==fd)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - invalid fd, %d", fn, fd);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - invalid fd, %d", fn, fd);
         ret=EXFAIL;
         goto out;
     }
@@ -172,14 +172,14 @@ expublic int tpext_addperiodcb(int secs, int (*p_periodcb)(void))
     
     if (secs<=0)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - invalid secs %d, must be >=0", fn, secs);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - invalid secs %d, must be >=0", fn, secs);
         ret=EXFAIL;
         goto out;
     }
     
     if (NULL==p_periodcb)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - invalid p_periodcb, it is NULL!", fn);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - invalid p_periodcb, it is NULL!", fn);
         ret=EXFAIL;
         goto out;
     }
@@ -219,7 +219,7 @@ expublic int tpext_addb4pollcb(int (*p_b4pollcb)(void))
     
     if (NULL==p_b4pollcb)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - invalid p_b4pollcb, it is NULL!", fn);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - invalid p_b4pollcb, it is NULL!", fn);
         ret=EXFAIL;
         goto out;
     }
@@ -251,7 +251,7 @@ expublic void tpext_configbrige
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type))
 {
     
-    _TPunset_error();
+    ndrx_TPunset_error();
     G_server_conf.flags = flags;
     G_server_conf.nodeid = nodeid;
     G_server_conf.p_qmsg = p_qmsg;
@@ -282,7 +282,7 @@ expublic char * tpsrvgetctxdata (void)
     
     if (NULL==ret)
     {
-        _TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
         goto out;
     }
     
@@ -336,7 +336,7 @@ expublic int tpsrvsetctxdata (char *data, long flags)
     
     if (NULL==data)
     {
-        _TPset_error_fmt(TPEINVAL, "%s - data is NULL", fn);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s - data is NULL", fn);
         EXFAIL_OUT(ret);
     }
     

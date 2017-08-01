@@ -179,7 +179,7 @@ expublic int unadvertse_to_ndrxd(char *svcname)
         }    
         else
         {
-          _TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
+          ndrx_TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
                         NDRXD_COM_SRVUNADV_RQ, ndrx_get_G_atmi_conf()->ndrxd_q_str);  
         }
     }
@@ -232,7 +232,7 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
         }    
         else
         {
-          _TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
+          ndrx_TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
                         NDRXD_COM_SRVUNADV_RQ, ndrx_get_G_atmi_conf()->ndrxd_q_str);  
         }
     }
@@ -331,7 +331,7 @@ expublic int ndrxd_get_bridges(char *nodes_out)
         }    
         else
         {
-          _TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
+          ndrx_TPset_error_fmt(TPESYSTEM, "Failed to send command %d to [%s]", 
                         NDRXD_COM_SRVUNADV_RQ, ndrx_get_G_atmi_conf()->ndrxd_q_str);  
         }
     }

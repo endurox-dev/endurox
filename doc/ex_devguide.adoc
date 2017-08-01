@@ -10,11 +10,33 @@ Enduro/X Development standard
 Enduro/X build system is CMake. Version used should be 2.8 and above. It uses
 Flex and Bison for building UBF (FML) Expressions.
 
-Intension is done with as 4x spaces. Enduro/X is programmed in NetBeans c/c++
+Intension is done with as 4x spaces. Enduro/X is programmed in NetBeans C/C++
 project. NetBeans supports CMake projects.
 
 Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
 and cgreen (integrated into Enduro/X) for unit testing.
+
+=== Reserved identifier prefixes
+
+As the C language do not have prefixes like for high level languages (Java, C#, etc),
+for C developers have to prefix their identifier so that there is no conflict between
+different party code blocks. This is the case for Enduro/X too. Enduro/X have
+reserved following keywords as a prefixes for identifiers:
+
+. NDRX - system wide internal Enduro/X identifiers
+
+. ndrx - system wide internal Enduro/X identifiers
+
+. EX - system wide internal Enduro/X identifiers
+
+. ex - system wide internal Enduro/X identifiers
+
+. tp - used for user functions for ATMI protocol
+
+. B - used for UBF buffer API
+
+. atmi - internal identifiers for tp funcs 
+
 
 Unit testing
 ------------

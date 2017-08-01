@@ -57,40 +57,39 @@
  * Internal version of tpsubscribe.
  * Actually do the main logic of the function
  */
-long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
+long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
-    char *fn = "_tpsubscribe";
     char *ret_buf;
     long ret_len;
 
-    NDRX_LOG(log_debug, "%s enter", fn);
+    NDRX_LOG(log_debug, "%s enter", __func__);
 
     if (NULL==eventexpr || EXEOS==eventexpr[0])
     {
-        _TPset_error_fmt(TPEINVAL, "eventexpr cannot be null/empty!");
+        ndrx_TPset_error_fmt(TPEINVAL, "eventexpr cannot be null/empty!");
         ret=EXFAIL;
         goto out;
     }
     /* Check the lenght */
     if (strlen(eventexpr)>255)
     {
-        _TPset_error_fmt(TPEINVAL, "eventexpre longer than 255 bytes!");
+        ndrx_TPset_error_fmt(TPEINVAL, "eventexpre longer than 255 bytes!");
         ret=EXFAIL;
         goto out;
     }
 
     if (NULL==ctl)
     {
-        _TPset_error_fmt(TPEINVAL, "ctl cannot be null/empty!");
+        ndrx_TPset_error_fmt(TPEINVAL, "ctl cannot be null/empty!");
         ret=EXFAIL;
         goto out;
     }
 
     if (EXEOS==ctl->name1[0])
     {
-        _TPset_error_fmt(TPEINVAL, "ctl->name1 cannot be null!");
+        ndrx_TPset_error_fmt(TPEINVAL, "ctl->name1 cannot be null!");
         ret=EXFAIL;
         goto out;
     }
@@ -98,7 +97,7 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
     /* All ok, we can now allocate the buffer... */
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
     {
-        NDRX_LOG(log_error, "%s: failed to allocate 1024", fn);
+        NDRX_LOG(log_error, "%s: failed to allocate 1024", __func__);
         ret=EXFAIL;
         goto out;
     }
@@ -106,7 +105,7 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
     /* Set up paramters */
     if (EXFAIL==Badd(p_ub, EV_MASK, (char *)eventexpr, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM, "Failed to set EV_MASK/eventexpr: [%s]", Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EV_MASK/eventexpr: [%s]", Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
@@ -114,7 +113,7 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
     /* Check the len */
     if (NULL!=filter && EXEOS!=filter[0] && strlen(filter)>255)
     {
-        _TPset_error_fmt(TPEINVAL, "filter longer than 255 bytes!");
+        ndrx_TPset_error_fmt(TPEINVAL, "filter longer than 255 bytes!");
         ret=EXFAIL;
     }
 
@@ -122,7 +121,7 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
     if (NULL!=filter && EXEOS!=filter[0] &&
             EXFAIL==Badd(p_ub, EV_FILTER, filter, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM, "Failed to set EV_FILTER/filter: [%s]",
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EV_FILTER/filter: [%s]",
                                             Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
@@ -131,7 +130,7 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 
     if (EXFAIL==CBadd(p_ub, EV_FLAGS, (char *)&ctl->flags, 0L, BFLD_LONG))
     {
-        _TPset_error_fmt(TPESYSTEM, "Failed to set EV_FLAGS/flags: [%s]",
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EV_FLAGS/flags: [%s]",
                                             Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
@@ -139,7 +138,7 @@ long _tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 
     if (EXFAIL==CBadd(p_ub, EV_SRVCNM, ctl->name1, 0L, BFLD_STRING))
     {
-        _TPset_error_fmt(TPESYSTEM, "Failed to set EV_SRVCNM/name1: [%s]",
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EV_SRVCNM/name1: [%s]",
                                             Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
@@ -156,12 +155,12 @@ out:
     {
         atmi_error_t err;
         /* Save the original error/needed later! */
-        _TPsave_error(&err);
+        ndrx_TPsave_error(&err);
         tpfree((char*)p_ub);
-        _TPrestore_error(&err);
+        ndrx_TPrestore_error(&err);
     }
 
-    NDRX_LOG(log_debug, "%s returns %ld", fn, ret);
+    NDRX_LOG(log_debug, "%s returns %ld", __func__, ret);
     
     return ret;
 }
@@ -170,20 +169,19 @@ out:
  * Internal version of tpunsubscribe.
  * Actually do the main logic of the function
  */
- long _tpunsubscribe(long subscription, long flags)
+ long ndrx_tpunsubscribe(long subscription, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
-    char *fn = "_tpunsubscribe";
     char *ret_buf;
     long ret_len;
 
-    NDRX_LOG(log_debug, "%s enter", fn);
+    NDRX_LOG(log_debug, "%s enter", __func__);
 
     /* All ok, we can now allocate the buffer... */
     if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 512)))
     {
-        NDRX_LOG(log_error, "%s: failed to allocate 512", fn);
+        NDRX_LOG(log_error, "%s: failed to allocate 512", __func__);
         ret=EXFAIL;
         goto out;
     }
@@ -191,15 +189,15 @@ out:
     /* Check the validity of arguments */
     if (subscription<-1)
     {
-        _TPset_error_fmt(TPEINVAL, "%s: subscription %ld cannot be < -1",
-                                    fn, subscription);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: subscription %ld cannot be < -1",
+                                     __func__, subscription);
         ret=EXFAIL;
         goto out;
     }
     
     if (EXFAIL==CBadd(p_ub, EV_SUBSNR, (char *)&subscription, 0L, BFLD_LONG))
     {
-        _TPset_error_fmt(TPESYSTEM, "Failed to set EV_SUBSNR/flags: [%s]",
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set EV_SUBSNR/flags: [%s]",
                                             Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
@@ -216,12 +214,12 @@ out:
     {
         atmi_error_t err;
         /* Save the original error/needed later! */
-        _TPsave_error(&err);
+        ndrx_TPsave_error(&err);
         tpfree((char*)p_ub);
-        _TPrestore_error(&err);
+        ndrx_TPrestore_error(&err);
     }
 
-    NDRX_LOG(log_debug, "%s returns %ld", fn, ret);
+    NDRX_LOG(log_debug, "%s returns %ld", __func__, ret);
     return ret;
 }
 
@@ -233,18 +231,17 @@ out:
  * @param flags
  * @return
  */
-int _tppost(char *eventname, char *data, long len, long flags)
+int ndrx_tppost(char *eventname, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    char fn[]="_tppost";
     char *ret_buf;
     long ret_len;
     
-    NDRX_LOG(log_debug, "%s enter", fn);
+    NDRX_LOG(log_debug, "%s enter", __func__);
 
     if (NULL==eventname || EXEOS==eventname[0])
     {
-        _TPset_error_fmt(TPEINVAL, "%s: eventname cannot be null/empty", fn);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: eventname cannot be null/empty", __func__);
         ret=EXFAIL;
         goto out;
     }
@@ -258,6 +255,6 @@ int _tppost(char *eventname, char *data, long len, long flags)
 
 out:
 
-    NDRX_LOG(log_debug, "%s returns %d", fn, ret);
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
     return ret;
 }

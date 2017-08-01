@@ -76,10 +76,10 @@ extern NDRX_API char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern NDRX_API char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 
 /* API: */
-extern NDRX_API int _tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+extern NDRX_API int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags);
 
-extern NDRX_API int _tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+extern NDRX_API int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char **data, long *len, long flags);
 #ifdef	__cplusplus
 }

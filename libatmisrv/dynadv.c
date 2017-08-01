@@ -175,7 +175,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
                             ent->q_descr, NULL))
         {
-            _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed to remove fd %d from epollfd: %s", 
+            ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed to remove fd %d from epollfd: %s", 
                     ent->q_descr, ndrx_poll_strerror(ndrx_epoll_errno()));
             ret=EXFAIL;
             goto out;
@@ -184,7 +184,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         /* Now close the FD */
         if (EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
-            _TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
+            ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
                     ent->q_descr, strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -206,7 +206,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
 
         if (NULL==G_server_conf.service_array)
         {
-            _TPset_error_fmt(TPEOS, "realloc failed: %s", strerror(errno));
+            ndrx_TPset_error_fmt(TPEOS, "realloc failed: %s", strerror(errno));
             ret=EXFAIL;
             goto out;
         }
@@ -282,7 +282,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
     }
     else 
     {
-        _TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", thisfn, svcname);
+        ndrx_TPset_error_fmt(TPENOENT, "%s: service [%s] not advertised", thisfn, svcname);
         ret=EXFAIL;
         goto out;
     }
@@ -328,7 +328,7 @@ expublic int	dynamic_advertise(svc_entry_fn_t *entry_new,
         }
         else
         {
-            _TPset_error_fmt(TPEMATCH, "Service [%s] already advertised by func. "
+            ndrx_TPset_error_fmt(TPEMATCH, "Service [%s] already advertised by func. "
                     "ptr. 0x%lx, but now requesting advertise by func. ptr. 0x%lx!",
                     svc_nm, entry_chk->p_func, p_func);
             ret=EXFAIL;
@@ -339,7 +339,7 @@ expublic int	dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Check the service count already in system! */
     if (G_server_conf.adv_service_count+1>MAX_SVC_PER_SVR)
     {
-        _TPset_error_fmt(TPELIMIT, "Servce limit %d reached!", MAX_SVC_PER_SVR);
+        ndrx_TPset_error_fmt(TPELIMIT, "Servce limit %d reached!", MAX_SVC_PER_SVR);
         ret=EXFAIL;
         goto out;
     }
@@ -379,7 +379,7 @@ expublic int	dynamic_advertise(svc_entry_fn_t *entry_new,
         /* Release semaphore! */
          if (G_shm_srv) ndrx_unlock_svc_op(__func__);
          
-        _TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
+        ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                     entry_new->listen_q, strerror(errno));
         ret=EXFAIL;
         goto out;
@@ -408,7 +408,7 @@ expublic int	dynamic_advertise(svc_entry_fn_t *entry_new,
     
     if (NULL==G_server_conf.service_array)
     {
-        _TPset_error_fmt(TPEOS, "Failed to reallocate memory to %d bytes!", sz);
+        ndrx_TPset_error_fmt(TPEOS, "Failed to reallocate memory to %d bytes!", sz);
         ret=EXFAIL;
         goto out;
     }
@@ -429,7 +429,7 @@ expublic int	dynamic_advertise(svc_entry_fn_t *entry_new,
     if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             entry_new->q_descr, &ev))
     {
-        _TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
+        ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
                 ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=EXFAIL;
         goto out;

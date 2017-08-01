@@ -141,6 +141,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 4.0.4 released on 29/07/2017. Feature #162 - added evt_mib.h
 
+- Version 4.0.5 released on 01/08/2017. Feature #180 - refactoring code towards ISO/IEC 9899:201x standard.
+
 # Build configurations
 
 ## Configure make with: 

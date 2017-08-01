@@ -67,7 +67,7 @@ int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, c
     UBF_header_t *hdr;
     if (EXFAIL==(ubf_used=Bused(p_ub)))
     {
-        _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
+        ndrx_TPset_error_msg(TPEINVAL, Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
@@ -75,7 +75,7 @@ int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, c
     /* Check that we have space enought to prepare for send */
     if (NULL!=olen && 0!=*olen && *olen < ubf_used)
     {
-        _TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, but requested: %d", fn, *olen, ubf_used);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, but requested: %d", fn, *olen, ubf_used);
         ret=EXFAIL;
         goto out;
     }
@@ -114,7 +114,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     NDRX_LOG(log_debug, "Entering %s", fn);
     if (EXFAIL==(rcv_buf_size=Bused(p_ub)))
     {
-        _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
+        ndrx_TPset_error_msg(TPEINVAL, Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
@@ -122,7 +122,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     /* Figure out the passed in buffer */
     if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
-        _TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
+        ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);
         ret=EXFAIL;
         goto out;
@@ -135,7 +135,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_UBF)
         {
             /* Raise error! */
-            _TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
+            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
                                         G_buf_descr[BUF_TYPE_UBF],
                                         G_buf_descr[outbufobj->type_id]);
             ret=EXFAIL;
@@ -149,7 +149,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         {
             NDRX_LOG(log_warn, "User buffer %d is different, "
                     "free it up and re-allocate as UBF", G_buf_descr[outbufobj->type_id]);
-            _tpfree(*odata, outbufobj);
+            ndrx_tpfree(*odata, outbufobj);
             *odata=NULL;
         }
     }
@@ -162,7 +162,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         
         if (EXFAIL==(existing_size=Bsizeof(p_ub_out)))
         {
-            _TPset_error_msg(TPEINVAL, Bstrerror(Berror));
+            ndrx_TPset_error_msg(TPEINVAL, Bstrerror(Berror));
             ret=EXFAIL;
             goto out;
         }
@@ -181,7 +181,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             char *new_addr;
             NDRX_LOG(log_debug, "%s: Reallocating", fn);
             
-            if (NULL==(new_addr=_tprealloc(*odata, rcv_buf_size)))
+            if (NULL==(new_addr=ndrx_tprealloc(*odata, rcv_buf_size)))
             {
                 NDRX_LOG(log_error, "%s: _tprealloc failed!", fn);
                 ret=EXFAIL;
@@ -199,7 +199,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
                                          "allocating new!", fn);
 
-        *odata = _tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_len);
+        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_len);
 
         if (NULL==*odata)
         {
@@ -216,7 +216,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     {
         ret=EXFAIL;
         NDRX_LOG(log_error, "Bcpy failed!");
-        _TPset_error_msg(TPEOS, Bstrerror(Berror));
+        ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
     }
 
@@ -247,7 +247,7 @@ expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
     if (NULL==ret)
     {
         NDRX_LOG(log_error, "%s: Failed to allocate UBF buffer!", fn);
-        _TPset_error_msg(TPEOS, Bstrerror(Berror));
+        ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
     }
 
@@ -278,7 +278,7 @@ expublic char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long l
     if (NULL==ret)
     {
         NDRX_LOG(log_error, "%s: Failed to allocate UBF buffer!", fn);
-        _TPset_error_msg(TPEOS, Bstrerror(Berror));
+        ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
     }
 
     return ret;

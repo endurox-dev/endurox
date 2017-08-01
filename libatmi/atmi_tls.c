@@ -85,7 +85,7 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
 #ifdef NDRX_OAPI_DEBUG
         
         NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
-                    fn, tls->G_atmi_xa_curtx.txinfo);
+                     __func__, tls->G_atmi_xa_curtx.txinfo);
 #endif
         
         if (priv_flags & CTXT_PRIV_TRAN)
@@ -95,7 +95,7 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
             if (tls->G_atmi_xa_curtx.txinfo)
             {
                 tls->M_atmi_error = 0;
-                if (EXSUCCEED!=_tpsuspend(&tls->tranid, 0, EXTRUE))
+                if (EXSUCCEED!=ndrx_tpsuspend(&tls->tranid, 0, EXTRUE))
                 {
                     userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
                             tpstrerror(tperrno));
@@ -159,7 +159,7 @@ expublic int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
         
 #ifdef NDRX_OAPI_DEBUG
         NDRX_LOG(log_debug, "%s: G_atmi_xa_curtx.txinfo: %p", 
-                    fn, tls->G_atmi_xa_curtx.txinfo);
+                     __func__, tls->G_atmi_xa_curtx.txinfo);
 #endif
         G_atmi_tls = tls; /* Must be set, so that tpresume works () - not allocate new.. */
         
@@ -173,7 +173,7 @@ expublic int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
             {   
                 /* reset error */
                 tls->M_atmi_error = 0;
-                if (EXSUCCEED!=_tpresume(&tls->tranid, 0))
+                if (EXSUCCEED!=ndrx_tpresume(&tls->tranid, 0))
                 {
                     userlog("Failed to resume transaction: [%s]", tpstrerror(tperrno));
                 }
@@ -249,7 +249,7 @@ expublic void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
     
     if (NULL==(tls = (atmi_tls_t *)NDRX_MALLOC(sizeof(atmi_tls_t))))
     {
-        userlog ("%s: failed to malloc", fn);
+        userlog ("%s: failed to malloc", __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -328,7 +328,7 @@ out:
  * @param flags
  * @return 
  */
-expublic void _tpfreectxt(TPCONTEXT_T context)
+expublic void ndrx_tpfreectxt(TPCONTEXT_T context)
 {
     atmi_tls_t * ctx = (atmi_tls_t *)context;
     
@@ -363,14 +363,13 @@ expublic void _tpfreectxt(TPCONTEXT_T context)
  * @param priv_flags private flags (for sharing the functionality)
  * @return 
  */
-expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
+expublic int ndrx_tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
 {
     int ret = EXSUCCEED;
     atmi_tls_t * ctx;
-    char *fn="_tpsetctxt";
     
 #ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p", fn, 
+    NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p",  __func__, 
             context, G_atmi_tls);
     
     NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
@@ -401,7 +400,7 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         if (NULL!=G_atmi_tls && G_atmi_tls->is_auto)
         {
             /* free the current thread context data (only in case if it was auto) */
-            _tpfreectxt((TPCONTEXT_T)G_atmi_tls);
+            ndrx_tpfreectxt((TPCONTEXT_T)G_atmi_tls);
         }
         /* In case if we are already in NULL context, then go out... */
         goto out; /* we are done. */
@@ -414,7 +413,7 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         /* have a deep checks */
         if (priv_flags & CTXT_PRIV_ATMI && ATMI_TLS_MAGIG!=ctx->magic)
         {
-            _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid atmi magic: "
+            ndrx_TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid atmi magic: "
                     "expected: %x got %x!", ATMI_TLS_MAGIG, ctx->magic);
             EXFAIL_OUT(ret);
         }
@@ -422,7 +421,7 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         if (priv_flags & CTXT_PRIV_NSTD && NULL!=ctx->p_nstd_tls 
                 && NSTD_TLS_MAGIG!=ctx->p_nstd_tls->magic)
         {
-            _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid nstd magic: "
+            ndrx_TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid nstd magic: "
                     "expected: %x got %x!", NSTD_TLS_MAGIG, ctx->p_nstd_tls->magic);
             EXFAIL_OUT(ret);
         }
@@ -430,7 +429,7 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
         if (priv_flags & CTXT_PRIV_UBF && NULL!=ctx->p_ubf_tls 
                 && UBF_TLS_MAGIG!=ctx->p_ubf_tls->magic)
         {
-            _TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid ubf magic: "
+            ndrx_TPset_error_fmt(TPENOENT, "_tpsetctxt: invalid ubf magic: "
                     "expected: %x got %x!", UBF_TLS_MAGIG, ctx->p_ubf_tls->magic);
             EXFAIL_OUT(ret);
         }
@@ -450,14 +449,14 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     if (priv_flags & CTXT_PRIV_NSTD && NULL!=ctx->p_nstd_tls &&
             EXSUCCEED!=ndrx_nstd_tls_set((void *)ctx->p_nstd_tls))
     {
-        _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libnstd context");
+        ndrx_TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libnstd context");
         EXFAIL_OUT(ret);
     }
     
     if (priv_flags & CTXT_PRIV_UBF &&  NULL!=ctx->p_ubf_tls &&
             EXSUCCEED!=ndrx_ubf_tls_set((void *)ctx->p_ubf_tls))
     {
-        _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libubf context");
+        ndrx_TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libubf context");
         EXFAIL_OUT(ret);
     }
     
@@ -465,7 +464,7 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     {
         if (EXSUCCEED!=ndrx_atmi_tls_set((void *)ctx, flags, priv_flags))
         {
-            _TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libatmi context");
+            ndrx_TPset_error_fmt(TPESYSTEM, "_tpsetctxt: failed to restore libatmi context");
             EXFAIL_OUT(ret);
         }
         
@@ -475,7 +474,7 @@ expublic int _tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
 out:
 
 #ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "RETURN: %s returns %d, context: %p, current: %p", fn, 
+    NDRX_LOG(log_debug, "RETURN: %s returns %d, context: %p, current: %p",  __func__, 
             ret, context, G_atmi_tls);
 #endif
     return ret;
@@ -487,7 +486,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
+expublic int ndrx_tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
 {
     int ret = TPMULTICONTEXTS; /* default */
     atmi_tls_t * ctx;
@@ -495,7 +494,7 @@ expublic int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
     
 #ifdef NDRX_OAPI_DEBUG
     NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p", 
-                fn, *context, G_atmi_tls);
+                 __func__, *context, G_atmi_tls);
     
     NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
         (priv_flags) & CTXT_PRIV_NSTD );
@@ -517,13 +516,13 @@ expublic int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
 #endif
     if (NULL==context)
     {
-        _TPset_error_msg(TPEINVAL, "_tpgetctxt: context must not be NULL!");
+        ndrx_TPset_error_msg(TPEINVAL, "_tpgetctxt: context must not be NULL!");
         EXFAIL_OUT(ret);
     }
     
     if (0!=flags)
     {
-        _TPset_error_msg(TPEINVAL, "_tpgetctxt: flags must be 0!");
+        ndrx_TPset_error_msg(TPEINVAL, "_tpgetctxt: flags must be 0!");
         EXFAIL_OUT(ret);
     }
     
@@ -565,7 +564,7 @@ expublic int _tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags)
 out:
 
 #ifdef NDRX_OAPI_DEBUG
-    NDRX_LOG(log_debug, "RETURN: %s returns %d, context: %p, current: %p", fn, 
+    NDRX_LOG(log_debug, "RETURN: %s returns %d, context: %p, current: %p",  __func__, 
             ret, *context, G_atmi_tls);
 #endif
 

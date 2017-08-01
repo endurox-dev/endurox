@@ -91,7 +91,7 @@ expublic int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (EXSUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_main_integra() failed to set context");
@@ -110,7 +110,7 @@ expublic int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int 
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             CTXT_PRIV_NSTD|CTXT_PRIV_UBF| CTXT_PRIV_ATMI | CTXT_PRIV_IGN))
         {
             userlog("ERROR! ndrx_main_integra() failed to get context");

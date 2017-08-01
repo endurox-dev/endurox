@@ -394,7 +394,7 @@ $message = <<"END_MESSAGE";
  */
 expublic void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags)
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     void (*ret) (char *data, long len, long flags) = NULL;
 
 $oapi_debug_entry 
@@ -402,14 +402,14 @@ $oapi_debug_entry
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -422,7 +422,7 @@ $oapi_debug_entry
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
@@ -566,21 +566,21 @@ $message = <<"END_MESSAGE";
  */
 expublic $sig 
 {
-    $func_type ret = SUCCEED;
-    int did_set = FALSE;
+    $func_type ret = EXSUCCEED;
+    int did_set = EXFALSE;
 
 $oapi_debug_entry 
 
     /* set the context */
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -593,11 +593,11 @@ $oapi_debug_entry
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0, 
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
-            FAIL_OUT(ret);
+            EXFAIL_OUT(ret);
         }
     }
 out:
@@ -620,7 +620,7 @@ $message = <<"END_MESSAGE";
  */
 expublic $sig 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 $oapi_debug_entry 
 
@@ -628,12 +628,12 @@ $oapi_debug_entry
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -665,7 +665,7 @@ $message = <<"END_MESSAGE";
  */
 expublic $sig 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 $oapi_debug_entry 
 
@@ -673,12 +673,12 @@ $oapi_debug_entry
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
          /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0,
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -691,7 +691,7 @@ $oapi_debug_entry
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
@@ -721,7 +721,7 @@ $message = <<"END_MESSAGE";
  */
 expublic $sig 
 {
-    int did_set = FALSE;
+    int did_set = EXFALSE;
     $func_type ret = NULL;
 
 $oapi_debug_entry 
@@ -729,14 +729,14 @@ $oapi_debug_entry
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
             ret = NULL;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -749,7 +749,7 @@ $oapi_debug_entry
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
                 $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");
@@ -778,21 +778,21 @@ $message = <<"END_MESSAGE";
 expublic $sig 
 {
     $func_type ret = BBADFLDID;
-    int did_set = FALSE;
+    int did_set = EXFALSE;
 
 $oapi_debug_entry 
  
     if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
     {
         /* set the context */
-        if (SUCCEED!=_tpsetctxt(*p_ctxt, 0, 
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to set context");
             ret = BBADFLDID;
             goto out;
         }
-        did_set = TRUE;
+        did_set = EXTRUE;
     }
     else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
     {
@@ -805,7 +805,7 @@ $oapi_debug_entry
 
     if (did_set)
     {
-        if (TPMULTICONTEXTS!=_tpgetctxt(p_ctxt, 0,
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
             $priv_flags))
         {
             userlog("ERROR! $func_name() failed to get context");

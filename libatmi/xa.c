@@ -154,7 +154,7 @@ expublic int atmi_xa_init(void)
             NDRX_LOG(log_error, "Failed to load XA lib [%s]: %s", 
                     G_atmi_env.xa_driverlib, dlerror());
             
-            _TPset_error_fmt(TPEOS, "Failed to load XA lib [%s]: %s", 
+            ndrx_TPset_error_fmt(TPEOS, "Failed to load XA lib [%s]: %s", 
                     G_atmi_env.xa_driverlib, dlerror());
             EXFAIL_OUT(ret);
         }
@@ -166,7 +166,7 @@ expublic int atmi_xa_init(void)
             NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch': %s", 
                 G_atmi_env.xa_driverlib, dlerror());
 
-            _TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch': %s", 
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch': %s", 
                 G_atmi_env.xa_driverlib, dlerror());
             EXFAIL_OUT(ret);
         }
@@ -179,7 +179,7 @@ expublic int atmi_xa_init(void)
             NDRX_LOG(log_error, "Cannot get XA switch handler - "
                             "`ndrx_get_xa_switch()' - returns NULL");
             
-            _TPset_error_fmt(TPESYSTEM,  "Cannot get XA switch handler - "
+            ndrx_TPset_error_fmt(TPESYSTEM,  "Cannot get XA switch handler - "
                             "`ndrx_get_xa_switch()' - returns NULL");
             EXFAIL_OUT(ret);
         }
@@ -207,7 +207,7 @@ expublic int atmi_xa_init(void)
             if (NULL==(xa_flags = NDRX_STRDUP(G_atmi_env.xa_flags)))
             {
                 int err = errno;
-                _TPset_error_fmt(TPEOS,  "Failed to allocate xa_flags temp buffer: %s", 
+                ndrx_TPset_error_fmt(TPEOS,  "Failed to allocate xa_flags temp buffer: %s", 
                         strerror(err));
                 
                 userlog("Failed to allocate xa_flags temp buffer: %s", strerror(err));
@@ -284,7 +284,7 @@ expublic int atmi_xa_init(void)
                                 "XA_FLAGS [%s] (usleep not set)", 
                                 NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
                         
-                        _TPset_error_fmt(TPEINVAL, "Invalid [%s] settings in "
+                        ndrx_TPset_error_fmt(TPEINVAL, "Invalid [%s] settings in "
                                 "XA_FLAGS [%s] (usleep not set)", 
                                 NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
                         
@@ -355,7 +355,7 @@ expublic int atmi_xa_open_entry(void)
                 ret, atmi_xa_geterrstr(ret));
         
         /* we should  generate atmi error */
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "atmi_xa_open_entry - fail: %d [%s]", 
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "atmi_xa_open_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         
         goto out;
@@ -397,7 +397,7 @@ expublic int atmi_xa_close_entry(void)
                 ret, atmi_xa_geterrstr(ret));
         
       /* we should  generate atmi error */
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "atmi_xa_close_entry - fail: %d [%s]", 
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "atmi_xa_close_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         goto out;
     }
@@ -505,7 +505,7 @@ expublic int atmi_xa_start_entry(XID *xid, long flags)
             NDRX_LOG(log_error, "finally xa_start_entry - fail: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
 
-            _TPset_error_fmt_rsn(TPERMERR,  ret, "finally xa_start_entry - fail: %d [%s]", 
+            ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "finally xa_start_entry - fail: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
 
             goto out;
@@ -537,7 +537,7 @@ int ret = EXSUCCEED;
     {
         NDRX_LOG(log_error, "xa_end_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "xa_end_entry - fail: %d [%s]", 
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_end_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         goto out;
     }
@@ -564,7 +564,7 @@ int ret = EXSUCCEED;
     {
         NDRX_LOG(log_error, "xa_rollback_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "xa_rollback_entry - fail: %d [%s]", 
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_rollback_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         goto out;
     }
@@ -591,7 +591,7 @@ int ret = EXSUCCEED;
     {
         NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         goto out;
     }
@@ -617,7 +617,7 @@ int ret = EXSUCCEED;
     {
         NDRX_LOG(log_error, "xa_commit_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
-        _TPset_error_fmt_rsn(TPERMERR,  ret, "xa_commit_entry - fail: %d [%s]", 
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_commit_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         goto out;
     }
@@ -640,7 +640,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int _tpbegin(unsigned long timeout, long flags)
+expublic int ndrx_tpbegin(unsigned long timeout, long flags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_TPBEGIN);
@@ -648,7 +648,7 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     long tmflags = 0;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY */
     
-    NDRX_LOG(log_debug, "_tpbegin enter");
+    NDRX_LOG(log_debug, "%s enter", __func__);
     
     memset(&xai, 0, sizeof(atmi_xa_tx_info_t));
     
@@ -656,14 +656,14 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_error, "tpbegin: - tpopen() was not called!");
-        _TPset_error_msg(TPEPROTO,  "tpbegin - tpopen() was not called!");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpbegin - tpopen() was not called!");
         EXFAIL_OUT(ret);
     }
 
     if (0!=flags)
     {
         NDRX_LOG(log_error, "tpbegin: flags != 0");
-        _TPset_error_msg(TPEINVAL,  "tpbegin: flags != 0");
+        ndrx_TPset_error_msg(TPEINVAL,  "tpbegin: flags != 0");
         EXFAIL_OUT(ret);
     }
     
@@ -672,7 +672,7 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     {
         NDRX_LOG(log_error, "tpbegin: - already in transaction mode XID: [%s]", 
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
-        _TPset_error_fmt(TPEPROTO,  "tpbegin: - already in transaction mode XID: [%s]", 
+        ndrx_TPset_error_fmt(TPEPROTO,  "tpbegin: - already in transaction mode XID: [%s]", 
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         EXFAIL_OUT(ret);
     }
@@ -681,7 +681,7 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     /* Load the timeout param to FB... */
     if (EXSUCCEED!=Bchg(p_ub, TMTXTOUT, 0, (char *)&timeout, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "tpbegin: - failed to fill FB - set TMTXTOUT!");
+        ndrx_TPset_error_fmt(TPESYSTEM,  "tpbegin: - failed to fill FB - set TMTXTOUT!");
         EXFAIL_OUT(ret);
     }
     
@@ -695,7 +695,7 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     
     if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
     {
-        _TPset_error_fmt(TPESYSTEM,  "tpbegin: - failed to fill FB - set TMTXFLAGS!");
+        ndrx_TPset_error_fmt(TPESYSTEM,  "tpbegin: - failed to fill FB - set TMTXFLAGS!");
         EXFAIL_OUT(ret);
     }
     
@@ -717,7 +717,7 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
          NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
-        _TPset_error_msg(TPEPROTO,  "tpbegin: - failed to read TM response");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to read TM response");
         EXFAIL_OUT(ret);
     }
     
@@ -728,7 +728,7 @@ expublic int _tpbegin(unsigned long timeout, long flags)
     if (EXSUCCEED!= atmi_xa_set_curtx_from_xai(&xai))
     {
         NDRX_LOG(log_error, "tpbegin: - failed to set curren tx");
-        _TPset_error_msg(TPEPROTO,  "tpbegin: - failed to set curren tx");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to set curren tx");
         EXFAIL_OUT(ret);
     }
     
@@ -775,33 +775,33 @@ out:
  * @param flags
  * @return 
  */
-expublic int _tpcommit(long flags)
+expublic int ndrx_tpcommit(long flags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
     int do_abort = EXFALSE;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
     
-    NDRX_LOG(log_debug, "_tpcommit enter");
+    NDRX_LOG(log_debug, "%s enter", __func__);
     
     if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_error, "tpcommit: - tpopen() was not called!");
-        _TPset_error_msg(TPEPROTO,  "tpcommit - tpopen() was not called!");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpcommit - tpopen() was not called!");
         EXFAIL_OUT(ret);
     }
 
     if (0!=flags)
     {
         NDRX_LOG(log_error, "tpcommit: flags != 0");
-        _TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0");
+        ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0");
         EXFAIL_OUT(ret);
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpcommit: Not in global TX");
-        _TPset_error_msg(TPEPROTO,  "tpcommit: Not in global TX");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpcommit: Not in global TX");
         EXFAIL_OUT(ret);
         
     }
@@ -809,7 +809,7 @@ expublic int _tpcommit(long flags)
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpcommit: Not not initiator");
-        _TPset_error_msg(TPEPROTO,  "tpcommit: Not not initiator");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpcommit: Not not initiator");
         EXFAIL_OUT(ret);
     }
     
@@ -834,10 +834,10 @@ expublic int _tpcommit(long flags)
     
     if (do_abort)
     {
-        ret = _tpabort(0); /*<<<<<<<<<< RETURN!!! */
+        ret = ndrx_tpabort(0); /*<<<<<<<<<< RETURN!!! */
         if (EXSUCCEED==ret)
         {
-            _TPset_error_msg(TPEABORT,  "tpcommit: Transaction was marked for "
+            ndrx_TPset_error_msg(TPEABORT,  "tpcommit: Transaction was marked for "
                     "abort and aborted now!");
             ret=EXFAIL;
         }
@@ -899,7 +899,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int _tpabort(long flags)
+expublic int ndrx_tpabort(long flags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -910,21 +910,21 @@ expublic int _tpabort(long flags)
     if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
         NDRX_LOG(log_error, "tpabort: - tpopen() was not called!");
-        _TPset_error_msg(TPEPROTO,  "tpabort - tpopen() was not called!");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpabort - tpopen() was not called!");
         EXFAIL_OUT(ret);
     }
 
     if (0!=flags)
     {
         NDRX_LOG(log_error, "tpabort: flags != 0");
-        _TPset_error_msg(TPEINVAL,  "tpabort: flags != 0");
+        ndrx_TPset_error_msg(TPEINVAL,  "tpabort: flags != 0");
         EXFAIL_OUT(ret);
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpabort: Not in global TX");
-        _TPset_error_msg(TPEPROTO,  "tpabort: Not in global TX");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpabort: Not in global TX");
         EXFAIL_OUT(ret);
         
     }
@@ -932,7 +932,7 @@ expublic int _tpabort(long flags)
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpabort: Not not initiator");
-        _TPset_error_msg(TPEPROTO,  "tpabort: Not not initiator");
+        ndrx_TPset_error_msg(TPEPROTO,  "tpabort: Not not initiator");
         EXFAIL_OUT(ret);
     }
     
@@ -981,7 +981,7 @@ out:
  * Open the entry to XA.
  * @return 
  */
-expublic int _tpopen(void)
+expublic int ndrx_tpopen(void)
 {
     int ret=EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
@@ -996,7 +996,7 @@ out:
  * Close the entry to XA.
  * @return 
  */
-expublic int _tpclose(void)
+expublic int ndrx_tpclose(void)
 {
     int ret=EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
@@ -1017,27 +1017,27 @@ out:
  * @param flags
  * @return SUCCEED/FAIL
  */
-expublic int _tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
+expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
 {
     int ret=EXSUCCEED;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
     NDRX_LOG(log_info, "Suspending global transaction...");
     if (NULL==tranid)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpsuspend: trandid = NULL!");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpsuspend: trandid = NULL!");
         EXFAIL_OUT(ret);
     }
     
     if (0!=flags)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpsuspend: flags!=0!");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpsuspend: flags!=0!");
         EXFAIL_OUT(ret);
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "_tpsuspend: Not in global TX");
-        _TPset_error_msg(TPEPROTO,  "_tpsuspend: Not in global TX");
+        ndrx_TPset_error_msg(TPEPROTO,  "_tpsuspend: Not in global TX");
         EXFAIL_OUT(ret);
     }
     
@@ -1047,7 +1047,7 @@ expublic int _tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
     {
         NDRX_LOG(log_error, "_tpsuspend: Abort only transaction!");
-        _TPset_error_msg(TPEPROTO,  "_tpsuspend: Abort only transaction!");
+        ndrx_TPset_error_msg(TPEPROTO,  "_tpsuspend: Abort only transaction!");
         EXFAIL_OUT(ret);
     }
 #endif
@@ -1057,7 +1057,7 @@ expublic int _tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
             && atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->call_cds)))
     {
         NDRX_LOG(log_error, "_tpsuspend: Call descriptors still open!");
-        _TPset_error_msg(TPEPROTO,  "_tpsuspend: Call descriptors still open!");
+        ndrx_TPset_error_msg(TPEPROTO,  "_tpsuspend: Call descriptors still open!");
         EXFAIL_OUT(ret);
     }
     
@@ -1065,7 +1065,7 @@ expublic int _tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
             && atmi_xa_cd_isanyreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds)))
     {
         NDRX_LOG(log_error, "_tpsuspend: Conversation descriptors still open!");
-        _TPset_error_msg(TPEPROTO,  "_tpsuspend: Conversation descriptors still open!");
+        ndrx_TPset_error_msg(TPEPROTO,  "_tpsuspend: Conversation descriptors still open!");
         EXFAIL_OUT(ret);
     }
     
@@ -1103,7 +1103,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int  _tpresume (TPTRANID *tranid, long flags)
+expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
 {
     int ret=EXSUCCEED;
     int was_join = EXFALSE;
@@ -1114,20 +1114,20 @@ expublic int  _tpresume (TPTRANID *tranid, long flags)
     
     if (NULL==tranid)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpresume: trandid = NULL!");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: trandid = NULL!");
         EXFAIL_OUT(ret);
     }
     
     if (0!=flags)
     {
-        _TPset_error_msg(TPEINVAL,  "_tpresume: flags!=0!");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: flags!=0!");
         EXFAIL_OUT(ret);
     }
     
     /* NOTE: TPEMATCH - not tracked. */
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
-        _TPset_error_msg(TPEPROTO,  "_tpresume: Already in global TX!");
+        ndrx_TPset_error_msg(TPEPROTO,  "_tpresume: Already in global TX!");
         EXFAIL_OUT(ret);
     }
     
@@ -1136,7 +1136,7 @@ expublic int  _tpresume (TPTRANID *tranid, long flags)
     
     if (EXSUCCEED!=_tp_srv_join_or_new(&xai, EXFALSE, &was_join))
     {
-        _TPset_error_msg(TPESYSTEM,  "_tpresume: Failed to enter in global TX!");
+        ndrx_TPset_error_msg(TPESYSTEM,  "_tpresume: Failed to enter in global TX!");
         EXFAIL_OUT(ret);
     }
     
