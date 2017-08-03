@@ -196,6 +196,9 @@ extern "C" {
 #define CONF_NDRX_MAXSVCSRVS_DFLT       30          /* default for NDRX_MAXSVCSRVS param */
 #define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG"  /* Xadmin config file */
 #define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /* debug config file */
+    
+#define CONF_VIEWFILES           "VIEWFILES"         /* List of view files to load      */
+#define CONF_VIEWDIR             "VIEWDIR"           /* Folders with view files stored, ':' - sep   */
                                                     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
