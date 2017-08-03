@@ -37,6 +37,22 @@ reserved following keywords as a prefixes for identifiers:
 
 . atmi - internal identifiers for tp funcs 
 
+=== Reserved UBF field numbers
+
+Enduro/X have reserved some list of typed UBF buffer field identifiers for internal use.
+The list is following:
+
+. 1-3999
+
+. 6000-10000
+
+. 30000001-33554431
+
+For user following field IDs are available:
+
+. 4000-5999
+
+. 10001-30000000
 
 Unit testing
 ------------
