@@ -503,6 +503,33 @@ expublic char *ndrx_str_strip(char *haystack, char *needle)
 }
 
 /**
+ * Strip off given chars from string ending
+ * @param s string to process
+ * @param needle chars to search and strip off from end
+ * @return same s string
+ */
+expublic char* ndrx_str_rstrip(char* s, char *needle)
+{
+    int i;    
+    char* p = s + strlen(s);
+    while (p > s)
+    {
+        p--;
+        
+        if (strchr(needle, *p))
+        {
+            *p = '\0';
+        }
+        else
+        {
+            /* we are done */
+            break;
+        }
+    }
+    return s;
+}
+
+/**
  * Check is string a integer
  * @param str string to test
  * @return TRUE/FALSE
@@ -555,8 +582,6 @@ expublic int ndrx_nr_chars(char *str, char character)
 
     return count;
 }
-
-
 
 /**
  * Returns the string mapped to long value
@@ -695,7 +720,6 @@ expublic int ndrx_get_cksum(char *file)
     {
         ret = EXFAIL;
     }
-    
     
     if (EXSUCCEED==ret)
     {

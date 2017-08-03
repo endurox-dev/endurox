@@ -409,7 +409,7 @@ exprivate int _ubf_load_fld_def(int base,
                               int line)
 {
     int ret=EXSUCCEED;
-    char ftype[32]={'\0'};
+    char ftype[NDRX_UBF_TYPE_LEN+1]={'\0'};
     UBF_field_def_t *fld, *fld2;
     UBF_field_def_t *reserved;
     dtype_str_t *p = G_dtype_str_map;

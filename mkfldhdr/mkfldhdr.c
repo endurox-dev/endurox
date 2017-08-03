@@ -148,7 +148,7 @@ char *get_next_from_env (int *ret)
 
         UBF_LOG(log_debug, "About to load fields list [%s]", flds);
 
-        strcpy(tmp_flds, flds);
+        NDRX_STRCPY_SAFE(tmp_flds, flds);
         ret_ptr=strtok(tmp_flds, ",");
     }
     else
@@ -158,7 +158,7 @@ char *get_next_from_env (int *ret)
 
     if (NULL!=ret_ptr)
     {
-        sprintf(tmp, "%s/%s", flddir, ret_ptr);
+        snprintf(tmp, sizeof(tmp), "%s/%s", flddir, ret_ptr);
         ret_ptr=tmp;
     }
 
@@ -319,7 +319,7 @@ exprivate int generate_files(void)
         /* Open output file */
         if (EXSUCCEED==ret)
         {
-            strcpy(G_active_file, get_file_name(fname));
+            NDRX_STRCPY_SAFE(G_active_file, get_file_name(fname));
             
             M_renderer->get_fullname(out_f_name);
             

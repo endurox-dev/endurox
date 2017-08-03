@@ -87,7 +87,7 @@ expublic int get_nonprintable_char_tmpspace(char *str, int len)
 /**
  * Builds printable version out 
  */
-expublic void build_printable_string(char *out, char *in, int in_len)
+expublic void ndrx_build_printable_string(char *out, char *in, int in_len)
 {
     int i;
     int cur = 0;

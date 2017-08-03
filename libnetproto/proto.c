@@ -553,7 +553,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             *net_buf_len = c_buf_in_len;
             
             /* Built representation for user... for debug purposes... */
-            build_printable_string(debug_buf, c_buf_out, c_buf_in_len);
+            ndrx_build_printable_string(debug_buf, c_buf_out, c_buf_in_len);
         }    
             break;
                 
@@ -877,7 +877,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                build_printable_string(debug_buf, c_buf_out, tag_len);
+                ndrx_build_printable_string(debug_buf, c_buf_out, tag_len);
             }
             
         }    
