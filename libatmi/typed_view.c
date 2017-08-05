@@ -112,7 +112,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     int len;
     char *p, *p2, *pend, *null_val_start, *p3;
     long line=0;
-    dtype_str_t *dtyp = G_dtype_str_map;
+    dtype_str_t *dtyp;
     ndrx_typedview_field_t *fld = NULL;
     int i;
     API_ENTRY;
@@ -133,7 +133,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         line++;
         orglen = strlen(buf);
         
-        NDRX_LOG(log_dump, "Got VIEW file line: [%s], line: %ld", p, line);
+        NDRX_LOG(log_debug, "Got VIEW file line: [%s], line: %ld", buf, line);
         
         if ('#'==buf[0])
         {
@@ -216,7 +216,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 EXFAIL_OUT(ret);    
             }
             
-            NDRX_STRCPY_SAFE(v->vname, p);
+            NDRX_STRCPY_SAFE(v->vname, tok);
             /* setup file name too */
             NDRX_STRCPY_SAFE(v->filename, fname);
             
@@ -238,6 +238,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         v->vname);
                 EXHASH_ADD_STR(ndrx_G_view_hash, vname, v);
                 v = NULL;
+                state = INFILE;
                 continue;
             }
             
@@ -246,6 +247,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
              * The first is field type name
              * Here we might get 'int'. this will be internally stored as long.
              *******************************************************************/
+            dtyp = G_dtype_str_map;
             while(EXEOS!=dtyp->fldname[0])
             {
                 if (0==strcmp(dtyp->fldname, tok))
@@ -546,15 +548,23 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             p3 = fld->nullval_bin;
             pend = buf + orglen;
             
+            /*NDRX_LOG(log_debug, "p2=%p pend=%p", p2, pend);*/
+            
             /* Search the opening of the data block */
             while (p2<pend)
             {
-                if (*p!=EXEOS && *p!=' ' && *p!='\t')
+                /*NDRX_LOG(log_debug, "At: %p testing [%c]", p2, *p2);*/
+                
+                if (*p2!=EXEOS && *p2!=' ' && *p2!='\t')
                 {
                     break;
-                }    
+                }
+                /*NDRX_LOG(log_debug, "At: %p skipping [%c]", p2, *p2);*/
+                
                 p2++;
             }
+            
+            NDRX_LOG(log_debug, "At %p value [%c]", p2, *p2);
             
             if (p2==pend)
             {
@@ -647,6 +657,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 else if (nulltype != NTYPSQUOTE && nulltype != NTYPDQUOTE &&
                         (*p2==' ' || *p2=='\t'))
                 {
+                    NDRX_LOG(log_debug, "Terminating non quoted NULL data");
                     /* Terminate value here too.. */
                     
                     *p2=EXEOS;
@@ -666,12 +677,24 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             if (nulltype != NTYPNO)
             {
-                NDRX_LOG(log_error, "Looks like unclosed quotes for "
-                        "NULL value, line %ld", line);
+                if (nulltype == NTYPSTD)
+                {
+                    /* we are at the end... (no compiled data) */
+                    NDRX_LOG(log_debug, "At th end, no compiled data");
+                    *p2 = EXEOS;
+                    NDRX_STRCPY_SAFE(fld->nullval, null_val_start);
+                    nulltype = NTYPNO;
+                    
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Looks like unclosed quotes for "
+                            "NULL value, line %ld", line);
 
-                ndrx_TPset_error_fmt(TPEINVAL, "Looks like unclosed quotes for "
-                        "NULL value, line %ld", line);
-                EXFAIL_OUT(ret);
+                    ndrx_TPset_error_fmt(TPEINVAL, "Looks like unclosed quotes for "
+                            "NULL value, line %ld", line);
+                    EXFAIL_OUT(ret);
+                }
             }
             
             NDRX_LOG(log_debug, "Got NULL value [%s]", fld->nullval);
@@ -743,9 +766,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         {
                             fld->offset = atol(p+1);
                         }
-                        else if (0==strncmp("elmsize", tok, cmplen))
+                        else if (0==strncmp("fldsize", tok, cmplen))
                         {
-                            fld->elmsize = atol(p+1);
+                            fld->fldsize = atol(p+1);
                         }
                         
                         /* Ignore others...  */
@@ -754,7 +777,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     }
                     
                     NDRX_LOG(log_debug, "Compiled offset loaded: %ld, element size: %ld", 
-                            fld->offset, fld->elmsize);
+                            fld->offset, fld->fldsize);
                 }
                 
             }
@@ -776,8 +799,17 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
              * Finally add field to linked list...
              *******************************************************************/
             DL_APPEND(v->fields, fld);
-            fld = NULL;
+            fld = NULL;            
         }
+    }
+    
+    if (INFILE!=state)
+    {
+        NDRX_LOG(log_error, "Invalid state [%d] -> VIEW not terminated with "
+                "END, line: %ld", state, line);
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid state [%d] -> VIEW not terminated with "
+                "END, line: %ld", state, line);
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -940,4 +972,127 @@ expublic int ndrx_view_load_directories(void)
     
 out:    
     return ret;
+}
+
+/**
+ * This will plot the object file from the compiled data in the memory..
+ * @param f file open for writting
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_view_plot_object(FILE *f)
+{
+    int ret = EXSUCCEED;
+    ndrx_typedview_t * views = ndrx_view_get_handle();
+    ndrx_typedview_t * vel, *velt;
+    ndrx_typedview_field_t * fld;
+    char tmp_count[32];
+    char tmp_size[32];
+    char tmp_null[NDRX_VIEW_NULL_LEN+3];
+    int err;
+    API_ENTRY;
+    
+#define WRITE_ERR \
+                err = errno;\
+                NDRX_LOG(log_error, "Failed to write to file: %s", strerror(err));\
+                ndrx_TPset_error_fmt(TPEOS, "Failed to write to file: %s", strerror(err));\
+                EXFAIL_OUT(ret);
+                
+    if (0>fprintf(f, "# Enduro/X Compiled VIEW file\n"))
+    {
+        WRITE_ERR;
+    }
+    
+    if (0>fprintf(f, "# It is possible to use this file as source of the "
+            "view and recompile it\n"))
+    {
+        WRITE_ERR;
+    }
+    
+    if (0>fprintf(f, "# that will basically update the offsets and sizes of "
+            "target platform\n\n"))
+    {
+        WRITE_ERR;
+    }
+        
+    EXHASH_ITER(hh, views, vel, velt)
+    {
+        /* Open view... */
+        if (0>fprintf(f, "\nVIEW %s\n", vel->vname))
+        {
+            WRITE_ERR;
+        }
+            
+        if (0>fprintf(f, "#type  cname               fbname         count flag    size  null                 compiled_data\n"))
+        {
+            WRITE_ERR;
+        }
+        
+        DL_FOREACH(vel->fields, fld)
+        {
+            snprintf(tmp_count, sizeof(tmp_count), "%d", fld->count);
+            
+            if (BFLD_CARRAY==fld->typecode || BFLD_STRING==fld->typecode)
+            {
+                snprintf(tmp_size, sizeof(tmp_size), "%d", fld->size);
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE(tmp_size, "-");
+            }
+            
+            snprintf(tmp_null, sizeof(tmp_null), "\"%s\"", fld->nullval);
+        
+            if (0>fprintf(f, "%-6s %-20s %-15s %-5s %-7s %-5s %-20s offset=%ld;elmsize=%ld\n", 
+                        fld->type_name, 
+                        fld->cname,
+                        fld->fbname,
+                        tmp_count,
+                        fld->flagsstr,
+                        tmp_size,
+                        tmp_null,
+                        fld->offset,
+                        fld->fldsize
+                    ))
+            {
+                WRITE_ERR;
+            }
+        }
+
+        /* close view */
+        if (0>fprintf(f, "END\n\n"))
+        {
+            WRITE_ERR;
+        }
+    }
+    
+out:
+    NDRX_LOG(log_debug, "%s terminates %d", __func__, ret);
+    return ret;
+}
+
+/**
+ * Delete all objects from memory
+ * @return 
+ */
+expublic void ndrx_view_deleteall(void)
+{
+    ndrx_typedview_t * views = ndrx_view_get_handle();
+    ndrx_typedview_t * vel, *velt;
+    ndrx_typedview_field_t * fld, *fldt;
+    
+    
+    EXHASH_ITER(hh, views, vel, velt)
+    {
+        DL_FOREACH_SAFE(vel->fields, fld, fldt)
+        {
+            DL_DELETE(vel->fields, fld);
+            
+            NDRX_FREE(fld);
+        }
+        
+        EXHASH_DEL(views, vel);
+        
+        NDRX_FREE(vel);
+    }
+    
 }

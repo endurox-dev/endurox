@@ -85,7 +85,7 @@ struct ndrx_typedview_field
     int compdataloaded;                   /* Is compiled data loaded? */
     char compflags[NDRX_VIEW_COMPFLAGS_LEN];
     long offset; /* Compiled offset */
-    long elmsize; /* element size in bytes */
+    long fldsize; /* element size in bytes */
 
     /* Linked list */
     ndrx_typedview_field_t *next, *prev;
@@ -116,7 +116,8 @@ extern NDRX_API ndrx_typedview_t * ndrx_view_get_handle(void);
 extern NDRX_API int ndrx_view_load_file(char *fname, int is_compiled);
 extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_load_directories(void);
-
+extern NDRX_API expublic int ndrx_view_plot_object(FILE *f);
+extern NDRX_API void ndrx_view_deleteall(void);
 
 #ifdef	__cplusplus
 }
