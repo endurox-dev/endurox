@@ -280,6 +280,7 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (pscript) # Platform script interpreter
 ENDIF()
 
+add_subdirectory (viewc) # View compiler
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (xmemck) # Enduro X memcory checking tool

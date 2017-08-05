@@ -42,7 +42,7 @@ reserved following keywords as a prefixes for identifiers:
 Global variables (non static exported from the object file) shall be named with
 following scheme: 
 
-. 'NDRX_G_<variable name>'. 
+. 'ndrx_G_<variable name>'. 
 
 The old naming scheme included only 'G' in the front, but we are moving the the
 common naming scheme with 'NDRX'/'ndrx' in the front of the all exported

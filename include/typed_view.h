@@ -48,6 +48,16 @@ extern "C" {
 #define NDRX_VIEW_FLAGS_LEN             16   /* Max flags                   */
 #define NDRX_VIEW_NULL_LEN              2660 /* Max len of the null value   */
 #define NDRX_VIEW_NAME_LEN              128  /* Max len of the name         */
+#define NDRX_VIEW_COMPFLAGS_LEN         128  /* Compiled flags len          */
+    
+/* field flags: */
+#define NDRX_VIEW_FLAG_ELEMCNT_IND_C    0x00000001 /* Include elemnt cnt ind */
+#define NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F  0x00000002 /* One way map only C->UBF */
+#define NDRX_VIEW_FLAG_LEN_INDICATOR_L  0x00000004 /* Include str/carr len ind */
+#define NDRX_VIEW_FLAG_0WAYMAP_N        0x00000008 /* 0 way map (do not copy to ubf) */
+#define NDRX_VIEW_FLAG_NULLFILLER_P     0x00000010 /* last char of NULL value is filler */
+#define NDRX_VIEW_FLAG_1WAYMAP_C2UBF_S  0x00000020 /* One way map only UBF->C */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -59,14 +69,26 @@ typedef struct ndrx_typedview_field ndrx_typedview_field_t;
 struct ndrx_typedview_field
 {
     char type_name[NDRX_UBF_TYPE_LEN+1]; /* UBF Type name */
+    short typecode;                     /* Resolved type code */
+    short typecode_full;                /* this is full code (i.e. may include int) */
     char cname[NDRX_VIEW_CNAME_LEN+1];  /* field name in struct */
+    char fbname[UBFFLDMAX+1];           /* fielded buffer field to project to */
     int count;                          /* array size, 1 - no array, >1 -> array */
     char flagsstr[NDRX_VIEW_FLAGS_LEN+1]; /* string flags */
     long flags;     /* binary flags */
-    long size;      /* size of the field, NOTE currently decimal is not supported */
-    char nullval[NDRX_VIEW_NULL_LEN+1];   /*Null value */
+    int size;      /* size of the field, NOTE currently decimal is not supported */
+    char nullval[NDRX_VIEW_NULL_LEN+1];       /*Null value */
+    char nullval_bin[NDRX_VIEW_NULL_LEN+1];   /*Null value, binary version  */
+    int  nullval_bin_len;                     /* length of NULL value... */
+
+    /* Compiled meta-data section: */
+    int compdataloaded;                   /* Is compiled data loaded? */
+    char compflags[NDRX_VIEW_COMPFLAGS_LEN];
+    long offset; /* Compiled offset */
+    long elmsize; /* element size in bytes */
+
     /* Linked list */
-    atmi_svc_list_t *next;
+    ndrx_typedview_field_t *next, *prev;
 };
 
 /**
@@ -90,6 +112,10 @@ struct ndrx_typedview
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern NDRX_API ndrx_typedview_t * ndrx_view_get_handle(void);
+extern NDRX_API int ndrx_view_load_file(char *fname, int is_compiled);
+extern NDRX_API int ndrx_view_load_directory(char *dir);
+extern NDRX_API int ndrx_view_load_directories(void);
 
 
 #ifdef	__cplusplus

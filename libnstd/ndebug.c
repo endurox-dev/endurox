@@ -355,13 +355,13 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             {
                 if (NULL!=dbg_ptr)
                 {
-                    strcpy(dbg_ptr->filename, p+1);
+                    NDRX_STRCPY_SAFE(dbg_ptr->filename, p+1);
                 }
                 else
                 {
-                    strcpy(G_tp_debug.filename, p+1);
-                    strcpy(G_ubf_debug.filename, p+1);
-                    strcpy(G_ndrx_debug.filename, p+1);
+                    NDRX_STRCPY_SAFE(G_tp_debug.filename, p+1);
+                    NDRX_STRCPY_SAFE(G_ubf_debug.filename, p+1);
+                    NDRX_STRCPY_SAFE(G_ndrx_debug.filename, p+1);
                 }
             } /* Feature #167 */
             else if (0==strncmp("threaded", tok, cmplen))
@@ -431,10 +431,10 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             
             if (NULL!=dbg_ptr)
             {
-                strcpy(G_ubf_debug.filename_th_template, 
+                NDRX_STRCPY_SAFE(G_ubf_debug.filename_th_template, 
                         G_ndrx_debug.filename_th_template);
                 
-                strcpy(G_tp_debug.filename_th_template, 
+                NDRX_STRCPY_SAFE(G_tp_debug.filename_th_template, 
                         G_ndrx_debug.filename_th_template);
             }
         }

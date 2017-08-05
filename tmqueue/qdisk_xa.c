@@ -1337,7 +1337,14 @@ out:
 
     if (NULL!=namelist)
     {
-        NDRX_FREE(namelist[n]);
+        /* Hmm possible memory leak? We might want to delete all
+         * n records... */
+        
+        while (n>=0)
+        {
+            NDRX_FREE(namelist[n]);
+            n--;
+        }
         NDRX_FREE(namelist);
         namelist = NULL;
     }

@@ -42,6 +42,14 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_UBF_TYPE_LEN             32 /* Storage for field type */
+
+/* Language mode... */    
+#define HDR_MIN_LANG            0
+#define HDR_C_LANG              0         /* Default goes to C                */
+#define HDR_GO_LANG             1         /* Golang                           */
+#define HDR_MAX_LANG            1
+
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct dtype_str {

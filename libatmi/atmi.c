@@ -47,7 +47,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {ndrx_TPunset_error(); \
-    ATMI_TLS_ENTRY;\
+    /*ATMI_TLS_ENTRY; - no need, as unset error already did.. */\
     if (!G_atmi_tls->G_atmi_is_init) { \
         /* this means this is dirty client call, do the init */\
         NDRX_DBG_INIT(("ATMI", ""));\
