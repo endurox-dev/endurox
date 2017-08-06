@@ -211,7 +211,7 @@ out:
  * @param len
  * @return
  */
-expublic char * JSON_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
 {
     char *ret;
     char fn[] = "JSON_tpalloc";

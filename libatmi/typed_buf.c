@@ -165,26 +165,9 @@ exprivate typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
                         (NULL!=p->alias && 0==strcmp(p->alias, type)) ||
                         p->type == type /*NULL buffer*/)
         {
-            /* check subtype (if used) */
-            if ((NULL!=p->subtype && (NULL==subtype || EXEOS==subtype[0])) ||
-                        (NULL==p->subtype && NULL!=subtype && EXEOS!=subtype[0]))
-            {
-                /* search for next */
-            } /* Assume empty string subtype as empty/null */
-            else if (NULL!=p->subtype && NULL!=subtype && EXEOS!=subtype[0])
-            {
-                /* compare subtypes */
-                if (0==strcmp(p->subtype, subtype))
-                {
-                    ret=p;
-                    break;
-                }
-            }
-            else
-            {
-                ret=p;
-                break;
-            }
+            /* subtype is passed to the type engine.. */
+            ret=p;
+            break;
         }
         p++;
     }
@@ -227,7 +210,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     }
 
     /* now allocate the memory  */
-    if (NULL==(ret=usr_type->pf_alloc(usr_type, len)))
+    if (NULL==(ret=usr_type->pf_alloc(usr_type, subtype, len)))
     {
         /* error detail should be already set */
         goto out;

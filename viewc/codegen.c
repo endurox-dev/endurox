@@ -269,8 +269,10 @@ out:
         NDRX_FCLOSE(f);
     }
 
+/*
     unlink(cfile);
     unlink(ofile);
+*/
 
     return ret;
 }

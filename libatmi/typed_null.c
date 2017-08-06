@@ -52,7 +52,8 @@
  * @param len
  * @return
  */
-expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, 
+        char *subtype, long len)
 {
     char *ret=NULL;
     char fn[] = "TPNULL_tpalloc";
@@ -63,7 +64,8 @@ expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, long len)
     if (NULL==ret)
     {
         NDRX_LOG(log_error, "%s: Failed to allocate TPNULL buffer!", fn);
-        ndrx_TPset_error_fmt(TPEOS, "TPNULL failed to allocate: %d bytes", sizeof(TPINIT));
+        ndrx_TPset_error_fmt(TPEOS, "TPNULL failed to allocate: %d bytes", 
+                sizeof(TPINIT));
         goto out;
     }
 

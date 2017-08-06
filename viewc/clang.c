@@ -91,6 +91,16 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
         
         DL_FOREACH(vel->fields, fld)
         {
+            if (fld->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+            {
+                fprintf(f, "\tshort\tC_%s;\n", fld->cname);
+            }
+            
+            if (fld->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+            {
+                fprintf(f, "\tunsigned short\tL_%s;\n", fld->cname);
+            }
+            
             switch (fld->typecode_full)
             {
                 case BFLD_CHAR:
@@ -186,16 +196,6 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
                     }
                     
                     break;
-            }
-            
-            if (fld->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
-            {
-                fprintf(f, "\tshort\tC_%s;\n", fld->cname);
-            }
-            
-            if (fld->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
-            {
-                fprintf(f, "\tunsigned short\tL_%s;\n", fld->cname);
             }
         }
         

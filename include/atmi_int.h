@@ -259,7 +259,8 @@ struct typed_buffer_descr
      *
      * Error detail should be set by this funcion
      */
-    int (*pf_prepare_outgoing) (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags);
+    int (*pf_prepare_outgoing) (typed_buffer_descr_t *descr, char *idata, 
+        long ilen, char *obuf, long *olen, long flags);
 
     /*
      * Prepare received buffer for internal processing.
@@ -270,14 +271,15 @@ struct typed_buffer_descr
      *
      * Error detail should be set by this function.
      */
-    int (*pf_prepare_incoming) (typed_buffer_descr_t *descr, char *rcv_data, long rcv_len, char **odata, long *olen, long flags);
+    int (*pf_prepare_incoming) (typed_buffer_descr_t *descr, char *rcv_data, 
+        long rcv_len, char **odata, long *olen, long flags);
 
     /*
      * This will allocate buffer memory. Error details should be provided by
      * this function by it self.
      * On error NULL shall be returned.
      */
-    char *(*pf_alloc) (typed_buffer_descr_t *descr, long len);
+    char *(*pf_alloc) (typed_buffer_descr_t *descr, char *subtype, long len);
 
     /*
      * Reallocate memory

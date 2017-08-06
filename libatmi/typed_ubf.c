@@ -58,7 +58,8 @@
  * olen - the actual lenght of data that should sent. Also this may represent
  *          space for the buffer to copy to.
  */
-int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags)
+int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
+        long ilen, char *obuf, long *olen, long flags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)idata;
@@ -231,7 +232,7 @@ out:
  * @param len
  * @return
  */
-expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
 {
     char *ret=NULL;
     char fn[] = "UBF_tpalloc";
