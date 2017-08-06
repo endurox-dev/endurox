@@ -72,7 +72,7 @@ foreach my $item (@LIBPATH_ARR) {
 	$BUILD_LIB_PATH="$BUILD_LIB_PATH -L$item";
 }
 
-$command="$CC -o $options{o} $options{f} -lm -lc -lrt -latmi -latmiclt -lubf -lnstd -ldl -lpthread $BUILD_LIB_PATH";
+$command="$CC -o $options{o} $options{f}  -latmiclt -latmi -lubf -lnstd -lrt -lm -lc -ldl -lpthread $BUILD_LIB_PATH";
 
 print "$command\n";
 `$command`

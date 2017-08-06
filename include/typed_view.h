@@ -118,6 +118,7 @@ extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_load_directories(void);
 extern NDRX_API expublic int ndrx_view_plot_object(FILE *f);
 extern NDRX_API void ndrx_view_deleteall(void);
+extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
 
 #ifdef	__cplusplus
 }

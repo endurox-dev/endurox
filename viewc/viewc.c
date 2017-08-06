@@ -190,12 +190,17 @@ int main(int argc, char **argv)
                 EXFAIL_OUT(ret);
             }
         
-            /* TODO: Get the offset & generate object file */
+            /* Get the offset - generate object file & invoke */
+            
+            if (EXSUCCEED!=ndrx_view_generate_code(outdir, basename, argv[i]))
+            {
+                NDRX_LOG(log_error, "Failed to generate code or invoke compiler!");
+                EXFAIL_OUT(ret);
+            }
         }
         
         /* Unload the view files (remove from hashes) */
         ndrx_view_deleteall();
-            
         
     }
     

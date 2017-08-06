@@ -42,7 +42,7 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Exectuables
-add_executable (viewc viewc.c clang.c golang.c)
+add_executable (viewc viewc.c clang.c golang.c gencode.c)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (viewc atmiclt atmi ubf m nstd ${RT_LIB} pthread)

@@ -61,6 +61,7 @@
 
 #include <userlog.h>
 #include <typed_view.h>
+#include <view_cmn.h>
 #include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -81,6 +82,20 @@
 expublic ndrx_typedview_t *ndrx_G_view_hash = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Resolve view by name
+ * @param vname view name
+ * @return  NULL or ptr to view object
+ */
+expublic ndrx_typedview_t * ndrx_view_get_view(char *vname)
+{
+    ndrx_typedview_t *ret;
+    
+    EXHASH_FIND_STR(ndrx_G_view_hash, vname, ret);
+    
+    return ret;
+}
 
 /**
  * Return handle to current view objects
@@ -106,7 +121,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     ndrx_typedview_t *v = NULL;
     char *saveptr1 = NULL; /* lookup section  */
     char *saveptr2 = NULL; /* lookup section  */
-    char *tok;
+    char *tok, *tok2;
     enum states { INFILE, INVIEW} state = INFILE;
     enum nulltypes { NTYPNO, NTYPSTD, NTYPSQUOTE, NTYPDQUOTE} nulltype = NTYPNO;
     int len;
@@ -122,8 +137,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     if (NULL==(f=NDRX_FOPEN(fname, "r")))
     {
         int err = errno;
-        NDRX_LOG(log_error, "Failed to open view file: %s", strerror(err));
-        ndrx_TPset_error_fmt(TPENOENT, "Failed to open view file: %s", strerror(err));
+        NDRX_LOG(log_error, "Failed to open view file [%s]: %s", 
+                fname, strerror(err));
+        ndrx_TPset_error_fmt(TPENOENT, "Failed to open view file [%s]: %s", 
+                fname, strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -753,27 +770,27 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                      * Initially we will have a format:
                      * <key>=value;..;<key>=<value>
                      */
-                    tok=strtok_r (tok,";", &saveptr2);
-                    while( tok != NULL ) 
+                    tok2=strtok_r (tok,";", &saveptr2);
+                    while( tok2 != NULL ) 
                     {
                         int cmplen;
                         char *p3;
                         /* get the setting... */
-                        p3 = strchr(tok, '=');
-                        cmplen = p3-tok;
+                        p3 = strchr(tok2, '=');
+                        cmplen = p3-tok2;
 
-                        if (0==strncmp("offset", tok, cmplen))
+                        if (0==strncmp("offset", tok2, cmplen))
                         {
-                            fld->offset = atol(p+1);
+                            fld->offset = atol(p3+1);
                         }
-                        else if (0==strncmp("fldsize", tok, cmplen))
+                        else if (0==strncmp("elmsize", tok2, cmplen))
                         {
-                            fld->fldsize = atol(p+1);
+                            fld->fldsize = atol(p3+1);
                         }
                         
                         /* Ignore others...  */
                         
-                        tok=strtok_r (NULL,";", &saveptr2);
+                        tok2=strtok_r (NULL,";", &saveptr2);
                     }
                     
                     NDRX_LOG(log_debug, "Compiled offset loaded: %ld, element size: %ld", 
@@ -1022,7 +1039,7 @@ expublic int ndrx_view_plot_object(FILE *f)
             WRITE_ERR;
         }
             
-        if (0>fprintf(f, "#type  cname               fbname         count flag    size  null                 compiled_data\n"))
+        if (0>fprintf(f, "#type  cname                fbname          count flag    size  null                 compiled_data\n"))
         {
             WRITE_ERR;
         }
@@ -1096,3 +1113,52 @@ expublic void ndrx_view_deleteall(void)
     }
     
 }
+
+/**
+ * Update view offsets
+ * @param vname view name 
+ * @param p offsets table
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p)
+{
+    int ret = EXSUCCEED;
+    ndrx_typedview_t * v;
+    ndrx_typedview_field_t *f;
+    
+    /* Get the handler and iterate over the hash and here.. */
+    v = ndrx_view_get_view(vname);
+    
+    if (NULL==v)
+    {
+        NDRX_LOG(log_error, "Failed to get view object by [%s]", vname);
+        NDRX_LOG(log_error, "View not found [%s]", vname);
+        EXFAIL_OUT(ret);
+    }
+    
+    DL_FOREACH(v->fields, f)
+    {
+        if (NULL==p->cname)
+        {
+            NDRX_LOG(log_error, "Field descriptor table does not match v object");
+            EXFAIL_OUT(ret);
+        }
+        else if (0!=strcmp(f->cname, p->cname))
+        {
+            NDRX_LOG(log_error, "Invalid field name, loaded object [%s] "
+                    "vs compiled code [%s]",
+                        f->cname, p->cname);
+            EXFAIL_OUT(ret);
+        }
+        
+        f->offset=p->offset;
+        f->fldsize=p->fldsize;
+        
+        p++;
+    }
+    
+out:
+    return ret;
+    
+}
+
