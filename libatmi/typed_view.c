@@ -787,6 +787,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         {
                             fld->fldsize = atol(p3+1);
                         }
+                        else if (0==strncmp("loffs", tok2, cmplen))
+                        {
+                            fld->length_fld_offset = atol(p3+1);
+                        }
+                        else if (0==strncmp("coffs", tok2, cmplen))
+                        {
+                            fld->count_fld_offset = atol(p3+1);
+                        }
                         
                         /* Ignore others...  */
                         

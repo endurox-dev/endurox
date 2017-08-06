@@ -87,6 +87,8 @@ struct ndrx_typedview_field
     char compflags[NDRX_VIEW_COMPFLAGS_LEN];
     long offset; /* Compiled offset */
     long fldsize; /* element size in bytes */
+    long count_fld_offset;
+    long length_fld_offset;
 
     /* Linked list */
     ndrx_typedview_field_t *next, *prev;
