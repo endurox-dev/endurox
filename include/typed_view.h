@@ -73,6 +73,7 @@ struct ndrx_typedview_field
     short typecode_full;                /* this is full code (i.e. may include int) */
     char cname[NDRX_VIEW_CNAME_LEN+1];  /* field name in struct */
     char fbname[UBFFLDMAX+1];           /* fielded buffer field to project to */
+    BFLDID ubfid;                       /* resolved field id (resolved load time) */
     int count;                          /* array size, 1 - no array, >1 -> array */
     char flagsstr[NDRX_VIEW_FLAGS_LEN+1]; /* string flags */
     long flags;     /* binary flags */

@@ -44,13 +44,15 @@ extern "C" {
 /*---------------------------Typedefs-----------------------------------*/
     
 /*
- * Update in-memory offsets
+ * In-memory structure offsets
  */ 
 typedef struct
 {
     char   *cname;
     long    offset;
     long    fldsize;
+    long    count_fld_offset; /* TODO: optional, if not used then -1*/
+    long    length_fld_offset; /* TODO: optional, if not used then -1*/
 } ndrx_view_offsets_t;
 
 /*---------------------------Globals------------------------------------*/
