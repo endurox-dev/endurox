@@ -74,6 +74,7 @@
 
 #define NDRX_VERSION   "@NDRX_VERSION_STR@"
 #define NDRX_BUILD_OS_NAME "@CMAKE_OS_NAME@"
+#define NDRX_COMPILER  "@CMAKE_C_COMPILER_ID@"
 
 /* PThread mode for Solaris */
 #define _POSIX_PTHREAD_SEMANTICS

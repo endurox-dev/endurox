@@ -771,6 +771,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                      * <key>=value;..;<key>=<value>
                      */
                     tok2=strtok_r (tok,";", &saveptr2);
+                    fld->length_fld_offset=EXFAIL;
+                    fld->count_fld_offset=EXFAIL;
                     while( tok2 != NULL ) 
                     {
                         int cmplen;
@@ -1022,7 +1024,13 @@ expublic int ndrx_view_plot_object(FILE *f)
                 ndrx_TPset_error_fmt(TPEOS, "Failed to write to file: %s", strerror(err));\
                 EXFAIL_OUT(ret);
                 
-    if (0>fprintf(f, "# Enduro/X Compiled VIEW file\n"))
+    if (0>fprintf(f, "# Compiled VIEW file %s %s %d bit, compiler: %s\n", 
+            NDRX_VERSION, NDRX_BUILD_OS_NAME, (int)sizeof(void *)*8, NDRX_COMPILER))
+    {
+        WRITE_ERR;
+    }
+    
+    if (0>fprintf(f, "# Time stamp: %s %s\n", __DATE__, __TIME__))
     {
         WRITE_ERR;
     }
@@ -1054,6 +1062,8 @@ expublic int ndrx_view_plot_object(FILE *f)
         
         DL_FOREACH(vel->fields, fld)
         {
+            char L_offs[256]="";
+            char C_offs[256]="";
             snprintf(tmp_count, sizeof(tmp_count), "%d", fld->count);
             
             if (BFLD_CARRAY==fld->typecode || BFLD_STRING==fld->typecode)
@@ -1065,9 +1075,19 @@ expublic int ndrx_view_plot_object(FILE *f)
                 NDRX_STRCPY_SAFE(tmp_size, "-");
             }
             
+            if (fld->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+            {
+                snprintf(C_offs, sizeof(C_offs), "coffs=%ld;", fld->count_fld_offset);
+            }
+            
+            if (fld->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+            {
+                snprintf(L_offs, sizeof(L_offs), "loffs=%ld;", fld->length_fld_offset);
+            }
+            
             snprintf(tmp_null, sizeof(tmp_null), "\"%s\"", fld->nullval);
-        
-            if (0>fprintf(f, "%-6s %-20s %-15s %-5s %-7s %-5s %-20s offset=%ld;elmsize=%ld\n", 
+            
+            if (0>fprintf(f, "%-6s %-20s %-15s %-5s %-7s %-5s %-20s offset=%ld;elmsize=%ld;%s%s\n", 
                         fld->type_name, 
                         fld->cname,
                         fld->fbname,
@@ -1076,7 +1096,9 @@ expublic int ndrx_view_plot_object(FILE *f)
                         tmp_size,
                         tmp_null,
                         fld->offset,
-                        fld->fldsize
+                        fld->fldsize,
+                        C_offs,
+                        L_offs
                     ))
             {
                 WRITE_ERR;
@@ -1161,6 +1183,8 @@ expublic int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p)
         
         f->offset=p->offset;
         f->fldsize=p->fldsize;
+        f->count_fld_offset=p->count_fld_offset;
+        f->length_fld_offset=p->length_fld_offset;
         
         p++;
     }

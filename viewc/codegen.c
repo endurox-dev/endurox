@@ -2,7 +2,7 @@
 ** Generate code for size & offset calculations done by compile & exec of the binary
 ** The generated binary will actually plot the object .V file.
 **
-** @file gencode.c
+** @file codegen.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -172,10 +172,26 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename, char *vsrcfil
             
         DL_FOREACH(vel->fields, fld)
         {
-            fprintf(f, "        {\"%s\", EXOFFSET(struct %s, %s), EXELEM_SIZE(struct %s, %s)},\n",
+            char C_field[NDRX_VIEW_CNAME_LEN*3]="EXFAIL";
+            char L_field[NDRX_VIEW_CNAME_LEN*3]="EXFAIL";
+            
+            if (fld->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+            {
+                snprintf(C_field, sizeof(C_field), "EXOFFSET(struct %s, C_%s)", 
+                        vel->vname, fld->cname);
+            }
+
+            if (fld->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+            {
+                snprintf(L_field, sizeof(L_field), "EXOFFSET(struct %s, L_%s)", 
+                        vel->vname, fld->cname);
+            }
+            
+            fprintf(f, "        {\"%s\", EXOFFSET(struct %s, %s), EXELEM_SIZE(struct %s, %s), %s, %s},\n",
                     fld->cname, 
                     vel->vname, fld->cname, 
-                    vel->vname, fld->cname
+                    vel->vname, fld->cname,
+                    C_field, L_field
                     );
         }
         
