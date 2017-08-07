@@ -173,5 +173,19 @@ EX_NETCONNID                552         long  -         Network Connection id at
 EX_NETCORR                  553         string  -       Network request correlator field
 EX_NETFLAGS                 554         string  -       Flags of the network call
 
+################################################################################
+# View processing
+################################################################################
+EX_VIEW_NAME                600         string  -      Name of the view (if present the this is view buffer)
+#
+# Checksum is compared before target system processes the record from fb
+# the object checksum of the view must match. Otherwise target system will not accept the incoming message
+# and the server shall respond with error 10.
+# checksum is calculated as crc32, updated during the loading time..
+#
+EX_VIEW_CKSUM               601         long   -       Checksum calculate of type+cname+count+length
+
+
+
 $#endif
 

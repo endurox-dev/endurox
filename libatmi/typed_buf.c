@@ -235,7 +235,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     node->size = len;
     
     node->type_id = usr_type->type_id;
-    node->sub_type_id = 0; /* So currently sub-type not supported. ok */
+    node->sub_type[0] = EXEOS; /* So currently sub-type not supported. ok */
 
     /* Save the allocated buffer in the list */
     /* DL_APPEND(G_buffers, node); */

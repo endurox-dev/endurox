@@ -210,6 +210,13 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename, char *vsrcfil
     /* Generate update offsets... */
     EXHASH_ITER(hh, views, vel, velt)
     {
+        fprintf(f, "    if (EXSUCCEED!=ndrx_view_update_object(\"%s\", sizeof(struct %s)))\n", 
+                vel->vname, vel->vname);
+        
+        fprintf(f, "    {\n");
+        fprintf(f, "        EXFAIL_OUT(ret);\n");
+        fprintf(f, "    }\n\n");
+        
         fprintf(f, "    if (EXSUCCEED!=ndrx_view_update_offsets(\"%s\", offs_%s))\n", 
                 vel->vname, vel->vname);
         

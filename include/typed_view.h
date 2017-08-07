@@ -47,7 +47,7 @@ extern "C" {
 #define NDRX_VIEW_CNAME_LEN             256  /* Max c field len in struct   */
 #define NDRX_VIEW_FLAGS_LEN             16   /* Max flags                   */
 #define NDRX_VIEW_NULL_LEN              2660 /* Max len of the null value   */
-#define NDRX_VIEW_NAME_LEN              128  /* Max len of the name         */
+#define NDRX_VIEW_NAME_LEN              33   /* Max len of view name        */
 #define NDRX_VIEW_COMPFLAGS_LEN         128  /* Compiled flags len          */
     
 /* field flags: */
@@ -106,6 +106,8 @@ struct ndrx_typedview
 {
     char vname[NDRX_VIEW_NAME_LEN];
     char filename[PATH_MAX+1];
+    uint32_t cksum;                 /* 32bit checksum */
+    long ssize;                     /* structure size */
     
     ndrx_typedview_field_t *fields;
 

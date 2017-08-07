@@ -51,14 +51,15 @@ typedef struct
     char   *cname;
     long    offset;
     long    fldsize;
-    long    count_fld_offset; /* TODO: optional, if not used then -1*/
-    long    length_fld_offset; /* TODO: optional, if not used then -1*/
+    long    count_fld_offset; /* optional, if not used then -1*/
+    long    length_fld_offset; /* optional, if not used then -1*/
 } ndrx_view_offsets_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API  int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p);
+extern NDRX_API int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p);
+extern NDRX_API int ndrx_view_update_object(char *vname, long ssize);
 
 #ifdef	__cplusplus
 }

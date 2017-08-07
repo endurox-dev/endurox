@@ -101,6 +101,7 @@ extern NDRX_API char * ndrx_memdup(char *org, size_t len);
 extern NDRX_API int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
         int tokens_elmsz, int len);
 extern NDRX_API void ndrx_chomp(char *str);
+extern NDRX_API uint32_t ndrx_rotl32b (uint32_t x, uint32_t n);
 extern NDRX_API int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz);
 
 /* Mapping functions: */

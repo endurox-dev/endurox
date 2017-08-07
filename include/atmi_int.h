@@ -47,6 +47,7 @@ extern "C" {
 #include <sys/sem.h>
 #include <exhash.h>
 #include <ndrstandard.h>
+#include <typed_view.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -231,7 +232,8 @@ typedef struct buffer_obj buffer_obj_t;
 struct buffer_obj
 {
     int type_id;
-    int sub_type_id;
+    /* int sub_type_id; */
+    char sub_type[NDRX_VIEW_NAME_LEN+1];
     short autoalloc;  /* Is buffer automatically allocated by tpcall? */
     char *buf;
     long size;        /* Allocated size.... */

@@ -864,11 +864,25 @@ out:
  */
 expublic void ndrx_chomp(char *str)
 {
-	int len = strlen(str);
-	
-	while (len>1 && (str[len-1]=='\n' || str[len-1]=='\r'))
-	{
-		str[len-1] = EXEOS;
-		len--;
-	}
+    int len = strlen(str);
+
+    while (len>1 && (str[len-1]=='\n' || str[len-1]=='\r'))
+    {
+        str[len-1] = EXEOS;
+        len--;
+    }
 }
+
+/**
+ * 32bit rotate left
+ * @param x variable to rotate bits left
+ * @param n number of bits to rotate
+ * @return return value
+ */
+expublic uint32_t ndrx_rotl32b (uint32_t x, uint32_t n)
+{
+  if (!n) return x;
+  return (x<<n) | (x>>(32-n));
+}
+
+

@@ -96,6 +96,8 @@ extern "C" {
 #endif
 #endif
 
+    
+#define NDRX_WORD_SIZE  (int)sizeof(void *)*8
 
 #ifndef EXELEM_SIZE
 #define EXELEM_SIZE(s,e)        (sizeof(((s *)0)->e))

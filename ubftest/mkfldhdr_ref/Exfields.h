@@ -118,4 +118,6 @@
 #define	EX_NETCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
 #define	EX_NETCORR	((BFLDID32)167772813)	/* number: 653	 type: string */
 #define	EX_NETFLAGS	((BFLDID32)167772814)	/* number: 654	 type: string */
+#define	EX_VIEW_NAME	((BFLDID32)167772860)	/* number: 700	 type: string */
+#define	EX_VIEW_CKSUM	((BFLDID32)33555133)	/* number: 701	 type: long */
 #endif

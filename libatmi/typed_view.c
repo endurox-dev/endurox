@@ -84,6 +84,26 @@ expublic ndrx_typedview_t *ndrx_G_view_hash = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Update checksum from given string
+ * @param v view object
+ * @param str string to add to add to checksum
+ * @return 
+ */
+exprivate void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str)
+{
+    int i;
+    int len = strlen(str);
+    uint32_t s;
+    
+    for (i=0; i<len; i++)
+    {
+        s = (uint32_t)str[i];
+        v->cksum=ndrx_rotl32b(v->cksum, 1);
+        v->cksum+=s;
+    }
+}
+
+/**
  * Resolve view by name
  * @param vname view name
  * @return  NULL or ptr to view object
@@ -155,6 +175,114 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         if ('#'==buf[0])
         {
             /* this is comment, ignore */
+            
+            if (is_compiled)
+            {
+                if (0==strncmp("#@__platform=", buf, 13))
+                {
+                    NDRX_LOG(log_debug, "Found platform data, parsing...");
+                    tok2=strtok_r (tok,";", &saveptr2);
+                    while( tok2 != NULL ) 
+                    {
+                        int cmplen;
+                        char *p3;
+                        /* get the setting... */
+                        p3 = strchr(tok2, '=');
+                        cmplen = p3-tok2;
+
+                        if (0==strncmp("@__platform", tok2, cmplen))
+                        {
+                            if (0!=strcmp(NDRX_BUILD_OS_NAME, p3+1))
+                            {
+                                NDRX_LOG(log_error, "Invalid platform, expected: "
+                                        "[%s] got [%s] - please recompile the "
+                                        "view file with viewc, line: %ld", 
+                                        NDRX_BUILD_OS_NAME, p3+1, line);
+                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid platform "
+                                        "expected: [%s] got [%s] - please recompile "
+                                        "the view file with viewc, line: %ld", 
+                                        NDRX_BUILD_OS_NAME, p3+1, line);
+                                EXFAIL_OUT(ret);
+                            }
+                        }
+                        else if (0==strncmp("@__arch", tok2, cmplen))
+                        {
+                            if (0!=strcmp(NDRX_CPUARCH, p3+1))
+                            {
+                                NDRX_LOG(log_error, "Invalid CPU arch, expected: "
+                                            "[%s] got [%s] - please recompile the "
+                                            "view file with viewc, line: %ld", 
+                                            NDRX_CPUARCH, p3+1, line);
+                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid CPU arch, expected: "
+                                        "expected: [%s] got [%s] - please recompile "
+                                        "the view file with viewc, line: %ld", 
+                                        NDRX_CPUARCH, p3+1, line);
+                                EXFAIL_OUT(ret);
+                            }
+                        }
+                        else if (0==strncmp("@__wsize", tok2, cmplen))
+                        {
+                            int ws=atoi(p3+1);
+                            
+                            if (ws!=NDRX_WORD_SIZE)
+                            {
+                                NDRX_LOG(log_error, "Invalid platform word size, expected: "
+                                        "[%d] got [%d] - please recompile the "
+                                        "view file with viewc, line: %ld", 
+                                        NDRX_WORD_SIZE, ws, line);
+                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid platfrom "
+                                        "word size, expected: "
+                                        "expected: [%d] got [%d] - please recompile "
+                                        "the view file with viewc, line: %ld", 
+                                        NDRX_WORD_SIZE, ws, line);
+                                EXFAIL_OUT(ret);
+                            }
+                        }
+                        
+                        /* Ignore others...  */
+                        
+                        tok2=strtok_r (NULL,";", &saveptr2);
+                    }
+                }
+                else if (0==strncmp("#@__ssize=", buf, 10))
+                {
+                    NDRX_LOG(log_debug, "Structure data, parsing...");
+                    tok2=strtok_r (tok,";", &saveptr2);
+                    while( tok2 != NULL ) 
+                    {
+                        int cmplen;
+                        char *p3;
+                        /* get the setting... */
+                        p3 = strchr(tok2, '=');
+                        cmplen = p3-tok2;
+
+                        if (0==strncmp("@__cksum", tok2, cmplen))
+                        {
+                            long cksum = atol(p3+1);
+                            long cksum_built = (long)v->cksum;
+                            
+                            if (cksum!=cksum_built)
+                            {
+                                NDRX_LOG(log_error, "Invalid VIEW [%s] checksum, expected: "
+                                        "[%ld] got [%ld] - please recompile the "
+                                        "view file with viewc, line: %ld", 
+                                        v->vname, cksum_built, cksum, line);
+                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid VIEW [%s] "
+                                        "checksum, expected: "
+                                        "[%ld] got [%ld] - please recompile the "
+                                        "view file with viewc, line: %ld", 
+                                        v->vname, cksum_built, cksum, line);
+                                EXFAIL_OUT(ret);
+                            }
+                        }
+                       
+                        /* Ignore others...  */
+                        
+                        tok2=strtok_r (NULL,";", &saveptr2);
+                    }
+                }
+            }
+            
             continue;
         }
         else if ('\n'==buf[0] || '\r'==buf[0] && '\n'==buf[1])
@@ -316,6 +444,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             fld->typecode_full = typfull;
             NDRX_STRCPY_SAFE(fld->type_name, tok);
             
+            /* Add type to checksum */
+            ndrx_view_cksum_update(v, fld->type_name);
             NDRX_LOG(log_debug, "Got type code UBF=%d full code=%d", 
                     fld->typecode, fld->typecode_full);
             
@@ -352,6 +482,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
              * time, we will skip this step.
              */
             NDRX_STRCPY_SAFE(fld->cname, tok);
+            
+            /* Add cname to checksum */
+            ndrx_view_cksum_update(v, fld->cname);
+            
             NDRX_LOG(log_debug, "Got c identifier [%s]", fld->cname);
             
             /******************************************************************* 
@@ -418,8 +552,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 
                 EXFAIL_OUT(ret);
             }
-            
-            
+
+            /* Add count to checksum */
+            ndrx_view_cksum_update(v, tok);
             
             NDRX_LOG(log_debug, "Got count [%hd]", fld->count);
             
@@ -514,6 +649,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         break;
                 }
             }/* for tok[i] */
+            
+            /* Add flags to checksum */
+            ndrx_view_cksum_update(v, fld->flagsstr);
+
             NDRX_LOG(log_debug, "Got flags [%s] -> %lx", fld->flagsstr, fld->flags);
             
             /******************************************************************* 
@@ -554,6 +693,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     EXFAIL_OUT(ret);
                 }
             }
+            
+            /* Add size to checksum */
+            ndrx_view_cksum_update(v, tok);
             
             NDRX_LOG(log_debug, "Got size [%hd]", fld->size);
             
@@ -1024,28 +1166,35 @@ expublic int ndrx_view_plot_object(FILE *f)
                 ndrx_TPset_error_fmt(TPEOS, "Failed to write to file: %s", strerror(err));\
                 EXFAIL_OUT(ret);
                 
-    if (0>fprintf(f, "# Compiled VIEW file %s %s %d bit, compiler: %s\n", 
+    if (0>fprintf(f, "#Compiled VIEW file %s %s %d bit, compiler: %s\n", 
             NDRX_VERSION, NDRX_BUILD_OS_NAME, (int)sizeof(void *)*8, NDRX_COMPILER))
     {
         WRITE_ERR;
     }
     
-    if (0>fprintf(f, "# Time stamp: %s %s\n", __DATE__, __TIME__))
+    if (0>fprintf(f, "#Time stamp: %s %s\n", __DATE__, __TIME__))
     {
         WRITE_ERR;
     }
     
-    if (0>fprintf(f, "# It is possible to use this file as source of the "
+    if (0>fprintf(f, "#It is possible to use this file as source of the "
             "view and recompile it\n"))
     {
         WRITE_ERR;
     }
     
-    if (0>fprintf(f, "# that will basically update the offsets and sizes of "
-            "target platform\n\n"))
+    if (0>fprintf(f, "#that will basically update the offsets and sizes of "
+            "target platform\n"))
     {
         WRITE_ERR;
     }
+    
+    if (0>fprintf(f, "#@__platform=%s;@__arch=%s;@__wsize=%d\n\n", 
+            NDRX_BUILD_OS_NAME, NDRX_CPUARCH, (int)sizeof(void *)*8))
+    {
+        WRITE_ERR;
+    }
+    
         
     EXHASH_ITER(hh, views, vel, velt)
     {
@@ -1105,6 +1254,13 @@ expublic int ndrx_view_plot_object(FILE *f)
             }
         }
 
+        /* print stats.. */
+        if (0>fprintf(f, "#@__ssize=%ld;@__cksum=%lu\n", vel->ssize, 
+                (unsigned long)vel->cksum))
+        {
+            WRITE_ERR;
+        }
+        
         /* close view */
         if (0>fprintf(f, "END\n\n"))
         {
@@ -1142,6 +1298,35 @@ expublic void ndrx_view_deleteall(void)
         NDRX_FREE(vel);
     }
     
+}
+
+/**
+ * Update view object properties
+ * @param vname view name
+ * @param ssize struct size
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_view_update_object(char *vname, long ssize)
+{
+    int ret = EXSUCCEED;
+    ndrx_typedview_t * v;
+
+
+    v = ndrx_view_get_view(vname);
+    
+    if (NULL==v)
+    {
+        NDRX_LOG(log_error, "Failed to get view object by [%s]", vname);
+        NDRX_LOG(log_error, "View not found [%s]", vname);
+        EXFAIL_OUT(ret);
+    }
+    
+    v->ssize = ssize;
+    
+    NDRX_LOG(log_info, "View [%s] struct size %ld", vname, v->ssize);
+    
+out:
+    return ret;
 }
 
 /**
