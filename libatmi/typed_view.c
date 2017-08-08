@@ -761,14 +761,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (*p2=='\'')
             {
                 nulltype = NTYPSQUOTE;
-                was_quotes=EXTRUE;
+                fld->nullval_quotes = EXTRUE;
                 p2++;
                 null_val_start = p2;
             }
             else if (*p2=='"')
             {
                 nulltype = NTYPDQUOTE;
-                was_quotes=EXTRUE;
+                fld->nullval_quotes = EXTRUE;
                 p2++;
                 null_val_start = p2;
             }
@@ -883,10 +883,18 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_DUMP(log_dump, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
             
-            if (!was_quotes && 0==strcmp(fld->nullval, "NONE"))
+            if (!fld->nullval_quotes)
             {
-                fld->nullval_none = EXTRUE;
-                NDRX_LOG(log_dump, "NONE keyword specified -> no NULL value...");
+                if (0==strcmp(fld->nullval, "NONE"))
+                {
+                    fld->nullval_none = EXTRUE;
+                    NDRX_LOG(log_dump, "NONE keyword specified -> no NULL value...");
+                }
+                else if (0==strcmp(fld->nullval, "-"))
+                {
+                    fld->nullval_default = EXTRUE;
+                    NDRX_LOG(log_dump, "Default NULL value used...");
+                }
             }
             
             /******************************************************************* 

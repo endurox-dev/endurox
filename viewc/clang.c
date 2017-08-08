@@ -71,6 +71,7 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
     ndrx_typedview_t * views = ndrx_view_get_handle();
     ndrx_typedview_t * vel, *velt;
     ndrx_typedview_field_t * fld;
+    char default_null[NDRX_VIEW_NULL_LEN+32];
             
     /* we generate headers in current directoy */
     snprintf(fname, sizeof(fname), "%s.h", basename);
@@ -92,6 +93,20 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
         
         DL_FOREACH(vel->fields, fld)
         {
+            if (!fld->nullval_default)
+            {
+                if (fld->nullval_quotes)
+                {
+                    snprintf(default_null, sizeof(default_null), "\t/* null=\"%s\" */",
+                        fld->nullval);
+                }
+                else
+                {
+                    snprintf(default_null, sizeof(default_null), "\t/* null=%s */",
+                        fld->nullval);
+                }
+            }
+                    
             if (fld->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
             {
                 fprintf(f, "\tshort\tC_%s;\n", fld->cname);
@@ -108,64 +123,72 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
                     
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tchar\t%s[%d];\n", fld->cname, fld->count);
+                        fprintf(f, "\tchar\t%s[%d];%s\n", fld->cname, fld->count, 
+                                default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tchar\t%s;\n", fld->cname);
+                        fprintf(f, "\tchar\t%s;%s\n", fld->cname,
+                                default_null);
                     }
                     
                     break;
                 case BFLD_INT:
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tint\t%s[%d];\n", fld->cname, fld->count);
+                        fprintf(f, "\tint\t%s[%d];%s\n", fld->cname, fld->count,
+                                    default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tint\t%s;\n", fld->cname);
+                        fprintf(f, "\tint\t%s;%s\n", fld->cname, default_null);
                     }
                     break;
                     
                 case BFLD_SHORT:
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tshort\t%s[%d];\n", fld->cname, fld->count);
+                        fprintf(f, "\tshort\t%s[%d];%s\n", fld->cname, fld->count, 
+                                default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tshort\t%s;\n", fld->cname);
+                        fprintf(f, "\tshort\t%s;%s\n", fld->cname, default_null);
                     }
                     break;
                 case BFLD_LONG:
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tlong\t%s[%d];\n", fld->cname, fld->count);
+                        fprintf(f, "\tlong\t%s[%d];%s\n", fld->cname, fld->count,
+                                default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tlong\t%s;\n", fld->cname);
+                        fprintf(f, "\tlong\t%s;%s\n", fld->cname, default_null);
                     }
                     
                     break;
                 case BFLD_FLOAT:
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tfloat\t%s[%d];\n", fld->cname, fld->count);
+                        fprintf(f, "\tfloat\t%s[%d];%s\n", fld->cname, fld->count,
+                                default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tfloat\t%s;\n", fld->cname);
+                        fprintf(f, "\tfloat\t%s;%s\n", fld->cname, default_null);
                     }
                     break;
                 case BFLD_DOUBLE:
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tdouble\t%s[%d];\n", fld->cname, fld->count);
+                        fprintf(f, "\tdouble\t%s[%d];%s\n", fld->cname, fld->count,
+                                default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tdouble\t%s;\n", fld->cname);
+                        fprintf(f, "\tdouble\t%s;%s\n", fld->cname,
+                                default_null);
                     }
                     
                     break;
@@ -174,12 +197,13 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
                     
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tchar\t%s[%d][%d];\n", fld->cname, 
-                                fld->count, fld->size);
+                        fprintf(f, "\tchar\t%s[%d][%d];%s\n", fld->cname, 
+                                fld->count, fld->size, default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tchar\t%s[%d];\n", fld->cname, fld->size);
+                        fprintf(f, "\tchar\t%s[%d];%s\n", fld->cname, fld->size,
+                                default_null);
                     }
                     
                     break;
@@ -188,12 +212,13 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
                     
                     if (fld->count > 1)
                     {
-                        fprintf(f, "\tchar\t%s[%d][%d];\n", fld->cname, 
-                                fld->count, fld->size);
+                        fprintf(f, "\tchar\t%s[%d][%d];%s\n", fld->cname, 
+                                fld->count, fld->size, default_null);
                     }
                     else
                     {
-                        fprintf(f, "\tchar\t%s[%d];\n", fld->cname, fld->size);
+                        fprintf(f, "\tchar\t%s[%d];%s\n", fld->cname, fld->size,
+                                default_null);
                     }
                     
                     break;
