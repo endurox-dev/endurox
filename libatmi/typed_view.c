@@ -1279,12 +1279,10 @@ out:
  */
 expublic void ndrx_view_deleteall(void)
 {
-    ndrx_typedview_t * views = ndrx_view_get_handle();
     ndrx_typedview_t * vel, *velt;
     ndrx_typedview_field_t * fld, *fldt;
     
-    
-    EXHASH_ITER(hh, views, vel, velt)
+    EXHASH_ITER(hh, ndrx_G_view_hash, vel, velt)
     {
         DL_FOREACH_SAFE(vel->fields, fld, fldt)
         {
@@ -1293,7 +1291,7 @@ expublic void ndrx_view_deleteall(void)
             NDRX_FREE(fld);
         }
         
-        EXHASH_DEL(views, vel);
+        EXHASH_DEL(ndrx_G_view_hash, vel);
         
         NDRX_FREE(vel);
     }

@@ -99,22 +99,23 @@ out:
  * This will generate all the stuff loaded into memory, if multiple view files
  * loaded, then output will go to this one. This must be followed by developers.
  * @param basename - file name with out extension
+ * @param ofile the path to object file built
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_view_generate_code(char *outdir, char *basename, char *vsrcfile)
+expublic int ndrx_view_generate_code(char *outdir, char *basename, 
+        char *vsrcfile, char *Vfile)
 {
     int ret = EXSUCCEED;
     FILE *f;
     char cfile[PATH_MAX+1];
     char ofile[PATH_MAX+1];
-    char Vfile[PATH_MAX+1];
     ndrx_typedview_t * views = ndrx_view_get_handle();
     ndrx_typedview_t * vel, *velt;
     ndrx_typedview_field_t * fld;
     
     snprintf(cfile, sizeof(cfile), "%s_excompiled.c", basename);
     snprintf(ofile, sizeof(ofile), "./%s_excompiled", basename);
-    snprintf(Vfile, sizeof(Vfile), "%s/%s.V", outdir, basename);
+    snprintf(Vfile, PATH_MAX+1, "%s/%s.V", outdir, basename);
     
     NDRX_LOG(log_info, "C-Code to compile: [%s]", cfile);
     NDRX_LOG(log_info, "Compiled binary: [%s]", ofile);
@@ -140,6 +141,7 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename, char *vsrcfil
     fprintf(f, "#include <stdio.h>\n");
     fprintf(f, "#include <errno.h>\n");
     fprintf(f, "#include <stdlib.h>\n");
+    fprintf(f, "#include <string.h>\n");
     fprintf(f, "#include <ndrstandard.h>\n");
     fprintf(f, "#include <ndebug.h>\n");
     fprintf(f, "#include <errno.h>\n");

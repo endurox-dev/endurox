@@ -92,6 +92,7 @@ int main(int argc, char **argv)
     char basename[PATH_MAX+1];
     char *p;
     int was_file = EXFALSE;
+    char Vfile[PATH_MAX+1];
     opterr = 0;
     
     NDRX_BANNER;
@@ -192,7 +193,7 @@ int main(int argc, char **argv)
         
             /* Get the offset - generate object file & invoke */
             
-            if (EXSUCCEED!=ndrx_view_generate_code(outdir, basename, argv[i]))
+            if (EXSUCCEED!=ndrx_view_generate_code(outdir, basename, argv[i], Vfile))
             {
                 NDRX_LOG(log_error, "Failed to generate code or invoke compiler!");
                 EXFAIL_OUT(ret);
@@ -201,6 +202,19 @@ int main(int argc, char **argv)
         
         /* Unload the view files (remove from hashes) */
         ndrx_view_deleteall();
+        
+        NDRX_LOG(log_info, ">>> About to test object file...");
+        
+        if (EXSUCCEED!=ndrx_view_load_file(Vfile, EXTRUE))
+        {
+            NDRX_LOG(log_error, "!!! Failed to test object file [%s] !!!", Vfile);
+            EXFAIL_OUT(ret);
+        }
+        
+        ndrx_view_deleteall();
+        
+        
+        NDRX_LOG(log_info, ">>> [%s] COMPILED & TESTED OK!", Vfile);
         
     }
     

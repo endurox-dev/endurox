@@ -60,6 +60,8 @@ typedef struct
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p);
 extern NDRX_API int ndrx_view_update_object(char *vname, long ssize);
+extern NDRX_API int ndrx_view_load_file(char *fname, int is_compiled);
+extern NDRX_API expublic int ndrx_view_plot_object(FILE *f);
 
 #ifdef	__cplusplus
 }

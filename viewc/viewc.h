@@ -39,6 +39,7 @@
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
-extern int ndrx_view_generate_code(char *outdir, char *basename, char *vsrcfile);
-
+extern int ndrx_view_generate_code(char *outdir, char *basename, 
+        char *vsrcfile, char *Vfile);
+extern int ndrx_view_plot_c_header(char *outdir, char *basename);
 #endif /* VIEWC_H_ */

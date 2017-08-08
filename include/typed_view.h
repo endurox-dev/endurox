@@ -42,6 +42,7 @@ extern "C" {
 #include <utlist.h>
 #include <exhash.h>
 #include <fdatatype.h>
+#include <view_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_VIEW_CNAME_LEN             256  /* Max c field len in struct   */
@@ -118,10 +119,8 @@ struct ndrx_typedview
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_handle(void);
-extern NDRX_API int ndrx_view_load_file(char *fname, int is_compiled);
 extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_load_directories(void);
-extern NDRX_API expublic int ndrx_view_plot_object(FILE *f);
 extern NDRX_API void ndrx_view_deleteall(void);
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
 
