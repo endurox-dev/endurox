@@ -72,7 +72,8 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
     ndrx_typedview_t * vel, *velt;
     ndrx_typedview_field_t * fld;
             
-    snprintf(fname, sizeof(fname), "%s/%s.h", outdir, basename);
+    /* we generate headers in current directoy */
+    snprintf(fname, sizeof(fname), "%s.h", basename);
     
     NDRX_LOG(log_info, "Opening output file: [%s]", fname);
     

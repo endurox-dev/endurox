@@ -120,4 +120,5 @@
 #define	EX_NETFLAGS	((BFLDID32)167772814)	/* number: 654	 type: string */
 #define	EX_VIEW_NAME	((BFLDID32)167772860)	/* number: 700	 type: string */
 #define	EX_VIEW_CKSUM	((BFLDID32)33555133)	/* number: 701	 type: long */
+#define	EX_VIEW_INCLFLDS	((BFLDID32)167772862)	/* number: 702	 type: string */
 #endif

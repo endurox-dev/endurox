@@ -72,6 +72,7 @@
 #define FLD_SIZE_MAX                65535
 #define FLD_COUNT_MAX                65535
 
+#define VIEW_SIZE_DEFAULT_SIZE      1024
 
 #define API_ENTRY {ndrx_TPunset_error(); \
 }\
@@ -145,6 +146,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     enum states { INFILE, INVIEW} state = INFILE;
     enum nulltypes { NTYPNO, NTYPSTD, NTYPSQUOTE, NTYPDQUOTE} nulltype = NTYPNO;
     int len;
+    int was_quotes;
     char *p, *p2, *pend, *null_val_start, *p3;
     long line=0;
     dtype_str_t *dtyp;
@@ -521,6 +523,25 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_STRCPY_SAFE(fld->fbname, tok);
             NDRX_LOG(log_dump, "Got UBF identifier [%s]", fld->fbname);
             
+            if (!is_compiled)
+            {
+                NDRX_LOG(log_dump, "About to resolve field id..");
+                
+                fld->ubfid = Bfldid(fld->fbname);
+                
+                if (BBADFLDID==fld->ubfid)
+                {
+                    NDRX_LOG(log_error, "Failed to resolve id for field [%s], line: %ld", 
+                        fld->fbname, line);
+                
+                    ndrx_TPset_error_fmt(TPEMATCH, "Failed to resolve id for "
+                            "field [%s], line: %ld", 
+                        fld->fbname, line);
+
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
             /******************************************************************* 
              * Parse count...
              *******************************************************************/
@@ -706,7 +727,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             p2 = tok+strlen(tok);
             p3 = fld->nullval_bin;
             pend = buf + orglen;
-            
+            was_quotes = EXFALSE;
             /*NDRX_LOG(log_dump, "p2=%p pend=%p", p2, pend);*/
             
             /* Search the opening of the data block */
@@ -740,12 +761,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (*p2=='\'')
             {
                 nulltype = NTYPSQUOTE;
+                was_quotes=EXTRUE;
                 p2++;
                 null_val_start = p2;
             }
             else if (*p2=='"')
             {
                 nulltype = NTYPDQUOTE;
+                was_quotes=EXTRUE;
                 p2++;
                 null_val_start = p2;
             }
@@ -859,6 +882,12 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_LOG(log_dump, "Got NULL value [%s]", fld->nullval);
             NDRX_DUMP(log_dump, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
+            
+            if (!was_quotes && 0==strcmp(fld->nullval, "NONE"))
+            {
+                fld->nullval_none = EXTRUE;
+                NDRX_LOG(log_dump, "NONE keyword specified -> no NULL value...");
+            }
             
             /******************************************************************* 
              * Parse NULL value & the system flags..
@@ -1044,7 +1073,7 @@ expublic int ndrx_view_load_directory(char *dir)
         EXFAIL_OUT(ret);
     }
     
-    snprintf(dup, sizeof(dup), ";%s;", env);
+    snprintf(dup, sizeof(dup), ",%s,", env);
     
     ndrx_str_strip(dup, " \t");
    
@@ -1072,7 +1101,7 @@ expublic int ndrx_view_load_directory(char *dir)
         }
         
         /* Check the file name in list */
-        snprintf(fname_chk, sizeof(fname_chk), ";%s;", namelist[n]->d_name);
+        snprintf(fname_chk, sizeof(fname_chk), ",%s,", namelist[n]->d_name);
         
         if (NULL!=strstr(dup, fname_chk))
         {
@@ -1086,6 +1115,8 @@ expublic int ndrx_view_load_directory(char *dir)
                 NDRX_LOG(log_error, "Failed to load view object file: [%s]", full_fname);
                 EXFAIL_OUT(ret);
             }
+            
+            NDRX_LOG(log_debug, "VIEW [%s] loaded OK.", namelist[n]->d_name);
             
         }
         
@@ -1382,3 +1413,51 @@ out:
     
 }
 
+/**
+ * Allocate the view object
+ * @param descr
+ * @param subtype
+ * @param len
+ * @return 
+ */
+expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
+{
+    char *ret=NULL;
+    
+    ndrx_typedview_t *v = ndrx_view_get_view(subtype);
+    
+    if (NULL==v)
+    {
+         NDRX_LOG(log_error, "%s: VIEW [%s] NOT FOUND!", __func__, subtype);
+        ndrx_TPset_error_fmt(TPENOENT, "%s: VIEW [%s] NOT FOUND!", 
+                __func__, subtype);
+        goto out;
+    }
+    
+    if (VIEW_SIZE_DEFAULT_SIZE>len)
+    {
+        len = VIEW_SIZE_DEFAULT_SIZE;
+    }
+    
+    /* Allocate VIEW buffer */
+    /* Maybe still malloc? */
+    ret=(char *)NDRX_CALLOC(1, len);
+
+    if (NULL==ret)
+    {
+        NDRX_LOG(log_error, "%s: Failed to allocate VIEW buffer!", __func__);
+        ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
+        goto out;
+    }
+    
+    /* Check the size of the view, if buffer is smaller then view
+     * the have some working in ULOG and logfile... */
+    if (v->ssize < len)
+    {
+        NDRX_LOG(log_info, "tpalloc'ed %ld bytes, but VIEW [%s] structure size if %ld",
+                len, subtype, v->ssize);
+    }
+
+out:
+    return ret;
+}

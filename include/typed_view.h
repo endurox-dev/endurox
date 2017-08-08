@@ -82,7 +82,7 @@ struct ndrx_typedview_field
     char nullval[NDRX_VIEW_NULL_LEN+1];       /*Null value */
     char nullval_bin[NDRX_VIEW_NULL_LEN+1];   /*Null value, binary version  */
     int  nullval_bin_len;                     /* length of NULL value... */
-
+    int  nullval_none;                        /* no NULL value */
     /* Compiled meta-data section: */
     int compdataloaded;                   /* Is compiled data loaded? */
     char compflags[NDRX_VIEW_COMPFLAGS_LEN];

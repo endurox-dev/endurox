@@ -235,7 +235,6 @@ out:
 expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
 {
     char *ret=NULL;
-    char fn[] = "UBF_tpalloc";
 
     if (0==len)
     {
@@ -247,7 +246,7 @@ expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long le
 
     if (NULL==ret)
     {
-        NDRX_LOG(log_error, "%s: Failed to allocate UBF buffer!", fn);
+        NDRX_LOG(log_error, "%s: Failed to allocate UBF buffer!", __func__);
         ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
     }

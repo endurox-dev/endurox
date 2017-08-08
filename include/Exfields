@@ -184,6 +184,10 @@ EX_VIEW_NAME                600         string  -      Name of the view (if pres
 # checksum is calculated as crc32, updated during the loading time..
 #
 EX_VIEW_CKSUM               601         long   -       Checksum calculate of type+cname+count+length
+# from left to right. The char index from left to right is the field number. All field numbers must be filled
+# the 0 -> field not included in the buffer.
+# the 1 -> field is included in buffer and must be installed back in structure.
+EX_VIEW_INCLFLDS            602         string -       Field include flags
 
 
 
