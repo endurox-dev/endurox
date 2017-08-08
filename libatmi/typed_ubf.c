@@ -73,10 +73,11 @@ int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata,
         goto out;
     }
 
-    /* Check that we have space enought to prepare for send */
+    /* Check that we have space enough to prepare for send */
     if (NULL!=olen && 0!=*olen && *olen < ubf_used)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, but requested: %d", fn, *olen, ubf_used);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
+                "but requested: %d", fn, *olen, ubf_used);
         ret=EXFAIL;
         goto out;
     }

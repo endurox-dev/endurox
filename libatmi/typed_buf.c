@@ -462,9 +462,9 @@ expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
         strcpy(type, buf_type->type);
     }
     
-    if (NULL!=subtype && NULL!=buf_type->subtype)
+    if (NULL!=subtype && EXEOS!=buf->sub_type[0])
     {
-        strcpy(subtype, buf_type->type);
+        strcpy(subtype, buf_type->subtype);
     }
     
 out:
