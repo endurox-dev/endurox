@@ -59,6 +59,17 @@ extern "C" {
 #define NDRX_VIEW_FLAG_NULLFILLER_P     0x00000010 /* last char of NULL value is filler */
 #define NDRX_VIEW_FLAG_1WAYMAP_C2UBF_S  0x00000020 /* One way map only UBF->C */
 
+    
+#define NDRX_VIEW_FIELD_SEPERATORS        " \t"
+#define NDRX_VIEW_TOKEN_START            "VIEW"
+#define NDRX_VIEW_TOKEN_END              "END"
+#define NDRX_VIEW_FLD_SIZE_MAX           65535
+#define NDRX_VIEW_FLD_COUNT_MAX          65535
+/* will use the same compat base */
+#define NDRX_VIEW_UBF_BASE               2000
+#define NDRX_VIEW_SIZE_DEFAULT_SIZE      1024
+
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -118,6 +129,7 @@ struct ndrx_typedview
 };
 
 /*---------------------------Globals------------------------------------*/
+extern ndrx_typedview_t *ndrx_G_view_hash;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_handle(void);
@@ -125,6 +137,7 @@ extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_load_directories(void);
 extern NDRX_API void ndrx_view_deleteall(void);
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
+extern NDRX_API void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str);
 
 #ifdef	__cplusplus
 }
