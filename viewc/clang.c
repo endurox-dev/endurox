@@ -114,7 +114,15 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
             
             if (fld->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
             {
-                fprintf(f, "\tunsigned short\tL_%s;\n", fld->cname);
+                if (fld->count > 1)
+                {
+                    fprintf(f, "\tunsigned short\tL_%s[];\n", fld->cname, fld->count);
+                }
+                else
+                {
+                    fprintf(f, "\tunsigned short\tL_%s;\n", fld->cname);
+                }
+
             }
             
             switch (fld->typecode_full)

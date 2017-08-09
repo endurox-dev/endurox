@@ -144,6 +144,36 @@ expublic char * VIEW_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
 }
 
 /**
+ * this will add data the the buffer. If data size is too small, allocate extra
+ * 1024 bytes and add again.
+ * @param pp_ub double ptr to buffer
+ * @param bfldid field id
+ * @param occ occurrence
+ * @param buf buffer
+ * @param len len
+ * @return EXSUCCED/EXFAIL
+ */
+exprivate  int sized_Bchg (UBFH **pp_ub, BFLDID bfldid, 
+        BFLDOCC occ, char * buf, BFLDLEN len)
+{
+    int ret = EXSUCCEED;
+    
+
+    while (EXSUCCEED!=(ret=Bchg(*pp_ub, bfldid, occ, buf, len))
+            &&  BNOSPACE==Berror)
+    {
+        if (NULL==(*pp_ub = (UBFH *)tprealloc((char *)*pp_ub, Bsizeof(*pp_ub) + 1024)))
+        {
+            NDRX_LOG(log_error, "Failed to realloc the buffer!");            
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Build the outgoing buffer...
  * @param descr
  * @param idata
@@ -169,6 +199,12 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     short *C_count;
     unsigned short *L_length; /* will transfer as long */
     long L_len_long;
+    
+    int *int_fix_ptr;
+    char *ptr;
+    long int_fix_l;
+    
+    int occ;
     
     /* get the view */
     
@@ -264,6 +300,44 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             i++;
         }
         
+        fldid = Bmkfldid(f->typecode, i);
+        
+        
+        /* well we must support arrays too...! of any types
+         * Arrays we will load into occurrences of the same buffer
+         */
+        /* loop over the occurrences */
+        for (occ=0; occ<*C_count; occ++)
+        {
+            /* OK we need to understand following:
+             * size (data len) of each of the array elements..
+             * TODO: the header plotter needs to support occurrances of the
+             * lenght elements for the arrays...
+             */
+            if (BFLD_INT==f->typecode)
+            {
+                int_fix_ptr = (int *)(idata+f->offset);
+                int_fix_l = (long)*int_fix_ptr;
+
+                if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, 0, (char *)&int_fix_l, 0L))
+                {
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup field %d", 
+                        fldid);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                ptr = (idata+f->offset);
+
+                if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, 0, ptr, 0L))
+                {
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup field %d", 
+                        fldid);
+                    EXFAIL_OUT(ret);
+                }
+            }
+        }
         
     }
     
