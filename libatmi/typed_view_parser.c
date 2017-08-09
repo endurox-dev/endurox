@@ -206,7 +206,23 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         p3 = strchr(tok2, '=');
                         cmplen = p3-tok2;
 
-                        if (0==strncmp("@__cksum", tok2, cmplen))
+                        if (0==strncmp("@__ssize", tok2, cmplen))
+                        {
+                            v->ssize = atol(p3+1);
+                            
+                            NDRX_LOG(log_debug, "Struct size loaded: [%ld]",
+                                    v->ssize);
+                            
+                            if (v->ssize<0)
+                            {
+                                NDRX_LOG(log_error, "Invalid size %ld, line %ld", 
+                                        v->ssize, line);
+                                ndrx_TPset_error_fmt(TPEINVAL, "Invalid size %ld, line %ld", 
+                                        v->ssize, line);
+                                EXFAIL_OUT(ret);   
+                            }
+                        }
+                        else if (0==strncmp("@__cksum", tok2, cmplen))
                         {
                             long cksum = atol(p3+1);
                             long cksum_built = (long)v->cksum;
@@ -912,7 +928,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         {
                             fld->offset = atol(p3+1);
                         }
-                        else if (0==strncmp("elmsize", tok2, cmplen))
+                        else if (0==strncmp("fldsize", tok2, cmplen))
                         {
                             fld->fldsize = atol(p3+1);
                         }

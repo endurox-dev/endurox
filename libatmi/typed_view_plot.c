@@ -168,7 +168,7 @@ expublic int ndrx_view_plot_object(FILE *f)
             
             snprintf(tmp_null, sizeof(tmp_null), "\"%s\"", fld->nullval);
             
-            if (0>fprintf(f, "%-6s %-20s %-15s %-5s %-7s %-5s %-20s offset=%ld;elmsize=%ld;%s%s\n", 
+            if (0>fprintf(f, "%-6s %-20s %-15s %-5s %-7s %-5s %-20s offset=%ld;fldsize=%ld;%s%s\n", 
                         fld->type_name, 
                         fld->cname,
                         fld->fbname,

@@ -306,36 +306,45 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         /* well we must support arrays too...! of any types
          * Arrays we will load into occurrences of the same buffer
          */
-        /* loop over the occurrences */
+        /* loop over the occurrences 
+         * we might want to send less count then max struct size..*/
         for (occ=0; occ<*C_count; occ++)
         {
             /* OK we need to understand following:
              * size (data len) of each of the array elements..
-             * TODO: the header plotter needs to support occurrances of the
-             * lenght elements for the arrays...
+             * TODO: the header plotter needs to support occurrences of the
+             * length elements for the arrays...
              */
+            char *fld_offs = idata+f->offset+occ*(f->fldsize/f->count);
+            
             if (BFLD_INT==f->typecode)
             {
-                int_fix_ptr = (int *)(idata+f->offset);
+                int_fix_ptr = (int *)(fld_offs);
                 int_fix_l = (long)*int_fix_ptr;
 
-                if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, 0, (char *)&int_fix_l, 0L))
+                if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, (char *)&int_fix_l, 0L))
                 {
                     ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup field %d", 
                         fldid);
                     EXFAIL_OUT(ret);
                 }
             }
-            else
+            else if (BFLD_CARRAY!=f->typecode)
             {
-                ptr = (idata+f->offset);
+                /* here length indicator is not needed */
 
-                if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, 0, ptr, 0L))
+                if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, fld_offs, 0L))
                 {
                     ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup field %d", 
                         fldid);
                     EXFAIL_OUT(ret);
                 }
+            }
+            else 
+            {
+                /* This is carray... manage the length  
+                 * we need array access to to the length indicators...
+                 */
             }
         }
         
