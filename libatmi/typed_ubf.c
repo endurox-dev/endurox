@@ -201,7 +201,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
                                          "allocating new!", fn);
 
-        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_len);
+        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_buf_size);
 
         if (NULL==*odata)
         {

@@ -66,7 +66,7 @@ extern "C" {
 #define NDRX_VIEW_FLD_SIZE_MAX           65535
 #define NDRX_VIEW_FLD_COUNT_MAX          65535
 /* will use the same compat base */
-#define NDRX_VIEW_UBF_BASE               2000
+#define NDRX_VIEW_UBF_BASE               6000
 #define NDRX_VIEW_SIZE_DEFAULT_SIZE      1024
 
     

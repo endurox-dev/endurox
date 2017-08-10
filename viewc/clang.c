@@ -116,7 +116,7 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
             {
                 if (fld->count > 1)
                 {
-                    fprintf(f, "\tunsigned short\tL_%s[];\n", fld->cname, fld->count);
+                    fprintf(f, "\tunsigned short\tL_%s[%d];\n", fld->cname, fld->count);
                 }
                 else
                 {

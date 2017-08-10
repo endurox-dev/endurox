@@ -58,6 +58,7 @@
 #include <typed_buf.h>
 #include <ndebug.h>
 #include <tperror.h>
+#include <ubfutil.h>
 
 #include <userlog.h>
 #include <typed_view.h>
@@ -194,12 +195,13 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     ndrx_typedview_t *v;
     ndrx_typedview_field_t *f;
     long cksum;
-    long fldid;
-    int i = NDRX_VIEW_UBF_BASE;
+    BFLDID fldid;
+    int i;
     typed_buffer_descr_t *ubf_descr;
     
     /* Indicators.. */
     short *C_count;
+    short C_count_stor;
     unsigned short *L_length; /* will transfer as long */
     long L_len_long;
     
@@ -224,7 +226,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     
     if (NULL==v)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "View not found [%s]!", v->vname);
+        ndrx_TPset_error_fmt(TPEINVAL, "View not found [%s]!", bo->sub_type);
         EXFAIL_OUT(ret);
     }
    
@@ -260,7 +262,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     /* Now setup the fields in the buffer according to loaded view object 
      * we will load all fields into the buffer
      */
-    i = 0;
+    i = NDRX_VIEW_UBF_BASE;
     DL_FOREACH(v->fields, f)
     {
         i++;
@@ -281,6 +283,11 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
                 EXFAIL_OUT(ret);
             }
             i++;
+        }
+        else
+        {
+            C_count_stor=f->count; 
+            C_count = &C_count_stor;
         }
         
         if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
@@ -307,6 +314,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         
         fldid = Bmkfldid(f->typecode, i);
         
+        NDRX_LOG(log_debug, "C_count=%hd fldid=%d", *C_count, fldid);
         
         /* well we must support arrays too...! of any types
          * Arrays we will load into occurrences of the same buffer
@@ -318,7 +326,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             int dim_size = f->fldsize/f->count;
             /* OK we need to understand following:
              * size (data len) of each of the array elements..
-             * TODO: the header plotter needs to support occurrences of the
+             * the header plotter needs to support occurrences of the
              * length elements for the arrays...
              */
             char *fld_offs = idata+f->offset+occ*dim_size;
@@ -359,7 +367,8 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
                 {
                     NDRX_LOG(log_dump, "Setting CARRAY with length indicator");
                     
-                    L_length = (unsigned short *)(idata+f->length_fld_offset+occ);
+                    L_length = (unsigned short *)(idata+f->length_fld_offset+
+                            occ*sizeof(unsigned short));
                     L_len_long = (long)*L_length;
                     
                     if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, fld_offs, L_len_long))
@@ -429,7 +438,22 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     char *p_out;
     buffer_obj_t *outbufobj=NULL;
     char subtype[NDRX_VIEW_NAME_LEN+1];
-
+    ndrx_typedview_t *v;
+    ndrx_typedview_field_t *f;
+    long cksum;
+    int i;
+    BFLDID fldid;
+    /* Indicators.. */
+    short *C_count;
+    short C_count_stor;
+    unsigned short *L_length; /* will transfer as long */
+    long L_len_long;
+    
+    int *int_fix_ptr;
+    long int_fix_l;
+    
+    int occ;
+    
     NDRX_LOG(log_debug, "Entering %s", __func__);
     
     /* test the UBF buffer: */
@@ -456,9 +480,18 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         goto out;
     }
     
-    /* TODO: Resolve the view data, get the size... */
+    /* Resolve the view data, get the size... */
     
-    NDRX_LOG(log_debug, "Received view [%s]", subtype);
+    v = ndrx_view_get_view(subtype);
+    
+    if (NULL==v)
+    {
+        userlog("View [%s] not defined!", subtype);
+        ndrx_TPset_error_fmt(TPEINVAL, "View [%s] not defined!", subtype);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Received VIEW [%s]", subtype);
 
     /* Figure out the passed in buffer */
     if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
@@ -477,9 +510,11 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 0!=strcmp(outbufobj->sub_type, subtype)))
         {
             /* Raise error! */
-            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
-                                        G_buf_descr[BUF_TYPE_VIEW],
-                                        G_buf_descr[outbufobj->type_id]);
+            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s/%s but got %s/%s buffer",
+                    G_buf_descr[BUF_TYPE_VIEW].type, 
+                    subtype,
+                    G_buf_descr[outbufobj->type_id].type,
+                    outbufobj->sub_type);
             EXFAIL_OUT(ret);
         }
         
@@ -489,9 +524,9 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          */
         if (outbufobj->type_id!=BUF_TYPE_VIEW || 0!=strcmp(outbufobj->sub_type, subtype) )
         {
-            NDRX_LOG(log_warn, "User buffer %d/%s is different, "
+            NDRX_LOG(log_warn, "User buffer %s/%s is different, "
                     "free it up and re-allocate as VIEW/%s", 
-                    G_buf_descr[outbufobj->type_id],
+                    G_buf_descr[outbufobj->type_id].type,
                     (outbufobj->sub_type==NULL?"NULL":outbufobj->sub_type),
                     subtype);
             
@@ -508,7 +543,8 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         
         existing_size=outbufobj->size;
 
-        NDRX_LOG(log_debug, "%s: Output buffer size: %d, recieved %d", __func__,
+        NDRX_LOG(log_debug, "%s: Output buffer size (struct size): %d, "
+                "received %d", __func__,
                             existing_size, rcv_buf_size);
         
         if (existing_size>=rcv_buf_size)
@@ -525,42 +561,209 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             if (NULL==(new_addr=ndrx_tprealloc(*odata, rcv_buf_size)))
             {
                 NDRX_LOG(log_error, "%s: _tprealloc failed!", __func__);
-                ret=EXFAIL;
-                goto out;
+                EXFAIL_OUT(ret);
             }
 
             /* allocated OK, return new address */
             *odata = new_addr;
-            p_ub_out = (UBFH *)*odata;
+            p_out = *odata;
         }
     }
     else
     {
         /* allocate the buffer */
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
-                                         "allocating new!", fn);
+                                         "allocating new!", __func__);
 
-        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_len);
+        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_VIEW], NULL, 
+                subtype, rcv_buf_size);
 
         if (NULL==*odata)
         {
             /* error should be set already */
-            NDRX_LOG(log_error, "Failed to allocat new buffer!");
+            NDRX_LOG(log_error, "Failed to allocate new buffer!");
             goto out;
         }
 
-        p_ub_out = (UBFH *)*odata;
+        p_out = *odata;
     }
-
-    /* Do the actual data copy */
-    if (EXSUCCEED!=Bcpy(p_ub_out, p_ub))
+    
+    /* Decode now buffer to structure... 
+     * we will go over our structure data
+     * then read the corresponding buffers
+     * but firstly lets validate the view checksum
+     */
+    if (EXSUCCEED!=Bget(p_ub, EX_VIEW_CKSUM, 0, (char *)&cksum, 0L))
     {
-        ret=EXFAIL;
-        NDRX_LOG(log_error, "Bcpy failed!");
-        ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
-        goto out;
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get EX_VIEW_CKSUM to [%ld]: %s", 
+                cksum, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
     }
+    
+    /* Verify checksum */
+    if (v->cksum!=cksum)
+    {
+        NDRX_LOG(log_error, "Invalid checksum for VIEW [%s] received. Our cksum: "
+                "%ld, their: %ld - try to recompile VIEW with viewc!",
+                v->vname, (long)v->cksum, (long)cksum);
+        
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid checksum for VIEW [%s] "
+                "received. Our cksum: "
+                "%ld, their: %ld - try to recompile VIEW with viewc!",
+                v->vname, (long)v->cksum, (long)cksum);
+        
+    }
+    
+    /* Now setup the fields in the buffer according to loaded view object 
+     * we will load all fields into the buffer
+     */
+    i = 0;
+    DL_FOREACH(v->fields, f)
+    {
+        i++;
+        
+        NDRX_LOG(log_dump, "Processing field: [%s]", f->cname);
+        /* Check do we have length indicator? */
+        if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+        {
+            C_count = (short *)(p_out+f->count_fld_offset);
+            NDRX_LOG(log_dump, "C_count=%hd", *C_count);
+            
+            fldid = Bmkfldid(BFLD_SHORT, i);
+            
+            if (EXSUCCEED!=Bget(p_ub, fldid, 0, (char *)C_count, 0L))
+            {
+                ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get C_count at field %d: %s", 
+                    i, Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+            i++;
+        }
+        else
+        {
+            
+            C_count_stor=f->count;
+            C_count = &C_count_stor;
+        }
+        
+        if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+        {
+            for (occ=0; occ<*C_count; occ++)
+            {
+                L_length = (unsigned short *)(p_out+f->length_fld_offset+occ);
+                L_len_long = (long)*L_length;
+                NDRX_LOG(log_dump, "L_length=%hu (long: %ld), occ=%d", 
+                        *L_length, L_len_long, occ);
 
+                fldid = Bmkfldid(BFLD_LONG, i);
+
+                if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&L_len_long, 0L))
+                {
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup L_len_long "
+                            "at field %d, occ %d: %s", 
+                        i, occ, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+            }
+            i++;
+        }
+        
+        fldid = Bmkfldid(f->typecode, i);
+        
+        /* well we must support arrays too...! of any types
+         * Arrays we will load into occurrences of the same buffer
+         */
+        /* loop over the occurrences 
+         * we might want to send less count then max struct size..*/
+        NDRX_LOG(log_debug, "C_count=%hd fldid=%d", *C_count, fldid);
+        
+        for (occ=0; occ<*C_count; occ++)
+        {
+            int dim_size = f->fldsize/f->count;
+            /* OK we need to understand following:
+             * size (data len) of each of the array elements..
+             * the header plotter needs to support occurrences of the
+             * length elements for the arrays...
+             */
+            char *fld_offs = p_out+f->offset+occ*dim_size;
+            
+            if (BFLD_INT==f->typecode)
+            {
+                NDRX_LOG(log_dump, "Getting INT");
+                
+                if (EXSUCCEED!=Bget(p_ub, fldid, occ, (char *)&int_fix_l, 0L))
+                {
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get field %d", 
+                        fldid);
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    int_fix_ptr = (int *)(fld_offs);
+                    *int_fix_ptr = int_fix_l;
+                    
+                    NDRX_LOG(log_dump, "Got int %d", *int_fix_ptr);
+                    
+                }
+            }
+            else 
+            {
+                /* This is carray... manage the length  
+                 * we need array access to to the length indicators...
+                 * if the L flag is set, then we must use length flags
+                 * if L not set, then setup full buffer...
+                 */
+                if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+                {
+                    BFLDLEN blen = dim_size;
+                    NDRX_LOG(log_dump, "Setting with length indicator");
+                    
+                    L_length = (unsigned short *)(p_out+f->length_fld_offset+
+                            occ*sizeof(unsigned short));
+                    L_len_long = (long)*L_length;
+                    
+                    if (EXSUCCEED!=Bget(p_ub, fldid, occ, fld_offs, &blen))
+                    {
+                        NDRX_LOG(log_error, "Failed to get "
+                                "field %d, occ %d, offs %d, blen %ld", 
+                            fldid, occ, fld_offs, blen);
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get "
+                                "field %d, occ %d, offs %d, blen %ld", 
+                            fldid, occ, fld_offs, blen);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    /* Test the buffer size.. */
+                    if (L_len_long!=blen)
+                    {
+                        NDRX_LOG(log_error, "Length indicator in buffer: %ld, real: %d",
+                                L_len_long, blen);
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Length indicator "
+                                "in buffer: %ld, real: %d",
+                                L_len_long, blen);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                }
+                else
+                {
+                    BFLDLEN blen = dim_size;
+                    NDRX_LOG(log_dump, "Getting w/o length indicator");
+                    
+                    if (EXSUCCEED!=Bget(p_ub, fldid, occ, fld_offs, &blen))
+                    {
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get "
+                                "field %d, occ %d, offs %d, dim_size %d", 
+                            fldid, occ, fld_offs, dim_size);
+                        EXFAIL_OUT(ret);
+                    }
+                }
+            }
+        } /* for occ */
+    }
+    
+    
+    
 out:
     return ret;
 }
