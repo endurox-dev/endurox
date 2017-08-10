@@ -387,6 +387,8 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         } /* for occ */
     }
     
+    ndrx_debug_dump_UBF(log_info, "Sending intermediate UBF buffer "
+            "containing VIEW data", p_ub);
     
     ubf_descr = ndrx_get_buffer_descr("UBF", NULL);
 
@@ -420,8 +422,145 @@ out:
 expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
-    int ret = EXSUCCEED;
+    int ret=EXSUCCEED;
+    int rcv_buf_size;
+    int existing_size;
+    UBFH *p_ub = (UBFH *)rcv_data;
+    char *p_out;
+    buffer_obj_t *outbufobj=NULL;
+    char subtype[NDRX_VIEW_NAME_LEN+1];
+
+    NDRX_LOG(log_debug, "Entering %s", __func__);
     
+    /* test the UBF buffer: */
+    if (EXFAIL==(rcv_buf_size=Bused(p_ub)))
+    {
+        ndrx_TPset_error_msg(TPEINVAL, Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    NDRX_LOG(log_debug, "UBF size: %d", rcv_buf_size);
+    
+    /* Get the sub-type we received */
+    
+    ndrx_debug_dump_UBF(log_info, "Received intermediate UBF buffer "
+            "containing VIEW data", p_ub);
+    
+    /* Dump the incoming buffer... */
+    if (EXSUCCEED!=Bget(p_ub, EX_VIEW_NAME, 0, subtype, 0L))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Failed to get view name "
+                "from incoming buffer..");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* TODO: Resolve the view data, get the size... */
+    
+    NDRX_LOG(log_debug, "Received view [%s]", subtype);
+
+    /* Figure out the passed in buffer */
+    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
+                                        "with tpalloc()!", odata);
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check the data types */
+    if (NULL!=outbufobj)
+    {
+        /* If we cannot change the data type, then we trigger an error */
+        if (flags & TPNOCHANGE && (outbufobj->type_id!=BUF_TYPE_VIEW ||
+                0!=strcmp(outbufobj->sub_type, subtype)))
+        {
+            /* Raise error! */
+            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
+                                        G_buf_descr[BUF_TYPE_VIEW],
+                                        G_buf_descr[outbufobj->type_id]);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* If we can change data type and this does not match, then
+         * we should firstly free it up and then bellow allow to work in mode
+         * when odata is NULL!
+         */
+        if (outbufobj->type_id!=BUF_TYPE_VIEW || 0!=strcmp(outbufobj->sub_type, subtype) )
+        {
+            NDRX_LOG(log_warn, "User buffer %d/%s is different, "
+                    "free it up and re-allocate as VIEW/%s", 
+                    G_buf_descr[outbufobj->type_id],
+                    (outbufobj->sub_type==NULL?"NULL":outbufobj->sub_type),
+                    subtype);
+            
+            ndrx_tpfree(*odata, outbufobj);
+            *odata=NULL;
+        }
+    }
+    
+    /* check the output buffer */
+    if (NULL!=*odata)
+    {
+        p_out = (char *)*odata;
+        NDRX_LOG(log_debug, "%s: Output buffer exists", __func__);
+        
+        existing_size=outbufobj->size;
+
+        NDRX_LOG(log_debug, "%s: Output buffer size: %d, recieved %d", __func__,
+                            existing_size, rcv_buf_size);
+        
+        if (existing_size>=rcv_buf_size)
+        {
+            /* re-use existing buffer */
+            NDRX_LOG(log_debug, "%s: Using existing buffer", __func__);
+        }
+        else
+        {
+            /* Reallocate the buffer, because we have missing some space */
+            char *new_addr;
+            NDRX_LOG(log_debug, "%s: Reallocating", __func__);
+            
+            if (NULL==(new_addr=ndrx_tprealloc(*odata, rcv_buf_size)))
+            {
+                NDRX_LOG(log_error, "%s: _tprealloc failed!", __func__);
+                ret=EXFAIL;
+                goto out;
+            }
+
+            /* allocated OK, return new address */
+            *odata = new_addr;
+            p_ub_out = (UBFH *)*odata;
+        }
+    }
+    else
+    {
+        /* allocate the buffer */
+        NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
+                                         "allocating new!", fn);
+
+        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_len);
+
+        if (NULL==*odata)
+        {
+            /* error should be set already */
+            NDRX_LOG(log_error, "Failed to allocat new buffer!");
+            goto out;
+        }
+
+        p_ub_out = (UBFH *)*odata;
+    }
+
+    /* Do the actual data copy */
+    if (EXSUCCEED!=Bcpy(p_ub_out, p_ub))
+    {
+        ret=EXFAIL;
+        NDRX_LOG(log_error, "Bcpy failed!");
+        ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
+        goto out;
+    }
+
 out:
     return ret;
 }

@@ -48,7 +48,8 @@ extern "C" {
 #define BUF_TYPE_STRING     4
 #define BUF_TYPE_CARRAY     5 
 #define BUF_TYPE_JSON       6
-#define BUF_TYPE_MAX        6 /* max buffer type, for integrity */
+#define BUF_TYPE_VIEW       7
+#define BUF_TYPE_MAX        7 /* max buffer type, for integrity */
 
 #define BUF_TYPE_UBF_STR        "UBF"
 #define BUF_TYPE_INIT_STR       "INIT"
@@ -56,6 +57,7 @@ extern "C" {
 #define BUF_TYPE_CARRAY_STR     "CARRAY"
 #define BUF_TYPE_NULL_STR       "NULL"
 #define BUF_TYPE_JSON_STR       "JSON"
+#define BUF_TYPE_VIEW_STR       "VIEW"
 
 /**
  * Automatic buffer conversion:
