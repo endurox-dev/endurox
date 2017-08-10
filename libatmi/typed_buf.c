@@ -154,7 +154,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr)
  * @param subtype - may be NULL
  * @return NULL/or ptr to G_buf_descr[X]
  */
-exprivate typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
+expublic typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, char *subtype)
 {
     typed_buffer_descr_t *p=G_buf_descr;
     typed_buffer_descr_t *ret = NULL;
@@ -195,7 +195,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     
     if (NULL==known_type)
     {
-        if (NULL==(usr_type = get_buffer_descr(type, subtype)))
+        if (NULL==(usr_type = ndrx_get_buffer_descr(type, subtype)))
         {
             ndrx_TPset_error_fmt(TPEOTYPE, "Unknown type (%s)/subtype(%s)", 
                     (NULL==type?"NULL":type), (NULL==subtype?"NULL":subtype));

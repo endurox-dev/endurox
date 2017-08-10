@@ -58,7 +58,7 @@
  * olen - the actual lenght of data that should sent. Also this may represent
  *          space for the buffer to copy to.
  */
-int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
+expublic int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
         long ilen, char *obuf, long *olen, long flags)
 {
     int ret=EXSUCCEED;
@@ -102,7 +102,7 @@ out:
  * odata - ptr to handler. Existing buffer may be reused or re-allocated
  * olen - output data length
  */
-int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
     int ret=EXSUCCEED;

@@ -174,7 +174,9 @@ out:
 }
 
 /**
- * Build the outgoing buffer...
+ * Build the outgoing buffer... This will convert the VIEW to internal UBF
+ * format.
+ * 
  * @param descr
  * @param idata
  * @param ilen
@@ -194,6 +196,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     long cksum;
     long fldid;
     int i = NDRX_VIEW_UBF_BASE;
+    typed_buffer_descr_t *ubf_descr;
     
     /* Indicators.. */
     short *C_count;
@@ -201,7 +204,6 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     long L_len_long;
     
     int *int_fix_ptr;
-    char *ptr;
     long int_fix_l;
     
     int occ;
@@ -283,19 +285,22 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         
         if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
         {
-            L_length = (unsigned short *)(idata+f->length_fld_offset);
-            L_len_long = (long)L_length;
-            NDRX_LOG(log_dump, "L_length=%hu (long: %ld", 
-                    *L_length, L_len_long);
-            
-            fldid = Bmkfldid(BFLD_LONG, i);
-            
-            if (EXSUCCEED!=Bchg(p_ub, fldid, 0, (char *)&L_len_long, 0L))
+            for (occ=0; occ<*C_count; occ++)
             {
-                ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup L_len_long "
-                        "at field %d: %s", 
-                    i, Bstrerror(Berror));
-                EXFAIL_OUT(ret);
+                L_length = (unsigned short *)(idata+f->length_fld_offset+occ);
+                L_len_long = (long)*L_length;
+                NDRX_LOG(log_dump, "L_length=%hu (long: %ld), occ=%d", 
+                        *L_length, L_len_long, occ);
+
+                fldid = Bmkfldid(BFLD_LONG, i);
+
+                if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&L_len_long, 0L))
+                {
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup L_len_long "
+                            "at field %d, occ %d: %s", 
+                        i, occ, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
             }
             i++;
         }
@@ -310,15 +315,17 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
          * we might want to send less count then max struct size..*/
         for (occ=0; occ<*C_count; occ++)
         {
+            int dim_size = f->fldsize/f->count;
             /* OK we need to understand following:
              * size (data len) of each of the array elements..
              * TODO: the header plotter needs to support occurrences of the
              * length elements for the arrays...
              */
-            char *fld_offs = idata+f->offset+occ*(f->fldsize/f->count);
+            char *fld_offs = idata+f->offset+occ*dim_size;
             
             if (BFLD_INT==f->typecode)
             {
+                NDRX_LOG(log_dump, "Setting up INT");
                 int_fix_ptr = (int *)(fld_offs);
                 int_fix_l = (long)*int_fix_ptr;
 
@@ -331,6 +338,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             }
             else if (BFLD_CARRAY!=f->typecode)
             {
+                NDRX_LOG(log_dump, "Setting up %hd", f->typecode);
                 /* here length indicator is not needed */
 
                 if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, fld_offs, 0L))
@@ -344,12 +352,51 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             {
                 /* This is carray... manage the length  
                  * we need array access to to the length indicators...
+                 * if the L flag is set, then we must use length flags
+                 * if L not set, then setup full buffer...
                  */
+                if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+                {
+                    NDRX_LOG(log_dump, "Setting CARRAY with length indicator");
+                    
+                    L_length = (unsigned short *)(idata+f->length_fld_offset+occ);
+                    L_len_long = (long)*L_length;
+                    
+                    if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, fld_offs, L_len_long))
+                    {
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup "
+                                "carray field %d, occ %d, offs %d, L_len_long %ld", 
+                            fldid, occ, fld_offs, L_len_long);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                }
+                else
+                {
+                    NDRX_LOG(log_dump, "Setting CARRAY w/o length indicator");
+                    
+                    if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, fld_offs, dim_size))
+                    {
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup "
+                                "carray field %d, occ %d, offs %d, dim_size %d", 
+                            fldid, occ, fld_offs, dim_size);
+                        EXFAIL_OUT(ret);
+                    }
+                }
             }
-        }
-        
+        } /* for occ */
     }
     
+    
+    ubf_descr = ndrx_get_buffer_descr("UBF", NULL);
+
+    /* get the UBF buffer descr... */
+    if (EXSUCCEED!=UBF_prepare_outgoing (ubf_descr, (char *)p_ub, 
+        0, obuf, olen, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to build UBF buffer!");
+        EXFAIL_OUT(ret);
+    }
     
 out:
     if (NULL!=p_ub)
@@ -359,6 +406,17 @@ out:
     return ret;
 }
 
+/**
+ * Prepare incoming buffer. the rcv_data is non xatmi buffer. Thus we will
+ * just make ptr 
+ * @param descr
+ * @param rcv_data
+ * @param rcv_len
+ * @param odata
+ * @param olen
+ * @param flags
+ * @return 
+ */
 expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
@@ -367,3 +425,4 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
 out:
     return ret;
 }
+

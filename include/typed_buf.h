@@ -79,6 +79,9 @@ extern NDRX_API char * ndrx_tprealloc (char *buf, long len);
 extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
 extern NDRX_API buffer_obj_t * ndrx_find_buffer(char *ptr);
+extern NDRX_API typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, 
+        char *subtype);
+
 /*extern NDRX_API void free_up_buffers(void);*/
 
 /* UBF support */
