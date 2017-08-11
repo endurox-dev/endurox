@@ -3,7 +3,7 @@ VIEW MYVIEW1
 char     tchar1     T_CHAR_FLD     1       -       -       '\0'
 string   tstring1   T_STRING_FLD  1       L       100      'HELLO WORLD'
 string   tstring2   T_STRING_2_FLD  4       C       20      'TESTEST'
-carray   tcarray1   T_CARRAY_FLD   10       CL      200      '-'
+carray   tcarray1   T_CARRAY_FLD   10       CL      10      '-'
 float    tfloat1    T_FLOAT_FLD    1       -       -       0.0
 double   tdouble1   T_DOUBLE_FLD   1       -       -       0.0
 long     tlong1     T_LONG_FLD     1       -       -       0

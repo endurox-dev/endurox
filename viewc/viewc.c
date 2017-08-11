@@ -64,6 +64,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic char ndrx_G_build_cmd[PATH_MAX+1] = "buildclient";
 /*---------------------------Statics------------------------------------*/
 
 /**
@@ -74,8 +75,9 @@
  */
 exprivate void usage(char *progname)
 {
-    fprintf (stderr, "Usage: %s [-n] [-d viewdir] [-C] viewfile [viewfile ... ]\n", 
-                        progname);
+    fprintf (stderr, "Usage: %s [-b build_command] [-n] [-d viewdir] "
+            "[-C] viewfile [viewfile ... ]\n", 
+             progname);
 }
 
 /**
@@ -90,19 +92,41 @@ int main(int argc, char **argv)
     int ret = EXSUCCEED;
     int lang_mode = HDR_C_LANG;
     char basename[PATH_MAX+1];
-    char *p;
+    char *p, *env;
     int was_file = EXFALSE;
     char Vfile[PATH_MAX+1];
+    char tmp[PATH_MAX];
     opterr = 0;
     
     NDRX_BANNER;
     
     fprintf(stderr, "VIEW File Compiler\n\n");
 
-    while ((c = getopt (argc, argv, "nd:Chm:")) != -1)
+    while ((c = getopt (argc, argv, "nd:Chm:b:L:")) != -1)
     {
         switch (c)
         {
+            case 'L':
+                /* Extra Library for runtime, colon separated...*/
+                env = getenv(NDRX_LD_LIBRARY_PATH);
+                
+                if (NULL!=env)
+                {
+                    snprintf(tmp, sizeof(tmp), "%s:%s", env, optarg);
+                }
+                else
+                {
+                    NDRX_STRCPY_SAFE(tmp, optarg);
+                }
+                
+                NDRX_LOG(log_debug, "Setting library path: [%s]", tmp);
+                
+                setenv(NDRX_LD_LIBRARY_PATH, tmp, EXTRUE);
+                
+                break;
+            case 'b':
+                NDRX_STRCPY_SAFE(ndrx_G_build_cmd, optarg);
+                break;
             case 'n':
                 NDRX_LOG(log_debug, "No UBF mapping processing...");
                 no_UBF = EXTRUE;
@@ -155,7 +179,8 @@ int main(int argc, char **argv)
                 EXFAIL_OUT(ret);
         }
     }
-        
+    
+    NDRX_LOG(log_debug, "Build command set to: [%s]", ndrx_G_build_cmd);
     for (i = optind; i < argc; i++)
     {
         was_file = EXTRUE;

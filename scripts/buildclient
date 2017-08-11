@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ## 
-## @(#) Builds EnduroX client process
+## @(#) Builds Enduro/X client process
 ##
 ## @file buildclient
 ## 
@@ -35,7 +35,7 @@ use Getopt::Std;
 
 
 my %options=();
-getopts("o:f:", \%options);
+getopts("o:f:a:", \%options);
 
 my $CFLAGS = $ENV{'CFLAGS'};
 
@@ -52,8 +52,6 @@ my $BUILD_LIB_PATH="";
 # Print out the options we have
 print "-o $options{o}\n" if defined $options{o};
 print "-f $options{f}\n" if defined $options{f};
-
-my $command="ld -o $options{o} $options{f}";
 
 # Extract the CFLAGS
 @CFLAGS_ARR = split (/ |\t+/,$CFLAGS);
@@ -72,7 +70,8 @@ foreach my $item (@LIBPATH_ARR) {
 	$BUILD_LIB_PATH="$BUILD_LIB_PATH -L$item";
 }
 
-$command="$CC -o $options{o} $options{f}  -latmiclt -latmi -lubf -lnstd -lrt -lm -lc -ldl -lpthread $BUILD_LIB_PATH";
+
+$command="$CC -o $options{o} $options{f}  -latmiclt -latmi -lubf -lnstd -lrt -lm -lc -ldl -lpthread $BUILD_LIB_PATH $options{a}";
 
 print "$command\n";
 `$command`

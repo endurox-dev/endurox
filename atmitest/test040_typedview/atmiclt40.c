@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
     long rsplen;
     int i, j;
     int ret=EXSUCCEED;
-    char *buf = tpalloc("STRING", NULL, 30);
+    
+    char *buf = tpalloc("VIEW", "", 30);
     
     if (NULL==buf)
     {

@@ -69,8 +69,8 @@ exprivate int ndrx_view_invoke(char *sourcecode, char *ofile)
     char build_cmd[PATH_MAX+1];
     
     
-    snprintf(build_cmd, sizeof(build_cmd), "buildclient -f %s -o %s", 
-            sourcecode, ofile);
+    snprintf(build_cmd, sizeof(build_cmd), "%s -f %s -o %s", 
+            ndrx_G_build_cmd, sourcecode, ofile);
     
     NDRX_LOG(log_info, ">>> About to execute: [%s]", build_cmd);
     

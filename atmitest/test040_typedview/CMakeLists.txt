@@ -46,15 +46,15 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 
 add_custom_command(
-  OUTPUT t40.h
-  COMMAND ../../viewc/viewc -n t40.v
+  OUTPUT t40.h t40.V
+  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../scripts/buildclient -a '-I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v
   DEPENDS t40.v)
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmisv40 atmisv40.c ../../libatmisrv/rawmain_integra.c t40.h)
+add_executable (atmisv40 atmisv40.c ../../libatmisrv/rawmain_integra.c t40.h t40.V)
 add_executable (atmiclt40 atmiclt40.c t40.h)
 ################################################################################
 ############################# Test - executables ###############################
