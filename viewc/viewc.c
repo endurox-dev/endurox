@@ -106,6 +106,9 @@ int main(int argc, char **argv)
             case 'n':
                 NDRX_LOG(log_debug, "No UBF mapping processing...");
                 no_UBF = EXTRUE;
+                
+                ndrx_view_loader_configure(no_UBF);
+                        
                 break;
             case 'd':
                 NDRX_STRCPY_SAFE(outdir, optarg);

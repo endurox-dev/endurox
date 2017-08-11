@@ -220,6 +220,8 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         EXFAIL_OUT(ret);
     }
     
+    NDRX_DUMP(log_dump, "Outgoing VIEW struct", idata, ilen);
+    
     NDRX_LOG(log_debug, "Preparing outgoing for VIEW [%s]", bo->sub_type);
     
     v = ndrx_view_get_view(bo->sub_type);
@@ -762,7 +764,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         } /* for occ */
     }
     
-    
+    NDRX_DUMP(log_dump, "Incoming VIEW struct", *odata, *olen);
     
 out:
     return ret;

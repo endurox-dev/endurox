@@ -72,8 +72,21 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+exprivate int M_no_ubf_proc = EXFALSE; /* Do not process UBF during loading... */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Configure view loader
+ * @param no_ubf_proc Do not process UBF during loading...
+ */
+expublic void ndrx_view_loader_configure(int no_ubf_proc)
+{
+    M_no_ubf_proc = no_ubf_proc;
+    
+    NDRX_LOG(log_warn, "Do not process UBF: %s", M_no_ubf_proc?"Yes":"No");
+    
+}
 
 /**
  * Load single view file
@@ -487,7 +500,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_STRCPY_SAFE(fld->fbname, tok);
             NDRX_LOG(log_dump, "Got UBF identifier [%s]", fld->fbname);
             
-            if (!is_compiled)
+            if (is_compiled || !M_no_ubf_proc)
             {
                 NDRX_LOG(log_dump, "About to resolve field id..");
                 
