@@ -103,7 +103,7 @@ out:
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_view_generate_code(char *outdir, char *basename, 
-        char *vsrcfile, char *Vfile)
+        char *vsrcfile, char *Vfile, int no_UBF)
 {
     int ret = EXSUCCEED;
     FILE *f;
@@ -133,7 +133,7 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename,
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: We need offsets for L_ and C_ fields... */
+    /* We need offsets for L_ and C_ fields... */
     
     fprintf(f, "/* Offset calculation auto-generated code */\n");
     fprintf(f, "/*---------------------------Includes-----------------------------------*/\n");
@@ -200,6 +200,8 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename,
         fprintf(f, "        {NULL}\n");
         fprintf(f, "    };\n\n");    
     }
+    
+    fprintf(f, "    ndrx_view_loader_configure(%d);\n\n", no_UBF);
 
     fprintf(f, "    /* Load view file.. */\n");
     fprintf(f, "    if (EXSUCCEED!=ndrx_view_load_file(input_file, EXFALSE))\n");
@@ -277,12 +279,10 @@ out:
     {
         NDRX_FCLOSE(f);
     }
-
 /*
     unlink(cfile);
     unlink(ofile);
 */
-
     return ret;
 }
 

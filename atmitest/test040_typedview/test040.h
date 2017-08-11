@@ -1,7 +1,7 @@
 /* 
-** UBF Header generator
+** Typed STRING tests
 **
-** @file viewc.h
+** @file test040.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,17 +29,19 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef VIEWC_H_
-#define VIEWC_H_
-/*------------------------------Includes--------------------------------------*/
-/*------------------------------Externs---------------------------------------*/
-/*------------------------------Macros----------------------------------------*/
-/*------------------------------Enums-----------------------------------------*/
-/*------------------------------Typedefs--------------------------------------*/
-/*------------------------------Globals---------------------------------------*/
-/*------------------------------Statics---------------------------------------*/
-/*------------------------------Prototypes------------------------------------*/
-extern int ndrx_view_generate_code(char *outdir, char *basename, 
-        char *vsrcfile, char *Vfile, int no_UBF);
-extern int ndrx_view_plot_c_header(char *outdir, char *basename);
-#endif /* VIEWC_H_ */
+#ifndef TEST040_H
+#define	TEST040_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+
+#define TEST_REPLY_SIZE         1024
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif	/* TEST040_H */
+

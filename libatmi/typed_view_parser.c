@@ -500,7 +500,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_STRCPY_SAFE(fld->fbname, tok);
             NDRX_LOG(log_dump, "Got UBF identifier [%s]", fld->fbname);
             
-            if (is_compiled || !M_no_ubf_proc)
+            if (is_compiled && !M_no_ubf_proc)
             {
                 NDRX_LOG(log_dump, "About to resolve field id..");
                 

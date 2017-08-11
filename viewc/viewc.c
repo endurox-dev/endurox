@@ -196,7 +196,8 @@ int main(int argc, char **argv)
         
             /* Get the offset - generate object file & invoke */
             
-            if (EXSUCCEED!=ndrx_view_generate_code(outdir, basename, argv[i], Vfile))
+            if (EXSUCCEED!=ndrx_view_generate_code(outdir, basename, argv[i], 
+                    Vfile, no_UBF))
             {
                 NDRX_LOG(log_error, "Failed to generate code or invoke compiler!");
                 EXFAIL_OUT(ret);

@@ -1203,7 +1203,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 NDRX_LOG(log_debug, "Buffer type is: %hd", 
                         *buffer_type);
                 
-                if (*buffer_type == BUF_TYPE_UBF)
+                if (BUF_TYPE_UBF==*buffer_type ||
+                        BUF_TYPE_VIEW==*buffer_type)
                 {
                     UBFH *p_ub = (UBFH *)data;
                     proto_ufb_fld_t f;
@@ -1682,7 +1683,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     
                     NDRX_LOG(log_debug, "Processing XATMIBUF");
                     
-                    if (*buffer_type == BUF_TYPE_UBF)
+                    if (*buffer_type == BUF_TYPE_UBF || 
+                            *buffer_type == BUF_TYPE_VIEW)
                     {    
                         UBFH *p_ub = (UBFH *)(ex_buf + ex_len+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
