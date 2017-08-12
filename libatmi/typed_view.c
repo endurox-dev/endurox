@@ -770,3 +770,31 @@ out:
     return ret;
 }
 
+/**
+ * Gracefully remove free up the buffer
+ * @param descr
+ * @param buf
+ */
+expublic void VIEW_tpfree(typed_buffer_descr_t *descr, char *buf)
+{
+    NDRX_FREE(buf);
+}
+
+
+/**
+ * Check the expression on buffer.
+ * @param descr
+ * @param buf
+ * @param expr
+ * @return TRUE/FALSE.
+ * In case of error we just return FALSE as not matched!
+ */
+expublic int VIEW_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr)
+{
+    int ret=EXFALSE;
+
+    NDRX_LOG(log_error, "VIEW buffers do not support event filters! Expr: [%s]", expr);
+    userlog("VIEW buffers do not support event filters! Expr: [%s]", expr);
+    
+    return ret;
+}

@@ -45,47 +45,33 @@ long M_subs_to_unsibscribe = -1;
 /**
  * Receive some string & reply back with string, ok?
  */
-void TEST40_STRING(TPSVCINFO *p_svc)
+void TEST40_VIEW(TPSVCINFO *p_svc)
 {
     int ret = EXSUCCEED;
     char *buf = p_svc->data;
     char type[16+1]={EXEOS};
+    char subtype[16+1]={EXEOS};
     int i;
     
     if (EXFAIL==tptypes(buf, type, NULL))
     {
-        NDRX_LOG(log_error, "TESTERROR: TEST40_STRING cannot "
+        NDRX_LOG(log_error, "TESTERROR: TEST40_VIEW cannot "
                 "determine buffer type");
         EXFAIL_OUT(ret);
     }
     
-    if (0!=strcmp(type, "STRING"))
+    if (0!=strcmp(type, "VIEW"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Buffer not STRING!");
+        NDRX_LOG(log_error, "TESTERROR: Buffer not VIEW!");
         EXFAIL_OUT(ret);
     }
     
-    if (0!=strcmp(buf, "HELLO WORLD"))
+    
+    if (0!=strcmp(subtype, "MYVIEW1"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Incoming string not \"HELLO WORLD\"");
+        NDRX_LOG(log_error, "TESTERROR: sub-type not MYVIEW1, but [%s]", subtype);
         EXFAIL_OUT(ret);
     }
-    
-    if (NULL== (buf = tprealloc(buf, TEST_REPLY_SIZE+1)))
-    {
-        NDRX_LOG(log_error, "TESTERROR: TEST40_STRING failed "
-                "to realloc the buffer");
-    }
-    
-    /* fill all the buffer with  */
-    for (i=0; i<TEST_REPLY_SIZE; i++)
-    {
-        buf[i]=i%255+1;
-    }
-    
-    buf[TEST_REPLY_SIZE] = EXEOS;
-    
-    NDRX_LOG(log_debug, "Sending buffer: [%s]", buf);
     
 out:
     
@@ -94,83 +80,26 @@ out:
 }
 
 /**
- * This should match the regex of caller (extra filter test func)
- */
-void TEST40 (TPSVCINFO *p_svc)
-{
-    int ret=EXSUCCEED;
-    
-out:
-
-    tpreturn(0, 0, NULL, 0L, 0L);
-
-}
-
-/**
- * This shall not match the regex of caller (extra filter test func)
- */
-void TEST40_2(TPSVCINFO *p_svc)
-{
-    long ret;
-    
-    NDRX_LOG(log_debug, "TEST40_2 - Called");
-    
-    tpreturn(0, 0, NULL, 0L, 0L);
-}
-
-/*
- * Do initialization
+ * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "tpsvrinit called");
-    TPEVCTL evctl;
 
-    memset(&evctl, 0, sizeof(evctl));
 
-    if (EXSUCCEED!=tpadvertise("TEST40_STRING", TEST40_STRING))
+    if (EXSUCCEED!=tpadvertise("TEST40_VIEW", TEST40_VIEW))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST40_STRING!");
+        NDRX_LOG(log_error, "Failed to initialize TEST40_VIEW!");
         ret=EXFAIL;
     }
-    else if (EXSUCCEED!=tpadvertise("TEST40", TEST40))
-    {
-        NDRX_LOG(log_error, "Failed to initialize TEST40 (first)!");
-        ret=EXFAIL;
-    }
-    else if (EXSUCCEED!=tpadvertise("TEST40_2", TEST40_2))
-    {
-        NDRX_LOG(log_error, "Failed to initialize TEST40_2!");
-        ret=EXFAIL;
-    }
-    
+
     if (EXSUCCEED!=ret)
     {
         goto out;
     }
 
-    strcpy(evctl.name1, "TEST40");
-    evctl.flags|=TPEVSERVICE;
-
-    /* Subscribe to event server */
-    if (EXFAIL==tpsubscribe("TEST40EV", "Hello (.*) Mars", &evctl, 0L))
-    {
-        NDRX_LOG(log_error, "Failed to subscribe TEST40 "
-                                        "to TEST40EV event failed");
-        ret=EXFAIL;
-    }
-
-    strcpy(evctl.name1, "TEST40_2");
-    /* Subscribe to event server */
-    if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST40EV", "Hello (.*) Pluto", &evctl, 0L)))
-    {
-        NDRX_LOG(log_error, "Failed to subscribe TEST40 "
-                                        "to TEST40EV event failed");
-        ret=EXFAIL;
-    }
-    
 out:
     return ret;
 }

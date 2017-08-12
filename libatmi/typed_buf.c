@@ -36,6 +36,7 @@
 #include <utlist.h>
 
 #include <atmi.h>
+#include <atmi_int.h>
 #include <ubf.h>
 #include <ndrstandard.h>
 #include <atmi_int.h>
@@ -45,6 +46,7 @@
 #include <typed_string.h>
 #include <typed_json.h>
 #include <typed_carray.h>
+#include <typed_view.h>
 #include <tperror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -79,6 +81,8 @@ expublic typed_buffer_descr_t G_buf_descr[] =
                                 CARRAY_tpalloc, CARRAY_tprealloc, CARRAY_tpfree, CARRAY_test},
     {BUF_TYPE_JSON,   "JSON", NULL,     NULL, JSON_prepare_outgoing, JSON_prepare_incoming,
                                 JSON_tpalloc, JSON_tprealloc, JSON_tpfree, JSON_test},
+    {BUF_TYPE_VIEW,   "VIEW", NULL,     NULL, VIEW_prepare_outgoing, VIEW_prepare_incoming,
+                                VIEW_tpalloc, VIEW_tprealloc, VIEW_tpfree, VIEW_test},
 #if 0
 /* Those bellow ones are not supported! */
     {BUF_TYPE_STRING,"STRING",  NULL,      NULL, /* todo:  */NULL, /* todo: */NULL, NULL},

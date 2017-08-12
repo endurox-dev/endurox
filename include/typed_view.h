@@ -43,12 +43,13 @@ extern "C" {
 #include <exhash.h>
 #include <fdatatype.h>
 #include <view_cmn.h>
+#include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_VIEW_CNAME_LEN             256  /* Max c field len in struct   */
 #define NDRX_VIEW_FLAGS_LEN             16   /* Max flags                   */
 #define NDRX_VIEW_NULL_LEN              2660 /* Max len of the null value   */
-#define NDRX_VIEW_NAME_LEN              33   /* Max len of view name        */
+#define NDRX_VIEW_NAME_LEN   XATMI_SUBTYPE_LEN   /* Max len of view name        */
 #define NDRX_VIEW_COMPFLAGS_LEN         128  /* Compiled flags len          */
     
 /* field flags: */
@@ -138,6 +139,17 @@ extern NDRX_API int ndrx_view_load_directories(void);
 extern NDRX_API void ndrx_view_deleteall(void);
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
 extern NDRX_API void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str);
+
+extern NDRX_API int VIEW_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
+extern NDRX_API void VIEW_tpfree(typed_buffer_descr_t *descr, char *buf);
+extern NDRX_API int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+                        long rcv_len, char **odata, long *olen, long flags);
+extern NDRX_API int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
+                    char *obuf, long *olen, long flags);
+extern NDRX_API char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern NDRX_API char * VIEW_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
+
+
 
 #ifdef	__cplusplus
 }

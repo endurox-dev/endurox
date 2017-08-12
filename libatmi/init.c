@@ -55,6 +55,7 @@
 #include <sys_unix.h>
 #include <atmi_tls.h>
 #include <cconfig.h>
+#include <typed_view.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000

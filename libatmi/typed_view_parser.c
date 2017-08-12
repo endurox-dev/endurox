@@ -500,7 +500,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_STRCPY_SAFE(fld->fbname, tok);
             NDRX_LOG(log_dump, "Got UBF identifier [%s]", fld->fbname);
             
-            if (is_compiled && !M_no_ubf_proc)
+            /*TODO: add - to defines ... */
+            if (is_compiled && !M_no_ubf_proc && 0!=strcmp("-", fld->fbname))
             {
                 NDRX_LOG(log_dump, "About to resolve field id..");
                 
@@ -517,6 +518,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
 
                     EXFAIL_OUT(ret);
                 }
+            }
+            else
+            {
+                fld->ubfid = BBADFLDID;
             }
             
             /******************************************************************* 

@@ -133,7 +133,7 @@ expublic char * tpalloc (char *type, char *subtype, long len)
     char *ret=NULL;
     /* int entry_status=EXSUCCEED; */
     
-/* Allow to skip initalization - this for for clt init (using tpalloc for buffer request)
+/* Allow to skip initialisation - this for for clt init (using tpalloc for buffer request)
     API_ENTRY;
     if (SUCCEED!=entry_status)
     {

@@ -30,7 +30,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-TESTNAME="test040_typedstring"
+TESTNAME="test040_typedview"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
@@ -46,15 +46,18 @@ fi;
 
 . ../testenv.sh
 
+#
+# Set view tables
+#
+export VIEWFILES=t40.V
+export VIEWDIR=.
+
 xadmin killall atmisv40 2>/dev/null
 xadmin killall atmiclt40 2>/dev/null
-xadmin killall tpevsrv 2>/dev/null
 
 # Start event server
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
 # NOTE: WE HAVE MEM LEAK HERE:
-(../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
-sleep 5
 # Start subscribers
 (./atmisv40 -t 4 -i 100 2>&1) > ./atmisv40.log &
 sleep 5
@@ -71,7 +74,6 @@ fi
 
 xadmin killall atmisv40 2>/dev/null
 xadmin killall atmiclt40 2>/dev/null
-xadmin killall tpevsrv 2>/dev/null
 
 #killall atmiclt1
 

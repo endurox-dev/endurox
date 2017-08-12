@@ -41,6 +41,7 @@
 #include <ndrstandard.h>
 #include "test040.h"
 #include "t40.h"
+#include "tperror.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -59,67 +60,36 @@ int main(int argc, char** argv) {
     int i, j;
     int ret=EXSUCCEED;
     
+    struct MYVIEW1 *v1;
     
-    char *buf = tpalloc("VIEW", "", 30);
-    
-    if (NULL==buf)
+    if (EXSUCCEED!=tpinit(NULL))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to alloc STRING buffer!");
+        NDRX_LOG(log_error, "TESTERROR: failed to init: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    v1= (struct MYVIEW1 *) tpalloc("VIEW", "MYVIEW1", sizeof(struct MYVIEW1));
+    
+    if (NULL==v1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to alloc VIEW buffer!");
         EXFAIL_OUT(ret);
     }
 
     for (j=0; j<10000; j++)
     {
-        strcpy(buf, "HELLO WORLD");
+        
+        memset(v1, 0, sizeof(struct MYVIEW1));
+        
+        NDRX_DUMP(log_debug, "VIEW1 request...", v1, sizeof(struct MYVIEW1));
 
-        if (EXSUCCEED!=tpcall("TEST40_STRING", buf, 0, &buf, &rsplen, 0))
+        if (EXSUCCEED!=tpcall("TEST40_VIEW", (char *)v1, 0, (char **)&v1, &rsplen, 0))
         {
-            NDRX_LOG(log_error, "TESTERROR: failed to call TEST40_STRING");
+            NDRX_LOG(log_error, "TESTERROR: failed to call TEST40_VIEW");
             EXFAIL_OUT(ret);
         }
 
-        NDRX_LOG(log_debug, "Got message [%s] ", buf);
-
-        /* Check the len */
-        if (TEST_REPLY_SIZE!=strlen(buf))
-        {
-            NDRX_LOG(log_error, "TESTERROR: Invalid message len for [%s] got: %d, "
-                    "but need: %d ", buf, strlen(buf), TEST_REPLY_SIZE);
-        }
-
-        for (i=0; i<TEST_REPLY_SIZE; i++)
-        {
-            if (((char)buf[i])!=((char)(i%255+1)))
-            {
-                NDRX_LOG(log_error, "TESTERROR: Invalid char at %d, "
-                        "expected: 0x%1x, but got 0x%1x", i, 
-                        (unsigned char)buf[i], (unsigned char)(i%255+1));
-            }
-        }
-
-        if (EXEOS!=buf[TEST_REPLY_SIZE])
-        {
-            NDRX_LOG(log_error, "TESTERROR: Not EOS!");
-        }
-
-        strcpy(buf, "Hello Enduro/X from Mars");
-
-        ret=tppost("TEST40EV", buf, 0L, TPSIGRSTRT);
-
-        if (1!=ret)
-        {
-            NDRX_LOG(log_error, "TESTERROR: Event is not processed by "
-                    "exactly 1 service! (%d) ", ret);
-            ret=EXFAIL;
-            goto out;
-        }
-        /* Realloc to some more... */
-        if (NULL== (buf = tprealloc(buf, 2048)))
-        {
-            NDRX_LOG(log_error, "TESTERROR: failed "
-                    "to realloc the buffer");
-        }
-        
+        NDRX_DUMP(log_debug, "VIEW1 reply...", v1, sizeof(struct MYVIEW1));
     }
     
 out:
