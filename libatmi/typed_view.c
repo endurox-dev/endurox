@@ -115,7 +115,7 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
      * the have some working in ULOG and logfile... */
     if (v->ssize < len)
     {
-        NDRX_LOG(log_info, "tpalloc'ed %ld bytes, but VIEW [%s] structure size if %ld",
+        NDRX_LOG(log_info, "tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
                 len, subtype, v->ssize);
     }
 
@@ -275,9 +275,11 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
             C_count = (short *)(idata+f->count_fld_offset);
-            NDRX_LOG(log_dump, "C_count=%hd", *C_count);
             
             fldid = Bmkfldid(BFLD_SHORT, i);
+            
+            NDRX_LOG(log_dump, "%s.C_%s=%hd fldid=%d", 
+                    v->vname, f->cname, *C_count, fldid);
             
             if (EXSUCCEED!=Bchg(p_ub, fldid, 0, (char *)C_count, 0L))
             {
@@ -291,6 +293,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         {
             C_count_stor=f->count; 
             C_count = &C_count_stor;
+            /* NDRX_LOG(log_debug, "count, from object: %hd", *C_count); */
         }
         
         if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
@@ -299,10 +302,11 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             {
                 L_length = (unsigned short *)(idata+f->length_fld_offset+occ);
                 L_len_long = (long)*L_length;
-                NDRX_LOG(log_dump, "L_length=%hu (long: %ld), occ=%d", 
-                        *L_length, L_len_long, occ);
-
+              
                 fldid = Bmkfldid(BFLD_LONG, i);
+                
+                NDRX_LOG(log_debug, "%s.L_%s=%hu (long: %ld) occ=%d fldid=%d", 
+                    v->vname, f->cname, *L_length, L_len_long, occ, fldid);
 
                 if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&L_len_long, 0L))
                 {

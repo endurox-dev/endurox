@@ -118,16 +118,16 @@ expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
     MUTEX_LOCK_V(M_lock);
     {
-    buffer_obj_t *ret;
-    
-    /*
-    ret = find_buffer_int(ptr);
-    */
-    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
-        
-        
-    MUTEX_UNLOCK_V(M_lock);
-    return ret;
+        buffer_obj_t *ret;
+
+        /*
+        ret = find_buffer_int(ptr);
+        */
+        EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
+
+
+        MUTEX_UNLOCK_V(M_lock);
+        return ret;
     }
 }
 
@@ -195,7 +195,9 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     typed_buffer_descr_t *usr_type = NULL;
     buffer_obj_t *node;
     
-    NDRX_LOG(log_debug, "%s: type=%s len=%d",  __func__, (NULL==type?"NULL":type), len);
+    NDRX_LOG(log_debug, "%s: type=%s, subtype=%s len=%d",  
+            __func__, (NULL==type?"NULL":type),
+            (NULL==subtype?"NULL":subtype), len);
     
     if (NULL==known_type)
     {
@@ -234,8 +236,10 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     memset(node, 0, sizeof(buffer_obj_t));
 
     node->buf = ret;
-    NDRX_LOG(log_debug, "%s: type=%s len=%d allocated=%p", 
-             __func__, (NULL==type?"NULL":type), len, ret);
+    NDRX_LOG(log_debug, "%s: type=%s subtype=%s len=%d allocated=%p", 
+             __func__, (NULL==type?"NULL":type),
+            (NULL==subtype?"NULL":subtype),
+            len, ret);
     node->size = len;
     
     node->type_id = usr_type->type_id;
@@ -476,7 +480,7 @@ expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
     
     if (NULL!=subtype && EXEOS!=buf->subtype[0])
     {
-        strcpy(subtype, buf_type->subtype);
+        strcpy(subtype, buf->subtype);
     }
     
 out:

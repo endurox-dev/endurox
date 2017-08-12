@@ -50,10 +50,9 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
     int ret = EXSUCCEED;
     char *buf = p_svc->data;
     char type[16+1]={EXEOS};
-    char subtype[16+1]={EXEOS};
-    int i;
+    char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     
-    if (EXFAIL==tptypes(buf, type, NULL))
+    if (EXFAIL==tptypes(buf, type, subtype))
     {
         NDRX_LOG(log_error, "TESTERROR: TEST40_VIEW cannot "
                 "determine buffer type");
@@ -66,10 +65,10 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
-    
     if (0!=strcmp(subtype, "MYVIEW1"))
     {
-        NDRX_LOG(log_error, "TESTERROR: sub-type not MYVIEW1, but [%s]", subtype);
+        NDRX_LOG(log_error, "TESTERROR: sub-type not MYVIEW1, but [%s]", 
+                subtype);
         EXFAIL_OUT(ret);
     }
     
