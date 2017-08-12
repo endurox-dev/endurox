@@ -1,5 +1,5 @@
 /* 
-** Typed STRING testing
+** Typed VIEW testing
 **
 ** @file atmiclt40.c
 ** 
@@ -40,6 +40,7 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include "test040.h"
+#include "t40.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -57,6 +58,7 @@ int main(int argc, char** argv) {
     long rsplen;
     int i, j;
     int ret=EXSUCCEED;
+    
     
     char *buf = tpalloc("VIEW", "", 30);
     
