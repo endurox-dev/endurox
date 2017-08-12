@@ -52,6 +52,8 @@ fi;
 export VIEWFILES=t40.V
 export VIEWDIR=.
 
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
+
 xadmin killall atmisv40 2>/dev/null
 xadmin killall atmiclt40 2>/dev/null
 

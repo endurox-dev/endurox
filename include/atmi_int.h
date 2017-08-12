@@ -232,7 +232,7 @@ struct buffer_obj
 {
     int type_id;
     /* int sub_type_id; */
-    char sub_type[XATMI_SUBTYPE_LEN+1];
+    char subtype[XATMI_SUBTYPE_LEN+1];
     short autoalloc;  /* Is buffer automatically allocated by tpcall? */
     char *buf;
     long size;        /* Allocated size.... */

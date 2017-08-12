@@ -88,9 +88,10 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
     
     if (NULL==v)
     {
-         NDRX_LOG(log_error, "%s: VIEW [%s] NOT FOUND!", __func__, subtype);
+        NDRX_LOG(log_error, "%s: VIEW [%s] NOT FOUND!", __func__, subtype);
         ndrx_TPset_error_fmt(TPENOENT, "%s: VIEW [%s] NOT FOUND!", 
                 __func__, subtype);
+        
         goto out;
     }
     
@@ -222,13 +223,13 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     
     NDRX_DUMP(log_dump, "Outgoing VIEW struct", idata, ilen);
     
-    NDRX_LOG(log_debug, "Preparing outgoing for VIEW [%s]", bo->sub_type);
+    NDRX_LOG(log_debug, "Preparing outgoing for VIEW [%s]", bo->subtype);
     
-    v = ndrx_view_get_view(bo->sub_type);
+    v = ndrx_view_get_view(bo->subtype);
     
     if (NULL==v)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "View not found [%s]!", bo->sub_type);
+        ndrx_TPset_error_fmt(TPEINVAL, "View not found [%s]!", bo->subtype);
         EXFAIL_OUT(ret);
     }
    
@@ -245,7 +246,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=Bchg(p_ub, EX_VIEW_NAME, 0, bo->sub_type, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, EX_VIEW_NAME, 0, bo->subtype, 0L))
     {
         ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup EX_VIEW_NAME to [%s]: %s", 
                 v->vname, Bstrerror(Berror));
@@ -316,7 +317,8 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         
         fldid = Bmkfldid(f->typecode, i);
         
-        NDRX_LOG(log_debug, "C_count=%hd fldid=%d", *C_count, fldid);
+        NDRX_LOG(log_debug, "num=%d, %s.%s = fldid %d C_count=%hd", i, v->vname, 
+                f->cname, fldid, *C_count);
         
         /* well we must support arrays too...! of any types
          * Arrays we will load into occurrences of the same buffer
@@ -333,12 +335,13 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
              */
             char *fld_offs = idata+f->offset+occ*dim_size;
             
-            if (BFLD_INT==f->typecode)
+            if (BFLD_INT==f->typecode_full)
             {
                 NDRX_LOG(log_dump, "Setting up INT");
                 int_fix_ptr = (int *)(fld_offs);
                 int_fix_l = (long)*int_fix_ptr;
 
+                NDRX_LOG(log_debug, "Setting up int->long %ld", int_fix_l);
                 if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, (char *)&int_fix_l, 0L))
                 {
                     ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup field %d", 
@@ -346,7 +349,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
                     EXFAIL_OUT(ret);
                 }
             }
-            else if (BFLD_CARRAY!=f->typecode)
+            else if (BFLD_CARRAY!=f->typecode_full)
             {
                 NDRX_LOG(log_dump, "Setting up %hd", f->typecode);
                 /* here length indicator is not needed */
@@ -509,14 +512,14 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     {
         /* If we cannot change the data type, then we trigger an error */
         if (flags & TPNOCHANGE && (outbufobj->type_id!=BUF_TYPE_VIEW ||
-                0!=strcmp(outbufobj->sub_type, subtype)))
+                0!=strcmp(outbufobj->subtype, subtype)))
         {
             /* Raise error! */
             ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s/%s but got %s/%s buffer",
                     G_buf_descr[BUF_TYPE_VIEW].type, 
                     subtype,
                     G_buf_descr[outbufobj->type_id].type,
-                    outbufobj->sub_type);
+                    outbufobj->subtype);
             EXFAIL_OUT(ret);
         }
         
@@ -524,12 +527,12 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          * we should firstly free it up and then bellow allow to work in mode
          * when odata is NULL!
          */
-        if (outbufobj->type_id!=BUF_TYPE_VIEW || 0!=strcmp(outbufobj->sub_type, subtype) )
+        if (outbufobj->type_id!=BUF_TYPE_VIEW || 0!=strcmp(outbufobj->subtype, subtype) )
         {
             NDRX_LOG(log_warn, "User buffer %s/%s is different, "
                     "free it up and re-allocate as VIEW/%s", 
                     G_buf_descr[outbufobj->type_id].type,
-                    (outbufobj->sub_type==NULL?"NULL":outbufobj->sub_type),
+                    (outbufobj->subtype==NULL?"NULL":outbufobj->subtype),
                     subtype);
             
             ndrx_tpfree(*odata, outbufobj);
@@ -613,13 +616,14 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 "received. Our cksum: "
                 "%ld, their: %ld - try to recompile VIEW with viewc!",
                 v->vname, (long)v->cksum, (long)cksum);
+        EXFAIL_OUT(ret);
         
     }
     
     /* Now setup the fields in the buffer according to loaded view object 
      * we will load all fields into the buffer
      */
-    i = 0;
+    i = NDRX_VIEW_UBF_BASE;
     DL_FOREACH(v->fields, f)
     {
         i++;
@@ -672,12 +676,13 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         
         fldid = Bmkfldid(f->typecode, i);
         
+        NDRX_LOG(log_debug, "num=%d, %s.%s = fldid %d C_count=%hd", i, v->vname, 
+                f->cname, fldid, *C_count);
         /* well we must support arrays too...! of any types
          * Arrays we will load into occurrences of the same buffer
          */
         /* loop over the occurrences 
          * we might want to send less count then max struct size..*/
-        NDRX_LOG(log_debug, "C_count=%hd fldid=%d", *C_count, fldid);
         
         for (occ=0; occ<*C_count; occ++)
         {
@@ -689,7 +694,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
              */
             char *fld_offs = p_out+f->offset+occ*dim_size;
             
-            if (BFLD_INT==f->typecode)
+            if (BFLD_INT==f->typecode_full)
             {
                 NDRX_LOG(log_dump, "Getting INT");
                 
@@ -702,10 +707,8 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 else
                 {
                     int_fix_ptr = (int *)(fld_offs);
-                    *int_fix_ptr = int_fix_l;
-                    
+                    *int_fix_ptr = (int)int_fix_l;   
                     NDRX_LOG(log_dump, "Got int %d", *int_fix_ptr);
-                    
                 }
             }
             else 

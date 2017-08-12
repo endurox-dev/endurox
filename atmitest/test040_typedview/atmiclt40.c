@@ -81,6 +81,14 @@ int main(int argc, char** argv) {
         
         memset(v1, 0, sizeof(struct MYVIEW1));
         
+        v1->tshort1=1;
+        v1->C_tchar2 = 2;
+        v1->tshort2[0]=2;
+        v1->tshort2[1]=3;
+        v1->tlong1 = 4;
+        v1->tint2[0]=5;
+        v1->tint2[1]=6;
+        
         NDRX_DUMP(log_debug, "VIEW1 request...", v1, sizeof(struct MYVIEW1));
 
         if (EXSUCCEED!=tpcall("TEST40_VIEW", (char *)v1, 0, (char **)&v1, &rsplen, 0))

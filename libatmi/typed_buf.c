@@ -239,7 +239,15 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     node->size = len;
     
     node->type_id = usr_type->type_id;
-    node->sub_type[0] = EXEOS; /* So currently sub-type not supported. ok */
+    
+    if (NULL==subtype)
+    {
+        node->subtype[0] = EXEOS;
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(node->subtype, subtype);
+    }
 
     /* Save the allocated buffer in the list */
     /* DL_APPEND(G_buffers, node); */
@@ -466,7 +474,7 @@ expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
         strcpy(type, buf_type->type);
     }
     
-    if (NULL!=subtype && EXEOS!=buf->sub_type[0])
+    if (NULL!=subtype && EXEOS!=buf->subtype[0])
     {
         strcpy(subtype, buf_type->subtype);
     }
