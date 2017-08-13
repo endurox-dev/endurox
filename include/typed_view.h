@@ -97,6 +97,21 @@ struct ndrx_typedview_field
     int  nullval_none;                        /* no NULL value */
     int  nullval_default;                     /* defaults "-" is used for nullval */
     int  nullval_quotes;                      /* is quotes used? */
+    
+    /* type compare values, parsed numerics: */
+    short   nullval_short;
+    short   nullval_int;
+    short   nullval_long;
+    short   nullval_float;
+    short   nullval_double;
+    
+    /*
+     * char, just use nullval_bin[0]
+     * string & carray -> Compare on the fly...
+     */
+    
+    /* type compare values, parsed numerics, end */
+    
     /* Compiled meta-data section: */
     int compdataloaded;                   /* Is compiled data loaded? */
     char compflags[NDRX_VIEW_COMPFLAGS_LEN];
