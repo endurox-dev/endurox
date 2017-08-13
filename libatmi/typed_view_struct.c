@@ -83,10 +83,9 @@ expublic ndrx_typedview_t *ndrx_G_view_hash = NULL;
  * @param str string to add to add to checksum
  * @return 
  */
-expublic void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str)
+expublic void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len)
 {
     int i;
-    int len = strlen(str);
     uint32_t s;
     
     for (i=0; i<len; i++)
@@ -133,6 +132,13 @@ expublic void ndrx_view_deleteall(void)
     
     EXHASH_ITER(hh, ndrx_G_view_hash, vel, velt)
     {
+        /* Delete all from hash */
+        EXHASH_ITER(hh, vel->fields_h, fld, fldt)
+        {
+            EXHASH_DEL(vel->fields_h, fld);
+        }
+        
+        /* Delete all from linked-list */
         DL_FOREACH_SAFE(vel->fields, fld, fldt)
         {
             DL_DELETE(vel->fields, fld);

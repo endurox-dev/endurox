@@ -107,6 +107,8 @@ struct ndrx_typedview_field
 
     /* Linked list */
     ndrx_typedview_field_t *next, *prev;
+    
+    EX_hash_handle hh;         /* makes this structure hashable */  
 };
 
 /**
@@ -125,6 +127,7 @@ struct ndrx_typedview
     long ssize;                     /* structure size */
     
     ndrx_typedview_field_t *fields;
+    ndrx_typedview_field_t *fields_h; /* hash access for fast NULL ops */
 
     EX_hash_handle hh;         /* makes this structure hashable */    
 };
@@ -138,7 +141,7 @@ extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_load_directories(void);
 extern NDRX_API void ndrx_view_deleteall(void);
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
-extern NDRX_API void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str);
+extern NDRX_API void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len);
 
 extern NDRX_API int VIEW_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
 extern NDRX_API void VIEW_tpfree(typed_buffer_descr_t *descr, char *buf);

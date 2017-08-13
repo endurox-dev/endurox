@@ -58,6 +58,7 @@ add_library (atmi SHARED
                 typed_json.c
                 typed_carray.c
                 typed_view.c
+                typed_view_null.c
                 typed_view_parser.c
                 typed_view_plot.c
                 typed_view_struct.c

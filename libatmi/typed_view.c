@@ -300,7 +300,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
         {
             for (occ=0; occ<*C_count; occ++)
             {
-                L_length = (unsigned short *)(idata+f->length_fld_offset+occ);
+                L_length = (unsigned short *)(idata+f->length_fld_offset+(sizeof(unsigned short)*occ));
                 L_len_long = (long)*L_length;
               
                 fldid = Bmkfldid(BFLD_LONG, i);
@@ -660,7 +660,8 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         {
             for (occ=0; occ<*C_count; occ++)
             {
-                L_length = (unsigned short *)(p_out+f->length_fld_offset+occ);
+                L_length = (unsigned short *)(p_out+f->length_fld_offset+
+                        sizeof(unsigned short)*occ);
                 L_len_long = (long)*L_length;
                 NDRX_LOG(log_dump, "L_length=%hu (long: %ld), occ=%d", 
                         *L_length, L_len_long, occ);

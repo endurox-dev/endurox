@@ -424,7 +424,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_STRCPY_SAFE(fld->type_name, tok);
             
             /* Add type to checksum */
-            ndrx_view_cksum_update(v, fld->type_name);
+            ndrx_view_cksum_update(v, fld->type_name, strlen(fld->type_name));
             NDRX_LOG(log_dump, "Got type code UBF=%d full code=%d", 
                     fld->typecode, fld->typecode_full);
             
@@ -463,7 +463,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             NDRX_STRCPY_SAFE(fld->cname, tok);
             
             /* Add cname to checksum */
-            ndrx_view_cksum_update(v, fld->cname);
+            ndrx_view_cksum_update(v, fld->cname, strlen(fld->cname));
             
             NDRX_LOG(log_dump, "Got c identifier [%s]", fld->cname);
             
@@ -557,7 +557,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
 
             /* Add count to checksum */
-            ndrx_view_cksum_update(v, tok);
+            ndrx_view_cksum_update(v, tok, strlen(tok));
             
             NDRX_LOG(log_dump, "Got count [%hd]", fld->count);
             
@@ -654,7 +654,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }/* for tok[i] */
             
             /* Add flags to checksum */
-            ndrx_view_cksum_update(v, fld->flagsstr);
+            ndrx_view_cksum_update(v, fld->flagsstr, strlen(fld->flagsstr));
 
             NDRX_LOG(log_dump, "Got flags [%s] -> %lx", fld->flagsstr, fld->flags);
             
@@ -698,7 +698,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
             
             /* Add size to checksum */
-            ndrx_view_cksum_update(v, tok);
+            ndrx_view_cksum_update(v, tok, sizeof(tok));
             
             NDRX_LOG(log_dump, "Got size [%hd]", fld->size);
             
@@ -879,6 +879,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
             }
             
+            /* Add null value too to the checksum */
+            ndrx_view_cksum_update(v, fld->nullval, strlen(fld->nullval));
+            
             /******************************************************************* 
              * Parse NULL value & the system flags..
              *******************************************************************/
@@ -987,6 +990,11 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
              * Finally add field to linked list...
              *******************************************************************/
             DL_APPEND(v->fields, fld);
+            
+            /* Add field to HASH too */
+            
+            EXHASH_ADD_STR(v->fields_h, cname, fld);
+            
             fld = NULL;            
         }
     }
