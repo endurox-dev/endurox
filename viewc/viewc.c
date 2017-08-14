@@ -44,6 +44,7 @@
 #include <atmi.h>
 #include <atmi_int.h>
 #include <sys_unix.h>
+#include <ctype.h>
 
 #include <ubf.h>
 #include <ferror.h>
@@ -52,12 +53,8 @@
 
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include <view_cmn.h>
 #include "viewc.h"
-
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

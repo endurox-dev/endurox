@@ -48,19 +48,19 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void _Fset_error(int error_code);
-extern NDRX_API void _Fset_error_msg(int error_code, char *msg);
-extern NDRX_API void _Fset_error_fmt(int error_code, const char *fmt, ...);
+extern NDRX_API void ndrx_Bset_error(int error_code);
+extern NDRX_API void ndrx_Bset_error_msg(int error_code, char *msg);
+extern NDRX_API void ndrx_Bset_error_fmt(int error_code, const char *fmt, ...);
 /* Is error already set?  */
-extern NDRX_API int _Fis_error(void);
-extern NDRX_API void _Bappend_error_msg(char *msg);
+extern NDRX_API int ndrx_Bis_error(void);
+extern NDRX_API void ndrx_Bappend_error_msg(char *msg);
 
-extern NDRX_API void _Bunset_error(void);
+extern NDRX_API void ndrx_Bunset_error(void);
 
 /* This is not related with UBF error, we will handle it here anyway
  * because file is part of error handling
  */
-extern NDRX_API void report_regexp_error(char *fun_nm, int err, regex_t *rp);
+extern NDRX_API void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp);
 #ifdef	__cplusplus
 }
 #endif

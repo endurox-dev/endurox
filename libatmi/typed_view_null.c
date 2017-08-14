@@ -64,11 +64,11 @@
  * @return EXFALSE/EXTRUE/EXFAIL
  */
 expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, 
-        BFLDOCC occ, char *view)
+        BFLDOCC occ, char *cstruct)
 {
     int ret = EXFALSE;
     int dim_size = f->fldsize/f->count;
-    char *fld_offs = view+f->offset+occ*dim_size;
+    char *fld_offs = cstruct+f->offset+occ*dim_size;
     short *sv;
     int *iv;
     long *lv;
@@ -189,7 +189,7 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             {
                 len = strlen(fld_offs);
                 
-                len = *((unsigned short *)(view+f->length_fld_offset+
+                len = *((unsigned short *)(cstruct+f->length_fld_offset+
                             occ*sizeof(unsigned short)));
             }
             else
@@ -232,17 +232,46 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     }
     
 out:
+    NDRX_LOG(log_debug, "%s: %s.%s presence %d", __func__, v->vname, f->cname, ret);
     return ret;
        
 }
 
-
-expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view) 
+/**
+ * Test is field null or not 
+ * @param cstruct
+ * @param cname
+ * @param occ
+ * @param view
+ * @return EXFAIL(-1)/EXFALSE(0)/EXTRUE(1)
+ */
+expublic int ndrx_Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
 {
     int ret = EXFALSE;
+    ndrx_typedview_t *v = NULL;
+    ndrx_typedview_field_t *f = NULL;
     
+    /* resolve view & field, call ndrx_Bvnull_int */
     
-    /* Todo: resolve view & field, call ndrx_Bvnull_int */
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(f = ndrx_view_get_field(v, cname)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "Field [%s] of view [%s] not found!", 
+                cname, v->vname);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==ndrx_Bvnull_int(v, f, occ, cstruct))
+    {
+        /* should not get here.. */
+        ndrx_Bset_error_fmt(BEUNIX, "System error occurred.");
+        EXFAIL_OUT(ret);
+    }
     
 out:
     return ret;

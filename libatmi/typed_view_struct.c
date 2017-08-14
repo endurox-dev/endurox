@@ -113,6 +113,22 @@ expublic ndrx_typedview_t * ndrx_view_get_view(char *vname)
 }
 
 /**
+ * Resolve field by name
+ * @param v view object
+ * @param cname field name to resolve
+ * @return  NULL or ptr to view object
+ */
+expublic ndrx_typedview_field_t * ndrx_view_get_field(ndrx_typedview_t *v, char *cname)
+{
+    ndrx_typedview_field_t *ret;
+    
+    EXHASH_FIND_STR(v, cname, ret);
+    
+    return ret;
+}
+
+
+/**
  * Return handle to current view objects
  * @return ndrx_G_view_hash var
  */
@@ -163,7 +179,6 @@ expublic int ndrx_view_update_object(char *vname, long ssize)
 {
     int ret = EXSUCCEED;
     ndrx_typedview_t * v;
-
 
     v = ndrx_view_get_view(vname);
     

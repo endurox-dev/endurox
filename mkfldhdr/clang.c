@@ -77,7 +77,7 @@ expublic int c_put_text_line (char *text)
     /* Check errors */
     if (ferror(G_outf))
     {
-        _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
+        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
         ret=EXFAIL;
     }
 
@@ -100,7 +100,7 @@ expublic int c_put_got_base_line(char *base)
     /* Check errors */
     if (ferror(G_outf))
     {
-        _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
+        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
         ret=EXFAIL;
     }
 
@@ -125,7 +125,7 @@ expublic int c_put_def_line (UBF_field_def_t *def)
     /* Check errors */
     if (ferror(G_outf))
     {
-        _Fset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
+        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
         ret=EXFAIL;
     }
 

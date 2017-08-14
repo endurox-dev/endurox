@@ -107,7 +107,7 @@ expublic int * O_Bget_Ferror_addr(TPCONTEXT_T *p_ctxt)
                 p_ctxt, G_atmi_tls);
     }
     
-    ret = _Bget_Ferror_addr();
+    ret = ndrx_Bget_Ferror_addr();
 
     if (did_set)
     {

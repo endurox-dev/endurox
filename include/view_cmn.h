@@ -63,6 +63,7 @@ extern NDRX_API int ndrx_view_update_object(char *vname, long ssize);
 extern NDRX_API int ndrx_view_load_file(char *fname, int is_compiled);
 extern NDRX_API int ndrx_view_plot_object(FILE *f);
 extern NDRX_API void ndrx_view_loader_configure(int no_ubf_proc);
+extern NDRX_API void ndrx_view_deleteall(void);
 
 #ifdef	__cplusplus
 }

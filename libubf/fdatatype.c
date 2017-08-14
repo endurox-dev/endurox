@@ -362,7 +362,7 @@ int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
     if (NULL!=len && *len < t->size)
     {
         /* Set error, that string buffer too short */
-        _Fset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
                                 "output: %d", t->size, *len);
         ret=EXFAIL;
     }
@@ -395,7 +395,7 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
     if (NULL!=len && *len < data_len)
     {
         /* Set error, that string buffer too short */
-        _Fset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
                                 "output: %d", data_len, *len);
         ret=EXFAIL;
     }
@@ -430,7 +430,7 @@ int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
     if (NULL!=len && *len>0 && *len < carr->dlen)
     {
         /* Set error, that string buffer too short */
-        _Fset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
                                 "output: %d", carr->dlen, *len);
         ret=EXFAIL;
     }
@@ -698,7 +698,7 @@ char *tbuf_string (struct dtype_ext1 *t, int len)
         if (NULL==G_ubf_tls->str_buf_ptr)
         {
             /* set error */
-            _Fset_error_fmt(BMALLOC, "Failed to allocate string tmp space for %d bytes", len);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate string tmp space for %d bytes", len);
         }
         else
         {
@@ -736,7 +736,7 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
         if (NULL==G_ubf_tls->carray_buf_ptr)
         {
             /* set error */
-            _Fset_error_fmt(BMALLOC, "Failed to allocate carray tmp space for %d bytes", len);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate carray tmp space for %d bytes", len);
         }
         else
         {
@@ -773,7 +773,7 @@ char *tallocdlft (struct dtype_ext1 *t, int *len)
 
     if (NULL==ret)
     {
-        _Fset_error_fmt(BMALLOC, "Failed to allocate %d bytes for user", alloc_size);
+        ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate %d bytes for user", alloc_size);
     }
     else
     {
@@ -866,13 +866,13 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
 
             if (NULL==cashed_string)
             {
-                _Fset_error_fmt(BMALLOC, "Failed to allocate %d bytes", tmp_len);
+                ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate %d bytes", tmp_len);
                 ret=EXFAIL;
             }
 
             if (NULL==tmp_regex)
             {
-                _Fset_error_fmt(BMALLOC, "Failed to allocate %d bytes", tmp_len);
+                ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate %d bytes", tmp_len);
                 ret=EXFAIL;
             }
             else
@@ -891,7 +891,7 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
 
             if (EXSUCCEED==ret && EXSUCCEED!=(err=regcomp(&re, tmp_regex, REG_EXTENDED | REG_NOSUB)))
             {
-                report_regexp_error("regcomp", err, &re);
+                ndrx_report_regexp_error("regcomp", err, &re);
                 ret=EXFAIL;
             }
             else if (EXSUCCEED==ret)

@@ -54,10 +54,11 @@
 #include <ubf_impl.h>
 #include <expr.h>
 #include <thlock.h>
+#include <typed_view.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#define API_ENTRY {_Bunset_error(); \
+#define API_ENTRY {ndrx_Bunset_error(); \
     if (!M_init) { \
 	MUTEX_LOCK; \
         UBF_DBG_INIT(("UBF", UBFDEBUGLEV));\
@@ -73,7 +74,7 @@
             /* Check data type alignity */ \
             if (IS_TYPE_INVALID(X)) \
             { \
-                _Fset_error_fmt(BTYPERR, "Invalid user type %d", X);\
+                ndrx_Bset_error_fmt(BTYPERR, "Invalid user type %d", X);\
                 Y;\
             }
 
@@ -98,12 +99,12 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     if (NULL==p_ub)
     {
         /* Null buffer */
-        _Fset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
+        ndrx_Bset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
         ret=EXFAIL;
     }
     else if (len < sizeof(UBF_header_t))
     {
-        _Fset_error_fmt(BNOSPACE, "Minimum: %d, but got: %d",
+        ndrx_Bset_error_fmt(BNOSPACE, "Minimum: %d, but got: %d",
                                     sizeof(UBF_header_t), len);
         ret=EXFAIL;
     }
@@ -257,7 +258,7 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
     }
     else
     {
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
         ret=EXFAIL;
     }
 
@@ -347,7 +348,7 @@ expublic BFLDID Bfldid (char *fldnm)
     }
     else
     {
-            _Fset_error(BBADNAME);
+            ndrx_Bset_error(BBADNAME);
             return BBADFLDID;
     }
 }
@@ -368,7 +369,7 @@ expublic char * Bfname (BFLDID bfldid)
     p_fld = _bfldidhash_get(bfldid);
     if (NULL==p_fld)
     {
-            _Fset_error(BBADFLD);
+            ndrx_Bset_error(BBADFLD);
     goto out;
     }
     else
@@ -649,31 +650,31 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
 
     if (EXSUCCEED==ret && NULL==p_ub_src)
     {
-        _Fset_error_msg(BNOTFLD, "p_ub_src is NULL!");
+        ndrx_Bset_error_msg(BNOTFLD, "p_ub_src is NULL!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && NULL==p_ub_dst)
     {
-        _Fset_error_msg(BNOTFLD, "p_ub_dst is NULL!");
+        ndrx_Bset_error_msg(BNOTFLD, "p_ub_dst is NULL!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && 0!=strncmp(src_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        _Fset_error_msg(BNOTFLD, "source buffer magic failed!");
+        ndrx_Bset_error_msg(BNOTFLD, "source buffer magic failed!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && 0!=strncmp(dst_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        _Fset_error_msg(BNOTFLD, "destination buffer magic failed!");
+        ndrx_Bset_error_msg(BNOTFLD, "destination buffer magic failed!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
     {
-        _Fset_error_fmt(BNOSPACE, "Destination buffer too short. "
+        ndrx_Bset_error_fmt(BNOSPACE, "Destination buffer too short. "
                                     "Source len: %d dest used: %d",
                                     dst_h->buf_len, src_h->bytes_used);
         ret=EXFAIL;
@@ -860,19 +861,19 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
     }
     else if (NULL==bfldid || NULL==occ)
     {
-        _Fset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
         return EXFAIL;
     }
     else if (*bfldid != BFIRSTFLDID && state.p_ub != p_ub)
     {
-        _Fset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
+        ndrx_Bset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
                                     "used for different state", fn,
                                     state.p_ub, p_ub);
         return EXFAIL;
     }
     else if (*bfldid != BFIRSTFLDID && state.size!=hdr->bytes_used)
     {
-        _Fset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
+        ndrx_Bset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
                                     "from last search", fn,
                                     state.size, hdr->bytes_used);
         return EXFAIL;
@@ -928,13 +929,13 @@ expublic int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
-        _Bappend_error_msg("(Bprojcpy: arguments fail for src buf!)");
+        ndrx_Bappend_error_msg("(Bprojcpy: arguments fail for src buf!)");
         return EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
-        _Bappend_error_msg("(Bprojcpy: arguments fail for dst buf!)");
+        ndrx_Bappend_error_msg("(Bprojcpy: arguments fail for dst buf!)");
         return EXFAIL;
     }
     else
@@ -1020,7 +1021,7 @@ expublic int Bdelall (UBFH *p_ub, BFLDID bfldid)
     {
         /* Set error that none of fields have been deleted */
         ret=EXFAIL;
-        _Fset_error_msg(BNOTPRES, "No fields have been deleted");
+        ndrx_Bset_error_msg(BNOTPRES, "No fields have been deleted");
     }
     
     UBF_LOG(log_warn, "%s: return %d", fn, ret);
@@ -1057,7 +1058,7 @@ expublic int Bdelete (UBFH *p_ub, BFLDID *fldlist)
     {
         /* Set error that none of fields have been deleted */
         ret=EXFAIL;
-        _Fset_error_msg(BNOTPRES, "No fields have been deleted");
+        ndrx_Bset_error_msg(BNOTPRES, "No fields have been deleted");
     }
     
     UBF_LOG(log_warn, "%s: return %d", fn, ret);
@@ -1089,7 +1090,7 @@ expublic int Bisubf (UBFH *p_ub)
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         ret=EXFALSE;
-        _Bunset_error();
+        ndrx_Bunset_error();
     }
     
     return ret;
@@ -1159,7 +1160,7 @@ expublic char * Btype (BFLDID bfldid)
 
     if (IS_TYPE_INVALID(type))
     {
-        _Fset_error_fmt(BTYPERR, "Unknown type number %d", type);
+        ndrx_Bset_error_fmt(BTYPERR, "Unknown type number %d", type);
         return NULL;
     }
     else
@@ -1209,7 +1210,7 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
     
     if ( alloc_size > MAXUBFLEN)
     {
-        _Fset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
                 alloc_size, MAXUBFLEN);
     }
     else
@@ -1217,7 +1218,7 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
         p_ub=NDRX_MALLOC(alloc_size);
         if (NULL==p_ub)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
         }
         else
         {
@@ -1264,7 +1265,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
      */
     if ( alloc_size < hdr->bytes_used || alloc_size > MAXUBFLEN)
     {
-        _Fset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
                 alloc_size, hdr->buf_len+1, MAXUBFLEN);
         p_ub=NULL;
     }
@@ -1273,7 +1274,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
         p_ub=NDRX_REALLOC(p_ub, alloc_size);
         if (NULL==p_ub)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
             p_ub=NULL;
         }
         else
@@ -1321,13 +1322,13 @@ expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
-        _Bappend_error_msg("(Bupdate: arguments fail for src buf!)");
+        ndrx_Bappend_error_msg("(Bupdate: arguments fail for src buf!)");
         ret=EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
-        _Bappend_error_msg("(Bupdate: arguments fail for dst buf!)");
+        ndrx_Bappend_error_msg("(Bupdate: arguments fail for dst buf!)");
         ret=EXFAIL;
     }
     else
@@ -1355,13 +1356,13 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
-        _Bappend_error_msg("(Bconcat: arguments fail for src buf!)");
+        ndrx_Bappend_error_msg("(Bconcat: arguments fail for src buf!)");
         ret=EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
-        _Bappend_error_msg("(Bconcat: arguments fail for dst buf!)");
+        ndrx_Bappend_error_msg("(Bconcat: arguments fail for dst buf!)");
         ret=EXFAIL;
     }
     else
@@ -1454,7 +1455,7 @@ expublic BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
 
     if (NULL==buf)
     {
-         _Fset_error_fmt(BEINVAL, "buf is NULL");
+         ndrx_Bset_error_fmt(BEINVAL, "buf is NULL");
          return EXFAIL;
     }
     /* Do standard validation */
@@ -1489,7 +1490,7 @@ expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
 
     if (NULL==buf)
     {
-         _Fset_error_fmt(BEINVAL, "buf is NULL");
+         ndrx_Bset_error_fmt(BEINVAL, "buf is NULL");
          return EXFAIL;
     }
  
@@ -1602,7 +1603,7 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
     /* check output file */
     if (NULL==outf)
     {
-        _Fset_error_msg(BEINVAL, "output file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "output file cannot be NULL!");
         return EXFAIL;
     }
 
@@ -1650,19 +1651,19 @@ expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
 
     if (NULL==from_buf)
     {
-        _Fset_error_fmt(BEINVAL, "%s:from buf cannot be NULL!", fn);
+        ndrx_Bset_error_fmt(BEINVAL, "%s:from buf cannot be NULL!", fn);
         return NULL; /* <<< RETURN! */
     }
 
     if (IS_TYPE_INVALID(from_type))
     {
-        _Fset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, from_type);
+        ndrx_Bset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, from_type);
         return NULL; /* <<< RETURN! */
     }
 
     if (IS_TYPE_INVALID(to_type))
     {
-        _Fset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, to_type);
+        ndrx_Bset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, to_type);
         return NULL; /* <<< RETURN! */
     }
 
@@ -1701,7 +1702,7 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
     /* check output file */
     if (NULL==inf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
     
@@ -1721,13 +1722,13 @@ expublic void Bboolpr (char * tree, FILE *outf)
     /* Do standard validation */
     if (NULL==tree)
     {
-        _Fset_error_msg(BEINVAL, "Evaluation tree cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Evaluation tree cannot be NULL!");
         return;
     }
     /* check output file */
     if (NULL==outf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return;
     }
 
@@ -1819,7 +1820,7 @@ expublic int Bread  (UBFH * p_ub, FILE * inf)
     /* check output file */
     if (NULL==inf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
 
@@ -1846,7 +1847,7 @@ expublic int Bwrite (UBFH *p_ub, FILE * outf)
     /* check output file */
     if (NULL==outf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
 
@@ -1896,3 +1897,16 @@ expublic int Bboolsetcbf (char *funcname,
     }
 }
 
+/**
+ * VIEW - test is field is NULL
+ * @param cstruct ptr to C structure in memory
+ * @param cname field name
+ * @param occ occurrence of the field (array index)
+ * @param view view name
+ * @return EXFAIL/EXFALSE/EXTRUE
+ */
+expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view) 
+{
+    API_ENTRY;
+    /* return ndrx_Bvnull(cstruct, cname, occ, view); */
+}

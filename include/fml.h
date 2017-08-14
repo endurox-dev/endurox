@@ -163,6 +163,11 @@ extern "C" {
 #define Frstrindex Brstrindex
 #define Ferror Berror
 #define Fielded Bisubf
+    
+/* VIEW related */
+#define Fvnull Bvnull
+/* VIEW related, END */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

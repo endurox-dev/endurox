@@ -120,7 +120,7 @@ exprivate int init_hash_area(void)
         M_bfldidhash2 = NDRX_MALLOC(malloc_size);
         if (NULL==M_bfldidhash2)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to malloc bfldidhash2, requested: %d bytes err: %s",
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to malloc bfldidhash2, requested: %d bytes err: %s",
                         malloc_size, strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -149,7 +149,7 @@ exprivate int init_hash_area(void)
         M_fldnmhash2 = NDRX_MALLOC(malloc_size);
         if (NULL==M_fldnmhash2)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to malloc fldnmhash2, requested: %d bytes err: %s",
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to malloc fldnmhash2, requested: %d bytes err: %s",
                         malloc_size, strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -285,7 +285,7 @@ exprivate int _ubf_load_def_table(void)
     flddir = getenv(FLDTBLDIR);
     if (NULL==flddir)
     {
-        _Fset_error_msg(BFTOPEN, "Field table directory not set - "
+        ndrx_Bset_error_msg(BFTOPEN, "Field table directory not set - "
                                  "check FLDTBLDIR env var");
         ret=EXFAIL;
         goto out;
@@ -295,7 +295,7 @@ exprivate int _ubf_load_def_table(void)
     flds = getenv(FIELDTBLS);
     if (NULL==flds)
     {
-        _Fset_error_msg(BFTOPEN, "Field table list not set - "
+        ndrx_Bset_error_msg(BFTOPEN, "Field table list not set - "
                  "check FIELDTBLS env var");
         ret=EXFAIL;
         goto out;
@@ -313,7 +313,7 @@ exprivate int _ubf_load_def_table(void)
         /* Open field table file */
         if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
         {
-            _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
+            ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
                                 strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -421,7 +421,7 @@ exprivate int _ubf_load_fld_def(int base,
 
     if (NULL==fld || NULL==fld2)
     {
-        _Fset_error_msg(BMALLOC, "Failed to allocate field def space!");
+        ndrx_Bset_error_msg(BMALLOC, "Failed to allocate field def space!");
         ret=EXFAIL;
         goto out;
     }
@@ -450,7 +450,7 @@ exprivate int _ubf_load_fld_def(int base,
 
     if (EXEOS==p->fldname[0])
     {
-        _Fset_error_fmt(BFTSYNTAX, "Failed to find data type for [%s] in %s:%d!",
+        ndrx_Bset_error_fmt(BFTSYNTAX, "Failed to find data type for [%s] in %s:%d!",
                                     ftype, fname, line);
         ret=EXFAIL;
     }
@@ -462,7 +462,7 @@ exprivate int _ubf_load_fld_def(int base,
             if (NULL!=(reserved=_fldnmhash_get(fld->fldname)))
             {
                 /* ERROR! ID Already defined! */
-                _Fset_error_fmt(BFTSYNTAX, "Duplicate name [%s] already taken by "
+                ndrx_Bset_error_fmt(BFTSYNTAX, "Duplicate name [%s] already taken by "
                                 "[%s]:%d %s:%d!",
                                 fld->fldname, reserved->fldname, number,
                                 fname, line);
@@ -472,7 +472,7 @@ exprivate int _ubf_load_fld_def(int base,
             if (EXSUCCEED==ret && NULL!=(reserved=_bfldidhash_get(fld->bfldid)))
             {
                 /* ERROR! Name already taken */
-                _Fset_error_fmt(BFTSYNTAX, "Duplicate ID [%s]:%d already taken by [%s]:%d "
+                ndrx_Bset_error_fmt(BFTSYNTAX, "Duplicate ID [%s]:%d already taken by [%s]:%d "
                                     "%s:%d!",
                                  fld->fldname, number, reserved->fldname, number,
                                  fname, line);
@@ -571,7 +571,7 @@ expublic char * _Bfname_int (BFLDID bfldid)
     {
         if (BFTOPEN==Berror || BFTSYNTAX==Berror)
         {
-            _Bunset_error();
+            ndrx_Bunset_error();
         }
 
         sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);

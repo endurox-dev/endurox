@@ -80,18 +80,18 @@ extern "C" {
 #define BEINVAL             14
 #define BERFU1              15
 #define BERFU2              16
-#define BERFU3              17
+#define BBADVIEW            17
 #define BERFU4              18
 #define BERFU5              19
 #define BERFU6              20
-#define BERFU7              21
+#define BNOCNAME            21
 #define BERFU8              22
 #define BMAXVAL             22 /* max error */
 
 /* Configuration: */
 #define CONF_NDRX_UBFMAXFLDS     "NDRX_UBFMAXFLDS"
 
-#define Berror	(*_Bget_Ferror_addr())
+#define Berror	(*ndrx_Bget_Ferror_addr())
 #define BFLDID32 BFLDID
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -114,7 +114,7 @@ typedef struct Bnext_state Bnext_state_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int * _Bget_Ferror_addr (void);
+extern NDRX_API int * ndrx_Bget_Ferror_addr (void);
 extern NDRX_API int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 extern NDRX_API int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype);
 extern NDRX_API int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype);
@@ -185,6 +185,9 @@ extern NDRX_API BFLDOCC Bunindex (UBFH * p_ub);
 extern NDRX_API long Bidxused (UBFH * p_ub);
 extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
+/* VIEW related */
+extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
+/* VIEW related, END */
 
 /* ATMI library TLS: */
 extern NDRX_API void * ndrx_ubf_tls_get(void);

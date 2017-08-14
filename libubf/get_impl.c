@@ -187,7 +187,7 @@ expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     else
     {
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
         ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/
@@ -240,7 +240,7 @@ expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
         get_fld_loc(p_ub, bfldid, -2, &dtype, &last_checked, &last_match, &last_occ, NULL);
     }
 
-    if (EXFAIL!=last_occ && !_Fis_error()) /* Exclude cases when error have been raised! */
+    if (EXFAIL!=last_occ && !ndrx_Bis_error()) /* Exclude cases when error have been raised! */
     {
         /* Have to get data type again - because in last mode it is not avaialble  */
         dtype = &G_dtype_str_map[bfldid>>EFFECTIVE_BITS];
@@ -265,7 +265,7 @@ expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
     }
     else
     {
-        _Fset_error(BNOTPRES); /* IF error have been set this will not override! */
+        ndrx_Bset_error(BNOTPRES); /* IF error have been set this will not override! */
         ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/

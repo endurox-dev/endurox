@@ -130,7 +130,7 @@ char *get_next_from_env (int *ret)
         flddir = (char *)getenv(FLDTBLDIR);
         if (NULL==flddir)
         {
-            _Fset_error_msg(BFTOPEN, "Field table directory not set - "
+            ndrx_Bset_error_msg(BFTOPEN, "Field table directory not set - "
                          "check FLDTBLDIR env var");
             *ret=EXFAIL;
             return NULL;
@@ -140,7 +140,7 @@ char *get_next_from_env (int *ret)
         flds = (char *)getenv(FIELDTBLS);
         if (NULL==flds)
         {
-            _Fset_error_msg(BFTOPEN, "Field table list not set - "
+            ndrx_Bset_error_msg(BFTOPEN, "Field table list not set - "
                  "check FIELDTBLS env var");
             *ret=EXFAIL;
             return NULL;
@@ -311,7 +311,7 @@ exprivate int generate_files(void)
         /* Open field table file */
         if (NULL==(inf=NDRX_FOPEN(fname, "r")))
         {
-            _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
+            ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                 fname, strerror(errno));
             ret=EXFAIL;
         }
@@ -326,7 +326,7 @@ exprivate int generate_files(void)
             /* build up path for output file name */
             if (NULL==(G_outf=NDRX_FOPEN(out_f_name, "w")))
             {
-                _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
+                ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                             out_f_name, strerror(errno));
                 ret=EXFAIL;
             }

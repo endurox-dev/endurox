@@ -126,7 +126,7 @@ expublic char * _Bfind (UBFH * p_ub, BFLDID bfldid,
     else
     {
         UBF_LOG(log_error, "%s: Field not present!", fn);
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
     }
 
     UBF_LOG(log_debug, "Bfind: return: %p", ret);
@@ -268,7 +268,7 @@ expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
             /* Align error */
             if (CHECK_ALIGN(p_fld, p_ub, hdr))
             {
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                             fn, p_fld);
                 break; /* <<<< BREAK!!! */
             }
@@ -291,10 +291,10 @@ expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
         }
     }/* while */
 
-    if (!_Fis_error() && ret==EXFAIL )
+    if (!ndrx_Bis_error() && ret==EXFAIL )
     {
         /* The we do not have a result */
-        _Fset_error_fmt(BNOTPRES, "%s: Occurrance of field %d not found last occ: %hd",
+        ndrx_Bset_error_fmt(BNOTPRES, "%s: Occurrance of field %d not found last occ: %hd",
                                     fn, bfldid, iocc);
     }
     
@@ -402,7 +402,7 @@ expublic char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
 
     dtype = &G_dtype_str_map[data_type];
     /* Get the data size of Bfind */
-    if (EXFAIL!=last_occ && !_Fis_error())
+    if (EXFAIL!=last_occ && !ndrx_Bis_error())
     {
         int dlen;
 
@@ -425,7 +425,7 @@ expublic char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
     else
     {
         /* set the error that field is not found */
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
     }
 
     UBF_LOG(log_debug, "%s: return: %p occ: %d", fn, ret, last_occ);

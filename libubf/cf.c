@@ -63,7 +63,7 @@
     {\
         if (to->size > *out_len)\
         {\
-            _Fset_error_fmt(BNOSPACE, "data size: %d specified :%d", to->size, *out_len);\
+            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", to->size, *out_len);\
             return NULL; \
         }\
     }
@@ -79,7 +79,7 @@
         len = strlen(tmp)+1; /* Including EOS! */\
         if (*out_len<len)\
         {\
-            _Fset_error_fmt(BNOSPACE, "data size: %d specified :%d", len, *out_len);\
+            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", len, *out_len);\
             return NULL;\
         }\
         else\
@@ -109,7 +109,7 @@ if (CNV_DIR_OUT==cnv_dir)\
         len = strlen(tmp); /* NOT Including EOS! */\
         if (NULL!=out_len && *out_len < len)\
         {\
-            _Fset_error_fmt(BNOSPACE, "data size: %d specified :%d", len, *out_len);\
+            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", len, *out_len);\
             return NULL;\
         }\
         else\
@@ -311,7 +311,7 @@ expublic char * get_cbuf(int in_from_type, int in_to_type,
             /* if target is string, then we need extra */
             if (NULL==(*out_alloc_buf = NDRX_MALLOC(in_len+1)))
             {
-                _Fset_error(BMALLOC);
+                ndrx_Bset_error(BMALLOC);
                 return NULL; /* <<<< RETURN!!! */
             }
             ret=*out_alloc_buf;
@@ -418,7 +418,7 @@ expublic char * ubf_convert(int from_type, int cnv_dir, char *input_buf, int in_
         default:
             /* ERR - invalid type */
             ret=NULL;
-            _Fset_error_fmt(BTYPERR, "Bad from type %d", from_type);
+            ndrx_Bset_error_fmt(BTYPERR, "Bad from type %d", from_type);
             break;
     }
 
@@ -447,7 +447,7 @@ char * conv_same(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, 
 
     if (NULL!=out_len && real_data > *out_len)
     {
-        _Fset_error_fmt(BNOSPACE, "data size: %d specified :%d", real_data, *out_len);
+        ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", real_data, *out_len);
         return NULL;
     }
 
@@ -714,7 +714,7 @@ char * conv_char_string(struct conv_type *t, int cnv_dir, char *input_buf, int i
 
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len &&  *out_len<2)
     {
-        _Fset_error_fmt(BNOSPACE, "data size: 2 specified :%d", len, *out_len);
+        ndrx_Bset_error_fmt(BNOSPACE, "data size: 2 specified :%d", len, *out_len);
         return NULL; /* <<< RETURN */
     }
     else
@@ -738,7 +738,7 @@ char * conv_char_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_
     
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len &&  *out_len<1)
     {
-        _Fset_error_fmt(BNOSPACE, "data size: 1 specified :%d", len, *out_len);
+        ndrx_Bset_error_fmt(BNOSPACE, "data size: 1 specified :%d", len, *out_len);
         return NULL; /* <<< RETURN */
     }
     else
@@ -1025,7 +1025,7 @@ char * conv_string_carr(struct conv_type *t, int cnv_dir, char *input_buf, int i
      * on incoming dest buffer should be fine!*/
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len && *out_len > 0 && *out_len < input_strlen)
     {
-        _Fset_error_fmt(BNOSPACE, "data size: %d specified :%d", input_strlen, *out_len);
+        ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", input_strlen, *out_len);
         return NULL; /*<<<< RETURN!*/
     }
 
@@ -1124,7 +1124,7 @@ char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_buf, int i
     /* Check output size! */
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len && *out_len > 0 && *out_len < input_carrlen+1) /* Now we include EOS */
     {
-        _Fset_error_fmt(BNOSPACE, "data size: %d specified :%d", input_carrlen+1, *out_len);
+        ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", input_carrlen+1, *out_len);
         return NULL; /*<<<< RETURN!*/
     }
 

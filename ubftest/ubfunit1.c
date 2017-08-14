@@ -380,7 +380,7 @@ Ensure(test_buffer_align_fadd)
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     while (EXSUCCEED==Badd(p_ub, T_SHORT_FLD, (char *)&data, 0)){}
     /* check that buffer is full */
-    err = _Bget_Ferror_addr();
+    err = ndrx_Bget_Ferror_addr();
     assert_equal(*err, BNOSPACE);
     /* Check last element */
     assert_equal(*check, BBADFLDID);
@@ -412,7 +412,7 @@ Ensure(test_buffer_align_fchg_and_fpresocc)
 
     while (EXSUCCEED==Bchg(p_ub, T_SHORT_FLD, occ, (char *)&data, 0)){occ++;}
     /* check that buffer is full */
-    err = _Bget_Ferror_addr();
+    err = ndrx_Bget_Ferror_addr();
     assert_equal(*err, BNOSPACE);
     /* Check last element */
     assert_equal(*check, BBADFLDID);

@@ -156,6 +156,7 @@ extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_load_directories(void);
 extern NDRX_API void ndrx_view_deleteall(void);
 extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
+extern NDRX_API ndrx_typedview_field_t * ndrx_view_get_field(ndrx_typedview_t *v, char *cname);
 extern NDRX_API void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len);
 
 extern NDRX_API int VIEW_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
@@ -167,6 +168,9 @@ extern NDRX_API int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *id
 extern NDRX_API char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
 extern NDRX_API char * VIEW_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
 
+extern NDRX_API int ndrx_Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
+extern NDRX_API int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, 
+        BFLDOCC occ, char *cstruct);
 
 
 #ifdef	__cplusplus
