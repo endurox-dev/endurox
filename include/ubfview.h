@@ -163,6 +163,9 @@ extern NDRX_API int ndrx_Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *v
 extern NDRX_API int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, 
         BFLDOCC occ, char *cstruct);
 
+extern NDRX_API int ndrx_Fvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
+        char *cstruct);
+extern NDRX_API int ndrx_Fvselinit(char *cstruct, char *cname, char *view) ;
 
 #ifdef	__cplusplus
 }

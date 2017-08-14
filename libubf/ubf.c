@@ -1905,7 +1905,7 @@ expublic int Bboolsetcbf (char *funcname,
  * @param view view name
  * @return EXFAIL/EXFALSE/EXTRUE
  */
-expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view) 
+expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
 {
     API_ENTRY;
     
@@ -1929,3 +1929,37 @@ expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
     
     return ndrx_Bvnull(cstruct, cname, occ, view);
 }
+
+/**
+ * Init structure element.
+ * Count indicators and Length indicators (where appropriate) are set to zero.
+ * @param cstruct C structure ptr in mem
+ * @param cname field name
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvselinit(char *cstruct, char *cname, char *view)
+{
+    API_ENTRY;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        return EXFAIL;
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Fvselinit(cstruct, cname, view);
+}
+

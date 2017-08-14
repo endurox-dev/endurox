@@ -293,11 +293,11 @@ expublic int ndrx_Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==ndrx_Bvnull_int(v, f, occ, cstruct))
+    if (EXFAIL==(ret=ndrx_Bvnull_int(v, f, occ, cstruct)))
     {
         /* should not get here.. */
         ndrx_Bset_error_fmt(BEUNIX, "System error occurred.");
-        EXFAIL_OUT(ret);
+        goto out;
     }
     
 out:
@@ -314,7 +314,7 @@ out:
 expublic int ndrx_Fvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
         char *cstruct)
 {
-    int ret = EXFALSE;
+    int ret = EXSUCCEED;
     int dim_size = f->fldsize/f->count;
     char *fld_offs;
     short *sv;
@@ -459,3 +459,43 @@ out:
     return ret;
        
 }
+
+/**
+ * Init VIEW element to zero
+ * @param cstruct c struct
+ * @param cname field name
+ * @param view view name
+ * @return  EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Fvselinit(char *cstruct, char *cname, char *view) 
+{
+    int ret = EXSUCCEED;
+    ndrx_typedview_t *v = NULL;
+    ndrx_typedview_field_t *f = NULL;
+    
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(f = ndrx_view_get_field(v, cname)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "Field [%s] of view [%s] not found!", 
+                cname, v->vname);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==ndrx_Fvselinit_int(v, f, cstruct))
+    {
+        /* should not get here.. */
+        ndrx_Bset_error_fmt(BEUNIX, "System error occurred.");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/* Next todo: Fvsinit */
+

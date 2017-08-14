@@ -187,6 +187,8 @@ extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
 /* VIEW related */
 extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
+extern NDRX_API int Bvselinit(char *cstruct, char *cname, char *view);
+
 /* VIEW related, END */
 
 /* ATMI library TLS: */
