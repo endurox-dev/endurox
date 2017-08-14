@@ -183,6 +183,51 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             
             break;
         case BFLD_CARRAY:
+            
+            /* nullval_bin EOS is set by CALLOC at the parser.. */
+            if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+            {
+                len = strlen(fld_offs);
+                
+                len = *((unsigned short *)(view+f->length_fld_offset+
+                            occ*sizeof(unsigned short)));
+            }
+            else
+            {
+                len = dim_size;
+            }
+            
+            /* test the filler */
+            ret=EXTRUE;
+            for (i=0; i<f->nullval_bin_len; i++)
+            {
+
+                if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P && 
+                        i==f->nullval_bin_len-1 && i<len)
+                {
+                    /* compare last bits... */
+                    for (j=i; j<len; j++)
+                    {
+                        if (fld_offs[j]!=f->nullval_bin[i])
+                        {
+                            ret=EXFALSE;
+                            goto out;
+                        }
+                    }
+                }
+                else if (fld_offs[i]!=f->nullval_bin[i] && 
+                        i<len)
+                {
+                    ret=EXFALSE;
+                    goto out;
+                }
+                else if (i>=len)
+                {
+                    ret=EXFALSE;
+                    goto out;
+                }
+            }
+            
             break;
     }
     
@@ -192,4 +237,14 @@ out:
 }
 
 
+expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view) 
+{
+    int ret = EXFALSE;
+    
+    
+    /* Todo: resolve view & field, call ndrx_Bvnull_int */
+    
+out:
+    return ret;
+}
 
