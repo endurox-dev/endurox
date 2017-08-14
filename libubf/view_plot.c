@@ -55,19 +55,16 @@
 #include <dirent.h>
 
 #include <ndrstandard.h>
-#include <typed_buf.h>
+#include <ubfview.h>
 #include <ndebug.h>
-#include <tperror.h>
 
 #include <userlog.h>
-#include <typed_view.h>
 #include <view_cmn.h>
 #include <atmi_tls.h>
-
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define API_ENTRY {ndrx_TPunset_error(); \
+#define API_ENTRY {ndrx_Bunset_error(); \
 }\
 
 /*---------------------------Enums--------------------------------------*/
@@ -95,7 +92,7 @@ expublic int ndrx_view_plot_object(FILE *f)
 #define WRITE_ERR \
                 err = errno;\
                 NDRX_LOG(log_error, "Failed to write to file: %s", strerror(err));\
-                ndrx_TPset_error_fmt(TPEOS, "Failed to write to file: %s", strerror(err));\
+                ndrx_Bset_error_fmt(TPEOS, "Failed to write to file: %s", strerror(err));\
                 EXFAIL_OUT(ret);
                 
     if (0>fprintf(f, "#Compiled VIEW file %s %s %d bit, compiler: %s\n", 

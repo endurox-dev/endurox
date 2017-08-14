@@ -79,13 +79,13 @@ extern "C" {
 #define BFTSYNTAX           13
 #define BEINVAL             14
 #define BERFU1              15
-#define BERFU2              16
+#define BBADTBL             16
 #define BBADVIEW            17
-#define BERFU4              18
-#define BERFU5              19
-#define BERFU6              20
+#define BVFSYNTAX           18
+#define BVFOPEN             19
+#define BBADACM             20
 #define BNOCNAME            21
-#define BERFU8              22
+#define BEBADOP             22
 #define BMAXVAL             22 /* max error */
 
 /* Configuration: */

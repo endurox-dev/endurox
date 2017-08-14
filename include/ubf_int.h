@@ -51,6 +51,10 @@ extern "C" {
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);
 #define FLDTBLDIR	"FLDTBLDIR"
 #define FIELDTBLS	"FIELDTBLS"
+    
+#define CONF_VIEWFILES  "VIEWFILES"         /* List of view files to load      */
+#define CONF_VIEWDIR    "VIEWDIR"           /* Folders with view files stored, ':' - sep   */
+    
 #define UBFDEBUGLEV "UBF_E_"
 
 #define UBF_MAGIC   "UBF1"

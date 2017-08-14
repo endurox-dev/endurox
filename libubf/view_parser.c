@@ -55,14 +55,11 @@
 #include <dirent.h>
 
 #include <ndrstandard.h>
-#include <typed_buf.h>
 #include <ndebug.h>
-#include <tperror.h>
 
 #include <userlog.h>
-#include <typed_view.h>
 #include <view_cmn.h>
-#include <atmi_tls.h>
+#include <ubfview.h>
 
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
@@ -123,7 +120,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         int err = errno;
         UBF_LOG(log_error, "Failed to open view file [%s]: %s", 
                 fname, strerror(err));
-        ndrx_Bset_error_fmt(TPENOENT, "Failed to open view file [%s]: %s", 
+        ndrx_Bset_error_fmt(BVFOPEN, "Failed to open view file [%s]: %s", 
                 fname, strerror(err));
         EXFAIL_OUT(ret);
     }
@@ -162,7 +159,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         "[%s] got [%s] - please recompile the "
                                         "view file with viewc, line: %ld", 
                                         NDRX_BUILD_OS_NAME, p3+1, line);
-                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid platform "
+                                ndrx_Bset_error_msg(BBADVIEW, "Invalid platform "
                                         "expected: [%s] got [%s] - please recompile "
                                         "the view file with viewc, line: %ld", 
                                         NDRX_BUILD_OS_NAME, p3+1, line);
@@ -177,7 +174,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                             "[%s] got [%s] - please recompile the "
                                             "view file with viewc, line: %ld", 
                                             NDRX_CPUARCH, p3+1, line);
-                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid CPU arch, expected: "
+                                ndrx_Bset_error_msg(BBADVIEW, "Invalid CPU arch, expected: "
                                         "expected: [%s] got [%s] - please recompile "
                                         "the view file with viewc, line: %ld", 
                                         NDRX_CPUARCH, p3+1, line);
@@ -194,7 +191,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         "[%d] got [%d] - please recompile the "
                                         "view file with viewc, line: %ld", 
                                         NDRX_WORD_SIZE, ws, line);
-                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid platfrom "
+                                ndrx_Bset_error_msg(BBADVIEW, "Invalid platfrom "
                                         "word size, expected: "
                                         "expected: [%d] got [%d] - please recompile "
                                         "the view file with viewc, line: %ld", 
@@ -231,7 +228,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             {
                                 UBF_LOG(log_error, "Invalid size %ld, line %ld", 
                                         v->ssize, line);
-                                ndrx_TPset_error_fmt(TPEINVAL, "Invalid size %ld, line %ld", 
+                                ndrx_Bset_error_msg(BBADVIEW, "Invalid size %ld, line %ld", 
                                         v->ssize, line);
                                 EXFAIL_OUT(ret);   
                             }
@@ -247,7 +244,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         "[%ld] got [%ld] - please recompile the "
                                         "view file with viewc, line: %ld", 
                                         v->vname, cksum_built, cksum, line);
-                                ndrx_TPset_error_fmt(TPEMATCH, "Invalid VIEW [%s] "
+                                ndrx_Bset_error_msg(BBADVIEW, "Invalid VIEW [%s] "
                                         "checksum, expected: "
                                         "[%ld] got [%ld] - please recompile the "
                                         "view file with viewc, line: %ld", 
@@ -299,7 +296,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 /* Not in view -> FAIL */
                 UBF_LOG(log_error, "Expected [%s] but got [%s], line: %ld", 
                         NDRX_VIEW_TOKEN_START, tok, line);
-                ndrx_TPset_error_fmt(TPEINVAL, "Expected [%s] but got [%s], line: %ld", 
+                ndrx_Bset_error_msg(BVFSYNTAX, "Expected [%s] but got [%s], line: %ld", 
                         NDRX_VIEW_TOKEN_START, tok, line);
                 EXFAIL_OUT(ret);
             }
@@ -308,7 +305,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             {
                 UBF_LOG(log_error, "Missing identifier after %s, line: %ld", 
                         NDRX_VIEW_TOKEN_START, line);
-                ndrx_TPset_error_fmt(TPEINVAL, "Missing identifier after %s, line: %ld", 
+                ndrx_Bset_error_msg(BVFSYNTAX, "Missing identifier after %s, line: %ld", 
                         NDRX_VIEW_TOKEN_START, line);
                 EXFAIL_OUT(ret);
             }
@@ -319,7 +316,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 UBF_LOG(log_error, "View identifier [%s] too long! Max len: %d,"
                         " but got: %d, line: %ld", 
                         tok, NDRX_VIEW_NAME_LEN, len, line);
-                ndrx_TPset_error_fmt(TPEINVAL, "View identifier [%s] too long!"
+                ndrx_Bset_error_msg(BVFSYNTAX, "View identifier [%s] too long!"
                         " Max len: %d, but got: %d, line: %ld", 
                         tok, NDRX_VIEW_NAME_LEN, len, line);
                 EXFAIL_OUT(ret);
@@ -335,7 +332,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         "line: %ld", 
                         strerror(err), line);
 
-                ndrx_TPset_error_fmt(TPEOS, "Failed to allocate "
+                ndrx_Bset_error_msg(BEUNIX, "Failed to allocate "
                         "ndrx_typedview_t: %s, line: %ld", 
                         strerror(err), line);
                 EXFAIL_OUT(ret);    
@@ -394,7 +391,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 {
                     UBF_LOG(log_error, "Invalid data type [%s], line: %ld", 
                             tok, line);
-                    ndrx_TPset_error_fmt(TPEINVAL, "Invalid data type [%s], line: %ld", 
+                    ndrx_Bset_error_msg(BVFSYNTAX, "Invalid data type [%s], line: %ld", 
                             tok, line);
                     EXFAIL_OUT(ret);
                 }
@@ -414,7 +411,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         " line: %ld", 
                         strerror(err), line);
 
-                ndrx_TPset_error_fmt(TPEOS, "Failed to allocate ndrx_typedview_field_t: "
+                ndrx_Bset_error_msg(BEUNIX, "Failed to allocate ndrx_typedview_field_t: "
                         "%s, line: %ld", 
                         strerror(err));
                 EXFAIL_OUT(ret);    
@@ -438,7 +435,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (NULL==tok)
             {
                 UBF_LOG(log_error, "Expected C field name, got EOS, line: %ld");
-                ndrx_TPset_error_fmt(TPEINVAL, "Expected C field name, got EOS, "
+                ndrx_Bset_error_msg(BVFSYNTAX, "Expected C field name, got EOS, "
                         "line %ld", line);
                 EXFAIL_OUT(ret);
             }
@@ -450,7 +447,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         " but got: %d, line: %ld", 
                         tok, NDRX_VIEW_CNAME_LEN, len, line);
                 
-                ndrx_TPset_error_fmt(TPEINVAL, "C field identifier [%s] too long!"
+                ndrx_Bset_error_msg(BVFSYNTAX, "C field identifier [%s] too long!"
                         " Max len: %d, but got: %d, line: %ld", 
                         tok, NDRX_VIEW_CNAME_LEN, len, line);
                 
@@ -478,7 +475,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             {
                 UBF_LOG(log_error, "Expected FB Name field, got EOS, line: %ld", 
                         line);
-                ndrx_TPset_error_fmt(TPEINVAL, "Expected FB Name field, "
+                ndrx_Bset_error_msg(BVFSYNTAX, "Expected FB Name field, "
                         "got EOS, line: %ld", line);
                 EXFAIL_OUT(ret);
             }
@@ -490,7 +487,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         " but got: %d, line: %ld", 
                         tok, UBFFLDMAX, len, line);
                 
-                ndrx_TPset_error_fmt(TPEINVAL, "UBF name identifier [%s] too long!"
+                ndrx_Bset_error_msg(BVFSYNTAX, "UBF name identifier [%s] too long!"
                         " Max len: %d, but got: %d, line: %ld", 
                         tok, UBFFLDMAX, len, line);
                 
@@ -513,7 +510,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     UBF_LOG(log_error, "Failed to resolve id for field [%s], line: %ld", 
                         fld->fbname, line);
                 
-                    ndrx_TPset_error_fmt(TPEMATCH, "Failed to resolve id for "
+                    ndrx_Bset_error_msg(BBADFLD, "Failed to resolve id for "
                             "field [%s], line: %ld", 
                         fld->fbname, line);
 
@@ -537,7 +534,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 UBF_LOG(log_error, "Invalid count: %d (parsed from [%s]), line: %ld", 
                         fld->count, tok, line);
                 
-                ndrx_TPset_error_fmt(TPEINVAL, "Invalid count: %d "
+                ndrx_Bset_error_msg(BVFSYNTAX, "Invalid count: %d "
                         "(parsed from [%s]), line: %ld", 
                         fld->count, tok, line);
                 
@@ -550,7 +547,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         " line: %ld", 
                         fld->count, tok, NDRX_VIEW_FLD_COUNT_MAX, line);
                 
-                ndrx_TPset_error_fmt(TPEINVAL, "Invalid count: %d (parsed from [%s]) "
+                ndrx_Bset_error_msg(BVFSYNTAX, "Invalid count: %d (parsed from [%s]) "
                         "max: %d, line: %ld", 
                         fld->count, tok, NDRX_VIEW_FLD_COUNT_MAX, line);
                 
@@ -572,7 +569,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             {
                 UBF_LOG(log_error, "Expected flags, got EOS, line: %ld", 
                         line);
-                ndrx_TPset_error_fmt(TPEINVAL, "Expected flags, got EOS, line: %ld",
+                ndrx_Bset_error_msg(BVFSYNTAX, "Expected flags, got EOS, line: %ld",
                         line);
                 EXFAIL_OUT(ret);
             }
@@ -584,7 +581,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         " but got: %d, line: %ld", 
                         tok, NDRX_VIEW_FLAGS_LEN, len, line);
                 
-                ndrx_TPset_error_fmt(TPEINVAL, "Flags [%s] too long!"
+                ndrx_Bset_error_msg(BVFSYNTAX, "Flags [%s] too long!"
                         " Max len: %d, but got: %d, line: %ld", 
                         tok, NDRX_VIEW_FLAGS_LEN, len, line);
                 
@@ -645,7 +642,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         UBF_LOG(log_error, "Unknown field flag [%c], line: %ld", 
                                 tok[i], line);
 
-                        ndrx_TPset_error_fmt(TPEINVAL, "Unknown field flag [%c], "
+                        ndrx_Bset_error_msg(BVFSYNTAX, "Unknown field flag [%c], "
                                 "line: %ld", 
                                 tok[i], line);
 
@@ -674,7 +671,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     UBF_LOG(log_error, "Size must be specified for string or "
                             "carray, line: %ld", line);
 
-                    ndrx_TPset_error_fmt(TPEINVAL, "Size must be specified for string or "
+                    ndrx_Bset_error_msg(BVFSYNTAX, "Size must be specified for string or "
                             "carray, line: %ld", line);
 
                     EXFAIL_OUT(ret);
@@ -690,7 +687,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             " line: %ld", 
                             fld->size, tok, NDRX_VIEW_FLD_SIZE_MAX, line);
 
-                    ndrx_TPset_error_fmt(TPEINVAL, "Invalid size: %d (parsed from [%s]) "
+                    ndrx_Bset_error_msg(BVFSYNTAX, "Invalid size: %d (parsed from [%s]) "
                             "max: %d, line: %ld", 
                             fld->size, tok, NDRX_VIEW_FLD_SIZE_MAX, line);
 
@@ -734,7 +731,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 UBF_LOG(log_error, "Missing NULL value, line: %ld", 
                                 tok[i], line);
 
-                ndrx_TPset_error_fmt(TPEINVAL, "Missing NULL value, line: %ld", 
+                ndrx_Bset_error_msg(BVFSYNTAX, "Missing NULL value, line: %ld", 
                         tok[i], line);
                 EXFAIL_OUT(ret);
             }
@@ -806,7 +803,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         UBF_LOG(log_error, "Un-escaped quote [%c], line %ld", 
                                 *p2, line);
 
-                        ndrx_TPset_error_fmt(TPEINVAL, "Un-escaped quote [%c], line %ld", 
+                        ndrx_Bset_error_msg(BVFSYNTAX, "Un-escaped quote [%c], line %ld", 
                                 *p2, line);
                         EXFAIL_OUT(ret);
                     }
@@ -856,7 +853,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     UBF_LOG(log_error, "Looks like unclosed quotes for "
                             "NULL value, line %ld", line);
 
-                    ndrx_TPset_error_fmt(TPEINVAL, "Looks like unclosed quotes for "
+                    ndrx_Bset_error_msg(BVFSYNTAX, "Looks like unclosed quotes for "
                             "NULL value, line %ld", line);
                     EXFAIL_OUT(ret);
                 }
@@ -928,7 +925,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         UBF_LOG(log_error, "Expected compiled data, but not found"
                             ", line %ld", line);
 
-                        ndrx_TPset_error_fmt(TPEINVAL, "Expected compiled data, but not found"
+                        ndrx_Bset_error_msg(BBADVIEW, "Expected compiled data, but not found"
                             ", line %ld", line);
                         EXFAIL_OUT(ret);
                     }
@@ -950,7 +947,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             " but got: %d, line: %ld", 
                             tok, NDRX_VIEW_COMPFLAGS_LEN, len, line);
                 
-                        ndrx_TPset_error_fmt(TPEINVAL, "Compiled data [%s] too long! Max len: %d,"
+                        ndrx_Bset_error_msg(BBADVIEW, "Compiled data [%s] too long! Max len: %d,"
                             " but got: %d, line: %ld", 
                             tok, NDRX_VIEW_COMPFLAGS_LEN, len, line);
 
@@ -1004,7 +1001,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 UBF_LOG(log_error, "Expected compiled data, but not found"
                     ", line %ld", line);
 
-                ndrx_TPset_error_fmt(TPEINVAL, "Expected compiled data, but not found"
+                ndrx_Bset_error_msg(BBADVIEW, "Expected compiled data, but not found"
                     ", line %ld", line);
                 EXFAIL_OUT(ret);
             }
@@ -1030,7 +1027,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     {
         UBF_LOG(log_error, "Invalid state [%d] -> VIEW not terminated with "
                 "END, line: %ld", state, line);
-        ndrx_TPset_error_fmt(TPEINVAL, "Invalid state [%d] -> VIEW not terminated with "
+        ndrx_Bset_error_msg(BVFSYNTAX, "Invalid state [%d] -> VIEW not terminated with "
                 "END, line: %ld", state, line);
         EXFAIL_OUT(ret);
     }
@@ -1081,7 +1078,7 @@ expublic int ndrx_view_load_directory(char *dir)
     if (NULL==env)
     {
         UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWFILES);
-        ndrx_TPset_error_fmt(TPESYSTEM, "Missing env [%s]", CONF_VIEWFILES);
+        ndrx_Bset_error_msg(BEUNIX, "Missing env [%s]", CONF_VIEWFILES);
         EXFAIL_OUT(ret);
     }
     
@@ -1090,7 +1087,7 @@ expublic int ndrx_view_load_directory(char *dir)
         UBF_LOG(log_error, "Invalid [%s] -> too long, max: %d", 
                 CONF_VIEWFILES, PATH_MAX-2);
         
-        ndrx_TPset_error_fmt(TPESYSTEM, "Invalid [%s] -> too long, max: %d", 
+        ndrx_Bset_error_msg(BEUNIX, "Invalid [%s] -> too long, max: %d", 
                 CONF_VIEWFILES, PATH_MAX-2);
         
         userlog("Invalid [%s] -> too long, max: %d", 
@@ -1110,7 +1107,7 @@ expublic int ndrx_view_load_directory(char *dir)
         UBF_LOG(log_error, "Failed to scan q directory [%s]: %s", 
                dir, strerror(err));
        
-        ndrx_TPset_error_fmt(TPEOS, "Failed to scan q directory [%s]: %s", 
+        ndrx_Bset_error_msg(BEUNIX, "Failed to scan q directory [%s]: %s", 
                dir, strerror(err));
        
         EXFAIL_OUT(ret);
@@ -1181,7 +1178,7 @@ expublic int ndrx_view_load_directories(void)
     if (NULL==env)
     {
         UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWDIR);
-        ndrx_TPset_error_fmt(TPESYSTEM, "Missing env [%s]", CONF_VIEWDIR);
+        ndrx_Bset_error_msg(BEUNIX, "Missing env [%s]", CONF_VIEWDIR);
         EXFAIL_OUT(ret);
     }
     

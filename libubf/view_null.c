@@ -39,7 +39,6 @@
 #include <ndrstandard.h>
 #include <typed_buf.h>
 #include <ndebug.h>
-#include <tperror.h>
 
 #include <userlog.h>
 #include <typed_view.h>

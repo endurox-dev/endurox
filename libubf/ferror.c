@@ -84,13 +84,13 @@ struct err_msg
     {BFTSYNTAX, "Syntax error in field table"}, /* 13 */
     {BEINVAL,   "Invalid argument to function"}, /* 14 */
     {BERFU1,    "BERFU1"}, /* 15 */
-    {BERFU2,    "BERFU2"}, /* 16 */
+    {BBADTBL,   "Bad access to field table"}, /* 16 */
     {BBADVIEW,  "Bad view name/not loaded"}, /* 17 */
-    {BERFU4,    "BERFU4"}, /* 18 */
-    {BERFU5,    "BERFU5"}, /* 19 */
-    {BERFU6,    "BERFU6"}, /* 20 */
-    {BNOCNAME,  "No such field of view"}, /* 21 */
-    {BERFU8,    "BERFU8"}, /* 22 */
+    {BVFSYNTAX, "View file syntax error"}, /* 18 */
+    {BVFOPEN,   "Failed to open view file"}, /* 19 */
+    {BBADACM,   "View array count indicator negative"}, /* 20 */
+    {BNOCNAME,  "Structure field (cname) not found"},
+    {BEBADOP,  "Bad operation"}, /* 21 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
