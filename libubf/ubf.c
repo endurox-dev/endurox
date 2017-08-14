@@ -1908,5 +1908,24 @@ expublic int Bboolsetcbf (char *funcname,
 expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view) 
 {
     API_ENTRY;
-    /* return ndrx_Bvnull(cstruct, cname, occ, view); */
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        return EXFAIL;
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Bvnull(cstruct, cname, occ, view);
 }

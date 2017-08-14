@@ -296,29 +296,6 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             /* NDRX_LOG(log_debug, "count, from object: %hd", *C_count); */
         }
         
-        if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
-        {
-            for (occ=0; occ<*C_count; occ++)
-            {
-                L_length = (unsigned short *)(idata+f->length_fld_offset+(sizeof(unsigned short)*occ));
-                L_len_long = (long)*L_length;
-              
-                fldid = Bmkfldid(BFLD_LONG, i);
-                
-                NDRX_LOG(log_debug, "%s.L_%s=%hu (long: %ld) occ=%d fldid=%d", 
-                    v->vname, f->cname, *L_length, L_len_long, occ, fldid);
-
-                if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&L_len_long, 0L))
-                {
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup L_len_long "
-                            "at field %d, occ %d: %s", 
-                        i, occ, Bstrerror(Berror));
-                    EXFAIL_OUT(ret);
-                }
-            }
-            i++;
-        }
-        
         fldid = Bmkfldid(f->typecode, i);
         
         NDRX_LOG(log_debug, "num=%d, %s.%s = fldid %d C_count=%hd", i, v->vname, 
@@ -336,10 +313,18 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
              * size (data len) of each of the array elements..
              * the header plotter needs to support occurrences of the
              * length elements for the arrays...
+             * 
+             * For outgoing if there is only one occurrence for field
+             * then we can can detect the field to be NULL,
+             * if NULL, then we do not send empty fields over..
              */
             char *fld_offs = idata+f->offset+occ*dim_size;
             
-            if (BFLD_INT==f->typecode_full)
+            if (1==*C_count && ndrx_Bvnull_int(v, f, occ, idata))
+            {
+                NDRX_LOG(log_debug, "Field is empty -> not sending...");
+            }
+            else if (BFLD_INT==f->typecode_full)
             {
                 NDRX_LOG(log_dump, "Setting up INT");
                 int_fix_ptr = (int *)(fld_offs);
@@ -387,7 +372,6 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
                             fldid, occ, fld_offs, L_len_long);
                         EXFAIL_OUT(ret);
                     }
-                    
                 }
                 else
                 {
@@ -633,6 +617,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         i++;
         
         NDRX_LOG(log_dump, "Processing field: [%s]", f->cname);
+        
         /* Check do we have length indicator? */
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
@@ -654,31 +639,8 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             
             C_count_stor=f->count;
             C_count = &C_count_stor;
-        }
-        
-        if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
-        {
-            for (occ=0; occ<*C_count; occ++)
-            {
-                L_length = (unsigned short *)(p_out+f->length_fld_offset+
-                        sizeof(unsigned short)*occ);
-                L_len_long = (long)*L_length;
-                NDRX_LOG(log_dump, "L_length=%hu (long: %ld), occ=%d", 
-                        *L_length, L_len_long, occ);
-
-                fldid = Bmkfldid(BFLD_LONG, i);
-
-                if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&L_len_long, 0L))
-                {
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to setup L_len_long "
-                            "at field %d, occ %d: %s", 
-                        i, occ, Bstrerror(Berror));
-                    EXFAIL_OUT(ret);
-                }
-            }
-            i++;
-        }
-        
+        } 
+       
         fldid = Bmkfldid(f->typecode, i);
         
         NDRX_LOG(log_debug, "num=%d, %s.%s = fldid %d C_count=%hd", i, v->vname, 
@@ -699,7 +661,16 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
              */
             char *fld_offs = p_out+f->offset+occ*dim_size;
             
-            if (BFLD_INT==f->typecode_full)
+            if (1==*C_count && !Bpres(p_ub, fldid, 0))
+            {
+                NDRX_LOG(log_debug, "Field not present -> Assume NULL value, "
+                        "installing...");
+                
+                /* TODO: also set the length if we have ptr to... */
+                
+                continue;
+            }
+            else if (BFLD_INT==f->typecode_full)
             {
                 NDRX_LOG(log_dump, "Getting INT");
                 

@@ -181,14 +181,14 @@ expublic int ndrx_view_update_object(char *vname, long ssize)
     
     if (NULL==v)
     {
-        NDRX_LOG(log_error, "Failed to get view object by [%s]", vname);
-        NDRX_LOG(log_error, "View not found [%s]", vname);
+        UBF_LOG(log_error, "Failed to get view object by [%s]", vname);
+        UBF_LOG(log_error, "View not found [%s]", vname);
         EXFAIL_OUT(ret);
     }
     
     v->ssize = ssize;
     
-    NDRX_LOG(log_info, "View [%s] struct size %ld", vname, v->ssize);
+    UBF_LOG(log_info, "View [%s] struct size %ld", vname, v->ssize);
     
 out:
     return ret;
@@ -211,8 +211,8 @@ expublic int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p)
     
     if (NULL==v)
     {
-        NDRX_LOG(log_error, "Failed to get view object by [%s]", vname);
-        NDRX_LOG(log_error, "View not found [%s]", vname);
+        UBF_LOG(log_error, "Failed to get view object by [%s]", vname);
+        UBF_LOG(log_error, "View not found [%s]", vname);
         EXFAIL_OUT(ret);
     }
     
@@ -220,12 +220,12 @@ expublic int ndrx_view_update_offsets(char *vname, ndrx_view_offsets_t *p)
     {
         if (NULL==p->cname)
         {
-            NDRX_LOG(log_error, "Field descriptor table does not match v object");
+            UBF_LOG(log_error, "Field descriptor table does not match v object");
             EXFAIL_OUT(ret);
         }
         else if (0!=strcmp(f->cname, p->cname))
         {
-            NDRX_LOG(log_error, "Invalid field name, loaded object [%s] "
+            UBF_LOG(log_error, "Invalid field name, loaded object [%s] "
                     "vs compiled code [%s]",
                         f->cname, p->cname);
             EXFAIL_OUT(ret);

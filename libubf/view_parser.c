@@ -110,7 +110,6 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     dtype_str_t *dtyp;
     ndrx_typedview_field_t *fld = NULL;
     int i;
-    char tmp[256];
     API_ENTRY;
     
     UBF_LOG(log_debug, "%s - enter", __func__);
@@ -863,32 +862,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             NDRX_DUMP(log_debug, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
-            
-            /* Build pre-compile compare value... */
-            switch (fld->typecode_full)
-            {
-                case BFLD_SHORT:
-                    fld->nullval_short = (short)atoi(fld->nullval_bin);
-                    UBF_LOG(log_debug, "nullval_short=%hd", fld->nullval_short);
-                    break;
-                case BFLD_INT:
-                    fld->nullval_int = atoi(fld->nullval_bin);
-                    UBF_LOG(log_debug, "nullval_int=%hd", fld->nullval_int);
-                    break;
-                case BFLD_LONG:
-                    fld->nullval_long = atol(fld->nullval_bin);
-                    UBF_LOG(log_debug, "nullval_long=%hd", fld->nullval_long);
-                    break;
-                case BFLD_FLOAT:
-                    fld->nullval_float = (float)atof(fld->nullval_bin);
-                    UBF_LOG(log_debug, "nullval_float=%f", fld->nullval_float);
-                    break;
-                case BFLD_DOUBLE:
-                    fld->nullval_double = atof(fld->nullval_bin);
-                    UBF_LOG(log_debug, "nullval_double=%lf", fld->nullval_double);
-                    break;
-            }
-            
+                     
             if (!fld->nullval_quotes)
             {
                 if (0==strcmp(fld->nullval, "NONE"))
@@ -900,6 +874,45 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 {
                     fld->nullval_default = EXTRUE;
                     UBF_LOG(log_debug, "Default NULL value used...");
+                    /*  */
+                }
+            }
+            
+            /* Build pre-compile compare value... */
+            if (fld->nullval_default || fld->nullval_none)
+            {
+                /* These are loaded by calloc:
+                fld->nullval_short=0;
+                fld->nullval_int=0;
+                fld->nullval_long=0;
+                fld->nullval_float=0.0;
+                fld->nullval_double=0.0;
+                */
+            }
+            else
+            {
+                switch (fld->typecode_full)
+                {
+                    case BFLD_SHORT:
+                        fld->nullval_short = (short)atoi(fld->nullval_bin);
+                        UBF_LOG(log_debug, "nullval_short=%hd", fld->nullval_short);
+                        break;
+                    case BFLD_INT:
+                        fld->nullval_int = atoi(fld->nullval_bin);
+                        UBF_LOG(log_debug, "nullval_int=%hd", fld->nullval_int);
+                        break;
+                    case BFLD_LONG:
+                        fld->nullval_long = atol(fld->nullval_bin);
+                        UBF_LOG(log_debug, "nullval_long=%hd", fld->nullval_long);
+                        break;
+                    case BFLD_FLOAT:
+                        fld->nullval_float = (float)atof(fld->nullval_bin);
+                        UBF_LOG(log_debug, "nullval_float=%f", fld->nullval_float);
+                        break;
+                    case BFLD_DOUBLE:
+                        fld->nullval_double = atof(fld->nullval_bin);
+                        UBF_LOG(log_debug, "nullval_double=%lf", fld->nullval_double);
+                        break;
                 }
             }
             

@@ -91,7 +91,7 @@ expublic int ndrx_view_plot_object(FILE *f)
     
 #define WRITE_ERR \
                 err = errno;\
-                NDRX_LOG(log_error, "Failed to write to file: %s", strerror(err));\
+                UBF_LOG(log_error, "Failed to write to file: %s", strerror(err));\
                 ndrx_Bset_error_fmt(TPEOS, "Failed to write to file: %s", strerror(err));\
                 EXFAIL_OUT(ret);
                 
@@ -198,6 +198,6 @@ expublic int ndrx_view_plot_object(FILE *f)
     }
     
 out:
-    NDRX_LOG(log_debug, "%s terminates %d", __func__, ret);
+    UBF_LOG(log_debug, "%s terminates %d", __func__, ret);
     return ret;
 }

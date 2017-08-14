@@ -217,7 +217,7 @@ expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
     ndrx_debug_t * dbg = debug_get_ndrx_ptr();
     if (dbg->level>=lev)
     {
-        NDRX_LOG(lev, "%s", title);
+        UBF_LOG(lev, "%s", title);
         Bfprint(p_ub, dbg->dbg_f_ptr);
     }
 }

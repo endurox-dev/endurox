@@ -76,6 +76,13 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     int i, j;
     int len;
     
+    if (f->nullval_none)
+    {
+        UBF_LOG(log_debug, "field set to NONE, no NULL value...");
+        ret=EXFALSE;
+        goto out;
+    }
+    
     switch(f->typecode_full)
     {
         case BFLD_SHORT:
@@ -137,13 +144,32 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             /* nullval_bin EOS is set by CALLOC at the parser.. */
             len = strlen(fld_offs);
             
+            /*
+             * Well we somehow need to check the length 
+             * of the default and the data.
+             * For filler the first part must match (length at-least)
+             * For non-filler it must be full match
+             */
             if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P)
             {
                 /* test the filler */
                 ret=EXTRUE;
+                
+                if (len < f->nullval_bin_len)
+                {
+                    /* No match , it is shorter.. */
+                    ret=EXFALSE;
+                    goto out;
+                }
+                
                 for (i=0; i<f->nullval_bin_len; i++)
                 {
-                    if (i==f->nullval_bin_len-1 && i<len)
+                    if (i>=len)
+                    {
+                        ret=EXFALSE;
+                        goto out;
+                    }
+                    else if (i==f->nullval_bin_len-1)
                     {
                         /* compare last bits... */
                         for (j=i; j<len; j++)
@@ -155,23 +181,18 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                             }
                         }
                     }
-                    else if (fld_offs[i]!=f->nullval_bin[i] && 
-                            i<len)
+                    else if (fld_offs[i]!=f->nullval_bin[i])
                     {
                         ret=EXFALSE;
                         goto out;
                     }
-                    else if (i>=len)
-                    {
-                        ret=EXFALSE;
-                        goto out;
-                    }
+                    
                 }
             }
             else
             {
                 /* EOS will be set there by calloc... */
-                NDRX_LOG(log_dump, "STR_CMP: data: [%s] vs obj: [%s]",
+                UBF_LOG(log_dump, "STR_CMP: data: [%s] vs obj: [%s]",
                         fld_offs, f->nullval_bin);
                 if (0==strcmp(fld_offs, f->nullval_bin))
                 {
@@ -186,8 +207,6 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             /* nullval_bin EOS is set by CALLOC at the parser.. */
             if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
             {
-                len = strlen(fld_offs);
-                
                 len = *((unsigned short *)(cstruct+f->length_fld_offset+
                             occ*sizeof(unsigned short)));
             }
@@ -196,13 +215,27 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                 len = dim_size;
             }
             
+            if (!(f->flags & NDRX_VIEW_FLAG_NULLFILLER_P))
+            {
+                if (len < f->nullval_bin_len)
+                {
+                    ret=EXFALSE;
+                    goto out;
+                }
+            }
+            
             /* test the filler */
             ret=EXTRUE;
             for (i=0; i<f->nullval_bin_len; i++)
             {
 
-                if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P && 
-                        i==f->nullval_bin_len-1 && i<len)
+                if (i>=len)
+                {
+                    ret=EXFALSE;
+                    goto out;
+                }
+                else if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P && 
+                        i==f->nullval_bin_len-1)
                 {
                     /* compare last bits... */
                     for (j=i; j<len; j++)
@@ -214,24 +247,19 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                         }
                     }
                 }
-                else if (fld_offs[i]!=f->nullval_bin[i] && 
-                        i<len)
+                else if (fld_offs[i]!=f->nullval_bin[i])
                 {
                     ret=EXFALSE;
                     goto out;
                 }
-                else if (i>=len)
-                {
-                    ret=EXFALSE;
-                    goto out;
-                }
+                
             }
             
             break;
     }
     
 out:
-    NDRX_LOG(log_debug, "%s: %s.%s presence %d", __func__, v->vname, f->cname, ret);
+    UBF_LOG(log_debug, "%s: %s.%s presence %d", __func__, v->vname, f->cname, ret);
     return ret;
        
 }
@@ -276,3 +304,158 @@ out:
     return ret;
 }
 
+/**
+ * Initialize single structure element to NULL
+ * @param v view object
+ * @param f field object
+ * @param cstruct c structure
+ * @return 
+ */
+expublic int ndrx_Fvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
+        char *cstruct)
+{
+    int ret = EXFALSE;
+    int dim_size = f->fldsize/f->count;
+    char *fld_offs;
+    short *sv;
+    int *iv;
+    long *lv;
+    float *fv;
+    double *dv;
+    int i, j;
+    int len;
+    int occ;
+    short *C_count;
+    unsigned short *L_length;
+    
+    if (f->nullval_none)
+    {
+        UBF_LOG(log_debug, "field set to NONE, no NULL value...");
+        ret=EXFALSE;
+        goto out;
+    }
+    
+    for (occ=0; occ<f->count; occ++)
+    {    
+        if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+        {
+            C_count = (short *)(cstruct+f->count_fld_offset);
+            *C_count = 0;
+        }
+        
+        dim_size = f->fldsize/f->count;
+        fld_offs = cstruct+f->offset+occ*dim_size;   
+        
+        switch(f->typecode_full)
+        {
+            case BFLD_SHORT:
+                sv = (short *)fld_offs;
+                *sv=f->nullval_short;
+                
+                break;
+            case BFLD_INT:
+                iv = (int *)fld_offs;
+                *iv=f->nullval_int;
+                break;
+            case BFLD_LONG:
+                lv = (long *)fld_offs;
+                *lv=f->nullval_long;
+                break;
+            case BFLD_CHAR:
+                *fld_offs == f->nullval_bin[0];
+                break;
+            case BFLD_FLOAT:
+                fv = (float *)fld_offs;
+                *fv = f->nullval_float;
+                break;
+            case BFLD_DOUBLE:
+                dv = (double *)fld_offs;
+                *dv = f->nullval_float;
+                break;
+            case BFLD_STRING:
+                
+                /* nullval_bin EOS is set by CALLOC at the parser.. */
+                
+                if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+                {
+                    
+                    L_length = (unsigned short *)(cstruct+f->length_fld_offset+
+                                occ*sizeof(unsigned short));
+                    *L_length = 0;
+                }
+                
+                if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P)
+                {
+                    for (i=0; i<f->nullval_bin_len; i++)
+                    {
+                        if (dim_size>i+1)
+                        {
+                            break;
+                        }
+                        else if (i==f->nullval_bin_len-1)
+                        {
+                            /* compare last bits... */
+                            for (j=i; j<len; j++)
+                            {
+                                fld_offs[j]=f->nullval_bin[i];
+                            }
+                        }
+                        else if (fld_offs[i]!=f->nullval_bin[i] && 
+                                i<len)
+                        {
+                            break;
+                        }
+                    }
+                }
+                else
+                {   
+                    if (0==strncpy(fld_offs, f->nullval_bin, dim_size-1))
+                    {
+                        break;
+                    }
+                    fld_offs[dim_size-1] = EXEOS;
+                }
+                
+                break;
+            case BFLD_CARRAY:
+
+                /* nullval_bin EOS is set by CALLOC at the parser.. */
+                if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+                {
+                     L_length = (unsigned short *)(cstruct+f->length_fld_offset+
+                                occ*sizeof(unsigned short));
+                    *L_length = 0;
+                }
+                
+                len = dim_size;
+
+                /* test the filler */
+                for (i=0; i<f->nullval_bin_len; i++)
+                {
+                    if (i>=len)
+                    {
+                        break;
+                    }
+                    else if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P && 
+                            i==f->nullval_bin_len-1 && i<len)
+                    {
+                        /* compare last bits... */
+                        for (j=i; j<len; j++)
+                        {
+                            fld_offs[j]=f->nullval_bin[i];
+                        }
+                    }
+                    else
+                    {
+                        fld_offs[i]=f->nullval_bin[i];
+                    }
+                }
+                break;
+        } /* switch typecode */
+    } /* for occ */
+    
+out:
+    
+    return ret;
+       
+}

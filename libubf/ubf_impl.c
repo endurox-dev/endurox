@@ -121,7 +121,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
     }
 
 #ifdef BIN_SEARCH_DEBUG
-    NDRX_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
+    UBF_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
 #endif
     
     while (BBADFLDID!=*p_bfldid)
@@ -131,7 +131,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
         type = (*p_bfldid>>EFFECTIVE_BITS);
         
 #ifdef BIN_SEARCH_DEBUG
-        NDRX_LOG(log_debug, "%s: Got field: [%d], type %d", fn, *p_bfldid, type);
+        UBF_LOG(log_debug, "%s: Got field: [%d], type %d", fn, *p_bfldid, type);
 #endif
 
         /* Check data type alignity */
@@ -159,7 +159,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
         typenext = (*p_bfldid>>EFFECTIVE_BITS);
         
 #ifdef BIN_SEARCH_DEBUG
-        NDRX_LOG(log_debug, "%s: Next field: [%d], type %d", fn, *p_bfldid, typenext);
+        UBF_LOG(log_debug, "%s: Next field: [%d], type %d", fn, *p_bfldid, typenext);
 #endif
         
         if (type!=typenext)
@@ -171,7 +171,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
         else
         {
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: Not updating type=%d, typenext=%d", fn, type, typenext);
+            UBF_LOG(log_debug, "%s: Not updating type=%d, typenext=%d", fn, type, typenext);
 #endif
         }
     }
@@ -197,37 +197,37 @@ exprivate inline void ubf_cache_set(UBFH *p_ub, BFLDID fldid, int next_offset)
         case BFLD_SHORT:
             uh->cache_long_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off => %d", 
                     fn, uh->cache_long_off);
 #endif
         case BFLD_LONG:
             uh->cache_char_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off=> %d", 
                     fn, uh->cache_char_off);
 #endif
         case BFLD_CHAR:
             uh->cache_float_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off=> %d", 
                     fn, uh->cache_float_off);
 #endif
         case BFLD_FLOAT:
             uh->cache_double_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off=> %d", 
                     fn, uh->cache_double_off);
 #endif
         case BFLD_DOUBLE:
             uh->cache_string_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off=> %d", 
                     fn, uh->cache_string_off);
 #endif
         case BFLD_STRING:
             uh->cache_carray_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off=> %d", 
                     fn, uh->cache_carray_off);
 #endif
             break;
@@ -250,37 +250,37 @@ expublic inline void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
         case BFLD_SHORT:
             uh->cache_long_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off+=%d => %d", 
                     fn, size_diff, uh->cache_long_off);
 #endif
         case BFLD_LONG:
             uh->cache_char_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off+=%d => %d", 
                     fn, size_diff, uh->cache_char_off);
 #endif
         case BFLD_CHAR:
             uh->cache_float_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off+=%d => %d", 
                     fn, size_diff, uh->cache_float_off);
 #endif
         case BFLD_FLOAT:
             uh->cache_double_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off+=%d => %d", 
                     fn, size_diff, uh->cache_double_off);
 #endif
         case BFLD_DOUBLE:
             uh->cache_string_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off+=%d => %d", 
                     fn, size_diff, uh->cache_string_off);
 #endif
         case BFLD_STRING:
             uh->cache_carray_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off+=%d => %d", 
                     fn, size_diff, uh->cache_carray_off);
 #endif
             break;
