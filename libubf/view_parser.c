@@ -67,7 +67,7 @@
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define API_ENTRY {ndrx_TPunset_error(); \
+#define API_ENTRY {ndrx_Bunset_error(); \
 }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -84,7 +84,7 @@ expublic void ndrx_view_loader_configure(int no_ubf_proc)
 {
     M_no_ubf_proc = no_ubf_proc;
     
-    NDRX_LOG(log_warn, "Do not process UBF: %s", M_no_ubf_proc?"Yes":"No");
+    UBF_LOG(log_warn, "Do not process UBF: %s", M_no_ubf_proc?"Yes":"No");
     
 }
 
@@ -116,14 +116,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     char tmp[256];
     API_ENTRY;
     
-    NDRX_LOG(log_dump, "%s - enter", __func__);
+    UBF_LOG(log_debug, "%s - enter", __func__);
     
     if (NULL==(f=NDRX_FOPEN(fname, "r")))
     {
         int err = errno;
-        NDRX_LOG(log_error, "Failed to open view file [%s]: %s", 
+        UBF_LOG(log_error, "Failed to open view file [%s]: %s", 
                 fname, strerror(err));
-        ndrx_TPset_error_fmt(TPENOENT, "Failed to open view file [%s]: %s", 
+        ndrx_Bset_error_fmt(TPENOENT, "Failed to open view file [%s]: %s", 
                 fname, strerror(err));
         EXFAIL_OUT(ret);
     }
@@ -134,7 +134,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         line++;
         orglen = strlen(buf);
         
-        NDRX_LOG(log_dump, "Got VIEW file line: [%s], line: %ld", buf, line);
+        UBF_LOG(log_debug, "Got VIEW file line: [%s], line: %ld", buf, line);
         
         if ('#'==buf[0])
         {
@@ -144,7 +144,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             {
                 if (0==strncmp("#@__platform=", buf, 13))
                 {
-                    NDRX_LOG(log_dump, "Found platform data, parsing...");
+                    UBF_LOG(log_debug, "Found platform data, parsing...");
                     tok2=strtok_r (tok,";", &saveptr2);
                     while( tok2 != NULL ) 
                     {
@@ -158,7 +158,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         {
                             if (0!=strcmp(NDRX_BUILD_OS_NAME, p3+1))
                             {
-                                NDRX_LOG(log_error, "Invalid platform, expected: "
+                                UBF_LOG(log_error, "Invalid platform, expected: "
                                         "[%s] got [%s] - please recompile the "
                                         "view file with viewc, line: %ld", 
                                         NDRX_BUILD_OS_NAME, p3+1, line);
@@ -173,7 +173,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         {
                             if (0!=strcmp(NDRX_CPUARCH, p3+1))
                             {
-                                NDRX_LOG(log_error, "Invalid CPU arch, expected: "
+                                UBF_LOG(log_error, "Invalid CPU arch, expected: "
                                             "[%s] got [%s] - please recompile the "
                                             "view file with viewc, line: %ld", 
                                             NDRX_CPUARCH, p3+1, line);
@@ -190,7 +190,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             
                             if (ws!=NDRX_WORD_SIZE)
                             {
-                                NDRX_LOG(log_error, "Invalid platform word size, expected: "
+                                UBF_LOG(log_error, "Invalid platform word size, expected: "
                                         "[%d] got [%d] - please recompile the "
                                         "view file with viewc, line: %ld", 
                                         NDRX_WORD_SIZE, ws, line);
@@ -210,7 +210,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
                 else if (0==strncmp("#@__ssize=", buf, 10))
                 {
-                    NDRX_LOG(log_dump, "Structure data, parsing...");
+                    UBF_LOG(log_debug, "Structure data, parsing...");
                     tok2=strtok_r (tok,";", &saveptr2);
                     while( tok2 != NULL ) 
                     {
@@ -224,12 +224,12 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         {
                             v->ssize = atol(p3+1);
                             
-                            NDRX_LOG(log_debug, "Struct size loaded: [%ld]",
+                            UBF_LOG(log_debug, "Struct size loaded: [%ld]",
                                     v->ssize);
                             
                             if (v->ssize<0)
                             {
-                                NDRX_LOG(log_error, "Invalid size %ld, line %ld", 
+                                UBF_LOG(log_error, "Invalid size %ld, line %ld", 
                                         v->ssize, line);
                                 ndrx_TPset_error_fmt(TPEINVAL, "Invalid size %ld, line %ld", 
                                         v->ssize, line);
@@ -243,7 +243,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             
                             if (cksum!=cksum_built)
                             {
-                                NDRX_LOG(log_error, "Invalid VIEW [%s] checksum, expected: "
+                                UBF_LOG(log_error, "Invalid VIEW [%s] checksum, expected: "
                                         "[%ld] got [%ld] - please recompile the "
                                         "view file with viewc, line: %ld", 
                                         v->vname, cksum_built, cksum, line);
@@ -297,7 +297,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (0!=strcmp(tok, NDRX_VIEW_TOKEN_START))
             {
                 /* Not in view -> FAIL */
-                NDRX_LOG(log_error, "Expected [%s] but got [%s], line: %ld", 
+                UBF_LOG(log_error, "Expected [%s] but got [%s], line: %ld", 
                         NDRX_VIEW_TOKEN_START, tok, line);
                 ndrx_TPset_error_fmt(TPEINVAL, "Expected [%s] but got [%s], line: %ld", 
                         NDRX_VIEW_TOKEN_START, tok, line);
@@ -306,7 +306,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
 
             if (NULL==(tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1)))
             {
-                NDRX_LOG(log_error, "Missing identifier after %s, line: %ld", 
+                UBF_LOG(log_error, "Missing identifier after %s, line: %ld", 
                         NDRX_VIEW_TOKEN_START, line);
                 ndrx_TPset_error_fmt(TPEINVAL, "Missing identifier after %s, line: %ld", 
                         NDRX_VIEW_TOKEN_START, line);
@@ -316,7 +316,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             len = strlen(tok);
             if (len > NDRX_VIEW_NAME_LEN)
             {
-                NDRX_LOG(log_error, "View identifier [%s] too long! Max len: %d,"
+                UBF_LOG(log_error, "View identifier [%s] too long! Max len: %d,"
                         " but got: %d, line: %ld", 
                         tok, NDRX_VIEW_NAME_LEN, len, line);
                 ndrx_TPset_error_fmt(TPEINVAL, "View identifier [%s] too long!"
@@ -331,7 +331,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (NULL==v)
             {
                 int err = errno;
-                NDRX_LOG(log_error, "Failed to allocate ndrx_typedview_t: %s, "
+                UBF_LOG(log_error, "Failed to allocate ndrx_typedview_t: %s, "
                         "line: %ld", 
                         strerror(err), line);
 
@@ -345,7 +345,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* setup file name too */
             NDRX_STRCPY_SAFE(v->filename, fname);
             
-            NDRX_LOG(log_dump, "Parsing view [%s]", v->vname);
+            UBF_LOG(log_debug, "Parsing view [%s]", v->vname);
             state = INVIEW;
             
         }
@@ -355,11 +355,11 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             short typfull=EXFAIL;
             
             tok = strtok_r(p, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            NDRX_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (0==strcmp(NDRX_VIEW_TOKEN_END, tok))
             {
-                NDRX_LOG(log_dump, "View [%s] finishing off -> add to hash", 
+                UBF_LOG(log_debug, "View [%s] finishing off -> add to hash", 
                         v->vname);
                 EXHASH_ADD_STR(ndrx_G_view_hash, vname, v);
                 v = NULL;
@@ -392,7 +392,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
                 else
                 {
-                    NDRX_LOG(log_error, "Invalid data type [%s], line: %ld", 
+                    UBF_LOG(log_error, "Invalid data type [%s], line: %ld", 
                             tok, line);
                     ndrx_TPset_error_fmt(TPEINVAL, "Invalid data type [%s], line: %ld", 
                             tok, line);
@@ -410,7 +410,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (NULL==fld)
             {
                 int err = errno;
-                NDRX_LOG(log_error, "Failed to allocate ndrx_typedview_field_t: %s,"
+                UBF_LOG(log_error, "Failed to allocate ndrx_typedview_field_t: %s,"
                         " line: %ld", 
                         strerror(err), line);
 
@@ -426,18 +426,18 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             /* Add type to checksum */
             ndrx_view_cksum_update(v, fld->type_name, strlen(fld->type_name));
-            NDRX_LOG(log_dump, "Got type code UBF=%d full code=%d", 
+            UBF_LOG(log_debug, "Got type code UBF=%d full code=%d", 
                     fld->typecode, fld->typecode_full);
             
             /******************************************************************* 
              * C Field name 
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            NDRX_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (NULL==tok)
             {
-                NDRX_LOG(log_error, "Expected C field name, got EOS, line: %ld");
+                UBF_LOG(log_error, "Expected C field name, got EOS, line: %ld");
                 ndrx_TPset_error_fmt(TPEINVAL, "Expected C field name, got EOS, "
                         "line %ld", line);
                 EXFAIL_OUT(ret);
@@ -446,7 +446,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             len = strlen(tok);
             if (len>NDRX_VIEW_CNAME_LEN)
             {
-                NDRX_LOG(log_error, "C field identifier [%s] too long! Max len: %d,"
+                UBF_LOG(log_error, "C field identifier [%s] too long! Max len: %d,"
                         " but got: %d, line: %ld", 
                         tok, NDRX_VIEW_CNAME_LEN, len, line);
                 
@@ -466,17 +466,17 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add cname to checksum */
             ndrx_view_cksum_update(v, fld->cname, strlen(fld->cname));
             
-            NDRX_LOG(log_dump, "Got c identifier [%s]", fld->cname);
+            UBF_LOG(log_debug, "Got c identifier [%s]", fld->cname);
             
             /******************************************************************* 
              * FB Name -> projection to fielded buffer.
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            NDRX_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (NULL==tok)
             {
-                NDRX_LOG(log_error, "Expected FB Name field, got EOS, line: %ld", 
+                UBF_LOG(log_error, "Expected FB Name field, got EOS, line: %ld", 
                         line);
                 ndrx_TPset_error_fmt(TPEINVAL, "Expected FB Name field, "
                         "got EOS, line: %ld", line);
@@ -486,7 +486,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             len = strlen(tok);
             if (len>UBFFLDMAX)
             {
-                NDRX_LOG(log_error, "UBF name identifier [%s] too long! Max len: %d,"
+                UBF_LOG(log_error, "UBF name identifier [%s] too long! Max len: %d,"
                         " but got: %d, line: %ld", 
                         tok, UBFFLDMAX, len, line);
                 
@@ -499,18 +499,18 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             /* ok, save the field */
             NDRX_STRCPY_SAFE(fld->fbname, tok);
-            NDRX_LOG(log_dump, "Got UBF identifier [%s]", fld->fbname);
+            UBF_LOG(log_debug, "Got UBF identifier [%s]", fld->fbname);
             
             /*TODO: add - to defines ... */
             if (is_compiled && !M_no_ubf_proc && 0!=strcmp("-", fld->fbname))
             {
-                NDRX_LOG(log_dump, "About to resolve field id..");
+                UBF_LOG(log_debug, "About to resolve field id..");
                 
                 fld->ubfid = Bfldid(fld->fbname);
                 
                 if (BBADFLDID==fld->ubfid)
                 {
-                    NDRX_LOG(log_error, "Failed to resolve id for field [%s], line: %ld", 
+                    UBF_LOG(log_error, "Failed to resolve id for field [%s], line: %ld", 
                         fld->fbname, line);
                 
                     ndrx_TPset_error_fmt(TPEMATCH, "Failed to resolve id for "
@@ -529,12 +529,12 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
              * Parse count...
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            NDRX_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             fld->count = (short)atoi(tok);
             
             if (fld->count<1)
             {
-                NDRX_LOG(log_error, "Invalid count: %d (parsed from [%s]), line: %ld", 
+                UBF_LOG(log_error, "Invalid count: %d (parsed from [%s]), line: %ld", 
                         fld->count, tok, line);
                 
                 ndrx_TPset_error_fmt(TPEINVAL, "Invalid count: %d "
@@ -546,7 +546,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             if (fld->count>NDRX_VIEW_FLD_COUNT_MAX)
             {
-                NDRX_LOG(log_error, "Invalid count: %d (parsed from [%s]) max: %d,"
+                UBF_LOG(log_error, "Invalid count: %d (parsed from [%s]) max: %d,"
                         " line: %ld", 
                         fld->count, tok, NDRX_VIEW_FLD_COUNT_MAX, line);
                 
@@ -560,17 +560,17 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add count to checksum */
             ndrx_view_cksum_update(v, tok, strlen(tok));
             
-            NDRX_LOG(log_dump, "Got count [%hd]", fld->count);
+            UBF_LOG(log_debug, "Got count [%hd]", fld->count);
             
             /******************************************************************* 
              * Parse flags
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            NDRX_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (NULL==tok)
             {
-                NDRX_LOG(log_error, "Expected flags, got EOS, line: %ld", 
+                UBF_LOG(log_error, "Expected flags, got EOS, line: %ld", 
                         line);
                 ndrx_TPset_error_fmt(TPEINVAL, "Expected flags, got EOS, line: %ld",
                         line);
@@ -580,7 +580,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             len = strlen(tok);
             if (len>NDRX_VIEW_FLAGS_LEN)
             {
-                NDRX_LOG(log_error, "Flags [%s] too long! Max len: %d,"
+                UBF_LOG(log_error, "Flags [%s] too long! Max len: %d,"
                         " but got: %d, line: %ld", 
                         tok, NDRX_VIEW_FLAGS_LEN, len, line);
                 
@@ -639,10 +639,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         fld->flags|=NDRX_VIEW_FLAG_1WAYMAP_C2UBF_S;
                         break;
                     case '-':
-                        NDRX_LOG(log_dump, "No flags set...");
+                        UBF_LOG(log_debug, "No flags set...");
                         break;    
                     default:
-                        NDRX_LOG(log_error, "Unknown field flag [%c], line: %ld", 
+                        UBF_LOG(log_error, "Unknown field flag [%c], line: %ld", 
                                 tok[i], line);
 
                         ndrx_TPset_error_fmt(TPEINVAL, "Unknown field flag [%c], "
@@ -657,21 +657,21 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add flags to checksum */
             ndrx_view_cksum_update(v, fld->flagsstr, strlen(fld->flagsstr));
 
-            NDRX_LOG(log_dump, "Got flags [%s] -> %lx", fld->flagsstr, fld->flags);
+            UBF_LOG(log_debug, "Got flags [%s] -> %lx", fld->flagsstr, fld->flags);
             
             /******************************************************************* 
              * Parse size
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            NDRX_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (0==strcmp(tok, "-"))
             {
-                NDRX_LOG(log_dump, "Empty token -> no size");
+                UBF_LOG(log_debug, "Empty token -> no size");
                 
                 if (fld->typecode==BFLD_CARRAY || fld->typecode==BFLD_STRING)
                 {
-                    NDRX_LOG(log_error, "Size must be specified for string or "
+                    UBF_LOG(log_error, "Size must be specified for string or "
                             "carray, line: %ld", line);
 
                     ndrx_TPset_error_fmt(TPEINVAL, "Size must be specified for string or "
@@ -686,7 +686,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
 
                 if (fld->size>NDRX_VIEW_FLD_SIZE_MAX)
                 {
-                    NDRX_LOG(log_error, "Invalid size: %d (parsed from [%s]) max: %d,"
+                    UBF_LOG(log_error, "Invalid size: %d (parsed from [%s]) max: %d,"
                             " line: %ld", 
                             fld->size, tok, NDRX_VIEW_FLD_SIZE_MAX, line);
 
@@ -701,7 +701,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add size to checksum */
             ndrx_view_cksum_update(v, tok, sizeof(tok));
             
-            NDRX_LOG(log_dump, "Got size [%hd]", fld->size);
+            UBF_LOG(log_debug, "Got size [%hd]", fld->size);
             
             /******************************************************************* 
              * Parse NULL value & the system flags..
@@ -711,27 +711,27 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             p3 = fld->nullval_bin;
             pend = buf + orglen;
             was_quotes = EXFALSE;
-            /*NDRX_LOG(log_dump, "p2=%p pend=%p", p2, pend);*/
+            /*UBF_LOG(log_debug, "p2=%p pend=%p", p2, pend);*/
             
             /* Search the opening of the data block */
             while (p2<pend)
             {
-                /*NDRX_LOG(log_dump, "At: %p testing [%c]", p2, *p2);*/
+                /*UBF_LOG(log_debug, "At: %p testing [%c]", p2, *p2);*/
                 
                 if (*p2!=EXEOS && *p2!=' ' && *p2!='\t')
                 {
                     break;
                 }
-                /*NDRX_LOG(log_dump, "At: %p skipping [%c]", p2, *p2);*/
+                /*UBF_LOG(log_debug, "At: %p skipping [%c]", p2, *p2);*/
                 
                 p2++;
             }
             
-            NDRX_LOG(log_dump, "At %p value [%c]", p2, *p2);
+            UBF_LOG(log_debug, "At %p value [%c]", p2, *p2);
             
             if (p2==pend)
             {
-                NDRX_LOG(log_error, "Missing NULL value, line: %ld", 
+                UBF_LOG(log_error, "Missing NULL value, line: %ld", 
                                 tok[i], line);
 
                 ndrx_TPset_error_fmt(TPEINVAL, "Missing NULL value, line: %ld", 
@@ -803,7 +803,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 {
                     if (nulltype != NTYPSQUOTE && nulltype != NTYPDQUOTE)
                     {
-                        NDRX_LOG(log_error, "Un-escaped quote [%c], line %ld", 
+                        UBF_LOG(log_error, "Un-escaped quote [%c], line %ld", 
                                 *p2, line);
 
                         ndrx_TPset_error_fmt(TPEINVAL, "Un-escaped quote [%c], line %ld", 
@@ -822,7 +822,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 else if (nulltype != NTYPSQUOTE && nulltype != NTYPDQUOTE &&
                         (*p2==' ' || *p2=='\t'))
                 {
-                    NDRX_LOG(log_dump, "Terminating non quoted NULL data");
+                    UBF_LOG(log_debug, "Terminating non quoted NULL data");
                     /* Terminate value here too.. */
                     
                     *p2=EXEOS;
@@ -845,7 +845,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 if (nulltype == NTYPSTD)
                 {
                     /* we are at the end... (no compiled data) */
-                    NDRX_LOG(log_dump, "At th end, no compiled data");
+                    UBF_LOG(log_debug, "At th end, no compiled data");
                     *p2 = EXEOS;
                     NDRX_STRCPY_SAFE(fld->nullval, null_val_start);
                     nulltype = NTYPNO;
@@ -853,7 +853,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
                 else
                 {
-                    NDRX_LOG(log_error, "Looks like unclosed quotes for "
+                    UBF_LOG(log_error, "Looks like unclosed quotes for "
                             "NULL value, line %ld", line);
 
                     ndrx_TPset_error_fmt(TPEINVAL, "Looks like unclosed quotes for "
@@ -862,9 +862,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
             }
             
-            NDRX_LOG(log_dump, "Got NULL value [%s]", fld->nullval);
+            UBF_LOG(log_debug, "Got NULL value [%s]", fld->nullval);
             
-            NDRX_DUMP(log_dump, "Got binary version of NULL value", fld->nullval_bin,
+            NDRX_DUMP(log_debug, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
             
             /* Build pre-compile compare value... */
@@ -872,23 +872,23 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             {
                 case BFLD_SHORT:
                     fld->nullval_short = (short)atoi(fld->nullval_bin);
-                    NDRX_LOG(log_dump, "nullval_short=%hd", fld->nullval_short);
+                    UBF_LOG(log_debug, "nullval_short=%hd", fld->nullval_short);
                     break;
                 case BFLD_INT:
                     fld->nullval_int = atoi(fld->nullval_bin);
-                    NDRX_LOG(log_dump, "nullval_int=%hd", fld->nullval_int);
+                    UBF_LOG(log_debug, "nullval_int=%hd", fld->nullval_int);
                     break;
                 case BFLD_LONG:
                     fld->nullval_long = atol(fld->nullval_bin);
-                    NDRX_LOG(log_dump, "nullval_long=%hd", fld->nullval_long);
+                    UBF_LOG(log_debug, "nullval_long=%hd", fld->nullval_long);
                     break;
                 case BFLD_FLOAT:
                     fld->nullval_float = (float)atof(fld->nullval_bin);
-                    NDRX_LOG(log_dump, "nullval_float=%f", fld->nullval_float);
+                    UBF_LOG(log_debug, "nullval_float=%f", fld->nullval_float);
                     break;
                 case BFLD_DOUBLE:
                     fld->nullval_double = atof(fld->nullval_bin);
-                    NDRX_LOG(log_dump, "nullval_double=%lf", fld->nullval_double);
+                    UBF_LOG(log_debug, "nullval_double=%lf", fld->nullval_double);
                     break;
             }
             
@@ -897,12 +897,12 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 if (0==strcmp(fld->nullval, "NONE"))
                 {
                     fld->nullval_none = EXTRUE;
-                    NDRX_LOG(log_dump, "NONE keyword specified -> no NULL value...");
+                    UBF_LOG(log_debug, "NONE keyword specified -> no NULL value...");
                 }
                 else if (0==strcmp(fld->nullval, "-"))
                 {
                     fld->nullval_default = EXTRUE;
-                    NDRX_LOG(log_dump, "Default NULL value used...");
+                    UBF_LOG(log_debug, "Default NULL value used...");
                 }
             }
             
@@ -925,7 +925,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 {
                     if (is_compiled) 
                     {
-                        NDRX_LOG(log_error, "Expected compiled data, but not found"
+                        UBF_LOG(log_error, "Expected compiled data, but not found"
                             ", line %ld", line);
 
                         ndrx_TPset_error_fmt(TPEINVAL, "Expected compiled data, but not found"
@@ -934,19 +934,19 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     }
                     else
                     {
-                        NDRX_LOG(log_dump, "No compiled data found at the view file...");
+                        UBF_LOG(log_debug, "No compiled data found at the view file...");
                     }
                 }
                 else
                 {
                     /* OK we got some token... */
-                    NDRX_LOG(log_dump, "Compiled data: [%s]", tok);
+                    UBF_LOG(log_debug, "Compiled data: [%s]", tok);
                     
                     len=strlen(tok);
                     
                     if (len>NDRX_VIEW_COMPFLAGS_LEN)
                     {
-                        NDRX_LOG(log_error, "Compiled data [%s] too long! Max len: %d,"
+                        UBF_LOG(log_error, "Compiled data [%s] too long! Max len: %d,"
                             " but got: %d, line: %ld", 
                             tok, NDRX_VIEW_COMPFLAGS_LEN, len, line);
                 
@@ -994,14 +994,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         tok2=strtok_r (NULL,";", &saveptr2);
                     }
                     
-                    NDRX_LOG(log_dump, "Compiled offset loaded: %ld, element size: %ld", 
+                    UBF_LOG(log_debug, "Compiled offset loaded: %ld, element size: %ld", 
                             fld->offset, fld->fldsize);
                 }
                 
             }
             else if (is_compiled) 
             {
-                NDRX_LOG(log_error, "Expected compiled data, but not found"
+                UBF_LOG(log_error, "Expected compiled data, but not found"
                     ", line %ld", line);
 
                 ndrx_TPset_error_fmt(TPEINVAL, "Expected compiled data, but not found"
@@ -1010,7 +1010,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
             else
             {
-                NDRX_LOG(log_dump, "No compiled data found at the view file...");
+                UBF_LOG(log_debug, "No compiled data found at the view file...");
             }
             
             /******************************************************************* 
@@ -1028,7 +1028,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     
     if (INFILE!=state)
     {
-        NDRX_LOG(log_error, "Invalid state [%d] -> VIEW not terminated with "
+        UBF_LOG(log_error, "Invalid state [%d] -> VIEW not terminated with "
                 "END, line: %ld", state, line);
         ndrx_TPset_error_fmt(TPEINVAL, "Invalid state [%d] -> VIEW not terminated with "
                 "END, line: %ld", state, line);
@@ -1037,7 +1037,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     
 out:
 
-    NDRX_LOG(log_dump, "%s - return %d", __func__, ret);
+    UBF_LOG(log_debug, "%s - return %d", __func__, ret);
 
     if (NULL!=f)
     {
@@ -1080,14 +1080,14 @@ expublic int ndrx_view_load_directory(char *dir)
     
     if (NULL==env)
     {
-        NDRX_LOG(log_error, "Missing env [%s]", CONF_VIEWFILES);
+        UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWFILES);
         ndrx_TPset_error_fmt(TPESYSTEM, "Missing env [%s]", CONF_VIEWFILES);
         EXFAIL_OUT(ret);
     }
     
     if (strlen(env)+2 > PATH_MAX)
     {
-        NDRX_LOG(log_error, "Invalid [%s] -> too long, max: %d", 
+        UBF_LOG(log_error, "Invalid [%s] -> too long, max: %d", 
                 CONF_VIEWFILES, PATH_MAX-2);
         
         ndrx_TPset_error_fmt(TPESYSTEM, "Invalid [%s] -> too long, max: %d", 
@@ -1107,7 +1107,7 @@ expublic int ndrx_view_load_directory(char *dir)
     if (n < 0)
     {
         int err = errno;
-        NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
+        UBF_LOG(log_error, "Failed to scan q directory [%s]: %s", 
                dir, strerror(err));
        
         ndrx_TPset_error_fmt(TPEOS, "Failed to scan q directory [%s]: %s", 
@@ -1131,17 +1131,17 @@ expublic int ndrx_view_load_directory(char *dir)
         if (NULL!=strstr(dup, fname_chk))
         {
             snprintf(full_fname, sizeof(full_fname), "%s/%s", dir, namelist[n]->d_name);
-            NDRX_LOG(log_debug, "File name [%s] accepted for view object load. "
+            UBF_LOG(log_debug, "File name [%s] accepted for view object load. "
                     "full path: [%s]", 
                     namelist[n]->d_name, full_fname);
             
             if (EXSUCCEED!=ndrx_view_load_file(full_fname, EXTRUE))
             {
-                NDRX_LOG(log_error, "Failed to load view object file: [%s]", full_fname);
+                UBF_LOG(log_error, "Failed to load view object file: [%s]", full_fname);
                 EXFAIL_OUT(ret);
             }
             
-            NDRX_LOG(log_debug, "VIEW [%s] loaded OK.", namelist[n]->d_name);
+            UBF_LOG(log_debug, "VIEW [%s] loaded OK.", namelist[n]->d_name);
             
         }
         
@@ -1180,18 +1180,18 @@ expublic int ndrx_view_load_directories(void)
     
     if (NULL==env)
     {
-        NDRX_LOG(log_error, "Missing env [%s]", CONF_VIEWDIR);
+        UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWDIR);
         ndrx_TPset_error_fmt(TPESYSTEM, "Missing env [%s]", CONF_VIEWDIR);
         EXFAIL_OUT(ret);
     }
     
     NDRX_STRCPY_SAFE(dirs, env);
     
-    NDRX_LOG(log_debug, "Splitting: [%s]", dirs);
+    UBF_LOG(log_debug, "Splitting: [%s]", dirs);
     tok=strtok_r (dirs,":", &saveptr1);
     while( tok != NULL ) 
     {
-        NDRX_LOG(log_debug, "Loading directory [%s]...", tok);
+        UBF_LOG(log_debug, "Loading directory [%s]...", tok);
         if (EXSUCCEED!=ndrx_view_load_directory(tok))
         {
             EXFAIL_OUT(ret);

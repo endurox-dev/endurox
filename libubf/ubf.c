@@ -1806,7 +1806,7 @@ expublic char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param inf
  * @return
  */
-expublic int Bread  (UBFH * p_ub, FILE * inf)
+expublic int Bread (UBFH * p_ub, FILE * inf)
 {
     char *fn = "Bread";
     API_ENTRY;

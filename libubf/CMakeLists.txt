@@ -70,7 +70,11 @@ add_library (ubf SHARED
 		expr_funcs.c
 		utils.c
 		b_readwrite.c
-                ubf_tls.c
+        ubf_tls.c
+        view_null.c
+        view_parser.c
+        view_plot.c
+        view_struct.c
 		${BISON_EXPRPARSER_OUTPUTS} 
 		${FLEX_EXPRSCANNER_OUTPUTS}
 	)
