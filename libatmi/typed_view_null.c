@@ -35,7 +35,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <dirent.h>
-
+#include <math.h>
 #include <ndrstandard.h>
 #include <typed_buf.h>
 #include <ndebug.h>
@@ -69,22 +69,118 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     int ret = EXFALSE;
     int dim_size = f->fldsize/f->count;
     char *fld_offs = view+f->offset+occ*dim_size;
+    short *sv;
+    int *iv;
+    long *lv;
+    float *fv;
+    double *dv;
+    int i, j;
+    int len;
     
     switch(f->typecode_full)
     {
         case BFLD_SHORT:
+            sv = (short *)fld_offs;
+            
+            if (*sv==f->nullval_short)
+            {
+                ret=EXTRUE;
+                goto out;
+            }
             break;
         case BFLD_INT:
+            iv = (int *)fld_offs;
+            
+            if (*iv==f->nullval_int)
+            {
+                ret=EXTRUE;
+                goto out;
+            }
             break;
         case BFLD_LONG:
+            lv = (long *)fld_offs;
+            
+            if (*lv==f->nullval_long)
+            {
+                ret=EXTRUE;
+                goto out;
+            }
             break;
         case BFLD_CHAR:
+            
+            if (*fld_offs == f->nullval_bin[0])
+            {
+                ret=EXTRUE;
+                goto out;
+            }
+            
             break;
         case BFLD_FLOAT:
+            fv = (float *)fld_offs;
+            
+            if (fabs( *fv - f->nullval_float)<FLOAT_EQUAL)
+            {
+                ret=EXTRUE;
+                goto out;
+            }
             break;
         case BFLD_DOUBLE:
+            dv = (double *)fld_offs;
+            
+            if (fabs( *dv - f->nullval_float)<DOUBLE_EQUAL)
+            {
+                ret=EXTRUE;
+                goto out;
+            }
             break;
         case BFLD_STRING:
+            
+            /* nullval_bin EOS is set by CALLOC at the parser.. */
+            len = strlen(fld_offs);
+            
+            if (f->flags & NDRX_VIEW_FLAG_NULLFILLER_P)
+            {
+                /* test the filler */
+                ret=EXTRUE;
+                for (i=0; i<f->nullval_bin_len; i++)
+                {
+                    if (i==f->nullval_bin_len-1 && i<len)
+                    {
+                        /* compare last bits... */
+                        for (j=i; j<len; j++)
+                        {
+                            if (fld_offs[j]!=f->nullval_bin[i])
+                            {
+                                ret=EXFALSE;
+                                goto out;
+                            }
+                        }
+                    }
+                    else if (fld_offs[i]!=f->nullval_bin[i] && 
+                            i<len)
+                    {
+                        ret=EXFALSE;
+                        goto out;
+                    }
+                    else if (i>=len)
+                    {
+                        ret=EXFALSE;
+                        goto out;
+                    }
+                }
+            }
+            else
+            {
+                /* EOS will be set there by calloc... */
+                NDRX_LOG(log_dump, "STR_CMP: data: [%s] vs obj: [%s]",
+                        fld_offs, f->nullval_bin);
+                if (0==strcmp(fld_offs, f->nullval_bin))
+                {
+                    ret=EXTRUE;
+                    goto out;
+                }
+            }
+            
             break;
         case BFLD_CARRAY:
             break;

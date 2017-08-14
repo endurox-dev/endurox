@@ -113,6 +113,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     dtype_str_t *dtyp;
     ndrx_typedview_field_t *fld = NULL;
     int i;
+    char tmp[256];
     API_ENTRY;
     
     NDRX_LOG(log_dump, "%s - enter", __func__);
@@ -862,8 +863,34 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
             
             NDRX_LOG(log_dump, "Got NULL value [%s]", fld->nullval);
+            
             NDRX_DUMP(log_dump, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
+            
+            /* Build pre-compile compare value... */
+            switch (fld->typecode_full)
+            {
+                case BFLD_SHORT:
+                    fld->nullval_short = (short)atoi(fld->nullval_bin);
+                    NDRX_LOG(log_dump, "nullval_short=%hd", fld->nullval_short);
+                    break;
+                case BFLD_INT:
+                    fld->nullval_int = atoi(fld->nullval_bin);
+                    NDRX_LOG(log_dump, "nullval_int=%hd", fld->nullval_int);
+                    break;
+                case BFLD_LONG:
+                    fld->nullval_long = atol(fld->nullval_bin);
+                    NDRX_LOG(log_dump, "nullval_long=%hd", fld->nullval_long);
+                    break;
+                case BFLD_FLOAT:
+                    fld->nullval_float = (float)atof(fld->nullval_bin);
+                    NDRX_LOG(log_dump, "nullval_float=%f", fld->nullval_float);
+                    break;
+                case BFLD_DOUBLE:
+                    fld->nullval_double = atof(fld->nullval_bin);
+                    NDRX_LOG(log_dump, "nullval_double=%lf", fld->nullval_double);
+                    break;
+            }
             
             if (!fld->nullval_quotes)
             {
