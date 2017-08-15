@@ -296,7 +296,7 @@ expublic int ndrx_Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
     if (EXFAIL==(ret=ndrx_Bvnull_int(v, f, occ, cstruct)))
     {
         /* should not get here.. */
-        ndrx_Bset_error_fmt(BEUNIX, "System error occurred.");
+        ndrx_Bset_error_fmt(BBADVIEW, "System error occurred.");
         goto out;
     }
     
@@ -311,7 +311,7 @@ out:
  * @param cstruct c structure
  * @return 
  */
-expublic int ndrx_Fvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
+expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
         char *cstruct)
 {
     int ret = EXSUCCEED;
@@ -467,7 +467,7 @@ out:
  * @param view view name
  * @return  EXSUCCEED/EXFAIL
  */
-expublic int ndrx_Fvselinit(char *cstruct, char *cname, char *view) 
+expublic int ndrx_Bvselinit(char *cstruct, char *cname, char *view) 
 {
     int ret = EXSUCCEED;
     ndrx_typedview_t *v = NULL;
@@ -486,10 +486,10 @@ expublic int ndrx_Fvselinit(char *cstruct, char *cname, char *view)
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==ndrx_Fvselinit_int(v, f, cstruct))
+    if (EXFAIL==ndrx_Bvselinit_int(v, f, cstruct))
     {
         /* should not get here.. */
-        ndrx_Bset_error_fmt(BEUNIX, "System error occurred.");
+        ndrx_Bset_error_fmt(BBADVIEW, "System error occurred.");
         EXFAIL_OUT(ret);
     }
     
@@ -505,19 +505,51 @@ out:
  * @param cstruct memory bloc to initialize
  * @return EXSUCCEED/EXFAIL
  */
-expublic int drx_Fvsinit_int(ndrx_typedview_t *v, char *cstruct)
+expublic int ndrx_Bvsinit_int(ndrx_typedview_t *v, char *cstruct)
 {
     int ret =EXSUCCEED;
+    ndrx_typedview_field_t *f;
     
     /* Go over the c struct  */
+    DL_FOREACH(v->fields, f)
+    {
+        if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, cstruct))
+        {
+            ndrx_Bset_error_fmt(BBADVIEW, "System error occurred.");
+            goto out;
+        }
+    }
     
 out:
     return ret;
 }
 
-expublic int ndrx_Fvsinit(char *cstruct, char *view)
+/**
+ * Initialise full structure by given view
+ * @param cstruct memory addr
+ * @param view view name
+ * @return  EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Bvsinit(char *cstruct, char *view)
 {
+    int ret = EXSUCCEED;
+    ndrx_typedview_t *v = NULL;
     
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=ndrx_Bvsinit_int(v, cstruct))
+    {
+        UBF_LOG(log_error, "ndrx_Bvsinit_int failed!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+                
+    return ret;
 }
 
 

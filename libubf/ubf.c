@@ -1960,6 +1960,38 @@ expublic int Bvselinit(char *cstruct, char *cname, char *view)
         return EXFAIL;
     }
     
-    return ndrx_Fvselinit(cstruct, cname, view);
+    return ndrx_Bvselinit(cstruct, cname, view);
 }
 
+/**
+ * Initialise structure field
+ * @param cstruct memory addr
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvsinit(char *cstruct, char *view)
+{
+    API_ENTRY;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        return EXFAIL;
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Bvsinit(cstruct, view);
+}
+
+/**
+ * Refresh view cache not supported by Enduro/X (and not needed).
+ */
+expublic void Bvrefresh(void)
+{
+    UBF_LOG(log_warn, "Bvrefresh - not supported by Enduro/X");
+}

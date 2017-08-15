@@ -109,6 +109,9 @@ extern "C" {
     
 /* VIEW related */
 #define Fvnull32 Bvnull
+#define Fvselinit32 Bvselinit
+#define Fvsinit32 Bvsinit
+#define Fvrefresh32 Bvrefresh
 /* VIEW related, END */
 
 #ifndef FBFR32

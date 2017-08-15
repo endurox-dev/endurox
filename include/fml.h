@@ -166,6 +166,9 @@ extern "C" {
     
 /* VIEW related */
 #define Fvnull Bvnull
+#define Fvselinit Bvselinit
+#define Fvsinit Bvsinit
+#define Fvrefresh Bvrefresh
 /* VIEW related, END */
     
 /*---------------------------Enums--------------------------------------*/
