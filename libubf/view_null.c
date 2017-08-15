@@ -331,9 +331,8 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     if (f->nullval_none)
     {
         UBF_LOG(log_debug, "field set to NONE, no NULL value...");
-        ret=EXFALSE;
         goto out;
-    }
+    } 
     
     for (occ=0; occ<f->count; occ++)
     {    

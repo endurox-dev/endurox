@@ -95,6 +95,11 @@ extern "C" {
 #define Fbfr Ubfh
 #define FBFR UBFH
     
+#define F_FTOS B_FTOS
+#define F_STOF B_STOF
+#define F_OFF B_OFF
+#define F_BOTH B_BOTH
+    
 #define Fnext_state Bnext_state 
 #define Fnext_state_t Bnext_state_t
     
@@ -169,6 +174,7 @@ extern "C" {
 #define Fvselinit Bvselinit
 #define Fvsinit Bvsinit
 #define Fvrefresh Bvrefresh
+#define Fvopt Bvopt
 /* VIEW related, END */
     
 /*---------------------------Enums--------------------------------------*/

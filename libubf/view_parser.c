@@ -70,8 +70,9 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-exprivate int M_no_ubf_proc = EXFALSE; /* Do not process UBF during loading... */
 /*---------------------------Statics------------------------------------*/
+MUTEX_LOCKDECL(M_view_change_lock);
+exprivate int M_no_ubf_proc = EXFALSE; /* Do not process UBF during loading... */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -633,7 +634,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                          * If set then transfer data from UBF -> to C at and not
                          * vice versa.
                          */
-                        fld->flags|=NDRX_VIEW_FLAG_1WAYMAP_C2UBF_S;
+                        fld->flags|=NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S;
                         break;
                     case '-':
                         UBF_LOG(log_debug, "No flags set...");
@@ -873,9 +874,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
                 else if (0==strcmp(fld->nullval, "-"))
                 {
+                    fld->nullval_bin[0] = EXEOS;
+                    fld->nullval_bin_len = 0;
                     fld->nullval_default = EXTRUE;
                     UBF_LOG(log_debug, "Default NULL value used...");
-                    /*  */
                 }
             }
             
@@ -1214,3 +1216,93 @@ expublic int ndrx_view_load_directories(void)
 out:    
     return ret;
 }
+
+/**
+ * Set view field option
+ * Thread safe.
+ * @param v resolved view object
+ * @param f resolved view field object
+ * @param option B_FTOS/B_STOF/B_OFF/B_BOTH
+ * @return 
+ */
+expublic int ndrx_Bvopt_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, int option)
+{
+    int ret = EXSUCCEED;
+    
+    MUTEX_LOCK_V(M_view_change_lock);
+    UBF_LOG(log_debug, "%s: Current flags: [%lx]", __func__, f->flags);
+    switch (option)
+    {
+        case B_FTOS: 
+            f->flags&=~NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F;
+            f->flags&=~NDRX_VIEW_FLAG_0WAYMAP_N;
+            f->flags|=NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S;
+            break;
+        case B_STOF:
+            f->flags&=~NDRX_VIEW_FLAG_0WAYMAP_N;
+            f->flags&=~NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S;
+            f->flags|=NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F;
+            break;
+        case B_OFF:
+            f->flags&=~NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S;
+            f->flags&=~NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F;
+            f->flags|=NDRX_VIEW_FLAG_0WAYMAP_N;
+            break;
+        case B_BOTH:
+            f->flags&=~NDRX_VIEW_FLAG_0WAYMAP_N;
+            f->flags|=NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S;
+            f->flags|=NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F;
+            break;
+        default:
+            ndrx_Bset_error_fmt(BEINVAL, "Invalid option for %s: %d", 
+                    __func__, option);
+            EXFAIL_OUT(ret);
+            break;
+    }
+    
+    UBF_LOG(log_debug, "%s: new flags: [%lx]", __func__, f->flags);
+    
+out:
+    MUTEX_UNLOCK_V(M_view_change_lock);
+    return ret;
+}
+
+/**
+ * Set view option..
+ * @param cname field name
+ * @param option option
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Bvopt(char *cname, int option, char *view) 
+{
+    int ret = EXFALSE;
+    ndrx_typedview_t *v = NULL;
+    ndrx_typedview_field_t *f = NULL;
+    
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(f = ndrx_view_get_field(v, cname)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "Field [%s] of view [%s] not found!", 
+                cname, v->vname);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==(ret=ndrx_Bvopt_int(v, f, option)))
+    {
+        /* should not get here.. */
+        ndrx_Bset_error_fmt(BBADVIEW, "System error occurred.");
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+
+

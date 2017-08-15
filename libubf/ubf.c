@@ -1964,7 +1964,7 @@ expublic int Bvselinit(char *cstruct, char *cname, char *view)
 }
 
 /**
- * Initialise structure field
+ * Initialize structure field
  * @param cstruct memory addr
  * @param view view name
  * @return EXSUCCEED/EXFAIL
@@ -1995,3 +1995,30 @@ expublic void Bvrefresh(void)
 {
     UBF_LOG(log_warn, "Bvrefresh - not supported by Enduro/X");
 }
+
+/**
+ * Set view option (thread safe)
+ * @param cname field name 
+ * @param option option (see B_FTOS, B_STOF, B_OFF, B_BOTH)
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvopt(char *cname, int option, char *view) 
+{
+    API_ENTRY;
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Bvopt(cname, option, view);
+}
+

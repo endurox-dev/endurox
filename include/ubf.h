@@ -87,6 +87,12 @@ extern "C" {
 #define BNOCNAME            21
 #define BEBADOP             22
 #define BMAXVAL             22 /* max error */
+    
+/* Bvopt options: */
+#define B_FTOS              1 /* flag S, one way UBF->Struct */
+#define B_STOF              2 /* flag F, one way Struct->UBF */
+#define B_OFF               3 /* Zero way mapping, N */
+#define B_BOTH              4 /* both F & S */
 
 /* Configuration: */
 #define CONF_NDRX_UBFMAXFLDS     "NDRX_UBFMAXFLDS"

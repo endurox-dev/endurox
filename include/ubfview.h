@@ -58,7 +58,7 @@ extern "C" {
 #define NDRX_VIEW_FLAG_LEN_INDICATOR_L  0x00000004 /* Include str/carr len ind */
 #define NDRX_VIEW_FLAG_0WAYMAP_N        0x00000008 /* 0 way map (do not copy to ubf) */
 #define NDRX_VIEW_FLAG_NULLFILLER_P     0x00000010 /* last char of NULL value is filler */
-#define NDRX_VIEW_FLAG_1WAYMAP_C2UBF_S  0x00000020 /* One way map only UBF->C */
+#define NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S  0x00000020 /* One way map only UBF->C */
 
     
 #define NDRX_VIEW_FIELD_SEPERATORS        " \t"
@@ -170,6 +170,9 @@ extern NDRX_API int ndrx_Bvselinit(char *cstruct, char *cname, char *view);
 extern NDRX_API int ndrx_Bvsinit_int(ndrx_typedview_t *v, char *cstruct);
 extern NDRX_API int ndrx_Bvsinit(char *cstruct, char *view);
 
+
+extern NDRX_API int ndrx_Bvopt_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, int option);
+extern NDRX_API int ndrx_Bvopt(char *cname, int option, char *view) ;
 
 #ifdef	__cplusplus
 }

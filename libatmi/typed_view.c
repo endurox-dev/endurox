@@ -115,7 +115,7 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
      * the have some working in ULOG and logfile... */
     if (v->ssize < len)
     {
-        NDRX_LOG(log_info, "tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
+        NDRX_LOG(log_warn, "tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
                 len, subtype, v->ssize);
     }
 
