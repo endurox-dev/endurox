@@ -666,8 +666,15 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 NDRX_LOG(log_debug, "Field not present -> Assume NULL value, "
                         "installing...");
                 
-                /* TODO: also set the length if we have ptr to... */
-                
+                /* also set the length if we have ptr to... 
+                 * This will be done by ndrx_Fvselinit_int();
+                 */
+                if (EXSUCCEED!=ndrx_Fvselinit_int(v, f, p_out))
+                {
+                    ndrx_TPset_error_fmt(BBADVIEW, "Failed to init %s.%s",
+                                v->vname, f->cname);
+                    EXFAIL_OUT(ret);
+                }
                 continue;
             }
             else if (BFLD_INT==f->typecode_full)
@@ -676,7 +683,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 
                 if (EXSUCCEED!=Bget(p_ub, fldid, occ, (char *)&int_fix_l, 0L))
                 {
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get field %d", 
+                    ndrx_TPset_error_fmt(BEUNIX, "Failed to get field %d", 
                         fldid);
                     EXFAIL_OUT(ret);
                 }

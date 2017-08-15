@@ -499,3 +499,25 @@ out:
 
 /* Next todo: Fvsinit */
 
+/**
+ * Initialize view to default values.
+ * @param v resolved view object
+ * @param cstruct memory bloc to initialize
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int drx_Fvsinit_int(ndrx_typedview_t *v, char *cstruct)
+{
+    int ret =EXSUCCEED;
+    
+    /* Go over the c struct  */
+    
+out:
+    return ret;
+}
+
+expublic int ndrx_Fvsinit(char *cstruct, char *view)
+{
+    
+}
+
+
