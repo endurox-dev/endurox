@@ -1,7 +1,7 @@
 /* 
 ** NULL Value handling in views
 **
-** @file typed_view_null.c
+** @file view_null.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing

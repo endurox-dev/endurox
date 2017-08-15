@@ -1,25 +1,7 @@
 /* 
 ** VIEW buffer type support - parser
-** Basically all data is going to be stored in FB.
-** For view not using base as 3000. And the UBF field numbers follows the 
-** the field number in the view (1, 2, 3, 4, ...) 
-** Sample file:
-** 
-**# 
-**#type    cname   fbname count flag  size  null
-**#
-**int     in    -   1   -   -   -
-**short    sh    -   2   -   -   -
-**long     lo    -   3   -   -   -
-**char     ch    -   1   -   -   -
-**float    fl    -   1   -   -   -
-**double    db    -   1   -   -   -
-**string    st    -   1   -   15   -
-**carray    ca    -   1   -   15   -
-**END
-** 
 **
-** @file typed_view_parser.c
+** @file view_parser.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
