@@ -227,9 +227,13 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
 {
     int ret=EXSUCCEED;
     
-    /* TODO: */
+    /* TODO: 
+     * - Build new UBF buffer from v. Loop over the v, add data to FB, realloc if needed.
+     * - call the BUPDATE, (BOJOIN - RFU), BJOIN, BCONCAT
+     */
     
 out:
     return ret;
 }
+
 
