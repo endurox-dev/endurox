@@ -134,7 +134,7 @@ expublic int _Bfprint (UBFH *p_ub, FILE * outf)
                 len--;
             }
 
-            temp_len = get_nonprintable_char_tmpspace(p, len);
+            temp_len = ndrx_get_nonprintable_char_tmpspace(p, len);
 
             if (temp_len!=len) /* for carray we need EOS at end! */
             {
@@ -338,7 +338,7 @@ expublic int _Bextread (UBFH * p_ub, FILE *inf)
         if (EXSUCCEED==ret && 
                     (BFLD_STRING == fldtype || BFLD_CARRAY == fldtype) && '='!=flag)
         {
-            if (EXFAIL==normalize_string(value, &len))
+            if (EXFAIL==ndrx_normalize_string(value, &len))
             {
                 ret=EXFAIL;
                 ndrx_Bset_error_fmt(BSYNTAX, "Cannot normalize value on line %d", line);

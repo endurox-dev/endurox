@@ -62,7 +62,7 @@ char HEX_TABLE[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e',
  * @param len - length of the resource.
  * @return count of non printable chracters
  */
-expublic int get_nonprintable_char_tmpspace(char *str, int len)
+expublic int ndrx_get_nonprintable_char_tmpspace(char *str, int len)
 {
     int ret=0;
     int i;
@@ -120,7 +120,7 @@ expublic void ndrx_build_printable_string(char *out, char *in, int in_len)
  * @param c - hex digit 0..f
  * @return -1 (on FAIL)/decimal number
  */
-expublic int get_num_from_hex(char c)
+expublic int ndrx_get_num_from_hex(char c)
 {
     int ret=EXFAIL;
     int i;
@@ -144,7 +144,7 @@ expublic int get_num_from_hex(char c)
  * that printable version
  * @param str - coded string with build_printable_string function
  */
-expublic int normalize_string(char *str, int *out_len)
+expublic int ndrx_normalize_string(char *str, int *out_len)
 {
     int ret=EXSUCCEED;
     int real=0;
@@ -175,8 +175,8 @@ expublic int normalize_string(char *str, int *out_len)
             else
             {
                 /* get high, low parts */
-                high = get_num_from_hex(str[data+1]);
-                low = get_num_from_hex(str[data+2]);
+                high = ndrx_get_num_from_hex(str[data+1]);
+                low = ndrx_get_num_from_hex(str[data+2]);
                 if (EXFAIL==high||EXFAIL==low)
                 {
                     UBF_LOG(log_error, "Invalid hex number 0x%c%c",
