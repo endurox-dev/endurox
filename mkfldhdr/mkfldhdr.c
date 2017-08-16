@@ -339,7 +339,7 @@ exprivate int generate_files(void)
         if (EXSUCCEED==ret)
         {
             /* This will also do the check for duplicates! */
-            ret=_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
+            ret=ndrx_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
                                         M_renderer->put_got_base_line, fname, EXTRUE);
         }
 

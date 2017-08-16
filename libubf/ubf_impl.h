@@ -74,52 +74,52 @@ extern void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff);
 extern void ubf_cache_dump(UBFH *p_ub, char *msg);
 extern int ubf_cache_update(UBFH *p_ub);
 
-extern int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+extern int ndrx_Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * buflen);
-extern int _Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
+extern int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
                                 get_fld_loc_info_t *last_start);
-extern int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
+extern int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len, get_fld_loc_info_t *last_start);
 extern int have_buffer_size(UBFH *p_ub, int add_size, int set_err);
 extern int validate_entry(UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, int mode);
-extern char * _Bfind (UBFH * p_ub, BFLDID bfldid,
+extern char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
                                         BFLDOCC occ, BFLDLEN * len,
                                         char **p_fld);
-extern BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid);
+extern BFLDOCC ndrx_Boccur (UBFH * p_ub, BFLDID bfldid);
 extern int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 
-extern char * _CBfind (UBFH *p_ub, BFLDID bfldid,
+extern char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC occ, BFLDLEN * len, int usrtype, int mode,
                         int extralen);
-extern char * _Bgetalloc (UBFH * p_ub,
+extern char * ndrx_Bgetalloc (UBFH * p_ub,
                             BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
-extern char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
+extern char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                                 BFLDOCC *occ,
                                                 BFLDLEN * len);
-extern char * _Btypcvt (BFLDLEN * to_len, int to_type,
+extern char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
-extern int _Bfprint (UBFH *p_ub, FILE * outf);
+extern int ndrx_Bfprint (UBFH *p_ub, FILE * outf);
 
-extern int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
+extern int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                 BFLDOCC *occ, char *buf, BFLDLEN *len,
                                 char **d_ptr);
-extern int _Bproj (UBFH * p_ub, BFLDID * fldlist,
+extern int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
                                     int mode, int *processed);
 
-extern int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+extern int ndrx_Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                                     BFLDID * fldlist);
-extern int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src);
-extern int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src);
-extern BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len);
-extern BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype);
-extern int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
+extern int ndrx_Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len);
+extern BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype);
+extern int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
                                    BFLDOCC *occ, char *buf, BFLDLEN *len);
-extern int _Bextread (UBFH * p_ub, FILE *inf);
-extern void _Bboolpr (char * tree, FILE *outf);
-extern int _Bread  (UBFH * p_ub, FILE * inf);
-extern int _Bwrite (UBFH *p_ub, FILE * outf);
-extern int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
-extern int _Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+extern int ndrx_Bextread (UBFH * p_ub, FILE *inf);
+extern void ndrx_Bboolpr (char * tree, FILE *outf);
+extern int ndrx_Bread  (UBFH * p_ub, FILE * inf);
+extern int ndrx_Bwrite (UBFH *p_ub, FILE * outf);
+extern int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
 #ifdef	__cplusplus
 }
 #endif

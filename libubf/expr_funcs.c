@@ -1763,7 +1763,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
 /* =========================API FUNCTIONS=====================================*/
 /* ===========================================================================*/
 
-expublic char * _Bboolco (char * expr)
+expublic char * ndrx_Bboolco (char * expr)
 {
 
     char *ret=NULL;
@@ -1816,7 +1816,7 @@ expublic char * _Bboolco (char * expr)
     return ret;
 }
 
-expublic int _Bboolev (UBFH * p_ub, char *tree)
+expublic int ndrx_Bboolev (UBFH * p_ub, char *tree)
 {
     int ret=EXSUCCEED;
     value_block_t v;
@@ -1858,7 +1858,7 @@ expublic int _Bboolev (UBFH * p_ub, char *tree)
  * @param tree
  * @return
  */
-expublic double _Bfloatev (UBFH * p_ub, char *tree)
+expublic double ndrx_Bfloatev (UBFH * p_ub, char *tree)
 {
     double ret=0.0;
     value_block_t v;
@@ -1894,7 +1894,7 @@ expublic double _Bfloatev (UBFH * p_ub, char *tree)
  * is not needed.
  * @param tree
  */
-expublic void _Btreefree (char *tree)
+expublic void ndrx_Btreefree (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
@@ -1929,11 +1929,11 @@ expublic void _Btreefree (char *tree)
         default:
             if (a->l)
             {
-                _Btreefree ((char *)a->l);
+                ndrx_Btreefree ((char *)a->l);
             }
             if (a->r)
             {
-                _Btreefree ((char *)a->r);
+                ndrx_Btreefree ((char *)a->r);
             }
             break;
     }
@@ -1947,7 +1947,7 @@ expublic void _Btreefree (char *tree)
  * @param tree - evaluation tree
  * @param outf - file to print to 
  */
-expublic void _Bboolpr (char * tree, FILE *outf)
+expublic void ndrx_Bboolpr (char * tree, FILE *outf)
 {
     int ret=EXSUCCEED;
 
@@ -2007,12 +2007,12 @@ expublic void _Bboolpr (char * tree, FILE *outf)
             fprintf(outf, "(");
             if (a->l)
             {
-                _Bboolpr ((char *)a->l, outf);
+                ndrx_Bboolpr ((char *)a->l, outf);
             }
             fprintf(outf, "%s", M_subtypes_sign_only[a->sub_type]);
             if (a->r)
             {
-                _Bboolpr ((char *)a->r, outf);
+                ndrx_Bboolpr ((char *)a->r, outf);
             }
             fprintf(outf, ")");
             break;
@@ -2022,7 +2022,7 @@ expublic void _Bboolpr (char * tree, FILE *outf)
 /*
  * Set callback function
  */
-expublic int _Bboolsetcbf (char *funcname, 
+expublic int ndrx_Bboolsetcbf (char *funcname, 
         long (*functionPtr)(UBFH *p_ub, char *funcname))
 {
 

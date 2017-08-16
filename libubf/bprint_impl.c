@@ -66,7 +66,7 @@
  * @param outf - file descriptor to print to
  * @return SUCCEED/FAIL
  */
-expublic int _Bfprint (UBFH *p_ub, FILE * outf)
+expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
 {
     int ret=EXSUCCEED;
    /* static __thread Bnext_state_t state; */
@@ -86,7 +86,7 @@ expublic int _Bfprint (UBFH *p_ub, FILE * outf)
 
     bfldid = BFIRSTFLDID;
 
-    while(1==_Bnext(&G_ubf_tls->bprint_state, 
+    while(1==ndrx_Bnext(&G_ubf_tls->bprint_state, 
             p_ub, &bfldid, &occ, NULL, &len, &p))
     {
         if (NULL!=tmp_buf)
@@ -106,7 +106,7 @@ expublic int _Bfprint (UBFH *p_ub, FILE * outf)
         /* All other data types needs to be converted */
         if (BFLD_STRING!=fldtype && BFLD_CARRAY!=fldtype)
         {
-            cnv_buf=_Btypcvt(&cnv_len, BFLD_STRING, p, fldtype, len);
+            cnv_buf=ndrx_Btypcvt(&cnv_len, BFLD_STRING, p, fldtype, len);
 
             if (NULL==cnv_buf)
             {
@@ -170,9 +170,9 @@ expublic int _Bfprint (UBFH *p_ub, FILE * outf)
 
         /* value is kept in p */
         if (len>0)
-            fprintf(outf, "%s\t%s\n", _Bfname_int(bfldid), p);
+            fprintf(outf, "%s\t%s\n", ndrx_Bfname_int(bfldid), p);
         else
-            fprintf(outf, "%s\t\n", _Bfname_int(bfldid));
+            fprintf(outf, "%s\t\n", ndrx_Bfname_int(bfldid));
 
         if (ferror(outf))
         {
@@ -207,7 +207,7 @@ out:
  * @param inf
  * @return
  */
-expublic int _Bextread (UBFH * p_ub, FILE *inf)
+expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf)
 {
     int ret=EXSUCCEED;
     int line=0;
@@ -309,7 +309,7 @@ expublic int _Bextread (UBFH * p_ub, FILE *inf)
              */
             if (EXSUCCEED==ret)
             {
-                bfldid = _Bfldid_int(fldnm);
+                bfldid = ndrx_Bfldid_int(fldnm);
                 if (BBADFLDID==bfldid)
                 {
                     ndrx_Bset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
@@ -361,7 +361,7 @@ expublic int _Bextread (UBFH * p_ub, FILE *inf)
         else if (EXSUCCEED==ret && '='==flag)
         {
             /* Resolve field to-field id */
-            bfldid_from = _Bfldid_int(value);
+            bfldid_from = ndrx_Bfldid_int(value);
             if (BBADFLDID==bfldid_from)
             {
                 ndrx_Bset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"

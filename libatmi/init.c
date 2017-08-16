@@ -756,6 +756,8 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
     {
         if (first)
         {
+#if 0
+            /* Will load uppon request... */
             NDRX_LOG(log_info, "About to load view files...");
             /* Load the view files (if any defined for the system) */
             if (NULL!=getenv(CONF_VIEWDIR))
@@ -773,6 +775,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             {
                 NDRX_LOG(log_warn, "%s not set, not loading views", CONF_VIEWDIR);
             }
+#endif
             
             /* Init semaphores first. */
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);

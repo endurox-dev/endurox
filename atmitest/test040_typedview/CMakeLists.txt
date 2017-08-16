@@ -54,14 +54,17 @@ add_custom_command(
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
+add_executable (viewunit1 viewunit1.c)
 add_executable (atmisv40 atmisv40.c ../../libatmisrv/rawmain_integra.c t40.h t40.V)
 add_executable (atmiclt40 atmiclt40.c t40.h)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
+target_link_libraries (viewunit1 ubf cgreen m nstd ${RT_LIB} pthread)
 target_link_libraries (atmisv40  atmisrvinteg atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt40 atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 
+set_target_properties(viewunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmisv40 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt40 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

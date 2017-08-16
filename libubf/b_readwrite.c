@@ -63,7 +63,7 @@
  * @param inf - stream to read from 
  * @return SUCCEED/FAIL
  */
-expublic int _Bread  (UBFH * p_ub, FILE * inf)
+expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -163,7 +163,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
  * @param outf - stream to write to 
  * @return SUCCEED/FAIL
  */
-expublic int _Bwrite (UBFH *p_ub, FILE * outf)
+expublic int ndrx_Bwrite (UBFH *p_ub, FILE * outf)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;

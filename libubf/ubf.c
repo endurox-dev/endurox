@@ -140,7 +140,7 @@ expublic int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
         return EXFAIL;
     }
     
-    return _Badd (p_ub, bfldid, buf, len, NULL);
+    return ndrx_Badd (p_ub, bfldid, buf, len, NULL);
 }
 
 /**
@@ -163,7 +163,7 @@ expublic int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return _Bget (p_ub, bfldid, occ, buf, buflen);
+    return ndrx_Bget (p_ub, bfldid, occ, buf, buflen);
 }
 
 /**
@@ -221,7 +221,7 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
                                     __dbg_type, __dbg_dtype->fldname,
                                     hdr->buf_len, hdr->bytes_used,
                                     (hdr->buf_len - hdr->bytes_used),
-                                    _Bfname_int(bfldid), bfldid, bfldid);
+                                    ndrx_Bfname_int(bfldid), bfldid, bfldid);
 #endif
 /*******************************************************************************/
     if (NULL!=(p=get_fld_loc(p_ub, bfldid, occ, &dtype, &last_checked, NULL, &last_occ,
@@ -323,7 +323,7 @@ expublic int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return _Bchg(p_ub, bfldid, occ, buf, len, NULL);
+    return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL);
 }
 
 /**
@@ -335,12 +335,12 @@ expublic BFLDID Bfldid (char *fldnm)
 
     API_ENTRY;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
             return BBADFLDID;
     }
     /* Now we can try to do lookup */
-    p_fld = _fldnmhash_get(fldnm);
+    p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {
@@ -360,21 +360,21 @@ expublic char * Bfname (BFLDID bfldid)
     UBF_field_def_t *p_fld;
     API_ENTRY;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
-    goto out;
+        goto out;
     }
 
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
     if (NULL==p_fld)
     {
-            ndrx_Bset_error(BBADFLD);
-    goto out;
+        ndrx_Bset_error(BBADFLD);
+        goto out;
     }
     else
     {
-            return p_fld->fldname;
+        return p_fld->fldname;
     }
     
 out:
@@ -403,7 +403,7 @@ expublic char * Bfind (UBFH * p_ub, BFLDID bfldid,
         return NULL;
     }
 
-    return _Bfind(p_ub, bfldid, occ, p_len, NULL);
+    return ndrx_Bfind(p_ub, bfldid, occ, p_len, NULL);
 }
 
 
@@ -452,7 +452,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "CBadd: the same types - direct call!");
-        return _Badd(p_ub, bfldid, buf, len, NULL); /* <<<< RETURN!!! */
+        return ndrx_Badd(p_ub, bfldid, buf, len, NULL); /* <<<< RETURN!!! */
     }
     /* if types are not the same then go the long way... */
 
@@ -469,7 +469,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
 
     if (NULL!=cvn_buf)
     {
-        ret=_Badd (p_ub, bfldid, cvn_buf, cvn_len, NULL);
+        ret=ndrx_Badd (p_ub, bfldid, cvn_buf, cvn_len, NULL);
     }
     else
     {
@@ -531,7 +531,7 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "CBchg: the same types - direct call!");
-        return _Bchg(p_ub, bfldid, occ, buf, len, NULL); /* <<<< RETURN!!! */
+        return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL); /* <<<< RETURN!!! */
     }
     /* if types are not the same then go the long way... */
     
@@ -600,7 +600,7 @@ expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
     }
     /* if types are not the same then go the long way... */
     
-    fb_data=_Bfind (p_ub, bfldid, occ, &tmp_len, NULL);
+    fb_data=ndrx_Bfind (p_ub, bfldid, occ, &tmp_len, NULL);
 
     if (NULL!=fb_data)
     {
@@ -762,7 +762,7 @@ BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid)
         return EXFAIL;
     }
 
-    return _Boccur (p_ub, bfldid);
+    return ndrx_Boccur (p_ub, bfldid);
 }
 
 /**
@@ -801,7 +801,7 @@ expublic char * Bboolco (char * expr)
     MUTEX_LOCK;
     {
         char *ret;
-        ret = _Bboolco (expr);
+        ret = ndrx_Bboolco (expr);
         MUTEX_UNLOCK;
         return ret;
     }
@@ -811,7 +811,7 @@ expublic char * Bboolco (char * expr)
 expublic int Bboolev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
-    return _Bboolev (p_ub, tree);
+    return ndrx_Bboolev (p_ub, tree);
 }
 
 /**
@@ -823,13 +823,13 @@ expublic int Bboolev (UBFH * p_ub, char *tree)
 expublic double Bfloatev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
-    return _Bfloatev (p_ub, tree);
+    return ndrx_Bfloatev (p_ub, tree);
 }
 
 expublic void Btreefree (char *tree)
 {
     API_ENTRY;
-    _Btreefree (tree);
+    ndrx_Btreefree (tree);
 }
 
 /**
@@ -885,7 +885,7 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
             memset(&state, 0, sizeof(state));
         }
 
-        return _Bnext(&state, p_ub, bfldid, occ, buf, len, NULL);
+        return ndrx_Bnext(&state, p_ub, bfldid, occ, buf, len, NULL);
     }
 }
 
@@ -909,7 +909,7 @@ expublic int Bproj (UBFH * p_ub, BFLDID * fldlist)
     else
     {
         /* Call the implementation */
-        return _Bproj (p_ub, fldlist, PROJ_MODE_PROJ, &processed);
+        return ndrx_Bproj (p_ub, fldlist, PROJ_MODE_PROJ, &processed);
     }
 }
 
@@ -941,7 +941,7 @@ expublic int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
     else
     {
         /* Call the implementation */
-        return _Bprojcpy (p_ub_dst, p_ub_src, fldlist);
+        return ndrx_Bprojcpy (p_ub_dst, p_ub_src, fldlist);
     }
 }
 
@@ -1014,7 +1014,7 @@ expublic int Bdelall (UBFH *p_ub, BFLDID bfldid)
     else
     {
         /* Call the implementation */
-        ret=_Bproj (p_ub, &bfldid, PROJ_MODE_DELALL, &processed);
+        ret=ndrx_Bproj (p_ub, &bfldid, PROJ_MODE_DELALL, &processed);
     }
 
     if (EXSUCCEED==ret && 0==processed)
@@ -1051,7 +1051,7 @@ expublic int Bdelete (UBFH *p_ub, BFLDID *fldlist)
     else
     {
         /* Call the implementation */
-        ret=_Bproj (p_ub, fldlist, PROJ_MODE_DELETE, &processed);
+        ret=ndrx_Bproj (p_ub, fldlist, PROJ_MODE_DELETE, &processed);
     }
 
     if (EXSUCCEED==ret && 0==processed)
@@ -1334,7 +1334,7 @@ expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     else
     {
         /* Call the implementation */
-        ret=_Bupdate (p_ub_dst, p_ub_src);
+        ret=ndrx_Bupdate (p_ub_dst, p_ub_src);
     }
     UBF_LOG(log_debug, "Return %s %d", fn, ret);
     return ret;
@@ -1368,7 +1368,7 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     else
     {
         /* Call the implementation */
-        ret=_Bconcat (p_ub_dst, p_ub_src);
+        ret=ndrx_Bconcat (p_ub_dst, p_ub_src);
     }
     UBF_LOG(log_debug, "Return %s %d", fn, ret);
     return ret;
@@ -1397,7 +1397,7 @@ expublic char * CBfind (UBFH * p_ub,
     VALIDATE_USER_TYPE(usrtype, return NULL);
 
     /* Call the implementation */
-    return _CBfind (p_ub, bfldid, occ, len, usrtype, CB_MODE_TEMPSPACE, 0);
+    return ndrx_CBfind (p_ub, bfldid, occ, len, usrtype, CB_MODE_TEMPSPACE, 0);
 }
 
 /**
@@ -1429,7 +1429,7 @@ expublic char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
     VALIDATE_USER_TYPE(usrtype, return NULL);
 
     /* Call the implementation */
-    ret=_CBfind (p_ub, bfldid, occ, extralen, usrtype, CB_MODE_ALLOC, 
+    ret=ndrx_CBfind (p_ub, bfldid, occ, extralen, usrtype, CB_MODE_ALLOC, 
                     (NULL!=extralen?*extralen:0));
 
     UBF_LOG(log_debug, "%s: returns ret=%p", fn, ret);
@@ -1469,7 +1469,7 @@ expublic BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
     /* validate user type */
 
     /* Call the implementation */
-    return _Bfindocc (p_ub, bfldid, buf, len);
+    return ndrx_Bfindocc (p_ub, bfldid, buf, len);
 }
 
 /**
@@ -1507,7 +1507,7 @@ expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
     /* validate user type */
 
     /* Call the implementation */
-    return _CBfindocc (p_ub, bfldid, buf, len, usrtype);
+    return ndrx_CBfindocc (p_ub, bfldid, buf, len, usrtype);
 }
 
 /**
@@ -1533,7 +1533,7 @@ expublic char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *ext
     }
 
     /* Call the implementation */
-    return _Bgetalloc (p_ub, bfldid, occ, extralen);
+    return ndrx_Bgetalloc (p_ub, bfldid, occ, extralen);
 }
 
 /**
@@ -1556,7 +1556,7 @@ expublic char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
     }
 
     /* Call the implementation */
-    return _Bfindlast (p_ub, bfldid, occ, len);
+    return ndrx_Bfindlast (p_ub, bfldid, occ, len);
 }
 
 /**
@@ -1579,7 +1579,7 @@ expublic int Bgetlast (UBFH *p_ub, BFLDID bfldid,
     }
 
     /* Call the implementation */
-    return _Bgetlast (p_ub, bfldid, occ, buf, len);
+    return ndrx_Bgetlast (p_ub, bfldid, occ, buf, len);
 }
 
 
@@ -1607,7 +1607,7 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
         return EXFAIL;
     }
 
-    return _Bfprint (p_ub, outf);
+    return ndrx_Bfprint (p_ub, outf);
 }
 
 /**
@@ -1629,7 +1629,7 @@ expublic int Bprint (UBFH *p_ub)
         return EXFAIL;
     }
 
-    return _Bfprint (p_ub, stdout);
+    return ndrx_Bfprint (p_ub, stdout);
 }
 
 /**
@@ -1679,7 +1679,7 @@ expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
     }
     
     /* Call implementation */
-    return _Btypcvt(to_len, to_type, from_buf, from_type, from_len);
+    return ndrx_Btypcvt(to_len, to_type, from_buf, from_type, from_len);
 }
 
 /**
@@ -1706,7 +1706,7 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
         return EXFAIL;
     }
     
-    return _Bextread (p_ub, inf);
+    return ndrx_Bextread (p_ub, inf);
 }
 
 /**
@@ -1732,7 +1732,7 @@ expublic void Bboolpr (char * tree, FILE *outf)
         return;
     }
 
-    _Bboolpr (tree, outf);
+    ndrx_Bboolpr (tree, outf);
     /* put newline at the end. */
     fprintf(outf, "\n");
 }
@@ -1824,7 +1824,7 @@ expublic int Bread (UBFH * p_ub, FILE * inf)
         return EXFAIL;
     }
 
-    return _Bread (p_ub, inf);
+    return ndrx_Bread (p_ub, inf);
 }
 
 /**
@@ -1835,13 +1835,12 @@ expublic int Bread (UBFH * p_ub, FILE * inf)
  */
 expublic int Bwrite (UBFH *p_ub, FILE * outf)
 {
-    char *fn = "_Bwrite";
     API_ENTRY;
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return EXFAIL;
     }
     /* check output file */
@@ -1851,7 +1850,7 @@ expublic int Bwrite (UBFH *p_ub, FILE * outf)
         return EXFAIL;
     }
 
-    return _Bwrite (p_ub, outf);
+    return ndrx_Bwrite (p_ub, outf);
 }
 
 
@@ -1872,7 +1871,7 @@ expublic int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return _Blen (p_ub, bfldid, occ);
+    return ndrx_Blen (p_ub, bfldid, occ);
 }
 
 /**
@@ -1890,7 +1889,7 @@ expublic int Bboolsetcbf (char *funcname,
     MUTEX_LOCK;
     {
         int ret;
-        ret = _Bboolsetcbf (funcname, functionPtr);
+        ret = ndrx_Bboolsetcbf (funcname, functionPtr);
         MUTEX_UNLOCK;
         return ret;
     }

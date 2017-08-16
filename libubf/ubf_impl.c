@@ -926,7 +926,7 @@ out:
  * BFLDID should stay at BADFLID, because will not be overwritten.
  * Also last entry always must at BBADFLDID! This is the rule.
  */
-expublic int _Badd (UBFH *p_ub, BFLDID bfldid, 
+expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, 
                     char *buf, BFLDLEN len,
                     get_fld_loc_info_t *last_start)
 {
@@ -971,7 +971,7 @@ expublic int _Badd (UBFH *p_ub, BFLDID bfldid,
                                     __dbg_vallen,
                                     hdr->buf_len, hdr->bytes_used,
                                     (hdr->buf_len - hdr->bytes_used),
-                                    _Bfname_int(bfldid), bfldid, bfldid);
+                                    ndrx_Bfname_int(bfldid), bfldid, bfldid);
     __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "Adding data", buf, &len);
     UBF_DUMP(log_always, "_Badd data to buffer:", buf, actual_data_size);
 #endif
@@ -1138,7 +1138,7 @@ out:
  * @param
  * @return
  */
-expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len,
                             get_fld_loc_info_t *last_start)
 {
@@ -1203,7 +1203,7 @@ expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                                     __dbg_vallen,
                                     hdr->buf_len, hdr->bytes_used,
                                     (hdr->buf_len - hdr->bytes_used),
-                                    _Bfname_int(bfldid), bfldid, bfldid);
+                                    ndrx_Bfname_int(bfldid), bfldid, bfldid);
     __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "Bchg data", buf, &len);
     UBF_DUMP(log_always, "Bchg data to buffer:", buf, actual_data_size);
 #endif
@@ -1421,7 +1421,7 @@ out:
  * @param bfldid
  * @return
  */
-expublic BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid)
+expublic BFLDOCC ndrx_Boccur (UBFH * p_ub, BFLDID bfldid)
 {
     dtype_str_t *fld_dtype;
     BFLDID *p_last=NULL;
@@ -1519,7 +1519,7 @@ expublic int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param d_ptr - pointer to start of the data (result is similar of Bfind result)
  * @return 0 - not found/ 1 - entry found.
  */
-expublic int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
+expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                 BFLDOCC *occ, char *buf, BFLDLEN *len,
                                 char **d_ptr)
 {
@@ -1671,7 +1671,7 @@ out:
  *                      here.
  * @return NULL on failure/ptr to allocted memory if OK.
  */
-expublic char * _Btypcvt (BFLDLEN * to_len, int to_type,
+expublic char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len)
 {
     char *alloc_buf=NULL;
@@ -1737,7 +1737,7 @@ out:
  * @param occ
  * @return 
  */
-expublic int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
+expublic int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 {
     dtype_str_t *fld_dtype;
     BFLDID *p_last=NULL;

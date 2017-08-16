@@ -249,7 +249,7 @@ exprivate int UBF_field_def_nm_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
  * Get field name entry from hash table.
  * @returns - NULL not found or ptr to UBF_field_def_t
  */
-expublic UBF_field_def_t * _fldnmhash_get(char *key)
+expublic UBF_field_def_t * ndrx_fldnmhash_get(char *key)
 {
     /* Get the linear array key */
     int hash_key = str_hash_from_key_fn(key) % M_hash2_size;
@@ -305,11 +305,11 @@ exprivate int _ubf_load_def_table(void)
 
     _ubf_loader_init();
 
-    strcpy(tmp_flds, flds);
+    NDRX_STRCPY_SAFE(tmp_flds, flds);
     p=strtok(tmp_flds, ",");
     while (NULL!=p && EXSUCCEED==ret)
     {
-        sprintf(tmp, "%s/%s", flddir, p);
+        snprintf(tmp, sizeof(tmp), "%s/%s", flddir, p);
         /* Open field table file */
         if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
         {
@@ -319,7 +319,7 @@ exprivate int _ubf_load_def_table(void)
             goto out;
         }
 
-        ret=_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
+        ret=ndrx_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
 
         /* Close file */
         NDRX_FCLOSE(fp);
@@ -345,7 +345,7 @@ expublic int _ubf_loader_init(void)
  * @param fp
  * @return
  */
-expublic int _ubf_load_def_file(FILE *fp, 
+expublic int ndrx_ubf_load_def_file(FILE *fp, 
                 int (*put_text_line) (char *text), /* callback for putting text line */
                 int (*put_def_line) (UBF_field_def_t *def),  /* callback for writting defintion */
                 int (*put_got_base_line) (char *base), /* callback for base line */
@@ -459,7 +459,7 @@ exprivate int _ubf_load_fld_def(int base,
         /* check dup before adding! */
         if (check_dup)
         {
-            if (NULL!=(reserved=_fldnmhash_get(fld->fldname)))
+            if (NULL!=(reserved=ndrx_fldnmhash_get(fld->fldname)))
             {
                 /* ERROR! ID Already defined! */
                 ndrx_Bset_error_fmt(BFTSYNTAX, "Duplicate name [%s] already taken by "
@@ -518,7 +518,7 @@ static unsigned int str_hash_from_key_fn( void *k )
 /**
  * Check that string keys are qual
  */
-static int str_keys_equal_fn ( void *key1, void *key2 )
+static int str_keys_equal_fn( void *key1, void *key2 )
 {
     return (0==strcmp(key1, key2)?1:0);
 }
@@ -527,7 +527,7 @@ static int str_keys_equal_fn ( void *key1, void *key2 )
  * Checks and reads type table (.fd files)
  * @return SUCCEED/FAIL
  */
-expublic int prepare_type_tables(void)
+expublic int ndrx_prepare_type_tables(void)
 {
     MUTEX_LOCK;
     {
@@ -562,19 +562,20 @@ expublic int prepare_type_tables(void)
 /**
  * Internal version of Bfname. Does not set error.
  */
-expublic char * _Bfname_int (BFLDID bfldid)
+expublic char * ndrx_Bfname_int (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
     UBF_TLS_ENTRY;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
         if (BFTOPEN==Berror || BFTSYNTAX==Berror)
         {
             ndrx_Bunset_error();
         }
 
-        sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);
+        snprintf(G_ubf_tls->bfname_buf, sizeof(G_ubf_tls->bfname_buf), 
+                "((BFLDID32)%d)", bfldid);
 
         return G_ubf_tls->bfname_buf;
     }
@@ -583,7 +584,8 @@ expublic char * _Bfname_int (BFLDID bfldid)
     p_fld = _bfldidhash_get(bfldid);
     if (NULL==p_fld)
     {
-        sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);
+        snprintf(G_ubf_tls->bfname_buf, sizeof(G_ubf_tls->bfname_buf),
+                "((BFLDID32)%d)", bfldid);
         return G_ubf_tls->bfname_buf;
     }
     else
@@ -610,12 +612,12 @@ exprivate BFLDID get_from_bfldidstr(char *fldnm)
  * Return BFLDID from name! (internal version, parses ((BFLDID)%d)
  * Does not reports errors.
  */
-expublic BFLDID _Bfldid_int (char *fldnm)
+expublic BFLDID ndrx_Bfldid_int (char *fldnm)
 {
     UBF_field_def_t *p_fld=NULL;
     BFLDID bfldid;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
         /* extending support for BFLDID syntax for read. */
         if (0==strncmp(fldnm, "((BFLDID32)", 10))
@@ -630,7 +632,7 @@ expublic BFLDID _Bfldid_int (char *fldnm)
     }
     
     /* Now we can try to do lookup */
-    p_fld = _fldnmhash_get(fldnm);
+    p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {

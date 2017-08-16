@@ -64,7 +64,7 @@
  * @param p_ub_src
  * @return
  */
-expublic int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
+expublic int ndrx_Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub_dst;
@@ -80,15 +80,15 @@ expublic int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     chg_state.last_checked = &hdr->bfldid;
             
     while(EXSUCCEED==ret &&
-        1==(nxt_stat=_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
+        1==(nxt_stat=ndrx_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
          * Update the occurrence in target buffer.
          */
-        if (EXSUCCEED!=(ret=_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state)))
+        if (EXSUCCEED!=(ret=ndrx_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]", 
-                                _Bfname_int(bfldid), occ);
+                                ndrx_Bfname_int(bfldid), occ);
         }
     }
 
@@ -104,7 +104,7 @@ expublic int _Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
  * @param p_ub_src
  * @return
  */
-expublic int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
+expublic int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub_dst;
@@ -123,15 +123,15 @@ expublic int _Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     memset(&state, 0, sizeof(state));
 
     while(EXSUCCEED==ret &&
-               1==(nxt_stat=_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
+               1==(nxt_stat=ndrx_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
          * Add new occurrances to the buffer.
          */
-        if (EXSUCCEED!=(ret=_Badd(p_ub_dst, bfldid, p_fld, len, &add_state)))
+        if (EXSUCCEED!=(ret=ndrx_Badd(p_ub_dst, bfldid, p_fld, len, &add_state)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]",
-                                                _Bfname_int(bfldid), occ);
+                                                ndrx_Bfname_int(bfldid), occ);
         }
     }
 

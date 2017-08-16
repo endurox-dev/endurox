@@ -65,7 +65,7 @@
  * @param extralen - extra size to allocate/data len returned
  * @return
  */
-expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
+expublic char * ndrx_Bgetalloc (UBFH * p_ub, BFLDID bfldid,
                             BFLDOCC occ, BFLDLEN *extralen)
 {
     int data_type = (bfldid>>EFFECTIVE_BITS);
@@ -84,7 +84,7 @@ expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
     #endif
 /*******************************************************************************/
 
-    fb_data=_Bfind (p_ub, bfldid, occ, &tmp_len, &p_fld);
+    fb_data=ndrx_Bfind (p_ub, bfldid, occ, &tmp_len, &p_fld);
 
     if (NULL!=fb_data)
     {
@@ -144,7 +144,7 @@ expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
  * @param buflen
  * @return
  */
-expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int ndrx_Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * len)
 {
     int ret=EXSUCCEED;
@@ -213,7 +213,7 @@ expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
  * @param buflen
  * @return
  */
-expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
+expublic int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len)
 {
     int ret=EXSUCCEED;

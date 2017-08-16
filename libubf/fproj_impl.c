@@ -97,7 +97,7 @@ int is_fld_pres (BFLDID * array, BFLDID left, BFLDID right, BFLDID number)
     }
     
     UBF_LOG(log_debug, "is_fld_pres: [%p/%s] in%s list",
-                                        number, _Bfname_int(number), bsearch?"":" NOT");
+                                        number, ndrx_Bfname_int(number), bsearch?"":" NOT");
 
     return bsearch;
 }
@@ -228,7 +228,7 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
  * @param processed - ptr to int, which will return the count of chunks processed
  * @return SUCCEED/FAIL
  */
-expublic int _Bproj (UBFH * p_ub, BFLDID * fldlist,
+expublic int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
                                     int mode, int *processed)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -559,7 +559,7 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
  *                  then buffer is reinitialized.
  * @return SUCCEED/FAIL
  */
-expublic int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+expublic int ndrx_Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                                     BFLDID * fldlist)
 {
     int ret=EXSUCCEED;
