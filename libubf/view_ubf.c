@@ -215,3 +215,21 @@ out:
     return ret;
 }
 
+/**
+ * Copy C struct data to UBF buffer
+ * @param p_ub UBF buffer
+ * @param v resolved view
+ * @param cstruct ptr c struct to update
+ * @param mode BUPDATE, BOJOIN, BJOIN, BCONCAT
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int mode)
+{
+    int ret=EXSUCCEED;
+    
+    /* TODO: */
+    
+out:
+    return ret;
+}
+
