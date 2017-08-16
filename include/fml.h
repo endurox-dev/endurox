@@ -175,6 +175,7 @@ extern "C" {
 #define Fvsinit Bvsinit
 #define Fvrefresh Bvrefresh
 #define Fvopt Bvopt
+#define Fvftos Bvftos
 /* VIEW related, END */
     
 /*---------------------------Enums--------------------------------------*/

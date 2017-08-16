@@ -56,3 +56,162 @@
 /*
  * TODO: Bvftos, Bvstof
  */
+
+/**
+ * Fill the C structure with UBF data
+ * @param p_ub ptr to UBF buffer
+ * @param v resolved view
+ * @param cstruct ptr to memory block where view instance lives
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
+{
+    int ret = EXSUCCEED;
+    int occ;
+    int dim_size;
+    char *fld_offs;
+    BFLDLEN len;
+    short *C_count;
+    short C_count_stor;
+    unsigned short *L_length;
+    unsigned short L_length_stor;
+    long l;
+    
+
+    ndrx_typedview_field_t *f;
+    
+    UBF_LOG(log_info, "Into %s", __func__);
+    
+    /* Go over the c struct  */
+    DL_FOREACH(v->fields, f)
+    {
+        if (f->flags & NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S)
+        {
+            for (occ=0; occ<f->count; occ++)
+            {
+                fld_offs = cstruct+f->offset+occ*dim_size;
+                dim_size = f->fldsize/f->count;
+                
+                
+                if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+                {
+                    C_count = (short *)(cstruct+f->count_fld_offset);
+                }
+                else
+                {
+                    C_count = &C_count_stor;
+                }
+                
+                if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+                {
+                    L_length = (unsigned short *)(cstruct+f->length_fld_offset+
+                            occ*sizeof(unsigned short));
+                }
+                else
+                {
+                    L_length = &L_length_stor;
+                }
+                
+                *C_count = 0;
+                *L_length = 0;
+            
+                
+                len = dim_size;
+
+                if (
+                        (
+                            BFLD_INT==f->typecode_full && 
+                            EXSUCCEED!=CBget(p_ub, f->ubfid, occ, (char *)&l, 0L, BFLD_LONG)
+                         )
+                         ||
+
+                        (
+                            BFLD_INT!=f->typecode_full && 
+                            EXSUCCEED!=CBget(p_ub, f->ubfid, occ, fld_offs, &len, f->typecode_full)
+                        )
+                    )
+                {
+                    UBF_LOG(log_info, "Failed to get %d field: %s",
+                            f->ubfid, Bstrerror(Berror));
+
+                    if (BNOTPRES!=Berror)
+                    {
+                        UBF_LOG(log_error, "Error getting field: %s", 
+                                Bstrerror(Berror));
+                        /* error already set */
+                        EXFAIL_OUT(ret);
+
+                    }
+                    else
+                    {
+                        /* unset UBF error */
+                        ndrx_Bunset_error();
+
+                        /* Setup NULL at given occ*/
+                        if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, cstruct))
+                        {
+                            ndrx_Bset_error_fmt(BBADVIEW, "Failed to set NULL to %s.%s",
+                                    v->vname, f->cname);
+                            EXFAIL_OUT(ret);
+                        }
+
+                    }
+                }
+                else
+                {
+                    if (BFLD_INT==f->typecode_full)
+                    {
+                        int *vi = (int *)fld_offs;
+                        *vi = (int)l;
+                    }
+                    
+                    (*(C_count))++;
+                    
+                    if (BFLD_STRING==f->typecode_full || 
+                            BFLD_CARRAY==f->typecode_full)
+                    {
+                        *L_length = (unsigned short)len;
+                    }
+                    else
+                    {
+                        /* not used for others.. */
+                        *L_length = 0;
+                    }
+                }
+            } /* for occ */
+        } /* if UBF->C flag */
+    } /* for fields in v */
+    
+out:
+    return ret;
+}
+
+/**
+ * Fill the C struct from UBF
+ * @param p_ub UBF buffer to fill
+ * @param cstruct memptr of the struct
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Bvftos(UBFH *p_ub, char *cstruct, char *view)
+{
+    int ret = EXSUCCEED;
+    ndrx_typedview_t *v = NULL;
+    /* Resolve view */
+    
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=ndrx_Bvftos_int(p_ub, v, cstruct))
+    {
+        UBF_LOG(log_error, "ndrx_Bvftos_int failed");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+

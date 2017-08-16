@@ -64,6 +64,7 @@ extern "C" {
 #define NDRX_VIEW_FIELD_SEPERATORS        " \t"
 #define NDRX_VIEW_TOKEN_START            "VIEW"
 #define NDRX_VIEW_TOKEN_END              "END"
+#define NDRX_VIEW_EMPTY_PARAM            "-"
 #define NDRX_VIEW_FLD_SIZE_MAX           65535
 #define NDRX_VIEW_FLD_COUNT_MAX          65535
 /* will use the same compat base */
@@ -173,6 +174,9 @@ extern NDRX_API int ndrx_Bvsinit(char *cstruct, char *view);
 
 extern NDRX_API int ndrx_Bvopt_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, int option);
 extern NDRX_API int ndrx_Bvopt(char *cname, int option, char *view) ;
+
+extern NDRX_API int ndrx_Bvftos(UBFH *p_ub, char *cstruct, char *view);
+extern NDRX_API int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct);
 
 #ifdef	__cplusplus
 }

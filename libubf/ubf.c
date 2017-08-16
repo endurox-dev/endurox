@@ -2003,7 +2003,7 @@ expublic void Bvrefresh(void)
  * @param view view name
  * @return EXSUCCEED/EXFAIL
  */
-expublic int Bvopt(char *cname, int option, char *view) 
+expublic int Bvopt(char *cname, int option, char *view)
 {
     API_ENTRY;
     
@@ -2021,4 +2021,37 @@ expublic int Bvopt(char *cname, int option, char *view)
     
     return ndrx_Bvopt(cname, option, view);
 }
+
+/**
+ * Convert UBF buffer to C struct
+ * @param p_ub UBF buffer
+ * @param cstruct ptr to mem block
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvftos(UBFH *p_ub, char *cstruct, char *view)
+{
+    API_ENTRY;
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        return EXFAIL;
+    }
+    
+    if (NULL==p_ub)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_ub is NULL!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Bvftos(p_ub, cstruct, view);
+}
+
 

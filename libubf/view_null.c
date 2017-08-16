@@ -315,7 +315,7 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
         char *cstruct)
 {
     int ret = EXSUCCEED;
-    int dim_size = f->fldsize/f->count;
+    int dim_size;
     char *fld_offs;
     short *sv;
     int *iv;
@@ -524,7 +524,7 @@ out:
 }
 
 /**
- * Initialise full structure by given view
+ * Initialize full structure by given view
  * @param cstruct memory addr
  * @param view view name
  * @return  EXSUCCEED/EXFAIL

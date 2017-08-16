@@ -594,6 +594,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                          * C->UBF
                          */
                         fld->flags|=NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F;
+                        
+                        if (0==strcmp(fld->fbname, NDRX_VIEW_EMPTY_PARAM))
+                        {
+                            ndrx_Bset_error_fmt(BVFSYNTAX, "FB name not set, but "
+                                    "F flag found, line: %ld", line);
+                            EXFAIL_OUT(ret);
+                        }
+                        
                         break;
                     case 'L':
                         /* Add length indicator
@@ -604,6 +612,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     case 'N':
                         /* Zero way mapping */
                         fld->flags|=NDRX_VIEW_FLAG_0WAYMAP_N;
+                        
                         break;
                     case 'P':
                         /* Interpret the NULL value's last char as the filler
@@ -617,6 +626,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                          * vice versa.
                          */
                         fld->flags|=NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S;
+                        
+                        if (0==strcmp(fld->fbname, NDRX_VIEW_EMPTY_PARAM))
+                        {
+                            ndrx_Bset_error_fmt(BVFSYNTAX, "FB name not set, but "
+                                    "S flag found, line: %ld", line);
+                            EXFAIL_OUT(ret);
+                        }
+                        
                         break;
                     case '-':
                         UBF_LOG(log_debug, "No flags set...");
@@ -633,6 +650,16 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         break;
                 }
             }/* for tok[i] */
+            
+            if ((fld->flags & NDRX_VIEW_FLAG_1WAYMAP_C2UBF_F || 
+                    fld->flags & NDRX_VIEW_FLAG_1WAYMAP_UBF2C_S) && 
+                    fld->flags & NDRX_VIEW_FLAG_0WAYMAP_N)
+            {
+                ndrx_Bset_error_fmt(BVFSYNTAX, "F & S flags are not compatible with N flag, "
+                                "line: %ld", 
+                                tok[i], line);
+                EXFAIL_OUT(ret);
+            }
             
             /* Add flags to checksum */
             ndrx_view_cksum_update(v, fld->flagsstr, strlen(fld->flagsstr));

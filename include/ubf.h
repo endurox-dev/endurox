@@ -196,7 +196,8 @@ extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
 extern NDRX_API int Bvselinit(char *cstruct, char *cname, char *view);
 extern NDRX_API int Bvsinit(char *cstruct, char *view);
 extern NDRX_API void Bvrefresh(void);
-
+extern NDRX_API int Bvopt(char *cname, int option, char *view);
+extern NDRX_API int Bvftos(UBFH *p_ub, char *cstruct, char *view);
 /* VIEW related, END */
 
 /* ATMI library TLS: */
