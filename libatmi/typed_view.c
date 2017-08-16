@@ -83,8 +83,16 @@
 expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
 {
     char *ret=NULL;
+    ndrx_typedview_t *v;
     
-    ndrx_typedview_t *v = ndrx_view_get_view(subtype);
+    if (EXSUCCEED!=ndrx_view_init())
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to load view files!",  __func__);
+        ret = NULL;
+        goto out;
+    }
+            
+    v = ndrx_view_get_view(subtype);
     
     if (NULL==v)
     {
@@ -210,6 +218,10 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     long int_fix_l;
     
     int occ;
+    
+    /* WARNING!!! views must be loaded already... 
+     * otherwise not way to allocate the VIEW buffer...
+     */
     
     /* get the view */
     
@@ -448,6 +460,12 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     int occ;
     
     NDRX_LOG(log_debug, "Entering %s", __func__);
+    
+    if (EXSUCCEED!=ndrx_view_init())
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to load view files!",  __func__);
+        EXFAIL_OUT(ret);
+    }
     
     /* test the UBF buffer: */
     if (EXFAIL==(rcv_buf_size=Bused(p_ub)))

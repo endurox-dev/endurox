@@ -762,7 +762,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             /* Load the view files (if any defined for the system) */
             if (NULL!=getenv(CONF_VIEWDIR))
             {
-                if (EXSUCCEED!=ndrx_view_load_directories())
+                if (EXSUCCEED!=ndrx_view_chkload_directories())
                 {
                     MUTEX_UNLOCK;
                     

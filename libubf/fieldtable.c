@@ -72,9 +72,10 @@
  * 
  * This ensures that our hash tables can correctly get data out (no duplicates!!)
  */
-UBF_field_def_t ** M_bfldidhash2 = NULL; /* FLD ID hash */
-UBF_field_def_t ** M_fldnmhash2 = NULL; /* FLD NM hash */
-int M_hash2_size = 16000; /* Default size for Hash2 */
+exprivate  UBF_field_def_t ** M_bfldidhash2 = NULL; /* FLD ID hash */
+exprivate  UBF_field_def_t ** M_fldnmhash2 = NULL; /* FLD NM hash */
+exprivate  volatile int M_field_def_loaded = EXFALSE;       /* IS UBF loaded? */
+exprivate  int M_hash2_size = 16000; /* Default size for Hash2 */
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate void _bfldidhash_add(UBF_field_def_t *p_fld);
@@ -328,7 +329,11 @@ exprivate int _ubf_load_def_table(void)
 
 out:
 
-	return ret;
+    if (EXSUCCEED==ret)
+    {
+        M_field_def_loaded = EXTRUE;
+    }
+    return ret;
 }
 
 /**
@@ -529,33 +534,27 @@ static int str_keys_equal_fn( void *key1, void *key2 )
  */
 expublic int ndrx_prepare_type_tables(void)
 {
-    MUTEX_LOCK;
+    /* If not loaded. */
+    if (!M_field_def_loaded)
     {
-    int ret=EXSUCCEED;
-#if FIELD_TABLE_NO_RETRY
-    static int first=1;
-    static int status;
-    
-    if (NULL==M_bfldidhash && first)
-    {
-        ret=_ubf_load_def_table();
-        first=0;
-        status=ret;
+        /* Lock */
+        MUTEX_LOCK;
+        {
+            int ret=EXSUCCEED;
+
+            /* if still not loaded by concurrent thread, then load */
+            if (!M_field_def_loaded)
+            {
+                ret=_ubf_load_def_table();
+            }
+
+            MUTEX_UNLOCK;
+            return ret;
+        }
     }
     else
     {
-        /* return old error code */
-        ret=status;
-    }
-#else
-    if (NULL==M_bfldidhash2 || NULL==M_fldnmhash2)
-    {
-        ret=_ubf_load_def_table();
-    }
-#endif
-
-    MUTEX_UNLOCK;
-    return ret;
+        return EXSUCCEED;
     }
 }
 

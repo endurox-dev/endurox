@@ -54,7 +54,11 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 MUTEX_LOCKDECL(M_view_change_lock);
+MUTEX_LOCKDECL(M_views_init_lock);
 exprivate int M_no_ubf_proc = EXFALSE; /* Do not process UBF during loading... */
+
+exprivate  volatile int M_views_loaded = EXFALSE; /* Is views loaded? */
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -1195,11 +1199,12 @@ out:
 expublic int ndrx_view_load_directories(void)
 {
     int ret = EXSUCCEED;
+    
     char *tok;
     char *saveptr1;
-    char *env = getenv(CONF_VIEWDIR);
+    char *env;
     char dirs[PATH_MAX+1];
-    
+    env = getenv(CONF_VIEWDIR);
     if (NULL==env)
     {
         UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWDIR);
@@ -1222,7 +1227,50 @@ expublic int ndrx_view_load_directories(void)
         tok=strtok_r (NULL,":", &saveptr1);
     }
     
-out:    
+    
+out:
+                        
+    if (EXSUCCEED==ret)
+    {
+        M_views_loaded = EXTRUE;
+        UBF_LOG(log_info, "Views loaded OK");
+    }
+
+    return ret;
+}
+
+/**
+ * init the views if needed.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_view_init(void)
+{
+    int ret = EXSUCCEED;
+    
+    if (!M_views_loaded)
+    {
+        MUTEX_LOCK_V(M_views_init_lock);
+        
+        /* Check so that concurrent process did not load the tables already... */
+        if (!M_views_loaded)
+        {
+            if (NULL==getenv(CONF_VIEWDIR) || NULL==getenv(CONF_VIEWFILES))
+            {
+                UBF_LOG(log_warn, "%s or %s not defined -> Not loading view files...", 
+                        CONF_VIEWDIR, CONF_VIEWFILES);
+                M_views_loaded=EXTRUE; /* Assume init done..., just not views will be found */
+            }
+            else
+            {
+                ret = ndrx_view_load_directories();
+            }
+        }
+        
+        MUTEX_UNLOCK_V(M_views_init_lock);
+        
+    }
+    
+out:
     return ret;
 }
 

@@ -31,7 +31,7 @@ END
 VIEW MYVIEW2
 #type    cname      fbname              count   flag    size    null
 short    tshort1    -                   1       -       -       2000
-long     tlong1     -                   1       S       -       0
+long     tlong1     -                   1       -       -       0
 char     tchar1     -                   1       -       -       '\0'
 float    tfloat1    -                   1       -       -       1.1
 double   tdouble1   -                   1       -       -       0.0

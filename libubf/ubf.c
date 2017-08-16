@@ -78,6 +78,8 @@
                 Y;\
             }
 
+#define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -1906,27 +1908,33 @@ expublic int Bboolsetcbf (char *funcname,
  */
 expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
 {
+    int ret = EXSUCCEED;
     API_ENTRY;
+    VIEW_ENTRY;
     
     if (NULL==cstruct)
     {
         ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==cname || EXEOS==cname[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==view || EXEOS==view[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
-    return ndrx_Bvnull(cstruct, cname, occ, view);
+    ret=ndrx_Bvnull(cstruct, cname, occ, view);
+    
+out:
+
+    return ret;
 }
 
 /**
@@ -1939,27 +1947,32 @@ expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
  */
 expublic int Bvselinit(char *cstruct, char *cname, char *view)
 {
+    int ret = EXSUCCEED;
     API_ENTRY;
+    VIEW_ENTRY;
     
     if (NULL==cstruct)
     {
         ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==cname || EXEOS==cname[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==view || EXEOS==view[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
-    return ndrx_Bvselinit(cstruct, cname, view);
+    ret=ndrx_Bvselinit(cstruct, cname, view);
+    
+out:
+    return ret;
 }
 
 /**
@@ -1970,21 +1983,25 @@ expublic int Bvselinit(char *cstruct, char *cname, char *view)
  */
 expublic int Bvsinit(char *cstruct, char *view)
 {
+    int ret = EXSUCCEED;
     API_ENTRY;
+    VIEW_ENTRY;
     
     if (NULL==cstruct)
     {
         ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==view || EXEOS==view[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
-    return ndrx_Bvsinit(cstruct, view);
+    ret=ndrx_Bvsinit(cstruct, view);
+out:
+    return ret;
 }
 
 /**
@@ -2004,21 +2021,26 @@ expublic void Bvrefresh(void)
  */
 expublic int Bvopt(char *cname, int option, char *view)
 {
+    int ret = EXSUCCEED;
     API_ENTRY;
+    VIEW_ENTRY;
     
     if (NULL==view || EXEOS==view[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==cname || EXEOS==cname[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
-    return ndrx_Bvopt(cname, option, view);
+    ret=ndrx_Bvopt(cname, option, view);
+    
+out:
+    return ret;
 }
 
 /**
@@ -2030,27 +2052,32 @@ expublic int Bvopt(char *cname, int option, char *view)
  */
 expublic int Bvftos(UBFH *p_ub, char *cstruct, char *view)
 {
+    int ret = EXSUCCEED;
     API_ENTRY;
+    VIEW_ENTRY;
     
     if (NULL==view || EXEOS==view[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==cstruct)
     {
         ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==p_ub)
     {
         ndrx_Bset_error_msg(BEINVAL, "p_ub is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
-    return ndrx_Bvftos(p_ub, cstruct, view);
+    ret=ndrx_Bvftos(p_ub, cstruct, view);
+    
+out:
+    return ret;
 }
 
 /**
@@ -2063,27 +2090,30 @@ expublic int Bvftos(UBFH *p_ub, char *cstruct, char *view)
  */
 expublic int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view)
 {
+    int ret = EXSUCCEED;
     API_ENTRY;
+    VIEW_ENTRY;
     
     if (NULL==view || EXEOS==view[0])
     {
         ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==cstruct)
     {
         ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==p_ub)
     {
         ndrx_Bset_error_msg(BEINVAL, "p_ub is NULL!");
-        return EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
-    return ndrx_Bvstof(p_ub, cstruct, mode, view);
+out:
+    ret=ndrx_Bvstof(p_ub, cstruct, mode, view);
 }
 /**
  * Join two buffers, update only existing fields in dest, remove missing fields
