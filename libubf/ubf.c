@@ -2054,4 +2054,61 @@ expublic int Bvftos(UBFH *p_ub, char *cstruct, char *view)
     return ndrx_Bvftos(p_ub, cstruct, view);
 }
 
+/**
+ * Copy data from structure to UBF
+ * @param p_ub ptr to UBF buffer
+ * @param cstruct ptr to memory block
+ * @param mode BUPDATE, BOJOIN, BJOIN, BCONCAT
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view)
+{
+    API_ENTRY;
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        return EXFAIL;
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        return EXFAIL;
+    }
+    
+    if (NULL==p_ub)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_ub is NULL!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Bvstof(p_ub, cstruct, mode, view);
+}
+/**
+ * Join two buffers, update only existing fields in dest, remove missing fields
+ * @param dest
+ * @param src
+ * @return EXFAIL
+ */
+expublic int Bjoin(UBFH *dest, UBFH *src)
+{
+    API_ENTRY;
+    ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
+    return EXFAIL;
+}
+
+/**
+ * Outer join two buffers, update existing, do not remove non-existing fields
+ * @param dest
+ * @param src
+ * @return 
+ */
+expublic int Bojoin(UBFH *dest, UBFH *src)
+{
+    API_ENTRY;
+    ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
+    return EXFAIL;
+}
 

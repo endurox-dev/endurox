@@ -175,8 +175,11 @@ extern NDRX_API int ndrx_Bvsinit(char *cstruct, char *view);
 extern NDRX_API int ndrx_Bvopt_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f, int option);
 extern NDRX_API int ndrx_Bvopt(char *cname, int option, char *view) ;
 
-extern NDRX_API int ndrx_Bvftos(UBFH *p_ub, char *cstruct, char *view);
 extern NDRX_API int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct);
+extern NDRX_API int ndrx_Bvftos(UBFH *p_ub, char *cstruct, char *view);
+
+extern NDRX_API int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int mode);
+extern NDRX_API int ndrx_Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
 
 #ifdef	__cplusplus
 }

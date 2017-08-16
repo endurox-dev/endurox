@@ -46,6 +46,7 @@ extern "C" {
 #define UBF_EXTENDED
 #define MAXUBFLEN	0xffffffff		/* Maximum UBFH length */
 #define BF_LENGTH        32
+
 /* UFB field types, suggest the c data types */
     
 #define BFLD_MIN        0
@@ -94,6 +95,11 @@ extern "C" {
 #define B_OFF               3 /* Zero way mapping, N */
 #define B_BOTH              4 /* both F & S */
 
+#define BUPDATE             1   /* Update buffer */
+#define BOJOIN              2   /* outer joing buffers, RFU */
+#define BJOIN               3   /* join buffers, RFU */
+#define BCONCAT             4   /* contact buffers */
+    
 /* Configuration: */
 #define CONF_NDRX_UBFMAXFLDS     "NDRX_UBFMAXFLDS"
 
@@ -191,6 +197,9 @@ extern NDRX_API BFLDOCC Bunindex (UBFH * p_ub);
 extern NDRX_API long Bidxused (UBFH * p_ub);
 extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
+extern NDRX_API int Bjoin(UBFH *dest, UBFH *src);
+extern NDRX_API int Bojoin(UBFH *dest, UBFH *src);
+
 /* VIEW related */
 extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
 extern NDRX_API int Bvselinit(char *cstruct, char *cname, char *view);
@@ -198,6 +207,7 @@ extern NDRX_API int Bvsinit(char *cstruct, char *view);
 extern NDRX_API void Bvrefresh(void);
 extern NDRX_API int Bvopt(char *cname, int option, char *view);
 extern NDRX_API int Bvftos(UBFH *p_ub, char *cstruct, char *view);
+extern NDRX_API int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
 /* VIEW related, END */
 
 /* ATMI library TLS: */

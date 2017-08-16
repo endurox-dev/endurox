@@ -137,6 +137,7 @@ typedef char UBF_CHAR;
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API void ndrx_build_printable_string(char *out, char *in, int in_len);
 
+
 #ifdef	__cplusplus
 }
 #endif

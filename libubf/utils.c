@@ -222,3 +222,21 @@ expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
     }
 }
 
+
+/**
+ * Dump the UBF buffer to log file, UBF logger
+ * @lev - debug level
+ * @title - debug title
+ * @p_ub - pointer to UBF buffer
+ */
+expublic void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p_ub)
+{
+    ndrx_debug_t * dbg = debug_get_ubf_ptr();
+    if (dbg->level>=lev)
+    {
+        UBF_LOG(lev, "%s", title);
+        Bfprint(p_ub, dbg->dbg_f_ptr);
+    }
+}
+
+

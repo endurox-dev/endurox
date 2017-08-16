@@ -114,6 +114,7 @@ extern "C" {
 #define Fvrefresh32 Bvrefresh
 #define Fvopt32 Bvopt
 #define Fvftos32 Bvftos
+#define Bvstof32 Bvstof
 /* VIEW related, END */
 
 #ifndef FBFR32
