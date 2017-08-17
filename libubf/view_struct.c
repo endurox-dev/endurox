@@ -101,7 +101,7 @@ expublic ndrx_typedview_field_t * ndrx_view_get_field(ndrx_typedview_t *v, char 
 {
     ndrx_typedview_field_t *ret;
     
-    EXHASH_FIND_STR(v, cname, ret);
+    EXHASH_FIND_STR(v->fields_h, cname, ret);
     
     return ret;
 }
