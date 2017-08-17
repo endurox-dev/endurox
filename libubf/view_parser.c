@@ -98,6 +98,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     dtype_str_t *dtyp;
     ndrx_typedview_field_t *fld = NULL;
     int i;
+    int esc_open;
     API_ENTRY;
     
     UBF_LOG(log_debug, "%s - enter", __func__);
@@ -116,6 +117,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     while (NULL!=fgets(buf, sizeof(buf), f))
     {
         line++;
+        
+        /* remove trailing newline... */
+        ndrx_chomp(buf);
+        
         orglen = strlen(buf);
         
         UBF_LOG(log_debug, "Got VIEW file line: [%s], line: %ld", buf, line);
@@ -259,9 +264,6 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Some strange line? */
             continue;
         }
-        
-        /* remove trailing newline... */
-        ndrx_chomp(buf);
         
         /* Remove trailing white space.. */
         ndrx_str_rstrip(buf, NDRX_VIEW_FIELD_SEPERATORS);
@@ -773,9 +775,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
             
             /* scan for closing element... */
+            esc_open = EXFALSE;
             while (p2<pend)
             {
-                if (*(p2-1)=='\\')
+                if (!esc_open && '\\'==*p2)
+                {
+                    esc_open = EXTRUE;
+                }
+                else if (esc_open)
                 {
                     /* so previous was escape... */
                     switch (*p2)
@@ -809,6 +816,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             break;   
                     }
                     p3++;
+                    esc_open = EXFALSE;
                 }
                 else if (*p2=='\'' || *p2=='"')
                 {
@@ -839,6 +847,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     *p2=EXEOS;
                     NDRX_STRCPY_SAFE(fld->nullval, null_val_start);
                     nulltype = NTYPNO;
+                    break;
                     
                 }
                 else

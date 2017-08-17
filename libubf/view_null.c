@@ -113,7 +113,6 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             }
             break;
         case BFLD_CHAR:
-            
             if (*fld_offs == f->nullval_bin[0])
             {
                 ret=EXTRUE;

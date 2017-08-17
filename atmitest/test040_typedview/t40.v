@@ -11,7 +11,7 @@ int      tint2      T_LONG_2_FLD        2       L       -       0
 int      tint3      -                   1       -       -       -1
 int      tint4      -                   2       -       -       -1
 
-char     tchar1     T_CHAR_FLD          1       -       -       '\0'
+char     tchar1     T_CHAR_FLD          1       -       -       '\n'
 char     tchar2     T_CHAR_2_FLD        5       C       -       'A'
 char     tchar3     T_CHAR_3_FLD        2       CF      -       -
 

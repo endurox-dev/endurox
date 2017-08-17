@@ -122,9 +122,13 @@ Ensure(test_Bvnull)
     
     /***************************** CHAR TESTS ********************************/
     
-    assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXTRUE);
-    v.tchar1 = 0x01;
+    
+    UBF_LOG(log_debug, "tchar1=%x", v.tchar1);
+    
     assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXFALSE);
+    
+    v.tchar1 = '\n';
+    assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXTRUE);
     
 }
 
