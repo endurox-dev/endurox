@@ -4,9 +4,12 @@ VIEW MYVIEW1
 short    tshort1    T_SHORT_FLD         1       -       -       2000
 short    tshort2    T_SHORT_2_FLD       2       C       -       2001
 short    tshort3    T_SHORT_3_FLD       3       N       -       -
+short    tshort4    -                   1       N       -       NONE
 
 long     tlong1     T_LONG_FLD          1       S       -       0
 int      tint2      T_LONG_2_FLD        2       L       -       0
+int      tint3      -                   1       -       -       -1
+int      tint4      -                   2       -       -       -1
 
 char     tchar1     T_CHAR_FLD          1       -       -       '\0'
 char     tchar2     T_CHAR_2_FLD        5       C       -       'A'
