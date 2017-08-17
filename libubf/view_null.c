@@ -360,7 +360,7 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                 *lv=f->nullval_long;
                 break;
             case BFLD_CHAR:
-                *fld_offs == f->nullval_bin[0];
+                *fld_offs = f->nullval_bin[0];
                 break;
             case BFLD_FLOAT:
                 fv = (float *)fld_offs;

@@ -64,6 +64,7 @@ void basic_teardown(void)
 Ensure(test_Bvnull)
 {
     struct MYVIEW1 v;
+    int i;
     
     memset(&v, 0, sizeof(v));
     
@@ -109,6 +110,8 @@ Ensure(test_Bvnull)
     assert_equal(Bvselinit((char *)&v,"tint3", "MYVIEW1"), EXSUCCEED);
     assert_equal(Bvnull((char *)&v, "tint3", 0, "MYVIEW1"), EXTRUE);
     
+    assert_equal(v.tint3, -1);
+    
     assert_equal(Bvnull((char *)&v, "tint4", 0, "MYVIEW1"), EXFALSE);
     assert_equal(Bvnull((char *)&v, "tint4", 1, "MYVIEW1"), EXFALSE);
     
@@ -122,13 +125,45 @@ Ensure(test_Bvnull)
     
     /***************************** CHAR TESTS ********************************/
     
-    
     UBF_LOG(log_debug, "tchar1=%x", v.tchar1);
-    
     assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXFALSE);
     
     v.tchar1 = '\n';
     assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXTRUE);
+    v.tchar1 = 0;
+    assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXFALSE);
+    assert_equal(Bvselinit((char *)&v,"tchar1", "MYVIEW1"), EXSUCCEED);
+    
+    UBF_LOG(log_debug, "tchar1=%x", v.tchar1);
+    assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXTRUE);
+    
+    
+    /* Here default is 'A' */
+    for (i=0;i<5;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tchar2", i, "MYVIEW1"), EXFALSE);
+    }
+    
+    assert_equal(Bvselinit((char *)&v,"tchar2", "MYVIEW1"), EXSUCCEED);
+    
+    for (i=0;i<5;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tchar2", i, "MYVIEW1"), EXTRUE);
+    }
+    
+    for (i=0;i<5;i++)
+    {
+        assert_equal(v.tchar2[i], 'A');
+    }
+    
+    /* Here default is zero byte */
+    
+    for (i=0;i<2;i++)
+    {
+        assert_equal(v.tchar3[i], 0);
+    }
+    
+    /***************************** FLOAT TESTS *******************************/
     
 }
 
