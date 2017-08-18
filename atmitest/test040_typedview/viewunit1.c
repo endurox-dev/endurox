@@ -65,6 +65,7 @@ Ensure(test_Bvnull)
 {
     struct MYVIEW1 v;
     int i;
+    char *spec_symbols = "\n\t\f\\\'\"\vHELLOWORLD\0";
     
     memset(&v, 0, sizeof(v));
     
@@ -213,6 +214,40 @@ Ensure(test_Bvnull)
         assert_equal(Bvnull((char *)&v, "tdouble1", i, "MYVIEW1"), EXTRUE);
         assert_equal(v.tdouble1[i], 55555.99);
     }
+    
+    assert_equal(Bvnull((char *)&v, "tdouble2", 0, "MYVIEW1"), EXFALSE);
+    assert_equal(Bvselinit((char *)&v,"tdouble2", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tdouble2", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(v.tdouble2, -999.123);
+    
+    /***************************** STRING TESTS *******************************/
+    
+    /* \n\t\f\\\'\"\vHELLOWORLD\0 */
+    
+    
+    for (i=0;i<3;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tstring0", i, "MYVIEW1"), EXFALSE);
+    }
+    
+    assert_equal(Bvselinit((char *)&v,"tstring0", "MYVIEW1"), EXSUCCEED);
+    
+    
+    UBF_DUMP(log_debug, "Special symbols test...", spec_symbols, strlen(spec_symbols));
+    
+    for (i=0;i<3;i++)
+    {
+        UBF_LOG(log_debug, "tstring0=[%s]", v.tstring0[i]);
+        
+        UBF_DUMP(log_debug, "testing0", v.tstring0[i], strlen(v.tstring0[i]));
+        
+        UBF_DUMP_DIFF(log_debug, "diff", spec_symbols, v.tstring0[i], strlen(v.tstring0[i]));
+        
+        
+        assert_equal(Bvnull((char *)&v, "tstring0", i, "MYVIEW1"), EXTRUE);
+    }
+    
+    assert_string_equal(v.tstring0[i], spec_symbols);
     
 }
 

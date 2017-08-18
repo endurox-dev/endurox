@@ -20,8 +20,9 @@ float    tfloat2    T_FLOAT_2_FLD       2       -       -       -
 float    tfloat3    -                   1       -       -       9999.99
 
 double   tdouble1   T_DOUBLE_FLD        2       -       -       55555.99
-double   tdouble2   T_DOUBLE_2_FLD      1       -       -       -99999999.88
+double   tdouble2   T_DOUBLE_2_FLD      1       -       -       -999.123
 
+string   tstring0   -                   3       -       15      '\n\t\f\\\'\"\vHELLOWORLD\0'
 string   tstring1   T_STRING_FLD        1       P       15      'HELLO WORLDB'
 string   tstring2   T_STRING_2_FLD      3       CL      20      'TESTEST'
 string   tstring3   T_STRING_3_FLD      4       C       20      'TESTEST'

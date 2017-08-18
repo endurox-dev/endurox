@@ -801,7 +801,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             *p3='\f';
                             break;
                         case '\\':
-                            *p3='\'';
+                            *p3='\\';
                             break;
                         case '\'':
                             *p3='\'';
@@ -817,6 +817,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                             break;   
                     }
                     p3++;
+                    fld->nullval_bin_len++;
                     esc_open = EXFALSE;
                 }
                 else if (*p2=='\'' || *p2=='"')
