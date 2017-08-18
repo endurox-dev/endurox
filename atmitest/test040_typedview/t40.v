@@ -15,11 +15,12 @@ char     tchar1     T_CHAR_FLD          1       -       -       '\n'
 char     tchar2     T_CHAR_2_FLD        5       C       -       'A'
 char     tchar3     T_CHAR_3_FLD        2       CF      -       -
 
-float    tfloat1    T_FLOAT_FLD         1       -       -       1.1
+float    tfloat1    T_FLOAT_FLD         4       -       -       1.1
 float    tfloat2    T_FLOAT_2_FLD       2       -       -       -
+float    tfloat3    -                   1       -       -       9999.99
 
-double   tdouble1   T_DOUBLE_FLD        1       -       -       0.0
-double   tdouble2   T_DOUBLE_2_FLD      2       -       -       0.0
+double   tdouble1   T_DOUBLE_FLD        2       -       -       55555.99
+double   tdouble2   T_DOUBLE_2_FLD      1       -       -       -99999999.88
 
 string   tstring1   T_STRING_FLD        1       P       15      'HELLO WORLDB'
 string   tstring2   T_STRING_2_FLD      3       CL      20      'TESTEST'

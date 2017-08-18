@@ -164,6 +164,55 @@ Ensure(test_Bvnull)
     }
     
     /***************************** FLOAT TESTS *******************************/
+    for (i=0;i<4;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tfloat1", 0, "MYVIEW1"), EXFALSE);
+    }
+    
+    assert_equal(Bvselinit((char *)&v,"tfloat1", "MYVIEW1"), EXSUCCEED);
+    
+    for (i=0;i<4;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tfloat1", i, "MYVIEW1"), EXTRUE);
+    }
+    
+    for (i=0;i<4;i++)
+    {
+        assert_equal(v.tfloat1[i], 1.1);
+    }
+    
+    /* occ: 0..3*/
+    assert_equal(Bvnull((char *)&v, "tfloat1", 4, "MYVIEW1"), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    /* Default set by memset... */
+    for (i=0;i<2;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tfloat2", i, "MYVIEW1"), EXTRUE);
+        assert_equal(Berror, 0);
+    }
+    
+    assert_equal(Bvnull((char *)&v, "tfloat3", 0, "MYVIEW1"), EXFALSE);
+    assert_equal(v.tfloat3, 0);
+    
+    assert_equal(Bvselinit((char *)&v,"tfloat3", "MYVIEW1"), EXSUCCEED);
+    assert_equal(v.tfloat3, 9999.99);
+    assert_equal(Bvnull((char *)&v, "tfloat3", 0, "MYVIEW1"), EXTRUE);
+    
+    
+    /***************************** DOUBLE TESTS *******************************/
+    for (i=0;i<2;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tdouble1", i, "MYVIEW1"), EXFALSE);
+    }
+    
+    assert_equal(Bvselinit((char *)&v,"tdouble1", "MYVIEW1"), EXSUCCEED);
+    
+    for (i=0;i<2;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tdouble1", i, "MYVIEW1"), EXTRUE);
+        assert_equal(v.tdouble1[i], 55555.99);
+    }
     
 }
 

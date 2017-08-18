@@ -71,6 +71,10 @@ extern "C" {
 #define NDRX_VIEW_UBF_BASE               6000
 #define NDRX_VIEW_SIZE_DEFAULT_SIZE      1024
 
+
+#define NDRX_VIEW_QUOTES_NONE           0
+#define NDRX_VIEW_QUOTES_SINGLE         1
+#define NDRX_VIEW_QUOTES_DOUBLE         2
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -101,10 +105,10 @@ struct ndrx_typedview_field
     
     /* type compare values, parsed numerics: */
     short   nullval_short;
-    short   nullval_int;
-    short   nullval_long;
-    short   nullval_float;
-    short   nullval_double;
+    int     nullval_int;
+    long    nullval_long;
+    float   nullval_float;
+    double  nullval_double;
     
     /*
      * char, just use nullval_bin[0]

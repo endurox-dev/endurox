@@ -145,7 +145,11 @@ expublic int ndrx_view_plot_object(FILE *f)
                 snprintf(L_offs, sizeof(L_offs), "loffs=%ld;", fld->length_fld_offset);
             }
             
-            if (fld->nullval_quotes)
+            if (NDRX_VIEW_QUOTES_SINGLE==fld->nullval_quotes)
+            {
+                snprintf(tmp_null, sizeof(tmp_null), "'%s'", fld->nullval);
+            }
+            else if (NDRX_VIEW_QUOTES_DOUBLE==fld->nullval_quotes)
             {
                 snprintf(tmp_null, sizeof(tmp_null), "\"%s\"", fld->nullval);
             }

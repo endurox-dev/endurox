@@ -132,7 +132,7 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
         case BFLD_DOUBLE:
             dv = (double *)fld_offs;
             
-            if (fabs( *dv - f->nullval_float)<DOUBLE_EQUAL)
+            if (fabs( *dv - f->nullval_double)<DOUBLE_EQUAL)
             {
                 ret=EXTRUE;
                 goto out;
@@ -292,6 +292,14 @@ expublic int ndrx_Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
         EXFAIL_OUT(ret);
     }
     
+    if (occ > f->count-1 || occ<0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Invalid occurrence requested for field "
+                "%s.%s, count=%d occ=%d (zero base)",
+                v->vname, f->cname, f->count, occ);
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXFAIL==(ret=ndrx_Bvnull_int(v, f, occ, cstruct)))
     {
         /* should not get here.. */
@@ -368,7 +376,7 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                 break;
             case BFLD_DOUBLE:
                 dv = (double *)fld_offs;
-                *dv = f->nullval_float;
+                *dv = f->nullval_double;
                 break;
             case BFLD_STRING:
                 
@@ -483,7 +491,7 @@ expublic int ndrx_Bvselinit(char *cstruct, char *cname, char *view)
                 cname, v->vname);
         EXFAIL_OUT(ret);
     }
-    
+        
     if (EXFAIL==ndrx_Bvselinit_int(v, f, cstruct))
     {
         /* should not get here.. */

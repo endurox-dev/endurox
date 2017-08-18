@@ -757,19 +757,20 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             if (*p2=='\'')
             {
                 nulltype = NTYPSQUOTE;
-                fld->nullval_quotes = EXTRUE;
+                fld->nullval_quotes = NDRX_VIEW_QUOTES_SINGLE;
                 p2++;
                 null_val_start = p2;
             }
             else if (*p2=='"')
             {
                 nulltype = NTYPDQUOTE;
-                fld->nullval_quotes = EXTRUE;
+                fld->nullval_quotes = NDRX_VIEW_QUOTES_DOUBLE;
                 p2++;
                 null_val_start = p2;
             }
             else
             {
+                fld->nullval_quotes = NDRX_VIEW_QUOTES_NONE;
                 nulltype = NTYPSTD;
                 null_val_start = p2;
             }
@@ -884,6 +885,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             UBF_LOG(log_debug, "Got NULL value [%s]", fld->nullval);
             
+            /* for doubles, etc... parsing! */
+            fld->nullval_bin[fld->nullval_bin_len]=EXEOS;
+            
             NDRX_DUMP(log_debug, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
                      
@@ -920,23 +924,28 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 {
                     case BFLD_SHORT:
                         fld->nullval_short = (short)atoi(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_short=%hd", fld->nullval_short);
+                        UBF_LOG(log_debug, "nullval_short=%hd (%s)", 
+                                fld->nullval_short, fld->nullval_bin);
                         break;
                     case BFLD_INT:
                         fld->nullval_int = atoi(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_int=%hd", fld->nullval_int);
+                        UBF_LOG(log_debug, "nullval_int=%hd (%s)", 
+                                fld->nullval_int, fld->nullval_bin);
                         break;
                     case BFLD_LONG:
                         fld->nullval_long = atol(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_long=%hd", fld->nullval_long);
+                        UBF_LOG(log_debug, "nullval_long=%hd (%s)", 
+                                fld->nullval_long, fld->nullval_bin);
                         break;
                     case BFLD_FLOAT:
                         fld->nullval_float = (float)atof(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_float=%f", fld->nullval_float);
+                        UBF_LOG(log_debug, "nullval_float=%f (%s)", 
+                                fld->nullval_float, fld->nullval_bin);
                         break;
                     case BFLD_DOUBLE:
                         fld->nullval_double = atof(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_double=%lf", fld->nullval_double);
+                        UBF_LOG(log_debug, "nullval_double=%lf (%s)", 
+                                fld->nullval_double, fld->nullval_bin);
                         break;
                 }
             }
