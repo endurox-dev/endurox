@@ -402,7 +402,7 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
 out:
     if (NULL!=temp_ub)
     {
-        NDRX_FREE(p_ub);
+        NDRX_FREE(temp_ub);
     }
 
     return ret;

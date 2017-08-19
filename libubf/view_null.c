@@ -381,7 +381,6 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             case BFLD_STRING:
                 
                 /* nullval_bin EOS is set by CALLOC at the parser.. */
-                
                 if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
                 {
                     
@@ -403,15 +402,8 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                         else if (i==f->nullval_bin_len-1)
                         {
                             /* Transfer last char as multiple copies.. */
-#if 0
-                            UBF_LOG(log_debug, "YOPT!!! i=%d dim_size-1=%d", 
-                                    i, dim_size);
-#endif
                             for (j=i; j<dim_size-1; j++)
                             {
-#if 0
-                                UBF_LOG(log_debug, "fld_offs[%d] = %c", j, f->nullval_bin[i]);
-#endif
                                 fld_offs[j]=f->nullval_bin[i];
                             }
                             

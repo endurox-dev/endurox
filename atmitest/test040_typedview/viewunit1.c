@@ -297,11 +297,84 @@ Ensure(test_Bvnull)
     assert_equal(memcmp(v.tcarray1, "\0\n\t\f\\\'\"\vHELLOWORLD", 18), 0);
     
     assert_equal(Bvnull((char *)&v, "tcarray2", 0, "MYVIEW1"), EXFALSE);
-    assert_equal(Bvselinit((char *)&v,"tcarray1", "MYVIEW1"), EXSUCCEED);
-    assert_equal(Bvnull((char *)&v, "tcarray1", 0, "MYVIEW1"), EXTRUE);
-    assert_equal(memcmp(v.tcarray1, "\0\n\t\f\\\'\"\vHELLOWORL\n\n\n\n\n\n\n\n'", 25), 0);
+    assert_equal(Bvselinit((char *)&v,"tcarray2", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tcarray2", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(memcmp(v.tcarray2, "\0\n\t\f\\\'\"\vHELLOWORL\n\n\n\n\n\n\n\n'", 25), 0);
+    
+    for (i=0; i<10; i++)
+    {
+        assert_equal(v.tcarray3[i][0], 0);
+    }
+    
+    assert_equal(Bvselinit((char *)&v, "tcarray3", "MYVIEW1"), EXSUCCEED);
+    
+    for (i=0; i<10; i++)
+    {
+        assert_equal(memcmp(v.tcarray3[i], "\0\\\nABC\t\f\'\vHELLOOOOOOOOOOOOOOOOOOO", 30), 0);
+    }
+    
+    assert_equal(Bvselinit((char *)&v, "tcarray4", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tcarray4", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(memcmp(v.tcarray4, "ABC", 3), 0);
     
     
+    assert_equal(Bvselinit((char *)&v, "tcarray5", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tcarray5", 0, "MYVIEW1"), EXTRUE);
+    
+    assert_equal(memcmp(v.tcarray5, "\0\0\0\0\0", 5), 0);
+    
+}
+
+Ensure(test_Bvsinit)
+{
+    struct MYVIEW2 v;
+   
+    memset(&v, 0, sizeof(v));
+    assert_equal(Bvsinit((char *)&v, "MYVIEW2"), EXSUCCEED);
+    
+    assert_equal(Bvnull((char *)&v, "tshort1", 0, "MYVIEW2"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tlong1", 0, "MYVIEW2"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW2"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tfloat1", 0, "MYVIEW2"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tdouble1", 0, "MYVIEW2"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tstring1", 0, "MYVIEW2"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tcarray1", 0, "MYVIEW2"), EXTRUE); 
+}
+
+Ensure(test_Bvrefresh)
+{
+    Bvrefresh();
+}
+
+/**
+ * Install structure to UBF
+ */
+Ensure(test_Bvstof)
+{
+    struct MYVIEW1 v;
+    char buf[2048];
+    BFLDID bfldid;
+    BFLDOCC occ;
+    int flds_got;
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    /* Set to NULL */
+    assert_equal(Bvsinit((char *)&v, "MYVIEW1"), EXSUCCEED);
+    
+    /* transfer to UBF.. */
+    assert_equal(Bvstof(p_ub, (char *)&v, BUPDATE, "MYVIEW1"), EXSUCCEED);
+    
+    /* not fields must be transfered. */
+    bfldid = BFIRSTFLDID;
+    flds_got = 0;
+    while(1==Bnext(p_ub, &bfldid, &occ, NULL, NULL))
+    {
+        flds_got++;
+    }
+
+    assert_equal(flds_got, 0);
     
     
 }
@@ -318,10 +391,11 @@ TestSuite *view_tests() {
     set_setup(suite, basic_setup);
     set_teardown(suite, basic_teardown);
 
-    
-
-    /*  UBF init test */
+    /* init view test */
     add_test(suite, test_Bvnull);
+    add_test(suite, test_Bvsinit);
+    add_test(suite, test_Bvrefresh);
+    add_test(suite, test_Bvstof);
     
     return suite;
 }
