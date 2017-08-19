@@ -400,7 +400,7 @@ void init_MYVIEW1(struct MYVIEW1 *v)
 
     v->tdouble1[0]=99999.111111;	/* null=55555.99 */
     v->tdouble1[1]=11111.999999;	/* null=55555.99 */
-    v->tdouble2=0;	/* null=-999.123 */
+    v->tdouble2=-999.123;	/* null=-999.123 */
 
     NDRX_STRCPY_SAFE(v->tstring0[0], "HELLO Enduro/X");	/* null="\n\t\f\\\'\"\vHELLOWORLD" */
     NDRX_STRCPY_SAFE(v->tstring0[1], "");	/* null="\n\t\f\\\'\"\vHELLOWORLD" */
@@ -562,6 +562,13 @@ Ensure(test_Bvstof)
     TEST_AS_DOUBLE(T_DOUBLE_FLD, 0, 99999.111111);
     TEST_AS_DOUBLE(T_DOUBLE_FLD, 1, 11111.999999);
     assert_equal(Bpres(p_ub, T_DOUBLE_FLD, 2),  EXFALSE);
+    
+    /* Not trasffered due to default value NULL: */
+    assert_equal(Bpres(p_ub, T_DOUBLE_2_FLD, 0),  EXFALSE);
+    
+    /*
+     * TODO: String & Carray -> Need a transfer length to test...
+     */
     
 }
 
