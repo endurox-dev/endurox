@@ -388,10 +388,10 @@ void init_MYVIEW1(struct MYVIEW1 *v)
     v->tchar3[0]='C';	/* null="A" */
     v->tchar3[1]='D';	/* null="A" */
 
-    v->tfloat1[0]=-111.11;	/* null=1.1 */
-    v->tfloat1[1]=-222.22;	/* null=1.1 */
-    v->tfloat1[2]=333.33;	/* null=1.1 */
-    v->tfloat1[3]=444.44;	/* null=1.1 */
+    v->tfloat1[0]=-0.11;	/* null=1.1 */
+    v->tfloat1[1]=-0.22;	/* null=1.1 */
+    v->tfloat1[2]=0.33;	/* null=1.1 */
+    v->tfloat1[3]=0.44;	/* null=1.1 */
 
     v->tfloat2[0]=100000.1;	/* null=1.1 */
     v->tfloat2[1]=200000.2;	/* null=1.1 */
@@ -462,6 +462,10 @@ void init_MYVIEW1(struct MYVIEW1 *v)
     assert_equal(CBget(p_ub, FLD, OCC, tmp, 0L, BFLD_STRING),  EXSUCCEED);\
     assert_string_equal(VAL, tmp);
 
+#define TEST_AS_DOUBLE(FLD, OCC, VAL)\
+    assert_equal(CBget(p_ub, FLD, OCC, (char *)&dtemp, 0L, BFLD_DOUBLE),  EXSUCCEED);\
+    assert_double_equal(VAL, dtemp);
+
 /**
  * Install structure to UBF
  */
@@ -474,6 +478,7 @@ Ensure(test_Bvstof)
     int flds_got;
     UBFH *p_ub = (UBFH *)buf;
     char tmp[128];
+    double dtemp;
     /***************************** TEST EMPTY STRUCT **************************/
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     
@@ -534,7 +539,30 @@ Ensure(test_Bvstof)
      */
     TEST_AS_STRING(T_LONG_2_FLD, 0, "54545");
     TEST_AS_STRING(T_LONG_2_FLD, 1, "23232");
-
+    
+    /*
+     * Char
+     */
+    TEST_AS_STRING(T_CHAR_FLD, 0, "A");
+    assert_equal(Bpres(p_ub, T_CHAR_2_FLD, 0),  EXFALSE);
+    assert_equal(Bpres(p_ub, T_CHAR_3_FLD, 0),  EXFALSE);
+    
+    /*
+     * Float tests
+     */
+    TEST_AS_DOUBLE(T_FLOAT_FLD, 0, -0.11);
+    TEST_AS_DOUBLE(T_FLOAT_FLD, 1, -0.22);
+    TEST_AS_DOUBLE(T_FLOAT_FLD, 2, 0.33);
+    TEST_AS_DOUBLE(T_FLOAT_FLD, 3, 0.44);
+    assert_equal(Bpres(p_ub, T_FLOAT_2_FLD, 0),  EXFALSE);
+    
+    /*
+     * Double tests
+     */
+    TEST_AS_DOUBLE(T_DOUBLE_FLD, 0, 99999.111111);
+    TEST_AS_DOUBLE(T_DOUBLE_FLD, 1, 11111.999999);
+    assert_equal(Bpres(p_ub, T_DOUBLE_FLD, 2),  EXFALSE);
+    
 }
 
 /* TODO: Unit test for default values... */
