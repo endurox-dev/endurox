@@ -22,13 +22,17 @@ float    tfloat3    -                   1       -       -       9999.99
 double   tdouble1   T_DOUBLE_FLD        2       -       -       55555.99
 double   tdouble2   T_DOUBLE_2_FLD      1       -       -       -999.123
 
-string   tstring0   -                   3       -       15      '\n\t\f\\\'\"\vHELLOWORLD\0'
-string   tstring1   T_STRING_FLD        1       P       15      'HELLO WORLDB'
-string   tstring2   T_STRING_2_FLD      3       CL      20      'TESTEST'
+string   tstring0   -                   3       -       18      '\n\t\f\\\'\"\vHELLOWORLD'
+string   tstring1   T_STRING_FLD        3       P       20      'HELLO WORLDB'
+string   tstring2   T_STRING_2_FLD      3       CL      20      -
 string   tstring3   T_STRING_3_FLD      4       C       20      'TESTEST'
+string   tstring4   -                   1       P       15      'HELLO TEST'
 
-carray   tcarray1   T_CARRAY_FLD        1       -      10      '-'
-carray   tcarray2   T_CARRAY_2_FLD      10       CL      10     '\0\\\nABC\t\f\'\vHELLO'
+carray   tcarray1   T_CARRAY_FLD        1       -       30      '\0\n\t\f\\\'\"\vHELLOWORLD'
+carray   tcarray2   T_CARRAY_2_FLD      1       P       25      '\0\n\t\f\\\'\"\vHELLOWORL\n'
+carray   tcarray3   T_CARRAY_3_FLD      10       CLP    30      '\0\\\nABC\t\f\'\vHELLO'
+carray   tcarray4   -                   1       -       5       'ABC'
+carray   tcarray5   -                   1       -       5       -
 
 END
 
@@ -43,3 +47,4 @@ double   tdouble1   -                   1       -       -       0.0
 string   tstring1   -                   1       P       15      'HELLO WORLDB'
 carray   tcarray1   -                   1       -      10      '-'
 END
+

@@ -99,6 +99,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     ndrx_typedview_field_t *fld = NULL;
     int i;
     int esc_open;
+    int dim_size;
     API_ENTRY;
     
     UBF_LOG(log_debug, "%s - enter", __func__);
@@ -947,6 +948,38 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         fld->nullval_double = atof(fld->nullval_bin);
                         UBF_LOG(log_debug, "nullval_double=%lf (%s)", 
                                 fld->nullval_double, fld->nullval_bin);
+                        break;
+                    case BFLD_STRING:
+                        
+                        /* needs currently to use count only.. */
+                        dim_size = fld->size;
+                        /* -1 for EOS */
+                        if (dim_size-1 < fld->nullval_bin_len)
+                        {
+                            UBF_LOG(log_error, "Invalid NULL length: %d, "
+                                    "string buffer max with out EOS: %d"
+                                ", line %ld", fld->nullval_bin_len, dim_size-1, line);
+
+                            ndrx_Bset_error_fmt(BBADVIEW, "Invalid NULL length: %d, "
+                                    "string buffer max with out EOS: %d"
+                                ", line %ld", fld->nullval_bin_len, dim_size-1, line);
+                            EXFAIL_OUT(ret);
+                        }
+                        break;
+                    case BFLD_CARRAY:
+                        dim_size = fld->size;
+                        
+                        if (dim_size < fld->nullval_bin_len)
+                        {
+                            UBF_LOG(log_error, "Invalid NULL length: %d, "
+                                    "carray buffer max: %d"
+                                ", line %ld", fld->nullval_bin_len, dim_size, line);
+
+                            ndrx_Bset_error_fmt(BBADVIEW, "Invalid NULL length: %d, "
+                                    "carray buffer max: %d"
+                                ", line %ld", fld->nullval_bin_len, dim_size, line);
+                            EXFAIL_OUT(ret);
+                        }
                         break;
                 }
             }

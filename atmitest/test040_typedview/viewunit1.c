@@ -66,7 +66,6 @@ Ensure(test_Bvnull)
     struct MYVIEW1 v;
     int i;
     char *spec_symbols = "\n\t\f\\\'\"\vHELLOWORLD\0";
-    
     memset(&v, 0, sizeof(v));
     
     /***************************** SHORT TESTS *******************************/
@@ -221,17 +220,24 @@ Ensure(test_Bvnull)
     assert_equal(v.tdouble2, -999.123);
     
     /***************************** STRING TESTS *******************************/
+    /* Fill the string 1 in advance.. */
+    assert_equal(Bvselinit((char *)&v,"tstring1", "MYVIEW1"), EXSUCCEED);
     
-    /* \n\t\f\\\'\"\vHELLOWORLD\0 */
+    /* Test filler: */
+    for (i=0;i<3;i++)
+    {
+        UBF_LOG(log_debug, "tstring1=[%s]", v.tstring1[i]);
+        
+        assert_equal(Bvnull((char *)&v, "tstring1", i, "MYVIEW1"), EXTRUE);
+    }
     
-    
+    /* Test special symbols... */
     for (i=0;i<3;i++)
     {
         assert_equal(Bvnull((char *)&v, "tstring0", i, "MYVIEW1"), EXFALSE);
     }
     
     assert_equal(Bvselinit((char *)&v,"tstring0", "MYVIEW1"), EXSUCCEED);
-    
     
     UBF_DUMP(log_debug, "Special symbols test...", spec_symbols, strlen(spec_symbols));
     
@@ -241,13 +247,62 @@ Ensure(test_Bvnull)
         
         UBF_DUMP(log_debug, "testing0", v.tstring0[i], strlen(v.tstring0[i]));
         
-        UBF_DUMP_DIFF(log_debug, "diff", spec_symbols, v.tstring0[i], strlen(v.tstring0[i]));
-        
+        UBF_DUMP_DIFF(log_debug, "diff", spec_symbols, v.tstring0[i], strlen(spec_symbols));
         
         assert_equal(Bvnull((char *)&v, "tstring0", i, "MYVIEW1"), EXTRUE);
     }
     
-    assert_string_equal(v.tstring0[i], spec_symbols);
+    assert_string_equal(v.tstring0[0], spec_symbols);
+    
+    /* Continue with filler... */
+    
+    for (i=0;i<3;i++)
+    {
+        assert_string_equal(v.tstring1[i], "HELLO WORLDBBBBBBBB");
+    }
+    
+    for (i=0;i<3;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tstring2", i, "MYVIEW1"), EXTRUE);
+    }
+    
+    for (i=0;i<4;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tstring3", i, "MYVIEW1"), EXFALSE);
+    }
+    
+    assert_equal(Bvselinit((char *)&v,"tstring3", "MYVIEW1"), EXSUCCEED);
+    
+    for (i=0;i<4;i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tstring3", i, "MYVIEW1"), EXTRUE);
+    }
+    
+    for (i=0;i<4;i++)
+    {
+        assert_string_equal(v.tstring3[i], "TESTEST");
+    }
+    
+    assert_equal(Bvnull((char *)&v, "tstring4", 0, "MYVIEW1"), EXFALSE);
+    assert_equal(Bvselinit((char *)&v,"tstring4", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tstring4", 0, "MYVIEW1"), EXTRUE);
+    assert_string_equal(v.tstring4, "HELLO TESTTTTT");
+    
+    
+    /***************************** CARRAY TESTS *******************************/
+    
+    assert_equal(Bvnull((char *)&v, "tcarray1", 0, "MYVIEW1"), EXFALSE);
+    assert_equal(Bvselinit((char *)&v,"tcarray1", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tcarray1", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(memcmp(v.tcarray1, "\0\n\t\f\\\'\"\vHELLOWORLD", 18), 0);
+    
+    assert_equal(Bvnull((char *)&v, "tcarray2", 0, "MYVIEW1"), EXFALSE);
+    assert_equal(Bvselinit((char *)&v,"tcarray1", "MYVIEW1"), EXSUCCEED);
+    assert_equal(Bvnull((char *)&v, "tcarray1", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(memcmp(v.tcarray1, "\0\n\t\f\\\'\"\vHELLOWORL\n\n\n\n\n\n\n\n'", 25), 0);
+    
+    
+    
     
 }
 

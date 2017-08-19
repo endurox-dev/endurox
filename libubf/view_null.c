@@ -141,7 +141,7 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
         case BFLD_STRING:
             
             /* nullval_bin EOS is set by CALLOC at the parser.. */
-            len = strlen(fld_offs);
+            len = dim_size-1; /* EOS do not count in */
             
             /*
              * Well we somehow need to check the length 
@@ -394,32 +394,52 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                 {
                     for (i=0; i<f->nullval_bin_len; i++)
                     {
-                        if (dim_size>i+1)
+                        if (i>=dim_size-1)
                         {
+                            /* Put EOS */
+                            fld_offs[i] = EXEOS;
                             break;
-                        }
+                        } /* if we are at the end... */
                         else if (i==f->nullval_bin_len-1)
                         {
-                            /* compare last bits... */
-                            for (j=i; j<len; j++)
+                            /* Transfer last char as multiple copies.. */
+#if 0
+                            UBF_LOG(log_debug, "YOPT!!! i=%d dim_size-1=%d", 
+                                    i, dim_size);
+#endif
+                            for (j=i; j<dim_size-1; j++)
                             {
+#if 0
+                                UBF_LOG(log_debug, "fld_offs[%d] = %c", j, f->nullval_bin[i]);
+#endif
                                 fld_offs[j]=f->nullval_bin[i];
                             }
-                        }
-                        else if (fld_offs[i]!=f->nullval_bin[i] && 
-                                i<len)
-                        {
+                            
+                            fld_offs[dim_size-1] = EXEOS;
                             break;
+                        }
+                        else
+                        {
+                            /* transfer the value.. */
+                            fld_offs[i]=f->nullval_bin[i];
                         }
                     }
                 }
                 else
                 {   
-                    if (0==strncpy(fld_offs, f->nullval_bin, dim_size-1))
+                    len = f->nullval_bin_len;
+                    
+                    if (len>dim_size)
+                    {
+                        len = dim_size-1; /* Place for eos */
+                    }
+                    
+                    if (0==strncpy(fld_offs, f->nullval_bin, len))
                     {
                         break;
                     }
-                    fld_offs[dim_size-1] = EXEOS;
+                    
+                    fld_offs[len] = EXEOS;                    
                 }
                 
                 break;

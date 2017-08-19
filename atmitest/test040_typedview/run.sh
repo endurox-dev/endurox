@@ -49,13 +49,53 @@ fi;
 #
 # Set view tables
 #
-export VIEWFILES=t40.V
 export VIEWDIR=.
-
-export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 xadmin killall atmisv40 2>/dev/null
 xadmin killall atmiclt40 2>/dev/null
+
+#
+# Generic exit function
+#
+function go_out {
+    echo "Test exiting with: $1"
+    popd 2>/dev/null
+    exit $1
+}
+
+
+################################################################################
+# Test view files
+################################################################################
+TVIEWNAME=tbad_view_invl_size.v
+../../viewc/viewc $TVIEWNAME
+
+
+if [ $? == 0 ]; then
+    echo "ERROR: $TVIEWNAME must not compile, but compiled OK!"
+    go_out 1
+fi
+
+################################################################################
+# Run unit tests
+################################################################################
+export VIEWFILES=t40.V
+./viewunit1 > viewunit1.out 2>&1
+
+cat viewunit1.out
+
+RES=`grep '0 failures, 0 exceptions' viewunit1.out`
+
+echo "RES=> [$RES]"
+
+if [ "X$RES" == "X" ]; then
+    echo "ERROR: Unit test failed, have some exceptions or failures!"
+fi
+
+
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
+
+exit 0
 
 # Start event server
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
@@ -82,4 +122,5 @@ xadmin killall atmiclt40 2>/dev/null
 popd 2>/dev/null
 
 exit $RET
+
 
