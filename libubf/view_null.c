@@ -203,16 +203,7 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             break;
         case BFLD_CARRAY:
             
-            /* nullval_bin EOS is set by CALLOC at the parser.. */
-            if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
-            {
-                len = *((unsigned short *)(cstruct+f->length_fld_offset+
-                            occ*sizeof(unsigned short)));
-            }
-            else
-            {
-                len = dim_size;
-            }
+            len = dim_size;
             
             if (!(f->flags & NDRX_VIEW_FLAG_NULLFILLER_P))
             {
@@ -227,7 +218,6 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             ret=EXTRUE;
             for (i=0; i<f->nullval_bin_len; i++)
             {
-
                 if (i>=len)
                 {
                     ret=EXFALSE;

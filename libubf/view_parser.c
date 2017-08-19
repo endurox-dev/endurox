@@ -615,6 +615,15 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                          * L_<field> or L_<field>[N] - in case if count > 0
                          * One way mapping struct -> to UBF */
                         fld->flags|=NDRX_VIEW_FLAG_LEN_INDICATOR_L;
+                        
+                        if (BFLD_STRING != fld->typecode_full && 
+                                BFLD_CARRAY != fld->typecode_full)
+                        {
+                            ndrx_Bset_error_fmt(BVFSYNTAX, "Flag L not valid for type %s! "
+                                    "L is valid only for string and carray, on line %ld", 
+                                    fld->type_name, line);
+                            EXFAIL_OUT(ret);
+                        }
                         break;
                     case 'N':
                         /* Zero way mapping */

@@ -67,9 +67,35 @@ function go_out {
 ################################################################################
 # Test view files
 ################################################################################
+#
+# Invalid size of the NULL value
+#
 TVIEWNAME=tbad_view_invl_size.v
 ../../viewc/viewc $TVIEWNAME
 
+
+if [ $? == 0 ]; then
+    echo "ERROR: $TVIEWNAME must not compile, but compiled OK!"
+    go_out 1
+fi
+
+#
+# Invalid L flag, set for long (accepted only for string & carray)
+#
+TVIEWNAME=tbad_invalid_L.v
+../../viewc/viewc $TVIEWNAME
+
+if [ $? == 0 ]; then
+    echo "ERROR: $TVIEWNAME must not compile, but compiled OK!"
+    go_out 1
+fi
+
+#
+# Invalid L flag, set for long (accepted only for string & carray)
+#
+
+TVIEWNAME=tbad_invalid_size_no_type.v
+../../viewc/viewc $TVIEWNAME
 
 if [ $? == 0 ]; then
     echo "ERROR: $TVIEWNAME must not compile, but compiled OK!"

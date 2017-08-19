@@ -187,7 +187,7 @@ int main(int argc, char **argv)
         if (EXSUCCEED!=ndrx_view_load_file(argv[i], EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to load view file [%s]: %s", 
-                    argv[i], tpstrerror(tperrno));
+                    argv[i], Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
         
