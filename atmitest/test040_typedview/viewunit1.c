@@ -615,7 +615,6 @@ Ensure(test_Bvftos)
     
     assert_equal(Bvnull((char *)&v, "tfloat3", 0, "MYVIEW1"), EXTRUE);
     
-    
     /*
      * Double tests
      */
@@ -686,6 +685,58 @@ Ensure(test_Bvftos)
 }
 
 /**
+ * Test Bvopt func
+ */
+Ensure(test_Bvopt)
+{
+    struct MYVIEW3 v;
+    char buf[2048];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    init_MYVIEW3(&v);
+    
+    /* Copy to UBF, must be empty, because of flag N */
+    
+    /* transfer to UBF.. */
+    assert_equal(Bvstof(p_ub, (char *)&v, BUPDATE, "MYVIEW3"), EXSUCCEED);
+    
+    assert_equal(Bpres(p_ub, T_SHORT_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_SHORT_3_FLD, 0), EXFALSE);
+    
+    assert_equal(Bvopt("tshort1", B_STOF, "MYVIEW3"), EXSUCCEED);
+    assert_equal(Bvopt("tshort3", B_BOTH, "MYVIEW3"), EXSUCCEED);
+    
+    /* Now transfer, should have something... */
+    assert_equal(Bvstof(p_ub, (char *)&v, BUPDATE, "MYVIEW3"), EXSUCCEED);
+    
+    assert_equal(Bpres(p_ub, T_SHORT_FLD, 0), EXTRUE);
+    assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_SHORT_3_FLD, 0), EXTRUE);
+    
+    /* Now transfer back.. */
+    memset(&v, 0, sizeof(v));
+    
+    assert_equal(Bvftos(p_ub, (char *)&v, "MYVIEW3"), EXSUCCEED);
+    
+    assert_equal(v.tshort1, 0);
+    assert_equal(v.tshort2, 0);
+    assert_equal(v.tshort3, 3);
+    
+    
+    assert_equal(Bvopt("tshort1", B_FTOS, "MYVIEW3"), EXSUCCEED);
+    
+    assert_equal(Bvftos(p_ub, (char *)&v, "MYVIEW3"), EXSUCCEED);
+    
+    assert_equal(v.tshort1, 1);
+    assert_equal(v.tshort2, 0);
+    assert_equal(v.tshort3, 3);
+    
+}
+
+/**
  * Very basic tests of the framework
  * @return
  */
@@ -701,6 +752,7 @@ TestSuite *view_tests() {
     add_test(suite, test_Bvrefresh);
     add_test(suite, test_Bvstof);
     add_test(suite, test_Bvftos);
+    add_test(suite, test_Bvopt);
     
     return suite;
 }

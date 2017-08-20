@@ -44,6 +44,17 @@
 #include "test040.h"
 
 /**
+ * Initi view 3
+ * @param v
+ */
+expublic void init_MYVIEW3(struct MYVIEW3 *v)
+{
+    v->tshort1 = 1;
+    v->tshort2 = 2;
+    v->tshort3 = 3;
+}
+
+/**
  * Init the 
  * @param v
  */

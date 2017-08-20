@@ -46,8 +46,8 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 
 add_custom_command(
-  OUTPUT t40.h t40.V
-  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../scripts/buildclient -a '-I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v
+  OUTPUT t40.h t40.V t40_2.h t40_2.V
+  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../scripts/buildclient -a '-I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v t40_2.v
   DEPENDS t40.v)
 
 # Make sure the linker can find the UBF library once it is built.

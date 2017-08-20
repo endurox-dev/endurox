@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 #include "t40.h"
+#include "t40_2.h"
     
 #define TEST_AS_STRING(FLD, OCC, VAL)\
     assert_equal(CBget(p_ub, FLD, OCC, tmp, 0L, BFLD_STRING),  EXSUCCEED);\
@@ -57,6 +58,7 @@ extern "C" {
 
 
 extern void init_MYVIEW1(struct MYVIEW1 *v);
+extern void init_MYVIEW3(struct MYVIEW3 *v);
 
 #ifdef	__cplusplus
 }
