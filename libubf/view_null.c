@@ -309,7 +309,7 @@ out:
  * @return 
  */
 expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
-        char *cstruct)
+        BFLDLEN single_occ, char *cstruct)
 {
     int ret = EXSUCCEED;
     int dim_size;
@@ -324,6 +324,8 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     int occ;
     short *C_count;
     unsigned short *L_length;
+    int start_occ;
+    int stop_occ;
     
     if (f->nullval_none)
     {
@@ -331,12 +333,29 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
         goto out;
     } 
     
-    for (occ=0; occ<f->count; occ++)
-    {    
+    if (EXFAIL!=single_occ)
+    {
+        start_occ = single_occ;
+        stop_occ = single_occ+1;
+    }
+    else
+    {
+        start_occ = 0;
+        stop_occ = f->count;
+    }
+    
+    for (occ=start_occ; occ<stop_occ; occ++)
+    {   
+        
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
             C_count = (short *)(cstruct+f->count_fld_offset);
-            *C_count = 0;
+            
+            /* Reset only if full NULLing */
+            if (EXFAIL==single_occ)
+            {
+                *C_count = 0;
+            }
         }
         
         dim_size = f->fldsize/f->count;
@@ -494,7 +513,7 @@ expublic int ndrx_Bvselinit(char *cstruct, char *cname, char *view)
         EXFAIL_OUT(ret);
     }
         
-    if (EXFAIL==ndrx_Bvselinit_int(v, f, cstruct))
+    if (EXFAIL==ndrx_Bvselinit_int(v, f, EXFAIL, cstruct))
     {
         /* should not get here.. */
         ndrx_Bset_error_fmt(BBADVIEW, "System error occurred.");
@@ -521,7 +540,7 @@ expublic int ndrx_Bvsinit_int(ndrx_typedview_t *v, char *cstruct)
     /* Go over the c struct  */
     DL_FOREACH(v->fields, f)
     {
-        if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, cstruct))
+        if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, EXFAIL, cstruct))
         {
             ndrx_Bset_error_fmt(BBADVIEW, "System error occurred.");
             goto out;

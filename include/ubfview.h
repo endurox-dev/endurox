@@ -170,7 +170,7 @@ extern NDRX_API int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t 
         BFLDOCC occ, char *cstruct);
 
 extern NDRX_API int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,  
-        char *cstruct);
+        BFLDLEN single_occ, char *cstruct);
 extern NDRX_API int ndrx_Bvselinit(char *cstruct, char *cname, char *view);
 
 extern NDRX_API int ndrx_Bvsinit_int(ndrx_typedview_t *v, char *cstruct);

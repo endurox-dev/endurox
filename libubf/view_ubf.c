@@ -98,6 +98,7 @@ expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
                 C_count = &C_count_stor;
             }
             
+            *C_count = 0;
             for (occ=0; occ<f->count; occ++)
             {
                 fld_offs = cstruct+f->offset+occ*dim_size;
@@ -112,9 +113,7 @@ expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
                     L_length = &L_length_stor;
                 }
                 
-                *C_count = 0;
                 *L_length = 0;
-            
                 len = dim_size;
 
                 if (
@@ -146,8 +145,8 @@ expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
                         /* unset UBF error */
                         ndrx_Bunset_error();
 
-                        /* Setup NULL at given occ*/
-                        if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, cstruct))
+                        /* Setup NULL at given occ, but we need to do this for occ! */
+                        if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, occ, cstruct))
                         {
                             ndrx_Bset_error_fmt(BBADVIEW, "Failed to set NULL to %s.%s",
                                     v->vname, f->cname);
@@ -164,7 +163,7 @@ expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
                         *vi = (int)l;
                     }
                     
-                    (*(C_count))++;
+                    *C_count = (*C_count) + 1;
                     
                     if (BFLD_STRING==f->typecode_full || 
                             BFLD_CARRAY==f->typecode_full)

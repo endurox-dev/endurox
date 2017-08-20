@@ -687,7 +687,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 /* also set the length if we have ptr to... 
                  * This will be done by ndrx_Fvselinit_int();
                  */
-                if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, p_out))
+                if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, occ, p_out))
                 {
                     ndrx_TPset_error_fmt(BBADVIEW, "Failed to init %s.%s",
                                 v->vname, f->cname);

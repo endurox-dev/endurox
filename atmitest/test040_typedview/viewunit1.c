@@ -506,6 +506,62 @@ Ensure(test_Bvstof)
     assert_equal(Bpres(p_ub, T_CARRAY_3_FLD, 9),  EXFALSE);
     
 }
+/**
+ * Transfer UBF buffer to C struct..
+ * We will use previously initialised buffer by Bvstof
+ */
+Ensure(test_Bvftos)
+{
+    struct MYVIEW1 v;
+    char buf[2048];
+    BFLDID bfldid;
+    BFLDOCC occ;
+    int flds_got;
+    UBFH *p_ub = (UBFH *)buf;
+    char tmp[128];
+    double dtemp;
+    BFLDLEN len;
+    int i, j;
+    /***************************** TEST EMPTY STRUCT **************************/
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    /* Load test value... */
+    init_MYVIEW1(&v);
+    
+    /* transfer to UBF.. */
+    assert_equal(Bvstof(p_ub, (char *)&v, BCONCAT, "MYVIEW1"), EXSUCCEED);
+    
+    memset(&v, 0, sizeof(v));
+    
+    assert_equal(Bvftos(p_ub, (char *)&v, "MYVIEW1"), EXSUCCEED);
+    
+    /* now in v either we have value from buffer of NULL for the field. */
+    
+    /*
+     * test short
+     */
+    assert_equal(v.tshort1, 15556);
+    
+    assert_equal(v.C_tshort2, 2);
+    assert_equal(v.tshort2[0], 9999);
+    assert_equal(v.tshort2[1], 8888);
+    
+    assert_equal(v.C_tshort3, 2);
+    assert_equal(v.tshort3[0], 7777);
+    assert_equal(v.tshort3[1], -7777);
+    
+    /*
+     * Long tests
+     */
+    assert_equal(v.tlong1, 33333333);
+    
+    /*
+     * Int tests
+     */
+    assert_equal(v.tint2[0], 54545);
+    assert_equal(v.tint2[1], 23232);
+    
+}
 
 /**
  * Very basic tests of the framework
@@ -522,6 +578,7 @@ TestSuite *view_tests() {
     add_test(suite, test_Bvsinit);
     add_test(suite, test_Bvrefresh);
     add_test(suite, test_Bvstof);
+    add_test(suite, test_Bvftos);
     
     return suite;
 }
