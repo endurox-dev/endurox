@@ -912,7 +912,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 else if (0==strcmp(fld->nullval, "-"))
                 {
                     fld->nullval_bin[0] = EXEOS;
-                    fld->nullval_bin_len = 0;
+                    fld->nullval_bin_len = 1;
                     fld->nullval_default = EXTRUE;
                     UBF_LOG(log_debug, "Default NULL value used...");
                 }

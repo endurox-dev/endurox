@@ -133,7 +133,9 @@ expublic void init_MYVIEW1(struct MYVIEW1 *v)
     NDRX_STRCPY_SAFE(v->tstring3[2], "");	/* null="TESTEST" */
     NDRX_STRCPY_SAFE(v->tstring3[3], "NNNNNN");	/* null="TESTEST" */
 
-    NDRX_STRCPY_SAFE(v->tstring4, "Some string value");	/* null="HELLO TEST" */
+    NDRX_STRCPY_SAFE(v->tstring4, "Some string");	/* null="HELLO TEST" */
+    
+    NDRX_STRCPY_SAFE(v->tstring5, "MEGA TEST");
 
     for (i=0; i<30; i++)
     {
@@ -160,12 +162,12 @@ expublic void init_MYVIEW1(struct MYVIEW1 *v)
     
     for (i=0; i<5; i++)
     {
-        v->tcarray4[i]=i+3;	/* null="ABC" */
+        v->tcarray4[i]=i+3;
     }
     
     for (i=0; i<5; i++)
     {
-        v->tcarray5[i]=i+4;	/* null="ABC" */
+        v->tcarray5[i]=i+4;
     }
     
 }
@@ -173,11 +175,11 @@ expublic void init_MYVIEW1(struct MYVIEW1 *v)
 #define TEST_NUM_EQUAL(X, Y)  if (X!=Y) {NDRX_LOG(log_error, \
                 "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
 
-#define TEST_DOUBLE_EQUAL(X, Y)  if (fabs(X-Y)>0.01) {NDRX_LOG(log_error, \
-                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
+#define TEST_DOUBLE_EQUAL(X, Y)  if (fabs(X-Y)>0.1) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! %lf vs %lf", #X, X, Y); ret=EXFAIL;};
 
 #define TEST_STRING_EQUAL(X, Y)  if (0!=strcmp(X,Y)) {NDRX_LOG(log_error, \
-                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
+                "TESTERROR: %s -> failed! [%s] vs [%s]", #X, X, Y); ret=EXFAIL;};
 
 /**
  * Validate demo data (data received over the TP buffers)
@@ -254,57 +256,69 @@ expublic int validate_MYVIEW1(struct MYVIEW1 *v)
     TEST_STRING_EQUAL(v->tstring1[1], "BOX MY PACK");
     TEST_STRING_EQUAL(v->tstring1[2], "\nEnduro/X\n");
 
-    #if 0
+    
     /* Test the L length indicator, must be set to number of bytes transfered */
-    v->C_tstring2=2;
+    TEST_NUM_EQUAL(v->C_tstring2, 2);
 
-    NDRX_STRCPY_SAFE(v->tstring2[0], "CCCCAAAADDDD");
-    NDRX_STRCPY_SAFE(v->tstring2[1], "EEEFFFGGG");
-    NDRX_STRCPY_SAFE(v->tstring2[2], "IIIIJJJJKKK");
+    TEST_STRING_EQUAL(v->tstring2[0], "CCCCAAAADDDD");
+    TEST_STRING_EQUAL(v->tstring2[1], "EEEFFFGGG");
+    TEST_STRING_EQUAL(v->tstring2[2], "");
 
-    v->C_tstring3=4;
+    TEST_NUM_EQUAL(v->C_tstring3, 4);
 
-    NDRX_STRCPY_SAFE(v->tstring3[0], "LLLLLL");	/* null="TESTEST" */
-    NDRX_STRCPY_SAFE(v->tstring3[1], "MMMMMM");	/* null="TESTEST" */
-    NDRX_STRCPY_SAFE(v->tstring3[2], "");	/* null="TESTEST" */
-    NDRX_STRCPY_SAFE(v->tstring3[3], "NNNNNN");	/* null="TESTEST" */
+    TEST_STRING_EQUAL(v->tstring3[0], "LLLLLL");
+    TEST_STRING_EQUAL(v->tstring3[1], "MMMMMM");
+    TEST_STRING_EQUAL(v->tstring3[2], "");
+    TEST_STRING_EQUAL(v->tstring3[3], "NNNNNN");
 
-    NDRX_STRCPY_SAFE(v->tstring4, "Some string value");	/* null="HELLO TEST" */
+    TEST_STRING_EQUAL(v->tstring4, "Some string");
+    
+    TEST_STRING_EQUAL(v->tstring5, "MEGA TEST");
+
 
     for (i=0; i<30; i++)
     {
-        v->tcarray1[i]=i;
+        TEST_NUM_EQUAL(v->tcarray1[i], i);
     }
 
-    v->L_tcarray2 = 5;
-    for (i=0; i<25; i++)
+
+    TEST_NUM_EQUAL(v->L_tcarray2, 5);
+    
+    for (i=0; i<5; i++)
     {
-        v->tcarray2[i]=i+1;
+        TEST_NUM_EQUAL(v->tcarray2[i], i+1);
     }
     
-    v->C_tcarray3 = 9;
+    /* This is not sent over because of indicator.. */
+    TEST_NUM_EQUAL(v->tcarray2[5], 0);
+    TEST_NUM_EQUAL(v->tcarray2[6], 0);
+
+    TEST_NUM_EQUAL(v->C_tcarray3, 9);
             
     for (j=0; j<9; j++)
     {
-        v->L_tcarray3[j]=j+1;
+        TEST_NUM_EQUAL(v->L_tcarray3[j], j+1);
         
-        for (i=0; i<16+j; i++)
+        for (i=0; i<j+1; i++)
         {
-            v->tcarray3[j][i]=i+2;
+            TEST_NUM_EQUAL(v->tcarray3[j][i], i+2);
         }
     }
     
+    /* Last not used... */
+    TEST_NUM_EQUAL(v->tcarray3[9][0], 0);
+    
     for (i=0; i<5; i++)
     {
-        v->tcarray4[i]=i+3;	/* null="ABC" */
+        TEST_NUM_EQUAL(v->tcarray4[i], i+3);
     }
     
     for (i=0; i<5; i++)
     {
-        v->tcarray5[i]=i+4;	/* null="ABC" */
+        TEST_NUM_EQUAL(v->tcarray5[i], i+4);
     }
-#endif
     
     return ret;
     
 }
+

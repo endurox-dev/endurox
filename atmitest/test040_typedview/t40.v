@@ -27,6 +27,7 @@ string   tstring1   T_STRING_FLD        3       FSP     20      'HELLO WORLDB'
 string   tstring2   T_STRING_2_FLD      3       FCL     20      -
 string   tstring3   T_STRING_3_FLD      4       FSCL    20      'TESTEST'
 string   tstring4   -                   1       P       15      'HELLO TEST'
+string   tstring5   -                   1       -       15      'MEGA TEST'
 
 carray   tcarray1   T_CARRAY_FLD        1       FS      30      '\0\n\t\f\\\'\"\vHELLOWORLD'
 carray   tcarray2   T_CARRAY_2_FLD      1       LFSP    25      '\0\n\t\f\\\'\"\vHELLOWORL\n'

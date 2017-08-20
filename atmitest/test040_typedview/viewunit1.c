@@ -386,6 +386,10 @@ Ensure(test_Bvstof)
     /* Load test value... */
     init_MYVIEW1(&v);
     
+    /* Having some issues with initialised data of these: */
+    assert_equal(Bvnull((char *)&v, "tstring2", 0, "MYVIEW1"), EXFALSE); 
+    assert_equal(Bvnull((char *)&v, "tcarray5", 0, "MYVIEW1"), EXFALSE); 
+    
     assert_equal(Bvstof(p_ub, (char *)&v, BUPDATE, "MYVIEW1"), EXSUCCEED);
     
     bfldid = BFIRSTFLDID;

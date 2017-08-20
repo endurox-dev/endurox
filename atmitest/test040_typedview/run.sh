@@ -91,7 +91,7 @@ TVIEWNAME=tbad_invalid_L.v
 
 if [ $? == 0 ]; then
     echo "ERROR: $TVIEWNAME must not compile, but compiled OK!"
-    go_out 1
+    go_out 2
 fi
 
 #
@@ -103,7 +103,7 @@ TVIEWNAME=tbad_invalid_size_no_type.v
 
 if [ $? == 0 ]; then
     echo "ERROR: $TVIEWNAME must not compile, but compiled OK!"
-    go_out 1
+    go_out 3
 fi
 
 ################################################################################
@@ -120,6 +120,7 @@ echo "RES=> [$RES]"
 
 if [ "X$RES" == "X" ]; then
     echo "ERROR: Unit test failed, have some exceptions or failures!"
+    go_out 20
 fi
 
 

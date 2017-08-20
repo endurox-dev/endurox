@@ -216,6 +216,7 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
             
             /* test the filler */
             ret=EXTRUE;
+            
             for (i=0; i<f->nullval_bin_len; i++)
             {
                 if (i>=len)
