@@ -54,11 +54,6 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-
-/*
- * TODO: Bvftos, Bvstof
- */
-
 /**
  * Fill the C structure with UBF data
  * @param p_ub ptr to UBF buffer
@@ -178,6 +173,17 @@ expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
                 }
             } /* for occ */
         } /* if UBF->C flag */
+        else
+        {
+            UBF_LOG(log_debug, "Defaulting to NULL %s.%s", 
+                    v->vname, f->cname);
+            if (EXSUCCEED!=ndrx_Bvselinit_int(v, f, EXFAIL, cstruct))
+            {
+                ndrx_Bset_error_fmt(BBADVIEW, "Failed to set NULL to %s.%s",
+                        v->vname, f->cname);
+                EXFAIL_OUT(ret);
+            }
+        }
     } /* for fields in v */
     
 out:
@@ -258,7 +264,7 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: 
+    /*
      * - Build new UBF buffer from v. Loop over the v, add data to FB, realloc if needed.
      * - call the BUPDATE, (BOJOIN - RFU), (BJOIN - RFU), BCONCAT
      */
@@ -336,8 +342,8 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
                         
                         if (BFLD_STRING == f->typecode_full)
                         {
-                            /* provide length back, nr transfered */
-                            *L_length = strlen(fld_offs);
+                            /* provide length back, nr transfered +1 for EOS*/
+                            *L_length = strlen(fld_offs)+1;
                         }
                     }
                 }

@@ -25,7 +25,7 @@ double   tdouble2   T_DOUBLE_2_FLD      1       F       -       -999.123
 string   tstring0   -                   3       -       18      '\n\t\f\\\'\"\vHELLOWORLD'
 string   tstring1   T_STRING_FLD        3       FSP     20      'HELLO WORLDB'
 string   tstring2   T_STRING_2_FLD      3       FCL     20      -
-string   tstring3   T_STRING_3_FLD      4       FSC     20      'TESTEST'
+string   tstring3   T_STRING_3_FLD      4       FSCL    20      'TESTEST'
 string   tstring4   -                   1       P       15      'HELLO TEST'
 
 carray   tcarray1   T_CARRAY_FLD        1       FS      30      '\0\n\t\f\\\'\"\vHELLOWORLD'

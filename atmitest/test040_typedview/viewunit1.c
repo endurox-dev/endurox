@@ -457,10 +457,10 @@ Ensure(test_Bvstof)
     assert_equal(Bpres(p_ub, T_STRING_FLD, 3),  EXFALSE);
     
     TEST_AS_STRING(T_STRING_2_FLD, 0, "CCCCAAAADDDD");
-    assert_equal(v.L_tstring2[0], 12);
+    assert_equal(v.L_tstring2[0], 13);
     
     TEST_AS_STRING(T_STRING_2_FLD, 1, "EEEFFFGGG");
-    assert_equal(v.L_tstring2[1], 9);
+    assert_equal(v.L_tstring2[1], 10);
     
     assert_equal(Bpres(p_ub, T_STRING_2_FLD, 2),  EXFALSE);
     
@@ -533,6 +533,18 @@ Ensure(test_Bvftos)
     
     memset(&v, 0, sizeof(v));
     
+    /* First will go as NULL */
+    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 0, "A", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 1, "B", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 2, "C", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 3, "D", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_2_FLD, 4, "E", 0L, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBchg(p_ub, T_CHAR_3_FLD, 0, "X", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_3_FLD, 0, "Y", 0L, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBchg(p_ub, T_FLOAT_2_FLD, 0, "44", 0L, BFLD_STRING), EXSUCCEED);
+    
     assert_equal(Bvftos(p_ub, (char *)&v, "MYVIEW1"), EXSUCCEED);
     
     /* now in v either we have value from buffer of NULL for the field. */
@@ -550,6 +562,11 @@ Ensure(test_Bvftos)
     assert_equal(v.tshort3[0], 7777);
     assert_equal(v.tshort3[1], -7777);
     
+    UBF_LOG(log_debug, "tshort4=%hd", v.tshort4);
+    
+    /* NULL set to NONE */
+    assert_equal(Bvnull((char *)&v, "tshort4", 0, "MYVIEW1"), EXFALSE);
+    
     /*
      * Long tests
      */
@@ -561,6 +578,111 @@ Ensure(test_Bvftos)
     assert_equal(v.tint2[0], 54545);
     assert_equal(v.tint2[1], 23232);
     
+    assert_equal(Bvnull((char *)&v, "tint3", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tint4", 0, "MYVIEW1"), EXTRUE);
+    
+    /*
+     * Char tests
+     */
+    
+    /* Field is F, no copy back to struct */
+    assert_equal(Bvnull((char *)&v, "tchar1", 0, "MYVIEW1"), EXTRUE);
+    
+    for (i=0; i<5; i++)
+    {
+        assert_equal(v.tchar2[i], 'A'+i);
+    
+    }
+    
+    assert_equal(Bvnull((char *)&v, "tchar2", 0, "MYVIEW1"), EXTRUE);
+    
+    for (i=0; i<2; i++)
+    {
+        assert_equal(Bvnull((char *)&v, "tchar3", i, "MYVIEW1"), EXTRUE);
+    }
+    
+    /*
+     * Float tests
+     */
+    assert_double_equal(v.tfloat1[0], -0.11);
+    assert_double_equal(v.tfloat1[1], -0.22);
+    assert_double_equal(v.tfloat1[2], 0.33);
+    assert_double_equal(v.tfloat1[3], 0.44);
+    
+    assert_double_equal(v.tfloat2[0], 44);
+    
+    assert_equal(Bvnull((char *)&v, "tfloat2", 1, "MYVIEW1"), EXTRUE);
+    
+    assert_equal(Bvnull((char *)&v, "tfloat3", 0, "MYVIEW1"), EXTRUE);
+    
+    
+    /*
+     * Double tests
+     */
+    assert_double_equal(v.tdouble1[0], 99999.111111);
+    assert_double_equal(v.tdouble1[1], 11111.999999);
+    assert_equal(Bvnull((char *)&v, "tdouble2", 0, "MYVIEW1"), EXTRUE);
+    
+    
+    /*
+     * String tests
+     */
+    assert_equal(Bvnull((char *)&v, "tstring0", 0, "MYVIEW1"), EXTRUE);
+    
+    assert_string_equal(v.tstring1[0], "Pack my box");
+    assert_string_equal(v.tstring1[1], "BOX MY PACK");
+    assert_string_equal(v.tstring1[2], "\nEnduro/X\n");
+    
+    assert_equal(Bvnull((char *)&v, "tstring2", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tstring2", 1, "MYVIEW1"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tstring2", 2, "MYVIEW1"), EXTRUE);
+    
+    
+    assert_equal(v.L_tstring3[0], 7);
+    assert_string_equal(v.tstring3[0], "LLLLLL");
+    assert_equal(v.L_tstring3[1], 7);
+    assert_string_equal(v.tstring3[1], "MMMMMM");
+    
+    assert_equal(v.L_tstring3[2], 1); /* EOS */
+    assert_string_equal(v.tstring3[2], "");
+    
+    assert_equal(v.L_tstring3[3], 7); /* EOS */
+    assert_string_equal(v.tstring3[3], "NNNNNN");
+    
+    
+    assert_equal(Bvnull((char *)&v, "tstring4", 0, "MYVIEW1"), EXTRUE);
+    
+    /*
+     * Carray tests
+     */
+    
+    for (i=0; i<30; i++)
+    {
+        assert_equal(v.tcarray1[i], i);
+    }
+    
+    assert_equal(v.L_tcarray2, 5);
+    
+    for (i=0; i<5; i++)
+    {
+        assert_equal(v.tcarray2[i], i+1);
+    }
+    
+    assert_equal(v.C_tcarray3, 9);
+            
+    for (j=0; j<9; j++)
+    {
+        assert_equal(v.L_tcarray3[j], j+1);
+        
+        for (i=0; i<j+1; i++)
+        {
+            assert_equal(v.tcarray3[j][i], i+2);
+        }
+    }
+    
+    assert_equal(Bvnull((char *)&v, "tcarray4", 0, "MYVIEW1"), EXTRUE);
+    
+    assert_equal(Bvnull((char *)&v, "tcarray5", 0, "MYVIEW1"), EXTRUE);
 }
 
 /**
