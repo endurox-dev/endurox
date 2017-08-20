@@ -49,9 +49,13 @@ extern "C" {
 #define TEST_AS_DOUBLE(FLD, OCC, VAL)\
     assert_equal(CBget(p_ub, FLD, OCC, (char *)&dtemp, 0L, BFLD_DOUBLE),  EXSUCCEED);\
     assert_double_equal(VAL, dtemp);
-
-
     
+#define GET_CARRAY_DOUBLE_TEST_LEN(FLD, OCC, LEN)\
+    len=sizeof(tmp);\
+    assert_equal(Bget(p_ub, FLD, OCC, tmp, &len),  EXSUCCEED);\
+    assert_equal(len, LEN);
+
+
 extern void init_MYVIEW1(struct MYVIEW1 *v);
 
 #ifdef	__cplusplus

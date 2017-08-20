@@ -359,6 +359,8 @@ Ensure(test_Bvstof)
     UBFH *p_ub = (UBFH *)buf;
     char tmp[128];
     double dtemp;
+    BFLDLEN len;
+    int i, j;
     /***************************** TEST EMPTY STRUCT **************************/
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     
@@ -473,12 +475,37 @@ Ensure(test_Bvstof)
     /*
      * Carray test
      */
+    GET_CARRAY_DOUBLE_TEST_LEN(T_CARRAY_FLD, 0, 30)
+    for (i=0; i<30; i++)
+    {
+        assert_equal(v.tcarray1[i], i);
+    }
     
+    GET_CARRAY_DOUBLE_TEST_LEN(T_CARRAY_FLD, 0, 30)
+    for (i=0; i<30; i++)
+    {
+        assert_equal(tmp[i], i);
+    }
     
+    GET_CARRAY_DOUBLE_TEST_LEN(T_CARRAY_2_FLD, 0, 5)
+    for (i=0; i<5; i++)
+    {
+        assert_equal(tmp[i], i+1);
+    }
+    
+    for (j=0; j<9; j++)
+    {
+        UBF_LOG(log_debug, "Testing j=%d", j);
+        GET_CARRAY_DOUBLE_TEST_LEN(T_CARRAY_3_FLD, j, j+1)
+                
+        for (i=0; i<j; i++)
+        {
+            assert_equal(tmp[i], i+2);
+        }
+    }
+    assert_equal(Bpres(p_ub, T_CARRAY_3_FLD, 9),  EXFALSE);
     
 }
-
-/* TODO: Unit test for default values... */
 
 /**
  * Very basic tests of the framework

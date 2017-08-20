@@ -134,13 +134,14 @@ expublic void init_MYVIEW1(struct MYVIEW1 *v)
         v->tcarray2[i]=i+1;
     }
     
+    v->C_tcarray3 = 9;
+            
     for (j=0; j<9; j++)
     {
-        v->L_tcarray3[j]=j;
+        v->L_tcarray3[j]=j+1;
         
         for (i=0; i<16+j; i++)
         {
-            v->L_tcarray3[j]=16+j+1; /* +1 because of 0 base... */
             v->tcarray3[j][i]=i+2;
         }
     }
