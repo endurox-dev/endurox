@@ -44,8 +44,17 @@
 
 #include "test040.h"
 
+#define TEST_NUM_EQUAL(X, Y)  if (X!=Y) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
+
+#define TEST_DOUBLE_EQUAL(X, Y)  if (fabs(X-Y)>0.1) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! %lf vs %lf", #X, X, Y); ret=EXFAIL;};
+
+#define TEST_STRING_EQUAL(X, Y)  if (0!=strcmp(X,Y)) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! [%s] vs [%s]", #X, X, Y); ret=EXFAIL;};
+
 /**
- * Initi view 3
+ * Init view 3
  * @param v
  */
 expublic void init_MYVIEW3(struct MYVIEW3 *v)
@@ -53,6 +62,22 @@ expublic void init_MYVIEW3(struct MYVIEW3 *v)
     v->tshort1 = 1;
     v->tshort2 = 2;
     v->tshort3 = 3;
+}
+
+/**
+ * Validate view 3
+ * @param v
+ * @return 
+ */
+expublic int validate_MYVIEW3(struct MYVIEW3 *v)
+{
+    int ret = EXSUCCEED;
+    
+    TEST_NUM_EQUAL(v->tshort1, 1);
+    TEST_NUM_EQUAL(v->tshort2, 2);
+    TEST_NUM_EQUAL(v->tshort3, 3);
+    
+    return ret;
 }
 
 /**
@@ -171,15 +196,6 @@ expublic void init_MYVIEW1(struct MYVIEW1 *v)
     }
     
 }
-
-#define TEST_NUM_EQUAL(X, Y)  if (X!=Y) {NDRX_LOG(log_error, \
-                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
-
-#define TEST_DOUBLE_EQUAL(X, Y)  if (fabs(X-Y)>0.1) {NDRX_LOG(log_error, \
-                "TESTERROR: %s -> failed! %lf vs %lf", #X, X, Y); ret=EXFAIL;};
-
-#define TEST_STRING_EQUAL(X, Y)  if (0!=strcmp(X,Y)) {NDRX_LOG(log_error, \
-                "TESTERROR: %s -> failed! [%s] vs [%s]", #X, X, Y); ret=EXFAIL;};
 
 /**
  * Validate demo data (data received over the TP buffers)

@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
     int ret=EXSUCCEED;
     
     struct MYVIEW1 *v1;
+    struct MYVIEW3 *v3;
     
     if (EXSUCCEED!=tpinit(NULL))
     {
@@ -67,18 +68,16 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
     
-    v1= (struct MYVIEW1 *) tpalloc("VIEW", "MYVIEW1", sizeof(struct MYVIEW1));
-    
     if (NULL==v1)
     {
         NDRX_LOG(log_error, "TESTERROR: failed to alloc VIEW buffer!");
         EXFAIL_OUT(ret);
     }
 
-    for (j=0; j<1; j++)
+    for (j=0; j<1000; j++)
     {
         
-        memset(v1, 0, sizeof(struct MYVIEW1));
+        v1= (struct MYVIEW1 *) tpalloc("VIEW", "MYVIEW1", sizeof(struct MYVIEW1));
         
         init_MYVIEW1(v1);
         
@@ -89,9 +88,15 @@ int main(int argc, char** argv) {
             NDRX_LOG(log_error, "TESTERROR: failed to call TEST40_VIEW");
             EXFAIL_OUT(ret);
         }
-
-        NDRX_DUMP(log_debug, "VIEW1 reply...", v1, sizeof(struct MYVIEW1));
         
+        v3 = (struct MYVIEW3 *)v1;
+        if (EXSUCCEED!=validate_MYVIEW3((v3)))
+        {
+            NDRX_LOG(log_error, "Failed to validate V3!");
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree((char *)v3);
     }
     
 out:

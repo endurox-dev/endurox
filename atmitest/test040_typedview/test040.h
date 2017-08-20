@@ -61,6 +61,7 @@ extern void init_MYVIEW1(struct MYVIEW1 *v);
 extern void init_MYVIEW3(struct MYVIEW3 *v);
 
 extern int validate_MYVIEW1(struct MYVIEW1 *v);
+extern int validate_MYVIEW3(struct MYVIEW3 *v);
 
 #ifdef	__cplusplus
 }

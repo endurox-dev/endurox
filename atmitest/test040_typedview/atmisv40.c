@@ -88,7 +88,16 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
     }
     NDRX_LOG(log_error, "BUF OK")
     
-    /* TODO: Setup different values back... */
+    /* Return different block back */
+    if (NULL==(buf = tpalloc("VIEW", "MYVIEW3", sizeof(struct MYVIEW3))))
+    {
+        NDRX_LOG(log_error, "Failed VIEW buffer: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Setup the values */
+    init_MYVIEW3((struct MYVIEW3 *)buf);
+    
     
 out:
     
@@ -97,7 +106,7 @@ out:
 }
 
 /**
- * Do initialisation
+ * Do initialization
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
