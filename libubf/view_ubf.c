@@ -115,7 +115,6 @@ expublic int ndrx_Bvftos_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct)
                 *C_count = 0;
                 *L_length = 0;
             
-                
                 len = dim_size;
 
                 if (
@@ -334,6 +333,12 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
                             
                             /* error will be set already */
                             EXFAIL_OUT(ret);
+                        }
+                        
+                        if (BFLD_STRING == f->typecode_full)
+                        {
+                            /* provide length back, nr transfered */
+                            *L_length = strlen(fld_offs);
                         }
                     }
                 }

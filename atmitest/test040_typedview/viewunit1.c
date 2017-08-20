@@ -42,7 +42,7 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 
-#include "t40.h"
+#include "test040.h"
 
 /**
  * Basic preparation before the test
@@ -347,126 +347,6 @@ Ensure(test_Bvrefresh)
 }
 
 /**
- * Init the 
- * @param v
- */
-void init_MYVIEW1(struct MYVIEW1 *v)
-{
-    int i, j;
-        
-    v->tshort1=15556;	/* null=2000 */
-
-    v->C_tshort2=2;
-    v->tshort2[0]=9999;	/* null=2001 */
-    v->tshort2[1]=8888;	/* null=2001 */
-
-    v->C_tshort3 = 2;
-    v->tshort3[0]=7777;	/* null=2001 */
-    v->tshort3[1]=-7777;	/* null=2001 */
-    v->tshort3[2]=-7777;	/* null=2001 */
-
-    v->tshort4=-10;	/* null=NONE */
-
-    v->tlong1=33333333;	/* null=0 */
-
-    v->tint2[0]=54545;	/* null=0 */
-    v->tint2[1]=23232;	/* null=0 */
-    v->tint3=-100;
-    v->tint4[0]=1010101;	/* null=-1 */
-    v->tint4[1]=989898;	/* null=-1 */
-
-    v->tchar1='A';	/* null="\n" */
-
-    v->C_tchar2=5;
-    v->tchar2[0]='A';	/* null="A" */
-    v->tchar2[1]='B';
-    v->tchar2[2]='C';
-    v->tchar2[3]='\n';
-    v->tchar2[4]='\t';
-
-    v->C_tchar3=0;
-    v->tchar3[0]='C';	/* null="A" */
-    v->tchar3[1]='D';	/* null="A" */
-
-    v->tfloat1[0]=-0.11;	/* null=1.1 */
-    v->tfloat1[1]=-0.22;	/* null=1.1 */
-    v->tfloat1[2]=0.33;	/* null=1.1 */
-    v->tfloat1[3]=0.44;	/* null=1.1 */
-
-    v->tfloat2[0]=100000.1;	/* null=1.1 */
-    v->tfloat2[1]=200000.2;	/* null=1.1 */
-
-    v->tfloat3=333333.111;	/* null=9999.99 */
-
-    v->tdouble1[0]=99999.111111;	/* null=55555.99 */
-    v->tdouble1[1]=11111.999999;	/* null=55555.99 */
-    v->tdouble2=-999.123;	/* null=-999.123 */
-
-    NDRX_STRCPY_SAFE(v->tstring0[0], "HELLO Enduro/X");	/* null="\n\t\f\\\'\"\vHELLOWORLD" */
-    NDRX_STRCPY_SAFE(v->tstring0[1], "");	/* null="\n\t\f\\\'\"\vHELLOWORLD" */
-    NDRX_STRCPY_SAFE(v->tstring0[2], "\nABC\n");	/* null="\n\t\f\\\'\"\vHELLOWORLD" */
-
-    NDRX_STRCPY_SAFE(v->tstring1[0], "Pack my box");	/* null="HELLO WORLDB" */
-    NDRX_STRCPY_SAFE(v->tstring1[1], "BOX MY PACK");	/* null="HELLO WORLDB" */
-    NDRX_STRCPY_SAFE(v->tstring1[2], "Enduro/X Middleware");	/* null="HELLO WORLDB" */
-
-    /* Test the L length indicator, must be set to number of bytes transfered */
-    v->C_tstring2=2;
-
-    NDRX_STRCPY_SAFE(v->tstring2[0], "CCCCAAAADDDD");
-    NDRX_STRCPY_SAFE(v->tstring2[1], "EEEFFFGGGHHH");
-    NDRX_STRCPY_SAFE(v->tstring2[2], "IIIIJJJJKKK");
-
-    v->C_tstring3=4;
-
-    NDRX_STRCPY_SAFE(v->tstring3[0], "LLLLLL");	/* null="TESTEST" */
-    NDRX_STRCPY_SAFE(v->tstring3[1], "MMMMMM");	/* null="TESTEST" */
-    NDRX_STRCPY_SAFE(v->tstring3[2], "");	/* null="TESTEST" */
-    NDRX_STRCPY_SAFE(v->tstring3[3], "NNNNNN");	/* null="TESTEST" */
-
-    NDRX_STRCPY_SAFE(v->tstring4, "Some string value");	/* null="HELLO TEST" */
-
-    for (i=0; i<30; i++)
-    {
-        v->tcarray1[i]=i;
-    }
-
-    for (i=0; i<25; i++)
-    {
-        v->tcarray2[i]=i+1;
-    }
-    
-    v->C_tcarray3=9;
-    
-    for (j=0; j<9; j++)
-    {
-        for (i=0; i<16+j; i++)
-        {
-            v->L_tcarray3[j]=16+j+1; /* +1 because of 0 base... */
-            v->tcarray3[j][i]=i+2;
-        }
-    }
-    
-    for (i=0; i<5; i++)
-    {
-        v->tcarray4[i]=i+3;	/* null="ABC" */
-    }
-    for (i=0; i<5; i++)
-    {
-        v->tcarray5[i]=i+4;	/* null="ABC" */
-    }
-    
-}
-
-#define TEST_AS_STRING(FLD, OCC, VAL)\
-    assert_equal(CBget(p_ub, FLD, OCC, tmp, 0L, BFLD_STRING),  EXSUCCEED);\
-    assert_string_equal(VAL, tmp);
-
-#define TEST_AS_DOUBLE(FLD, OCC, VAL)\
-    assert_equal(CBget(p_ub, FLD, OCC, (char *)&dtemp, 0L, BFLD_DOUBLE),  EXSUCCEED);\
-    assert_double_equal(VAL, dtemp);
-
-/**
  * Install structure to UBF
  */
 Ensure(test_Bvstof)
@@ -563,12 +443,38 @@ Ensure(test_Bvstof)
     TEST_AS_DOUBLE(T_DOUBLE_FLD, 1, 11111.999999);
     assert_equal(Bpres(p_ub, T_DOUBLE_FLD, 2),  EXFALSE);
     
-    /* Not trasffered due to default value NULL: */
+    /* Not transfered due to default value NULL: */
     assert_equal(Bpres(p_ub, T_DOUBLE_2_FLD, 0),  EXFALSE);
     
     /*
-     * TODO: String & Carray -> Need a transfer length to test...
+     * String
      */
+    TEST_AS_STRING(T_STRING_FLD, 0, "Pack my box");
+    TEST_AS_STRING(T_STRING_FLD, 1, "BOX MY PACK");
+    TEST_AS_STRING(T_STRING_FLD, 2, "\nEnduro/X\n");
+    assert_equal(Bpres(p_ub, T_STRING_FLD, 3),  EXFALSE);
+    
+    TEST_AS_STRING(T_STRING_2_FLD, 0, "CCCCAAAADDDD");
+    assert_equal(v.L_tstring2[0], 12);
+    
+    TEST_AS_STRING(T_STRING_2_FLD, 1, "EEEFFFGGG");
+    assert_equal(v.L_tstring2[1], 9);
+    
+    assert_equal(Bpres(p_ub, T_STRING_2_FLD, 2),  EXFALSE);
+    
+    
+    TEST_AS_STRING(T_STRING_3_FLD, 0, "LLLLLL");
+    TEST_AS_STRING(T_STRING_3_FLD, 1, "MMMMMM");
+    TEST_AS_STRING(T_STRING_3_FLD, 2, "");
+    TEST_AS_STRING(T_STRING_3_FLD, 3, "NNNNNN");
+    
+    assert_equal(Bpres(p_ub, T_STRING_3_FLD, 4),  EXFALSE);
+    
+    /*
+     * Carray test
+     */
+    
+    
     
 }
 

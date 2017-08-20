@@ -1,5 +1,5 @@
 /* 
-** Typed STRING tests
+** Typed VIEW tests
 **
 ** @file test040.h
 ** 
@@ -36,8 +36,23 @@
 extern "C" {
 #endif
 
+#include "t40.h"
+    
+#define TEST_AS_STRING(FLD, OCC, VAL)\
+    assert_equal(CBget(p_ub, FLD, OCC, tmp, 0L, BFLD_STRING),  EXSUCCEED);\
+    assert_string_equal(VAL, tmp);
 
-#define TEST_REPLY_SIZE         1024
+#define TEST_AS_STRING2(FLD, OCC, VAL)\
+    assert_equal(CBget(p_ub, FLD, OCC, tmp, 0L, BFLD_STRING),  EXSUCCEED);\
+    assert_equal(strcmp(VAL, tmp), 0);
+
+#define TEST_AS_DOUBLE(FLD, OCC, VAL)\
+    assert_equal(CBget(p_ub, FLD, OCC, (char *)&dtemp, 0L, BFLD_DOUBLE),  EXSUCCEED);\
+    assert_double_equal(VAL, dtemp);
+
+
+    
+extern void init_MYVIEW1(struct MYVIEW1 *v);
 
 #ifdef	__cplusplus
 }

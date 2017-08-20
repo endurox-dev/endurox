@@ -40,7 +40,6 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include "test040.h"
-#include "t40.h"
 #include "tperror.h"
 
 /*---------------------------Externs------------------------------------*/
