@@ -56,7 +56,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 ############################# Test - executables ###############################
 add_executable (viewunit1 viewunit1.c shared.c)
 add_executable (atmisv40 atmisv40.c shared.c ../../libatmisrv/rawmain_integra.c t40.h t40.V)
-add_executable (atmiclt40 atmiclt40.c t40.h)
+add_executable (atmiclt40 atmiclt40.c shared.c t40.h)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...

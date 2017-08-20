@@ -52,6 +52,8 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
     char type[16+1]={EXEOS};
     char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     
+    NDRX_LOG(log_debug, "Into: %s", __func__);
+    
     if (EXFAIL==tptypes(buf, type, subtype))
     {
         NDRX_LOG(log_error, "TESTERROR: TEST40_VIEW cannot "
@@ -65,12 +67,28 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
+    NDRX_LOG(log_debug, "%s VIEW ok", __func__);
+    
     if (0!=strcmp(subtype, "MYVIEW1"))
     {
         NDRX_LOG(log_error, "TESTERROR: sub-type not MYVIEW1, but [%s]", 
                 subtype);
         EXFAIL_OUT(ret);
     }
+    
+    NDRX_LOG(log_debug, "%s MYVIEW1 ok", __func__);
+        
+    NDRX_LOG(log_debug, "%s About to compare data block..", __func__);
+    
+    NDRX_LOG(log_error, "v1 OK, now BUF")
+    if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)buf))
+    {
+        NDRX_LOG(log_error, "Invalid data recovered from FB!");
+        EXFAIL_OUT(ret);
+    }
+    NDRX_LOG(log_error, "BUF OK")
+    
+    /* TODO: Setup different values back... */
     
 out:
     

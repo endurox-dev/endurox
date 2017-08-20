@@ -726,7 +726,6 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                     
                     L_length = (unsigned short *)(p_out+f->length_fld_offset+
                             occ*sizeof(unsigned short));
-                    L_len_long = (long)*L_length;
                     
                     if (EXSUCCEED!=Bget(p_ub, fldid, occ, fld_offs, &blen))
                     {
@@ -739,17 +738,11 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                         EXFAIL_OUT(ret);
                     }
                     
-                    /* Test the buffer size.. */
-                    if (L_len_long!=blen)
+                    if (f->typecode_full == BFLD_CARRAY || 
+                            f->typecode_full == BFLD_STRING)
                     {
-                        NDRX_LOG(log_error, "Length indicator in buffer: %ld, real: %d",
-                                L_len_long, blen);
-                        ndrx_TPset_error_fmt(TPESYSTEM, "Length indicator "
-                                "in buffer: %ld, real: %d",
-                                L_len_long, blen);
-                        EXFAIL_OUT(ret);
+                        *L_length = blen;
                     }
-                    
                 }
                 else
                 {
@@ -802,3 +795,4 @@ expublic int VIEW_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char
     
     return ret;
 }
+

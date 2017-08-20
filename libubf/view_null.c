@@ -346,9 +346,7 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     
     for (occ=start_occ; occ<stop_occ; occ++)
     {   
-        
-        NDRX_LOG(log_debug, "YOPT %s.%s: %d", v->vname, f->cname, occ);
-        
+     
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
             C_count = (short *)(cstruct+f->count_fld_offset);

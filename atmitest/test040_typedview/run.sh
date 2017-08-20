@@ -59,6 +59,10 @@ xadmin killall atmiclt40 2>/dev/null
 #
 function go_out {
     echo "Test exiting with: $1"
+
+    xadmin killall atmisv40 2>/dev/null
+    xadmin killall atmiclt40 2>/dev/null
+
     popd 2>/dev/null
     exit $1
 }
@@ -121,8 +125,6 @@ fi
 
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
-exit 0
-
 # Start event server
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
 # NOTE: WE HAVE MEM LEAK HERE:
@@ -140,13 +142,11 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-xadmin killall atmisv40 2>/dev/null
-xadmin killall atmiclt40 2>/dev/null
 
 #killall atmiclt1
 
 popd 2>/dev/null
 
-exit $RET
+go_out $RET
 
 

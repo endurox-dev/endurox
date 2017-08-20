@@ -40,6 +40,7 @@
 #include "ubfunit1.h"
 #include "ndebug.h"
 #include <fdatatype.h>
+#include <math.h>
 
 #include "test040.h"
 
@@ -166,5 +167,144 @@ expublic void init_MYVIEW1(struct MYVIEW1 *v)
     {
         v->tcarray5[i]=i+4;	/* null="ABC" */
     }
+    
+}
+
+#define TEST_NUM_EQUAL(X, Y)  if (X!=Y) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
+
+#define TEST_DOUBLE_EQUAL(X, Y)  if (fabs(X-Y)>0.01) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
+
+#define TEST_STRING_EQUAL(X, Y)  if (0!=strcmp(X,Y)) {NDRX_LOG(log_error, \
+                "TESTERROR: %s -> failed! %d vs %d", #X, X, Y); ret=EXFAIL;};
+
+/**
+ * Validate demo data (data received over the TP buffers)
+ * @param v
+ */
+expublic int validate_MYVIEW1(struct MYVIEW1 *v)
+{
+    int i, j;
+    int ret = EXSUCCEED;
+        
+    TEST_NUM_EQUAL(v->tshort1, 15556);
+
+    TEST_NUM_EQUAL(v->C_tshort2, 2);
+    TEST_NUM_EQUAL(v->tshort2[0], 9999);
+    TEST_NUM_EQUAL(v->tshort2[1], 8888);
+    
+
+    TEST_NUM_EQUAL(v->C_tshort3, 2);
+    TEST_NUM_EQUAL(v->tshort3[0], 7777);
+    TEST_NUM_EQUAL(v->tshort3[1], -7777);
+    
+    /* because we transfer only 2x elements... 
+     * Due to count set to 2.
+     * TODO: Add this note to the VIEW files. That if
+     * Count is used, then during service calls, count also is used..
+     */
+    TEST_NUM_EQUAL(v->tshort3[2], 0);
+    
+    TEST_NUM_EQUAL(v->tshort4, -10);
+
+    TEST_NUM_EQUAL(v->tlong1, 33333333);
+
+    TEST_NUM_EQUAL(v->tint2[0], 54545);
+    TEST_NUM_EQUAL(v->tint2[1], 23232);
+    TEST_NUM_EQUAL(v->tint3, -100);
+    TEST_NUM_EQUAL(v->tint4[0], 1010101);
+    TEST_NUM_EQUAL(v->tint4[1], 989898);
+
+
+
+    TEST_NUM_EQUAL(v->tchar1, 'A');
+
+    TEST_NUM_EQUAL(v->C_tchar2, 5);
+    TEST_NUM_EQUAL(v->tchar2[0], 'A');
+    TEST_NUM_EQUAL(v->tchar2[1], 'B');
+    TEST_NUM_EQUAL(v->tchar2[2], 'C');
+    TEST_NUM_EQUAL(v->tchar2[3], '\n');
+    TEST_NUM_EQUAL(v->tchar2[4], '\t');
+
+    TEST_NUM_EQUAL(v->C_tchar3, 0);
+    /* due to count set to 0 */
+    TEST_NUM_EQUAL(v->tchar3[0], 0);
+    TEST_NUM_EQUAL(v->tchar3[1], 0);
+
+    TEST_DOUBLE_EQUAL(v->tfloat1[0],-0.11);
+    TEST_DOUBLE_EQUAL(v->tfloat1[1],-0.22);
+    TEST_DOUBLE_EQUAL(v->tfloat1[2],0.33);
+    TEST_DOUBLE_EQUAL(v->tfloat1[3],0.44);
+
+    TEST_DOUBLE_EQUAL(v->tfloat2[0],100000.1);
+    TEST_DOUBLE_EQUAL(v->tfloat2[1],200000.2);
+
+    TEST_DOUBLE_EQUAL(v->tfloat3,333333.111);
+
+    TEST_DOUBLE_EQUAL(v->tdouble1[0],99999.111111);
+    TEST_DOUBLE_EQUAL(v->tdouble1[1],11111.999999);
+    TEST_DOUBLE_EQUAL(v->tdouble2,-999.123);
+
+    TEST_STRING_EQUAL(v->tstring0[0], "HELLO Enduro/X");
+    TEST_STRING_EQUAL(v->tstring0[1], "");
+    TEST_STRING_EQUAL(v->tstring0[2], "\nABC\n");
+
+    TEST_STRING_EQUAL(v->tstring1[0], "Pack my box");
+    TEST_STRING_EQUAL(v->tstring1[1], "BOX MY PACK");
+    TEST_STRING_EQUAL(v->tstring1[2], "\nEnduro/X\n");
+
+    #if 0
+    /* Test the L length indicator, must be set to number of bytes transfered */
+    v->C_tstring2=2;
+
+    NDRX_STRCPY_SAFE(v->tstring2[0], "CCCCAAAADDDD");
+    NDRX_STRCPY_SAFE(v->tstring2[1], "EEEFFFGGG");
+    NDRX_STRCPY_SAFE(v->tstring2[2], "IIIIJJJJKKK");
+
+    v->C_tstring3=4;
+
+    NDRX_STRCPY_SAFE(v->tstring3[0], "LLLLLL");	/* null="TESTEST" */
+    NDRX_STRCPY_SAFE(v->tstring3[1], "MMMMMM");	/* null="TESTEST" */
+    NDRX_STRCPY_SAFE(v->tstring3[2], "");	/* null="TESTEST" */
+    NDRX_STRCPY_SAFE(v->tstring3[3], "NNNNNN");	/* null="TESTEST" */
+
+    NDRX_STRCPY_SAFE(v->tstring4, "Some string value");	/* null="HELLO TEST" */
+
+    for (i=0; i<30; i++)
+    {
+        v->tcarray1[i]=i;
+    }
+
+    v->L_tcarray2 = 5;
+    for (i=0; i<25; i++)
+    {
+        v->tcarray2[i]=i+1;
+    }
+    
+    v->C_tcarray3 = 9;
+            
+    for (j=0; j<9; j++)
+    {
+        v->L_tcarray3[j]=j+1;
+        
+        for (i=0; i<16+j; i++)
+        {
+            v->tcarray3[j][i]=i+2;
+        }
+    }
+    
+    for (i=0; i<5; i++)
+    {
+        v->tcarray4[i]=i+3;	/* null="ABC" */
+    }
+    
+    for (i=0; i<5; i++)
+    {
+        v->tcarray5[i]=i+4;	/* null="ABC" */
+    }
+#endif
+    
+    return ret;
     
 }

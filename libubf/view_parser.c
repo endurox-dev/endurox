@@ -899,7 +899,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* for doubles, etc... parsing! */
             fld->nullval_bin[fld->nullval_bin_len]=EXEOS;
             
-            NDRX_DUMP(log_debug, "Got binary version of NULL value", fld->nullval_bin,
+            UBF_DUMP(log_debug, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
                      
             if (!fld->nullval_quotes)

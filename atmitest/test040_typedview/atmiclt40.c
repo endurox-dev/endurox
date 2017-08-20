@@ -75,18 +75,12 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
 
-    for (j=0; j<10000; j++)
+    for (j=0; j<1; j++)
     {
         
         memset(v1, 0, sizeof(struct MYVIEW1));
         
-        v1->tshort1=1;
-        v1->C_tchar2 = 2;
-        v1->tshort2[0]=2;
-        v1->tshort2[1]=3;
-        v1->tlong1 = 4;
-        v1->tint2[0]=5;
-        v1->tint2[1]=6;
+        init_MYVIEW1(v1);
         
         NDRX_DUMP(log_debug, "VIEW1 request...", v1, sizeof(struct MYVIEW1));
 
@@ -97,6 +91,7 @@ int main(int argc, char** argv) {
         }
 
         NDRX_DUMP(log_debug, "VIEW1 reply...", v1, sizeof(struct MYVIEW1));
+        
     }
     
 out:
