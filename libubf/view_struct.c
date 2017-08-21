@@ -66,6 +66,11 @@ expublic void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len)
 {
     int i;
     uint32_t s;
+    long l;
+    
+#if 0
+    UBF_DUMP(log_debug, "ADDING TO CHECKSUM", str, len);
+#endif
     
     for (i=0; i<len; i++)
     {
@@ -75,6 +80,11 @@ expublic void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len)
         /* xor the value with intput... */
         v->cksum^=s;
     }
+    
+    l = v->cksum;
+#if 0
+    UBF_LOG(log_debug, "Current checksum: %ld", l);
+#endif
 }
 
 /**

@@ -135,7 +135,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 if (0==strncmp("#@__platform=", buf, 13))
                 {
                     UBF_LOG(log_debug, "Found platform data, parsing...");
-                    tok2=strtok_r (tok,";", &saveptr2);
+                    tok2=strtok_r (buf,";", &saveptr2);
                     while( tok2 != NULL ) 
                     {
                         int cmplen;
@@ -201,7 +201,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 else if (0==strncmp("#@__ssize=", buf, 10))
                 {
                     UBF_LOG(log_debug, "Structure data, parsing...");
-                    tok2=strtok_r (tok,";", &saveptr2);
+                    tok2=strtok_r (buf,";", &saveptr2);
                     while( tok2 != NULL ) 
                     {
                         int cmplen;
@@ -722,7 +722,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
             
             /* Add size to checksum */
-            ndrx_view_cksum_update(v, tok, sizeof(tok));
+            ndrx_view_cksum_update(v, tok, strlen(tok));
             
             UBF_LOG(log_debug, "Got size [%hd]", fld->size);
             
