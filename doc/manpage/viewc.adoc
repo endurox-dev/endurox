@@ -1,0 +1,70 @@
+VIEWC(8)
+========
+:doctype: manpage
+
+
+NAME
+----
+viewc - View file compiler
+
+
+SYNOPSIS
+--------
+*viewc* ['OPTIONS'] viewfile1 viewfile2 ... viewfileN
+
+
+DESCRIPTION
+-----------
+*viewc* binary consume view files defined in format specified of 'viewfile(5)'.
+The view file describes the C structure which can be mapped to *UBF* buffer. The
+view file contains also the length of the *STRING* and *CARRAY* fields. Program does
+following steps:
+
+. Generates C header file with structures according to the view file
+
+. Calculates machine dependent the C field offset in the memory, calculates field
+lengths
+
+To perform offset and size calculation, viewc generates small C program which is
+compiled by 'buildclient(8)' Perl script. The generated temporary program is executed
+which updates the in-memory read view file. The view file is updated with platform
+specific data and the "object-file" is written to disk. The object file basically
+corresponds the same 'viewfile(5)' format, except that additional meta data for
+each of the fields are encoded after the NULL column. Also some meta data are
+encoded in view file comments. The "object-file" can be used as original view file
+by viewc. In that case viewc will ignore the meta data and will produce new
+"object-file".
+
+'viewc' must have access to 'cc' (C Compiler).
+
+
+OPTIONS
+-------
+[*-L* 'LD_LIBRARY_PATH']::
+Additional library path for dynamic libraries. Will be passed to *buildclient* during
+the build phase.
+
+[*-b* 'BUILD_FLAGS']::
+Additional flags to be passed to 'cc' command line.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*viewfile(5)* *buildclient(8)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
