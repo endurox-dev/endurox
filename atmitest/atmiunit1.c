@@ -336,6 +336,20 @@ Ensure(test039_tpbroadcast)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test040_typedview)
+{
+    int ret;
+    ret=system_dbg("test040_typedview/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test040_typedview_dom)
+{
+    int ret;
+    ret=system_dbg("test040_typedview/run-dom.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -399,6 +413,10 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test038_tpnotify);
     add_test(suite, test039_tpbroadcast);
+    
+    add_test(suite, test040_typedview);
+    
+    add_test(suite, test040_typedview_dom);
             
     return suite;
 }
