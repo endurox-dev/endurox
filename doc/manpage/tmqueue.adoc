@@ -88,7 +88,7 @@ This time in seconds used by main forwarder thread to scan for any automatic mes
 for processing.
 
 [*-p* 'SERVICE_THREAD_POOL_SIZE']::
-This is thread pool size of used for 'tpenqueue()', 'tpdequeue()' serving. Also this thread pool is utilised
+This is thread pool size of used for 'tpenqueue()', 'tpdequeue()' serving. Also this thread pool is utilized
 by 'xadmin mqX' commands. Default is '10'.
 
 [*-u* 'NOTIFY_THREAD_POOL_SIZE']::

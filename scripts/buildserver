@@ -32,10 +32,11 @@
 ##
 
 use Getopt::Std;
+use Cwd;
 
 
 my %options=();
-getopts("o:f:s:", \%options);
+getopts("o:f:s:a:", \%options);
 
 my $CFLAGS = $ENV{'CFLAGS'};
 
@@ -44,6 +45,13 @@ my $CC = "cc";
 if ($ENV{'CC'})
 {
 	$CC=$ENV{'CC'};
+}
+
+my $CFLAGS="";
+
+if ($ENV{'CFLAGS'})
+{
+	$CFLAGS=$ENV{'CFLAGS'};
 }
 
 my $LIBPATH = $ENV{'LIBPATH'};
@@ -70,7 +78,23 @@ foreach my $item (@LIBPATH_ARR) {
 	$BUILD_LIB_PATH="$BUILD_LIB_PATH -L$item";
 }
 
-$command="$CC -o $options{o} $options{f} -latmisrv -lm -lc -lrt -latmi -lubf -lnstd -ldl -lpthread $BUILD_LIB_PATH";
+# Set RT LIB
+my $dyn_libs = "-lrt -ldl -lpthread";
+my $wd = getcwd;
+
+print "OS Version: $^O wd: $wd\n";
+
+if ($^O eq "freebsd" )
+{
+	$dyn_libs = "-lrt -lpthread";
+}
+elsif ($^O eq "darwin")
+{
+	$dyn_libs = "-ldl -lpthread";
+}
+
+
+$command="$CC $CFLAGS -o $options{o} $options{f} -latmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $BUILD_LIB_PATH $options{a}";
 
 print "$command\n";
 `$command`

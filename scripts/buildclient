@@ -97,4 +97,3 @@ $command="$CC $CFLAGS -o $options{o} $options{f}  -latmiclt -latmi -lubf -lnstd 
 
 print "$command\n";
 `$command`
-
