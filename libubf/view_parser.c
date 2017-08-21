@@ -255,7 +255,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             continue;
         }
-        else if ('\n'==buf[0] || '\r'==buf[0] && '\n'==buf[1])
+        else if (('\n'==buf[0]) || (('\r'==buf[0]) && ('\n'==buf[1])))
         {
             /* this is newline, ignore */
             continue;
