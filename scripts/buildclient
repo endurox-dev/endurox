@@ -79,6 +79,10 @@ if ($^O eq "freebsd" )
 {
 	$dyn_libs = "-lrt -lpthread";
 }
+elsif ($^O eq "darwin")
+{
+	$dyn_libs = "-ldl -lpthread";
+}
 
 $command="$CC -o $options{o} $options{f}  -latmiclt -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $BUILD_LIB_PATH $options{a}";
 
