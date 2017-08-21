@@ -267,6 +267,7 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename,
     if (EXSUCCEED!=ndrx_view_invoke(cfile, ofile))
     {
         NDRX_LOG(log_error, "Failed to compile VIEW!");
+        EXFAIL_OUT(ret);
     }
     else  
     {
