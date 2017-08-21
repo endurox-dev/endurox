@@ -106,6 +106,10 @@ expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
                         fld->nullval);
                 }
             }
+            else
+            {
+                default_null[0]=EXEOS;
+            }
                     
             if (fld->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
             {
