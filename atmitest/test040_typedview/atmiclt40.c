@@ -67,18 +67,17 @@ int main(int argc, char** argv) {
         NDRX_LOG(log_error, "TESTERROR: failed to init: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
-    
-    if (NULL==v1)
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to alloc VIEW buffer!");
-        EXFAIL_OUT(ret);
-    }
 
     for (j=0; j<1000; j++)
     {
         
         v1= (struct MYVIEW1 *) tpalloc("VIEW", "MYVIEW1", sizeof(struct MYVIEW1));
-        
+        if (NULL==v1)
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to alloc VIEW buffer!");
+            EXFAIL_OUT(ret);
+        }
+
         init_MYVIEW1(v1);
         
         NDRX_DUMP(log_debug, "VIEW1 request...", v1, sizeof(struct MYVIEW1));
