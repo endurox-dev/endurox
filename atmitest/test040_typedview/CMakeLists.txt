@@ -48,7 +48,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 add_custom_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT t40.h t40.V t40_2.h t40_2.V
-  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../scripts/buildclient -a '-I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v_in t40_2.v_in
+  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../scripts/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v_in t40_2.v_in
   DEPENDS t40.v_in t40.v_in)
 
 # Make sure the linker can find the UBF library once it is built.
