@@ -32,6 +32,7 @@
 ##
 
 use Getopt::Std;
+use Cwd;
 
 
 my %options=();
@@ -79,8 +80,9 @@ foreach my $item (@LIBPATH_ARR) {
 
 # Set RT LIB
 my $dyn_libs = "-lrt -ldl -lpthread";
+my $wd = getcwd;
 
-print "OS Version: $^O\n";
+print "OS Version: $^O wd: $wd\n";
 
 if ($^O eq "freebsd" )
 {
