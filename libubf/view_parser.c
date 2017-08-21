@@ -228,8 +228,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         }
                         else if (0==strncmp("@__cksum", tok2, cmplen))
                         {
-                            long cksum = atol(p3+1);
-                            long cksum_built = (long)v->cksum;
+                            long cksum = atoll(p3+1);
+                            long cksum_built = v->cksum;
                             
                             if (cksum!=cksum_built)
                             {
