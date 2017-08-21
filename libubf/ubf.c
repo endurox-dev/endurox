@@ -2112,8 +2112,10 @@ expublic int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view)
         EXFAIL_OUT(ret);
     }
     
-out:
     ret=ndrx_Bvstof(p_ub, cstruct, mode, view);
+    
+out:
+    return ret;
 }
 /**
  * Join two buffers, update only existing fields in dest, remove missing fields
