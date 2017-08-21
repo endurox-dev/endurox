@@ -143,6 +143,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 4.0.5 released on 01/08/2017. Feature #180 - refactoring code towards ISO/IEC 9899:201x standard.
 
+- Version 5.0.1 released on 21/08/2017. Feature #96 - Typed View support, Bug #182 - fix in bridge protocol.
+
 # Build configurations
 
 ## Configure make with: 
