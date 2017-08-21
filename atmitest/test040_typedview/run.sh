@@ -74,7 +74,7 @@ function go_out {
 #
 # Invalid size of the NULL value
 #
-TVIEWNAME=tbad_view_invl_size.v
+TVIEWNAME=tbad_view_invl_size.v_in
 ../../viewc/viewc $TVIEWNAME
 
 
@@ -86,7 +86,7 @@ fi
 #
 # Invalid L flag, set for long (accepted only for string & carray)
 #
-TVIEWNAME=tbad_invalid_L.v
+TVIEWNAME=tbad_invalid_L.v_in
 ../../viewc/viewc $TVIEWNAME
 
 if [ $? == 0 ]; then
@@ -98,7 +98,7 @@ fi
 # Invalid L flag, set for long (accepted only for string & carray)
 #
 
-TVIEWNAME=tbad_invalid_size_no_type.v
+TVIEWNAME=tbad_invalid_size_no_type.v_in
 ../../viewc/viewc $TVIEWNAME
 
 if [ $? == 0 ]; then
