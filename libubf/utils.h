@@ -47,8 +47,8 @@ extern "C" {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
-extern int get_nonprintable_char_tmpspace(char *str, int len);
-extern int normalize_string(char *str, int *out_len);
+extern int ndrx_get_nonprintable_char_tmpspace(char *str, int len);
+extern int ndrx_normalize_string(char *str, int *out_len);
 #ifdef	__cplusplus
 }
 #endif

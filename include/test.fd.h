@@ -36,10 +36,13 @@
 /*	-----	-----            */
 #define	T_CHAR_FLD	((BFLDID32)67109875)	/* number: 1011	 type: char */
 #define	T_CHAR_2_FLD	((BFLDID32)67109876)	/* number: 1012	 type: char */
+#define	T_CHAR_3_FLD	((BFLDID32)67109877)	/* number: 1013	 type: char */
 #define	T_SHORT_FLD	((BFLDID32)1021)	/* number: 1021	 type: short */
 #define	T_SHORT_2_FLD	((BFLDID32)1022)	/* number: 1022	 type: short */
+#define	T_SHORT_3_FLD	((BFLDID32)1023)	/* number: 1023	 type: short */
 #define	T_LONG_FLD	((BFLDID32)33555463)	/* number: 1031	 type: long */
 #define	T_LONG_2_FLD	((BFLDID32)33555464)	/* number: 1032	 type: long */
+#define	T_LONG_3_FLD	((BFLDID32)33555465)	/* number: 1033	 type: long */
 #define	T_FLOAT_FLD	((BFLDID32)100664337)	/* number: 1041	 type: float */
 #define	T_FLOAT_2_FLD	((BFLDID32)100664338)	/* number: 1042	 type: float */
 #define	T_FLOAT_3_FLD	((BFLDID32)100664339)	/* number: 1043	 type: float */
@@ -59,4 +62,5 @@
 #define	T_STRING_10_FLD	((BFLDID32)167773170)	/* number: 1010	 type: string */
 #define	T_CARRAY_FLD	((BFLDID32)201327673)	/* number: 1081	 type: carray */
 #define	T_CARRAY_2_FLD	((BFLDID32)201327674)	/* number: 1082	 type: carray */
+#define	T_CARRAY_3_FLD	((BFLDID32)201327675)	/* number: 1083	 type: carray */
 #endif

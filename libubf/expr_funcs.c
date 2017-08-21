@@ -191,15 +191,15 @@ void yyerror(char *s, ...)
         sprintf(errbuf, ". Near of %d-%d: ", yylloc.first_column, yylloc.last_column);
         vsprintf(errbuf+strlen(errbuf), s, ap);
 
-        if (_Fis_error())
+        if (ndrx_Bis_error())
         {
           /* append message */
-          _Bappend_error_msg(errbuf);
+          ndrx_Bappend_error_msg(errbuf);
         }
         else
         {
           /* Set the error from fresh! (+2 for remvoing [. ]) */
-          _Fset_error_msg(BSYNTAX, errbuf+2);
+          ndrx_Bset_error_msg(BSYNTAX, errbuf+2);
         }
 
         G_error = EXFAIL;
@@ -326,7 +326,7 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
 
     if(!a) {
       yyerror("out of space");
-      _Fset_error_msg(BMALLOC, "out of memory for new ast");
+      ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast");
       return NULL;
     }
     else
@@ -334,7 +334,7 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
         if (EXSUCCEED!=add_resource((char *)a))
         {
             yyerror("out of space");
-            _Fset_error_msg(BMALLOC, "out of memory for resource list");
+            ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
             return NULL;
         }
     }
@@ -364,7 +364,7 @@ struct ast * newfld(bfldid_t f)
 
     if(!a) {
       yyerror("out of space");
-      _Fset_error_msg(BMALLOC, "out of memory for new ast_fld");
+      ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast_fld");
       return NULL;
     }
     else
@@ -372,7 +372,7 @@ struct ast * newfld(bfldid_t f)
         if (EXSUCCEED!=add_resource((char *)a))
         {
             yyerror("out of space");
-            _Fset_error_msg(BMALLOC, "out of memory for resource list");
+            ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
             return NULL;
         }
     }
@@ -389,7 +389,7 @@ struct ast * newfld(bfldid_t f)
     if (BBADFLDID==get_bfldid(&(a->fld)))
     {
         yyerror("Bad field Id");
-        _Fset_error_fmt(BBADNAME, "Bad field name for [%s]", a->fld.fldnm);
+        ndrx_Bset_error_fmt(BBADNAME, "Bad field name for [%s]", a->fld.fldnm);
         /* Not sure is this good? If we do free get stack coruption/double free */
         goto out;
     }
@@ -447,7 +447,7 @@ int set_func(char *funcname, functionPtr_t functionPtr)
         if (NULL==tmp)
         {
             yyerror("out of space");
-            _Fset_error_msg(BMALLOC, "out of memory for new func_hash_t");
+            ndrx_Bset_error_msg(BMALLOC, "out of memory for new func_hash_t");
             ret=EXFAIL;
             goto out;
         }
@@ -471,7 +471,7 @@ struct ast * newfunc(char *funcname)
   if(!a)
   {
     yyerror("out of space");
-    _Fset_error_msg(BMALLOC, "out of memory for new ast_func");
+    ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast_func");
     return NULL;
   }
   else
@@ -479,7 +479,7 @@ struct ast * newfunc(char *funcname)
       if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
-          _Fset_error_msg(BMALLOC, "out of memory for resource list");
+          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
           return NULL;
       }
   }
@@ -494,7 +494,7 @@ struct ast * newfunc(char *funcname)
   if (len<3)
   {
       yyerror("Function name too short!");
-      _Fset_error_fmt(BBADNAME, "Full function name too short [%s]", funcname);
+      ndrx_Bset_error_fmt(BBADNAME, "Full function name too short [%s]", funcname);
       /* Not sure is this good? If we do free get stack coruption/double free */
       goto out;
   }
@@ -508,7 +508,7 @@ struct ast * newfunc(char *funcname)
   if (NULL==(a->f=get_func(a->funcname)))
   {
       yyerror("Bad function name");
-      _Fset_error_fmt(BBADNAME, "Bad function name for [%s]", a->funcname);
+      ndrx_Bset_error_fmt(BBADNAME, "Bad function name for [%s]", a->funcname);
       /* Not sure is this good? If we do free get stack coruption/double free */
       goto out;
   }
@@ -532,7 +532,7 @@ struct ast * newstring(char *str)
 
     if(!a || !a->str) {
         yyerror("out of space");
-        _Fset_error_msg(BMALLOC, "out of memory for new ast_string or a->str");
+        ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast_string or a->str");
         return NULL;
     }
     else
@@ -540,7 +540,7 @@ struct ast * newstring(char *str)
       if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
-          _Fset_error_msg(BMALLOC, "out of memory for resource list");
+          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
           return NULL;
       }
     }
@@ -568,7 +568,7 @@ struct ast * newfloat(double d)
 
     if(!a) {
         yyerror("out of space");
-        _Fset_error_msg(BMALLOC, "out of memory for new newfloat");
+        ndrx_Bset_error_msg(BMALLOC, "out of memory for new newfloat");
         return NULL;
     }
     else
@@ -576,7 +576,7 @@ struct ast * newfloat(double d)
       if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
-          _Fset_error_msg(BMALLOC, "out of memory for resource list");
+          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
           return NULL;
       }
     }
@@ -604,7 +604,7 @@ struct ast * newlong(long l)
 
     if(!a) {
         yyerror("out of space");
-        _Fset_error_msg(BMALLOC, "out of memory for new newfloat");
+        ndrx_Bset_error_msg(BMALLOC, "out of memory for new newfloat");
         return NULL;
     }
     else
@@ -612,7 +612,7 @@ struct ast * newlong(long l)
       if (EXSUCCEED!=add_resource((char *)a))
       {
           yyerror("out of space");
-          _Fset_error_msg(BMALLOC, "out of memory for resource list");
+          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
           return NULL;
       }
     }
@@ -1143,7 +1143,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
         {
             if (BNOTPRES==Berror)
             {
-                _Bunset_error(); /* Clear error, because this is not error case! */
+                ndrx_Bunset_error(); /* Clear error, because this is not error case! */
                 /* This is OK */
                 UBF_LOG(log_warn, "Field not present [%s]", lf->fld.fldnm);
                 v->value_type=VALUE_TYPE_LONG;
@@ -1173,7 +1173,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     else
     {
         /* cannot handle other items, but should be already handled by parser! */
-        _Fset_error_msg(BSYNTAX, "Left side of regex must be const string or FB field");
+        ndrx_Bset_error_msg(BSYNTAX, "Left side of regex must be const string or FB field");
         ret=EXFAIL;
     }
 
@@ -1187,7 +1187,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     /* We must handle this by parser */
             UBF_LOG(log_error, "Right side of regexp must be const string! "
                                     "But got node type [%d]\n", r->nodetype);
-    _Fset_error_msg(BSYNTAX, "Right side of regex must be const string");
+    ndrx_Bset_error_msg(BSYNTAX, "Right side of regex must be const string");
     }
 
     if (EXSUCCEED==ret)
@@ -1203,7 +1203,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
             UBF_LOG(log_debug, "Compiling regex");
             if (EXSUCCEED!=(err=regcomp(re, p_r, REG_EXTENDED | REG_NOSUB)))
             {
-                report_regexp_error("regcomp", err, re);
+                ndrx_report_regexp_error("regcomp", err, re);
                 ret=EXFAIL;
             }
             else
@@ -1307,7 +1307,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 if (NULL==(v->strval=NDRX_MALLOC(len)))
                 {
                     UBF_LOG(log_error, "Error malloc fail!");
-                    _Fset_error_fmt(BMALLOC, "Error malloc fail! (cannot allocate %d)", len);
+                    ndrx_Bset_error_fmt(BMALLOC, "Error malloc fail! (cannot allocate %d)", len);
                     ret=EXFAIL;
                 }
                 else
@@ -1320,7 +1320,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 {
                     if (BNOTPRES==Berror)
                     {
-                        _Bunset_error(); /* clear error */
+                        ndrx_Bunset_error(); /* clear error */
                         UBF_LOG(log_warn, "Failed to get [%s] as str"
                                                      " - downgrade to FALSE!",
                                                      fld->fld.fldnm);
@@ -1354,7 +1354,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 {
                     if (BNOTPRES==Berror)
                     {
-                        _Bunset_error(); /* clear error */
+                        ndrx_Bunset_error(); /* clear error */
                         UBF_LOG(log_warn, "Failed to get [%s] as long"
                                 " - downgrade to FALSE!",
                                 fld->fld.fldnm);
@@ -1382,7 +1382,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 {
                     if (BNOTPRES==Berror)
                     {
-                        _Bunset_error(); /* clear error */
+                        ndrx_Bunset_error(); /* clear error */
                         UBF_LOG(log_warn, "Failed to get [%s] as double"
                                 " - downgrade to FALSE!",
                                 fld->fld.fldnm);
@@ -1588,13 +1588,13 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
 
     if (!v)
     {
-        _Fset_error_msg(BNOTFLD, "internal error, null ret value");
+        ndrx_Bset_error_msg(BNOTFLD, "internal error, null ret value");
             return EXFAIL; /* <<< RETURN HERE! */
     }
 
     if(!a)
     {
-        _Fset_error_msg(BNOTFLD, "internal error, null eval");
+        ndrx_Bset_error_msg(BNOTFLD, "internal error, null eval");
         return EXFAIL; /* <<< RETURN HERE! */
     }
     
@@ -1763,7 +1763,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
 /* =========================API FUNCTIONS=====================================*/
 /* ===========================================================================*/
 
-expublic char * _Bboolco (char * expr)
+expublic char * ndrx_Bboolco (char * expr)
 {
 
     char *ret=NULL;
@@ -1779,7 +1779,7 @@ expublic char * _Bboolco (char * expr)
 
     if (NULL==expr_int)
     {
-        _Fset_error_fmt(BMALLOC, "cannot allocate %d bytes for expression copy",
+        ndrx_Bset_error_fmt(BMALLOC, "cannot allocate %d bytes for expression copy",
                                     buf_len);
     }
     else
@@ -1816,7 +1816,7 @@ expublic char * _Bboolco (char * expr)
     return ret;
 }
 
-expublic int _Bboolev (UBFH * p_ub, char *tree)
+expublic int ndrx_Bboolev (UBFH * p_ub, char *tree)
 {
     int ret=EXSUCCEED;
     value_block_t v;
@@ -1825,7 +1825,7 @@ expublic int _Bboolev (UBFH * p_ub, char *tree)
 
     if (NULL==tree)
     {
-        _Fset_error_msg(BEINVAL, "NULL tree passed for eval!");
+        ndrx_Bset_error_msg(BEINVAL, "NULL tree passed for eval!");
         return EXFAIL; /* <<< RETURN */
     }
     /*
@@ -1858,7 +1858,7 @@ expublic int _Bboolev (UBFH * p_ub, char *tree)
  * @param tree
  * @return
  */
-expublic double _Bfloatev (UBFH * p_ub, char *tree)
+expublic double ndrx_Bfloatev (UBFH * p_ub, char *tree)
 {
     double ret=0.0;
     value_block_t v;
@@ -1867,7 +1867,7 @@ expublic double _Bfloatev (UBFH * p_ub, char *tree)
 
     if (NULL==tree)
     {
-        _Fset_error_msg(BEINVAL, "NULL tree passed for eval!");
+        ndrx_Bset_error_msg(BEINVAL, "NULL tree passed for eval!");
         return EXFAIL; /* <<< RETURN */
     }
     /*
@@ -1894,7 +1894,7 @@ expublic double _Bfloatev (UBFH * p_ub, char *tree)
  * is not needed.
  * @param tree
  */
-expublic void _Btreefree (char *tree)
+expublic void ndrx_Btreefree (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
@@ -1929,11 +1929,11 @@ expublic void _Btreefree (char *tree)
         default:
             if (a->l)
             {
-                _Btreefree ((char *)a->l);
+                ndrx_Btreefree ((char *)a->l);
             }
             if (a->r)
             {
-                _Btreefree ((char *)a->r);
+                ndrx_Btreefree ((char *)a->r);
             }
             break;
     }
@@ -1947,7 +1947,7 @@ expublic void _Btreefree (char *tree)
  * @param tree - evaluation tree
  * @param outf - file to print to 
  */
-expublic void _Bboolpr (char * tree, FILE *outf)
+expublic void ndrx_Bboolpr (char * tree, FILE *outf)
 {
     int ret=EXSUCCEED;
 
@@ -2007,12 +2007,12 @@ expublic void _Bboolpr (char * tree, FILE *outf)
             fprintf(outf, "(");
             if (a->l)
             {
-                _Bboolpr ((char *)a->l, outf);
+                ndrx_Bboolpr ((char *)a->l, outf);
             }
             fprintf(outf, "%s", M_subtypes_sign_only[a->sub_type]);
             if (a->r)
             {
-                _Bboolpr ((char *)a->r, outf);
+                ndrx_Bboolpr ((char *)a->r, outf);
             }
             fprintf(outf, ")");
             break;
@@ -2022,7 +2022,7 @@ expublic void _Bboolpr (char * tree, FILE *outf)
 /*
  * Set callback function
  */
-expublic int _Bboolsetcbf (char *funcname, 
+expublic int ndrx_Bboolsetcbf (char *funcname, 
         long (*functionPtr)(UBFH *p_ub, char *funcname))
 {
 
@@ -2035,7 +2035,7 @@ expublic int _Bboolsetcbf (char *funcname,
 
     if (NULL==funcname || (len=strlen(funcname)) < 3 || len > MAX_FUNC_NAME-2)
     {
-        _Fset_error_fmt(BBADNAME, "Bad function name passed [%s]", funcname);
+        ndrx_Bset_error_fmt(BBADNAME, "Bad function name passed [%s]", funcname);
         ret=EXFAIL;
         goto out;
     }

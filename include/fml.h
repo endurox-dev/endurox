@@ -76,13 +76,13 @@ extern "C" {
 #define FFTOPEN BFTOPEN
 #define FFTSYNTAX BFTSYNTAX
 #define FEINVAL BEINVAL
-#define FBADTBL BERFU2
-#define FBADVIEW BERFU3
-#define FVFSYNTAX BERFU4
-#define FVFOPEN BERFU5
-#define FBADACM BERFU6
-#define FNOCNAME BERFU7
-#define FEBADOP BERFU8
+#define FBADTBL BBADTBL
+#define FBADVIEW BBADVIEW
+#define FVFSYNTAX BVFSYNTAX
+#define FVFOPEN BVFOPEN
+#define FBADACM BBADACM
+#define FNOCNAME BNOCNAME
+#define FEBADOP BEBADOP
 #define FMAXVAL  BMAXVAL
     
 #define Ferror Berror
@@ -94,6 +94,11 @@ extern "C" {
 
 #define Fbfr Ubfh
 #define FBFR UBFH
+    
+#define F_FTOS B_FTOS
+#define F_STOF B_STOF
+#define F_OFF B_OFF
+#define F_BOTH B_BOTH
     
 #define Fnext_state Bnext_state 
 #define Fnext_state_t Bnext_state_t
@@ -163,6 +168,17 @@ extern "C" {
 #define Frstrindex Brstrindex
 #define Ferror Berror
 #define Fielded Bisubf
+    
+/* VIEW related */
+#define Fvnull Bvnull
+#define Fvselinit Bvselinit
+#define Fvsinit Bvsinit
+#define Fvrefresh Bvrefresh
+#define Fvopt Bvopt
+#define Fvftos Bvftos
+#define Bvstof Bvstof
+/* VIEW related, END */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

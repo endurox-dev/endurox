@@ -291,9 +291,10 @@ extern "C" {
 #define X_C_TYPE	"X_C_TYPE"
 #define X_COMMON	"X_COMMON"
 
-#define MAXTIDENT                   30		/* Internal identifed max len */
+#define MAXTIDENT                   30		/* Internal identifed max len   */
 #define XATMI_SERVICE_NAME_LENGTH   MAXTIDENT
-    
+#define XATMI_SUBTYPE_LEN           33      /* Max sub-type len             */
+     
 /* Range for cluster ID's
  * Currently we allow 254 nodes.
  */

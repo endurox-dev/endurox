@@ -47,7 +47,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {ndrx_TPunset_error(); \
-    ATMI_TLS_ENTRY;\
+    /*ATMI_TLS_ENTRY; - no need, as unset error already did.. */\
     if (!G_atmi_tls->G_atmi_is_init) { \
         /* this means this is dirty client call, do the init */\
         NDRX_DBG_INIT(("ATMI", ""));\
@@ -133,7 +133,7 @@ expublic char * tpalloc (char *type, char *subtype, long len)
     char *ret=NULL;
     /* int entry_status=EXSUCCEED; */
     
-/* Allow to skip initalization - this for for clt init (using tpalloc for buffer request)
+/* Allow to skip initialisation - this for for clt init (using tpalloc for buffer request)
     API_ENTRY;
     if (SUCCEED!=entry_status)
     {

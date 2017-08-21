@@ -130,7 +130,7 @@ char *get_next_from_env (int *ret)
         flddir = (char *)getenv(FLDTBLDIR);
         if (NULL==flddir)
         {
-            _Fset_error_msg(BFTOPEN, "Field table directory not set - "
+            ndrx_Bset_error_msg(BFTOPEN, "Field table directory not set - "
                          "check FLDTBLDIR env var");
             *ret=EXFAIL;
             return NULL;
@@ -140,7 +140,7 @@ char *get_next_from_env (int *ret)
         flds = (char *)getenv(FIELDTBLS);
         if (NULL==flds)
         {
-            _Fset_error_msg(BFTOPEN, "Field table list not set - "
+            ndrx_Bset_error_msg(BFTOPEN, "Field table list not set - "
                  "check FIELDTBLS env var");
             *ret=EXFAIL;
             return NULL;
@@ -148,7 +148,7 @@ char *get_next_from_env (int *ret)
 
         UBF_LOG(log_debug, "About to load fields list [%s]", flds);
 
-        strcpy(tmp_flds, flds);
+        NDRX_STRCPY_SAFE(tmp_flds, flds);
         ret_ptr=strtok(tmp_flds, ",");
     }
     else
@@ -158,7 +158,7 @@ char *get_next_from_env (int *ret)
 
     if (NULL!=ret_ptr)
     {
-        sprintf(tmp, "%s/%s", flddir, ret_ptr);
+        snprintf(tmp, sizeof(tmp), "%s/%s", flddir, ret_ptr);
         ret_ptr=tmp;
     }
 
@@ -311,7 +311,7 @@ exprivate int generate_files(void)
         /* Open field table file */
         if (NULL==(inf=NDRX_FOPEN(fname, "r")))
         {
-            _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
+            ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                 fname, strerror(errno));
             ret=EXFAIL;
         }
@@ -319,14 +319,14 @@ exprivate int generate_files(void)
         /* Open output file */
         if (EXSUCCEED==ret)
         {
-            strcpy(G_active_file, get_file_name(fname));
+            NDRX_STRCPY_SAFE(G_active_file, get_file_name(fname));
             
             M_renderer->get_fullname(out_f_name);
             
             /* build up path for output file name */
             if (NULL==(G_outf=NDRX_FOPEN(out_f_name, "w")))
             {
-                _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
+                ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                             out_f_name, strerror(errno));
                 ret=EXFAIL;
             }
@@ -339,7 +339,7 @@ exprivate int generate_files(void)
         if (EXSUCCEED==ret)
         {
             /* This will also do the check for duplicates! */
-            ret=_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
+            ret=ndrx_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
                                         M_renderer->put_got_base_line, fname, EXTRUE);
         }
 

@@ -63,7 +63,7 @@
  * @param inf - stream to read from 
  * @return SUCCEED/FAIL
  */
-expublic int _Bread  (UBFH * p_ub, FILE * inf)
+expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -85,7 +85,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
     /* Was header read OK? */
     if (sizeof(hdr_src)!=read)
     {
-        _Fset_error_fmt(BEUNIX, "%s:Failed to read header from input file, unix err: [%s]",
+        ndrx_Bset_error_fmt(BEUNIX, "%s:Failed to read header from input file, unix err: [%s]",
                                      fn, strerror(errno));
         ret=EXFAIL;
     }
@@ -93,7 +93,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
     /* Check header */
     if (EXSUCCEED==ret && 0!=strncmp(hdr_src.magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        _Fset_error_fmt(BNOTFLD, "%s:Source buffer not bisubf!", fn);
+        ndrx_Bset_error_fmt(BNOTFLD, "%s:Source buffer not bisubf!", fn);
         ret=EXFAIL;
     }
 
@@ -110,7 +110,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
     /* Check dest buffer size. */
     if (EXSUCCEED==ret && dst_buf_free<hdr_src.bytes_used)
     {
-        _Fset_error_fmt(BNOSPACE, "%s:No space in source buffer - free: %d bytes, requested: %d",
+        ndrx_Bset_error_fmt(BNOSPACE, "%s:No space in source buffer - free: %d bytes, requested: %d",
                                     fn, dst_buf_free, hdr_src.bytes_used);
         ret=EXFAIL;   
     }
@@ -124,7 +124,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
 
         if (read!=to_read)
         {
-            _Fset_error_fmt(BEUNIX, "%s:Failed to read buffer data from input file, unix err: [%s]",
+            ndrx_Bset_error_fmt(BEUNIX, "%s:Failed to read buffer data from input file, unix err: [%s]",
                                      fn, strerror(errno));
             ret=EXFAIL;
         }
@@ -142,7 +142,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
         if (EXSUCCEED!=(ret=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD)))
         {
             UBF_LOG(log_error, "Restored buffer is invalid!");
-           _Bappend_error_msg("(restored buffer is invalid)");
+           ndrx_Bappend_error_msg("(restored buffer is invalid)");
 
         }
         else
@@ -163,7 +163,7 @@ expublic int _Bread  (UBFH * p_ub, FILE * inf)
  * @param outf - stream to write to 
  * @return SUCCEED/FAIL
  */
-expublic int _Bwrite (UBFH *p_ub, FILE * outf)
+expublic int ndrx_Bwrite (UBFH *p_ub, FILE * outf)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -181,7 +181,7 @@ expublic int _Bwrite (UBFH *p_ub, FILE * outf)
     if (written!=hdr->bytes_used)
     {
         /* we have error condition! */
-        _Fset_error_fmt(BEUNIX, "%s:Write failed! Requested for write %d bytes, "
+        ndrx_Bset_error_fmt(BEUNIX, "%s:Write failed! Requested for write %d bytes, "
                                     "but written %d. Unix error: [%s]",
                                      fn, hdr->bytes_used, written, strerror(errno));
         ret=EXFAIL;
@@ -195,7 +195,7 @@ expublic int _Bwrite (UBFH *p_ub, FILE * outf)
     
     if (EXSUCCEED==ret && ferror(outf))
     {
-        _Fset_error_fmt(BEUNIX, "%s: On Write fflush failed, Unix error: [%s]",
+        ndrx_Bset_error_fmt(BEUNIX, "%s: On Write fflush failed, Unix error: [%s]",
                                    fn, strerror(errno));
         ret=EXFAIL;
     }

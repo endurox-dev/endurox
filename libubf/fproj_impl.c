@@ -97,7 +97,7 @@ int is_fld_pres (BFLDID * array, BFLDID left, BFLDID right, BFLDID number)
     }
     
     UBF_LOG(log_debug, "is_fld_pres: [%p/%s] in%s list",
-                                        number, _Bfname_int(number), bsearch?"":" NOT");
+                                        number, ndrx_Bfname_int(number), bsearch?"":" NOT");
 
     return bsearch;
 }
@@ -228,7 +228,7 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
  * @param processed - ptr to int, which will return the count of chunks processed
  * @return SUCCEED/FAIL
  */
-expublic int _Bproj (UBFH * p_ub, BFLDID * fldlist,
+expublic int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
                                     int mode, int *processed)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -352,7 +352,7 @@ expublic int _Bproj (UBFH * p_ub, BFLDID * fldlist,
             if (IS_TYPE_INVALID(type))
             {
                 ret=EXFAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
                                         "buffer: %d", fn, type);
                 break; /* <<< BREAK; */
             }
@@ -369,7 +369,7 @@ expublic int _Bproj (UBFH * p_ub, BFLDID * fldlist,
             if (CHECK_ALIGN(p, p_ub, hdr))
             {
                 ret=EXFAIL;
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
                                             fn, p);
                 break; /* <<< BREAK; */
             }
@@ -391,7 +391,7 @@ expublic int _Bproj (UBFH * p_ub, BFLDID * fldlist,
     
     if (EXSUCCEED!=ubf_cache_update(p_ub))
     {
-        _Fset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
+        ndrx_Bset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
         EXFAIL_OUT(ret);
     }
     
@@ -493,7 +493,7 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
          */
         if (hdr_dst->bytes_used+cpy_size > hdr_dst->buf_len)
         {
-            _Fset_error_fmt(BNOSPACE, "No space in dest buffer, free: "
+            ndrx_Bset_error_fmt(BNOSPACE, "No space in dest buffer, free: "
                                       "%d bytes required: %d bytes",
                                 (hdr_dst->buf_len - hdr_dst->bytes_used), cpy_size);
             ret=EXFAIL;
@@ -559,7 +559,7 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
  *                  then buffer is reinitialized.
  * @return SUCCEED/FAIL
  */
-expublic int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+expublic int ndrx_Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
                                     BFLDID * fldlist)
 {
     int ret=EXSUCCEED;
@@ -664,7 +664,7 @@ expublic int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 
             if (IS_TYPE_INVALID(type))
             {
-                _Fset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Unknown data type found in "
                                         "buffer: %d", fn, type);
                 EXFAIL_OUT(ret);
             }
@@ -680,7 +680,7 @@ expublic int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
             /* Align error */
             if (CHECK_ALIGN(p, p_ub_src, hdr_src))
             {
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                             fn, p);
                 EXFAIL_OUT(ret);
             }
@@ -707,7 +707,7 @@ expublic int _Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 
     if (EXSUCCEED!=ubf_cache_update(p_ub_dst))
     {
-        _Fset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
+        ndrx_Bset_error_fmt(BALIGNERR, "%s: Failed to update cache!");
         EXFAIL_OUT(ret);
     }
 

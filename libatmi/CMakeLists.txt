@@ -57,6 +57,7 @@ add_library (atmi SHARED
                 typed_string.c
                 typed_json.c
                 typed_carray.c
+                typed_view.c
                 atmiutils.c
                 init.c
                 conversation.c

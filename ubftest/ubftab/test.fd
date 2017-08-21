@@ -38,10 +38,13 @@ $#define __TEST_FD
 
 T_CHAR_FLD	        11	char	- 1 Chart test field 1
 T_CHAR_2_FLD	    	12	char	- 1 Chart test field 2
+T_CHAR_3_FLD	    	13	char	- 1 Chart test field 3
 T_SHORT_FLD	        21	short	- 1 Short test field 1
 T_SHORT_2_FLD		22	short   - 1 Short test field 2
+T_SHORT_3_FLD		23	short   - 1 Short test field 3
 T_LONG_FLD		31	long	- 1 Long test field 1
 T_LONG_2_FLD		32	long	- 1 Long test field 2
+T_LONG_3_FLD		33	long	- 1 Long test field 3
 T_FLOAT_FLD		41	float   - 1 Float test field 1
 T_FLOAT_2_FLD		42	float	- 1 Float test field 2
 T_FLOAT_3_FLD		43	float	- 1 Float test field 3
@@ -61,6 +64,7 @@ T_STRING_9_FLD		69	string  - 1 String test field 9
 T_STRING_10_FLD		10	string  - 1 String test field 10
 T_CARRAY_FLD		81	carray  - 1 Carray test field 1
 T_CARRAY_2_FLD		82	carray	- 1 Carray test field 2
+T_CARRAY_3_FLD		83	carray	- 1 Carray test field 3
 
 
 $#endif

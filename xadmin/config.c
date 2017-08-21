@@ -1,5 +1,5 @@
 /* 
-** Master Configuration for ndrx command line utilty!
+** Master Configuration for ndrx command line utility!
 **
 ** @file config.c
 ** 
@@ -80,7 +80,7 @@ expublic int load_env_config(void)
     }
     else
     {
-        strcpy(G_config.pid_file, p);
+        NDRX_STRCPY_SAFE(G_config.pid_file, p);
         NDRX_LOG(log_debug, "ndrxd pid file: %s", G_config.pid_file);
     }
     
@@ -101,10 +101,12 @@ expublic int load_env_config(void)
     }
 
     /* format the admin queue */
-    sprintf(G_config.ndrxd_q_str, NDRX_NDRXD, G_config.qprefix);
+    snprintf(G_config.ndrxd_q_str, sizeof(G_config.ndrxd_q_str), 
+            NDRX_NDRXD, G_config.qprefix);
 
     /* Open client queue to wait replies on */
-    sprintf(G_config.reply_queue_str, NDRX_NDRXCLT, G_config.qprefix, getpid());
+    snprintf(G_config.reply_queue_str, sizeof(G_config.reply_queue_str),
+            NDRX_NDRXCLT, G_config.qprefix, getpid());
 
     /* Unlink previous admin queue (if have such) - ignore any error */
     ndrx_mq_unlink(G_config.reply_queue_str);

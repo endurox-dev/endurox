@@ -36,6 +36,7 @@
 #include <utlist.h>
 
 #include <atmi.h>
+#include <atmi_int.h>
 #include <ubf.h>
 #include <ndrstandard.h>
 #include <atmi_int.h>
@@ -45,6 +46,7 @@
 #include <typed_string.h>
 #include <typed_json.h>
 #include <typed_carray.h>
+#include <typed_view.h>
 #include <tperror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -79,6 +81,8 @@ expublic typed_buffer_descr_t G_buf_descr[] =
                                 CARRAY_tpalloc, CARRAY_tprealloc, CARRAY_tpfree, CARRAY_test},
     {BUF_TYPE_JSON,   "JSON", NULL,     NULL, JSON_prepare_outgoing, JSON_prepare_incoming,
                                 JSON_tpalloc, JSON_tprealloc, JSON_tpfree, JSON_test},
+    {BUF_TYPE_VIEW,   "VIEW", NULL,     NULL, VIEW_prepare_outgoing, VIEW_prepare_incoming,
+                                VIEW_tpalloc, VIEW_tprealloc, VIEW_tpfree, VIEW_test},
 #if 0
 /* Those bellow ones are not supported! */
     {BUF_TYPE_STRING,"STRING",  NULL,      NULL, /* todo:  */NULL, /* todo: */NULL, NULL},
@@ -114,16 +118,16 @@ expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
     MUTEX_LOCK_V(M_lock);
     {
-    buffer_obj_t *ret;
-    
-    /*
-    ret = find_buffer_int(ptr);
-    */
-    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
-        
-        
-    MUTEX_UNLOCK_V(M_lock);
-    return ret;
+        buffer_obj_t *ret;
+
+        /*
+        ret = find_buffer_int(ptr);
+        */
+        EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
+
+
+        MUTEX_UNLOCK_V(M_lock);
+        return ret;
     }
 }
 
@@ -154,7 +158,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr)
  * @param subtype - may be NULL
  * @return NULL/or ptr to G_buf_descr[X]
  */
-exprivate typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
+expublic typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, char *subtype)
 {
     typed_buffer_descr_t *p=G_buf_descr;
     typed_buffer_descr_t *ret = NULL;
@@ -165,26 +169,9 @@ exprivate typed_buffer_descr_t * get_buffer_descr(char *type, char *subtype)
                         (NULL!=p->alias && 0==strcmp(p->alias, type)) ||
                         p->type == type /*NULL buffer*/)
         {
-            /* check subtype (if used) */
-            if ((NULL!=p->subtype && (NULL==subtype || EXEOS==subtype[0])) ||
-                        (NULL==p->subtype && NULL!=subtype && EXEOS!=subtype[0]))
-            {
-                /* search for next */
-            } /* Assume empty string subtype as empty/null */
-            else if (NULL!=p->subtype && NULL!=subtype && EXEOS!=subtype[0])
-            {
-                /* compare subtypes */
-                if (0==strcmp(p->subtype, subtype))
-                {
-                    ret=p;
-                    break;
-                }
-            }
-            else
-            {
-                ret=p;
-                break;
-            }
+            /* subtype is passed to the type engine.. */
+            ret=p;
+            break;
         }
         p++;
     }
@@ -208,11 +195,13 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     typed_buffer_descr_t *usr_type = NULL;
     buffer_obj_t *node;
     
-    NDRX_LOG(log_debug, "%s: type=%s len=%d",  __func__, (NULL==type?"NULL":type), len);
+    NDRX_LOG(log_debug, "%s: type=%s, subtype=%s len=%d",  
+            __func__, (NULL==type?"NULL":type),
+            (NULL==subtype?"NULL":subtype), len);
     
     if (NULL==known_type)
     {
-        if (NULL==(usr_type = get_buffer_descr(type, subtype)))
+        if (NULL==(usr_type = ndrx_get_buffer_descr(type, subtype)))
         {
             ndrx_TPset_error_fmt(TPEOTYPE, "Unknown type (%s)/subtype(%s)", 
                     (NULL==type?"NULL":type), (NULL==subtype?"NULL":subtype));
@@ -227,7 +216,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     }
 
     /* now allocate the memory  */
-    if (NULL==(ret=usr_type->pf_alloc(usr_type, len)))
+    if (NULL==(ret=usr_type->pf_alloc(usr_type, subtype, len)))
     {
         /* error detail should be already set */
         goto out;
@@ -247,12 +236,22 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     memset(node, 0, sizeof(buffer_obj_t));
 
     node->buf = ret;
-    NDRX_LOG(log_debug, "%s: type=%s len=%d allocated=%p", 
-             __func__, (NULL==type?"NULL":type), len, ret);
+    NDRX_LOG(log_debug, "%s: type=%s subtype=%s len=%d allocated=%p", 
+             __func__, (NULL==type?"NULL":type),
+            (NULL==subtype?"NULL":subtype),
+            len, ret);
     node->size = len;
     
     node->type_id = usr_type->type_id;
-    node->sub_type_id = 0; /* So currently sub-type not supported. ok */
+    
+    if (NULL==subtype)
+    {
+        node->subtype[0] = EXEOS;
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(node->subtype, subtype);
+    }
 
     /* Save the allocated buffer in the list */
     /* DL_APPEND(G_buffers, node); */
@@ -479,9 +478,9 @@ expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
         strcpy(type, buf_type->type);
     }
     
-    if (NULL!=subtype && NULL!=buf_type->subtype)
+    if (NULL!=subtype && EXEOS!=buf->subtype[0])
     {
-        strcpy(subtype, buf_type->type);
+        strcpy(subtype, buf->subtype);
     }
     
 out:

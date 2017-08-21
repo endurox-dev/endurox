@@ -84,13 +84,13 @@ struct err_msg
     {BFTSYNTAX, "Syntax error in field table"}, /* 13 */
     {BEINVAL,   "Invalid argument to function"}, /* 14 */
     {BERFU1,    "BERFU1"}, /* 15 */
-    {BERFU2,    "BERFU2"}, /* 16 */
-    {BERFU3,    "BERFU3"}, /* 17 */
-    {BERFU4,    "BERFU4"}, /* 18 */
-    {BERFU5,    "BERFU5"}, /* 19 */
-    {BERFU6,    "BERFU6"}, /* 20 */
-    {BERFU7,    "BERFU7"}, /* 21 */
-    {BERFU8,    "BERFU8"}, /* 22 */
+    {BBADTBL,   "Bad access to field table"}, /* 16 */
+    {BBADVIEW,  "Bad view name/not loaded"}, /* 17 */
+    {BVFSYNTAX, "View file syntax error"}, /* 18 */
+    {BVFOPEN,   "Failed to open view file"}, /* 19 */
+    {BBADACM,   "View array count indicator negative"}, /* 20 */
+    {BNOCNAME,  "Structure field (cname) not found"},
+    {BEBADOP,  "Bad operation"}, /* 21 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -145,7 +145,7 @@ expublic char * Bstrerror (int err)
  * ATMI standard
  * @return - pointer to int holding error code?
  */
-expublic int * _Bget_Ferror_addr (void)
+expublic int * ndrx_Bget_Ferror_addr (void)
 {
     UBF_TLS_ENTRY;
     return &G_ubf_tls->M_ubf_error;
@@ -157,12 +157,12 @@ expublic int * _Bget_Ferror_addr (void)
  * @param msg
  * @return
  */
-expublic void _Fset_error(int error_code)
+expublic void ndrx_Bset_error(int error_code)
 {
     UBF_TLS_ENTRY;
     if (!G_ubf_tls->M_ubf_error)
     {
-        UBF_LOG(log_warn, "_Fset_error: %d (%s)", 
+        UBF_LOG(log_warn, "%s: %d (%s)", __func__,
                                 error_code, UBF_ERROR_DESCRIPTION(error_code));
         G_ubf_tls->M_ubf_error_msg_buf[0] = EXEOS;
         G_ubf_tls->M_ubf_error = error_code;
@@ -175,7 +175,7 @@ expublic void _Fset_error(int error_code)
  * @param msg
  * @return
  */
-expublic void _Fset_error_msg(int error_code, char *msg)
+expublic void ndrx_Bset_error_msg(int error_code, char *msg)
 {
     int msg_len;
     int err_len;
@@ -188,7 +188,7 @@ expublic void _Fset_error_msg(int error_code, char *msg)
         err_len = (msg_len>MAX_ERROR_LEN)?MAX_ERROR_LEN:msg_len;
 
 
-        UBF_LOG(log_warn, "_Fset_error_msg: %d (%s) [%s]", error_code,
+        UBF_LOG(log_warn, "%s: %d (%s) [%s]", __func__, error_code,
                                 UBF_ERROR_DESCRIPTION(error_code), msg);
         G_ubf_tls->M_ubf_error_msg_buf[0] = EXEOS;
         strncat(G_ubf_tls->M_ubf_error_msg_buf, msg, err_len);
@@ -203,7 +203,7 @@ expublic void _Fset_error_msg(int error_code, char *msg)
  * @param fmt - format stirng
  * @param ... - format details
  */
-expublic void _Fset_error_fmt(int error_code, const char *fmt, ...)
+expublic void ndrx_Bset_error_fmt(int error_code, const char *fmt, ...)
 {
     char msg[MAX_ERROR_LEN+1] = {EXEOS};
     va_list ap;
@@ -215,10 +215,10 @@ expublic void _Fset_error_fmt(int error_code, const char *fmt, ...)
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(G_ubf_tls->M_ubf_error_msg_buf, msg);
+        NDRX_STRCPY_SAFE(G_ubf_tls->M_ubf_error_msg_buf, msg);
         G_ubf_tls->M_ubf_error = error_code;
 
-        UBF_LOG(log_warn, "_Fset_error_fmt: %d (%s) [%s]",
+        UBF_LOG(log_warn, "%s: %d (%s) [%s]", __func__,
                         error_code, UBF_ERROR_DESCRIPTION(error_code),
                         G_ubf_tls->M_ubf_error_msg_buf);
     }
@@ -227,7 +227,7 @@ expublic void _Fset_error_fmt(int error_code, const char *fmt, ...)
 /**
  * Unset any error data currently in use
  */
-expublic void _Bunset_error(void)
+expublic void ndrx_Bunset_error(void)
 {
     UBF_TLS_ENTRY;
     G_ubf_tls->M_ubf_error_msg_buf[0]=EXEOS;
@@ -237,7 +237,7 @@ expublic void _Bunset_error(void)
  * Return >0 if error is set
  * @return 
  */
-expublic int _Fis_error(void)
+expublic int ndrx_Bis_error(void)
 {
     UBF_TLS_ENTRY;
     return G_ubf_tls->M_ubf_error;
@@ -247,7 +247,7 @@ expublic int _Fis_error(void)
  * Append error message
  * @param msg
  */
-expublic void _Bappend_error_msg(char *msg)
+expublic void ndrx_Bappend_error_msg(char *msg)
 {
     int free_space;
     int app_error_len = strlen(msg);
@@ -265,7 +265,7 @@ expublic void _Bappend_error_msg(char *msg)
  * @param err
  * @param rp
  */
-expublic void report_regexp_error(char *fun_nm, int err, regex_t *rp)
+expublic void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp)
 {
     char *errmsg;
     int errlen;
@@ -277,7 +277,7 @@ expublic void report_regexp_error(char *fun_nm, int err, regex_t *rp)
     snprintf(errbuf, sizeof(errbuf), "regexp err (%s, %d, \"%s\").",
                                         fun_nm, err, errmsg);
     UBF_LOG(log_error, "Failed to compile regexp: [%s]", errbuf);
-    _Fset_error_msg(BSYNTAX, errbuf);
+    ndrx_Bset_error_msg(BSYNTAX, errbuf);
 
     NDRX_FREE(errmsg);
 }

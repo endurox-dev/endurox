@@ -85,6 +85,7 @@ extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, l
 
 extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
 extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
+extern NDRX_API char* ndrx_str_rstrip(char* s, char *needle);
 
 extern NDRX_API int ndrx_isint(char *str);
 extern NDRX_API int ndrx_nr_chars(char *str, char character);
@@ -100,6 +101,7 @@ extern NDRX_API char * ndrx_memdup(char *org, size_t len);
 extern NDRX_API int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
         int tokens_elmsz, int len);
 extern NDRX_API void ndrx_chomp(char *str);
+extern NDRX_API uint32_t ndrx_rotl32b (uint32_t x, uint32_t n);
 extern NDRX_API int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz);
 
 /* Mapping functions: */

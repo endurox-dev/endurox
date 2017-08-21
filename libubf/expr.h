@@ -235,10 +235,10 @@ void yyerror(char *s, ...);
 extern int debug;
 void dumpast(struct ast *a, int level);
 
-extern char * _Bboolco (char * expr);
-extern int _Bboolev (UBFH * p_ub, char *tree);
-extern double _Bfloatev (UBFH * p_ub, char *tree);
-extern void _Btreefree (char *tree);
+extern char * ndrx_Bboolco (char * expr);
+extern int ndrx_Bboolev (UBFH * p_ub, char *tree);
+extern double ndrx_Bfloatev (UBFH * p_ub, char *tree);
+extern void ndrx_Btreefree (char *tree);
 
 extern __thread struct ast *G_p_root_node;
 extern __thread int G_node_count;

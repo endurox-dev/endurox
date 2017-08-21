@@ -54,10 +54,11 @@
 #include <ubf_impl.h>
 #include <expr.h>
 #include <thlock.h>
+#include <typed_view.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#define API_ENTRY {_Bunset_error(); \
+#define API_ENTRY {ndrx_Bunset_error(); \
     if (!M_init) { \
 	MUTEX_LOCK; \
         UBF_DBG_INIT(("UBF", UBFDEBUGLEV));\
@@ -73,9 +74,11 @@
             /* Check data type alignity */ \
             if (IS_TYPE_INVALID(X)) \
             { \
-                _Fset_error_fmt(BTYPERR, "Invalid user type %d", X);\
+                ndrx_Bset_error_fmt(BTYPERR, "Invalid user type %d", X);\
                 Y;\
             }
+
+#define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -98,12 +101,12 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     if (NULL==p_ub)
     {
         /* Null buffer */
-        _Fset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
+        ndrx_Bset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
         ret=EXFAIL;
     }
     else if (len < sizeof(UBF_header_t))
     {
-        _Fset_error_fmt(BNOSPACE, "Minimum: %d, but got: %d",
+        ndrx_Bset_error_fmt(BNOSPACE, "Minimum: %d, but got: %d",
                                     sizeof(UBF_header_t), len);
         ret=EXFAIL;
     }
@@ -139,7 +142,7 @@ expublic int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
         return EXFAIL;
     }
     
-    return _Badd (p_ub, bfldid, buf, len, NULL);
+    return ndrx_Badd (p_ub, bfldid, buf, len, NULL);
 }
 
 /**
@@ -162,7 +165,7 @@ expublic int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return _Bget (p_ub, bfldid, occ, buf, buflen);
+    return ndrx_Bget (p_ub, bfldid, occ, buf, buflen);
 }
 
 /**
@@ -220,7 +223,7 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
                                     __dbg_type, __dbg_dtype->fldname,
                                     hdr->buf_len, hdr->bytes_used,
                                     (hdr->buf_len - hdr->bytes_used),
-                                    _Bfname_int(bfldid), bfldid, bfldid);
+                                    ndrx_Bfname_int(bfldid), bfldid, bfldid);
 #endif
 /*******************************************************************************/
     if (NULL!=(p=get_fld_loc(p_ub, bfldid, occ, &dtype, &last_checked, NULL, &last_occ,
@@ -257,7 +260,7 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
     }
     else
     {
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
         ret=EXFAIL;
     }
 
@@ -322,7 +325,7 @@ expublic int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return _Bchg(p_ub, bfldid, occ, buf, len, NULL);
+    return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL);
 }
 
 /**
@@ -334,12 +337,12 @@ expublic BFLDID Bfldid (char *fldnm)
 
     API_ENTRY;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
             return BBADFLDID;
     }
     /* Now we can try to do lookup */
-    p_fld = _fldnmhash_get(fldnm);
+    p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {
@@ -347,7 +350,7 @@ expublic BFLDID Bfldid (char *fldnm)
     }
     else
     {
-            _Fset_error(BBADNAME);
+            ndrx_Bset_error(BBADNAME);
             return BBADFLDID;
     }
 }
@@ -359,21 +362,21 @@ expublic char * Bfname (BFLDID bfldid)
     UBF_field_def_t *p_fld;
     API_ENTRY;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
-    goto out;
+        goto out;
     }
 
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
     if (NULL==p_fld)
     {
-            _Fset_error(BBADFLD);
-    goto out;
+        ndrx_Bset_error(BBADFLD);
+        goto out;
     }
     else
     {
-            return p_fld->fldname;
+        return p_fld->fldname;
     }
     
 out:
@@ -402,7 +405,7 @@ expublic char * Bfind (UBFH * p_ub, BFLDID bfldid,
         return NULL;
     }
 
-    return _Bfind(p_ub, bfldid, occ, p_len, NULL);
+    return ndrx_Bfind(p_ub, bfldid, occ, p_len, NULL);
 }
 
 
@@ -451,7 +454,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "CBadd: the same types - direct call!");
-        return _Badd(p_ub, bfldid, buf, len, NULL); /* <<<< RETURN!!! */
+        return ndrx_Badd(p_ub, bfldid, buf, len, NULL); /* <<<< RETURN!!! */
     }
     /* if types are not the same then go the long way... */
 
@@ -468,7 +471,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
 
     if (NULL!=cvn_buf)
     {
-        ret=_Badd (p_ub, bfldid, cvn_buf, cvn_len, NULL);
+        ret=ndrx_Badd (p_ub, bfldid, cvn_buf, cvn_len, NULL);
     }
     else
     {
@@ -530,7 +533,7 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "CBchg: the same types - direct call!");
-        return _Bchg(p_ub, bfldid, occ, buf, len, NULL); /* <<<< RETURN!!! */
+        return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL); /* <<<< RETURN!!! */
     }
     /* if types are not the same then go the long way... */
     
@@ -599,7 +602,7 @@ expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
     }
     /* if types are not the same then go the long way... */
     
-    fb_data=_Bfind (p_ub, bfldid, occ, &tmp_len, NULL);
+    fb_data=ndrx_Bfind (p_ub, bfldid, occ, &tmp_len, NULL);
 
     if (NULL!=fb_data)
     {
@@ -649,31 +652,31 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
 
     if (EXSUCCEED==ret && NULL==p_ub_src)
     {
-        _Fset_error_msg(BNOTFLD, "p_ub_src is NULL!");
+        ndrx_Bset_error_msg(BNOTFLD, "p_ub_src is NULL!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && NULL==p_ub_dst)
     {
-        _Fset_error_msg(BNOTFLD, "p_ub_dst is NULL!");
+        ndrx_Bset_error_msg(BNOTFLD, "p_ub_dst is NULL!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && 0!=strncmp(src_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        _Fset_error_msg(BNOTFLD, "source buffer magic failed!");
+        ndrx_Bset_error_msg(BNOTFLD, "source buffer magic failed!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && 0!=strncmp(dst_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        _Fset_error_msg(BNOTFLD, "destination buffer magic failed!");
+        ndrx_Bset_error_msg(BNOTFLD, "destination buffer magic failed!");
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
     {
-        _Fset_error_fmt(BNOSPACE, "Destination buffer too short. "
+        ndrx_Bset_error_fmt(BNOSPACE, "Destination buffer too short. "
                                     "Source len: %d dest used: %d",
                                     dst_h->buf_len, src_h->bytes_used);
         ret=EXFAIL;
@@ -761,7 +764,7 @@ BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid)
         return EXFAIL;
     }
 
-    return _Boccur (p_ub, bfldid);
+    return ndrx_Boccur (p_ub, bfldid);
 }
 
 /**
@@ -800,7 +803,7 @@ expublic char * Bboolco (char * expr)
     MUTEX_LOCK;
     {
         char *ret;
-        ret = _Bboolco (expr);
+        ret = ndrx_Bboolco (expr);
         MUTEX_UNLOCK;
         return ret;
     }
@@ -810,7 +813,7 @@ expublic char * Bboolco (char * expr)
 expublic int Bboolev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
-    return _Bboolev (p_ub, tree);
+    return ndrx_Bboolev (p_ub, tree);
 }
 
 /**
@@ -822,13 +825,13 @@ expublic int Bboolev (UBFH * p_ub, char *tree)
 expublic double Bfloatev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
-    return _Bfloatev (p_ub, tree);
+    return ndrx_Bfloatev (p_ub, tree);
 }
 
 expublic void Btreefree (char *tree)
 {
     API_ENTRY;
-    _Btreefree (tree);
+    ndrx_Btreefree (tree);
 }
 
 /**
@@ -860,19 +863,19 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
     }
     else if (NULL==bfldid || NULL==occ)
     {
-        _Fset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
         return EXFAIL;
     }
     else if (*bfldid != BFIRSTFLDID && state.p_ub != p_ub)
     {
-        _Fset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
+        ndrx_Bset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
                                     "used for different state", fn,
                                     state.p_ub, p_ub);
         return EXFAIL;
     }
     else if (*bfldid != BFIRSTFLDID && state.size!=hdr->bytes_used)
     {
-        _Fset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
+        ndrx_Bset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
                                     "from last search", fn,
                                     state.size, hdr->bytes_used);
         return EXFAIL;
@@ -884,7 +887,7 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
             memset(&state, 0, sizeof(state));
         }
 
-        return _Bnext(&state, p_ub, bfldid, occ, buf, len, NULL);
+        return ndrx_Bnext(&state, p_ub, bfldid, occ, buf, len, NULL);
     }
 }
 
@@ -908,7 +911,7 @@ expublic int Bproj (UBFH * p_ub, BFLDID * fldlist)
     else
     {
         /* Call the implementation */
-        return _Bproj (p_ub, fldlist, PROJ_MODE_PROJ, &processed);
+        return ndrx_Bproj (p_ub, fldlist, PROJ_MODE_PROJ, &processed);
     }
 }
 
@@ -928,19 +931,19 @@ expublic int Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
-        _Bappend_error_msg("(Bprojcpy: arguments fail for src buf!)");
+        ndrx_Bappend_error_msg("(Bprojcpy: arguments fail for src buf!)");
         return EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
-        _Bappend_error_msg("(Bprojcpy: arguments fail for dst buf!)");
+        ndrx_Bappend_error_msg("(Bprojcpy: arguments fail for dst buf!)");
         return EXFAIL;
     }
     else
     {
         /* Call the implementation */
-        return _Bprojcpy (p_ub_dst, p_ub_src, fldlist);
+        return ndrx_Bprojcpy (p_ub_dst, p_ub_src, fldlist);
     }
 }
 
@@ -1013,14 +1016,14 @@ expublic int Bdelall (UBFH *p_ub, BFLDID bfldid)
     else
     {
         /* Call the implementation */
-        ret=_Bproj (p_ub, &bfldid, PROJ_MODE_DELALL, &processed);
+        ret=ndrx_Bproj (p_ub, &bfldid, PROJ_MODE_DELALL, &processed);
     }
 
     if (EXSUCCEED==ret && 0==processed)
     {
         /* Set error that none of fields have been deleted */
         ret=EXFAIL;
-        _Fset_error_msg(BNOTPRES, "No fields have been deleted");
+        ndrx_Bset_error_msg(BNOTPRES, "No fields have been deleted");
     }
     
     UBF_LOG(log_warn, "%s: return %d", fn, ret);
@@ -1050,14 +1053,14 @@ expublic int Bdelete (UBFH *p_ub, BFLDID *fldlist)
     else
     {
         /* Call the implementation */
-        ret=_Bproj (p_ub, fldlist, PROJ_MODE_DELETE, &processed);
+        ret=ndrx_Bproj (p_ub, fldlist, PROJ_MODE_DELETE, &processed);
     }
 
     if (EXSUCCEED==ret && 0==processed)
     {
         /* Set error that none of fields have been deleted */
         ret=EXFAIL;
-        _Fset_error_msg(BNOTPRES, "No fields have been deleted");
+        ndrx_Bset_error_msg(BNOTPRES, "No fields have been deleted");
     }
     
     UBF_LOG(log_warn, "%s: return %d", fn, ret);
@@ -1089,7 +1092,7 @@ expublic int Bisubf (UBFH *p_ub)
     {
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         ret=EXFALSE;
-        _Bunset_error();
+        ndrx_Bunset_error();
     }
     
     return ret;
@@ -1159,7 +1162,7 @@ expublic char * Btype (BFLDID bfldid)
 
     if (IS_TYPE_INVALID(type))
     {
-        _Fset_error_fmt(BTYPERR, "Unknown type number %d", type);
+        ndrx_Bset_error_fmt(BTYPERR, "Unknown type number %d", type);
         return NULL;
     }
     else
@@ -1209,7 +1212,7 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
     
     if ( alloc_size > MAXUBFLEN)
     {
-        _Fset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
                 alloc_size, MAXUBFLEN);
     }
     else
@@ -1217,7 +1220,7 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
         p_ub=NDRX_MALLOC(alloc_size);
         if (NULL==p_ub)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
         }
         else
         {
@@ -1264,7 +1267,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
      */
     if ( alloc_size < hdr->bytes_used || alloc_size > MAXUBFLEN)
     {
-        _Fset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
                 alloc_size, hdr->buf_len+1, MAXUBFLEN);
         p_ub=NULL;
     }
@@ -1273,7 +1276,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
         p_ub=NDRX_REALLOC(p_ub, alloc_size);
         if (NULL==p_ub)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
             p_ub=NULL;
         }
         else
@@ -1321,19 +1324,19 @@ expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
-        _Bappend_error_msg("(Bupdate: arguments fail for src buf!)");
+        ndrx_Bappend_error_msg("(Bupdate: arguments fail for src buf!)");
         ret=EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
-        _Bappend_error_msg("(Bupdate: arguments fail for dst buf!)");
+        ndrx_Bappend_error_msg("(Bupdate: arguments fail for dst buf!)");
         ret=EXFAIL;
     }
     else
     {
         /* Call the implementation */
-        ret=_Bupdate (p_ub_dst, p_ub_src);
+        ret=ndrx_Bupdate (p_ub_dst, p_ub_src);
     }
     UBF_LOG(log_debug, "Return %s %d", fn, ret);
     return ret;
@@ -1355,19 +1358,19 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
-        _Bappend_error_msg("(Bconcat: arguments fail for src buf!)");
+        ndrx_Bappend_error_msg("(Bconcat: arguments fail for src buf!)");
         ret=EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
-        _Bappend_error_msg("(Bconcat: arguments fail for dst buf!)");
+        ndrx_Bappend_error_msg("(Bconcat: arguments fail for dst buf!)");
         ret=EXFAIL;
     }
     else
     {
         /* Call the implementation */
-        ret=_Bconcat (p_ub_dst, p_ub_src);
+        ret=ndrx_Bconcat (p_ub_dst, p_ub_src);
     }
     UBF_LOG(log_debug, "Return %s %d", fn, ret);
     return ret;
@@ -1396,7 +1399,7 @@ expublic char * CBfind (UBFH * p_ub,
     VALIDATE_USER_TYPE(usrtype, return NULL);
 
     /* Call the implementation */
-    return _CBfind (p_ub, bfldid, occ, len, usrtype, CB_MODE_TEMPSPACE, 0);
+    return ndrx_CBfind (p_ub, bfldid, occ, len, usrtype, CB_MODE_TEMPSPACE, 0);
 }
 
 /**
@@ -1428,7 +1431,7 @@ expublic char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
     VALIDATE_USER_TYPE(usrtype, return NULL);
 
     /* Call the implementation */
-    ret=_CBfind (p_ub, bfldid, occ, extralen, usrtype, CB_MODE_ALLOC, 
+    ret=ndrx_CBfind (p_ub, bfldid, occ, extralen, usrtype, CB_MODE_ALLOC, 
                     (NULL!=extralen?*extralen:0));
 
     UBF_LOG(log_debug, "%s: returns ret=%p", fn, ret);
@@ -1454,7 +1457,7 @@ expublic BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
 
     if (NULL==buf)
     {
-         _Fset_error_fmt(BEINVAL, "buf is NULL");
+         ndrx_Bset_error_fmt(BEINVAL, "buf is NULL");
          return EXFAIL;
     }
     /* Do standard validation */
@@ -1468,7 +1471,7 @@ expublic BFLDOCC Bfindocc (UBFH *p_ub, BFLDID bfldid,
     /* validate user type */
 
     /* Call the implementation */
-    return _Bfindocc (p_ub, bfldid, buf, len);
+    return ndrx_Bfindocc (p_ub, bfldid, buf, len);
 }
 
 /**
@@ -1489,7 +1492,7 @@ expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
 
     if (NULL==buf)
     {
-         _Fset_error_fmt(BEINVAL, "buf is NULL");
+         ndrx_Bset_error_fmt(BEINVAL, "buf is NULL");
          return EXFAIL;
     }
  
@@ -1506,7 +1509,7 @@ expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
     /* validate user type */
 
     /* Call the implementation */
-    return _CBfindocc (p_ub, bfldid, buf, len, usrtype);
+    return ndrx_CBfindocc (p_ub, bfldid, buf, len, usrtype);
 }
 
 /**
@@ -1532,7 +1535,7 @@ expublic char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *ext
     }
 
     /* Call the implementation */
-    return _Bgetalloc (p_ub, bfldid, occ, extralen);
+    return ndrx_Bgetalloc (p_ub, bfldid, occ, extralen);
 }
 
 /**
@@ -1555,7 +1558,7 @@ expublic char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
     }
 
     /* Call the implementation */
-    return _Bfindlast (p_ub, bfldid, occ, len);
+    return ndrx_Bfindlast (p_ub, bfldid, occ, len);
 }
 
 /**
@@ -1578,7 +1581,7 @@ expublic int Bgetlast (UBFH *p_ub, BFLDID bfldid,
     }
 
     /* Call the implementation */
-    return _Bgetlast (p_ub, bfldid, occ, buf, len);
+    return ndrx_Bgetlast (p_ub, bfldid, occ, buf, len);
 }
 
 
@@ -1602,11 +1605,11 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
     /* check output file */
     if (NULL==outf)
     {
-        _Fset_error_msg(BEINVAL, "output file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "output file cannot be NULL!");
         return EXFAIL;
     }
 
-    return _Bfprint (p_ub, outf);
+    return ndrx_Bfprint (p_ub, outf);
 }
 
 /**
@@ -1628,7 +1631,7 @@ expublic int Bprint (UBFH *p_ub)
         return EXFAIL;
     }
 
-    return _Bfprint (p_ub, stdout);
+    return ndrx_Bfprint (p_ub, stdout);
 }
 
 /**
@@ -1650,19 +1653,19 @@ expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
 
     if (NULL==from_buf)
     {
-        _Fset_error_fmt(BEINVAL, "%s:from buf cannot be NULL!", fn);
+        ndrx_Bset_error_fmt(BEINVAL, "%s:from buf cannot be NULL!", fn);
         return NULL; /* <<< RETURN! */
     }
 
     if (IS_TYPE_INVALID(from_type))
     {
-        _Fset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, from_type);
+        ndrx_Bset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, from_type);
         return NULL; /* <<< RETURN! */
     }
 
     if (IS_TYPE_INVALID(to_type))
     {
-        _Fset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, to_type);
+        ndrx_Bset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, to_type);
         return NULL; /* <<< RETURN! */
     }
 
@@ -1678,7 +1681,7 @@ expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
     }
     
     /* Call implementation */
-    return _Btypcvt(to_len, to_type, from_buf, from_type, from_len);
+    return ndrx_Btypcvt(to_len, to_type, from_buf, from_type, from_len);
 }
 
 /**
@@ -1701,11 +1704,11 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
     /* check output file */
     if (NULL==inf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
     
-    return _Bextread (p_ub, inf);
+    return ndrx_Bextread (p_ub, inf);
 }
 
 /**
@@ -1721,17 +1724,17 @@ expublic void Bboolpr (char * tree, FILE *outf)
     /* Do standard validation */
     if (NULL==tree)
     {
-        _Fset_error_msg(BEINVAL, "Evaluation tree cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Evaluation tree cannot be NULL!");
         return;
     }
     /* check output file */
     if (NULL==outf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return;
     }
 
-    _Bboolpr (tree, outf);
+    ndrx_Bboolpr (tree, outf);
     /* put newline at the end. */
     fprintf(outf, "\n");
 }
@@ -1805,7 +1808,7 @@ expublic char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param inf
  * @return
  */
-expublic int Bread  (UBFH * p_ub, FILE * inf)
+expublic int Bread (UBFH * p_ub, FILE * inf)
 {
     char *fn = "Bread";
     API_ENTRY;
@@ -1819,11 +1822,11 @@ expublic int Bread  (UBFH * p_ub, FILE * inf)
     /* check output file */
     if (NULL==inf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
 
-    return _Bread (p_ub, inf);
+    return ndrx_Bread (p_ub, inf);
 }
 
 /**
@@ -1834,23 +1837,22 @@ expublic int Bread  (UBFH * p_ub, FILE * inf)
  */
 expublic int Bwrite (UBFH *p_ub, FILE * outf)
 {
-    char *fn = "_Bwrite";
     API_ENTRY;
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return EXFAIL;
     }
     /* check output file */
     if (NULL==outf)
     {
-        _Fset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
 
-    return _Bwrite (p_ub, outf);
+    return ndrx_Bwrite (p_ub, outf);
 }
 
 
@@ -1871,7 +1873,7 @@ expublic int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return _Blen (p_ub, bfldid, occ);
+    return ndrx_Blen (p_ub, bfldid, occ);
 }
 
 /**
@@ -1889,10 +1891,255 @@ expublic int Bboolsetcbf (char *funcname,
     MUTEX_LOCK;
     {
         int ret;
-        ret = _Bboolsetcbf (funcname, functionPtr);
+        ret = ndrx_Bboolsetcbf (funcname, functionPtr);
         MUTEX_UNLOCK;
         return ret;
     }
     }
+}
+
+/**
+ * VIEW - test is field is NULL
+ * @param cstruct ptr to C structure in memory
+ * @param cname field name
+ * @param occ occurrence of the field (array index)
+ * @param view view name
+ * @return EXFAIL/EXFALSE/EXTRUE
+ */
+expublic int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvnull(cstruct, cname, occ, view);
+    
+out:
+
+    return ret;
+}
+
+/**
+ * Init structure element.
+ * Count indicators and Length indicators (where appropriate) are set to zero.
+ * @param cstruct C structure ptr in mem
+ * @param cname field name
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvselinit(char *cstruct, char *cname, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvselinit(cstruct, cname, view);
+    
+out:
+    return ret;
+}
+
+/**
+ * Initialize structure field
+ * @param cstruct memory addr
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvsinit(char *cstruct, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvsinit(cstruct, view);
+out:
+    return ret;
+}
+
+/**
+ * Refresh view cache not supported by Enduro/X (and not needed).
+ */
+expublic void Bvrefresh(void)
+{
+    UBF_LOG(log_warn, "Bvrefresh - not supported by Enduro/X");
+}
+
+/**
+ * Set view option (thread safe)
+ * @param cname field name 
+ * @param option option (see B_FTOS, B_STOF, B_OFF, B_BOTH)
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvopt(char *cname, int option, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvopt(cname, option, view);
+    
+out:
+    return ret;
+}
+
+/**
+ * Convert UBF buffer to C struct
+ * @param p_ub UBF buffer
+ * @param cstruct ptr to mem block
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvftos(UBFH *p_ub, char *cstruct, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_ub)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_ub is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvftos(p_ub, cstruct, view);
+    
+out:
+    return ret;
+}
+
+/**
+ * Copy data from structure to UBF
+ * @param p_ub ptr to UBF buffer
+ * @param cstruct ptr to memory block
+ * @param mode BUPDATE, BOJOIN, BJOIN, BCONCAT
+ * @param view view name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_ub)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_ub is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvstof(p_ub, cstruct, mode, view);
+    
+out:
+    return ret;
+}
+/**
+ * Join two buffers, update only existing fields in dest, remove missing fields
+ * @param dest
+ * @param src
+ * @return EXFAIL
+ */
+expublic int Bjoin(UBFH *dest, UBFH *src)
+{
+    API_ENTRY;
+    ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
+    return EXFAIL;
+}
+
+/**
+ * Outer join two buffers, update existing, do not remove non-existing fields
+ * @param dest
+ * @param src
+ * @return 
+ */
+expublic int Bojoin(UBFH *dest, UBFH *src)
+{
+    API_ENTRY;
+    ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
+    return EXFAIL;
 }
 

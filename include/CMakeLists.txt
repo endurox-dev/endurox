@@ -67,6 +67,7 @@ install (FILES
     Excompat.h
     tpadm.h
     evt_mib.h
+    view_cmn.h
     DESTINATION include)
 
 install (FILES

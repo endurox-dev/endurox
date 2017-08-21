@@ -48,7 +48,8 @@ extern "C" {
 #define BUF_TYPE_STRING     4
 #define BUF_TYPE_CARRAY     5 
 #define BUF_TYPE_JSON       6
-#define BUF_TYPE_MAX        6 /* max buffer type, for integrity */
+#define BUF_TYPE_VIEW       7
+#define BUF_TYPE_MAX        7 /* max buffer type, for integrity */
 
 #define BUF_TYPE_UBF_STR        "UBF"
 #define BUF_TYPE_INIT_STR       "INIT"
@@ -56,6 +57,7 @@ extern "C" {
 #define BUF_TYPE_CARRAY_STR     "CARRAY"
 #define BUF_TYPE_NULL_STR       "NULL"
 #define BUF_TYPE_JSON_STR       "JSON"
+#define BUF_TYPE_VIEW_STR       "VIEW"
 
 /**
  * Automatic buffer conversion:
@@ -79,21 +81,26 @@ extern NDRX_API char * ndrx_tprealloc (char *buf, long len);
 extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
 extern NDRX_API buffer_obj_t * ndrx_find_buffer(char *ptr);
+extern NDRX_API typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, 
+        char *subtype);
+
 /*extern NDRX_API void free_up_buffers(void);*/
 
 /* UBF support */
-extern NDRX_API int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags);
-extern NDRX_API int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, long rcv_len, char **odata, long *olen, long flags);
+extern NDRX_API int UBF_prepare_outgoing (typed_buffer_descr_t *descr, 
+        char *idata, long ilen, char *obuf, long *olen, long flags);
+extern NDRX_API int UBF_prepare_incoming (typed_buffer_descr_t *descr, 
+        char *rcv_data, long rcv_len, char **odata, long *olen, long flags);
 extern NDRX_API char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
-extern NDRX_API char	* UBF_tpalloc (typed_buffer_descr_t *descr, long len);
+extern NDRX_API char	* UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
 extern NDRX_API void UBF_tpfree(typed_buffer_descr_t *descr, char *buf);
 extern NDRX_API int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
     
 /* Type buffer support */
-extern NDRX_API char * TPINIT_tpalloc (typed_buffer_descr_t *descr, long len);
+extern NDRX_API char * TPINIT_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
 extern NDRX_API void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 /* Type null buffer */
-extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, long len);
+extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
 extern NDRX_API void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
 
 /* Automatic buffer convert: */

@@ -121,7 +121,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
     }
 
 #ifdef BIN_SEARCH_DEBUG
-    NDRX_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
+    UBF_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
 #endif
     
     while (BBADFLDID!=*p_bfldid)
@@ -131,13 +131,13 @@ expublic int ubf_cache_update(UBFH *p_ub)
         type = (*p_bfldid>>EFFECTIVE_BITS);
         
 #ifdef BIN_SEARCH_DEBUG
-        NDRX_LOG(log_debug, "%s: Got field: [%d], type %d", fn, *p_bfldid, type);
+        UBF_LOG(log_debug, "%s: Got field: [%d], type %d", fn, *p_bfldid, type);
 #endif
 
         /* Check data type alignity */
         if (IS_TYPE_INVALID(type))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Invalid field type (%d)", fn, *p_bfldid);
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Invalid field type (%d)", fn, *p_bfldid);
             EXFAIL_OUT(ret);
         }
         
@@ -150,7 +150,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                         fn, p);
             EXFAIL_OUT(ret);
         }
@@ -159,7 +159,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
         typenext = (*p_bfldid>>EFFECTIVE_BITS);
         
 #ifdef BIN_SEARCH_DEBUG
-        NDRX_LOG(log_debug, "%s: Next field: [%d], type %d", fn, *p_bfldid, typenext);
+        UBF_LOG(log_debug, "%s: Next field: [%d], type %d", fn, *p_bfldid, typenext);
 #endif
         
         if (type!=typenext)
@@ -171,7 +171,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
         else
         {
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: Not updating type=%d, typenext=%d", fn, type, typenext);
+            UBF_LOG(log_debug, "%s: Not updating type=%d, typenext=%d", fn, type, typenext);
 #endif
         }
     }
@@ -197,37 +197,37 @@ exprivate inline void ubf_cache_set(UBFH *p_ub, BFLDID fldid, int next_offset)
         case BFLD_SHORT:
             uh->cache_long_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off => %d", 
                     fn, uh->cache_long_off);
 #endif
         case BFLD_LONG:
             uh->cache_char_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off=> %d", 
                     fn, uh->cache_char_off);
 #endif
         case BFLD_CHAR:
             uh->cache_float_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off=> %d", 
                     fn, uh->cache_float_off);
 #endif
         case BFLD_FLOAT:
             uh->cache_double_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off=> %d", 
                     fn, uh->cache_double_off);
 #endif
         case BFLD_DOUBLE:
             uh->cache_string_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off=> %d", 
                     fn, uh->cache_string_off);
 #endif
         case BFLD_STRING:
             uh->cache_carray_off=next_offset;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off=> %d", 
+            UBF_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off=> %d", 
                     fn, uh->cache_carray_off);
 #endif
             break;
@@ -250,37 +250,37 @@ expublic inline void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
         case BFLD_SHORT:
             uh->cache_long_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_SHORT, uh->cache_long_off+=%d => %d", 
                     fn, size_diff, uh->cache_long_off);
 #endif
         case BFLD_LONG:
             uh->cache_char_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_LONG, uh->cache_char_off+=%d => %d", 
                     fn, size_diff, uh->cache_char_off);
 #endif
         case BFLD_CHAR:
             uh->cache_float_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_CHAR, uh->cache_float_off+=%d => %d", 
                     fn, size_diff, uh->cache_float_off);
 #endif
         case BFLD_FLOAT:
             uh->cache_double_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_FLOAT, uh->cache_double_off+=%d => %d", 
                     fn, size_diff, uh->cache_double_off);
 #endif
         case BFLD_DOUBLE:
             uh->cache_string_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_DOUBLE, uh->cache_string_off+=%d => %d", 
                     fn, size_diff, uh->cache_string_off);
 #endif
         case BFLD_STRING:
             uh->cache_carray_off+=size_diff;
 #ifdef BIN_SEARCH_DEBUG
-            NDRX_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off+=%d => %d", 
+            UBF_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off+=%d => %d", 
                     fn, size_diff, uh->cache_carray_off);
 #endif
             break;
@@ -772,7 +772,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         /* Check data type alignity */
         if (IS_TYPE_INVALID(type))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Found invalid data type in buffer %d", 
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Found invalid data type in buffer %d", 
                                         fn, type);
             stat=EXFAIL;
             goto out;
@@ -785,7 +785,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
                                         fn, p);
             stat=EXFAIL;
             goto out;
@@ -812,7 +812,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         if (IS_TYPE_INVALID(type))
         {
             
-            _Fset_error_fmt(BALIGNERR, "Found invalid data type in buffer %d", type);
+            ndrx_Bset_error_fmt(BALIGNERR, "Found invalid data type in buffer %d", type);
             stat=EXFAIL;
             goto out;
         }
@@ -851,7 +851,7 @@ expublic int have_buffer_size(UBFH *p_ub, int add_size, int set_err)
     if ( buf_free < add_size)
     {
         if (set_err)
-            _Fset_error_fmt(BNOSPACE, "Buffsize free [%d] new data size [%d]",
+            ndrx_Bset_error_fmt(BNOSPACE, "Buffsize free [%d] new data size [%d]",
                     buf_free, add_size);
         return EXFALSE;
     }
@@ -876,28 +876,28 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
     if (NULL==p_ub)
     {
         /* Null buffer */
-        _Fset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
+        ndrx_Bset_error_msg(BNOTFLD, "ptr to UBFH is NULL");
         EXFAIL_OUT(ret);
     }
     else if (0!=strncmp(hdr->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        _Fset_error_msg(BNOTFLD, "Invalid FB magic");
+        ndrx_Bset_error_msg(BNOTFLD, "Invalid FB magic");
         EXFAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && BBADFLDID==bfldid)
     {
         /* Invalid arguments? */
-        _Fset_error_msg(BBADFLD, "bfldid == BBADFLDID");
+        ndrx_Bset_error_msg(BBADFLD, "bfldid == BBADFLDID");
         EXFAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && IS_TYPE_INVALID(bfldid>>EFFECTIVE_BITS))
     {   /* Invalid field id */
-        _Fset_error_msg(BBADFLD, "Invalid bfldid (type not correct)");
+        ndrx_Bset_error_msg(BBADFLD, "Invalid bfldid (type not correct)");
         EXFAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && occ < -1)
     {
-        _Fset_error_msg(BEINVAL, "occ < -1");
+        ndrx_Bset_error_msg(BEINVAL, "occ < -1");
         EXFAIL_OUT(ret);
     }
     /* Validate the buffer. Last 4 bytes must be empty! */
@@ -909,7 +909,7 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
     last=(BFLDID *)(p);
     if (*last!=BBADFLDID)
     {
-        _Fset_error_fmt(BALIGNERR, "last %d bytes of buffer not equal to "
+        ndrx_Bset_error_fmt(BALIGNERR, "last %d bytes of buffer not equal to "
                                     "%p (got %p)",
                                     sizeof(BFLDID), BBADFLDID, *last);
         EXFAIL_OUT(ret);
@@ -926,7 +926,7 @@ out:
  * BFLDID should stay at BADFLID, because will not be overwritten.
  * Also last entry always must at BBADFLDID! This is the rule.
  */
-expublic int _Badd (UBFH *p_ub, BFLDID bfldid, 
+expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, 
                     char *buf, BFLDLEN len,
                     get_fld_loc_info_t *last_start)
 {
@@ -971,7 +971,7 @@ expublic int _Badd (UBFH *p_ub, BFLDID bfldid,
                                     __dbg_vallen,
                                     hdr->buf_len, hdr->bytes_used,
                                     (hdr->buf_len - hdr->bytes_used),
-                                    _Bfname_int(bfldid), bfldid, bfldid);
+                                    ndrx_Bfname_int(bfldid), bfldid, bfldid);
     __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "Adding data", buf, &len);
     UBF_DUMP(log_always, "_Badd data to buffer:", buf, actual_data_size);
 #endif
@@ -1028,7 +1028,7 @@ expublic int _Badd (UBFH *p_ub, BFLDID bfldid,
         int type = (*p_bfldid>>EFFECTIVE_BITS);
         if (IS_TYPE_INVALID(type))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Unknown data type referenced %d",
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Unknown data type referenced %d",
                                         fn, type);
             EXFAIL_OUT(ret);
         }
@@ -1041,7 +1041,7 @@ expublic int _Badd (UBFH *p_ub, BFLDID bfldid,
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
                                         fn, p);
             EXFAIL_OUT(ret);
         }
@@ -1138,7 +1138,7 @@ out:
  * @param
  * @return
  */
-expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len,
                             get_fld_loc_info_t *last_start)
 {
@@ -1203,7 +1203,7 @@ expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                                     __dbg_vallen,
                                     hdr->buf_len, hdr->bytes_used,
                                     (hdr->buf_len - hdr->bytes_used),
-                                    _Bfname_int(bfldid), bfldid, bfldid);
+                                    ndrx_Bfname_int(bfldid), bfldid, bfldid);
     __dbg_dtype_ext1->p_dump_data(__dbg_dtype_ext1, "Bchg data", buf, &len);
     UBF_DUMP(log_always, "Bchg data to buffer:", buf, actual_data_size);
 #endif
@@ -1233,7 +1233,7 @@ expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         /* Which may happen for badly formatted data! */
         if (EXFAIL==target_elem_size)
         {
-            _Fset_error_msg(BEINVAL, "Failed to get data size - corrupted data?");
+            ndrx_Bset_error_msg(BEINVAL, "Failed to get data size - corrupted data?");
             EXFAIL_OUT(ret);
         }
 
@@ -1276,7 +1276,7 @@ expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         /* Put the actual data there, buffer sizes already resized above */
         if (EXSUCCEED!=dtype->p_put_data(dtype, p, bfldid, buf, len))
         {
-            _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
+            ndrx_Bset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
             EXFAIL_OUT(ret);
         }
     }
@@ -1315,7 +1315,7 @@ expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
         if (EXFAIL==target_elem_size)
         {
-            _Fset_error_msg(BEINVAL, "Failed to get data size - corrupted data?");
+            ndrx_Bset_error_msg(BEINVAL, "Failed to get data size - corrupted data?");
             EXFAIL_OUT(ret);
         }
 
@@ -1357,7 +1357,7 @@ expublic int _Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         if (EXSUCCEED!=dtype->p_put_data(dtype, p, bfldid, buf, len))
         {
             /* We have failed! */
-            _Fset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
+            ndrx_Bset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
             EXFAIL_OUT(ret);
         }       
         /* Finally increase the buffer usage! */
@@ -1421,7 +1421,7 @@ out:
  * @param bfldid
  * @return
  */
-expublic BFLDOCC _Boccur (UBFH * p_ub, BFLDID bfldid)
+expublic BFLDOCC ndrx_Boccur (UBFH * p_ub, BFLDID bfldid)
 {
     dtype_str_t *fld_dtype;
     BFLDID *p_last=NULL;
@@ -1519,7 +1519,7 @@ expublic int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
  * @param d_ptr - pointer to start of the data (result is similar of Bfind result)
  * @return 0 - not found/ 1 - entry found.
  */
-expublic int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
+expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                 BFLDOCC *occ, char *buf, BFLDLEN *len,
                                 char **d_ptr)
 {
@@ -1553,7 +1553,7 @@ expublic int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         /* Align error */
         if (IS_TYPE_INVALID(type))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Invalid data type: %d", type, fn);
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Invalid data type: %d", type, fn);
             found=EXFAIL;
             goto out;
         }
@@ -1568,7 +1568,7 @@ expublic int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p", fn, p);
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p", fn, p);
             found=EXFAIL;
             goto out;
         }
@@ -1600,7 +1600,7 @@ expublic int _Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
 
         if (IS_TYPE_INVALID(type))
         {
-            _Fset_error_fmt(BALIGNERR, "Invalid data type: %d", type);
+            ndrx_Bset_error_fmt(BALIGNERR, "Invalid data type: %d", type);
             found=EXFAIL;
             goto out;
         }
@@ -1671,7 +1671,7 @@ out:
  *                      here.
  * @return NULL on failure/ptr to allocted memory if OK.
  */
-expublic char * _Btypcvt (BFLDLEN * to_len, int to_type,
+expublic char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len)
 {
     char *alloc_buf=NULL;
@@ -1737,7 +1737,7 @@ out:
  * @param occ
  * @return 
  */
-expublic int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
+expublic int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 {
     dtype_str_t *fld_dtype;
     BFLDID *p_last=NULL;
@@ -1772,7 +1772,7 @@ expublic int _Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
     else
     {
         /* Field not found */
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
         ret=EXFAIL;
     }
 

@@ -106,6 +106,16 @@ extern "C" {
 #define Frstrindex32 Brstrindex
 #define Ferror32 Berror
 #define Fielded32 Bisubf
+    
+/* VIEW related */
+#define Fvnull32 Bvnull
+#define Fvselinit32 Bvselinit
+#define Fvsinit32 Bvsinit
+#define Fvrefresh32 Bvrefresh
+#define Fvopt32 Bvopt
+#define Fvftos32 Bvftos
+#define Bvstof32 Bvstof
+/* VIEW related, END */
 
 #ifndef FBFR32
 #define FBFR32 UBFH

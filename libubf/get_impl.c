@@ -65,7 +65,7 @@
  * @param extralen - extra size to allocate/data len returned
  * @return
  */
-expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
+expublic char * ndrx_Bgetalloc (UBFH * p_ub, BFLDID bfldid,
                             BFLDOCC occ, BFLDLEN *extralen)
 {
     int data_type = (bfldid>>EFFECTIVE_BITS);
@@ -84,7 +84,7 @@ expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
     #endif
 /*******************************************************************************/
 
-    fb_data=_Bfind (p_ub, bfldid, occ, &tmp_len, &p_fld);
+    fb_data=ndrx_Bfind (p_ub, bfldid, occ, &tmp_len, &p_fld);
 
     if (NULL!=fb_data)
     {
@@ -144,7 +144,7 @@ expublic char * _Bgetalloc (UBFH * p_ub, BFLDID bfldid,
  * @param buflen
  * @return
  */
-expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+expublic int ndrx_Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * len)
 {
     int ret=EXSUCCEED;
@@ -187,7 +187,7 @@ expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     else
     {
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
         ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/
@@ -213,7 +213,7 @@ expublic int _Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
  * @param buflen
  * @return
  */
-expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
+expublic int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len)
 {
     int ret=EXSUCCEED;
@@ -240,7 +240,7 @@ expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
         get_fld_loc(p_ub, bfldid, -2, &dtype, &last_checked, &last_match, &last_occ, NULL);
     }
 
-    if (EXFAIL!=last_occ && !_Fis_error()) /* Exclude cases when error have been raised! */
+    if (EXFAIL!=last_occ && !ndrx_Bis_error()) /* Exclude cases when error have been raised! */
     {
         /* Have to get data type again - because in last mode it is not avaialble  */
         dtype = &G_dtype_str_map[bfldid>>EFFECTIVE_BITS];
@@ -265,7 +265,7 @@ expublic int _Bgetlast (UBFH *p_ub, BFLDID bfldid,
     }
     else
     {
-        _Fset_error(BNOTPRES); /* IF error have been set this will not override! */
+        ndrx_Bset_error(BNOTPRES); /* IF error have been set this will not override! */
         ret=EXFAIL;
     }
 /***************************************** DEBUG *******************************/

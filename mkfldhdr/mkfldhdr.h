@@ -41,12 +41,6 @@ extern char *G_output_dir;
 extern FILE *G_outf;
 extern char G_active_file[];
 /*------------------------------Macros----------------------------------------*/
-
-#define HDR_MIN_LANG            0
-#define HDR_C_LANG              0         /* Default goes to C                */
-#define HDR_GO_LANG             1         /* Golang                           */
-#define HDR_MAX_LANG            1
-
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 /*

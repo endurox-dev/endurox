@@ -51,6 +51,10 @@ extern "C" {
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);
 #define FLDTBLDIR	"FLDTBLDIR"
 #define FIELDTBLS	"FIELDTBLS"
+    
+#define CONF_VIEWFILES  "VIEWFILES"         /* List of view files to load      */
+#define CONF_VIEWDIR    "VIEWDIR"           /* Folders with view files stored, ':' - sep   */
+    
 #define UBFDEBUGLEV "UBF_E_"
 
 #define UBF_MAGIC   "UBF1"
@@ -115,6 +119,9 @@ extern "C" {
 #define DOUBLE_RESOLUTION 6
 #define FLOAT_RESOLUTION 5
 
+    
+#define BFLD_INT                -2  /* Internal Buffer type for VIEW */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -128,7 +135,8 @@ typedef char UBF_CHAR;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void build_printable_string(char *out, char *in, int in_len);
+extern NDRX_API void ndrx_build_printable_string(char *out, char *in, int in_len);
+
 
 #ifdef	__cplusplus
 }

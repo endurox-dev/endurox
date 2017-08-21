@@ -46,6 +46,7 @@ extern "C" {
 #define UBF_EXTENDED
 #define MAXUBFLEN	0xffffffff		/* Maximum UBFH length */
 #define BF_LENGTH        32
+
 /* UFB field types, suggest the c data types */
     
 #define BFLD_MIN        0
@@ -56,7 +57,7 @@ extern "C" {
 #define BFLD_DOUBLE	4
 #define BFLD_STRING	5
 #define BFLD_CARRAY	6
-#define BFLD_MAX        6
+#define BFLD_MAX    6
 
 /* invalid field id - returned from functions where field id not found */
 #define BBADFLDID (BFLDID)0
@@ -79,19 +80,30 @@ extern "C" {
 #define BFTSYNTAX           13
 #define BEINVAL             14
 #define BERFU1              15
-#define BERFU2              16
-#define BERFU3              17
-#define BERFU4              18
-#define BERFU5              19
-#define BERFU6              20
-#define BERFU7              21
-#define BERFU8              22
+#define BBADTBL             16
+#define BBADVIEW            17
+#define BVFSYNTAX           18
+#define BVFOPEN             19
+#define BBADACM             20
+#define BNOCNAME            21
+#define BEBADOP             22
 #define BMAXVAL             22 /* max error */
+    
+/* Bvopt options: */
+#define B_FTOS              1 /* flag S, one way UBF->Struct */
+#define B_STOF              2 /* flag F, one way Struct->UBF */
+#define B_OFF               3 /* Zero way mapping, N */
+#define B_BOTH              4 /* both F & S */
 
+#define BUPDATE             1   /* Update buffer */
+#define BOJOIN              2   /* outer joing buffers, RFU */
+#define BJOIN               3   /* join buffers, RFU */
+#define BCONCAT             4   /* contact buffers */
+    
 /* Configuration: */
 #define CONF_NDRX_UBFMAXFLDS     "NDRX_UBFMAXFLDS"
 
-#define Berror	(*_Bget_Ferror_addr())
+#define Berror	(*ndrx_Bget_Ferror_addr())
 #define BFLDID32 BFLDID
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -114,7 +126,7 @@ typedef struct Bnext_state Bnext_state_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int * _Bget_Ferror_addr (void);
+extern NDRX_API int * ndrx_Bget_Ferror_addr (void);
 extern NDRX_API int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 extern NDRX_API int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype);
 extern NDRX_API int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype);
@@ -185,6 +197,18 @@ extern NDRX_API BFLDOCC Bunindex (UBFH * p_ub);
 extern NDRX_API long Bidxused (UBFH * p_ub);
 extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
+extern NDRX_API int Bjoin(UBFH *dest, UBFH *src);
+extern NDRX_API int Bojoin(UBFH *dest, UBFH *src);
+
+/* VIEW related */
+extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
+extern NDRX_API int Bvselinit(char *cstruct, char *cname, char *view);
+extern NDRX_API int Bvsinit(char *cstruct, char *view);
+extern NDRX_API void Bvrefresh(void);
+extern NDRX_API int Bvopt(char *cname, int option, char *view);
+extern NDRX_API int Bvftos(UBFH *p_ub, char *cstruct, char *view);
+extern NDRX_API int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
+/* VIEW related, END */
 
 /* ATMI library TLS: */
 extern NDRX_API void * ndrx_ubf_tls_get(void);

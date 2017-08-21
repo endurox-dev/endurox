@@ -66,7 +66,7 @@
  * @param p_fld - pointer to start of the actual field (optional)
  * @return
  */
-expublic char * _Bfind (UBFH * p_ub, BFLDID bfldid,
+expublic char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
                                         BFLDOCC occ, BFLDLEN * len,
                                         char **p_fld)
 {
@@ -126,7 +126,7 @@ expublic char * _Bfind (UBFH * p_ub, BFLDID bfldid,
     else
     {
         UBF_LOG(log_error, "%s: Field not present!", fn);
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
     }
 
     UBF_LOG(log_debug, "Bfind: return: %p", ret);
@@ -151,7 +151,7 @@ expublic char * _Bfind (UBFH * p_ub, BFLDID bfldid,
  * @param type
  * @return
  */
-expublic char * _CBfind (UBFH *p_ub, BFLDID bfldid,
+expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC occ, BFLDLEN * len, int usrtype,
                         int mode, int extralen)
 {
@@ -169,7 +169,7 @@ expublic char * _CBfind (UBFH *p_ub, BFLDID bfldid,
     #endif
 /*******************************************************************************/
 
-    fb_data=_Bfind (p_ub, bfldid, occ, &tmp_len, NULL);
+    fb_data=ndrx_Bfind (p_ub, bfldid, occ, &tmp_len, NULL);
 
     if (NULL!=fb_data)
     {
@@ -219,7 +219,7 @@ expublic char * _CBfind (UBFH *p_ub, BFLDID bfldid,
  * @param len
  * @return
  */
-expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
+expublic BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
 {
     dtype_str_t *dtype=NULL;
     dtype_ext1_t *dtype_ext1;
@@ -268,7 +268,7 @@ expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
             /* Align error */
             if (CHECK_ALIGN(p_fld, p_ub, hdr))
             {
-                _Fset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                             fn, p_fld);
                 break; /* <<<< BREAK!!! */
             }
@@ -291,10 +291,10 @@ expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
         }
     }/* while */
 
-    if (!_Fis_error() && ret==EXFAIL )
+    if (!ndrx_Bis_error() && ret==EXFAIL )
     {
         /* The we do not have a result */
-        _Fset_error_fmt(BNOTPRES, "%s: Occurrance of field %d not found last occ: %hd",
+        ndrx_Bset_error_fmt(BNOTPRES, "%s: Occurrance of field %d not found last occ: %hd",
                                     fn, bfldid, iocc);
     }
     
@@ -314,7 +314,7 @@ expublic BFLDOCC _Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len)
  * @param usrtype - user data type specified
  * @return -1 (FAIL)/>=0 occurrance
  */
-expublic BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype)
+expublic BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype)
 {
     int ret=EXFAIL;
     int cvn_len=0;
@@ -329,7 +329,7 @@ expublic BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN le
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "%s: the same types - direct call!", fn);
-        return _Bfindocc(p_ub, bfldid, value, len); /* <<<< RETURN!!! */
+        return ndrx_Bfindocc(p_ub, bfldid, value, len); /* <<<< RETURN!!! */
     }
 
     /* if types are not the same then go the long way... */
@@ -348,7 +348,7 @@ expublic BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN le
 
     if (NULL!=cvn_buf)
     {   /* In case of string, we do not want regexp processing, so do not pass the len */
-        ret=_Bfindocc(p_ub, bfldid, cvn_buf, (BFLD_STRING!=to_type?cvn_len:0));
+        ret=ndrx_Bfindocc(p_ub, bfldid, cvn_buf, (BFLD_STRING!=to_type?cvn_len:0));
     }
     else
     {
@@ -377,7 +377,7 @@ expublic BFLDOCC _CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN le
  * @param len
  * @return 
  */
-expublic char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
+expublic char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                                 BFLDOCC *occ,
                                                 BFLDLEN * len)
 {
@@ -402,7 +402,7 @@ expublic char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
 
     dtype = &G_dtype_str_map[data_type];
     /* Get the data size of Bfind */
-    if (EXFAIL!=last_occ && !_Fis_error())
+    if (EXFAIL!=last_occ && !ndrx_Bis_error())
     {
         int dlen;
 
@@ -425,7 +425,7 @@ expublic char * _Bfindlast (UBFH * p_ub, BFLDID bfldid,
     else
     {
         /* set the error that field is not found */
-        _Fset_error(BNOTPRES);
+        ndrx_Bset_error(BNOTPRES);
     }
 
     UBF_LOG(log_debug, "%s: return: %p occ: %d", fn, ret, last_occ);

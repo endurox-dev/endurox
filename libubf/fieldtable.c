@@ -72,9 +72,10 @@
  * 
  * This ensures that our hash tables can correctly get data out (no duplicates!!)
  */
-UBF_field_def_t ** M_bfldidhash2 = NULL; /* FLD ID hash */
-UBF_field_def_t ** M_fldnmhash2 = NULL; /* FLD NM hash */
-int M_hash2_size = 16000; /* Default size for Hash2 */
+exprivate  UBF_field_def_t ** M_bfldidhash2 = NULL; /* FLD ID hash */
+exprivate  UBF_field_def_t ** M_fldnmhash2 = NULL; /* FLD NM hash */
+exprivate  volatile int M_field_def_loaded = EXFALSE;       /* IS UBF loaded? */
+exprivate  int M_hash2_size = 16000; /* Default size for Hash2 */
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate void _bfldidhash_add(UBF_field_def_t *p_fld);
@@ -120,7 +121,7 @@ exprivate int init_hash_area(void)
         M_bfldidhash2 = NDRX_MALLOC(malloc_size);
         if (NULL==M_bfldidhash2)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to malloc bfldidhash2, requested: %d bytes err: %s",
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to malloc bfldidhash2, requested: %d bytes err: %s",
                         malloc_size, strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -149,7 +150,7 @@ exprivate int init_hash_area(void)
         M_fldnmhash2 = NDRX_MALLOC(malloc_size);
         if (NULL==M_fldnmhash2)
         {
-            _Fset_error_fmt(BMALLOC, "Failed to malloc fldnmhash2, requested: %d bytes err: %s",
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to malloc fldnmhash2, requested: %d bytes err: %s",
                         malloc_size, strerror(errno));
             ret=EXFAIL;
             goto out;
@@ -249,7 +250,7 @@ exprivate int UBF_field_def_nm_cmp(UBF_field_def_t *a, UBF_field_def_t *b)
  * Get field name entry from hash table.
  * @returns - NULL not found or ptr to UBF_field_def_t
  */
-expublic UBF_field_def_t * _fldnmhash_get(char *key)
+expublic UBF_field_def_t * ndrx_fldnmhash_get(char *key)
 {
     /* Get the linear array key */
     int hash_key = str_hash_from_key_fn(key) % M_hash2_size;
@@ -285,7 +286,7 @@ exprivate int _ubf_load_def_table(void)
     flddir = getenv(FLDTBLDIR);
     if (NULL==flddir)
     {
-        _Fset_error_msg(BFTOPEN, "Field table directory not set - "
+        ndrx_Bset_error_msg(BFTOPEN, "Field table directory not set - "
                                  "check FLDTBLDIR env var");
         ret=EXFAIL;
         goto out;
@@ -295,7 +296,7 @@ exprivate int _ubf_load_def_table(void)
     flds = getenv(FIELDTBLS);
     if (NULL==flds)
     {
-        _Fset_error_msg(BFTOPEN, "Field table list not set - "
+        ndrx_Bset_error_msg(BFTOPEN, "Field table list not set - "
                  "check FIELDTBLS env var");
         ret=EXFAIL;
         goto out;
@@ -305,21 +306,21 @@ exprivate int _ubf_load_def_table(void)
 
     _ubf_loader_init();
 
-    strcpy(tmp_flds, flds);
+    NDRX_STRCPY_SAFE(tmp_flds, flds);
     p=strtok(tmp_flds, ",");
     while (NULL!=p && EXSUCCEED==ret)
     {
-        sprintf(tmp, "%s/%s", flddir, p);
+        snprintf(tmp, sizeof(tmp), "%s/%s", flddir, p);
         /* Open field table file */
         if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
         {
-            _Fset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
+            ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
                                 strerror(errno));
             ret=EXFAIL;
             goto out;
         }
 
-        ret=_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
+        ret=ndrx_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
 
         /* Close file */
         NDRX_FCLOSE(fp);
@@ -328,7 +329,11 @@ exprivate int _ubf_load_def_table(void)
 
 out:
 
-	return ret;
+    if (EXSUCCEED==ret)
+    {
+        M_field_def_loaded = EXTRUE;
+    }
+    return ret;
 }
 
 /**
@@ -345,7 +350,7 @@ expublic int _ubf_loader_init(void)
  * @param fp
  * @return
  */
-expublic int _ubf_load_def_file(FILE *fp, 
+expublic int ndrx_ubf_load_def_file(FILE *fp, 
                 int (*put_text_line) (char *text), /* callback for putting text line */
                 int (*put_def_line) (UBF_field_def_t *def),  /* callback for writting defintion */
                 int (*put_got_base_line) (char *base), /* callback for base line */
@@ -409,7 +414,7 @@ exprivate int _ubf_load_fld_def(int base,
                               int line)
 {
     int ret=EXSUCCEED;
-    char ftype[32]={'\0'};
+    char ftype[NDRX_UBF_TYPE_LEN+1]={'\0'};
     UBF_field_def_t *fld, *fld2;
     UBF_field_def_t *reserved;
     dtype_str_t *p = G_dtype_str_map;
@@ -421,7 +426,7 @@ exprivate int _ubf_load_fld_def(int base,
 
     if (NULL==fld || NULL==fld2)
     {
-        _Fset_error_msg(BMALLOC, "Failed to allocate field def space!");
+        ndrx_Bset_error_msg(BMALLOC, "Failed to allocate field def space!");
         ret=EXFAIL;
         goto out;
     }
@@ -450,7 +455,7 @@ exprivate int _ubf_load_fld_def(int base,
 
     if (EXEOS==p->fldname[0])
     {
-        _Fset_error_fmt(BFTSYNTAX, "Failed to find data type for [%s] in %s:%d!",
+        ndrx_Bset_error_fmt(BFTSYNTAX, "Failed to find data type for [%s] in %s:%d!",
                                     ftype, fname, line);
         ret=EXFAIL;
     }
@@ -459,10 +464,10 @@ exprivate int _ubf_load_fld_def(int base,
         /* check dup before adding! */
         if (check_dup)
         {
-            if (NULL!=(reserved=_fldnmhash_get(fld->fldname)))
+            if (NULL!=(reserved=ndrx_fldnmhash_get(fld->fldname)))
             {
                 /* ERROR! ID Already defined! */
-                _Fset_error_fmt(BFTSYNTAX, "Duplicate name [%s] already taken by "
+                ndrx_Bset_error_fmt(BFTSYNTAX, "Duplicate name [%s] already taken by "
                                 "[%s]:%d %s:%d!",
                                 fld->fldname, reserved->fldname, number,
                                 fname, line);
@@ -472,7 +477,7 @@ exprivate int _ubf_load_fld_def(int base,
             if (EXSUCCEED==ret && NULL!=(reserved=_bfldidhash_get(fld->bfldid)))
             {
                 /* ERROR! Name already taken */
-                _Fset_error_fmt(BFTSYNTAX, "Duplicate ID [%s]:%d already taken by [%s]:%d "
+                ndrx_Bset_error_fmt(BFTSYNTAX, "Duplicate ID [%s]:%d already taken by [%s]:%d "
                                     "%s:%d!",
                                  fld->fldname, number, reserved->fldname, number,
                                  fname, line);
@@ -518,7 +523,7 @@ static unsigned int str_hash_from_key_fn( void *k )
 /**
  * Check that string keys are qual
  */
-static int str_keys_equal_fn ( void *key1, void *key2 )
+static int str_keys_equal_fn( void *key1, void *key2 )
 {
     return (0==strcmp(key1, key2)?1:0);
 }
@@ -527,54 +532,49 @@ static int str_keys_equal_fn ( void *key1, void *key2 )
  * Checks and reads type table (.fd files)
  * @return SUCCEED/FAIL
  */
-expublic int prepare_type_tables(void)
+expublic int ndrx_prepare_type_tables(void)
 {
-    MUTEX_LOCK;
+    /* If not loaded. */
+    if (!M_field_def_loaded)
     {
-    int ret=EXSUCCEED;
-#if FIELD_TABLE_NO_RETRY
-    static int first=1;
-    static int status;
-    
-    if (NULL==M_bfldidhash && first)
-    {
-        ret=_ubf_load_def_table();
-        first=0;
-        status=ret;
+        /* Lock */
+        MUTEX_LOCK;
+        {
+            int ret=EXSUCCEED;
+
+            /* if still not loaded by concurrent thread, then load */
+            if (!M_field_def_loaded)
+            {
+                ret=_ubf_load_def_table();
+            }
+
+            MUTEX_UNLOCK;
+            return ret;
+        }
     }
     else
     {
-        /* return old error code */
-        ret=status;
-    }
-#else
-    if (NULL==M_bfldidhash2 || NULL==M_fldnmhash2)
-    {
-        ret=_ubf_load_def_table();
-    }
-#endif
-
-    MUTEX_UNLOCK;
-    return ret;
+        return EXSUCCEED;
     }
 }
 
 /**
  * Internal version of Bfname. Does not set error.
  */
-expublic char * _Bfname_int (BFLDID bfldid)
+expublic char * ndrx_Bfname_int (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
     UBF_TLS_ENTRY;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
         if (BFTOPEN==Berror || BFTSYNTAX==Berror)
         {
-            _Bunset_error();
+            ndrx_Bunset_error();
         }
 
-        sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);
+        snprintf(G_ubf_tls->bfname_buf, sizeof(G_ubf_tls->bfname_buf), 
+                "((BFLDID32)%d)", bfldid);
 
         return G_ubf_tls->bfname_buf;
     }
@@ -583,7 +583,8 @@ expublic char * _Bfname_int (BFLDID bfldid)
     p_fld = _bfldidhash_get(bfldid);
     if (NULL==p_fld)
     {
-        sprintf(G_ubf_tls->bfname_buf, "((BFLDID32)%d)", bfldid);
+        snprintf(G_ubf_tls->bfname_buf, sizeof(G_ubf_tls->bfname_buf),
+                "((BFLDID32)%d)", bfldid);
         return G_ubf_tls->bfname_buf;
     }
     else
@@ -610,12 +611,12 @@ exprivate BFLDID get_from_bfldidstr(char *fldnm)
  * Return BFLDID from name! (internal version, parses ((BFLDID)%d)
  * Does not reports errors.
  */
-expublic BFLDID _Bfldid_int (char *fldnm)
+expublic BFLDID ndrx_Bfldid_int (char *fldnm)
 {
     UBF_field_def_t *p_fld=NULL;
     BFLDID bfldid;
 
-    if (EXSUCCEED!=prepare_type_tables())
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
         /* extending support for BFLDID syntax for read. */
         if (0==strncmp(fldnm, "((BFLDID32)", 10))
@@ -630,7 +631,7 @@ expublic BFLDID _Bfldid_int (char *fldnm)
     }
     
     /* Now we can try to do lookup */
-    p_fld = _fldnmhash_get(fldnm);
+    p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {

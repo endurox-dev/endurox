@@ -61,6 +61,7 @@
 
 #include <typed_buf.h>
 #include <ubfutil.h>
+#include <math.h>
 
 #include "fdatatype.h"
 /*---------------------------Externs------------------------------------*/
@@ -428,14 +429,16 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     int i;
     int conv_bcd = EXFALSE;
     
+    /* Bug #182 added ABS fix. */
     switch (fld->fld_type)
     {
         case EXF_SHORT:
         {
             short *tmp = (short *)c_buf_in;
+            short tmp_abs = (short)abs(*tmp);
             MKSIGN;
-                        
-            sprintf(c_buf_out, "%hd%c", *tmp, sign);
+
+            sprintf(c_buf_out, "%hd%c", tmp_abs, sign);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }
@@ -445,7 +448,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             long *tmp = (long *)c_buf_in;
             MKSIGN;
             
-            sprintf(c_buf_out, "%ld%c", *tmp, sign);
+            sprintf(c_buf_out, "%ld%c", labs(*tmp), sign);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }
@@ -462,12 +465,15 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         {
             float *tmp = (float *)c_buf_in;
             float tmp_op = *tmp;
+            float tmp_abs;
             MKSIGN;
             
             for (i=0; i<FLOAT_RESOLUTION; i++)
                 tmp_op*=10.0f;
             
-            sprintf(c_buf_out, "%.0lf%c", tmp_op, sign);
+            tmp_abs = (float)fabs(tmp_op);
+                    
+            sprintf(c_buf_out, "%.0lf%c", tmp_abs, sign);
             *net_buf_len = strlen(c_buf_out);
             
             conv_bcd = EXTRUE;
@@ -482,7 +488,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             for (i=0; i<DOUBLE_RESOLUTION; i++)
                 tmp_op*=10.0f;
             
-            sprintf(c_buf_out, "%.0lf%c", tmp_op, sign);
+            sprintf(c_buf_out, "%.0lf%c", fabs(tmp_op), sign);
             *net_buf_len = strlen(c_buf_out);
             
             conv_bcd = EXTRUE;
@@ -501,7 +507,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             int *tmp = (int *)c_buf_in;
             MKSIGN;
             
-            sprintf(c_buf_out, "%d%c", *tmp, sign);
+            sprintf(c_buf_out, "%d%c", abs(*tmp), sign);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
             
@@ -553,7 +559,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             *net_buf_len = c_buf_in_len;
             
             /* Built representation for user... for debug purposes... */
-            build_printable_string(debug_buf, c_buf_out, c_buf_in_len);
+            ndrx_build_printable_string(debug_buf, c_buf_out, c_buf_in_len);
         }    
             break;
                 
@@ -677,7 +683,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             net_byte = net_buf[net_buf_offset + i] & 0xff; 
             
-            sprintf(tmp, "%02x", net_byte);
+            snprintf(tmp, sizeof(tmp), "%02x", net_byte);
             strcat(bcd_buf, tmp);
         }
         
@@ -877,7 +883,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                build_printable_string(debug_buf, c_buf_out, tag_len);
+                ndrx_build_printable_string(debug_buf, c_buf_out, tag_len);
             }
             
         }    
@@ -1203,7 +1209,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 NDRX_LOG(log_debug, "Buffer type is: %hd", 
                         *buffer_type);
                 
-                if (*buffer_type == BUF_TYPE_UBF)
+                if (BUF_TYPE_UBF==*buffer_type ||
+                        BUF_TYPE_VIEW==*buffer_type)
                 {
                     UBFH *p_ub = (UBFH *)data;
                     proto_ufb_fld_t f;
@@ -1682,7 +1689,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     
                     NDRX_LOG(log_debug, "Processing XATMIBUF");
                     
-                    if (*buffer_type == BUF_TYPE_UBF)
+                    if (*buffer_type == BUF_TYPE_UBF || 
+                            *buffer_type == BUF_TYPE_VIEW)
                     {    
                         UBFH *p_ub = (UBFH *)(ex_buf + ex_len+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;

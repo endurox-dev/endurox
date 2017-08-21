@@ -58,7 +58,8 @@
  * olen - the actual lenght of data that should sent. Also this may represent
  *          space for the buffer to copy to.
  */
-int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, char *obuf, long *olen, long flags)
+expublic int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
+        long ilen, char *obuf, long *olen, long flags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)idata;
@@ -72,10 +73,11 @@ int UBF_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, c
         goto out;
     }
 
-    /* Check that we have space enought to prepare for send */
+    /* Check that we have space enough to prepare for send */
     if (NULL!=olen && 0!=*olen && *olen < ubf_used)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, but requested: %d", fn, *olen, ubf_used);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
+                "but requested: %d", fn, *olen, ubf_used);
         ret=EXFAIL;
         goto out;
     }
@@ -100,7 +102,7 @@ out:
  * odata - ptr to handler. Existing buffer may be reused or re-allocated
  * olen - output data length
  */
-int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
     int ret=EXSUCCEED;
@@ -199,7 +201,7 @@ int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
                                          "allocating new!", fn);
 
-        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_len);
+        *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_buf_size);
 
         if (NULL==*odata)
         {
@@ -231,10 +233,9 @@ out:
  * @param len
  * @return
  */
-expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
 {
     char *ret=NULL;
-    char fn[] = "UBF_tpalloc";
 
     if (0==len)
     {
@@ -246,7 +247,7 @@ expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, long len)
 
     if (NULL==ret)
     {
-        NDRX_LOG(log_error, "%s: Failed to allocate UBF buffer!", fn);
+        NDRX_LOG(log_error, "%s: Failed to allocate UBF buffer!", __func__);
         ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
     }
