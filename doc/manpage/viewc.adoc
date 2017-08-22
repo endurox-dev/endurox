@@ -37,15 +37,44 @@ by viewc. In that case viewc will ignore the meta data and will produce new
 
 'viewc' must have access to 'cc' (C Compiler).
 
+ENVIRONMENT
+-----------
+*CC*::
+Optional environment variable indicating which C compiler to use. If parameter is
+not set, the 'cc' command is used.
+
+*CFLAGS*::
+Optional C flags to be passed to C compiler during the *buildclient* execution.
 
 OPTIONS
 -------
 [*-L* 'LD_LIBRARY_PATH']::
-Additional library path for dynamic libraries. Will be passed to *buildclient* during
-the build phase.
+Additional library path for dynamic libraries. This is needed during the compiled
+code execution, so that runtime can load dynamic libraries required by Enduro/X.
 
 [*-b* 'BUILD_FLAGS']::
-Additional flags to be passed to 'cc' command line.
+Additional flags to be passed to 'cc' command line. This can be used to pass
+additional include path, library path or libraries it self.
+
+[*-n*]::
+Do not process UBF mapping during compilation of the view file. This can be useful
+in cases if the environment is not configured during the build time and field
+definition files are not accessible at the time.
+
+[*-d* 'OUTPUT_DIRECTOR']::
+Optional flag for changing output directory where object file is generated. If
+parameter is not set, current directory is used.
+
+[*-C*]::
+Reserved for future use.
+
+[*-m* 'LANGUAGE_MODE']::
+Language mode for header file generation. Currently defined value is 0 - C lang,
+which is default value of the parameter.
+
+[*-h*]::
+Print usage.
+
 
 EXIT STATUS
 -----------
@@ -54,6 +83,12 @@ Success
 
 *1*::
 Failure
+
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview* for sample usage.
+
 
 BUGS
 ----
