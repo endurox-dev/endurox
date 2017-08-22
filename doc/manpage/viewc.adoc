@@ -37,6 +37,9 @@ by viewc. In that case viewc will ignore the meta data and will produce new
 
 'viewc' must have access to 'cc' (C Compiler).
 
+ENVIRONMENT
+-----------
+
 
 OPTIONS
 -------
