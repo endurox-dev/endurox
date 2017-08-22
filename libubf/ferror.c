@@ -152,6 +152,14 @@ expublic int * ndrx_Bget_Ferror_addr (void)
 }
 
 /**
+ * For ABI compatiblity with older Enduro/X versions.
+ */
+expublic int * _Bget_Ferror_addr (void)
+{
+    return ndrx_Bget_Ferror_addr();
+}
+
+/**
  * Internetal function for setting
  * @param error_code
  * @param msg
