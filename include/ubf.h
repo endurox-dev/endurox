@@ -127,6 +127,7 @@ typedef struct Bnext_state Bnext_state_t;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API int * ndrx_Bget_Ferror_addr (void);
+extern NDRX_API int * _Bget_Ferror_addr (void); /* for backwards compatibility */
 extern NDRX_API int Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 extern NDRX_API int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len, int usrtype);
 extern NDRX_API int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len, int usrtype);

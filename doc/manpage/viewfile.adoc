@@ -1,0 +1,376 @@
+VIEWFILE(5)
+===========
+:doctype: manpage
+
+
+NAME
+----
+viewfile - Enduro/X VIEW Buffer descriptor file 
+
+
+SYNOPSIS
+--------
+
+Formal specification:
+
+---------------------------------------------------------------------
+# First view in the file 
+VIEW VIEWNAME
+
+VIEW_TYPE   C_NAME  FB_NAME COUNT   FLAGS   SIZE    NULL_VAL
+...
+VIEW_TYPE_N   C_NAME_N  FB_NAME_N COUNT_N   FLAGS_N   SIZE_N    NULL_VAL_N
+
+END
+
+...
+
+# N view in the view file
+VIEW VIEWNAME_N
+
+...
+
+END
+---------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+View files (usually with extension '.v') describe the data block 
+
+
+DEBUG CONFIGURATION FILE SYNTAX
+-------------------------------
+
+*SANITY_SECONDS*::
+	Number of seconds after which perform system sanity checks. This number
+	should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
+	is time by which 'ndrxd' sleeps periodically.
+*CHECKPM_STY*::
+        This is number of sanity cycles into which check dead processes from the
+        process model. This makes the actual checking of th PID existence system.
+        Thus if ndrxd is started in learning mode and will not receive signals
+        of the dead servers, then by setting it will discover exited processes.
+*BRIDGE_REFRESH_TIME*::
+	Number of sanity units in which 'tpbridge' refresh should be send to other node.
+	If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
+	then period between bridge refreshes will be 10*2 = 20 seconds.
+    Default value is *0* - do not send full updates.
+*MIN_RESTART_TIME*::
+	Number of sanity units in which died server will be tried to start back. This is
+	minimal time, means that this time is applied in case if server was running and died.
+	If it is consecutive try, then RESTART_STEP is applied on this timer.	
+*RESTART_STEP*::
+	Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
+	Meaning that next try of restart will tried later that previous by this
+	number of sanity units.
+*MAX_RESTART_TIME*::
+	Max number of sanity units after which server will tried to restart.
+	After each consecutive ATMI server death, next reboot is tried
+	by 'MIN_RESTART_TIME'+'RESTART_STEP'*try_count. If this goes over the
+	'MAX_RESTART_TIME' then 'MAX_RESTART_TIME' is used instead.
+*NDRXD_RESTART_TO_CHECK*::
+	Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
+	mode. Within this time no sanity checks are perfomed, but instead "learning" mode
+	is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
+	If in this time ATMI server does not responds, then ATMI server is subject
+	of sanity checks.
+*NDRXD_GATHER_PQ_STATS*::
+        Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
+        stats for service queues. In future this might be used for automatic service starting
+        and stopping.
+*MIN_SERVERS_DEFAULT*::
+	Default minimum number of copies of the server which needs to be started automatically.
+	This can be overridden by 'MIN_SERVERS_SRV' per server.
+*MAX_SERVERS_DEFAULT*::
+	Max number of ATMI server copies per ATMI server entry. The difference between
+	MIN and MAX servers means the number of standby servers configured. They can be started
+	by hand with out system re-configuration. But they are not booted automatically at
+	system startup. You will have to start them with $ xadmin start -s <server_name>
+	or by $ xadmin start -i <server_id>. This can be overridden by
+	'MAX_SERVERS_SRV'.
+*AUTOKILL_DEFAULT*::
+	Should server be automatically killed (by sequence signal sequence 
+	-2, -15, -9) in case if server have been starting up too long, or
+	does not respond to pings too long, or it is performing shutdown
+	too long. This can be overridden by 'AUTOKILL_SRV' on per server
+	basis.
+*ENV_OVERRIDE_DEFAULT*::
+	Full path to file containing environment variable overrides.
+	see 'ex_envover(5)' for more details. This can be overridden
+	by per server basis by ENV_OVERRIDE_SRV. 
+	Both are optional settings.
+*MAX_STARTUP_TIME_DEFAULT*::
+	Max time (in sanity units) in which server should start up, i.e. send init info to
+	'ndrxd'. If during this time server have not initialized, it is being restarted. This
+	can be overridden by 'MAX_STARTUP_TIME_SRV'.
+*PING_EVERY_TIME_DEFAULT*::
+	Number of sanity units in which perform peridical server pings. This can be
+	overridden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
+*MAX_PING_TIME_DEFAULT*::
+	Number of sanity units, time in which server *must* respond to ping requests.
+	If there is no response from server within this time, then restart sequence is
+	initiated. This can be overridden by 'MAX_PING_TIME_SRV'.
+*MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
+	Maximum time in which shutdown of server must complete in sanity units.
+	If in given time server is not shutdown, then forced shutdown sequence
+	is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
+	on per server basis.
+*EXPORT_SERVICES_DEFAULT*::
+    Comma separated list of services to be applied to all binaries which means the list of
+    services to be exported by *tpbridge* server to other cluster node. This can be overridden by 
+    'ATMI_SERVER_EXPORT_SERVICES'.
+*BLACKLIST_SERVICES_DEFAULT*::
+    Comma separated list of services to be applied to all server binaries which means the list of
+    services that must not be exported by *tpbridge* server to other cluster node.
+    'ATMI_SERVER_BLACKLIST_SERVICES' is first priority over the 'EXPORT_SERVICES_DEFAULT' if
+    service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
+    'ATMI_SERVER_BLACKLIST_SERVICES'. 
+*NDRXD_SRV_START_WAIT_DEFAULT*::
+        Number of seconds to wait for servers to boot. If not started in given time,
+        then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
+        Default value for this is 30 seconds.
+*NDRXD_SRV_STOP_WAIT_DEFAULT*::
+        Number of seconds to wait for server to shutdown. If not started in given time,
+        then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
+        Default value for this is 30 seconds.
+*KILL_TIME_DEFAULT*::
+	Time in sanity units after which to progress from first signal -2 to next signal
+	-15. And after -15 this time means when next -9 signal will be sent. This is used
+	if forced restart of forced shutdown was initiated by 'ndrxd'. This
+	can be overridden by 'KILL_TIME_SRV'.
+*COMMON_CONFIG_TAG_DEFAULT*::
+	Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
+        process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
+*PROTECTED_SERVER_DEFAULT*::
+	Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+	'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+	stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+	won't work on these because '-c' is not supposed to be used by restart.
+	The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+	something else which is involved into 'ndrxd' daemon management it self.
+	This can be overridden by 'PROTECTED_SERVER'.
+*RELOAD_ON_CHANGE_DEFAULT*::
+	If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
+	and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
+	the XATMI servers one by one. The scanning will occur at every sanity
+	cycle. This is recommended to be used *only* for development purposes. And
+	must not be used on production servers! 
+	This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+	
+*SECONDS_TO_SLEEP_AFTER_SRV_START*::
+	Number of seconds to wait for next item to start after the server is launched.
+	This is useful in cases when for example we start bridge server, let it for some
+	seconds to connect to other node, then continue with other service startup.
+*SERVER_BINARY_NAME*::
+	ATMI server executable's name. The executable must be in $PATH.
+	This name cannot contain special symbols like path seperator '/'
+	and it cannot contains commas ','! Commas are used as internal
+	queue seperator combined with binary names.
+*RESPAWN_SRV*::
+    Do the automatica process respawning if process is died for some reason. The default
+    value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
+    then sanity checks will not automatically re-boot the process.
+*SERVER_ID*::
+	Server ID. It is internal ID for server instance. For each separate ATMI server
+	the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
+	than 1. In this case up till MAX servers, internally 'SERVER_ID' is incremented.
+	Thus for example if SERVER_ID is 200, and MAX_SERVERS_SRV is 5, then
+	following server IDs will be reserved: 200, 201, 202, 203, 204. The maximum server
+	id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
+*ATMI_SERVER_SYSTEM_OPTIONS*::
+	Command line system options passed to ATMI server. Following parameters are
+	used by Enduro/X ATMI servers: '-N', boolean type. If present, then no services
+	will be advertised by server. In this case will be advertised only services specified
+	by '-s' flag. For example if server advertises SERVICE1, SERVICE2, SERVICE3, but '-N'
+	was specified, and '-sSERVICE3' is specified, then only service SERVICE3 will be 
+	advertised. The '-s' argument also can contain aliases for services, for example
+	'-sOTHERSVC:SERVICE2', then new service OTHERSVC will be advertised which
+	basically is the same SERVICE2 (same function used). '-s' and '-N' can be mixed.
+	'-s' can appear multiple times in system options. With one '-s' multiple services
+        can be aliased to single existing service.
+        The format is: '-s<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The ',' can be
+        used as separator too, but for certain platforms it does not work, thus '/' is
+        recommended.
+	Server binaries output is controlled via '-e LOG_FILE', which means
+	that stdout & stderr of server is dumped to LOG_FILE.
+	There are few internal params: param '-k' is just a random key
+	for shell scripts. Another internal param is Server ID which is automatically passed
+	to binary via '-i SERVER_ID'.
+        Enduro/X supports automatic buffer conversion for ATMI servers. 
+        Currently supported modes are 'JSON2UBF', 'UBF2JSON', these modes are activated 
+        by -x paramter in system options. These modes are passed for server functions 
+        being advertised. For example if we have service *functions* (not services) 
+        UBF1FUNC, UBF2FUNC and JSONFUNC and we want to ensure that these receive
+        converted messages even if caller to UBF service sends JSON and vice versa, then 
+        following options might be set to command line:
+        '-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON'.
+*ATMI_SERVER_APPLICATION_OPTIONS*::
+	Application specific command line options. This follows content after sys options as:
+	'system options -- app options'.
+*ATMI_SERVER_EXPORT_SERVICES*::
+	Enduro/X server specific list of services to be exported. This list is only for 
+	*tpbridge* servers.
+*ATMI_SERVER_BLACKLIST_SERVICES*::
+	Enduro/X server specific list of services that must not be exported. This list is only for 
+	*tpbridge* servers. Blacklist have higher priority over the Export list.
+*ATMI_SERVER_FULL_PATH*::
+    This is full path of the XATMI server binary. At the porcess startup this overrides
+    the server binary name at *SERVER_BINARY_NAME*. *ATMI_SERVER_FULL_PATH* is used only
+    for process startup. This is intended for testing, if server wrapper scripts
+    needs to be started. But as the *ndrxd* will do the sanity checks against the process
+    names, for time of the testing this needs to be disabled. Thus to do the testings with
+    full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
+    of process model checks, the ndrxd will find out that wrapped binary name does not
+    contain the *SERVER_BINARY_NAME*, thus will reboot the process.
+*CLT_COMMAND_LINE*::
+	Executable name and arguments for client program. Command line basically is a format
+	string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
+	for subsection substitution. Other env variables available here too.
+*CLT_LOG*::
+	Logfile to which stdout and stderr is logged. Can be overridden by 'CLT_LOG_EXEC'
+	for each individual process. Optional attribute.
+*CLT_STDOUT*::
+	File where to log stdout. Can be overridden by 'CLT_STDOUT_EXEC'
+	for each individual process. Optional attribute.
+*CLT_STDERR*::
+	File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
+	for each individual process. Optional attribute.
+*CLT_ENV*::
+	Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLT_ENV_EXEC'
+	for each individual process. Optional attribute.
+*CLT_CCTAG*::
+	ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
+	for each individual process. Optional attribute.
+*CLT_WD*::
+	Working directory for the process. Can be overridden by 'CLT_WD_EXEC'.
+*CLT_AUTOSTART*::
+	Should process be started automatically? 'Y' or 'y' means boot at start.
+	Can be overridden by 'CLT_AUTOSTART_EXEC' for each individual process. 
+	Optional attribute. Default 'n'.
+*CLT_TAG_EXEC*::
+	Tagname to be set for process.
+*CLT_SUBSECT_EXEC*::
+	Subsection to be set for process. '-' used as default.
+*CLT_KLEVEL*::
+        Kill level of the client. *0* - do not kill child processes recursively 
+        of the client, *1* - do kill child processes only when performing 
+        SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
+	The default is *0*.
+	
+EXAMPLE
+-------
+Sample view file (say test.v):
+
+---------------------------------------------------------------------
+VIEW MYVIEW1
+#type    cname      fbname              count   flag    size    null
+
+short    tshort1    T_SHORT_FLD         1       FS      -       2000
+short    tshort2    T_SHORT_2_FLD       2       FSC     -       2001
+short    tshort3    T_SHORT_3_FLD       3       FSC     -       -
+short    tshort4    -                   1       N       -       NONE
+
+long     tlong1     T_LONG_FLD          1       FS      -       0
+int      tint2      T_LONG_2_FLD        2       FS       -       0
+int      tint3      -                   1       -       -       -1
+int      tint4      -                   2       -       -       -1
+
+char     tchar1     T_CHAR_FLD          1       F       -       '\n'
+char     tchar2     T_CHAR_2_FLD        5       SC      -       'A'
+char     tchar3     T_CHAR_3_FLD        2       CN      -       -
+
+float    tfloat1    T_FLOAT_FLD         4       FS      -       1.1
+float    tfloat2    T_FLOAT_2_FLD       2       S       -       -
+float    tfloat3    -                   1       N       -       9999.99
+
+double   tdouble1   T_DOUBLE_FLD        2       FS      -       55555.99
+double   tdouble2   T_DOUBLE_2_FLD      1       F       -       -999.123
+
+string   tstring0   -                   3       -       18      '\n\t\f\\\'\"\vHELLOWORLD'
+string   tstring1   T_STRING_FLD        3       FSP     20      'HELLO WORLDB'
+string   tstring2   T_STRING_2_FLD      3       FCL     20      -
+string   tstring3   T_STRING_3_FLD      4       FSCL    20      'TESTEST'
+string   tstring4   -                   1       P       15      'HELLO TEST'
+string   tstring5   -                   1       -       15      'MEGA TEST'
+
+carray   tcarray1   T_CARRAY_FLD        1       FS      30      '\0\n\t\f\\\'\"\vHELLOWORLD'
+carray   tcarray2   T_CARRAY_2_FLD      1       LFSP    25      '\0\n\t\f\\\'\"\vHELLOWORL\n'
+carray   tcarray3   T_CARRAY_3_FLD      10      FSCLP   30      '\0\\\nABC\t\f\'\vHELLO'
+carray   tcarray4   -                   1       -       5       'ABC'
+carray   tcarray5   -                   1       -       5       -
+
+END
+
+---------------------------------------------------------------------
+
+Compile the view:
+
+---------------------------------------------------------------------
+$ viewc test.v
+$ ls -l 
+TODO:
+---------------------------------------------------------------------
+
+Compiled header output (C language mode)
+
+---------------------------------------------------------------------
+struct MYVIEW1 {
+        short   tshort1;        /* null=2000 */
+        short   C_tshort2;
+        short   tshort2[2];     /* null=2001 */
+        short   C_tshort3;
+        short   tshort3[3];
+        short   tshort4;        /* null=NONE */
+        long    tlong1; /* null=0 */
+        int     tint2[2];       /* null=0 */
+        int     tint3;  /* null=-1 */
+        int     tint4[2];       /* null=-1 */
+        char    tchar1; /* null="\n" */
+        short   C_tchar2;
+        char    tchar2[5];      /* null="A" */
+        short   C_tchar3;
+        char    tchar3[2];
+        float   tfloat1[4];     /* null=1.1 */
+        float   tfloat2[2];
+        float   tfloat3;        /* null=9999.99 */
+        double  tdouble1[2];    /* null=55555.99 */
+        double  tdouble2;       /* null=-999.123 */
+        char    tstring0[3][18];        /* null="\n\t\f\\\'\"\vHELLOWORLD" */
+        char    tstring1[3][20];        /* null="HELLO WORLDB" */
+        short   C_tstring2;
+        unsigned short  L_tstring2[3];
+        char    tstring2[3][20];
+        short   C_tstring3;
+        unsigned short  L_tstring3[4];
+        char    tstring3[4][20];        /* null="TESTEST" */
+        char    tstring4[15];   /* null="HELLO TEST" */
+        char    tstring5[15];   /* null="MEGA TEST" */
+        char    tcarray1[30];   /* null="\0\n\t\f\\\'\"\vHELLOWORLD" */
+        unsigned short  L_tcarray2;
+        char    tcarray2[25];   /* null="\0\n\t\f\\\'\"\vHELLOWORL\n" */
+        short   C_tcarray3;
+        unsigned short  L_tcarray3[10];
+        char    tcarray3[10][30];       /* null="\0\\\nABC\t\f\'\vHELLO" */
+        char    tcarray4[5];    /* null="ABC" */
+        char    tcarray5[5];
+};
+---------------------------------------------------------------------
+
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*
+
+AUTHOR
+------
+Enduro/X is created by Madars Vitolins.
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
