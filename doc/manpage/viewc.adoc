@@ -33,7 +33,10 @@ corresponds the same 'viewfile(5)' format, except that additional meta data for
 each of the fields are encoded after the NULL column. Also some meta data are
 encoded in view file comments. The "object-file" can be used as original view file
 by viewc. In that case viewc will ignore the meta data and will produce new
-"object-file".
+"object-file". Compiled view file gets extension '.V', the generated header file
+in C language mode, gets extension '.h'. If source view file passed in command
+line for compilation contains the extension, for output files it is stripped off
+and only base name is used for target output files. 
 
 'viewc' must have access to 'cc' (C Compiler).
 
