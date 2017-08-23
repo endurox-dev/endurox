@@ -34,7 +34,8 @@ cmake_minimum_required(VERSION 2.8)
 find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
-set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf)
+set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf
+                viewfile)
 set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            tprecover cpmsrv tmqueue cconfsrv tpbrdcstsv uvlog xmemck
            viewc)
