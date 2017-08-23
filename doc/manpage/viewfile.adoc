@@ -200,8 +200,8 @@ VIEW FILE ELEMENTS
     To use default NULL specification, use "-" field. Which means 0 for short/long/int.
     0.0f for float/double, "" - for string and zero length carray. To encode
     special symbols, spaces in the NULL value, use single or double quoted string.
-    The view compiler recognizes following escape sequences '\0' - for 0x00 byte,
-    '\n', '\t' , '\f', '\\', "\'", '\"', '\v'. For string NULLs the EOS terminator
+    The view compiler recognizes following escape sequences '\\0' - for 0x00 byte,
+    '\\n', '\\t' , '\\f', '\\\\', "\\'", '\\"', '\\v'. For string NULLs the EOS terminator
     0x00 byte is not needed. NULL values are used during the *tpcalloc(3)* operation.
     The buffer is initialized with default values by help of the *Bvsinit(3)* function.
     To set individual field to the NULL value use *Bvselinit(3)*. To test the
