@@ -15,7 +15,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*viewc* binary consume view files defined in format specified of 'viewfile(5)'.
+*viewc* binary consume view files defined in format specified of *viewfile(5)*.
 The view file describes the C structure which can be mapped to *UBF* buffer. The
 view file contains also the length of the *STRING* and *CARRAY* fields. Program does
 following steps:
@@ -29,7 +29,7 @@ To perform offset and size calculation, viewc generates small C program which is
 compiled by 'buildclient(8)' Perl script. The generated temporary program is executed
 which updates the in-memory read view file. The view file is updated with platform
 specific data and the "object-file" is written to disk. The object file basically
-corresponds the same 'viewfile(5)' format, except that additional meta data for
+corresponds the same *viewfile(5)* format, except that additional meta data for
 each of the fields are encoded after the NULL column. Also some meta data are
 encoded in view file comments. The "object-file" can be used as original view file
 by viewc. In that case viewc will ignore the meta data and will produce new
@@ -38,13 +38,13 @@ in C language mode, gets extension '.h'. If source view file passed in command
 line for compilation contains the extension, for output files it is stripped off
 and only base name is used for target output files. 
 
-'viewc' must have access to 'cc' (C Compiler).
+*viewc* must have access to *cc* (C Compiler).
 
 ENVIRONMENT
 -----------
 *CC*::
 Optional environment variable indicating which C compiler to use. If parameter is
-not set, the 'cc' command is used.
+not set, the *cc* command is used.
 
 *CFLAGS*::
 Optional C flags to be passed to C compiler during the *buildclient* execution.
