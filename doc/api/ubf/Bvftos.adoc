@@ -1,0 +1,69 @@
+BVFTOS(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bvftos - Transfer data from UBF buffer to view (C structure)
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvftos(UBFH *'p_ub', char *'cstruct', char *'view');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+This function is used to transfer the data in UBF buffer to VIEW structure. The
+view file (see *viewfile(5)* page), shall contain the mappings in 'UBF_NAME' column.
+If mapping is present (not "-"), the function will perform data transfer from corresponding
+UBF buffer to mapped C view field. The transfer is performed only in case if in
+column 'FLAGS' of view file the flag *S* is present, and flag *N* is not present.
+If UBF buffer have more occurrences that defined in 'COUNT' column of view file,
+then extra UBF occurrences are ignored. If occurrences are less than 'COUNT' specified
+in view, then those missing array elements are filled with 'NULL_VAL' value. If
+flag *C* is present, then count field will be initialized to number of elements
+transferred to structure. If *L* flag was present, then for *string* and *carray*
+elements, the number of bytes transferred to each array element is set.
+
+RETURN VALUE
+------------
+On success, *Bvftos()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BBADFLD* Invalid field id passed.
+
+*BBADVIEW* View is not found, object file is defective or system error.
+
+*BVFSYNTAX* Defective object file.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/viewunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
