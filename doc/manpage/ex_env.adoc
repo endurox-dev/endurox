@@ -115,9 +115,9 @@ Mandatory Env. Variables
 	Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
 	The minimum is recommended something about 7. Every service name in shared memory is hashed 
 	and semaphore protecting the service is calculated by modulus of NRSEMS. This affects 
-        'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
-        by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
-        protection. Default value is 30.
+    'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
+    by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
+    protection. Default value is 30.
 *NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
     Max number of servers can advertise same service. This is used only in 'poll()' mode.
 	The number affects the size of shared memory used for services. Bigger number causes
@@ -131,31 +131,37 @@ Mandatory Env. Variables
 *FIELDTBLS*='COMMA_SEPERATED_LIST_OF_FIELD_FILES'::
 	This is comma separated list of field files found in FLDTBLDIR.
 *NDRX_CCONFIG*='NDRX_COMMON_CONFIG_FILE'::
-        If this is set then, all above configuration is read from specified ini
-        file in 'NDRX_COMMON_CONFIG_FILE' in [@global] section. The Enduro/X config
-        driving unit is able to merge configuration from multiple config files,
-        and you can set higher priority files by in 'NDRX_CCONFIG1', 'NDRX_CCONFIG2'
-        'NDRX_CCONFIG3', 'NDRX_CCONFIG4', 'NDRX_CCONFIG5'. Basically 'NDRX_CCONFIG'
-        is lowest priority and 'NDRX_CCONFIG5' is highest priority. The specified
-        configuration file can be directory, in that case Enduro/X will search for
-        files with mask *.ini, *.cfg, *.conf, *.config files. All will be loaded
-        in alphabetical order.
+    If this is set then, all above configuration is read from specified ini
+    file in 'NDRX_COMMON_CONFIG_FILE' in [@global] section. The Enduro/X config
+    driving unit is able to merge configuration from multiple config files,
+    and you can set higher priority files by in 'NDRX_CCONFIG1', 'NDRX_CCONFIG2'
+    'NDRX_CCONFIG3', 'NDRX_CCONFIG4', 'NDRX_CCONFIG5'. Basically 'NDRX_CCONFIG'
+    is lowest priority and 'NDRX_CCONFIG5' is highest priority. The specified
+    configuration file can be directory, in that case Enduro/X will search for
+    files with mask *.ini, *.cfg, *.conf, *.config files. All will be loaded
+    in alphabetical order.
 *NDRX_CCTAG*='NDRX_COMMON_CONFIG_TAG'::
-        This is basically subsection used for Enduro/X configuration sections
-        [@global], [@debug], [@queue]. If the variable is set, then Enduro/X will
-        lookup at process startup for sections like [@global/YOUR_TAG], etc. CC tag
-        can contain multiple sections, for example 'server1/RM2'. Enduro/X will lookup
-        the variables in each section [@global/server1] and [@global/RM2] for setting
-        up the system.
+    This is basically subsection used for Enduro/X configuration sections
+    [@global], [@debug], [@queue]. If the variable is set, then Enduro/X will
+    lookup at process startup for sections like [@global/YOUR_TAG], etc. CC tag
+    can contain multiple sections, for example 'server1/RM2'. Enduro/X will lookup
+    the variables in each section [@global/server1] and [@global/RM2] for setting
+    up the system.
 *NDRX_XADMIN_CONFIG*='XADMIN_CONFIG_FILE'::
-        This variable is used by *xadmin* read the specific configuration file with
-        xadmin's settings. Variable is optional.
+    This variable is used by *xadmin* read the specific configuration file with
+    xadmin's settings. Variable is optional.
 *HOME*='UNIX_USER_HOME_DIR'::
-        This variable is used by *xadmin* to search for per user configuration file
-        when xadmin is started. In home directory search for configuration is done
-        by $HOME/.xadmin.config. This file is used in case if 'NDRX_XADMIN_CONFIG'
-        is missing. Variable is optional.
-
+    This variable is used by *xadmin* to search for per user configuration file
+    when xadmin is started. In home directory search for configuration is done
+    by $HOME/.xadmin.config. This file is used in case if 'NDRX_XADMIN_CONFIG'
+    is missing. Variable is optional.
+*VIEWDIR*='NDRX_VIEW_DIR'::
+    This is colon separated list of directories where to search VIEW compiled
+    object files. The access to these directories are done only once operations
+    with views are performed.
+*VIEWFILES*='NDRX_VIEW_FILES'::
+    Comma separated list of VIEW object files (typically with extension .V).
+    Object files are produced by view compiler *viewc(8)*.
 
 EXAMPLE
 -------
@@ -163,6 +169,8 @@ Sample configuration:
 ---------------------------------------------------------------------
 export FIELDTBLS=Exfields,fieldtab1.fd,fieldtab2.fd
 export FLDTBLDIR=/enduro/tst1/tuxfbuf
+export VIEWDIR=/enduro/tst1/views
+export VIEWFILES=customer.V,card.V
 export NDRX_DMNLEV=5
 export NDRX_DMNLOG=/enduro/tst1/tmp/NDRXD
 export NDRX_APPHOME=/enduro/tst1
@@ -226,6 +234,8 @@ The configuration file might look like:
 [@global]
 FIELDTBLS=Exfields,fieldtab1.fd,fieldtab2.fd
 FLDTBLDIR=/enduro/tst1/tuxfbuf
+VIEWDIR=/enduro/tst1/views
+VIEWFILES=customer.V,card.V
 NDRX_DMNLEV=5
 NDRX_DMNLOG=/enduro/tst1/tmp/NDRXD
 NDRX_APPHOME=/enduro/tst1
@@ -294,7 +304,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)* *viewc(8)*
 
 AUTHOR
 ------

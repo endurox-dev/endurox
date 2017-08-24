@@ -40,6 +40,7 @@
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include "test026.h"
+#include "ubfutil.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -49,6 +50,43 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * test case for #189 - fails to parse json
+ * @return EXSUCCEED/EXFAIL
+ */
+int test_tpjsontoubf(void)
+{
+    int ret = EXSUCCEED;
+    
+    /* Bug #189 */
+    char *data = "{\n"
+                  "        \"T_STRING_FLD\":\"L\"\n"
+                  "}";
+    
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+    
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to allocate p_ub: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_info, "Testing Bug #189 tpjsontoubf() - failes to parse JSON");
+    
+    if (EXSUCCEED!=tpjsontoubf(p_ub, data))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to parse [%s]: %s", 
+                data, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    ndrx_debug_dump_UBF(log_debug, "parsed ubf buffer", p_ub);
+    
+    
+out:
+    return ret;
+}
 /*
  * Do the test call to the server
  */
@@ -59,6 +97,11 @@ int main(int argc, char** argv) {
     int ret=EXSUCCEED;
     long l;
     char tmp[128];
+    
+    if (EXSUCCEED!=test_tpjsontoubf())
+    {
+        EXFAIL_OUT(ret);
+    }
     
     NDRX_LOG(log_info, "Testing UBF -> JSON auto conv...");
     for (i=0; i<10000; i++)
@@ -181,6 +224,8 @@ int main(int argc, char** argv) {
 
         tpfree((char *)json);
     }
+    
+    
     
 out:
 

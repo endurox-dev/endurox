@@ -35,6 +35,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include <ndrstandard.h>
 #include <ubfview.h>

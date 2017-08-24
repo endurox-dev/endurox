@@ -633,7 +633,7 @@ extern NDRX_API void tplogprintubf(int lev, char *title, UBFH *p_ub);
 extern NDRX_API void * ndrx_atmi_tls_get(long priv_flags);
 extern NDRX_API int ndrx_atmi_tls_set(void *data, int flags, long priv_flags);
 extern NDRX_API void ndrx_atmi_tls_free(void *data);
-extern NDRX_API void * ndrx_atmi_tls_new(int auto_destroy, int auto_set);
+extern NDRX_API void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set);
 
 /* Error code - function for unsol: */
 extern NDRX_API void ndrx_ndrx_tmunsolerr_handler(char *data, long len, long flags);

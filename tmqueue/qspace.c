@@ -29,6 +29,13 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
+
+#include <ndrx_config.h>
+
+#ifdef EX_OS_FREEBSD
+#define _WITH_GETLINE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,7 +43,6 @@
 #include <regex.h>
 #include <utlist.h>
 
-#include <ndrx_config.h>
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
