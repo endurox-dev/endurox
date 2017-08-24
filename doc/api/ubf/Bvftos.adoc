@@ -19,8 +19,11 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-This function is used to transfer the data in UBF buffer to VIEW structure. The
-view file (see *viewfile(5)* page), shall contain the mappings in 'UBF_NAME' column.
+This function is used to transfer the data from UBF buffer 'p_ub' to VIEW structure 'cstruct'. 
+The view name is passed by 'view' argument. The name present by 'view' must be
+present in view object files. Configured by *VIEWDIR* and *VIEWFILES* environment
+variables.
+The view file (see *viewfile(5)* page), shall contain the mappings in 'UBF_NAME' column.
 If mapping is present (not "-"), the function will perform data transfer from corresponding
 UBF buffer to mapped C view field. The transfer is performed only in case if in
 column 'FLAGS' of view file the flag *S* is present, and flag *N* is not present.
@@ -61,7 +64,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)*
+*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)* *ex_env(5)*
 
 COPYING
 -------
