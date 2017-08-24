@@ -366,6 +366,7 @@ out:
 expublic void atmisrv_un_initialize(int fork_uninit)
 {
     int i;
+    atmi_tls_t *tls;
     /* We should close the queues and detach shared memory!
      * Also we will not remove service queues, because we do not
      * what other instances do. This is up to ndrxd!
@@ -416,6 +417,14 @@ expublic void atmisrv_un_initialize(int fork_uninit)
     
     /* close XA if was open.. */
     atmi_xa_uninit();
+    
+    /* Mark our environment as un-initialised 
+     * In external main() function cases, they might want to reuse the ATMI
+     * context, and it is not server any more.
+     */
+    
+    tls = ndrx_atmi_tls_get(0);
+    ndrx_atmi_tls_new(tls, tls->is_auto, EXTRUE);
 }
 
 /* ===========================================================================*/

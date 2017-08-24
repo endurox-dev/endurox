@@ -58,7 +58,7 @@ export VIEWFILES=t40.V,t40_2.V
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
-export NDRX_TOUT=3
+export NDRX_TOUT=10
 
 #
 # Domain 1 - here client will live
