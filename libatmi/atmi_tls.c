@@ -118,7 +118,7 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
             }
         }
         
-        /* Disable curren thread TLS... */
+        /* Disable current thread TLS... */
         G_atmi_tls = NULL;
 
         /* unlock object */
@@ -228,11 +228,10 @@ expublic void ndrx_atmi_tls_free(void *data)
  * @param auto_destroy if set to 1 then when tried exits, thread data will be made free
  * @return 
  */
-expublic void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
+expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
 {
     int ret = EXSUCCEED;
     atmi_tls_t *tls  = NULL;
-    char fn[] = "atmi_context_new";
     
     /* init they key storage */
     if (M_first)
@@ -247,10 +246,18 @@ expublic void * ndrx_atmi_tls_new(int auto_destroy, int auto_set)
         MUTEX_UNLOCK_V(M_thdata_init);
     }
     
-    if (NULL==(tls = (atmi_tls_t *)NDRX_MALLOC(sizeof(atmi_tls_t))))
+    if (NULL!=tls_in)
     {
-        userlog ("%s: failed to malloc", __func__);
-        EXFAIL_OUT(ret);
+        tls = (atmi_tls_t *)tls_in;
+        NDRX_LOG(log_debug, "%s: Reusing TLS storage", __func__);
+    }
+    else
+    {
+        if (NULL==(tls = (atmi_tls_t *)NDRX_MALLOC(sizeof(atmi_tls_t))))
+        {
+            userlog ("%s: failed to malloc", __func__);
+            EXFAIL_OUT(ret);
+        }
     }
     
     /* do the common init... */
