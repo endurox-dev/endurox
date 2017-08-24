@@ -17,9 +17,9 @@ Formal specification:
 # First view in the file 
 VIEW VIEWNAME
 
-VIEW_TYPE   C_NAME  FB_NAME COUNT   FLAGS   SIZE    NULL_VAL
+FLD_TYPE     C_NAME     UBF_NAME   COUNT     FLAGS       SIZE        NULL_VAL
 ...
-VIEW_TYPE_N   C_NAME_N  FB_NAME_N COUNT_N   FLAGS_N   SIZE_N    NULL_VAL_N
+FLD_TYPE_N   C_NAME_N   UBF_NAME_N COUNT_N   FLAGS_N     SIZE_N      NULL_VAL_N
 
 END
 
@@ -33,233 +33,7 @@ VIEW VIEWNAME_N
 END
 ---------------------------------------------------------------------
 
-DESCRIPTION
------------
-View files (usually with extension '.v') describe the data block 
-
-
-DEBUG CONFIGURATION FILE SYNTAX
--------------------------------
-
-*SANITY_SECONDS*::
-	Number of seconds after which perform system sanity checks. This number
-	should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
-	is time by which 'ndrxd' sleeps periodically.
-*CHECKPM_STY*::
-        This is number of sanity cycles into which check dead processes from the
-        process model. This makes the actual checking of th PID existence system.
-        Thus if ndrxd is started in learning mode and will not receive signals
-        of the dead servers, then by setting it will discover exited processes.
-*BRIDGE_REFRESH_TIME*::
-	Number of sanity units in which 'tpbridge' refresh should be send to other node.
-	If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
-	then period between bridge refreshes will be 10*2 = 20 seconds.
-    Default value is *0* - do not send full updates.
-*MIN_RESTART_TIME*::
-	Number of sanity units in which died server will be tried to start back. This is
-	minimal time, means that this time is applied in case if server was running and died.
-	If it is consecutive try, then RESTART_STEP is applied on this timer.	
-*RESTART_STEP*::
-	Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
-	Meaning that next try of restart will tried later that previous by this
-	number of sanity units.
-*MAX_RESTART_TIME*::
-	Max number of sanity units after which server will tried to restart.
-	After each consecutive ATMI server death, next reboot is tried
-	by 'MIN_RESTART_TIME'+'RESTART_STEP'*try_count. If this goes over the
-	'MAX_RESTART_TIME' then 'MAX_RESTART_TIME' is used instead.
-*NDRXD_RESTART_TO_CHECK*::
-	Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
-	mode. Within this time no sanity checks are perfomed, but instead "learning" mode
-	is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
-	If in this time ATMI server does not responds, then ATMI server is subject
-	of sanity checks.
-*NDRXD_GATHER_PQ_STATS*::
-        Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
-        stats for service queues. In future this might be used for automatic service starting
-        and stopping.
-*MIN_SERVERS_DEFAULT*::
-	Default minimum number of copies of the server which needs to be started automatically.
-	This can be overridden by 'MIN_SERVERS_SRV' per server.
-*MAX_SERVERS_DEFAULT*::
-	Max number of ATMI server copies per ATMI server entry. The difference between
-	MIN and MAX servers means the number of standby servers configured. They can be started
-	by hand with out system re-configuration. But they are not booted automatically at
-	system startup. You will have to start them with $ xadmin start -s <server_name>
-	or by $ xadmin start -i <server_id>. This can be overridden by
-	'MAX_SERVERS_SRV'.
-*AUTOKILL_DEFAULT*::
-	Should server be automatically killed (by sequence signal sequence 
-	-2, -15, -9) in case if server have been starting up too long, or
-	does not respond to pings too long, or it is performing shutdown
-	too long. This can be overridden by 'AUTOKILL_SRV' on per server
-	basis.
-*ENV_OVERRIDE_DEFAULT*::
-	Full path to file containing environment variable overrides.
-	see 'ex_envover(5)' for more details. This can be overridden
-	by per server basis by ENV_OVERRIDE_SRV. 
-	Both are optional settings.
-*MAX_STARTUP_TIME_DEFAULT*::
-	Max time (in sanity units) in which server should start up, i.e. send init info to
-	'ndrxd'. If during this time server have not initialized, it is being restarted. This
-	can be overridden by 'MAX_STARTUP_TIME_SRV'.
-*PING_EVERY_TIME_DEFAULT*::
-	Number of sanity units in which perform peridical server pings. This can be
-	overridden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
-*MAX_PING_TIME_DEFAULT*::
-	Number of sanity units, time in which server *must* respond to ping requests.
-	If there is no response from server within this time, then restart sequence is
-	initiated. This can be overridden by 'MAX_PING_TIME_SRV'.
-*MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
-	Maximum time in which shutdown of server must complete in sanity units.
-	If in given time server is not shutdown, then forced shutdown sequence
-	is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
-	on per server basis.
-*EXPORT_SERVICES_DEFAULT*::
-    Comma separated list of services to be applied to all binaries which means the list of
-    services to be exported by *tpbridge* server to other cluster node. This can be overridden by 
-    'ATMI_SERVER_EXPORT_SERVICES'.
-*BLACKLIST_SERVICES_DEFAULT*::
-    Comma separated list of services to be applied to all server binaries which means the list of
-    services that must not be exported by *tpbridge* server to other cluster node.
-    'ATMI_SERVER_BLACKLIST_SERVICES' is first priority over the 'EXPORT_SERVICES_DEFAULT' if
-    service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
-    'ATMI_SERVER_BLACKLIST_SERVICES'. 
-*NDRXD_SRV_START_WAIT_DEFAULT*::
-        Number of seconds to wait for servers to boot. If not started in given time,
-        then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
-        Default value for this is 30 seconds.
-*NDRXD_SRV_STOP_WAIT_DEFAULT*::
-        Number of seconds to wait for server to shutdown. If not started in given time,
-        then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
-        Default value for this is 30 seconds.
-*KILL_TIME_DEFAULT*::
-	Time in sanity units after which to progress from first signal -2 to next signal
-	-15. And after -15 this time means when next -9 signal will be sent. This is used
-	if forced restart of forced shutdown was initiated by 'ndrxd'. This
-	can be overridden by 'KILL_TIME_SRV'.
-*COMMON_CONFIG_TAG_DEFAULT*::
-	Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
-        process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
-*PROTECTED_SERVER_DEFAULT*::
-	Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-	'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-	stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-	won't work on these because '-c' is not supposed to be used by restart.
-	The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-	something else which is involved into 'ndrxd' daemon management it self.
-	This can be overridden by 'PROTECTED_SERVER'.
-*RELOAD_ON_CHANGE_DEFAULT*::
-	If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
-	and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
-	the XATMI servers one by one. The scanning will occur at every sanity
-	cycle. This is recommended to be used *only* for development purposes. And
-	must not be used on production servers! 
-	This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
-	
-*SECONDS_TO_SLEEP_AFTER_SRV_START*::
-	Number of seconds to wait for next item to start after the server is launched.
-	This is useful in cases when for example we start bridge server, let it for some
-	seconds to connect to other node, then continue with other service startup.
-*SERVER_BINARY_NAME*::
-	ATMI server executable's name. The executable must be in $PATH.
-	This name cannot contain special symbols like path seperator '/'
-	and it cannot contains commas ','! Commas are used as internal
-	queue seperator combined with binary names.
-*RESPAWN_SRV*::
-    Do the automatica process respawning if process is died for some reason. The default
-    value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
-    then sanity checks will not automatically re-boot the process.
-*SERVER_ID*::
-	Server ID. It is internal ID for server instance. For each separate ATMI server
-	the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
-	than 1. In this case up till MAX servers, internally 'SERVER_ID' is incremented.
-	Thus for example if SERVER_ID is 200, and MAX_SERVERS_SRV is 5, then
-	following server IDs will be reserved: 200, 201, 202, 203, 204. The maximum server
-	id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
-*ATMI_SERVER_SYSTEM_OPTIONS*::
-	Command line system options passed to ATMI server. Following parameters are
-	used by Enduro/X ATMI servers: '-N', boolean type. If present, then no services
-	will be advertised by server. In this case will be advertised only services specified
-	by '-s' flag. For example if server advertises SERVICE1, SERVICE2, SERVICE3, but '-N'
-	was specified, and '-sSERVICE3' is specified, then only service SERVICE3 will be 
-	advertised. The '-s' argument also can contain aliases for services, for example
-	'-sOTHERSVC:SERVICE2', then new service OTHERSVC will be advertised which
-	basically is the same SERVICE2 (same function used). '-s' and '-N' can be mixed.
-	'-s' can appear multiple times in system options. With one '-s' multiple services
-        can be aliased to single existing service.
-        The format is: '-s<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The ',' can be
-        used as separator too, but for certain platforms it does not work, thus '/' is
-        recommended.
-	Server binaries output is controlled via '-e LOG_FILE', which means
-	that stdout & stderr of server is dumped to LOG_FILE.
-	There are few internal params: param '-k' is just a random key
-	for shell scripts. Another internal param is Server ID which is automatically passed
-	to binary via '-i SERVER_ID'.
-        Enduro/X supports automatic buffer conversion for ATMI servers. 
-        Currently supported modes are 'JSON2UBF', 'UBF2JSON', these modes are activated 
-        by -x paramter in system options. These modes are passed for server functions 
-        being advertised. For example if we have service *functions* (not services) 
-        UBF1FUNC, UBF2FUNC and JSONFUNC and we want to ensure that these receive
-        converted messages even if caller to UBF service sends JSON and vice versa, then 
-        following options might be set to command line:
-        '-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON'.
-*ATMI_SERVER_APPLICATION_OPTIONS*::
-	Application specific command line options. This follows content after sys options as:
-	'system options -- app options'.
-*ATMI_SERVER_EXPORT_SERVICES*::
-	Enduro/X server specific list of services to be exported. This list is only for 
-	*tpbridge* servers.
-*ATMI_SERVER_BLACKLIST_SERVICES*::
-	Enduro/X server specific list of services that must not be exported. This list is only for 
-	*tpbridge* servers. Blacklist have higher priority over the Export list.
-*ATMI_SERVER_FULL_PATH*::
-    This is full path of the XATMI server binary. At the porcess startup this overrides
-    the server binary name at *SERVER_BINARY_NAME*. *ATMI_SERVER_FULL_PATH* is used only
-    for process startup. This is intended for testing, if server wrapper scripts
-    needs to be started. But as the *ndrxd* will do the sanity checks against the process
-    names, for time of the testing this needs to be disabled. Thus to do the testings with
-    full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
-    of process model checks, the ndrxd will find out that wrapped binary name does not
-    contain the *SERVER_BINARY_NAME*, thus will reboot the process.
-*CLT_COMMAND_LINE*::
-	Executable name and arguments for client program. Command line basically is a format
-	string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
-	for subsection substitution. Other env variables available here too.
-*CLT_LOG*::
-	Logfile to which stdout and stderr is logged. Can be overridden by 'CLT_LOG_EXEC'
-	for each individual process. Optional attribute.
-*CLT_STDOUT*::
-	File where to log stdout. Can be overridden by 'CLT_STDOUT_EXEC'
-	for each individual process. Optional attribute.
-*CLT_STDERR*::
-	File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
-	for each individual process. Optional attribute.
-*CLT_ENV*::
-	Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLT_ENV_EXEC'
-	for each individual process. Optional attribute.
-*CLT_CCTAG*::
-	ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
-	for each individual process. Optional attribute.
-*CLT_WD*::
-	Working directory for the process. Can be overridden by 'CLT_WD_EXEC'.
-*CLT_AUTOSTART*::
-	Should process be started automatically? 'Y' or 'y' means boot at start.
-	Can be overridden by 'CLT_AUTOSTART_EXEC' for each individual process. 
-	Optional attribute. Default 'n'.
-*CLT_TAG_EXEC*::
-	Tagname to be set for process.
-*CLT_SUBSECT_EXEC*::
-	Subsection to be set for process. '-' used as default.
-*CLT_KLEVEL*::
-        Kill level of the client. *0* - do not kill child processes recursively 
-        of the client, *1* - do kill child processes only when performing 
-        SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
-	The default is *0*.
-	
-EXAMPLE
--------
-Sample view file (say test.v):
+Example view: (test.v):
 
 ---------------------------------------------------------------------
 VIEW MYVIEW1
@@ -303,15 +77,7 @@ END
 
 ---------------------------------------------------------------------
 
-Compile the view:
-
----------------------------------------------------------------------
-$ viewc test.v
-$ ls -l 
-TODO:
----------------------------------------------------------------------
-
-Compiled header output (C language mode)
+Compiled header output (C language mode):
 
 ---------------------------------------------------------------------
 struct MYVIEW1 {
@@ -357,17 +123,155 @@ struct MYVIEW1 {
 ---------------------------------------------------------------------
 
 
+DESCRIPTION
+-----------
+View files (usually with extension '.v') describe the data block or structure
+which later is generated by 'viewc(8)' binary. The view compiler generate C header
+file for view file. Also the compiler generate the 'object-file' with extension
+'.V'. The object-file basically is the same view file except it contains platform
+specific meta data. For each platfrom (OS/CPU changes), view file shall be re-
+compiled. How ever during the middleware operations, the message view message
+produced on one platform is transferable on the other platform. This basically
+is the core view feature, so that programmer may operate with C structures, but
+the middleware ensures that structure is successfully delivered to the target
+system in cross platform way.
+
+View files may describe single element or array of the element (e.g. 'tshort1'). 
+The arrays are supported for STRING and CARRAY fields too. In those cases those
+are two dimensional arrays.
+
+For STRING and CARRAY types, length can be specified. The length is given in total
+number of bytes. So if you want to store "ABC", you will need to specify 'count'
+4, one extra byte for EOS (zero terminator).
+
+The next section describes each of the view file elements.
+
+
+FLD_TYPE   C_NAME  FB_NAME COUNT   FLAGS   SIZE    NULL_VAL
+
+VIEW FILE ELEMENTS
+------------------
+
+*FLD_TYPE*::
+    Field type. This is how the field will be presented in the C structure. Following types
+    are supported: *short*, *long*, *char*, *float*, *double*, *string* and *carray*.
+    Carray is a blob, which might contain binary zero byte (0x00).
+    
+*C_NAME*::
+    Field name in c structure. The rule against the field name applies the standard
+    ones which applies to C variable names. *viewc* accepts max length of the 256
+    for the C identifier. But actual size is determined by compiler.
+    
+*UBF_NAME*::
+    Optional UBF buffer field name. This is used by *Bvstof(3)* - convert C struct
+    to UBF buffer. And by *Bvftos(3)* - convert UBF buffer to c structure. If the
+    setup of the UBF field is not needed, then field can be skipped with "-" (minus
+    sign in view file). In that case no mappings are processed. During the *Bvstof*
+    and *Bvftos* invocation. If field is set, then *FLAGS* field changes the logic
+    how the mapping is processed.
+    
+*COUNT*::
+	This array element count. As in view file each of the c fields can be array,
+    this defines the behavior. If field is set to *1*, then field is created as
+    a normal one. If count > 1, then array is defined. The count cannot be less
+    than 1, in such case view compiler will give an error. For *CARRAY* and *string*
+    fields, count greater that 1 will create basically two dimensional array,
+    where one dimension is count and another dimension is size.
+    
+*FLAGS*::
+    There are defined several flags for the view file. For values see the section
+    bellow. If not flags are set, then value "-" shall be used in view descriptor.
+    Some options of the flags can be changed in the runtime with *Bvopt(3)*
+    function.
+
+*SIZE*::
+    Number of bytes for *string* or *carray* definition. For other field types
+    it is not valid to be set and will cause *viewc* complication error. For
+    *string* and *carray* it is mandatory to be set size set. For other types
+    use value "-".
+    
+*NULL_VAL*::
+    This is NULL value for the field. The NULL value indicates the value when
+    it can be considered that field is empty. The NULL value is used for following
+    cases: 1) When transferring data from C to UBF buffer by *Bvstof(3)*. Each
+    field is tested against NULL value. If field is NULL and the updated mode
+    *BUPDATE*, then field is not copied to target buffer. In case of multiple
+    occurrences, the occurrence will be lost if next C array element is not NULL.
+    To use default NULL specification, use "-" field. Which means 0 for short/long/int.
+    0.0f for float/double, "" - for string and zero length carray. To encode
+    special symbols, spaces in the NULL value, use single or double quoted string.
+    The view compiler recognizes following escape sequences '\0' - for 0x00 byte,
+    '\n', '\t' , '\f', '\\', "\'", '\"', '\v'. For string NULLs the EOS terminator
+    0x00 byte is not needed. NULL values are used during the *tpcalloc(3)* operation.
+    The buffer is initialized with default values by help of the *Bvsinit(3)* function.
+    To set individual field to the NULL value use *Bvselinit(3)*. To test the
+    field for NULL value use *Bvnull(3)*. If no NULL value is present for a field
+    use keyworkd NONE wiht out quotes. In that case no value will be considered NULL.
+    This will mean that any value will be transfered to UBF. And any value will be
+    copied over to desination service when doing *tpcall(3)*.
+
+VIEW FLAGS
+----------
+
+*F*::
+    Map the field from C to UBF (will be processed by *Bvstof(3)*).
+    
+*S*::
+    Map the field from C to UBF (will be processed by *Bvftos(3)*). 
+    
+*N*:: 
+    Do not perform UBF mappings at all (*Bvstof(3)*, *Bvftos(3)* will skip the
+    field in the same way as "-" value used for flags.). 
+    
+*C*::
+    Flag means generate count indicator for the field. The count field type is 
+    'short'. The count field is made as 'C_' prefix for the C field name.
+    If other field is named as combination of 'C_' and this field name, 
+    then C compiler will generate error as duplicate member of the structure.
+    The count field participates during the data transfer to UBF buffer via
+    *Bvstof(3)*, *Bvftos(3)* commands. For the transfer for to the UBF, the count
+    will indicate occurrences to transfer. For example 0, will make zero transfer
+    (buffer will not be setup). The count field participates also in structure 
+    transfer view *tpcall(3)* or other buffer related IPC operation. The actual
+    data transfered to the target system will depend on count field. The other
+    elements in target system will be initialized with NULL value, defined in view.
+    If count field is not set (no *C* flag present), all occurrences will be sent
+    to the target system. And all occurrences will be copied to the UBF buffer.
+    When data is transfered from UBF to C structure, then count field is set to
+    number occurrences are written in the structure. For sample reference,
+    see 'C_tshort2' field and its original 'tshort2' definition.
+
+*L*::
+    If this flag is set, then additional length indicator(s) are generated. This
+    is used to indicate the actual length for the *CARRAY* data, to be written
+    to UBF buffer. If data is converted fro UBF buffer to C structure, then field
+    will indicate the number of bytes copied to C structure. In case of strings,
+    the field is updated only in case when data is copied from UBF to C struct,
+    in that case it is set to number of bytes written to C struct. When converting
+    from C to UBF, for strings this length value is ignored and EOS termination
+    of the string are used for length indication. The length field is produced
+    as prefix 'L_' for the given field. In the same way as for *C*, there might
+    be conflict with duplicate field if another field is already as this field
+    prefixed with 'L_'. The field type is 'unsigned short'. IF *COUNT* is greater
+    than 1, then length indicators are array of 'unsigned short', because the
+    length indication must be processed for each of the elements in array.
+    If *L* flag is not set, then for *carray* full buffer size is copied to UBF
+    and back. The length plays similar role for C struct data transfer over the
+    *tpcall(3)* and other IPC operations. Only the number set it length are
+    transfered to target service for the *CARRAY* fields.
+    
+EXAMPLE
+-------
+See *atmitest/test040_typedview* for sample usage.
+
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*
-
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
+*viewc(8)*, *Bvftos(3)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, 
+*Bvopt(3)*, *Bvrefresh(3)*
 
 
 COPYING
