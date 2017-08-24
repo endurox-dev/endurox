@@ -205,7 +205,10 @@ VIEW FILE ELEMENTS
     0x00 byte is not needed. NULL values are used during the *tpcalloc(3)* operation.
     The buffer is initialized with default values by help of the *Bvsinit(3)* function.
     To set individual field to the NULL value use *Bvselinit(3)*. To test the
-    field for NULL value use *Bvnull(3)*.
+    field for NULL value use *Bvnull(3)*. If no NULL value is present for a field
+    use keyworkd NONE wiht out quotes. In that case no value will be considered NULL.
+    This will mean that any value will be transfered to UBF. And any value will be
+    copied over to desination service when doing *tpcall(3)*.
 
 VIEW FLAGS
 ----------
@@ -259,8 +262,7 @@ VIEW FLAGS
     
 EXAMPLE
 -------
-Sample view file (say test.v):
-
+See *atmitest/test040_typedview* for sample usage.
 
 BUGS
 ----
