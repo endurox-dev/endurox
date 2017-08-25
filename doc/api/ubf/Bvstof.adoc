@@ -48,8 +48,11 @@ target 'p_ub' buffer.
 
 If *C* (count indicator) was set for the field, then during data transfer this
 number of elements are copied to UBF. If *C* flag was not used, then all elements
-are staged to copy. If *L* flag was set, then for *carray* buffers this will
-indelicate number of bytes to copy to UBF field. 
+are staged to copy. If count field is greater than count defined in VIEW, the operation
+will be terminated with error *TPEINVAL*
+
+If *L* flag was set, then for *carray* buffers this will
+indicate number of bytes to copy to UBF field. 
 
 
 RETURN VALUE
@@ -63,6 +66,10 @@ Note that *Bstrerror()* returns generic error message plus custom message with
 debug info from last function call.
 
 *BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BEINVAL* Invalid value passed to function. Count indicator is greater than count
+specified in view or length indicator is greater than size specified for field in
+view.
 
 *BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
 
