@@ -125,6 +125,8 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
     {
         NDRX_LOG(log_warn, "tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
                 len, subtype, v->ssize);
+        userlog("tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
+                len, subtype, v->ssize);
     }
 
 out:

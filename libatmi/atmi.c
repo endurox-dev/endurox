@@ -1071,7 +1071,7 @@ out:
  */
 expublic TPCONTEXT_T tpnewctxt(int auto_destroy, int auto_set)
 {
-    TPCONTEXT_T ctx = ndrx_atmi_tls_new(auto_destroy, auto_set);
+    TPCONTEXT_T ctx = ndrx_atmi_tls_new(NULL, auto_destroy, auto_set);
     
     if (NULL!=ctx)
     {

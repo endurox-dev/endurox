@@ -134,7 +134,7 @@ COMMANDS
 	Alias for 'pe'.
 *set* ENV_NAME=ENV VALUE::
 	Set environment value. The value of env variable is parsed as command line arguments.
-        Prior sending to 'ndrxd' they are contact with spaces in between.
+        Prior sending to 'ndrxd' they are concatenated with spaces in between.
 *unset* ENV_NAME::
         Unset environment variable
 *pc*::

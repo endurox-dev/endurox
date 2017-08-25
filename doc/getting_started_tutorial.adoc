@@ -133,7 +133,7 @@ export NDRX_DEBUG_CONF=/opt/app1/conf/debug.conf
 # NDRX config too.
 export NDRX_CONFIG=/opt/app1/conf/ndrxconfig.xml
 export PATH=$PATH:/opt/app1/bin
-export export FLDTBLDIR=/opt/app1/ubftab
+export FLDTBLDIR=/opt/app1/ubftab
 # Max fields for hashing UBF
 export NDRX_UBFMAXFLDS=16000
 
