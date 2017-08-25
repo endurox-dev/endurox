@@ -5,7 +5,7 @@ BVSTOF(3)
 
 NAME
 ----
-Bvstof - Transfer data from view (C structure) to UBF buffer
+Bvstof - Transfer data from View (C structure) to UBF buffer
 
 
 SYNOPSIS
@@ -26,31 +26,31 @@ data merge mode into UBF buffer (because UBF may already contain some fields).
 
 For 'mode' have defined following constants:
 
-. BUPDATE - Use *Bupdate(3)* mechanism to merge the data into 'p_ub'.
+. BUPDATE - Uses *Bupdate(3)* mechanism to merge the data into 'p_ub'. In this mode
+if field in C structure corresponds to NULL value defined in view, then data is
+not transfered to UBF.
 
-. BOJOIN - Use Bojoin() mechanism to merge data into 'p_ub'. Bojoin() is not yet
+. BOJOIN - Uses Bojoin() mechanism to merge data into 'p_ub'. Bojoin() is not yet
 supported, thus it is reserved for future use. And this mode will not change
 the target UBF buffer.
 
-. BJOIN               3   /* join buffers, RFU */
+. BJOIN - Uses Bjoin() function to merge structure data to UBF buffer. Bjoin() is
+not yet implemented, thus this mode will not add/change any data in target UBF
+buffer.
 
-. BCONCAT             4   /* contact buffers */
+. BCONCAT - Uses *Bconcat(3)* function to merge data into target UBF. In this
+mode even if field corresponds to NULL value in view, the NULL value is copied
+to target UBF.
 
+The mode functions are supported thanks to approach that firstly structure data
+is loaded into temporary UBF buffer, and then this temp buffer is merged with
+target 'p_ub' buffer.
 
-This function is used to transfer the data from UBF buffer 'p_ub' to VIEW structure 'cstruct'. 
-The view name is passed by 'view' argument. The name present by 'view' must be
-present in view object files. Configured by *VIEWDIR* and *VIEWFILES* environment
-variables.
-The view file (see *viewfile(5)* page), shall contain the mappings in 'UBF_NAME' column.
-If mapping is present (not "-"), the function will perform data transfer from corresponding
-UBF buffer to mapped C view field. The transfer is performed only in case if in
-column 'FLAGS' of view file the flag *S* is present, and flag *N* is not present.
-If UBF buffer have more occurrences that defined in 'COUNT' column of view file,
-then extra UBF occurrences are ignored. If occurrences are less than 'COUNT' specified
-in view, then those missing array elements are filled with 'NULL_VAL' value. If
-flag *C* is present, then count field will be initialized to number of elements
-transferred to structure. If *L* flag was present, then for *string* and *carray*
-elements, the number of bytes transferred to each array element is set.
+If *C* (count indicator) was set for the field, then during data transfer this
+number of elements are copied to UBF. If *C* flag was not used, then all elements
+are staged to copy. If *L* flag was set, then for *carray* buffers this will
+indelicate number of bytes to copy to UBF field. 
+
 
 RETURN VALUE
 ------------
@@ -70,7 +70,11 @@ debug info from last function call.
 
 *BBADVIEW* View is not found, object file is defective or system error.
 
-*BVFSYNTAX* Defective object file.
+*BVFSYNTAX* Defective object file, cannot load.
+
+*BMALLOC* Malloc failed, out of memory.
+
+*BNOSPACE* Not enough space in target buffer (pointed by 'p_ub').
 
 EXAMPLE
 -------
@@ -78,11 +82,12 @@ See *atmitest/test040_typedview/viewunit1.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)* *ex_env(5)*
+*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)*, *ex_env(5)*,
+*Bupdate(3)*, *Bconcat(3)*
 
 COPYING
 -------

@@ -97,6 +97,8 @@ set(MAN3_NAMES
     Bunindex
     Bidxused
     Brstrindex
+    Bvstof
+    Bvftos
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
