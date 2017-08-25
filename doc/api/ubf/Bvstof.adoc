@@ -1,0 +1,102 @@
+BVSTOF(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bvstof - Transfer data from View (C structure) to UBF buffer
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvstof(UBFH *'p_ub', char *'cstruct', int 'mode', char *'view');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function is used to transfer data from view C structure ('cstruct') to UBF buffer
+('p_ub'). The view type is passed into 'view' variable which must correspond to
+the actual C structure behind 'cstruct' pointer. The 'mode' flag indicates the
+data merge mode into UBF buffer (because UBF may already contain some fields).
+
+For 'mode' have defined following constants:
+
+. BUPDATE - Uses *Bupdate(3)* mechanism to merge the data into 'p_ub'. In this mode
+if field in C structure corresponds to NULL value defined in view, then data is
+not transfered to UBF.
+
+. BOJOIN - Uses Bojoin() mechanism to merge data into 'p_ub'. Bojoin() is not yet
+supported, thus it is reserved for future use. And this mode will not change
+the target UBF buffer.
+
+. BJOIN - Uses Bjoin() function to merge structure data to UBF buffer. Bjoin() is
+not yet implemented, thus this mode will not add/change any data in target UBF
+buffer.
+
+. BCONCAT - Uses *Bconcat(3)* function to merge data into target UBF. In this
+mode even if field corresponds to NULL value in view, the NULL value is copied
+to target UBF.
+
+The mode functions are supported thanks to approach that firstly structure data
+is loaded into temporary UBF buffer, and then this temp buffer is merged with
+target 'p_ub' buffer.
+
+If *C* (count indicator) was set for the field, then during data transfer this
+number of elements are copied to UBF. If *C* flag was not used, then all elements
+are staged to copy. If count field is greater than count defined in VIEW, the operation
+will be terminated with error *TPEINVAL*
+
+If *L* flag was set, then for *carray* buffers this will
+indicate number of bytes to copy to UBF field. 
+
+
+RETURN VALUE
+------------
+On success, *Bvftos()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BEINVAL* Invalid value passed to function. Count indicator is greater than count
+specified in view or length indicator is greater than size specified for field in
+view.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BBADFLD* Invalid field id passed.
+
+*BBADVIEW* View is not found, object file is defective or system error.
+
+*BVFSYNTAX* Defective object file, cannot load.
+
+*BMALLOC* Malloc failed, out of memory.
+
+*BNOSPACE* Not enough space in target buffer (pointed by 'p_ub').
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/viewunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)*, *ex_env(5)*,
+*Bupdate(3)*, *Bconcat(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
