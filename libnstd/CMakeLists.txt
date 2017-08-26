@@ -84,7 +84,7 @@ add_library (nstd SHARED ndebug.c nstdutil.c ntimer.c nclopt.c benchmark.c
                             ini.c inicfg.c cconfig.c nerror.c nstd_tls.c ulog.c
                             sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
                             sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
-                            exregex.c)
+                            exregex.c platform.c)
 
 if(${CMAKE_OS_NAME} STREQUAL "AIX")
     # for tls support
