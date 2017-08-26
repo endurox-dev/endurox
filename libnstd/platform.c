@@ -90,4 +90,6 @@ expublic long ndrx_platf_stack_get_size(void)
         }
         MUTEX_UNLOCK_V(M_stack_size_lock);
     }
+   
+    return M_stack_size;
 }
