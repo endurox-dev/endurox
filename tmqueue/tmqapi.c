@@ -264,7 +264,7 @@ out:
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
-                strcpy(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
                 ret=EXFAIL;
             }
         }

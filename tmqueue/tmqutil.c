@@ -89,9 +89,9 @@ expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
 {
     size_t out_len;
     
-    NDRX_DUMP(log_debug, "Original CORID", corid_in, TMCORRIDLEN_STR);
+    NDRX_DUMP(log_debug, "Original CORID", corid_in, TMCORRIDLEN);
     
-    atmi_xa_base64_encode((unsigned char *)corid_in, TMCORRIDLEN_STR, &out_len, corid_str_out);
+    atmi_xa_base64_encode((unsigned char *)corid_in, TMCORRIDLEN, &out_len, corid_str_out);
 
     corid_str_out[out_len] = EXEOS;
     
