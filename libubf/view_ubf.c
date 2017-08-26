@@ -292,6 +292,17 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
                 C_count = &C_count_stor;
             }
 
+            if (*C_count > f->count)
+            {
+                UBF_LOG(log_error, "Invalid count for field %s.%s in "
+                        "view %hd, specified: %hd", v->vname, f->cname, 
+                        f->count, *C_count);
+                ndrx_Bset_error_fmt(BEINVAL, "Invalid count for field %s.%s in "
+                        "view %hd, specified: %hd", v->vname, f->cname, 
+                        f->count, *C_count);
+                EXFAIL_OUT(ret);
+            }
+
             for (occ=0; occ<*C_count; occ++)
             {
              
@@ -306,6 +317,17 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
                 {
                     L_length_stor = dim_size;
                     L_length = &L_length_stor;
+                }
+                
+                if (*L_length > dim_size)
+                {
+                    UBF_LOG(log_error, "Invalid length for field %s.%s in "
+                            "view dim size %hu, occ %d specified: %hu", v->vname, 
+                            f->cname,  occ, dim_size, *L_length);
+                    ndrx_Bset_error_fmt(BEINVAL, "Invalid length for field %s.%s in "
+                            "view dim size %hu, occ %d specified: %hu", v->vname, 
+                            f->cname, occ, dim_size, *L_length);
+                    EXFAIL_OUT(ret);
                 }
                 
                 len = *L_length;

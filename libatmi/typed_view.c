@@ -310,6 +310,17 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
             /* NDRX_LOG(log_debug, "count, from object: %hd", *C_count); */
         }
         
+        if (*C_count > f->count)
+        {
+            NDRX_LOG(log_error, "Invalid count for field %s.%s in "
+                    "view %hd, specified: %hd", v->vname, f->cname, 
+                    f->count, *C_count);
+            ndrx_TPset_error_fmt(BEINVAL, "Invalid count for field %s.%s in "
+                    "view %hd, specified: %hd", v->vname, f->cname, 
+                    f->count, *C_count);
+            EXFAIL_OUT(ret);
+        }
+        
         fldid = Bmkfldid(f->typecode, i);
         
         NDRX_LOG(log_debug, "num=%d, %s.%s = fldid %d C_count=%hd", i, v->vname, 
@@ -373,11 +384,24 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
                  */
                 if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
                 {
+                    dim_size = f->fldsize/f->count;
+                    
                     NDRX_LOG(log_dump, "Setting CARRAY with length indicator");
                     
                     L_length = (unsigned short *)(idata+f->length_fld_offset+
                             occ*sizeof(unsigned short));
                     L_len_long = (long)*L_length;
+                    
+                    if (*L_length > dim_size)
+                    {
+                        UBF_LOG(log_error, "Invalid length for field %s.%s in "
+                                "view dim size %hu, occ %d specified: %hu", v->vname, 
+                                f->cname,  occ, dim_size, *L_length);
+                        ndrx_TPset_error_fmt(BEINVAL, "Invalid length for field %s.%s in "
+                                "view dim size %hu, occ %d specified: %hu", v->vname, 
+                                f->cname, occ, dim_size, *L_length);
+                        EXFAIL_OUT(ret);
+                    }
                     
                     if (EXSUCCEED!=sized_Bchg(&p_ub, fldid, occ, fld_offs, L_len_long))
                     {

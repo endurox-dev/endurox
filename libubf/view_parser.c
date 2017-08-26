@@ -100,6 +100,13 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
     int i;
     int esc_open;
     int dim_size;
+    /* Additional checks for compiled object: */
+    int file_platform_ok = EXFALSE;
+    int file_arch_ok = EXFALSE;
+    int file_wsize_ok = EXFALSE;
+    int view_ssize_ok;
+    int view_cksum_ok;
+    
     API_ENTRY;
     
     UBF_LOG(log_debug, "%s - enter", __func__);
@@ -144,7 +151,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         p3 = strchr(tok2, '=');
                         cmplen = p3-tok2;
 
-                        if (0==strncmp("@__platform", tok2, cmplen))
+                        if (0==strncmp("#@__platform", tok2, cmplen))
                         {
                             if (0!=strcmp(NDRX_BUILD_OS_NAME, p3+1))
                             {
@@ -157,6 +164,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         "the view file with viewc, line: %ld", 
                                         NDRX_BUILD_OS_NAME, p3+1, line);
                                 EXFAIL_OUT(ret);
+                            }
+                            else
+                            {
+                                file_platform_ok = EXTRUE;
                             }
                         }
                         else if (0==strncmp("@__arch", tok2, cmplen))
@@ -172,6 +183,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         "the view file with viewc, line: %ld", 
                                         NDRX_CPUARCH, p3+1, line);
                                 EXFAIL_OUT(ret);
+                            }
+                            else
+                            {
+                                file_arch_ok = EXTRUE;
                             }
                         }
                         else if (0==strncmp("@__wsize", tok2, cmplen))
@@ -190,6 +205,10 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         "the view file with viewc, line: %ld", 
                                         NDRX_WORD_SIZE, ws, line);
                                 EXFAIL_OUT(ret);
+                            }
+                            else
+                            {
+                                file_wsize_ok = EXTRUE;
                             }
                         }
                         
@@ -210,7 +229,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         p3 = strchr(tok2, '=');
                         cmplen = p3-tok2;
 
-                        if (0==strncmp("@__ssize", tok2, cmplen))
+                        if (0==strncmp("#@__ssize", tok2, cmplen))
                         {
                             v->ssize = atol(p3+1);
                             
@@ -225,6 +244,9 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         v->ssize, line);
                                 EXFAIL_OUT(ret);   
                             }
+                            
+                            view_ssize_ok = EXTRUE;
+            
                         }
                         else if (0==strncmp("@__cksum", tok2, cmplen))
                         {
@@ -244,6 +266,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                                         v->vname, cksum_built, cksum, line);
                                 EXFAIL_OUT(ret);
                             }
+                            
+                            view_cksum_ok = EXTRUE;
                         }
                        
                         /* Ignore others...  */
@@ -278,7 +302,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         
         /* tokenize the line  */
         if (INFILE==state)
-        {
+        {   
             tok = strtok_r(p, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
             
             if (0!=strcmp(tok, NDRX_VIEW_TOKEN_START))
@@ -334,6 +358,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             UBF_LOG(log_debug, "Parsing view [%s]", v->vname);
             state = INVIEW;
+            view_ssize_ok = EXFALSE;
+            view_cksum_ok = EXFALSE;
             
         }
         else if (INVIEW==state)
@@ -346,6 +372,18 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             if (0==strcmp(NDRX_VIEW_TOKEN_END, tok))
             {
+                /* Bug #191 */
+                if (is_compiled && (!view_ssize_ok || !view_cksum_ok))
+                {
+                    UBF_LOG(log_error, "Compiled view data not found ssize=%d, cksum=%d, "
+                        "line: %ld",  view_ssize_ok, view_cksum_ok, line);
+
+                    ndrx_Bset_error_fmt(BBADVIEW, "Compiled view data not found "
+                            "ssize=%d, cksum=%d, line: %ld",  
+                            view_ssize_ok, view_cksum_ok, line);
+                    EXFAIL_OUT(ret);    
+                }
+                
                 UBF_LOG(log_debug, "View [%s] finishing off -> add to hash", 
                         v->vname);
                 EXHASH_ADD_STR(ndrx_G_view_hash, vname, v);
@@ -1120,6 +1158,20 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         ndrx_Bset_error_fmt(BVFSYNTAX, "Invalid state [%d] -> VIEW not terminated with "
                 "END, line: %ld", state, line);
         EXFAIL_OUT(ret);
+    }
+    
+    /* Bug #191 */
+    if (is_compiled && (!file_platform_ok || !file_arch_ok || !file_wsize_ok))
+    {
+        UBF_LOG(log_error, "Compiled view data not found platform=%d "
+                "arch=%d wsize=%d, line: %ld",  
+                file_platform_ok, file_arch_ok, file_wsize_ok, line);
+        
+        ndrx_Bset_error_fmt(BBADVIEW, "Compiled view data not found platform=%d "
+                "arch=%d wsize=%d, line: %ld",  
+                file_platform_ok, file_arch_ok, file_wsize_ok, line);
+        
+        EXFAIL_OUT(ret);    
     }
     
 out:
