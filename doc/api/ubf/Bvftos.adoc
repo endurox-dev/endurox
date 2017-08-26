@@ -64,7 +64,8 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)* *ex_env(5)*
+*viewc(8)* *Bvstof(3)* *Bvsinit(3)* *Bvselinit(3)* *Bvnull(3)* *Bvopt(3)* *ex_env(5)*
+*viewfile(5)*
 
 COPYING
 -------
