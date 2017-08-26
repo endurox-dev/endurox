@@ -214,7 +214,6 @@ out:
 expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
 {
     char *ret;
-    char fn[] = "STRING_tpalloc";
 
     if (0==len)
     {
@@ -223,7 +222,15 @@ expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
 
     /* Allocate STRING buffer */
     ret=(char *)NDRX_MALLOC(len);
-    ret[0] = EXEOS;
+    if (NULL!=ret)
+    {
+        ret[0] = EXEOS;
+    }
+    else
+    {
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate STRING buffer: %s",  
+                __func__, strerror(errno));
+    }
     
 out:
     return ret;
@@ -238,7 +245,6 @@ out:
 expublic char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len)
 {
     char *ret=NULL;
-    char fn[] = "STRING_tprealloc";
 
     if (0==len)
     {
@@ -248,6 +254,11 @@ expublic char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, lon
     /* Allocate STRING buffer */
     ret=(char *)NDRX_REALLOC(cur_ptr, len);
     
+    if (NULL==ret)
+    {
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate STRING buffer: %s",  
+                __func__, strerror(errno));
+    }
 
     return ret;
 }
