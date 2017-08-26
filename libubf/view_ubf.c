@@ -319,14 +319,14 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
                     L_length = &L_length_stor;
                 }
                 
-                if (*L_length > dim_size)
+                if (BFLD_CARRAY==f->typecode_full && *L_length > dim_size)
                 {
                     UBF_LOG(log_error, "Invalid length for field %s.%s in "
-                            "view dim size %hu, occ %d specified: %hu", v->vname, 
-                            f->cname,  occ, dim_size, *L_length);
+                            "view dim size %d, occ %d specified: %hu", v->vname, 
+                            f->cname,  dim_size, occ, *L_length);
                     ndrx_Bset_error_fmt(BEINVAL, "Invalid length for field %s.%s in "
-                            "view dim size %hu, occ %d specified: %hu", v->vname, 
-                            f->cname, occ, dim_size, *L_length);
+                            "view dim size %d, occ %d specified: %hu", v->vname, 
+                            f->cname, dim_size, occ, *L_length);
                     EXFAIL_OUT(ret);
                 }
                 
@@ -464,7 +464,7 @@ expublic int ndrx_Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view)
     
     if (EXSUCCEED!=ndrx_Bvstof_int(p_ub, v, cstruct, mode))
     {
-        UBF_LOG(log_error, "ndrx_Bvftos_int failed");
+        UBF_LOG(log_error, "ndrx_Bvstof_int failed");
         EXFAIL_OUT(ret);
     }
     

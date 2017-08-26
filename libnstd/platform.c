@@ -53,7 +53,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate M_stack_size = EXFAIL;    /* Current stack size */
+exprivate long M_stack_size = EXFAIL;    /* Current stack size */
 
 MUTEX_LOCKDECL(M_stack_size_lock);
 
@@ -90,4 +90,6 @@ expublic long ndrx_platf_stack_get_size(void)
         }
         MUTEX_UNLOCK_V(M_stack_size_lock);
     }
+   
+    return M_stack_size;
 }
