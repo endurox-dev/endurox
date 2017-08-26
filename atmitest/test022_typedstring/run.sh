@@ -54,10 +54,10 @@ xadmin killall tpevsrv 2>/dev/null
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
 # NOTE: WE HAVE MEM LEAK HERE:
 (../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
-sleep 5
+sleep 10
 # Start subscribers
 (./atmisv22 -t 4 -i 100 2>&1) > ./atmisv22.log &
-sleep 5
+sleep 10
 # Post the event
 (./atmiclt22 2>&1) > ./atmiclt22.log
 

@@ -195,7 +195,7 @@ exprivate void slipSigHandler (int sig)
     /* clean up resources after exit.. */
     pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
     /* set some small stacks size, 1M should be fine! */
-    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    pthread_attr_setstacksize(&pthread_custom_attr, ndrx_platf_stack_get_size());
     pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
 }
 
@@ -368,7 +368,7 @@ expublic void ndrx_epoll_sys_init(void)
     pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
-    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    pthread_attr_setstacksize(&pthread_custom_attr, ndrx_platf_stack_get_size());
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             signal_process, NULL);
     M_signal_first = EXFALSE;

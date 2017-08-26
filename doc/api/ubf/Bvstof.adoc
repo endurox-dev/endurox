@@ -93,8 +93,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*viewc(8)*, *Bvstof(3)*, *Bvsinit(3)*, *Bvselinit(3)*, *Bvnull(3)*, *Bvopt(3)*, *ex_env(5)*,
-*Bupdate(3)*, *Bconcat(3)*
+*viewc(8)* *Bvstof(3)* *Bvsinit(3)* *Bvselinit(3)* *Bvnull(3)* *Bvopt(3)* *ex_env(5)*
+*Bupdate(3)* *Bconcat(3)*
 
 COPYING
 -------

@@ -1,7 +1,7 @@
 /* 
-** Q util
+** System platform related utilities
 **
-** @file xasrvutil.c
+** @file platform.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,73 +29,67 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#include <stdio.h>
+
+/*---------------------------Includes-----------------------------------*/
+#include <ndrstandard.h>
+#include <time.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <ctype.h>
+#include <pthread.h>
+#include <nstd_tls.h>
+
+#include "nstdutil.h"
+#include "ndebug.h"
+#include "userlog.h"
 #include <errno.h>
-#include <regex.h>
-#include <utlist.h>
-
-#include <ndebug.h>
-#include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
-#include <ubf.h>
-#include <Exfields.h>
-
-#include <exnet.h>
-#include <ndrxdcmn.h>
-
-#include "tmqd.h"
-#include "../libatmisrv/srv_int.h"
-#include <xa_cmn.h>
-#include <atmi_int.h>
-#include <exuuid.h>
+#include <sys/resource.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate long M_stack_size = EXFAIL;    /* Current stack size */
+
+MUTEX_LOCKDECL(M_stack_size_lock);
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Extract info from msgid.
- * 
- * @param msgid_in
- * @param p_nodeid
- * @param p_srvid
+ * Return stack size configured for system
+ * @return EXFAIL or stack size
  */
-expublic void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
+expublic long ndrx_platf_stack_get_size(void)
 {
-    *p_nodeid = 0;
-    *p_srvid = 0;
+    struct rlimit limit;
     
-    memcpy((char *)p_nodeid, msgid+sizeof(exuuid_t), sizeof(short));
-    memcpy((char *)p_srvid, msgid+sizeof(exuuid_t)+sizeof(short), sizeof(short));
-    
-    NDRX_LOG(log_info, "Extracted nodeid=%hd srvid=%hd", 
-            *p_nodeid, *p_srvid);
-}
-
-/**
- * Generate serialized version of the string
- * @param msgid_in, length defined by constant TMMSGIDLEN
- * @param msgidstr_out
- * @return msgidstr_out
- */
-expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
-{
-    size_t out_len;
-    
-    NDRX_DUMP(log_debug, "Original CORID", corid_in, TMCORRIDLEN);
-    
-    atmi_xa_base64_encode((unsigned char *)corid_in, TMCORRIDLEN, &out_len, corid_str_out);
-
-    corid_str_out[out_len] = EXEOS;
-    
-    NDRX_LOG(log_debug, "CORID after serialize: [%s]", corid_str_out);
-    
-    return corid_str_out;
+    if (EXFAIL==M_stack_size)
+    {
+        /* lock */
+        MUTEX_LOCK_V(M_stack_size_lock);
+        
+        if (EXFAIL==M_stack_size)
+        {
+            if (EXSUCCEED!=getrlimit (RLIMIT_STACK, &limit))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to get stack size: %s", strerror(err));
+                userlog("Failed to get stack size: %s", strerror(err));
+            }
+            else
+            {
+                M_stack_size=limit.rlim_cur;
+                
+                NDRX_LOG(log_info, "Current stack size: %ld, max: %ld", 
+                        M_stack_size,  (long)limit.rlim_max);
+            }
+        }
+        MUTEX_UNLOCK_V(M_stack_size_lock);
+    }
+   
+    return M_stack_size;
 }

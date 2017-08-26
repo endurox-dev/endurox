@@ -210,7 +210,10 @@ expublic void ndrxd_sigchld_init(void)
     pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
-    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    /* pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024); */
+    
+    pthread_attr_setstacksize(&pthread_custom_attr, ndrx_platf_stack_get_size());
+    
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             check_child_exit, NULL);
 

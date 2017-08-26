@@ -552,6 +552,8 @@ exprivate int deqempty_q_test(void)
     } 
     
     buf = (UBFH *)tpalloc("UBF", "", 100);
+    memset(&qc, 0, sizeof(qc));
+    
     if (EXSUCCEED==tpdequeue("MYSPACE", "TESTA", &qc, (char **)&buf, &len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: TESTA not empty!");
@@ -565,7 +567,6 @@ exprivate int deqempty_q_test(void)
         NDRX_LOG(log_error, "TESTERROR: TESTB not empty!");
         EXFAIL_OUT(ret);
     }
-
 
     memset(&qc, 0, sizeof(qc));
 

@@ -313,7 +313,7 @@ expublic void background_process_init(void)
     pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
     */
     /* set some small stacks size, 1M should be fine! */
-    pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+    pthread_attr_setstacksize(&pthread_custom_attr, ndrx_platf_stack_get_size());
     pthread_create(&G_bacground_thread, &pthread_custom_attr, 
             background_process, NULL);
       

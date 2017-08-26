@@ -120,6 +120,9 @@ extern NDRX_API int ndrx_nstd_tls_set(void *data);
 extern NDRX_API void ndrx_nstd_tls_free(void *data);
 extern NDRX_API void * ndrx_nstd_tls_new(int auto_destroy, int auto_set);
 
+/* Platform: */
+extern NDRX_API long ndrx_platf_stack_get_size(void);
+
 #ifdef	__cplusplus
 }
 #endif

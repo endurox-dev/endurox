@@ -16,12 +16,15 @@
 #include <pthread.h>
 #include <errno.h>
 #include <time.h> 
+#include <ndebug.h>
 
 #ifdef EX_OS_LINUX
 #include <sys/prctl.h>
 #endif
 
 #include "thpool.h"
+
+#include <nstdutil.h>
 
 #ifdef THPOOL_DEBUG
 #define THPOOL_DEBUG 1
@@ -130,7 +133,7 @@ struct thpool_* thpool_init(int num_threads){
 
 	/* Make new thread pool */
 	thpool_* thpool_p;
-	thpool_p = (struct thpool_*)malloc(sizeof(struct thpool_));
+	thpool_p = (struct thpool_*)NDRX_MALLOC(sizeof(struct thpool_));
 	if (thpool_p == NULL){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for thread pool\n");
 		return NULL;
@@ -144,17 +147,17 @@ struct thpool_* thpool_init(int num_threads){
 	/* Initialise the job queue */
 	if (jobqueue_init(thpool_p) == -1){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for job queue\n");
-		free(thpool_p);
+		NDRX_FREE(thpool_p);
 		return NULL;
 	}
 
 	/* Make threads in pool */
-	thpool_p->threads = (struct poolthread**)malloc(num_threads * sizeof(struct poolthread));
+	thpool_p->threads = (struct poolthread**)NDRX_MALLOC(num_threads * sizeof(struct poolthread));
 	if (thpool_p->threads == NULL){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for threads\n");
 		jobqueue_destroy(thpool_p);
-		free(thpool_p->jobqueue_p);
-		free(thpool_p);
+		NDRX_FREE(thpool_p->jobqueue_p);
+		NDRX_FREE(thpool_p);
 		return NULL;
 	}
 
@@ -179,7 +182,7 @@ struct thpool_* thpool_init(int num_threads){
 int thpool_add_work(thpool_* thpool_p, void *(*function_p)(void*, int *), void* arg_p){
 	job* newjob;
 
-	newjob=(struct job*)malloc(sizeof(struct job));
+	newjob=(struct job*)NDRX_MALLOC(sizeof(struct job));
 	if (newjob==NULL){
 		fprintf(stderr, "thpool_add_work(): Could not allocate memory for new job\n");
 		return -1;
@@ -270,15 +273,15 @@ void thpool_destroy(thpool_* thpool_p){
 
 	/* Job queue cleanup */
 	jobqueue_destroy(thpool_p);
-	free(thpool_p->jobqueue_p);
+	NDRX_FREE(thpool_p->jobqueue_p);
 	
 	/* Deallocs */
 	int n;
 	for (n=0; n < threads_total; n++){
 		poolthread_destroy(thpool_p->threads[n]);
 	}
-	free(thpool_p->threads);
-	free(thpool_p);
+	NDRX_FREE(thpool_p->threads);
+	NDRX_FREE(thpool_p);
 }
 
 #if 0
@@ -318,7 +321,7 @@ static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p
 	pthread_attr_t pthread_custom_attr;
 	pthread_attr_init(&pthread_custom_attr);
 
-	*poolthread_p = (struct poolthread*)malloc(sizeof(struct poolthread));
+	*poolthread_p = (struct poolthread*)NDRX_MALLOC(sizeof(struct poolthread));
 	if (poolthread_p == NULL){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for thread\n");
 		exit(1);
@@ -328,7 +331,8 @@ static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p
 	(*poolthread_p)->id       = id;
 
 	/* have some stack space... */
-	pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024);
+        pthread_attr_setstacksize(&pthread_custom_attr, 
+            ndrx_platf_stack_get_size());
 	pthread_create(&(*poolthread_p)->pthread, &pthread_custom_attr,
 			(void *)poolthread_do, (*poolthread_p));
 	pthread_detach((*poolthread_p)->pthread);
@@ -404,7 +408,7 @@ static void* poolthread_do(struct poolthread* poolthread_p){
 				func_buff = job_p->function;
 				arg_buff  = job_p->arg;
 				func_buff(arg_buff, &finish_off);
-				free(job_p);
+				NDRX_FREE(job_p);
 			}
 			
 			pthread_mutex_lock(&thpool_p->thcount_lock);
@@ -423,7 +427,7 @@ static void* poolthread_do(struct poolthread* poolthread_p){
 
 /* Frees a thread  */
 static void poolthread_destroy (poolthread* poolthread_p){
-	free(poolthread_p);
+	NDRX_FREE(poolthread_p);
 }
 
 
@@ -436,7 +440,7 @@ static void poolthread_destroy (poolthread* poolthread_p){
 /* Initialize queue */
 static int jobqueue_init(thpool_* thpool_p){
 	
-	thpool_p->jobqueue_p = (struct jobqueue*)malloc(sizeof(struct jobqueue));
+	thpool_p->jobqueue_p = (struct jobqueue*)NDRX_MALLOC(sizeof(struct jobqueue));
 	if (thpool_p->jobqueue_p == NULL){
 		return -1;
 	}
@@ -444,7 +448,7 @@ static int jobqueue_init(thpool_* thpool_p){
 	thpool_p->jobqueue_p->front = NULL;
 	thpool_p->jobqueue_p->rear  = NULL;
 
-	thpool_p->jobqueue_p->has_jobs = (struct bsem*)malloc(sizeof(struct bsem));
+	thpool_p->jobqueue_p->has_jobs = (struct bsem*)NDRX_MALLOC(sizeof(struct bsem));
 	if (thpool_p->jobqueue_p->has_jobs == NULL){
 		return -1;
 	}
@@ -460,7 +464,7 @@ static int jobqueue_init(thpool_* thpool_p){
 static void jobqueue_clear(thpool_* thpool_p){
 
 	while(thpool_p->jobqueue_p->len){
-		free(jobqueue_pull(thpool_p));
+		NDRX_FREE(jobqueue_pull(thpool_p));
 	}
 
 	thpool_p->jobqueue_p->front = NULL;
@@ -532,7 +536,7 @@ static struct job* jobqueue_pull(thpool_* thpool_p){
 /* Free all queue resources back to the system */
 static void jobqueue_destroy(thpool_* thpool_p){
 	jobqueue_clear(thpool_p);
-	free(thpool_p->jobqueue_p->has_jobs);
+	NDRX_FREE(thpool_p->jobqueue_p->has_jobs);
 }
 
 

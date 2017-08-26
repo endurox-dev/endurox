@@ -67,7 +67,7 @@ structure (like *tpcall(3)* or *Bvstof(3)*) can cause segmentation fault.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set 
+On success, *tpalloc()* return zero; on error, -1 is returned, with *tperrno* set 
 to indicate the error.
 
 
@@ -101,7 +101,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpfree(3)* *viewfile(5)*
+*tpfree(3)* *viewfile(5)* *tprealloc(3)*
 
 COPYING
 -------
