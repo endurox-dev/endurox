@@ -1,0 +1,58 @@
+BVSINIT(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bvsinit - Initialize all view fields to NULL value.
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvsinit(char *'cstruct', char *'view');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Initialize all view members to 'NULL' value specified in view file. The pointer
+to C structure is specified in 'cstruct' parameter. The view name is specified 'view'.
+Function initialize all members including all array elements to corresponding
+NULL values in *viewfile(5)*.
+
+RETURN VALUE
+------------
+On success, *Bvsinit()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BEINVAL* 'cstruct' or 'view' parameters are NULL.
+
+*BBADVIEW* View is not found, object file is defective or system error.
+
+*BVFSYNTAX* Defective object file, cannot load.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/viewunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*viewc(8)* *Bvstof(3)* *Bvftos(3)* *Bvselinit(3)* *Bvnull(3)* *Bvopt(3)* *viewfile(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
