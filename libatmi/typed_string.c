@@ -228,8 +228,8 @@ expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
     }
     else
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate STRING buffer: %s",  
-                __func__, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate STRING buffer (len=%ld): %s",  
+                __func__, len, strerror(errno));
     }
     
 out:
