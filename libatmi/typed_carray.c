@@ -228,8 +228,8 @@ expublic char * CARRAY_tpalloc (typed_buffer_descr_t *descr, char *subtype, long
     }
     else
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate CARRAY buffer: %s",  
-                __func__, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate CARRAY buffer (len=%ld): %s",  
+                __func__, len, strerror(errno));
     }
     
 out:
@@ -256,8 +256,8 @@ expublic char * CARRAY_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, lon
     
     if (NULL==ret)
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate CARRAY buffer: %s",  
-                __func__, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate CARRAY buffer (len=%ld): %s",  
+                __func__, len, strerror(errno));
     }
 
     return ret;

@@ -229,8 +229,8 @@ expublic char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
     }
     else
     {        
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate JSON buffer: %s",  
-                __func__, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate JSON buffer (len=%ld): %s",  
+                __func__, len, strerror(errno));
     }
     
 out:
@@ -257,8 +257,8 @@ expublic char * JSON_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long 
     
     if (NULL==ret)
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate JSON buffer: %s",  
-                __func__, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate JSON buffer (len=%ld): %s",  
+                __func__, len, strerror(errno));
     }
 
     return ret;

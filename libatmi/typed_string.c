@@ -211,7 +211,7 @@ out:
  * @param len
  * @return
  */
-expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, long len)
+expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
 {
     char *ret;
 
@@ -256,8 +256,8 @@ expublic char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, lon
     
     if (NULL==ret)
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate STRING buffer: %s",  
-                __func__, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to reallocate STRING buffer (len=%ld): %s",  
+                __func__, len, strerror(errno));
     }
 
     return ret;
