@@ -37,6 +37,8 @@ debug info from last function call.
 
 *BEINVAL* 'cstruct', 'cname' or 'view' parameters are NULL.
 
+*BNOCNAME* 'cname' not found.
+
 *BBADVIEW* View is not found, object file is defective or system error.
 
 *BVFSYNTAX* Defective object file, cannot load.

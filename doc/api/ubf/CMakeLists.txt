@@ -101,6 +101,7 @@ set(MAN3_NAMES
     Bvftos
     Bvselinit
     Bvsinit
+    Bvopt
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

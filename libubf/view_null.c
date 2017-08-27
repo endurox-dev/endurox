@@ -509,7 +509,7 @@ expublic int ndrx_Bvselinit(char *cstruct, char *cname, char *view)
     
     if (NULL==(f = ndrx_view_get_field(v, cname)))
     {
-        ndrx_Bset_error_fmt(BBADVIEW, "Field [%s] of view [%s] not found!", 
+        ndrx_Bset_error_fmt(BNOCNAME, "Field [%s] of view [%s] not found!", 
                 cname, v->vname);
         EXFAIL_OUT(ret);
     }
