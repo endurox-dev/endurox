@@ -151,6 +151,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 5.0.4 released on 22/08/2017. Bug #186
 
+- Version 5.0.5 released on 27/08/2017. Bug #184, Bug #191, Bug #190, Bug #192, Bug #193
+
 # Build configurations
 
 ## Configure make with: 
