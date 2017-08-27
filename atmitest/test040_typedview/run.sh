@@ -46,6 +46,8 @@ fi;
 
 . ../testenv.sh
 
+export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
+
 #
 # Set view tables
 #
