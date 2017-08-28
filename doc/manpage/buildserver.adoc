@@ -1,0 +1,106 @@
+BUILDSERVER(8)
+==============
+:doctype: manpage
+
+
+NAME
+----
+buildserver - Build XATMI server
+
+
+SYNOPSIS
+--------
+*buildserver* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+Build client is Perl script which is used for building XATMI server proceses.
+buildserver script was added to Enduro/X for better compatiblity with competitor
+software. It is not mandatory to use the buildserver. The Enduro/X server
+processes can be built as a standard C/C++ binaries. Buildclient script basically
+invokes C compiler, with specified output binary name and list of object files to
+include in the link. The link process is appended with standard Enduro/X dynamic
+libraries which are intended for server use.
+
+By comparing to the Oracle (R) Tuxedo (R) *buildclient* version, Enduro/X does
+not process the '-s' paramter. Meaning that automatic service advertises are
+not performed. Thus to migrate from Tuxedo to Enduro/X the *tpadvertise(3)* 
+must be used, e.g.
+
+--------------------------------------------------------------------------------
+void SOMESVC (TPSVCINFO *p_svc)
+{
+   ...
+}
+
+int tpsvrinit(int argc, char **argv)
+{
+
+    /* advertises service in init instead of -s argument. */
+    if (0!=tpadvertise("SOMESVC", SOMESVC))
+    {
+        ...
+    }
+}
+
+
+void tpsvrdone(void)
+{
+    ...
+}
+
+--------------------------------------------------------------------------------
+
+ENVIRONMENT
+-----------
+[*CC*]::
+Optional environment variable indicating which C compiler to use. If parameter is
+not set, the *cc* command is used.
+
+[*CFLAGS*]::
+Optional C flags to be passed to C compiler during the *cc* execution.
+
+[*NDRX_HOME*]::
+Optional environment variable indicating the Enduro/X installation home. If variable
+is set then, "-I$NDRX_HOME/include" is added to *cc* command line for including
+Enduro/X headers.
+
+OPTIONS
+-------
+*-o* 'OUTPUT_BINARY'::
+Output binary name passed to *cc*.
+
+*-f* 'INTPUT_FILES']::
+List of input files (must be passed in quotes, space separated) to the C compiler.
+The files might be .o or .c extensions.
+
+[*-a*]::
+Additional flags to be passed to *cc*. This must be quoted string. Similar to the
+*CFLAGS* environment flag, except that it is passed in command lien for *buildserver*.
+
+[*-s*]::
+This flag is ignored. The logic might change in future and advertise from CLI
+might become available.
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*viewfile(5)* *buildclient(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

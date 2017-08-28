@@ -38,7 +38,7 @@ set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf
                 viewfile)
 set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            tprecover cpmsrv tmqueue cconfsrv tpbrdcstsv uvlog xmemck
-           viewc)
+           viewc buildclient buildserver)
 # Joined lists
 #set(PDF_MAN_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv 
 #                ex_env ndrxdebug.conf ndrxconfig.xml ex_envover
