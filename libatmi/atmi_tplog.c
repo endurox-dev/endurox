@@ -96,7 +96,7 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
     ndrx_debug_t * dbg = debug_get_tp_ptr();
     if (dbg->level>=lev)
     {
-        NDRX_LOG(lev, "%s", title);
+        TP_LOG(lev, "%s", title);
         Bfprint(p_ub, dbg->dbg_f_ptr);
     }
 }
