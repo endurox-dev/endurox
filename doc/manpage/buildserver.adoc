@@ -15,8 +15,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Build client is Perl script which is used for building XATMI server proceses.
-buildserver script was added to Enduro/X for better compatiblity with competitor
+Build client is Perl script which is used for building XATMI server process.
+buildserver script was added to Enduro/X for better compatibility with competitor
 software. It is not mandatory to use the buildserver. The Enduro/X server
 processes can be built as a standard C/C++ binaries. Buildclient script basically
 invokes C compiler, with specified output binary name and list of object files to
