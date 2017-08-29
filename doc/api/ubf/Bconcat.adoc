@@ -5,7 +5,7 @@ BCONCAT(3)
 
 NAME
 ----
-Bupdate - buffer update 
+Bupdate - Concatinate UBF buffers
 
 
 SYNOPSIS
@@ -19,7 +19,9 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Concatinate source buffer in 'p_ub_src' to destination buffer in 'p_ub_dst'. Function will add any field from source buffer to destination buffer by using *Badd(3)* function call.
+Concatinate source buffer in 'p_ub_src' to destination buffer in 'p_ub_dst'. 
+Function will add any field from source buffer to destination buffer by using 
+*Badd(3)* function call.
 
 RETURN VALUE
 ------------
@@ -27,7 +29,8 @@ On success, *Bproj()* return zero; on error, -1 is returned, with *Berror* set t
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
 
 *BALIGNERR* Source or dest buffer corrupted or pointing to not aligned memory area.
 
@@ -50,4 +53,3 @@ SEE ALSO
 COPYING
 -------
 (C) Mavimax, Ltd
-
