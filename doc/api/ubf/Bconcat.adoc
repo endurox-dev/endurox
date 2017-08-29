@@ -5,7 +5,7 @@ BCONCAT(3)
 
 NAME
 ----
-Bupdate - Concatinate UBF buffers
+Bconcat - Concatinate UBF buffers
 
 
 SYNOPSIS
