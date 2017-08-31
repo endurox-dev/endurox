@@ -39,3 +39,15 @@ atmitest/test029_inicfg/C_test.ini
 *.5
 *.3
 libatmisrv/atmisrvinteg.pc
+atmitest/test040_typedview/t40.V
+atmitest/test040_typedview/t40.h
+atmitest/test040_typedview/t40_2.V
+atmitest/test040_typedview/t40_2.h
+libpsstdlib/WizardBase.c
+xadmin/Exfields.c
+xadmin/gen_c_client.c
+xadmin/gen_c_server.c
+xadmin/gen_go_client.c
+xadmin/gen_go_server.c
+xadmin/gen_ubf_tab.c
+xadmin/provision.c
