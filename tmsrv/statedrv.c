@@ -74,11 +74,11 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     rmstatus_driver_t* vote_txstage;
     txstage_descriptor_t* descr;
     char stagearr[NDRX_MAX_RMS];
-    char xa_retry[NDRX_MAX_RMS];
     int min_in_group;
     int min_in_overall;
     int try=0;
     int was_retry;
+    int is_tx_finished = EXFALSE;
     NDRX_LOG(log_info, "tm_drive() enter from xid=[%s]", p_xai->tmxid);
     do
     {
@@ -302,21 +302,37 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         
         /* p_tl becomes invalid! */
         tms_remove_logfile(p_tl);
-    }
-    else
-    {
-        /* move transaction to background */
-        NDRX_LOG(log_info, "Transaction not completed - leave "
-                "to background");
-        p_tl->is_background = EXTRUE;
-        /* Unlock the transaction */
-        tms_unlock_entry(p_tl);
+        
+        is_tx_finished = EXTRUE;
     }
     
     /* map stage to return code */
     ret = xa_txstage2tperrno(descr->txstage, master_op);
     
 out:          
+
+    /* Bug #199 if system error occurs transaction 
+     * 
+     */
+    if (!is_tx_finished)
+    {
+        /* move transaction to background */
+        if (!p_tl->is_background)
+        {
+            NDRX_LOG(log_info, "Transaction not completed - leave "
+                    "to background");
+            p_tl->is_background = EXTRUE;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Transaction not completed - will be processed with next"
+                    "background cycle (if not expired)");
+        }
+        
+        /* Unlock the transaction */
+        tms_unlock_entry(p_tl);
+    }
+
     NDRX_LOG(log_info, "tm_drive() returns %d", ret);
     return ret;
 }
