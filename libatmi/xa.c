@@ -608,7 +608,7 @@ out:
  */
 expublic int atmi_xa_commit_entry(XID *xid, long flags)
 {
-int ret = EXSUCCEED;
+    int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_commit_entry");
@@ -623,6 +623,37 @@ int ret = EXSUCCEED;
     }
     
 out:
+    return ret;
+}
+
+/**
+ * Get the list of transactions associate with RMID
+ * @param xids xid array
+ * @param count array len of xids
+ * @param rmid resource manager id
+ * @param flags flags
+ * @return >= number of trans in xid, 
+ */
+expublic int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags)
+{
+    int ret = EXSUCCEED;
+    XA_API_ENTRY(EXTRUE);
+    
+    NDRX_LOG(log_debug, "%s", __func__);
+    
+    if (0 > (ret = G_atmi_env.xa_sw->xa_recover_entry(xids, count,
+                                    G_atmi_env.xa_rmid, flags)))
+    {
+        NDRX_LOG(log_error, "xa_recover_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_recover_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+        goto out;
+    }
+    
+out:
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
+
     return ret;
 }
 

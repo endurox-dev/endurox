@@ -313,6 +313,8 @@ extern NDRX_API int atmi_xa_end_entry(XID *xid);
 extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_prepare_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags);
+
 extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
                     atmi_xa_tx_info_t *p_xai);
 extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
