@@ -78,7 +78,7 @@ expublic void br_dump_nodestack(char *stack, char *msg)
             sprintf(tmp, "%d", nodeid);
         strcat(node_stack_str, tmp);
     }
-    NDRX_LOG(log_error, "%s: [%s]", msg, node_stack_str);
+    NDRX_LOG(log_info, "%s: [%s]", msg, node_stack_str);
     
 }
 
