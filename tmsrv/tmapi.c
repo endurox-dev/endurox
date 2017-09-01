@@ -80,7 +80,6 @@ expublic int tm_tpabort(UBFH *p_ub)
     int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl = NULL;
-    int i;
     
     NDRX_LOG(log_debug, "tm_tpabort() called");
     
@@ -144,9 +143,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl = NULL;
-    int i;
     int do_abort = EXFALSE;
-    short reason;
     
     NDRX_LOG(log_debug, "tm_tpcommit() called");
     
@@ -249,7 +246,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
     /* we should start new transaction... (only if static...) */
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
-        if (EXSUCCEED!=(ret = atmi_xa_start_entry(&xid, 0)))
+        if (EXSUCCEED!=(ret = atmi_xa_start_entry(&xid, 0, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to start new transaction!");
             atmi_xa_set_error_fmt(p_ub, TPETRAN, NDRX_XA_ERSN_NONE, 
@@ -269,7 +266,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
     atmi_xa_serialize_xid(&xid, xid_str);
     
     /* load the XID into buffer */
-    strcpy(xai.tmxid, xid_str);
+    NDRX_STRCPY_SAFE(xai.tmxid, xid_str);
     xai.tmrmid = G_atmi_env.xa_rmid;
     xai.tmnodeid = G_atmi_env.our_nodeid;
     xai.tmsrvid = G_server_conf.srv_id;

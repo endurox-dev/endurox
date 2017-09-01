@@ -340,7 +340,7 @@ expublic int atmi_xa_open_entry(void)
     int ret = EXSUCCEED;
     XA_API_ENTRY(EXFALSE); /* already does ATMI_TLS_ENTRY; */
     
-    NDRX_LOG(log_debug, "atmi_xa_open_entry");
+    NDRX_LOG(log_debug, "atmi_xa_open_entry RMID=%hd", G_atmi_env.xa_rmid);
     
     if (G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
@@ -445,23 +445,36 @@ out:
  * @param flags
  * @return 
  */
-expublic int atmi_xa_start_entry(XID *xid, long flags)
+expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
 {
     int ret = EXSUCCEED;
+    int need_retry;
     XA_API_ENTRY(EXTRUE);
     
-    NDRX_LOG(log_debug, "atmi_xa_start_entry");
+    NDRX_LOG(log_debug, "%s", __func__);
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
         int tries;
         
-        NDRX_LOG(log_error, "xa_start_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
+        if ((flags & TMJOIN || flags & TMRESUME) && XAER_NOTA==ret)
+        {
+            need_retry = EXFALSE;
+        }
+        else
+        {
+            need_retry = EXTRUE;
+        }
+        
+        if (!ping_try || need_retry)
+        {
+            NDRX_LOG(log_error, "%s - fail: %d [%s]", 
+                    __func__, ret, atmi_xa_geterrstr(ret));
+        }
         
         /* Check that return code is in list... */
-        if (G_atmi_env.xa_recon_times > 1 && is_error_in_recon_list(ret))
+        if (G_atmi_env.xa_recon_times > 1 && need_retry && is_error_in_recon_list(ret))
         {
             for (tries=1; tries<G_atmi_env.xa_recon_times; tries++)
             {
@@ -483,7 +496,7 @@ expublic int atmi_xa_start_entry(XID *xid, long flags)
                 {
 
                     /* restart...: */
-                    NDRX_LOG(log_warn, "RECON: atmi_xa_start_entry()");
+                    NDRX_LOG(log_warn, "RECON: %s()", __func__);
                     if (XA_OK==(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
                                         G_atmi_env.xa_rmid, flags)))
                     {
@@ -493,24 +506,34 @@ expublic int atmi_xa_start_entry(XID *xid, long flags)
                 }
                 else
                 {
-                    NDRX_LOG(log_error, "RECON: Attempt %d xa_start_entry - "
+                    NDRX_LOG(log_error, "%s: RECON: Attempt %d - "
                             "fail: %d [%s]", 
-                    ret, tries, atmi_xa_geterrstr(ret));
+                    __func__, tries, ret, atmi_xa_geterrstr(ret));
                 }
             } /* for tries */
         } /* if retry supported. */
         
         if (XA_OK!=ret)
+        
         {
-            NDRX_LOG(log_error, "finally xa_start_entry - fail: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
+            if (ping_try && XAER_NOTA==ret)
+            {
+                /* needs to set error silently.. */
+                ndrx_TPset_error_fmt_rsn_silent(TPERMERR,  
+                        ret, "finally %s - fail: %d [%s]", 
+                        __func__, ret, atmi_xa_geterrstr(ret));
+            }
+            else
+            {
+                NDRX_LOG(log_error, "finally %s - fail: %d [%s]", 
+                        __func__, ret, atmi_xa_geterrstr(ret));
 
-            ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "finally xa_start_entry - fail: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-
+                ndrx_TPset_error_fmt_rsn(TPERMERR,  
+                        ret, "finally %s - fail: %d [%s]", 
+                        __func__, ret, atmi_xa_geterrstr(ret));
+            }
             goto out;
         }
-        
     }
     
 out:
@@ -526,7 +549,7 @@ out:
  */
 expublic int atmi_xa_end_entry(XID *xid)
 {
-int ret = EXSUCCEED;
+    int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_end_entry");
@@ -644,16 +667,65 @@ expublic int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags)
     if (0 > (ret = G_atmi_env.xa_sw->xa_recover_entry(xids, count,
                                     G_atmi_env.xa_rmid, flags)))
     {
-        NDRX_LOG(log_error, "xa_recover_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_recover_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        goto out;
+        int tries;
+        
+        NDRX_LOG(log_error, "%s - fail: %d [%s]", 
+                __func__, ret, atmi_xa_geterrstr(ret));
+        
+        /* Check that return code is in list... */
+        if (G_atmi_env.xa_recon_times > 1 && is_error_in_recon_list(ret))
+        {
+            for (tries=1; tries<G_atmi_env.xa_recon_times; tries++)
+            {
+                NDRX_LOG(log_warn, "RECON: Attempt %d, sleeping %ld micro-sec", 
+                        tries, G_atmi_env.xa_recon_usleep);
+                usleep(G_atmi_env.xa_recon_usleep);
+                
+                
+                NDRX_LOG(log_warn, "RECON: Retrying...");
+                
+                /* xa_close */
+                
+                NDRX_LOG(log_warn, "RECON: atmi_xa_close_entry()");
+                
+                atmi_xa_close_entry();
+                
+                NDRX_LOG(log_warn, "RECON: atmi_xa_open_entry()");
+                if (EXSUCCEED==atmi_xa_open_entry())
+                {
+
+                    /* restart...: */
+                    NDRX_LOG(log_warn, "RECON: %s()", __func__);
+                    if (0<=(ret = G_atmi_env.xa_sw->xa_recover_entry(xids, count,
+                                    G_atmi_env.xa_rmid, flags)))
+                    {
+                        NDRX_LOG(log_warn, "RECON: Succeed");
+                        break;
+                    }
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "%s: RECON: Attempt %d - "
+                            "fail: %d [%s]", 
+                    __func__, tries, ret, atmi_xa_geterrstr(ret));
+                }
+            } /* for tries */
+        } /* if retry supported. */
+        
+        if (0 > ret)
+        {
+            NDRX_LOG(log_error, "finally %s - fail: %d [%s]", 
+                    __func__, ret, atmi_xa_geterrstr(ret));
+
+            ndrx_TPset_error_fmt_rsn(TPERMERR,  
+                    ret, "finally %s - fail: %d [%s]", 
+                    __func__, ret, atmi_xa_geterrstr(ret));
+
+            goto out;
+        }
     }
     
 out:
-    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
-
     return ret;
 }
 
@@ -766,7 +838,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     /* OK... now join the transaction (if we are static...) (only if static) */
     if (!XA_IS_DYNAMIC_REG)
     {
-        if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai), TMJOIN))
+        if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai), TMJOIN, EXFALSE))
         {
             /* TODO: Unset current transaction */
             atmi_xa_reset_curtx();
@@ -1307,7 +1379,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 NDRX_LOG(log_debug, "Dynamic reg - no start/join!");
         }
         /* Continue with static ...  ok it is known, then just join the transaction */
-        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN))
+        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
             EXFAIL_OUT(ret);
@@ -1348,7 +1420,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         /* Continue with static... */
         else if (*p_is_known)
         {
-            if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN))
+            if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to join transaction!");
                 EXFAIL_OUT(ret);
@@ -1359,7 +1431,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             }
         }
         /* Open new transaction in branch */
-        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMNOFLAGS))
+        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMNOFLAGS, EXFALSE))
         {
             reason=atmi_xa_get_reason();
             NDRX_LOG(log_error, "Failed to create new tx under local RM (reason: %hd)!", 
@@ -1369,7 +1441,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 /* It is already known... then join... */
                 *p_is_known=EXTRUE;
                 
-                if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN))
+                if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
                 {
                     NDRX_LOG(log_error, "Failed to join transaction!");
                     EXFAIL_OUT(ret);

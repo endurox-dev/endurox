@@ -862,7 +862,7 @@ expublic int tpinit (TPINIT * init_data)
     }
     
     /* Load the queue prefix */
-    if (NULL==(p=getenv("NDRX_QPREFIX")))
+    if (NULL==(p=getenv(CONF_NDRX_QPREFIX)))
     {
         ndrx_TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
         ret=EXFAIL;

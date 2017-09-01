@@ -62,10 +62,10 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-int M_is_open = EXFALSE;
-int M_is_reg = EXFALSE; /* Dynamic registration done? */
-int M_rmid = EXFAIL;
-FILE *M_f = NULL;
+__thread int M_is_open = EXFALSE;
+__thread int M_is_reg = EXFALSE; /* Dynamic registration done? */
+__thread int M_rmid = EXFAIL;
+__thread FILE *M_f = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -220,13 +220,13 @@ exprivate char *get_file_name(XID *xid, int rmid, char *folder)
     
     if (first)
     {
-        strcpy(test_root, getenv("NDRX_TEST_RM_DIR"));
+        NDRX_STRCPY_SAFE(test_root, getenv("NDRX_TEST_RM_DIR"));
         first = EXFALSE;
     }
     
     atmi_xa_serialize_xid(xid, xid_str);
     
-    sprintf(buf, "%s/%s/%s", test_root, folder, xid_str);
+    snprintf(buf, sizeof(buf), "%s/%s/%s", test_root, folder, xid_str);
     NDRX_LOG(log_debug, "Folder built: %s", buf);
     
     return buf;
@@ -247,8 +247,8 @@ exprivate int file_move(XID *xid, int rmid, char *from_folder, char *to_folder)
     char from_file[FILENAME_MAX+1] = {EXEOS};
     char to_file[FILENAME_MAX+1] = {EXEOS};
     
-    strcpy(from_file, get_file_name(xid, rmid, from_folder));
-    strcpy(to_file, get_file_name(xid, rmid, to_folder));
+    NDRX_STRCPY_SAFE(from_file, get_file_name(xid, rmid, from_folder));
+    NDRX_STRCPY_SAFE(to_file, get_file_name(xid, rmid, to_folder));
     
     
     if (EXSUCCEED!=rename(from_file, to_file))
@@ -324,8 +324,17 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
         return XAER_RMERR;
     }
     
+    if ((flags & TMJOIN) || (flags & TMRESUME))
+    {
+        if (!ndrx_file_exists(file))
+        {
+            NDRX_LOG(log_error, "TMJOIN or TMRESUME but transaction does not exits!");
+            return XAER_NOTA;
+        }
+    }
+    
     /* Open file for write... */
-    if (NULL==(M_f = NDRX_FOPEN(file, "w")))
+    if (NULL==(M_f = NDRX_FOPEN(file, "a")))
     {
         NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() - failed to open file: %s!", 
                 strerror(errno));
@@ -489,8 +498,8 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         return XAER_RMERR;
     }
     
-    NDRX_LOG(log_error, "TESTERROR!!! xa_recover_entry() - not using!!");
-    return XAER_RMERR;
+    NDRX_LOG(log_error, "WARNING!!! xa_recover_entry() - STUB!!");
+    return 0; /* 0 transactions found... */
 }
 
 /**
@@ -503,14 +512,13 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
  */
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    
-    if (!M_is_open)
+   if (!M_is_open)
     {
         NDRX_LOG(log_error, "TESTERROR!!! xa_forget_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    NDRX_LOG(log_error, "TESTERROR!!! xa_forget_entry() - not using!!");
+    NDRX_LOG(log_error, "TESTERROR!!! xa_forget_entry() - not implemented!!");
     return XAER_RMERR;
 }
 

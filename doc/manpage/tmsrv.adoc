@@ -29,7 +29,7 @@ with transaction, then process notifies initial transaction manager that new
 association must be made. In active phase this too is stored in process memory.
 
 When transaction comes to commit() phase, then it is logged to disk. Every 
-transaction is logged to seperate file.  File name contains resource manager ID and 
+transaction is logged to separate file.  File name contains resource manager ID and 
 transaction XID. During the prepare phase status of every Resource Manager is logged.
 The same is with commit phase. Once all resources are
 completed, transaction file is removed. If 'tmsrv' crashed for in-progress transaction,
@@ -87,7 +87,7 @@ Enduro/X support static and dynamic XA registration.
 OPTIONS
 -------
 *-t* 'DEFAULT_TIMEOUT'::
-'DEFAULT_TIMEOUT' default transaction time-out in seconds.
+'DEFAULT_TIMEOUT' is default transaction time-out in seconds.
 
 *-l* 'LOG_DIR'::
 'LOG_DIR' is full path to transaction log file directory. Process at startup
@@ -119,12 +119,46 @@ every '-m' try for *XA_RETRY* will be multiplied by '-r' attempts.
 Default value is seto to '3'. 
 
 [*-p* 'THREAD_POOL_SIZE']::
-This is the number of threads processing incoming requsts. If all threads are busy, then
+This is the number of threads processing incoming requests. If all threads are busy, then
 job is internally queued. It is known that some databases slowly process some of 
 the XA operations, for example 'xa_rollback'. Thus multiple threads can handle this
-more efficiently. Default threadpool size is set to 10. For more load balacing it
+more efficiently. *Default threadpool size is set to 10*. For more load balancing it
 is recommended to start multiple 'tmsrv' processes for same RMID.
+Note that *tmsrv* run with multiple threads, thus for Oracle DB flag '+Threads=true' 
+*MUST* be set in *NDRX_XA_OPEN_STR*. 
+Otherwise unexpected core dumps can be received from *tmsrv*.
 
+[*-P* 'PING_SECONDS']::
+Number of seconds to perform database pings by either xa_start+TMJOIN flag or
+by xa_recover+TMSTARTRSCAN and TMENDRSCAN flags. The xa_recover is enabled by
+*-R* parameter. The *default* is xa_start. In case of xa_start from database it
+is expected error code XAER_NOTA (transaction not found) as the scan is performed
+for non existent XID, generated for each worker thread. For xa_recover it is 
+expected that operation succeeds. If the operations goes out of the normal 
+behavior, then reconnection procedure set in *NDRX_XA_FLAGS* *RECON* is applied
+i.e. thread will perform xa_close() and xa_open() and retry operation. See the
+*ex_env(5)* manpage for the details. But for quick reference you may use value
+'RECON:*:3:100' which will perform 3x attempts on any error by sleeping 100 ms in
+between attempts. The *NDRX_XA_FLAGS* must be set in CC config or environment 
+and the attempts must be greater that 1. Other with the *tmsrv* will not boot
+with *-P* flag set.
+
+[*-R*]::
+Enable xa_recover() call for PINGs instead of xa_start(). See *-P* flag description.
+
+XA RECOVER SETTINGS FOR ORACLE DB
+---------------------------------
+The -R mode might not be enabled in database for user. I.e. user is not allowed
+to see open transactions. Thus must be enabled by following commands on DB user
+set in XA open string:
+
+--------------------------------------------------------------------------------
+grant select on pending_trans$ to <database_user>; 
+grant select on dba_2pc_pending to <database_user>;
+grant select on dba_pending_transactions to <database_user>;
+grant execute on dbms_system to <database_user>;  (If using Oracle 10.2)
+grant execute on dbms_xa to <database_user>; (If using Oracle 10.2)
+--------------------------------------------------------------------------------
 
 EXIT STATUS
 -----------
@@ -136,7 +170,7 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

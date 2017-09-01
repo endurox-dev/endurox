@@ -35,13 +35,13 @@ export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
-	# Do nothing 
-	echo > /dev/null
+    # Do nothing 
+    echo > /dev/null
 else
-	# started from parent folder
-	pushd .
-	echo "Doing cd"
-	cd $TESTNAME
+    # started from parent folder
+    pushd .
+    echo "Doing cd"
+    cd $TESTNAME
 fi;
 
 
@@ -53,6 +53,9 @@ fi
 
 SYSTEM=`uname`
 echo "SYSTEM: "$SYSTEM""
+
+export TESTPING_DOM1="";
+export TESTPING_DOM2="";
 ################################################################################
 # Bug 160, xa_start fails due to closed connection, recon
 ################################################################################
@@ -135,6 +138,17 @@ export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-tryok.$SUFFIX
 echo "Doing static registration tests... (Bug #105 - prepare ok, but proc abort)"
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.$SUFFIX
 ./run-dom.sh || exit $?
+
+################################################################################
+# Normal tests
+################################################################################
+
+export NDRX_XA_FLAGS=RECON:*:3:100
+# tests with xa_recover type pings
+export TESTPING_DOM1="-P1 -R";
+
+# tests with xa_start type pings
+export TESTPING_DOM2="-P1";
 
 echo "Doing static registration tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s.$SUFFIX

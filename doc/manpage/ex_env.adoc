@@ -91,8 +91,8 @@ Mandatory Env. Variables
 	This is open string for two phase commit XA driver.
         Must be set if using distributed transactions.
 *NDRX_XA_CLOSE_STR*='XA_CLOSE_STRING'::
-	This is close string for two phase commit XA driver. This is optional, 'NDRX_XA_OPEN_STR' will be used
-        if not set.
+	This is close string for two phase commit XA driver. This is optional, 
+        'NDRX_XA_OPEN_STR' will be used if not set.
 *NDRX_XA_DRIVERLIB*='ENDUROX_XA_DRIVER_LIB'::
 	This is full path to Enduro/X shared library which loads the XA api.
 *NDRX_XA_RMLIB*='RESOURCE_MANAGER_SPECIFIC_DRIVER'::
@@ -108,7 +108,8 @@ Mandatory Env. Variables
 	of xa_close()/xa_open() and doing xa_start() again in case if original
 	xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
 	closed the connection. The format for the tag is:
-	'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number of attempts>:<sleep between attempts milli-sec>'
+	'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
+        of attempts>:<sleep between attempts milli-sec>'
 	example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
 	3x attempts, sleep 100 milliseconds between attempts.
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
@@ -204,7 +205,7 @@ export ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
 export PATH=$PATH:ORACLE_HOME/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
 export NDRX_XA_RES_ID=1
-export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f"
+export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f+Threads=true"
 export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 
 # XA Static registration driver
@@ -277,7 +278,7 @@ ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
 PATH=$PATH:ORACLE_HOME/bin
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f"
+NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f+Threads=true"
 NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 # XA Static registration driver
 NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaoras.so
@@ -298,6 +299,11 @@ NDRX_XA_LAZY_INIT=1
 
 ---------------------------------------------------------------------
 
+NOTES FOR ORACLE DB
+-------------------
+Note that *tmsrv* run with multiple threads. Flag '+Threads=true' MUST be set in
+*NDRX_XA_OPEN_STR*. Otherwise unexpected core dumps can be received from *tmsrv*.
+
 BUGS
 ----
 Report bugs to support@mavimax.com
@@ -305,11 +311,6 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)* *viewc(8)*
-
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
-
 
 COPYING
 -------

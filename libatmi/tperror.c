@@ -208,8 +208,8 @@ expublic void ndrx_TPset_error(int error_code)
     ATMI_TLS_ENTRY;
     if (!G_atmi_tls->M_atmi_error)
     {
-        NDRX_LOG(log_warn, "_TPset_error: %d (%s)",
-                error_code, ATMI_ERROR_DESCRIPTION(error_code));
+        NDRX_LOG(log_warn, "%s: %d (%s)",
+                __func__, error_code, ATMI_ERROR_DESCRIPTION(error_code));
         
         G_atmi_tls->M_atmi_error_msg_buf[0] = EXEOS;
         G_atmi_tls->M_atmi_error = error_code;
@@ -272,12 +272,39 @@ expublic void ndrx_TPset_error_fmt(int error_code, const char *fmt, ...)
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(G_atmi_tls->M_atmi_error_msg_buf, msg);
+        NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, msg);
         G_atmi_tls->M_atmi_error = error_code;
 
-        NDRX_LOG(log_warn, "_TPset_error_fmt: %d (%s) [%s]",
+        NDRX_LOG(log_warn, "%s: %d (%s) [%s]", __func__,
                         error_code, ATMI_ERROR_DESCRIPTION(error_code),
                         G_atmi_tls->M_atmi_error_msg_buf);
+    }
+}
+
+/**
+ * Extended error setter, including reason (for XA mostly)
+ * Silent version (no debug message)
+ * @param error_code
+ * @param reason
+ * @param fmt
+ * @param ...
+ */
+expublic void ndrx_TPset_error_fmt_rsn_silent(int error_code, 
+        short reason, const char *fmt, ...)
+{
+    char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
+    va_list ap;
+    ATMI_TLS_ENTRY;
+
+    if (!G_atmi_tls->M_atmi_error)
+    {
+        va_start(ap, fmt);
+        (void) vsnprintf(msg, sizeof(msg), fmt, ap);
+        va_end(ap);
+
+        NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, msg);
+        G_atmi_tls->M_atmi_error = error_code;
+        G_atmi_tls->M_atmi_reason = reason;
     }
 }
 
@@ -300,11 +327,11 @@ expublic void ndrx_TPset_error_fmt_rsn(int error_code, short reason, const char 
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(G_atmi_tls->M_atmi_error_msg_buf, msg);
+        NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, msg);
         G_atmi_tls->M_atmi_error = error_code;
         G_atmi_tls->M_atmi_reason = reason;
 
-        NDRX_LOG(log_warn, "_TPset_error_fmt_rsn: %d (%s) reason: %d [%s]",
+        NDRX_LOG(log_warn, "%s: %d (%s) reason: %d [%s]", __func__, 
                         error_code, ATMI_ERROR_DESCRIPTION(error_code), reason,
                         G_atmi_tls->M_atmi_error_msg_buf);
     }
@@ -371,7 +398,7 @@ expublic void atmi_xa_set_error(UBFH *p_ub, short error_code, short reason)
 {
     if (!atmi_xa_is_error(p_ub))
     {
-        NDRX_LOG(log_warn, "atmi_xa_set_error: %d (%s)",
+        NDRX_LOG(log_warn, "%s: %d (%s)", __func__,
                                 error_code, ATMI_ERROR_DESCRIPTION(error_code));
         Bchg(p_ub, TMERR_CODE, 0, (char *)&error_code, 0L);
         Bchg(p_ub, TMERR_REASON, 0, (char *)&reason, 0L);
@@ -388,7 +415,7 @@ expublic void atmi_xa_set_error_msg(UBFH *p_ub, short error_code, short reason, 
 {
     if (!atmi_xa_is_error(p_ub))
     {
-        NDRX_LOG(log_warn, "atmi_xa_set_error_msg: %d (%s) [%s]", error_code,
+        NDRX_LOG(log_warn, "%s: %d (%s) [%s]", __func__, error_code,
                                 ATMI_ERROR_DESCRIPTION(error_code), msg);
         
         Bchg(p_ub, TMERR_CODE, 0, (char *)&error_code, 0L);
@@ -556,7 +583,7 @@ expublic void ndrx_TPsave_error(atmi_error_t *p_err)
     
     p_err->atmi_error = G_atmi_tls->M_atmi_error;
     p_err->atmi_reason = G_atmi_tls->M_atmi_reason;
-    strcpy(p_err->atmi_error_msg_buf, G_atmi_tls->M_atmi_error_msg_buf);
+    NDRX_STRCPY_SAFE(p_err->atmi_error_msg_buf, G_atmi_tls->M_atmi_error_msg_buf);
 }
 
 /**
@@ -568,5 +595,5 @@ expublic void ndrx_TPrestore_error(atmi_error_t *p_err)
     ATMI_TLS_ENTRY;
     G_atmi_tls->M_atmi_error = p_err->atmi_error;
     G_atmi_tls->M_atmi_reason = p_err->atmi_reason;
-    strcpy(G_atmi_tls->M_atmi_error_msg_buf, p_err->atmi_error_msg_buf);
+    NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, p_err->atmi_error_msg_buf);
 }

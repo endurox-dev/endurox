@@ -101,8 +101,8 @@
 /*---------------------------Statics------------------------------------*/
 
 /* Shared between threads: */
-exprivate int M_is_open = EXFALSE;
-exprivate int M_rmid = EXFAIL;
+exprivate __thread int M_is_open = EXFALSE;
+exprivate __thread int M_rmid = EXFAIL;
 
 exprivate char M_folder[PATH_MAX] = {EXEOS}; /* Where to store the q data */
 exprivate char M_folder_active[PATH_MAX] = {EXEOS}; /* Active transactions */
@@ -1379,8 +1379,9 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         return XAER_RMERR;
     }
     
-    NDRX_LOG(log_error, "ERROR! xa_recover_entry() - not using!!");
-    return XAER_RMERR;
+    NDRX_LOG(log_error, "WARNING! xa_recover_entry() - STUB!");
+    
+    return 0; /* no transactions found */
 }
 
 /**

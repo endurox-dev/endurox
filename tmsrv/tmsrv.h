@@ -73,6 +73,8 @@ typedef struct
     /* Number of foreground retries in stage for XA_RETRY */
     int xa_retries;
     
+    int ping_time; /* Number of seconds for interval of doing "pings" to db */
+    int ping_mode_jointran; /* PING with join non existent transaction */
     threadpool thpool;
 } tmsrv_cfg_t;
 
@@ -85,6 +87,13 @@ struct thread_server
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
 
+/*---------------------------Prototypes---------------------------------*/
+/* init */
+extern void tm_thread_init(void);
+extern void tm_thread_uninit(void);
+extern void tm_thread_shutdown(void *ptr, int *p_finish_off);
+
+extern void tm_ping_db(void *ptr, int *p_finish_off);
 
 extern tmsrv_cfg_t G_tmsrv_cfg;
 
@@ -149,7 +158,6 @@ extern void background_unlock(void);
 extern int tm_tpprinttrans(UBFH *p_ub, int cd);
 extern int tm_aborttrans(UBFH *p_ub);
 extern int tm_committrans(UBFH *p_ub);
-
 
 #ifdef	__cplusplus
 }

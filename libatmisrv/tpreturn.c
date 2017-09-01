@@ -245,7 +245,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     call->timer = last_call->timer;
     
     /* Get the reply order... */
-    strcpy(call->callstack, last_call->callstack);
+    NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
@@ -406,7 +406,7 @@ expublic void _tpforward (char *svc, char *data,
     data_len+=sizeof(tp_command_call_t);
 
     call->buffer_type_id = (short)buffer_info->type_id; /* < caused core dumps! */
-    strcpy(call->reply_to, last_call->reply_to); /* <<< main difference from call! */
+    NDRX_STRCPY_SAFE(call->reply_to, last_call->reply_to); /* <<< main difference from call! */
     call->command_id = ATMI_COMMAND_TPCALL;
 
     strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
@@ -415,7 +415,7 @@ expublic void _tpforward (char *svc, char *data,
     call->cd = last_call->cd; /* <<< another difference from call! */
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;
-    strcpy(call->callstack, last_call->callstack);
+    NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     
     /* work out the XA data */
     if (ndrx_get_G_atmi_xa_curtx()->txinfo)

@@ -85,9 +85,54 @@ exprivate int M_init_ok = EXFALSE;
 pthread_mutex_t M_wait_th_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
+/*
+ * Thread private data
+ */
+exprivate __thread ndrx_stopwatch_t M_ping_stopwatch;
+exprivate __thread int M_thread_first = EXTRUE;
+exprivate __thread XID M_ping_xid; /* run pings by this non existent xid */
 /*---------------------------Prototypes---------------------------------*/
-exprivate int tx_tout_check(void);
+exprivate int tm_tout_check(void);
 exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
+
+/**
+ * Initialize thread
+ */
+expublic void tm_thread_init(void)
+{
+    if (EXSUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to init worker client");
+        userlog("tmsrv: Failed to init worker client");
+        exit(1);
+    }
+
+    /* Bug #161 We shall run xa_open() here too, because it is per thread
+     * config.
+     */
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "Worker thread failed to tpopen() - nothing to do, "
+                "process will exit");
+        userlog("Worker thread failed to tpopen() - nothing to do, "
+                "process will exit");
+        exit(1);
+    }
+
+    ndrx_stopwatch_reset(&M_ping_stopwatch);
+    
+    atmi_xa_new_xid(&M_ping_xid);
+    
+}
+
+/**
+ * Close the thread session
+ */
+expublic void tm_thread_uninit(void)
+{
+    tpclose();
+    tpterm();
+}
 
 /**
  * Tmsrv service entry (working thread)
@@ -99,7 +144,6 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
      * TPBEGIN...
      */
     int ret=EXSUCCEED;
-    static __thread int first = EXTRUE;
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
@@ -109,16 +153,17 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     /**************************************************************************/
     UBFH *p_ub = (UBFH *)thread_data->buffer;
     
-    /* Do the ATMI init */
-    if (first)
+    /* Do the ATMI init, if needed */
+    if (M_thread_first)
     {
-        first = EXFALSE;
-        if (EXSUCCEED!=tpinit(NULL))
-        {
-            NDRX_LOG(log_error, "Failed to init worker client");
-            userlog("tmsrv: Failed to init worker client");
-            exit(1);
-        }
+        tm_thread_init();
+        M_thread_first = EXFALSE;
+    }
+    
+    /* run the ping (will be skipped if thread is already pinged in time) */
+    if (G_tmsrv_cfg.ping_time > 0)
+    {
+        tm_ping_db(NULL, NULL);
     }
     
     /* restore context. */
@@ -271,6 +316,16 @@ out:
                 (char *)p_ub,
                 0L,
                 0L);
+    
+    /* note this is thread and it does not do long jump */
+    /* 
+     * If there was very long processing session and ping is required (detected
+     * by func). Then run it here.
+     */
+    if (G_tmsrv_cfg.ping_time > 0)
+    {
+        tm_ping_db(NULL, NULL);
+    }
 }
 
 /**
@@ -362,8 +417,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     memset(&G_tmsrv_cfg, 0, sizeof(G_tmsrv_cfg));
     
+    G_tmsrv_cfg.ping_mode_jointran = EXTRUE;
+    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "t:s:l:c:m:p:r:")) != -1)
+    while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:R")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -375,7 +432,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
                 /* status directory: */
             case 'l': 
-                strcpy(G_tmsrv_cfg.tlog_dir, optarg);
+                NDRX_STRCPY_SAFE(G_tmsrv_cfg.tlog_dir, optarg);
                 NDRX_LOG(log_debug, "Status directory "
                             "set to: [%s]", G_tmsrv_cfg.tlog_dir);
                 break;
@@ -394,6 +451,24 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
             case 'r': 
                 G_tmsrv_cfg.xa_retries = atoi(optarg);
+                break;
+            case 'R':
+                /* in this case use tran listing (xa_recover)*/
+                G_tmsrv_cfg.ping_mode_jointran = EXFALSE;
+                break;
+            case 'P':
+                /* Ping will run with timeout timer interval...
+                 * will work with RECON flags (which must be set for this case)
+                 */
+                G_tmsrv_cfg.ping_time = atoi(optarg);
+
+                if (G_tmsrv_cfg.ping_time < 0)
+                {
+                    NDRX_LOG(log_error, "ERROR ! invalid value %d for -P. Must be >=0",
+                            G_tmsrv_cfg.ping_time);
+                    EXFAIL_OUT(ret);
+                }
+                
                 break;
             default:
                 /*return FAIL;*/
@@ -426,7 +501,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         G_tmsrv_cfg.xa_retries = XA_RETRIES_DFLT;
     }
-        
+    
     if (EXEOS==G_tmsrv_cfg.tlog_dir[0])
     {
         userlog("TMS log dir not set!");
@@ -446,10 +521,39 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                             G_tmsrv_cfg.xa_retries);
     
     NDRX_LOG(log_debug, "About to initialize XA!");
+    
     if (EXSUCCEED!=atmi_xa_init()) /* will open next... */
     {
         NDRX_LOG(log_error, "Failed to initialize XA driver!");
         EXFAIL_OUT(ret);
+    }
+    
+    if (G_tmsrv_cfg.ping_time > 0)
+    {
+
+        NDRX_LOG(log_info, "DB PING & connection recovery enabled, interval: %d "
+                "(same as -c number)", 
+                G_tmsrv_cfg.tout_check_time);
+        
+        if (G_tmsrv_cfg.ping_mode_jointran)
+        {
+            NDRX_LOG(log_warn, "PING by JOIN to non existent transaction");
+        }
+        else
+        {
+            NDRX_LOG(log_warn, "PING by RECOVER transaction");
+        }
+        
+        if (G_atmi_env.xa_recon_times <=1)
+        {
+            NDRX_LOG(log_warn, "ERROR ! Using -P (ping) to be effective, please "
+                    "ensure that NDRX_XA_FLAGS=RECON... is set to tries count > 1!");
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_info, "DB PING disabled (-P not set)");
     }
     
     /* we should open the XA  */
@@ -516,7 +620,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     
     /* Register timer check (needed for time-out detection) */
-    if (EXSUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tx_tout_check))
+    if (EXSUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tm_tout_check))
     {
             ret=EXFAIL;
             NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
@@ -547,7 +651,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         /* Terminate the threads */
         for (i=0; i<G_tmsrv_cfg.threadpoolsize; i++)
         {
-            thpool_add_work(G_tmsrv_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+            thpool_add_work(G_tmsrv_cfg.thpool, (void *)tm_thread_shutdown, NULL);
         }
         
         /* Wait to complete */
@@ -621,14 +725,93 @@ out:
 }
 
 /**
+ * Run the DB ping...
+ * It will try to list the transactions from DB. Non invasive method.
+ * The recover entry will automatically reconnect to DB if connection failed
+ * We will try to join non existent transaction...
+ */
+expublic void tm_ping_db(void *ptr, int *p_finish_off)
+{
+    int delta = ndrx_stopwatch_get_delta_sec(&M_ping_stopwatch);
+    int ret;
+    unsigned long tid = (unsigned long)ndrx_gettid();
+    int is_ping_ok;
+    
+    /* Do the ATMI init, if needed */
+    if (M_thread_first)
+    {
+        tm_thread_init();
+        M_thread_first = EXFALSE;
+    }
+    
+    if (delta >= G_tmsrv_cfg.ping_time)
+    {
+        ndrx_stopwatch_reset(&M_ping_stopwatch);
+        NDRX_LOG(log_debug, "RMID: %hd TID: %lu: Running ping", 
+                G_atmi_env.xa_rmid, tid);
+        
+        if (G_tmsrv_cfg.ping_mode_jointran)
+        {
+            if (EXSUCCEED==(ret = atmi_xa_start_entry(&M_ping_xid, TMJOIN, EXTRUE)) || 
+                atmi_xa_get_reason()!=XAER_NOTA)
+            {
+                is_ping_ok = EXFALSE;
+            }
+            else
+            {
+                is_ping_ok = EXTRUE;
+            }
+        }
+        else
+        {
+            if (0>(ret = atmi_xa_recover_entry(&M_ping_xid, 1, G_atmi_env.xa_rmid, 
+                TMSTARTRSCAN|TMENDRSCAN)))
+            {
+                is_ping_ok = EXFALSE;
+            }
+            else
+            {
+                is_ping_ok = EXTRUE;
+            }
+        }
+        
+        if (!is_ping_ok)
+        {
+            /* Ping error/ulog */
+            NDRX_LOG(log_error, "RMID: %hd TID: %lu ERROR ! DB PING FAILED: %s", 
+                    G_atmi_env.xa_rmid, tid, tpstrerror(tperrno));
+            userlog("RMID: %hd TID: %lu ERROR ! DB PING FAILED: %s", 
+                    G_atmi_env.xa_rmid, tid, tpstrerror(tperrno));
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "RMID %hd TID: %lu: PING OK %d", 
+                    G_atmi_env.xa_rmid, tid, ret);
+        }
+    }
+
+}
+
+/**
  * Callback routine for scheduled timeout checks.
  * @return 
  */
-exprivate int tx_tout_check(void)
+exprivate int tm_tout_check(void)
 {
+    int i;
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
+    
     thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
-    /* return SUCCEED; */
+    
+    /* RUN PINGs... over the all threads... */
+    if (G_tmsrv_cfg.ping_time > 0)
+    {
+        for (i=0; i<G_tmsrv_cfg.threadpoolsize; i++)
+        {
+            thpool_add_work(G_tmsrv_cfg.thpool, (void*)tm_ping_db, NULL);
+        }
+    }
+    
     
     return EXSUCCEED;
 }
@@ -643,4 +826,16 @@ exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off)
     pthread_mutex_lock(&M_wait_th_mutex);
     pthread_cond_signal(&M_wait_th_cond);
     pthread_mutex_unlock(&M_wait_th_mutex);
+}
+
+/**
+ * Shutdown the thread
+ * @param arg
+ * @param p_finish_off
+ */
+expublic void tm_thread_shutdown(void *ptr, int *p_finish_off)
+{
+    tm_thread_uninit();
+    
+    *p_finish_off = EXTRUE;
 }

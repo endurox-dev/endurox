@@ -308,7 +308,7 @@ extern NDRX_API int atmi_xa_init(void);
 extern NDRX_API void atmi_xa_uninit(void);
 extern NDRX_API int atmi_xa_open_entry(void);
 extern NDRX_API int atmi_xa_close_entry(void);
-extern NDRX_API int atmi_xa_start_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_start_entry(XID *xid, long flags, int ping_try);
 extern NDRX_API int atmi_xa_end_entry(XID *xid);
 extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_prepare_entry(XID *xid, long flags);

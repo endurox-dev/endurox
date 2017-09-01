@@ -64,9 +64,6 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-
-
 /*---------------------------Globals------------------------------------*/
 expublic pthread_t G_forward_thread;
 expublic int G_forward_req_shutdown = EXFALSE;    /* Is shutdown request? */
@@ -452,7 +449,9 @@ expublic void * forward_process(void *arg)
     * - Use timers counters from the cli params. 
     */
     
+    tmq_thread_init();
     forward_loop();
+    tmq_thread_uninit();
     
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS END **********");
     

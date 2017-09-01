@@ -350,6 +350,34 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"105"* ]]; then
 
 fi
 
+################################################################################
+# Test that pings works...
+################################################################################
+PING_DOM1=`grep 'PING OK 0' TM1*.log`
+echo "DOM1 PINGs by xa_recover: [$PING_DOM1]"
+
+if [ "X$PING_DOM1" == "X" ]; then
+    echo "DOM1 PINGs not working!"
+    RET=-1
+    go_out $RET
+fi
+
+echo "DOM1 pings OK"
+
+PING_DOM2=`grep 'PING OK -4' TM2*.log`
+echo "DOM2 PINGs by xa_start TMJOIN: [$PING_DOM2]"
+
+if [ "X$PING_DOM2" == "X" ]; then
+    echo "DOM2 PINGs not working!"
+    RET=-1
+    go_out $RETs
+fi
+
+echo "DOM2 pings OK"
+
+################################################################################
+# Normal tests
+################################################################################
 echo "Testing journal recovery..."
 cp ./test_data/* ./RM1
 xadmin restart -s tmsrv

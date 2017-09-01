@@ -178,6 +178,12 @@ extern tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/* init */
+extern void tmq_thread_init(void);
+extern void tmq_thread_uninit(void);
+extern void tmq_thread_shutdown(void *ptr, int *p_finish_off);
+
+
 /* Q api */
 extern int tmq_mqlq(UBFH *p_ub, int cd);
 extern int tmq_mqlc(UBFH *p_ub, int cd);

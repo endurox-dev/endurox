@@ -155,6 +155,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 5.0.6 released on 28/08/2017. Bug #195
 
+- Version 5.0.7 released on 01/09/2017. Feature #161 - tmsrv database pings & automatic reconnecting in case of network failures.
+
 # Build configurations
 
 ## Configure make with: 

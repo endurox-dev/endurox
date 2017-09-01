@@ -104,8 +104,8 @@ expublic int background_read_log(void)
     char fnamefull[PATH_MAX+1];
     atmi_xa_log_t *pp_tl = NULL;
     
-    sprintf(tranmask, "TRN-%ld-%hd-%d-", tpgetnodeid(), G_atmi_env.xa_rmid, 
-            G_server_conf.srv_id);
+    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", tpgetnodeid(), 
+            G_atmi_env.xa_rmid, G_server_conf.srv_id);
     len = strlen(tranmask);
     /* List the files here. */
     n = scandir(G_tmsrv_cfg.tlog_dir, &namelist, 0, alphasort);
@@ -137,7 +137,8 @@ expublic int background_read_log(void)
            
            if (0==strncmp(namelist[n]->d_name, tranmask, len))
            {
-               sprintf(fnamefull, "%s/%s", G_tmsrv_cfg.tlog_dir, namelist[n]->d_name);
+               snprintf(fnamefull, sizeof(fnamefull), "%s/%s", G_tmsrv_cfg.tlog_dir, 
+                       namelist[n]->d_name);
                NDRX_LOG(log_warn, "Resuming transaction: [%s]", 
                        fnamefull);
                if (EXSUCCEED!=tms_load_logfile(fnamefull, 
@@ -210,6 +211,9 @@ expublic int background_loop(void)
     
     while(!G_bacground_req_shutdown)
     {
+        /* run ping... */
+        tm_ping_db(NULL, NULL);
+        
         /* Check the list of transactions (iterate over...) 
          * Seems anyway, we need a list of background ops here...
          */
@@ -283,6 +287,8 @@ expublic void * background_process(void *arg)
 {
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS START ********");
     
+    tm_thread_init();
+    
    /* 1. Read the transaction records from disk */ 
     background_read_log();
     
@@ -294,6 +300,8 @@ expublic void * background_process(void *arg)
     */
     
     background_loop();
+    
+    tm_thread_uninit();
     
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS END **********");
     

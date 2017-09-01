@@ -78,6 +78,38 @@ exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
 exprivate void tm_chk_one_free_thread_notif(void *ptr, int *p_finish_off);
 
 /**
+ * Initialize thread
+ */
+expublic void tmq_thread_init(void)
+{
+    if (EXSUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to init worker client");
+        userlog("tmsrv: Failed to init worker client");
+        exit(1);
+    }
+    
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "Worker thread failed to tpopen() - nothing to do, "
+                "process will exit");
+        userlog("Worker thread failed to tpopen() - nothing to do, "
+                "process will exit");
+        exit(1);
+    }
+    
+}
+
+/**
+ * Close the thread session
+ */
+expublic void tmq_thread_uninit(void)
+{
+    tpclose();
+    tpterm();
+}
+
+/**
  * Tmqueue service entry (working thread)
  * @param p_svc - data & len used only...!
  */
@@ -101,12 +133,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     if (first)
     {
         first = EXFALSE;
-        if (EXSUCCEED!=tpinit(NULL))
-        {
-            NDRX_LOG(log_error, "Failed to init worker client");
-            userlog("tmqueue: Failed to init worker client");
-            exit(1);
-        }
+        tmq_thread_init();
     }
     
     /* restore context. */
@@ -323,15 +350,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         switch(c)
         {
             case 'm': /* My qspace.. */ 
-                strcpy(G_tmqueue_cfg.qspace, optarg);
-                sprintf(G_tmqueue_cfg.qspacesvc, NDRX_SVC_QSPACE, optarg);
+                NDRX_STRCPY_SAFE(G_tmqueue_cfg.qspace, optarg);
+                snprintf(G_tmqueue_cfg.qspacesvc, sizeof(G_tmqueue_cfg.qspacesvc),
+                        NDRX_SVC_QSPACE, optarg);
                 NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
                 NDRX_LOG(log_debug, "Qspace svc set to: [%s]", G_tmqueue_cfg.qspacesvc);
                 break;
                 
             case 'q':
                 /* Add the queue */
-                strcpy(G_tmqueue_cfg.qconfig, optarg);
+                NDRX_STRCPY_SAFE(G_tmqueue_cfg.qconfig, optarg);
                 NDRX_LOG(log_error, "Loading q config: [%s]", G_tmqueue_cfg.qconfig);
                 if (EXSUCCEED!=tmq_reload_conf(G_tmqueue_cfg.qconfig))
                 {
@@ -441,7 +469,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
      * Also.. when we will recover from disk we will have to ensure the correct order
      * of the enqueued messages. We can use time-stamp for doing ordering.
      */
-    sprintf(svcnm, NDRX_SVC_TMQ, tpgetnodeid(), tpgetsrvid());
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, tpgetnodeid(), tpgetsrvid());
     
     if (EXSUCCEED!=tpadvertise(svcnm, TMQUEUE))
     {
@@ -506,19 +534,19 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         /* Terminate the threads (request) */
         for (i=0; i<G_tmqueue_cfg.threadpoolsize; i++)
         {
-            thpool_add_work(G_tmqueue_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+            thpool_add_work(G_tmqueue_cfg.thpool, (void *)tmq_thread_shutdown, NULL);
         }
         
         /* update threads */
         for (i=0; i<G_tmqueue_cfg.notifpoolsize; i++)
         {
-            thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tp_thread_shutdown, NULL);
+            thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tmq_thread_shutdown, NULL);
         }
         
         /* forwarder */
         for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
         {
-            thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tp_thread_shutdown, NULL);
+            thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
         }
         
         
@@ -531,4 +559,16 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     tpclose();
     
+}
+
+/**
+ * Shutdown the thread
+ * @param arg
+ * @param p_finish_off
+ */
+expublic void tmq_thread_shutdown(void *ptr, int *p_finish_off)
+{
+    tmq_thread_uninit();
+    
+    *p_finish_off = EXTRUE;
 }
