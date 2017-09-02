@@ -212,7 +212,10 @@ expublic int background_loop(void)
     while(!G_bacground_req_shutdown)
     {
         /* run ping... */
-        tm_ping_db(NULL, NULL);
+        if (G_tmsrv_cfg.ping_time > 0)
+        {
+            tm_ping_db(NULL, NULL);
+        }
         
         /* Check the list of transactions (iterate over...) 
          * Seems anyway, we need a list of background ops here...
