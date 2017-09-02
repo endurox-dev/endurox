@@ -83,7 +83,7 @@ func "+svcname+@"(ac *atmi.ATMICtx, svc *atmi.TPSVCINFO) {
 		}
 	}()
 	
-	"+(useubf?@"
+	"+(useubf=="y"?@"
 	//Get UBF Handler
 	ub, _ := ac.CastToUBF(&svc.Data)
 
