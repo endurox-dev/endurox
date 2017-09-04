@@ -546,7 +546,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         
         if (G_atmi_env.xa_recon_times <=1)
         {
-            NDRX_LOG(log_warn, "ERROR ! Using -P (ping) to be effective, please "
+            NDRX_LOG(log_always, "ERROR ! Using -P (ping) to be effective, please "
                     "ensure that NDRX_XA_FLAGS=RECON... is set to tries count > 1!");
             EXFAIL_OUT(ret);
         }
