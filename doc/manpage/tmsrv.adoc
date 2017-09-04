@@ -135,7 +135,7 @@ by xa_recover+TMSTARTRSCAN and TMENDRSCAN flags. The xa_recover is enabled by
 is expected error code XAER_NOTA (transaction not found) as the scan is performed
 for non existent XID, generated for each worker thread. For xa_recover it is 
 expected that operation succeeds. If the operations goes out of the normal 
-behavior, then reconnection procedure set in *NDRX_XA_FLAGS* *RECON* is applied
+behavior, then reconnection procedure is set in *NDRX_XA_FLAGS* - tag *RECON*
 i.e. thread will perform xa_close() and xa_open() and retry operation. See the
 *ex_env(5)* manpage for the details. But for quick reference you may use value
 'RECON:*:3:100' which will perform 3x attempts on any error by sleeping 100 ms in
