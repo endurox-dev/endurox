@@ -260,6 +260,9 @@ expublic void tpext_configbrige
     
 }
 
+
+
+
 /**
  * Read current call context data
  * NOTE: buffer must be freed by caller!
@@ -267,24 +270,43 @@ expublic void tpext_configbrige
  * is tpcontinue()
  * WARNING! This suspends global tx!
  * 
- * @param data
- * @param flags
- * @return 
+ * @param p_buf if not NULL, then use as input buffer, if NULL, then will allocate the buf
+ * @param p_len if pp_buf not NULL, size of input buffer, on output real size put in pp_buf is set
+ * @return ptr to p_buf or allocated memory or NULL and tperrno will set to error
  */
-expublic char * tpsrvgetctxdata (void)
+expublic char * tpsrvgetctxdata2 (char *p_buf, long *p_len)
 {
-    server_ctx_info_t *ret = NDRX_MALLOC(sizeof(server_ctx_info_t));
+    server_ctx_info_t *ret = NULL;
     tp_command_call_t *last_call = ndrx_get_G_last_call();
     tp_conversation_control_t *p_accept_con;
-    char *fn = "tpsrvgetctxdata";
     
     API_ENTRY;
     
-    if (NULL==ret)
+    if (NULL==p_buf)
     {
-        ndrx_TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", strerror(errno));
-        goto out;
+        ret = NDRX_MALLOC(sizeof(server_ctx_info_t));
+        if (NULL==ret)
+        {
+            ndrx_TPset_error_fmt(TPEOS, "Failed to malloc ctx data: %s", 
+                    strerror(errno));
+            goto out;
+        }
     }
+    else
+    {
+        /* p_buf is not NULL */
+        if (*p_len < sizeof(server_ctx_info_t))
+        {
+            ndrx_TPset_error_fmt(TPEOS, "%s: ERROR ! Context data size: %d, "
+                    "but non NULL buffer size %ld", __func__, 
+                    strerror(errno), (int)sizeof(server_ctx_info_t), *p_len);
+            goto out;
+        }
+        
+        ret = (server_ctx_info_t *)p_buf;
+    }
+    
+    *p_len = sizeof(server_ctx_info_t);
     
     if (tpgetlev())
     {
@@ -312,8 +334,27 @@ expublic char * tpsrvgetctxdata (void)
     
 out:
     NDRX_LOG(log_debug, "%s: returning %p (last call cd: %d)", 
-        fn, ret, ret->G_last_call.cd);
+        __func__, ret, ret->G_last_call.cd);
     return (char *)ret;
+}
+
+/**
+ * Original version tpsrvgetctxdata, just wrap the automatically allocated memory
+ * @return 
+ */
+expublic char * tpsrvgetctxdata (void)
+{
+    long len;
+    return tpsrvgetctxdata2 (NULL, &len);
+}
+
+/**
+ * Free up the memory buffer allocated by tpsrvgetctxdata
+ * @param p_buf buffer allocated by tpsrvgetctxdata or tpsrvgetctxdata2 with p_buf NULL
+ */
+expublic void tpsrvfreectxdata(char *p_buf)
+{
+    NDRX_FREE(p_buf);
 }
 
 /**
