@@ -568,6 +568,8 @@ extern NDRX_API int tpclose (void);
 extern NDRX_API int tpgetlev (void);
 extern NDRX_API char * tpstrerror (int err);
 extern NDRX_API char * tpsrvgetctxdata (void); 
+extern NDRX_API char * tpsrvgetctxdata2 (char *p_buf, long *p_len);
+extern NDRX_API void tpsrvfreectxdata(char *p_buf);
 extern NDRX_API int tpsrvsetctxdata (char *data, long flags);
 extern NDRX_API void tpcontinue (void);
 extern NDRX_API long tpgetnodeid(void);
