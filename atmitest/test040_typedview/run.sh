@@ -56,6 +56,8 @@ export VIEWDIR=.
 xadmin killall atmisv40 2>/dev/null
 xadmin killall atmiclt40 2>/dev/null
 
+rm *.log
+
 #
 # Generic exit function
 #
