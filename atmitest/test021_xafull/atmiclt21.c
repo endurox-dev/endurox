@@ -184,10 +184,10 @@ int main(int argc, char** argv) {
         /* Call Svc1 */
         if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
         {
-            NDRX_LOG(log_error, "RUNTX should return fail!");
+            NDRX_LOG(log_error, "TESTERROR: RUNTX should not return fail!");
         }
         
-        sleep(4);
+        sleep(10);
 
         ret=tpcommit(0);
         
