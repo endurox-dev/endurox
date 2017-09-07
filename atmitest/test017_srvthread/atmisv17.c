@@ -79,7 +79,7 @@ void _TH_TESTSVFN (void *ptr, int *p_finish_off)
     }
     
     /* free up the transport data.*/
-    free(thread_data->context_data);
+    tpsrvsetctxdata(thread_data->context_data);
     free(thread_data);
     
     /* !!!************* OK. we are ready to go! **********************!!!*/

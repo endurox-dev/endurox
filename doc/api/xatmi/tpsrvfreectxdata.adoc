@@ -1,0 +1,50 @@
+TPSRVFREECTXDATA(3)
+===================
+:doctype: manpage
+
+
+NAME
+----
+tpsrvfreectxdata - Free server context data
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpsrvfreectxdata(char *p_buf);
+
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd 
+-lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used for deallocating the server context data allocated either 
+by *tpsrvgetctxdata(3)* or *tpsrvgetctxdata2()*.
+
+This function is available only for XATMI servers.
+
+RETURN VALUE
+------------
+Function does not return a value.
+
+ERRORS
+------
+Function does not return an error.
+
+EXAMPLE
+-------
+See *atmitest/test017_srvthread/atmisv17.c* for sample code.
+
+BUGS
+----
+Report bugs to madars.vitolins@gmail.com
+
+SEE ALSO
+--------
+*tpsetctxdata(3)* *tpsrvgetctxdata(3)* *tpcontinue(3)* *tpinit(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

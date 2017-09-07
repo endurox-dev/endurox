@@ -14,15 +14,35 @@ SYNOPSIS
 
 char * tpsrvgetctxdata (void);
 
-Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+char * tpsrvgetctxdata2 (char *p_buf, long *p_len);
+
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd 
+-lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Get server context data. This function is intended to be used by XATMI server function. When main thread service dispatcher invokes the service function, by using *tpsrvgetctxdata()* it is possible to flip over the work load to thread. Function allocates memory block by *malloc()* and fills with the thread data. If global transaction is started, then it is suspended and transaction data is written to returned context data.
+Get server context data. This function is intended to be used by XATMI server 
+function. When main thread service dispatcher invokes the service function, by 
+using *tpsrvgetctxdata()* it is possible to flip over the work load to thread. 
+Function allocates memory block by *malloc()* and fills with the thread data. If 
+global transaction is started, then it is suspended and transaction data is 
+written to returned context data.
 
-Returned pointer later must be freed by caller by using *free()* to avoid memory leak.
+If the size of allocated memory block is needed to be know, then *tpsrvgetctxdata2()*
+can be used, for which 'p_len' is mandatory attributed. In case if 'p_buf' is NULL,
+the 'p_len' will be set to block size allocated. In case of 'p_buf' is not NULL
+i.e. using user buffer, then on input 'p_len' indicates the buffer size. The function
+will validate the size, if shorter than context data needed, the function will
+terminate with error. In case of success *tpsrvgetctxdata2()* will either return
+user pointer passed in 'p_buf' if was not NULL or memory block allocated by function.
 
-Sample app, original request goes to 'TESTSVFN' but it is servered by later by new thread on function '_TH_TESTSVFN'.
+Returned pointer if was allocated by *tpsrvgetctxdata()* or *tpsrvgetctxdata2()* 
+must be freed by caller by using *tpsrvfreectxdata()* to avoid memory leak.
+Currently *tpsrvfreectxdata()* is just a wrapper for system function *free()*, but
+this can change in future.
+
+Sample app, original request goes to 'TESTSVFN' but it is servered by later by 
+new thread on function '_TH_TESTSVFN'.
 -------------------------------------------------------------------------------
 
 #include <unistd.h>     /* Symbolic Constants */
@@ -51,27 +71,27 @@ typedef struct thread_server thread_server_t;
 /* threaded function... */
 void _TH_TESTSVFN (void *ptr)
 {
-    int ret=SUCCEED;
+    int ret=EXSUCCEED;
     double d;
     int i;
     thread_server_t *thread_data = (thread_server_t *)ptr;
     UBFH *p_ub = (UBFH *)thread_data->buffer;
     
-    if (SUCCEED!=tpinit(NULL))
+    if (EXSUCCEED!=tpinit(NULL))
     {
         NDRX_LOG(log_error, "Failed to init worker client");
         exit(1);
     }
     
     /* restore context. */
-    if (SUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
+    if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
     {
         NDRX_LOG(log_error, "Failed to set context");
         exit(1);
     }
     
     /* free up the transport data.*/
-    free(thread_data->context_data);
+    tpsrvfreectxdata(thread_data->context_data);
     free(thread_data);
     
     NDRX_LOG(log_debug, "TESTSVFN got call");
@@ -117,7 +137,8 @@ void TESTSVFN (TPSVCINFO *p_svc)
     
     thread_server_t *thread_data = malloc(sizeof(thread_server_t));
     
-    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
+    /* not using sub-type - on tpreturn/forward for thread it will be auto-free 
+*/
     thread_data->buffer =  tpalloc(btype, NULL, size);
     
     
@@ -132,7 +153,8 @@ void TESTSVFN (TPSVCINFO *p_svc)
     
     thread_data->context_data = tpsrvgetctxdata();
     
-    if (SUCCEED!=pthread_create (&thread, &attr, (void *) &_TH_TESTSVFN, thread_data))
+    if (EXSUCCEED!=pthread_create (&thread, &attr, (void *) &_TH_TESTSVFN, 
+thread_data))
     {
         ret=FAIL;
         goto out;
@@ -181,20 +203,29 @@ This function is available only for XATMI servers.
 
 RETURN VALUE
 ------------
-On success, *tpsrvgetctxdata()* return pointer to context data block; on error, NULL is returned, with *tperrno* set to indicate the error.
+On success, *tpsrvgetctxdata()* return pointer to context data block; on error, 
+NULL is returned, with *tperrno* set to indicate the error.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
 
-*TPEPROTO* Global transaction was started and it was marked for abort-only, there was any open call descriptors with-in global transaction, 
+*TPEINVAL* the 'p_len' indicates buffer shorter than needed for context data.
 
-*TPERMERR* Resource Manager failed (failed to suspend global transaction). The *tpstrerror()* will provide more info from last call.
+*TPEPROTO* Global transaction was started and it was marked for abort-only, 
+there was any open call descriptors with-in global transaction, 
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. This could also be a problem with dynamical driver loading.
+*TPERMERR* Resource Manager failed (failed to suspend global transaction). The 
+*tpstrerror()* will provide more info from last call.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info. This could also be a problem with dynamical driver 
+loading.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info.
 
 EXAMPLE
 -------
@@ -206,7 +237,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*tpsetctxdata(3)* *tpcontinue(3)* *tpinit(3)*
+*tpsetctxdata(3)* *tpsrvfreectxdata(3)* *tpcontinue(3)* *tpinit(3)*
 
 COPYING
 -------

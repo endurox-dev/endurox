@@ -64,6 +64,7 @@ set(MAN3_NAMES
         tppost
         tpsrvgetctxdata 
         tpsrvsetctxdata
+        tpsrvfreectxdata
         tpgetctxt
         tpsetctxt
         tpnewctxt
