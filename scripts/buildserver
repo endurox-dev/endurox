@@ -34,53 +34,79 @@
 use Getopt::Std;
 use Cwd;
 
+#
+# Compile the server.
+#
+sub buildmain {
 
-my %options=();
-getopts("o:f:s:a:", \%options);
+    my %options=();
+    getopts("o:f:s:a:", \%options);
 
-my $CFLAGS = $ENV{'CFLAGS'};
+    my $CFLAGS = $ENV{'CFLAGS'};
 
-# Support #104, mvitolin 23/03/2017 - give chance to change compiler
-my $CC = "cc";
-if ($ENV{'CC'})
-{
-	$CC=$ENV{'CC'};
+    # Support #104, mvitolin 23/03/2017 - give chance to change compiler
+    my $CC = "cc";
+    if ($ENV{'CC'})
+    {
+        $CC=$ENV{'CC'};
+    }
+
+    my $CFLAGS="";
+    if ($ENV{'CFLAGS'})
+    {
+        $CFLAGS=$ENV{'CFLAGS'};
+    }
+
+    my $NDRX_INCL="";
+    if (defined $ENV{'NDRX_HOME'})
+    {
+            $NDRX_INCL="-I$ENV{'NDRX_HOME'}/include";
+    }
+
+    # Print out the options we have
+    print "-o $options{o}\n" if defined $options{o};
+    print "-f $options{f}\n" if defined $options{f};
+
+    # Set RT LIB
+    my $dyn_libs = "-lrt -ldl -lpthread";
+    my $wd = getcwd;
+
+    print "OS Version: $^O wd: $wd\n";
+
+    if ($^O eq "freebsd" )
+    {
+        $dyn_libs = "-lrt -lpthread";
+    }
+    elsif ($^O eq "darwin")
+    {
+        $dyn_libs = "-ldl -lpthread";
+    }
+
+
+    my $command="$CC $CFLAGS -o $options{o} $options{f} -latmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL";
+
+    # print the build output
+    print "$command\n";
+    my $output=`$command`;
+    my $ret = $?;
+
+    print STDERR $output;
+
+    #
+    # Termiante process accordingly
+    #
+    if ($ret != 0)
+    {
+            exit -1;
+    }
+    else
+    {
+            exit 0;
+    }
+    
 }
 
-my $CFLAGS="";
-if ($ENV{'CFLAGS'})
-{
-	$CFLAGS=$ENV{'CFLAGS'};
-}
+# Run the main
+buildmain();
 
-my $NDRX_INCL="";
-if (defined $ENV{'NDRX_HOME'})
-{
-        $NDRX_INCL="-I$ENV{'NDRX_HOME'}/include";
-}
-
-# Print out the options we have
-print "-o $options{o}\n" if defined $options{o};
-print "-f $options{f}\n" if defined $options{f};
-
-# Set RT LIB
-my $dyn_libs = "-lrt -ldl -lpthread";
-my $wd = getcwd;
-
-print "OS Version: $^O wd: $wd\n";
-
-if ($^O eq "freebsd" )
-{
-	$dyn_libs = "-lrt -lpthread";
-}
-elsif ($^O eq "darwin")
-{
-	$dyn_libs = "-ldl -lpthread";
-}
-
-
-$command="$CC $CFLAGS -o $options{o} $options{f} -latmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL";
-
-print "$command\n";
-`$command`
 
