@@ -338,7 +338,7 @@ expublic int command_wait_and_run(int *finished, int *abort)
     }
     else
     {
-        NDRX_LOG(log_warn, ">>>>>>>>>>>>>>>>>>got message, len : %ld",
+        NDRX_LOG(log_info, ">>>>>>>>>>>>>>>>>>got message, len : %ld",
                         data_len);
 
         /* reset error code */
