@@ -84,6 +84,7 @@ void dump_float (struct dtype_ext1 *t, char *text, char *data, int *len);
 void dump_double (struct dtype_ext1 *t, char *text, char *data, int *len);
 void dump_string (struct dtype_ext1 *t, char *text, char *data, int *len);
 void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len);
+void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len);
 
 char *tbuf_short (struct dtype_ext1 *t, int len);
 char *tbuf_long (struct dtype_ext1 *t, int len);
@@ -92,6 +93,7 @@ char *tbuf_float (struct dtype_ext1 *t, int len);
 char *tbuf_double (struct dtype_ext1 *t, int len);
 char *tbuf_string (struct dtype_ext1 *t, int len);
 char *tbuf_carray (struct dtype_ext1 *t, int len);
+char *tbuf_int (struct dtype_ext1 *t, int len);
 
 char *tallocdlft (struct dtype_ext1 *t, int *len);
 
@@ -100,6 +102,7 @@ char *tallocdlft (struct dtype_ext1 *t, int *len);
  */
 int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
 int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
+int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
 int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
 int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
 int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
@@ -120,6 +123,7 @@ expublic dtype_str_t G_dtype_str_map[] =
 	{"double",	BFLD_DOUBLE, BFLD_DOUBLE_SIZE, 8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 4 */
 	{"string",	BFLD_STRING, BFLD_STRING_SIZE, 4, get_fb_string_size, put_data_string,  get_d_size_string, get_data_str}, /* 5 */
 	{"carray",	BFLD_CARRAY, BFLD_CARRAY_SIZE, 4, get_fb_carray_size, put_data_carray, get_d_size_carray, get_data_carr}, /* 6 */
+	{"int",		BFLD_INT,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 7 */
     {""}
 };
 
@@ -136,6 +140,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
     {BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,4, tbuf_double,tallocdlft, cmp_double},    /* 4 */
     {BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,4, tbuf_string,tallocdlft, cmp_string},    /* 5 */
     {BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,8, tbuf_carray,tallocdlft, cmp_carray},    /* 6 */
+    {BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   4, tbuf_int,   tallocdlft, cmp_int},      /* 1 */
     -1
 };
 /*********************** Basic data type operations ***************************/
@@ -639,6 +644,19 @@ void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
+void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len)
+{
+    if (NULL!=data)
+    {
+        int *l = (int *)data;
+        UBF_LOG(log_debug, "%s:\n[%d]", text, *l);
+    }
+    else
+    {
+        UBF_LOG(log_debug, "%s:\n[null]", text);
+    }
+}
+
 /******************************************************************************/
 /* Bellow functions returns temporary buffer space that could be used by      */
 /* calls like CBfind.                                                         */
@@ -751,6 +769,12 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
     return G_ubf_tls->carray_buf_ptr;
 }
 
+char *tbuf_int (struct dtype_ext1 *t, int len)
+{
+    UBF_TLS_ENTRY;
+    return (char *)&G_ubf_tls->tbuf_i;
+}
+
 /******************************************************************************/
 /* Bellow functions are designed for buffer allocation for conversation space.*/
 /* User is responsible to free it up                                          */
@@ -800,6 +824,13 @@ int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLE
     long *l1 = (long *)val1;
     long *l2 = (long *)val2;
     return (*l1==*l2);
+}
+
+int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+{
+    int *i1 = (int *)val1;
+    int *i2 = (int *)val2;
+    return (*i1==*i2);
 }
 
 int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)

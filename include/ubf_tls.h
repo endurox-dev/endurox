@@ -63,6 +63,7 @@ typedef struct
     /* fdatatype.c */
     short tbuf_s; /* =0; */
     long tbuf_l;/*=0; */
+    int tbuf_i;/*=0; */
     char tbuf_c;/*=0; */
     float tbuf_f; /*=0.0; */
     double tbuf_d; /*=0.0; */

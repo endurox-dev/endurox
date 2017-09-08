@@ -76,6 +76,28 @@ extern "C" {
 #define NDRX_VIEW_QUOTES_SINGLE         1
 #define NDRX_VIEW_QUOTES_DOUBLE         2
     
+#define NDRX_VIEW_COUNT_SETUP\
+	if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)\
+	{\
+	    C_count = (short *)(cstruct+f->count_fld_offset);\
+	}\
+	else\
+	{\
+	    C_count = &C_count_stor;\
+	}
+
+#define NDRX_VIEW_LEN_SETUP\
+	if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)\
+	{\
+	    L_length = (unsigned short *)(cstruct+f->length_fld_offset+\
+		    occ*sizeof(unsigned short));\
+	}\
+	else\
+	{\
+	    L_length_stor = dim_size;\
+	    L_length = &L_length_stor;\
+	}\
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     

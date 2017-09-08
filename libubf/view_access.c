@@ -44,6 +44,7 @@
 #include <userlog.h>
 #include <view_cmn.h>
 #include <atmi_tls.h>
+#include <cf.h>
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -55,6 +56,10 @@
 
 /**
  * Return the VIEW field according to user type
+ * In case of NULL value, we do not return the given occurrence.
+ * If the C_count is less than given occurrence and BVNEXT_NOTNULL is set, then
+ * field not found will be returned.
+ * 
  * @param cstruct instance of the view object
  * @param view view name
  * @param cname field name in view
@@ -63,22 +68,131 @@
  * @param len on input user buffer len, on output bytes written to (for carray only)
  * on input for string too.
  * @param usrtype of buf see BFLD_* types
+ * @param mode BVNEXT_ALL or BVNEXT_NOTNULL
  * @return 0 on success, or -1 on fail. 
  * 
  * The following errors possible:
  * - BBADVIEW view not found
  * - BNOCNAME field not found
- * - BNOTPRES field not present (invalid occ)
+ * - BNOTPRES field is NULL
  * - BEINVAL cstruct/view/cname/buf is NULL
  * - BEINVAL - invalid usrtype
+ * - BEINVAL - invalid occurrence
  * - BNOSPACE - no space in buffer (the data is larger than user buf specified)
  */
-expublic int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
-			 char *buf, BFLDLEN *len, int usrtype)
+
+expublic int ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
+	ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, BFLDLEN *len, 
+			     int usrtype, long flags)
 {
-	return EXFAIL;
+	int ret = EXSUCCEED;
+	int dim_size = f->fldsize/f->count;
+	char *fld_offs = cstruct+f->offset+occ*dim_size;
+	char *cvn_buf;
+	short *C_count;
+	short C_count_stor;
+	unsigned short *L_length;
+	unsigned short L_length_stor;
+    
+	UBF_LOG(log_debug, "%s enter, get %s.%s occ=%d", __func__,
+		v->vname, f->cname, occ);
+	
+	NDRX_VIEW_COUNT_SETUP;
+		
+	if (flags & BVACCESS_NOTNULL)
+	{
+		if (ndrx_Bvnull_int(v, f, occ, cstruct))
+		{
+			NDRX_LOG(log_debug, "Field is NULL");
+			ndrx_Bset_error_fmt(BNOTPRES, "%s.%s occ=%d is NULL", 
+					 v->vname, f->cname, occ);
+			EXFAIL_OUT(ret);
+		}
+		
+		if (*C_count-1<occ+1)
+		{
+			NDRX_LOG(log_debug, "%s.%s count field is set to %hu, "
+				"but requesting occ=%d (zero based) - NOT PRES",
+				 v->vname, f->cname, *C_count, occ);
+			ndrx_Bset_error_fmt(BNOTPRES, "%s.%s count field is set to %hu, "
+				"but requesting occ=%d (zero based) - NOT PRES",
+				 v->vname, f->cname, *C_count, occ);
+			EXFAIL_OUT(ret);
+		}
+	}
+	
+	/* Will request type convert now */
+	NDRX_VIEW_LEN_SETUP;
+	
+	cvn_buf = ndrx_ubf_convert(f->typecode_full, CNV_DIR_OUT, fld_offs, *L_length,
+                                    usrtype, buf, len);
+        if (NULL==cvn_buf)
+        {
+            UBF_LOG(log_error, "%s: failed to convert data!", __func__);
+            /* Error should be provided by conversation function */
+            EXFAIL_OUT(ret);
+        }
+	 
+out:
+	UBF_LOG(log_debug, "%s return %d", __func__, ret);
+	
+	return ret;
 }
 
+/**
+ * Wrapper for function for ndrx_CBvget_int, just to resolve the objects
+ * @param cstruct
+ * @param view
+ * @param cname
+ * @param occ
+ * @param buf
+ * @param len
+ * @param usrtype
+ * @param mode
+ * @return 
+ */
+expublic int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+			 char *buf, BFLDLEN *len, int usrtype, long flags)
+{
+	int ret = EXFALSE;
+	ndrx_typedview_t *v = NULL;
+	ndrx_typedview_field_t *f = NULL;
+	
+	/* resolve view & field, call ndrx_Bvnull_int */
+    
+	if (NULL==(v = ndrx_view_get_view(view)))
+	{
+	    ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+	    EXFAIL_OUT(ret);
+	}
+
+	if (NULL==(f = ndrx_view_get_field(v, cname)))
+	{
+	    ndrx_Bset_error_fmt(BNOCNAME, "Field [%s] of view [%s] not found!", 
+		    cname, v->vname);
+	    EXFAIL_OUT(ret);
+	}
+
+	if (occ > f->count-1 || occ<0)
+	{
+	    ndrx_Bset_error_fmt(BEINVAL, "Invalid occurrence requested for field "
+		    "%s.%s, count=%d occ=%d (zero base)",
+		    v->vname, f->cname, f->count, occ);
+	    EXFAIL_OUT(ret);
+	}
+    
+	if (EXFAIL==(ret=ndrx_CBvget_int(cstruct, v, f, occ, buf, len, 
+					 usrtype, flags)))
+	{
+		/* error must be set */
+		NDRX_LOG(log_error, "ndrx_CBvget_int failed");
+		EXFAIL_OUT(ret);
+	}
+	
+out:
+	
+	return ret;
+}
 
 /**
  * Return the VIEW field according to user type
@@ -105,10 +219,98 @@ expublic int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ,
  * - BEINVAL invalid usrtype
  * - BNOSPACE the view field is shorter than data received
  */
+expublic int ndrx_CBvset_int(char *cstruct, ndrx_typedview_t *v, 
+		ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, 
+			     BFLDLEN len, int usrtype)
+{
+	int ret = EXSUCCEED;
+	int dim_size = f->fldsize/f->count;
+	char *fld_offs = cstruct+f->offset+occ*dim_size;
+	char *cvn_buf;
+	short *C_count;
+	short C_count_stor;
+	unsigned short *L_length;
+	unsigned short L_length_stor;
+   
+	BFLDLEN setlen;
+	UBF_LOG(log_debug, "%s enter, get %s.%s occ=%d", __func__,
+		v->vname, f->cname, occ);
+	
+	NDRX_VIEW_COUNT_SETUP;
+	
+	/* Length output buffer */
+	NDRX_VIEW_LEN_SETUP;
+
+	setlen = dim_size;
+	
+	cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_OUT, buf, len,
+                                    f->typecode_full, fld_offs, &setlen);
+	
+	if (NULL==cvn_buf)
+        {
+            UBF_LOG(log_error, "%s: failed to convert data!", __func__);
+            /* Error should be provided by conversation function */
+            EXFAIL_OUT(ret);
+        }
+	
+	*L_length = setlen;
+	
+out:	
+	UBF_LOG(log_debug, "%s return %d", __func__, ret);
+	
+	return ret;
+}
+
+/**
+ * Set the field wrapper for internal method above.
+ * @param cstruct
+ * @param view
+ * @param cname
+ * @param occ
+ * @param buf
+ * @param len
+ * @param usrtype
+ * @return 
+ */
 expublic int ndrx_CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
 			 char *buf, BFLDLEN len, int usrtype)
 {
-	return EXFAIL;
+	int ret = EXFALSE;
+	ndrx_typedview_t *v = NULL;
+	ndrx_typedview_field_t *f = NULL;
+	
+	/* resolve view & field, call ndrx_Bvnull_int */
+    
+	if (NULL==(v = ndrx_view_get_view(view)))
+	{
+	    ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+	    EXFAIL_OUT(ret);
+	}
+
+	if (NULL==(f = ndrx_view_get_field(v, cname)))
+	{
+	    ndrx_Bset_error_fmt(BNOCNAME, "Field [%s] of view [%s] not found!", 
+		    cname, v->vname);
+	    EXFAIL_OUT(ret);
+	}
+
+	if (occ > f->count-1 || occ<0)
+	{
+	    ndrx_Bset_error_fmt(BEINVAL, "Invalid occurrence requested for field "
+		    "%s.%s, count=%d occ=%d (zero base)",
+		    v->vname, f->cname, f->count, occ);
+	    EXFAIL_OUT(ret);
+	}
+    
+	if (EXFAIL==(ret=ndrx_CBvset_int(cstruct, v, f, occ, buf, len, usrtype)))
+	{
+		/* error must be set */
+		NDRX_LOG(log_error, "ndrx_CBvset_int failed");
+		EXFAIL_OUT(ret);
+	}
+	
+out:
+	return ret;
 }
 
 /**
@@ -164,11 +366,23 @@ expublic int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ
 }
 
 /**
- * API would require state to be memset to 0, to start scan
- * @param mode BVNEXT_ALL, BVNET_INDICATORS
+ * This will iterate over the view buffer and will return the value in buf/len
+ * optionally.
+ * @param state Save state for scanning. For start scan, do memset 0 on state
+ * @param cstruct instance of the view object
+ * @param view view name
+ * @param cname output cname field
+ * @param cname_len optional buffer len indicator of cname
+ * @param fldtype return the type of the field
+ * @param occ occurrence returnd
+ * @param is_null return TRUE if value is NULL (tested only if BNEXT_NOTNULL not set)
+ * @param buf data copied to buf (optional if not NULL)
+ * @param len buffer len (if set on intput validate the intput len) on output bytes copied
+ * including NULL, BNEXT_NOTNULL - return only non NULL values
  */
 expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, 
-		char *view, char *cname, BFLDLEN * cname_len, BFLDOCC *occ, 
+		char *view, char *cname, BFLDLEN * cname_len, int *fldtype, 
+			  BFLDOCC *occ, int *is_null,
 			  char *buf, BFLDLEN *len, long mode)
 {
 	return EXFAIL;

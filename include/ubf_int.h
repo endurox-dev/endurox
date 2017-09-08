@@ -90,6 +90,7 @@ extern "C" {
 #define BFLD_DOUBLE_SIZE	sizeof(double)
 #define BFLD_STRING_SIZE	0
 #define BFLD_CARRAY_SIZE	0
+#define BFLD_INT_SIZE		sizeof(int)
 
 /* #define UBF_API_DEBUG   1 *//* Provide lots of debugs from UBF API? */
 
@@ -116,8 +117,8 @@ extern "C" {
 #define DOUBLE_EQUAL        0.000001
 #define FLOAT_EQUAL         0.00001
 
-#define DOUBLE_RESOLUTION 6
-#define FLOAT_RESOLUTION 5
+#define DOUBLE_RESOLUTION	6
+#define FLOAT_RESOLUTION	5
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

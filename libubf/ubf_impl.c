@@ -1698,7 +1698,7 @@ expublic char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
     }
     
     /* Run the conversation */
-    if (NULL==ubf_convert(from_type, CNV_DIR_OUT, from_buf, from_len,
+    if (NULL==ndrx_ubf_convert(from_type, CNV_DIR_OUT, from_buf, from_len,
                         to_type, ret, &cvn_len))
     {
         /* if fails, error should be already set! */

@@ -186,7 +186,7 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
             return NULL; /* <<<< RETURN!!!! */
         }
 
-        ret = ubf_convert(from_type, CNV_DIR_OUT, fb_data, tmp_len,
+        ret = ndrx_ubf_convert(from_type, CNV_DIR_OUT, fb_data, tmp_len,
                                     usrtype, cvn_buf, len);
         if (NULL==ret)
         {
@@ -343,7 +343,7 @@ expublic BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLE
     }
 
     /* Convert the value */
-    cvn_buf = ubf_convert(usrtype, CNV_DIR_IN, value, len,
+    cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_IN, value, len,
                         to_type, p, &cvn_len);
 
     if (NULL!=cvn_buf)

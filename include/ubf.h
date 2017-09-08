@@ -107,6 +107,8 @@ extern "C" {
 
 #define Berror	(*ndrx_Bget_Ferror_addr())
 #define BFLDID32 BFLDID
+	
+#define BVACCESS_NOTNULL	0x00000001	/* return value if not NULL */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     

@@ -57,7 +57,7 @@ struct conv_type {
 typedef struct conv_type conv_type_t;
 
 /* The main conversation function. This will not work in multi threaded mode! */
-extern char * ubf_convert(int cnv_dir, int from_type, char *input_buf, int in_len,
+extern char * ndrx_ubf_convert(int cnv_dir, int from_type, char *input_buf, int in_len,
                         int to_type, char *output_buf , int *out_len);
 
 extern char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,

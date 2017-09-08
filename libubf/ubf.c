@@ -466,7 +466,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
         return EXFAIL; /* <<<< RETURN!!!! */
     }
 
-    cvn_buf = ubf_convert(usrtype, CNV_DIR_IN, buf, len,
+    cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_IN, buf, len,
                         to_type, p, &cvn_len);
 
     if (NULL!=cvn_buf)
@@ -545,7 +545,7 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         return EXFAIL; /* <<<< RETURN!!!! */
     }
 
-    cvn_buf = ubf_convert(usrtype, CNV_DIR_IN, buf, len,
+    cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_IN, buf, len,
                         to_type, p, &cvn_len);
 
     if (NULL!=cvn_buf)
@@ -607,7 +607,7 @@ expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
     if (NULL!=fb_data)
     {
 
-        cvn_buf = ubf_convert(from_type, CNV_DIR_OUT, fb_data, tmp_len,
+        cvn_buf = ndrx_ubf_convert(from_type, CNV_DIR_OUT, fb_data, tmp_len,
                                     usrtype, buf, len);
         if (NULL==cvn_buf)
         {

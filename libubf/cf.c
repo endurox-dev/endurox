@@ -55,7 +55,7 @@
         tmp[cpy_len] = EXEOS
 
 /*
- * This generally checks fixed data type lenghts, i.e. if converting out
+ * This generally checks fixed data type lengths, i.e. if converting out
  * then if specified shorter that standard data type, then rejected!
  */
 #define CHECK_OUTPUT_BUF_SIZE \
@@ -418,7 +418,7 @@ expublic char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
  * @param olen
  * @return
  */
-expublic char * ubf_convert(int from_type, int cnv_dir, char *input_buf, int in_len,
+expublic char * ndrx_ubf_convert(int from_type, int cnv_dir, char *input_buf, int in_len,
                         int to_type, char *output_buf , int *out_len)
 {
     conv_type_t* conv_tab = NULL;
@@ -471,7 +471,7 @@ expublic char * ubf_convert(int from_type, int cnv_dir, char *input_buf, int in_
 
 /**
  * Returns the same data, but copied into different buffer.
- * Does buffer lenght check.
+ * Does buffer length check.
  */
 exprivate char * conv_same(struct conv_type *t, int cnv_dir, char *input_buf, 
 			  int in_len, char *output_buf , int *out_len)
@@ -479,19 +479,20 @@ exprivate char * conv_same(struct conv_type *t, int cnv_dir, char *input_buf,
     dtype_str_t *dtype = &G_dtype_str_map[t->to_type];
     int real_data;
     int size = dtype->p_get_data_size(dtype, input_buf, in_len, &real_data);
-
+    
     /* Check buffer sizes */
 
     if (NULL!=out_len && real_data > *out_len)
     {
-        ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", real_data, *out_len);
+        ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", 
+			    real_data, *out_len);
         return NULL;
     }
 
     if (NULL!=out_len)
         *out_len = real_data;
 
-    /* Copy off the buffer stuff */
+    /* Copy off the buffer data */
     memcpy(output_buf, input_buf, real_data);
 
     return output_buf;
@@ -1309,7 +1310,8 @@ exprivate char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_
     int input_carrlen = in_len;
 
     /* Check output size! */
-    if (CNV_DIR_OUT==cnv_dir && NULL!=out_len && *out_len > 0 && *out_len < input_carrlen+1) /* Now we include EOS */
+     /* Now we include EOS */
+    if (CNV_DIR_OUT==cnv_dir && NULL!=out_len && *out_len > 0 && *out_len < input_carrlen+1)
     {
         ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", input_carrlen+1, *out_len);
         return NULL; /*<<<< RETURN!*/
