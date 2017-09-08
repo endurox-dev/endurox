@@ -118,9 +118,6 @@ extern "C" {
 
 #define DOUBLE_RESOLUTION 6
 #define FLOAT_RESOLUTION 5
-
-    
-#define BFLD_INT                7  /* Internal Buffer type for VIEW */
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

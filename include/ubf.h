@@ -57,7 +57,9 @@ extern "C" {
 #define BFLD_DOUBLE	4
 #define BFLD_STRING	5
 #define BFLD_CARRAY	6
-#define BFLD_MAX    6
+#define BFLD_MAX	6
+	
+#define BFLD_INT        7  /* Used for view access */
 
 /* invalid field id - returned from functions where field id not found */
 #define BBADFLDID (BFLDID)0
