@@ -76,6 +76,7 @@ add_library (ubf SHARED
                 view_plot.c
                 view_struct.c
                 view_ubf.c
+		view_access.c
 		${BISON_EXPRPARSER_OUTPUTS} 
 		${FLEX_EXPRSCANNER_OUTPUTS}
 	)

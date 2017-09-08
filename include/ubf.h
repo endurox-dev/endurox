@@ -123,6 +123,16 @@ struct Bnext_state
     size_t size;
 };
 typedef struct Bnext_state Bnext_state_t;
+
+/**
+ * TOOD: Next state for view iteration...
+ */
+struct Bvnext_state
+{
+	/* TODO: */
+};
+typedef struct Bvnext_state Bvnext_state_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
