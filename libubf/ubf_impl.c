@@ -1689,7 +1689,7 @@ expublic char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
                                         from_type, to_type);
 
     /* Allocate the buffer dynamically */
-    if (NULL==(ret=get_cbuf(from_type, to_type, NULL, from_buf, from_len, &alloc_buf,
+    if (NULL==(ret=ndrx_ubf_get_cbuf(from_type, to_type, NULL, from_buf, from_len, &alloc_buf,
                                 &cvn_len, CB_MODE_ALLOC, 0)))
     {
         /* error should be already set */

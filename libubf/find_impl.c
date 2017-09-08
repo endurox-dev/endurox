@@ -174,7 +174,7 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
     if (NULL!=fb_data)
     {
         /* Allocate the buffer */
-        if (NULL==(cvn_buf=get_cbuf(from_type,usrtype,
+        if (NULL==(cvn_buf=ndrx_ubf_get_cbuf(from_type,usrtype,
                         NULL, fb_data, tmp_len,
                         &alloc_buf,
                         &alloc_size,
@@ -335,7 +335,7 @@ expublic BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLE
     /* if types are not the same then go the long way... */
 
     /* Allocate the buffer dynamically or statically */
-    if (NULL==(p=get_cbuf(usrtype, to_type, tmp_buf,value, len, &alloc_buf, &cvn_len,
+    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf,value, len, &alloc_buf, &cvn_len,
                                 CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "%s: Malloc failed!", fn);

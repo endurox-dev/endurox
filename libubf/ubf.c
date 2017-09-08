@@ -459,7 +459,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     /* if types are not the same then go the long way... */
 
     /* Allocate the buffer dynamically */
-    if (NULL==(p=get_cbuf(usrtype, to_type, tmp_buf, buf, len, &alloc_buf, 
+    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf, buf, len, &alloc_buf, 
                                 &cvn_len, CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "%s: Malloc failed!", fn);
@@ -538,7 +538,7 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     /* if types are not the same then go the long way... */
     
     /* Allocate the buffer dynamically */
-    if (NULL==(p=get_cbuf(usrtype, to_type, tmp_buf, buf, len, &alloc_buf, &cvn_len,
+    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf, buf, len, &alloc_buf, &cvn_len,
                                 CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "CBchg: Malloc failed!");

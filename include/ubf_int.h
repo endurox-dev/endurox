@@ -120,7 +120,7 @@ extern "C" {
 #define FLOAT_RESOLUTION 5
 
     
-#define BFLD_INT                -2  /* Internal Buffer type for VIEW */
+#define BFLD_INT                7  /* Internal Buffer type for VIEW */
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

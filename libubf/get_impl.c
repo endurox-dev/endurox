@@ -89,7 +89,7 @@ expublic char * ndrx_Bgetalloc (UBFH * p_ub, BFLDID bfldid,
     if (NULL!=fb_data)
     {
         /* Allocate the buffer */
-        if (NULL==(ret=get_cbuf(data_type,data_type,
+        if (NULL==(ret=ndrx_ubf_get_cbuf(data_type,data_type,
                         NULL, fb_data, tmp_len,
                         &alloc_buf,
                         &alloc_size,
