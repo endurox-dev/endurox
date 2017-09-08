@@ -323,7 +323,20 @@ out:
  */
 expublic long ndrx_Bvsizeof(char *view)
 {
-	return EXFAIL;
+	long ret;
+	
+	ndrx_typedview_t *v = NULL;
+	
+	if (NULL==(v = ndrx_view_get_view(view)))
+	{
+	    ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+	    EXFAIL_OUT(ret);
+	}
+	
+	ret = v->ssize;
+	
+out:
+	return ret;
 }
 
 /**
@@ -384,8 +397,8 @@ expublic int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ
  */
 expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, 
 		char *view, char *cname, BFLDLEN * cname_len, int *fldtype, 
-			  BFLDOCC *occ, int *is_null,
-			  char *buf, BFLDLEN *len, long mode, int usrtype)
+		BFLDOCC *occ, int *is_null,
+		char *buf, BFLDLEN *len, long mode, int usrtype)
 {
 	/* will use conv_same to return data in user buffer */
 	return EXFAIL;
