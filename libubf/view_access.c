@@ -346,16 +346,45 @@ out:
  * @param cstruct instance of the view object
  * @param view view name
  * @param cname field name in view
- * @return occurrences
+ * @param maxocc number of occurrences for view filed
+ * @return occurrences (1 based)
  *  The following errors possible:
  * - BBADVIEW view not found
  * - BNOCNAME field not found
  * - BEINVAL cstruct/view/cname/buf is NULL
  * 
  */
-expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname)
+expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname, BFLDOCC *maxocc)
 {
-	return EXFAIL;
+	BFLDOCC ret;
+	ndrx_typedview_t *v = NULL;
+	ndrx_typedview_field_t *f = NULL;
+	short *C_count;
+	short C_count_stor;
+	
+	if (NULL==(v = ndrx_view_get_view(view)))
+	{
+	    ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+	    EXFAIL_OUT(ret);
+	}
+	
+	if (NULL==(f = ndrx_view_get_field(v, cname)))
+	{
+	    ndrx_Bset_error_fmt(BNOCNAME, "Field [%s] of view [%s] not found!", 
+		    cname, v->vname);
+	    EXFAIL_OUT(ret);
+	}
+	
+	NDRX_VIEW_COUNT_SETUP;
+	
+	
+	*maxocc=f->count;
+	
+	ret = *C_count;
+	
+out:
+	NDRX_LOG(log_debug, "%s returns %d maxocc=%d", __func__, ret, maxocc);
+	return ret;
 }
 
 /**
@@ -365,7 +394,7 @@ expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname)
  * @param cstruct instance of the view object
  * @param view view name
  * @param cname field name in view
- * @param occ occurrences
+ * @param occ occurrences (non zero based)
  * @return 0 on success or -1 on failure
  *  The following errors possible:
  * - BBADVIEW view not found
@@ -374,8 +403,39 @@ expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname)
  * - BNOTPRES occ out of bounds
  */
 expublic int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ)
-{
-	return EXFAIL;
+{	
+	int ret = EXSUCCEED;
+	ndrx_typedview_t *v = NULL;
+	ndrx_typedview_field_t *f = NULL;
+	short *C_count;
+	short C_count_stor;
+	
+	if (NULL==(v = ndrx_view_get_view(view)))
+	{
+	    ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+	    EXFAIL_OUT(ret);
+	}
+	
+	if (NULL==(f = ndrx_view_get_field(v, cname)))
+	{
+	    ndrx_Bset_error_fmt(BNOCNAME, "Field [%s] of view [%s] not found!", 
+		    cname, v->vname);
+	    EXFAIL_OUT(ret);
+	}
+	
+	if (occ>f->count || occ<0)
+	{
+	    ndrx_Bset_error_fmt(BEINVAL, "%s: invalid occ %d max: %d, min: 0",
+			     __func__, occ, occ>f->count);
+	    EXFAIL_OUT(ret);
+	}
+	
+	NDRX_VIEW_COUNT_SETUP;
+	
+	*C_count = occ;
+	
+out:
+	return ret;
 }
 
 /**
@@ -395,9 +455,9 @@ expublic int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ
  * otherwise raw data is copied out...
  * including NULL, BNEXT_NOTNULL - return only non NULL values
  */
-expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, 
-		char *view, char *cname, BFLDLEN * cname_len, int *fldtype, 
-		BFLDOCC *occ, int *is_null,
+expublic int ndrx_Bvnext (Bvnext_state_t *state, 
+		char *cstruct, char *view, char *cname, BFLDLEN * cname_len, 
+		int *fldtype, BFLDOCC *occ, int *is_null,
 		char *buf, BFLDLEN *len, long mode, int usrtype)
 {
 	/* will use conv_same to return data in user buffer */
