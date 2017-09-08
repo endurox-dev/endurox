@@ -374,17 +374,20 @@ expublic int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ
  * @param cname output cname field
  * @param cname_len optional buffer len indicator of cname
  * @param fldtype return the type of the field
- * @param occ occurrence returnd
+ * @param occ occurrence return
  * @param is_null return TRUE if value is NULL (tested only if BNEXT_NOTNULL not set)
  * @param buf data copied to buf (optional if not NULL)
- * @param len buffer len (if set on intput validate the intput len) on output bytes copied
+ * @param len buffer len (if set on input validate the input len) on output bytes copied
+ * @param usrtype in case if not -1, the data will be converted to destination type
+ * otherwise raw data is copied out...
  * including NULL, BNEXT_NOTNULL - return only non NULL values
  */
 expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, 
 		char *view, char *cname, BFLDLEN * cname_len, int *fldtype, 
 			  BFLDOCC *occ, int *is_null,
-			  char *buf, BFLDLEN *len, long mode)
+			  char *buf, BFLDLEN *len, long mode, int usrtype)
 {
+	/* will use conv_same to return data in user buffer */
 	return EXFAIL;
 }
 
