@@ -108,6 +108,65 @@ Ensure(test_Bvget_short)
             EXFAIL);
     assert_equal(Berror, BNOTPRES);
     
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort4", 0, (char *)&s, 0L, BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_equal(s, -10);
+    
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tlong1", 0, (char *)&s, 0L, BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_not_equal(s, 0);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tint3", 0, (char *)&s, 0L, BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_equal(s, -100);
+    
+    /* non existent field: */
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "xint3", 0, (char *)&s, 0L, BFLD_SHORT, 0L), 
+            EXFAIL);
+    assert_equal(Berror, BNOCNAME);
+    
+    /* Test field NULL */
+    v.tint4[0] = -1;
+    v.tint4[1] = -1;
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tint4", 0, (char *)&s, 0L, BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_equal(s, -1);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tint4", 1, (char *)&s, 0L, BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_equal(s, -1);
+    
+    
+    /* not pres because of NULL value */
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tint4", 0, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXFAIL);
+    assert_equal(Berror, BNOTPRES);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tint4", 1, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXFAIL);
+    assert_equal(Berror, BNOTPRES);
+    
+    
+    /* Test the ascii value to char */
+    s = 0;
+    NDRX_LOG(log_debug, "tchar1=%c", v.tchar1);
+    
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar1", 0, (char *)&s, 0L, 
+            BFLD_SHORT, /* TODO: BVACCESS_NOTNULL */ 0), 
+            EXSUCCEED);
+    assert_equal(s, 65);
     
 }
 
