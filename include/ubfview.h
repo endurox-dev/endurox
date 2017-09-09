@@ -77,6 +77,7 @@ extern "C" {
 	}\
 	else\
 	{\
+            C_count_stor = f->count;\
 	    C_count = &C_count_stor;\
 	}
 

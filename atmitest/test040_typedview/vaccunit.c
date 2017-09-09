@@ -164,9 +164,73 @@ Ensure(test_Bvget_short)
     NDRX_LOG(log_debug, "tchar1=%c", v.tchar1);
     
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar1", 0, (char *)&s, 0L, 
-            BFLD_SHORT, /* TODO: BVACCESS_NOTNULL */ 0), 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
             EXSUCCEED);
     assert_equal(s, 65);
+    
+    
+    s = 0;
+    NDRX_LOG(log_debug, "tchar2=%c", v.tchar1);
+    
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar2", 0, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXFAIL);
+    assert_equal(Berror, BNOTPRES);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar2", 1, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXSUCCEED);
+    assert_equal(s, 66);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar2", 2, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXSUCCEED);
+    assert_equal(s, 67);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar2", 3, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXSUCCEED);
+    assert_equal(s, '\n');
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar2", 4, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXSUCCEED);
+    assert_equal(s, '\t');
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar2", 5, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar3", 0, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXFAIL);
+    assert_equal(Berror, BNOTPRES);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar3", 1, (char *)&s, 0L, 
+            BFLD_SHORT, BVACCESS_NOTNULL), 
+            EXFAIL);
+    assert_equal(Berror, BNOTPRES);
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar3", 0, (char *)&s, 0L, 
+            BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_equal(s, 'C');
+    
+    s = 0;
+    assert_equal(CBvget((char *)&v, "MYVIEW1", "tchar3", 1, (char *)&s, 0L, 
+            BFLD_SHORT, 0L), 
+            EXSUCCEED);
+    assert_equal(s, 'D');
+    
     
 }
 

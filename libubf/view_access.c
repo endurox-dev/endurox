@@ -109,7 +109,7 @@ expublic int ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
             EXFAIL_OUT(ret);
         }
 
-        if (*C_count-1<occ+1)
+        if (*C_count<occ+1)
         {
             NDRX_LOG(log_debug, "%s.%s count field is set to %hu, "
                     "but requesting occ=%d (zero based) - NOT PRES",
