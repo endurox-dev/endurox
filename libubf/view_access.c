@@ -68,7 +68,7 @@
  * @param len on input user buffer len, on output bytes written to (for carray only)
  * on input for string too.
  * @param usrtype of buf see BFLD_* types
- * @param mode BVNEXT_NOTNULL
+ * @param mode BVACCESS_NOTNULL
  * @return 0 on success, or -1 on fail. 
  * 
  * The following errors possible:

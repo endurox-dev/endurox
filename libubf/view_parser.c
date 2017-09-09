@@ -408,7 +408,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 dtyp++;
             }
             
-            if (EXFAIL==typ)
+            if (BFLD_INT==typ)
             {
                 if (0==strcmp(tok, "int"))
                 {

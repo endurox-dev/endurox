@@ -55,7 +55,7 @@ add_custom_command(
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (viewunit1 viewunit1.c shared.c t40.h t40.V t40_2.h t40_2.V)
+add_executable (viewunit1 viewunit1.c shared.c vaccunit.c t40.h t40.V t40_2.h t40_2.V)
 add_executable (atmisv40 atmisv40.c shared.c ../../libatmisrv/rawmain_integra.c t40.h t40.V t40_2.h t40_2.V)
 add_executable (atmiclt40 atmiclt40.c shared.c t40.h t40.V t40_2.h t40_2.V)
 ################################################################################

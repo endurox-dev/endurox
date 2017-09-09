@@ -892,7 +892,8 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && IS_TYPE_INVALID(bfldid>>EFFECTIVE_BITS))
     {   /* Invalid field id */
-        ndrx_Bset_error_msg(BBADFLD, "Invalid bfldid (type not correct)");
+        ndrx_Bset_error_fmt(BBADFLD, "Invalid bfldid (type %d not correct)",
+                ((int)bfldid>>EFFECTIVE_BITS));
         EXFAIL_OUT(ret);
     }
     else if (!(mode & VALIDATE_MODE_NO_FLD) && occ < -1)
