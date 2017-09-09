@@ -1251,14 +1251,13 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
-    char fn[] = "Brealloc";
     API_ENTRY;
 
     UBF_LOG(log_debug, "Brealloc: enter p_ub=%p!", p_ub);
     
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         p_ub=NULL;
     }
 
@@ -1316,20 +1315,19 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
  */
 expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
-    char fn[] = "Bupdate";
     int ret=EXSUCCEED;
     API_ENTRY;
     /* Do standard validation */
-    UBF_LOG(log_debug, "Entering %s", fn);
+    UBF_LOG(log_debug, "Entering %s", __func__);
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail for src buf!", __func__);
         ndrx_Bappend_error_msg("(Bupdate: arguments fail for src buf!)");
         ret=EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail for dst buf!", __func__);
         ndrx_Bappend_error_msg("(Bupdate: arguments fail for dst buf!)");
         ret=EXFAIL;
     }
@@ -1338,7 +1336,7 @@ expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
         /* Call the implementation */
         ret=ndrx_Bupdate (p_ub_dst, p_ub_src);
     }
-    UBF_LOG(log_debug, "Return %s %d", fn, ret);
+    UBF_LOG(log_debug, "Return %s %d", __func__, ret);
     return ret;
 }
 
@@ -1350,20 +1348,19 @@ expublic int Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
  */
 expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 {
-    char fn[] = "Bconcat";
     int ret=EXSUCCEED;
     API_ENTRY;
     /* Do standard validation */
-    UBF_LOG(log_debug, "Entering %s", fn);
+    UBF_LOG(log_debug, "Entering %s", __func__);
     if (EXSUCCEED!=validate_entry(p_ub_src, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail for src buf!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail for src buf!", __func__);
         ndrx_Bappend_error_msg("(Bconcat: arguments fail for src buf!)");
         ret=EXFAIL;
     }
     else if (EXSUCCEED!=validate_entry(p_ub_dst, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail for dst buf!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail for dst buf!", __func__);
         ndrx_Bappend_error_msg("(Bconcat: arguments fail for dst buf!)");
         ret=EXFAIL;
     }
@@ -1372,7 +1369,7 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
         /* Call the implementation */
         ret=ndrx_Bconcat (p_ub_dst, p_ub_src);
     }
-    UBF_LOG(log_debug, "Return %s %d", fn, ret);
+    UBF_LOG(log_debug, "Return %s %d", __func__, ret);
     return ret;
 }
 
@@ -1545,15 +1542,14 @@ expublic char * Bgetalloc (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *ext
 expublic char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
                                     BFLDOCC *occ, BFLDLEN *len)
 {
-    char *fn = "Bfindlast";
     API_ENTRY;
 
-    UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
+    UBF_LOG(log_debug, "%s: bfldid: %d", __func__, bfldid);
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return NULL;
     }
 
@@ -1568,15 +1564,14 @@ expublic char * Bfindlast (UBFH * p_ub, BFLDID bfldid,
 expublic int Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len)
 {
-    char *fn = "Bgetlast";
     API_ENTRY;
 
-    UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
+    UBF_LOG(log_debug, "%s: bfldid: %d", __func__, bfldid);
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return EXFAIL;
     }
 
@@ -1593,13 +1588,12 @@ expublic int Bgetlast (UBFH *p_ub, BFLDID bfldid,
  */
 expublic int Bfprint (UBFH *p_ub, FILE * outf)
 {
-    char *fn = "Bfprint";
     API_ENTRY;
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return EXFAIL;
     }
     /* check output file */
@@ -2141,5 +2135,299 @@ expublic int Bojoin(UBFH *dest, UBFH *src)
     API_ENTRY;
     ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
     return EXFAIL;
+}
+
+/**
+ * Dynamically read the 
+ * @param cstruct view object (struct instance) from where to take the value
+ * @param view view name
+ * @param cname field name
+ * @param occ array index (zero based)
+ * @param buf buffer where to store the value
+ * @param len buffer on input user for strings and carray. Indicates the space.
+ * On output indicates the length of data loaded, used for carray and strings.
+ * optional
+ * @param usrtype User field type
+ * @param flags 0 or BVNEXT_NOTNULL (report view 'NULL' values as BNOTPRES)
+ * @return 0 - succeed, -1 FAIL
+ */
+expublic int CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN *len, int usrtype, long flags)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==buf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "buf is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_CBvget(cstruct, view, cname, occ, buf, len, usrtype, flags);
+    
+out:
+    return ret;
+}
+
+/**
+ * Dynamically set view value. 
+ * 
+ * @param cstruct user view object
+ * @param view view name
+ * @param cname field name
+ * @param occ occurrence to set. If occ+1>C_<count field>, then count field 
+ * is incremented to this occ +1
+ * @param buf buffer to take value from
+ * @param len buffer len (mandatory for carray)
+ * @param usrtype User type of data see BFLD_*
+ * @return 0 - succeed, -1 fail
+ */
+expublic int CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN len, int usrtype)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==buf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "buf is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=CBvset(cstruct, view, cname, occ, buf, len, usrtype);
+    
+out:
+    return ret;
+
+}
+
+/**
+ * Size of the view
+ * @param view view name
+ * @return -1 on fail, or size of the view
+ */
+expublic long Bvsizeof(char *view)
+{
+    long ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = ndrx_Bvsizeof(view);
+    
+out:
+    return ret;
+}
+/**
+ * Get field occurrences number of array elements in VIEW.
+ * Set by 'count' column in view file.
+ * @param cstruct view object
+ * @param view view name
+ * @param cname filed name
+ * @param maxocc returns the 'count' value of the view file
+ * @param realocc returns number of non null elements in array. Scanned from
+ * end of the array. Once first non NULL value is found, then this is detected
+ * as real count.
+ * @return count set in C_<count_filed>. If count  indicator field not used,
+ * then 'count' value (max value) from view is returned.
+ * In case of error -1 is returned.
+ */
+expublic BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
+        BFLDOCC *maxocc, BFLDOCC *realocc)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==maxocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "maxocc is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==realocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "realocc is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = ndrx_Bvoccur(cstruct, view, cname, maxocc, realocc);
+    
+out:
+    return ret;
+}
+
+/**
+ * 
+ * @param cstruct
+ * @param view
+ * @param cname
+ * @param occ
+ * @return 
+ */
+expublic int Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = ndrx_Bvsetoccur(cstruct, view, cname, occ);
+    
+out:
+    return ret;
+}
+
+/**
+ * Iterate dynamically over the view structure
+ * @param state where to store the iteration state, initialised when 'view' is set
+ * @param cstruct view object to iterate
+ * @param view view name, on start of iter, must be set
+ * @param cname field name to return
+ * @param fldtype type to returnd BFLD_* consts applies
+ * @param occ occurrence to return
+ * @param is_null is field NULL?
+ * @param buf optional user buffer where to store the output data
+ * @param len optional len for buffer size, if not set, assumes buffer have enough
+ * space to store the value
+ * @param flags 0 or BVACCESS_NOTNULL (return only non NULL values, and for array
+ * the list until the last non null value, means includes nulls in the middle and
+ * returns them, so that indexes are kept OK)
+ * @param usrtype -1 (if user bufer matches the type) or BFLD_* const for user
+ * data type. Thus data will be converted to user type.
+ * @return 1 - For success (have next), 0 EOF (nothing to return), -1 FAIL
+ */
+expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, char *cname,
+        int *fldtype, BFLDOCC *occ, int *is_null, char *buf, BFLDLEN *len, 
+        long flags, int usrtype)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==state)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "state is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        if (NULL == state->v)
+        {
+            ndrx_Bset_error_msg(BEINVAL, "view is null but state contains NULL");
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty, no where "
+                "to store field name");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==occ)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "occ is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==is_null)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "is_null is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=Bvnext (state, cstruct, view, cname, fldtype, occ, is_null, buf, len, 
+        flags, usrtype);
+
+out:
+
+    return ret;    
 }
 

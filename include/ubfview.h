@@ -45,12 +45,6 @@ extern "C" {
 #include <view_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_VIEW_CNAME_LEN             256  /* Max c field len in struct   */
-#define NDRX_VIEW_FLAGS_LEN             16   /* Max flags                   */
-#define NDRX_VIEW_NULL_LEN              2660 /* Max len of the null value   */
-/*XATMI_SUBTYPE_LEN  from atmi*/
-#define NDRX_VIEW_NAME_LEN              33   /* Max len of view name        */
-#define NDRX_VIEW_COMPFLAGS_LEN         128  /* Compiled flags len          */
     
 /* field flags: */
 #define NDRX_VIEW_FLAG_ELEMCNT_IND_C    0x00000001 /* Include elemnt cnt ind */
@@ -86,15 +80,15 @@ extern "C" {
 	    C_count = &C_count_stor;\
 	}
 
-#define NDRX_VIEW_LEN_SETUP\
+#define NDRX_VIEW_LEN_SETUP(OCC, DIMSZ)\
 	if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)\
 	{\
 	    L_length = (unsigned short *)(cstruct+f->length_fld_offset+\
-		    occ*sizeof(unsigned short));\
+		    OCC*sizeof(unsigned short));\
 	}\
 	else\
 	{\
-	    L_length_stor = dim_size;\
+	    L_length_stor = DIMSZ;\
 	    L_length = &L_length_stor;\
 	}\
 
@@ -207,6 +201,34 @@ extern NDRX_API int ndrx_Bvftos(UBFH *p_ub, char *cstruct, char *view);
 
 extern NDRX_API int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int mode);
 extern NDRX_API int ndrx_Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
+
+/* View dynamic data access functions: */
+extern NDRX_API int ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
+    ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, BFLDLEN *len, 
+                 int usrtype, long flags);
+extern NDRX_API int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN *len, int usrtype, long flags);
+
+extern NDRX_API int ndrx_CBvset_int(char *cstruct, ndrx_typedview_t *v, 
+        ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, 
+                 BFLDLEN len, int usrtype);
+extern NDRX_API int ndrx_CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN len, int usrtype);
+
+extern NDRX_API long ndrx_Bvsizeof(char *view);
+
+extern NDRX_API BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v, 
+        ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc);
+
+extern NDRX_API BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname, 
+        BFLDOCC *maxocc, BFLDOCC *realocc);
+
+extern NDRX_API int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ);
+
+extern NDRX_API int ndrx_Bvnext (Bvnext_state_t *state, 
+        char *cstruct, char *view, char *cname,
+        int *fldtype, BFLDOCC *occ, int *is_null,
+        char *buf, BFLDLEN *len, long flags, int usrtype);
 
 #ifdef	__cplusplus
 }

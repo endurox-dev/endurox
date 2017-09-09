@@ -109,6 +109,14 @@ extern "C" {
 #define BFLDID32 BFLDID
 	
 #define BVACCESS_NOTNULL	0x00000001	/* return value if not NULL */
+
+/* View settings: */    
+#define NDRX_VIEW_CNAME_LEN             256  /* Max c field len in struct   */
+#define NDRX_VIEW_FLAGS_LEN             16   /* Max flags                   */
+#define NDRX_VIEW_NULL_LEN              2660 /* Max len of the null value   */
+/*XATMI_SUBTYPE_LEN  from atmi*/
+#define NDRX_VIEW_NAME_LEN              33   /* Max len of view name        */
+#define NDRX_VIEW_COMPFLAGS_LEN         128  /* Compiled flags len          */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -129,11 +137,17 @@ struct Bnext_state
 typedef struct Bnext_state Bnext_state_t;
 
 /**
- * TOOD: Next state for view iteration...
+ * Next state for view iteration...
  */
 struct Bvnext_state
 {
-	/* TODO: */
+    void *v;
+    void *vel;
+    void *velt;
+    int occ; /* current occ of the field, 0 based */
+    int non_null_occs;
+    int dim_size;
+    
 };
 typedef struct Bvnext_state Bvnext_state_t;
 
@@ -223,6 +237,18 @@ extern NDRX_API void Bvrefresh(void);
 extern NDRX_API int Bvopt(char *cname, int option, char *view);
 extern NDRX_API int Bvftos(UBFH *p_ub, char *cstruct, char *view);
 extern NDRX_API int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
+
+extern NDRX_API int CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN *len, int usrtype, long flags);
+extern NDRX_API int CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN len, int usrtype);
+extern NDRX_API long Bvsizeof(char *view);
+extern NDRX_API BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
+        BFLDOCC *maxocc, BFLDOCC *realocc);
+extern NDRX_API int Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ);
+extern NDRX_API int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, 
+        char *cname, int *fldtype, BFLDOCC *occ, int *is_null, 
+        char *buf, BFLDLEN *len,  long flags, int usrtype);
 /* VIEW related, END */
 
 /* ATMI library TLS: */
