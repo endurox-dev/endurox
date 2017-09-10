@@ -332,14 +332,14 @@ class Provision extends WizardBase {
 		<!--
 			Ping server in every X seconds (step is <sanity>).
 		-->
-		<pingtime>2</pingtime>
+		<pingtime>10</pingtime>
 		
 		<!--
 			Max time in seconds in which server must respond.
 			The granularity is sanity time.
 			X <= 0 = disabled 
 		-->
-		<ping_max>5</ping_max>
+		<ping_max>30</ping_max>
 		
 		<!--
 			Max time to wait until process should exit on shutdown
