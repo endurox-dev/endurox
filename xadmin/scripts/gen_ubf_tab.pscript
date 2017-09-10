@@ -138,6 +138,7 @@ space:= $(empty) $(empty)
 
 export FIELDTBLS=$(subst $(space),$(comma),$(SOURCES))
 export FLDTBLDIR=$(shell pwd)
+unexport NDRX_CCONFIG
 
 $(info $$SOURCES is [${SOURCES}])
 $(info $$OUTPUT is [${OUTPUT}])
