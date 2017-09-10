@@ -2201,7 +2201,7 @@ out:
  * @param usrtype User type of data see BFLD_*
  * @return 0 - succeed, -1 fail
  */
-expublic int CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+expublic int CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN len, int usrtype)
 {
     int ret = EXSUCCEED;
@@ -2232,7 +2232,7 @@ expublic int CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ,
         EXFAIL_OUT(ret);
     }
     
-    ret=CBvset(cstruct, view, cname, occ, buf, len, usrtype);
+    ret=ndrx_CBvchg(cstruct, view, cname, occ, buf, len, usrtype);
     
 out:
     return ret;

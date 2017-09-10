@@ -210,10 +210,10 @@ extern NDRX_API int ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
 extern NDRX_API int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
 
-extern NDRX_API int ndrx_CBvset_int(char *cstruct, ndrx_typedview_t *v, 
+extern NDRX_API int ndrx_CBvchg_int(char *cstruct, ndrx_typedview_t *v, 
         ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, 
                  BFLDLEN len, int usrtype);
-extern NDRX_API int ndrx_CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+extern NDRX_API int ndrx_CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN len, int usrtype);
 
 extern NDRX_API long ndrx_Bvsizeof(char *view);

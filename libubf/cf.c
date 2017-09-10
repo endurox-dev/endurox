@@ -216,7 +216,8 @@ expublic conv_type_t G_conv_fn_short[] =
     {BFLD_SHORT, BFLD_FLOAT, conv_short_float},
     {BFLD_SHORT, BFLD_DOUBLE, conv_short_double},
     {BFLD_SHORT, BFLD_STRING, conv_short_string},
-    {BFLD_SHORT, BFLD_CARRAY, conv_short_carr}
+    {BFLD_SHORT, BFLD_CARRAY, conv_short_carr},
+    {BFLD_SHORT, BFLD_INT, conv_short_int}
 };
 expublic conv_type_t G_conv_fn_long[] =
 {
@@ -226,7 +227,8 @@ expublic conv_type_t G_conv_fn_long[] =
     {BFLD_LONG, BFLD_FLOAT, conv_long_float},
     {BFLD_LONG, BFLD_DOUBLE, conv_long_double},
     {BFLD_LONG, BFLD_STRING, conv_long_string},
-    {BFLD_LONG, BFLD_CARRAY, conv_long_carr}
+    {BFLD_LONG, BFLD_CARRAY, conv_long_carr},
+    {BFLD_LONG, BFLD_INT, conv_long_int}
 };
 
 expublic conv_type_t G_conv_fn_char[] =
@@ -238,8 +240,8 @@ expublic conv_type_t G_conv_fn_char[] =
     {BFLD_CHAR, BFLD_FLOAT, conv_char_float},
     {BFLD_CHAR, BFLD_DOUBLE, conv_char_double},
     {BFLD_CHAR, BFLD_STRING, conv_char_string},
-    {BFLD_CHAR, BFLD_CARRAY, conv_char_carr}
-
+    {BFLD_CHAR, BFLD_CARRAY, conv_char_carr},
+    {BFLD_CHAR, BFLD_INT, conv_char_int}
 };
 
 expublic conv_type_t G_conv_fn_float[] =
@@ -250,7 +252,8 @@ expublic conv_type_t G_conv_fn_float[] =
     {BFLD_FLOAT, BFLD_FLOAT, conv_same},
     {BFLD_FLOAT, BFLD_DOUBLE, conv_float_double},
     {BFLD_FLOAT, BFLD_STRING, conv_float_string},
-    {BFLD_FLOAT, BFLD_CARRAY, conv_float_carr}
+    {BFLD_FLOAT, BFLD_CARRAY, conv_float_carr},
+    {BFLD_FLOAT, BFLD_INT, conv_float_int}
 };
 
 expublic conv_type_t G_conv_fn_double[] =
@@ -261,7 +264,8 @@ expublic conv_type_t G_conv_fn_double[] =
     {BFLD_DOUBLE, BFLD_FLOAT, conv_double_float},
     {BFLD_DOUBLE, BFLD_DOUBLE, conv_same},
     {BFLD_DOUBLE, BFLD_STRING, conv_double_string},
-    {BFLD_DOUBLE, BFLD_CARRAY, conv_double_carr}
+    {BFLD_DOUBLE, BFLD_CARRAY, conv_double_carr},
+    {BFLD_DOUBLE, BFLD_INT, conv_double_int}
 };
 
 expublic conv_type_t G_conv_fn_string[] =
@@ -272,7 +276,8 @@ expublic conv_type_t G_conv_fn_string[] =
     {BFLD_STRING, BFLD_FLOAT, conv_string_float},
     {BFLD_STRING, BFLD_DOUBLE, conv_string_double},
     {BFLD_STRING, BFLD_STRING, conv_same},
-    {BFLD_STRING, BFLD_CARRAY, conv_string_carr}
+    {BFLD_STRING, BFLD_CARRAY, conv_string_carr},
+    {BFLD_STRING, BFLD_INT, conv_string_int}
 };
 
 expublic conv_type_t G_conv_fn_carr[] =
@@ -283,7 +288,8 @@ expublic conv_type_t G_conv_fn_carr[] =
     {BFLD_CARRAY, BFLD_FLOAT, conv_carr_float},
     {BFLD_CARRAY, BFLD_DOUBLE, conv_carr_double},
     {BFLD_CARRAY, BFLD_STRING, conv_carr_string},
-    {BFLD_CARRAY, BFLD_CARRAY, conv_same}
+    {BFLD_CARRAY, BFLD_CARRAY, conv_same},
+    {BFLD_CARRAY, BFLD_INT, conv_carr_int},
 };
 
 expublic conv_type_t G_conv_fn_int[] =

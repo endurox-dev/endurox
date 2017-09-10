@@ -219,7 +219,7 @@ out:
  * - BEINVAL invalid usrtype
  * - BNOSPACE the view field is shorter than data received
  */
-expublic int ndrx_CBvset_int(char *cstruct, ndrx_typedview_t *v, 
+expublic int ndrx_CBvchg_int(char *cstruct, ndrx_typedview_t *v, 
 		ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, 
 			     BFLDLEN len, int usrtype)
 {
@@ -272,7 +272,7 @@ out:
  * @param usrtype
  * @return 
  */
-expublic int ndrx_CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+expublic int ndrx_CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ, 
 			 char *buf, BFLDLEN len, int usrtype)
 {
     int ret = EXFALSE;
@@ -302,10 +302,10 @@ expublic int ndrx_CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ,
         EXFAIL_OUT(ret);
     }
 
-    if (EXFAIL==(ret=ndrx_CBvset_int(cstruct, v, f, occ, buf, len, usrtype)))
+    if (EXFAIL==(ret=ndrx_CBvchg_int(cstruct, v, f, occ, buf, len, usrtype)))
     {
         /* error must be set */
-        NDRX_LOG(log_error, "ndrx_CBvset_int failed");
+        NDRX_LOG(log_error, "ndrx_CBvchg_int failed");
         EXFAIL_OUT(ret);
     }
 	

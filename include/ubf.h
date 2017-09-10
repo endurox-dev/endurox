@@ -240,7 +240,7 @@ extern NDRX_API int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
 
 extern NDRX_API int CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
-extern NDRX_API int CBvset(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+extern NDRX_API int CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN len, int usrtype);
 extern NDRX_API long Bvsizeof(char *view);
 extern NDRX_API BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
