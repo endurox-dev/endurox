@@ -977,7 +977,7 @@ exprivate char * conv_float_int(struct conv_type *t, int cnv_dir, char *input_bu
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *i = (short)*ptr;
+    *i = (float)*ptr;
 
     return output_buf;
 }

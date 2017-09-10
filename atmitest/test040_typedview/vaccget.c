@@ -1,7 +1,7 @@
 /* 
 ** View access unit
 **
-** @file vaccunit.c
+** @file vaccget.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -1952,7 +1952,7 @@ Ensure(test_Bvget_int)
  * Very basic tests of the framework
  * @return
  */
-TestSuite *vacc_tests(void) {
+TestSuite *vacc_CBvget_tests(void) {
     TestSuite *suite = create_test_suite();
     
     set_setup(suite, basic_setup);

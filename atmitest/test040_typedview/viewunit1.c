@@ -44,7 +44,7 @@
 
 #include "test040.h"
 
-extern TestSuite *vacc_tests(void);
+extern TestSuite *vacc_CBvget_tests(void);
 
 /**
  * Basic preparation before the test
@@ -773,7 +773,7 @@ int main(int argc, char** argv)
     add_suite(suite, view_tests());
 
     /* Dynamic view access: */
-    add_suite(suite, vacc_tests());
+    add_suite(suite, vacc_CBvget_tests());
 
     if (argc > 1) {
         return run_single_test(suite,argv[1],create_text_reporter());
