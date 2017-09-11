@@ -1437,7 +1437,7 @@ Ensure(test_Bvget_string)
 /**
  * Test Bvget as carray
  */
-Ensure(test_Bvget_carry)
+Ensure(test_Bvget_carray)
 {
     struct MYVIEW1 v;
     init_MYVIEW1(&v);
@@ -1965,7 +1965,7 @@ TestSuite *vacc_CBvget_tests(void) {
     add_test(suite, test_Bvget_float);
     add_test(suite, test_Bvget_double);
     add_test(suite, test_Bvget_string);
-    add_test(suite, test_Bvget_carry);
+    add_test(suite, test_Bvget_carray);
     add_test(suite, test_Bvget_int);
             
     return suite;

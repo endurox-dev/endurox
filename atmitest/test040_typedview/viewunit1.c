@@ -45,8 +45,8 @@
 #include "test040.h"
 
 extern TestSuite *vacc_CBvget_tests(void);
-
-extern  TestSuite *vacc_CBvchg_tests(void);
+extern TestSuite *vacc_CBvchg_tests(void);
+extern TestSuite *vacc_util_tests(void);
 	
 /**
  * Basic preparation before the test
