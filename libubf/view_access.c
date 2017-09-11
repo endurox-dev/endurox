@@ -252,6 +252,11 @@ expublic int ndrx_CBvchg_int(char *cstruct, ndrx_typedview_t *v,
             /* Error should be provided by conversation function */
             EXFAIL_OUT(ret);
         }
+        
+        if (occ+1 > *C_count)
+        {
+            *C_count = occ+1;
+        }
 	
 	*L_length = setlen;
 	

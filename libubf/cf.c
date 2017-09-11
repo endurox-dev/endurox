@@ -862,7 +862,7 @@ exprivate char * conv_char_int(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *i = (long) *ptr;
+    *i = (int) *ptr;
 
     return output_buf;
 }
@@ -977,7 +977,7 @@ exprivate char * conv_float_int(struct conv_type *t, int cnv_dir, char *input_bu
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *i = (float)*ptr;
+    *i = (int)*ptr;
 
     return output_buf;
 }
@@ -1093,7 +1093,7 @@ exprivate char * conv_double_int(struct conv_type *t, int cnv_dir, char *input_b
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *i = (short)*ptr;
+    *i = (int)*ptr;
 
     return output_buf;
 }
