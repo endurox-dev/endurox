@@ -2359,13 +2359,12 @@ out:
 /**
  * Iterate dynamically over the view structure
  * @param state where to store the iteration state, initialised when 'view' is set
- * @param cstruct view object to iterate
  * @param view view name, on start of iter, must be set
  * @param cname field name to return
  * @param fldtype type to returnd BFLD_* consts applies
  * @return 1 - For success (have next), 0 EOF (nothing to return), -1 FAIL
  */
-expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, 
+expublic int Bvnext (Bvnext_state_t *state, char *view, 
         char *cname, int *fldtype)
 {
     int ret = EXSUCCEED;
@@ -2385,6 +2384,13 @@ expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view,
             ndrx_Bset_error_msg(BEINVAL, "view is null but state contains NULL");
             EXFAIL_OUT(ret);
         }
+        
+        if (NULL == state->vel)
+        {
+            UBF_LOG(log_debug, "View scan early EOF");
+            ret = 0;
+            goto out;
+        }
     }
     
     if (NULL==cname || EXEOS==cname[0])
@@ -2394,19 +2400,13 @@ expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view,
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==cstruct)
-    {
-        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
-        EXFAIL_OUT(ret);
-    }    
-    
     if (NULL==fldtype)
     {
         ndrx_Bset_error_msg(BEINVAL, "fldtype is NULL!");
         EXFAIL_OUT(ret);
     }    
     
-    ret=ndrx_Bvnext (state, cstruct, view, cname, fldtype);
+    ret=ndrx_Bvnext (state, view, cname, fldtype);
 
 out:
 

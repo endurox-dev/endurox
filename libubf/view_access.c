@@ -496,20 +496,15 @@ out:
  * @param fldtype return the type of the field
  * @return On success 1 is returned, on EOF 0, on failure -1
  */
-expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view, 
-        char *cname, int *fldtype)
+expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname, int *fldtype)
 {
     int ret = EXSUCCEED;
-    int gotone = EXFALSE;
-
     ndrx_typedview_t *v;
     ndrx_typedview_field_t *f;
-    ndrx_typedview_field_t *ft;
     
     v = (ndrx_typedview_t *) state->v;
     f = (ndrx_typedview_field_t *) state->vel;
-    ft = (ndrx_typedview_field_t *) state->velt;
-
+    
     /* find first */
     if (NULL!=view)
     {
@@ -523,13 +518,9 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view,
             EXFAIL_OUT(ret);
         }
 
-        DL_FOREACH_SAFE(v->fields, f, ft)
-        {
-            gotone = EXTRUE;
-            break;
-        }
-
-        if (!gotone)
+        f = v->fields;
+        
+        if (NULL==f)
         {
             UBF_LOG(log_debug, "View scan EOF");
             ret = 0;
@@ -540,13 +531,9 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view,
     else
     {
         /* find next */
-        DL_FOREACH_SAFE_CONT(v->fields, f, ft)
-        {
-            gotone = EXTRUE;
-            break;
-        }
-
-        if (!gotone)
+        f = f->next;
+        
+        if (NULL==f)
         {
             UBF_LOG(log_debug, "View scan EOF");
             ret = 0;
@@ -555,13 +542,28 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view,
 
     }
     
+    strncpy(cname, f->cname, NDRX_VIEW_CNAME_LEN);
+    cname[NDRX_VIEW_CNAME_LEN] = EXEOS;
+    
+    *fldtype = f->typecode_full;
+    ret = 1;
+    
+    
 out:
     /* fill up the state: */
 
     state->v = v;
     state->vel = f;
-    state->velt = ft;
     
+    if (ret > 0)
+    {
+        UBF_LOG(log_debug, "%s returns %d (%s.%s %d)", __func__, 
+                ret, v->vname, cname, *fldtype);
+    }
+    else
+    {
+        UBF_LOG(log_debug, "%s returns %d",  __func__, ret);
+    }
     
     return ret;
 }

@@ -169,6 +169,55 @@ Ensure(test_Bvsetoccur)
     
 }
 
+
+Ensure(test_Bvnext)
+{
+    struct MYVIEW1 v;
+    Bvnext_state_t state;
+    char cname[NDRX_VIEW_CNAME_LEN];
+    int fldtype=99;
+    
+    init_MYVIEW1(&v);
+    
+    assert_equal(Bvnext (&state, "MYVIEW1", cname, &fldtype), 1);
+    assert_string_equal(cname, "tshort1");
+    assert_equal(fldtype, 0);
+    
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tshort2");
+    assert_equal(fldtype, 0);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tshort3");
+    assert_equal(fldtype, 0);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tshort4");
+    assert_equal(fldtype, 0);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tlong1");
+    assert_equal(fldtype, 1);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tint2");
+    assert_equal(fldtype, 7);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tint3");
+    assert_equal(fldtype, 7);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tint4");
+    assert_equal(fldtype, 7);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tchar1");
+    assert_equal(fldtype, 2);
+    
+    
+}
 /**
  * Very basic tests of the framework
  * @return
@@ -184,6 +233,7 @@ TestSuite *vacc_util_tests(void)
     add_test(suite, test_Bvsizeof);
     add_test(suite, test_Bvoccur);
     add_test(suite, test_Bvsetoccur);
-    
+    add_test(suite, test_Bvnext);
+            
     return suite;
 }

@@ -143,7 +143,6 @@ struct Bvnext_state
 {
     void *v;
     void *vel;
-    void *velt;
 };
 typedef struct Bvnext_state Bvnext_state_t;
 
@@ -242,8 +241,7 @@ extern NDRX_API long Bvsizeof(char *view);
 extern NDRX_API BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
         BFLDOCC *maxocc, BFLDOCC *realocc);
 extern NDRX_API int Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ);
-extern NDRX_API int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, 
-        char *cname, int *fldtype);
+extern NDRX_API int Bvnext (Bvnext_state_t *state, char *view, char *cname, int *fldtype);
 /* VIEW related, END */
 
 /* ATMI library TLS: */
