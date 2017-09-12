@@ -69,6 +69,26 @@ Ensure(test_Bvsizeof)
     assert_equal(Bvsizeof("MYVIEW3"), sizeof(v3));
 }
 
+
+/**
+ * Test Bvoccur
+ */
+Ensure(test_Bvoccur)
+{
+    struct MYVIEW1 v;
+    BFLDOCC maxocc;
+    BFLDOCC realocc;
+    
+    init_MYVIEW1(&v);
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort1", &maxocc, &realocc), 1);
+    assert_equal(maxocc, 1);
+    assert_equal(realocc, 1);
+    
+    
+}
+
+
 /**
  * Very basic tests of the framework
  * @return
@@ -82,6 +102,8 @@ TestSuite *vacc_util_tests(void)
 
     /* init view test */
     add_test(suite, test_Bvsizeof);
+    add_test(suite, test_Bvoccur);
+    
             
     return suite;
 }

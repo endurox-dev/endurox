@@ -63,8 +63,9 @@ exprivate void basic_teardown(void)
 Ensure(test_Bvget_short)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     short s;
+    
+    init_MYVIEW1(&v);
     
     s = 0;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)&s, 0L, BFLD_SHORT, 0L), 
@@ -283,8 +284,9 @@ Ensure(test_Bvget_short)
 Ensure(test_Bvget_long)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     long l;
+    
+    init_MYVIEW1(&v);
     
     l = 0;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)&l, 0L, BFLD_LONG, 0L), 
@@ -517,10 +519,13 @@ Ensure(test_Bvget_long)
 Ensure(test_Bvget_char)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
+    
     char c;
     short s;
     long l;
+    
+    init_MYVIEW1(&v);
+    
     c = 0;
     v.tshort1 = 65;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)&c, 0L, BFLD_CHAR, 0L), 
@@ -716,8 +721,9 @@ Ensure(test_Bvget_char)
 Ensure(test_Bvget_float)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     float f;
+    
+    init_MYVIEW1(&v);
     
     f = 0;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)&f, 0L, BFLD_FLOAT, 0L), 
@@ -951,8 +957,9 @@ Ensure(test_Bvget_float)
 Ensure(test_Bvget_double)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     double d;
+    
+    init_MYVIEW1(&v);
     
     d = 0;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)&d, 0L, BFLD_DOUBLE, 0L), 
@@ -1185,9 +1192,10 @@ Ensure(test_Bvget_double)
 Ensure(test_Bvget_string)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     char s[255];
     BFLDLEN len;
+    
+    init_MYVIEW1(&v);
     
     s[0] = EXEOS;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)s, 0L, BFLD_STRING, 0L), 
@@ -1440,9 +1448,10 @@ Ensure(test_Bvget_string)
 Ensure(test_Bvget_carray)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     char c[255];
     BFLDLEN len;
+    
+    init_MYVIEW1(&v);
     
     c[0] = EXEOS;
     len = sizeof(c);
@@ -1719,8 +1728,8 @@ Ensure(test_Bvget_carray)
 Ensure(test_Bvget_int)
 {
     struct MYVIEW1 v;
-    init_MYVIEW1(&v);
     int i;
+    init_MYVIEW1(&v);
     
     i = 0;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tshort1", 0, (char *)&i, 0L, BFLD_INT, 0L), 
