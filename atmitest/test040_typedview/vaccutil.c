@@ -85,9 +85,89 @@ Ensure(test_Bvoccur)
     assert_equal(maxocc, 1);
     assert_equal(realocc, 1);
     
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 2);
+    assert_equal(maxocc, 2);
+    assert_equal(realocc, 2);
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc), 2);
+    assert_equal(maxocc, 3);
+    assert_equal(realocc, 3);
+    
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort4", &maxocc, &realocc), 1);
+    assert_equal(maxocc, 1);
+    assert_equal(realocc, 1);
+    
+    v.tint2[1] = 0;
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint2", &maxocc, &realocc), 2);
+    assert_equal(maxocc, 2);
+    assert_equal(realocc, 1); /* due to last element is NULL */
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc), 5);
+    assert_equal(maxocc, 5);
+    assert_equal(realocc, 5);
+    
+    v.tchar2[4]='A';
+    v.tchar2[3]='A';
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc), 5);
+    assert_equal(maxocc, 5);
+    assert_equal(realocc, 3);
+    
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar3", &maxocc, &realocc), 0);
+    assert_equal(maxocc, 2);
+    assert_equal(realocc, 2);
+    
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tfloat1", &maxocc, &realocc), 4);
+    assert_equal(maxocc, 4);
+    assert_equal(realocc, 4);
+    
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring0", &maxocc, &realocc), 3);
+    assert_equal(maxocc, 3);
+    assert_equal(realocc, 3);
+    
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring2", &maxocc, &realocc), 2);
+    assert_equal(maxocc, 3);
+    assert_equal(realocc, 3);
     
 }
 
+
+/**
+ * Test Bvsetoccur
+ */
+Ensure(test_Bvsetoccur)
+{
+    struct MYVIEW1 v;
+    BFLDOCC maxocc;
+    BFLDOCC realocc;
+    
+    memset(&v, 0, sizeof(v));
+    
+    v.tshort2[0] =2001;
+    v.tshort2[1] =2001;
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 0);
+    assert_equal(maxocc, 2);
+    assert_equal(realocc, 0);
+    
+    v.C_tshort2 = 1;
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 1);
+    assert_equal(maxocc, 2);
+    assert_equal(realocc, 0);
+    
+    v.C_tshort2 = 2;
+    
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 2);
+    assert_equal(maxocc, 2);
+    assert_equal(realocc, 0);
+    
+}
 
 /**
  * Very basic tests of the framework
@@ -103,7 +183,7 @@ TestSuite *vacc_util_tests(void)
     /* init view test */
     add_test(suite, test_Bvsizeof);
     add_test(suite, test_Bvoccur);
+    add_test(suite, test_Bvsetoccur);
     
-            
     return suite;
 }

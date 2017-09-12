@@ -776,8 +776,8 @@ int main(int argc, char** argv)
 
     /* Dynamic view access: */
     add_suite(suite, vacc_CBvget_tests());
-    
     add_suite(suite, vacc_CBvchg_tests());
+    add_suite(suite, vacc_util_tests());
     
     if (argc > 1) {
         return run_single_test(suite,argv[1],create_text_reporter());

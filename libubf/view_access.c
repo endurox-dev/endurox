@@ -487,41 +487,20 @@ out:
 }
 
 /**
- * This will iterate over the view buffer and will return the value in buf/len
- * optionally.
- * @param state Save state for scanning. Save is initialised when view is not NULL
+ * Iterate over the structure, this will only return list of fields used for
+ * by structure.
+ * @param state Save state for scanning. Save is initialized when view is not NULL
  * @param cstruct instance of the view object
  * @param view view name if not NULL, then start scan
  * @param cname output cname field, must be NDRX_VIEW_CNAME_LEN + 1 in size.
  * @param fldtype return the type of the field
- * @param occ occurrence return
- * @param is_null return TRUE if value is NULL (tested only if BNEXT_NOTNULL not set)
- * @param buf data copied to buf (optional if not NULL)
- * @param len buffer len (if set on input validate the input len) on output bytes copied
- * @param usrtype in case if not -1, the data will be converted to destination type
- * otherwise raw data is copied out...
- * including NULL, BVACCESS_NOTNULL - return only non NULL values, if array have NULL
- * in the middle it will be skipped and next value will be returned. Also this follows
- * the Count flags, thus if count is set less than max count, then less elements will
- * be tested and returned.
- * 
- * In case if BVACCESS_NOTNULL is not set, the array length indicators still will be
- * used
- * 
  * @return On success 1 is returned, on EOF 0, on failure -1
  */
-expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view, char *cname,
-		int *fldtype, BFLDOCC *occ, int *is_null,
-		char *buf, BFLDLEN *len, long flags, int usrtype)
+expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view, 
+        char *cname, int *fldtype)
 {
     int ret = EXSUCCEED;
     int gotone = EXFALSE;
-    int skip_null;
-    BFLDOCC occs, maxoccs, realoccs;
-    char *cnv_buf;
-    char *fld_offs;
-    unsigned short *L_length;
-    unsigned short L_length_stor;
 
     ndrx_typedview_t *v;
     ndrx_typedview_field_t *f;
@@ -531,152 +510,50 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *cstruct, char *view, char
     f = (ndrx_typedview_field_t *) state->vel;
     ft = (ndrx_typedview_field_t *) state->velt;
 
-    do 
+    /* find first */
+    if (NULL!=view)
     {
-        skip_null = EXFALSE;
-        /* find first */
-        if (NULL!=view)
-        {
-            UBF_LOG(log_debug, "Starting to scan view: %s", view);
-            memset(state, 0, sizeof(Bvnext_state_t));
+        UBF_LOG(log_debug, "Starting to scan view: %s", view);
+        memset(state, 0, sizeof(Bvnext_state_t));
 
-            /* Resolve the view */
-            if (NULL==(v = ndrx_view_get_view(view)))
-            {
-                ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
-                EXFAIL_OUT(ret);
-            }
-            
-            DL_FOREACH_SAFE(v->fields, f, ft)
-            {
-                gotone = EXTRUE;
-                break;
-            }
-            
-            if (!gotone)
-            {
-                UBF_LOG(log_debug, "View scan EOF");
-                ret = 0;
-                goto out;
-            }
-            
-        }
-        else if (state->non_null_occs > state->occ)
+        /* Resolve the view */
+        if (NULL==(v = ndrx_view_get_view(view)))
         {
-            UBF_LOG(log_debug, "%s: total non null count: %d "
-                    "current occ: %d - process array elem",
-                    __func__, state->non_null_occs, state->occ);
+            ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+            EXFAIL_OUT(ret);
         }
-        else
+
+        DL_FOREACH_SAFE(v->fields, f, ft)
         {
-            state->occ = 0; /* reset occurrences */
-            
-            /* find next */
-            DL_FOREACH_SAFE_CONT(v->fields, f, ft)
-            {
-                gotone = EXTRUE;
-                break;
-            }
-            
-            if (!gotone)
-            {
-                UBF_LOG(log_debug, "View scan EOF");
-                ret = 0;
-                goto out;
-            }
-            
-            if (flags & BVACCESS_NOTNULL)
-            {
-                occs = ndrx_Bvoccur_int(cstruct, v, f, &maxoccs, &realoccs);
-                
-                if (EXFAIL==occs)
-                {
-                    UBF_LOG(log_error, "%s: Failed to get occurrences!", __func__);
-                    EXFAIL_OUT(ret);
-                }
-                
-                state->non_null_occs = realoccs;
-            }
-            else
-            {
-                state->non_null_occs = occs;
-            }
-            
-            UBF_LOG(log_debug, "%s: Next: got: %d %s, non_null_occs=%d", __func__, 
-                    gotone, f->cname, state->non_null_occs);
-            
-            if (0==state->non_null_occs)
-            {
-                UBF_LOG(log_debug, "Field is NULL or all occs are NULL, skip to next");
-                gotone = EXFALSE;
-                skip_null = EXTRUE;
-            }
-            else
-            {
-                state->dim_size = f->fldsize/f->count;
-            }
-                
+            gotone = EXTRUE;
+            break;
         }
-    
-        if (gotone)
+
+        if (!gotone)
         {
-            *is_null = ndrx_Bvnull_int(v, f, state->occ, cstruct);
-            *fldtype = f->typecode_full;
-            
-            strncpy(cname, f->cname, NDRX_VIEW_CNAME_LEN);
-            cname[NDRX_VIEW_CNAME_LEN] = EXEOS;
-            *occ = state->occ;
-            
-            UBF_LOG(log_debug, "Element found: %s.%s index: %d type: %d is_null: %d", 
-                    v->vname, cname, *occ, *fldtype, *is_null);
-            
-            if (NULL!=buf)
-            {
-                
-                fld_offs = cstruct+f->offset+state->occ*state->dim_size;
-                
-                /* Will request type convert now */
-                NDRX_VIEW_LEN_SETUP(state->occ, state->dim_size);
-    
-    
-                UBF_LOG(log_debug, "User buffer is not null (%p) loading data, usrtype: %d",
-                        buf, usrtype);
-                
-                if (EXFAIL==usrtype)
-                {
-                    UBF_LOG(log_debug, "User type set to -1, assuming user buffer "
-                            "same as in struct - direct return");
-                    
-                    cnv_buf = ndrx_ubf_convert(*fldtype, CNV_DIR_OUT, fld_offs, *L_length,
-                                *fldtype, buf, len);
-                    if (NULL==cnv_buf)
-                    {
-                        UBF_LOG(log_error, "%s: failed to convert data!", __func__);
-                        /* Error should be provided by conversation function */
-                        EXFAIL_OUT(ret);
-                    }
-                }
-                else
-                {
-                    UBF_LOG(log_debug, "Converting from %d to %d", 
-                            *fldtype, usrtype);
-                    
-                    cnv_buf = ndrx_ubf_convert(*fldtype, CNV_DIR_OUT, fld_offs, *L_length,
-                                usrtype, buf, len);
-                    if (NULL==cnv_buf)
-                    {
-                        UBF_LOG(log_error, "%s: failed to convert data!", __func__);
-                        /* Error should be provided by conversation function */
-                        EXFAIL_OUT(ret);
-                    }
-                }
-            }
+            UBF_LOG(log_debug, "View scan EOF");
+            ret = 0;
+            goto out;
         }
-        
-        /* if all ok, increment occ. */
-        state->occ++;
-    
-    } while (skip_null);
+
+    }
+    else
+    {
+        /* find next */
+        DL_FOREACH_SAFE_CONT(v->fields, f, ft)
+        {
+            gotone = EXTRUE;
+            break;
+        }
+
+        if (!gotone)
+        {
+            UBF_LOG(log_debug, "View scan EOF");
+            ret = 0;
+            goto out;
+        }
+
+    }
     
 out:
     /* fill up the state: */

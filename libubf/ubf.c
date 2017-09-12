@@ -2319,7 +2319,7 @@ out:
 }
 
 /**
- * 
+ * Set occurrences (C_<field>) field
  * @param cstruct
  * @param view
  * @param cname
@@ -2363,21 +2363,10 @@ out:
  * @param view view name, on start of iter, must be set
  * @param cname field name to return
  * @param fldtype type to returnd BFLD_* consts applies
- * @param occ occurrence to return
- * @param is_null is field NULL?
- * @param buf optional user buffer where to store the output data
- * @param len optional len for buffer size, if not set, assumes buffer have enough
- * space to store the value
- * @param flags 0 or BVACCESS_NOTNULL (return only non NULL values, and for array
- * the list until the last non null value, means includes nulls in the middle and
- * returns them, so that indexes are kept OK)
- * @param usrtype -1 (if user bufer matches the type) or BFLD_* const for user
- * data type. Thus data will be converted to user type.
  * @return 1 - For success (have next), 0 EOF (nothing to return), -1 FAIL
  */
-expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, char *cname,
-        int *fldtype, BFLDOCC *occ, int *is_null, char *buf, BFLDLEN *len, 
-        long flags, int usrtype)
+expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, 
+        char *cname, int *fldtype)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -2409,22 +2398,15 @@ expublic int Bvnext (Bvnext_state_t *state, char *cstruct, char *view, char *cna
     {
         ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
         EXFAIL_OUT(ret);
-    }
+    }    
     
-    if (NULL==occ)
+    if (NULL==fldtype)
     {
-        ndrx_Bset_error_msg(BEINVAL, "occ is NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "fldtype is NULL!");
         EXFAIL_OUT(ret);
-    }
+    }    
     
-    if (NULL==is_null)
-    {
-        ndrx_Bset_error_msg(BEINVAL, "is_null is NULL!");
-        EXFAIL_OUT(ret);
-    }
-    
-    ret=Bvnext (state, cstruct, view, cname, fldtype, occ, is_null, buf, len, 
-        flags, usrtype);
+    ret=ndrx_Bvnext (state, cstruct, view, cname, fldtype);
 
 out:
 
