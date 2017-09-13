@@ -2271,12 +2271,13 @@ out:
  * @param realocc returns number of non null elements in array. Scanned from
  * end of the array. Once first non NULL value is found, then this is detected
  * as real count.
+ * @param dim_size number of bytes for field dimension
  * @return count set in C_<count_filed>. If count  indicator field not used,
  * then 'count' value (max value) from view is returned.
  * In case of error -1 is returned.
  */
 expublic BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
-        BFLDOCC *maxocc, BFLDOCC *realocc)
+        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -2312,7 +2313,7 @@ expublic BFLDOCC Bvoccur(char *cstruct, char *view, char *cname,
         EXFAIL_OUT(ret);
     }
     
-    ret = ndrx_Bvoccur(cstruct, view, cname, maxocc, realocc);
+    ret = ndrx_Bvoccur(cstruct, view, cname, maxocc, realocc, dim_size);
     
 out:
     return ret;
@@ -2365,7 +2366,7 @@ out:
  * @return 1 - For success (have next), 0 EOF (nothing to return), -1 FAIL
  */
 expublic int Bvnext (Bvnext_state_t *state, char *view, 
-        char *cname, int *fldtype)
+        char *cname, int *fldtype, BFLDOCC *maxocc, long *dim_size)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -2406,7 +2407,7 @@ expublic int Bvnext (Bvnext_state_t *state, char *view,
         EXFAIL_OUT(ret);
     }    
     
-    ret=ndrx_Bvnext (state, view, cname, fldtype);
+    ret=ndrx_Bvnext (state, view, cname, fldtype, maxocc, dim_size);
 
 out:
 

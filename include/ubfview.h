@@ -219,15 +219,15 @@ extern NDRX_API int ndrx_CBvchg(char *cstruct, char *view, char *cname, BFLDOCC 
 extern NDRX_API long ndrx_Bvsizeof(char *view);
 
 extern NDRX_API BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v, 
-        ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc);
+        ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size);
 
 extern NDRX_API BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname, 
-        BFLDOCC *maxocc, BFLDOCC *realocc);
+        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size);
 
 extern NDRX_API int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ);
 
 extern NDRX_API int ndrx_Bvnext (Bvnext_state_t *state, char *view, 
-        char *cname, int *fldtype);
+        char *cname, int *fldtype, BFLDOCC *maxocc, long *dim_size);
 
 #ifdef	__cplusplus
 }

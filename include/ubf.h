@@ -239,9 +239,10 @@ extern NDRX_API int CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ,
              char *buf, BFLDLEN len, int usrtype);
 extern NDRX_API long Bvsizeof(char *view);
 extern NDRX_API BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
-        BFLDOCC *maxocc, BFLDOCC *realocc);
+        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size);
 extern NDRX_API int Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC occ);
-extern NDRX_API int Bvnext (Bvnext_state_t *state, char *view, char *cname, int *fldtype);
+extern NDRX_API int Bvnext (Bvnext_state_t *state, char *view, char *cname, 
+			    int *fldtype, BFLDOCC *maxocc, long *dim_size);
 /* VIEW related, END */
 
 /* ATMI library TLS: */

@@ -78,59 +78,62 @@ Ensure(test_Bvoccur)
     struct MYVIEW1 v;
     BFLDOCC maxocc;
     BFLDOCC realocc;
+    long dim_size;
     
     init_MYVIEW1(&v);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort1", &maxocc, &realocc), 1);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort1", &maxocc, &realocc, &dim_size), 1);
     assert_equal(maxocc, 1);
     assert_equal(realocc, 1);
+    assert_equal(dim_size, sizeof(short));
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc, &dim_size), 2);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 2);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 2);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort4", &maxocc, &realocc), 1);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort4", &maxocc, &realocc, &dim_size), 1);
     assert_equal(maxocc, 1);
     assert_equal(realocc, 1);
     
     v.tint2[1] = 0;
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint2", &maxocc, &realocc), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint2", &maxocc, &realocc, &dim_size), 2);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 1); /* due to last element is NULL */
+    assert_equal(dim_size, sizeof(int));
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc), 5);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc, &dim_size), 5);
     assert_equal(maxocc, 5);
     assert_equal(realocc, 5);
     
     v.tchar2[4]='A';
     v.tchar2[3]='A';
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc), 5);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc, &dim_size), 5);
     assert_equal(maxocc, 5);
     assert_equal(realocc, 3);
     
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar3", &maxocc, &realocc), 0);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar3", &maxocc, &realocc, &dim_size), 0);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 2);
     
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tfloat1", &maxocc, &realocc), 4);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tfloat1", &maxocc, &realocc, &dim_size), 4);
     assert_equal(maxocc, 4);
     assert_equal(realocc, 4);
+    assert_equal(dim_size, sizeof(float));
     
-    
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring0", &maxocc, &realocc), 3);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring0", &maxocc, &realocc, &dim_size), 3);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
+    assert_equal(dim_size, 18);
     
-    
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring2", &maxocc, &realocc), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring2", &maxocc, &realocc, &dim_size), 2);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     
@@ -144,28 +147,17 @@ Ensure(test_Bvsetoccur)
 {
     struct MYVIEW1 v;
     BFLDOCC maxocc;
-    BFLDOCC realocc;
-    
     memset(&v, 0, sizeof(v));
     
-    v.tshort2[0] =2001;
-    v.tshort2[1] =2001;
+    assert_equal(Bvsetoccur((char *)&v, "MYVIEW1", "tshort2", 0), 0);
+    assert_equal(v.C_tchar2, 0);
+   
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 0);
-    assert_equal(maxocc, 2);
-    assert_equal(realocc, 0);
-    
-    v.C_tshort2 = 1;
-    
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 1);
-    assert_equal(maxocc, 2);
-    assert_equal(realocc, 0);
-    
-    v.C_tshort2 = 2;
-    
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc), 2);
-    assert_equal(maxocc, 2);
-    assert_equal(realocc, 0);
+    assert_equal(Bvsetoccur((char *)&v, "MYVIEW1", "tshort2", 1), 0);
+    assert_equal(v.C_tchar2, 1);
+   
+    assert_equal(Bvsetoccur((char *)&v, "MYVIEW1", "tshort2", 2), -1);
+    assert_equal(Berror, BEINVAL);
     
 }
 
@@ -176,136 +168,146 @@ Ensure(test_Bvnext)
     Bvnext_state_t state;
     char cname[NDRX_VIEW_CNAME_LEN];
     int fldtype=99;
+    BFLDOCC maxocc;
+    long dim_size;
     
     init_MYVIEW1(&v);
     
-    assert_equal(Bvnext (&state, "MYVIEW1", cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, "MYVIEW1", cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tshort1");
     assert_equal(fldtype, 0);
+    assert_equal(maxocc, 1);
+    assert_equal(dim_size, sizeof(short));
     
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tshort2");
     assert_equal(fldtype, 0);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tshort3");
     assert_equal(fldtype, 0);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tshort4");
     assert_equal(fldtype, 0);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tlong1");
     assert_equal(fldtype, 1);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tint2");
     assert_equal(fldtype, 7);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tint3");
     assert_equal(fldtype, 7);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tint4");
     assert_equal(fldtype, 7);
+    assert_equal(maxocc, 2);
+    assert_equal(dim_size, sizeof(int));
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tchar1");
     assert_equal(fldtype, 2);
     
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tchar2");
     assert_equal(fldtype, 2);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tchar3");
     assert_equal(fldtype, 2);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tfloat1");
     assert_equal(fldtype, 3);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tfloat2");
     assert_equal(fldtype, 3);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tfloat3");
     assert_equal(fldtype, 3);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tdouble1");
     assert_equal(fldtype, 4);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tdouble2");
     assert_equal(fldtype, 4);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tstring0");
     assert_equal(fldtype, 5);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tstring1");
     assert_equal(fldtype, 5);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tstring2");
     assert_equal(fldtype, 5);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tstring3");
     assert_equal(fldtype, 5);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(maxocc, 4);
+    assert_equal(dim_size, 20);
+    
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tstring4");
     assert_equal(fldtype, 5);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tstring5");
     assert_equal(fldtype, 5);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tcarray1");
     assert_equal(fldtype, 6);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tcarray2");
     assert_equal(fldtype, 6);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tcarray3");
     assert_equal(fldtype, 6);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tcarray4");
     assert_equal(fldtype, 6);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
     assert_string_equal(cname, "tcarray5");
     assert_equal(fldtype, 6);
     
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 0);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 0);
     
     
     /* Test inval param */
-    assert_equal(Bvnext (NULL, NULL, cname, &fldtype), -1);
+    assert_equal(Bvnext (NULL, NULL, cname, &fldtype, &maxocc, &dim_size), -1);
     assert_equal(Berror, BEINVAL);
     
     /* Test inval param */
     state.v = NULL;
     state.vel = NULL;
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), -1);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), -1);
     assert_equal(Berror, BEINVAL);
     
     /* Test eof */
     state.v = (char *)0x1;
     state.vel = NULL;
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 0);
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 0);
     
     
 }

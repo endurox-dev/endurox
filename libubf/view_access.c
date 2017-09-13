@@ -364,7 +364,8 @@ out:
  * 
  */
 expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v, 
-		ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc)
+		ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc, 
+				  long *dim_size)
 {
     BFLDOCC ret;
     short *C_count;
@@ -391,9 +392,11 @@ expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v,
     }
     
     *realocc = i+1;
-	
+    *dim_size = f->fldsize/f->count;
+    
 out:
-    NDRX_LOG(log_debug, "%s returns %d maxocc=%d", __func__, ret, maxocc);
+    NDRX_LOG(log_debug, "%s returns %d maxocc=%d dim_size=%d", __func__, 
+	     ret, maxocc, *dim_size);
     return ret;
 }
 
@@ -404,10 +407,11 @@ out:
  * @param cname
  * @param maxocc
  * @param realocc
+ * @param dimsz
  * @return 
  */
 expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname, 
-        BFLDOCC *maxocc, BFLDOCC *realocc)
+        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size)
 {
     BFLDOCC ret = EXSUCCEED;
     ndrx_typedview_t *v = NULL;
@@ -426,7 +430,7 @@ expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname,
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==(ret = ndrx_Bvoccur_int(cstruct, v, f, maxocc, realocc)))
+    if (EXFAIL==(ret = ndrx_Bvoccur_int(cstruct, v, f, maxocc, realocc, dim_size)))
     {
         NDRX_LOG(log_error, "ndrx_Bvoccur_int failed");
     }
@@ -496,7 +500,8 @@ out:
  * @param fldtype return the type of the field
  * @return On success 1 is returned, on EOF 0, on failure -1
  */
-expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname, int *fldtype)
+expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname, 
+			  int *fldtype, BFLDOCC *maxocc, long *dim_size)
 {
     int ret = EXSUCCEED;
     ndrx_typedview_t *v;
@@ -547,6 +552,9 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname, int *f
     
     *fldtype = f->typecode_full;
     ret = 1;
+    
+    *dim_size = f->fldsize/f->count;
+    *maxocc = f->count;
     
     
 out:
