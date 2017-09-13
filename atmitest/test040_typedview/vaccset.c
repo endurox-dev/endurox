@@ -92,7 +92,7 @@ Ensure(test_Bvchg_short)
     assert_equal(v.tshort2[1], 8888);
     
     /* occs 0 */
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 0);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 0);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 0);
             
@@ -102,7 +102,7 @@ Ensure(test_Bvchg_short)
     assert_equal(v.tshort3[0], 7777);
     
     /* TEST: Occurrences 1 */
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 1);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 1);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 1);
     
@@ -113,7 +113,7 @@ Ensure(test_Bvchg_short)
     
     
     /* TEST: Occurrences 2 */
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 2);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 2);
     
@@ -124,7 +124,7 @@ Ensure(test_Bvchg_short)
     assert_equal(v.tshort3[2], -7777);
     
     /* TEST: Occurrences 2 */
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 3);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 3);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     
@@ -142,7 +142,7 @@ Ensure(test_Bvchg_short)
             EXSUCCEED);
     assert_equal(v.tshort3[1], 0);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 3);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 3);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     
@@ -151,7 +151,7 @@ Ensure(test_Bvchg_short)
             EXSUCCEED);
     assert_equal(v.tshort3[2], 0);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 3);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 3);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 0);
     
@@ -188,7 +188,7 @@ Ensure(test_Bvchg_short)
             EXSUCCEED);
     assert_equal(v.tint4[1], -1);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint4", &maxocc, &realocc, &dim_size), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint4", &maxocc, &realocc, &dim_size, NULL), 2);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 0);
     

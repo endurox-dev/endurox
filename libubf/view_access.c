@@ -355,7 +355,8 @@ out:
  * @param realoccs by using set the count set in variable, it tests the array
  * until the end. And it detects the last array element which is not NULL and 
  * from start till last used (even in the middle there is NULL) is assumed as
- * it is real occs.
+ * it is real occs. (optional), set if not NULL
+ * @param fldtype field type code
  * @return occurrences (1 based)
  *  The following errors possible:
  * - BBADVIEW view not found
@@ -365,7 +366,7 @@ out:
  */
 expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v, 
 		ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc, 
-				  long *dim_size)
+                long *dim_size, int *fldtype)
 {
     BFLDOCC ret;
     short *C_count;
@@ -374,25 +375,36 @@ expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v,
         
     NDRX_VIEW_COUNT_SETUP;
 
-    *maxocc=f->count;
+    if (NULL!=maxocc)
+    {
+        *maxocc=f->count;
+    }
 
     ret = *C_count;
     
-    /* search for number of real occs... 
-     */
-    *realocc = f->count;
-    
-    /* scan from the end until we reach first non NULL */
-    for (i=f->count-1; i>=0; i--)
+    if (NULL!=realocc)
     {
-        if (!ndrx_Bvnull_int(v, f, i, cstruct))
+        /* scan from the end until we reach first non NULL */
+        for (i=f->count-1; i>=0; i--)
         {
-            break;
+            if (!ndrx_Bvnull_int(v, f, i, cstruct))
+            {
+                break;
+            }
         }
+        *realocc = i+1;
     }
     
-    *realocc = i+1;
-    *dim_size = f->fldsize/f->count;
+    
+    if (NULL!=dim_size)
+    {
+        *dim_size = f->fldsize/f->count;
+    }
+    
+    if (NULL!=fldtype)
+    {
+        *fldtype = f->typecode_full;
+    }
     
 out:
     NDRX_LOG(log_debug, "%s returns %d maxocc=%d dim_size=%d", __func__, 
@@ -411,7 +423,7 @@ out:
  * @return 
  */
 expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname, 
-        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size)
+        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size, int *fldtype)
 {
     BFLDOCC ret = EXSUCCEED;
     ndrx_typedview_t *v = NULL;
@@ -430,7 +442,8 @@ expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname,
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==(ret = ndrx_Bvoccur_int(cstruct, v, f, maxocc, realocc, dim_size)))
+    if (EXFAIL==(ret = ndrx_Bvoccur_int(cstruct, v, f, maxocc, realocc, 
+            dim_size, fldtype)))
     {
         NDRX_LOG(log_error, "ndrx_Bvoccur_int failed");
     }
@@ -550,12 +563,22 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname,
     strncpy(cname, f->cname, NDRX_VIEW_CNAME_LEN);
     cname[NDRX_VIEW_CNAME_LEN] = EXEOS;
     
-    *fldtype = f->typecode_full;
+    if (NULL!=fldtype)
+    {
+        *fldtype = f->typecode_full;
+    }
+    
     ret = 1;
     
-    *dim_size = f->fldsize/f->count;
-    *maxocc = f->count;
+    if (NULL!=dim_size)
+    {
+        *dim_size = f->fldsize/f->count;
+    }
     
+    if (NULL!=maxocc)
+    {
+        *maxocc = f->count;
+    }
     
 out:
     /* fill up the state: */

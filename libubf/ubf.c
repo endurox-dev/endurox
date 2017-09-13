@@ -2277,7 +2277,7 @@ out:
  * In case of error -1 is returned.
  */
 expublic BFLDOCC Bvoccur(char *cstruct, char *view, char *cname, 
-        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size)
+        BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size, int* fldtype)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -2301,19 +2301,7 @@ expublic BFLDOCC Bvoccur(char *cstruct, char *view, char *cname,
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==maxocc)
-    {
-        ndrx_Bset_error_msg(BEINVAL, "maxocc is NULL!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (NULL==realocc)
-    {
-        ndrx_Bset_error_msg(BEINVAL, "realocc is NULL!");
-        EXFAIL_OUT(ret);
-    }
-    
-    ret = ndrx_Bvoccur(cstruct, view, cname, maxocc, realocc, dim_size);
+    ret = ndrx_Bvoccur(cstruct, view, cname, maxocc, realocc, dim_size, fldtype);
     
 out:
     return ret;
@@ -2400,13 +2388,7 @@ expublic int Bvnext (Bvnext_state_t *state, char *view,
                 "to store field name");
         EXFAIL_OUT(ret);
     }
-    
-    if (NULL==fldtype)
-    {
-        ndrx_Bset_error_msg(BEINVAL, "fldtype is NULL!");
-        EXFAIL_OUT(ret);
-    }    
-    
+        
     ret=ndrx_Bvnext (state, view, cname, fldtype, maxocc, dim_size);
 
 out:

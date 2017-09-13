@@ -42,7 +42,7 @@
 /*------------------------------Prototypes------------------------------------*/
 
 /* buffer will be allocated by XATMI: */
-extern int ndrx_tpjsontoview(char **cstruct, char *view, char *buffer);
+extern char* ndrx_tpjsontoview(char *view, char *buffer);
 extern int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer, int bufsize);
 
 #endif /* VIEW2EXJSON_H_ */

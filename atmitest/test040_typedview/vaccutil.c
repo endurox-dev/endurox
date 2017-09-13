@@ -82,58 +82,58 @@ Ensure(test_Bvoccur)
     
     init_MYVIEW1(&v);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort1", &maxocc, &realocc, &dim_size), 1);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort1", &maxocc, &realocc, &dim_size, NULL), 1);
     assert_equal(maxocc, 1);
     assert_equal(realocc, 1);
     assert_equal(dim_size, sizeof(short));
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc, &dim_size), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort2", &maxocc, &realocc, &dim_size, NULL), 2);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 2);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort3", &maxocc, &realocc, &dim_size, NULL), 2);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort4", &maxocc, &realocc, &dim_size), 1);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tshort4", &maxocc, &realocc, &dim_size, NULL), 1);
     assert_equal(maxocc, 1);
     assert_equal(realocc, 1);
     
     v.tint2[1] = 0;
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint2", &maxocc, &realocc, &dim_size), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tint2", &maxocc, &realocc, &dim_size, NULL), 2);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 1); /* due to last element is NULL */
     assert_equal(dim_size, sizeof(int));
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc, &dim_size), 5);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc, &dim_size, NULL), 5);
     assert_equal(maxocc, 5);
     assert_equal(realocc, 5);
     
     v.tchar2[4]='A';
     v.tchar2[3]='A';
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc, &dim_size), 5);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar2", &maxocc, &realocc, &dim_size, NULL), 5);
     assert_equal(maxocc, 5);
     assert_equal(realocc, 3);
     
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar3", &maxocc, &realocc, &dim_size), 0);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tchar3", &maxocc, &realocc, &dim_size, NULL), 0);
     assert_equal(maxocc, 2);
     assert_equal(realocc, 2);
     
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tfloat1", &maxocc, &realocc, &dim_size), 4);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tfloat1", &maxocc, &realocc, &dim_size, NULL), 4);
     assert_equal(maxocc, 4);
     assert_equal(realocc, 4);
     assert_equal(dim_size, sizeof(float));
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring0", &maxocc, &realocc, &dim_size), 3);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring0", &maxocc, &realocc, &dim_size, NULL), 3);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     assert_equal(dim_size, 18);
     
-    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring2", &maxocc, &realocc, &dim_size), 2);
+    assert_equal(Bvoccur((char *)&v, "MYVIEW1", "tstring2", &maxocc, &realocc, &dim_size, NULL), 2);
     assert_equal(maxocc, 3);
     assert_equal(realocc, 3);
     

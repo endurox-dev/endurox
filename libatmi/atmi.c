@@ -845,7 +845,14 @@ out:
  */
 expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
 {
-    return ndrx_tpjsontoubf(p_ub, buffer);
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    ret = ndrx_tpjsontoubf(p_ub, buffer);
+    
+out:
+    return ret;
 }
 
 /**
@@ -857,7 +864,14 @@ expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
  */
 expublic int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
 {
-    return ndrx_tpubftojson(p_ub, buffer, bufsize);
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    ret=ndrx_tpubftojson(p_ub, buffer, bufsize);
+    
+out:
+    return ret;
 }
 
 /**

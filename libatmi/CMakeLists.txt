@@ -70,6 +70,7 @@ add_library (atmi SHARED
                 xastates.c
                 exparson.c
                 ubf2exjson.c
+                view2exjson.c
                 newenv.c
                 typed_xcvt.c
                 ubfutil.c
