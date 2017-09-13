@@ -1,7 +1,7 @@
 /* 
 ** ubf<->json conversion lib
 **
-** @file ubf2exjson.c
+** @file view2exjson.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -42,7 +42,7 @@
 #include <ndebug.h>
 
 #include <exparson.h>
-#include <ubf2exjson.h>
+#include <view2exjson.h>
 #include <ubf.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
@@ -74,7 +74,7 @@ exprivate long round_long( double r ) {
  * @param buffer - json text to parse
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
+expublic int ndrx_tpjsontoview(UBFH *p_ub, char *buffer)
 {
     int ret = EXSUCCEED;
     EXJSON_Value *root_value;
@@ -323,7 +323,7 @@ out:
  * @param bufsize       output buffer size
  * @return SUCCEED/FAIL 
  */
-expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
+expublic int ndrx_tpviewtojson(UBFH *p_ub, char *buffer, int bufsize)
 {
     int ret = EXSUCCEED;
     BFLDID fldid;
@@ -511,7 +511,7 @@ out:
  * @param buffer
  * @return 
  */
-expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
+expublic int typed_xcvt_json2view(buffer_obj_t **buffer)
 {
     int ret = EXSUCCEED;
     buffer_obj_t *tmp_b;
@@ -526,7 +526,7 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
     }
 
     /* Do the convert */
-    if (EXSUCCEED!=ndrx_tpjsontoubf(tmp, (*buffer)->buf))
+    if (EXSUCCEED!=ndrx_tpjsontoview(tmp, (*buffer)->buf))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert JSON->UBF!");
@@ -574,7 +574,7 @@ out:
  * @param buffer
  * @return 
  */
-expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
+expublic int typed_xcvt_view2json(buffer_obj_t **buffer)
 {
     int ret = EXSUCCEED;
     buffer_obj_t *tmp_b;
@@ -589,7 +589,7 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
     }
 
     /* Do the convert */
-    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, ATMI_MSG_MAX_SIZE))
+    if (EXSUCCEED!=ndrx_tpviewtojson((UBFH *)(*buffer)->buf, tmp, ATMI_MSG_MAX_SIZE))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert UBF->JSON!");
