@@ -217,6 +217,97 @@ Ensure(test_Bvnext)
     assert_equal(fldtype, 2);
     
     
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tchar2");
+    assert_equal(fldtype, 2);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tchar3");
+    assert_equal(fldtype, 2);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tfloat1");
+    assert_equal(fldtype, 3);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tfloat2");
+    assert_equal(fldtype, 3);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tfloat3");
+    assert_equal(fldtype, 3);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tdouble1");
+    assert_equal(fldtype, 4);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tdouble2");
+    assert_equal(fldtype, 4);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tstring0");
+    assert_equal(fldtype, 5);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tstring1");
+    assert_equal(fldtype, 5);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tstring2");
+    assert_equal(fldtype, 5);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tstring3");
+    assert_equal(fldtype, 5);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tstring4");
+    assert_equal(fldtype, 5);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tstring5");
+    assert_equal(fldtype, 5);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tcarray1");
+    assert_equal(fldtype, 6);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tcarray2");
+    assert_equal(fldtype, 6);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tcarray3");
+    assert_equal(fldtype, 6);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tcarray4");
+    assert_equal(fldtype, 6);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 1);
+    assert_string_equal(cname, "tcarray5");
+    assert_equal(fldtype, 6);
+    
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 0);
+    
+    
+    /* Test inval param */
+    assert_equal(Bvnext (NULL, NULL, cname, &fldtype), -1);
+    assert_equal(Berror, BEINVAL);
+    
+    /* Test inval param */
+    state.v = NULL;
+    state.vel = NULL;
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), -1);
+    assert_equal(Berror, BEINVAL);
+    
+    /* Test eof */
+    state.v = (char *)0x1;
+    state.vel = NULL;
+    assert_equal(Bvnext (&state, NULL, cname, &fldtype), 0);
+    
+    
 }
 /**
  * Very basic tests of the framework

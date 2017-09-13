@@ -479,7 +479,10 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
 
     if (strlen(serialized_string) <= bufsize )
     {
-        strcpy(buffer, serialized_string);
+        strncpy(buffer, serialized_string, bufsize-1);
+        
+        serialized_string[bufsize-1] = EXEOS;
+        
         NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
     }
     else
