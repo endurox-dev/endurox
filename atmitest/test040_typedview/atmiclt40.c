@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <math.h>       /* fabs */
 
 #include <atmi.h>
 #include <ubf.h>
@@ -56,74 +57,162 @@
  */
 int test_view2json(void)
 {
-	int ret = EXSUCCEED;
-	struct MYVIEW1 v1;
-	char msg[ATMI_MSG_MAX_SIZE+1];
-	char *abuf = NULL;
-	char view[NDRX_VIEW_NAME_LEN+1];
-	init_MYVIEW1(&v1);
-	
-	if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 
-				 BVACCESS_NOTNULL))
-	{
-		NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
-			 tpstrerror(tperrno));
-		EXFAIL_OUT(ret);
-	}
-	
-	memset(&v1, 0, sizeof(v1));
-	
-	NDRX_LOG(log_debug, "Got json: [%s]", msg);
-	
-	if (NULL==(abuf=tpjsontoview(view, msg)))
-	{
-		NDRX_LOG(log_error, "TESTERROR: Failed to get view from JSON: %s", 
-			 tpstrerror(tperrno));
-		EXFAIL_OUT(ret);
-	}
-	
-	/* test structure... */
-	if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)abuf))
-	{
-		NDRX_LOG(log_error, "TESTERROR: Failed to validate view recovery!");
-		EXFAIL_OUT(ret);
-	}
-	
-	
-	tpfree(abuf);
-	abuf = NULL;
-	
-	init_MYVIEW1(&v1);
-	
-	if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 0))
-	{
-		NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
-			 tpstrerror(tperrno));
-		EXFAIL_OUT(ret);
-	}
-	
-	NDRX_LOG(log_debug, "Got json2: [%s]", msg);
-	
-	if (NULL==(abuf=tpjsontoview(view, msg)))
-	{
-		NDRX_LOG(log_error, "TESTERROR: Failed to get view from JSON: %s", 
-			 tpstrerror(tperrno));
-		EXFAIL_OUT(ret);
-	}
-	
-	/* test structure... */
-	if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)abuf))
-	{
-		NDRX_LOG(log_error, "TESTERROR: Failed to validate view recovery!");
-		EXFAIL_OUT(ret);
-	}
+    int ret = EXSUCCEED;
+    struct MYVIEW1 v1;
+    char msg[ATMI_MSG_MAX_SIZE+1];
+    char *abuf = NULL;
+    char view[NDRX_VIEW_NAME_LEN+1];
+    char *testbuf = "{\"MYVIEW2\":{\"tshort1\":1,\"tlong1\":2,\"tchar1\":\"A\",\""
+    "tfloat1\":1,\"tdouble1\":21,\"tstring1\":\"ABC\",\""
+    "tcarray1\":\"SEVMTE8AAAAAAA==\"}}";
+
+    struct MYVIEW2 *v2;
+    init_MYVIEW1(&v1);
+
+    if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 
+                             BVACCESS_NOTNULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&v1, 0, sizeof(v1));
+
+    NDRX_LOG(log_debug, "Got json: [%s]", msg);
+
+    if (NULL==(abuf=tpjsontoview(view, msg)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get view from JSON: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    /* test structure... */
+    if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)abuf))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to validate view recovery!");
+        EXFAIL_OUT(ret);
+    }
+
+
+    tpfree(abuf);
+    abuf = NULL;
+
+    /* test full convert... */
+    init_MYVIEW1(&v1);
+
+    msg[0] = EXEOS;
+    if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_debug, "Got json2: [%s]", msg);
+
+    if (NULL==(abuf=tpjsontoview(view, msg)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get view from JSON: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    /* test structure... */
+    if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)abuf))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to validate view recovery!");
+        EXFAIL_OUT(ret);
+    }
+
+
+    /* test manual convert */
+
+    if (NULL==(abuf=tpjsontoview(view, testbuf)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get view from JSON: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    v2 = (struct MYVIEW2 *)abuf;
+
+    if (1!=v2->tshort1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort1 got %hd expected 1", 
+                 v2->tshort1);
+        EXFAIL_OUT(ret);
+    }
+
+    if (2!=v2->tlong1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tlong1 got %hd expected 2", 
+                 v2->tlong1);
+        EXFAIL_OUT(ret);
+    }
+
+    if ('A'!=v2->tchar1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tchar1 got %c expected A", 
+                 v2->tchar1);
+        EXFAIL_OUT(ret);
+    }
+
+    if (fabs(v2->tfloat1 - 1.0f) > 0.1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tfloat1 got %f expected 1", 
+                 v2->tfloat1);
+        EXFAIL_OUT(ret);
+    }
+
+    if ((v2->tdouble1 - 21.0f) > 0.1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tdouble1 got %lf expected 21", 
+                 v2->tdouble1);
+        EXFAIL_OUT(ret);
+    }
+
+    if (0!=strcmp(v2->tstring1, "ABC"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tstring1 got [%s] expected ABC", 
+                 v2->tdouble1);
+        EXFAIL_OUT(ret);
+    }
+
+    if (0!=strncmp(v2->tcarray1, "HELLO", 5))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tstring1 got [%10s] expected "
+                "[HELLO]", 
+                 v2->tdouble1); 
+        EXFAIL_OUT(ret);
+    }
+
+
+    msg[0] = EXEOS;
+
+    if (EXSUCCEED!=tpviewtojson((char *)v2, "MYVIEW2", msg, sizeof(msg), 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_debug, "v2 json: [%s]", msg);
+
+    if (0!=strcmp(msg, testbuf))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Built json: [%s] expected [%s]", 
+                 msg, testbuf);
+        EXFAIL_OUT(ret);
+    }
 	
 	
 out:
-	if (NULL!=abuf)
-	{
-		tpfree(abuf);
-	}
+    if (NULL!=abuf)
+    {
+        tpfree(abuf);
+    }
 
 	return ret;
 }
