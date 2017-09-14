@@ -600,10 +600,15 @@ extern NDRX_API int tpext_delb4pollcb(void);
 extern NDRX_API int tpterm (void);
 extern NDRX_API int tpgetsrvid (void);
 
-/* JSON<->ubf buffer support */
+/* JSON<->UBF buffer support */
 extern NDRX_API int tpjsontoubf(UBFH *p_ub, char *buffer);
 extern NDRX_API int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 
+
+/* JSON<->VIEW buffer support */
+extern NDRX_API int tpviewtojson(char *cstruct, char *view, char *buffer,  
+        int bufsize, long flags);
+extern NDRX_API char* tpjsontoview(char *view, char *buffer);
 
 /* Queue support: */
 extern NDRX_API int tpenqueue (char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);

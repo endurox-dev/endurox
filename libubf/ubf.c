@@ -2148,7 +2148,7 @@ expublic int Bojoin(UBFH *dest, UBFH *src)
  * On output indicates the length of data loaded, used for carray and strings.
  * optional
  * @param usrtype User field type
- * @param flags 0 or BVNEXT_NOTNULL (report view 'NULL' values as BNOTPRES)
+ * @param flags 0 or BVACCESS_NOTNULL (report view 'NULL' values as BNOTPRES)
  * @return 0 - succeed, -1 FAIL
  */
 expublic int CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 

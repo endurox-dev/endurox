@@ -41,7 +41,7 @@
 #include <ndebug.h>
 
 #include <exparson.h>
-#include <ubf2exjson.h>
+#include <view2exjson.h>
 #include <ubf.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
@@ -430,19 +430,20 @@ out:
     return cstruct;
 }
 
-#if 0
-TODO:
+
 /**
  * Build json text from UBF buffer
  * @param p_ub  JSON buffer
  * @param buffer output json buffer
  * @param bufsize       output buffer size
+ * @param flags BVACCESS_NOTNULL -> return only non NULL values, if not set,
+ * return all
  * @return SUCCEED/FAIL 
  */
-expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer, int bufsize)
+expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer, 
+        int bufsize, long flags)
 {
     int ret = EXSUCCEED;
-    BFLDID fldid;
     int occs;
     int is_array;
     double d_val;
@@ -450,173 +451,236 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer, int bufs
     char b64_buf[CARR_BUFFSIZE_B64+1];
     int is_num;
     char *s_ptr;
+    char rootkey[NDRX_VIEW_NAME_LEN+1+5];
     BFLDLEN flen;
+    
+    Bvnext_state_t state;
+    char cname[NDRX_VIEW_CNAME_LEN+1];
+    int fldtype;
+    BFLDOCC maxocc;
+    long dim_size;
+    
     EXJSON_Value *root_value = exjson_value_init_object();
     EXJSON_Object *root_object = exjson_value_get_object(root_value);
+    
+    EXJSON_Value *view_value = exjson_value_init_object();
+    EXJSON_Object *view_object = exjson_value_get_object(view_value);
+    
+    
     char *serialized_string = NULL;
     BFLDOCC oc;
-    BFLDLEN fldlen;
 
     char *nm;
     EXJSON_Array * jarr;
-
-    for (fldid = BFIRSTFLDID, oc = 0;
-            1 == (ret = Bnext(p_ub, &fldid, &oc, NULL, &fldlen));)
+    
+    
+    snprintf(rootkey, sizeof(rootkey), "Root.%s", view);
+    
+    NDRX_LOG(log_debug, "Root key: %s", rootkey);
+    
+    if( EXJSONSuccess != exjson_object_dotset_value(root_object, rootkey, view_value) )
+    {	
+        NDRX_LOG(log_error, "exjson: Failed to set root value");
+        ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to set root value");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==(ret=Bvnext(&state, view, cname, &fldtype, &maxocc, &dim_size)))
     {
-        nm = Bfname(fldid);
-        NDRX_LOG(log_debug, "Field: [%s] occ %d", nm, oc);
-        if (0==oc)
+        NDRX_LOG(log_error, "Failed to iterate VIEW: %s", Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to iterate VIEW: %s",  
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    while (ret)
+    {
+        int fulloccs;
+        int realoccs;
+        /* Get real occurrences */
+        if (EXFAIL==(fulloccs=Bvoccur(cstruct, view, cname, NULL, &realoccs, NULL, NULL)))
         {
-            occs = Boccur(p_ub, fldid);
-
-            if (occs>1)
+            NDRX_LOG(log_error, "Failed to get view field %s.%s infos: %s", 
+                    view, cname, Bstrerror(Berror));
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get view field %s.%s infos: %s", 
+                    view, cname, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (flags & BVACCESS_NOTNULL)
+        {
+            occs = realoccs;
+            NDRX_LOG(log_dump, "Using REAL (non null) occs: %s", occs);
+        }
+        else
+        {
+            occs = fulloccs;
+            
+            NDRX_LOG(log_dump, "Using set occs: %s", occs);
+        }
+        
+        for (oc=0; oc<occs; oc++)
+        {
+            NDRX_LOG(log_debug, "Field: [%s] occ %d", cname, oc);
+            if (0==oc)
             {
-                /* create array */
-                is_array = EXTRUE;
-                if (NULL==(jarr = exjson_array_init()))
+                if (occs>1)
                 {
-                        NDRX_LOG(log_error, "Failed to initialise array!");
-                        EXFAIL_OUT(ret);
+                    /* create array */
+                    is_array = EXTRUE;
+                    if (NULL==(jarr = exjson_array_init()))
+                    {
+                            NDRX_LOG(log_error, "Failed to initialize array!");
+
+                            ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array!");
+                            EXFAIL_OUT(ret);
+                    }
+                    /* add array to document... */
+                    if (EXJSONSuccess!=exjson_object_set_array(root_object, nm, jarr))
+                    {
+                            NDRX_LOG(log_error, "exjson: Failed to add Array to root object!!");
+                            ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to add "
+                                    "Array to root object!!");
+                            EXFAIL_OUT(ret);
+
+                            EXFAIL_OUT(ret);
+                    }
                 }
-                /* add array to document... */
-                if (EXJSONSuccess!=exjson_object_set_array(root_object, nm, jarr))
+                else
                 {
-                        NDRX_LOG(log_error, "Failed to add Array to root object!!");
-                        EXFAIL_OUT(ret);
+                    is_array = EXFALSE;
                 }
             }
             else
             {
-                is_array = EXFALSE;
-            }
-        }
-        else
-        {
-            is_array = EXTRUE;
-        }
-
-        if (IS_NUM(fldid))
-        {
-            if (EXSUCCEED!=CBget(p_ub, fldid, oc, (char *)&d_val, 0L, BFLD_DOUBLE))
-            {
-                NDRX_LOG(log_error, "Failed to get (double): %ld/%d: %s",
-                                                fldid, oc, Bstrerror(Berror));
-                
-                ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get (double): %ld/%d: %s",
-                                                fldid, oc, Bstrerror(Berror));
-                EXFAIL_OUT(ret);
-            }
-            is_num = EXTRUE;
-            NDRX_LOG(log_debug, "Numeric value: %lf", d_val);
-        }
-        else
-        {
-            is_num = EXFALSE;
-            flen = sizeof(strval);
-            if (EXSUCCEED!=CBget(p_ub, fldid, oc, strval, &flen, BFLD_CARRAY))
-            {
-                NDRX_LOG(log_error, "Failed to get (string): %ld/%d: %s",
-                                        fldid, oc, Bstrerror(Berror));
-                
-                ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get (string): %ld/%d: %s",
-                                        fldid, oc, Bstrerror(Berror));
-                
-                EXFAIL_OUT(ret);
+                is_array = EXTRUE;
             }
 
-            /* If it is carray, then convert to hex... */
-            if (IS_BIN(fldid))
+            if (IS_NUM(fldtype))
             {
-                size_t outlen;
-                NDRX_LOG(log_debug, "Field is binary... convert to b64");
-
-                if (NULL==atmi_base64_encode((unsigned char *)strval, flen, 
-                            &outlen, b64_buf))
+                if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
+                        (char *)&d_val, 0L, BFLD_DOUBLE, flags))
                 {
-                    NDRX_LOG(log_error, "Failed to convert to b64!");
-                    
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to convert to b64!");
-                    
+                    NDRX_LOG(log_error, "Failed to get (double): %s.%s/%d: %s",
+                                                    view, cname, oc, Bstrerror(Berror));
+
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get (double): %s.%s/%d: %s",
+                                                    view, cname, oc, Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
-                b64_buf[outlen] = EXEOS;
-                s_ptr = b64_buf;
+                is_num = EXTRUE;
+                NDRX_LOG(log_debug, "Numeric value: %lf", d_val);
+            }
+            else
+            {
+                is_num = EXFALSE;
+                flen = sizeof(strval);
+                if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
+                        strval, &flen, BFLD_CARRAY, flags))
+                {
+                    NDRX_LOG(log_error, "Failed to get (string): %s.%s/%d: %s",
+                                            view, cname, oc, Bstrerror(Berror));
+
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get (string): %s.%s/%d: %s",
+                                            view, cname, oc, Bstrerror(Berror));
+
+                    EXFAIL_OUT(ret);
+                }
+
+                /* If it is carray, then convert to hex... */
+                if (IS_BIN(fldtype))
+                {
+                    size_t outlen;
+                    NDRX_LOG(log_debug, "Field is binary... convert to b64");
+
+                    if (NULL==atmi_base64_encode((unsigned char *)strval, flen, 
+                                &outlen, b64_buf))
+                    {
+                        NDRX_LOG(log_error, "Failed to convert to b64!");
+
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to convert to b64!");
+
+                        EXFAIL_OUT(ret);
+                    }
+                    b64_buf[outlen] = EXEOS;
+                    s_ptr = b64_buf;
+
+                }
+                else
+                {
+                    strval[flen] = EXEOS;
+                    s_ptr = strval;
+                }
+
+                NDRX_LOG(log_debug, "String value: [%s]", s_ptr);
+            }
+
+            if (is_array)
+            {
+                    /* Add array element 
+                    exjson_object_set_value */
+
+                    /* Add normal element */
+                    if (is_num)
+                    {
+                        if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
+                        {
+                            NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
+                                    d_val);
+
+                            ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                                    "elem to [%lf]!", d_val);
+
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    else
+                    {
+                        if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
+                        {
+                            NDRX_LOG(log_error, "Failed to set array elem to [%s]!", 
+                                    s_ptr);
+
+                            ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                                    "elem to [%s]!", s_ptr);
+
+                            EXFAIL_OUT(ret);
+                        }
+                    }
 
             }
             else
             {
-                strval[flen] = EXEOS;
-                s_ptr = strval;
-            }
-
-            NDRX_LOG(log_debug, "String value: [%s]", s_ptr);
-        }
-
-        if (is_array)
-        {
-                /* Add array element 
-                exjson_object_set_value */
-
                 /* Add normal element */
                 if (is_num)
                 {
-                    if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
+                    if (EXJSONSuccess!=exjson_object_set_number(root_object, nm, d_val))
                     {
-                        NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
-                                d_val);
-                        
-                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                "elem to [%lf]!", d_val);
-                        
+                        NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
+                                            nm, d_val);
+
+                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
+                                "value to [%lf]!", nm, d_val);
+
                         EXFAIL_OUT(ret);
                     }
                 }
                 else
                 {
-                    if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
+                    if (EXJSONSuccess!=exjson_object_set_string(root_object, nm, s_ptr))
                     {
-                        NDRX_LOG(log_error, "Failed to set array elem to [%s]!", 
-                                s_ptr);
-                        
-                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                "elem to [%s]!", s_ptr);
-                        
+                        NDRX_LOG(log_error, "Failed to set [%s] value to [%s]!",
+                                        nm, s_ptr);
+
+                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
+                                "value to [%s]!", nm, s_ptr);
+
                         EXFAIL_OUT(ret);
                     }
                 }
-
-        }
-        else
-        {
-            /* Add normal element */
-            if (is_num)
-            {
-                if (EXJSONSuccess!=exjson_object_set_number(root_object, nm, d_val))
-                {
-                    NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
-                                        nm, d_val);
-                    
-                    ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
-                            "value to [%lf]!", nm, d_val);
-                    
-                    EXFAIL_OUT(ret);
-                }
             }
-            else
-            {
-                if (EXJSONSuccess!=exjson_object_set_string(root_object, nm, s_ptr))
-                {
-                    NDRX_LOG(log_error, "Failed to set [%s] value to [%s]!",
-                                    nm, s_ptr);
-                    
-                    ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
-                            "value to [%s]!", nm, s_ptr);
-                    
-                    EXFAIL_OUT(ret);
-                }
-            }
-        }
-    }
+        } /* for occ */
+    } /* while ret */ 
 
     serialized_string = exjson_serialize_to_string(root_value);
 
@@ -650,9 +714,12 @@ out:
     {
         exjson_value_free(root_value);
     }
+
+    /* At iter end, ret normally becomes 0, thus fine here as SUCCEED */
     return ret;
 }
 
+#if 0
 /**
  * auto-buffer convert func. json->ubf
  * @param buffer

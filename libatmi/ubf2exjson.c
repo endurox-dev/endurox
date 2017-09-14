@@ -406,13 +406,20 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
                 is_array = EXTRUE;
                 if (NULL==(jarr = exjson_array_init()))
                 {
-                        NDRX_LOG(log_error, "Failed to initialise array!");
+                        NDRX_LOG(log_error, "Failed to initialize array!");
+                        
+                        ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to "
+                                "initialize array!");
+                        
                         EXFAIL_OUT(ret);
                 }
                 /* add array to document... */
                 if (EXJSONSuccess!=exjson_object_set_array(root_object, nm, jarr))
                 {
                         NDRX_LOG(log_error, "Failed to add Array to root object!!");
+                        
+                        ndrx_TPset_error_msg(TPESYSTEM, "Failed to add Array "
+                                "to root object!!");
                         EXFAIL_OUT(ret);
                 }
             }

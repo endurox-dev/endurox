@@ -44,6 +44,7 @@
 #include <tperror.h>
 #include <atmi_tls.h>
 #include <ubf.h>
+#include <view2exjson.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {ndrx_TPunset_error(); \
@@ -1380,3 +1381,86 @@ out:
     return ret;
 }
 
+/**
+ * Convert view to JSON
+ * @param cstruct view object
+ * @param view view name
+ * @param buffer output buffer
+ * @param bufsize output buffer size
+ * @param flags 0 or BVACCESS_NOTNULL for NULL access mode
+ * @return 0 on succeed, -1 on fail
+ */
+expublic int tpviewtojson(char *cstruct, char *view, char *buffer,  
+        int bufsize, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    if (NULL==cstruct)
+    {
+        NDRX_LOG(log_error, "cstruct is NULL");
+        ndrx_TPset_error_fmt(TPEINVAL, "cstruct is NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view || EXEOS==view[0])
+    {
+        NDRX_LOG(log_error, "view is NULL or empty");
+        ndrx_TPset_error_fmt(TPEINVAL, "view is NULL or empty");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==buffer)
+    {
+        NDRX_LOG(log_error, "buffer is NULL");
+        ndrx_TPset_error_fmt(TPEINVAL, "buffer is NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    ret = ndrx_tpviewtojson(cstruct, view, buffer,  bufsize, flags);
+    
+out:
+    return ret;
+}
+
+/**
+ * Convert json to view 
+ * @param view view name (output)
+ * @param buffer input buffer to parse
+ * @return NULL on error, or tpalloc'd VIEW buffer with parsed fields inside.
+ */
+expublic char* tpjsontoview(char *view, char *buffer)
+{
+    int ret=EXSUCCEED;
+    char *ret_ptr;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    if (NULL==view)
+    {
+        NDRX_LOG(log_error, "view is NULL");
+        ndrx_TPset_error_fmt(TPEINVAL, "view is NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==buffer)
+    {
+        NDRX_LOG(log_error, "buffer is NULL");
+        ndrx_TPset_error_fmt(TPEINVAL, "buffer is NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret_ptr=ndrx_tpjsontoview(view, buffer);
+    
+out:
+    if (EXSUCCEED==ret)
+    {
+        return ret_ptr;
+    }
+    else
+    {
+        return NULL;
+    }
+}

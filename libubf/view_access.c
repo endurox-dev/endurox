@@ -57,7 +57,7 @@
 /**
  * Return the VIEW field according to user type
  * In case of NULL value, we do not return the given occurrence.
- * If the C_count is less than given occurrence and BVNEXT_NOTNULL is set, then
+ * If the C_count is less than given occurrence and BVACCESS_NOTNULL is set, then
  * field not found will be returned.
  * 
  * @param cstruct instance of the view object

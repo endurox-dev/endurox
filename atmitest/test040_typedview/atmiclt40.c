@@ -67,7 +67,10 @@ int main(int argc, char** argv) {
         NDRX_LOG(log_error, "TESTERROR: failed to init: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+    
+    /* view ops with json */
 
+    /* View ops with services */
     for (j=0; j<1000; j++)
     {
         
