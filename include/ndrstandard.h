@@ -106,8 +106,37 @@ extern "C" {
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 
+#if 0
+/*These are slow! */
 #define NDRX_STRCPY_SAFE(X, Y) {strncpy(X, Y, sizeof(X)-1);\
                           X[sizeof(X)-1]=EXEOS;}
+	
+#define NDRX_STRNCPY_SAFE(X, Y, N) {strncpy(X, Y, N-1);\
+                          X[N]=EXEOS;}
+	
+#endif
+/* TODO: switch to STRLCPY if  */
+#define NDRX_STRCPY_SAFE(X, Y) {\
+	int ndrx_I5SmWDM_len = strlen(Y);\
+	int ndrx_XgCmDEk_bufzs = sizeof(X)-1;\
+	if (ndrx_I5SmWDM_len > ndrx_XgCmDEk_bufzs)\
+	{\
+		ndrx_I5SmWDM_len = ndrx_XgCmDEk_bufzs;\
+	}\
+	memcpy(X, Y, ndrx_I5SmWDM_len);\
+	X[ndrx_I5SmWDM_len]=0;\
+	}
+/* N - buffer size of X **/	
+#define NDRX_STRNCPY_SAFE(X, Y, N) {\
+	int ndrx_I5SmWDM_len = strlen(Y);\
+	int ndrx_XgCmDEk_bufzs = N-1;\
+	if (ndrx_I5SmWDM_len > ndrx_XgCmDEk_bufzs)\
+	{\
+		ndrx_I5SmWDM_len = ndrx_XgCmDEk_bufzs;\
+	}\
+	memcpy(X, Y, ndrx_I5SmWDM_len);\
+	X[ndrx_I5SmWDM_len]=0;\
+	}
 /*
  * So we use these two macros where we need know that more times they will be
  * true, than false. This makes some boost for CPU code branching.

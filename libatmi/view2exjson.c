@@ -137,8 +137,6 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
         EXFAIL_OUT(ret);
     }
     
-    name = (char *)exjson_object_get_name(root_object, i);
-    
     NDRX_LOG(log_debug, "Allocating view [%s]: %ld", name, vsize);
     
     cstruct = tpalloc("VIEW", name, vsize);
@@ -699,10 +697,8 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
 
     if (strlen(serialized_string) <= bufsize )
     {
-        strncpy(buffer, serialized_string, bufsize-1);
-        
-        serialized_string[bufsize-1] = EXEOS;
-        
+	    
+	NDRX_STRNCPY_SAFE(buffer, serialized_string, bufsize-1);
         NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
     }
     else
