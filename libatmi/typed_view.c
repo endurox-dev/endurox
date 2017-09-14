@@ -107,6 +107,14 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
     {
         len = NDRX_VIEW_SIZE_DEFAULT_SIZE;
     }
+    else if (v->ssize < len)
+    {
+	
+	len = v->ssize;
+	NDRX_LOG(log_warn, "VIEW [%s] structure size is %ld, requested %ld -> "
+		"upgrading to view size!",
+                len, subtype, v->ssize);   
+    }
     
     /* Allocate VIEW buffer */
     /* Maybe still malloc? */
@@ -119,16 +127,15 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
         goto out;
     }
     
-    /* Check the size of the view, if buffer is smaller then view
-     * the have some working in ULOG and logfile... */
-    if (v->ssize < len)
+    if (EXSUCCEED!=ndrx_Bvsinit_int(v, ret))
     {
-        NDRX_LOG(log_warn, "tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
-                len, subtype, v->ssize);
-        userlog("tpalloc'ed %ld bytes, but VIEW [%s] structure size is %ld",
-                len, subtype, v->ssize);
+	NDRX_LOG(log_error, "%s: Failed to init view: %s!", 
+		 __func__, Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to init view: %s!", 
+		 __func__, Bstrerror(Berror));
+        goto out;    
     }
-
+    
 out:
     return ret;
 }

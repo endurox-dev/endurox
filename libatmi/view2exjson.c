@@ -116,6 +116,14 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
     cnt = exjson_object_get_count(root_object);
     NDRX_LOG(log_error, "cnt = %d", cnt);
     
+    
+    if (NULL==(name = (char *)exjson_object_get_name(root_object, 0)))
+    {
+	NDRX_LOG(log_error, "exjson: Invalid json no root VIEW object");
+	ndrx_TPset_error_msg(TPEINVAL, "exjson: Invalid json no root VIEW object");
+	EXFAIL_OUT(ret);
+    }
+    
     vsize = Bvsizeof(name);
     
     if (vsize < 0)
@@ -153,6 +161,9 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
         EXFAIL_OUT(ret);
     }
 
+    cnt = exjson_object_get_count(view_object);
+    NDRX_LOG(log_error, "cnt = %d", cnt);
+    
     for (i =0; i< cnt; i++)
     {
         name = (char *)exjson_object_get_name(view_object, i);

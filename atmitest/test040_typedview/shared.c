@@ -305,9 +305,12 @@ expublic int validate_MYVIEW1(struct MYVIEW1 *v)
         TEST_NUM_EQUAL(v->tcarray2[i], i+1);
     }
     
-    /* This is not sent over because of indicator.. */
+    /* This is not sent over because of indicator.. 
+     * Really cannot test, because null initialisers might
+     * fill with other data...
     TEST_NUM_EQUAL(v->tcarray2[5], 0);
     TEST_NUM_EQUAL(v->tcarray2[6], 0);
+     * */
 
     TEST_NUM_EQUAL(v->C_tcarray3, 9);
             

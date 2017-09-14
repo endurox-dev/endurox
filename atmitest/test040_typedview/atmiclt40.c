@@ -59,19 +59,43 @@ int test_view2json(void)
 	int ret = EXSUCCEED;
 	struct MYVIEW1 v1;
 	char msg[ATMI_MSG_MAX_SIZE+1];
-	
+	char *abuf = NULL;
+	char view[NDRX_VIEW_NAME_LEN+1];
 	init_MYVIEW1(&v1);
 	
-	if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), BVACCESS_NOTNULL))
+	if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 
+				 BVACCESS_NOTNULL))
 	{
 		NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
 			 tpstrerror(tperrno));
 		EXFAIL_OUT(ret);
 	}
 	
+	memset(&v1, 0, sizeof(v1));
+	
 	NDRX_LOG(log_debug, "Got json: [%s]", msg);
 	
+	if (NULL==(abuf=tpjsontoview(view, msg)))
+	{
+		NDRX_LOG(log_error, "TESTERROR: Failed to get view from JSON: %s", 
+			 tpstrerror(tperrno));
+		EXFAIL_OUT(ret);
+	}
+	
+	/* test structure... */
+	if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)abuf))
+	{
+		NDRX_LOG(log_error, "TESTERROR: Failed to validate view recovery!");
+		EXFAIL_OUT(ret);
+	}
+	
+	
 out:
+	if (NULL!=abuf)
+	{
+		tpfree(abuf);
+	}
+
 	return ret;
 }
 
