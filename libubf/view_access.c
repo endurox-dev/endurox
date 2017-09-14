@@ -385,7 +385,7 @@ expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v,
     if (NULL!=realocc)
     {
         /* scan from the end until we reach first non NULL */
-        for (i=f->count-1; i>=0; i--)
+        for (i=ret-1; i>=0; i--)
         {
             if (!ndrx_Bvnull_int(v, f, i, cstruct))
             {
@@ -407,8 +407,8 @@ expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v,
     }
     
 out:
-    NDRX_LOG(log_debug, "%s returns %d maxocc=%d dim_size=%d", __func__, 
-	     ret, maxocc, *dim_size);
+    NDRX_LOG(log_debug, "%s returns %d maxocc=%d dim_size=%d realocc=%d", __func__, 
+	     ret, maxocc?*maxocc:-1, dim_size?*dim_size:-1, realocc?*realocc:-1);
     return ret;
 }
 

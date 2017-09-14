@@ -2382,9 +2382,9 @@ expublic int Bvnext (Bvnext_state_t *state, char *view,
         }
     }
     
-    if (NULL==cname || EXEOS==cname[0])
+    if (NULL==cname)
     {
-        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty, no where "
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL, no where "
                 "to store field name");
         EXFAIL_OUT(ret);
     }

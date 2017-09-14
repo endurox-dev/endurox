@@ -50,6 +50,31 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Test json2view and vice versa
+ * @return 
+ */
+int test_view2json(void)
+{
+	int ret = EXSUCCEED;
+	struct MYVIEW1 v1;
+	char msg[ATMI_MSG_MAX_SIZE+1];
+	
+	init_MYVIEW1(&v1);
+	
+	if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), BVACCESS_NOTNULL))
+	{
+		NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
+			 tpstrerror(tperrno));
+		EXFAIL_OUT(ret);
+	}
+	
+	NDRX_LOG(log_debug, "Got json: [%s]", msg);
+	
+out:
+	return ret;
+}
+
 /*
  * Do the test call to the server
  */
@@ -69,6 +94,12 @@ int main(int argc, char** argv) {
     }
     
     /* view ops with json */
+    
+    if (EXSUCCEED!=test_view2json())
+    {
+	NDRX_LOG(log_error, "TESTERROR: JSON2VIEW failed!");
+        EXFAIL_OUT(ret);    
+    }
 
     /* View ops with services */
     for (j=0; j<1000; j++)

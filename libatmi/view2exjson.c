@@ -451,7 +451,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     char b64_buf[CARR_BUFFSIZE_B64+1];
     int is_num;
     char *s_ptr;
-    char rootkey[NDRX_VIEW_NAME_LEN+1+5];
     BFLDLEN flen;
     
     Bvnext_state_t state;
@@ -470,15 +469,9 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     char *serialized_string = NULL;
     BFLDOCC oc;
 
-    char *nm;
     EXJSON_Array * jarr;
     
-    
-    snprintf(rootkey, sizeof(rootkey), "Root.%s", view);
-    
-    NDRX_LOG(log_debug, "Root key: %s", rootkey);
-    
-    if( EXJSONSuccess != exjson_object_dotset_value(root_object, rootkey, view_value) )
+    if( EXJSONSuccess != exjson_object_dotset_value(root_object, view, view_value) )
     {	
         NDRX_LOG(log_error, "exjson: Failed to set root value");
         ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to set root value");
@@ -536,7 +529,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                             EXFAIL_OUT(ret);
                     }
                     /* add array to document... */
-                    if (EXJSONSuccess!=exjson_object_set_array(root_object, nm, jarr))
+                    if (EXJSONSuccess!=exjson_object_set_array(view_object, cname, jarr))
                     {
                             NDRX_LOG(log_error, "exjson: Failed to add Array to root object!!");
                             ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to add "
@@ -559,7 +552,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
             if (IS_NUM(fldtype))
             {
                 if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
-                        (char *)&d_val, 0L, BFLD_DOUBLE, flags))
+                        (char *)&d_val, 0L, BFLD_DOUBLE, 0))
                 {
                     NDRX_LOG(log_error, "Failed to get (double): %s.%s/%d: %s",
                                                     view, cname, oc, Bstrerror(Berror));
@@ -576,7 +569,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 is_num = EXFALSE;
                 flen = sizeof(strval);
                 if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
-                        strval, &flen, BFLD_CARRAY, flags))
+                        strval, &flen, BFLD_CARRAY, 0))
                 {
                     NDRX_LOG(log_error, "Failed to get (string): %s.%s/%d: %s",
                                             view, cname, oc, Bstrerror(Berror));
@@ -654,32 +647,41 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 /* Add normal element */
                 if (is_num)
                 {
-                    if (EXJSONSuccess!=exjson_object_set_number(root_object, nm, d_val))
+                    if (EXJSONSuccess!=exjson_object_set_number(view_object, cname, d_val))
                     {
                         NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
-                                            nm, d_val);
+                                            cname, d_val);
 
                         ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
-                                "value to [%lf]!", nm, d_val);
+                                "value to [%lf]!", cname, d_val);
 
                         EXFAIL_OUT(ret);
                     }
                 }
                 else
                 {
-                    if (EXJSONSuccess!=exjson_object_set_string(root_object, nm, s_ptr))
+                    if (EXJSONSuccess!=exjson_object_set_string(view_object, cname, s_ptr))
                     {
                         NDRX_LOG(log_error, "Failed to set [%s] value to [%s]!",
-                                        nm, s_ptr);
+                                        cname, s_ptr);
 
                         ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
-                                "value to [%s]!", nm, s_ptr);
+                                "value to [%s]!", cname, s_ptr);
 
                         EXFAIL_OUT(ret);
                     }
                 }
             }
         } /* for occ */
+	
+	if (EXFAIL==(ret=Bvnext(&state, NULL, cname, &fldtype, &maxocc, &dim_size)))
+	{
+	    NDRX_LOG(log_error, "Failed to iterate VIEW: %s", Bstrerror(Berror));
+	    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to iterate VIEW: %s",  
+		    Bstrerror(Berror));
+	    EXFAIL_OUT(ret);
+	}
+
     } /* while ret */ 
 
     serialized_string = exjson_serialize_to_string(root_value);
