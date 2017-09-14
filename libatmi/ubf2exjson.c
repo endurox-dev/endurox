@@ -109,7 +109,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
     root_object = exjson_value_get_object(root_value);
 
     cnt = exjson_object_get_count(root_object);
-    NDRX_LOG(log_error, "cnt = %d", cnt);
+    NDRX_LOG(log_debug, "cnt = %d", cnt);
 
     for (i =0; i< cnt; i++)
     {
@@ -154,7 +154,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
                     }
                     str_len = st_len;
                     s_ptr = bin_buf;
-                    NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                    NDRX_LOG(log_debug, "got binary len [%d]", str_len);
                 }
                 else
                 {
@@ -265,7 +265,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
                                 }
                                 str_len = st_len;
                                 s_ptr = bin_buf;
-                                NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                                NDRX_LOG(log_debug, "got binary len [%d]", str_len);
                             }
                             else
                             {

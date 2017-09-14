@@ -138,6 +138,7 @@ export NDRX_DEBUG_CONF=`pwd`/debug.conf
 sleep 5
 # Post the event
 (./atmiclt40 2>&1) > ./atmiclt40.log
+#(valgrind --show-reachable=yes --leak-check=full ./atmiclt40 2>&1) > ./atmiclt40.log
 
 RET=$?
 

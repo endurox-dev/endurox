@@ -103,18 +103,18 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
 
     root_value = exjson_parse_string_with_comments(buffer);
     type = exjson_value_get_type(root_value);
-    NDRX_LOG(log_error, "Type is %d", type);
+    NDRX_LOG(log_debug, "Type is %d", type);
 
     if (exjson_value_get_type(root_value) != EXJSONObject)
     {
-        NDRX_LOG(log_error, "Failed to parse root element");
+        NDRX_LOG(log_debug, "Failed to parse root element");
         ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
         return NULL;
     }
     root_object = exjson_value_get_object(root_value);
 
     cnt = exjson_object_get_count(root_object);
-    NDRX_LOG(log_error, "cnt = %d", cnt);
+    NDRX_LOG(log_debug, "cnt = %d", cnt);
     
     
     if (NULL==(name = (char *)exjson_object_get_name(root_object, 0)))
@@ -160,13 +160,13 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
     }
 
     cnt = exjson_object_get_count(view_object);
-    NDRX_LOG(log_error, "cnt = %d", cnt);
+    NDRX_LOG(log_debug, "cnt = %d", cnt);
     
     for (i =0; i< cnt; i++)
     {
         name = (char *)exjson_object_get_name(view_object, i);
 
-        NDRX_LOG(log_error, "came: [%s]", name);
+        NDRX_LOG(log_debug, "came: [%s]", name);
         
         if (EXFAIL==Bvoccur(cstruct, view, name, NULL, NULL, NULL, &cnametyp))
         {
@@ -217,7 +217,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                     }
                     str_len = st_len;
                     s_ptr = bin_buf;
-                    NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                    NDRX_LOG(log_debug, "got binary len [%d]", str_len);
                 }
                 else
                 {
@@ -332,7 +332,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                                 }
                                 str_len = st_len;
                                 s_ptr = bin_buf;
-                                NDRX_LOG(log_error, "got binary len [%d]", str_len);
+                                NDRX_LOG(log_debug, "got binary len [%d]", str_len);
                             }
                             else
                             {

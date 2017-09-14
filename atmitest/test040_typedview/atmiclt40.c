@@ -125,6 +125,9 @@ int test_view2json(void)
         NDRX_LOG(log_error, "TESTERROR: Failed to validate view recovery!");
         EXFAIL_OUT(ret);
     }
+    
+    tpfree(abuf);
+    abuf=NULL;
 
 
     /* test manual convert */
@@ -237,10 +240,13 @@ int main(int argc, char** argv) {
     
     /* view ops with json */
     
-    if (EXSUCCEED!=test_view2json())
+    for (i=0; i<10000; i++)
     {
-	NDRX_LOG(log_error, "TESTERROR: JSON2VIEW failed!");
-        EXFAIL_OUT(ret);    
+        if (EXSUCCEED!=test_view2json())
+        {
+            NDRX_LOG(log_error, "TESTERROR: JSON2VIEW failed!");
+            EXFAIL_OUT(ret);    
+        }
     }
 
     /* View ops with services */
