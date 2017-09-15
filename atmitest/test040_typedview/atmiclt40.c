@@ -244,7 +244,7 @@ int test_view2json(void)
         EXFAIL_OUT(ret);
     }
     
-    
+    /* TODO Test case for NULL field with hands... */
 	
 	
 out:
