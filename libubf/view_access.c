@@ -589,7 +589,7 @@ out:
     if (ret > 0)
     {
         UBF_LOG(log_debug, "%s returns %d (%s.%s %d)", __func__, 
-                ret, v->vname, cname, *fldtype);
+                ret, v->vname, cname, fldtype?*fldtype:-1);
     }
     else
     {

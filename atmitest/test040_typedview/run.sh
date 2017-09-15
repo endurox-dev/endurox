@@ -118,11 +118,12 @@ export VIEWFILES=t40.V,t40_2.V
 
 cat viewunit1.out
 
-RES=`grep '0 failures, 0 exceptions' viewunit1.out`
+#RES=`grep '0 failures, 0 exceptions' viewunit1.out`
+RES=`grep Completed viewunit1.out | grep -v '0 failures, 0 exceptions'`
 
 echo "RES=> [$RES]"
 
-if [ "X$RES" == "X" ]; then
+if [ "X$RES" != "X" ]; then
     echo "ERROR: Unit test failed, have some exceptions or failures!"
     go_out 20
 fi

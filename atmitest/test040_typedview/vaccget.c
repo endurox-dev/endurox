@@ -546,7 +546,6 @@ Ensure(test_Bvget_char)
     assert_equal(c, 'a');
    
     
-    
     v.tlong1 = 98;
     c = 0;
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tlong1", 0, (char *)&c, 0L, BFLD_CHAR, 0L), 

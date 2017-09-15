@@ -209,6 +209,42 @@ int test_view2json(void)
                  msg, testbuf);
         EXFAIL_OUT(ret);
     }
+    
+    /* test error cases */
+    tpfree(abuf);
+    abuf = NULL;
+
+    
+    if (NULL!=(abuf=tpjsontoview(view, "HELLO WORLD")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failure must occur - invalid json");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEINVAL!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: invalid error on json parse: "
+                "expected TPEINVAL, got: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    if (NULL!=(abuf=tpjsontoview(view, "{\"NONEXIST\":{}}")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failure must occur - invalid json");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEINVAL!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: invalid error on json parse: "
+                "expected TPEINVAL, got: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    
 	
 	
 out:
@@ -216,8 +252,8 @@ out:
     {
         tpfree(abuf);
     }
-
-	return ret;
+    
+    return ret;
 }
 
 /*
