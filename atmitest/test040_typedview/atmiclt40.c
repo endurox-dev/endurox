@@ -66,7 +66,12 @@ int test_view2json(void)
     "tfloat1\":1,\"tdouble1\":21,\"tstring1\":\"ABC\",\""
     "tcarray1\":\"SEVMTE8AAAAAAA==\"}}";
 
+    char *t3buf_null = "{\"MYVIEW3\":{\"tshort1\":0,\"tshort2\":0,\"tshort3\":0}}";
+    char *t3buf_nnull = "{\"MYVIEW3\":{}}";
+    
     struct MYVIEW2 *v2;
+    struct MYVIEW3 v3;
+    
     init_MYVIEW1(&v1);
 
     if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 
@@ -229,7 +234,6 @@ int test_view2json(void)
         EXFAIL_OUT(ret);
     }
     
-    
     if (NULL!=(abuf=tpjsontoview(view, "{\"NONEXIST\":{}}")))
     {
         NDRX_LOG(log_error, "TESTERROR: Failure must occur - invalid json");
@@ -244,8 +248,59 @@ int test_view2json(void)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO Test case for NULL field with hands... */
-	
+    /* Test case for NULL field... */
+    
+    if (EXSUCCEED!=Bvsinit((char *)&v3, "MYVIEW3"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: MYVIEW3 failed to init: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpviewtojson((char *)&v3, "MYVIEW3", msg, sizeof(msg), 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_debug, "v3 json: [%s]", msg);
+
+    if (0!=strcmp(msg, t3buf_null))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Built json: [%s] expected [%s]", 
+                 msg, t3buf_null);
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    if (EXSUCCEED!=tpviewtojson((char *)&v3, "MYVIEW3", msg, sizeof(msg), 
+            BVACCESS_NOTNULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
+                 tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_debug, "v3 json: [%s]", msg);
+
+    if (0!=strcmp(msg, t3buf_nnull))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Built json: [%s] expected [%s]", 
+                 msg, t3buf_nnull);
+        EXFAIL_OUT(ret);
+    }
+ 
+    if (NULL==(abuf=tpjsontoview(view, msg)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to parse empty json: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    tpfree(abuf);
+    abuf = NULL;
+    
 	
 out:
     if (NULL!=abuf)
