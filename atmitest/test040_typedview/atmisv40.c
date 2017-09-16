@@ -102,11 +102,56 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
 out:
     
     tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
-    
 }
 
 /**
- * Do initialization
+ * Test View to JSON convert
+ * @param p_svc
+ */
+void TEST40_V2JSON(TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    char *buf = p_svc->data;
+    char type[16+1]={EXEOS};
+    char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
+    char *input = "{\"MYVIEW3\":{\"tshort1\":1,\"tshort2\":2,\"tshort3\":3}}";
+    char *output = "{\"MYVIEW3\":{\"tshort1\":4,\"tshort2\":5,\"tshort3\":6}}";
+    
+    NDRX_LOG(log_debug, "Into: %s", __func__);
+    
+    if (EXFAIL==tptypes(buf, type, subtype))
+    {
+        NDRX_LOG(log_error, "TESTERROR: TEST40_VIEW cannot "
+                "determine buffer type");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(type, "JSON"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Buffer not VIEW!");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "%s JSON received ok: [%s]", __func__, buf);
+    
+    /* compare.. */
+    if (0!=strcmp(input, buf))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Input of V2J not matched, expected: "
+                "[%s] got [%s]", input, buf);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* size not changed... */
+    strcpy(buf, output);
+    
+out:
+    
+    tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
+}
+
+/**
+ * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
@@ -117,13 +162,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     if (EXSUCCEED!=tpadvertise("TEST40_VIEW", TEST40_VIEW))
     {
-        NDRX_LOG(log_error, "Failed to initialize TEST40_VIEW!");
-        ret=EXFAIL;
+        NDRX_LOG(log_error, "Failed to initialise TEST40_VIEW!");
+        EXFAIL_OUT(ret);
     }
-
-    if (EXSUCCEED!=ret)
+    
+    if (EXSUCCEED!=tpadvertise("TEST40_V2JSON", TEST40_V2JSON))
     {
-        goto out;
+        NDRX_LOG(log_error, "Failed to initialise TEST40_V2JSON!");
+        EXFAIL_OUT(ret);
     }
 
 out:

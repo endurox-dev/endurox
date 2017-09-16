@@ -311,6 +311,24 @@ out:
     return ret;
 }
 
+/**
+ * Call JSON service (TEST40_V2JSON) with VIEW buffer
+ * @return 
+ */
+int test_x_view2json(void)
+{
+    
+}
+
+/**
+ * Call VIEW service with JSON (TEST40_JSON2V)
+ * @return 
+ */
+int test_x_json2view(void)
+{
+    
+}
+
 /*
  * Do the test call to the server
  */
