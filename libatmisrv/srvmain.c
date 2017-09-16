@@ -167,6 +167,14 @@ int parse_xcvt_arg(char *arg)
         {
             flags|=SYS_SRV_CVT_UBF2JSON;
         }
+        if (0==strcmp(cvtfunc, BUF_CVT_INCOMING_JSON2VIEW_STR))
+        {
+            flags|=SYS_SRV_CVT_JSON2VIEW;
+        }
+        else if (0==strcmp(cvtfunc, BUF_CVT_INCOMING_VIEW2JSON_STR))
+        {
+            flags|=SYS_SRV_CVT_VIEW2JSON;
+        }
         
         if (0==flags)
         {

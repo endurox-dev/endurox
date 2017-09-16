@@ -64,6 +64,8 @@ extern "C" {
  */
 #define BUF_CVT_INCOMING_JSON2UBF_STR           "JSON2UBF"
 #define BUF_CVT_INCOMING_UBF2JSON_STR           "UBF2JSON"
+#define BUF_CVT_INCOMING_JSON2VIEW_STR          "JSON2VIEW"
+#define BUF_CVT_INCOMING_VIEW2JSON_STR          "VIEW2JSON"
     
 
 /* others: VIEW X_COMMON X_C_TYPE X_OCTET FML32 VIEW32 - not supported currently */

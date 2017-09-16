@@ -354,11 +354,21 @@ expublic int sv_serve_call(int *service, int *status)
                 G_server_conf.service_array[no]->xcvtflags && 
                 
                 /* convert in case when really needed */
-                ( (BUF_TYPE_UBF == outbufobj->type_id && 
+                ( 
+                  /* UBF2JSON */
+                  (BUF_TYPE_UBF == outbufobj->type_id && 
                     SYS_SRV_CVT_UBF2JSON & G_server_conf.service_array[no]->xcvtflags)
                 ||
                   (BUF_TYPE_JSON == outbufobj->type_id && SYS_SRV_CVT_JSON2UBF & 
                     G_server_conf.service_array[no]->xcvtflags)
+                
+                  /* VIEW2JSON */
+                || (BUF_TYPE_VIEW == outbufobj->type_id && 
+                    SYS_SRV_CVT_VIEW2JSON & G_server_conf.service_array[no]->xcvtflags)
+                ||
+                  (BUF_TYPE_JSON == outbufobj->type_id && SYS_SRV_CVT_JSON2VIEW & 
+                    G_server_conf.service_array[no]->xcvtflags)
+                
                 )
             )
         {

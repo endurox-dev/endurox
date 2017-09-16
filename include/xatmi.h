@@ -334,8 +334,12 @@ extern "C" {
 #define SYS_SRV_CVT_JSON2UBF    0x00000008 /* Message is converted from JSON to UBF */
 #define SYS_SRV_CVT_UBF2JSON    0x00000010 /* Message is converted from UBF to JSON */
 
+#define SYS_SRV_CVT_JSON2VIEW    0x00000020 /* Message is converted from JSON to VIEW */
+#define SYS_SRV_CVT_VIEW2JSON    0x00000040 /* Message is converted from UBF to JSON (non NULL)*/
+    
 /* Test is any flag set */
-#define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON)
+#define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
+        X & SYS_SRV_CVT_JSON2VIEW || X & SYS_SRV_CVT_VIEW2JSON)
     
 #define tpadvertise(_SVCNM, _FNADDR) tpadvertise_full(_SVCNM, _FNADDR, #_FNADDR)
 

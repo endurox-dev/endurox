@@ -78,7 +78,6 @@ expublic int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse)
         xcvtflags = SYS_SRV_CVT_JSON2UBF;
     }
     
-    /***********************JSON<->UBF*****************************************/
     /* Do the actual convert */
     if (xcvtflags & SYS_SRV_CVT_JSON2UBF)
     {
@@ -87,6 +86,47 @@ expublic int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse)
     else if (xcvtflags & SYS_SRV_CVT_UBF2JSON)
     {
         ret = typed_xcvt_ubf2json(buffer);
+    }
+    
+    /***********************JSON<->UBF*****************************************/
+    if (xcvtflags & SYS_SRV_CVT_JSON2UBF && is_reverse)
+    {
+        xcvtflags = SYS_SRV_CVT_UBF2JSON;
+    }
+    else if (xcvtflags & SYS_SRV_CVT_UBF2JSON && is_reverse)
+    {
+        xcvtflags = SYS_SRV_CVT_JSON2UBF;
+    }
+    
+    /* Do the actual convert */
+    if (xcvtflags & SYS_SRV_CVT_JSON2UBF)
+    {
+        ret = typed_xcvt_json2ubf(buffer);
+    }
+    else if (xcvtflags & SYS_SRV_CVT_UBF2JSON)
+    {
+        ret = typed_xcvt_ubf2json(buffer);
+    }
+
+    /***********************JSON<->VIEW*****************************************/
+    if (xcvtflags & SYS_SRV_CVT_JSON2VIEW && is_reverse)
+    {
+        xcvtflags = SYS_SRV_CVT_VIEW2JSON;
+    }
+    else if (xcvtflags & SYS_SRV_CVT_VIEW2JSON && is_reverse)
+    {
+        xcvtflags = SYS_SRV_CVT_JSON2VIEW;
+    }
+    
+    /* Do the actual convert */
+    if (xcvtflags & SYS_SRV_CVT_JSON2VIEW)
+    {
+        ret = typed_xcvt_json2view(buffer);
+    }
+    else if (xcvtflags & SYS_SRV_CVT_VIEW2JSON)
+    {
+        /* non null pls */
+        ret = typed_xcvt_view2json(buffer, BVACCESS_NOTNULL);
     }
     
 out:
