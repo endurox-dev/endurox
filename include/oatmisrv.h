@@ -51,6 +51,8 @@ extern NDRX_API void Otpreturn(TPCONTEXT_T *p_ctxt, int rval, long rcode, char *
 extern NDRX_API int Otpunadvertise(TPCONTEXT_T *p_ctxt, char *svcname);
 extern NDRX_API void Otpforward(TPCONTEXT_T *p_ctxt, char *svc, char *data, long len, long flags);
 extern NDRX_API char * Otpsrvgetctxdata(TPCONTEXT_T *p_ctxt);
+extern NDRX_API char * Otpsrvgetctxdata2(TPCONTEXT_T *p_ctxt, char *p_buf, long *p_len);
+extern NDRX_API void Otpsrvfreectxdata(TPCONTEXT_T *p_ctxt, char *p_buf);
 extern NDRX_API int Otpsrvsetctxdata(TPCONTEXT_T *p_ctxt, char *data, long flags);
 extern NDRX_API void Otpcontinue(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpext_addpollerfd(TPCONTEXT_T *p_ctxt, int fd, uint32_t events, void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));

@@ -915,6 +915,7 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpext_delpollerfd/
                 && $func_name !~ m/tpext_addb4pollcb/
                 && $func_name !~ m/tpsrvsetctxdata/
+                && $func_name !~ m/tpsrvfreectxdata/
                 && $func_name !~ m/tpext_addperiodcb/
                 && $func_name !~ m/^ndrx_main$/
                 # This goes to integration module
@@ -926,6 +927,7 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpreturn/
                 && $func_name !~ m/tpsrvgetctxdata/
                 && $func_name !~ m/tpsrvsetctxdata/
+                && $func_name !~ m/tpsrvfreectxdata/
                 && $func_name !~ m/tpunadvertise/
                 )
             {
@@ -954,6 +956,7 @@ NEXT: while( my $line = <$info>)
                 || $func_name =~ m/tpext_delpollerfd/
                 || $func_name =~ m/tpext_addb4pollcb/
                 || $func_name =~ m/tpsrvsetctxdata/
+                || $func_name =~ m/tpsrvfreectxdata/
                 || $func_name =~ m/tpext_addperiodcb/
                 || $func_name =~ m/tpsvrinit/
                 || $func_name =~ m/tpgetsrvid/
