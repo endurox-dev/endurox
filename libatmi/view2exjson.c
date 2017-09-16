@@ -728,62 +728,30 @@ out:
     return ret;
 }
 
-#if 0
 /**
- * auto-buffer convert func. json->ubf
+ * auto-buffer convert func. view->ubf
  * @param buffer
  * @return 
  */
-expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
+expublic int typed_xcvt_json2view(buffer_obj_t **buffer)
 {
     int ret = EXSUCCEED;
     buffer_obj_t *tmp_b;
     /* Allocate the max UBF buffer */
-    UBFH * tmp = NULL;
-    UBFH * newbuf_out = NULL; /* real output buffer */
-
-    if (NULL==(tmp = (UBFH *)tpalloc("UBF", NULL, ATMI_MSG_MAX_SIZE)))
-    {
-        NDRX_LOG(log_error, "failed to convert JSON->UBF. UBF buffer alloc fail!");
-        EXFAIL_OUT(ret);
-    }
-
+    char * tmp = NULL;
+    char view[NDRX_VIEW_NAME_LEN+1];
+    
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpjsontoubf(tmp, (*buffer)->buf))
+    if (NULL==(tmp=ndrx_tpjsontoview(view, (*buffer)->buf)))
     {
-        tpfree((char *)tmp);
-        NDRX_LOG(log_error, "Failed to convert JSON->UBF: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "Failed to convert JSON->VIEW: %s", 
+                tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
-    /* Shrink the buffer (by reallocating) new! 
-     * we will do the shrink because, msg Q might not have settings set for
-     * max buffer size...
-     */
-    if (NULL==(newbuf_out = (UBFH *)tpalloc("UBF", NULL, Bused(tmp))))
-    {
-        tpfree((char *)tmp);
-        NDRX_LOG(log_error, "Failed to alloc output UBF %ld !", Bused(tmp));
-        EXFAIL_OUT(ret);
-    }
-
-    if (EXSUCCEED!=Bcpy(newbuf_out, tmp))
-    {
-        tpfree((char *)tmp);
-        tpfree((char *)newbuf_out);
-
-        NDRX_LOG(log_error, "Failed to copy tmp UBF to output: %s !", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-
-    }
-
-    tmp_b=ndrx_find_buffer((char *)newbuf_out);
+    tmp_b=ndrx_find_buffer((char *)tmp);
     tmp_b->autoalloc = (*buffer)->autoalloc;
-
-    /* Kill the buffers */
-    tpfree((*buffer)->buf);
-    tpfree((char *)tmp);
 
     /* finally return the buffer */
     NDRX_LOG(log_info, "Returning new buffer %p", tmp_b);
@@ -794,15 +762,19 @@ out:
 
 
 /**
- * auto-buffer convert func. ubf->json
+ * auto-buffer convert func. view->json
  * @param buffer
+ * @param flags - conversion mode 0 (incl NULL0, BVACCESS_NOTNULL - not null
  * @return 
  */
-expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
+expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
 {
     int ret = EXSUCCEED;
     buffer_obj_t *tmp_b;
-    
+    char type[XATMI_SUBTYPE_LEN+1];
+    char subtype[XATMI_TYPE_LEN+1]={EXEOS};
+   
+
     char * tmp = NULL;
     char * newbuf_out = NULL; /* real output buffer */
 
@@ -812,13 +784,25 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
                 tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+    
+    /* Get view name... */
+    
+    if (EXSUCCEED!=tptypes((*buffer)->buf, type, subtype))
+    {
+         NDRX_LOG(log_error, "Failed to get view infos: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Got types %s/%s", type, subtype);
 
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, ATMI_MSG_MAX_SIZE))
+    if (EXSUCCEED!=ndrx_tpviewtojson((*buffer)->buf, 
+            subtype, tmp, ATMI_MSG_MAX_SIZE, flags))
     {
         tpfree((char *)tmp);
-        NDRX_LOG(log_error, "Failed to convert UBF->JSON: %s", 
+        NDRX_LOG(log_error, "Failed to convert VIEW->JSON: %s", 
                 tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
@@ -846,9 +830,8 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
 
     /* finally return the buffer */
     NDRX_LOG(log_info, "Returning new buffer %p", tmp_b->buf);
+    
     *buffer = tmp_b;
 out:
     return ret;
 }
-
-#endif

@@ -108,6 +108,10 @@ extern NDRX_API int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_rev
 
 extern NDRX_API int typed_xcvt_json2ubf(buffer_obj_t **buffer);
 extern NDRX_API int typed_xcvt_ubf2json(buffer_obj_t **buffer);
+
+extern NDRX_API int typed_xcvt_json2view(buffer_obj_t **buffer);
+extern NDRX_API int typed_xcvt_view2json(buffer_obj_t **buffer, long flags);
+
     
 #ifdef	__cplusplus
 }

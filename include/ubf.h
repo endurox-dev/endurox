@@ -115,6 +115,7 @@ extern "C" {
 #define NDRX_VIEW_FLAGS_LEN             16   /* Max flags                   */
 #define NDRX_VIEW_NULL_LEN              2660 /* Max len of the null value   */
 /*XATMI_SUBTYPE_LEN  from atmi*/
+/* Same as XATMI_SUBTYPE_LEN */
 #define NDRX_VIEW_NAME_LEN              33   /* Max len of view name        */
 #define NDRX_VIEW_COMPFLAGS_LEN         128  /* Compiled flags len          */
 /*---------------------------Enums--------------------------------------*/

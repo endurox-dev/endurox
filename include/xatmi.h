@@ -293,6 +293,7 @@ extern "C" {
 
 #define MAXTIDENT                   30		/* Internal identifed max len   */
 #define XATMI_SERVICE_NAME_LENGTH   MAXTIDENT
+#define XATMI_TYPE_LEN           8       /* Max type len                 */
 #define XATMI_SUBTYPE_LEN           33      /* Max sub-type len             */
      
 /* Range for cluster ID's
