@@ -55,7 +55,7 @@
             <min>2</min>
             <max>2</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -xTEST40_V2JSON:VIEW2JSON -xTEST40_JSON2V:JSON2VIEW </sysopt>
         </server>
         <server name="tpbridge">
             <min>1</min>

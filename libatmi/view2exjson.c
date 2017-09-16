@@ -787,7 +787,7 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     
     /* Get view name... */
     
-    if (EXSUCCEED!=tptypes((*buffer)->buf, type, subtype))
+    if (EXFAIL==tptypes((*buffer)->buf, type, subtype))
     {
          NDRX_LOG(log_error, "Failed to get view infos: %s",
                 tpstrerror(tperrno));

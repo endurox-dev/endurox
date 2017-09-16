@@ -128,7 +128,7 @@ void TEST40_V2JSON(TPSVCINFO *p_svc)
     
     if (0!=strcmp(type, "JSON"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Buffer not VIEW!");
+        NDRX_LOG(log_error, "TESTERROR: Buffer not JSON!");
         EXFAIL_OUT(ret);
     }
     
@@ -149,6 +149,76 @@ out:
     
     tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
 }
+
+
+/**
+ * Process view recieved from json buffer
+ */
+void TEST40_JSON2V(TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    char *buf = p_svc->data;
+    char type[16+1]={EXEOS};
+    char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
+    struct MYVIEW3 *v3 = (struct MYVIEW3 *)buf;
+    
+    NDRX_LOG(log_debug, "Into: %s", __func__);
+    
+    if (EXFAIL==tptypes(buf, type, subtype))
+    {
+        NDRX_LOG(log_error, "TESTERROR: TEST40_VIEW cannot "
+                "determine buffer type");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(type, "VIEW"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Buffer not VIEW!");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "%s VIEW ok", __func__);
+    
+    if (0!=strcmp(subtype, "MYVIEW3"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: sub-type not MYVIEW3, but [%s]", 
+                subtype);
+        EXFAIL_OUT(ret);
+    }
+         
+    NDRX_LOG(log_debug, "%s About to compare data block..", __func__);
+
+    if (6!=v3->tshort1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort1 must be 6 but must be %hd",
+                v3->tshort1);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (7!=v3->tshort2)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort2 must be 7 but must be %hd",
+                v3->tshort2);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (8!=v3->tshort3)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort3 must be 8 but must be %hd",
+                v3->tshort3);
+        EXFAIL_OUT(ret);
+    }
+    
+    v3->tshort1 = 9;
+    v3->tshort2 = 1;
+    v3->tshort3 = 2;
+
+out:
+    
+    tpreturn(EXSUCCEED==ret?TPSUCCESS:TPFAIL, 0, buf, 0L, 0L);
+}
+
+
 
 /**
  * Do initialisation
@@ -171,13 +241,19 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise TEST40_V2JSON!");
         EXFAIL_OUT(ret);
     }
+    
+    if (EXSUCCEED!=tpadvertise("TEST40_JSON2V", TEST40_JSON2V))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TEST40_JSON2V!");
+        EXFAIL_OUT(ret);
+    }
 
 out:
     return ret;
 }
 
 /**
- * Do de-initialization
+ * Do de-initialisation
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {

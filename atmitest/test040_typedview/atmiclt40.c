@@ -317,7 +317,59 @@ out:
  */
 int test_x_view2json(void)
 {
+    int ret = EXSUCCEED;
+    struct MYVIEW3 *v3 = NULL;
+    long rsplen;
     
+    v3 = (struct MYVIEW3 *)tpalloc("VIEW", "MYVIEW3", 0);
+    
+    if (NULL==v3)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to allocate MYVIEW3: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    v3->tshort1 = 1;
+    v3->tshort2 = 2;
+    v3->tshort3 = 3;
+    
+    if (EXSUCCEED!=tpcall("TEST40_V2JSON", (char *) v3, 0, 
+            (char **)&v3, &rsplen, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to call TEST40_V2JSON");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (4!=v3->tshort1)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort1 must be 4 but must be %hd",
+                v3->tshort1);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (5!=v3->tshort2)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort2 must be 5 but must be %hd",
+                v3->tshort2);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (6!=v3->tshort3)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tshort3 must be 6 but must be %hd",
+                v3->tshort3);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (NULL!=v3)
+    {
+        tpfree((char *)v3);
+    }
+
+    return ret;
 }
 
 /**
@@ -326,7 +378,46 @@ int test_x_view2json(void)
  */
 int test_x_json2view(void)
 {
+    int ret = EXSUCCEED;
+    long rsplen;
+    char *buf;
     
+    char *input = "{\"MYVIEW3\":{\"tshort1\":6,\"tshort2\":7,\"tshort3\":8}}";
+    char *output = "{\"MYVIEW3\":{\"tshort1\":9,\"tshort2\":1,\"tshort3\":2}}";
+    
+    buf = tpalloc("JSON", NULL, 1024);
+    
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to allocate MYVIEW3: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    strcpy(buf, input);
+    
+    if (EXSUCCEED!=tpcall("TEST40_JSON2V", buf, 0, &buf, &rsplen, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to call TEST40_JSON2V: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(buf, output))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Received [%s] expected [%s]", 
+                buf, output);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
+    return ret;
 }
 
 /*
@@ -347,6 +438,25 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
     
+    for (i=0; i<1000; i++)
+    {
+        if (EXSUCCEED!=test_x_json2view())
+        {
+            NDRX_LOG(log_error, "TESTERROR: test_x_json2view() fail!");
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    
+    for (i=0; i<1000; i++)
+    {
+        if (EXSUCCEED!=test_x_view2json())
+        {
+            NDRX_LOG(log_error, "TESTERROR: test_x_view2json() fail!");
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     /* view ops with json */
     
     for (i=0; i<10000; i++)
@@ -354,7 +464,7 @@ int main(int argc, char** argv) {
         if (EXSUCCEED!=test_view2json())
         {
             NDRX_LOG(log_error, "TESTERROR: JSON2VIEW failed!");
-            EXFAIL_OUT(ret);    
+            EXFAIL_OUT(ret);
         }
     }
 

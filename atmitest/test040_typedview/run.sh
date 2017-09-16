@@ -135,7 +135,7 @@ export NDRX_DEBUG_CONF=`pwd`/debug.conf
 #(valgrind --track-origins=yes --leak-check=full ../../tpevsrv/tpevsrv -i 10 2>&1) > ./tpevsrv.log &
 # NOTE: WE HAVE MEM LEAK HERE:
 # Start subscribers
-(./atmisv40 -t 4 -i 100 2>&1) > ./atmisv40.log &
+(./atmisv40 -t 4 -i 100 -xTEST40_V2JSON:VIEW2JSON -xTEST40_JSON2V:JSON2VIEW 2>&1) > ./atmisv40.log &
 sleep 5
 # Post the event
 (./atmiclt40 2>&1) > ./atmiclt40.log
