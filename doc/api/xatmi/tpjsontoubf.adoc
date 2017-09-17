@@ -21,7 +21,9 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Function converts JSON formatted text in 'buffer' to UBF buffer. JSON should be formatted in single level. Where JSON field name matches UBF field name. If multiple occurrances/array of values is present in JSON, then it is converted as multiple field occurrences in UBF buffer.
+Function converts JSON formatted text in 'buffer' to UBF buffer. JSON should be formatted in single level. 
+Where JSON field name matches UBF field name. If multiple occurrances/array of values is present in JSON, 
+then it is converted as multiple field occurrences in UBF buffer.
 
 For example following JSON buffer:
 
@@ -59,15 +61,25 @@ T_STRING_FLD    HELLO WORLD
 T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
 --------------------------------------------------------------------------------
 
-Note that *BFLD_CARRAY* (binary data) fields should be present in base64 encoding in JSON buffer. It is up to user to allocate UBF buffer with enought size to fit the converted message.
+Note that *BFLD_CARRAY* (binary data) fields should be present in base64 encoding in JSON buffer. 
+It is up to user to allocate UBF buffer with enought size to fit the converted message.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned.
+On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-No error codes available for this function. Additional info might be read in *ndrx*/*ubf* logs, see *ndrxdebug.conf(5)*
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* Invalid JSON or invalid base64 encoding, 
+
+*TPESYSTEM* UBF sub-system error, JSON sub-system error.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info. In case of insufficient memory this error will be 
+generated too.
 
 EXAMPLE
 -------
@@ -79,7 +91,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*ndrxdebug.conf(5)*, *tpubftojson(3)*
+*ndrxdebug.conf(5)*, *tpubftojson(3)* *tpjsontoview(3)* tpviewtojson(3)*
 
 COPYING
 -------
