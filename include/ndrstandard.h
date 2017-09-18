@@ -38,7 +38,7 @@ extern "C" {
     
 #include <ndrx_config.h>
 #include <stdint.h>
-
+#include <string.h>
     
 #if UINTPTR_MAX == 0xffffffff
 /* 32-bit */
@@ -115,6 +115,15 @@ extern "C" {
                           X[N]=EXEOS;}
 	
 #endif
+    
+#ifdef HAVE_STRLCPY
+#define NDRX_STRCPY_SAFE(X, Y) {strlcpy(X, Y, sizeof(X)-1);\
+                          X[sizeof(X)-1]=EXEOS;}
+	
+#define NDRX_STRNCPY_SAFE(X, Y, N) {strlcpy(X, Y, N-1);\
+                          X[N]=EXEOS;}
+#else
+    
 /* TODO: switch to STRLCPY if  */
 #define NDRX_STRCPY_SAFE(X, Y) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
@@ -137,6 +146,7 @@ extern "C" {
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	X[ndrx_I5SmWDM_len]=0;\
 	}
+#endif
 /*
  * So we use these two macros where we need know that more times they will be
  * true, than false. This makes some boost for CPU code branching.
