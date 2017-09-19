@@ -410,11 +410,11 @@ exprivate int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
     }
     
     /* copy off resource */
-    strncpy(cf->resource, resource, sizeof(cf->resource)-1);
+    NDRX_STRNCPY(cf->resource, resource, sizeof(cf->resource)-1);
     cf->resource[sizeof(cf->resource)-1] = EXEOS;
     
     /* copy off fullname of file */
-    strncpy(cf->fullname, fullname, sizeof(cf->fullname)-1);
+    NDRX_STRNCPY(cf->fullname, fullname, sizeof(cf->fullname)-1);
     cf->fullname[sizeof(cf->fullname)-1] = EXEOS;
     
     cf->refreshed = EXTRUE;

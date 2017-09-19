@@ -218,7 +218,7 @@ int main(int argc, char **argv)
                 M_renderer = &M_renderer_tab[G_langmode];
                 break;
             case 'p':
-                strncpy(G_privdata, optarg, FILENAME_MAX);
+                NDRX_STRNCPY(G_privdata, optarg, FILENAME_MAX);
                 G_privdata[FILENAME_MAX] = EXEOS;
                 break;
         }
@@ -280,7 +280,7 @@ char *get_file_name(char *fname)
     else
     {
         int len = strlen(p+1);
-        strncpy(fname_conv, p+1, len);
+        NDRX_STRNCPY(fname_conv, p+1, len);
         fname_conv[len] = EXEOS;
 
         return fname_conv;

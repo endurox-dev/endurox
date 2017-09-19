@@ -70,7 +70,7 @@ expublic void pe_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_
     *send_size += (sizeof(command_reply_pe_t) - sizeof(command_reply_t));
 
     /* Copy data to reply structure */
-    strncpy(pe_info->env, env, EX_ENV_MAX);
+    NDRX_STRNCPY(pe_info->env, env, EX_ENV_MAX);
     pe_info->env[EX_ENV_MAX] = EXEOS;
     
     NDRX_LOG(log_debug, "magic: %ld", pe_info->rply.magic);

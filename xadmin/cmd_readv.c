@@ -84,7 +84,7 @@ expublic int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     memset(&call, 0, sizeof(call));
     
     call.srvid = EXFAIL;
-    strncpy(call.svc_nm, svcnm, sizeof(call.svc_nm)-1);
+    NDRX_STRNCPY(call.svc_nm, svcnm, sizeof(call.svc_nm)-1);
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,

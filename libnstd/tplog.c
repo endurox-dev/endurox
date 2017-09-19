@@ -392,7 +392,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
                 loggers[i] != LOG_FACILITY_UBF_REQUEST
             )
         {
-            strncpy(l->module, module, 4);
+            NDRX_STRNCPY(l->module, module, 4);
             l->module[4] = EXEOS;
         }
 
@@ -481,7 +481,7 @@ expublic int tploggetreqfile(char *filename, int bufsize)
     {
         if (bufsize>0)
         {
-            strncpy(filename, G_nstd_tls->requestlog_tp.filename, bufsize-1);
+            NDRX_STRNCPY(filename, G_nstd_tls->requestlog_tp.filename, bufsize-1);
             filename[bufsize-1] = EXEOS;
         }
         else

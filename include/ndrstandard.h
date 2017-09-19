@@ -122,6 +122,8 @@ extern "C" {
 	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {strlcpy(X, Y, N-1);\
                           X[N]=EXEOS;}
+    
+#define NDRX_STRNCPY(X, Y, N) strlcpy(X, Y, N-1)
 #else
     
 /* TODO: switch to STRLCPY if  */
@@ -135,7 +137,8 @@ extern "C" {
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	X[ndrx_I5SmWDM_len]=0;\
 	}
-/* N - buffer size of X **/	
+    
+/* N - buffer size of X */	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
 	int ndrx_XgCmDEk_bufzs = N-1;\
@@ -145,6 +148,16 @@ extern "C" {
 	}\
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	X[ndrx_I5SmWDM_len]=0;\
+	}
+
+/* in case if dest buffer allows, we copy EOS too */
+#define NDRX_STRNCPY(X, Y, N) {\
+	int ndrx_I5SmWDM_len = strlen(Y)+1;\
+	if (ndrx_I5SmWDM_len > N)\
+	{\
+		ndrx_I5SmWDM_len = N;\
+	}\
+	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	}
 #endif
 /*
