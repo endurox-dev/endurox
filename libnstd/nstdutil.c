@@ -286,7 +286,8 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
     {
         ins = strstr(orig, rep);
         len_front = ins - orig;
-        tmp = strncpy(tmp, orig, len_front) + len_front;
+        NDRX_STRNCPY(tmp, orig, len_front);
+        tmp =  tmp + len_front;
         tmp = strcpy(tmp, with) + len_with;
         orig += len_front + len_rep; /* move to next "end of rep" */
     }
@@ -338,7 +339,7 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
             int cpylen = close-p-2;
             int envlen;
             /* do substitution */
-            strncpy(envnm, p+2, cpylen);
+            NDRX_STRNCPY(envnm, p+2, cpylen);
             envnm[cpylen] = EXEOS;
             env = getenv(envnm);
             if (NULL!=env)

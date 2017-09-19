@@ -499,7 +499,7 @@ struct ast * newfunc(char *funcname)
       goto out;
   }
   
-  strncpy(a->funcname, funcname, len-2);
+  NDRX_STRNCPY(a->funcname, funcname, len-2);
   a->funcname[len-2] = EXEOS;
   
   G_node_count++;

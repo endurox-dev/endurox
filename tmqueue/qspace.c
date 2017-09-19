@@ -128,7 +128,7 @@ expublic int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
     NDRX_STRCPY_SAFE(hdr->qspace, qspace);
    /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
     hdr->command_code = TMQ_STORCMD_NEWMSG;
-    strncpy(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
+    NDRX_STRNCPY(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
     hdr->nodeid = nodeid;
     hdr->srvid = srvid;
     hdr->flags = flags;
@@ -187,13 +187,13 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     /* - Not used.
     if (0==strcmp(key, TMQ_QC_NAME))
     {
-        strncpy(qconf->name, value, sizeof(qconf->name)-1);
+        NDRX_STRNCPY(qconf->name, value, sizeof(qconf->name)-1);
         qconf->name[sizeof(qconf->name)-1] = EOS;
     }
     else  */
     if (0==strcmp(key, TMQ_QC_SVCNM))
     {
-        strncpy(qconf->svcnm, value, sizeof(qconf->svcnm)-1);
+        NDRX_STRNCPY(qconf->svcnm, value, sizeof(qconf->svcnm)-1);
         qconf->svcnm[sizeof(qconf->svcnm)-1] = EXEOS;
     }
     else if (0==strcmp(key, TMQ_QC_TRIES))
@@ -558,7 +558,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
     if (NULL!=p)
     {
         NDRX_LOG(log_info, "Got token: [%s]", p);
-        strncpy(buf, p, sizeof(qconf->qname)-1);
+        NDRX_STRNCPY(buf, p, sizeof(qconf->qname)-1);
         buf[sizeof(qconf->qname)-1] = EXEOS;
         
         NDRX_LOG(log_debug, "Q name: [%s]", buf);
@@ -603,7 +603,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
     {
         NDRX_LOG(log_info, "Got pair [%s]", p);
         
-        strncpy(buf, p, sizeof(buf)-1);
+        NDRX_STRNCPY(buf, p, sizeof(buf)-1);
         buf[sizeof(buf)-1] = EXEOS;
         
         p2 = strchr(buf, '=');

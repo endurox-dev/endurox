@@ -50,7 +50,7 @@
 #define FIX_NM(Xsrc, Xbuf, Xlen) \
             if (strlen(Xsrc) > Xlen)\
             {\
-                strncpy(Xbuf, Xsrc, Xlen-1);\
+                NDRX_STRNCPY(Xbuf, Xsrc, Xlen-1);\
                 Xbuf[Xlen-1] = '+';\
                 Xbuf[Xlen] = EXEOS;\
             }\
