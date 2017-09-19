@@ -123,7 +123,6 @@ extern "C" {
 #define NDRX_STRNCPY_SAFE(X, Y, N) {strlcpy(X, Y, N-1);\
                           X[N]=EXEOS;}
     
-#define NDRX_STRNCPY(X, Y, N) strlcpy(X, Y, N-1)
 #else
     
 /* TODO: switch to STRLCPY if  */
@@ -149,8 +148,11 @@ extern "C" {
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	X[ndrx_I5SmWDM_len]=0;\
 	}
+#endif
 
-/* in case if dest buffer allows, we copy EOS too */
+/* in case if dest buffer allows, we copy EOS too
+ * This is compatible with strncpy
+ */
 #define NDRX_STRNCPY(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y)+1;\
 	if (ndrx_I5SmWDM_len > N)\
@@ -159,7 +161,6 @@ extern "C" {
 	}\
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	}
-#endif
 /*
  * So we use these two macros where we need know that more times they will be
  * true, than false. This makes some boost for CPU code branching.
