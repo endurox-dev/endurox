@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 #include <cgreen/cgreen.h>
 #include <ubf.h>
 #include <ndrstandard.h>
@@ -928,7 +929,7 @@ Ensure(test_Bvget_float)
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tdouble2", 0, (char *)&f, 0L, 
             BFLD_FLOAT, 0L), 
             EXSUCCEED);
-    assert_double_equal(f,-999.123);
+    assert_equal((fabs(f  + 999.123)<0.2), 1);
     
     
     NDRX_STRCPY_SAFE(v.tstring0[0], "125.77");
