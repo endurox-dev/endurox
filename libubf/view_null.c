@@ -436,10 +436,7 @@ expublic int ndrx_Bvselinit_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
                         len = dim_size-1; /* Place for eos */
                     }
                     
-                    if (0==strncpy(fld_offs, f->nullval_bin, len))
-                    {
-                        break;
-                    }
+                    NDRX_STRNCPY(fld_offs, f->nullval_bin, len)
                     
                     fld_offs[len] = EXEOS;                    
                 }

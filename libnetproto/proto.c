@@ -604,7 +604,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         
         for (j=0; j<bcd_tmp_len; j+=2)
         {
-            strncpy(tmp_char_buf, bcd_tmp+j, 2);
+            NDRX_STRNCPY(tmp_char_buf, bcd_tmp+j, 2);
             tmp_char_buf[2] = EXEOS;
             sscanf(tmp_char_buf, "%x", &hex_dec);
             
@@ -786,7 +786,7 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_STRING:
         {
             /* EOS must be present in c struct! */
-            strncpy(c_buf_out, datap, tag_len);
+            NDRX_STRNCPY(c_buf_out, datap, tag_len);
             c_buf_out[tag_len] = EXEOS;
             
             /*NDRX_LOG(6, "%s = [%s] (string)", fld->cname, c_buf_out);*/
@@ -850,7 +850,7 @@ exprivate int x_nettoc(cproto_t *fld,
             char *p;
             ndrx_stopwatch_t *tmp = (ndrx_stopwatch_t *)c_buf_out;
             
-            strncpy(timer_buf, bcd_buf, 20);
+            NDRX_STRNCPY(timer_buf, bcd_buf, 20);
             timer_buf[20] = EXEOS;
             
             p = timer_buf;
@@ -861,7 +861,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             
             
-            strncpy(timer_buf, bcd_buf+20, 20);
+            NDRX_STRNCPY(timer_buf, bcd_buf+20, 20);
             timer_buf[20] = EXEOS;
             p = timer_buf;
             while ('0'==*p) p++;

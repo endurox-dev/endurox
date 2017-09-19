@@ -51,7 +51,7 @@
         char tmp[CF_TEMP_BUF_MAX+1]; \
         int cpy_len = in_len > CF_TEMP_BUF_MAX?CF_TEMP_BUF_MAX: in_len;\
         UBF_LOG(log_error, "[%10.10s]", input_buf);\
-        strncpy(tmp, input_buf, cpy_len); \
+        NDRX_STRNCPY(tmp, input_buf, cpy_len); \
         tmp[cpy_len] = EXEOS
 
 /*
@@ -114,7 +114,7 @@ if (CNV_DIR_OUT==cnv_dir)\
         }\
         else\
         {\
-            strncpy(output_buf, tmp, len);\
+            NDRX_STRNCPY(output_buf, tmp, len);\
         }\
     }\
     else\
@@ -1199,7 +1199,7 @@ exprivate char * conv_string_carr(struct conv_type *t, int cnv_dir, char *input_
         return NULL; /*<<<< RETURN!*/
     }
 
-    strncpy(output_buf, input_buf, input_strlen);
+    NDRX_STRNCPY(output_buf, input_buf, input_strlen);
 
     if (NULL!=out_len)
         *out_len = input_strlen;
@@ -1323,7 +1323,7 @@ exprivate char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_
         return NULL; /*<<<< RETURN!*/
     }
 
-    strncpy(output_buf, input_buf, input_carrlen);
+    NDRX_STRNCPY(output_buf, input_buf, input_carrlen);
     output_buf[input_carrlen] = EXEOS;
 
     if (NULL!=out_len)

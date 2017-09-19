@@ -190,7 +190,9 @@ CHECK_C_SOURCE_COMPILES("int main() { int X = 0; __sync_bool_compare_and_swap(&X
 
 CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t len; getline(buf, &len, stdin);}" HAVE_GETLINE)
 
-# To check for an include file you do this:
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
+
+# To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
 CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
 	

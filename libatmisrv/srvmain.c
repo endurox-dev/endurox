@@ -80,7 +80,7 @@ int parse_svc_arg(char *arg)
     {
         NDRX_LOG(log_debug, "Aliasing requested");
         /* extract alias name out */
-        strncpy(alias_name, p+1, XATMI_SERVICE_NAME_LENGTH);
+        NDRX_STRNCPY(alias_name, p+1, XATMI_SERVICE_NAME_LENGTH);
         alias_name[XATMI_SERVICE_NAME_LENGTH] = 0;
         /* Put the EOS in place of : */
         *p=EXEOS;
@@ -100,7 +100,7 @@ int parse_svc_arg(char *arg)
                 return EXFAIL; /* <<< return FAIL! */
         }
 
-        strncpy(entry->svc_nm, p, XATMI_SERVICE_NAME_LENGTH);
+        NDRX_STRNCPY(entry->svc_nm, p, XATMI_SERVICE_NAME_LENGTH);
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
 
         if (EXEOS!=alias_name[0])
@@ -154,7 +154,7 @@ int parse_xcvt_arg(char *arg)
     if (NULL!=(p=strchr(arg, ':')))
     {
         /* Conversion function name */
-        strncpy(cvtfunc, p+1, XATMI_SERVICE_NAME_LENGTH);
+        NDRX_STRNCPY(cvtfunc, p+1, XATMI_SERVICE_NAME_LENGTH);
         cvtfunc[XATMI_SERVICE_NAME_LENGTH] = 0;
         *p=EXEOS;
         
@@ -200,7 +200,7 @@ int parse_xcvt_arg(char *arg)
                 return EXFAIL; /* <<< return FAIL! */
         }
 
-        strncpy(entry->fn_nm, p, XATMI_SERVICE_NAME_LENGTH);
+        NDRX_STRNCPY(entry->fn_nm, p, XATMI_SERVICE_NAME_LENGTH);
         entry->xcvtflags = flags;
         
         
@@ -359,11 +359,11 @@ int ndrx_init(int argc, char** argv)
     p=strrchr(argv[0], '/');
     if (NULL!=p)
     {
-        strncpy(G_server_conf.binary_name, p+1, MAXTIDENT);
+        NDRX_STRNCPY(G_server_conf.binary_name, p+1, MAXTIDENT);
     }
     else
     {
-        strncpy(G_server_conf.binary_name, argv[0], MAXTIDENT);
+        NDRX_STRNCPY(G_server_conf.binary_name, argv[0], MAXTIDENT);
     }
 
     G_server_conf.binary_name[MAXTIDENT] = EXEOS;
