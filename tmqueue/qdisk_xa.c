@@ -506,21 +506,21 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     M_rmid = rmid;
     
     /* The xa_info is directory, where to store the data...*/
-    strncpy(M_folder, xa_info, sizeof(M_folder)-2);
+    NDRX_STRNCPY(M_folder, xa_info, sizeof(M_folder)-2);
     M_folder[sizeof(M_folder)-1] = EXEOS;
     
     NDRX_LOG(log_error, "Q data directory: [%s]", xa_info);
     
     /* The xa_info is directory, where to store the data...*/
-    strncpy(M_folder_active, xa_info, sizeof(M_folder_active)-8);
+    NDRX_STRNCPY(M_folder_active, xa_info, sizeof(M_folder_active)-8);
     M_folder_active[sizeof(M_folder_active)-7] = EXEOS;
     strcat(M_folder_active, "/active");
     
-    strncpy(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
+    NDRX_STRNCPY(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
     M_folder_prepared[sizeof(M_folder_prepared)-9] = EXEOS;
     strcat(M_folder_prepared, "/prepared");
     
-    strncpy(M_folder_committed, xa_info, sizeof(M_folder_committed)-11);
+    NDRX_STRNCPY(M_folder_committed, xa_info, sizeof(M_folder_committed)-11);
     M_folder_committed[sizeof(M_folder_committed)-10] = EXEOS;
     strcat(M_folder_committed, "/committed");
     

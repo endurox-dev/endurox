@@ -298,7 +298,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf)
             /* now read field number + value */
             int cpylen = (tok-p);
             /* Copy off field name */
-            strncpy(fldnm, p, cpylen);
+            NDRX_STRNCPY(fldnm, p, cpylen);
             fldnm[cpylen]=EXEOS;
             /* Copy off value */
             strcpy(value, tok+1);

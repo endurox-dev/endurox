@@ -96,7 +96,7 @@ expublic int simple_command_reply(command_call_t * call,
         /* put error details in response */
         reply->error_code = ndrxd_errno;
         /* Append with error message */
-        strncpy(reply->error_msg, ndrxd_strerror(reply->error_code), RPLY_ERR_MSG_MAX-1);
+        NDRX_STRNCPY(reply->error_msg, ndrxd_strerror(reply->error_code), RPLY_ERR_MSG_MAX-1);
         reply->error_msg[RPLY_ERR_MSG_MAX-1] = EXEOS;
     }
 

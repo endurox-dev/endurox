@@ -458,9 +458,9 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         svc_entry_fn_t *existing=NULL;
         /* fill entry details */
         memset(entry, 0, sizeof(svc_entry_fn_t));
-        strncpy(entry->svc_nm, svc_nm, XATMI_SERVICE_NAME_LENGTH);
+        NDRX_STRNCPY(entry->svc_nm, svc_nm, XATMI_SERVICE_NAME_LENGTH);
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
-        strncpy(entry->fn_nm, fn_nm, XATMI_SERVICE_NAME_LENGTH);
+        NDRX_STRNCPY(entry->fn_nm, fn_nm, XATMI_SERVICE_NAME_LENGTH);
         /* At this point we need to check the convert flags... */
         entry->xcvtflags = xcvt_lookup(entry->fn_nm);
         
@@ -551,7 +551,7 @@ expublic int tpunadvertise(char *svcname)
     }
     
     /* Crosscheck buffer. */
-    strncpy(svc_nm, svcname, XATMI_SERVICE_NAME_LENGTH);
+    NDRX_STRNCPY(svc_nm, svcname, XATMI_SERVICE_NAME_LENGTH);
     svc_nm[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     
     

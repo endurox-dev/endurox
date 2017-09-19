@@ -283,8 +283,7 @@ expublic int ndrx_load_common_env(void)
     }
     else
     {
-        strncpy(G_atmi_env.qprefix, p, sizeof(G_atmi_env.qprefix)-1);
-        G_atmi_env.qprefix[sizeof(G_atmi_env.qprefix)-1] = EXEOS;
+        NDRX_STRCPY_SAFE(G_atmi_env.qprefix, p);
         
         snprintf(G_atmi_env.qprefix_match, sizeof(G_atmi_env.qprefix_match),
                 "%s%c", G_atmi_env.qprefix, NDRX_FMT_SEP);
@@ -308,8 +307,7 @@ expublic int ndrx_load_common_env(void)
     }
     else
     {
-        strncpy(G_atmi_env.qpath, p, sizeof(G_atmi_env.qpath)-1);
-        G_atmi_env.qpath[sizeof(G_atmi_env.qpath)-1] = EXEOS;
+        NDRX_STRCPY_SAFE(G_atmi_env.qpath, p);
         
         NDRX_LOG(log_debug, "Posix queue queue path set to: [%s]",
                             G_atmi_env.qpath);
