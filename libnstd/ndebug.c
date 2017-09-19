@@ -306,7 +306,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             else if (0==strncmp("iflags", tok, cmplen))
             {
                 /* Setup integration flags */
-                strncpy(G_tp_debug.iflags, p+1, sizeof(G_tp_debug.iflags)-1);
+                NDRX_STRNCPY(G_tp_debug.iflags, p+1, sizeof(G_tp_debug.iflags)-1);
                 G_tp_debug.iflags[sizeof(G_tp_debug.iflags)-1] = EXEOS;
             }
             else if (0==strncmp("lines", tok, cmplen))
@@ -421,7 +421,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             {
                 /* insert the" .%u", move other part to the back..*/
                 memmove(p+len2, p, 4);
-                strncpy(p, ".%u", len2);
+                NDRX_STRNCPY(p, ".%u", len2);
             }
             else
             {

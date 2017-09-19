@@ -159,16 +159,24 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
     {
         int srvid = pm_pid->p_pm->srvid;
         
-        userlog("Server process [%s], srvid %hd, pid %d died", 
+        /* Bug #214 */
+        if (NDRXD_PM_EXIT!=pm_status->srvinfo.state)
+        {
+            userlog("Server process [%s], srvid %hd, pid %d died", 
                 pm_pid->p_pm->conf->binary_name, pm_status->srvinfo.srvid, pm_pid->pid);
+        }
                 
         /* If we wanted it to stop, but it died, then let it be in exit status
          * which will not try to restart it!
          */
         if (pm_pid->p_pm->state!=NDRXD_PM_STOPPING)
+        {
             pm_pid->p_pm->state = pm_status->srvinfo.state;
+        }
         else
+        {
             pm_pid->p_pm->state=NDRXD_PM_EXIT; /* so that we do no try again to wake it up! */
+        }
 
 
         NDRX_LOG(log_warn, "Removing resources allocated "

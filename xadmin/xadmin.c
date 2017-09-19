@@ -638,7 +638,7 @@ exprivate int get_file(char *buf, size_t size, char *path1, char *path2)
     else if (NULL!=path1)
     {
         /* snprintf(buf, size, "%s", path1); */
-        strncpy(buf, path1, size);
+        NDRX_STRNCPY(buf, path1, size);
         buf[size-1] = EXEOS;
     }
     else

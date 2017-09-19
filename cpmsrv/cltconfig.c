@@ -200,42 +200,42 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
         if (0==strcmp((char *)attr->name, "cmdline"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(cltproc.stat.command_line, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.command_line, p, PATH_MAX);
             cltproc.stat.command_line[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "env"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(cltproc.stat.env, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.env, p, PATH_MAX);
             cltproc.stat.env[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "cctag"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(cltproc.stat.cctag, p, NDRX_CCTAG_MAX);
+            NDRX_STRNCPY(cltproc.stat.cctag, p, NDRX_CCTAG_MAX);
             cltproc.stat.cctag[NDRX_CCTAG_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "wd"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(cltproc.stat.wd, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.wd, p, PATH_MAX);
             cltproc.stat.wd[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "stdout"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(cltproc.stat.log_stdout, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.log_stdout, p, PATH_MAX);
             cltproc.stat.log_stdout[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "stderr"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(cltproc.stat.log_stderr, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.log_stderr, p, PATH_MAX);
             cltproc.stat.log_stderr[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
@@ -243,10 +243,10 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(attr->children);
             /* Install both: */
-            strncpy(cltproc.stat.log_stdout, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.log_stdout, p, PATH_MAX);
             cltproc.stat.log_stdout[PATH_MAX] = EXEOS;
             
-            strncpy(cltproc.stat.log_stderr, p, PATH_MAX);
+            NDRX_STRNCPY(cltproc.stat.log_stderr, p, PATH_MAX);
             cltproc.stat.log_stderr[PATH_MAX] = EXEOS;
             xmlFree(p);
         }
@@ -317,7 +317,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 if (0==strcmp((char *)attr->name, "tag"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->tag, p, CPM_TAG_LEN);
+                    NDRX_STRNCPY(p_cltproc->tag, p, CPM_TAG_LEN);
                     p_cltproc->tag[CPM_TAG_LEN] = EXEOS;
                     xmlFree(p);
                 }
@@ -325,7 +325,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 {
                     /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->subsect, p, CPM_TAG_LEN);
+                    NDRX_STRNCPY(p_cltproc->subsect, p, CPM_TAG_LEN);
                     p_cltproc->subsect[CPM_SUBSECT_LEN] = EXEOS;
                     xmlFree(p);
                 }
@@ -333,7 +333,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 {
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->stat.env, p, PATH_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.env, p, PATH_MAX);
                     p_cltproc->stat.env[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
@@ -341,7 +341,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 {
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->stat.cctag, p, NDRX_CCTAG_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.cctag, p, NDRX_CCTAG_MAX);
                     p_cltproc->stat.cctag[NDRX_CCTAG_MAX] = EXEOS;
                     xmlFree(p);
                 }
@@ -349,21 +349,21 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 {
                      /* Optional */
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->stat.wd, p, PATH_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.wd, p, PATH_MAX);
                     p_cltproc->stat.wd[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "stdout"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->stat.log_stdout, p, PATH_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.log_stdout, p, PATH_MAX);
                     p_cltproc->stat.log_stdout[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
                 else if (0==strcmp((char *)attr->name, "stderr"))
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
-                    strncpy(p_cltproc->stat.log_stderr, p, PATH_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.log_stderr, p, PATH_MAX);
                     p_cltproc->stat.log_stderr[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }
@@ -371,10 +371,10 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 {
                     p = (char *)xmlNodeGetContent(attr->children);
                     /* Install both: */
-                    strncpy(p_cltproc->stat.log_stdout, p, PATH_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.log_stdout, p, PATH_MAX);
                     p_cltproc->stat.log_stdout[PATH_MAX] = EXEOS;
 
-                    strncpy(p_cltproc->stat.log_stderr, p, PATH_MAX);
+                    NDRX_STRNCPY(p_cltproc->stat.log_stderr, p, PATH_MAX);
                     p_cltproc->stat.log_stderr[PATH_MAX] = EXEOS;
                     xmlFree(p);
                 }

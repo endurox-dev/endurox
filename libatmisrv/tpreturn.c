@@ -409,7 +409,7 @@ expublic void _tpforward (char *svc, char *data,
     NDRX_STRCPY_SAFE(call->reply_to, last_call->reply_to); /* <<< main difference from call! */
     call->command_id = ATMI_COMMAND_TPCALL;
 
-    strncpy(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
+    NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     call->flags = flags;
     call->cd = last_call->cd; /* <<< another difference from call! */
