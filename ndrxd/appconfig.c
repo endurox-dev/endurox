@@ -264,7 +264,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             else if (0==strcmp("env", (char *)cur->name))
             {
                 p = (char *)xmlNodeGetContent(cur);
-                strncpy(config->default_env, p, sizeof(config->default_env)-1);
+                NDRX_STRNCPY(config->default_env, p, sizeof(config->default_env)-1);
                 
                 /* Ensure that we terminate... */
                 config->default_env[sizeof(config->default_env)-1] = EXEOS;
@@ -362,7 +362,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             else if (0==strcmp((char*)cur->name, "cctag"))
             {
                 p = (char *)xmlNodeGetContent(cur);
-                strncpy(config->default_cctag, p, sizeof(config->default_cctag)-1);
+                NDRX_STRNCPY(config->default_cctag, p, sizeof(config->default_cctag)-1);
                 
                 /* Ensure that we terminate... */
                 config->default_cctag[sizeof(config->default_cctag)-1] = EXEOS;
@@ -661,7 +661,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         if (0==strcmp((char *)attr->name, "name"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
-            strncpy(srvnm, p, MAXTIDENT);
+            NDRX_STRNCPY(srvnm, p, MAXTIDENT);
             srvnm[MAXTIDENT] = EXEOS;
             xmlFree(p);
         }
@@ -779,7 +779,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("sysopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT)-1);
+            NDRX_STRNCPY(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT)-1);
             /* process env */
             ndrx_str_env_subs(p_srvnode->SYSOPT);
             /* Ensure that we terminate... */
@@ -789,7 +789,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("appopt", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT)-1);
+            NDRX_STRNCPY(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT)-1);
             /* process env */
             ndrx_str_env_subs_len(p_srvnode->APPOPT, sizeof(p_srvnode->APPOPT));
             /* Ensure that we terminate... */
@@ -799,7 +799,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         else if (0==strcmp("env", (char *)cur->name))
         {
             p = (char *)xmlNodeGetContent(cur);
-            strncpy(p_srvnode->env, p, sizeof(p_srvnode->env)-1);
+            NDRX_STRNCPY(p_srvnode->env, p, sizeof(p_srvnode->env)-1);
 
             /* Ensure that we terminate... */
             p_srvnode->env[sizeof(p_srvnode->env)-1] = EXEOS;
