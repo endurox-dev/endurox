@@ -123,7 +123,7 @@ out:
 /**
  * Return list of message queues
  */
-expublic string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status)
 {
     return ndrx_sys_folder_list(qpath, return_status);
 }

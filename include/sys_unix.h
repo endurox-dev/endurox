@@ -299,7 +299,20 @@ extern NDRX_API int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_nam
 extern NDRX_API char * ndrx_sys_get_proc_name_getprocs(void);
 
 /* provided by: sys_<platform>.c */
-extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status);
+extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status);
+/* emulated message queue: */
+extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *return_status);
+
+#ifdef EX_USE_EMQ
+
+#define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_emq
+
+#else
+
+#define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_pl
+
+#endif
+
 
 #ifdef	__cplusplus
 }
