@@ -78,7 +78,7 @@ exprivate int qd_exhash_add(mqd_t q)
     MUTEX_LOCK_V(M_lock);
     
     EXHASH_ADD_PTR(M_qd_hash, qd, el);
-    NDRX_LOG(log_error, "added...");
+    NDRX_LOG(log_debug, "added...");
     
     MUTEX_UNLOCK_V(M_lock);
     
