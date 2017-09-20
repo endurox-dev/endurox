@@ -54,7 +54,7 @@ source ./test-func-include.sh
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
-export NDRX_TOUT=10
+export NDRX_TOUT=20
 
 rm -rf $TESTDIR/RM1
 rm -rf $TESTDIR/RM2
