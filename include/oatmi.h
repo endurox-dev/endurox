@@ -87,7 +87,7 @@ extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
 extern NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
 extern NDRX_API int Otpviewtojson(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *buffer,  int bufsize, long flags);
-extern NDRX_API char* Otpjsontoview(TPCONTEXT_T *p_ctxt, char *view, char *buffer);
+extern NDRX_API char * Otpjsontoview(TPCONTEXT_T *p_ctxt, char *view, char *buffer);
 extern NDRX_API int Otpenqueue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
 extern NDRX_API int Otpdequeue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 extern NDRX_API int Otpenqueueex(TPCONTEXT_T *p_ctxt, short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags);
