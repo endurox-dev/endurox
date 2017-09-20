@@ -123,7 +123,7 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-typedef unsigned short _UBF_SHORT;
+typedef short _UBF_SHORT;
 typedef unsigned int _UBF_INT;
 typedef double UBF_DOUBLE;
 typedef float UBF_FLOAT;

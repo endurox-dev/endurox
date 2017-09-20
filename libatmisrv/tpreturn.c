@@ -556,6 +556,6 @@ expublic void _tpcontinue (void)
         
         NDRX_LOG(log_debug, "Long jumping to continue!");
         longjmp(G_server_conf.call_ret_env, return_status);
-        NDRX_LOG(log_error, "doing nothing after long jmp!");
+        /* NDRX_LOG(log_error, "doing nothing after long jmp!"); - not reached. */
     }
 }

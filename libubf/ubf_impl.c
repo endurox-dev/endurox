@@ -859,7 +859,9 @@ expublic int have_buffer_size(UBFH *p_ub, int add_size, int set_err)
     {
         return EXTRUE;
     }
+/*
     return ret;
+*/
 }
 
 /**

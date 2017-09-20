@@ -111,3 +111,4 @@ expublic int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse)
 out:
     return ret;
 }
+

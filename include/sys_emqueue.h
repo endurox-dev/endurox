@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/signal.h>
+#include <time.h>
 
 #if defined(WIN32)
 #   include <fcntl.h>
@@ -83,9 +84,10 @@ extern int     emq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
 extern int     emq_unlink(const char *name);
 
 extern int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
-        const struct timespec *__abs_timeout);    
+        const struct timespec *__abs_timeout); 
+
 extern  ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
-        const struct timespec *__restrict __abs_timeout);
+        const struct timespec * __abs_timeout);
 
 extern void emq_set_lock_timeout(int secs);
         

@@ -1177,11 +1177,7 @@ exprivate tmq_memmsg_t* tmq_get_msg_by_corid(char *corid)
     tmq_corid_serialize(corid, corid_str);
     
     return tmq_get_msg_by_corid_str(corid_str);
-    
-    return ret;
 }
-
-
 
 /**
  * Remove mem message

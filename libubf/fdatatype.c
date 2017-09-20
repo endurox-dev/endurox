@@ -141,7 +141,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
     {BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,4, tbuf_string,tallocdlft, cmp_string},    /* 5 */
     {BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,8, tbuf_carray,tallocdlft, cmp_carray},    /* 6 */
     {BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   4, tbuf_int,   tallocdlft, cmp_int},      /* 1 */
-    -1
+    {-1}
 };
 /*********************** Basic data type operations ***************************/
 

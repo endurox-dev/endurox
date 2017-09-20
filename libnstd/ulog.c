@@ -144,3 +144,4 @@ expublic int userlog_const (const char *msg)
 {
     return userlog("%s", msg);
 }
+

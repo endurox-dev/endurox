@@ -228,8 +228,11 @@ exprivate void * check_child_exit(void *arg)
 #endif
     }
    
+/*
+    - not reached
     NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
     return NULL;
+*/
 }
 
 
