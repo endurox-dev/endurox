@@ -181,11 +181,12 @@ bool doubles_are_equal(double tried, double expected) {
         return true;
     }
 
+    return false;
+
 #else
     return max(tried, expected) - min(tried, expected) < accuracy(significant_figures, max(tried, expected));
 #endif
 
-    return false;
 }
 
 /* #106 Seems like Causing core dumps on aix with XLC: */

@@ -1296,11 +1296,11 @@ expublic void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (c
             
     if (EXSUCCEED!=entry_status)
     {
-        ret=TPUNSOLERR;
+        ret=(void *)TPUNSOLERR;
         goto out;
     }
     
-    ret = G_atmi_tls->p_unsol_handler;
+    ret = (void *)G_atmi_tls->p_unsol_handler;
     
     G_atmi_tls->p_unsol_handler = disp;
     
@@ -1464,3 +1464,4 @@ out:
         return NULL;
     }
 }
+

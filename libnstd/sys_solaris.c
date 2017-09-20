@@ -52,7 +52,7 @@
 #include <nstdutil.h>
 #include <limits.h>
 
-#include <mqueue.h>
+#include <sys_mqueue.h>
 #include <sys_unix.h>
 
 #include <utlist.h>

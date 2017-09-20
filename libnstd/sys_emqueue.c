@@ -554,8 +554,8 @@ exists:
         errno = ENOMEM;
     }
     
-    return((mqd_t) emqinfo);
     NDRX_LOG(log_debug, "into: emq_open ret ok");
+    return((mqd_t) emqinfo);
 pthreaderr:
     errno = i;
 err:

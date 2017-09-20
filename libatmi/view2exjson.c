@@ -544,8 +544,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                             ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to add "
                                     "Array to root object!!");
                             EXFAIL_OUT(ret);
-
-                            EXFAIL_OUT(ret);
                     }
                 }
                 else
@@ -835,3 +833,4 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
 out:
     return ret;
 }
+

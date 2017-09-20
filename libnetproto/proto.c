@@ -101,15 +101,15 @@ struct cproto
     int     tableid;            /* table id. */
     long    tag;                /* TLV tag */
     char*   cname;              /* c field name */
-    size_t  offset;             /* offset in structure */
+    long    offset;             /* offset in structure */
     int     len;                /* len in bytes */
     int     fld_type;           /* field type */
     short   type;               /* field type:  XFLD or XSUB */
     int     min_len;            /* min data len in chars */
     int     max_len;            /* max data len in chars */
     cproto_t *include;          /* include sub_structure */
-    size_t  counter_offset;     /* counter offset... */
-    size_t  elem_size;          /* size of array element. */
+    long    counter_offset;     /* counter offset... */
+    long    elem_size;          /* size of array element. */
     /* During parsing returns conv struct for XSUB */
     xmsg_t * (*p_classify_fn) (char *ex_buf, long ex_len); 
     

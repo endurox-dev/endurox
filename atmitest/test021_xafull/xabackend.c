@@ -610,8 +610,6 @@ expublic int xa_prepare_entry_stat105(XID *xid, int rmid, long flags)
     
     /* seems have issues with freebsd ... abort();*/
     exit(EXFAIL);
-    
-    return ret;
 }
 
 expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags)

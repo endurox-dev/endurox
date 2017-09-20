@@ -410,8 +410,8 @@ exprivate int cpm_sc(UBFH *p_ub, int cd)
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
     {
-        EXFAIL_OUT(ret);
         NDRX_LOG(log_error, "Missing EX_CPMTAG!");
+        EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
