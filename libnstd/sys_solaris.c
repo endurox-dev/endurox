@@ -73,7 +73,7 @@
  * "/n00b,srv,admin,atmi.sv1,123,2229")
  * the qpath must point to /tmp
  */
-expublic string_list_t* ndrx_sys_mqueue_list_make(char *qpath, int *return_status)
+expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status)
 {
     string_list_t* ret = NULL;
     struct dirent **namelist;
