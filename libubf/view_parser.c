@@ -131,7 +131,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
         
         orglen = strlen(buf);
         
-        UBF_LOG(log_debug, "Got VIEW file line: [%s], line: %ld", buf, line);
+        UBF_LOG(log_dump, "Got VIEW file line: [%s], line: %ld", buf, line);
         
         if ('#'==buf[0])
         {
@@ -368,7 +368,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             short typfull=EXFAIL;
             
             tok = strtok_r(p, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (0==strcmp(NDRX_VIEW_TOKEN_END, tok))
             {
@@ -451,14 +451,14 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             /* Add type to checksum */
             ndrx_view_cksum_update(v, fld->type_name, strlen(fld->type_name));
-            UBF_LOG(log_debug, "Got type code UBF=%d full code=%d", 
+            UBF_LOG(log_dump, "Got type code UBF=%d full code=%d", 
                     fld->typecode, fld->typecode_full);
             
             /******************************************************************* 
              * C Field name 
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (NULL==tok)
             {
@@ -491,13 +491,13 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add cname to checksum */
             ndrx_view_cksum_update(v, fld->cname, strlen(fld->cname));
             
-            UBF_LOG(log_debug, "Got c identifier [%s]", fld->cname);
+            UBF_LOG(log_dump, "Got c identifier [%s]", fld->cname);
             
             /******************************************************************* 
              * FB Name -> projection to fielded buffer.
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (NULL==tok)
             {
@@ -524,12 +524,12 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             
             /* ok, save the field */
             NDRX_STRCPY_SAFE(fld->fbname, tok);
-            UBF_LOG(log_debug, "Got UBF identifier [%s]", fld->fbname);
+            UBF_LOG(log_dump, "Got UBF identifier [%s]", fld->fbname);
             
             /*TODO: add - to defines ... */
             if (is_compiled && !M_no_ubf_proc && 0!=strcmp("-", fld->fbname))
             {
-                UBF_LOG(log_debug, "About to resolve field id..");
+                UBF_LOG(log_dump, "About to resolve field id..");
                 
                 fld->ubfid = Bfldid(fld->fbname);
                 
@@ -554,7 +554,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
              * Parse count...
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             fld->count = (short)atoi(tok);
             
             if (fld->count<1)
@@ -585,13 +585,13 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add count to checksum */
             ndrx_view_cksum_update(v, tok, strlen(tok));
             
-            UBF_LOG(log_debug, "Got count [%hd]", fld->count);
+            UBF_LOG(log_dump, "Got count [%hd]", fld->count);
             
             /******************************************************************* 
              * Parse flags
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (NULL==tok)
             {
@@ -690,7 +690,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         
                         break;
                     case '-':
-                        UBF_LOG(log_debug, "No flags set...");
+                        UBF_LOG(log_dump, "No flags set...");
                         break;    
                     default:
                         UBF_LOG(log_error, "Unknown field flag [%c], line: %ld", 
@@ -718,17 +718,17 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add flags to checksum */
             ndrx_view_cksum_update(v, fld->flagsstr, strlen(fld->flagsstr));
 
-            UBF_LOG(log_debug, "Got flags [%s] -> %lx", fld->flagsstr, fld->flags);
+            UBF_LOG(log_dump, "Got flags [%s] -> %lx", fld->flagsstr, fld->flags);
             
             /******************************************************************* 
              * Parse size
              *******************************************************************/
             tok = strtok_r(NULL, NDRX_VIEW_FIELD_SEPERATORS, &saveptr1);
-            UBF_LOG(log_debug, "Got token [%s]", (NULL==tok?"<NULL>":tok));
+            UBF_LOG(log_dump, "Got token [%s]", (NULL==tok?"<NULL>":tok));
             
             if (0==strcmp(tok, "-"))
             {
-                UBF_LOG(log_debug, "Empty token -> no size");
+                UBF_LOG(log_dump, "Empty token -> no size");
                 
                 if (fld->typecode==BFLD_CARRAY || fld->typecode==BFLD_STRING)
                 {
@@ -762,7 +762,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             /* Add size to checksum */
             ndrx_view_cksum_update(v, tok, strlen(tok));
             
-            UBF_LOG(log_debug, "Got size [%hd]", fld->size);
+            UBF_LOG(log_dump, "Got size [%hd]", fld->size);
             
             /******************************************************************* 
              * Parse NULL value & the system flags..
@@ -788,7 +788,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 p2++;
             }
             
-            UBF_LOG(log_debug, "At %p value [%c]", p2, *p2);
+            UBF_LOG(log_dump, "At %p value [%c]", p2, *p2);
             
             if (p2==pend)
             {
@@ -891,7 +891,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 else if (nulltype != NTYPSQUOTE && nulltype != NTYPDQUOTE &&
                         (*p2==' ' || *p2=='\t'))
                 {
-                    UBF_LOG(log_debug, "Terminating non quoted NULL data");
+                    UBF_LOG(log_dump, "Terminating non quoted NULL data");
                     /* Terminate value here too.. */
                     
                     *p2=EXEOS;
@@ -932,12 +932,12 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 }
             }
             
-            UBF_LOG(log_debug, "Got NULL value [%s]", fld->nullval);
+            UBF_LOG(log_dump, "Got NULL value [%s]", fld->nullval);
             
             /* for doubles, etc... parsing! */
             fld->nullval_bin[fld->nullval_bin_len]=EXEOS;
             
-            UBF_DUMP(log_debug, "Got binary version of NULL value", fld->nullval_bin,
+            UBF_DUMP(log_dump, "Got binary version of NULL value", fld->nullval_bin,
                         fld->nullval_bin_len);
                      
             if (!fld->nullval_quotes)
@@ -952,7 +952,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     fld->nullval_bin[0] = EXEOS;
                     fld->nullval_bin_len = 1;
                     fld->nullval_default = EXTRUE;
-                    UBF_LOG(log_debug, "Default NULL value used...");
+                    UBF_LOG(log_dump, "Default NULL value used...");
                 }
             }
             
@@ -973,27 +973,27 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 {
                     case BFLD_SHORT:
                         fld->nullval_short = (short)atoi(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_short=%hd (%s)", 
+                        UBF_LOG(log_dump, "nullval_short=%hd (%s)", 
                                 fld->nullval_short, fld->nullval_bin);
                         break;
                     case BFLD_INT:
                         fld->nullval_int = atoi(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_int=%hd (%s)", 
+                        UBF_LOG(log_dump, "nullval_int=%hd (%s)", 
                                 fld->nullval_int, fld->nullval_bin);
                         break;
                     case BFLD_LONG:
                         fld->nullval_long = atol(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_long=%hd (%s)", 
+                        UBF_LOG(log_dump, "nullval_long=%hd (%s)", 
                                 fld->nullval_long, fld->nullval_bin);
                         break;
                     case BFLD_FLOAT:
                         fld->nullval_float = (float)atof(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_float=%f (%s)", 
+                        UBF_LOG(log_dump, "nullval_float=%f (%s)", 
                                 fld->nullval_float, fld->nullval_bin);
                         break;
                     case BFLD_DOUBLE:
                         fld->nullval_double = atof(fld->nullval_bin);
-                        UBF_LOG(log_debug, "nullval_double=%lf (%s)", 
+                        UBF_LOG(log_dump, "nullval_double=%lf (%s)", 
                                 fld->nullval_double, fld->nullval_bin);
                         break;
                     case BFLD_STRING:
@@ -1065,7 +1065,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 else
                 {
                     /* OK we got some token... */
-                    UBF_LOG(log_debug, "Compiled data: [%s]", tok);
+                    UBF_LOG(log_dump, "Compiled data: [%s]", tok);
                     
                     len=strlen(tok);
                     
@@ -1119,7 +1119,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                         tok2=strtok_r (NULL,";", &saveptr2);
                     }
                     
-                    UBF_LOG(log_debug, "Compiled offset loaded: %ld, element size: %ld", 
+                    UBF_LOG(log_dump, "Compiled offset loaded: %ld, element size: %ld", 
                             fld->offset, fld->fldsize);
                 }
                 
