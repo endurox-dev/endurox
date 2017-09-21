@@ -915,7 +915,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 if (nulltype == NTYPSTD)
                 {
                     /* we are at the end... (no compiled data) */
-                    UBF_LOG(log_debug, "At th end, no compiled data");
+                    UBF_LOG(log_dump, "At th end, no compiled data");
                     *p2 = EXEOS;
                     NDRX_STRCPY_SAFE(fld->nullval, null_val_start);
                     nulltype = NTYPNO;
@@ -1059,7 +1059,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                     }
                     else
                     {
-                        UBF_LOG(log_debug, "No compiled data found at the view file...");
+                        UBF_LOG(log_dump, "No compiled data found at the view file...");
                     }
                 }
                 else
@@ -1135,7 +1135,7 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             }
             else
             {
-                UBF_LOG(log_debug, "No compiled data found at the view file...");
+                UBF_LOG(log_dump, "No compiled data found at the view file...");
             }
             
             /******************************************************************* 

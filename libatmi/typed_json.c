@@ -211,17 +211,17 @@ out:
  * @param len
  * @return
  */
-expublic char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
+expublic char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
 {
     char *ret;
 
-    if (0==len)
+    if (0==*len)
     {
-        len = JSON_DEFAULT_SIZE;
+        *len = JSON_DEFAULT_SIZE;
     }
 
     /* Allocate JSON buffer */
-    ret=(char *)NDRX_MALLOC(len);
+    ret=(char *)NDRX_MALLOC(*len);
     
     if (NULL!=ret)
     {

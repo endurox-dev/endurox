@@ -233,17 +233,17 @@ out:
  * @param len
  * @return
  */
-expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
+expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
 {
     char *ret=NULL;
 
-    if (0==len)
+    if (0==*len)
     {
-        len = UBF_DEFAULT_SIZE;
+        *len = UBF_DEFAULT_SIZE;
     }
 
     /* Allocate UBF buffer */
-    ret=(char *)Balloc(1, len);
+    ret=(char *)Balloc(1, *len);
 
     if (NULL==ret)
     {

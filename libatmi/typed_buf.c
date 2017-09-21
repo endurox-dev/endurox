@@ -216,7 +216,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     }
 
     /* now allocate the memory  */
-    if (NULL==(ret=usr_type->pf_alloc(usr_type, subtype, len)))
+    if (NULL==(ret=usr_type->pf_alloc(usr_type, subtype, &len)))
     {
         /* error detail should be already set */
         goto out;
@@ -280,7 +280,8 @@ expublic char * ndrx_tprealloc (char *buf, long len)
     NDRX_LOG(log_debug, "%s buf=%p, len=%ld",  __func__, buf, len);
     if (NULL==(node=find_buffer_int(buf)))
     {
-         ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p is not know to system",  __func__, buf);
+         ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p is not know to system",  
+                 __func__, buf);
         ret=NULL;
         goto out;
     }

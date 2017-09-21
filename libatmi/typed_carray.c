@@ -210,17 +210,17 @@ out:
  * @param len
  * @return
  */
-expublic char * CARRAY_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
+expublic char * CARRAY_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
 {
     char *ret;
 
-    if (0==len)
+    if (0==*len)
     {
-        len = CARRAY_DEFAULT_SIZE;
+        *len = CARRAY_DEFAULT_SIZE;
     }
 
     /* Allocate CARRAY buffer */
-    ret=(char *)NDRX_MALLOC(len);
+    ret=(char *)NDRX_MALLOC(*len);
     
     if (NULL!=ret)
     {

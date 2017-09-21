@@ -280,7 +280,7 @@ struct typed_buffer_descr
      * this function by it self.
      * On error NULL shall be returned.
      */
-    char *(*pf_alloc) (typed_buffer_descr_t *descr, char *subtype, long len);
+    char *(*pf_alloc) (typed_buffer_descr_t *descr, char *subtype, long *len);
 
     /*
      * Reallocate memory

@@ -50,7 +50,7 @@ extern int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
                     char *obuf, long *olen, long flags);
 extern int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags);
-extern char * STRING_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern char * STRING_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern char * STRING_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
 extern void STRING_tpfree(typed_buffer_descr_t *descr, char *buf);
 extern int STRING_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
