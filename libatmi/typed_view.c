@@ -64,6 +64,7 @@
 #include <typed_view.h>
 #include <view_cmn.h>
 #include <atmi_tls.h> 
+#include <fieldtable.h>
 
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
@@ -84,10 +85,19 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
 {
     char *ret=NULL;
     ndrx_typedview_t *v;
+
+    if (EXSUCCEED!=ndrx_prepare_type_tables())
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to load UBF FD files:%s",
+            __func__, Bstrerror(Berror));
+        ret = NULL;
+        goto out;
+    }
     
     if (EXSUCCEED!=ndrx_view_init())
     {
-        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to load view files!",  __func__);
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to load view files:%s",
+            __func__, Bstrerror(Berror));
         ret = NULL;
         goto out;
     }
@@ -109,11 +119,9 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
     }
     else if (v->ssize < len)
     {
-	
-	len = v->ssize;
-	NDRX_LOG(log_warn, "VIEW [%s] structure size is %ld, requested %ld -> "
-		"upgrading to view size!",
-                len, subtype, v->ssize);   
+	    len = v->ssize;
+        NDRX_LOG(log_warn, "VIEW [%s] structure size is %ld, requested %ld -> "
+		    "upgrading to view size!", len, subtype, v->ssize);   
     }
     
     /* Allocate VIEW buffer */
@@ -129,10 +137,12 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
     
     if (EXSUCCEED!=ndrx_Bvsinit_int(v, ret))
     {
-	NDRX_LOG(log_error, "%s: Failed to init view: %s!", 
-		 __func__, Bstrerror(Berror));
+        NDRX_LOG(log_error, "%s: Failed to init view: %s!", 
+		    __func__, Bstrerror(Berror));
+
         ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to init view: %s!", 
-		 __func__, Bstrerror(Berror));
+		    __func__, Bstrerror(Berror));
+
         goto out;    
     }
     
