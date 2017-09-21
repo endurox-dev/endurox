@@ -52,7 +52,7 @@
  * @param len
  * @return
  */
-expublic char * TPINIT_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
+expublic char * TPINIT_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
 {
     char *ret=NULL;
     char fn[] = "UBF_tpalloc";

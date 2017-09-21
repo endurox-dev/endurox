@@ -81,7 +81,7 @@
  * @param len
  * @return 
  */
-expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len)
+expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
 {
     char *ret=NULL;
     ndrx_typedview_t *v;
@@ -113,20 +113,20 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long l
         goto out;
     }
     
-    if (NDRX_VIEW_SIZE_DEFAULT_SIZE>len)
+    if (NDRX_VIEW_SIZE_DEFAULT_SIZE>*len)
     {
-        len = NDRX_VIEW_SIZE_DEFAULT_SIZE;
+        *len = NDRX_VIEW_SIZE_DEFAULT_SIZE;
     }
-    else if (v->ssize < len)
+    else if (v->ssize < *len)
     {
-	    len = v->ssize;
+        *len = v->ssize;
         NDRX_LOG(log_warn, "VIEW [%s] structure size is %ld, requested %ld -> "
-		    "upgrading to view size!", len, subtype, v->ssize);   
+		    "upgrading to view size!", *len, subtype, v->ssize);   
     }
     
     /* Allocate VIEW buffer */
     /* Maybe still malloc? */
-    ret=(char *)NDRX_CALLOC(1, len);
+    ret=(char *)NDRX_CALLOC(1, *len);
 
     if (NULL==ret)
     {

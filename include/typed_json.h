@@ -50,7 +50,7 @@ extern int JSON_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long
                     char *obuf, long *olen, long flags);
 extern int JSON_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags);
-extern char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern char * JSON_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
 extern void JSON_tpfree(typed_buffer_descr_t *descr, char *buf);
 extern int JSON_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);

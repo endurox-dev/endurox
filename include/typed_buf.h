@@ -94,15 +94,15 @@ extern NDRX_API int UBF_prepare_outgoing (typed_buffer_descr_t *descr,
 extern NDRX_API int UBF_prepare_incoming (typed_buffer_descr_t *descr, 
         char *rcv_data, long rcv_len, char **odata, long *olen, long flags);
 extern NDRX_API char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
-extern NDRX_API char	* UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern NDRX_API char	* UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern NDRX_API void UBF_tpfree(typed_buffer_descr_t *descr, char *buf);
 extern NDRX_API int UBF_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char *expr);
     
 /* Type buffer support */
-extern NDRX_API char * TPINIT_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern NDRX_API char * TPINIT_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern NDRX_API void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 /* Type null buffer */
-extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern NDRX_API void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
 
 /* Automatic buffer convert: */

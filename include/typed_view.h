@@ -58,7 +58,7 @@ extern NDRX_API int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rc
                         long rcv_len, char **odata, long *olen, long flags);
 extern NDRX_API int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
                     char *obuf, long *olen, long flags);
-extern NDRX_API char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long len);
+extern NDRX_API char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern NDRX_API char * VIEW_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long len);
 
 #ifdef	__cplusplus
