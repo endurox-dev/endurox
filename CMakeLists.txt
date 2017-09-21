@@ -119,10 +119,14 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	set(EX_OS_SUNOS "1")
     set(EX_USE_POLL "1")
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
+	# Bug #219 !!! _REENTRANT makes errno thread safe
+	SET(CMAKE_C_FLAGS "-D_REENTRANT")
 	if ("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
 		message("SUN Studio compiler (building for 64bit) ")
 
-		SET(CMAKE_C_FLAGS "-errtags -fast -m64 -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
+		# Bug #219 !!! _REENTRANT makes errno thread safe
+		# For GNU I guess 
+		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -errtags -fast -m64 -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
 		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_MBR_DECLARATION -erroff=E_NO_IMPLICIT_DECL_ALLOWED")
 		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
 		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
