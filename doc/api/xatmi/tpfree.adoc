@@ -17,13 +17,24 @@ void tpfree(char *'ptr');
 
 For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
 
-For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf 
+-lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Free up the XATMI buffer allocated by *tpalloc()* or *tprealloc()*. The pointer shall not be used to any other calls afterwards, as it points to invalid memory after call. *tpfree()* must not be used for auto-allocated buffers, i.e. ones received into to service routine, as auto buffers will be cleaned up in following *tpreturn()* or *tpforward()* calls.
+Free up the XATMI buffer allocated by *tpalloc()* or *tprealloc()*. The pointer 
+shall not be used to any other calls afterwards, as it points to invalid memory 
+after call. *tpfree()* must not be used for auto-allocated buffers, i.e. ones 
+received into to service routine, as auto buffers will be cleaned up in following 
+*tpreturn()* or *tpforward()* calls.
 
 Function will not free any other resources e.g. allocated by *malloc()* or *calloc()*.
+
+*tpfree()* is not needed to be called on buffers which are automatically allocated
+by incoming service call. Also *tpfree()* is not needed to called on buffers
+which are returned to *tpreturn(3)* or *tpforward(3)*. At service ending,
+tpreturn or tpforward makes free auto-allocated buffer and return buffer (if it
+is different than auto-alloc buffer).
 
 RETURN VALUE
 ------------

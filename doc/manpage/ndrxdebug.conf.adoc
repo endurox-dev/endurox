@@ -10,7 +10,7 @@ ndrxdebug.conf - Enduro/X Runtime Debug configuration
 
 SYNOPSIS
 --------
-BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] file=[LOG_FILE]
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] file=[LOG_FILE] [iflags=INTEGRATION_FLAGS]
 
 
 DESCRIPTION
@@ -51,8 +51,11 @@ DEBUG CONFIGURATION FILE SYNTAX
 *LOG_FILE*::
 	Log file. If empty then 'stderr' will be used.
 *COMMENTS*::
-	Commented lines starts with '#'. Empty lines are ignored.
-
+    Commented lines starts with '#'. Empty lines are ignored.
+*INTEGRATION_FLAGS*::
+    Integration specific flags. These specific for binding environments. For example
+    *endurox-go* package have defined flag 'detailed' which will print the
+    Go source file name and the code line instead of fixed C function file/line.
 
 EXAMPLE
 -------
