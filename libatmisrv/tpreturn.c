@@ -128,7 +128,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     strcpy(call->reply_to, G_atmi_conf.reply_q_str);
     */
     /* Save original reply to path, so that bridge knows what to next */
-    strcpy(call->reply_to, last_call->reply_to);
+    NDRX_STRCPY_SAFE(call->reply_to, last_call->reply_to);
     
     /* Mark as service failure. */
     if (TPSUCCESS!=rval)
