@@ -159,6 +159,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 5.0.8 released on 17/09/2017. Works on dynamic view access. #99, #206, #207, #210
 
+- Version 5.0.9 released on 27/09/2017. (development) Works on #224
+
 # Build configurations
 
 ## Configure make with: 

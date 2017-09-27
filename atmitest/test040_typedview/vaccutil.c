@@ -318,6 +318,18 @@ Ensure(test_Bvnext)
     
     
 }
+
+Ensure(test_Bvcpy)
+{
+    struct MYVIEW1 src;
+    struct MYVIEW1 dst;
+    init_MYVIEW1(&src);
+    
+    memset(&dst, 0, sizeof(dst));
+    assert_equal(Bvcpy ((char *)&dst, (char *)&src, "MYVIEW1"), sizeof(struct MYVIEW1));
+    assert_equal(memcmp(&dst, &src, sizeof(struct MYVIEW1)), 0);
+    
+}
 /**
  * Very basic tests of the framework
  * @return
@@ -334,6 +346,7 @@ TestSuite *vacc_util_tests(void)
     add_test(suite, test_Bvoccur);
     add_test(suite, test_Bvsetoccur);
     add_test(suite, test_Bvnext);
+    add_test(suite, test_Bvcpy);
             
     return suite;
 }

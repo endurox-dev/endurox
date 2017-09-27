@@ -345,6 +345,34 @@ out:
 }
 
 /**
+ * Copy view data from one view to another. Views must be the same
+ * and the buffer size on both sides must be at least in size view
+ * @param cstruct_dst destination buffer
+ * @param cstruct_src source buffer
+ * @param view view name (must be common between two views)
+ * @return bytes copied or -1 on failure
+ */
+expublic long ndrx_Bvcpy(char *cstruct_dst, char *cstruct_src, char *view)
+{
+    long ret;
+
+    ndrx_typedview_t *v = NULL;
+
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+
+    ret = v->ssize;
+    
+    memcpy(cstruct_dst, cstruct_src, ret);
+    
+out:
+    return ret;
+}
+
+/**
  * Return the occurrences set in buffer. This will either return C_ count field
  * set, or will return max array size, this does not test field against NULL or not.
  * anything, 

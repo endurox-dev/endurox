@@ -218,6 +218,8 @@ extern NDRX_API int ndrx_CBvchg(char *cstruct, char *view, char *cname, BFLDOCC 
 
 extern NDRX_API long ndrx_Bvsizeof(char *view);
 
+extern NDRX_API long ndrx_Bvcpy(char *cstruct_dst, char *cstruct_src, char *view);
+
 extern NDRX_API BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v, 
         ndrx_typedview_field_t *f, BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size,
         int *fldtype);
