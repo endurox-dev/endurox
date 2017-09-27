@@ -124,6 +124,7 @@ extern NDRX_API int OBvstof(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *cstruct, int 
 extern NDRX_API int OCBvget(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype, long flags);
 extern NDRX_API int OCBvchg(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ, char *buf, BFLDLEN len, int usrtype);
 extern NDRX_API long OBvsizeof(TPCONTEXT_T *p_ctxt, char *view);
+extern NDRX_API long OBvcpy(TPCONTEXT_T *p_ctxt, char *cstruct_dst, char *cstruct_src, char *view);
 extern NDRX_API BFLDOCC OBvoccur(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size, int* fldtype);
 extern NDRX_API int OBvsetoccur(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ);
 extern NDRX_API int OBvnext(TPCONTEXT_T *p_ctxt, Bvnext_state_t *state, char *view, char *cname, int *fldtype, BFLDOCC *maxocc, long *dim_size);

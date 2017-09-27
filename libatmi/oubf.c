@@ -5930,6 +5930,82 @@ out:
 
 
 /**
+ * Object-API wrapper for Bvcpy() - Auto generated.
+ */
+expublic long OBvcpy(TPCONTEXT_T *p_ctxt, char *cstruct_dst, char *cstruct_src, char *view) 
+{
+    long ret = EXSUCCEED;
+    int did_set = EXFALSE;
+
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: Bvcpy() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_IGN );
+#endif
+
+ 
+
+    /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
+    {
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bvcpy() failed to set context");
+            EXFAIL_OUT(ret);
+        }
+        did_set = EXTRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Bvcpy() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+    
+    ret = Bvcpy(cstruct_dst, cstruct_src, view);
+
+    if (did_set)
+    {
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bvcpy() failed to get context");
+            EXFAIL_OUT(ret);
+        }
+    }
+out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: Bvcpy() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+ 
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for Bvoccur() - Auto generated.
  */
 expublic BFLDOCC OBvoccur(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size, int* fldtype) 
