@@ -2261,6 +2261,49 @@ expublic long Bvsizeof(char *view)
 out:
     return ret;
 }
+
+
+
+/**
+ * Copy the view contents from one buffer to another
+ * @param cstruct_dst Destination buffer
+ * @param cstruct_src Source buffer
+ * @param view View name
+ * @return -1 on fail, or number of bytes copied
+ */
+expublic long Bvcpy(char *cstruct_dst, char *cstruct_src, char *view)
+{
+    long ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct_src)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct_src is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cstruct_dst)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct_dst is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    ret = ndrx_Bvcpy(cstruct_dst, cstruct_src, view);
+    
+out:
+    return ret;
+}
+
+
+
 /**
  * Get field occurrences number of array elements in VIEW.
  * Set by 'count' column in view file.
