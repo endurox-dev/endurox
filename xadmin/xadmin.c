@@ -95,28 +95,28 @@ cmd_mapping_t M_command_map[] =
     {"echo",    cmd_echo,  EXFAIL,                 1,  999,0, "Echo text back to terminal", NULL},
     {"idle",    cmd_idle,  EXFAIL,                 1,  1,  0, "Enter daemon process in idle state (if not started)", NULL},
     {"help",    cmd_help,  EXFAIL,                 1,  2,  0, "Print help (this output)\n"
-                                                "\t\targs: help [command]", NULL},
+                                                "\t args: help [command]", NULL},
     {"h",       cmd_help,  EXFAIL,                 1,  2,  0, "Alias for `help'", NULL},
     {"info",    cmd_help,  EXFAIL,                 1,  2,  0, "Alias for `help'", NULL},
     {"stat",    cmd_stat,  EXFAIL,                 1,  1,  0, "Prints general status information", NULL},
     {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,    1,  1,  1, "Load configuration", NULL},
     {"start",   cmd_start, NDRXD_COM_START_RQ,   1,  4,  1, "Start application domain\n"
-                                                         "\t\tAlso loads configuration automatically.\n"
-                                                         "\t\targs: start [-y] [-s <server>] [-i <srvid>]", NULL},
+                                                         "\t Also loads configuration automatically.\n"
+                                                         "\t args: start [-y] [-s <server>] [-i <srvid>]", NULL},
     {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,     1,  1,  1, "Print services", NULL},
     {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,    1,  4,  0, "Stop application domain\n"
-                                                         "\t\targs: stop [-y] [-c]|[-s <server>] [-i <srvid>]", NULL},
+                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>]", NULL},
     {"down",    cmd_fdown, EXFAIL,                 1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
-                                                         "\t\targs: fdown [-y]\n"
-                                                         "\t\tRUN ONLY IF YOU KNOW WHAT YOU ARE DOING!", NULL},
+                                                         "\t args: fdown [-y]\n"
+                                                         "\t RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!", NULL},
     {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,      1,  1,  1, "Attached to ndrxd user session in progress", NULL},
     {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, "Load new configuration", NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, "Test new configuration", NULL},
     {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 5,  5,  1,"Un-advertise service.\n"
-                                                         "\t\targs: unadv -i server_id -s service_name", NULL},
+                                                         "\t args: unadv -i server_id -s service_name", NULL},
     {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 5,  5,  1,"Re-advertise service.\n"
-                                                         "\t\targs: readv -i server_id -s service_name\n"
-                                                         "\t\tmight be usable if service Q was unlinked", NULL},
+                                                         "\t args: readv -i server_id -s service_name\n"
+                                                         "\t might be usable if service Q was unlinked", NULL},
     {"restart", cmd_r,    EXFAIL,                 1,  4,  0, "Restart app or service (invokes start & stop with same args!)", NULL},
     {"r", cmd_r,    EXFAIL,                       1,  4,  0, "Alias for `restart'", NULL},
     {"-v",      cmd_ver,  EXFAIL,                 1,  1,  0, "Print version info", NULL},
@@ -125,14 +125,14 @@ cmd_mapping_t M_command_map[] =
     {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,   1,  1,  1, "Shared mem, print services", NULL},
     {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,   1,  1,  1, "Shared mem, print servers", NULL},
     {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,   1,  2,  1, "Abort app shutdown or startup.\n"
-                                                           "\t\targs: abort [-y]", NULL},
+                                                           "\t args: abort [-y]", NULL},
     {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Restarts server instance by instance\n"
-                                                         "\t\tArgs: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
+                                                         "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Alias for `sreload'", NULL},
     {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, "Print service queues", NULL},
     {"pqa",cmd_pqa,  EXFAIL,            1,  2,  0, "Print all queues\n"
-                                                "\t\targs: pqa [-a]\n"
-                                                "\t\t-a - print all queues "
+                                                "\t args: pqa [-a]\n"
+                                                "\t -a - print all queues "
                                                 "(incl. other local systems)", NULL},
     /* New XA commands: printtrans (pt), abort, commit, exsting abort move to: sabort (start/stop) 
      * abort + install ctrl+c handler 
@@ -140,47 +140,47 @@ cmd_mapping_t M_command_map[] =
     {"pt",        cmd_pt,EXFAIL,   1,  1,  1, "Print transactions", NULL},
     {"printtrans",cmd_pt,EXFAIL,   1,  1,  1, "Alias for `pt'", NULL},
     {"abort",     cmd_abort,EXFAIL,   3,  5,  1, "Abort transaction\n"
-                                            "\t\targs: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]", NULL},
+                                            "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]", NULL},
     {"aborttrans",cmd_abort,EXFAIL,   3,  5,  1, "Alias for `abort'", NULL},
     {"commit",     cmd_commit,EXFAIL,   3,  4,  1, "Commit transaction\n"
-                                            "\t\targs: commit -t <RM Ref> -x <XID> [-y]", NULL},
+                                            "\t args: commit -t <RM Ref> -x <XID> [-y]", NULL},
     {"committrans",cmd_commit,EXFAIL,   3,  4,  1, "Alias for `commit'", NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,   1,  1,  1, "Print env (from ndrxd)", NULL},
     {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,   2,  2,  1, "Alias for `pe'", NULL},
     {"set",       cmd_set,NDRXD_COM_SET_RQ,   1,  99,  1, "Set env variable. \n"
-                                                "\t\tFormat: VAR=SOME VALUE (will be contact with spaces)", NULL},
+                                                "\t Format: VAR=SOME VALUE (will be contact with spaces)", NULL},
     {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ,   1,  1,  1, "Set env variable. Forma: VAR"},
     {"pc",        cmd_pc,EXFAIL,   1,  1,  1, "Print clients", NULL},
     {"sc",        cmd_sc,EXFAIL,   2,  3,  1, "Stop client\n"
-                                    "\t\targs: sc -t <Tag> [-s <Subsection (default -)]", NULL},
+                                    "\t args: sc -t <Tag> [-s <Subsection (default -)]", NULL},
     {"bc",        cmd_bc,EXFAIL,   2,  3,  1, "Boot(start) client\n"
-                                    "\t\targs: bc -t <Tag> [-s <Subsection (default -)]", NULL},
+                                    "\t args: bc -t <Tag> [-s <Subsection (default -)]", NULL},
     {"mqlc",      cmd_mqlc,EXFAIL,   1,  1,  1, "List persistent queue configuration", NULL},
     {"mqlq",      cmd_mqlq,EXFAIL,   1,  1,  1, "List persistent queues (active/dynamic)", NULL},
     {"mqrc",      cmd_mqrc,EXFAIL,   1,  1,  1, "Reload TMQ config", NULL},
     {"mqlm",      cmd_mqlm,EXFAIL,   3,  3,  1, "List messages in q\n"
-                                    "\t\targs: mqlm -s <QSpace> -q <QName>", NULL},
+                                    "\t args: mqlm -s <QSpace> -q <QName>", NULL},
     {"mqdm",      cmd_mqdm,EXFAIL,   4,  4,  1, "Dump/peek message to stdout\n"
-                                    "\t\targs: mqdm -n <Cluster node id> -i <Server ID> -m <Message ID>", NULL},
+                                    "\t args: mqdm -n <Cluster node id> -i <Server ID> -m <Message ID>", NULL},
     {"mqch",      cmd_mqch,EXFAIL,   4,  4,  1, "Change queue config (runtime only)\n"
-                                    "\t\targs: mqch -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>", NULL},
+                                    "\t args: mqch -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>", NULL},
     {"mqrm",      cmd_mqrm,EXFAIL,   4,  4,  1, "Remove message from Q space\n"
-                                    "\t\targs: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>\n", NULL},
+                                    "\t args: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>", NULL},
     {"mqmv",      cmd_mqmv,EXFAIL,   6,  6,  1, "Move message to different qspace/qname\n"
-                                    "\t\targs: mqmv -n <Source cluster node id> -i <Source server ID>\n"
-                                    "\t\t-m <Source Message ID> -s <Dest qspace> -q <Dest qname>", NULL},
+                                    "\t args: mqmv -n <Source cluster node id> -i <Source server ID>\n"
+                                    "\t -m <Source Message ID> -s <Dest qspace> -q <Dest qname>", NULL},
     {"killall",   cmd_killall,EXFAIL, 1,  999,  0, "Kill all processes (in ps -ef) matching the name\n"
-                                    "\t\targs: killall <name1> <name2> ... <nameN>", NULL},
-    {"qrm",       cmd_qrm,EXFAIL, 1,  999,  0, "Remove specific queue"
-                                    "\t\targs: qrm <qname1> <qname2> ... <qnameN>\n", NULL},
+                                    "\t args: killall <name1> <name2> ... <nameN>", NULL},
+    {"qrm",       cmd_qrm,EXFAIL, 1,  999,  0, "Remove specific queue\n"
+                                    "\t args: qrm <qname1> <qname2> ... <qnameN>", NULL},
     {"qrmall",    cmd_qrmall,EXFAIL, 1,  999,  0, "Remove queue matching the substring \n"
-                                    "\t\targs: qrmall <substr1> <substr2> ... <substrN>", NULL},
+                                    "\t args: qrmall <substr1> <substr2> ... <substrN>", NULL},
     {"provision", cmd_provision,EXFAIL, 0,  999,  0, "Prepare initial Enduro/X instance environment \n"
-                                     "\t\targs: provision [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n", NULL},
+                                     "\t args: provision [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]", NULL},
     {"gen",       cmd_gen,EXFAIL, 0,  999,  0, "Generate sources\n"
-                                     "\t\targs: gen <language> <type> [-d] "
+                                     "\t args: gen <target> <type> [-d] "
                                      "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
-                                     "\t\tsub-targets available:", cmd_gen_help}
+                                     "\t tagets/types available:", cmd_gen_help}
 };
 
 /*
