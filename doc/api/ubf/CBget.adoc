@@ -19,7 +19,13 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Function is used to get field data from UBF buffer. 'p_ub' is pointer to UBF buffer, 'bfldid' is field id, 'occ' is field occurrence at buffer, which needs to be read. 'buf' is buffer where to output the data. 'len' is used as *input* for indicating the lenght of the bytes for the target buffer ('buf'). If the data is larger than 'len' inidicated, then error of *BNOSPACE*. Then 'len' is optional. If set to NULL, then no such checks are made. 'len' is used for *BFLD_STRING* and *BFLD_CARRAY*. On output 'len' (if not NULL), indicates the length of data loaded in bytes. 'usrtype' indicates the data type of the 'buf'.
+Function is used to get field data from UBF buffer. 'p_ub' is pointer to UBF buffer, 
+'bfldid' is field id, 'occ' is field occurrence at buffer, which needs to be read. 'buf' 
+is buffer where to output the data. 'len' is used as *input* for indicating the length of 
+the bytes for the target buffer ('buf'). If the data is larger than 'len' indicated, 
+then error of *BNOSPACE*. Then 'len' is optional. If set to NULL, then no such checks are 
+made. 'len' is used for *BFLD_STRING* and *BFLD_CARRAY*. On output 'len' (if not NULL), 
+indicates the length of data loaded in bytes. 'usrtype' indicates the data type of the 'buf'.
 
 RETURN VALUE
 ------------
@@ -27,7 +33,8 @@ On success, *CBget()* return zero; on error, -1 is returned, with *Berror* set t
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message with debug 
+info from last function call.
 
 *BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
 
@@ -47,11 +54,11 @@ See *ubftest/test_cbget.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bchg(3)* *Badd(3)* *CBadd(3)* *Bget(3)* *CBget(3)*
+*Bchg(3)* *CBchg(3)* *Badd(3)* *CBadd(3)* *Bget(3)*
 
 COPYING
 -------

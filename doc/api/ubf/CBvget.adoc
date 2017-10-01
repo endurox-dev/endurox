@@ -1,0 +1,80 @@
+CBVGET(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+CBvget - Get and convert to user type data from UBF buffer
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int CBvget(char *'cstruct', char *'view', char *'cname', BFLDOCC 'occ', char *'buf', 
+BFLDLEN *'len', int 'usrtype', long 'flags');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function is used to get field data dynamically from VIEW buffer. 'cstruct' is pointer 
+to C structure instance (object), 'view' is name of the VIEW (must match the instance of the
+object), 'occ' is field array occurrence, if field is not an array or first array element must
+be read, then use occ=0. 'buf' is buffer where to output the data. 'len' is used on both
+directions, on *input* it is used for indicating the length of the bytes for the target buffer 
+('buf'). If the data is larger than 'len' indicated, then error *BNOSPACE* is returned. 
+Then 'len' is optional. If set to NULL, then no such checks are made, and it is assumed 
+that buffer lenght is sufficiend to store the data. 'len' is used only for *BFLD_STRING* 
+and *BFLD_CARRAY* fields. On output 'len' (if not NULL), indicates the length of data loaded in 'buf'. 
+Indicated in bytes. 'usrtype' is user type indicating the data type of the 'buf', 
+if types are different, the automatic data conversion is performed. 'flags' is either set to
+0 in which case data is returned as is in the VIEW, does not matter if it matches the *NULL*
+value specified in VIEW file or not, the exact value is returned. If flag *BVACCESS_NOTNULL*
+is specified, then if value in field matches *NULL* column in view file, then error 
+*BNOTPRES* is returned. *BNOTPRES* can be returned in case if 'C' flag was set in view file,
+and the count indicator is set to less than occurrence specified.
+
+
+RETURN VALUE
+------------
+On success, *CBvget()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info 
+from last function call, stored in thread local storage (TLS).
+
+*BEINVAL* 'view', 'cstruct' or 'buf' is NULL. 'view' or 'cname' is empty string (first byte
+0x00). Or occurrence is out of bounds of the array declaration.
+
+*BBADVIEW* invalid view name (not found in view file).
+
+*BNOCNAME* field name ('cname') not found in view structure.
+
+*BNOSPACE* No space in 'buf'.
+
+*BMALLOC* Failed to allocate type conversion buffer.
+
+*BNOTPRES* Field not present (in case field value matches NULL in view file and *BVACCESS_NOTNULL*
+is set or count (C_) field is less than occurrence requested.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/vaccget.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*CBvchg(3)* *Bvnext(3)* *Bvsetoccur(3)* 
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
