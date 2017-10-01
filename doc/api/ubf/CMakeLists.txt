@@ -104,6 +104,7 @@ set(MAN3_NAMES
     Bvopt
     Bvnull
     Bconcat
+    CBvget
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
