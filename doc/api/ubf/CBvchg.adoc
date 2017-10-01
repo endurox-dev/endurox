@@ -1,0 +1,72 @@
+CBVCHG(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+CBvchg - Convert from user type and change field value in VIEW field
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int CBvchg(char *'cstruct', char *'view', char *'cname', BFLDOCC 'occ', 
+             char *'buf', BFLDLEN 'len', int 'usrtype');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function is used to set field data dynamically to VIEW buffer field. 'cstruct' is pointer 
+to C structure instance (object), 'view' is name of the VIEW (must match the instance of the
+object), 'occ' is field array occurrence, if field is not an array or first array element must
+be set, then use occ=0. 'buf' is buffer where to take user data from. 'len' is  used for 
+indicating the length of the bytes of the target buffer ('buf') size in bytes. 
+If field size in VIEW is shorter than data putting to, then *BNOSPACE* error is returned.
+'len' is used only for *BFLD_CARRAY* fields.
+'usrtype' is user type indicating the data type of the 'buf', 
+if types are different, the automatic data conversion is performed. And VIEW matched data
+is installed in the cstruct field offset. If current array C_ (count) field is less than
+occurrences, then C_ count field is adjusted accordingly to have the occurrence included in
+the count range.
+
+RETURN VALUE
+------------
+On success, *CBvchg()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info 
+from last function call, stored in thread local storage (TLS).
+
+*BEINVAL* 'view', 'cstruct' or 'buf' is NULL. 'view' or 'cname' is empty string (first byte
+0x00). Or occurrence is out of bounds of the array declaration.
+
+*BBADVIEW* invalid view name (not found in view file).
+
+*BNOCNAME* field name ('cname') not found in view structure.
+
+*BNOSPACE* No space in view field to install data (data larger than field size).
+
+*BMALLOC* Failed to allocate type conversion buffer.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/vaccset.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*CBvget(3)* *Bvnext(3)* *Bvsetoccur(3)* 
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

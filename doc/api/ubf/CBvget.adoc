@@ -5,7 +5,7 @@ CBVGET(3)
 
 NAME
 ----
-CBvget - Get and convert to user type data from UBF buffer
+CBvget - Get and convert to user type data from VIEW buffer field
 
 
 SYNOPSIS
