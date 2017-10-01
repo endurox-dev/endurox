@@ -105,6 +105,7 @@ set(MAN3_NAMES
     Bvnull
     Bconcat
     CBvget
+    CBvchg
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
