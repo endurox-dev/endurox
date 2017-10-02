@@ -1,0 +1,68 @@
+BVOCCUR(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bvoccur - Return number of view field array occurrences
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+BFLDOCC Bvoccur(char *'cstruct', char *'view', char *'cname',
+        BFLDOCC *'maxocc', BFLDOCC *'realocc', long *'dim_size', int *'fldtype');
+        
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Return the occurrences set in buffer. This will either return 'C' (C_<field>) 
+count field value, or will return max array size. 'cstruct' is view structure
+instance (object). 'view' is view name of which 'cstruct' is instance of. 'maxocc'
+is number of maximum possible occurrences for view field (this is basically number
+defined in 'COUNT' column in view file). 'maxocc' is optional and can be NULL.
+'realocc' is number of filled occurrences in array tested from the C_<field> 
+indicator position or from the end of the array. The 'realocc' will return 
+number of occurrences as number to which corresponds first non NULL element 
+when testing from the end of the array. 'realocc' is optional and can be NULL.
+'dim_size' returns the number bytes takes one view field element (or field it self
+if count is set to 1 in view file). 'fldtype' is view field type, see 'BLFD_*'
+constants.
+
+
+RETURN VALUE
+------------
+On success, *Bvoccur()* returns number of field occurrences (max or set in count); 
+on error, *-1* is returned, with *Berror* set to indicate the error. 
+
+
+ERRORS
+------
+Bstrerror(3) can give more description for error (for last call).
+
+*BEINVAL* 'view' is NULL or empty, 'cname' is NULL or empty, 'cstruct' is null.
+
+*BBADVIEW* 'view' is not found in loaded view files (see *VIEWDIR* and *VIEWFILES*
+in ex_env(3).
+
+*BNOCNAME* 'cname' field is not present in view.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/vaccutil.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*CBchg(3)* *Bvsetoccur(3)* *viewfile(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
