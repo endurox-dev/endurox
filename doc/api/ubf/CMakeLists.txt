@@ -107,6 +107,7 @@ set(MAN3_NAMES
     CBvget
     CBvchg
     Bvsizeof
+    Bvcpy
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
