@@ -1,0 +1,57 @@
+BVCPY(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+Bvcpy - perform VIEW buffer copy from one to another
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+long Bvcpy(char *'cstruct_dst', char *'cstruct_src', char *'view')
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function copies memory data from VIEW/C structure instances of 'cstruct_src' to 
+'cstruct_dst' instance. The size to copy is taken from 'view' name. Note that it
+is up to developer to ensure that both buffers are in correct size, otherwise
+memory overflow is possible and program might terminate with segmentation fault.
+
+RETURN VALUE
+------------
+On success, *Bvcpy()* return number of bytes copied; on error, 
+-1 is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BEINVAL* 'view' is NULL or empty, 'cstruct_src' is null or 'cstruct_dst' is null.
+
+*BBADVIEW* View specified in 'view' paramter not found.
+
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/vaccutil.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bvchg(3)* *Bvsizeof(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
