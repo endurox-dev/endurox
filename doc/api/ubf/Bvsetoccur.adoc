@@ -1,0 +1,58 @@
+BVSETOCCUR(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+Bvsetoccur - Set occurrences of the view count field
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvsetoccur(char *'cstruct', char *'view', char *'cname', BFLDOCC 'occ');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function is used to set array length in the 'C_<field>' (count field) if configured
+in view file with flag 'C'. If flag is not used in view (count field not present
+in view) then function will just return succeed with out changing anything.
+
+RETURN VALUE
+------------
+On success, *Bvsetoccur()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info 
+from last function call, stored in thread local storage (TLS).
+
+*BEINVAL* 'view', 'cstruct' or 'cname' is NULL. 'view' or 'cname' is empty string (first byte
+0x00). Or occurrence is out of bounds of the array declaration.
+
+*BBADVIEW* invalid view name (not found in view file).
+
+*BNOCNAME* field name ('cname') not found in view structure.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/vaccutil.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*CBvchg(3)* *CBvget(3)* *Bvnext(3)* *viewfile(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

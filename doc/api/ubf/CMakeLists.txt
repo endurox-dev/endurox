@@ -109,6 +109,7 @@ set(MAN3_NAMES
     Bvsizeof
     Bvcpy
     Bvoccur
+    Bvsetoccur
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
