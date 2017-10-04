@@ -110,6 +110,7 @@ set(MAN3_NAMES
     Bvcpy
     Bvoccur
     Bvsetoccur
+    Bvnext
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

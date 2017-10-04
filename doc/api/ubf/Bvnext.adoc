@@ -1,0 +1,60 @@
+BVNEXT(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bvnext - Iterate over the view structure
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvnext (Bvnext_state_t *'state', char *'view', char *'cname', int *'fldtype', 
+BFLDOCC *'maxocc', long *'dim_size)
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Iterate over the given 'view' structure. *Bvnext()* is called multiple times, each invoke
+will return next view field. To start iterate over the view 'view' must be set. To continue
+iteration, 'view' parameter must be set to NULL. 'state' keeps the iterator position in the
+view. 'cname' returns next parameter name. It is assumed that 'cname' buffer size is at least
+*NDRX_VIEW_CNAME_LEN*+1 bytes long (257 bytes). 'fldtype' returns field type (See BFLD_\*
+constants).	'fldtype' is optional and can be NULL. 'maxocc' returns field array size.
+parameter is optional and can be NULL. 'dim_size' is array element size in bytes.
+
+RETURN VALUE
+------------
+On success, *Bnext()* return *1*, if End Of Buffer reached, then *0* is returned; on error, 
+-1 is returned, with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info 
+from last function call.
+
+*BEINVAL* 'state' is NULL, 'view' is NULL and 'state' not initialized or 'cname' is NULL.
+
+*BBADVIEW* 'view' not found in view files.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/vaccutil.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*CBvchg(3)* *CBvget(3)* *Bvsetoccur(3)* *Bvoccur(3)* *viewfile(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

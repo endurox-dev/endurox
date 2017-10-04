@@ -2409,7 +2409,7 @@ expublic int Bvnext (Bvnext_state_t *state, char *view,
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==view || EXEOS==view[0])
+    if (NULL==view)
     {
         if (NULL == state->v)
         {
