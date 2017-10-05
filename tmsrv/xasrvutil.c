@@ -87,7 +87,12 @@ expublic void atmi_xa_new_xid(XID *xid)
     memset(xid->data, 0, XIDDATASIZE); /* this is not necessary, but... */
     exuuid_generate(uuid_val);
     memcpy(xid->data, uuid_val, sizeof(exuuid_t));
-    memcpy(xid->data + sizeof(exuuid_t), &(atmi_env->xa_rmid), sizeof(unsigned char));
+
+    /*Bug #228 - using incorrect rmid field was using short from env instead of rmid (uchar)*/
+    NDRX_LOG(log_debug, "New xid, rmid=%d(%c), node_id=%hd, srv_id=%hd",
+		(int)rmid, rmid, node_id, srv_id);
+
+    memcpy(xid->data + sizeof(exuuid_t), (char *)&rmid, sizeof(unsigned char));
     /* Have an additional infos for transaction id... */
     memcpy(xid->data  
             +sizeof(exuuid_t)  
