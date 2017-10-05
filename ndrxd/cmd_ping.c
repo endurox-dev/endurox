@@ -98,7 +98,7 @@ expublic int srv_send_ping (pm_node_t *p_pm)
     
 out:
    
-    NDRX_LOG(log_warn, "srv_send_ping returns with status %d", ret);
+    NDRX_LOG(log_info, "srv_send_ping returns with status %d", ret);
     return ret;
 }
 
