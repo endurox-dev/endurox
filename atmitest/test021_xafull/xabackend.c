@@ -328,7 +328,8 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
     {
         if (!ndrx_file_exists(file))
         {
-            NDRX_LOG(log_error, "TMJOIN or TMRESUME but transaction does not exits!");
+            NDRX_LOG(log_error, "TMJOIN or TMRESUME but transaction does not exits (file: [%s])!",
+			file);
             return XAER_NOTA;
         }
     }
