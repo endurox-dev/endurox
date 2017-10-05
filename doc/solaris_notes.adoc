@@ -18,6 +18,11 @@ documentation and does not use GPG-ME encryption for bridges.
 For Solaris Posix queues actually are virtual files in /tmp directory with '.MQD' prefix.
 Enduro/X for queue management uses these files.
 
+
+For production releases emulated message queue is selected (-DDEFINE_FORCEEMQ=ON). This is
+due to fact that Posix queues build in Solaris are unstable on provides weird behaviour
+(like getting queue attributes causes program to freeze (wait some lock on q?), etc.).
+
 == Installation process
 
 The installation process will install required pen source packages from 'http://www.opencsw.org'.
@@ -188,7 +193,7 @@ thus following cmake will pick up gcc by default:
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc\
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_FORCEEMQ=ON .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -198,7 +203,7 @@ $ make install
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc \
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_FORCEEMQ=ON .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -212,7 +217,7 @@ The compilation will be done in 64bit mode
 
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
-$ cmake -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
 ---------------------------------------------------------------------
 
 === Solaris 10
@@ -221,13 +226,13 @@ This assumes that GCC is installed, and "ar" from gcc will be used.
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar \
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
 ---------------------------------------------------------------------
 
 
 cmake  -DCMAKE_CC_COMPILER=/opt/solarisstudio12.4/bin/cc \
 -DCMAKE_CXX_COMPILER=/opt/solarisstudio12.4/bin/c++ \
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
 
 
 == Unit Testing
