@@ -68,7 +68,7 @@ MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
 expublic void atmi_xa_new_xid(XID *xid)
 {
     exuuid_t uuid_val;
-    atmi_lib_env_t *atmi_env = ndrx_get_G_atmi_env(void);
+    atmi_lib_env_t *atmi_env = ndrx_get_G_atmi_env();
     unsigned char rmid =  (unsigned char)atmi_env->xa_rmid;
     short node_id = (short) atmi_env->our_nodeid;
     short srv_id = (short) G_srv_id;
