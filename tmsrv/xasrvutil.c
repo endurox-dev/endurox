@@ -68,8 +68,9 @@ MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
 expublic void atmi_xa_new_xid(XID *xid)
 {
     exuuid_t uuid_val;
-    unsigned char rmid =  (unsigned char)G_atmi_env.xa_rmid;
-    short node_id = (short) G_atmi_env.our_nodeid;
+    atmi_lib_env_t *atmi_env = ndrx_get_G_atmi_env(void);
+    unsigned char rmid =  (unsigned char)atmi_env->xa_rmid;
+    short node_id = (short) atmi_env->our_nodeid;
     short srv_id = (short) G_srv_id;
     
     /* Do the locking, so that we get unique xids... */
@@ -86,7 +87,7 @@ expublic void atmi_xa_new_xid(XID *xid)
     memset(xid->data, 0, XIDDATASIZE); /* this is not necessary, but... */
     exuuid_generate(uuid_val);
     memcpy(xid->data, uuid_val, sizeof(exuuid_t));
-    memcpy(xid->data + sizeof(exuuid_t), &G_atmi_env.xa_rmid, sizeof(unsigned char));
+    memcpy(xid->data + sizeof(exuuid_t), &(atmi_env->xa_rmid), sizeof(unsigned char));
     /* Have an additional infos for transaction id... */
     memcpy(xid->data  
             +sizeof(exuuid_t)  
