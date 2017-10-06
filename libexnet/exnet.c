@@ -152,7 +152,10 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
         {
             NDRX_LOG(log_error, "send failure: %s",
                             strerror(errno));
-            close_socket(net);
+            /* close_socket(net); */
+            
+            NDRX_LOG(log_error, "Scheduling connection close...");
+            net->schedule_close = EXTRUE;
             ret=EXFAIL;
         }
         else
@@ -172,6 +175,7 @@ out:
 /**
  * Internal version of receive.
  * On error, it will do disconnect!
+ * Receive is done by main thread only. Thus no we can close connection here directly.
  */
 exprivate  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flags, int appflags)
 {
@@ -286,6 +290,8 @@ out:
  * If we do poll on incoming messages, we shall receive from the same thread
  * because, otherwise it will alert for messages all the time or we need to
  * check some advanced flags..
+ * On error we can close connection directly, because receive is done by main 
+ * thread.
  */
 expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int appflags)
 {
@@ -507,7 +513,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     }
 
 out:
-	return EXSUCCEED;
+    return EXSUCCEED;
 }
 
 /**
@@ -542,7 +548,8 @@ exprivate int close_socket(exnetcon_t *net)
 
 out:
     net->sock=EXFAIL;
-
+    net->schedule_close = EXFALSE;
+    
     if (NULL!=net->p_disconnected && EXSUCCEED!=net->p_disconnected(net))
     {
             NDRX_LOG(log_error, "Disconnected notification "
@@ -557,7 +564,7 @@ out:
         /* If this was incoming, then do some server side work + do free as it did malloc! */
         exnet_remove_incoming(net);
     }
-
+    
     return ret;
 }
 
@@ -576,10 +583,10 @@ expublic int exnet_configure_client_sock(exnetcon_t *net)
     /* We want to poll the stuff */
     if (EXFAIL==fcntl(net->sock, F_SETFL, O_NONBLOCK))
     {
-            NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
-                                    strerror(errno));
-            ret=EXFAIL;
-            goto out;
+        NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
+                                strerror(errno));
+        ret=EXFAIL;
+        goto out;
     }
 
     if (EXFAIL==(result = setsockopt(net->sock,            /* socket affected */
@@ -605,10 +612,10 @@ expublic int exnet_configure_client_sock(exnetcon_t *net)
     NDRX_LOG(log_debug, "Setting SO_RCVTIMEO=%d", tv.tv_sec);
     if (EXSUCCEED!=setsockopt(net->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)))
     {
-            NDRX_LOG(log_error, "setsockopt() failed for fd=%d: %s",
-                            net->sock, strerror(errno));
-            ret=EXFAIL;
-            goto out;
+        NDRX_LOG(log_error, "setsockopt() failed for fd=%d: %s",
+                        net->sock, strerror(errno));
+        ret=EXFAIL;
+        goto out;
     }
 #endif
     
@@ -683,6 +690,14 @@ expublic int exnet_periodic(void)
 
     DL_FOREACH(head, net)
     {
+        /* Check if close is scheduled... */
+        if (net->schedule_close)
+        {
+            NDRX_LOG(log_warn, "Connection close is scheduled - closing fd %d", 
+                    net->sock);
+            close_socket(net);
+        }
+        
         /* Only on connections... */
         if (EXFAIL==net->sock)
         {
@@ -736,7 +751,7 @@ expublic int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short 
     int ret=EXSUCCEED;
 
     net->port = port;
-    strcpy(net->addr, addr);
+    NDRX_STRCPY_SAFE(net->addr, addr);
 
     net->address.sin_family = AF_INET;
     net->address.sin_addr.s_addr = inet_addr(net->addr); /* assign the address */

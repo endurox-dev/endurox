@@ -68,6 +68,7 @@ struct exnetcon
     int is_connected;     /* Connection state...                    */
     int is_server;          /* Are we server or client? */
     int is_incoming;        /* Is connection incoming? */
+    int schedule_close;      /* Schedule connection close... */
     
     /* Client properties */
     exnetcon_t *my_server;  /* Pointer to listener structure, used by server, 

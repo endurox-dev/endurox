@@ -155,6 +155,8 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     client->sock = client_fd;
     client->my_server = srv;
     client->is_connected = EXTRUE;
+    client->schedule_close = EXFALSE;
+    
     memcpy(&client->address, &clt_address, sizeof(clt_address));
     
     /* We could get IP address & port of the call save in client struct & dump do log. */
@@ -165,7 +167,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
                 strerror(errno));
         EXFAIL_OUT(ret);
     }
-    strcpy(client->addr, ip_ptr);
+    NDRX_STRCPY_SAFE(client->addr, ip_ptr);
     /*Get port number*/
     client->port = ntohs(clt_address.sin_port);
     NDRX_LOG(log_warn, "Got call from: %s:%u", client->addr, client->port);
