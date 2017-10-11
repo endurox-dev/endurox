@@ -1,4 +1,4 @@
-TPJSONTOUBF(3)
+TPUBFTOJSON(3)
 ==============
 :doctype: manpage
 
@@ -21,7 +21,9 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Function convers UBF buffer in 'p_ub' to JSON object string to 'buffer' string. The field 'bufsize' must indicate the space in *buffer*. If the size is not enough, function will fail.
+Function converts UBF buffer in 'p_ub' to JSON object string to 'buffer' string. 
+The field 'bufsize' must indicate the space in *buffer*. If the size is not enough, 
+function will fail.
 
 For example, following buffer in 'p_ub':
 
@@ -60,15 +62,25 @@ will be converted in following JSON buffer:
 }
 --------------------------------------------------------------------------------
 
-CARRAY (byte array) data will be converted as base64 string in JSON. In output JSON output formatting newlines might not be present.
+CARRAY (byte array) data will be converted as base64 string in JSON. In output 
+JSON output formatting newlines might not be present.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned.
+On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-No error codes available for this function. Additional info might be read in *ndrx*/*ubf* logs, see *ndrxdebug.conf(5)*
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPESYSTEM* System failure occurred during serving. 
+See logs i.e. user log, or debugs for more info. Might be insufficient memory,
+JSON or UBF library failure.
+
+*TPEOS* Not enough space in output 'buffer'.
+
 
 EXAMPLE
 -------
@@ -76,7 +88,7 @@ See *atmitest/test024_json/atmiclt24.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
