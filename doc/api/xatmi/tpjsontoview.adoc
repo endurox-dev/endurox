@@ -1,32 +1,32 @@
-TPJSONTOUBF(3)
-==============
+TPJSONTOVIEW(3)
+===============
 :doctype: manpage
 
 
 NAME
 ----
-tpjsontoubf - Convert JSON object to UBF buffer
+tpjsontoview - Convert JSON object to VIEW buffer
 
 
 SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpjsontoubf(UBFH *'p_ub', char *'buffer');
+char * tpjsontoview(char *'view', char *'buffer')
 
+For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
 
-For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
-
-For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lview -lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Function converts JSON formatted text in 'buffer' to UBF buffer. JSON should
-be formatted in single level. Where JSON field name matches UBF field name.
+Function converts JSON formatted text in 'buffer' to VIEW buffer. JSON should
+be formatted in two levels. In first level there is single field named as VIEW
+name, and in second level JSON field names matches VIEW field name.
 If multiple occurrances/array of values is present in JSON, 
-then it is converted as multiple field occurrences in UBF buffer.
+then it is converted in VIEW field array elements.
 
-For example following JSON buffer:
+For example following JSON:
 
 --------------------------------------------------------------------------------
 {  
@@ -47,7 +47,7 @@ For example following JSON buffer:
 }
 --------------------------------------------------------------------------------
 
-Will be converted to following UBF buffer:
+Can be loaded into following VIEW:
 
 --------------------------------------------------------------------------------
 T_SHORT_FLD     1765
@@ -63,7 +63,7 @@ T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
 --------------------------------------------------------------------------------
 
 Note that *BFLD_CARRAY* (binary data) fields should be present in base64 encoding
-in JSON buffer. It is up to user to allocate UBF buffer with enought size to fit
+in JSON buffer. It is up to user to allocate VIEW buffer with enought size to fit
 the converted message.
 
 RETURN VALUE
@@ -78,7 +78,7 @@ debug info from last function call.
 
 *TPEINVAL* Invalid JSON or invalid base64 encoding, 
 
-*TPESYSTEM* UBF sub-system error, JSON sub-system error.
+*TPESYSTEM* VIEW sub-system error, JSON sub-system error.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info. In case of insufficient memory this error will be 
@@ -94,7 +94,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxdebug.conf(5)*, *tpubftojson(3)* *tpjsontoview(3)* tpviewtojson(3)*
+*ndrxdebug.conf(5)*, *tpviewtojson(3)* *tpjsontoview(3)* tpviewtojson(3)*
 
 COPYING
 -------
