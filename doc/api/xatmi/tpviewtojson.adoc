@@ -1,0 +1,118 @@
+TPVIEWTOJSON(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpviewtojson - Convert VIEW buffer to JSON object
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpviewtojson(char *'cstruct', char *'view', char *'buffer', int 'bufsize', long 'flags');
+
+For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lview -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function converts VIEW buffer in 'cstruct', described by 'view' to JSON 
+string stored in 'buffer' string. The field 'bufsize' must indicate the space in *buffer*. 
+If the size is not enough, function will fail. 'flags' current is used to define
+the function logic in case for 'NULL' fields in view file.
+
+For example, following buffer in 'cstruct'/'view':
+
+--------------------------------------------------------------------------------
+VIEW MYVIEW2
+#type    cname      fbname              count   flag    size    null
+short    tshort1    -                   1       -       -       2000
+long     tlong1     -                   1       -       -       5
+char     tchar1     -                   1       -       -       '\0'
+float    tfloat1    -                   1       -       -       1.1
+double   tdouble1   -                   1       -       -       0.0
+string   tstring1   -                   2       -       15      'HELLO WORLDB'
+carray   tcarray1   -                   1       -       10      '-'
+END
+--------------------------------------------------------------------------------
+
+with structure set to (in C, no error handling for simplicity):
+
+--------------------------------------------------------------------------------
+struct MYVIEW2 v2;
+char buf_with_nulls[65000];
+char buf_no_nulls[65000];
+
+Bvsinit((char *)&v2, "MYVIEW2"); /* initialize to NULL values */
+
+v2.tshort1=100;
+strcpy(v2.tstring1[1], "Enduro/X");
+
+
+tpviewtojson((char *)&v2, "MYVIEW2", buf_with_nulls, sizeof(buf_with_nulls), 0);
+
+tpviewtojson((char *)&v2, "MYVIEW2", buf_with_nulls, sizeof(buf_with_nulls), 0);
+
+--------------------------------------------------------------------------------
+
+if flags 
+
+--------------------------------------------------------------------------------
+{  
+   "T_SHORT_FLD":1765,
+   "T_LONG_FLD":[  
+      3333111,
+      2
+   ],
+   "T_CHAR_FLD":"A",
+   "T_FLOAT_FLD":1.330000,
+   "T_DOUBLE_FLD":[  
+      1111.220000,
+      333,
+      444
+   ],
+   "T_STRING_FLD":"HELLO WORLD",
+   "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+}
+--------------------------------------------------------------------------------
+
+CARRAY (byte array) data will be converted as base64 string in JSON. In output 
+JSON output formatting newlines might not be present.
+
+RETURN VALUE
+------------
+On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+with *tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPESYSTEM* System failure occurred during serving. 
+See logs i.e. user log, or debugs for more info. Might be insufficient memory,
+JSON or VIEW library failure.
+
+*TPEOS* Not enough space in output 'buffer'.
+
+
+EXAMPLE
+-------
+See *atmitest/test024_json/atmiclt24.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrxdebug.conf(5)*, *tpjsontoview(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
