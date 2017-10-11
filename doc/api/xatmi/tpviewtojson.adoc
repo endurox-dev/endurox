@@ -35,12 +35,12 @@ long     tlong1     -                   1       -       -       5
 char     tchar1     -                   1       -       -       '\0'
 float    tfloat1    -                   1       -       -       1.1
 double   tdouble1   -                   1       -       -       0.0
-string   tstring1   -                   2       -       15      'HELLO WORLDB'
+string   tstring1   -                   3       -       15      'HELLO WORLD'
 carray   tcarray1   -                   1       -       10      '-'
 END
 --------------------------------------------------------------------------------
 
-with structure set to (in C, no error handling for simplicity):
+and structure initialized to (in C, no error handling for simplicity):
 
 --------------------------------------------------------------------------------
 struct MYVIEW2 v2;
@@ -53,35 +53,48 @@ v2.tshort1=100;
 strcpy(v2.tstring1[1], "Enduro/X");
 
 
+/* by default null fields are exported */
 tpviewtojson((char *)&v2, "MYVIEW2", buf_with_nulls, sizeof(buf_with_nulls), 0);
 
-tpviewtojson((char *)&v2, "MYVIEW2", buf_with_nulls, sizeof(buf_with_nulls), 0);
+/* BVACCESS_NOTNULL makes to export only non NULL fields*/
+tpviewtojson((char *)&v2, "MYVIEW2", buf_no_nulls, sizeof(buf_with_nulls), BVACCESS_NOTNULL);
 
 --------------------------------------------------------------------------------
 
-if flags 
+Buffer 'buf_with_nulls' in this example will be filled with following message:
 
 --------------------------------------------------------------------------------
+
 {  
-   "T_SHORT_FLD":1765,
-   "T_LONG_FLD":[  
-      3333111,
-      2
-   ],
-   "T_CHAR_FLD":"A",
-   "T_FLOAT_FLD":1.330000,
-   "T_DOUBLE_FLD":[  
-      1111.220000,
-      333,
-      444
-   ],
-   "T_STRING_FLD":"HELLO WORLD",
-   "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+	"MYVIEW2":
+	{
+		
+		"tshort1":100,
+		"tlong1":5,
+		"tchar1":"",
+		"tfloat1":1.10000,
+		"tdouble1":0.000000,
+		"tstring1":["HELLO WORLD", "Enduro/X", "HELLO WORLD],
+		"tcarray1":"-"
+	}
 }
+
 --------------------------------------------------------------------------------
 
-CARRAY (byte array) data will be converted as base64 string in JSON. In output 
-JSON output formatting newlines might not be present.
+Buffer 'buf_no_nulls' in this example will be filled with following message:
+
+--------------------------------------------------------------------------------
+
+{
+        "MYVIEW2":
+        {
+
+                "tshort1":100,
+                "tstring1":["HELLO WORLD", "Enduro/X"]
+        }
+}
+
+--------------------------------------------------------------------------------
 
 RETURN VALUE
 ------------
@@ -95,14 +108,15 @@ debug info from last function call.
 
 *TPESYSTEM* System failure occurred during serving. 
 See logs i.e. user log, or debugs for more info. Might be insufficient memory,
-JSON or VIEW library failure.
+JSON or UBF library failure. Enduro/X environment not configured.
 
 *TPEOS* Not enough space in output 'buffer'.
 
+*TPEINVAL* 'cstruct' is NULL, 'view' is NULL or empty string, 'buffer' is NULL.
 
 EXAMPLE
 -------
-See *atmitest/test024_json/atmiclt24.c* for sample code.
+See *atmitest/test040_typedview/atmiclt40.c* for sample code.
 
 BUGS
 ----
@@ -110,7 +124,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxdebug.conf(5)*, *tpjsontoview(3)*
+*ndrxdebug.conf(5)* *tpjsontoview(3)* *viewc(8)* *ex_env(5)*
 
 COPYING
 -------
