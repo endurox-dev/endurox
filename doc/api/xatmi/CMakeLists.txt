@@ -107,7 +107,8 @@ set(MAN3_NAMES
         tpnotify
         tpbroadcast
         tpchkunsol
-	tpviewtojson
+        tpviewtojson
+        tpjsontoview
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

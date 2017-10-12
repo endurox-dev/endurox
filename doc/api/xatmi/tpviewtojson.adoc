@@ -75,7 +75,7 @@ Buffer 'buf_with_nulls' in this example will be filled with following message:
 		"tfloat1":1.10000,
 		"tdouble1":0.000000,
 		"tstring1":["HELLO WORLD", "Enduro/X", "HELLO WORLD],
-		"tcarray1":"-"
+		"tcarray1":"LQ=="
 	}
 }
 
@@ -95,6 +95,8 @@ Buffer 'buf_no_nulls' in this example will be filled with following message:
 }
 
 --------------------------------------------------------------------------------
+
+NOTE that "carray" typed view fields are exported as base64 strings.
 
 RETURN VALUE
 ------------

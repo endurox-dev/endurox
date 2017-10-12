@@ -23,70 +23,74 @@ DESCRIPTION
 Function converts JSON formatted text in 'buffer' to VIEW buffer. JSON should
 be formatted in two levels. In first level there is single field named as VIEW
 name, and in second level JSON field names matches VIEW field name.
-If multiple occurrances/array of values is present in JSON, 
-then it is converted in VIEW field array elements.
+If multiple occurrences/array of values is present in JSON, 
+then it is converted in VIEW field array elements. The function in case of success
+returns XATMI (tpcalloc'ed) VIEW buffer, which is initialised to NULL values and
+then recovered from JSON.
 
 For example following JSON:
 
 --------------------------------------------------------------------------------
 {  
-   "T_SHORT_FLD":1765,
-   "T_LONG_FLD":[  
-      3333111,
-      2
-   ],
-   "T_CHAR_FLD":"A",
-   "T_FLOAT_FLD":1.330000,
-   "T_DOUBLE_FLD":[  
-      1111.220000,
-      333,
-      444
-   ],
-   "T_STRING_FLD":"HELLO WORLD",
-   "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+	"MYVIEW2":
+	{
+		
+		"tshort1":100,
+		"tlong1":5,
+		"tchar1":"",
+		"tfloat1":1.10000,
+		"tdouble1":0.000000,
+		"tstring1":["HELLO WORLD", "Enduro/X", "HELLO WORLD],
+		"tcarray1":"SGVsbG8gd29ybGQ="
+	}
 }
 --------------------------------------------------------------------------------
 
 Can be loaded into following VIEW:
 
 --------------------------------------------------------------------------------
-T_SHORT_FLD     1765
-T_LONG_FLD      3333111
-T_LONG_FLD      2
-T_CHAR_FLD      A
-T_FLOAT_FLD     1.33000
-T_DOUBLE_FLD    1111.220000
-T_DOUBLE_FLD    333.000000
-T_DOUBLE_FLD    444.000000
-T_STRING_FLD    HELLO WORLD
-T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
+VIEW MYVIEW2
+#type    cname      fbname              count   flag    size    null
+short    tshort1    -                   1       -       -       -
+long     tlong1     -                   1       -       -       -
+char     tchar1     -                   1       -       -       -
+float    tfloat1    -                   1       -       -       -
+double   tdouble1   -                   1       -       -       -
+string   tstring1   -                   3       -       15      -
+carray   tcarray1   -                   1       -       10      -
+END
 --------------------------------------------------------------------------------
 
-Note that *BFLD_CARRAY* (binary data) fields should be present in base64 encoding
-in JSON buffer. It is up to user to allocate VIEW buffer with enought size to fit
-the converted message.
+Note that *carray* (binary data) fields should be present in base64 encoding
+in JSON buffer.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno*
-set to indicate the error.
+On success, *tpcall()* return pointer to XATMI allocated VIEW buffer; on error, 
+NULL is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------
 Note that *tpstrerror()* returns generic error message plus custom message with 
 debug info from last function call.
 
-*TPEINVAL* Invalid JSON or invalid base64 encoding, 
+*TPEINVAL* Invalid JSON or invalid base64 encoding, 'view' is NULL or 'buffer'
+is NULL.
 
-*TPESYSTEM* VIEW sub-system error, JSON sub-system error.
+*TPEOTYPE* Invalid type specified to function - 'view' name specified in JSON message
+is not found in view files.
+
+*TPESYSTEM* VIEW sub-system error, JSON sub-system error or Enduro/X environment
+not configured.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info. In case of insufficient memory this error will be 
 generated too.
 
+
 EXAMPLE
 -------
-See *atmitest/test024_json/atmiclt24.c* for sample code.
+See *atmitest/test040_typedview/atmiclt40.c* for sample code.
 
 BUGS
 ----
@@ -94,9 +98,10 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxdebug.conf(5)*, *tpviewtojson(3)* *tpjsontoview(3)* tpviewtojson(3)*
+*tpviewtojson(3)* *viewfile(5)* *viewc(8)* *ex_env(5)*
 
 COPYING
 -------
 (C) Mavimax, Ltd
+
 
