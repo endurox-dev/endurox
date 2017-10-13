@@ -46,6 +46,7 @@
 #include <ubf.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
+#include <fieldtable.h>
 
 #include "tperror.h"
 
@@ -163,9 +164,9 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
 
                 if (EXSUCCEED!=CBchg(p_ub, fid, 0, s_ptr, str_len, BFLD_CARRAY))
                 {
-                    NDRX_LOG(log_error, "Failed to set view field (%s) %d: %s",
+                    NDRX_LOG(log_error, "Failed to set UBF field (%s) %d: %s",
                             name, fid, Bstrerror(Berror));
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set view field (%s) %d: %s",
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set UBF field (%s) %d: %s",
                             name, fid, Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
@@ -394,8 +395,9 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
     for (fldid = BFIRSTFLDID, oc = 0;
             1 == (ret = Bnext(p_ub, &fldid, &oc, NULL, &fldlen));)
     {
-        nm = Bfname(fldid);
-        NDRX_LOG(log_debug, "Field: [%s] occ %d", nm, oc);
+        /* Feature #232 return ID if field not found in tables... */
+        nm = ndrx_Bfname_int(fldid);
+        NDRX_LOG(log_debug, "Field: [%s] occ %d id: %d", nm, oc, fldid);
         if (0==oc)
         {
             occs = Boccur(p_ub, fldid);
