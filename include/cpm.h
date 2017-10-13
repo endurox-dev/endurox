@@ -40,9 +40,10 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define CPM_CMD_PC          "pc" /* Print Clients */
-#define CPM_CMD_BC          "bc" /* Boot Client */
-#define CPM_CMD_SC          "sc" /* Stop Client */
+#define CPM_CMD_PC          "pc" /* Print Clients(s) */
+#define CPM_CMD_BC          "bc" /* Boot Client(s) */
+#define CPM_CMD_SC          "sc" /* Stop Client(s) */
+#define CPM_CMD_RC          "rc" /* Reload Client(s) (restart one by one) */
     
 #define CPM_DEF_BUFFER_SZ       1024
     

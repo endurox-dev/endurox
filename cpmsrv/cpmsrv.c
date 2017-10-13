@@ -67,6 +67,7 @@ exprivate int cpm_callback_timer(void);
 exprivate int cpm_bc(UBFH *p_ub, int cd);
 exprivate int cpm_sc(UBFH *p_ub, int cd);
 exprivate int cpm_pc(UBFH *p_ub, int cd);
+exprivate int cpm_rc(UBFH *p_ub, int cd);
 
 /**
  * Client Process Monitor, main thread entry 
@@ -92,7 +93,7 @@ void CPMSVC (TPSVCINFO *p_svc)
     
     NDRX_LOG(log_info, "Got command: [%s]", cmd);
     
-    if (0==strcmp(cmd, "bc") || 0==strcmp(cmd, "sc"))
+    if (0==strcmp(cmd, "bc") || 0==strcmp(cmd, "sc") || 0==strcmp(cmd, "rc"))
     {
         /* get tag & subsect */
         len=sizeof(tag);
@@ -102,7 +103,7 @@ void CPMSVC (TPSVCINFO *p_svc)
         
         if (EXEOS==subsect[0])
         {
-            strcpy(subsect, "-");
+            NDRX_STRCPY_SAFE(subsect, "-");
         }
     }
     else if (0==strcmp(cmd, "pc"))
@@ -141,6 +142,11 @@ void CPMSVC (TPSVCINFO *p_svc)
     {
         /* Just print the stuff */
         cpm_pc(p_ub, p_svc->cd);
+    }
+    else if (0==strcmp(cmd, "rc"))
+    {
+        /* Just print the stuff */
+        cpm_rc(p_ub, p_svc->cd);
     }
 
 out:
@@ -334,6 +340,73 @@ out:
 }
 
 /**
+ * Process single object and send the results to client
+ * @param p_ub
+ * @param tag
+ * @param subsect
+ * @param c
+ * @return 
+ */
+exprivate int cpm_bc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, cpm_process_t * c)
+{
+    int ret = EXSUCCEED;
+    long revent;
+    char debug[256];
+    
+    NDRX_LOG(log_debug, "Into %s: p_ub=%p, cd=%d, tag=[%s] subsect=[%s], c=%p",
+            __func__, p_ub, cd, tag, subsect, c);
+    
+    if (NULL==c)
+    {
+        snprintf(debug, sizeof(debug), "Client process %s/%s not found!", 
+                tag, subsect);
+        NDRX_LOG(log_error, "%s", debug);
+        userlog("%s!", debug);
+        Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        if (CLT_STATE_STARTED != c->dyn.cur_state)
+        {
+            snprintf(debug, sizeof(debug), "Client process %s/%s marked for start", 
+                    tag, subsect);
+            NDRX_LOG(log_info, "%s", debug);
+            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+
+            c->dyn.cur_state = CLT_STATE_STARTING;
+            c->dyn.req_state = CLT_STATE_STARTED;
+        }
+        else
+        {
+            snprintf(debug, sizeof(debug), "Process %s/%s already marked "
+                                "for startup or running...", tag, subsect);
+            NDRX_LOG(log_info, "%s", debug);
+            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        }
+    }
+    
+out:
+         
+    if (EXFAIL == tpsend(cd,
+                        (char *)p_ub,
+                        0L,
+                        0,
+                        &revent))
+    {
+        NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                            tpstrerror(tperrno), revent);
+    }
+    else
+    {
+        NDRX_LOG(log_debug,"sent ok");
+    }
+
+                
+    return ret;
+}
+
+/**
  * Boot the client process
  * @param p_ub
  * @param cd
@@ -346,7 +419,7 @@ exprivate int cpm_bc(UBFH *p_ub, int cd)
     char tag[CPM_TAG_LEN+1];
     char subsect[CPM_SUBSECT_LEN+1];
     cpm_process_t * c;
-    char debug[256];
+    
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
     {
@@ -355,39 +428,23 @@ exprivate int cpm_bc(UBFH *p_ub, int cd)
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
-        strcpy(subsect, "-");
+        NDRX_STRCPY_SAFE(subsect, "-");
     }
     
-    c = cpm_client_get(tag, subsect);
-    
-    if (NULL==c)
+    if (0==strstr(tag, "%"))
     {
-        sprintf(debug, "Client process %s/%s not found!", tag, subsect);
-        NDRX_LOG(log_error, "%s", debug);
-        userlog("%s!", debug);
-        Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-        EXFAIL_OUT(ret);
+        c = cpm_client_get(tag, subsect);
+        if (EXSUCCEED!=(cpm_bc_obj(p_ub, cd, tag, subsect, c)))
+        {
+            NDRX_LOG(log_error, "%s: cpm_bc_obj failed", __func__);
+            EXFAIL_OUT(ret);
+        }
     }
     else
     {
-        if (CLT_STATE_STARTED != c->dyn.cur_state)
-        {
-            sprintf(debug, "Client process %s/%s marked for start", tag, subsect);
-            NDRX_LOG(log_info, "%s", debug);
-            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-
-            c->dyn.cur_state = CLT_STATE_STARTING;
-            c->dyn.req_state = CLT_STATE_STARTED;
-        }
-        else
-        {
-            sprintf(debug, "Process %s/%s already marked "
-                                "for startup or running...", tag, subsect);
-            NDRX_LOG(log_info, "%s", debug);
-            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-        }
+        /* Expand to regular expressions... */
     }
-    
+        
 out:
     return ret;
 }
@@ -416,14 +473,15 @@ exprivate int cpm_sc(UBFH *p_ub, int cd)
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
-        strcpy(subsect, "-");
+        NDRX_STRCPY_SAFE(subsect, "-");
     }
     
     c = cpm_client_get(tag, subsect);
     
     if (NULL==c)
     {
-        sprintf(debug, "Client process %s/%s not found!", tag, subsect);
+        snprintf(debug, sizeof(debug), "Client process %s/%s not found!", 
+                tag, subsect);
         NDRX_LOG(log_error, "%s", debug);
         userlog("%s!", debug);
         Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
@@ -437,20 +495,22 @@ exprivate int cpm_sc(UBFH *p_ub, int cd)
         {
             if (EXSUCCEED==cpm_kill(c))
             {
-                sprintf(debug, "Client process %s/%s stopped", tag, subsect);
+                snprintf(debug, sizeof(debug), "Client process %s/%s stopped", 
+                        tag, subsect);
                 NDRX_LOG(log_info, "%s", debug);
                 Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
             }
             else
             {
-                sprintf(debug, "Failed to stop %s/%s!", tag, subsect);
+                snprintf(debug, sizeof(debug), "Failed to stop %s/%s!", 
+                        tag, subsect);
                 NDRX_LOG(log_info, "%s", debug);
                 Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
             }
         }
         else
         {
-            sprintf(debug, "Client process %s/%s not running already...", 
+            snprintf(debug, sizeof(debug), "Client process %s/%s not running already...", 
                     tag, subsect);
             NDRX_LOG(log_info, "%s", debug);
             Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
@@ -489,27 +549,28 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     
         if (CLT_STATE_STARTED == c->dyn.cur_state)
         {
-            sprintf(output, "%s/%s - running pid %d (%s)",
+            snprintf(output, sizeof(output), "%s/%s - running pid %d (%s)",
                                 c->tag, c->subsect, c->dyn.pid, buffer);
         }
         else if (CLT_STATE_STARTING == c->dyn.cur_state && 
                 c->dyn.req_state != CLT_STATE_NOTRUN)
         {
-            sprintf(output, "%s/%s - starting (%s)",c->tag, c->subsect, buffer);
+            snprintf(output, sizeof(output), "%s/%s - starting (%s)",c->tag, 
+                    c->subsect, buffer);
         }
         else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_STARTED) )
         {
-            sprintf(output, "%s/%s - dead %d (%s)", c->tag, c->subsect, 
+            snprintf(output, sizeof(output), "%s/%s - dead %d (%s)", c->tag, c->subsect, 
                     c->dyn.exit_status, buffer);
         }
         else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_NOTRUN) )
         {
-            sprintf(output, "%s/%s - shutdown (%s)", c->tag, c->subsect, 
+            snprintf(output, sizeof(output), "%s/%s - shutdown (%s)", c->tag, c->subsect, 
                     buffer);
         }
         else
         {
-            sprintf(output, "%s/%s - not started", c->tag, c->subsect);
+            snprintf(output, sizeof(output), "%s/%s - not started", c->tag, c->subsect);
         }
         
         if (EXSUCCEED!=Bchg(p_ub, EX_CPMOUTPUT, 0, output, 0L))
@@ -537,5 +598,19 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     
 out:
 
+    return ret;
+}
+
+/**
+ * Reload clients (restart one by one)
+ * @param p_ub
+ * @param cd
+ * @return 
+ */
+exprivate int cpm_rc(UBFH *p_ub, int cd)
+{
+    int ret = EXSUCCEED;
+    
+out:
     return ret;
 }
