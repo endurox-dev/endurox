@@ -155,7 +155,7 @@ cmd_mapping_t M_command_map[] =
                                     "\t args: sc -t <Tag> [-s <Subsection (default -)]", NULL},
     {"bc",        cmd_bc,EXFAIL,   2,  3,  1, "Boot(start) client\n"
                                     "\t args: bc -t <Tag> [-s <Subsection (default -)]", NULL},
-    {"bc",        cmd_bc,EXFAIL,   2,  3,  1, "Reload/Restart clients one-by-one\n"
+    {"rc",        cmd_rc,EXFAIL,   2,  3,  1, "Reload/Restart clients one-by-one\n"
                                     "\t args: bc -t <Tag> [-s <Subsection (default -)]", NULL},
     {"mqlc",      cmd_mqlc,EXFAIL,   1,  1,  1, "List persistent queue configuration", NULL},
     {"mqlq",      cmd_mqlq,EXFAIL,   1,  1,  1, "List persistent queues (active/dynamic)", NULL},

@@ -109,6 +109,62 @@ expublic void ndrx_regfree(regex_t *p_re)
     regfree(p_re);
 }
 
+/**
+ * Copy string to dest by doing escape of posix regex symbols
+ * @param dest dest buffer assume enought space it has
+ * @param src source buffer to copy from
+ * @param opt_start optional start symbol to copy to str, opt if 0x0 not used
+ * @param opt_end optional end symbol to copy to str, opt if 0x0 not used
+ * @param subst_from substitute from char (opt), if 0x0 not used
+ * @param subst_to substitute to string (opt)
+ */
+expublic void ndrx_regasc_cpyesc(char *dest, char *src, 
+        char opt_start, char opt_end, char subst_from, char *subst_to)
+{
+    char *p = dest;
+    int i;
+    int len = strlen(src);
+    
+    if (opt_start)
+    {
+        *p=opt_start;
+        p++;
+    }
+    
+    for (i=0; i<len; i++)
+    {
+        if (strchr(".^$*+?()[{\\|", src[i]))
+        {
+            *p='\'';
+            p++;
+            *p = src[i];
+        }
+        else if (subst_from==src[i])
+        {
+            while (EXEOS!=*subst_to)
+            {
+                *p = *subst_to;
+                
+                p++;
+                subst_to++;
+            }
+        }
+        else
+        {
+            *p = src[i];
+            p++;
+        }
+    }
+    
+    if (opt_end)
+    {
+        *p=opt_end;
+        p++;
+    }
+    
+    *p=EXEOS;
+}
+
 /*
  * If we want to do some extract in future, take a look on: regmatch_t
  * See:

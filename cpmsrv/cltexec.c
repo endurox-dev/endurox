@@ -283,8 +283,7 @@ out:
 expublic int cpm_killall(void)
 {
     int ret = EXSUCCEED;
-    cpm_process_t *c = NULL;
-    cpm_process_t *ct = NULL;
+    cpm_process_t *c = NULL, *ct = NULL;
     int is_any_running;
     ndrx_stopwatch_t t;
     char *sig_str[3]={"SIGINT","SIGTERM", "SIGKILL"};

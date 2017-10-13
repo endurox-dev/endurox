@@ -52,6 +52,7 @@
 #include <signal.h>
 #include "cpmsrv.h"
 #include "userlog.h"
+#include <exregex.h>
   
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
@@ -68,6 +69,10 @@ exprivate int cpm_bc(UBFH *p_ub, int cd);
 exprivate int cpm_sc(UBFH *p_ub, int cd);
 exprivate int cpm_pc(UBFH *p_ub, int cd);
 exprivate int cpm_rc(UBFH *p_ub, int cd);
+
+exprivate int cpm_bc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, cpm_process_t * c, int *p_nr_proc);
+exprivate int cpm_sc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, cpm_process_t * c, int *p_nr_proc);
+exprivate int cpm_rc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, cpm_process_t * c, int *p_nr_proc);
 
 /**
  * Client Process Monitor, main thread entry 
@@ -340,6 +345,149 @@ out:
 }
 
 /**
+ * Send message user.
+ * @param p_ub
+ * @param cd
+ * @param msg
+ */
+exprivate void cpm_send_msg(UBFH *p_ub, int cd, char *msg)
+{
+    long revent;
+    
+    if (EXFAIL == tpsend(cd,
+                        (char *)p_ub,
+                        0L,
+                        0,
+                        &revent))
+    {
+        NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                            tpstrerror(tperrno), revent);
+    }
+    else
+    {
+        NDRX_LOG(log_debug,"sent ok");
+    }
+}
+
+/**
+ * Stop single client
+ * @param p_ub
+ * @param cd
+ * @param tag
+ * @param subsect
+ * @param c
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int cpm_sc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, 
+        cpm_process_t * c, int *p_nr_proc)
+{
+    int ret = EXSUCCEED;
+    long revent;
+    char debug[256];
+    
+    c = cpm_client_get(tag, subsect);
+    
+    if (NULL==c)
+    {
+        snprintf(debug, sizeof(debug), "Client process %s/%s not found!", 
+                tag, subsect);
+        NDRX_LOG(log_error, "%s", debug);
+        userlog("%s!", debug);
+        Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        (*p_nr_proc)++;
+        
+        c->dyn.req_state = CLT_STATE_NOTRUN;
+        
+        if (CLT_STATE_STARTED ==  c->dyn.cur_state)
+        {
+            if (EXSUCCEED==cpm_kill(c))
+            {
+                snprintf(debug, sizeof(debug), "Client process %s/%s stopped", 
+                        tag, subsect);
+                NDRX_LOG(log_info, "%s", debug);
+                Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+            }
+            else
+            {
+                snprintf(debug, sizeof(debug), "Failed to stop %s/%s!", 
+                        tag, subsect);
+                NDRX_LOG(log_info, "%s", debug);
+                Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+            }
+        }
+        else
+        {
+            snprintf(debug, sizeof(debug), "Client process %s/%s not running already...", 
+                    tag, subsect);
+            NDRX_LOG(log_info, "%s", debug);
+            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
+        }
+    }
+out:
+
+    if (EXFAIL == tpsend(cd,
+                        (char *)p_ub,
+                        0L,
+                        0,
+                        &revent))
+    {
+        NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                            tpstrerror(tperrno), revent);
+    }
+    else
+    {
+        NDRX_LOG(log_debug,"sent ok");
+    }
+
+                
+    return ret;
+}
+
+/**
+ * Reboot the client
+ * @param p_ub
+ * @param cd
+ * @param tag
+ * @param subsect
+ * @param c
+ * @return 
+ */
+exprivate int cpm_rc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, 
+        cpm_process_t * c, int *p_nr_proc)
+{   
+    int ret = EXSUCCEED;
+    int dum;
+    if (CLT_STATE_STARTED ==  c->dyn.cur_state)
+    {
+        (*p_nr_proc)++;
+        /* restart if any running... */
+        NDRX_LOG(log_debug, "[%s]/[%s] running - restarting...", tag, subsect);
+        
+        NDRX_LOG(log_debug, "About to stop...");
+        if (EXSUCCEED!=cpm_sc_obj(p_ub, cd, tag, subsect, c, &dum))
+        {
+            NDRX_LOG(log_error, "Failed to stop [%s]/[%s]", tag, subsect);
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_debug, "About to start...");
+        if (EXSUCCEED!=cpm_bc_obj(p_ub, cd, tag, subsect, c, &dum))
+        {
+            NDRX_LOG(log_error, "Failed to start [%s]/[%s]", tag, subsect);
+            EXFAIL_OUT(ret);
+        }
+        
+        
+    }
+out:
+    return ret;
+}
+
+/**
  * Process single object and send the results to client
  * @param p_ub
  * @param tag
@@ -347,7 +495,8 @@ out:
  * @param c
  * @return 
  */
-exprivate int cpm_bc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, cpm_process_t * c)
+exprivate int cpm_bc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, 
+        cpm_process_t * c, int *p_nr_proc)
 {
     int ret = EXSUCCEED;
     long revent;
@@ -367,6 +516,8 @@ exprivate int cpm_bc_obj(UBFH *p_ub, int cd, char *tag, char *subsect, cpm_proce
     }
     else
     {
+        (*p_nr_proc)++;
+        
         if (CLT_STATE_STARTED != c->dyn.cur_state)
         {
             snprintf(debug, sizeof(debug), "Client process %s/%s marked for start", 
@@ -407,19 +558,32 @@ out:
 }
 
 /**
- * Boot the client process
+ * Start/Stop client the client process
  * @param p_ub
  * @param cd
  * @return 
  */
-exprivate int cpm_bc(UBFH *p_ub, int cd)
+exprivate int cpm_bcscrc(UBFH *p_ub, int cd, 
+        int(*p_func)(UBFH *, int, char*, char*,cpm_process_t *, int *p_nr_proc))
 {
     int ret = EXSUCCEED;
+    char msg[256];
+    cpm_process_t *c = NULL, *ct = NULL;
     
     char tag[CPM_TAG_LEN+1];
     char subsect[CPM_SUBSECT_LEN+1];
-    cpm_process_t * c;
     
+    char regex_tag[CPM_TAG_LEN * 2 + 2 + 1]; /* all symbols can be escaped, 
+                                            * have ^$ start/end and EOS */
+    char regex_subsect[CPM_SUBSECT_LEN * 2 + 2 + 1];
+    
+    regex_t r_comp_tag;
+    int r_comp_tag_alloc = EXFALSE;
+    
+    regex_t r_comp_subsect;
+    int r_comp_subsect_alloc = EXFALSE;
+    
+    int nr_proc = 0;
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
     {
@@ -431,10 +595,10 @@ exprivate int cpm_bc(UBFH *p_ub, int cd)
         NDRX_STRCPY_SAFE(subsect, "-");
     }
     
-    if (0==strstr(tag, "%"))
+    if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
     {
         c = cpm_client_get(tag, subsect);
-        if (EXSUCCEED!=(cpm_bc_obj(p_ub, cd, tag, subsect, c)))
+        if (EXSUCCEED!=(p_func(p_ub, cd, tag, subsect, c, &nr_proc)))
         {
             NDRX_LOG(log_error, "%s: cpm_bc_obj failed", __func__);
             EXFAIL_OUT(ret);
@@ -443,10 +607,79 @@ exprivate int cpm_bc(UBFH *p_ub, int cd)
     else
     {
         /* Expand to regular expressions... */
+        ndrx_regasc_cpyesc(regex_tag, tag, '^', '$', '%', ".*");
+        NDRX_LOG(log_debug, "Got regex tag: [%s]", tag);
+        if (EXSUCCEED!=ndrx_regcomp(&r_comp_tag, regex_tag))
+        {
+            NDRX_LOG(log_error, "Failed to compile regexp of tag!");
+            
+            snprintf(msg, sizeof(msg), "Failed to compile regexp of tag[%s]!",
+                    regex_tag);    
+            cpm_send_msg(p_ub, cd, msg);
+        }
+        r_comp_tag_alloc=EXTRUE;
+        
+        
+        ndrx_regasc_cpyesc(regex_subsect, subsect, '^', '$', '%', ".*");
+        NDRX_LOG(log_debug, "Got regex subsect: [%s]", subsect);
+        
+        if (EXSUCCEED!=ndrx_regcomp(&r_comp_subsect, regex_subsect))
+        {
+            NDRX_LOG(log_error, "Failed to compile regexp of subsect!");
+            
+            snprintf(msg, sizeof(msg), "Failed to compile regexp of subsect[%s]!",
+                    regex_subsect);
+            cpm_send_msg(p_ub, cd, msg);
+        }
+        r_comp_subsect_alloc=EXTRUE;
+        
+        /* loop over the hash */
+        EXHASH_ITER(hh, G_clt_config, c, ct)
+        {
+            if (EXSUCCEED==ndrx_regexec(&r_comp_tag, c->tag) && 
+                    EXSUCCEED==ndrx_regexec(&r_comp_subsect, c->subsect))
+            {
+                NDRX_LOG(log_debug, "[%s]/[%s] - matched", c->tag, c->subsect);
+                if (EXSUCCEED!=p_func(p_ub, cd, c->tag, c->subsect, c, &nr_proc))
+                {
+                    NDRX_LOG(log_error, "Matched process [%s]/[%s] failed to start/stop",
+                            c->tag, c->subsect);
+                }
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "[%s]/[%s] - NOT matched", c->tag, c->subsect);
+            }
+        }
+        snprintf(msg, sizeof(msg), "%d client(s) processed.", nr_proc);
+        cpm_send_msg(p_ub, cd, msg);
     }
         
 out:
+                
+    if (r_comp_tag_alloc)
+    {
+        ndrx_regfree(&r_comp_tag);
+    }
+
+    if (r_comp_subsect_alloc)
+    {
+        ndrx_regfree(&r_comp_subsect);
+    }
+
     return ret;
+}
+
+/**
+ * Boot client
+ * @param p_ub
+ * @param cd
+ * @return 
+ */
+exprivate int cpm_bc(UBFH *p_ub, int cd)
+{
+    NDRX_LOG(log_debug, "Into %s", __func__);
+    return cpm_bcscrc(p_ub, cd, cpm_bc_obj);
 }
 
 
@@ -457,68 +690,9 @@ out:
  * @return 
  */
 exprivate int cpm_sc(UBFH *p_ub, int cd)
-{
-    int ret = EXSUCCEED;
-    
-    char tag[CPM_TAG_LEN+1];
-    char subsect[CPM_SUBSECT_LEN+1];
-    cpm_process_t * c;
-    char debug[256];
-    
-    if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
-    {
-        NDRX_LOG(log_error, "Missing EX_CPMTAG!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
-    {
-        NDRX_STRCPY_SAFE(subsect, "-");
-    }
-    
-    c = cpm_client_get(tag, subsect);
-    
-    if (NULL==c)
-    {
-        snprintf(debug, sizeof(debug), "Client process %s/%s not found!", 
-                tag, subsect);
-        NDRX_LOG(log_error, "%s", debug);
-        userlog("%s!", debug);
-        Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-        EXFAIL_OUT(ret);
-    }
-    else
-    {
-        c->dyn.req_state = CLT_STATE_NOTRUN;
-        
-        if (CLT_STATE_STARTED ==  c->dyn.cur_state)
-        {
-            if (EXSUCCEED==cpm_kill(c))
-            {
-                snprintf(debug, sizeof(debug), "Client process %s/%s stopped", 
-                        tag, subsect);
-                NDRX_LOG(log_info, "%s", debug);
-                Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-            }
-            else
-            {
-                snprintf(debug, sizeof(debug), "Failed to stop %s/%s!", 
-                        tag, subsect);
-                NDRX_LOG(log_info, "%s", debug);
-                Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-            }
-        }
-        else
-        {
-            snprintf(debug, sizeof(debug), "Client process %s/%s not running already...", 
-                    tag, subsect);
-            NDRX_LOG(log_info, "%s", debug);
-            Bchg(p_ub, EX_CPMOUTPUT, 0, debug, 0L);
-        }
-    }
-    
-out:
-    return ret;
+{   
+    NDRX_LOG(log_debug, "Into %s", __func__);
+    return cpm_bcscrc(p_ub, cd, cpm_sc_obj);
 }
 
 /**
@@ -608,9 +782,7 @@ out:
  * @return 
  */
 exprivate int cpm_rc(UBFH *p_ub, int cd)
-{
-    int ret = EXSUCCEED;
-    
-out:
-    return ret;
+{   
+    NDRX_LOG(log_debug, "Into %s", __func__);
+    return cpm_bcscrc(p_ub, cd, cpm_rc_obj);
 }
