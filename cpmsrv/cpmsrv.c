@@ -354,6 +354,8 @@ exprivate void cpm_send_msg(UBFH *p_ub, int cd, char *msg)
 {
     long revent;
     
+    Bchg(p_ub, EX_CPMOUTPUT, 0, msg, 0L);
+    
     if (EXFAIL == tpsend(cd,
                         (char *)p_ub,
                         0L,
@@ -564,7 +566,8 @@ out:
  * @return 
  */
 exprivate int cpm_bcscrc(UBFH *p_ub, int cd, 
-        int(*p_func)(UBFH *, int, char*, char*,cpm_process_t *, int *p_nr_proc))
+        int(*p_func)(UBFH *, int, char*, char*,cpm_process_t *, int *p_nr_proc), 
+        char *finish_msg)
 {
     int ret = EXSUCCEED;
     char msg[256];
@@ -651,7 +654,7 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
                 NDRX_LOG(log_debug, "[%s]/[%s] - NOT matched", c->tag, c->subsect);
             }
         }
-        snprintf(msg, sizeof(msg), "%d client(s) processed.", nr_proc);
+        snprintf(msg, sizeof(msg), "%d client(s) %s.", nr_proc, finish_msg);
         cpm_send_msg(p_ub, cd, msg);
     }
         
@@ -679,7 +682,7 @@ out:
 exprivate int cpm_bc(UBFH *p_ub, int cd)
 {
     NDRX_LOG(log_debug, "Into %s", __func__);
-    return cpm_bcscrc(p_ub, cd, cpm_bc_obj);
+    return cpm_bcscrc(p_ub, cd, cpm_bc_obj, "marked for started");
 }
 
 
@@ -692,7 +695,7 @@ exprivate int cpm_bc(UBFH *p_ub, int cd)
 exprivate int cpm_sc(UBFH *p_ub, int cd)
 {   
     NDRX_LOG(log_debug, "Into %s", __func__);
-    return cpm_bcscrc(p_ub, cd, cpm_sc_obj);
+    return cpm_bcscrc(p_ub, cd, cpm_sc_obj, "stopped");
 }
 
 /**
@@ -784,5 +787,5 @@ out:
 exprivate int cpm_rc(UBFH *p_ub, int cd)
 {   
     NDRX_LOG(log_debug, "Into %s", __func__);
-    return cpm_bcscrc(p_ub, cd, cpm_rc_obj);
+    return cpm_bcscrc(p_ub, cd, cpm_rc_obj, "restarted");
 }
