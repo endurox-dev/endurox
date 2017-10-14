@@ -94,6 +94,7 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long tw
     int recv_continue = 1;
     int tp_errno;
     int rcv_count = 0;
+    long flags = TPNOTRAN | TPRECVONLY;
     
     /* Setup the call buffer... */
     if (NULL==p_ub)
@@ -132,6 +133,8 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long tw
         }
     }
     
+    /* if we run batch commands, the no time-out please */
+    
     if (EXFAIL == (cd = tpconnect(svcnm,
                                     (char *)p_ub,
                                     0,
@@ -158,14 +161,19 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long tw
             tp_errno = tperrno;
             if (TPEEVENT == tp_errno)
             {
-                    if (TPEV_SVCSUCC == revent)
-                            ret = EXSUCCEED;
-                    else
-                    {
-                        NDRX_LOG(log_error,
-                                 "Unexpected conv event %lx", revent );
-                        EXFAIL_OUT(ret);
-                    }
+                if (TPEV_SVCSUCC == revent)
+                        ret = EXSUCCEED;
+                else
+                {
+                    NDRX_LOG(log_error,
+                             "Unexpected conv event %lx", revent );
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (TPETIME == tp_errno)
+            {
+                fprintf(stderr, "Error ! Timeout waiting on server reply, -w shall be smaller than NDRX_TOUT env.\n");
+                fprintf(stderr, "The cpmsrv will complete the operation in background...\n");
             }
             else
             {

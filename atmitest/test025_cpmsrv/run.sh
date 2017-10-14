@@ -61,7 +61,7 @@ export NDRX_DMNLOG=$TESTDIR/ndrxd.log
 export NDRX_LOG=$TESTDIR/ndrx.log
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
-export NDRX_TOUT=13
+export NDRX_TOUT=30
 # Test process count
 PROC_COUNT=100
 #
@@ -126,7 +126,11 @@ echo "Run some tests of the batch mode"
 test_proc_cnt "ndrxbatchmode.sh" "0" "29"
 
 echo "Batch start"
-xadmin bc -t BATCH% -s% -w 10000
+
+#
+# Wait time shall be less than time out...
+#
+xadmin bc -t BATCH% -s% -w 15000
 
 xadmin pc
 
@@ -143,7 +147,7 @@ test_proc_cnt "ndrxbatchmode.sh" "0" "32"
 
 echo "Batch start"
 xadmin bc -t BATCH% -s%
-sleep 10
+sleep 15
 
 test_proc_cnt "ndrxbatchmode.sh" "3" "33"
 
@@ -153,8 +157,9 @@ OUT1=`xadmin pc`
 
 echo "Before reload [$OUT1]"
 
-xadmin rc -t BATCH% -s%
-sleep 10
+xadmin rc -t BATCH% -s% -w 15000
+
+xadmin pc
 
 test_proc_cnt "ndrxbatchmode.sh" "3" "34"
 OUT2=`xadmin pc`
