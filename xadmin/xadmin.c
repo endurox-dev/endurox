@@ -103,7 +103,10 @@ cmd_mapping_t M_command_map[] =
     {"start",   cmd_start, NDRXD_COM_START_RQ,   1,  4,  1, "Start application domain\n"
                                                          "\t Also loads configuration automatically.\n"
                                                          "\t args: start [-y] [-s <server>] [-i <srvid>]", NULL},
-    {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,     1,  1,  1, "Print services", NULL},
+    {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,     1,  2,  1, "Print services\n"
+                                                            "\t args: psc [-s]\n"
+                                                            "\t -s : print full service name"
+                                                         , NULL},
     {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,    1,  4,  0, "Stop application domain\n"
                                                          "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>]", NULL},
     {"down",    cmd_fdown, EXFAIL,                 1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
