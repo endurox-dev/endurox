@@ -18,13 +18,18 @@ DESCRIPTION
 Client process monitor is Enduro/X server process which is responsible for managing client processes,
 which are described in 'ndrxconfig.xml', '<clients>' section. The process reloads configuration file
 every time when timestamp is changed. If process is removed from '<clients>' section and process
-is stopped, then it is removed from listings. If process is running, it is left in curren process model.
+is stopped, then it is removed from listings. If process is running, it is left in current process model.
 
 'cpmsrv' is servicing backend functionality for xadmin's pc (print clients), bc (boot client), 
 sc (stop client) commands. Invoked via ATMI subsystem resources.
 
 During the startup phase, all 'autostart' processes are started. During the shutdown phase all started
-processes are shut-down, by doing standard kill signallings.
+processes are shut-down, by doing standard kill signalling.
+
+If using wildcards in bc/sc/rc commands, then please ensure that estimated start/stop
+times are shorter than *cpmsrv* max ping time (if enabled in ndrxconfig.xml). Otherwise
+the cpmsrv might be killed by *ndrxd* because it will assume that *cpmsrv* is not
+responding.
 
 OPTIONS
 -------
@@ -44,18 +49,12 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxconfig.xml(5)*
-
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
-
+*ndrxconfig.xml(5)* *ndrxd(8)*
 
 COPYING
 -------
 (C) Mavimax, Ltd
-
