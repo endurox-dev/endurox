@@ -139,12 +139,44 @@ COMMANDS
         Unset environment variable
 *pc*::
 	Print client processes. This sends command to Client Process Monitor server ('cpmsrv').
-*bc* -t <process tag> [-s <sub section>]::
+*bc* -t <process_tag> [-s <sub_section>] [-w <wait_time>]::
 	Boot client process. This sends command to Client Process Monitor server ('cpmsrv').
-	Processes are registered in 'ndrxconfig.xml' '<clients>' section.
-*sc* -t <process tag> [-s <sub section>]::
+	Processes are registered in 'ndrxconfig.xml' '<clients>' section. If sub section
+        is not specified, then default value is minus sign ('-'). The 'process_tag'
+        and 'sub_section' can contain wildcards percent ('%') sign. Then boot process will
+        be executed in batch mode and progress will be returned to the xadmin's output.
+        When running in batch mode 'wait_time' is time in milliseconds to sleep after
+        each matched process is marked for start. Note that 'wait_time' shall be less
+        than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
+        section).
+*sc* -t <process_tag> [-s <sub_section>] [-w <wait time in milliseconds>]::
 	Stop client process. This sends command to Client Process Monitor server ('cpmsrv').
-
+        The process is stopped by 'process_tag' and optional 'sub_section'. If sub section
+        is not specified, then default value is minus sign ('-'). The 'process_tag'
+        and 'sub_section' can contain wild-card percent sign ('%'), then stopping is executed
+        in batch mode (stop all matched running processes). If 'wait_time' is specified
+        then in batch mode it is sleep in milliseconds after each stopped process.
+        Note that 'wait_time' shall be less
+        than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
+        section). Also time needed for stopping shall be counted in. If the timeout
+        occurs, cpmsrv will complete the operation anyway.
+*rc* -t <process_tag> [-s <sub_section>] [-w <wait time in milliseconds>]::
+	Reload client process. This sends command to Client Process Monitor server ('cpmsrv').
+        The process is reloaded (stopped/marked for start) by 'process_tag' and 
+        optional 'sub_section'. If sub section is not specified, 
+        then default value is minus sign ('-'). The 'process_tag' and 'sub_section' 
+        can contain wild-card percent sign ('%'), then reloading is executed
+        in batch mode (stop/start running processes one by one). 
+        If 'wait_time' is specified then in batch mode it is sleep in 
+        milliseconds after each stopped process. Note that 'wait_time' shall be less
+        than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
+        section). Also time needed for stopping shall be counted in. If the timeout
+        occurs, cpmsrv will complete the operation anyway. The 'wait_time' can be
+        used in cases when reloading the binaries with out service interruption,
+        in that case 'wait_time' should contain the *cpmsrv's* interval check 
+        time ('-i' flag) because for start operation binary is only marked for 
+        boot and not the booted. Basically this executes sc/bc for each of the 
+        matched processes.
 *mqlc*::
 	List queue configuration. This broadcasts the requests of config listing to all 
 	'tmqueue' servers. If flags column contains 'D' flag, then it means that queue
@@ -231,18 +263,12 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxd(8)*, *q.conf(5)*, *tmqueue(8)*
-
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
-
+*ndrxd(8)*, *q.conf(5)*, *tmqueue(8)* *cpmsrv(8)*
 
 COPYING
 -------
 (C) Mavimax, Ltd
-
