@@ -114,10 +114,57 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode
 
 xadmin down -y
 xadmin start -y || go_out 1
+
+################################################################################
+echo "Run some tests of the batch mode"
+################################################################################
+
+test_proc_cnt "ndrxbatchmode.sh" "0" "29"
+
+echo "Batch start"
+xadmin bc -t BATCH% -s% -w 10000
+
+xadmin pc
+
+test_proc_cnt "ndrxbatchmode.sh" "3" "30"
+
+echo "Batch stop (no subsect)"
+xadmin sc -t BATCH%
+
+test_proc_cnt "ndrxbatchmode.sh" "2" "31"
+
+echo "with subsect"
+xadmin sc -t BATCH% -sB%
+test_proc_cnt "ndrxbatchmode.sh" "0" "32"
+
+echo "Batch start"
+xadmin bc -t BATCH% -s%
+sleep 10
+
+test_proc_cnt "ndrxbatchmode.sh" "3" "33"
+
+
+echo "Testing batch reload"
+OUT1=`xadmin pc`
+
+echo "Before reload [$OUT1]"
+
+xadmin rc -t BATCH% -s%
+sleep 10
+
+test_proc_cnt "ndrxbatchmode.sh" "3" "34"
+OUT2=`xadmin pc`
+
+echo "After reload [$OUT2]"
+
+if [ "X$OUT1" == "X$OUT2" ]; then
+    echo "TESTERROR! [$OUT1]==[$OUT2] -> FAIL, pid must be changed..."
+    go_out 35
+fi
 
 xadmin bc -t TESTENV
 xadmin bc -t TESTENV2

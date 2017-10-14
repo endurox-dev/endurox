@@ -65,6 +65,7 @@
 #define	EX_CPMOUTPUT	((BFLDID32)167772361)	/* number: 201	 type: string */
 #define	EX_CPMTAG	((BFLDID32)167772362)	/* number: 202	 type: string */
 #define	EX_CPMSUBSECT	((BFLDID32)167772363)	/* number: 203	 type: string */
+#define	EX_CPMWAIT	((BFLDID32)33554636)	/* number: 204	 type: long */
 #define	EX_CLTID	((BFLDID32)167772410)	/* number: 250	 type: string */
 #define	EX_DATA	((BFLDID32)201326843)	/* number: 251	 type: carray */
 #define	EX_DATA_BUFTYP	((BFLDID32)252)	/* number: 252	 type: short */
