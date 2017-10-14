@@ -85,7 +85,7 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect)
+exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long twait)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, CPM_DEF_BUFFER_SZ);
     int ret=EXSUCCEED;
@@ -100,6 +100,15 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect)
     {
         NDRX_LOG(log_error, "Failed to alloc FB!");        
         EXFAIL_OUT(ret);
+    }
+    
+    if (twait > 0)
+    {
+        if (EXSUCCEED!=Bchg(p_ub, EX_CPMWAIT, 0, (char *)&twait, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to set EX_CPMWAIT: %s!", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     
     if (EXSUCCEED!=Bchg(p_ub, EX_CPMCOMMAND, 0, cmd, 0L))
@@ -202,7 +211,7 @@ expublic int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 {
     int ret = EXSUCCEED;
     
-    call_cpm(NDRX_SVC_CPM, CPM_CMD_PC, NULL, NULL);
+    call_cpm(NDRX_SVC_CPM, CPM_CMD_PC, NULL, NULL, 0);
     
 out:
     return ret;
@@ -220,13 +229,15 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     int ret = EXSUCCEED;
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
-    
+    long twait = 0;
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
                                 NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {'w', BFLD_LONG, (void *)&twait, sizeof(twait), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Wait milliseconds"},
         {0}
     };
     
@@ -237,7 +248,7 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_SC, tag, subsect);
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_SC, tag, subsect, twait);
     
 out:
     return ret;
@@ -255,13 +266,15 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     int ret = EXSUCCEED;
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
-    
+    long twait = 0;
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
                                 NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {'w', BFLD_LONG, (void *)&twait, sizeof(twait), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Wait milliseconds"},
         {0}
     };
     
@@ -272,7 +285,7 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_BC, tag, subsect);
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_BC, tag, subsect, twait);
     
 out:
     return ret;
@@ -290,13 +303,16 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     int ret = EXSUCCEED;
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
-    
+    long twait = 0;
+     
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
                                 NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {'w', BFLD_LONG, (void *)&twait, sizeof(twait), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Wait milliseconds"},
         {0}
     };
     
@@ -307,7 +323,7 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_RC, tag, subsect);
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_RC, tag, subsect, twait);
     
 out:
     return ret;

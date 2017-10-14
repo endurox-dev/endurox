@@ -569,6 +569,7 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
         int(*p_func)(UBFH *, int, char*, char*,cpm_process_t *, int *p_nr_proc), 
         char *finish_msg)
 {
+    long twait = 0;
     int ret = EXSUCCEED;
     char msg[256];
     cpm_process_t *c = NULL, *ct = NULL;
@@ -597,6 +598,8 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     {
         NDRX_STRCPY_SAFE(subsect, "-");
     }
+    
+    Bget(p_ub, EX_CPMWAIT, 0, (char *)&twait, 0L);
     
     if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
     {
@@ -642,11 +645,20 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
             if (EXSUCCEED==ndrx_regexec(&r_comp_tag, c->tag) && 
                     EXSUCCEED==ndrx_regexec(&r_comp_subsect, c->subsect))
             {
+                int cur_nr_proc = nr_proc;
                 NDRX_LOG(log_debug, "[%s]/[%s] - matched", c->tag, c->subsect);
+                
+                
                 if (EXSUCCEED!=p_func(p_ub, cd, c->tag, c->subsect, c, &nr_proc))
                 {
                     NDRX_LOG(log_error, "Matched process [%s]/[%s] failed to start/stop",
                             c->tag, c->subsect);
+                }
+                
+                if (cur_nr_proc!=nr_proc && twait > 0)
+                {
+                    NDRX_LOG(log_debug, "Sleeping %d millisec", twait);
+                    usleep(twait*1000);
                 }
             }
             else
