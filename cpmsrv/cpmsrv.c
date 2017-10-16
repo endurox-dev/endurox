@@ -463,7 +463,8 @@ exprivate int cpm_rc_obj(UBFH *p_ub, int cd, char *tag, char *subsect,
 {   
     int ret = EXSUCCEED;
     int dum;
-    if (CLT_STATE_STARTED ==  c->dyn.cur_state)
+    /* will do over those binary which are request to be started... */
+    if (CLT_STATE_STARTED ==  c->dyn.req_state)
     {
         (*p_nr_proc)++;
         /* restart if any running... */
