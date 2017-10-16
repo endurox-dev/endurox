@@ -109,7 +109,9 @@ extern "C" {
 /* Feature #127 
  * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
  */
-#define NDRX_MSGSIZEMAX     ndrx_msgsizemax()
+#define NDRX_MSGSIZEMAX          ndrx_msgsizemax()
+
+#define NDRX_PADDING_MAX         16 /* Max compiled padding in struct (assumed) */
 
 #if 0
 /*These are slow! */
