@@ -271,7 +271,7 @@ expublic int get_cmdq_attr(struct mq_attr *attr)
 expublic int command_wait_and_run(int *finished, int *abort)
 {
     int ret=EXSUCCEED;
-    char    msg_buffer_max[ATMI_MSG_MAX_SIZE];
+    char    msg_buffer_max[NDRX_MSGSIZEMAX];
     size_t buf_max = sizeof(msg_buffer_max);
     unsigned int prio = 0;
     struct timespec abs_timeout;
@@ -286,7 +286,7 @@ expublic int command_wait_and_run(int *finished, int *abort)
     int prev_context = NDRXD_CTX_NOCHG;
     
     memset(msg_buffer_max, 0, sizeof(msg_buffer_max));
-    sprintf(context_check, ",%d,", G_command_state.context);
+    snprintf(context_check, sizeof(context_check), ",%d,", G_command_state.context);
 
     /* Initialize wait timeout */
     gettimeofday (&timeval, NULL);

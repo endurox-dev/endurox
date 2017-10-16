@@ -148,7 +148,8 @@ extern "C" {
  */
 #define NDRX_SYSBUF_ALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
 {\
-    __buf = NDRX_CALLOC(1, (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE));\
+    int __buf_size__ = NDRX_MSGSIZEMAX;\
+    __buf = NDRX_CALLOC(1, __buf_size__);\
     if (NULL==__buf)\
     {\
         int err = errno;\
@@ -160,7 +161,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+        *((int *)__p_bufsz) = __buf_size__;\
     }\
 }
     
@@ -169,7 +170,8 @@ extern "C" {
  */
 #define NDRX_SYSBUF_MALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
 {\
-    __buf = NDRX_MALLOC(G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+    int __buf_size__ = NDRX_MSGSIZEMAX;\
+    __buf = NDRX_MALLOC(__buf_size__);\
     if (NULL==__buf)\
     {\
         int err = errno;\
@@ -181,7 +183,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+        *((int *)__p_bufsz) = __buf_size__;\
     }\
 }
     
@@ -190,7 +192,8 @@ extern "C" {
  */
 #define NDRX_SYSBUF_MALLOC_OUT(__buf, __p_bufsz, __ret)\
 {\
-    __buf = NDRX_MALLOC((G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE));\
+    int __buf_size__ = NDRX_MSGSIZEMAX;\
+    __buf = NDRX_MALLOC(__buf_size__);\
     if (NULL==__buf)\
     {\
         int err = errno;\
@@ -201,7 +204,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = (G_atmi_env.msgsize_max>ATMI_MSG_MAX_SIZE?G_atmi_env.msgsize_max:ATMI_MSG_MAX_SIZE);\
+        *((int *)__p_bufsz) = __buf_size__;\
     }\
 }
     
@@ -605,7 +608,7 @@ typedef struct ndrx_qdet ndrx_qdet_t;
 
 /* This may have some issues with alignment and this make
  * actual size smaller than 1 char */
-#define MAX_CALL_DATA_SIZE (ATMI_MSG_MAX_SIZE-sizeof(tp_command_call_t))
+#define MAX_CALL_DATA_SIZE (NDRX_MSGSIZEMAX-sizeof(tp_command_call_t))
 
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */

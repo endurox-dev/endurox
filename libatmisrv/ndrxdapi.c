@@ -79,7 +79,7 @@ expublic void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_cb) (void))
 expublic int report_to_ndrxd(void)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     srv_status_t *status = (srv_status_t *)buf;
     int i, offset=0;
     svc_entry_fn_t *entry;
@@ -104,8 +104,8 @@ expublic int report_to_ndrxd(void)
             offset++;
             continue; /* not interested in admin q */
         }
-        strcpy(status->svcs[i-offset].svc_nm, entry->svc_nm);
-        strcpy(status->svcs[i-offset].fn_nm, entry->fn_nm);
+        NDRX_STRCPY_SAFE(status->svcs[i-offset].svc_nm, entry->svc_nm);
+        NDRX_STRCPY_SAFE(status->svcs[i-offset].fn_nm, entry->fn_nm);
         status->svcs[i-offset].qopen_time = entry->qopen_time;
         status->svc_count++;
 
@@ -145,7 +145,7 @@ expublic int report_to_ndrxd(void)
 expublic int unadvertse_to_ndrxd(char *svcname)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     command_dynadvertise_t *unadv = (command_dynadvertise_t *)buf;
     int i, offset=0;
     svc_entry_fn_t *entry;
@@ -155,7 +155,7 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     
     /* format out the status report */
     unadv->srvid= G_server_conf.srv_id;
-    strcpy(unadv->svc_nm, svcname);
+    NDRX_STRCPY_SAFE(unadv->svc_nm, svcname);
     
     ret=cmd_generic_call(NDRXD_COM_SRVUNADV_RQ, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
@@ -196,7 +196,7 @@ out:
 expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     command_dynadvertise_t *adv = (command_dynadvertise_t *)buf;
     int i, offset=0;
     size_t  send_size=sizeof(command_dynadvertise_t);
@@ -205,8 +205,8 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     
     /* format out the status report */
     adv->srvid= G_server_conf.srv_id;
-    strcpy(adv->svc_nm, entry->svc_nm);
-    strcpy(adv->fn_nm, entry->fn_nm);
+    NDRX_STRCPY_SAFE(adv->svc_nm, entry->svc_nm);
+    NDRX_STRCPY_SAFE(adv->fn_nm, entry->fn_nm);
     /*Transfer the time there*/
     adv->qopen_time = entry->qopen_time;
     

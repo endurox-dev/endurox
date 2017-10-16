@@ -392,7 +392,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
                 int dest_node, int ex_flags, TPTRANID *p_tranid)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     tp_command_call_t *call=(tp_command_call_t *)buf;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;

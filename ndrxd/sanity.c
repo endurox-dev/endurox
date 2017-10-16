@@ -371,7 +371,7 @@ exprivate int check_server(char *qname)
     char    process[NDRX_MAX_Q_SIZE+1];
     pid_t pid;
     int     srv_id;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     srv_status_t *status = (srv_status_t *)buf;
     int ret=EXSUCCEED;
     
@@ -632,7 +632,7 @@ exprivate int check_dead_processes(void)
 {
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     srv_status_t *status = (srv_status_t *)buf;
     
     DL_FOREACH(G_process_model, p_pm)

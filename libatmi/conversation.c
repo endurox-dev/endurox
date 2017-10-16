@@ -642,7 +642,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     char fn[] = "_tpconnect";
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     long data_len = MAX_CALL_DATA_SIZE;
     tp_command_call_t *call = (tp_command_call_t *)buf;
     time_t timestamp;
@@ -1299,7 +1299,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     int ret=EXSUCCEED;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info=NULL;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     long data_len = MAX_CALL_DATA_SIZE;
     tp_command_call_t *call = (tp_command_call_t *)buf;
     tp_conversation_control_t *conv;

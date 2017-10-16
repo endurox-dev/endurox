@@ -58,7 +58,7 @@
 #define IS_BIN(X) (BFLD_CARRAY == Bfldtype(X))
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
-#define CARR_BUFFSIZE		ATMI_MSG_MAX_SIZE
+#define CARR_BUFFSIZE		NDRX_MSGSIZEMAX
 #define CARR_BUFFSIZE_B64	(4 * (CARR_BUFFSIZE) / 3)
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -604,7 +604,7 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
     UBFH * tmp = NULL;
     UBFH * newbuf_out = NULL; /* real output buffer */
 
-    if (NULL==(tmp = (UBFH *)tpalloc("UBF", NULL, ATMI_MSG_MAX_SIZE)))
+    if (NULL==(tmp = (UBFH *)tpalloc("UBF", NULL, NDRX_MSGSIZEMAX)))
     {
         NDRX_LOG(log_error, "failed to convert JSON->UBF. UBF buffer alloc fail!");
         EXFAIL_OUT(ret);
@@ -668,7 +668,7 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
     char * tmp = NULL;
     char * newbuf_out = NULL; /* real output buffer */
 
-    if (NULL==(tmp = tpalloc("JSON", NULL, ATMI_MSG_MAX_SIZE)))
+    if (NULL==(tmp = tpalloc("JSON", NULL, NDRX_MSGSIZEMAX)))
     {
         NDRX_LOG(log_error, "failed to convert UBF->JSON. JSON buffer alloc fail!: %s",
                 tpstrerror(tperrno));
@@ -677,7 +677,7 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
 
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, ATMI_MSG_MAX_SIZE))
+    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, NDRX_MSGSIZEMAX))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert UBF->JSON: %s", 
