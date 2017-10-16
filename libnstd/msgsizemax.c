@@ -1,7 +1,7 @@
 /* 
-** User log
+** Max message size determination functions
 **
-** @file ulog.c
+** @file msgsizemax.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -51,97 +51,45 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate int M_maxmsgsize_loaded = EXFALSE; /* Is config loaded? */
+exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * API version of USERLOG
+ * Return configured max message size.
+ * This will try to get value from environment, if not possible then NDRX_ATMI_MSG_MAX_SIZE
+ * is used.
+ * @return max message size
  */
-expublic int userlog (char *data, ...)
+expublic inline long ndrx_msgsizemax (void)
 {
-    int ret=EXSUCCEED;
-    /* TODO: Might need semaphore for first init... */
-    static int first = 1;
-    static char *out_f = NULL;
-    static char *out_f_dflt = ".";
-    FILE *output;
-    char  pre[100];
-    int fopened=0;
-    struct timeval  time_val;
-    char full_name[FILENAME_MAX] = {EXEOS};
-    long ldate, ltime, lusec;
-    int print_label = 0;
-    pid_t pid;
-    va_list ap;
-    /* No need for contexting... */
-
-    gettimeofday( &time_val, NULL );
-    
-    ndrx_get_dt_local(&ldate, &ltime, &lusec);
-    
-    if (first)
+    char *esize;
+    if (!M_maxmsgsize_loaded)
     {
-        if (NULL==(out_f=getenv(CONF_NDRX_ULOG)))
-        {
-            print_label = 1;
-            out_f=out_f_dflt;
-        }
-
-        /* get pid */
-        pid = getpid();
-        first = 0;
-    }
-
-    /* Format the full output file */
-    if (NULL!=out_f)
-    {
-        snprintf(full_name, sizeof(full_name), "%s/ULOG.%06ld", out_f, ldate);
+        /* this is thread safe function
+         * it will not be a problem if this block is twice executed.
+         */
+        ndrx_cconfig_load();
         
-        if (print_label)
+        esize = getenv(CONF_NDRX_MSGSIZEMAX);
+        
+        if (NULL==esize)
         {
-            fprintf(stderr, "Logging to %s\n", full_name);
+            M_maxmsgsize = atol(esize);
+            
+            if (M_maxmsgsize < NDRX_ATMI_MSG_MAX_SIZE)
+            {
+                M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
+            }
         }
-    }
-
-    /* if no file or failed to open, then use stderr as output */
-    /* we cannot have fopen/fclose debug here, it will cause recursion */
-    if (NULL==out_f || NULL==(output=fopen(full_name, "a")))
-    {
-        if (NULL!=out_f)
+        else
         {
-            fprintf(stderr, "Failed to open [%s]\n", full_name);
+            M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
         }
-        output=stderr;
-    }
-    else
-    {
-        fopened=1;
+        
+        M_maxmsgsize_loaded = EXTRUE;
     }
     
-    snprintf(pre, sizeof(pre), "%5ld:%08ld:%06ld%02ld:%-12.12s:",
-            (long)pid, ldate, ltime,
-                    (long)time_val.tv_usec/10000, EX_PROGNAME);
-
-    va_start(ap, data);
-    fputs(pre, output);
-    (void) vfprintf(output, data, ap);
-    fputs("\n", output);
-    va_end(ap);
-
-    if (fopened)
-    {
-        fclose( output );
-    }
-    
-out:
-    return ret;
-}
-
-/**
- * Write the userlog message by const string
- * @param msg
- */
-expublic int userlog_const (const char *msg)
-{
-    return userlog("%s", msg);
+    return M_maxmsgsize;
 }
 

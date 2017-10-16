@@ -62,12 +62,13 @@
 #include <typed_buf.h>
 #include <ubfutil.h>
 #include <math.h>
+#include <xatmi.h>
 
 #include "fdatatype.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#define PMSGMAX ATMI_MSG_MAX_SIZE
+#define PMSGMAX -2 /* special case for max buffer size */
 
 #define MKSIGN char sign = '0';\
             if (*tmp<0)\
@@ -239,7 +240,7 @@ struct proto_ufb_fld
 {
     int bfldid;
     int bfldlen;
-    char buf[PMSGMAX+1];
+    char buf[0];
 };
 
 /**
@@ -422,7 +423,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
  * @return 
  */
 exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,  
-                        char *c_buf_out, long *net_buf_len,
+                        char *c_buf_out, int c_buf_len, long *net_buf_len,
                         char *debug_buf, int c_buf_in_len)
 {
     int ret=EXSUCCEED;
@@ -438,7 +439,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             short tmp_abs = (short)abs(*tmp);
             MKSIGN;
 
-            sprintf(c_buf_out, "%hd%c", tmp_abs, sign);
+            snprintf(c_buf_out, c_buf_len, "%hd%c", tmp_abs, sign);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }
@@ -448,7 +449,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             long *tmp = (long *)c_buf_in;
             MKSIGN;
             
-            sprintf(c_buf_out, "%ld%c", labs(*tmp), sign);
+            snprintf(c_buf_out, c_buf_len, "%ld%c", labs(*tmp), sign);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }
@@ -473,7 +474,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             tmp_abs = (float)fabs(tmp_op);
                     
-            sprintf(c_buf_out, "%.0lf%c", tmp_abs, sign);
+            snprintf(c_buf_out, c_buf_len, "%.0lf%c", tmp_abs, sign);
             *net_buf_len = strlen(c_buf_out);
             
             conv_bcd = EXTRUE;
@@ -488,7 +489,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             for (i=0; i<DOUBLE_RESOLUTION; i++)
                 tmp_op*=10.0f;
             
-            sprintf(c_buf_out, "%.0lf%c", fabs(tmp_op), sign);
+            snprintf(c_buf_out, c_buf_len, "%.0lf%c", fabs(tmp_op), sign);
             *net_buf_len = strlen(c_buf_out);
             
             conv_bcd = EXTRUE;
@@ -498,7 +499,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_STRING:
         {
             /* EOS must be present in c struct! */
-            strcpy(c_buf_out, c_buf_in);
+            NDRX_STRNCPY_SAFE(c_buf_out, c_buf_in, c_buf_len);
             *net_buf_len = strlen(c_buf_out);
         }
             break;
@@ -507,7 +508,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             int *tmp = (int *)c_buf_in;
             MKSIGN;
             
-            sprintf(c_buf_out, "%d%c", abs(*tmp), sign);
+            snprintf(c_buf_out, c_buf_len, "%d%c", abs(*tmp), sign);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
             
@@ -516,7 +517,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_ULONG:
         {
             unsigned long *tmp = (unsigned long *)c_buf_in;
-            sprintf(c_buf_out, "%lu", *tmp);
+            snprintf(c_buf_out, c_buf_len, "%lu", *tmp);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }
@@ -524,14 +525,14 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_UINT:
         {
             unsigned *tmp = (unsigned *)c_buf_in;
-            sprintf(c_buf_out, "%u", *tmp);
+            snprintf(c_buf_out, c_buf_len, "%u", *tmp);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }    
         case EXF_USHORT:
         {
             unsigned short *tmp = (unsigned short *)c_buf_in;
-            sprintf(c_buf_out, "%hu", *tmp);
+            snprintf(c_buf_out, c_buf_len, "%hu", *tmp);
             *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }    
@@ -539,7 +540,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_NTIMER:
         {
             ndrx_stopwatch_t *tmp = (ndrx_stopwatch_t *)c_buf_in;
-            sprintf(c_buf_out, "%020ld%020ld", tmp->t.tv_sec, 
+            snprintf(c_buf_out, c_buf_len, "%020ld%020ld", tmp->t.tv_sec, 
                     tmp->t.tv_nsec);
             NDRX_LOG(6, "time=>[%s]", c_buf_out);
             
@@ -574,7 +575,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     
     if (EXF_CARRAY!=fld->fld_type)
     {
-        strcpy(debug_buf, c_buf_out);
+        NDRX_STRNCPY_SAFE(debug_buf, c_buf_out, c_buf_len);
     }
     /* else should be set up already by carray func! */
     
@@ -591,12 +592,12 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         
         if (strlen(c_buf_out) % 2)
         {
-            strcpy(bcd_tmp, "0");
+            NDRX_STRCPY_SAFE(bcd_tmp, "0");
             strcat(bcd_tmp, c_buf_out);
         }
         else
         {
-            strcpy(bcd_tmp, c_buf_out);
+            NDRX_STRCPY_SAFE(bcd_tmp, c_buf_out);
         }
         
         /* Now process char by char */
@@ -633,7 +634,8 @@ out:
  */
 exprivate int x_nettoc(cproto_t *fld, 
                     char *net_buf, long net_buf_offset, short tag_len, /* in */
-                    char *c_buf_out, BFLDLEN *p_bfldlen, char *debug_buf) /* out */
+                    char *c_buf_out, BFLDLEN *p_bfldlen, char *debug_buf, 
+                    int debug_len) /* out */
 {
     int ret=EXSUCCEED;
     int i, j;
@@ -715,7 +717,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%hd", *tmp);
+                snprintf(debug_buf, debug_len, "%hd", *tmp);
             }
         }
             break;
@@ -729,7 +731,7 @@ exprivate int x_nettoc(cproto_t *fld,
           
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%ld", *tmp);
+                snprintf(debug_buf, debug_len, "%ld", *tmp);
             }
         }
             break;
@@ -740,7 +742,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                strcpy(debug_buf, tmp);
+                NDRX_STRNCPY(debug_buf, tmp, debug_len);
             }
         }
             break;
@@ -759,7 +761,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%f", *tmp);
+                snprintf(debug_buf, debug_len, "%f", *tmp);
             }
             
         }
@@ -779,7 +781,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%lf", *tmp);
+                snprintf(debug_buf, debug_len, "%lf", *tmp);
             }
         }
             break;
@@ -793,7 +795,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                strcpy(debug_buf, c_buf_out);
+                NDRX_STRNCPY(debug_buf, c_buf_out, debug_len);
             }
         }
             break;
@@ -807,7 +809,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%d", *tmp);
+                snprintf(debug_buf, debug_len, "%d", *tmp);
             }
         }
             break;
@@ -818,7 +820,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%lu", *tmp);
+                snprintf(debug_buf, debug_len, "%lu", *tmp);
             }
         }
             break;
@@ -829,7 +831,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%u", *tmp);
+                snprintf(debug_buf, debug_len, "%u", *tmp);
             }
         }    
             break;
@@ -840,7 +842,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%hu", *tmp);
+                snprintf(debug_buf, debug_len, "%hu", *tmp);
             }
         }    
             break;
@@ -871,7 +873,8 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                sprintf(debug_buf, "%s = [tv_sec = %ld tv_nsec = %ld] (unsigned)", 
+                snprintf(debug_buf, debug_len, "%s = [tv_sec = %ld "
+                        "tv_nsec = %ld] (unsigned)", 
                         fld->cname, tmp->t.tv_sec, tmp->t.tv_nsec);
             }
         }    
@@ -969,8 +972,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
 {
     int ret=EXSUCCEED;
     cproto_t *p = cv->tab[level];
-    char tmp[PMSGMAX];
-    char debug[PMSGMAX];
+    char tmp[NDRX_MSGSIZEMAX];
+    char debug[NDRX_MSGSIZEMAX];
     long len = 0;
     
     /* Length memory: */
@@ -979,6 +982,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
     long len_offset;
     short *p_accept;
     short len_written; /* The length we used  */
+    int max_len;
     
     NDRX_LOG(log_debug, "Building table: %s - enter at %p [%s] "
                         "tag: [0x%x], level: %d", 
@@ -1017,12 +1021,13 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 /* This is field... */
                 if ( UBF_TAG_BFLD_CARRAY == p->tag)
                 {
-                    ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, &len, debug, 
-                                p_ub_data->bfldlen);
+                    ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, 
+                            sizeof(tmp), &len, debug, p_ub_data->bfldlen);
                 }
                 else
                 {
-                    ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, &len, debug, 0);
+                    ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, sizeof(tmp),
+                            &len, debug, 0);
                 }
                 
                 if (EXSUCCEED!=ret)
@@ -1243,6 +1248,10 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     
                     /* loop over the buffer & process field by field */
                     memset(f.buf, 0, sizeof(f.buf));
+                    
+                    TODO: We need a dynamic buffer here...!
+                    Thus f.buf shall be pointer to block...
+                    
                     f.bfldlen = sizeof(f.buf);
                     f.bfldid = BFIRSTFLDID;
                     while(1==Bnext(p_ub, &f.bfldid, &occ, f.buf, &f.bfldlen))
@@ -1304,12 +1313,19 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
         /* Verify data length (currently at warning level!) - it should be
          * in range!
          */
-        if ((len_written < p->min_len  || len_written > p->max_len) && p->type != XSBL)
+        /* Feature #127 2017/10/16 Allow dynamic max buffer size configuration */
+        max_len = p->max_len;
+        if (PMSGMAX == max_len)
+        {
+            max_len = NDRX_MSGSIZEMAX;
+        }
+        
+        if ((len_written < p->min_len  || len_written > max_len) && p->type != XSBL)
         {
             NDRX_LOG(log_error, "Experimental verification: WARNING! INVALID LEN!"
                     " tag: 0x%x (%s)"
                     " min_len=%ld max_len=%ld but got: %hd",
-                    p->tag, p->cname, p->min_len, p->max_len, len_written);
+                    p->tag, p->cname, p->min_len, max_len, len_written);
             
             NDRX_DUMP(log_debug, "Invalid chunk:", 
                     /* Get to the start of the buffer: */
@@ -1517,7 +1533,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     long int_pos = 0;
     int  *p_fld_len;
     int  xatmi_fld_len;
-    char debug[PMSGMAX];
+    int max_len;
+    char debug[NDRX_MSGSIZEMAX];
      tp_command_call_t *more_debug;
     
     NDRX_LOG(log_debug, "Enter field: [%s] max_struct: %ld", 
@@ -1552,12 +1569,20 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
             /* Verify data length (currently at warning level!) - it should be
              * in range!
              */
-            if (net_len<fld->min_len || net_len>fld->max_len)
+            max_len = fld->max_len;
+            
+            /* Feature #127 - Allow dynamic max buffer size configuration */
+            if (PMSGMAX == max_len)
+            {
+                max_len = NDRX_MSGSIZEMAX;
+            }
+            
+            if (net_len<fld->min_len || net_len>max_len)
             {
                 NDRX_LOG(log_error, "Experimental verification: WARNING! "
                         "INVALID LEN! tag: 0x%x (%s) "
                         "min_len=%ld max_len=%ld but got: %hd",
-                        fld->tag, fld->cname, fld->min_len, fld->max_len, net_len);
+                        fld->tag, fld->cname, fld->min_len, max_len, net_len);
                 
                 NDRX_DUMP(log_debug, "Invalid chunk:", 
                                 (char *)(proto_buf + int_pos - 4), 
@@ -1576,7 +1601,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     loop_keeper = 0;
                     
                     if (EXSUCCEED!=x_nettoc(fld, proto_buf, int_pos, net_len, 
-                            (char *)(ex_buf+ex_len+fld->offset), &bfldlen, debug))
+                            (char *)(ex_buf+ex_len+fld->offset), &bfldlen, 
+                            debug, sizeof(debug)))
                     {
                         NDRX_LOG(log_error, "Failed to convert from net"
                                 " tag: %x!", net_tag);
