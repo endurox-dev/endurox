@@ -1218,7 +1218,9 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         BUF_TYPE_VIEW==*buffer_type)
                 {
                     UBFH *p_ub = (UBFH *)data;
-                    proto_ufb_fld_t f;
+                    
+                    char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];
+                    proto_ufb_fld_t *f =  (proto_ufb_fld_t *)f_data_buf;
                     BFLDOCC occ;
                     
                     short accept_tags[] = {UBF_TAG_BFLDID, UBF_TAG_BFLDLEN, 0, EXFAIL};
@@ -1247,16 +1249,13 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     NDRX_LOG(log_debug, "Processing UBF buffer");
                     
                     /* loop over the buffer & process field by field */
-                    memset(f.buf, 0, sizeof(f.buf));
+                    /*memset(f.buf, 0, sizeof(f.buf));  <<< HMMM Way too slow!!! */
                     
-                    TODO: We need a dynamic buffer here...!
-                    Thus f.buf shall be pointer to block...
-                    
-                    f.bfldlen = sizeof(f.buf);
-                    f.bfldid = BFIRSTFLDID;
-                    while(1==Bnext(p_ub, &f.bfldid, &occ, f.buf, &f.bfldlen))
+                    f->bfldlen = NDRX_MSGSIZEMAX;
+                    f->bfldid = BFIRSTFLDID;
+                    while(1==Bnext(p_ub, &f->bfldid, &occ, f->buf, &f->bfldlen))
                     {
-                        f_type = Bfldtype(f.bfldid);
+                        f_type = Bfldtype(f->bfldid);
                         
                         accept_tags[2] = M_ubf_proto_tag_map[f_type];
                         
@@ -1266,8 +1265,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         /* Hmm lets drive our structure? */
                         
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
-                            (char *)&f, sizeof(f), proto_buf, proto_buf_offset, 
-                                accept_tags, &f);
+                            (char *)f, sizeof(f_data_buf), proto_buf, 
+                            proto_buf_offset,  accept_tags, f);
                     
                         if (EXSUCCEED!=ret)
                         {
@@ -1278,9 +1277,11 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                             ret=EXFAIL;
                             goto out;
                         }
-                        
+                        /*
+                         * why?
                         memset(f.buf, 0, sizeof(f.buf));
-                        f.bfldlen = sizeof(f.buf);
+                         */
+                        f->bfldlen = NDRX_MSGSIZEMAX;
                     }
                     
                     /* </process field by field> */
