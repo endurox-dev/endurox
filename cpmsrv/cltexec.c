@@ -333,8 +333,10 @@ expublic int cpm_killall(void)
             ndrx_stopwatch_reset(&t);
             do
             {
-                /* sign_chld_handler(0); */
-
+#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
+                /* Process any dead child... */
+                sign_chld_handler(SIGCHLD);
+#endif
                 EXHASH_ITER(hh, G_clt_config, c, ct)
                 {
                     if (CLT_STATE_STARTED==c->dyn.cur_state)
@@ -392,6 +394,10 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
+#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
+        /* Process any dead child... */
+        sign_chld_handler(SIGCHLD);
+#endif
         /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
@@ -425,6 +431,10 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
+#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
+        /* Process any dead child... */
+        sign_chld_handler(SIGCHLD);
+#endif
         /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
@@ -465,7 +475,10 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
-        /* sign_chld_handler(0); */
+#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
+        /* Process any dead child... */
+        sign_chld_handler(SIGCHLD);
+#endif
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
@@ -518,7 +531,7 @@ expublic int cpm_exec(cpm_process_t *c)
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
 
-        strcpy(cmd_str, c->stat.command_line);
+        NDRX_STRCPY_SAFE(cmd_str, c->stat.command_line);
 
         token = strtok(cmd_str, separators);
         while( token != NULL )
