@@ -72,20 +72,21 @@ expublic void sign_chld_handler(int sig)
 {
     pid_t chldpid;
     int stat_loc;
+    cpm_process_t * c;
     struct rusage rusage;
 
     memset(&rusage, 0, sizeof(rusage));
 
+    NDRX_LOG(log_debug, "About to wait3()");
     while (0<(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
     {
-        /* - no debug please... Can cause lockups...
+        /* - no debug please... Can cause lockups... - not using singlals thus no tproblem... */
         NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
                                            chldpid, stat_loc);
-        */
         
         /* Search for the client & mark it as dead */
         
-        cpm_process_t * c = cpm_get_client_by_pid(chldpid);
+        c = cpm_get_client_by_pid(chldpid);
         
         if (NULL!=c)
         {
@@ -93,6 +94,10 @@ expublic void sign_chld_handler(int sig)
             c->dyn.exit_status = stat_loc;
             /* Set status change time */
             cpm_set_cur_time(c);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "PID not found %d in client registry!",chldpid);
         }
         
     }
