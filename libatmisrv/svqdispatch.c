@@ -1080,7 +1080,7 @@ expublic int sv_wait_for_request(void)
     int ret=EXSUCCEED;
     int nfds, n, len, j;
     unsigned prio;
-    char msg_buf[ATMI_MSG_MAX_SIZE];
+    char msg_buf[NDRX_MSGSIZEMAX];
     int again;
     int tout;
     pollextension_rec_t *ext;
@@ -1225,7 +1225,7 @@ expublic int sv_wait_for_request(void)
             }
             
             if (EXFAIL==(len=ndrx_mq_receive (evmqd,
-                (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
+                (char *)msg_buf, sizeof(msg_buf), &prio)))
             {
                 if (EAGAIN==errno)
                 {

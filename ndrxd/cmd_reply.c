@@ -62,10 +62,10 @@ expublic int simple_command_reply(command_call_t * call,
 {
     int ret=EXSUCCEED;
     command_reply_t *reply;
-    char reply_buf[ATMI_MSG_MAX_SIZE];
+    char reply_buf[NDRX_MSGSIZEMAX];
     size_t send_size = sizeof(command_reply_t);
 
-    memset(reply_buf, 0, sizeof(reply_buf));
+    memset(reply_buf, 0, sizeof(command_reply_t));
     reply = (command_reply_t *)reply_buf;
     
     if (call->flags & NDRXD_CALL_FLAGS_DEADQ)
@@ -87,7 +87,7 @@ expublic int simple_command_reply(command_call_t * call,
     
     if (NULL!=error_msg)
     {
-        strcpy(reply->error_msg, error_msg);
+        NDRX_STRCPY_SAFE(reply->error_msg, error_msg);
     }
 
     /* If error is set, then load the message */
