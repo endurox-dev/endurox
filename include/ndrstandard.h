@@ -104,7 +104,12 @@ extern "C" {
 #endif
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
+    
+#define NDRX_ATMI_MSG_MAX_SIZE   65536 /* internal */
+/* Feature #127 
+ * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
+ */
+#define NDRX_MSGSIZEMAX     ndrx_msgsizemax()
 
 #if 0
 /*These are slow! */

@@ -152,7 +152,7 @@ extern "C" {
 /*
  * globals
  */
-#define ATMI_MSG_MAX_SIZE   65536
+/* #define ATMI_MSG_MAX_SIZE   NDRX_ATMI_MSG_MAX_SIZE - temporary disable... */
 #define NDRX_MAX_Q_SIZE     128
 #define NDRX_MAX_ID_SIZE    96      /* pfx + binary name + server id + pid + nodeid */
 #define NDRX_MAX_KEY_SIZE   128     /* Key size for random key                  */
@@ -171,8 +171,8 @@ extern "C" {
 #define CONF_NDRX_DMNLOG         "NDRX_DMNLOG"       /* Log file for backend process */
 #define CONF_NDRX_LOG            "NDRX_LOG"        /* Log file for command line utilty */
 #define CONF_NDRX_RNDK           "NDRX_RNDK"       /* Random key */
-#define NDRX_MSGMAX              "NDRX_MSGMAX"     /* Posix queues, max msgs */
-#define NDRX_MSGSIZEMAX          "NDRX_MSGSIZEMAX" /* Maximum size of message for posixq */
+#define CONF_NDRX_MSGMAX         "NDRX_MSGMAX"     /* Posix queues, max msgs */
+#define CONF_NDRX_MSGSIZEMAX     "NDRX_MSGSIZEMAX" /* Maximum size of message for posixq */
 #define CONF_NDRX_SANITY         "NDRX_SANITY" /* Time in seconds after which do sanity check for dead processes */
 #define CONF_NDRX_QPATH          "NDRX_QPATH" /* Path to place on fs where queues lives */
 #define CONF_NDRX_IPCKEY         "NDRX_IPCKEY" /* IPC Key for shared memory */
