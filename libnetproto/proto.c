@@ -1242,7 +1242,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     NDRX_LOG(log_debug, "Processing UBF buffer");
                     
                     /* loop over the buffer & process field by field */
-                    memset(f.buf, 0, sizeof(f.buf));
+                    /* memset(f.buf, 0, sizeof(f.buf)); - why too slow! */
                     f.bfldlen = sizeof(f.buf);
                     f.bfldid = BFIRSTFLDID;
                     while(1==Bnext(p_ub, &f.bfldid, &occ, f.buf, &f.bfldlen))
@@ -1270,7 +1270,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                             goto out;
                         }
                         
-                        memset(f.buf, 0, sizeof(f.buf));
+                        /* memset(f.buf, 0, sizeof(f.buf)); - too slow! */
                         f.bfldlen = sizeof(f.buf);
                     }
                     
