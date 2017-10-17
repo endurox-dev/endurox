@@ -73,7 +73,7 @@ expublic inline long ndrx_msgsizemax (void)
         
         esize = getenv(CONF_NDRX_MSGSIZEMAX);
         
-        if (NULL==esize)
+        if (NULL!=esize)
         {
             M_maxmsgsize = atol(esize);
             

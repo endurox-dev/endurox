@@ -59,7 +59,7 @@ int test_view2json(void)
 {
     int ret = EXSUCCEED;
     struct MYVIEW1 v1;
-    char msg[ATMI_MSG_MAX_SIZE+1];
+    char msg[NDRX_MSGSIZEMAX+1];
     char *abuf = NULL;
     char view[NDRX_VIEW_NAME_LEN+1];
     char *testbuf = "{\"MYVIEW2\":{\"tshort1\":1,\"tlong1\":2,\"tchar1\":\"A\",\""

@@ -524,9 +524,9 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     int ret=EXSUCCEED;
     char *fn = "br_send_to_net";
     
-    char tmp[ATMI_MSG_MAX_SIZE];
-    char tmp2[ATMI_MSG_MAX_SIZE];
-    char tmp_enc[ATMI_MSG_MAX_SIZE]; /* Not the best way, but we atleas we are clear... */
+    char tmp[NDRX_MSGSIZEMAX];
+    char tmp2[NDRX_MSGSIZEMAX];
+    char tmp_enc[NDRX_MSGSIZEMAX]; /* Not the best way, but we atleas we are clear... */
     char *snd;
     long snd_len;
     
@@ -571,7 +571,7 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     /* use GPG encryption */
     if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
-	int enc_len = ATMI_MSG_MAX_SIZE;
+	int enc_len = NDRX_MSGSIZEMAX;
 	if (!M_is_gpg_init)
 	{
             if (EXSUCCEED==br_init_gpg())
