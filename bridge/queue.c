@@ -91,6 +91,8 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type)
         EXFAIL_OUT(ret);
     }
     
+    NDRX_SYSBUF_MALLOC_WERR_OUT(msg->buffer, NULL, ret);
+    
     /*fill in the details*/
     msg->pack_type = pack_type;
     msg->len = len;
@@ -101,6 +103,12 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type)
     DL_APPEND(M_in_q, msg);
     
 out:
+
+    if (NULL==msg->buffer && NULL!=msg)
+    {
+        NDRX_FREE(msg);
+    }
+
     return ret;
 }
 
@@ -162,7 +170,7 @@ exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q, in
     /* So this is initial call */
     if (NULL==from_q)
     {
-        /* If error is EAGAIN, then enqueue the message */
+        /* TODO !!! Implement queue runner! If error is EAGAIN, then enqueue the message */
         if (EAGAIN==err)
         {
             /* Put stuff in queue */
@@ -186,6 +194,7 @@ exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q, in
         {
             /* Generate error reply */
             DL_DELETE(M_in_q, from_q);
+            NDRX_FREE(from_q->buffer);
             NDRX_FREE(from_q);
         }
     }
