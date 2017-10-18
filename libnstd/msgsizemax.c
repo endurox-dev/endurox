@@ -44,7 +44,7 @@
 #include <nstdutil.h>
 #include <sys_unix.h>
 #include <userlog.h>
-#include <atmi.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -61,7 +61,7 @@ exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
  * is used.
  * @return max message size
  */
-expublic inline long ndrx_msgsizemax (void)
+expublic long ndrx_msgsizemax (void)
 {
     char *esize;
     if (!M_maxmsgsize_loaded)
