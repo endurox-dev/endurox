@@ -1536,7 +1536,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     int  xatmi_fld_len;
     int max_len;
     char debug[NDRX_MSGSIZEMAX];
-     tp_command_call_t *more_debug;
+    tp_command_call_t *more_debug;
     
     NDRX_LOG(log_debug, "Enter field: [%s] max_struct: %ld", 
                         cur->cname, *max_struct);
@@ -1721,7 +1721,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     {    
                         UBFH *p_ub = (UBFH *)(ex_buf + ex_len+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
-                        int tmp_buf_size = PMSGMAX - ex_len - fld->offset;
+                        int tmp_buf_size = /*PMSGMAX*/NDRX_MSGSIZEMAX - ex_len - fld->offset;
                         
                         proto_ufb_fld_t f;
                         
