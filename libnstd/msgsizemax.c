@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -45,6 +46,7 @@
 #include <sys_unix.h>
 #include <userlog.h>
 #include <cconfig.h>
+#include <sys/resource.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -53,7 +55,19 @@
 /*---------------------------Statics------------------------------------*/
 exprivate int M_maxmsgsize_loaded = EXFALSE; /* Is config loaded? */
 exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
+exprivate long M_stack_estim = EXFAIL; /* Estimated stack size */
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Test the stack and have a function name which will tell
+ * what to user do.
+ */
+exprivate int ndrx_please_increase_stack(void)
+{
+    volatile char buf[M_stack_estim];
+    
+    buf[M_stack_estim-1] = EXSUCCEED;
+}
 
 /**
  * Return configured max message size.
@@ -64,6 +78,8 @@ exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
 expublic long ndrx_msgsizemax (void)
 {
     char *esize;
+    struct rlimit rl;
+    
     if (!M_maxmsgsize_loaded)
     {
         /* this is thread safe function
@@ -86,6 +102,33 @@ expublic long ndrx_msgsizemax (void)
         {
             M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
         }
+        
+        /* Estimate stack */
+        M_stack_estim = M_maxmsgsize * NDRX_STACK_MSG_FACTOR;
+        
+        /* Check rlimit */
+        if (EXSUCCEED==getrlimit(RLIMIT_STACK, &rl))
+        {
+            if (RLIM_INFINITY!=rl.rlim_cur && rl.rlim_cur < M_stack_estim)
+            {
+                rl.rlim_cur = M_stack_estim;
+                
+                /* Ignore the result, because it is assumed that 
+                 * we cannot perform any logging  */
+                if (EXSUCCEED!=setrlimit(RLIMIT_STACK, &rl))
+                {
+                    userlog("setrlimit(RLIMIT_STACK, ...) failed: %s", 
+                            strerror(errno));
+                }
+            }
+        }
+        else
+        {
+            userlog("getrlimit(RLIMIT_STACK, ...) failed: %s", strerror(errno));
+        }
+        
+        /*test the stack */
+        ndrx_please_increase_stack();
         
         M_maxmsgsize_loaded = EXTRUE;
     }
