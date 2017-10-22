@@ -117,8 +117,24 @@ expublic long ndrx_msgsizemax (void)
                  * we cannot perform any logging  */
                 if (EXSUCCEED!=setrlimit(RLIMIT_STACK, &rl))
                 {
-                    userlog("setrlimit(RLIMIT_STACK, ...) failed: %s", 
-                            strerror(errno));
+                    userlog("setrlimit(RLIMIT_STACK, ...) rlim_cur=%ld failed: %s",
+                                (long)M_stack_estim, strerror(errno));
+                    
+                    userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
+                                "to: %ld bytes or %ld kb (calculated by: "
+                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                (long)M_stack_estim, (long)(M_stack_estim/1024), 
+                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
+
+                    fprintf(stderr, "LIMITS ERROR ! Please set stack (ulimit -s) size "
+                                "to: %ld bytes or %ld kb (calculated by: "
+                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                (long)M_stack_estim, (long)(M_stack_estim/1024), 
+                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
+                    
+                    fprintf(stderr, "Process is terminating with error...\n");
+
+                    exit(EXFAIL);
                 }
             }
         }
