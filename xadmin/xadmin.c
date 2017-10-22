@@ -767,6 +767,8 @@ int main(int argc, char** argv) {
     int have_next = 1;
     int ret=EXSUCCEED;
     int need_init = EXTRUE;
+    /*test the stack*/
+    char buf[NDRX_MSGSIZEMAX];
     /* Command line arguments */
     M_argc = argc;
     M_argv = argv;

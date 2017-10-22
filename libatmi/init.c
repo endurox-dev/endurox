@@ -130,6 +130,7 @@ out:
 exprivate int ndrx_init_once(void)
 {
     int ret = EXSUCCEED;
+    char buf[NDRX_MSGSIZEMAX]; /* test the stack. */
     /* reset callstates to default */
     /* memset(&G_call_state, 0, sizeof(G_call_state)); */
     
@@ -148,6 +149,7 @@ expublic int ndrx_load_common_env(void)
     char *p;
     
     MUTEX_LOCK_V(M_env_lock);
+    
     if (G_is_env_loaded)
     {
         NDRX_LOG(log_debug, "env already loaded...");
