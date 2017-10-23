@@ -350,6 +350,13 @@ Ensure(test040_typedview_dom)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test041_bigmsg)
+{
+    int ret;
+    ret=system_dbg("test041_bigmsg/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -417,6 +424,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test040_typedview);
     
     add_test(suite, test040_typedview_dom);
+    add_test(suite, test041_bigmsg);
             
     return suite;
 }

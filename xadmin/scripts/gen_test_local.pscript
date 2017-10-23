@@ -75,7 +75,7 @@ function install()
 
 @"
 /* 
-** "+::prov.testid+@" - client
+** "+::prov.descr+@" - client
 **
 ** @file atmiclt"+::prov.testid+@".c
 ** 
@@ -171,7 +171,7 @@ out:
 
 @"
 /* 
-** "+::prov.testid+@" - server
+** "+::prov.descr+@" - server
 **
 ** @file atmisv"+::prov.testid+@".c
 ** 
@@ -294,7 +294,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 
 @"
 ## 
-## "+::prov.testid+@" - makefile
+## "+::prov.descr+@" - makefile
 ##
 ## @file CMakeLists.txt
 ## 
@@ -480,7 +480,7 @@ exit $RET
 
 @"
 /* 
-** "+::prov.testname+@" - common header
+** "+::prov.descr+@" - common header
 **
 ** @file test"+::prov.testname+@".h
 ** 
@@ -510,8 +510,8 @@ exit $RET
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef TEST"+::prov.testname+@"_H
-#define	TEST"+::prov.testname+@"_H
+#ifndef TEST"+::prov.testid+@"_H
+#define	TEST"+::prov.testid+@"_H
 
 #ifdef	__cplusplus
 extern ""C"" {
@@ -524,7 +524,7 @@ extern ""C"" {
 }
 #endif
 
-#endif	/* TEST"+::prov.testname+@"_H */
+#endif	/* TEST"+::prov.testid+@"_H */
 
 "))
 		{
