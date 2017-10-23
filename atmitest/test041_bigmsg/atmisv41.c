@@ -56,30 +56,53 @@
 void TESTSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
-    char testbuf[1024];
+    char bufferreq[TEST_MSGSIZE];
+    int i;
+    BFLDLEN retlen;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
+    
+     /* test the response... */
+    retlen = TEST_MSGSIZE;
+    if (EXFAIL==Bget(p_ub, T_CARRAY_FLD, 0, bufferreq, &retlen))
+    {
+        NDRX_LOG(log_debug, "Failed to get T_CARRAY_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
 
-    /* Just print the buffer */
-    Bprint(p_ub);
-    
-    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    if (retlen != TEST_MSGSIZE)
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
-                 Bstrerror(Berror));
+        NDRX_LOG(log_error, "Invalid message size received, expected: %d, got: %d", 
+                (int)retlen, (int)TEST_MSGSIZE);
         ret=EXFAIL;
         goto out;
     }
-    
-    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+
+    for (i=0; i<TEST_MSGSIZE; i++)
     {
-        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
-            VALUE_EXPECTED, testbuf);
+        char c = (char) ((i+2) & 0xff);
+        if (bufferreq[i] != c)
+        {
+            NDRX_LOG(log_error, "TESTERROR and index %d: expected %x but got %x",
+                        i, (int)bufferreq[i], (int)c);
+            ret=EXFAIL;
+            goto out;
+        }
+    }
+    
+    for (i=0; i<TEST_MSGSIZE; i++)
+    {
+        bufferreq[i] = (char) ((i+3) & 0xff);
+    }
+
+    if (EXFAIL==Bchg(p_ub, T_CARRAY_FLD, 0, bufferreq, TEST_MSGSIZE))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_CARRAY_FLD[0]: %s", Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
-        
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,

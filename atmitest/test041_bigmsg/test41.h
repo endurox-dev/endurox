@@ -38,7 +38,8 @@ extern "C" {
 #endif
 
 
-#define VALUE_EXPECTED "Hello EnduroX"
+/* 1M */
+#define TEST_MSGSIZE (1024*1024)
 
 #ifdef	__cplusplus
 }
