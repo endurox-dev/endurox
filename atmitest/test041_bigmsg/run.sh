@@ -60,7 +60,7 @@ rm *.log
 
 (./atmi.sv41 -i123 2>&1) > ./atmisv41.log &
 sleep 1
-(./atmiclt41 2>&1) > ./atmiclt41.log
+time ./atmiclt41
 
 RET=$?
 

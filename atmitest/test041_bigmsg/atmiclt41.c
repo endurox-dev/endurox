@@ -54,28 +54,69 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
+/**
  * Do the test call to the server
+ * We will send 1 mega-byte message to server and expect to receive response back
  */
 int main(int argc, char** argv) {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024*1024*1024+1024); /* + hdr */
     long rsplen;
-    int i;
+    int i, j;
     int ret=EXSUCCEED;
+    char bufferreq[TEST_MSGSIZE];
+    BFLDLEN retlen;
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    for (j=0; j<2000; j++)
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
+        for (i=0; i<TEST_MSGSIZE; i++)
+        {
+            char c = (char) ((i+2) & 0xff);
+            bufferreq[i] = c;
+        }
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        if (EXFAIL==Bchg(p_ub, T_CARRAY_FLD, 0, bufferreq, TEST_MSGSIZE))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_CARRAY_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }    
+
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        /* test the response... */
+        retlen = TEST_MSGSIZE;
+        if (EXFAIL==Bget(p_ub, T_CARRAY_FLD, 0, bufferreq, &retlen))
+        {
+            NDRX_LOG(log_debug, "Failed to get T_CARRAY_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (retlen != TEST_MSGSIZE)
+        {
+            NDRX_LOG(log_error, "Invalid message size received, expected: %d, got: %d", 
+                    (int)retlen, (int)TEST_MSGSIZE);
+            ret=EXFAIL;
+            goto out;
+        }
+
+        for (i=0; i<TEST_MSGSIZE; i++)
+        {
+            char c = (char) ((i+3) & 0xff);
+            if (bufferreq[i] != c)
+            {
+                NDRX_LOG(log_error, "TESTERROR and index %d: expected %x but got %x",
+                            i, (int)bufferreq[i], (int) (c));
+                ret=EXFAIL;
+                goto out;
+            }
+        }
     }
     
 out:
