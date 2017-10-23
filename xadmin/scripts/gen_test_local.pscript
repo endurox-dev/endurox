@@ -1,0 +1,552 @@
+#!/usr/bin/pscript
+
+userlog("Generate local unit test");
+
+//Include wizard base.
+compilestring(getwizardbase())();
+
+//Provision class
+class CLocalTestCase extends WizardBase {
+
+	constructor()
+	{
+		base.constructor();
+	}
+	
+	//Configure it:
+
+	</ order=1, name = "test number", type = "number", min=0, max=999 /> 
+	testid = "";
+
+	</ order=2, name = "test code name", type = "string", min=1, max=16 /> 
+	testcode = "";
+	
+	</ order=3, name = "Unit test description", type = "string", min=1, max=999 /> 
+	descr = "";
+	
+
+	testname = "";
+	client = "";
+	server = "";
+	make = "";
+	debug = "";
+	run = "";
+	hdr = "";
+	
+	function getOutputFiles()
+	{
+		testname = format("test%03d_%s", testid.tointeger(), testcode);
+
+		mkdir (testname);
+
+		client = format("%s/atmiclt%d.c", testname, testid.tointeger());
+		server = format("%s/atmisv%d.c", testname, testid.tointeger());
+		make = format("%s/CMakeLists.txt", testname);
+		debug = format("%s/debug.conf", testname);
+		run = format("%s/run.sh", testname);
+		hdr = format("%s/test%d.h", testname, testid.tointeger());
+	}
+	
+}
+	
+
+//Run the mater installer
+function install() 
+{
+	local root = getroottable();
+
+	//Create a provision object
+	root["prov"] <- CLocalTestCase();
+
+	if (!::prov.isDefaulted)
+	{
+		::prov.runInteractive();
+	}
+
+	if (::prov.validatAndPrintConfig())
+	{
+		::prov.getOutputFiles();
+		print(format("Test case: [%s]\n", ::prov.testname));
+
+//
+// Client code
+//
+		if (!::prov.writeFile(::prov.client, 
+
+@"
+/* 
+** "+::prov.testid+@" - client
+**
+** @file atmiclt"+::prov.testid+@".c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include ""test"+::prov.testid+@".h""
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/*
+ * Do the test call to the server
+ */
+int main(int argc, char** argv) {
+
+    UBFH *p_ub = (UBFH *)tpalloc(""UBF"", NULL, 56000);
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
+    
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, ""Failed to set T_STRING_FLD[0]: %s"", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL == tpcall(""TESTSV"", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, ""TESTSV failed: %s"", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpterm();
+    fprintf(stderr, ""Exit with %d\n"", ret);
+
+    return ret;
+}
+"))
+		{
+			return false;
+		}
+
+//
+// server code
+//
+		if (!::prov.writeFile(::prov.server, 
+
+@"
+/* 
+** "+::prov.testid+@" - server
+**
+** @file atmisv"+::prov.testid+@".c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include ""test"+::prov.testid+@".h""
+
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Standard service entry
+ */
+void TESTSV (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, ""%s got call"", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, ""TESTERROR: Failed to get T_STRING_FLD: %s"", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    {
+        NDRX_LOG(log_error, ""TESTERROR: Expected: [%s] got [%s]"",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/*
+ * Do initialization
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    NDRX_LOG(log_debug, ""tpsvrinit called"");
+
+    if (EXSUCCEED!=tpadvertise(""TESTSV"", TESTSV))
+    {
+        NDRX_LOG(log_error, ""Failed to initialize TESTSV!"");
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Do de-initialization
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, ""tpsvrdone called"");
+}
+
+"))
+		{
+			return false;
+		}
+//
+// Makefile
+//
+		if (!::prov.writeFile(::prov.make, 
+
+@"
+## 
+## "+::prov.testid+@" - makefile
+##
+## @file CMakeLists.txt
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+cmake_minimum_required(VERSION 2.8)
+
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
+
+
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS(""-D NDRX_DEBUG"")
+ENDIF ($ENV{RELEASE_BUILD})
+
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+
+############################# Test - executables ###############################
+add_executable (atmi.sv"+::prov.testid+@" atmisv"+::prov.testid+@".c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt"+::prov.testid+@" atmiclt"+::prov.testid+@".c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv"+::prov.testid+@" atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt"+::prov.testid+@" atmiclt atmi ubf nstd m pthread ${RT_LIB})
+
+set_target_properties(atmi.sv"+::prov.testid+@" PROPERTIES LINK_FLAGS ""$ENV{MYLDFLAGS}"")
+set_target_properties(atmiclt"+::prov.testid+@" PROPERTIES LINK_FLAGS ""$ENV{MYLDFLAGS}"")
+################################################################################
+
+
+"))
+		{
+			return false;
+		}
+
+//
+// Debug configuration
+//
+		if (!::prov.writeFile(::prov.debug, 
+
+@"
+* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx.log
+atmiclt"+::prov.testid+@" file=${TESTDIR}/atmiclt"+::prov.testid+@".log
+atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
+
+"))
+		{
+			return false;
+		}
+//
+// Run file
+//
+		if (!::prov.writeFile(::prov.run, 
+
+@"
+#!/bin/bash
+## 
+## @(#) "+::prov.descr+@" - test launcher
+##
+## @file run.sh
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware PlatfoRm for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+TESTNAME="""+::prov.testname+@"""
+
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+	# Do nothing 
+	echo > /dev/null
+else
+	# started from parent folder
+	pushd .
+	echo ""Doing cd""
+	cd "+::prov.testname+@"
+fi;
+
+. ../testenv.sh
+
+export TESTDIR=""$NDRX_APPHOME/atmitest/$TESTNAME""
+export PATH=$PATH:$TESTDIR
+
+xadmin killall atmi.sv1 2>/dev/null
+xadmin killall atmiclt1 2>/dev/null
+
+# client timeout
+export NDRX_TOUT=10
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
+
+rm *.log
+
+(./atmi.sv"+::prov.testid+@" -i123 2>&1) > ./atmisv"+::prov.testid+@".log &
+sleep 1
+(./atmiclt"+::prov.testid+@" 2>&1) > ./atmiclt"+::prov.testid+@".log
+
+RET=$?
+
+# Catch is there is test error!!!
+if [ ""X`grep TESTERROR *.log`"" != ""X"" ]; then
+	echo ""Test error detected!""
+	RET=-2
+fi
+
+xadmin killall atmi.sv"+::prov.testid+@" 2>/dev/null
+xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
+
+popd 2>/dev/null
+
+exit $RET
+
+"))
+		{
+			return false;
+		}
+//
+// Give execute permissions for runner
+//
+        if (!::prov.setExec(::prov.run))
+        {
+                return false;
+        }
+
+//
+// Common header file
+//
+		if (!::prov.writeFile(::prov.hdr,
+
+@"
+/* 
+** "+::prov.testname+@" - common header
+**
+** @file test"+::prov.testname+@".h
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#ifndef TEST"+::prov.testname+@"_H
+#define	TEST"+::prov.testname+@"_H
+
+#ifdef	__cplusplus
+extern ""C"" {
+#endif
+
+
+#define VALUE_EXPECTED ""Hello EnduroX""
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif	/* TEST"+::prov.testname+@"_H */
+
+"))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+if (::install())
+{
+	print("local test case gen succeed!\n");
+	
+	return 0;
+}
+else
+{
+	print("local test case gen failed!\n");
+	return -1;
+}

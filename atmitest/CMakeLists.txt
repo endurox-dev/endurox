@@ -82,6 +82,7 @@ add_subdirectory (test037_down)
 add_subdirectory (test038_tpnotify)
 add_subdirectory (test039_tpbroadcast)
 add_subdirectory (test040_typedview)
+add_subdirectory (test041_bigmsg)
 
 ################################################################################
 # Master test case driver
