@@ -311,7 +311,9 @@ int ndrx_init(int argc, char** argv)
             }
                 break;
             case 't':
-                /* Looks liek */
+                /* Override timeout settings for communications with ndrxd
+                 * i.e. for ndrxd resposne waiting & other msg requeuing...
+                 */
                 G_server_conf.time_out = atoi(optarg);
                 break;
             case 'h': case '?':
