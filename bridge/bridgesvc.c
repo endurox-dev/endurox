@@ -234,7 +234,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "Node ID, -n = [%hd]", G_bridge_cfg.nodeid);
                 break;
             case 'i':
-                strcpy(addr, optarg);
+                NDRX_STRCPY_SAFE(addr, optarg);
                 NDRX_LOG(log_debug, "IP server/binding addresss, -i = [%s]", addr);
                 break;
             case 'p':
@@ -338,6 +338,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Reset network structs */
     exnet_reset_struct(&G_bridge_cfg.net);
     
+    /* Allocate network buffer */
+    if (EXSUCCEED!=exnet_net_init(&G_bridge_cfg.net))
+    {
+        NDRX_LOG(log_error, "Failed to allocate data buffer!");
+        EXFAIL_OUT(ret);
+    }
+        
     /* Install call-backs */
     exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, br_disconnected);
     
@@ -345,7 +352,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Then configure the lib - we will have only one client session! */
     if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
-        4, is_server, backlog, 1, periodic_zero))
+        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
         EXFAIL_OUT(ret);
@@ -435,7 +442,8 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         thpool_destroy(G_bridge_cfg.thpool);
     }
     
-    if (NULL!=G_bridge_cfg.con)
+    /* close if not server connection...  */
+    if (NULL!=G_bridge_cfg.con && (&G_bridge_cfg.net)!=G_bridge_cfg.con)
         
     {
         exnet_close_shut(G_bridge_cfg.con);

@@ -365,9 +365,11 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     if (G_bridge_cfg.common_format)
     {
         long tmp_len = p_netmsg->len;
-        NDRX_LOG(log_debug, "Convert message from network...");
         
         NDRX_SYSBUF_MALLOC_OUT(tmp, NULL, ret);
+        
+        NDRX_LOG(log_debug, "Convert message from network... (tmp buf = %p, size: %ld)", 
+                tmp, NDRX_MSGSIZEMAX);
         
         if (EXSUCCEED!=exproto_proto2ex(p_netmsg->buf, tmp_len,  tmp, &tmp_len))
         {

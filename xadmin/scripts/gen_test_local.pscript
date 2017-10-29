@@ -24,6 +24,11 @@ class CLocalTestCase extends WizardBase {
 	</ order=3, name = "Unit test description", type = "string", min=1, max=999 /> 
 	descr = "";
 	
+    </ order=4, name = "Domain 1", type = "yn"/> 
+    dom1 = "n";
+    
+    </ order=5, name = "Domain 2", depend="(::prov.dom1==\"y\")", type = "yn"/> 
+    dom2 = "n";
 
 	testname = "";
 	client = "";
@@ -32,6 +37,12 @@ class CLocalTestCase extends WizardBase {
 	debug = "";
 	run = "";
 	hdr = "";
+	
+	dom1_debug = "";
+	dom1_ndrxconf = "";
+	
+    dom2_debug = "";
+    dom2_ndrxconf = "";
 	
 	function getOutputFiles()
 	{
@@ -45,6 +56,13 @@ class CLocalTestCase extends WizardBase {
 		debug = format("%s/debug.conf", testname);
 		run = format("%s/run.sh", testname);
 		hdr = format("%s/test%d.h", testname, testid.tointeger());
+		
+		dom1_debug = format("%s/debug-dom1.conf", testname);
+        dom1_ndrxconf = format("%s/ndrxconfig-dom1.xml", testname);
+        
+        dom2_debug = format("%s/debug-dom2.conf", testname);
+        dom2_ndrxconf = format("%s/ndrxconfig-dom2.xml", testname);
+    
 	}
 	
 }
@@ -68,6 +86,64 @@ function install()
 		::prov.getOutputFiles();
 		print(format("Test case: [%s]\n", ::prov.testname));
 
+		
+//
+// Common header file
+//
+        if (!::prov.writeFile(::prov.hdr,
+
+@"
+/* 
+** "+::prov.descr+@" - common header
+**
+** @file test"+::prov.testname+@".h
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#ifndef TEST"+::prov.testid+@"_H
+#define TEST"+::prov.testid+@"_H
+
+#ifdef  __cplusplus
+extern ""C"" {
+#endif
+
+
+#define VALUE_EXPECTED ""Hello EnduroX""
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif  /* TEST"+::prov.testid+@"_H */
+
+"))
+        {
+            return false;
+        }
 //
 // Client code
 //
@@ -366,7 +442,7 @@ set_target_properties(atmiclt"+::prov.testid+@" PROPERTIES LINK_FLAGS ""$ENV{MYL
 //
 // Debug configuration
 //
-		if (!::prov.writeFile(::prov.debug, 
+		if ("n"==::prov.dom1 && "n"==::prov.dom2 && !::prov.writeFile(::prov.debug, 
 
 @"
 * ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx.log
@@ -378,9 +454,9 @@ atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
 			return false;
 		}
 //
-// Run file
+// Run file (local one)
 //
-		if (!::prov.writeFile(::prov.run, 
+		if ("n"==::prov.dom1 && "n"==::prov.dom2 && !::prov.writeFile(::prov.run, 
 
 @"
 #!/bin/bash
@@ -466,6 +542,356 @@ exit $RET
 			return false;
 		}
 //
+// Domain 1 XML configuration
+//
+        if ("y"==::prov.dom1 && !::prov.writeFile(::prov.dom1_ndrxconf, 
+
+@"<?xml version=""1.0"" ?>
+<endurox>
+    <appconfig>
+        <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
+        <!-- Sanity check time, sec -->
+        <sanity>1</sanity>
+        <!-- If process have been state changed to other than dead, exit or not running
+        but PID of program does not exists in system, then send internel message, then 
+        program have been stopped.
+        In Seconds.
+        -->
+        <checkpm>5</checkpm>
+        <!--  <sanity> timer, end -->
+        <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
+        <!-- Do dead process restart every X seconds -->
+        <respawncheck>10</respawncheck>
+        <!-- Do process reset after 1 sec -->
+        <restart_min>1</restart_min>
+        <!-- If restart fails, then boot after +5 sec of previous wait time -->
+        <restart_step>10</restart_step>
+        <!-- If still not started, then max boot time is a 30 sec. -->
+        <restart_max>30</restart_max>
+        <!--  <sanity> timer, end -->
+
+        <!-- Time after attach when program will start do sanity & respawn checks,
+        starts counting after configuration load -->
+        <restart_to_check>20</restart_to_check>
+        <!-- Send full service table every 5 seconds -->
+        <brrefresh>5</brrefresh>
+    </appconfig>
+    <defaults>
+        <min>1</min>
+        <max>1</max>
+        <autokill>1</autokill>
+        <!-- Do not need respawning! -->
+        <respawn>1</respawn>
+        <!-- The maximum time while process can hang in 'starting' state i.e.
+        have not completed initialization, sec -->
+        <start_max>20</start_max>
+        <!--
+        Ping server in every X seconds (minimum step is <sanity>).
+        -->
+        <pingtime>9</pingtime>
+        <!--
+        Max time in seconds in which server must respond.
+        The granularity is sanity time.
+        -->
+        <ping_max>40</ping_max>
+        <!--
+        Max time to wait until process should exit on shutdown
+        -->
+        <end_max>30</end_max>
+        <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+        to process until it have been terminated. -->
+        <killtime>20</killtime>
+    </defaults>
+    <servers>
+    " +("n"==::prov.dom1?
+@"            <server name=""atmisv.sv"+::prov.testid+@""">
+                <min>1</min>
+                <max>1</max>
+                <srvid>10</srvid>
+                <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+            </server>":""
+        )+ @"<server name=""tpbridge"">
+            <max>1</max>
+            <srvid>101</srvid>
+            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30 -P0</appopt>
+        </server>
+    </servers>
+</endurox>
+
+"))
+        {
+            return false;
+        }
+        
+//
+// Domain 2 XML configuration
+//
+        if ("y"==::prov.dom2 && !::prov.writeFile(::prov.dom2_ndrxconf, 
+
+@"<?xml version=""1.0"" ?>
+<endurox>
+    <appconfig>
+        <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
+        <!-- Sanity check time, sec -->
+        <sanity>1</sanity>
+        <!-- If process have been state changed to other than dead, exit or not running
+        but PID of program does not exists in system, then send internel message, then 
+        program have been stopped.
+        In Seconds.
+        -->
+        <checkpm>5</checkpm>
+        <!--  <sanity> timer, end -->
+
+        <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
+        <!-- Do dead process restart every X seconds -->
+        <respawncheck>10</respawncheck>
+        <!-- Do process reset after 1 sec -->
+        <restart_min>1</restart_min>
+        <!-- If restart fails, then boot after +5 sec of previous wait time -->
+        <restart_step>10</restart_step>
+        <!-- If still not started, then max boot time is a 30 sec. -->
+        <restart_max>30</restart_max>
+        <!--  <sanity> timer, end -->
+
+        <!-- Time after attach when program will start do sanity & respawn checks,
+        starts counting after configuration load -->
+        <restart_to_check>20</restart_to_check>
+        <!-- Send full service table every 5 seconds -->
+        <brrefresh>5</brrefresh>
+    </appconfig>
+    <defaults>
+        <min>1</min>
+        <max>1</max>
+        <autokill>1</autokill>
+        <!-- Do not need respawning! -->
+        <respawn>1</respawn>
+        <!-- The maximum time while process can hang in 'starting' state i.e.
+        have not completed initialization, sec -->
+        <start_max>20</start_max>
+        <!--
+        Ping server in every X seconds (minimum step is <sanity>).
+        -->
+        <pingtime>9</pingtime>
+        <!--
+        Max time in seconds in which server must respond.
+        The granularity is sanity time.
+        -->
+        <ping_max>40</ping_max>
+        <!--
+        Max time to wait until process should exit on shutdown
+        -->
+        <end_max>30</end_max>
+        <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+        to process until it have been terminated. -->
+        <killtime>20</killtime>
+    </defaults>
+    <servers>
+        <server name=""atmi.sv"+::prov.testid+@""">
+            <min>1</min>
+            <max>1</max>
+            <srvid>10</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
+        </server>
+        <server name=""tpbridge"">
+            <max>1</max>
+            <srvid>101</srvid>
+            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
+            <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30 -P0</appopt>
+        </server>
+    </servers>
+</endurox>
+
+
+"))
+        {
+            return false;
+        }
+//
+// Debug dom1 configuration
+//
+        if ("y"==::prov.dom1 && !::prov.writeFile(::prov.dom1_debug, 
+
+@"
+* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx-dom1.log
+xadmin file=${TESTDIR}/xadmin-dom1.log
+ndrxd file=${TESTDIR}/ndrxd-dom1.log
+atmiclt"+::prov.testid+@" file=${TESTDIR}/atmiclt-dom1.log
+"+("y"==::prov.dom1 && "n"==::prov.dom2?@"
+atmisv"+::prov.testid+@" file=${TESTDIR}/atmisv-dom2.log
+":"")+@"
+tpbridge file=${TESTDIR}/tpbridge-dom1.log threaded=y
+"))
+        {
+            return false;
+        }
+        
+//
+// Debug dom2 configuration
+//
+        if ("y"==::prov.dom2 && !::prov.writeFile(::prov.dom2_debug, 
+@"
+* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx-dom2.log
+xadmin file=${TESTDIR}/xadmin-dom2.log
+ndrxd file=${TESTDIR}/ndrxd-dom2.log
+atmisv"+::prov.testid+@" file=${TESTDIR}/atmisv-dom2.log
+tpbridge file=${TESTDIR}/tpbridge-dom2.log threaded=y
+"))
+        {
+            return false;
+        }
+        
+//
+// Run config for domains..
+//
+        if ("y"==::prov.dom1 && !::prov.writeFile(::prov.run, 
+
+@"
+#!/bin/bash
+## 
+## @(#) "+::prov.descr+@" - test launcher
+##
+## @file run.sh
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+
+export TESTNAME="""+::prov.testname+@"""
+
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+    # Do nothing 
+    echo > /dev/null
+else
+    # started from parent folder
+    pushd .
+    echo ""Doing cd""
+    cd $TESTNAME
+fi;
+
+. ../testenv.sh
+
+export TESTDIR=""$NDRX_APPHOME/atmitest/$TESTNAME""
+export PATH=$PATH:$TESTDIR
+
+export NDRX_TOUT=10
+
+#
+# Domain 1 - here client will live
+#
+function set_dom1 {
+    echo ""Setting domain 1""
+    . ../dom1.sh
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
+    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
+    export NDRX_LOG=$TESTDIR/ndrx-dom1.log
+    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
+}
+
+"+("y"==::prov.dom2?@"
+#
+# Domain 2 - here server will live
+#
+function set_dom2 {
+    echo ""Setting domain 2""
+    . ../dom2.sh    
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2.xml
+    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom2.log
+    export NDRX_LOG=$TESTDIR/ndrx-dom2.log
+    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom2.conf
+}":"")+@"
+
+#
+# Generic exit function
+#
+function go_out {
+    echo ""Test exiting with: $1""
+    
+    set_dom1;
+    xadmin stop -y
+    xadmin down -y
+
+    set_dom2;
+    xadmin stop -y
+    xadmin down -y
+
+    # If some alive stuff left...
+    xadmin killall atmiclt"+::prov.testid+@"
+
+    popd 2>/dev/null
+    exit $1
+}
+
+rm *dom*.log
+# Any bridges that are live must be killed!
+xadmin killall tpbridge
+
+set_dom1;
+xadmin down -y
+xadmin start -y || go_out 1
+
+"+("y"==::prov.dom2?@"
+set_dom2;
+xadmin down -y
+xadmin start -y || go_out 2
+":"")+@"
+
+# Have some wait for ndrxd goes in service - wait for connection establishment.
+sleep 30
+RET=0
+
+xadmin psc
+xadmin ppm
+echo ""Running off client""
+
+set_dom1;
+(./atmiclt"+::prov.testid+@" 2>&1) > ./atmiclt-dom1.log
+#(valgrind --leak-check=full --log-file=""v.out"" -v ./atmiclt"+::prov.testid+@" 2>&1) > ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ ""X$RET"" != ""X0"" ]]; then
+    go_out $RET
+fi
+
+# Catch is there is test error!!!
+if [ ""X`grep TESTERROR *.log`"" != ""X"" ]; then
+        echo ""Test error detected!""
+        RET=-2
+fi
+
+
+go_out $RET
+
+"))
+        {
+            return false;
+        }
+//
 // Give execute permissions for runner
 //
         if (!::prov.setExec(::prov.run))
@@ -473,63 +899,6 @@ exit $RET
                 return false;
         }
 
-//
-// Common header file
-//
-		if (!::prov.writeFile(::prov.hdr,
-
-@"
-/* 
-** "+::prov.descr+@" - common header
-**
-** @file test"+::prov.testname+@".h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
-#ifndef TEST"+::prov.testid+@"_H
-#define	TEST"+::prov.testid+@"_H
-
-#ifdef	__cplusplus
-extern ""C"" {
-#endif
-
-
-#define VALUE_EXPECTED ""Hello EnduroX""
-
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* TEST"+::prov.testid+@"_H */
-
-"))
-		{
-			return false;
-		}
 	}
 	else
 	{

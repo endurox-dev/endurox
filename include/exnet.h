@@ -41,11 +41,16 @@
 #include <netinet/in.h>
 
 #include <nstopwatch.h>
+
+#include "ndrstandard.h"
 /*------------------------------Externs---------------------------------------*/
-extern int G_recv_tout;				/* Was there timeout on recieve? */
+extern int G_recv_tout;				/* Was there timeout on receive? */
 /*------------------------------Macros----------------------------------------*/
-#define	EXNET_ADDR_LEN		32		/* Max len for address	   */
-#define DATA_BUF_MAX		(64*1024)	/* Have a data buffer, 32K */
+#define	EXNET_ADDR_LEN		32		/* Max len for address          */
+#define NET_LEN_PFX_LEN         4               /* Len bytes */
+
+/* Buffer size + netlen */
+#define DATA_BUF_MAX		NDRX_MSGSIZEMAX+NET_LEN_PFX_LEN 
 
 #define APPFLAGS_MASK			0x0001	/* Mask the content in prod mode */
 #define APPFLAGS_TOUT_OK		0x0002	/* Timeout is OK		 */
@@ -74,7 +79,7 @@ struct exnetcon
     exnetcon_t *my_server;  /* Pointer to listener structure, used by server, 
                              * in case if this was incomming connection */
     int rcvtimeout;        /* Receive timeout                        */
-    char d[DATA_BUF_MAX];         /* Data buffer                            */
+    char *d;         /* Data buffer                            */
     int  dl;                   /* Data left in databuffer                */
     int recv_tout;              /* Last system call error for receive	  */
     int len_pfx;           /* Length prefix                          */
@@ -117,6 +122,7 @@ extern int exnet_is_connected(exnetcon_t *net);
 extern int exnet_close_shut(exnetcon_t *net);
 extern int exnet_set_timeout(exnetcon_t *net, int timeout);
 extern void exnet_reset_struct(exnetcon_t *net);
+extern int exnet_net_init(exnetcon_t *net);
 extern int exnet_configure_client_sock(exnetcon_t *net);
 extern int exnet_bind(exnetcon_t *net);
 
