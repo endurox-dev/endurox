@@ -68,7 +68,7 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define DBUF_SZ	(sizeof(net->d) - net->dl)	/* Buffer size to recv in 	*/
+#define DBUF_SZ	(NDRX_MSGSIZEMAX - net->dl)	/* Buffer size to recv in 	*/
 
 #if defined(EX_USE_EPOLL)
 
@@ -841,3 +841,31 @@ expublic void exnet_reset_struct(exnetcon_t *net)
     net->len_pfx = EXFAIL;           /* Length prefix                          */    
 }
 
+/**
+ * Initialize network struct
+ * @param net networks struct to init
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int exnet_net_init(exnetcon_t *net)
+{
+    int ret = EXSUCCEED;
+    
+    net->d = NDRX_MALLOC(DATA_BUF_MAX);
+    
+    if (NULL==net->d)
+    {
+        int err = errno;
+        
+        userlog("Failed to allocate client structure! %s", 
+                strerror(err));
+        
+        NDRX_LOG(log_error, "Failed to allocate data block for client! %s", 
+                strerror(err));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+            
+out:
+    return ret;
+}

@@ -87,32 +87,58 @@ expublic int ndrx_get_nonprintable_char_tmpspace(char *str, int len)
 /**
  * Builds printable version out 
  */
-expublic void ndrx_build_printable_string(char *out, char *in, int in_len)
+expublic void ndrx_build_printable_string(char *out, int out_len, char *in, int in_len)
 {
     int i;
     int cur = 0;
+    
     for (i=0; i<in_len; i++)
     {
         if (IS_NOT_PRINTABLE(in[i]))
         {
-            /* make int hexy */
-            out[cur++] = '\\';
-            out[cur++] = HEX_TABLE[(in[i]>>4)&0x0f];
-            out[cur++] = HEX_TABLE[in[i]&0x0f];
+            /* we shall leave space for EOS, thus having not >= but > and same
+             * bellow.
+             */
+            if (out_len - cur > 3)
+            {
+                /* make int hexy */
+                out[cur++] = '\\';
+                out[cur++] = HEX_TABLE[(in[i]>>4)&0x0f];
+                out[cur++] = HEX_TABLE[in[i]&0x0f];
+            }
+            else
+            {
+                break;
+            }
         }
         else if ('\\'==in[i])
         {
             /* Convert \ to two \\ */
-            out[cur++] = '\\';
-            out[cur++] = '\\';
+            if (out_len - cur > 2)
+            {
+                out[cur++] = '\\';
+                out[cur++] = '\\';
+            }
+            else
+            {
+                break;
+            }
         }
-        else
+        else if (out_len - cur > 1)
         {
             /* copy off printable char */
             out[cur++] = in[i];
         }
+        else
+        {
+            break;
+        }
     }
-    out[cur] = EXEOS;
+    
+    if (cur<out_len)
+    {
+        out[cur] = EXEOS;
+    }
 }
 
 /**

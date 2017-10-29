@@ -148,7 +148,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
                 }
 
                 /* build the printable string */
-                ndrx_build_printable_string(tmp_buf, p, len);
+                ndrx_build_printable_string(tmp_buf, temp_len+1, p, len);
                 p = tmp_buf;
             }
             else if (BFLD_CARRAY==fldtype) /* we need EOS for carray... */
