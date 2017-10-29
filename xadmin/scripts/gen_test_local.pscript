@@ -92,8 +92,7 @@ function install()
 //
         if (!::prov.writeFile(::prov.hdr,
 
-@"
-/* 
+@"/* 
 ** "+::prov.descr+@" - common header
 **
 ** @file test"+::prov.testname+@".h
@@ -149,8 +148,7 @@ extern ""C"" {
 //
 		if (!::prov.writeFile(::prov.client, 
 
-@"
-/* 
+@"/* 
 ** "+::prov.descr+@" - client
 **
 ** @file atmiclt"+::prov.testid+@".c
@@ -245,8 +243,7 @@ out:
 //
 		if (!::prov.writeFile(::prov.server, 
 
-@"
-/* 
+@"/* 
 ** "+::prov.descr+@" - server
 **
 ** @file atmisv"+::prov.testid+@".c
@@ -368,8 +365,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 //
 		if (!::prov.writeFile(::prov.make, 
 
-@"
-## 
+@"## 
 ## "+::prov.descr+@" - makefile
 ##
 ## @file CMakeLists.txt
@@ -458,8 +454,7 @@ atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
 //
 		if ("n"==::prov.dom1 && "n"==::prov.dom2 && !::prov.writeFile(::prov.run, 
 
-@"
-#!/bin/bash
+@"#!/bin/bash
 ## 
 ## @(#) "+::prov.descr+@" - test launcher
 ##
@@ -712,8 +707,7 @@ exit $RET
 //
         if ("y"==::prov.dom1 && !::prov.writeFile(::prov.dom1_debug, 
 
-@"
-* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx-dom1.log
+@"* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx-dom1.log
 xadmin file=${TESTDIR}/xadmin-dom1.log
 ndrxd file=${TESTDIR}/ndrxd-dom1.log
 atmiclt"+::prov.testid+@" file=${TESTDIR}/atmiclt-dom1.log
@@ -730,8 +724,7 @@ tpbridge file=${TESTDIR}/tpbridge-dom1.log threaded=y
 // Debug dom2 configuration
 //
         if ("y"==::prov.dom2 && !::prov.writeFile(::prov.dom2_debug, 
-@"
-* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx-dom2.log
+@"* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx-dom2.log
 xadmin file=${TESTDIR}/xadmin-dom2.log
 ndrxd file=${TESTDIR}/ndrxd-dom2.log
 atmisv"+::prov.testid+@" file=${TESTDIR}/atmisv-dom2.log
@@ -746,8 +739,7 @@ tpbridge file=${TESTDIR}/tpbridge-dom2.log threaded=y
 //
         if ("y"==::prov.dom1 && !::prov.writeFile(::prov.run, 
 
-@"
-#!/bin/bash
+@"#!/bin/bash
 ## 
 ## @(#) "+::prov.descr+@" - test launcher
 ##
