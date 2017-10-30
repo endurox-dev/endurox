@@ -47,6 +47,8 @@ extern "C" {
 #include <sys/sem.h>
 #include <exhash.h>
 #include <ndrstandard.h>
+#include <userlog.h>
+#include <tperror.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
