@@ -50,6 +50,7 @@
 #include <exnet.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include <userlog.h>
 
 #if defined(EX_USE_EPOLL)
 

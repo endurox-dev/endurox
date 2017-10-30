@@ -63,6 +63,7 @@
 #include <ubfutil.h>
 #include <math.h>
 #include <xatmi.h>
+#include <userlog.h>
 
 #include "fdatatype.h"
 /*---------------------------Externs------------------------------------*/
