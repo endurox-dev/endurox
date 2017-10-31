@@ -166,17 +166,24 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
                 int spent = ndrx_stopwatch_get_delta_sec(&w);
                 NDRX_LOG(log_warn, "Socket full: %s - retry, time spent: %d, max: %d", 
                         strerror(err), spent, net->rcvtimeout);
-                
+                usleep(10000); /* sleep 10 msec.. on retry... */
+
                 if (spent>=net->rcvtimeout)
                 {
                     NDRX_LOG(log_error, "ERROR! Failed to send, socket full: %s "
                             "time spent: %d, max: %d", 
                         strerror(err), spent, net->rcvtimeout);
+                    /*
                     userlog("ERROR! Failed to send, socket full: %s "
                             "time spent: %d, max: %d", 
                         strerror(err), spent, net->rcvtimeout);
+                     * */
+                    
                     break;
                 }
+                
+                err = 0; /* clear error */
+                
             }
         }
 
