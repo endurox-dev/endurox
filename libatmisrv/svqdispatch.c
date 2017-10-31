@@ -315,6 +315,8 @@ expublic int sv_serve_call(int *service, int *status)
                              /* save last call info to ATMI library
                               * (this does excludes data by default) */
         
+        NDRX_DUMP(log_error, "YOPT! got from Q", (char *)call, 100);
+        
         /* Register global tx */
         if (EXEOS!=call->tmxid[0] && 
                 EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
@@ -754,7 +756,7 @@ expublic int sv_server_request(char *buf, int len)
 
             break;
         case ATMI_COMMAND_CONNECT:
-            /* We have connection for converstation */
+            /* We have connection for conversation */
             ret=sv_serve_connect(&service, &status);
             break;
         case ATMI_COMMAND_SELF_SD:
@@ -1243,7 +1245,7 @@ expublic int sv_wait_for_request(void)
                 }
             }
             else
-            {
+            {   
                 /* OK, we got the message and now we can call the service */
                 /*G_server_conf.service_array[n]->p_func((TPSVCINFO *)msg_buf);*/
 
@@ -1304,7 +1306,7 @@ expublic int sv_wait_for_request(void)
                     /* Save on the big message copy... */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
-
+                    
                     sv_server_request(msg_buf, len);
                 }
             }
