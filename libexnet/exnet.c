@@ -109,6 +109,8 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     char d[DATA_BUF_MAX];	/* Data buffer				   */
     int size_to_send;
     int tmp_s;
+    int err;
+    ndrx_stopwatch_t w;
 
     /* check the sizes are that supported? */
     if (len>allow_size)
@@ -146,12 +148,42 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
         {
             NDRX_LOG(log_debug, "*** MSG DUMP IS MASKED ***");
         }
-        tmp_s = send(net->sock, d+sent, size_to_send-sent, flags);
+        
+        err = 0;
+        ndrx_stopwatch_reset(&w);
+        
+        while (err!=0)
+        {
+            tmp_s = send(net->sock, d+sent, size_to_send-sent, flags);
+            
+            if (EXFAIL==tmp_s)
+            {
+                err = errno;
+            }
+            
+            if (EAGAIN==err || EWOULDBLOCK==err)
+            {
+                int spent = ndrx_stopwatch_get_delta_sec(&w);
+                NDRX_LOG(log_warn, "Socket full: %s - retry, time spent: %d, max: %d", 
+                        strerror(err), spent, net->rcvtimeout);
+                
+                if (spent>=net->rcvtimeout)
+                {
+                    NDRX_LOG(log_error, "ERROR! Failed to send, socket full: %s "
+                            "time spent: %d, max: %d", 
+                        strerror(err), spent, net->rcvtimeout);
+                    userlog("ERROR! Failed to send, socket full: %s "
+                            "time spent: %d, max: %d", 
+                        strerror(err), spent, net->rcvtimeout);
+                    break;
+                }
+            }
+        }
 
         if (EXFAIL==tmp_s)
         {
             NDRX_LOG(log_error, "send failure: %s",
-                            strerror(errno));
+                            strerror(err));
             /* close_socket(net); */
             
             NDRX_LOG(log_error, "Scheduling connection close...");
@@ -180,9 +212,6 @@ out:
 exprivate  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flags, int appflags)
 {
     ssize_t ret;
-
-    /* Reset recv err */
-    net->recv_tout =0;
 
     ret = recv (net->sock, __buf, __n, flags);
 
@@ -302,7 +331,6 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
     if (0==net->dl)
     {
         /* This is new message */
-        net->recv_tout = 0; /* Just in case reset... */
         ndrx_stopwatch_reset(&net->rcv_timer);
     }
     

@@ -81,7 +81,6 @@ struct exnetcon
     int rcvtimeout;        /* Receive timeout                        */
     char *d;         /* Data buffer                            */
     int  dl;                   /* Data left in databuffer                */
-    int recv_tout;              /* Last system call error for receive	  */
     int len_pfx;           /* Length prefix                          */
     ndrx_stopwatch_t rcv_timer;        /* Receive timer...  */
     ndrx_stopwatch_t connect_time;    /* Time of connection in transit..... */
