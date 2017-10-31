@@ -1453,7 +1453,7 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *
 out:
    
     NDRX_LOG(log_debug, "%s - returns %d", fn, ret);
-	return ret;
+    return ret;
 }
 
 
@@ -1512,7 +1512,7 @@ expublic int exproto_proto2ex(char *proto_buf, long proto_len,
         char *ex_buf, long *max_struct)
 {
     *max_struct = 0;
-    return _exproto_proto2ex(M_cmd_br_net_call_x, proto_buf, proto_len, 
+    return _exproto_proto2ex(M_cmd_br_net_call_x, proto_buf, proto_len,
         ex_buf, 0, max_struct, 0, NULL, NULL);
 }
 
