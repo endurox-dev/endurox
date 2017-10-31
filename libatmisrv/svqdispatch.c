@@ -1246,6 +1246,7 @@ expublic int sv_wait_for_request(void)
             }
             else
             {   
+                NDRX_DUMP(log_error, "YOPT2! got from Q", (char *)msg_buf, 100);
                 /* OK, we got the message and now we can call the service */
                 /*G_server_conf.service_array[n]->p_func((TPSVCINFO *)msg_buf);*/
 

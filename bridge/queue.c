@@ -228,6 +228,9 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* fr
     int ret=EXSUCCEED;
     char svc_q[NDRX_MAX_Q_SIZE+1];
     int is_bridge = EXFALSE;
+
+
+    NDRX_DUMP(log_error, "YOPT BRI! got from Q", (char *)call, 100);
     
     if (ATMI_COMMAND_EVPOST==call->command_id)
     {
