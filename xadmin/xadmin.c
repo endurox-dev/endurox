@@ -154,11 +154,11 @@ cmd_mapping_t M_command_map[] =
                                                 "\t Format: VAR=SOME VALUE (will be contact with spaces)", NULL},
     {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ,   1,  1,  1, "Set env variable. Forma: VAR"},
     {"pc",        cmd_pc,EXFAIL,   1,  1,  1, "Print clients", NULL},
-    {"sc",        cmd_sc,EXFAIL,   2,  4,  1, "Stop client\n"
+    {"sc",        cmd_sc,EXFAIL,   1,  4,  1, "Stop client\n"
                                     "\t args: sc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]", NULL},
-    {"bc",        cmd_bc,EXFAIL,   2,  4,  1, "Boot(start) client\n"
+    {"bc",        cmd_bc,EXFAIL,   1,  4,  1, "Boot(start) client\n"
                                     "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]", NULL},
-    {"rc",        cmd_rc,EXFAIL,   2,  4,  1, "Reload/Restart clients one-by-one\n"
+    {"rc",        cmd_rc,EXFAIL,   1,  4,  1, "Reload/Restart clients one-by-one\n"
                                     "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]", NULL},
     {"mqlc",      cmd_mqlc,EXFAIL,   1,  1,  1, "List persistent queue configuration", NULL},
     {"mqlq",      cmd_mqlq,EXFAIL,   1,  1,  1, "List persistent queues (active/dynamic)", NULL},

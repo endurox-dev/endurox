@@ -102,7 +102,7 @@ exprivate char *proc_state_to_str(long state, short msg_type)
             ret = stopping;
             break;
         default:
-            sprintf(unknown, "Unknown state (%ld)", state);
+            snprintf(unknown, sizeof(unknown), "Unknown state (%ld)", state);
             ret = unknown;
             break;
     }
@@ -214,7 +214,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     
     /* prepare for call */
     call.srvid = srvid;
-    strcpy(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
@@ -300,7 +300,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     /* prepare for call */
     call.complete_shutdown = complete;
     call.srvid = srvid;
-    strcpy(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.binary_name, srvnm);
 
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                     NDRXD_CALL_TYPE_GENERIC,
@@ -466,7 +466,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     
     /* prepare for call */
     call.srvid = srvid;
-    strcpy(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
