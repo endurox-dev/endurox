@@ -106,10 +106,11 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     int ret=EXSUCCEED;
     int allow_size = DATA_BUF_MAX-net->len_pfx;
     int sent = 0;
-    char d[DATA_BUF_MAX];	/* Data buffer				   */
+    char d[NET_LEN_PFX_LEN];	/* Data buffer, len     		   */
     int size_to_send;
     int tmp_s;
     int err;
+    int retry;
     ndrx_stopwatch_t w;
 
     /* check the sizes are that supported? */
@@ -117,13 +118,17 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     {
         NDRX_LOG(log_error, "Buffer too large for sending! "
                         "requested: %d, allowed: %d", len, allow_size);
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
-    /* Prepare the buffer */
+    /* !!! Prepare the buffer 
+     * do we really need a copy???!
+     * maybe just send 4 bytes and the other bytes...   
+     
     memcpy(d+net->len_pfx, buf, len);
-
+    * - moved to two step sending...
+    */
+    
     if (4==net->len_pfx)
     {
         /* Install the length prefix. */
@@ -139,22 +144,43 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     MUTEX_LOCK_V(M_send_lock)
     do
     {
-        NDRX_LOG(log_debug, "Sending, len: %d", size_to_send-sent);
+        NDRX_LOG(log_debug, "Sending, len: %d, total msg: %d", 
+                size_to_send-sent, size_to_send);
+        
         if (!(appflags & APPFLAGS_MASK))
         {
-            NDRX_DUMP(log_debug, "Sending, msg ", d+sent, size_to_send-sent);
+            if (sent < net->len_pfx)
+            {
+                NDRX_DUMP(log_debug, "Sending, msg (msg len pfx)", 
+                        d+sent, net->len_pfx-sent);
+            }
+            else
+            {
+                NDRX_DUMP(log_debug, "Sending, msg ", buf+sent-net->len_pfx, 
+                            size_to_send-sent);
+            }
         }
         else
         {
             NDRX_LOG(log_debug, "*** MSG DUMP IS MASKED ***");
         }
         
-        err = 0;
         ndrx_stopwatch_reset(&w);
         
-        while (err!=0)
+        do
         {
-            tmp_s = send(net->sock, d+sent, size_to_send-sent, flags);
+            err = 0;
+            retry = EXFALSE;
+            
+            if (sent<net->len_pfx)
+            {
+                tmp_s = send(net->sock, d+sent, net->len_pfx-sent, flags);
+            }
+            else
+            {
+                tmp_s = send(net->sock, buf+sent-net->len_pfx, 
+                        size_to_send-sent, flags);
+            }
             
             if (EXFAIL==tmp_s)
             {
@@ -173,19 +199,19 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
                     NDRX_LOG(log_error, "ERROR! Failed to send, socket full: %s "
                             "time spent: %d, max: %d", 
                         strerror(err), spent, net->rcvtimeout);
-                    /*
+                    
                     userlog("ERROR! Failed to send, socket full: %s "
                             "time spent: %d, max: %d", 
                         strerror(err), spent, net->rcvtimeout);
-                     * */
                     
                     break;
                 }
                 
-                err = 0; /* clear error */
+                retry = EXTRUE;
                 
             }
         }
+        while (retry);
 
         if (EXFAIL==tmp_s)
         {
@@ -195,7 +221,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             
             NDRX_LOG(log_error, "Scheduling connection close...");
             net->schedule_close = EXTRUE;
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -204,6 +230,13 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             sent+=tmp_s;
         }
 
+        if (sent < size_to_send)
+        {
+            NDRX_LOG(log_debug, "partial submission: total: %d, sent: %d, left "
+                    "for sending: %d - continue", size_to_send, sent, 
+                    size_to_send - sent);
+        }
+        
     } while (EXSUCCEED==ret && sent < size_to_send);
     MUTEX_UNLOCK_V(M_send_lock)
 
@@ -244,12 +277,9 @@ exprivate  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flag
         ret=EXFAIL;
         goto out;
     }
-    else
-    {
-        
-    }
+    
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -260,7 +290,7 @@ exprivate int get_full_len(exnetcon_t *net)
 {
     int  pfx_len, msg_len;
 
-    /* 5 bytes... */
+    /* 4 bytes... */
     pfx_len = ( 
                 (net->d[0] & 0xff) << 24
               | (net->d[1] & 0xff) << 16
@@ -270,6 +300,8 @@ exprivate int get_full_len(exnetcon_t *net)
 
     msg_len = pfx_len+net->len_pfx;
     NDRX_LOG(log_debug, "pfx_len=%d msg_len=%d", pfx_len, msg_len);
+    
+    /* TODO: if we got invalid len - close connection */
 
     return msg_len;
 }
@@ -282,14 +314,14 @@ exprivate int cut_out_msg(exnetcon_t *net, int full_msg, char *buf, int *len, in
     int ret=EXSUCCEED;
     int len_with_out_pfx = full_msg-net->len_pfx;
     /* 1. check the sizes 			*/
-    NDRX_LOG(log_debug, "Msg len with out pfx: %d, userbuf: %d",
-                    len_with_out_pfx, *len);
+    NDRX_LOG(log_debug, "Msg len with out pfx: %d  (full_msg: %d - pfx: %d), userbuf: %d",
+                    len_with_out_pfx, full_msg, net->len_pfx, *len);
     if (*len < len_with_out_pfx)
     {
-            NDRX_LOG(log_error, "User buffer to small: %d < %d",
-                            *len, len_with_out_pfx);
-            ret=EXFAIL;
-            goto out;
+        NDRX_LOG(log_error, "User buffer to small: %d < %d",
+                        *len, len_with_out_pfx);
+        ret=EXFAIL;
+        goto out;
     }
 
     /* 2. copy data to user buffer 		*/
@@ -297,7 +329,7 @@ exprivate int cut_out_msg(exnetcon_t *net, int full_msg, char *buf, int *len, in
 
     if (!(appflags & APPFLAGS_MASK))
     {
-            NDRX_DUMP(log_debug, "Got message: ", net->d, full_msg);
+        NDRX_DUMP(log_debug, "Got message: ", net->d, full_msg);
     }
 
     memcpy(buf, net->d+net->len_pfx, len_with_out_pfx);
@@ -321,7 +353,7 @@ out:
 
 /**
  * Receive single message with prefixed length.
- * We will check peek the lenght bytes, and then
+ * We will check peek the length bytes, and then
  * will request to receive full message
  * If we do poll on incoming messages, we shall receive from the same thread
  * because, otherwise it will alert for messages all the time or we need to
@@ -355,11 +387,11 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                     net->dl, full_msg);
             if (net->dl >= full_msg)
             {
-                NDRX_LOG(log_debug,
-                    "Full msg in buffer");
                 /* Copy msg out there & cut the buffer */
+                ret=cut_out_msg(net, full_msg, buf, len, appflags);
+                
                 MUTEX_UNLOCK_V(M_recv_lock)
-                return cut_out_msg(net, full_msg, buf, len, appflags);
+                return ret;
             }
         }
 
@@ -423,7 +455,7 @@ expublic int exnet_b4_poll_cb(void)
     }
 
 out:
-	return ret;
+    return ret;
 }
 
 /**
