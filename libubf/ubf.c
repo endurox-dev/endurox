@@ -677,7 +677,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
     if (EXSUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
     {
         ndrx_Bset_error_fmt(BNOSPACE, "Destination buffer too short. "
-                                    "Source len: %d dest used: %d",
+                                    "Dest buf len: %d source buf bytes used: %d",
                                     dst_h->buf_len, src_h->bytes_used);
         ret=EXFAIL;
     }
