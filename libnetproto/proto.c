@@ -1544,7 +1544,10 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     int max_len;
     char debug[16*1024];
     tp_command_call_t *more_debug;
-    
+    /* temp buf for UBF processing */
+    char tmpf[NDRX_MSGSIZEMAX];
+    proto_ufb_fld_t *f=(proto_ufb_fld_t *)tmpf;
+
     NDRX_LOG(log_debug, "Enter field: [%s] max_struct: %ld ex_buf: %p", 
                         cur->cname, *max_struct, ex_buf);
     
@@ -1726,16 +1729,10 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     if (*buffer_type == BUF_TYPE_UBF || 
                             *buffer_type == BUF_TYPE_VIEW)
                     {   
-                        char *tmpf = NULL;
                         UBFH *p_ub = (UBFH *)(ex_buf+ex_len+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
                         int tmp_buf_size = /*PMSGMAX*/NDRX_MSGSIZEMAX - ex_len - fld->offset;
-                        
-                        proto_ufb_fld_t *f; /* is data allocated!?? */
-                        
-                        NDRX_SYSBUF_MALLOC_OUT(tmpf, NULL, ret);
-                        
-                        f = (proto_ufb_fld_t *)tmpf;
+
                         
                         NDRX_DUMP(log_debug, "Got UBF buffer", 
                                 (char *)(proto_buf+int_pos), net_len);
@@ -1750,8 +1747,6 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         {
                             NDRX_LOG(log_error, "Failed to init FB: %s", 
                                     Bstrerror(Berror) );
-                            
-                            NDRX_FREE(tmpf);
                             ret=EXFAIL;
                             goto out;
                         }
@@ -1765,8 +1760,6 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                     (char *)f, 0,
                                     max_struct, level,
                                     p_ub, f);
-                        
-                        NDRX_FREE(tmpf); /* free the working buffer.. */
                         
                         if (EXSUCCEED!=ret)
                         {

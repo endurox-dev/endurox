@@ -169,7 +169,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             goto out;
         }
 
-        NDRX_LOG(log_debug, "%s: Output buffer size: %d, received %d", fn,
+        NDRX_LOG(log_debug, "%s: Output buffer size: %ld, received %ld", fn,
                             existing_size, rcv_buf_size);
         
         if (existing_size>=rcv_buf_size)

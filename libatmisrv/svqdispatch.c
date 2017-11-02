@@ -315,8 +315,6 @@ expublic int sv_serve_call(int *service, int *status)
                              /* save last call info to ATMI library
                               * (this does excludes data by default) */
         
-        NDRX_DUMP(log_error, "YOPT! got from Q", (char *)call, 100);
-        
         /* Register global tx */
         if (EXEOS!=call->tmxid[0] && 
                 EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
@@ -1246,7 +1244,6 @@ expublic int sv_wait_for_request(void)
             }
             else
             {   
-                NDRX_DUMP(log_error, "YOPT2! got from Q", (char *)msg_buf, 100);
                 /* OK, we got the message and now we can call the service */
                 /*G_server_conf.service_array[n]->p_func((TPSVCINFO *)msg_buf);*/
 
