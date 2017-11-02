@@ -152,7 +152,7 @@ extern "C" {
 /*
  * globals
  */
-/* #define ATMI_MSG_MAX_SIZE   NDRX_ATMI_MSG_MAX_SIZE - temporary disable... */
+#define ATMI_MSG_MAX_SIZE   NDRX_MSGSIZEMAX
 #define NDRX_MAX_Q_SIZE     128
 #define NDRX_MAX_ID_SIZE    96      /* pfx + binary name + server id + pid + nodeid */
 #define NDRX_MAX_KEY_SIZE   128     /* Key size for random key                  */
