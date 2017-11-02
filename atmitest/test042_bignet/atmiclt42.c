@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     long rsplen;
     int i, j;
     int ret=EXSUCCEED;
-    char bufferreq[TEST_MSGSIZE];
+    char bufferreq[ATMI_MSG_MAX_SIZE];
     BFLDLEN retlen;
     
     for (j=0; j<2000; j++)
