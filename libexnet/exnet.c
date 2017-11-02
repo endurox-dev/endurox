@@ -266,7 +266,7 @@ exprivate  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flag
     {
         if (EAGAIN==errno || EWOULDBLOCK==errno)
         {
-                NDRX_LOG(log_error, "Still no data (waiting...)");
+            NDRX_LOG(log_error, "Still no data (waiting...)");
         }
         else
         {
