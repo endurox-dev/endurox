@@ -430,6 +430,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test040_typedview);
     
     add_test(suite, test040_typedview_dom);
+
     add_test(suite, test041_bigmsg);
     add_test(suite,test042_bignet);
             
