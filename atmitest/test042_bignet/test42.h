@@ -38,7 +38,7 @@ extern "C" {
 
 
 /* 1M */
-#define TEST_MSGSIZE (1*1024*1024)
+#define TEST_MSGSIZE (8*1024*1024)
 
 
 #ifdef  __cplusplus

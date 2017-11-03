@@ -95,6 +95,55 @@
 #define XTAB3(e1,e2,e3)     3, e1, e2, e3, NULL
 #define XTAB4(e1,e2,e3,e4)  4, e1, e2, e3, e4
 
+/*
+ * Standard check for output buffer space
+ */
+#define CHECK_PROTO_BUFSZ(RET, CURSIZE, MAXSIZE, TO_WRITE) \
+    if ((CURSIZE) + TO_WRITE > MAXSIZE) \
+    {\
+        NDRX_LOG(log_error, "ERROR ! EX2NET: Message size in bytes max: %ld, at "\
+                    "current state: %ld, about "\
+                    "to write: %ld (new total: %d) - EXCEEDS message size. "\
+                    "Please increase NDRX_MSGSIZEMAX!", \
+                    (long)MAXSIZE, (long)(CURSIZE), (long)TO_WRITE, (long)(CURSIZE) + (long)TO_WRITE);\
+        userlog("ERROR ! EX2NET: Message size in bytes max: %ld, at current state: %ld, about "\
+                    "to write: %ld (new total: %d) - EXCEEDS message size. "\
+                    "Please increase NDRX_MSGSIZEMAX!", \
+                    (long)MAXSIZE, (long)(CURSIZE), (long)TO_WRITE, (long)(CURSIZE) + (long)TO_WRITE);\
+        EXFAIL_OUT(RET);\
+    }
+/*
+ *  Check the internal incoming buffers, for data overrun
+ */
+#define CHECK_EX_BUFSZ(RET, CUROFFSZ, FLD_OFFSZ, MAXSIZE, TO_WRITE) \
+if ((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE) > MAXSIZE) \
+    {\
+        NDRX_LOG(log_error, "ERROR ! NET2EX: Incomming buffer size in bytes: %ld, incoming "\
+                            "message is larger %ld (offset: %ld, fld_offs: %ld, "\
+                            "datasize: %ld) - dropping, please increase NDRX_MSGSIZEMAX!",\
+                    (long)MAXSIZE, (long)((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE)),\
+                    (long)(CUROFFSZ), (long)(FLD_OFFSZ), (long)(TO_WRITE)\
+                    );\
+        userlog("ERROR ! NET2EX: Incomming buffer size in bytes: %ld, incoming "\
+                            "message is larger %ld (offset: %ld, fld_offs: %ld, "\
+                            "datasize: %ld) - dropping, please increase NDRX_MSGSIZEMAX!",\
+                    (long)MAXSIZE, (long)((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE)),\
+                    (long)(CUROFFSZ), (long)(FLD_OFFSZ), (long)(TO_WRITE));\
+        EXFAIL_OUT(RET);\
+    }
+
+#define CHECK_EX_BUFSZ_SIMPLE(RET, MAXSIZE, TO_WRITE) \
+if ((TO_WRITE) > MAXSIZE) \
+    {\
+        NDRX_LOG(log_error, "ERROR ! NET2EX: Incomming buffer size in bytes: %ld"\
+                                "data size: %ld - dropping, please increase NDRX_MSGSIZEMAX!",\
+                MAXSIZE, (TO_WRITE));\
+        userlog( "ERROR ! NET2EX: Incomming buffer size in bytes: %ld"\
+                                "data size: %ld - dropping, please increase NDRX_MSGSIZEMAX!",\
+                MAXSIZE, (TO_WRITE));\
+        EXFAIL_OUT(RET);\
+    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /* map between C structure and parm bnlock fields */
@@ -396,7 +445,7 @@ static xmsg_t M_ndrxd_x[] =
 /*---------------------------Prototypes---------------------------------*/
 exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
         char *ex_buf, long ex_len, long *max_struct, int level, 
-        UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data);
+        UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz);
 
 
 #define FIX_SIGND(x) if ('1'==bdc_sign) *x = -1 * (*x);
@@ -639,7 +688,7 @@ out:
 exprivate int x_nettoc(cproto_t *fld, 
                     char *net_buf, long net_buf_offset, int tag_len, /* in */
                     char *c_buf_out, BFLDLEN *p_bfldlen, char *debug_buf, 
-                    int debug_len) /* out */
+                    int debug_len, long c_bufsz) /* out */
 {
     int ret=EXSUCCEED;
     int i, j;
@@ -716,6 +765,9 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_SHORT:
         {
             short *tmp = (short *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(short));
+                    
             sscanf(bcd_buf, "%hd", tmp);
             FIX_SIGND(tmp);
             
@@ -728,6 +780,8 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_LONG:
         {
             long *tmp = (long *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(long));
             
             sscanf(bcd_buf, "%ld", tmp);
             
@@ -742,6 +796,9 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_CHAR:
         {
             char *tmp = (char *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(char));
+            
             tmp[0] = datap[0];
             
             if (debug_get_ndrx_level() >= log_debug)
@@ -753,6 +810,8 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_FLOAT:
         {
             float *tmp = (float *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(float));
             
             sscanf(bcd_buf, "%f", tmp);
             
@@ -774,6 +833,8 @@ exprivate int x_nettoc(cproto_t *fld,
         {
             double *tmp = (double *)c_buf_out;
             
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(double));
+            
             sscanf(bcd_buf, "%lf", tmp);
             
             for (i=0; i<DOUBLE_RESOLUTION; i++)
@@ -792,6 +853,9 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_STRING:
         {
             /* EOS must be present in c struct! */
+            /* include EOS in dest space calc.. */
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, tag_len+1);
+            
             NDRX_STRNCPY(c_buf_out, datap, tag_len);
             c_buf_out[tag_len] = EXEOS;
             
@@ -807,6 +871,8 @@ exprivate int x_nettoc(cproto_t *fld,
         {
             int *tmp = (int *)c_buf_out;
             
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(int));
+            
             sscanf(bcd_buf, "%d", tmp);
             
             FIX_SIGND(tmp);
@@ -820,6 +886,9 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_ULONG:
         {
             unsigned long *tmp = (unsigned long *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(unsigned long));
+            
             sscanf(bcd_buf, "%lu", tmp);
             
             if (debug_get_ndrx_level() >= log_debug)
@@ -831,6 +900,9 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_UINT:
         {
             unsigned *tmp = (unsigned *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(unsigned));
+            
             sscanf(bcd_buf, "%u", tmp);
             
             if (debug_get_ndrx_level() >= log_debug)
@@ -842,6 +914,9 @@ exprivate int x_nettoc(cproto_t *fld,
         case EXF_USHORT:
         {
             unsigned short *tmp = (unsigned short *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(unsigned short));
+            
             sscanf(bcd_buf, "%hu", tmp);
             
             if (debug_get_ndrx_level() >= log_debug)
@@ -855,6 +930,8 @@ exprivate int x_nettoc(cproto_t *fld,
             char timer_buf[21];
             char *p;
             ndrx_stopwatch_t *tmp = (ndrx_stopwatch_t *)c_buf_out;
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(ndrx_stopwatch_t));
             
             NDRX_STRNCPY(timer_buf, bcd_buf, 20);
             timer_buf[20] = EXEOS;
@@ -887,6 +964,9 @@ exprivate int x_nettoc(cproto_t *fld,
         {
             NDRX_LOG(log_debug, "carray tag len: %d (out buf: %p)", 
                     tag_len, c_buf_out);
+            
+            CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, tag_len);
+            
             memcpy(c_buf_out, datap, tag_len);
             *p_bfldlen = tag_len;
             
@@ -957,13 +1037,22 @@ exprivate int read_net_int(char *buf, long *proto_buf_offset)
  * @param buf - start of the buffer
  * @param proto_buf_offset - current offset of buffer
  */
-exprivate void write_tag(short tag, char *buf, long *proto_buf_offset)
+exprivate int write_tag(short tag, char *buf, long *proto_buf_offset, 
+        long proto_bufsz)
 {
+    int ret = EXSUCCEED;
     short net_tag;
     net_tag = htons(tag);
+    
     /* Put tag on network */
-    memcpy(buf+*proto_buf_offset, (char *)&net_tag, 2);
-    *proto_buf_offset+=2;
+    
+    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, TAG_BYTES);
+    
+    memcpy(buf+*proto_buf_offset, (char *)&net_tag, TAG_BYTES);
+    *proto_buf_offset+=TAG_BYTES;
+    
+out:
+    return ret;
 }
 
 /**
@@ -972,28 +1061,38 @@ exprivate void write_tag(short tag, char *buf, long *proto_buf_offset)
  * @param buf - start of the buffer
  * @param proto_buf_offset - current offset of buffer
  */
-exprivate void write_len(int len, char *buf, long *proto_buf_offset)
+exprivate int write_len(int len, char *buf, long *proto_buf_offset, 
+        long proto_bufsz)
 {
+    int ret = EXSUCCEED;
     int net_len;
     net_len = htonl(len);
     /* Put tag on network */
-    memcpy(buf+*proto_buf_offset, (char *)&net_len, 4);
-    *proto_buf_offset+=4;
+    
+    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
+    
+    memcpy(buf+*proto_buf_offset, (char *)&net_len, LEN_BYTES);
+    *proto_buf_offset+=LEN_BYTES;
+    
+out:
+    return ret;
 }
 
 /**
  * Build network message by using xmsg record, this table is recursive...
  * TODO: Might we can avoid tmp -> directly write to ex_buf?!
  * @param cv
- * @param ex_buf
- * @param ex_len
- * @param proto_buf
- * @param proto_len
- * @return 
+ * @param ex_buf - Enduro/X C buffer (machine specific structures)
+ * @param ex_len - Enduro/X C side buffer len
+ * @param proto_buf - output procol buffer
+ * @param proto_len - actual number of bytes written to output buffer
+ * @param proto_bufz - output buffer size max
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
         char *ex_buf, long ex_len, char *proto_buf, long *proto_buf_offset,
-                        short *accept_tags, proto_ufb_fld_t *p_ub_data)
+        short *accept_tags, proto_ufb_fld_t *p_ub_data, 
+        long proto_bufsz)
 {
     int ret=EXSUCCEED;
     cproto_t *p = cv->tab[level];
@@ -1044,6 +1143,9 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             case XFLD:
             {
                 /* This is field... */
+                
+                /* TODO: Move to direct buffer setup. Including estimating of
+                 * max fixed data type sizes... */
                 if ( UBF_TAG_BFLD_CARRAY == p->tag)
                 {
                     ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, 
@@ -1071,12 +1173,24 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* Build that stuff */
                 
-                write_tag((short)p->tag, proto_buf, proto_buf_offset);
-                write_len((int)len, proto_buf, proto_buf_offset);
+                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                        proto_buf_offset, proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (EXSUCCEED!=write_len((int)len, proto_buf, 
+                        proto_buf_offset, proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
                 
                 len_written = (int)len;
                 
                 /* Put data on network */
+                
+                CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, len);
+                
                 memcpy(proto_buf+(*proto_buf_offset), tmp, len);
                 *proto_buf_offset=*proto_buf_offset + len;
                 
@@ -1091,9 +1205,15 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 long off_stop;
                 
                 /* This is sub tlv/ thus put tag... */
-                write_tag((short)p->tag, proto_buf, proto_buf_offset);
+                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, proto_buf_offset, 
+                        proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
                 
                 len_offset = *proto_buf_offset;
+                
+                CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
                 *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
                 
                 off_start = *proto_buf_offset;
@@ -1101,20 +1221,26 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* This is sub field, we should run it from subtable... */
                 ret = exproto_build_ex2proto(cv, level+1, offset+p->offset,
-                        ex_buf, ex_len, proto_buf, proto_buf_offset, NULL, NULL);
+                        ex_buf, ex_len, proto_buf, proto_buf_offset, NULL, NULL,
+                        proto_bufsz);
+                
                 if (EXSUCCEED!=ret)
                 {
                     NDRX_LOG(log_error, "Failed to convert sub/tag %x: [%s] %ld"
                             "at offset %ld", p->tag, p->cname, p->offset);
-                    ret=EXFAIL;
-                    goto out;
+                    EXFAIL_OUT(ret);
                 }
                 
                 /* <sub tlv> */
                 off_stop = *proto_buf_offset;
                 /* Put back len there.. */
                 len_written = (int)(off_stop - off_start);
-                write_len(len_written, proto_buf, &len_offset);
+                /* this should be ok, but check anyway */
+                if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
+                        proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
                 /* </sub tlv> */
             }
                 break;
@@ -1141,11 +1267,16 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* <sub tlv> */
                 /* This is sub tlv/ thus put tag... */
-                write_tag((short)p->tag, proto_buf, proto_buf_offset);
+                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                        proto_buf_offset, proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
                 
                 NDRX_LOG(log_debug, "XINC tag: 0x%x", p->tag);
                 
                 len_offset = *proto_buf_offset;
+                CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
                 *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
                 
                 off_start = *proto_buf_offset; /* why not +2??? */
@@ -1153,7 +1284,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* If we use include the we should go deeper inside, not? */
                 ret = exproto_build_ex2proto(&tmp_cv, 0, offset+p->offset,
-                        ex_buf, ex_len, proto_buf, proto_buf_offset, NULL, NULL);
+                        ex_buf, ex_len, proto_buf, proto_buf_offset, NULL, NULL, 
+                        proto_bufsz);
                 
                 if (EXSUCCEED!=ret)
                 {
@@ -1167,7 +1299,11 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 off_stop = *proto_buf_offset;
                 /* Put back len there.. */
                 len_written = (int)(off_stop - off_start);
-                write_len(len_written, proto_buf, &len_offset);
+                if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
+                        proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
                 /* </sub tlv> */
             }
                 break;
@@ -1194,9 +1330,15 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     long off_stop;
 
                     /* This is sub tlv/ thus put tag... */
-                    write_tag((short)p->tag, proto_buf, proto_buf_offset);
+                    if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                            proto_buf_offset, proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
                     
                     len_offset = *proto_buf_offset;
+                    
+                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
                     *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
                     
                     off_start = *proto_buf_offset;
@@ -1205,7 +1347,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     ret = exproto_build_ex2proto(&tmp_cv, 0, 
                                 offset+p->offset + p->elem_size*j,
                                 ex_buf, ex_len, proto_buf, proto_buf_offset,
-                                NULL, NULL);
+                                NULL, NULL, proto_bufsz);
                     
                     if (EXSUCCEED!=ret)
                     {
@@ -1221,7 +1363,12 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     off_stop = *proto_buf_offset;
                     /* Put back len there.. */
                     len_written = (int)(off_stop - off_start);
-                    write_len(len_written, proto_buf, &len_offset);
+                    
+                    if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset,
+                            proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
                     /* </sub tlv> */
                 }
                 
@@ -1259,9 +1406,14 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     xmsg_t tmp_cv;
 
                     /* This is sub tlv/ thus put tag... */
-                    write_tag((short)p->tag, proto_buf, proto_buf_offset);
+                    if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                            proto_buf_offset, proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
                     
                     len_offset = *proto_buf_offset;
+                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
                     *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
                     
                     off_start = *proto_buf_offset;
@@ -1275,7 +1427,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* loop over the buffer & process field by field */
                     /*memset(f.buf, 0, sizeof(f.buf));  <<< HMMM Way too slow!!! */
                     
-                    f->bfldlen = NDRX_MSGSIZEMAX;
+                    f->bfldlen = NDRX_MSGSIZEMAX - sizeof(*f);
                     f->bfldid = BFIRSTFLDID;
                     while(1==Bnext(p_ub, &f->bfldid, &occ, f->buf, &f->bfldlen))
                     {
@@ -1290,7 +1442,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
                             (char *)f, sizeof(f_data_buf), proto_buf, 
-                            proto_buf_offset,  accept_tags, f);
+                            proto_buf_offset,  accept_tags, f, proto_bufsz);
                     
                         if (EXSUCCEED!=ret)
                         {
@@ -1298,14 +1450,13 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                                     "sub/tag %x: [%s] %ld"
                                     "at offset %ld", 
                                     p->tag, p->cname, p->offset);
-                            ret=EXFAIL;
-                            goto out;
+                            EXFAIL_OUT(ret);
                         }
                         /*
                          * why?
                         memset(f.buf, 0, sizeof(f.buf));
                          */
-                        f->bfldlen = NDRX_MSGSIZEMAX;
+                        f->bfldlen = NDRX_MSGSIZEMAX - sizeof(*f);
                     }
                     
                     /* </process field by field> */
@@ -1314,7 +1465,11 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     off_stop = *proto_buf_offset;
                     /* Put back len there.. */
                     len_written = (short)(off_stop - off_start);
-                    write_len(len_written, proto_buf, &len_offset);
+                    if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset,
+                            proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
                     /* </sub tlv> */
                 }
                 else
@@ -1322,12 +1477,22 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* Should work for string buffers too, if EOS counts in len! */
                     NDRX_LOG(log_debug, "Processing data block buffer");
                     
-                    write_tag((short)p->tag, proto_buf, proto_buf_offset);
-                    write_len((int)*buf_len, proto_buf, proto_buf_offset);
+                    if (EXSUCCEED!=write_tag((short)p->tag, 
+                            proto_buf, proto_buf_offset, proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    if (EXSUCCEED!=write_len((int)*buf_len, proto_buf, 
+                            proto_buf_offset, proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
                     
                     len_written = *buf_len;
                     
                     /* Put data on network */
+                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, *buf_len);
                     memcpy(proto_buf+(*proto_buf_offset), data, *buf_len);
                     *proto_buf_offset=*proto_buf_offset + *buf_len;
                 }
@@ -1375,9 +1540,10 @@ out:
  * Convert Enduro/X internal format to Network Format.
  * @param 
  */
-expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *proto_len)
+expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, 
+        long *proto_len, long proto_bufsz)
 {
-	int ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     /* Identify the message */
     cmd_br_net_call_t *msg = (cmd_br_net_call_t *)ex_buf;
     char *fn = "exproto_ex2proto";
@@ -1434,7 +1600,7 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, long *
                     cv->msg_type, cv->command, cv->descr);
 
             ret = exproto_build_ex2proto(cv, 0, 0, ex_buf, ex_len, 
-                    proto_buf, proto_len, NULL, NULL);
+                    proto_buf, proto_len, NULL, NULL, proto_bufsz);
 
             break;
         }
@@ -1504,30 +1670,31 @@ exprivate cproto_t * get_descr_from_tag(cproto_t *cur, short tag)
  * @param proto_buf
  * @param proto_len
  * @param ex_buf
- * @param ex_len
+ * @param ex_offs current offset in C struct
  * @param max_struct
- * @return 
+ * @param ex_bufsz - Enduro/X output buffer size
+ * @return EXSUCCED/EXFAIL
  */
 expublic int exproto_proto2ex(char *proto_buf, long proto_len, 
-        char *ex_buf, long *max_struct)
+        char *ex_buf, long *max_struct, long ex_bufsz)
 {
     *max_struct = 0;
     return _exproto_proto2ex(M_cmd_br_net_call_x, proto_buf, proto_len,
-        ex_buf, 0, max_struct, 0, NULL, NULL);
+        ex_buf, 0, max_struct, 0, NULL, NULL, ex_bufsz);
 }
 
 /**
  * Deblock the network message...
  * Hm Also we need to get total len of message, in c structure?
- * @param ex_buf
- * @param ex_len
- * @param proto_buf
- * @param proto_len
+ * @param ex_buf - Enduro/X machine specific C strutures data
+ * @param ex_offset - current offset in machine specific C struct
+ * @param proto_buf - procol received from net
+ * @param proto_len - block len received
  * @return 
  */
 exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
-        char *ex_buf, long ex_len, long *max_struct, int level, 
-        UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data)
+        char *ex_buf, long ex_offset, long *max_struct, int level, 
+        UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz)
 {
     int ret=EXSUCCEED;
     char *fn = "exproto_proto2ex";
@@ -1612,8 +1779,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     loop_keeper = 0;
                     
                     if (EXSUCCEED!=x_nettoc(fld, proto_buf, int_pos, net_len, 
-                            (char *)(ex_buf+ex_len+fld->offset), &bfldlen, 
-                            debug, sizeof(debug)))
+                            (char *)(ex_buf+ex_offset+fld->offset), &bfldlen, 
+                            debug, sizeof(debug), (ex_bufsz - (ex_offset+fld->offset))))
                     {
                         NDRX_LOG(log_error, "Failed to convert from net"
                                 " tag: %x!", net_tag);
@@ -1658,7 +1825,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     /* This uses sub-table, lets request function to 
                      * find out the table! 
                      */
-                    if (NULL==(cv = fld->p_classify_fn(ex_buf, ex_len)))
+                    if (NULL==(cv = fld->p_classify_fn(ex_buf, ex_offset)))
                     {
                         /* We should have something! */
                         ret=EXFAIL;
@@ -1668,8 +1835,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     {
                         ret = _exproto_proto2ex(cv->tab[level+1], 
                                     (char *)(proto_buf+int_pos), net_len, 
-                                    ex_buf, ex_len+fld->offset,
-                                    max_struct, level+1, NULL, NULL);
+                                    ex_buf, ex_offset+fld->offset,
+                                    max_struct, level+1, NULL, NULL, ex_bufsz);
                         
                         if (EXSUCCEED!=ret)
                         {
@@ -1688,8 +1855,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     
                     ret = _exproto_proto2ex(fld->include, 
                                     (char *)(proto_buf+int_pos), net_len, 
-                                    ex_buf, ex_len+fld->offset,
-                                    max_struct, level+1, NULL, NULL);
+                                    ex_buf, ex_offset+fld->offset,
+                                    max_struct, level+1, NULL, NULL, ex_bufsz);
 
                     if (EXSUCCEED!=ret)
                     {
@@ -1705,8 +1872,8 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             loop_keeper);
                     ret = _exproto_proto2ex(fld->include, 
                                     (char *)(proto_buf+int_pos), net_len, 
-                                    ex_buf, (ex_len+fld->offset + fld->elem_size*loop_keeper),
-                                    max_struct, level+1, NULL, NULL);
+                                    ex_buf, (ex_offset+fld->offset + fld->elem_size*loop_keeper),
+                                    max_struct, level+1, NULL, NULL, ex_bufsz);
                     
                     if (EXSUCCEED!=ret)
                     {
@@ -1719,9 +1886,9 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     
                 case XATMIBUF:
                 {
-                    short *buffer_type = (short *)(ex_buf+ex_len+fld->buftype_offset);
-                    long *buf_len = (long *)(ex_buf+ex_len+fld->counter_offset);
-                    char *data = (char *)(ex_buf+ex_len+fld->offset);
+                    short *buffer_type = (short *)(ex_buf+ex_offset+fld->buftype_offset);
+                    long *buf_len = (long *)(ex_buf+ex_offset+fld->counter_offset);
+                    char *data = (char *)(ex_buf+ex_offset+fld->offset);
                     
                     
                     NDRX_LOG(log_debug, "Processing XATMIBUF");
@@ -1729,9 +1896,9 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     if (*buffer_type == BUF_TYPE_UBF || 
                             *buffer_type == BUF_TYPE_VIEW)
                     {   
-                        UBFH *p_ub = (UBFH *)(ex_buf+ex_len+fld->offset);
+                        UBFH *p_ub = (UBFH *)(ex_buf+ex_offset+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
-                        int tmp_buf_size = /*PMSGMAX*/NDRX_MSGSIZEMAX - ex_len - fld->offset;
+                        int tmp_buf_size = /*PMSGMAX*/NDRX_MSGSIZEMAX - ex_offset - fld->offset;
 
                         
                         NDRX_DUMP(log_debug, "Got UBF buffer", 
@@ -1741,7 +1908,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                          */
                         NDRX_LOG(log_debug, "Initial FB size: %d (p_ub=%p "
                                 "(ex_buf %p + ex_len %ld + fld->offset %ld))", 
-                                tmp_buf_size, p_ub, ex_buf, ex_len, fld->offset);
+                                tmp_buf_size, p_ub, ex_buf, ex_offset, fld->offset);
                         
                         if (EXSUCCEED!=Binit(p_ub, tmp_buf_size))
                         {
@@ -1759,7 +1926,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                      * we can install them in FB! */
                                     (char *)f, 0,
                                     max_struct, level,
-                                    p_ub, f);
+                                    p_ub, f, sizeof(tmpf));
                         
                         if (EXSUCCEED!=ret)
                         {
@@ -1809,6 +1976,10 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         NDRX_LOG(log_debug, "XATMIBUF - other type buffer, "
                                                 "just copy memory... (%d bytes)!", 
                                                 *buf_len);
+                        /* Validate output buffer sizes */
+                        
+                        CHECK_EX_BUFSZ(ret, ex_offset, fld->offset, ex_offset, *buf_len);
+                                
                         /* Just copy off the memory & setup sizes (max offset) */
                         memcpy(data, (char *)(proto_buf+int_pos), *buf_len);
                         
@@ -1834,9 +2005,9 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 NDRX_LOG(log_debug, "I am here! %ld vs %ld", 
                                     fld->offset + ex_len + *p_fld_len, *max_struct);
                 */
-                if ((fld->offset + ex_len + *p_fld_len) > *max_struct)
+                if ((fld->offset + ex_offset + *p_fld_len) > *max_struct)
                 {
-                    *max_struct = fld->offset +ex_len+ *p_fld_len;
+                    *max_struct = fld->offset +ex_offset+ *p_fld_len;
                     /*
                     NDRX_LOG(log_debug, "max len=>%ld", *max_struct);
                      */
