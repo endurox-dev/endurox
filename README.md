@@ -163,6 +163,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 5.0.10 released on 13/10/2017. (stable) Feature #232, Feature #231, -O2 optimization by default
 
+- Version 5.1.1  released on 13/10/2017. (development) Bug #238, Bug #236, Feature #127
+
 # Build configurations
 
 ## Configure make with: 
