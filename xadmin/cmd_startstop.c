@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -172,6 +173,8 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
+    short keep_running_ndrxd;
+    
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -180,6 +183,8 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+        {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
     };
         
@@ -247,7 +252,9 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
-    short complete = EXFALSE;
+    short keep_running_ndrxd = EXFALSE;
+    short dummy;
+    
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -257,8 +264,10 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
-        {'c', BFLD_SHORT, (void *)&complete, 0, 
-                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Complete shutdown (ndrxd off)"},
+        {'c', BFLD_SHORT, (void *)&dummy, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Left for compatibility"},
+        {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
     };
         
@@ -298,7 +307,15 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     }
     
     /* prepare for call */
-    call.complete_shutdown = complete;
+    if (keep_running_ndrxd)
+    {
+        call.complete_shutdown = EXFALSE;
+    }
+    else
+    {
+        /* do full shutdown by default */
+        call.complete_shutdown = EXTRUE;
+    }
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
 
@@ -334,6 +351,7 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
+    short keep_running_ndrxd = EXFALSE;
     
     /* just verify that content is ok: */
     ncloptmap_t clopt[] =
@@ -345,6 +363,9 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                                 
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+                                
+        {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
     };
         
@@ -364,6 +385,17 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     cmd.ndrxd_cmd = NDRXD_COM_STOP_RQ;
     if (EXSUCCEED==(ret=cmd_stop(&cmd, argc, argv, p_have_next)))
     {
+        if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
+        {
+            /* let daemon to finish the exit process (unlink pid file/queues) */
+            sleep(2); /* this will be interrupted when we got sig child */
+            if (!is_ndrxd_running() && EXFAIL==ndrx_start_idle())
+            {
+                fprintf(stderr, "Failed to start idle instance of ndrxd!");
+                EXFAIL_OUT(ret);
+            }
+        }
+        
         cmd.ndrxd_cmd = NDRXD_COM_START_RQ;
         ret = cmd_start(&cmd, argc, argv, p_have_next);
     }
