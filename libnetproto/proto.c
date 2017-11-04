@@ -469,19 +469,21 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
  * 
  * 
  * @param fld
- * @param c_buf_in
- * @param c_buf_out
- * @param net_buf_len
+ * @param c_buf_in - input data
+ * @param proto_buf - output protocol buffer
+ * @param proto_bufsz - total buffer size
+ * @param proto_buf_offset - current offset in protocol buffer
  * @param c_buf_in_len - data len, only for carray.
  * @return 
  */
 exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,  
-                        char *c_buf_out, int c_buf_len, long *net_buf_len,
+                        char *proto_buf, int proto_bufsz, long *proto_buf_offset,
                         char *debug_buf, int debug_len, int c_buf_in_len)
 {
     int ret=EXSUCCEED;
     int i;
     int conv_bcd = EXFALSE;
+    char numbuf[1024];
     
     /* Bug #182 added ABS fix. */
     switch (fld->fld_type)
@@ -491,9 +493,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             short *tmp = (short *)c_buf_in;
             short tmp_abs = (short)abs(*tmp);
             MKSIGN;
-
-            snprintf(c_buf_out, c_buf_len, "%hd%c", tmp_abs, sign);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%hd%c", tmp_abs, sign);
             conv_bcd = EXTRUE;
         }
             break;
@@ -501,18 +501,20 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         {
             long *tmp = (long *)c_buf_in;
             MKSIGN;
-            
-            snprintf(c_buf_out, c_buf_len, "%ld%c", labs(*tmp), sign);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%ld%c", labs(*tmp), sign);
             conv_bcd = EXTRUE;
         }
             break;
         case EXF_CHAR:
         {
             char *tmp = (char *)c_buf_in;
-            c_buf_out[0] = *tmp;
-            c_buf_out[1] = 0;
-            *net_buf_len = 1;
+            
+            CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, 2);
+            
+            proto_buf[*proto_buf_offset] = *tmp;
+            proto_buf[*proto_buf_offset+1] = 0; /* later for strcpy */
+            *proto_buf_offset += 1;
+            
         }
             break;
         case EXF_FLOAT:
@@ -527,8 +529,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             tmp_abs = (float)fabs(tmp_op);
                     
-            snprintf(c_buf_out, c_buf_len, "%.0lf%c", tmp_abs, sign);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%.0lf%c", tmp_abs, sign);
             
             conv_bcd = EXTRUE;
         }
@@ -542,8 +543,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             for (i=0; i<DOUBLE_RESOLUTION; i++)
                 tmp_op*=10.0f;
             
-            snprintf(c_buf_out, c_buf_len, "%.0lf%c", fabs(tmp_op), sign);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%.0lf%c", fabs(tmp_op), sign);
             
             conv_bcd = EXTRUE;
             
@@ -552,68 +552,70 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_STRING:
         {
             /* EOS must be present in c struct! */
-            NDRX_STRNCPY_SAFE(c_buf_out, c_buf_in, c_buf_len);
-            *net_buf_len = strlen(c_buf_out);
+            int len = strlen(c_buf_in);
+            
+            CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, len+1);
+            
+            NDRX_STRNCPY_SAFE((proto_buf+(*proto_buf_offset)), c_buf_in, 
+                    (proto_bufsz - (*proto_buf_offset)) );
+            
+            *proto_buf_offset += len;
         }
             break;
         case EXF_INT:
         {
             int *tmp = (int *)c_buf_in;
             MKSIGN;
-            
-            snprintf(c_buf_out, c_buf_len, "%d%c", abs(*tmp), sign);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%d%c", abs(*tmp), sign);
             conv_bcd = EXTRUE;
-            
         }
             break;
         case EXF_ULONG:
         {
             unsigned long *tmp = (unsigned long *)c_buf_in;
-            snprintf(c_buf_out, c_buf_len, "%lu", *tmp);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%lu", *tmp);
             conv_bcd = EXTRUE;
         }
             break;
         case EXF_UINT:
         {
             unsigned *tmp = (unsigned *)c_buf_in;
-            snprintf(c_buf_out, c_buf_len, "%u", *tmp);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%u", *tmp);
             conv_bcd = EXTRUE;
         }    
         case EXF_USHORT:
         {
             unsigned short *tmp = (unsigned short *)c_buf_in;
-            snprintf(c_buf_out, c_buf_len, "%hu", *tmp);
-            *net_buf_len = strlen(c_buf_out);
+            snprintf(numbuf, sizeof(numbuf), "%hu", *tmp);
             conv_bcd = EXTRUE;
         }    
             break;
         case EXF_NTIMER:
         {
             ndrx_stopwatch_t *tmp = (ndrx_stopwatch_t *)c_buf_in;
-            snprintf(c_buf_out, c_buf_len, "%020ld%020ld", tmp->t.tv_sec, 
+            snprintf(numbuf, sizeof(numbuf), "%020ld%020ld", tmp->t.tv_sec, 
                     tmp->t.tv_nsec);
-            NDRX_LOG(6, "time=>[%s]", c_buf_out);
+            NDRX_LOG(6, "time=>[%s]", numbuf);
             
             NDRX_LOG(log_debug, "timer = (tv_sec: %ld tv_nsec: %ld)"
                                     " delta: %d", 
                                     tmp->t.tv_sec,  tmp->t.tv_nsec, 
                                     ndrx_stopwatch_get_delta_sec(tmp));
             
-            *net_buf_len = strlen(c_buf_out);
             conv_bcd = EXTRUE;
         }    
             break;
         case EXF_CARRAY:
         {
             /* Support for carray field. */
-            memcpy(c_buf_out, c_buf_in, c_buf_in_len);
-            *net_buf_len = c_buf_in_len;
+            
+            CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, c_buf_in_len);
+            
+            memcpy(proto_buf+*proto_buf_offset, c_buf_in, c_buf_in_len);
+            *proto_buf_offset = c_buf_in_len;
             
             /* Built representation for user... for debug purposes... */
-            ndrx_build_printable_string(debug_buf, debug_len, c_buf_out, c_buf_in_len);
+            ndrx_build_printable_string(debug_buf, debug_len, proto_buf, c_buf_in_len);
         }    
             break;
                 
@@ -628,14 +630,14 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     
     if (EXF_CARRAY!=fld->fld_type)
     {
-        NDRX_STRNCPY_SAFE(debug_buf, c_buf_out, c_buf_len);
+        NDRX_STRNCPY_SAFE(debug_buf, proto_buf, proto_bufsz);
     }
     /* else should be set up already by carray func! */
     
     /* Perform length check here... */
     if (conv_bcd)
     {
-        char bcd_tmp[128];
+        char bcd_tmp[1024];
         char tmp_char_buf[3];
         char c;
         int hex_dec;
@@ -643,18 +645,20 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         int bcd_tmp_len;
         int bcd_pos = 0;
         
-        if (strlen(c_buf_out) % 2)
+        if (strlen(numbuf) % 2)
         {
             NDRX_STRCPY_SAFE(bcd_tmp, "0");
-            strcat(bcd_tmp, c_buf_out);
+            strcat(bcd_tmp, numbuf);
         }
         else
         {
-            NDRX_STRCPY_SAFE(bcd_tmp, c_buf_out);
+            NDRX_STRCPY_SAFE(bcd_tmp, numbuf);
         }
         
         /* Now process char by char */
         bcd_tmp_len = strlen(bcd_tmp);
+        
+        CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, (bcd_tmp_len / 2));
         
         for (j=0; j<bcd_tmp_len; j+=2)
         {
@@ -664,12 +668,12 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             /*NDRX_LOG(6, "got hex 0x%x", hex_dec);*/
             
-            c_buf_out[bcd_pos] = (char)(hex_dec & 0xff);
+            proto_buf[(*proto_buf_offset) + bcd_pos] = (char)(hex_dec & 0xff);
             /*NDRX_LOG(6, "put[%d] %x",bcd_pos, c_buf_out[bcd_pos]);*/
                     
             bcd_pos++;
         }
-        *net_buf_len = bcd_tmp_len / 2;
+        *proto_buf_offset += (bcd_tmp_len / 2);
     }
     
 out:
@@ -1146,15 +1150,35 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* TODO: Move to direct buffer setup. Including estimating of
                  * max fixed data type sizes... */
+                
+                long len_offset;
+                long off_start;
+                long off_stop;
+                
+                /* This is sub tlv/ thus put tag... */
+                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, proto_buf_offset, 
+                        proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                
+                len_offset = *proto_buf_offset;
+                
+                CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
+                *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
+                
+                off_start = *proto_buf_offset;
+                
                 if ( UBF_TAG_BFLD_CARRAY == p->tag)
                 {
-                    ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, 
-                            sizeof(tmp), &len, debug, sizeof(debug), p_ub_data->bfldlen);
+                    ret = x_ctonet(p, ex_buf+offset+p->offset, proto_buf, 
+                            proto_bufsz, proto_buf_offset, debug, sizeof(debug), 
+                            p_ub_data->bfldlen);
                 }
                 else
                 {
-                    ret = x_ctonet(p, ex_buf+offset+p->offset, tmp, sizeof(tmp),
-                            &len, debug, sizeof(debug), 0);
+                    ret = x_ctonet(p, ex_buf+offset+p->offset, proto_buf, proto_bufsz,
+                            proto_buf_offset, debug, sizeof(debug), 0);
                 }
                 
                 if (EXSUCCEED!=ret)
