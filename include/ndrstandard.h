@@ -107,7 +107,7 @@ extern "C" {
     
 #define NDRX_ATMI_MSG_MAX_SIZE   65536 /* internal */
     
-#define NDRX_STACK_MSG_FACTOR        20 /* max number of messages in stack */
+#define NDRX_STACK_MSG_FACTOR        30 /* max number of messages in stack */
     
 /* Feature #127 
  * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
