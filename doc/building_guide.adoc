@@ -48,6 +48,8 @@ set a appropriate limits. To do this automatically at system startup,
 Linuxes which supports '/etc/rc.local', must add following lines before "exit 0":
 
 ---------------------------------------------------------------------
+#!/bin/bash
+
 # Mount the /dev/mqueue
 # Not for Debian 8.x: queue is readly mounted, thus test:
 

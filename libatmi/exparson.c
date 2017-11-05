@@ -1,7 +1,7 @@
 /*
  Exparson
  based on parson ( http://kgabis.github.com/parson/ )
- Copyright (c) 2012 - 2015 Krzysztof Gabis
+ Copyright (c) 2012 - 2017 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,10 @@
  THE SOFTWARE.
 */
 #ifdef _MSC_VER
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#endif
+#endif /* _CRT_SECURE_NO_WARNINGS */
+#endif /* _MSC_VER */
 
 #include "exparson.h"
 
@@ -32,12 +34,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <errno.h>
 
-#define STARTING_CAPACITY         15
-#define ARRAY_MAX_CAPACITY    122880 /* 15*(2^13) */
-#define OBJECT_MAX_CAPACITY      960 /* 15*(2^6)  */
-#define MAX_NESTING               19
-#define DOUBLE_SERIALIZATION_FORMAT "%f"
+/* Apparently sscanf is not implemented in some "standard" libraries, so don't use it, if you
+ * don't have to. */
+#define sscanf THINK_TWICE_ABOUT_USING_SSCANF
+
+#define STARTING_CAPACITY 16
+#define MAX_NESTING       2048
+#define FLOAT_FORMAT      "%1.17g"
 
 #define SIZEOF_TOKEN(a)       (sizeof(a) - 1)
 #define SKIP_CHAR(str)        ((*str)++)
@@ -63,11 +68,13 @@ typedef union exjson_value_value {
 } EXJSON_Value_Value;
 
 struct exjson_value_t {
-    EXJSON_Value_Type     type;
-    EXJSON_Value_Value    value;
+    EXJSON_Value      *parent;
+    EXJSON_Value_Type  type;
+    EXJSON_Value_Value value;
 };
 
 struct exjson_object_t {
+    EXJSON_Value  *wrapping_value;
     char       **names;
     EXJSON_Value **values;
     size_t       count;
@@ -75,6 +82,7 @@ struct exjson_object_t {
 };
 
 struct exjson_array_t {
+    EXJSON_Value  *wrapping_value;
     EXJSON_Value **items;
     size_t       count;
     size_t       capacity;
@@ -85,31 +93,32 @@ static char * read_file(const char *filename);
 static void   remove_comments(char *string, const char *start_token, const char *end_token);
 static char * exparson_strndup(const char *string, size_t n);
 static char * exparson_strdup(const char *string);
-static int    is_utf16_hex(const unsigned char *string);
+static int    hex_char_to_int(char c);
+static int    parse_utf16_hex(const char *string, unsigned int *result);
 static int    num_bytes_in_utf8_sequence(unsigned char c);
 static int    verify_utf8_sequence(const unsigned char *string, int *len);
 static int    is_valid_utf8(const char *string, size_t string_len);
 static int    is_decimal(const char *string, size_t length);
 
 /* EXJSON Object */
-static EXJSON_Object * exjson_object_init(void);
+static EXJSON_Object * exjson_object_init(EXJSON_Value *wrapping_value);
 static EXJSON_Status   exjson_object_add(EXJSON_Object *object, const char *name, EXJSON_Value *value);
 static EXJSON_Status   exjson_object_resize(EXJSON_Object *object, size_t new_capacity);
 static EXJSON_Value  * exjson_object_nget_value(const EXJSON_Object *object, const char *name, size_t n);
 static void          exjson_object_free(EXJSON_Object *object);
 
 /* EXJSON Array */
+static EXJSON_Array * exjson_array_init(EXJSON_Value *wrapping_value);
 static EXJSON_Status  exjson_array_add(EXJSON_Array *array, EXJSON_Value *value);
 static EXJSON_Status  exjson_array_resize(EXJSON_Array *array, size_t new_capacity);
 static void         exjson_array_free(EXJSON_Array *array);
-static EXJSON_Value * exjson_value_init_array_ext(EXJSON_Array *array);
 
 /* EXJSON Value */
 static EXJSON_Value * exjson_value_init_string_no_copy(char *string);
 
 /* Parser */
-static void         skip_quotes(const char **string);
-static int          parse_utf_16(const char **unprocessed, char **processed);
+static EXJSON_Status  skip_quotes(const char **string);
+static int          parse_utf16(const char **unprocessed, char **processed);
 static char *       process_string(const char *input, size_t len);
 static char *       get_quoted_string(const char **string);
 static EXJSON_Value * parse_object_value(const char **string, size_t nesting);
@@ -129,8 +138,9 @@ static int    append_string(char *buf, const char *string);
 /* Various */
 static char * exparson_strndup(const char *string, size_t n) {
     char *output_string = (char*)exparson_malloc(n + 1);
-    if (!output_string)
+    if (!output_string) {
         return NULL;
+    }
     output_string[n] = '\0';
     strncpy(output_string, string, n);
     return output_string;
@@ -140,8 +150,31 @@ static char * exparson_strdup(const char *string) {
     return exparson_strndup(string, strlen(string));
 }
 
-static int is_utf16_hex(const unsigned char *s) {
-    return isxdigit(s[0]) && isxdigit(s[1]) && isxdigit(s[2]) && isxdigit(s[3]);
+static int hex_char_to_int(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return -1;
+}
+
+static int parse_utf16_hex(const char *s, unsigned int *result) {
+    int x1, x2, x3, x4;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0' || s[3] == '\0') {
+        return 0;
+    }
+    x1 = hex_char_to_int(s[0]);
+    x2 = hex_char_to_int(s[1]);
+    x3 = hex_char_to_int(s[2]);
+    x4 = hex_char_to_int(s[3]);
+    if (x1 == -1 || x2 == -1 || x3 == -1 || x4 == -1) {
+        return 0;
+    }
+    *result = (unsigned int)((x1 << 12) | (x2 << 8) | (x3 << 4) | x4);
+    return 1;
 }
 
 static int num_bytes_in_utf8_sequence(unsigned char c) {
@@ -162,7 +195,7 @@ static int num_bytes_in_utf8_sequence(unsigned char c) {
 static int verify_utf8_sequence(const unsigned char *string, int *len) {
     unsigned int cp = 0;
     *len = num_bytes_in_utf8_sequence(string[0]);
-    
+
     if (*len == 1) {
         cp = string[0];
     } else if (*len == 2 && IS_CONT(string[1])) {
@@ -180,24 +213,24 @@ static int verify_utf8_sequence(const unsigned char *string, int *len) {
     } else {
         return 0;
     }
-    
+
     /* overlong encodings */
     if ((cp < 0x80    && *len > 1) ||
         (cp < 0x800   && *len > 2) ||
         (cp < 0x10000 && *len > 3)) {
         return 0;
     }
-    
+
     /* invalid unicode */
     if (cp > 0x10FFFF) {
         return 0;
     }
-    
+
     /* surrogate halves */
     if (cp >= 0xD800 && cp <= 0xDFFF) {
         return 0;
     }
-    
+
     return 1;
 }
 
@@ -214,13 +247,17 @@ static int is_valid_utf8(const char *string, size_t string_len) {
 }
 
 static int is_decimal(const char *string, size_t length) {
-    if (length > 1 && string[0] == '0' && string[1] != '.')
+    if (length > 1 && string[0] == '0' && string[1] != '.') {
         return 0;
-    if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.')
+    }
+    if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
         return 0;
-    while (length--)
-        if (strchr("xX", string[length]))
+    }
+    while (length--) {
+        if (strchr("xX", string[length])) {
             return 0;
+        }
+    }
     return 1;
 }
 
@@ -229,8 +266,9 @@ static char * read_file(const char * filename) {
     size_t file_size;
     long pos;
     char *file_contents;
-    if (!fp)
+    if (!fp) {
         return NULL;
+    }
     fseek(fp, 0L, SEEK_END);
     pos = ftell(fp);
     if (pos < 0) {
@@ -262,8 +300,9 @@ static void remove_comments(char *string, const char *start_token, const char *e
     char *ptr = NULL, current_char;
     size_t start_token_len = strlen(start_token);
     size_t end_token_len = strlen(end_token);
-    if (start_token_len == 0 || end_token_len == 0)
-    	return;
+    if (start_token_len == 0 || end_token_len == 0) {
+        return;
+    }
     while ((current_char = *string) != '\0') {
         if (current_char == '\\' && !escaped) {
             escaped = 1;
@@ -272,15 +311,18 @@ static void remove_comments(char *string, const char *start_token, const char *e
         } else if (current_char == '\"' && !escaped) {
             in_string = !in_string;
         } else if (!in_string && strncmp(string, start_token, start_token_len) == 0) {
-			for(i = 0; i < start_token_len; i++)
+            for(i = 0; i < start_token_len; i++) {
                 string[i] = ' ';
-        	string = string + start_token_len;
+            }
+            string = string + start_token_len;
             ptr = strstr(string, end_token);
-            if (!ptr)
+            if (!ptr) {
                 return;
-            for (i = 0; i < (ptr - string) + end_token_len; i++)
+            }
+            for (i = 0; i < (ptr - string) + end_token_len; i++) {
                 string[i] = ' ';
-          	string = ptr + end_token_len - 1;
+            }
+            string = ptr + end_token_len - 1;
         }
         escaped = 0;
         string++;
@@ -288,10 +330,12 @@ static void remove_comments(char *string, const char *start_token, const char *e
 }
 
 /* EXJSON Object */
-static EXJSON_Object * exjson_object_init(void) {
+static EXJSON_Object * exjson_object_init(EXJSON_Value *wrapping_value) {
     EXJSON_Object *new_obj = (EXJSON_Object*)exparson_malloc(sizeof(EXJSON_Object));
-    if (!new_obj)
+    if (new_obj == NULL) {
         return NULL;
+    }
+    new_obj->wrapping_value = wrapping_value;
     new_obj->names = (char**)NULL;
     new_obj->values = (EXJSON_Value**)NULL;
     new_obj->capacity = 0;
@@ -304,19 +348,21 @@ static EXJSON_Status exjson_object_add(EXJSON_Object *object, const char *name, 
     if (object == NULL || name == NULL || value == NULL) {
         return EXJSONFailure;
     }
+    if (exjson_object_get_value(object, name) != NULL) {
+        return EXJSONFailure;
+    }
     if (object->count >= object->capacity) {
         size_t new_capacity = MAX(object->capacity * 2, STARTING_CAPACITY);
-        if (new_capacity > OBJECT_MAX_CAPACITY)
+        if (exjson_object_resize(object, new_capacity) == EXJSONFailure) {
             return EXJSONFailure;
-        if (exjson_object_resize(object, new_capacity) == EXJSONFailure)
-            return EXJSONFailure;
+        }
     }
-    if (exjson_object_get_value(object, name) != NULL)
-        return EXJSONFailure;
     index = object->count;
     object->names[index] = exparson_strdup(name);
-    if (object->names[index] == NULL)
+    if (object->names[index] == NULL) {
         return EXJSONFailure;
+    }
+    value->parent = exjson_object_get_wrapping_value(object);
     object->values[index] = value;
     object->count++;
     return EXJSONSuccess;
@@ -331,17 +377,15 @@ static EXJSON_Status exjson_object_resize(EXJSON_Object *object, size_t new_capa
         new_capacity == 0) {
             return EXJSONFailure; /* Shouldn't happen */
     }
-    
     temp_names = (char**)exparson_malloc(new_capacity * sizeof(char*));
-    if (temp_names == NULL)
-        return EXJSONFailure;
-    
-    temp_values = (EXJSON_Value**)exparson_malloc(new_capacity * sizeof(EXJSON_Value*));
     if (temp_names == NULL) {
+        return EXJSONFailure;
+    }
+    temp_values = (EXJSON_Value**)exparson_malloc(new_capacity * sizeof(EXJSON_Value*));
+    if (temp_values == NULL) {
         exparson_free(temp_names);
         return EXJSONFailure;
     }
-    
     if (object->names != NULL && object->values != NULL && object->count > 0) {
         memcpy(temp_names, object->names, object->count * sizeof(char*));
         memcpy(temp_values, object->values, object->count * sizeof(EXJSON_Value*));
@@ -354,27 +398,25 @@ static EXJSON_Status exjson_object_resize(EXJSON_Object *object, size_t new_capa
     return EXJSONSuccess;
 }
 
-/* Madars Vitolins, exjson iteration... */
-EXJSON_Value * exjson_object_nget_value_n(const EXJSON_Object *object, size_t n) {
-	return object->values[n];
-}
-
 static EXJSON_Value * exjson_object_nget_value(const EXJSON_Object *object, const char *name, size_t n) {
     size_t i, name_length;
     for (i = 0; i < exjson_object_get_count(object); i++) {
         name_length = strlen(object->names[i]);
-        if (name_length != n)
+        if (name_length != n) {
             continue;
-        if (strncmp(object->names[i], name, n) == 0)
+        }
+        if (strncmp(object->names[i], name, n) == 0) {
             return object->values[i];
+        }
     }
     return NULL;
 }
 
 static void exjson_object_free(EXJSON_Object *object) {
-    while(object->count--) {
-        exparson_free(object->names[object->count]);
-        exjson_value_free(object->values[object->count]);
+    size_t i;
+    for (i = 0; i < object->count; i++) {
+        exparson_free(object->names[i]);
+        exjson_value_free(object->values[i]);
     }
     exparson_free(object->names);
     exparson_free(object->values);
@@ -382,10 +424,12 @@ static void exjson_object_free(EXJSON_Object *object) {
 }
 
 /* EXJSON Array */
-EXJSON_Array * exjson_array_init(void) {
+static EXJSON_Array * exjson_array_init(EXJSON_Value *wrapping_value) {
     EXJSON_Array *new_array = (EXJSON_Array*)exparson_malloc(sizeof(EXJSON_Array));
-    if (!new_array)
+    if (new_array == NULL) {
         return NULL;
+    }
+    new_array->wrapping_value = wrapping_value;
     new_array->items = (EXJSON_Value**)NULL;
     new_array->capacity = 0;
     new_array->count = 0;
@@ -395,11 +439,11 @@ EXJSON_Array * exjson_array_init(void) {
 static EXJSON_Status exjson_array_add(EXJSON_Array *array, EXJSON_Value *value) {
     if (array->count >= array->capacity) {
         size_t new_capacity = MAX(array->capacity * 2, STARTING_CAPACITY);
-        if (new_capacity > ARRAY_MAX_CAPACITY)
+        if (exjson_array_resize(array, new_capacity) == EXJSONFailure) {
             return EXJSONFailure;
-        if (exjson_array_resize(array, new_capacity) == EXJSONFailure)
-            return EXJSONFailure;
+        }
     }
+    value->parent = exjson_array_get_wrapping_value(array);
     array->items[array->count] = value;
     array->count++;
     return EXJSONSuccess;
@@ -410,7 +454,7 @@ static EXJSON_Status exjson_array_resize(EXJSON_Array *array, size_t new_capacit
     if (new_capacity == 0) {
         return EXJSONFailure;
     }
-    new_items = exparson_malloc(new_capacity * sizeof(EXJSON_Value*));
+    new_items = (EXJSON_Value**)exparson_malloc(new_capacity * sizeof(EXJSON_Value*));
     if (new_items == NULL) {
         return EXJSONFailure;
     }
@@ -424,8 +468,10 @@ static EXJSON_Status exjson_array_resize(EXJSON_Array *array, size_t new_capacit
 }
 
 static void exjson_array_free(EXJSON_Array *array) {
-    while (array->count--)
-        exjson_value_free(array->items[array->count]);
+    size_t i;
+    for (i = 0; i < array->count; i++) {
+        exjson_value_free(array->items[i]);
+    }
     exparson_free(array->items);
     exparson_free(array);
 }
@@ -433,69 +479,73 @@ static void exjson_array_free(EXJSON_Array *array) {
 /* EXJSON Value */
 static EXJSON_Value * exjson_value_init_string_no_copy(char *string) {
     EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
+    if (!new_value) {
         return NULL;
+    }
+    new_value->parent = NULL;
     new_value->type = EXJSONString;
     new_value->value.string = string;
     return new_value;
 }
 
-static EXJSON_Value * exjson_value_init_array_ext(EXJSON_Array *array) {
-    EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
-        return NULL;
-    new_value->type = EXJSONArray;
-    new_value->value.array = array;
-    return new_value;
-}
-
-
 /* Parser */
-static void skip_quotes(const char **string) {
+static EXJSON_Status skip_quotes(const char **string) {
+    if (**string != '\"') {
+        return EXJSONFailure;
+    }
     SKIP_CHAR(string);
     while (**string != '\"') {
-        if (**string == '\0')
-            return;
-        if (**string == '\\') {
+        if (**string == '\0') {
+            return EXJSONFailure;
+        } else if (**string == '\\') {
             SKIP_CHAR(string);
-            if (**string == '\0')
-                return;
+            if (**string == '\0') {
+                return EXJSONFailure;
+            }
         }
         SKIP_CHAR(string);
     }
     SKIP_CHAR(string);
+    return EXJSONSuccess;
 }
 
-static int parse_utf_16(const char **unprocessed, char **processed) {
+static int parse_utf16(const char **unprocessed, char **processed) {
     unsigned int cp, lead, trail;
+    int parse_succeeded = 0;
     char *processed_ptr = *processed;
     const char *unprocessed_ptr = *unprocessed;
     unprocessed_ptr++; /* skips u */
-    if (!is_utf16_hex((const unsigned char*)unprocessed_ptr) || sscanf(unprocessed_ptr, "%4x", &cp) == EOF)
-            return EXJSONFailure;
+    parse_succeeded = parse_utf16_hex(unprocessed_ptr, &cp);
+    if (!parse_succeeded) {
+        return EXJSONFailure;
+    }
     if (cp < 0x80) {
-        *processed_ptr = cp; /* 0xxxxxxx */
+        processed_ptr[0] = (char)cp; /* 0xxxxxxx */
     } else if (cp < 0x800) {
-        *processed_ptr++ = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
-        *processed_ptr   = ((cp     ) & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[0] = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
+        processed_ptr[1] = ((cp)      & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr += 1;
     } else if (cp < 0xD800 || cp > 0xDFFF) {
-        *processed_ptr++ = ((cp >> 12) & 0x0F) | 0xE0; /* 1110xxxx */
-        *processed_ptr++ = ((cp >> 6)  & 0x3F) | 0x80; /* 10xxxxxx */
-        *processed_ptr   = ((cp     )  & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[0] = ((cp >> 12) & 0x0F) | 0xE0; /* 1110xxxx */
+        processed_ptr[1] = ((cp >> 6)  & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[2] = ((cp)       & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr += 2;
     } else if (cp >= 0xD800 && cp <= 0xDBFF) { /* lead surrogate (0xD800..0xDBFF) */
         lead = cp;
         unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
-        if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u' || /* starts with \u? */
-            !is_utf16_hex((const unsigned char*)unprocessed_ptr)          ||
-            sscanf(unprocessed_ptr, "%4x", &trail) == EOF           ||
-            trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
-                return EXJSONFailure;
+        if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u') {
+            return EXJSONFailure;
         }
-        cp = ((((lead-0xD800)&0x3FF)<<10)|((trail-0xDC00)&0x3FF))+0x010000;
-        *processed_ptr++ = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
-        *processed_ptr++ = (((cp >> 12) & 0x3F) | 0x80); /* 10xxxxxx */
-        *processed_ptr++ = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
-        *processed_ptr   = (((cp     )  & 0x3F) | 0x80); /* 10xxxxxx */
+        parse_succeeded = parse_utf16_hex(unprocessed_ptr, &trail);
+        if (!parse_succeeded || trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
+            return EXJSONFailure;
+        }
+        cp = ((((lead - 0xD800) & 0x3FF) << 10) | ((trail - 0xDC00) & 0x3FF)) + 0x010000;
+        processed_ptr[0] = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
+        processed_ptr[1] = (((cp >> 12) & 0x3F) | 0x80); /* 10xxxxxx */
+        processed_ptr[2] = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
+        processed_ptr[3] = (((cp)       & 0x3F) | 0x80); /* 10xxxxxx */
+        processed_ptr += 3;
     } else { /* trail surrogate before lead surrogate */
         return EXJSONFailure;
     }
@@ -512,9 +562,12 @@ static char* process_string(const char *input, size_t len) {
     const char *input_ptr = input;
     size_t initial_size = (len + 1) * sizeof(char);
     size_t final_size = 0;
-    char *output = (char*)exparson_malloc(initial_size);
-    char *output_ptr = output;
-    char *resized_output = NULL;
+    char *output = NULL, *output_ptr = NULL, *resized_output = NULL;
+    output = (char*)exparson_malloc(initial_size);
+    if (output == NULL) {
+        goto error;
+    }
+    output_ptr = output;
     while ((*input_ptr != '\0') && (size_t)(input_ptr - input) < len) {
         if (*input_ptr == '\\') {
             input_ptr++;
@@ -528,8 +581,9 @@ static char* process_string(const char *input, size_t len) {
                 case 'r':  *output_ptr = '\r'; break;
                 case 't':  *output_ptr = '\t'; break;
                 case 'u':
-                    if (parse_utf_16(&input_ptr, &output_ptr) == EXJSONFailure)
+                    if (parse_utf16(&input_ptr, &output_ptr) == EXJSONFailure) {
                         goto error;
+                    }
                     break;
                 default:
                     goto error;
@@ -545,9 +599,11 @@ static char* process_string(const char *input, size_t len) {
     *output_ptr = '\0';
     /* resize to new length */
     final_size = (size_t)(output_ptr-output) + 1;
+    /* todo: don't resize if final_size == initial_size */
     resized_output = (char*)exparson_malloc(final_size);
-    if (resized_output == NULL)
+    if (resized_output == NULL) {
         goto error;
+    }
     memcpy(resized_output, output, final_size);
     exparson_free(output);
     return resized_output;
@@ -561,16 +617,18 @@ error:
 static char * get_quoted_string(const char **string) {
     const char *string_start = *string;
     size_t string_len = 0;
-    skip_quotes(string);
-    if (**string == '\0')
+    EXJSON_Status status = skip_quotes(string);
+    if (status != EXJSONSuccess) {
         return NULL;
+    }
     string_len = *string - string_start - 2; /* length without quotes */
     return process_string(string_start + 1, string_len);
 }
 
 static EXJSON_Value * parse_value(const char **string, size_t nesting) {
-    if (nesting > MAX_NESTING)
+    if (nesting > MAX_NESTING) {
         return NULL;
+    }
     SKIP_WHITESPACES(string);
     switch (**string) {
         case '{':
@@ -596,8 +654,9 @@ static EXJSON_Value * parse_object_value(const char **string, size_t nesting) {
     EXJSON_Value *output_value = exjson_value_init_object(), *new_value = NULL;
     EXJSON_Object *output_object = exjson_value_get_object(output_value);
     char *new_key = NULL;
-    if (output_value == NULL)
+    if (output_value == NULL || **string != '{') {
         return NULL;
+    }
     SKIP_CHAR(string);
     SKIP_WHITESPACES(string);
     if (**string == '}') { /* empty object */
@@ -606,8 +665,13 @@ static EXJSON_Value * parse_object_value(const char **string, size_t nesting) {
     }
     while (**string != '\0') {
         new_key = get_quoted_string(string);
+        if (new_key == NULL) {
+            exjson_value_free(output_value);
+            return NULL;
+        }
         SKIP_WHITESPACES(string);
-        if (new_key == NULL || **string != ':') {
+        if (**string != ':') {
+            exparson_free(new_key);
             exjson_value_free(output_value);
             return NULL;
         }
@@ -618,16 +682,17 @@ static EXJSON_Value * parse_object_value(const char **string, size_t nesting) {
             exjson_value_free(output_value);
             return NULL;
         }
-        if(exjson_object_add(output_object, new_key, new_value) == EXJSONFailure) {
+        if (exjson_object_add(output_object, new_key, new_value) == EXJSONFailure) {
             exparson_free(new_key);
-            exparson_free(new_value);
+            exjson_value_free(new_value);
             exjson_value_free(output_value);
             return NULL;
         }
         exparson_free(new_key);
         SKIP_WHITESPACES(string);
-        if (**string != ',')
+        if (**string != ',') {
             break;
+        }
         SKIP_CHAR(string);
         SKIP_WHITESPACES(string);
     }
@@ -644,8 +709,9 @@ static EXJSON_Value * parse_object_value(const char **string, size_t nesting) {
 static EXJSON_Value * parse_array_value(const char **string, size_t nesting) {
     EXJSON_Value *output_value = exjson_value_init_array(), *new_array_value = NULL;
     EXJSON_Array *output_array = exjson_value_get_array(output_value);
-    if (!output_value)
+    if (!output_value || **string != '[') {
         return NULL;
+    }
     SKIP_CHAR(string);
     SKIP_WHITESPACES(string);
     if (**string == ']') { /* empty array */
@@ -654,18 +720,19 @@ static EXJSON_Value * parse_array_value(const char **string, size_t nesting) {
     }
     while (**string != '\0') {
         new_array_value = parse_value(string, nesting);
-        if (!new_array_value) {
+        if (new_array_value == NULL) {
             exjson_value_free(output_value);
             return NULL;
         }
-        if(exjson_array_add(output_array, new_array_value) == EXJSONFailure) {
-            exparson_free(new_array_value);
+        if (exjson_array_add(output_array, new_array_value) == EXJSONFailure) {
+            exjson_value_free(new_array_value);
             exjson_value_free(output_value);
             return NULL;
         }
         SKIP_WHITESPACES(string);
-        if (**string != ',')
+        if (**string != ',') {
             break;
+        }
         SKIP_CHAR(string);
         SKIP_WHITESPACES(string);
     }
@@ -682,8 +749,9 @@ static EXJSON_Value * parse_array_value(const char **string, size_t nesting) {
 static EXJSON_Value * parse_string_value(const char **string) {
     EXJSON_Value *value = NULL;
     char *new_string = get_quoted_string(string);
-    if (new_string == NULL)
+    if (new_string == NULL) {
         return NULL;
+    }
     value = exjson_value_init_string_no_copy(new_string);
     if (value == NULL) {
         exparson_free(new_string);
@@ -707,15 +775,14 @@ static EXJSON_Value * parse_boolean_value(const char **string) {
 
 static EXJSON_Value * parse_number_value(const char **string) {
     char *end;
-    double number = strtod(*string, &end);
-    EXJSON_Value *output_value;
-    if (is_decimal(*string, end - *string)) {
-        *string = end;
-        output_value = exjson_value_init_number(number);
-    } else {
-        output_value = NULL;
+    double number = 0;
+    errno = 0;
+    number = strtod(*string, &end);
+    if (errno || !is_decimal(*string, end - *string)) {
+        return NULL;
     }
-    return output_value;
+    *string = end;
+    return exjson_value_init_number(number);
 }
 
 static EXJSON_Value * parse_null_value(const char **string) {
@@ -728,14 +795,14 @@ static EXJSON_Value * parse_null_value(const char **string) {
 }
 
 /* Serialization */
-#define APPEND_STRING(str) do { written = append_string(buf, (str)); \
-                                if (written < 0) { return -1; } \
-                                if (buf != NULL) { buf += written; } \
+#define APPEND_STRING(str) do { written = append_string(buf, (str));\
+                                if (written < 0) { return -1; }\
+                                if (buf != NULL) { buf += written; }\
                                 written_total += written; } while(0)
 
-#define APPEND_INDENT(level) do { written = append_indent(buf, (level)); \
-                                  if (written < 0) { return -1; } \
-                                  if (buf != NULL) { buf += written; } \
+#define APPEND_INDENT(level) do { written = append_indent(buf, (level));\
+                                  if (written < 0) { return -1; }\
+                                  if (buf != NULL) { buf += written; }\
                                   written_total += written; } while(0)
 
 static int exjson_serialize_to_buffer_r(const EXJSON_Value *value, char *buf, int level, int is_pretty, char *num_buf)
@@ -747,95 +814,121 @@ static int exjson_serialize_to_buffer_r(const EXJSON_Value *value, char *buf, in
     size_t i = 0, count = 0;
     double num = 0.0;
     int written = -1, written_total = 0;
-    
+
     switch (exjson_value_get_type(value)) {
         case EXJSONArray:
             array = exjson_value_get_array(value);
             count = exjson_array_get_count(array);
             APPEND_STRING("[");
-            if (count > 0 && is_pretty)
+            if (count > 0 && is_pretty) {
                 APPEND_STRING("\n");
+            }
             for (i = 0; i < count; i++) {
-                if (is_pretty)
+                if (is_pretty) {
                     APPEND_INDENT(level+1);
+                }
                 temp_value = exjson_array_get_value(array, i);
                 written = exjson_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf);
-                if (written < 0)
+                if (written < 0) {
                     return -1;
-                if (buf != NULL)
+                }
+                if (buf != NULL) {
                     buf += written;
+                }
                 written_total += written;
-                if (i < (count - 1))
+                if (i < (count - 1)) {
                     APPEND_STRING(",");
-                if (is_pretty)
+                }
+                if (is_pretty) {
                     APPEND_STRING("\n");
+                }
             }
-            if (count > 0 && is_pretty)
+            if (count > 0 && is_pretty) {
                 APPEND_INDENT(level);
+            }
             APPEND_STRING("]");
             return written_total;
         case EXJSONObject:
             object = exjson_value_get_object(value);
             count  = exjson_object_get_count(object);
             APPEND_STRING("{");
-            if (count > 0 && is_pretty)
+            if (count > 0 && is_pretty) {
                 APPEND_STRING("\n");
+            }
             for (i = 0; i < count; i++) {
                 key = exjson_object_get_name(object, i);
-                if (is_pretty)
-                    APPEND_INDENT(level+1);
-                written = exjson_serialize_string(key, buf);
-                if (written < 0)
+                if (key == NULL) {
                     return -1;
-                if (buf != NULL)
+                }
+                if (is_pretty) {
+                    APPEND_INDENT(level+1);
+                }
+                written = exjson_serialize_string(key, buf);
+                if (written < 0) {
+                    return -1;
+                }
+                if (buf != NULL) {
                     buf += written;
+                }
                 written_total += written;
                 APPEND_STRING(":");
-                if (is_pretty)
+                if (is_pretty) {
                     APPEND_STRING(" ");
+                }
                 temp_value = exjson_object_get_value(object, key);
                 written = exjson_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf);
-                if (written < 0)
+                if (written < 0) {
                     return -1;
-                if (buf != NULL)
+                }
+                if (buf != NULL) {
                     buf += written;
+                }
                 written_total += written;
-                if (i < (count - 1))
+                if (i < (count - 1)) {
                     APPEND_STRING(",");
-                if (is_pretty)
+                }
+                if (is_pretty) {
                     APPEND_STRING("\n");
+                }
             }
-            if (count > 0 && is_pretty)
+            if (count > 0 && is_pretty) {
                 APPEND_INDENT(level);
+            }
             APPEND_STRING("}");
             return written_total;
         case EXJSONString:
             string = exjson_value_get_string(value);
-            written = exjson_serialize_string(string, buf);
-            if (written < 0)
+            if (string == NULL) {
                 return -1;
-            if (buf != NULL)
+            }
+            written = exjson_serialize_string(string, buf);
+            if (written < 0) {
+                return -1;
+            }
+            if (buf != NULL) {
                 buf += written;
+            }
             written_total += written;
             return written_total;
         case EXJSONBoolean:
-            if (exjson_value_get_boolean(value))
+            if (exjson_value_get_boolean(value)) {
                 APPEND_STRING("true");
-            else
+            } else {
                 APPEND_STRING("false");
+            }
             return written_total;
         case EXJSONNumber:
             num = exjson_value_get_number(value);
-            if (buf != NULL)
+            if (buf != NULL) {
                 num_buf = buf;
-            if (num == ((double)(int)num)) /*  check if num is integer */
-                written = sprintf(num_buf, "%d", (int)num);
-            else
-                written = sprintf(num_buf, DOUBLE_SERIALIZATION_FORMAT, num);
-            if (written < 0)
+            }
+            written = sprintf(num_buf, FLOAT_FORMAT, num);
+            if (written < 0) {
                 return -1;
-            if (buf != NULL)
+            }
+            if (buf != NULL) {
                 buf += written;
+            }
             written_total += written;
             return written_total;
         case EXJSONNull:
@@ -858,11 +951,44 @@ static int exjson_serialize_string(const char *string, char *buf) {
         switch (c) {
             case '\"': APPEND_STRING("\\\""); break;
             case '\\': APPEND_STRING("\\\\"); break;
+            case '/':  APPEND_STRING("\\/"); break; /* to make exjson embeddable in xml\/html */
             case '\b': APPEND_STRING("\\b"); break;
             case '\f': APPEND_STRING("\\f"); break;
             case '\n': APPEND_STRING("\\n"); break;
             case '\r': APPEND_STRING("\\r"); break;
             case '\t': APPEND_STRING("\\t"); break;
+            case '\x00': APPEND_STRING("\\u0000"); break;
+            case '\x01': APPEND_STRING("\\u0001"); break;
+            case '\x02': APPEND_STRING("\\u0002"); break;
+            case '\x03': APPEND_STRING("\\u0003"); break;
+            case '\x04': APPEND_STRING("\\u0004"); break;
+            case '\x05': APPEND_STRING("\\u0005"); break;
+            case '\x06': APPEND_STRING("\\u0006"); break;
+            case '\x07': APPEND_STRING("\\u0007"); break;
+            /* '\x08' duplicate: '\b' */
+            /* '\x09' duplicate: '\t' */
+            /* '\x0a' duplicate: '\n' */
+            case '\x0b': APPEND_STRING("\\u000b"); break;
+            /* '\x0c' duplicate: '\f' */
+            /* '\x0d' duplicate: '\r' */
+            case '\x0e': APPEND_STRING("\\u000e"); break;
+            case '\x0f': APPEND_STRING("\\u000f"); break;
+            case '\x10': APPEND_STRING("\\u0010"); break;
+            case '\x11': APPEND_STRING("\\u0011"); break;
+            case '\x12': APPEND_STRING("\\u0012"); break;
+            case '\x13': APPEND_STRING("\\u0013"); break;
+            case '\x14': APPEND_STRING("\\u0014"); break;
+            case '\x15': APPEND_STRING("\\u0015"); break;
+            case '\x16': APPEND_STRING("\\u0016"); break;
+            case '\x17': APPEND_STRING("\\u0017"); break;
+            case '\x18': APPEND_STRING("\\u0018"); break;
+            case '\x19': APPEND_STRING("\\u0019"); break;
+            case '\x1a': APPEND_STRING("\\u001a"); break;
+            case '\x1b': APPEND_STRING("\\u001b"); break;
+            case '\x1c': APPEND_STRING("\\u001c"); break;
+            case '\x1d': APPEND_STRING("\\u001d"); break;
+            case '\x1e': APPEND_STRING("\\u001e"); break;
+            case '\x1f': APPEND_STRING("\\u001f"); break;
             default:
                 if (buf != NULL) {
                     buf[0] = c;
@@ -899,8 +1025,9 @@ static int append_string(char *buf, const char *string) {
 EXJSON_Value * exjson_parse_file(const char *filename) {
     char *file_contents = read_file(filename);
     EXJSON_Value *output_value = NULL;
-    if (file_contents == NULL)
+    if (file_contents == NULL) {
         return NULL;
+    }
     output_value = exjson_parse_string(file_contents);
     exparson_free(file_contents);
     return output_value;
@@ -909,19 +1036,21 @@ EXJSON_Value * exjson_parse_file(const char *filename) {
 EXJSON_Value * exjson_parse_file_with_comments(const char *filename) {
     char *file_contents = read_file(filename);
     EXJSON_Value *output_value = NULL;
-    if (file_contents == NULL)
+    if (file_contents == NULL) {
         return NULL;
+    }
     output_value = exjson_parse_string_with_comments(file_contents);
     exparson_free(file_contents);
     return output_value;
 }
 
 EXJSON_Value * exjson_parse_string(const char *string) {
-    if (string == NULL)
+    if (string == NULL) {
         return NULL;
-    SKIP_WHITESPACES(&string);
-    if (*string != '{' && *string != '[')
-        return NULL;
+    }
+    if (string[0] == '\xEF' && string[1] == '\xBB' && string[2] == '\xBF') {
+        string = string + 3; /* Support for UTF-8 BOM */
+    }
     return parse_value((const char**)&string, 0);
 }
 
@@ -929,31 +1058,23 @@ EXJSON_Value * exjson_parse_string_with_comments(const char *string) {
     EXJSON_Value *result = NULL;
     char *string_mutable_copy = NULL, *string_mutable_copy_ptr = NULL;
     string_mutable_copy = exparson_strdup(string);
-    if (string_mutable_copy == NULL)
+    if (string_mutable_copy == NULL) {
         return NULL;
+    }
     remove_comments(string_mutable_copy, "/*", "*/");
     remove_comments(string_mutable_copy, "//", "\n");
     string_mutable_copy_ptr = string_mutable_copy;
-    SKIP_WHITESPACES(&string_mutable_copy_ptr);
-    if (*string_mutable_copy_ptr != '{' && *string_mutable_copy_ptr != '[') {
-        exparson_free(string_mutable_copy);
-        return NULL;
-    }
     result = parse_value((const char**)&string_mutable_copy_ptr, 0);
     exparson_free(string_mutable_copy);
     return result;
 }
 
-
 /* EXJSON Object API */
 
-EXJSON_Value * exjson_object_get_value_n(const EXJSON_Object *object, size_t n) {
-	return exjson_object_nget_value_n(object, n);
-}
-
 EXJSON_Value * exjson_object_get_value(const EXJSON_Object *object, const char *name) {
-    if (object == NULL || name == NULL)
+    if (object == NULL || name == NULL) {
         return NULL;
+    }
     return exjson_object_nget_value(object, name, strlen(name));
 }
 
@@ -961,16 +1082,8 @@ const char * exjson_object_get_string(const EXJSON_Object *object, const char *n
     return exjson_value_get_string(exjson_object_get_value(object, name));
 }
 
-const char * exjson_object_get_string_n(const EXJSON_Object *object, size_t n) {
-    return exjson_value_get_string(exjson_object_get_value_n(object, n));
-}
-
 double exjson_object_get_number(const EXJSON_Object *object, const char *name) {
     return exjson_value_get_number(exjson_object_get_value(object, name));
-}
-
-double exjson_object_get_number_n(const EXJSON_Object *object, size_t n) {
-    return exjson_value_get_number(exjson_object_get_value_n(object, n));
 }
 
 EXJSON_Object * exjson_object_get_object(const EXJSON_Object *object, const char *name) {
@@ -985,14 +1098,11 @@ int exjson_object_get_boolean(const EXJSON_Object *object, const char *name) {
     return exjson_value_get_boolean(exjson_object_get_value(object, name));
 }
 
-int exjson_object_get_boolean_n(const EXJSON_Object *object, size_t n) {
-    return exjson_value_get_boolean(exjson_object_get_value_n(object, n));
-}
-
 EXJSON_Value * exjson_object_dotget_value(const EXJSON_Object *object, const char *name) {
     const char *dot_position = strchr(name, '.');
-    if (!dot_position)
+    if (!dot_position) {
         return exjson_object_get_value(object, name);
+    }
     object = exjson_value_get_object(exjson_object_nget_value(object, name, dot_position - name));
     return exjson_object_dotget_value(object, dot_position + 1);
 }
@@ -1022,15 +1132,46 @@ size_t exjson_object_get_count(const EXJSON_Object *object) {
 }
 
 const char * exjson_object_get_name(const EXJSON_Object *object, size_t index) {
-    if (index >= exjson_object_get_count(object))
+    if (object == NULL || index >= exjson_object_get_count(object)) {
         return NULL;
+    }
     return object->names[index];
+}
+
+EXJSON_Value * exjson_object_get_value_at(const EXJSON_Object *object, size_t index) {
+    if (object == NULL || index >= exjson_object_get_count(object)) {
+        return NULL;
+    }
+    return object->values[index];
+}
+
+EXJSON_Value *exjson_object_get_wrapping_value(const EXJSON_Object *object) {
+    return object->wrapping_value;
+}
+
+int exjson_object_has_value (const EXJSON_Object *object, const char *name) {
+    return exjson_object_get_value(object, name) != NULL;
+}
+
+int exjson_object_has_value_of_type(const EXJSON_Object *object, const char *name, EXJSON_Value_Type type) {
+    EXJSON_Value *val = exjson_object_get_value(object, name);
+    return val != NULL && exjson_value_get_type(val) == type;
+}
+
+int exjson_object_dothas_value (const EXJSON_Object *object, const char *name) {
+    return exjson_object_dotget_value(object, name) != NULL;
+}
+
+int exjson_object_dothas_value_of_type(const EXJSON_Object *object, const char *name, EXJSON_Value_Type type) {
+    EXJSON_Value *val = exjson_object_dotget_value(object, name);
+    return val != NULL && exjson_value_get_type(val) == type;
 }
 
 /* EXJSON Array API */
 EXJSON_Value * exjson_array_get_value(const EXJSON_Array *array, size_t index) {
-    if (index >= exjson_array_get_count(array))
+    if (array == NULL || index >= exjson_array_get_count(array)) {
         return NULL;
+    }
     return array->items[index];
 }
 
@@ -1058,6 +1199,10 @@ size_t exjson_array_get_count(const EXJSON_Array *array) {
     return array ? array->count : 0;
 }
 
+EXJSON_Value * exjson_array_get_wrapping_value(const EXJSON_Array *array) {
+    return array->wrapping_value;
+}
+
 /* EXJSON Value API */
 EXJSON_Value_Type exjson_value_get_type(const EXJSON_Value *value) {
     return value ? value->type : EXJSONError;
@@ -1083,13 +1228,17 @@ int exjson_value_get_boolean(const EXJSON_Value *value) {
     return exjson_value_get_type(value) == EXJSONBoolean ? value->value.boolean : -1;
 }
 
+EXJSON_Value * exjson_value_get_parent (const EXJSON_Value *value) {
+    return value ? value->parent : NULL;
+}
+
 void exjson_value_free(EXJSON_Value *value) {
     switch (exjson_value_get_type(value)) {
         case EXJSONObject:
             exjson_object_free(value->value.object);
             break;
         case EXJSONString:
-            if (value->value.string) { exparson_free(value->value.string); }
+            exparson_free(value->value.string);
             break;
         case EXJSONArray:
             exjson_array_free(value->value.array);
@@ -1102,10 +1251,12 @@ void exjson_value_free(EXJSON_Value *value) {
 
 EXJSON_Value * exjson_value_init_object(void) {
     EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
+    if (!new_value) {
         return NULL;
+    }
+    new_value->parent = NULL;
     new_value->type = EXJSONObject;
-    new_value->value.object = exjson_object_init();
+    new_value->value.object = exjson_object_init(new_value);
     if (!new_value->value.object) {
         exparson_free(new_value);
         return NULL;
@@ -1115,10 +1266,12 @@ EXJSON_Value * exjson_value_init_object(void) {
 
 EXJSON_Value * exjson_value_init_array(void) {
     EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
+    if (!new_value) {
         return NULL;
+    }
+    new_value->parent = NULL;
     new_value->type = EXJSONArray;
-    new_value->value.array = exjson_array_init();
+    new_value->value.array = exjson_array_init(new_value);
     if (!new_value->value.array) {
         exparson_free(new_value);
         return NULL;
@@ -1130,24 +1283,34 @@ EXJSON_Value * exjson_value_init_string(const char *string) {
     char *copy = NULL;
     EXJSON_Value *value;
     size_t string_len = 0;
-    if (string == NULL)
+    if (string == NULL) {
         return NULL;
+    }
     string_len = strlen(string);
-    if (!is_valid_utf8(string, string_len))
+    if (!is_valid_utf8(string, string_len)) {
         return NULL;
+    }
     copy = exparson_strndup(string, string_len);
-    if (copy == NULL)
+    if (copy == NULL) {
         return NULL;
+    }
     value = exjson_value_init_string_no_copy(copy);
-    if (value == NULL)
+    if (value == NULL) {
         exparson_free(copy);
+    }
     return value;
 }
 
 EXJSON_Value * exjson_value_init_number(double number) {
-    EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
+    EXJSON_Value *new_value = NULL;
+    if ((number * 0.0) != 0.0) { /* nan and inf test */
         return NULL;
+    }
+    new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
+    if (new_value == NULL) {
+        return NULL;
+    }
+    new_value->parent = NULL;
     new_value->type = EXJSONNumber;
     new_value->value.number = number;
     return new_value;
@@ -1155,8 +1318,10 @@ EXJSON_Value * exjson_value_init_number(double number) {
 
 EXJSON_Value * exjson_value_init_boolean(int boolean) {
     EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
+    if (!new_value) {
         return NULL;
+    }
+    new_value->parent = NULL;
     new_value->type = EXJSONBoolean;
     new_value->value.boolean = boolean ? 1 : 0;
     return new_value;
@@ -1164,8 +1329,10 @@ EXJSON_Value * exjson_value_init_boolean(int boolean) {
 
 EXJSON_Value * exjson_value_init_null(void) {
     EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
-    if (!new_value)
+    if (!new_value) {
         return NULL;
+    }
+    new_value->parent = NULL;
     new_value->type = EXJSONNull;
     return new_value;
 }
@@ -1177,13 +1344,14 @@ EXJSON_Value * exjson_value_deep_copy(const EXJSON_Value *value) {
     char *temp_string_copy = NULL;
     EXJSON_Array *temp_array = NULL, *temp_array_copy = NULL;
     EXJSON_Object *temp_object = NULL, *temp_object_copy = NULL;
-    
+
     switch (exjson_value_get_type(value)) {
         case EXJSONArray:
             temp_array = exjson_value_get_array(value);
             return_value = exjson_value_init_array();
-            if (return_value == NULL)
+            if (return_value == NULL) {
                 return NULL;
+            }
             temp_array_copy = exjson_value_get_array(return_value);
             for (i = 0; i < exjson_array_get_count(temp_array); i++) {
                 temp_value = exjson_array_get_value(temp_array, i);
@@ -1202,8 +1370,9 @@ EXJSON_Value * exjson_value_deep_copy(const EXJSON_Value *value) {
         case EXJSONObject:
             temp_object = exjson_value_get_object(value);
             return_value = exjson_value_init_object();
-            if (return_value == NULL)
+            if (return_value == NULL) {
                 return NULL;
+            }
             temp_object_copy = exjson_value_get_object(return_value);
             for (i = 0; i < exjson_object_get_count(temp_object); i++) {
                 temp_key = exjson_object_get_name(temp_object, i);
@@ -1226,12 +1395,17 @@ EXJSON_Value * exjson_value_deep_copy(const EXJSON_Value *value) {
             return exjson_value_init_number(exjson_value_get_number(value));
         case EXJSONString:
             temp_string = exjson_value_get_string(value);
-            temp_string_copy = exparson_strdup(temp_string);
-            if (temp_string_copy == NULL)
+            if (temp_string == NULL) {
                 return NULL;
+            }
+            temp_string_copy = exparson_strdup(temp_string);
+            if (temp_string_copy == NULL) {
+                return NULL;
+            }
             return_value = exjson_value_init_string_no_copy(temp_string_copy);
-            if (return_value == NULL)
+            if (return_value == NULL) {
                 exparson_free(temp_string_copy);
+            }
             return return_value;
         case EXJSONNull:
             return exjson_value_init_null();
@@ -1255,8 +1429,9 @@ EXJSON_Status exjson_serialize_to_buffer(const EXJSON_Value *value, char *buf, s
         return EXJSONFailure;
     }
     written = exjson_serialize_to_buffer_r(value, buf, 0, 0, NULL);
-    if (written < 0)
+    if (written < 0) {
         return EXJSONFailure;
+    }
     return EXJSONSuccess;
 }
 
@@ -1268,13 +1443,15 @@ EXJSON_Status exjson_serialize_to_file(const EXJSON_Value *value, const char *fi
         return EXJSONFailure;
     }
     fp = fopen (filename, "w");
-    if (fp != NULL) {
-        if (fputs (serialized_string, fp) == EOF) {
-            return_code = EXJSONFailure;
-        }
-        if (fclose (fp) == EOF) {
-            return_code = EXJSONFailure;
-        }
+    if (fp == NULL) {
+        exjson_free_serialized_string(serialized_string);
+        return EXJSONFailure;
+    }
+    if (fputs(serialized_string, fp) == EOF) {
+        return_code = EXJSONFailure;
+    }
+    if (fclose(fp) == EOF) {
+        return_code = EXJSONFailure;
     }
     exjson_free_serialized_string(serialized_string);
     return return_code;
@@ -1288,8 +1465,9 @@ char * exjson_serialize_to_string(const EXJSON_Value *value) {
         return NULL;
     }
     buf = (char*)exparson_malloc(buf_size_bytes);
-    if (buf == NULL)
+    if (buf == NULL) {
         return NULL;
+    }
     serialization_result = exjson_serialize_to_buffer(value, buf, buf_size_bytes);
     if (serialization_result == EXJSONFailure) {
         exjson_free_serialized_string(buf);
@@ -1307,11 +1485,13 @@ size_t exjson_serialization_size_pretty(const EXJSON_Value *value) {
 EXJSON_Status exjson_serialize_to_buffer_pretty(const EXJSON_Value *value, char *buf, size_t buf_size_in_bytes) {
     int written = -1;
     size_t needed_size_in_bytes = exjson_serialization_size_pretty(value);
-    if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes)
+    if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
         return EXJSONFailure;
+    }
     written = exjson_serialize_to_buffer_r(value, buf, 0, 1, NULL);
-    if (written < 0)
+    if (written < 0) {
         return EXJSONFailure;
+    }
     return EXJSONSuccess;
 }
 
@@ -1323,13 +1503,15 @@ EXJSON_Status exjson_serialize_to_file_pretty(const EXJSON_Value *value, const c
         return EXJSONFailure;
     }
     fp = fopen (filename, "w");
-    if (fp != NULL) {
-        if (fputs (serialized_string, fp) == EOF) {
-            return_code = EXJSONFailure;
-        }
-        if (fclose (fp) == EOF) {
-            return_code = EXJSONFailure;
-        }
+    if (fp == NULL) {
+        exjson_free_serialized_string(serialized_string);
+        return EXJSONFailure;
+    }
+    if (fputs(serialized_string, fp) == EOF) {
+        return_code = EXJSONFailure;
+    }
+    if (fclose(fp) == EOF) {
+        return_code = EXJSONFailure;
     }
     exjson_free_serialized_string(serialized_string);
     return return_code;
@@ -1343,8 +1525,9 @@ char * exjson_serialize_to_string_pretty(const EXJSON_Value *value) {
         return NULL;
     }
     buf = (char*)exparson_malloc(buf_size_bytes);
-    if (buf == NULL)
+    if (buf == NULL) {
         return NULL;
+    }
     serialization_result = exjson_serialize_to_buffer_pretty(value, buf, buf_size_bytes);
     if (serialization_result == EXJSONFailure) {
         exjson_free_serialized_string(buf);
@@ -1353,37 +1536,37 @@ char * exjson_serialize_to_string_pretty(const EXJSON_Value *value) {
     return buf;
 }
 
-
 void exjson_free_serialized_string(char *string) {
     exparson_free(string);
 }
 
 EXJSON_Status exjson_array_remove(EXJSON_Array *array, size_t ix) {
-    size_t last_element_ix = 0;
+    size_t to_move_bytes = 0;
     if (array == NULL || ix >= exjson_array_get_count(array)) {
         return EXJSONFailure;
     }
-    last_element_ix = exjson_array_get_count(array) - 1;
     exjson_value_free(exjson_array_get_value(array, ix));
+    to_move_bytes = (exjson_array_get_count(array) - 1 - ix) * sizeof(EXJSON_Value*);
+    memmove(array->items + ix, array->items + ix + 1, to_move_bytes);
     array->count -= 1;
-    if (ix != last_element_ix) /* Replace value with one from the end of array */
-        array->items[ix] = exjson_array_get_value(array, last_element_ix);
     return EXJSONSuccess;
 }
 
 EXJSON_Status exjson_array_replace_value(EXJSON_Array *array, size_t ix, EXJSON_Value *value) {
-    if (array == NULL || value == NULL || ix >= exjson_array_get_count(array)) {
+    if (array == NULL || value == NULL || value->parent != NULL || ix >= exjson_array_get_count(array)) {
         return EXJSONFailure;
     }
     exjson_value_free(exjson_array_get_value(array, ix));
+    value->parent = exjson_array_get_wrapping_value(array);
     array->items[ix] = value;
     return EXJSONSuccess;
 }
 
 EXJSON_Status exjson_array_replace_string(EXJSON_Array *array, size_t i, const char* string) {
     EXJSON_Value *value = exjson_value_init_string(string);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_replace_value(array, i, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1393,8 +1576,9 @@ EXJSON_Status exjson_array_replace_string(EXJSON_Array *array, size_t i, const c
 
 EXJSON_Status exjson_array_replace_number(EXJSON_Array *array, size_t i, double number) {
     EXJSON_Value *value = exjson_value_init_number(number);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_replace_value(array, i, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1404,8 +1588,9 @@ EXJSON_Status exjson_array_replace_number(EXJSON_Array *array, size_t i, double 
 
 EXJSON_Status exjson_array_replace_boolean(EXJSON_Array *array, size_t i, int boolean) {
     EXJSON_Value *value = exjson_value_init_boolean(boolean);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_replace_value(array, i, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1415,8 +1600,9 @@ EXJSON_Status exjson_array_replace_boolean(EXJSON_Array *array, size_t i, int bo
 
 EXJSON_Status exjson_array_replace_null(EXJSON_Array *array, size_t i) {
     EXJSON_Value *value = exjson_value_init_null();
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_replace_value(array, i, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1426,8 +1612,9 @@ EXJSON_Status exjson_array_replace_null(EXJSON_Array *array, size_t i) {
 
 EXJSON_Status exjson_array_clear(EXJSON_Array *array) {
     size_t i = 0;
-    if (array == NULL)
+    if (array == NULL) {
         return EXJSONFailure;
+    }
     for (i = 0; i < exjson_array_get_count(array); i++) {
         exjson_value_free(exjson_array_get_value(array, i));
     }
@@ -1436,15 +1623,17 @@ EXJSON_Status exjson_array_clear(EXJSON_Array *array) {
 }
 
 EXJSON_Status exjson_array_append_value(EXJSON_Array *array, EXJSON_Value *value) {
-    if (array == NULL || value == NULL)
+    if (array == NULL || value == NULL || value->parent != NULL) {
         return EXJSONFailure;
+    }
     return exjson_array_add(array, value);
 }
 
 EXJSON_Status exjson_array_append_string(EXJSON_Array *array, const char *string) {
     EXJSON_Value *value = exjson_value_init_string(string);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_append_value(array, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1454,8 +1643,9 @@ EXJSON_Status exjson_array_append_string(EXJSON_Array *array, const char *string
 
 EXJSON_Status exjson_array_append_number(EXJSON_Array *array, double number) {
     EXJSON_Value *value = exjson_value_init_number(number);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_append_value(array, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1465,8 +1655,9 @@ EXJSON_Status exjson_array_append_number(EXJSON_Array *array, double number) {
 
 EXJSON_Status exjson_array_append_boolean(EXJSON_Array *array, int boolean) {
     EXJSON_Value *value = exjson_value_init_boolean(boolean);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_append_value(array, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1476,8 +1667,9 @@ EXJSON_Status exjson_array_append_boolean(EXJSON_Array *array, int boolean) {
 
 EXJSON_Status exjson_array_append_null(EXJSON_Array *array) {
     EXJSON_Value *value = exjson_value_init_null();
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_array_append_value(array, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1488,13 +1680,15 @@ EXJSON_Status exjson_array_append_null(EXJSON_Array *array) {
 EXJSON_Status exjson_object_set_value(EXJSON_Object *object, const char *name, EXJSON_Value *value) {
     size_t i = 0;
     EXJSON_Value *old_value;
-    if (object == NULL || name == NULL || value == NULL)
+    if (object == NULL || name == NULL || value == NULL || value->parent != NULL) {
         return EXJSONFailure;
+    }
     old_value = exjson_object_get_value(object, name);
     if (old_value != NULL) { /* free and overwrite old value */
         exjson_value_free(old_value);
         for (i = 0; i < exjson_object_get_count(object); i++) {
             if (strcmp(object->names[i], name) == 0) {
+                value->parent = exjson_object_get_wrapping_value(object);
                 object->values[i] = value;
                 return EXJSONSuccess;
             }
@@ -1502,11 +1696,6 @@ EXJSON_Status exjson_object_set_value(EXJSON_Object *object, const char *name, E
     }
     /* add new key value pair */
     return exjson_object_add(object, name, value);
-}
-
-/* Madars... */
-EXJSON_Status exjson_object_set_array(EXJSON_Object *object, const char *name, EXJSON_Array *array) {
-   return exjson_object_set_value(object, name, exjson_value_init_array_ext(array));
 }
 
 EXJSON_Status exjson_object_set_string(EXJSON_Object *object, const char *name, const char *string) {
@@ -1530,8 +1719,9 @@ EXJSON_Status exjson_object_dotset_value(EXJSON_Object *object, const char *name
     char *current_name = NULL;
     EXJSON_Object *temp_obj = NULL;
     EXJSON_Value *new_value = NULL;
-    if (value == NULL || name == NULL || value == NULL)
+    if (object == NULL || name == NULL || value == NULL) {
         return EXJSONFailure;
+    }
     dot_pos = strchr(name, '.');
     if (dot_pos == NULL) {
         return exjson_object_set_value(object, name, value);
@@ -1558,8 +1748,9 @@ EXJSON_Status exjson_object_dotset_value(EXJSON_Object *object, const char *name
 
 EXJSON_Status exjson_object_dotset_string(EXJSON_Object *object, const char *name, const char *string) {
     EXJSON_Value *value = exjson_value_init_string(string);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_object_dotset_value(object, name, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1569,8 +1760,9 @@ EXJSON_Status exjson_object_dotset_string(EXJSON_Object *object, const char *nam
 
 EXJSON_Status exjson_object_dotset_number(EXJSON_Object *object, const char *name, double number) {
     EXJSON_Value *value = exjson_value_init_number(number);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_object_dotset_value(object, name, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1580,8 +1772,9 @@ EXJSON_Status exjson_object_dotset_number(EXJSON_Object *object, const char *nam
 
 EXJSON_Status exjson_object_dotset_boolean(EXJSON_Object *object, const char *name, int boolean) {
     EXJSON_Value *value = exjson_value_init_boolean(boolean);
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_object_dotset_value(object, name, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1591,8 +1784,9 @@ EXJSON_Status exjson_object_dotset_boolean(EXJSON_Object *object, const char *na
 
 EXJSON_Status exjson_object_dotset_null(EXJSON_Object *object, const char *name) {
     EXJSON_Value *value = exjson_value_init_null();
-    if (value == NULL)
+    if (value == NULL) {
         return EXJSONFailure;
+    }
     if (exjson_object_dotset_value(object, name, value) == EXJSONFailure) {
         exjson_value_free(value);
         return EXJSONFailure;
@@ -1602,8 +1796,9 @@ EXJSON_Status exjson_object_dotset_null(EXJSON_Object *object, const char *name)
 
 EXJSON_Status exjson_object_remove(EXJSON_Object *object, const char *name) {
     size_t i = 0, last_item_index = 0;
-    if (object == NULL || exjson_object_get_value(object, name) == NULL)
+    if (object == NULL || exjson_object_get_value(object, name) == NULL) {
         return EXJSONFailure;
+    }
     last_item_index = exjson_object_get_count(object) - 1;
     for (i = 0; i < exjson_object_get_count(object); i++) {
         if (strcmp(object->names[i], name) == 0) {
@@ -1629,11 +1824,10 @@ EXJSON_Status exjson_object_dotremove(EXJSON_Object *object, const char *name) {
     } else {
         current_name = exparson_strndup(name, dot_pos - name);
         temp_obj = exjson_object_get_object(object, current_name);
+        exparson_free(current_name);
         if (temp_obj == NULL) {
-            exparson_free(current_name);
             return EXJSONFailure;
         }
-        exparson_free(current_name);
         return exjson_object_dotremove(temp_obj, dot_pos + 1);
     }
 }
@@ -1643,7 +1837,7 @@ EXJSON_Status exjson_object_clear(EXJSON_Object *object) {
     if (object == NULL) {
         return EXJSONFailure;
     }
-    for (i = 0; i < exjson_object_get_count(object); i++) {        
+    for (i = 0; i < exjson_object_get_count(object); i++) {
         exparson_free(object->names[i]);
         exjson_value_free(object->values[i]);
     }
@@ -1658,24 +1852,27 @@ EXJSON_Status exjson_validate(const EXJSON_Value *schema, const EXJSON_Value *va
     EXJSON_Value_Type schema_type = EXJSONError, value_type = EXJSONError;
     const char *key = NULL;
     size_t i = 0, count = 0;
-    if (schema == NULL || value == NULL)
+    if (schema == NULL || value == NULL) {
         return EXJSONFailure;
+    }
     schema_type = exjson_value_get_type(schema);
     value_type = exjson_value_get_type(value);
-    if (schema_type != value_type && schema_type != EXJSONNull) /* null represents all values */
+    if (schema_type != value_type && schema_type != EXJSONNull) { /* null represents all values */
         return EXJSONFailure;
+    }
     switch (schema_type) {
         case EXJSONArray:
             schema_array = exjson_value_get_array(schema);
             value_array = exjson_value_get_array(value);
             count = exjson_array_get_count(schema_array);
-            if (count == 0)
+            if (count == 0) {
                 return EXJSONSuccess; /* Empty array allows all types */
+            }
             /* Get first value from array, rest is ignored */
             temp_schema_value = exjson_array_get_value(schema_array, 0);
             for (i = 0; i < exjson_array_get_count(value_array); i++) {
                 temp_value = exjson_array_get_value(value_array, i);
-                if (exjson_validate(temp_schema_value, temp_value) == 0) {
+                if (exjson_validate(temp_schema_value, temp_value) == EXJSONFailure) {
                     return EXJSONFailure;
                 }
             }
@@ -1684,18 +1881,21 @@ EXJSON_Status exjson_validate(const EXJSON_Value *schema, const EXJSON_Value *va
             schema_object = exjson_value_get_object(schema);
             value_object = exjson_value_get_object(value);
             count = exjson_object_get_count(schema_object);
-            if (count == 0)
+            if (count == 0) {
                 return EXJSONSuccess; /* Empty object allows all objects */
-            else if (exjson_object_get_count(value_object) < count)
+            } else if (exjson_object_get_count(value_object) < count) {
                 return EXJSONFailure; /* Tested object mustn't have less name-value pairs than schema */
+            }
             for (i = 0; i < count; i++) {
                 key = exjson_object_get_name(schema_object, i);
                 temp_schema_value = exjson_object_get_value(schema_object, key);
                 temp_value = exjson_object_get_value(value_object, key);
-                if (temp_value == NULL)
+                if (temp_value == NULL) {
                     return EXJSONFailure;
-                if (exjson_validate(temp_schema_value, temp_value) == EXJSONFailure)
+                }
+                if (exjson_validate(temp_schema_value, temp_value) == EXJSONFailure) {
                     return EXJSONFailure;
+                }
             }
             return EXJSONSuccess;
         case EXJSONString: case EXJSONNumber: case EXJSONBoolean: case EXJSONNull:
@@ -1705,7 +1905,7 @@ EXJSON_Status exjson_validate(const EXJSON_Value *schema, const EXJSON_Value *va
     }
 }
 
-EXJSON_Status exjson_value_equals(const EXJSON_Value *a, const EXJSON_Value *b) {
+int exjson_value_equals(const EXJSON_Value *a, const EXJSON_Value *b) {
     EXJSON_Object *a_object = NULL, *b_object = NULL;
     EXJSON_Array *a_array = NULL, *b_array = NULL;
     const char *a_string = NULL, *b_string = NULL;
@@ -1752,6 +1952,9 @@ EXJSON_Status exjson_value_equals(const EXJSON_Value *a, const EXJSON_Value *b) 
         case EXJSONString:
             a_string = exjson_value_get_string(a);
             b_string = exjson_value_get_string(b);
+            if (a_string == NULL || b_string == NULL) {
+                return 0; /* shouldn't happen */
+            }
             return strcmp(a_string, b_string) == 0;
         case EXJSONBoolean:
             return exjson_value_get_boolean(a) == exjson_value_get_boolean(b);
