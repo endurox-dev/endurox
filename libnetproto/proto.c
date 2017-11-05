@@ -478,7 +478,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
  */
 exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,  
                         char *proto_buf, int proto_bufsz, long *proto_buf_offset,
-                        char *debug_buf, int debug_len, int c_buf_in_len)
+                        char *debug_buf, int debug_bufsz, int c_buf_in_len)
 {
     int ret=EXSUCCEED;
     int i;
@@ -615,7 +615,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             *proto_buf_offset = c_buf_in_len;
             
             /* Built representation for user... for debug purposes... */
-            ndrx_build_printable_string(debug_buf, debug_len, proto_buf, c_buf_in_len);
+            ndrx_build_printable_string(debug_buf, debug_bufsz, proto_buf, c_buf_in_len);
         }    
             break;
                 
@@ -630,7 +630,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     
     if (EXF_CARRAY!=fld->fld_type)
     {
-        NDRX_STRNCPY_SAFE(debug_buf, proto_buf, proto_bufsz);
+        NDRX_STRNCPY_SAFE(debug_buf, proto_buf + (*proto_buf_offset), debug_bufsz);
     }
     /* else should be set up already by carray func! */
     
@@ -1100,10 +1100,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
 {
     int ret=EXSUCCEED;
     cproto_t *p = cv->tab[level];
-    char tmp[NDRX_MSGSIZEMAX];
     char debug[16*1024]; /* we might get prefix byte with \0X */
-    long len = 0;
-    
     /* Length memory: */
     int schedule_length = EXFALSE;
     cproto_t *len_rec;
@@ -1189,34 +1186,24 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     goto out;
                 }
                 
+                off_stop = *proto_buf_offset;
+                len_written = (int)(off_stop - off_start);
+                
                 NDRX_LOG(log_debug, "ex2net: tag: [0x%x]\t[%s]\t len:"
                         " %ld (0x%04lx) type:"
                         " [%s]\t data: [%s]"/*netbuf (tag start): %p"*/, 
-                        p->tag, p->cname, len, len, M_type[p->fld_type], debug/*, 
+                        p->tag, p->cname, len_written, len_written, 
+                        M_type[p->fld_type], debug/*, 
                         (proto_buf+(*proto_buf_offset))*/ );
                 
-                /* Build that stuff */
+                /* Write data off */
                 
-                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
-                        proto_buf_offset, proto_bufsz))
+                if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
+                        proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
                 }
                 
-                if (EXSUCCEED!=write_len((int)len, proto_buf, 
-                        proto_buf_offset, proto_bufsz))
-                {
-                    EXFAIL_OUT(ret);
-                }
-                
-                len_written = (int)len;
-                
-                /* Put data on network */
-                
-                CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, len);
-                
-                memcpy(proto_buf+(*proto_buf_offset), tmp, len);
-                *proto_buf_offset=*proto_buf_offset + len;
                 
             }
                 break;
