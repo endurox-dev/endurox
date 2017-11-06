@@ -252,12 +252,14 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
         
         last = (char *)hdr;
         last+=(hdr->bytes_used-1);
+#if 0
         /* Ensure that we reset last elements... So that we do not get
          * used elements
          */
         UBF_LOG(log_debug, "resetting: %p to 0 - %d bytes",
                             last+1, 0, remove_size);
         memset(last+1, 0, remove_size);
+#endif
     }
     else
     {
@@ -687,7 +689,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
     {
         /* save some original characteristics of dest buffer */
         dst_buf_len = dst_h->buf_len;
-        memset(p_ub_dst, 0, dst_h->bytes_used);
+        /*memset(p_ub_dst, 0, dst_h->bytes_used);*/
         memcpy(p_ub_dst, p_ub_src, src_h->bytes_used);
         dst_h->buf_len = dst_buf_len;
         dst_h->bytes_used = src_h->bytes_used;
@@ -1286,7 +1288,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
             /* reset the header pointer */
             hdr = (UBF_header_t *)p_ub;
             reset_size = alloc_size-hdr->buf_len;
-
+#if 0
             if (reset_size>0)
             {
                 /* Now we need to set buffer ending to 0
@@ -1298,6 +1300,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 
                 memset(p+hdr->buf_len, 0, reset_size);
             }
+#endif
             /* Update FB to new size. */
             hdr->buf_len+=reset_size;
         }

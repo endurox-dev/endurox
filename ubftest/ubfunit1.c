@@ -315,10 +315,10 @@ Ensure(test_Bunused)
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID));
     /* Add some field and then see what happens */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(BFLDID)-sizeof(s)-2/* align of short */);
+    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(s)-2/* align of short */);
     /* fill up to zero */
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "abc", 0), EXSUCCEED);
-    assert_equal(Bunused(p_ub), 0);
+    assert_equal(Bunused(p_ub), sizeof(BFLDID));
 }
 
 
