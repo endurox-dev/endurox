@@ -698,8 +698,8 @@ exprivate int x_nettoc(cproto_t *fld,
     int i, j;
     int conv_bcd = EXFALSE;
     int bcd_sign_used = EXFALSE;
-    char bcd_buf[64] = {EXEOS};
-    char tmp[64];
+    char bcd_buf[1024] = {EXEOS};
+    char tmp[1024];
     char bdc_sign;
     char *datap = (net_buf + net_buf_offset);
     
@@ -807,7 +807,8 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                NDRX_STRNCPY(debug_buf, tmp, debug_len);
+                debug_buf[0] = tmp[0];
+                debug_buf[1] = EXEOS;
             }
         }
             break;
@@ -1989,7 +1990,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                                 *buf_len);
                         /* Validate output buffer sizes */
                         
-                        CHECK_EX_BUFSZ(ret, ex_offset, fld->offset, ex_offset, *buf_len);
+                        CHECK_EX_BUFSZ(ret, ex_offset, fld->offset, ex_bufsz, *buf_len);
                                 
                         /* Just copy off the memory & setup sizes (max offset) */
                         memcpy(data, (char *)(proto_buf+int_pos), *buf_len);
