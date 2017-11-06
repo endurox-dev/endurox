@@ -113,7 +113,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     }
     else
     {
-        /* Initialize buffer */
+        /* Initialise buffer */
         /* the last element bfldid is set to zero */
         memset((char *)p_ub, 0, sizeof(UBF_header_t)); /* Do we need all to be set to 0? */
         ubf_h->version = UBF_VERSION; /* Reset options to (all disabled) */

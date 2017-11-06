@@ -120,6 +120,9 @@ extern "C" {
 #define DOUBLE_RESOLUTION	6
 #define FLOAT_RESOLUTION	5
     
+    
+#define UBF_EOF(HDR, FIELD) ((char *)FIELD >= (((char *)HDR) + HDR->bytes_used))
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
