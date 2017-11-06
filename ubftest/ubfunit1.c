@@ -312,7 +312,7 @@ Ensure(test_Bunused)
 
     /* Check basic Binit */
     assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
-    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t));
+    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID));
     /* Add some field and then see what happens */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(BFLDID)-sizeof(s)-2/* align of short */);

@@ -301,7 +301,7 @@ expublic int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
 
         /* OK stuff is sorted */
         /* Do not count in bad field by it self. It is not needed for us! */
-        while(BBADFLDID!=*p_bfldid)
+        while(!UBF_EOF(hdr, p_bfldid))
         {
             /* Should we start removal? */
             if (PROJ_MODE_PROJ==mode)
@@ -634,7 +634,7 @@ expublic int ndrx_Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
 
         /* OK stuff is sorted */
         /* Do not count in bad field by it self. It is not needed for us! */
-        while(EXSUCCEED==ret && BBADFLDID!=*p_bfldid_src)
+        while(EXSUCCEED==ret && !UBF_EOF(hdr_src, p_bfldid_src))
         {
             mark = is_fld_pres(fldlist, 0, fld_count-1, *p_bfldid_src);
             

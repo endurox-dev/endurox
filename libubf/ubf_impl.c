@@ -124,7 +124,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
     UBF_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
 #endif
     
-    while ((char *)p_bfldid < ((char *)hdr) + hdr->bytes_used)
+    while (!UBF_EOF(hdr, p_bfldid))
     {
         /* Got to next position */
         /* Get type */
@@ -749,7 +749,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             *last_matched = p;
     }
 
-    while ( (char *)p_bfldid < (((char *)hdr) + hdr->bytes_used) &&
+    while ( !UBF_EOF(hdr, p_bfldid)  &&
             ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
             bfldid >= *p_bfldid)
     {
@@ -805,7 +805,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
      * Check that we found correct field!?!
      * if not then responding with NULL!
      */
-    if (BBADFLDID!=*p_bfldid && bfldid ==*p_bfldid && iocc==occ)
+    if (!UBF_EOF(hdr, p_bfldid) && bfldid ==*p_bfldid && iocc==occ)
     {
         type = (*p_bfldid>>EFFECTIVE_BITS);
         /* Check data type alignity */
@@ -1018,7 +1018,7 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
     }
 
     /* Seek position where we should insert the data... */
-    while (BBADFLDID!=*p_bfldid && bfldid >= *p_bfldid)
+    while (!UBF_EOF(hdr, p_bfldid) && bfldid >= *p_bfldid)
     {
         /*
          * Save the point from which we can continue (suitable for Bconcat)
@@ -1053,7 +1053,7 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
         p_bfldid = (BFLDID *)p;
     }
 
-    if (BBADFLDID==*p_bfldid)
+    if (UBF_EOF(hdr, p_bfldid))
     {
         /* Copy data here! */
         if (EXSUCCEED!=ndtype->p_put_data(ndtype, p, bfldid, buf, len))
