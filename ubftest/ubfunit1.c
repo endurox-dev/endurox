@@ -481,7 +481,10 @@ TestSuite *ubf_basic_tests() {
     add_test(suite, test_Bfldno);
     add_test(suite, test_buffer_align_fadd);
     add_test(suite, test_buffer_align_fchg_and_fpresocc);
+/*
+    - not valid any more the trailer might non zero
     add_test(suite, test_buffer_alignity);
+*/
     add_test(suite, test_Bisubf);
     add_test(suite, test_Bunused);
     add_test(suite, test_Bsizeof);
