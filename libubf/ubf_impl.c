@@ -124,7 +124,7 @@ expublic int ubf_cache_update(UBFH *p_ub)
     UBF_LOG(log_debug, "%s: About to update ubf bin-search cache", fn);
 #endif
     
-    while (BBADFLDID!=*p_bfldid)
+    while ((char *)p_bfldid < ((char *)hdr) + hdr->bytes_used)
     {
         /* Got to next position */
         /* Get type */
@@ -749,7 +749,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             *last_matched = p;
     }
 
-    while (BBADFLDID!=*p_bfldid &&
+    while ( (char *)p_bfldid < (((char *)hdr) + hdr->bytes_used) &&
             ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
             bfldid >= *p_bfldid)
     {
@@ -903,6 +903,7 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
         ndrx_Bset_error_msg(BEINVAL, "occ < -1");
         EXFAIL_OUT(ret);
     }
+#if 0
     /* Validate the buffer. Last 4 bytes must be empty! */
     /* Get the end of the buffer */
     p = (char *)p_ub;
@@ -917,6 +918,7 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
                                     sizeof(BFLDID), BBADFLDID, *last);
         EXFAIL_OUT(ret);
     }
+#endif
    
 out:
     return ret;
