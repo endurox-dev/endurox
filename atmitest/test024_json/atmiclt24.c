@@ -59,8 +59,8 @@ int main(int argc, char **argv)
         char *json = "{\"T_SHORT_FLD\":1765,"
         "\"T_LONG_FLD\":[3333111,2],"
         "\"T_CHAR_FLD\":\"A\","
-        "\"T_FLOAT_FLD\":1.330000,"
-        "\"T_DOUBLE_FLD\":[1111.220000,333,444],"
+        "\"T_FLOAT_FLD\":1,"
+        "\"T_DOUBLE_FLD\":[1111.22,333,444],"
         "\"T_STRING_FLD\":\"HELLO WORLD\","
         "\"T_CARRAY_FLD\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\"}";
         
