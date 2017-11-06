@@ -96,7 +96,6 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     int ret=EXSUCCEED;
     UBF_header_t *ubf_h = (UBF_header_t *)p_ub;
     char *p;
-    BFLDID  *last;
     
     UBF_LOG(log_debug, "Binit p_ub=%p len=%d", p_ub, len);
             
@@ -122,7 +121,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
-        ubf_h->bytes_used = sizeof(UBF_header_t);
+        ubf_h->bytes_used = sizeof(UBF_header_t) - sizeof(BFLDID); /* so this is not used.. */
     }
     
     return ret;
