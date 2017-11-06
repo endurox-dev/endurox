@@ -95,6 +95,8 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
 {
     int ret=EXSUCCEED;
     UBF_header_t *ubf_h = (UBF_header_t *)p_ub;
+    char *p;
+    BFLDID  *last;
     
     UBF_LOG(log_debug, "Binit p_ub=%p len=%d", p_ub, len);
             
@@ -113,14 +115,19 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     else
     {
         /* Initialize buffer */
-        memset((char *)p_ub, 0, len); /* TODO: Do we need all to be set to 0? */
+        memset((char *)p_ub, 0, sizeof(UBF_header_t)); /* TODO: Do we need all to be set to 0? */
         ubf_h->version = UBF_VERSION; /* Reset options to (all disabled) */
         ubf_h->buffer_type = 0; /* not used currently */
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
         ubf_h->bytes_used = sizeof(UBF_header_t);
-        
+        /* init trailer */
+        p = (char *)ubf_h;
+        p+=ubf_h->bytes_used;
+        p-= sizeof(BFLDID);
+        last=(BFLDID *)(p);
+        *last=BBADFLDID;
     }
     
     return ret;
@@ -256,7 +263,7 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
          */
         UBF_LOG(log_debug, "resetting: %p to 0 - %d bytes",
                             last+1, 0, remove_size);
-        memset(last+1, 0, remove_size);
+        /*memset(last+1, 0, remove_size);*/
     }
     else
     {
@@ -686,7 +693,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
     {
         /* save some original characteristics of dest buffer */
         dst_buf_len = dst_h->buf_len;
-        memset(p_ub_dst, 0, dst_h->bytes_used);
+        /*memset(p_ub_dst, 0, dst_h->bytes_used);*/
         memcpy(p_ub_dst, p_ub_src, src_h->bytes_used);
         dst_h->buf_len = dst_buf_len;
         dst_h->bytes_used = src_h->bytes_used;
@@ -1295,7 +1302,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
                                     "From %p %d bytes",
                                     p+hdr->buf_len, reset_size);
 
-                memset(p+hdr->buf_len, 0, reset_size);
+                /*memset(p+hdr->buf_len, 0, reset_size);*/
             }
             /* Update FB to new size. */
             hdr->buf_len+=reset_size;

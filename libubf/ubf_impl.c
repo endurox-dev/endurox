@@ -1272,6 +1272,7 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             if (must_have_size < 0)
             {
                 /* Reset trailing stuff to 0 - this should be tested! */
+                /*TODO: Opt ???*/
                 memset(p+existing_size + must_have_size+move_size, 0, real_move);
             }
         }
