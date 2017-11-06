@@ -204,6 +204,8 @@ int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size)
     tmp=aligned%DEFAULT_ALIGN;
     aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
 
+    UBF_LOG(log_error, "YOPT=> aligned: %d payload: %d", aligned, payload_size?*payload_size:-1);
+    
     return aligned;
 }
 

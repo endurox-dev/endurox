@@ -722,7 +722,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     *fld_dtype=NULL;
     int stat = EXSUCCEED;
     char fn[] = "get_fld_loc";
-    
+    int eof;
 
     *last_occ = EXFAIL;
     /*
@@ -741,18 +741,25 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         p = (char *)p_bfldid;
     }
     
+    /* ok we match first... then step to next. */
     if (bfldid == *p_bfldid)
     {
         iocc++;
+        
+        UBF_LOG(log_error, "YOPTELL MATCH 1! => %d %d", iocc, *p_bfldid);
+        
         /* Save last matched position */
         if (NULL!=last_matched)
             *last_matched = p;
     }
 
-    while ( !UBF_EOF(hdr, p_bfldid)  &&
+    while ( !(eof=UBF_EOF(hdr, p_bfldid))  &&
             ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
             bfldid >= *p_bfldid)
     {
+        
+        UBF_LOG(log_error, "YOPT! cur fld: %d search %d", *p_bfldid, bfldid);
+        
         /*
          * Update the start of the new field
          * This keeps us in track what was last normal field check.
@@ -782,19 +789,36 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         dtype = &G_dtype_str_map[type];
         step = dtype->p_next(dtype, p, NULL);
         p+=step;
+        
+        UBF_LOG(log_error, "YOPT, settping: %d", step);
+        
         /* Align error */
+#if 0
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
-                                        fn, p);
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p "
+                    "(offset: %ld) field: %d, len: %d, overrun: %d", 
+                    fn, p, (long)(p-((char *)hdr)),
+                    *p_bfldid, step, (p-((char *)hdr)) - hdr->bytes_used );
             stat=EXFAIL;
             goto out;
         }
+#endif
+
+        if (eof=UBF_EOF(hdr, p))
+        {
+            UBF_LOG(log_error, "YOPT!, GOT EOF!");
+            break;
+        }
+            
         p_bfldid = (BFLDID *)p;
 
         if (bfldid == *p_bfldid)
         {
             iocc++;
+            
+            UBF_LOG(log_error, "YOPTELL MATCH! => %d", iocc);
+            
             /* Save last matched position */
             if (NULL!=last_matched)
                 *last_matched = p;
@@ -805,7 +829,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
      * Check that we found correct field!?!
      * if not then responding with NULL!
      */
-    if (!UBF_EOF(hdr, p_bfldid) && bfldid ==*p_bfldid && iocc==occ)
+    if (!eof && bfldid ==*p_bfldid && iocc==occ)
     {
         type = (*p_bfldid>>EFFECTIVE_BITS);
         /* Check data type alignity */
@@ -826,10 +850,18 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 
     *last_occ = iocc;
     /* set up last checked, it could be even next element! */
-    *last_checked=(char *)p_bfldid;
+    
+    if (!eof)
+    {
+        *last_checked=(char *)p_bfldid;
+    }
+    else
+    {
+        *last_checked=NULL;
+    }
     
     
-    UBF_LOG(log_debug, "*last_checked [%d] %p", **last_checked, *last_checked);
+    UBF_LOG(log_debug, "*last_checked %p", *last_checked);
     
 out:
     return ret;
@@ -1046,8 +1078,8 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
-                                        fn, p);
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p "
+                    "(offset: %ld)", fn, p, (long)(p-((char *)hdr)));
             EXFAIL_OUT(ret);
         }
         p_bfldid = (BFLDID *)p;
@@ -1251,6 +1283,7 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
         if (must_have_size!=0)
         { 
+            BFLDLEN yopt;
             int real_move = must_have_size;
             if (real_move < 0 )
                 real_move = -real_move;
@@ -1265,7 +1298,12 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
             /* Free up, or make more memory to be used! */
             memmove(p+existing_size + must_have_size, p+existing_size, move_size); 
+            
+            yopt = hdr->bytes_used;
+            
             hdr->bytes_used+=must_have_size;
+            
+            UBF_LOG(log_error, "YOPT: bytes_used: %d (+%d)-> %d", yopt, must_have_size, hdr->bytes_used);
            
             /* Update type offset cache: */
             ubf_cache_shift(p_ub, bfldid, must_have_size);
@@ -1274,8 +1312,9 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             if (must_have_size < 0)
             {
                 /* Reset trailing stuff to 0 - this should be tested! */
-                /*TODO: Opt ???*/
+                /*TODO: Opt ???
                 memset(p+existing_size + must_have_size+move_size, 0, real_move);
+                 * */
             }
         }
 
@@ -1292,6 +1331,14 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         int missing_occ;
         int must_have_size;
         int empty_elem_tot_size;
+        BFLDLEN yopt;
+        
+        if (NULL==last_checked)
+        {
+            /* so element was not found, calculate "virtual address" */
+            last_checked = ((char *)hdr) + hdr->bytes_used;
+        }
+        
         p = last_checked;
         p_bfldid = (BFLDID *)last_checked;
         int type;
@@ -1312,7 +1359,9 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
          * 0 - (-1) - 1 = 0, meaning that there is nothing missing.
          */
         missing_occ = occ - last_occ - 1; /* -1 cos end elem is ours */
-        UBF_LOG(log_debug, "Missing empty positions = %d", missing_occ);
+        UBF_LOG(log_debug, "Missing empty positions: %d (occ: %d, last_occ: %d)", 
+                missing_occ, occ, last_occ);
+        
         elem_empty_size = ext1_map->p_empty_sz(ext1_map);
         empty_elem_tot_size = missing_occ * ext1_map->p_empty_sz(ext1_map);
 
@@ -1326,8 +1375,10 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         }
 
         must_have_size=empty_elem_tot_size+target_elem_size;
-        UBF_LOG(log_debug, "About to add data %d bytes",
-                                        must_have_size);
+        UBF_LOG(log_debug, "About to add data %d bytes (total used: %d, total: %d), "
+                "target_elem_size: %d, empty_elem_tot_size: %d, missing_occ: %d",
+                must_have_size, hdr->bytes_used, hdr->buf_len,
+                target_elem_size, empty_elem_tot_size, missing_occ);
         
         if (!have_buffer_size(p_ub, must_have_size, EXTRUE))
         {
@@ -1366,8 +1417,12 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             ndrx_Bset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
             EXFAIL_OUT(ret);
         }       
+        yopt = hdr->bytes_used;
         /* Finally increase the buffer usage! */
         hdr->bytes_used+=must_have_size;
+        
+        UBF_LOG(log_error, "YOPT: bytes_used: %d (+%d)-> %d", yopt, must_have_size, hdr->bytes_used);
+        
         
         /* Update type offset cache: */
         ubf_cache_shift(p_ub, bfldid, must_have_size);
@@ -1592,7 +1647,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
     }
     
     /* return the results */
-    if (BBADFLDID!=*state->p_cur_bfldid)
+    if (!UBF_EOF(hdr, state->p_cur_bfldid))
     {
         /* Return the value if needed */
         *bfldid = *state->p_cur_bfldid;
