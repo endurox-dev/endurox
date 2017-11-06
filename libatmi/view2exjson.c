@@ -537,7 +537,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                                     "Array to root object!!");
                             EXFAIL_OUT(ret);
                     }
-                    if (NULL == (jarr=exjson_object_get_array(root_object, cname)))
+                    if (NULL == (jarr=exjson_object_get_array(view_object, cname)))
                     {
                             NDRX_LOG(log_error, "Failed to initialize array!!");
 
