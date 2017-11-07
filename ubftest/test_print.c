@@ -279,7 +279,7 @@ Ensure(test_bextread_bfldid)
     fclose(f);
     
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
+    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }

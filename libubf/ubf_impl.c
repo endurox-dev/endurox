@@ -742,7 +742,8 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     
     /* ok we match first... then step to next. */
-    if (bfldid == *p_bfldid)
+    /* test only if we are not at the end... */
+    if (!UBF_EOF(hdr, p_bfldid) && bfldid == *p_bfldid)
     {
         iocc++;
         
@@ -861,7 +862,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     
     
-    UBF_LOG(log_debug, "*last_checked %p", *last_checked);
+    UBF_LOG(log_debug, "*last_checked %p, last_occ=%d", *last_checked, *last_occ);
     
 out:
     return ret;
@@ -1014,7 +1015,7 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
 #endif
 /*******************************************************************************/
 
-    UBF_LOG(log_debug, "Badd: bfldid: %x", bfldid);
+    UBF_LOG(log_debug, "Badd: bfldid: %d", bfldid);
     
     int ntype = (bfldid>>EFFECTIVE_BITS);
     dtype_str_t *ndtype = &G_dtype_str_map[ntype];
@@ -1245,7 +1246,8 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     UBF_DUMP(log_always, "Bchg data to buffer:", buf, actual_data_size);
 #endif
 /*******************************************************************************/
-
+    UBF_LOG(log_debug, "%s: changing %d occ=%d", __func__, bfldid, occ);
+    
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         p = get_fld_loc_binary_search(p_ub, bfldid, occ, &dtype,
