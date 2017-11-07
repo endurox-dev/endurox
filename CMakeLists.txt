@@ -68,7 +68,7 @@ IF (DEFINE_RELEASEBUILD)
 ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
-        SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
 SET(RT_LIB rt dl)
