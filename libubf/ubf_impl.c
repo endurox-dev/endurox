@@ -468,6 +468,7 @@ get_last:
  * @param last_matched - last matched field (can be used together with last_occ),
  *                       It is optional (pas NULL if not needed).
  * @param lat_checked  - if not NULL, then function will try find the last occ of the type (even not matched).
+ *              In case of EOF/not found, this might point to address outside the bytes_used scope!!!
  * @param occ - occurrence to get. If less than -1, then get out the count
  * @param last_occ last check occurrence
  * @return - ptr to field.
@@ -702,6 +703,8 @@ out:
  *                       It is optional (pas NULL if not needed).
  * @param occ - occurrence to get. If less than -1, then get out the count
  * @param last_occ last check occurrence
+ * @param last_checked - BE WARNED! In case of not found, this will point to hdr+bytes_used 
+ * (to non existing field address)!
  * @return - ptr to field.
  */
 expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
@@ -747,8 +750,6 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     {
         iocc++;
         
-        UBF_LOG(log_error, "YOPTELL MATCH 1! => %d %d", iocc, *p_bfldid);
-        
         /* Save last matched position */
         if (NULL!=last_matched)
             *last_matched = p;
@@ -758,9 +759,6 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
             ( (bfldid != *p_bfldid) || (bfldid == *p_bfldid && (iocc<occ || occ<-1))) &&
             bfldid >= *p_bfldid)
     {
-        
-        UBF_LOG(log_error, "YOPT! cur fld: %d search %d", *p_bfldid, bfldid);
-        
         /*
          * Update the start of the new field
          * This keeps us in track what was last normal field check.
@@ -791,8 +789,6 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         step = dtype->p_next(dtype, p, NULL);
         p+=step;
         
-        UBF_LOG(log_error, "YOPT, settping: %d", step);
-        
         /* Align error */
 #if 0
         if (CHECK_ALIGN(p, p_ub, hdr))
@@ -808,7 +804,6 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 
         if (eof=UBF_EOF(hdr, p))
         {
-            UBF_LOG(log_error, "YOPT!, GOT EOF!");
             break;
         }
             
@@ -817,8 +812,6 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         if (bfldid == *p_bfldid)
         {
             iocc++;
-            
-            UBF_LOG(log_error, "YOPTELL MATCH! => %d", iocc);
             
             /* Save last matched position */
             if (NULL!=last_matched)
@@ -858,7 +851,8 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     else
     {
-        *last_checked=NULL;
+        /* Last check will go over the boundaries! */
+        *last_checked=(char *)hdr + hdr->bytes_used;
     }
     
     
@@ -1285,7 +1279,7 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 
         if (must_have_size!=0)
         { 
-            BFLDLEN yopt;
+            BFLDLEN debug_before;
             int real_move = must_have_size;
             if (real_move < 0 )
                 real_move = -real_move;
@@ -1301,11 +1295,12 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             /* Free up, or make more memory to be used! */
             memmove(p+existing_size + must_have_size, p+existing_size, move_size); 
             
-            yopt = hdr->bytes_used;
+            debug_before = hdr->bytes_used;
             
             hdr->bytes_used+=must_have_size;
             
-            UBF_LOG(log_error, "YOPT: bytes_used: %d (+%d)-> %d", yopt, must_have_size, hdr->bytes_used);
+            UBF_LOG(log_debug, "%s: bytes_used: %d (+%d)-> %d",
+                __func__, debug_before, must_have_size, hdr->bytes_used);
            
             /* Update type offset cache: */
             ubf_cache_shift(p_ub, bfldid, must_have_size);
@@ -1333,13 +1328,16 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         int missing_occ;
         int must_have_size;
         int empty_elem_tot_size;
-        BFLDLEN yopt;
+        BFLDLEN debug_before;
         
+#if 0
+        -- this is always set, even to invalid addr.
         if (NULL==last_checked)
         {
             /* so element was not found, calculate "virtual address" */
             last_checked = ((char *)hdr) + hdr->bytes_used;
         }
+#endif
         
         p = last_checked;
         p_bfldid = (BFLDID *)last_checked;
@@ -1419,11 +1417,12 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
             ndrx_Bset_error_msg(BEINVAL, "Failed to put data into FB - corrupted data?");
             EXFAIL_OUT(ret);
         }       
-        yopt = hdr->bytes_used;
+        debug_before = hdr->bytes_used;
         /* Finally increase the buffer usage! */
         hdr->bytes_used+=must_have_size;
         
-        UBF_LOG(log_error, "YOPT: bytes_used: %d (+%d)-> %d", yopt, must_have_size, hdr->bytes_used);
+        UBF_LOG(log_debug, "%s: bytes_used: %d (+%d)-> %d",
+            __func__, debug_before, must_have_size, hdr->bytes_used);
         
         
         /* Update type offset cache: */

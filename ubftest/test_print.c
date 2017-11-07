@@ -241,7 +241,7 @@ Ensure(test_bprint)
     assert_not_equal((f=fopen(filename, "r")), NULL);
     assert_equal(Bextread(p_ub2, f), EXSUCCEED);
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
+    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
@@ -800,6 +800,7 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_plus);
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
+
 
     return suite;
 }
