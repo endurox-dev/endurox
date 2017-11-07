@@ -560,6 +560,13 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
                     (proto_bufsz - (*proto_buf_offset)) );
             
             *proto_buf_offset += len;
+            
+            /* need some debug too... */
+            
+            if (debug_get_ndrx_level() >= log_debug)
+            {
+                NDRX_STRNCPY_SAFE(debug_buf, c_buf_in, debug_bufsz);
+            }
         }
             break;
         case EXF_INT:
@@ -612,10 +619,14 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, c_buf_in_len);
             
             memcpy(proto_buf+*proto_buf_offset, c_buf_in, c_buf_in_len);
-            *proto_buf_offset = c_buf_in_len;
+            *proto_buf_offset += c_buf_in_len;
             
             /* Built representation for user... for debug purposes... */
-            ndrx_build_printable_string(debug_buf, debug_bufsz, proto_buf, c_buf_in_len);
+            if (debug_get_ndrx_level() >= log_debug)
+            {
+                ndrx_build_printable_string(debug_buf, debug_bufsz, 
+                        proto_buf, c_buf_in_len);
+            }
         }    
             break;
                 
@@ -628,9 +639,16 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             break;
     }
     
-    if (EXF_CARRAY!=fld->fld_type)
+    if (debug_get_ndrx_level() >= log_debug)
     {
-        NDRX_STRNCPY_SAFE(debug_buf, proto_buf + (*proto_buf_offset), debug_bufsz);
+        if (conv_bcd)
+        {
+            NDRX_STRNCPY_SAFE(debug_buf, numbuf, debug_bufsz);
+        }
+        else if (EXF_CARRAY!=fld->fld_type)
+        {
+            NDRX_STRNCPY_SAFE(debug_buf, proto_buf + (*proto_buf_offset), debug_bufsz);
+        }
     }
     /* else should be set up already by carray func! */
     
@@ -1537,6 +1555,11 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             /* TODO: Might consider to ret=FAIL; goto out; - 
              * When all will be debugged!
              */
+            
+            if (len_written < 0)
+            {
+                EXFAIL_OUT(ret);
+            }
         }
         
 tag_continue:
