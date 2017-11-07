@@ -381,6 +381,24 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
         if (net->dl>=net->len_pfx)
         {
             full_msg = get_full_len(net);
+            
+            if (full_msg < 0)
+            {
+                NDRX_LOG(log_error, "ERROR ! received len %d < 0 - closing socket!", 
+                        full_msg);
+                userlog("ERROR ! received len %d < 0! - closing socket!", full_msg);
+                close_socket(net);
+                EXFAIL_OUT(ret);
+            }
+            else if (full_msg > NDRX_MSGSIZEMAX)
+            {
+                NDRX_LOG(log_error, "ERROR ! received len %d > max buf %ld! - "
+                        "closing socket!", full_msg, NDRX_MSGSIZEMAX);
+                userlog("ERROR ! received len %d > max buf %ld! - "
+                        "closing socket!", full_msg, NDRX_MSGSIZEMAX);
+                close_socket(net);
+                EXFAIL_OUT(ret);
+            }
 
             NDRX_LOG(log_debug, "Data buffered - "
                     "buf: [%d], full: %d",
