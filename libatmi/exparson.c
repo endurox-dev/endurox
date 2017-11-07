@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
+#include <ubf_int.h>
 
 /* Apparently sscanf is not implemented in some "standard" libraries, so don't use it, if you
  * don't have to. */
@@ -922,7 +923,12 @@ static int exjson_serialize_to_buffer_r(const EXJSON_Value *value, char *buf, in
             if (buf != NULL) {
                 num_buf = buf;
             }
-            written = sprintf(num_buf, FLOAT_FORMAT, num);
+            
+            if (num == ((double)(long)num)) /*  check if num is integer */
+                written = sprintf(num_buf, "%ld", (long)num);
+            else /* Enduro/X specific: */
+                written = sprintf(num_buf, "%.*lf", DOUBLE_RESOLUTION, num);
+
             if (written < 0) {
                 return -1;
             }
