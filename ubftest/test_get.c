@@ -477,6 +477,45 @@ Ensure(test_bgetlast)
     assert_equal(occ, -1);
 }
 
+
+/**
+ * Test Test cahced fields
+ */
+Ensure(test_cached_flds)
+{
+    char fb[1024];
+    UBFH *p_ub = (UBFH *)fb;
+    short s1;
+    long l1;
+
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+
+    s1 = 144;
+    
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s1, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s1, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, 2, (char *)&s1, 0), EXSUCCEED);
+    
+    assert_equal(Boccur(p_ub, T_SHORT_FLD), 3);
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 2), EXSUCCEED);
+    
+    assert_equal(Boccur(p_ub, T_SHORT_FLD), 2);
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 1), EXSUCCEED);
+    
+    assert_equal(Boccur(p_ub, T_SHORT_FLD), 1);
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), EXSUCCEED);
+    
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+
+    l1 = 144;
+    
+    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l1, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_LONG_FLD, 0), EXSUCCEED);
+    assert_equal(Boccur(p_ub, T_LONG_FLD), 0);
+        
+}
+
 TestSuite *ubf_get_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -484,6 +523,8 @@ TestSuite *ubf_get_tests(void)
     add_test(suite, test_cbgetalloc);
     add_test(suite, test_bgetalloc);
     add_test(suite, test_bgetlast);
+    
+    add_test(suite, test_cached_flds);
 
     return suite;
 }
