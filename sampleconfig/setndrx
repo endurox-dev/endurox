@@ -57,7 +57,7 @@ export NDRX_MSGMAX=1000
 # Daemon Q size...
 export NDRX_DQMAX=100
 # Max message size (in bytes)
-export NDRX_MSGSIZEMAX=56000
+export NDRX_MSGSIZEMAX=62000
 # Load dynamically....!
 . ~/ndrx_home
 # Max fields for hashing UBF
