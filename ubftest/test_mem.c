@@ -82,8 +82,8 @@ Ensure(test_Brealloc)
     assert_equal(Brealloc(p_ub, 1, 0), NULL);
     assert_equal(Berror, BEINVAL);
 
-    /* should be bigger than existing. */
-    assert_equal(Brealloc(p_ub, 1, strlen(BIG_TEST_STRING)+1), NULL);
+    /* should be bigger than existing. 4 is sizeof bfld, first in stuct */
+    assert_equal(Brealloc(p_ub, 1, strlen(BIG_TEST_STRING)-4), NULL);
     assert_equal(Berror, BEINVAL);
 
     assert_equal(EXSUCCEED, Bfree(p_ub));

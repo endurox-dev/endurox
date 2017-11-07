@@ -299,10 +299,10 @@ Ensure(test_fconcat)
     load_concat_test_data(p_ub);
     /* Do the full copy - output should be the same */
     assert_equal(Bconcat(p_ub2, p_ub), EXSUCCEED);
-    assert_equal(memcmp(p_ub2, p_ub, sizeof(fb)), 0);
+    assert_equal(memcmp(p_ub2, p_ub, Bused(p_ub2)), 0);
 
     /* Do the update over again - should be the same */
-    assert_equal(memcmp(p_ub2, p_ub, sizeof(fb)), 0);
+    assert_equal(memcmp(p_ub2, p_ub, Bused(p_ub2)), 0);
     test_concat_data_1(p_ub2);
 
     /* -------------------------------------------------------- */
