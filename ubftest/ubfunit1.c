@@ -392,6 +392,9 @@ Ensure(test_buffer_align_fadd)
 }
 
 /**
+ * Test is not actual anymore - we do not end with BBADFLD
+ * - we operation with actual length of the buffer to find the EOF
+ * ---------------------------------------------------------------
  * This tests so that buffer terminats with BBADFLDID
  * and then pre-last item is the data.
  * Do test with Bchg
@@ -439,6 +442,7 @@ Ensure(test_buffer_align_fchg_and_fpresocc)
 
 /**
  * Basically we should test all API functions here which operate with FB!
+ * This also seems to be not valid... We do not end with BADFLDID anymore.
  */
 Ensure(test_buffer_alignity)
 {
@@ -479,8 +483,10 @@ TestSuite *ubf_basic_tests() {
     add_test(suite, test_fld_table);
     add_test(suite, test_Bmkfldid);
     add_test(suite, test_Bfldno);
+/* no more for new processing priciples of bytes used.
     add_test(suite, test_buffer_align_fadd);
     add_test(suite, test_buffer_align_fchg_and_fpresocc);
+*/
 /*
     - not valid any more the trailer might non zero
     add_test(suite, test_buffer_alignity);
