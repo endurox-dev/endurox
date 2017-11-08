@@ -73,6 +73,7 @@ exprivate int ndrx_please_increase_stack(void)
  * Return configured max message size.
  * This will try to get value from environment, if not possible then NDRX_ATMI_MSG_MAX_SIZE
  * is used.
+ * TODO: Have some sync here... no need to execute twice..
  * @return max message size
  */
 expublic long ndrx_msgsizemax (void)
