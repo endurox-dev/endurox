@@ -56,6 +56,7 @@
 exprivate int M_maxmsgsize_loaded = EXFALSE; /* Is config loaded? */
 exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
 exprivate long M_stack_estim = EXFAIL; /* Estimated stack size */
+MUTEX_LOCKDECL(M_maxmsgsize_loaded_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -83,71 +84,77 @@ expublic long ndrx_msgsizemax (void)
     
     if (!M_maxmsgsize_loaded)
     {
-        /* this is thread safe function
-         * it will not be a problem if this block is twice executed.
-         */
-        ndrx_cconfig_load();
+        MUTEX_LOCK_V(M_maxmsgsize_loaded_lock);
         
-        esize = getenv(CONF_NDRX_MSGSIZEMAX);
-        
-        if (NULL!=esize)
+        if (!M_maxmsgsize_loaded)
         {
-            M_maxmsgsize = atol(esize);
-            
-            if (M_maxmsgsize < NDRX_ATMI_MSG_MAX_SIZE)
+            /* this is thread safe function
+             * it will not be a problem if this block is twice executed.
+             */
+            ndrx_cconfig_load();
+
+            esize = getenv(CONF_NDRX_MSGSIZEMAX);
+
+            if (NULL!=esize)
+            {
+                M_maxmsgsize = atol(esize);
+
+                if (M_maxmsgsize < NDRX_ATMI_MSG_MAX_SIZE)
+                {
+                    M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
+                }
+            }
+            else
             {
                 M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
             }
-        }
-        else
-        {
-            M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
-        }
-        
-        /* Estimate stack */
-        M_stack_estim = M_maxmsgsize * NDRX_STACK_MSG_FACTOR;
-        
-        /* Check rlimit */
-        if (EXSUCCEED==getrlimit(RLIMIT_STACK, &rl))
-        {
-            if (RLIM_INFINITY!=rl.rlim_cur && rl.rlim_cur < M_stack_estim)
+
+            /* Estimate stack */
+            M_stack_estim = M_maxmsgsize * NDRX_STACK_MSG_FACTOR;
+
+            /* Check rlimit */
+            if (EXSUCCEED==getrlimit(RLIMIT_STACK, &rl))
             {
-                rl.rlim_cur = M_stack_estim;
-                
-                /* Ignore the result, because it is assumed that 
-                 * we cannot perform any logging  */
-                if (EXSUCCEED!=setrlimit(RLIMIT_STACK, &rl))
+                if (RLIM_INFINITY!=rl.rlim_cur && rl.rlim_cur < M_stack_estim)
                 {
-                    userlog("setrlimit(RLIMIT_STACK, ...) rlim_cur=%ld failed: %s",
-                                (long)M_stack_estim, strerror(errno));
-                    
-                    userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
-                                "to: %ld bytes or %ld kb (calculated by: "
-                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
-                                (long)M_stack_estim, (long)(M_stack_estim/1024), 
-                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
+                    rl.rlim_cur = M_stack_estim;
 
-                    fprintf(stderr, "LIMITS ERROR ! Please set stack (ulimit -s) size "
-                                "to: %ld bytes or %ld kb (calculated by: "
-                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
-                                (long)M_stack_estim, (long)(M_stack_estim/1024), 
-                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
-                    
-                    fprintf(stderr, "Process is terminating with error...\n");
+                    /* Ignore the result, because it is assumed that 
+                     * we cannot perform any logging  */
+                    if (EXSUCCEED!=setrlimit(RLIMIT_STACK, &rl))
+                    {
+                        userlog("setrlimit(RLIMIT_STACK, ...) rlim_cur=%ld failed: %s",
+                                    (long)M_stack_estim, strerror(errno));
 
-                    exit(EXFAIL);
+                        userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
+                                    "to: %ld bytes or %ld kb (calculated by: "
+                                    "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                    (long)M_stack_estim, (long)(M_stack_estim/1024), 
+                                    (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
+
+                        fprintf(stderr, "LIMITS ERROR ! Please set stack (ulimit -s) size "
+                                    "to: %ld bytes or %ld kb (calculated by: "
+                                    "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                    (long)M_stack_estim, (long)(M_stack_estim/1024), 
+                                    (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
+
+                        fprintf(stderr, "Process is terminating with error...\n");
+
+                        exit(EXFAIL);
+                    }
                 }
             }
+            else
+            {
+                userlog("getrlimit(RLIMIT_STACK, ...) failed: %s", strerror(errno));
+            }
+
+            /*test the stack */
+            ndrx_please_increase_stack();
+
+            M_maxmsgsize_loaded = EXTRUE;
         }
-        else
-        {
-            userlog("getrlimit(RLIMIT_STACK, ...) failed: %s", strerror(errno));
-        }
-        
-        /*test the stack */
-        ndrx_please_increase_stack();
-        
-        M_maxmsgsize_loaded = EXTRUE;
+        MUTEX_UNLOCK_V(M_maxmsgsize_loaded_lock);
     }
     
     return M_maxmsgsize;
