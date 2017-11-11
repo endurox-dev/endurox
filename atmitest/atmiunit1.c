@@ -431,8 +431,10 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test040_typedview_dom);
 
+#ifdef EX_OS_LINUX
     add_test(suite, test041_bigmsg);
     add_test(suite,test042_bignet);
+#endif
             
     return suite;
 }

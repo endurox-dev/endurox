@@ -13,6 +13,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
+#include <ndrstandard.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <ubf.h>
