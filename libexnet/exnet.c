@@ -192,7 +192,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
                 int spent = ndrx_stopwatch_get_delta_sec(&w);
                 NDRX_LOG(log_warn, "Socket full: %s - retry, time spent: %d, max: %d", 
                         strerror(err), spent, net->rcvtimeout);
-                usleep(10000); /* sleep 10 msec.. on retry... */
+                usleep(100000); /* sleep 0.1 sec on retry... */
 
                 if (spent>=net->rcvtimeout)
                 {
@@ -547,7 +547,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
             goto out;
         }
     }
-    else
+    else if (net->is_connected)
     {
         /* We are connected, send zero lenght message, ok */
         if (net->periodic_zero && 
