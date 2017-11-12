@@ -356,8 +356,8 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     char cmd = TMQ_CMD_ENQUEUE;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
-    char tmp[ATMI_MSG_MAX_SIZE];
-    long tmp_len = ATMI_MSG_MAX_SIZE;
+    char tmp[NDRX_MSGSIZEMAX];
+    long tmp_len = sizeof(tmp);
     UBFH *p_ub = NULL;
     short buftype;
     atmi_error_t errbuf;
@@ -473,11 +473,11 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     /* do the call to queue system */
     if (EXEOS!=*qspace)
     {
-        sprintf(qspacesvc, NDRX_SVC_QSPACE, qspace);
+        snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_QSPACE, qspace);
     }
     else
     {
-        sprintf(qspacesvc, NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
+        snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
     }
     
     if (EXFAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))

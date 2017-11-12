@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <sys/param.h>
+#include <string.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -51,6 +52,7 @@
 #include <nclopt.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define SUBSECT_SEP     "/"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -238,6 +240,7 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
     long twait = 0;
+    char *p;
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
@@ -249,11 +252,36 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         {0}
     };
     
-    /* parse command line */
-    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    if (argc>=2 && '-'!=argv[1][0])
     {
-        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
-        EXFAIL_OUT(ret);
+        /* parse the tag/sub */
+        p = strtok(argv[1], SUBSECT_SEP);
+        
+        if (NULL!=p)
+        {
+            NDRX_STRCPY_SAFE(tag, p);
+        }
+        else
+        {
+            fprintf(stderr, "Missing tag! Syntax sc <TAG>[/SUBSECT], e.g. sc POS/1\n");
+            EXFAIL_OUT(ret);
+        }
+        
+        p = strtok(NULL, SUBSECT_SEP);
+        
+        if (NULL!=p)
+        {
+            NDRX_STRCPY_SAFE(subsect, p);
+        }
+    }
+    else
+    {
+        /* parse command line */
+        if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+        {
+            fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+            EXFAIL_OUT(ret);
+        }
     }
     
     ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_SC, tag, subsect, twait);
@@ -275,6 +303,7 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
     long twait = 0;
+    char *p;
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
@@ -287,7 +316,29 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    if (argc>=2 && '-'!=argv[1][0])
+    {
+        /* parse the tag/sub */
+        p = strtok(argv[1], SUBSECT_SEP);
+        
+        if (NULL!=p)
+        {
+            NDRX_STRCPY_SAFE(tag, p);
+        }
+        else
+        {
+            fprintf(stderr, "Missing tag! Syntax bc <TAG>[/SUBSECT], e.g. sc POS/1\n");
+            EXFAIL_OUT(ret);
+        }
+        
+        p = strtok(NULL, SUBSECT_SEP);
+        
+        if (NULL!=p)
+        {
+            NDRX_STRCPY_SAFE(subsect, p);
+        }
+    }
+    else if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         EXFAIL_OUT(ret);
@@ -312,7 +363,8 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
     long twait = 0;
-     
+    char *p;
+    
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
@@ -325,7 +377,29 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     };
     
     /* parse command line */
-    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    if (argc>=2 && '-'!=argv[1][0])
+    {
+        /* parse the tag/sub */
+        p = strtok(argv[1], SUBSECT_SEP);
+        
+        if (NULL!=p)
+        {
+            NDRX_STRCPY_SAFE(tag, p);
+        }
+        else
+        {
+            fprintf(stderr, "Missing tag! Syntax rc <TAG>[/SUBSECT], e.g. sc POS/1\n");
+            EXFAIL_OUT(ret);
+        }
+        
+        p = strtok(NULL, SUBSECT_SEP);
+        
+        if (NULL!=p)
+        {
+            NDRX_STRCPY_SAFE(subsect, p);
+        }
+    }
+    else if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         EXFAIL_OUT(ret);

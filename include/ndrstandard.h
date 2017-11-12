@@ -104,7 +104,18 @@ extern "C" {
 #endif
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+    
+#define NDRX_ATMI_MSG_MAX_SIZE   65536 /* internal */
+    
+#define NDRX_STACK_MSG_FACTOR        30 /* max number of messages in stack */
+    
+/* Feature #127 
+ * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
+ */
+extern NDRX_API long ndrx_msgsizemax (void);
+#define NDRX_MSGSIZEMAX          ndrx_msgsizemax()
 
+#define NDRX_PADDING_MAX         16 /* Max compiled padding in struct (assumed) */
 
 #if 0
 /*These are slow! */

@@ -496,7 +496,7 @@ class WizardBase {
 		userlog(format("Setting 755 to [%s]",  filename));
 		try
 		{
-			chmod(::prov.setfile, "755");
+			chmod(filename, "755");
 		}
 		catch (e)
 		{

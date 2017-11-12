@@ -109,7 +109,7 @@ expublic int remove_service_q(char *svc, short srvid)
     int ret=EXSUCCEED;
     char q_str[NDRX_MAX_Q_SIZE+1];
     mqd_t qd=(mqd_t)EXFAIL;
-    char msg_buf[ATMI_MSG_MAX_SIZE];
+    char msg_buf[NDRX_MSGSIZEMAX];
     int len;
     unsigned prio;
     tp_command_generic_t *gen_command;
@@ -117,9 +117,9 @@ expublic int remove_service_q(char *svc, short srvid)
     NDRX_LOG(log_debug, "%s - Enter, svc = [%s], srvid = %hd", fn, svc, srvid);
      
 #ifdef EX_USE_POLL
-    sprintf(q_str, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, svc, srvid);
+    snprintf(q_str, sizeof(q_str), NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, svc, srvid);
 #else
-    sprintf(q_str, NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
+    snprintf(q_str, sizeof(q_str), NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
 #endif
     
     /* Run in non-blocked mode */
@@ -141,7 +141,7 @@ expublic int remove_service_q(char *svc, short srvid)
     
     /* Read all messages from Q & reply with dummy/FAIL stuff back! */
     while ((len=ndrx_mq_receive (qd,
-        (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)) > 0)
+        (char *)msg_buf, sizeof(msg_buf), &prio)) > 0)
     {
         NDRX_LOG(log_warn, "Got message, size: %d", len);
         gen_command = (tp_command_generic_t *)msg_buf;

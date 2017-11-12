@@ -163,6 +163,8 @@ Bug #110 (tpbridge does not report connection status to ndrxd after ndrxd is res
 
 - Version 5.0.10 released on 13/10/2017. (stable) Feature #232, Feature #231, -O2 optimization by default
 
+- Version 5.1.1  released on 13/10/2017. (development) Feature #127, Bug #229, Feature #230, Bug #234, Feature #244, Bug #243, Feature #248, Bug #240, Bug #238 - basically big message size support (over the 64K)
+
 # Build configurations
 
 ## Configure make with: 

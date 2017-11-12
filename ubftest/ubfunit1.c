@@ -312,13 +312,13 @@ Ensure(test_Bunused)
 
     /* Check basic Binit */
     assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
-    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t));
+    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID));
     /* Add some field and then see what happens */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(BFLDID)-sizeof(s)-2/* align of short */);
+    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(s)-2/* align of short */);
     /* fill up to zero */
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "abc", 0), EXSUCCEED);
-    assert_equal(Bunused(p_ub), 0);
+    assert_equal(Bunused(p_ub), sizeof(BFLDID));
 }
 
 
@@ -392,6 +392,9 @@ Ensure(test_buffer_align_fadd)
 }
 
 /**
+ * Test is not actual anymore - we do not end with BBADFLD
+ * - we operation with actual length of the buffer to find the EOF
+ * ---------------------------------------------------------------
  * This tests so that buffer terminats with BBADFLDID
  * and then pre-last item is the data.
  * Do test with Bchg
@@ -439,6 +442,7 @@ Ensure(test_buffer_align_fchg_and_fpresocc)
 
 /**
  * Basically we should test all API functions here which operate with FB!
+ * This also seems to be not valid... We do not end with BADFLDID anymore.
  */
 Ensure(test_buffer_alignity)
 {
@@ -479,9 +483,14 @@ TestSuite *ubf_basic_tests() {
     add_test(suite, test_fld_table);
     add_test(suite, test_Bmkfldid);
     add_test(suite, test_Bfldno);
+/* no more for new processing priciples of bytes used.
     add_test(suite, test_buffer_align_fadd);
     add_test(suite, test_buffer_align_fchg_and_fpresocc);
+*/
+/*
+    - not valid any more the trailer might non zero
     add_test(suite, test_buffer_alignity);
+*/
     add_test(suite, test_Bisubf);
     add_test(suite, test_Bunused);
     add_test(suite, test_Bsizeof);

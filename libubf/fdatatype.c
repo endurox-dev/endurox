@@ -367,7 +367,7 @@ int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
     if (NULL!=len && *len < t->size)
     {
         /* Set error, that string buffer too short */
-        ndrx_Bset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
                                 "output: %d", t->size, *len);
         ret=EXFAIL;
     }
@@ -400,7 +400,7 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
     if (NULL!=len && *len < data_len)
     {
         /* Set error, that string buffer too short */
-        ndrx_Bset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
                                 "output: %d", data_len, *len);
         ret=EXFAIL;
     }
@@ -435,7 +435,7 @@ int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
     if (NULL!=len && *len>0 && *len < carr->dlen)
     {
         /* Set error, that string buffer too short */
-        ndrx_Bset_error_fmt(BNOSPACE, "output buffer to short. Data len %d in buf, "
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
                                 "output: %d", carr->dlen, *len);
         ret=EXFAIL;
     }
