@@ -116,32 +116,22 @@ expublic long ndrx_msgsizemax (void)
             if (EXSUCCEED==getrlimit(RLIMIT_STACK, &rl))
             {
                 if (RLIM_INFINITY!=rl.rlim_cur && rl.rlim_cur < M_stack_estim)
-                {
-                    rl.rlim_cur = M_stack_estim;
+                {   
+                    userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
+                                "to: %ld bytes or %ld kb (calculated by: "
+                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                (long)M_stack_estim, (long)(M_stack_estim/1024), 
+                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
 
-                    /* Ignore the result, because it is assumed that 
-                     * we cannot perform any logging  */
-                    if (EXSUCCEED!=setrlimit(RLIMIT_STACK, &rl))
-                    {
-                        userlog("setrlimit(RLIMIT_STACK, ...) rlim_cur=%ld failed: %s",
-                                    (long)M_stack_estim, strerror(errno));
+                    fprintf(stderr, "LIMITS ERROR ! Please set stack (ulimit -s) size "
+                                "to: %ld bytes or %ld kb (calculated by: "
+                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                (long)M_stack_estim, (long)(M_stack_estim/1024), 
+                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
 
-                        userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
-                                    "to: %ld bytes or %ld kb (calculated by: "
-                                    "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
-                                    (long)M_stack_estim, (long)(M_stack_estim/1024), 
-                                    (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
+                    fprintf(stderr, "Process is terminating with error...\n");
 
-                        fprintf(stderr, "LIMITS ERROR ! Please set stack (ulimit -s) size "
-                                    "to: %ld bytes or %ld kb (calculated by: "
-                                    "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
-                                    (long)M_stack_estim, (long)(M_stack_estim/1024), 
-                                    (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
-
-                        fprintf(stderr, "Process is terminating with error...\n");
-
-                        exit(EXFAIL);
-                    }
+                    exit(EXFAIL);
                 }
             }
             else
