@@ -5,11 +5,11 @@ EX_ENV(5)
 
 NAME
 ----
-ex_env - EnduroX Environment configuration
+ex_env - Enduro/X Environment configuration
 
 DESCRIPTION
 -----------
-EnduroX use set of environment variables which is initial environment
+Enduro/X use set of environment variables which is initial environment
 for application domain. There is set of parameters related to system,
 prefixes, Posix Queue mount points, various system limits. Next step
 to the configuration is appdomain config it self, in 'ndrxconfig.xml'
@@ -18,119 +18,130 @@ and 'debug.conf'.
 Mandatory Env. Variables
 ------------------------
 *NDRX_NODEID*='NODE_ID'::
-	Cluster Node ID. Should be within 1..32.
+    Cluster Node ID. Should be within 1..32.
 *NDRX_CLUSTERISED*='1|0'::
-	Do we work in cluster mode or not? '1' - yes, we are in cluster. 
-	'0' - no, we are not in cluster.
+    Do we work in cluster mode or not? '1' - yes, we are in cluster. 
+    '0' - no, we are not in cluster.
 *NDRX_LDBAL*='LOAD_BALANCE_PERCENT'::
-	if LOAD_BALANCE_PERCENT is 0 = means process all locally, 
-	if value is set to 100 = process all on remote servers (if svc
-	available on remote server). 70% means, process 30% locally
-	70% remotely.
+    if LOAD_BALANCE_PERCENT is 0 = means process all locally, 
+    if value is set to 100 = process all on remote servers (if svc
+    available on remote server). 70% means, process 30% locally
+    70% remotely.
 *NDRX_TOUT*='TIME_OUT_IN_SECONDS'::
-	Global tpcall() timeout, if not called with TPNOTIME flag.
-	If process will not return in this time, then TPETIME error
-	will be returned.
+    Global tpcall() timeout, if not called with TPNOTIME flag.
+    If process will not return in this time, then TPETIME error
+    will be returned.
 *NDRX_ULOG*='ULOG_PATH'::
-	Writtable system path where to write user logs.
+    Writable system path where to write user logs.
 *NDRX_QPREFIX*='APP_PREFIX'::
-	Prefix used for POSIX IPC resources (shm and queue).
+    Prefix used for POSIX IPC resources (shm and queue).
 *NDRX_SVCMAX*='MAX_SERVICES'::
-	This determines the maximum number of services supported by instance.
-	The less is number, then less shared memory is used. However for
-	performance reason, number should be much bigger (3-4 times) than
-	actual estimated service count. Biggern number might speed up linear
-	hashing, i.e. it will be less likely that hash will collide.
+    This determines the maximum number of services supported by instance.
+    The less is number, then less shared memory is used. However for
+    performance reason, number should be much bigger (3-4 times) than
+    actual estimated service count. Biggern number might speed up linear
+    hashing, i.e. it will be less likely that hash will collide.
 *NDRX_SRVMAX*='MAX_SERVERS'::
-	Maximum number of servers that will be supported. This affects the
-	'-i' flag. Server ID. The max server id will be MAX_SERVERS-1.
+    Maximum number of servers that will be supported. This affects the
+    '-i' flag. Server ID. The max server id will be MAX_SERVERS-1.
 *NDRX_CONFIG*='FULL_PATH_TO_CONFIG_FILE'::
-	This shows the full path to useual ndrxconfig.xml.
+    This shows the full path to useual ndrxconfig.xml.
 *NDRX_QPATH*='QUEUE_MOUNT_POINT'::
-	Full path to directory where POSIX Queue is mounted.
+    Full path to directory where POSIX Queue is mounted.
 *NDRX_SHMPATH*='SHARED_MEM_MOUNT_POINT'::
-	Full path to POSIX Shared memory mount point.
+    Full path to POSIX Shared memory mount point.
 *NDRX_CMDWAIT*='NDRXD_COMMAND_WAIT_SECS'::
-	Number of second to wait for commands, after which 'ndrxd' does other checks.
+    Number of second to wait for commands, after which 'ndrxd' does other checks.
 *NDRX_DPID*='PATH_TO_NDRXD_PID_FILE'::
-	This is full path to 'ndrxd' PID file.
+    This is full path to 'ndrxd' PID file.
 *NDRX_RNDK*='APP_DOMAIN_RANDOM_KEY'::
-	Random key to indentify the processes beloning to
-	this app domain (i.e. used in ps ef).
+    Random key to indentify the processes beloning to
+    this app domain (i.e. used in ps ef).
 *NDRX_IPCKEY*='SYS_V_SEMAPHORE_KEY'::
-	System V Semaphores key number. Used for shared memory locking.
-	POSIX semaphores are not used here, because they are not unlocked if process
-	dies during acquired semaphore.
+    System V Semaphores key number. Used for shared memory locking.
+    POSIX semaphores are not used here, because they are not unlocked if process
+    dies during acquired semaphore.
 *NDRX_MSGMAX*='MAX_MSGS_PER_QUEUE'::
-	Posix queue config attrib. Max number of messages that can be put in one queue.
+    Posix queue config attrib. Max number of messages that can be put in one queue.
 *NDRX_DQMAX*='NDRXD_ACCESS_Q_MSG_MAX'::
-	EnduroX ATMI daemoni 'ndrxd' access Q size. Bigger is better.
+    Enduro/X ATMI daemoni 'ndrxd' access Q size. Bigger is better.
 *NDRX_MSGSIZEMAX*='NDRXD_ACCESS_Q_MSG_MAX'::
-	Max message size (in bytes).
+    Max message size (in bytes). The value is limited to the operating system limits
+    of the maximums size of the POSIX queues message size. For example on Linux 
+    kernel 3.13 it is possible to set message size to 10 Megabytes. Also the message
+    size denotes the internal buffer sizes for XATMI message processing. As mostly
+    for all operations Enduro/X uses stack allocation for the buffers, this means
+    that there are requirements for the application stack sizes. Thus the stack
+    size must be 30 times the size of the message. For example if message size
+    is set to 64KB, then stack size must be at least 1920KB (~2MB). Otherwise application
+    will not start. If message size max is set to less than 64KB, then buffer size
+    is defaulted to 64KB.
+    This parameter also affects the opening/creation of the message queue. As the
+    message size is specified in mq_open() attributes.
 *NDRX_APPHOME*='FULL_PATH_TO_APPDOMAIN_INSTANCE_DIR'::
-	This is full path to application (not an EnduroX directory it self) root directory.
+    This is full path to application (not an Enduro/X directory it self) root directory.
 *NDRX_HOME*='FULL_PATH_TO_ENDUROX_ROOT_DIRECTORY'::
-	Full path to EnduroX installaction directory.
+    Full path to Enduro/X installaction directory.
 *NDRX_DEBUG_CONF*='FULL_PATH_TO_DEBUG_CONFIG_FILE'::
-	This sets full path to debug configuration file.
+    This sets full path to debug configuration file.
 *NDRX_UBFMAXFLDS*='MAX_NUMBER_OF_UBFFIELDS'::
-	Max number of UBF fields. Used for hashing. Bigger number is better. The max number
-	is number is 33554432 (25 bit).
+    Max number of UBF fields. Used for hashing. Bigger number is better. 
+    The max number is number is 33554432 (25 bit).
 *NDRX_DMNLOG*='FULL_PATH_TO_NDRX_DMNLOG'::
 	The full path to 'ndrxd' log file. Used by shell scripts.
 *NDRX_DMNLEV*='LOG_LEVEL_OF_NDRXD'::
-	Log level of 'ndrxd'. From 1..5. 5 is max. Used by shell scripts.
+    Log level of 'ndrxd'. From 1..5. 5 is max. Used by shell scripts.
 *NDRX_LOG*='FULL_PATH_TO_XADMIN_LOG_FILE'::
-	Full path to 'xadmin' log file. Used by shell scripts.
+    Full path to 'xadmin' log file. Used by shell scripts.
 *NDRX_LEV*='LOG_LEVEL_OF_XADMIN'::
-	Log level of 'xadmin'. From 1..5. 5 is max. Used by shell scripts.
+    Log level of 'xadmin'. From 1..5. 5 is max. Used by shell scripts.
 *NDRX_XA_RES_ID*='XA_RESOURCE_ID'::
-	XA API two phase commit resource id.
-        Must be set if using distributed transactions.
+    XA API two phase commit resource id.
+    Must be set if using distributed transactions.
 *NDRX_XA_OPEN_STR*='XA_OPEN_STRING'::
-	This is open string for two phase commit XA driver.
-        Must be set if using distributed transactions.
+    This is open string for two phase commit XA driver.
+    Must be set if using distributed transactions.
 *NDRX_XA_CLOSE_STR*='XA_CLOSE_STRING'::
-	This is close string for two phase commit XA driver. This is optional, 
-        'NDRX_XA_OPEN_STR' will be used if not set.
+    This is close string for two phase commit XA driver. This is optional, 
+    'NDRX_XA_OPEN_STR' will be used if not set.
 *NDRX_XA_DRIVERLIB*='ENDUROX_XA_DRIVER_LIB'::
-	This is full path to Enduro/X shared library which loads the XA api.
+    This is full path to Enduro/X shared library which loads the XA api.
 *NDRX_XA_RMLIB*='RESOURCE_MANAGER_SPECIFIC_DRIVER'::
-	This is full path to resource manager's specific driver (shared library).
-        Must be set if using distributed transactions.
+    This is full path to resource manager's specific driver (shared library).
+    Must be set if using distributed transactions.
 *NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
-	Set to '1' if XA sub-system should be initialized on first transactions. 
-        If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
+    Set to '1' if XA sub-system should be initialized on first transactions. 
+    If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
 *NDRX_XA_FLAGS*='XADMIN_XA_FLAGS'::
-	Special for XA sub-system. It is semicolon separated tags with values.
-	currently tag 'RECON' is defined.
-	'RECON' tag defines the number of attempts
-	of xa_close()/xa_open() and doing xa_start() again in case if original
-	xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
-	closed the connection. The format for the tag is:
-	'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
-        of attempts>:<sleep between attempts milli-sec>'
-	example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
-	3x attempts, sleep 100 milliseconds between attempts.
+    Special for XA sub-system. It is semicolon separated tags with values.
+    currently tag 'RECON' is defined.
+    'RECON' tag defines the number of attempts
+    of xa_close()/xa_open() and doing xa_start() again in case if original
+    xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
+    closed the connection. The format for the tag is:
+    'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
+    of attempts>:<sleep between attempts milli-sec>'
+    example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
+    3x attempts, sleep 100 milliseconds between attempts.
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
-	Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
-	The minimum is recommended something about 7. Every service name in shared memory is hashed 
-	and semaphore protecting the service is calculated by modulus of NRSEMS. This affects 
+    Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
+    The minimum is recommended something about 7. Every service name in shared memory is hashed 
+    and semaphore protecting the service is calculated by modulus of NRSEMS. This affects 
     'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
     by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
     protection. Default value is 30.
 *NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
     Max number of servers can advertise same service. This is used only in 'poll()' mode.
-	The number affects the size of shared memory used for services. Bigger number causes
-	more memory to be used for service registry. If the number of servers goes over this number
-	for one service, the service entry will be ignored.
+    The number affects the size of shared memory used for services. Bigger number causes
+    more memory to be used for service registry. If the number of servers goes over this number
+    for one service, the service entry will be ignored.
 *PATH='PATH'*::
-	This is not Enduro/X specific env variable. But Enduro/X distribution bin 
-	directory should be included in system PATH env. variable.
+    This is not Enduro/X specific env variable. But Enduro/X distribution bin 
+    directory should be included in system PATH env. variable.
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
-	This is directory where .fd files are located. I.e. UBF field definitions.
+    This is directory where .fd files are located. I.e. UBF field definitions.
 *FIELDTBLS*='COMMA_SEPERATED_LIST_OF_FIELD_FILES'::
-	This is comma separated list of field files found in FLDTBLDIR.
+    This is comma separated list of field files found in FLDTBLDIR.
 *NDRX_CCONFIG*='NDRX_COMMON_CONFIG_FILE'::
     If this is set then, all above configuration is read from specified ini
     file in 'NDRX_COMMON_CONFIG_FILE' in [@global] section. The Enduro/X config

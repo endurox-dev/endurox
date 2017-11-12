@@ -822,7 +822,8 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
         return; /* the level is lowered by thread/request logger */
     }
     
-    __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s", comment);
+    __ndrx_debug__(dbg_ptr, lev, file, line, func, "%s (nr bytes: %ld)", 
+            comment, len);
     
     if (0==len)
     {

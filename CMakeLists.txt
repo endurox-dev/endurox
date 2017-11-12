@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "5.0.10")
+set(VERSION "5.1.1")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -64,11 +64,11 @@ SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flag
 IF (DEFINE_RELEASEBUILD)
 	MESSAGE( RELEASE_BUILD )
 	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 ${CMAKE_C_FLAGS}")
 ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
-        SET(CMAKE_C_FLAGS "-O2 -ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
 SET(RT_LIB rt dl)

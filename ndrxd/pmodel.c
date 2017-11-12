@@ -144,10 +144,9 @@ out:
  */
 exprivate void handle_child(pid_t chldpid, int stat_loc)
 {
-    char buf[ATMI_MSG_MAX_SIZE];
-    srv_status_t *status = (srv_status_t *)buf;
+    srv_status_t status;
 
-    memset(buf, 0, sizeof(buf));
+    memset(&status, 0, sizeof(status));
     
     if (chldpid>0)
     {
@@ -158,25 +157,25 @@ exprivate void handle_child(pid_t chldpid, int stat_loc)
             NDRX_LOG(log_warn, "Process is stopped - ignore..");
             return;
         }
-        status->srvinfo.pid = chldpid;
+        status.srvinfo.pid = chldpid;
 
         if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
         {
             NDRX_LOG(log_error, "Process normal shutdown!");
-            status->srvinfo.state = NDRXD_PM_EXIT;
+            status.srvinfo.state = NDRXD_PM_EXIT;
         }
         else if (WIFEXITED(stat_loc) && TPEXIT_ENOENT == WEXITSTATUS(stat_loc))
         {
             NDRX_LOG(log_error, "Binary not found!");
-            status->srvinfo.state = NDRXD_PM_ENOENT;
+            status.srvinfo.state = NDRXD_PM_ENOENT;
         }
         else
         {
             NDRX_LOG(log_error, "Process abnormal shutdown!");
-            status->srvinfo.state = NDRXD_PM_DIED;
+            status.srvinfo.state = NDRXD_PM_DIED;
         }
         /* NDRX_LOG(log_warn, "Sending notification"); */
-        self_notify(status, EXFALSE);
+        self_notify(&status, EXFALSE);
     }
 }
 
@@ -247,10 +246,7 @@ expublic int thread_check_child_exit(void)
     int stat_loc;
     struct rusage rusage;
     int ret=EXFALSE;
-    char buf[ATMI_MSG_MAX_SIZE];
-    srv_status_t *status = (srv_status_t *)buf;
 
-    memset(buf, 0, sizeof(buf));
     memset(&rusage, 0, sizeof(rusage));
 
     while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)

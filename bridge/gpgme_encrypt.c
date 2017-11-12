@@ -594,11 +594,10 @@ int pgpa_decrypt(pgpgme_enc_t *p_enc, char *in_data_p_enc, int in_data_len_p_enc
         }
     }
 
-
     nbytes = gpgme_data_seek (clear_text, 0, SEEK_SET);
     if (nbytes == -1)
     {
-        sprintf (error_buf,  "%s:%d: Error in data seek: ",			
+        snprintf (error_buf,  sizeof(error_buf), "%s:%d: Error in data seek: ",			
                         __FILE__, __LINE__);
         gpga_set_err(GPGA_ERR_DATA_SEEK, 0, error_buf);
         ret=FAIL;
@@ -608,7 +607,7 @@ int pgpa_decrypt(pgpgme_enc_t *p_enc, char *in_data_p_enc, int in_data_len_p_enc
     nbytes = gpgme_data_read( clear_text, out_data_clr, *out_data_len_clr );
     if (nbytes == -1)
     {
-        sprintf (error_buf,  "%s:%d: %s\n",			
+        snprintf (error_buf,  sizeof(error_buf), "%s:%d: %s\n",			
                 __FILE__, __LINE__, "Error in data read");
         gpga_set_err(GPGA_ERR_DATA_READ, 0, error_buf);
         ret=FAIL;
@@ -628,10 +627,10 @@ out:
 	
 }
 
-/* #define TESTEST  */
+/* #define DOTEST  */
 
 
-#ifdef TESTEST
+#ifdef DOTEST
 
 
 #define BUF_LEN			2048
@@ -640,7 +639,7 @@ out:
  */
 void log_t(int lev, char *msg)
 {
-	fprintf(stderr, "%d:%s\n", lev, msg);
+    fprintf(stderr, "%d:%s\n", lev, msg);
 }
 
 /**

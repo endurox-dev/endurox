@@ -62,6 +62,9 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+MUTEX_LOCKDECL(M_gpg_init_lock);
+
 int M_is_gpg_init = EXFALSE;
 
 #ifndef DISABLEGPGME
@@ -115,55 +118,55 @@ out:
  */
 static int br_init_gpg(void)
 {
-	int ret=EXSUCCEED;
-	
-	if (EXSUCCEED!=pgpa_init(&M_enc,og_callback, 
-			/* use signing if signer set! */
-			(0==G_bridge_cfg.gpg_signer[0]?EXFALSE:EXTRUE)))
-	{
-		
-            NDRX_LOG(log_always, 
-                    "GPG init fail: apierr=%d gpg_meerr=%d: %s ", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
+    int ret=EXSUCCEED;
 
-            userlog("GPG init fail: apierr=%d gpg_meerr=%d: %s ", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
+    if (EXSUCCEED!=pgpa_init(&M_enc,og_callback, 
+                    /* use signing if signer set! */
+                    (0==G_bridge_cfg.gpg_signer[0]?EXFALSE:EXTRUE)))
+    {
 
-            ret=EXFAIL;
-            goto out;
-	}
+        NDRX_LOG(log_always, 
+                "GPG init fail: apierr=%d gpg_meerr=%d: %s ", 
+                gpga_aerrno(), gpga_gerrno(), 
+                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
 
-	/* we sing with singing key... */
-	if (EXSUCCEED!=br_set_signer(G_bridge_cfg.gpg_signer))
-	{
-            ret=EXFAIL;
-            goto out;
-	}
+        userlog("GPG init fail: apierr=%d gpg_meerr=%d: %s ", 
+                gpga_aerrno(), gpga_gerrno(), 
+                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
 
-	NDRX_LOG(log_debug, "Setting GPG recipient to [%s]",
-					G_bridge_cfg.gpg_recipient);
-	
-	if (EXSUCCEED!=pgpa_set_recipient(&M_enc, G_bridge_cfg.gpg_recipient))
-	{
-            NDRX_LOG(log_always, "GPG set recipient fail: "
-                                        "apierr=%d gpg_meerr=%d: %s", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
+        ret=EXFAIL;
+        goto out;
+    }
 
-            userlog("GPG set recipient (%s) fail: apierr=%d gpg_meerr=%d: %s ", 
-                    G_bridge_cfg.gpg_recipient,
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
+    /* we sing with singing key... */
+    if (EXSUCCEED!=br_set_signer(G_bridge_cfg.gpg_signer))
+    {
+        ret=EXFAIL;
+        goto out;
+    }
 
-            ret=EXFAIL;
-            goto out;
-	}
+    NDRX_LOG(log_debug, "Setting GPG recipient to [%s]",
+                                    G_bridge_cfg.gpg_recipient);
+
+    if (EXSUCCEED!=pgpa_set_recipient(&M_enc, G_bridge_cfg.gpg_recipient))
+    {
+        NDRX_LOG(log_always, "GPG set recipient fail: "
+                                    "apierr=%d gpg_meerr=%d: %s", 
+                gpga_aerrno(), gpga_gerrno(), 
+                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
+
+        userlog("GPG set recipient (%s) fail: apierr=%d gpg_meerr=%d: %s ", 
+                G_bridge_cfg.gpg_recipient,
+                gpga_aerrno(), gpga_gerrno(), 
+                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
+
+        ret=EXFAIL;
+        goto out;
+    }
 	
 	
 out:
-	return ret;
+    return ret;
 }
 
 #endif /* ifndef DISABLEGPGME */
@@ -322,12 +325,23 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
         
 	if (!M_is_gpg_init)
 	{
-            if (EXSUCCEED==br_init_gpg())
+            MUTEX_LOCK_V(M_gpg_init_lock);
+            
+            /* thread which might hold the lock was already performed
+             * the init, thus check it here twice.
+             */
+            if (!M_is_gpg_init)
             {
-                M_is_gpg_init = EXTRUE;
-                NDRX_LOG(log_error, "GPG init OK");
+                if (EXSUCCEED==(ret=br_init_gpg()))
+                {
+                    M_is_gpg_init = EXTRUE;
+                    NDRX_LOG(log_error, "GPG init OK");
+                }
             }
-            else
+            
+            MUTEX_UNLOCK_V(M_gpg_init_lock);
+            
+            if (EXSUCCEED!=ret)
             {
                 NDRX_LOG(log_error, "GPG init fail");
                 EXFAIL_OUT(ret);
@@ -365,11 +379,14 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     if (G_bridge_cfg.common_format)
     {
         long tmp_len = p_netmsg->len;
-        NDRX_LOG(log_debug, "Convert message from network...");
         
         NDRX_SYSBUF_MALLOC_OUT(tmp, NULL, ret);
         
-        if (EXSUCCEED!=exproto_proto2ex(p_netmsg->buf, tmp_len,  tmp, &tmp_len))
+        NDRX_LOG(log_debug, "Convert message from network... (tmp buf = %p, size: %ld)", 
+                tmp, NDRX_MSGSIZEMAX);
+        
+        if (EXSUCCEED!=exproto_proto2ex(p_netmsg->buf, tmp_len,  tmp, &tmp_len, 
+                NDRX_MSGSIZEMAX))
         {
             NDRX_LOG(log_error, "Failed to convert incoming message!");
             EXFAIL_OUT(ret);
@@ -523,10 +540,9 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 {
     int ret=EXSUCCEED;
     char *fn = "br_send_to_net";
-    
-    char tmp[ATMI_MSG_MAX_SIZE];
-    char tmp2[ATMI_MSG_MAX_SIZE];
-    char tmp_enc[ATMI_MSG_MAX_SIZE]; /* Not the best way, but we atleas we are clear... */
+    char tmp[NDRX_MSGSIZEMAX];
+    char tmp2[NDRX_MSGSIZEMAX];
+    char tmp_enc[NDRX_MSGSIZEMAX]; /* Not the best way, but we atleas we are clear... */
     char *snd;
     long snd_len;
     
@@ -545,6 +561,19 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     call->command_id = command_id;
     
     call->len = len;
+    
+    if (len > sizeof(tmp) - sizeof(call))
+    {
+        NDRX_LOG(log_error, "%s: Sending more that buf can handle: "
+                "len=%d, (outbufsz: %ld)", __func__, 
+                len, (long)(sizeof(tmp) - sizeof(call)));
+        
+        userlog("%s: Sending more that buf can handle: "
+                "len=%d, (outbufsz: %ld)", __func__, 
+                len, (long)(sizeof(tmp) - sizeof(call)));
+        
+        EXFAIL_OUT(ret);
+    }
     memcpy(call->buf, buf, len);
     
     snd = tmp;
@@ -559,8 +588,8 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         snd = tmp2;
         
         snd_len = 0;
-        
-        if (EXSUCCEED!=exproto_ex2proto((char *)call, snd_len, tmp2, &snd_len))
+        /* TODO: Set the output buffer size border. */
+        if (EXSUCCEED!=exproto_ex2proto((char *)call, snd_len, tmp2, &snd_len, sizeof(tmp2)))
         {
             ret=EXFAIL;
             goto out;
@@ -571,18 +600,19 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     /* use GPG encryption */
     if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
-	int enc_len = ATMI_MSG_MAX_SIZE;
+	int enc_len = NDRX_MSGSIZEMAX;
 	if (!M_is_gpg_init)
 	{
+            /* TODO: Maybe we need lock here? */
             if (EXSUCCEED==br_init_gpg())
             {
-                    M_is_gpg_init = EXTRUE;
-                    NDRX_LOG(log_error, "GPG init OK");
+                M_is_gpg_init = EXTRUE;
+                NDRX_LOG(log_error, "GPG init OK");
             }
             else
             {
-                    NDRX_LOG(log_error, "GPG init fail");
-                    EXFAIL_OUT(ret);
+                NDRX_LOG(log_error, "GPG init fail");
+                EXFAIL_OUT(ret);
             }
 	}
 	

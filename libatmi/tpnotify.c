@@ -86,7 +86,7 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         int ex_flags)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     tp_notif_call_t *call=(tp_notif_call_t *)buf;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;

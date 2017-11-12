@@ -94,7 +94,7 @@ expublic int userlog (char *data, ...)
     /* Format the full output file */
     if (NULL!=out_f)
     {
-        sprintf(full_name, "%s/ULOG.%06ld", out_f, ldate);
+        snprintf(full_name, sizeof(full_name), "%s/ULOG.%06ld", out_f, ldate);
         
         if (print_label)
         {
@@ -117,7 +117,7 @@ expublic int userlog (char *data, ...)
         fopened=1;
     }
     
-    sprintf(pre, "%5ld:%08ld:%06ld%02ld:%-12.12s:",
+    snprintf(pre, sizeof(pre), "%5ld:%08ld:%06ld%02ld:%-12.12s:",
             (long)pid, ldate, ltime,
                     (long)time_val.tv_usec/10000, EX_PROGNAME);
 
