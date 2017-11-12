@@ -56,7 +56,7 @@
 #define IS_BIN(X) (BFLD_CARRAY == X)
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
-#define CARR_BUFFSIZE       ATMI_MSG_MAX_SIZE
+#define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
 #define CARR_BUFFSIZE_B64   (4 * (CARR_BUFFSIZE) / 3)
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -780,7 +780,7 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     char * tmp = NULL;
     char * newbuf_out = NULL; /* real output buffer */
 
-    if (NULL==(tmp = tpalloc("JSON", NULL, ATMI_MSG_MAX_SIZE)))
+    if (NULL==(tmp = tpalloc("JSON", NULL, NDRX_MSGSIZEMAX)))
     {
         NDRX_LOG(log_error, "failed to convert UBF->JSON. JSON buffer alloc fail!: %s",
                 tpstrerror(tperrno));
@@ -801,7 +801,7 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     /* Do the convert */
     ndrx_TPunset_error();
     if (EXSUCCEED!=ndrx_tpviewtojson((*buffer)->buf, 
-            subtype, tmp, ATMI_MSG_MAX_SIZE, flags))
+            subtype, tmp, NDRX_MSGSIZEMAX, flags))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert VIEW->JSON: %s", 

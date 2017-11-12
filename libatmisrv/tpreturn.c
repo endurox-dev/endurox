@@ -69,7 +69,7 @@
 expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE]; /* physical place where to put the reply */
+    char buf[NDRX_MSGSIZEMAX]; /* physical place where to put the reply */
     tp_command_call_t *call=(tp_command_call_t *)buf;
     char fn[] = "_tpreturn";
     buffer_obj_t *buffer_info;
@@ -352,7 +352,7 @@ expublic void _tpforward (char *svc, char *data,
                 long len, long flags)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     tp_command_call_t *call=(tp_command_call_t *)buf;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;

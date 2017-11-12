@@ -61,11 +61,11 @@ COMMANDS
 	'-i' means start specific server instance.
 *psc*::
 	Print services
-*stop* [-y] [-c]|[-s <server>] [-i <srvid>]::
+*stop* [-y] [-s <server>] [-i <srvid>] [-k]::
 	Stop application domain. '-y' means do not ask for confirmation. '-s' means
 	ATMI servers binary name to be stopped, instead of whole application domain.
-	'-i' means stop specific server instance. '-c' flag will shutdown 'ndrxd' daemon,
-	otherwise daemon keeps running.
+	'-i' means stop specific server instance. '-k' flag will keep 'ndrxd' running,
+	and protected servers will not be shutdown.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
 	Reload application domain - restart server instance by instance.
 	Configuration be loaded prior.

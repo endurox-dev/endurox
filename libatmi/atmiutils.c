@@ -483,7 +483,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     int ret=EXSUCCEED;
     command_reply_t *reply;
     unsigned prio = 0;
-    char    msg_buffer_max[ATMI_MSG_MAX_SIZE];
+    char    msg_buffer_max[NDRX_MSGSIZEMAX];
     
     long  reply_len;
 

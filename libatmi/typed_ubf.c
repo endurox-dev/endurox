@@ -106,8 +106,8 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                         long rcv_len, char **odata, long *olen, long flags)
 {
     int ret=EXSUCCEED;
-    int rcv_buf_size;
-    int existing_size;
+    long rcv_buf_size;
+    long existing_size;
     UBFH *p_ub = (UBFH *)rcv_data;
     UBFH *p_ub_out;
     char fn[]="UBF_prepare_incoming";
@@ -169,7 +169,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
             goto out;
         }
 
-        NDRX_LOG(log_debug, "%s: Output buffer size: %d, recieved %d", fn,
+        NDRX_LOG(log_debug, "%s: Output buffer size: %ld, received %ld", fn,
                             existing_size, rcv_buf_size);
         
         if (existing_size>=rcv_buf_size)
@@ -199,7 +199,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     {
         /* allocate the buffer */
         NDRX_LOG(log_debug, "%s: Incoming buffer where missing - "
-                                         "allocating new!", fn);
+                "allocating new (size: %d)!",  fn, rcv_buf_size);
 
         *odata = ndrx_tpalloc(&G_buf_descr[BUF_TYPE_UBF], NULL, NULL, rcv_buf_size);
 
@@ -217,7 +217,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     if (EXSUCCEED!=Bcpy(p_ub_out, p_ub))
     {
         ret=EXFAIL;
-        NDRX_LOG(log_error, "Bcpy failed!");
+        NDRX_LOG(log_error, "Bcpy failed!: %s", Bstrerror(Berror));
         ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
     }

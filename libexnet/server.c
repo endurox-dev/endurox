@@ -50,6 +50,7 @@
 #include <exnet.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include <userlog.h>
 
 #if defined(EX_USE_EPOLL)
 
@@ -89,7 +90,7 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * About to remove incoming connection.
+ * About to remove incoming connefction.
  */
 expublic void exnet_remove_incoming(exnetcon_t *net)
 {
@@ -97,6 +98,7 @@ expublic void exnet_remove_incoming(exnetcon_t *net)
     net->my_server->incomming_cons--;
     NDRX_LOG(log_debug, "Open connections decreased to: %d", 
             net->my_server->incomming_cons);
+    NDRX_FREE(net->d); /* remove network buffer */
     NDRX_FREE(net);
 }
 
@@ -140,10 +142,16 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
 
     /* Allocate client connection structure! 
      * We could take a copy of server structure + do some modifications to it */
+    
     if (NULL==(client = NDRX_MALLOC(sizeof(exnetcon_t))))
     {
+        int err = errno;
+        
+        userlog("Failed to allocate client structure! %s", 
+                strerror(err));
+        
         NDRX_LOG(log_error, "Failed to allocate client structure! %s", 
-                strerror(errno));
+                strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -159,7 +167,15 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
     memcpy(&client->address, &clt_address, sizeof(clt_address));
     
-    /* We could get IP address & port of the call save in client struct & dump do log. */
+    if (EXSUCCEED!=exnet_net_init(client))
+    {
+        NDRX_LOG(log_error, "Failed to init client!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* We could get IP address & port of the call save in client struct 
+     * & dump do log. 
+     */
     
     if((ip_ptr = inet_ntoa(clt_address.sin_addr)) < 0 )
     {
@@ -203,6 +219,11 @@ out:
 
     if (EXSUCCEED!=ret && client)
     {
+        if (NULL!=client->d)
+        {
+            NDRX_FREE(client->d);
+        }
+        
         NDRX_FREE(client);
     }
 
@@ -260,5 +281,5 @@ out:
 
     NDRX_LOG(log_debug, "%s - return %d", fn, ret);
 
-	return ret;
+    return ret;
 }
