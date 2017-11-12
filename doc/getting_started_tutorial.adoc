@@ -122,7 +122,8 @@ export NDRX_IPCKEY=44000
 export NDRX_MSGMAX=1000
 # Daemon Q size...
 export NDRX_DQMAX=100
-# Max message size (in bytes), max 64K
+# Max message size (in bytes), max about ~10 MB on Linux
+# Stack size must be at least NDRX_MSGSIZEMAX*30
 export NDRX_MSGSIZEMAX=10000
 # Where app domain lives
 export NDRX_APPHOME=/opt/app1
