@@ -36,15 +36,19 @@ echo 10000 > /proc/sys/fs/mqueue/queues_max
 Which means:
 
 - 'msg_max' - Maximum number of messages in queue (32K)
-- 'msgsize_max' - Maximum message size, ~10KB (can be set up up to 32K)
+
+- 'msgsize_max' - Maximum message size, ~10KB (System limited, for example for linux 
+kernel 3.13 and later this can reach up to 10MB)
+
 - 'queues_max' - Maximum number of queues (10K)
 
 See <<MQ_OVERVIEW>> for more details about Posix queues on GNU/Linux.
 
 Also do not remember to update Enduro/X environment variables to reflect these
-settings. Variabales like:
+settings. Variables like:
 
 - 'NDRX_MSGMAX'
+
 - 'NDRX_MSGSIZEMAX'
 
 See <<EX_ENV>> for more configuration flags.
