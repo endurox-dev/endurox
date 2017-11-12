@@ -191,14 +191,12 @@ In this case stack size needs to be increased, that could be done by in multiple
 ways:
 
 1. Change by $ ulimit -s 1920
-
 To ensure that this is set each time the Enduro/X is started, it needs to be 
 added to the "env" script of the application which prepares application
 environment before app boot. Also system settings must be checked in
 '/etc/security/limits.conf' either the limit is enough - "stack" parameter.
 
 2. Set the user/system limit directly in '/etc/security/limits.conf'.
-
 For other operating systems, please consult with corresponding manual for chaning
 the message size and stack size.
 
