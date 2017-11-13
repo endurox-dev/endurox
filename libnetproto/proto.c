@@ -1235,6 +1235,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 long off_start;
                 long off_stop;
                 
+                NDRX_LOG(log_debug, "XSUB enter: tag: %x proto offset: %ld, c struct off: %ld", 
+                        (int)p->tag, *proto_buf_offset, offset+p->offset);
                 /* This is sub tlv/ thus put tag... */
                 if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, proto_buf_offset, 
                         proto_bufsz))
