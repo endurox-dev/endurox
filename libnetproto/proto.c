@@ -228,7 +228,7 @@ static cproto_t M_cmd_br_net_call_x[] =
     {TNC, EXFAIL}
 };
 
-/* Converter for stnadard ndrxd header. */
+/* Converter for standard ndrxd header. */
 #define TSH     1 /* standard hearder */
 static cproto_t M_stdhdr_x[] = 
 {
@@ -2068,7 +2068,7 @@ out:
 
 
 /**
- * Classsify the netcall message (return driver record).
+ * Classify the netcall message (return driver record).
  * @param ex_buf
  * @param ex_len
  * @return xmsg_t ptr or NULL
