@@ -1209,7 +1209,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 len_written = (int)(off_stop - off_start);
                 
                 NDRX_LOG(log_debug, "ex2net: tag: [0x%x]\t[%s]\t len:"
-                        " %ld (0x%04lx) type:"
+                        " %d (0x%04x) type:"
                         " [%s]\t data: [%s]"/*netbuf (tag start): %p"*/, 
                         p->tag, p->cname, len_written, len_written, 
                         M_type[p->fld_type], debug/*, 
