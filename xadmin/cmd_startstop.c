@@ -294,10 +294,9 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         EXFAIL_OUT(ret);
     }
     
-    if ((EXFAIL!=srvid || EXEOS!=srvnm[0]) && call.complete_shutdown)
+    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
     {
-        fprintf(stderr, "-i or -s cannot be combined with -c!\n");
-        EXFAIL_OUT(ret);
+        keep_running_ndrxd = EXTRUE;
     }
     
     if (EXFAIL==srvid && EXEOS==srvnm[0] &&
@@ -369,7 +368,12 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         {0}
     };
         
-    if (argc>=2 && '-'==argv[1][0])
+    if (argc>=2 && '-'!=argv[1][0])
+    {
+	NDRX_STRNCPY(srvnm, argv[1], MAXTIDENT);
+	srvnm[MAXTIDENT] = 0;
+    }
+    else
     {
         /* parse command line */
         if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
@@ -377,6 +381,12 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
             EXFAIL_OUT(ret);
         }
+    }
+    
+    
+    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
+    {
+        keep_running_ndrxd = EXTRUE;
     }
     
     
