@@ -1105,6 +1105,7 @@ out:
  * Build network message by using xmsg record, this table is recursive...
  * TODO: Might we can avoid tmp -> directly write to ex_buf?!
  * @param cv
+ * @param offset    Current offset in C structure
  * @param ex_buf - Enduro/X C buffer (machine specific structures)
  * @param ex_len - Enduro/X C side buffer len
  * @param proto_buf - output procol buffer
@@ -1303,7 +1304,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     EXFAIL_OUT(ret);
                 }
                 
-                NDRX_LOG(log_debug, "XINC tag: 0x%x", p->tag);
+                NDRX_LOG(log_debug, "XINC tag: 0x%x, current offset=%ld, new=%ld", 
+                        p->tag, offset, p->offset);
                 
                 len_offset = *proto_buf_offset;
                 CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
@@ -1329,6 +1331,10 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 off_stop = *proto_buf_offset;
                 /* Put back len there.. */
                 len_written = (int)(off_stop - off_start);
+                
+                NDRX_LOG(log_debug, "len_written=%d len_offset=%ld", 
+                        len_written, len_offset);
+                
                 if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
                         proto_bufsz))
                 {
