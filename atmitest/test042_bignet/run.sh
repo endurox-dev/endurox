@@ -55,7 +55,7 @@ export NDRX_TOUT=30
 #
 # Domain 1 - here client will live
 #
-function set_dom1 {
+set_dom1() {
     echo "Setting domain 1"
     . ../dom1.sh
     export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
@@ -68,7 +68,7 @@ function set_dom1 {
 #
 # Domain 2 - here server will live
 #
-function set_dom2 {
+set_dom2() {
     echo "Setting domain 2"
     . ../dom2.sh    
     export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2.xml
