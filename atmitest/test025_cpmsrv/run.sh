@@ -100,7 +100,7 @@ function test_proc_cnt {
     CNT=`$PSCMD | grep $proc | grep -v grep | wc | awk '{print $1}'`
     XPROC_COUNT=$cnt
     echo ">>> $PSCMD procs: $CNT"
-    if [[ "$CNT" -ne "$XPROC_COUNT" ]]; then 
+    if [[ "X$CNT" -ne "X$XPROC_COUNT" ]]; then 
         echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
         go_out $go
     fi
