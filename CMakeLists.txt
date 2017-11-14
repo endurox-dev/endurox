@@ -68,6 +68,8 @@ IF (DEFINE_RELEASEBUILD)
 ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
+# Memory debugging:
+#        SET(CMAKE_C_FLAGS "-fsanitize=address -O2 -ggdb ${CMAKE_C_FLAGS}")
         SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
@@ -295,6 +297,7 @@ add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
+
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (pscript) # Platform script interpreter

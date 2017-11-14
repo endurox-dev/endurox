@@ -259,7 +259,7 @@ static cproto_t M_command_call_x[] =
 static cproto_t M_cmd_br_time_sync_x[] = 
 {
     {TST, 0x10A5,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
-    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 40, 40},
+    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 20, 20},
     {TST, EXFAIL}
 };
 
