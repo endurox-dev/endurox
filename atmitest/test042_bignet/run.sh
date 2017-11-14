@@ -1,4 +1,3 @@
-
 #!/bin/bash
 ## 
 ## @(#) Net big message test - test launcher
