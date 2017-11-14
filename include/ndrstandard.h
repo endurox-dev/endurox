@@ -132,7 +132,7 @@ extern NDRX_API long ndrx_msgsizemax (void);
                           X[sizeof(X)-1]=EXEOS;}
 	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {strlcpy(X, Y, N-1);\
-                          X[N]=EXEOS;}
+                          X[N-1]=EXEOS;}
     
 #else
     
