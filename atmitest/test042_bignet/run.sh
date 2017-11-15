@@ -110,6 +110,8 @@ set_dom2;
 xadmin down -y
 xadmin start -y || go_out 2
 
+echo "Message size is: $NDRX_MSGSIZEMAX!!!"
+
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 sleep 30
