@@ -298,13 +298,13 @@ return_to_main:
         {
             last_call->autobuf=NULL;
         }
-         NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
+        NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
         ndrx_tpfree(data, NULL);
     }
 
     if (NULL!=last_call->autobuf)
     {
-         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
+        NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
         ndrx_tpfree(last_call->autobuf->buf, NULL);
         last_call->autobuf = NULL;
     }
@@ -312,7 +312,7 @@ return_to_main:
     /* server thread, no long jump... (thread should kill it self.)*/
     if (!(last_call->sysflags & SYS_SRV_THREAD))
     {        
-        return_status|=RETURN_TYPE_TPRETURN;
+         return_status|=RETURN_TYPE_TPRETURN;
          if (EXFAIL==ret)
              return_status|=RETURN_FAILED;
 
@@ -491,13 +491,13 @@ out:
         {
             last_call->autobuf=NULL;
         }
-         NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
+        NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
         ndrx_tpfree(data, NULL);
     }
 
     if (last_call->autobuf)
     {
-         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
+        NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
         ndrx_tpfree(last_call->autobuf->buf, NULL);
         last_call->autobuf = NULL;
     }
