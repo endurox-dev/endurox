@@ -439,12 +439,14 @@ expublic void _tpforward (char *svc, char *data,
     /* Want to keep original call time... */
     memcpy(&call->timer, &last_call->timer, sizeof(call->timer));
     
-    /* Hmm we can free up the data? - do it here because we still need buffer_info!*/
+    /* Hmm we can free up the data? - do it here because we still need buffer_info!
+     * ???? NOTE HERE! Bug #250 - all job is done bellow!
     if (NULL!=data)
     {
         ndrx_tpfree(data, NULL);
     }
-
+    *
+    */
     /* Check is service available? */
     if (EXSUCCEED!=ndrx_shm_get_svc(call->name, send_q, &is_bridge))
     {
