@@ -126,6 +126,18 @@ extern NDRX_API long ndrx_msgsizemax (void);
                           X[N]=EXEOS;}
 	
 #endif
+
+#ifdef HAVE_STRNLEN
+
+#define NDRX_STRNLEN strnlen
+
+#else
+
+extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
+
+#define NDRX_STRNLEN ndrx_strnlen
+
+#endif
     
 #ifdef HAVE_STRLCPY
 #define NDRX_STRCPY_SAFE(X, Y) {strlcpy(X, Y, sizeof(X)-1);\
@@ -148,7 +160,9 @@ extern NDRX_API long ndrx_msgsizemax (void);
 	X[ndrx_I5SmWDM_len]=0;\
 	}
     
-/* N - buffer size of X */	
+/* N - buffer size of X 
+ * This always copies EOS
+ */	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
 	int ndrx_XgCmDEk_bufzs = N-1;\
@@ -170,6 +184,15 @@ extern NDRX_API long ndrx_msgsizemax (void);
 	{\
 		ndrx_I5SmWDM_len = N;\
 	}\
+	memcpy(X, Y, ndrx_I5SmWDM_len);\
+	}
+
+/* Copy the maxing at source buffer, not checking the dest
+ * N - number of symbols to test in source buffer.
+ * The dest buffer is assumed to be large enough.
+ */
+#define NDRX_STRNCPY_SRC(X, Y, N) {\
+	int ndrx_I5SmWDM_len = NDRX_STRNLEN(Y, N);\
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	}
 /*

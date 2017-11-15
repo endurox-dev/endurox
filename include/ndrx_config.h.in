@@ -15,6 +15,8 @@
 
 #cmakedefine HAVE_EXPECT @HAVE_EXPECT@
 
+#cmakedefine HAVE_STRNLEN @HAVE_STRNLEN@
+
 #cmakedefine HAVE_SYNC @HAVE_SYNC@
 
 #cmakedefine HAVE_GETLINE @HAVE_GETLINE@
