@@ -63,8 +63,10 @@ int main(int argc, char** argv) {
     long rsplen;
     int i, j;
     int ret=EXSUCCEED;
-    char bufferreq[ATMI_MSG_MAX_SIZE];
+    char bufferreq[TEST_MSGSIZE];
     BFLDLEN retlen;
+
+	NDRX_LOG(log_error, "ATMI message size: %ld", ATMI_MSG_MAX_SIZE);
     
     for (j=0; j<2000; j++)
     {
