@@ -96,7 +96,7 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_
             len+=strlen(G_cctag);
         }
 
-        if (NULL==(tmp1 = NDRX_MALLOC(len+1)))
+        if (NULL==(tmp1 = NDRX_MALLOC(len+2))) /* 1 for eos, another for seperator */
         {
             userlog("%s: tmp1 malloc failed: %s", fn, strerror(errno));
             EXFAIL_OUT(ret);
