@@ -489,6 +489,10 @@ out:
 
     if (NULL!=data)
     {
+        /* TODO: Lookup the buffer infos for data, and then compary with autobuf!
+         * as the last_call autobuf might be already free - the same for tpforward
+         * for xcv -> update the autobuf if changed auto buf...
+         */
         if (last_call->autobuf && last_call->autobuf->buf==data)
         {
             last_call->autobuf=NULL;
