@@ -236,12 +236,11 @@ expublic int background_loop(void)
             
             if (el->p_tl.trycount>=G_tmsrv_cfg.max_tries)
             {
+                NDRX_LOG(log_warn, "Skipping try %ld of %ld...", 
+                        el->p_tl.trycount,  G_tmsrv_cfg.max_tries);
                 /* Have some housekeep. */
                 LL_DELETE(tx_list, el);
                 NDRX_FREE(el);
-
-                NDRX_LOG(log_warn, "Skipping try %ld of %ld...", 
-                        el->p_tl.trycount,  G_tmsrv_cfg.max_tries);
                 continue;
             }
             
