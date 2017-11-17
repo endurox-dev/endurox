@@ -502,6 +502,19 @@ exprivate int _ubf_load_fld_def(int base,
     }
     
 out:
+    if (EXSUCCEED!=ret)
+    {
+        if (NULL!=fld)
+        {
+            NDRX_FREE(fld);
+        }
+
+        if (NULL!=fld2)
+        {
+            NDRX_FREE(fld2);
+        }
+
+    }
     return ret;
 }
 
