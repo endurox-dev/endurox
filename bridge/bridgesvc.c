@@ -122,6 +122,7 @@ expublic int br_connected(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
     
+    /* once created this shall not change... */
     G_bridge_cfg.con = net;
     NDRX_LOG(log_debug, "Net=%p", G_bridge_cfg.net);
     
@@ -140,8 +141,10 @@ expublic int br_disconnected(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
     
+    /*
+     * - leave object in place...
     G_bridge_cfg.con = NULL;
-    
+    */
     ret=br_send_status(EXFALSE);
     
     return ret;  

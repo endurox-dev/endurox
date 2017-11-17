@@ -53,6 +53,8 @@
 #include <ndebug.h>
 
 #include <utlist.h>
+
+#include "exhash.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -92,4 +94,22 @@ expublic exnetcon_t * extnet_get_con_head(void)
     return M_netlist;
 }
 
-
+/**
+ * Find a disconnected connection object to fill the connection details in
+ * This assumes that we hold read lock on the object.
+ * @return NULL (not dicon objs) or some obj
+ */
+expublic exnetcon_t *exnet_find_free_conn(void)
+{
+    exnetcon_t *net;
+    
+    DL_FOREACH(M_netlist, net)
+    {
+        if (!net->is_connected)
+        {
+            return net;
+        }
+    }
+    
+    return NULL;
+}

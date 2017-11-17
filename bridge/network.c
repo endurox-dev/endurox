@@ -532,6 +532,7 @@ out:
 /**
  * Send message to other bridge.
  * Might want to use async call, as there Net stack could be full & blocked.
+ * It is safe to assume that 
  * @param buf
  * @param len
  * @return 
@@ -589,7 +590,8 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         
         snd_len = 0;
         /* TODO: Set the output buffer size border. */
-        if (EXSUCCEED!=exproto_ex2proto((char *)call, snd_len, tmp2, &snd_len, sizeof(tmp2)))
+        if (EXSUCCEED!=exproto_ex2proto((char *)call, snd_len, tmp2, 
+                &snd_len, sizeof(tmp2)))
         {
             ret=EXFAIL;
             goto out;
@@ -642,9 +644,43 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 #endif
     
     /* Might want to move this stuff to Q */
-    if (EXSUCCEED!=exnet_send_sync(G_bridge_cfg.con, (char *)snd, snd_len, 0, 0))
+    
+    /* the connection object is created by main thread
+     * and calls are dispatched by main thread too. Thus 
+     * existence of con must be atomic.
+     *  */
+    if (NULL!=G_bridge_cfg.con)
     {
-        NDRX_LOG(log_error, "Failed to submit message to network");
+        /* Lock to network */
+        exnet_rwlock_read(G_bridge_cfg.con);
+                
+        if (exnet_is_connected(G_bridge_cfg.con))
+        {
+            if (EXSUCCEED!=exnet_send_sync(G_bridge_cfg.con, 
+                    (char *)snd, snd_len, 0, 0))
+            {
+                NDRX_LOG(log_error, "Failed to submit message to network");
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Node disconnected - cannot send");
+            ret=EXFAIL;
+        }
+        
+        /* unlock the network */
+        exnet_rwlock_unlock(G_bridge_cfg.con); 
+        
+        if (EXSUCCEED!=ret)
+        {
+            goto out;
+        }
+        
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Node disconnected - cannot send");
         EXFAIL_OUT(ret);
     }
     
