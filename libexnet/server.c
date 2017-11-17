@@ -291,6 +291,7 @@ expublic int exnet_bind(exnetcon_t *net)
 {
 	int ret=EXSUCCEED;
     char *fn = "exnet_bind";
+    int enable = EXTRUE;
     
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -298,6 +299,12 @@ expublic int exnet_bind(exnetcon_t *net)
     {
         NDRX_LOG(log_error, "Failed to create socket: %s",
                                 strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (setsockopt(net->sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    {
+        NDRX_LOG(log_error, "Failed to set SO_REUSEADDR: %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
     
@@ -309,7 +316,7 @@ expublic int exnet_bind(exnetcon_t *net)
         EXFAIL_OUT(ret);
             
     }
-    
+
     if ( listen(net->sock, net->backlog) < 0 ) 
     {
         NDRX_LOG(log_error, "Error calling listen(): %s", 

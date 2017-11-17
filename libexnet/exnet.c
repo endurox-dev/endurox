@@ -671,7 +671,13 @@ exprivate int close_socket(exnetcon_t *net)
                                 tpstrerror(tperrno));
         }
 
-        /* Close it */
+        /* shutdown & Close it */
+        if (EXSUCCEED!=shutdown(net->sock, SHUT_RDWR))
+        {
+            NDRX_LOG(log_error, "Failed to shutdown socket: %s",
+                                    strerror(errno));
+        }
+
         if (EXSUCCEED!=close(net->sock))
         {
             NDRX_LOG(log_error, "Failed to close socket: %s",
@@ -1027,18 +1033,9 @@ expublic int exnet_is_connected(exnetcon_t *net)
  */
 expublic int exnet_close_shut(exnetcon_t *net)
 {
-    if (EXFAIL!=net->sock)
-    {
-        if (EXSUCCEED!=shutdown(net->sock, SHUT_RDWR))
-        {
-            NDRX_LOG(log_info, "Failed to shutdown socket: %s",
-                            strerror(errno));
-        }
-        
-        exnet_rwlock_mainth_write(net);
-        close_socket(net);
-        exnet_rwlock_mainth_read(net);
-    }
+    exnet_rwlock_mainth_write(net);
+    close_socket(net);
+    exnet_rwlock_mainth_read(net);
 
     return EXSUCCEED;
 }
