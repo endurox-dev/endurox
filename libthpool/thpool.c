@@ -82,13 +82,14 @@ typedef struct poolthread{
 
 /* Threadpool */
 typedef struct thpool_{
-	poolthread**   threads;                  /* pointer to threads        */
+	poolthread**   threads;              /* pointer to threads        */
+	volatile int num_threads;            /* total num of threads      */
 	volatile int num_threads_alive;      /* threads currently alive   */
 	volatile int num_threads_working;    /* threads currently working */
 	pthread_mutex_t  thcount_lock;       /* used for thread count etc */
         
-        int threads_keepalive;
-        int threads_on_hold;
+    int threads_keepalive;
+    int threads_on_hold;
 
 	jobqueue*  jobqueue_p;               /* pointer to the job queue  */    
 } thpool_;
@@ -138,6 +139,7 @@ struct thpool_* thpool_init(int num_threads){
 		fprintf(stderr, "thpool_init(): Could not allocate memory for thread pool\n");
 		return NULL;
 	}
+	thpool_p->num_threads   = 0;
 	thpool_p->num_threads_alive   = 0;
 	thpool_p->num_threads_working = 0;
         
@@ -167,6 +169,7 @@ struct thpool_* thpool_init(int num_threads){
 	int n;
 	for (n=0; n<num_threads; n++){
 		poolthread_init(thpool_p, &thpool_p->threads[n], n);
+	    thpool_p->num_threads++;
 		if (THPOOL_DEBUG)
 			printf("THPOOL_DEBUG: Created thread %d in pool \n", n);
 	}
@@ -249,7 +252,7 @@ void thpool_wait(thpool_* thpool_p){
 /* Destroy the threadpool */
 void thpool_destroy(thpool_* thpool_p){
 	
-	volatile int threads_total = thpool_p->num_threads_alive;
+	volatile int threads_total = thpool_p->num_threads;
 
 	/* End each thread 's infinite loop */
 	thpool_p->threads_keepalive = 0;
@@ -277,6 +280,7 @@ void thpool_destroy(thpool_* thpool_p){
 	
 	/* Deallocs */
 	int n;
+    /* avoid mem leak #250 */
 	for (n=0; n < threads_total; n++){
 		poolthread_destroy(thpool_p->threads[n]);
 	}
