@@ -155,7 +155,7 @@ print_domains;
 
 # Go to domain 2
 set_dom2;
-`
+
 xadmin stop -s tpbridge
 xadmin start -s tpbridge
 
