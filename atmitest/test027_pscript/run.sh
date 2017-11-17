@@ -51,6 +51,7 @@ killall atmiclt27 2>/dev/null
 (./atmiclt27 2>&1) > ./atmiclt27.log
 
 RET=$?
+echo "Return: $RET"
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

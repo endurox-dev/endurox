@@ -506,6 +506,7 @@ TestSuite *ubf_basic_tests() {
 int main(int argc, char** argv)
 {    
     TestSuite *suite = create_test_suite();
+    int ret;
 
     add_suite(suite, ubf_basic_tests());
     add_suite(suite, ubf_Badd_tests());
@@ -526,10 +527,17 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_readwrite_tests());
     add_suite(suite, ubf_mkfldhdr_tests());
 
-    if (argc > 1) {
-        return run_single_test(suite,argv[1],create_text_reporter());
+    if (argc > 1)
+    {
+        ret=run_single_test(suite,argv[1],create_text_reporter());
+    }
+    else
+    {
+        ret=run_test_suite(suite, create_text_reporter());
     }
 
-    return run_test_suite(suite, create_text_reporter());
+    destroy_test_suite(suite);
+
+    return ret;
     
 }

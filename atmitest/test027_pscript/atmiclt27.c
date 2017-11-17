@@ -154,7 +154,8 @@ TestSuite *pscrit_test_all(void)
 /*
  * Main test case entry
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
     TestSuite *suite = create_test_suite();
 
