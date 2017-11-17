@@ -81,7 +81,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     atmi_lib_conf_t *p_atmi_lib_conf = ndrx_get_G_atmi_conf();
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     tp_command_call_t * last_call;
-    
+    int was_auto_buf = EXFALSE;
     /* client with last call is acceptable...! 
      * As it can be a server's companion thread
      */
@@ -174,6 +174,11 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             /* Convert back, if convert flags was set */
             if (SYS_SRV_CVT_ANY_SET(last_call->sysflags))
             {
+                if (buffer_info == last_call->autobuf)
+                {
+                    was_auto_buf=EXTRUE;
+                }
+                
                 NDRX_LOG(log_debug, "about reverse xcvt...");
                 /* Convert buffer back.. */
                 if (EXSUCCEED!=typed_xcvt(&buffer_info, last_call->sysflags, EXTRUE))
@@ -191,6 +196,11 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
                 {
                     data = buffer_info->buf;
                     /* Assume that length not used for self describing buffers */
+                    /* Bug #250 restore auto buf if was so... */
+                    if (was_auto_buf)
+                    {
+                        last_call->autobuf = buffer_info;
+                    }
                 }
             }
             
@@ -340,7 +350,7 @@ return_to_main:
 }
 
 /**
- * Do asynchronus call.
+ * Forward the call to next service
  * @param svc
  * @param data
  * @param len
@@ -362,7 +372,7 @@ expublic void _tpforward (char *svc, char *data,
     long return_status=0;
     int is_bridge;
     tp_command_call_t * last_call;
-    
+    int was_auto_buf = EXFALSE;
     
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     
@@ -388,6 +398,37 @@ expublic void _tpforward (char *svc, char *data,
         ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
         ret=EXFAIL;
         goto out;
+    }
+    
+    /* Convert back, if convert flags was set */
+    if (SYS_SRV_CVT_ANY_SET(last_call->sysflags))
+    {
+        if (buffer_info == last_call->autobuf)
+        {
+            was_auto_buf=EXTRUE;
+        }
+        
+        NDRX_LOG(log_debug, "about reverse xcvt...");
+        /* Convert buffer back.. */
+        if (EXSUCCEED!=typed_xcvt(&buffer_info, last_call->sysflags, EXTRUE))
+        {
+            NDRX_LOG(log_debug, "Failed to convert buffer back to "
+                    "callers format: %llx", last_call->sysflags);
+            userlog("Failed to convert buffer back to "
+                    "callers format: %llx", last_call->sysflags);
+            ret=EXFAIL;
+            goto out;
+        }
+        else
+        {
+            data = buffer_info->buf;
+            /* Assume that length not used for self describing buffers */
+            /* Bug #250 restore auto buf if was so... */
+            if (was_auto_buf)
+            {
+                last_call->autobuf = buffer_info;
+            }
+        }
     }
     
     descr = &G_buf_descr[buffer_info->type_id];
@@ -489,7 +530,7 @@ out:
 
     if (NULL!=data)
     {
-        /* TODO: Lookup the buffer infos for data, and then compary with autobuf!
+        /* Lookup the buffer infos for data, and then compare with autobuf!
          * as the last_call autobuf might be already free - the same for tpforward
          * for xcv -> update the autobuf if changed auto buf...
          */
