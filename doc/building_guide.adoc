@@ -220,7 +220,7 @@ installation of packages:
 
 ---------------------------------------------------------------------
 # zypper install git-core cmake flex bison gcc libxml2 libgpgme11 gcc-c++ \
-libxml2-devel libgpgme-devel asciidoc cmake dia 
+libxml2-devel libgpgme-devel asciidoc cmake dia rpm-build
 ---------------------------------------------------------------------
 
 
