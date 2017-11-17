@@ -128,12 +128,42 @@ xadmin start -y || go_out 2
 
 #exit 0
 
+###############################################################################
 # Have some wait for ndrxd goes in service - wait for connection establishment.
+# Test Connection recovery... (bug #250)
+###############################################################################
 sleep 60
 
 print_domains;
 
 # Go to domain 1
+set_dom1;
+
+# test Bug #250 - test conn recovery
+xadmin stop -s tpbridge
+# links must be lost
+print_domains;
+
+xadmin start -s tpbridge
+
+
+# TODO: Send someting, to have some threads running...
+
+sleep 60
+print_domains;
+
+
+# Go to domain 2
+set_dom2;
+`
+xadmin stop -s tpbridge
+xadmin start -s tpbridge
+
+###############################################################################
+# Now continue with standard tests..
+###############################################################################
+sleep 60
+print_domains;
 set_dom1;
 
 # check that services are blacklisted (others will be tested by tpcalls)
