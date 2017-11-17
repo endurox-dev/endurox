@@ -135,11 +135,10 @@ Ensure(basic_script_func_call)
     
     ps_getstring(v,-1,&s);
     printf("Got result: [%s]\n", s);
+    assert_string_equal(s, "Jimbo Hello World");
     
     ps_pop(v,3); //pops the roottable and the function
 
-    assert_string_equal(s, "Jimbo Hello World");
-    
     ps_close(v);
 }
 
