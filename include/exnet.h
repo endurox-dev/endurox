@@ -82,10 +82,15 @@ struct exnetcon
     char *d;                    /* Data buffer                            */
     int  dl;                    /* Data left in databuffer                */
     int len_pfx;                /* Length prefix                          */
-    ndrx_stopwatch_t rcv_timer;        /* Receive timer...  */
-    ndrx_stopwatch_t connect_time;    /* Time of connection in transit..... */
-    int periodic_zero;          /* send zero length message in seconds */
-    ndrx_stopwatch_t last_zero;        /* Last time send zero length message */
+    ndrx_stopwatch_t rcv_timer;         /* Receive timer...  */
+    ndrx_stopwatch_t connect_time;      /* Time of connection in transit..... */
+    int periodic_zero;                  /* send zero length message in seconds*/
+    ndrx_stopwatch_t last_zero;         /* Last time send zero length message */
+    
+    pthread_rwlock_t rwlock;            /* Needs lock for closing...          */
+    
+    MUTEX_VAR(rcvlock);                /* Receive lock                        */
+    MUTEX_VAR(sendlock);               /* Send lock                           */
     
     /* Server settings */
     int backlog;            /* Incomming connection queue len (backlog) */
@@ -125,10 +130,18 @@ extern int exnet_net_init(exnetcon_t *net);
 extern int exnet_configure_client_sock(exnetcon_t *net);
 extern int exnet_bind(exnetcon_t *net);
 
+extern void exnet_rwlock_read(exnetcon_t *net);
+extern void exnet_rwlock_write(exnetcon_t *net);
+extern void exnet_rwlock_unlock(exnetcon_t *net);
+extern void exnet_rwlock_mainth_write(exnetcon_t *net);
+extern void exnet_rwlock_mainth_read(exnetcon_t *net);
+
+
 /* Connection tracking: */
 extern void exnet_add_con(exnetcon_t *net);
 extern void exnet_del_con(exnetcon_t *net);
 extern exnetcon_t * extnet_get_con_head(void);
+expublic exnetcon_t *exnet_find_free_conn(void);
 extern void exnet_remove_incoming(exnetcon_t *net);
 
 #endif /* EXNET_H_ */
