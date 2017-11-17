@@ -284,6 +284,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib:$HOME/endurox/dis
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
+#  To complete unit tests:
+export NDRX_MSGSIZEMAX=1049600
+
+# Increase stack size
+ulimit -s 30751
+
 EOF
 
 $ chmod +x $HOME/ndrx_home
