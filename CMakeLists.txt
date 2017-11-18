@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "5.1.1")
+set(VERSION "5.1.2")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -69,9 +69,8 @@ ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
-#       SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer  -O1 -ggdb ${CMAKE_C_FLAGS}")
-       SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-#        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
+#       SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
 SET(RT_LIB rt dl)
