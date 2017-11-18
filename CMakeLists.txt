@@ -91,14 +91,14 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 	message("No threads mode for CPM - bit slower child process exit status check...")
 	# Seems aix 7.1 does not like threads mixed with fork...
    	set(EX_CPM_NO_THREADS "1")
-    set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
+        set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		message("GNU compiler")
-		set ( CMAKE_C_FLAGS "-pthread -maix64 ${CMAKE_C_FLAGS}")
+		set ( CMAKE_C_FLAGS "-D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 		message("XL compiler")
-		set ( CMAKE_C_FLAGS " -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99 -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
+		set ( CMAKE_C_FLAGS " -D_THREAD_SAFE -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99 -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
 
 		if (NOT DEFINE_RELEASEBUILD)
 			message("XL compiler: with -g (debug symbols...)")
