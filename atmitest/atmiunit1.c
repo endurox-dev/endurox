@@ -431,9 +431,11 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test040_typedview_dom);
 
+#ifdef SYS64BIT
 #if defined(EX_OS_LINUX) || defined(EX_OS_FREEBSD)
     add_test(suite, test041_bigmsg);
     add_test(suite,test042_bignet);
+#endif
 #endif
             
     return suite;
