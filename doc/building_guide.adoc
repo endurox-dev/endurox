@@ -61,8 +61,8 @@ fi
 # Max Messages in Queue
 echo 10000 > /proc/sys/fs/mqueue/msg_max
 
-# Max message size (Currently Enduro/X supports only 32K as max)
-echo 64000 > /proc/sys/fs/mqueue/msgsize_max
+# Max message size, to pass unit tests, use 1M+1K
+echo 1049600 > /proc/sys/fs/mqueue/msgsize_max
 
 # Max number of queues for user
 echo 10000 > /proc/sys/fs/mqueue/queues_max
