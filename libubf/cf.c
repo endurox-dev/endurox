@@ -1323,7 +1323,7 @@ exprivate char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_
         return NULL; /*<<<< RETURN!*/
     }
 
-    NDRX_STRNCPY(output_buf, input_buf, input_carrlen);
+    NDRX_STRNCPY_SRC(output_buf, input_buf, input_carrlen);
     output_buf[input_carrlen] = EXEOS;
 
     if (NULL!=out_len)

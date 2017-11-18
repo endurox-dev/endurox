@@ -48,6 +48,8 @@ set a appropriate limits. To do this automatically at system startup,
 Linuxes which supports '/etc/rc.local', must add following lines before "exit 0":
 
 ---------------------------------------------------------------------
+#!/bin/bash
+
 # Mount the /dev/mqueue
 # Not for Debian 8.x: queue is readly mounted, thus test:
 
@@ -59,8 +61,8 @@ fi
 # Max Messages in Queue
 echo 10000 > /proc/sys/fs/mqueue/msg_max
 
-# Max message size (Currently Enduro/X supports only 32K as max)
-echo 64000 > /proc/sys/fs/mqueue/msgsize_max
+# Max message size, to pass unit tests, use 1M+1K
+echo 1049600 > /proc/sys/fs/mqueue/msgsize_max
 
 # Max number of queues for user
 echo 10000 > /proc/sys/fs/mqueue/queues_max
@@ -139,7 +141,7 @@ $
 
 ==== System level dependencies - for Centos/RHEL/Oracle Linux 7.x
 
-Now install system depenencies  
+Now install system dependencies  
 
 But if you run build on *Oracle Linux*, you need to enable optional repo
 for asciidoc/gpgme-devel/dblatex
@@ -199,9 +201,31 @@ cmake version 3.7.2
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ---------------------------------------------------------------------
 
+==== System level dependencies - for Suse Linux Enterprise Server 12.3
+
+To install all required dependencies, you need following sets of DVDs (or
+other sources), or later
+
+- SLE SERVER, DVD1 (e.g. SLE-12-SP3-Server-DVD-x86_64-GM-DVD1.iso)
+- SLE SERVER, DVD2 (e.g. SLE-12-SP3-Server-DVD-x86_64-GM-DVD2.iso)
+- SLE SDK, DVD1 (e.g. SLE-12-SP2-SDK-DVD-x86_64-GM-DVD1.iso)
+- SLE SDK, DVD2 (e.g. SLE-12-SP2-SDK-DVD-x86_64-GM-DVD2.iso)
+
+Add these in the "Configured Software Repositories dialog" in YaST tool. Also
+ensure that RPM database is updated of available packages. One way to do this is
+Open the "Software Management" in the YaST, it will re-scan the available software
+sources.
+
+installation of packages:
+
+---------------------------------------------------------------------
+# zypper install git-core cmake flex bison gcc libxml2 libgpgme11 gcc-c++ \
+libxml2-devel libgpgme-devel asciidoc cmake dia rpm-build
+---------------------------------------------------------------------
 
 
 ==== AsciiDoc Integration with Dia
+
 Also Enduro/X includes documentation in sources, thus additional config is needed
 so that `Dia` package can build illustrations needed for manuals.
 
@@ -232,6 +256,7 @@ $ git clone https://github.com/endurox-dev/endurox endurox
 ---------------------------------------------------------------------
 
 === Enduro/X basic Environment configuration for HOME directory
+
 This code bellow creates 'ndrx_home' executable file which loads basic environment, 
 so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
 This also assumes that you are going to install to '$HOME/endurox/dist' folder.
@@ -258,6 +283,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib:$HOME/endurox/dis
 
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+
+#  To complete unit tests:
+export NDRX_MSGSIZEMAX=1049600
+
+# Increase stack size
+ulimit -s 30751
 
 EOF
 

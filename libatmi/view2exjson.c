@@ -56,7 +56,7 @@
 #define IS_BIN(X) (BFLD_CARRAY == X)
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
-#define CARR_BUFFSIZE       ATMI_MSG_MAX_SIZE
+#define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
 #define CARR_BUFFSIZE_B64   (4 * (CARR_BUFFSIZE) / 3)
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -84,8 +84,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
     EXJSON_Value *view_value;
     EXJSON_Object *view_object;
     
-    EXJSON_Value *val;
-    EXJSON_Array *array_val;
+    EXJSON_Array *array;
     size_t i, cnt, j, arr_cnt;
     int type;
     char *name;
@@ -187,12 +186,12 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
             }
         }
 
-        switch ((f_type=exjson_value_get_type(exjson_object_nget_value_n(view_object, i))))
+        switch ((f_type=exjson_value_get_type(exjson_object_get_value_at(view_object, i))))
         {
             case EXJSONString:
             {
                 BFLDLEN str_len;
-                s_ptr = str_val = (char *)exjson_object_get_string_n(view_object, i);
+                s_ptr = str_val = (char *)exjson_object_get_string(view_object, name);
                 NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
 
                 /* If it is carray - parse hex... */
@@ -239,7 +238,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
             case EXJSONNumber:
             {
                 long l;
-                d_val = exjson_object_get_number_n(view_object, i);
+                d_val = exjson_object_get_number(view_object, name);
                 NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
 
                 if (IS_INT(cnametyp))
@@ -272,7 +271,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                     break;
             case EXJSONBoolean:
             {
-                bool_val = (short)exjson_object_get_boolean_n(view_object, i);
+                bool_val = (short)exjson_object_get_boolean(view_object, name);
                 NDRX_LOG(log_debug, "Bool Value: [%hd]", bool_val);
                 if (EXSUCCEED!=CBvchg(cstruct, view, name, 0, 
                         (char *)&bool_val, 0L, BFLD_SHORT))
@@ -292,24 +291,23 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
              */
             case EXJSONArray:
             {
-                if (NULL==(array_val = exjson_value_get_array(
-                        exjson_object_nget_value_n(view_object, i))))
+                if (NULL==(array = exjson_object_get_array(view_object, name)))
                 {
                     NDRX_LOG(log_error, "Failed to get array object!");
                     ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get array object!");
                     EXFAIL_OUT(ret);
                 }
-                arr_cnt = exjson_array_get_count(array_val);
+                arr_cnt = exjson_array_get_count(array);
 
                 for (j = 0; j<arr_cnt; j++ )
                 {
                     switch (f_type = exjson_value_get_type(
-                            exjson_array_get_value(array_val, j)))
+                            exjson_array_get_value(array, j)))
                     {
                         case EXJSONString:
                         {
                             BFLDLEN str_len;
-                            s_ptr = str_val = (char *)exjson_array_get_string(array_val, j);
+                            s_ptr = str_val = (char *)exjson_array_get_string(array, j);
                             NDRX_LOG(log_debug, 
                                         "Array j=%d, Str Value: [%s]", j, str_val);
 
@@ -355,7 +353,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                         case EXJSONNumber:
                         {
                             long l;
-                            d_val = exjson_array_get_number(array_val, j);
+                            d_val = exjson_array_get_number(array, j);
                             NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
 
                             if (IS_INT(cnametyp))
@@ -391,7 +389,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                         break;
                         case EXJSONBoolean:
                         {
-                            bool_val = (short)exjson_array_get_boolean(array_val, j);
+                            bool_val = (short)exjson_array_get_boolean(array, j);
                             NDRX_LOG(log_debug, "Array j=%d, Bool Value: [%hd]", j, bool_val);
                             if (EXSUCCEED!=CBvchg(cstruct, view, name, j, 
                                     (char *)&bool_val, 0L, BFLD_SHORT))
@@ -478,7 +476,8 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     char *serialized_string = NULL;
     BFLDOCC oc;
 
-    EXJSON_Array * jarr;
+    EXJSON_Value *jarr_value=NULL;
+    EXJSON_Array *jarr=NULL;
     
     if( EXJSONSuccess != exjson_object_dotset_value(root_object, view, view_value) )
     {	
@@ -530,20 +529,20 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 {
                     /* create array */
                     is_array = EXTRUE;
-                    if (NULL==(jarr = exjson_array_init()))
-                    {
-                            NDRX_LOG(log_error, "Failed to initialize array!");
-
-                            ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array!");
-                            EXFAIL_OUT(ret);
-                    }
                     /* add array to document... */
-                    if (EXJSONSuccess!=exjson_object_set_array(view_object, cname, jarr))
+                    if (EXJSONSuccess!=exjson_object_set_value(view_object, cname, exjson_value_init_array()))
                     {
                             NDRX_LOG(log_error, "exjson: Failed to add Array to root object!!");
                             ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to add "
                                     "Array to root object!!");
                             EXFAIL_OUT(ret);
+                    }
+                    if (NULL == (jarr=exjson_object_get_array(view_object, cname)))
+                    {
+                            NDRX_LOG(log_error, "Failed to initialize array!!");
+
+                            ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array");
+                            EXFAIL_OUT(ret);                    
                     }
                 }
                 else
@@ -722,6 +721,11 @@ out:
         exjson_value_free(root_value);
     }
 
+    if (NULL!=jarr_value )
+    {
+        exjson_value_free(jarr_value);
+    }
+
     /* At iter end, ret normally becomes 0, thus fine here as SUCCEED */
     return ret;
 }
@@ -776,7 +780,7 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     char * tmp = NULL;
     char * newbuf_out = NULL; /* real output buffer */
 
-    if (NULL==(tmp = tpalloc("JSON", NULL, ATMI_MSG_MAX_SIZE)))
+    if (NULL==(tmp = tpalloc("JSON", NULL, NDRX_MSGSIZEMAX)))
     {
         NDRX_LOG(log_error, "failed to convert UBF->JSON. JSON buffer alloc fail!: %s",
                 tpstrerror(tperrno));
@@ -797,7 +801,7 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     /* Do the convert */
     ndrx_TPunset_error();
     if (EXSUCCEED!=ndrx_tpviewtojson((*buffer)->buf, 
-            subtype, tmp, ATMI_MSG_MAX_SIZE, flags))
+            subtype, tmp, NDRX_MSGSIZEMAX, flags))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert VIEW->JSON: %s", 

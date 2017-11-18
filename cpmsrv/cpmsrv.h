@@ -59,6 +59,7 @@ extern "C" {
 #define NDRX_CLTSUBSECT             "NDRX_CLTSUBSECT" /* Subsect format string */
 
 
+#define CLT_WILDCARD                '%'         /* regexp -> .* */
     
 #define S_FS                        0x1c /* Field seperator */
     

@@ -95,6 +95,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
 {
     int ret=EXSUCCEED;
     UBF_header_t *ubf_h = (UBF_header_t *)p_ub;
+    char *p;
     
     UBF_LOG(log_debug, "Binit p_ub=%p len=%d", p_ub, len);
             
@@ -112,15 +113,15 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     }
     else
     {
-        /* Initialize buffer */
-        memset((char *)p_ub, 0, len); /* TODO: Do we need all to be set to 0? */
+        /* Initialise buffer */
+        /* the last element bfldid is set to zero */
+        memset((char *)p_ub, 0, sizeof(UBF_header_t)); /* Do we need all to be set to 0? */
         ubf_h->version = UBF_VERSION; /* Reset options to (all disabled) */
         ubf_h->buffer_type = 0; /* not used currently */
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
-        ubf_h->bytes_used = sizeof(UBF_header_t);
-        
+        ubf_h->bytes_used = sizeof(UBF_header_t) - sizeof(BFLDID); /* so this is not used.. */
     }
     
     return ret;
@@ -251,12 +252,14 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
         
         last = (char *)hdr;
         last+=(hdr->bytes_used-1);
+#if 0
         /* Ensure that we reset last elements... So that we do not get
          * used elements
          */
         UBF_LOG(log_debug, "resetting: %p to 0 - %d bytes",
                             last+1, 0, remove_size);
         memset(last+1, 0, remove_size);
+#endif
     }
     else
     {
@@ -677,7 +680,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
     if (EXSUCCEED==ret && dst_h->buf_len < src_h->bytes_used)
     {
         ndrx_Bset_error_fmt(BNOSPACE, "Destination buffer too short. "
-                                    "Source len: %d dest used: %d",
+                                    "Dest buf len: %d source buf bytes used: %d",
                                     dst_h->buf_len, src_h->bytes_used);
         ret=EXFAIL;
     }
@@ -686,7 +689,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
     {
         /* save some original characteristics of dest buffer */
         dst_buf_len = dst_h->buf_len;
-        memset(p_ub_dst, 0, dst_h->bytes_used);
+        /*memset(p_ub_dst, 0, dst_h->bytes_used);*/
         memcpy(p_ub_dst, p_ub_src, src_h->bytes_used);
         dst_h->buf_len = dst_buf_len;
         dst_h->bytes_used = src_h->bytes_used;
@@ -1285,7 +1288,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
             /* reset the header pointer */
             hdr = (UBF_header_t *)p_ub;
             reset_size = alloc_size-hdr->buf_len;
-
+#if 0
             if (reset_size>0)
             {
                 /* Now we need to set buffer ending to 0
@@ -1297,6 +1300,7 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 
                 memset(p+hdr->buf_len, 0, reset_size);
             }
+#endif
             /* Update FB to new size. */
             hdr->buf_len+=reset_size;
         }

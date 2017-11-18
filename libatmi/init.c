@@ -130,6 +130,7 @@ out:
 exprivate int ndrx_init_once(void)
 {
     int ret = EXSUCCEED;
+    char buf[NDRX_MSGSIZEMAX]; /* test the stack. */
     /* reset callstates to default */
     /* memset(&G_call_state, 0, sizeof(G_call_state)); */
     
@@ -148,6 +149,7 @@ expublic int ndrx_load_common_env(void)
     char *p;
     
     MUTEX_LOCK_V(M_env_lock);
+    
     if (G_is_env_loaded)
     {
         NDRX_LOG(log_debug, "env already loaded...");
@@ -241,12 +243,12 @@ expublic int ndrx_load_common_env(void)
         NDRX_LOG(log_debug, "Random key set to: [%s]", G_atmi_env.rnd_key);
     }
 
-    p = getenv(NDRX_MSGMAX);
+    p = getenv(CONF_NDRX_MSGMAX);
     if (NULL==p)
     {
         /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", NDRX_MSGMAX);
-        userlog("Missing config key %s - FAIL", NDRX_MSGMAX);
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_MSGMAX);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_MSGMAX);
         ret=EXFAIL;
         goto out;
     }
@@ -257,12 +259,12 @@ expublic int ndrx_load_common_env(void)
                             G_atmi_env.msg_max);
     }
 
-    p = getenv(NDRX_MSGSIZEMAX);
+    p = getenv(CONF_NDRX_MSGSIZEMAX);
     if (NULL==p)
     {
         /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", NDRX_MSGSIZEMAX);
-        userlog("Missing config key %s - FAIL", NDRX_MSGSIZEMAX);
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_MSGSIZEMAX);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_MSGSIZEMAX);
         ret=EXFAIL;
         goto out;
     }

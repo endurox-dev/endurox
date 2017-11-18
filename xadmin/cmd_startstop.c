@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -102,7 +103,7 @@ exprivate char *proc_state_to_str(long state, short msg_type)
             ret = stopping;
             break;
         default:
-            sprintf(unknown, "Unknown state (%ld)", state);
+            snprintf(unknown, sizeof(unknown), "Unknown state (%ld)", state);
             ret = unknown;
             break;
     }
@@ -172,6 +173,8 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
+    short keep_running_ndrxd;
+    
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -180,6 +183,8 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+        {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
     };
         
@@ -214,7 +219,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     
     /* prepare for call */
     call.srvid = srvid;
-    strcpy(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
@@ -247,7 +252,9 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
-    short complete = EXFALSE;
+    short keep_running_ndrxd = EXFALSE;
+    short dummy;
+    
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -257,8 +264,10 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
-        {'c', BFLD_SHORT, (void *)&complete, 0, 
-                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Complete shutdown (ndrxd off)"},
+        {'c', BFLD_SHORT, (void *)&dummy, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Left for compatibility"},
+        {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
     };
         
@@ -285,10 +294,9 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         EXFAIL_OUT(ret);
     }
     
-    if ((EXFAIL!=srvid || EXEOS!=srvnm[0]) && call.complete_shutdown)
+    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
     {
-        fprintf(stderr, "-i or -s cannot be combined with -c!\n");
-        EXFAIL_OUT(ret);
+        keep_running_ndrxd = EXTRUE;
     }
     
     if (EXFAIL==srvid && EXEOS==srvnm[0] &&
@@ -298,9 +306,17 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     }
     
     /* prepare for call */
-    call.complete_shutdown = complete;
+    if (keep_running_ndrxd)
+    {
+        call.complete_shutdown = EXFALSE;
+    }
+    else
+    {
+        /* do full shutdown by default */
+        call.complete_shutdown = EXTRUE;
+    }
     call.srvid = srvid;
-    strcpy(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.binary_name, srvnm);
 
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                     NDRXD_CALL_TYPE_GENERIC,
@@ -334,6 +350,7 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
+    short keep_running_ndrxd = EXFALSE;
     
     /* just verify that content is ok: */
     ncloptmap_t clopt[] =
@@ -345,10 +362,18 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                                 
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+                                
+        {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
     };
         
-    if (argc>=2 && '-'==argv[1][0])
+    if (argc>=2 && '-'!=argv[1][0])
+    {
+	NDRX_STRNCPY(srvnm, argv[1], MAXTIDENT);
+	srvnm[MAXTIDENT] = 0;
+    }
+    else
     {
         /* parse command line */
         if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
@@ -359,11 +384,28 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     }
     
     
+    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
+    {
+        keep_running_ndrxd = EXTRUE;
+    }
+    
+    
     memset(&cmd, 0, sizeof(cmd));
     
     cmd.ndrxd_cmd = NDRXD_COM_STOP_RQ;
     if (EXSUCCEED==(ret=cmd_stop(&cmd, argc, argv, p_have_next)))
     {
+        if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
+        {
+            /* let daemon to finish the exit process (unlink pid file/queues) */
+            sleep(2); /* this will be interrupted when we got sig child */
+            if (!is_ndrxd_running() && EXFAIL==ndrx_start_idle())
+            {
+                fprintf(stderr, "Failed to start idle instance of ndrxd!");
+                EXFAIL_OUT(ret);
+            }
+        }
+        
         cmd.ndrxd_cmd = NDRXD_COM_START_RQ;
         ret = cmd_start(&cmd, argc, argv, p_have_next);
     }
@@ -466,7 +508,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     
     /* prepare for call */
     call.srvid = srvid;
-    strcpy(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,

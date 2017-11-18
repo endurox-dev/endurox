@@ -221,7 +221,7 @@ expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *ref
     pm_node_t *srv = NULL;
     char *fn = "brd_send_update";
     
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     bridge_refresh_t *tmp_refresh= (bridge_refresh_t *)buf;
     /* default use all */
     bridge_refresh_t *p_refresh = refresh;
@@ -330,11 +330,10 @@ expublic int brd_connected(int nodeid)
 {
     int ret=EXSUCCEED;
     bridgedef_t *cur = brd_get_bridge(nodeid);
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
     
-
-    memset(buf, 0, sizeof(buf));
+    memset(refresh, 0, sizeof(bridge_refresh_t));
     
     if (NULL!=cur)
     {
@@ -732,7 +731,7 @@ expublic void brd_end_diff(void)
 {
     bridgedef_t *r = NULL;
     bridgedef_t *rtmp = NULL;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
     int first = EXTRUE;
     
@@ -793,7 +792,7 @@ expublic void brd_send_periodrefresh(void)
 {
     bridgedef_t *cur = NULL;
     bridgedef_t *rtmp = NULL;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
     
     /* Nothing to do. */
@@ -801,7 +800,7 @@ expublic void brd_send_periodrefresh(void)
         return;
     
     /* Reset the buffer otherwise it keeps growing!!! */
-    memset(buf, 0, sizeof(buf));
+    memset(refresh, 0, sizeof(bridge_refresh_t));
     
     EXHASH_ITER(hh, G_bridge_hash, cur, rtmp)
     {

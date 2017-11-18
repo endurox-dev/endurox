@@ -350,6 +350,19 @@ Ensure(test040_typedview_dom)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test041_bigmsg)
+{
+    int ret;
+    ret=system_dbg("test041_bigmsg/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+Ensure(test042_bignet)
+{
+    int ret;
+    ret=system_dbg("test042_bignet/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -417,24 +430,37 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test040_typedview);
     
     add_test(suite, test040_typedview_dom);
+
+#if defined(EX_OS_LINUX) || defined(EX_OS_FREEBSD)
+    add_test(suite, test041_bigmsg);
+    add_test(suite,test042_bignet);
+#endif
             
     return suite;
 }
 
-/*
+/**
  * Main test case entry
  */
 int main(int argc, char** argv) {
+
+    int ret;
 
     TestSuite *suite = create_test_suite();
 
     add_suite(suite, atmi_test_all());
 
 
-    if (argc > 1) {
-        return run_single_test(suite,argv[1],create_text_reporter());
+    if (argc > 1)
+    {
+        ret=run_single_test(suite,argv[1],create_text_reporter());
     }
+    else
+    {
+        ret=run_test_suite(suite, create_text_reporter());
+    }
+    destroy_test_suite(suite);
 
-    return run_test_suite(suite, create_text_reporter());
+    return ret;
 }
 

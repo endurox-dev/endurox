@@ -46,6 +46,7 @@
 #include <ubf.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
+#include <fieldtable.h>
 
 #include "tperror.h"
 
@@ -57,7 +58,7 @@
 #define IS_BIN(X) (BFLD_CARRAY == Bfldtype(X))
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
-#define CARR_BUFFSIZE		ATMI_MSG_MAX_SIZE
+#define CARR_BUFFSIZE		NDRX_MSGSIZEMAX
 #define CARR_BUFFSIZE_B64	(4 * (CARR_BUFFSIZE) / 3)
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -81,8 +82,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
     int ret = EXSUCCEED;
     EXJSON_Value *root_value;
     EXJSON_Object *root_object;
-    EXJSON_Value *val;
-    EXJSON_Array *array_val;
+    EXJSON_Array *array;
     size_t i, cnt, j, arr_cnt;
     int type;
     char *name;
@@ -124,12 +124,12 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
             continue;
         }
 
-        switch ((f_type=exjson_value_get_type(exjson_object_nget_value_n(root_object, i))))
+        switch ((f_type=exjson_value_get_type(exjson_object_get_value_at(root_object, i))))
         {
             case EXJSONString:
             {
                 BFLDLEN str_len;
-                s_ptr = str_val = (char *)exjson_object_get_string_n(root_object, i);
+                s_ptr = str_val = (char *)exjson_object_get_string(root_object, name);
                 NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
 
                 /* If it is carray - parse hex... */
@@ -163,9 +163,9 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
 
                 if (EXSUCCEED!=CBchg(p_ub, fid, 0, s_ptr, str_len, BFLD_CARRAY))
                 {
-                    NDRX_LOG(log_error, "Failed to set view field (%s) %d: %s",
+                    NDRX_LOG(log_error, "Failed to set UBF field (%s) %d: %s",
                             name, fid, Bstrerror(Berror));
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set view field (%s) %d: %s",
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set UBF field (%s) %d: %s",
                             name, fid, Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
@@ -174,7 +174,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
             case EXJSONNumber:
             {
                 long l;
-                d_val = exjson_object_get_number_n(root_object, i);
+                d_val = exjson_object_get_number(root_object, name);
                 NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
 
                 if (IS_INT(fid))
@@ -206,7 +206,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
                     break;
             case EXJSONBoolean:
             {
-                bool_val = (short)exjson_object_get_boolean_n(root_object, i);
+                bool_val = (short)exjson_object_get_boolean(root_object, name);
                 NDRX_LOG(log_debug, "Bool Value: [%hd]", bool_val);
                 if (EXSUCCEED!=CBchg(p_ub, fid, 0, (char *)&bool_val, 0L, BFLD_SHORT))
                 {
@@ -225,24 +225,23 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
              */
             case EXJSONArray:
             {
-                if (NULL==(array_val = exjson_value_get_array(
-                        exjson_object_nget_value_n(root_object, i))))
+                if (NULL==(array = exjson_object_get_array(root_object, name)))
                 {
                     NDRX_LOG(log_error, "Failed to get array object!");
                     ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get array object!");
                     EXFAIL_OUT(ret);
                 }
-                arr_cnt = exjson_array_get_count(array_val);
+                arr_cnt = exjson_array_get_count(array);
 
                 for (j = 0; j<arr_cnt; j++ )
                 {
                     switch (f_type = exjson_value_get_type(
-                            exjson_array_get_value(array_val, j)))
+                            exjson_array_get_value(array, j)))
                     {
                         case EXJSONString:
                         {
                             BFLDLEN str_len;
-                            s_ptr = str_val = (char *)exjson_array_get_string(array_val, j);
+                            s_ptr = str_val = (char *)exjson_array_get_string(array, j);
                             NDRX_LOG(log_debug, 
                                         "Array j=%d, Str Value: [%s]", j, str_val);
 
@@ -287,7 +286,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
                         case EXJSONNumber:
                         {
                             long l;
-                            d_val = exjson_array_get_number(array_val, j);
+                            d_val = exjson_array_get_number(array, j);
                             NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
 
                             if (IS_INT(fid))
@@ -323,7 +322,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
                         break;
                         case EXJSONBoolean:
                         {
-                            bool_val = (short)exjson_array_get_boolean(array_val, j);
+                            bool_val = (short)exjson_array_get_boolean(array, j);
                             NDRX_LOG(log_debug, "Array j=%d, Bool Value: [%hd]", j, bool_val);
                             if (EXSUCCEED!=CBchg(p_ub, fid, j, (char *)&bool_val, 0L, BFLD_SHORT))
                             {
@@ -389,38 +388,37 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
     BFLDLEN fldlen;
 
     char *nm;
-    EXJSON_Array * jarr;
+    EXJSON_Value *jarr_value=NULL;
+    EXJSON_Array *jarr=NULL;
 
     for (fldid = BFIRSTFLDID, oc = 0;
             1 == (ret = Bnext(p_ub, &fldid, &oc, NULL, &fldlen));)
     {
-        nm = Bfname(fldid);
-        NDRX_LOG(log_debug, "Field: [%s] occ %d", nm, oc);
+        /* Feature #232 return ID if field not found in tables... */
+        nm = ndrx_Bfname_int(fldid);
+        NDRX_LOG(log_debug, "Field: [%s] occ %d id: %d", nm, oc, fldid);
         if (0==oc)
         {
             occs = Boccur(p_ub, fldid);
-
             if (occs>1)
             {
                 /* create array */
                 is_array = EXTRUE;
-                if (NULL==(jarr = exjson_array_init()))
-                {
-                        NDRX_LOG(log_error, "Failed to initialize array!");
-                        
-                        ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to "
-                                "initialize array!");
-                        
-                        EXFAIL_OUT(ret);
-                }
                 /* add array to document... */
-                if (EXJSONSuccess!=exjson_object_set_array(root_object, nm, jarr))
+                if (EXJSONSuccess!=exjson_object_set_value(root_object, nm, exjson_value_init_array()))
                 {
                         NDRX_LOG(log_error, "Failed to add Array to root object!!");
                         
                         ndrx_TPset_error_msg(TPESYSTEM, "Failed to add Array "
                                 "to root object!!");
                         EXFAIL_OUT(ret);
+                }
+                if (NULL == (jarr=exjson_object_get_array(root_object, nm)))
+                {
+                        NDRX_LOG(log_error, "Failed to initialize array!!");
+                        
+                        ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array");
+                        EXFAIL_OUT(ret);                    
                 }
             }
             else
@@ -586,6 +584,11 @@ out:
     {
         exjson_value_free(root_value);
     }
+
+    if ( NULL != jarr_value )
+    {
+        exjson_value_free(jarr_value);
+    }
     return ret;
 }
 
@@ -602,7 +605,7 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
     UBFH * tmp = NULL;
     UBFH * newbuf_out = NULL; /* real output buffer */
 
-    if (NULL==(tmp = (UBFH *)tpalloc("UBF", NULL, ATMI_MSG_MAX_SIZE)))
+    if (NULL==(tmp = (UBFH *)tpalloc("UBF", NULL, NDRX_MSGSIZEMAX)))
     {
         NDRX_LOG(log_error, "failed to convert JSON->UBF. UBF buffer alloc fail!");
         EXFAIL_OUT(ret);
@@ -666,7 +669,7 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
     char * tmp = NULL;
     char * newbuf_out = NULL; /* real output buffer */
 
-    if (NULL==(tmp = tpalloc("JSON", NULL, ATMI_MSG_MAX_SIZE)))
+    if (NULL==(tmp = tpalloc("JSON", NULL, NDRX_MSGSIZEMAX)))
     {
         NDRX_LOG(log_error, "failed to convert UBF->JSON. JSON buffer alloc fail!: %s",
                 tpstrerror(tperrno));
@@ -675,7 +678,7 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
 
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, ATMI_MSG_MAX_SIZE))
+    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, NDRX_MSGSIZEMAX))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert UBF->JSON: %s", 

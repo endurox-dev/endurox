@@ -887,3 +887,20 @@ expublic uint32_t ndrx_rotl32b (uint32_t x, uint32_t n)
 }
 
 
+/**
+ * Return string len, but do it until the max position
+ * @param str string to test
+ * @param max max len to test to
+ * @return string len
+ */
+expublic size_t ndrx_strnlen(char *str, size_t max)
+{
+    char *p;
+    
+    for(p = str; *p && max; ++p)
+    {
+        max--;
+    }
+    
+    return(p - str);
+}
