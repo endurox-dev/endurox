@@ -90,45 +90,48 @@ exprivate int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
  */
 cmd_mapping_t M_command_map[] = 
 {
-    {"quit",    cmd_quit,  EXFAIL,                 1,  1,  0, "Quit from command line utility", NULL},
-    {"q",       cmd_quit,  EXFAIL,                 1,  1,  0, "Alias for `quit'", NULL},
-    {"echo",    cmd_echo,  EXFAIL,                 1,  999,0, "Echo text back to terminal", NULL},
-    {"idle",    cmd_idle,  EXFAIL,                 1,  1,  0, "Enter daemon process in idle state (if not started)", NULL},
-    {"help",    cmd_help,  EXFAIL,                 1,  2,  0, "Print help (this output)\n"
+    {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, "Quit from command line utility", NULL},
+    {"q",       cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
+    {"echo",    cmd_echo,  EXFAIL,              1,  999,0, "Echo text back to terminal", NULL},
+    {"idle",    cmd_idle,  EXFAIL,              1,  1,  0, "Enter daemon process in idle state (if not started)", NULL},
+    {"help",    cmd_help,  EXFAIL,              1,  2,  0, "Print help (this output)\n"
                                                 "\t args: help [command]", NULL},
-    {"h",       cmd_help,  EXFAIL,                 1,  2,  0, "Alias for `help'", NULL},
-    {"info",    cmd_help,  EXFAIL,                 1,  2,  0, "Alias for `help'", NULL},
-    {"stat",    cmd_stat,  EXFAIL,                 1,  1,  0, "Prints general status information", NULL},
-    {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,    1,  1,  1, "Load configuration", NULL},
-    {"start",   cmd_start, NDRXD_COM_START_RQ,   1,  4,  1, "Start application domain\n"
+    {"h",       cmd_help,  EXFAIL,              1,  2,  0, "Alias for `help'", NULL},
+    {"info",    cmd_help,  EXFAIL,              1,  2,  0, "Alias for `help'", NULL},
+    {"stat",    cmd_stat,  EXFAIL,              1,  1,  0, "Prints general status information", NULL},
+    {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,   1,  1,  1, "Load configuration", NULL},
+    {"start",   cmd_start, NDRXD_COM_START_RQ,  1,  5,  1, "Start application domain\n"
                                                          "\t Also loads configuration automatically.\n"
                                                          "\t args: start [-y] [-s <server>] [-i <srvid>]", NULL},
-    {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,     1,  1,  1, "Print services", NULL},
-    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,    1,  4,  0, "Stop application domain\n"
-                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>]", NULL},
-    {"down",    cmd_fdown, EXFAIL,                 1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
+    {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,    1,  2,  1, "Print services\n"
+                                                            "\t args: psc [-s]\n"
+                                                            "\t -s : print full service name"
+                                                         , NULL},
+    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  4,  0, "Stop application domain\n"
+                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k]", NULL},
+    {"down",    cmd_fdown, EXFAIL,              1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
                                                          "\t args: fdown [-y]\n"
                                                          "\t RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!", NULL},
-    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,      1,  1,  1, "Attached to ndrxd user session in progress", NULL},
-    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, "Load new configuration", NULL},
+    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,    1,  1,  1, "Attached to ndrxd user session in progress", NULL},
+    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ, 1,  1,  1, "Load new configuration", NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, "Test new configuration", NULL},
     {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 5,  5,  1,"Un-advertise service.\n"
                                                          "\t args: unadv -i server_id -s service_name", NULL},
     {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 5,  5,  1,"Re-advertise service.\n"
                                                          "\t args: readv -i server_id -s service_name\n"
                                                          "\t might be usable if service Q was unlinked", NULL},
-    {"restart", cmd_r,    EXFAIL,                 1,  4,  0, "Restart app or service (invokes start & stop with same args!)", NULL},
-    {"r", cmd_r,    EXFAIL,                       1,  4,  0, "Alias for `restart'", NULL},
-    {"-v",      cmd_ver,  EXFAIL,                 1,  1,  0, "Print version info", NULL},
-    {"ver",     cmd_ver,  EXFAIL,                 1,  1,  0, "Print version info, same as -v", NULL},
-    {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,   1,  1,  1, "Print process model", NULL},
-    {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,   1,  1,  1, "Shared mem, print services", NULL},
-    {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,   1,  1,  1, "Shared mem, print servers", NULL},
-    {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,   1,  2,  1, "Abort app shutdown or startup.\n"
+    {"restart", cmd_r,    EXFAIL,                1,  4,  0, "Restart app or service (invokes start & stop with same args!)", NULL},
+    {"r",       cmd_r,    EXFAIL,                1,  5,  0, "Alias for `restart'", NULL},
+    {"-v",      cmd_ver,  EXFAIL,                1,  1,  0, "Print version info", NULL},
+    {"ver",     cmd_ver,  EXFAIL,                1,  1,  0, "Print version info, same as -v", NULL},
+    {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  1,  1, "Print process model", NULL},
+    {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1,  1, "Shared mem, print services", NULL},
+    {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, "Shared mem, print servers", NULL},
+    {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  2,  1, "Abort app shutdown or startup.\n"
                                                            "\t args: abort [-y]", NULL},
     {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Restarts server instance by instance\n"
                                                          "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
-    {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Alias for `sreload'", NULL},
+    {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, "Alias for `sreload'", NULL},
     {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, "Print service queues", NULL},
     {"pqa",cmd_pqa,  EXFAIL,            1,  2,  0, "Print all queues\n"
                                                 "\t args: pqa [-a]\n"
@@ -151,10 +154,12 @@ cmd_mapping_t M_command_map[] =
                                                 "\t Format: VAR=SOME VALUE (will be contact with spaces)", NULL},
     {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ,   1,  1,  1, "Set env variable. Forma: VAR"},
     {"pc",        cmd_pc,EXFAIL,   1,  1,  1, "Print clients", NULL},
-    {"sc",        cmd_sc,EXFAIL,   2,  3,  1, "Stop client\n"
-                                    "\t args: sc -t <Tag> [-s <Subsection (default -)]", NULL},
-    {"bc",        cmd_bc,EXFAIL,   2,  3,  1, "Boot(start) client\n"
-                                    "\t args: bc -t <Tag> [-s <Subsection (default -)]", NULL},
+    {"sc",        cmd_sc,EXFAIL,   1,  4,  1, "Stop client\n"
+                                    "\t args: sc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]", NULL},
+    {"bc",        cmd_bc,EXFAIL,   1,  4,  1, "Boot(start) client\n"
+                                    "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]", NULL},
+    {"rc",        cmd_rc,EXFAIL,   1,  4,  1, "Reload/Restart clients one-by-one\n"
+                                    "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]", NULL},
     {"mqlc",      cmd_mqlc,EXFAIL,   1,  1,  1, "List persistent queue configuration", NULL},
     {"mqlq",      cmd_mqlq,EXFAIL,   1,  1,  1, "List persistent queues (active/dynamic)", NULL},
     {"mqrc",      cmd_mqrc,EXFAIL,   1,  1,  1, "Reload TMQ config", NULL},
@@ -762,6 +767,8 @@ int main(int argc, char** argv) {
     int have_next = 1;
     int ret=EXSUCCEED;
     int need_init = EXTRUE;
+    /*test the stack*/
+    char buf[NDRX_MSGSIZEMAX];
     /* Command line arguments */
     M_argc = argc;
     M_argv = argv;

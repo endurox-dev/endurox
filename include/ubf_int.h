@@ -120,6 +120,9 @@ extern "C" {
 #define DOUBLE_RESOLUTION	6
 #define FLOAT_RESOLUTION	5
     
+    
+#define UBF_EOF(HDR, FIELD) ((char *)FIELD >= (((char *)HDR) + HDR->bytes_used))
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -133,7 +136,8 @@ typedef char UBF_CHAR;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_build_printable_string(char *out, char *in, int in_len);
+extern NDRX_API void ndrx_build_printable_string(char *out, int out_len, char *in, 
+        int in_len);
 
 
 #ifdef	__cplusplus

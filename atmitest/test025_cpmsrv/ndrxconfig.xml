@@ -60,6 +60,13 @@
         </servers>
 	<!-- Client section -->
         <clients>
+                <!-- batch mode/% tests -->
+                <client cmdline="ndrxbatchmode.sh">
+                        <exec tag="BATCH1" autostart="N" log="batch-1.log"/>
+                        <exec tag="BATCH2" subsect="B2" autostart="N" log="batch-2.log"/>
+                        <exec tag="BATCH3" subsect="B3" autostart="N" log="batch-3.log"/>
+                </client>
+                
                 <!--Test parameter passing to process -->
                 <client cmdline="testbin1.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
                         <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="testbin1-1.log"/>

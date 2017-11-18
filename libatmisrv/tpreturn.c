@@ -69,7 +69,7 @@
 expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE]; /* physical place where to put the reply */
+    char buf[NDRX_MSGSIZEMAX]; /* physical place where to put the reply */
     tp_command_call_t *call=(tp_command_call_t *)buf;
     char fn[] = "_tpreturn";
     buffer_obj_t *buffer_info;
@@ -81,7 +81,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     atmi_lib_conf_t *p_atmi_lib_conf = ndrx_get_G_atmi_conf();
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     tp_command_call_t * last_call;
-    
+    int was_auto_buf = EXFALSE;
     /* client with last call is acceptable...! 
      * As it can be a server's companion thread
      */
@@ -174,6 +174,11 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             /* Convert back, if convert flags was set */
             if (SYS_SRV_CVT_ANY_SET(last_call->sysflags))
             {
+                if (buffer_info == last_call->autobuf)
+                {
+                    was_auto_buf=EXTRUE;
+                }
+                
                 NDRX_LOG(log_debug, "about reverse xcvt...");
                 /* Convert buffer back.. */
                 if (EXSUCCEED!=typed_xcvt(&buffer_info, last_call->sysflags, EXTRUE))
@@ -191,6 +196,11 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
                 {
                     data = buffer_info->buf;
                     /* Assume that length not used for self describing buffers */
+                    /* Bug #250 restore auto buf if was so... */
+                    if (was_auto_buf)
+                    {
+                        last_call->autobuf = buffer_info;
+                    }
                 }
             }
             
@@ -298,13 +308,13 @@ return_to_main:
         {
             last_call->autobuf=NULL;
         }
-         NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
+        NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
         ndrx_tpfree(data, NULL);
     }
 
     if (NULL!=last_call->autobuf)
     {
-         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
+        NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
         ndrx_tpfree(last_call->autobuf->buf, NULL);
         last_call->autobuf = NULL;
     }
@@ -312,7 +322,7 @@ return_to_main:
     /* server thread, no long jump... (thread should kill it self.)*/
     if (!(last_call->sysflags & SYS_SRV_THREAD))
     {        
-        return_status|=RETURN_TYPE_TPRETURN;
+         return_status|=RETURN_TYPE_TPRETURN;
          if (EXFAIL==ret)
              return_status|=RETURN_FAILED;
 
@@ -340,7 +350,7 @@ return_to_main:
 }
 
 /**
- * Do asynchronus call.
+ * Forward the call to next service
  * @param svc
  * @param data
  * @param len
@@ -352,7 +362,7 @@ expublic void _tpforward (char *svc, char *data,
                 long len, long flags)
 {
     int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
+    char buf[NDRX_MSGSIZEMAX];
     tp_command_call_t *call=(tp_command_call_t *)buf;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
@@ -362,7 +372,7 @@ expublic void _tpforward (char *svc, char *data,
     long return_status=0;
     int is_bridge;
     tp_command_call_t * last_call;
-    
+    int was_auto_buf = EXFALSE;
     
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     
@@ -388,6 +398,37 @@ expublic void _tpforward (char *svc, char *data,
         ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", fn);
         ret=EXFAIL;
         goto out;
+    }
+    
+    /* Convert back, if convert flags was set */
+    if (SYS_SRV_CVT_ANY_SET(last_call->sysflags))
+    {
+        if (buffer_info == last_call->autobuf)
+        {
+            was_auto_buf=EXTRUE;
+        }
+        
+        NDRX_LOG(log_debug, "about reverse xcvt...");
+        /* Convert buffer back.. */
+        if (EXSUCCEED!=typed_xcvt(&buffer_info, last_call->sysflags, EXTRUE))
+        {
+            NDRX_LOG(log_debug, "Failed to convert buffer back to "
+                    "callers format: %llx", last_call->sysflags);
+            userlog("Failed to convert buffer back to "
+                    "callers format: %llx", last_call->sysflags);
+            ret=EXFAIL;
+            goto out;
+        }
+        else
+        {
+            data = buffer_info->buf;
+            /* Assume that length not used for self describing buffers */
+            /* Bug #250 restore auto buf if was so... */
+            if (was_auto_buf)
+            {
+                last_call->autobuf = buffer_info;
+            }
+        }
     }
     
     descr = &G_buf_descr[buffer_info->type_id];
@@ -439,12 +480,14 @@ expublic void _tpforward (char *svc, char *data,
     /* Want to keep original call time... */
     memcpy(&call->timer, &last_call->timer, sizeof(call->timer));
     
-    /* Hmm we can free up the data? - do it here because we still need buffer_info!*/
+    /* Hmm we can free up the data? - do it here because we still need buffer_info!
+     * ???? NOTE HERE! Bug #250 - all job is done bellow!
     if (NULL!=data)
     {
         ndrx_tpfree(data, NULL);
     }
-
+    *
+    */
     /* Check is service available? */
     if (EXSUCCEED!=ndrx_shm_get_svc(call->name, send_q, &is_bridge))
     {
@@ -487,17 +530,21 @@ out:
 
     if (NULL!=data)
     {
+        /* Lookup the buffer infos for data, and then compare with autobuf!
+         * as the last_call autobuf might be already free - the same for tpforward
+         * for xcv -> update the autobuf if changed auto buf...
+         */
         if (last_call->autobuf && last_call->autobuf->buf==data)
         {
             last_call->autobuf=NULL;
         }
-         NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
+        NDRX_LOG(log_debug, "%s free buffer %p", fn, data);
         ndrx_tpfree(data, NULL);
     }
 
     if (last_call->autobuf)
     {
-         NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
+        NDRX_LOG(log_debug, "%s free auto buffer %p", fn, last_call->autobuf->buf);
         ndrx_tpfree(last_call->autobuf->buf, NULL);
         last_call->autobuf = NULL;
     }

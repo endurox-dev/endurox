@@ -77,7 +77,8 @@ typedef struct in_msg in_msg_t;
 struct in_msg
 {
     int pack_type;
-    char buffer[ATMI_MSG_MAX_SIZE];
+    /* char buffer[ATMI_MSG_MAX_SIZE]; */
+    char *buffer;
     int len;
     ndrx_stopwatch_t trytime;  /* Time in Q */
     in_msg_t *prev, *next;

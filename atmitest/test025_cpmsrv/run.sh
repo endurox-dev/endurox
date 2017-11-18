@@ -61,7 +61,7 @@ export NDRX_DMNLOG=$TESTDIR/ndrxd.log
 export NDRX_LOG=$TESTDIR/ndrx.log
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
-export NDRX_TOUT=13
+export NDRX_TOUT=30
 # Test process count
 PROC_COUNT=100
 #
@@ -100,7 +100,7 @@ function test_proc_cnt {
     CNT=`$PSCMD | grep $proc | grep -v grep | wc | awk '{print $1}'`
     XPROC_COUNT=$cnt
     echo ">>> $PSCMD procs: $CNT"
-    if [[ "$CNT" -ne "$XPROC_COUNT" ]]; then 
+    if [[ "X$CNT" -ne "X$XPROC_COUNT" ]]; then 
         echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
         go_out $go
     fi
@@ -114,10 +114,62 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode
 
 xadmin down -y
 xadmin start -y || go_out 1
+
+################################################################################
+echo "Run some tests of the batch mode"
+################################################################################
+
+test_proc_cnt "ndrxbatchmode.sh" "0" "29"
+
+echo "Batch start"
+
+#
+# Wait time shall be less than time out...
+#
+xadmin bc -t BATCH% -s% -w 15000
+
+xadmin pc
+
+test_proc_cnt "ndrxbatchmode.sh" "3" "30"
+
+echo "Batch stop (no subsect)"
+xadmin sc -t BATCH%
+
+test_proc_cnt "ndrxbatchmode.sh" "2" "31"
+
+echo "with subsect"
+xadmin sc -t BATCH% -sB%
+test_proc_cnt "ndrxbatchmode.sh" "0" "32"
+
+echo "Batch start"
+xadmin bc -t BATCH% -s%
+sleep 15
+
+test_proc_cnt "ndrxbatchmode.sh" "3" "33"
+
+
+echo "Testing batch reload"
+OUT1=`xadmin pc`
+
+echo "Before reload [$OUT1]"
+
+xadmin rc -t BATCH% -s% -w 15000
+
+xadmin pc
+
+test_proc_cnt "ndrxbatchmode.sh" "3" "34"
+OUT2=`xadmin pc`
+
+echo "After reload [$OUT2]"
+
+if [ "X$OUT1" == "X$OUT2" ]; then
+    echo "TESTERROR! [$OUT1]==[$OUT2] -> FAIL, pid must be changed..."
+    go_out 35
+fi
 
 xadmin bc -t TESTENV
 xadmin bc -t TESTENV2

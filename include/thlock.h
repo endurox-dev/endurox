@@ -42,8 +42,13 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
+
 /* *** PTHREAD MUTEX *** */
-#define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER; 
+    
+#define MUTEX_VAR(X)        pthread_mutex_t X
+#define MUTEX_VAR_INIT(X)   pthread_mutex_init(&X, NULL)
+    
+#define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
 
 #define MUTEX_LOCK_V(X) pthread_mutex_lock(&X);
 

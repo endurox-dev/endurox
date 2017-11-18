@@ -104,7 +104,18 @@ extern "C" {
 #endif
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+    
+#define NDRX_ATMI_MSG_MAX_SIZE   65536 /* internal */
+    
+#define NDRX_STACK_MSG_FACTOR        30 /* max number of messages in stack */
+    
+/* Feature #127 
+ * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
+ */
+extern NDRX_API long ndrx_msgsizemax (void);
+#define NDRX_MSGSIZEMAX          ndrx_msgsizemax()
 
+#define NDRX_PADDING_MAX         16 /* Max compiled padding in struct (assumed) */
 
 #if 0
 /*These are slow! */
@@ -115,13 +126,25 @@ extern "C" {
                           X[N]=EXEOS;}
 	
 #endif
+
+#ifdef HAVE_STRNLEN
+
+#define NDRX_STRNLEN strnlen
+
+#else
+
+extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
+
+#define NDRX_STRNLEN ndrx_strnlen
+
+#endif
     
 #ifdef HAVE_STRLCPY
 #define NDRX_STRCPY_SAFE(X, Y) {strlcpy(X, Y, sizeof(X)-1);\
                           X[sizeof(X)-1]=EXEOS;}
 	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {strlcpy(X, Y, N-1);\
-                          X[N]=EXEOS;}
+                          X[N-1]=EXEOS;}
     
 #else
     
@@ -137,7 +160,9 @@ extern "C" {
 	X[ndrx_I5SmWDM_len]=0;\
 	}
     
-/* N - buffer size of X */	
+/* N - buffer size of X 
+ * This always copies EOS
+ */	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
 	int ndrx_XgCmDEk_bufzs = N-1;\
@@ -159,6 +184,15 @@ extern "C" {
 	{\
 		ndrx_I5SmWDM_len = N;\
 	}\
+	memcpy(X, Y, ndrx_I5SmWDM_len);\
+	}
+
+/* Copy the maxing at source buffer, not checking the dest
+ * N - number of symbols to test in source buffer.
+ * The dest buffer is assumed to be large enough.
+ */
+#define NDRX_STRNCPY_SRC(X, Y, N) {\
+	int ndrx_I5SmWDM_len = NDRX_STRNLEN(Y, N);\
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	}
 /*

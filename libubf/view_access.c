@@ -589,7 +589,7 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname,
     }
     
     NDRX_STRNCPY(cname, f->cname, NDRX_VIEW_CNAME_LEN);
-    cname[NDRX_VIEW_CNAME_LEN] = EXEOS;
+    cname[NDRX_VIEW_CNAME_LEN-1] = EXEOS; /* #250 */
     
     if (NULL!=fldtype)
     {

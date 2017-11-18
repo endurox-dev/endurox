@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "5.0.9")
+set(VERSION "5.1.2")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -64,11 +64,13 @@ SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flag
 IF (DEFINE_RELEASEBUILD)
 	MESSAGE( RELEASE_BUILD )
 	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 ${CMAKE_C_FLAGS}")
 ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
-        SET(CMAKE_C_FLAGS "-ggdb ${CMAKE_C_FLAGS}")
+# Memory debugging:
+#       SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
 SET(RT_LIB rt dl)
@@ -202,6 +204,8 @@ CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
 
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
+
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
 CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
@@ -295,6 +299,7 @@ add_subdirectory (tpevsrv)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
+
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (pscript) # Platform script interpreter

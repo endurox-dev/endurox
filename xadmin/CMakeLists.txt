@@ -83,6 +83,12 @@ add_custom_command(
   OUTPUT gen_c_server.c
   COMMAND embedfile scripts/gen_c_server.pscript gen_c_server
   DEPENDS scripts/gen_c_server.pscript)
+
+add_custom_command(
+  OUTPUT gen_test_local.c
+  COMMAND embedfile scripts/gen_test_local.pscript gen_test_local
+  DEPENDS scripts/gen_test_local.pscript)
+  
   
 # Exectuables
 add_executable (xadmin xadmin.c exec.c config.c
@@ -90,10 +96,11 @@ add_executable (xadmin xadmin.c exec.c config.c
 		cmd_at.c cmd_reload.c cmd_unadv.c cmd_ppm.c
                 cmd_shm_psvc.c cmd_shm_psrv.c cmd_readv.c cmd_pq.c cmd_pqa.c
                 cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
-                cmd_scbp.c cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
+                cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
                 provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
-                gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c)
+                gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
+                gen_test_local)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

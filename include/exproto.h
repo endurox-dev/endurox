@@ -41,8 +41,8 @@
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 extern int exproto_proto2ex(char *proto_buf, long proto_len, 
-        char *ex_buf, long *max_struct);
+        char *ex_buf, long *max_struct, long ex_bufsz);
 extern int exproto_ex2proto(char *ex_buf, long ex_len, 
-	char *proto_buf, long *proto_len);
+	char *proto_buf, long *proto_len, long proto_bufsz);
 
 #endif /* EXPROTO_H_ */

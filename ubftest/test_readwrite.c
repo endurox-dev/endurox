@@ -66,7 +66,7 @@ Ensure(test_readwrite)
     remove_test_temp();
 
     /* Now compare the buffers */
-    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), 0);
+    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
     /* run check on data */
     do_dummy_data_test(p_ub2);
 }
