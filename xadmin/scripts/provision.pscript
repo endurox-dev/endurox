@@ -530,8 +530,7 @@ class Provision extends WizardBase {
 	function buildAppini()
 	{
 	
-		appiniVal=appiniVal+@"
-[@global]
+		appiniVal=appiniVal+@"[@global]
 NDRX_CLUSTERISED=1
 NDRX_CMDWAIT=1
 NDRX_CONFIG=${NDRX_APPHOME}/"+confDir+@"/ndrxconfig.xml

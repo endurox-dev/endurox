@@ -102,7 +102,7 @@ int main(int argc, char** argv)
     int had_mask = EXFALSE;
     exmemck_settings_t settings;
     
-    memset(&settings, sizeof(settings), 0);
+    memset(&settings, 0, sizeof(settings));
     
     settings.pf_proc_exit = xmem_print_exit;
     settings.pf_proc_leaky = xmem_print_leaky;

@@ -43,6 +43,7 @@
 #include <ndrxdcmn.h>
 #include <atmi_int.h>
 #include <gencall.h>
+#include <nclopt.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -51,6 +52,7 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+exprivate short M_svconly;
 
 /**
  * Print header
@@ -58,8 +60,16 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT\n");
-    fprintf(stderr, "-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----\n");
+    if (M_svconly)
+    {
+        fprintf(stderr, "Nd Service Name                   Prog SRVID #SUCC #FAIL MAX      LAST     STAT\n");
+        fprintf(stderr, "-- ------------------------------ ---- ----- ----- ----- -------- -------- -----\n");
+    }
+    else
+    {
+        fprintf(stderr, "Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT\n");
+        fprintf(stderr, "-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----\n");
+    }
 }
 
 /**
@@ -81,18 +91,35 @@ expublic int psc_rsp_process(command_reply_t *reply, size_t reply_len)
         FIX_SVC_NM(psc_info->binary_name, binary, (sizeof(binary)-1));
         for (i=0; i<psc_info->svc_count; i++)
         {
-            FIX_SVC_NM(psc_info->svcdet[i].svc_nm, svc, (sizeof(svc)-1));
-            FIX_SVC_NM(psc_info->svcdet[i].fn_nm, fun, (sizeof(fun)-1));
-                             /*svc    fun     bin*/
-           fprintf(stdout, "%-2d %-12.12s %-12.12s %-9.9s %-5d %-5.5s %-5.5s %-8.8s %-8.8s %-5.5s\n",
-                   psc_info->nodeid,
-                   svc, fun, binary, psc_info->srvid, 
-                   ndrx_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 
-                   ndrx_decode_num(psc_info->svcdet[i].fail, 1, 0, 1),
-                   /*decode_msec(psc_info->svcdet[i].min, 0, 0, 2), - not very interesting */
-                   ndrx_decode_msec(psc_info->svcdet[i].max, 0, 0, 2),
-                   ndrx_decode_msec(psc_info->svcdet[i].last, 1, 0, 2),
-                   (psc_info->svcdet[i].status?"BUSY":"AVAIL"));
+            if (M_svconly)
+            {
+                /* Feature #230 */
+                /*svc    fun     bin*/
+                fprintf(stdout, "%-2d %-30.30s %-4.4s %-5d %-5.5s %-5.5s %-8.8s %-8.8s %-5.5s\n",
+                       psc_info->nodeid,
+                       psc_info->svcdet[i].svc_nm, binary, psc_info->srvid, 
+                       ndrx_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 
+                       ndrx_decode_num(psc_info->svcdet[i].fail, 1, 0, 1),
+                       /*decode_msec(psc_info->svcdet[i].min, 0, 0, 2), - not very interesting */
+                       ndrx_decode_msec(psc_info->svcdet[i].max, 0, 0, 2),
+                       ndrx_decode_msec(psc_info->svcdet[i].last, 1, 0, 2),
+                       (psc_info->svcdet[i].status?"BUSY":"AVAIL"));
+            }
+            else
+            {
+                FIX_SVC_NM(psc_info->svcdet[i].svc_nm, svc, (sizeof(svc)-1));
+                FIX_SVC_NM(psc_info->svcdet[i].fn_nm, fun, (sizeof(fun)-1));
+                                 /*svc    fun     bin*/
+                fprintf(stdout, "%-2d %-12.12s %-12.12s %-9.9s %-5d %-5.5s %-5.5s %-8.8s %-8.8s %-5.5s\n",
+                       psc_info->nodeid,
+                       svc, fun, binary, psc_info->srvid, 
+                       ndrx_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 
+                       ndrx_decode_num(psc_info->svcdet[i].fail, 1, 0, 1),
+                       /*decode_msec(psc_info->svcdet[i].min, 0, 0, 2), - not very interesting */
+                       ndrx_decode_msec(psc_info->svcdet[i].max, 0, 0, 2),
+                       ndrx_decode_msec(psc_info->svcdet[i].last, 1, 0, 2),
+                       (psc_info->svcdet[i].status?"BUSY":"AVAIL"));
+            }
         }
     }
     
@@ -109,6 +136,25 @@ expublic int psc_rsp_process(command_reply_t *reply, size_t reply_len)
 expublic int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
+    
+    int ret = EXSUCCEED;
+    
+    ncloptmap_t clopt[] =
+    {
+        {'s', BFLD_INT, (void *)&M_svconly, sizeof(M_svconly), 
+                                NCLOPT_OPT, "Print services only"},
+        {0}
+    };
+    
+    M_svconly = EXFALSE;
+            
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    
     memset(&call, 0, sizeof(call));
 
     /* Print header at first step! */
@@ -125,5 +171,8 @@ expublic int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         p_have_next,
                         G_call_args,
                         EXFALSE);
+    
+out:
+    return ret;
 }
 

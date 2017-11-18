@@ -754,7 +754,7 @@ expublic int sv_server_request(char *buf, int len)
 
             break;
         case ATMI_COMMAND_CONNECT:
-            /* We have connection for converstation */
+            /* We have connection for conversation */
             ret=sv_serve_connect(&service, &status);
             break;
         case ATMI_COMMAND_SELF_SD:
@@ -1080,7 +1080,7 @@ expublic int sv_wait_for_request(void)
     int ret=EXSUCCEED;
     int nfds, n, len, j;
     unsigned prio;
-    char msg_buf[ATMI_MSG_MAX_SIZE];
+    char msg_buf[NDRX_MSGSIZEMAX];
     int again;
     int tout;
     pollextension_rec_t *ext;
@@ -1225,7 +1225,7 @@ expublic int sv_wait_for_request(void)
             }
             
             if (EXFAIL==(len=ndrx_mq_receive (evmqd,
-                (char *)msg_buf, ATMI_MSG_MAX_SIZE, &prio)))
+                (char *)msg_buf, sizeof(msg_buf), &prio)))
             {
                 if (EAGAIN==errno)
                 {
@@ -1243,7 +1243,7 @@ expublic int sv_wait_for_request(void)
                 }
             }
             else
-            {
+            {   
                 /* OK, we got the message and now we can call the service */
                 /*G_server_conf.service_array[n]->p_func((TPSVCINFO *)msg_buf);*/
 
@@ -1304,7 +1304,7 @@ expublic int sv_wait_for_request(void)
                     /* Save on the big message copy... */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
-
+                    
                     sv_server_request(msg_buf, len);
                 }
             }

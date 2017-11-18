@@ -104,6 +104,8 @@ extern NDRX_API void ndrx_chomp(char *str);
 extern NDRX_API uint32_t ndrx_rotl32b (uint32_t x, uint32_t n);
 extern NDRX_API int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz);
 
+extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
+
 /* Mapping functions: */
 extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
 extern NDRX_API char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval);

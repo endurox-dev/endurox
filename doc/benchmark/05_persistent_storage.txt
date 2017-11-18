@@ -55,3 +55,17 @@
 "linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 45 1470
 "linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 49 1475
 "linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 53 1392
+"i7_6gen_o2_4_10lin" 1 2457
+"i7_6gen_o2_4_10lin" 5 2358
+"i7_6gen_o2_4_10lin" 9 2351
+"i7_6gen_o2_4_10lin" 13 2246
+"i7_6gen_o2_4_10lin" 17 2203
+"i7_6gen_o2_4_10lin" 21 2112
+"i7_6gen_o2_4_10lin" 25 2091
+"i7_6gen_o2_4_10lin" 29 1994
+"i7_6gen_o2_4_10lin" 33 1921
+"i7_6gen_o2_4_10lin" 37 1829
+"i7_6gen_o2_4_10lin" 41 1806
+"i7_6gen_o2_4_10lin" 45 1739
+"i7_6gen_o2_4_10lin" 49 1670
+"i7_6gen_o2_4_10lin" 53 1608

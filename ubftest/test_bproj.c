@@ -289,7 +289,7 @@ Ensure(test_projcpy)
     /* Projection */
     assert_equal(Bproj(p_ub_src, proj), EXSUCCEED);
     /* Compare the buffer to one what we get from proj */
-    assert_equal(memcmp(p_ub_dst, p_ub_src, sizeof(fb_dst)), EXSUCCEED);
+    assert_equal(memcmp(p_ub_dst, p_ub_src, Bused(p_ub_dst)), EXSUCCEED);
     
     /* OK now test that all data have been copied! */
     load_proj_test_data(p_ub_src);
@@ -306,7 +306,7 @@ Ensure(test_projcpy)
     UBF_LOG(log_debug, "hsrc dump carray, 6: %ld", hsrc->cache_carray_off);
         
         
-    assert_equal(memcmp(p_ub_dst, p_ub_src, sizeof(fb_dst)), EXSUCCEED);
+    assert_equal(memcmp(p_ub_dst, p_ub_src, Bused(p_ub_dst)), EXSUCCEED);
     UBF_DUMP(log_debug, "Dest buffer", p_ub_dst, sizeof(fb_dst));
     
         
@@ -457,7 +457,7 @@ Ensure(test_Bdelete)
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
     assert_equal(Bdelete(p_ub, delete_all), EXSUCCEED);
             
-    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb2)), EXSUCCEED);
+    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), EXSUCCEED);
     
 }
 
