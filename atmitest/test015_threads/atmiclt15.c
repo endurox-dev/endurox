@@ -349,6 +349,8 @@ int main(int argc, char** argv)
     void *arg3 = NULL;
     void *arg4 = NULL;
     void *arg5 = NULL;
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
     
     memset(M_test_array, 0, sizeof(M_test_array));
     
@@ -361,13 +363,16 @@ int main(int argc, char** argv)
         arg5 = (void *)4;
     }
     
+    pthread_attr_setstacksize(&pthread_custom_attr, 
+            ndrx_platf_stack_get_size());
+
     /* create threads 1 and 2 */    
-    pthread_create (&thread1, NULL, (void *) &do_thread_work, arg1);
-    pthread_create (&thread2, NULL, (void *) &do_thread_work, arg2);
+    pthread_create (&thread1, &pthread_custom_attr, (void *) &do_thread_work, arg1);
+    pthread_create (&thread2, &pthread_custom_attr, (void *) &do_thread_work, arg2);
     /*sleep(1);  Have some async works... WHY? */
-    pthread_create (&thread3, NULL, (void *) &do_thread_work, arg3);
-    pthread_create (&thread4, NULL, (void *) &do_thread_work, arg4);
-    pthread_create (&thread5, NULL, (void *) &do_thread_work, arg5);
+    pthread_create (&thread3, &pthread_custom_attr, (void *) &do_thread_work, arg3);
+    pthread_create (&thread4, &pthread_custom_attr, (void *) &do_thread_work, arg4);
+    pthread_create (&thread5, &pthread_custom_attr, (void *) &do_thread_work, arg5);
 
     /* Main block now waits for both threads to terminate, before it exits
        If main block exits, both threads exit, even if the threads have not
