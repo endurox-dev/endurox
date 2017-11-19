@@ -215,7 +215,7 @@ class Provision extends WizardBase {
 	addubf = "";
 
 	</ order=56, name = "Max IPC message size", 
-			type="number", min=1024, max=56000 /> 
+			type="number", min=1024 /> 
 	msgsizemax="56000";
 
 	</ order=57, name = "Max IPC messages in queue", 
