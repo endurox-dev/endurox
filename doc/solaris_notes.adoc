@@ -229,10 +229,15 @@ $ cmake -D CMAKE_AR=/opt/csw/gnu/ar \
 -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
 ---------------------------------------------------------------------
 
+== Building the code
 
-cmake  -DCMAKE_CC_COMPILER=/opt/solarisstudio12.4/bin/cc \
--DCMAKE_CXX_COMPILER=/opt/solarisstudio12.4/bin/c++ \
--DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
+---------------------------------------------------------------------
+$ cd /export/home/user1/endurox
+$ make 
+$ make install
+---------------------------------------------------------------------
+
+This will produce binaries in '/export/home/user1/endurox/dist' folder.
 
 
 == Unit Testing
