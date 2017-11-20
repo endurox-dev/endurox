@@ -192,7 +192,7 @@ thus following cmake will pick up gcc by default:
 === Solaris 11
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
-$ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc\
+$ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc\
 -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_FORCEEMQ=ON .
 $ make 
 $ make install
@@ -202,7 +202,7 @@ $ make install
 
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
-$ cmake -D CMAKE_AR=/opt/csw/gnu/ar -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc \
+$ cmake -D CMAKE_AR=/opt/csw/gnu/ar -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc \
 -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_FORCEEMQ=ON .
 $ make 
 $ make install
