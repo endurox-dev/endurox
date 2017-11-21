@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     long l;
     int i;
     
-#ifdef EX_OS_DARWIN
+#if defined(EX_OS_DARWIN) || defined(EX_OS_SUNOS)
     /* open/close q slow on osx */
     for (i=0; i<50; i++)
 #else
