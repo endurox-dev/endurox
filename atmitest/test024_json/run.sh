@@ -46,6 +46,8 @@ fi;
 
 . ../testenv.sh
 
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
+
 xadmin killall atmiclt24 2>/dev/null
 
 (./atmiclt24 2>&1) > ./atmiclt24.log
