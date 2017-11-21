@@ -66,7 +66,7 @@ exprivate int qd_exhash_add(mqd_t q)
     int ret = EXSUCCEED;
     qd_hash_t * el = NDRX_CALLOC(1, sizeof(qd_hash_t));
     
-    NDRX_LOG(log_debug, "Registering %p as mqd_t", q);
+    NDRX_LOG(log_dump, "Registering %p as mqd_t", q);
     if (NULL==el)
     {
         NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
@@ -78,7 +78,7 @@ exprivate int qd_exhash_add(mqd_t q)
     MUTEX_LOCK_V(M_lock);
     
     EXHASH_ADD_PTR(M_qd_hash, qd, el);
-    NDRX_LOG(log_debug, "added...");
+    NDRX_LOG(log_dump, "added...");
     
     MUTEX_UNLOCK_V(M_lock);
     
@@ -96,7 +96,7 @@ exprivate int qd_hash_chk(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
     
-    NDRX_LOG(log_debug, "checking qd %p", qd);
+    NDRX_LOG(log_dump, "checking qd %p", qd);
     
     MUTEX_LOCK_V(M_lock);
     
@@ -123,7 +123,7 @@ exprivate void qd_hash_del(mqd_t qd)
 {
     qd_hash_t *ret = NULL;
     
-    NDRX_LOG(log_debug, "Unregistering %p as mqd_t", qd);
+    NDRX_LOG(log_dump, "Unregistering %p as mqd_t", qd);
     
     MUTEX_LOCK_V(M_lock);
     EXHASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
@@ -174,7 +174,7 @@ static char *get_path(const char *path)
 expublic void emq_set_lock_timeout(int secs)
 {
     M_lock_secs = secs;
-    NDRX_LOG(log_debug, "Setting lock timeout to: %d", M_lock_secs);
+    NDRX_LOG(log_dump, "Setting lock timeout to: %d", M_lock_secs);
 }
 
 /**
@@ -254,20 +254,20 @@ expublic int emq_close(mqd_t emqd)
     filesize = sizeof(struct emq_hdr) + (attr->mq_maxmsg *
                       (sizeof(struct msg_hdr) + msgsize));
 
-    NDRX_LOG(log_debug, "Before munmap()");
+    NDRX_LOG(log_dump, "Before munmap()");
 #if defined(WIN32)
     if (!UnmapViewOfFile(emqinfo->emqi_hdr) || !CloseHandle(emqinfo->emqi_fmap))
 #else
     if (munmap(emqinfo->emqi_hdr, filesize) == -1)
 #endif
         return(-1);
-    NDRX_LOG(log_debug, "After munmap()");
+    NDRX_LOG(log_dump, "After munmap()");
 
     emqinfo->emqi_magic = 0;          /* just in case */
     NDRX_FREE(emqinfo);
     qd_hash_del(emqd);
 
-    NDRX_LOG(log_debug, "into: emq_close ret 0");
+    NDRX_LOG(log_dump, "into: emq_close ret 0");
     
     return(0);
 }
@@ -279,7 +279,7 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     struct mq_attr *attr;
     struct emq_info *emqinfo;
 
-    NDRX_LOG(log_debug, "into: emq_getattr");
+    NDRX_LOG(log_dump, "into: emq_getattr");
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
@@ -304,7 +304,7 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     emqstat->mq_curmsgs = attr->mq_curmsgs;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
-    NDRX_LOG(log_debug, "into: emq_getattr ret 0");
+    NDRX_LOG(log_dump, "into: emq_getattr ret 0");
     return(0);
 }
 
@@ -385,7 +385,7 @@ expublic mqd_t emq_open(const char *pathname, int oflag, ...)
     nonblock = oflag & O_NONBLOCK;
     oflag &= ~O_NONBLOCK;
     emqinfo = NULL;
-    NDRX_LOG(log_debug, "into: emq_open");
+    NDRX_LOG(log_dump, "into: emq_open");
 
 
 again:
@@ -497,7 +497,7 @@ again:
                 NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
                 errno = ENOMEM;
             }
-            NDRX_LOG(log_debug, "into: emq_open ret ok");
+            NDRX_LOG(log_dump, "into: emq_open ret ok");
             return((mqd_t) emqinfo);
     }
 exists:
@@ -554,7 +554,7 @@ exists:
         errno = ENOMEM;
     }
     
-    NDRX_LOG(log_debug, "into: emq_open ret ok");
+    NDRX_LOG(log_dump, "into: emq_open ret ok");
     return((mqd_t) emqinfo);
 pthreaderr:
     errno = i;
@@ -578,7 +578,7 @@ err:
         NDRX_FREE(emqinfo);
     close(fd);
     errno = save_errno;
-    NDRX_LOG(log_debug, "into: emq_open ret -1");
+    NDRX_LOG(log_dump, "into: emq_open ret -1");
     return((mqd_t) -1);
 }
 
@@ -597,7 +597,7 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     int try =0;
 
 retry:
-    NDRX_LOG(log_debug, "into: emq_timedreceive");
+    NDRX_LOG(log_dump, "into: emq_timedreceive");
     
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
@@ -644,9 +644,9 @@ retry:
                 usleep(2000);
                 goto retry;
             }
-            NDRX_LOG(log_debug, "queue empty on %p", emqd);
+            NDRX_LOG(log_dump, "queue empty on %p", emqd);
             if (NULL==__abs_timeout) {
-                NDRX_LOG(log_debug, "w/o time-out");
+                NDRX_LOG(log_dump, "w/o time-out");
                 struct timespec abs_timeout;
                 struct timeval  timeval;
                 gettimeofday (&timeval, NULL);
@@ -660,7 +660,7 @@ retry:
                 if (0!=pthread_cond_timedwait(&emqhdr->emqh_wait, &emqhdr->emqh_lock, 
                         __abs_timeout))
                 {
-                    NDRX_LOG(log_debug, "%p timed out", emqd);
+                    NDRX_LOG(log_dump, "%p timed out", emqd);
                     errno = ETIMEDOUT;
                     goto err;
                 }
@@ -695,13 +695,13 @@ retry:
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
     
-    NDRX_LOG(log_debug, "emq_timedreceive - got something len=%d", len);
+    NDRX_LOG(log_dump, "emq_timedreceive - got something len=%d", len);
     return(len);
 
 err:
     pthread_mutex_unlock(&emqhdr->emqh_lock);
 
-    NDRX_LOG(log_debug, "emq_timedreceive - failed");
+    NDRX_LOG(log_dump, "emq_timedreceive - failed");
     return(-1);
 }
 
@@ -720,7 +720,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     int ret = EXSUCCEED;
 
 retry:
-    NDRX_LOG(log_debug, "into: emq_timedsend");
+    NDRX_LOG(log_dump, "into: emq_timedsend");
 
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
@@ -789,7 +789,7 @@ retry:
                  * Thuse better use wait with timeout. */
                 pthread_cond_wait(&emqhdr->emqh_wait, &emqhdr->emqh_lock);
 #endif
-                NDRX_LOG(log_debug, "w/o time-out");
+                NDRX_LOG(log_dump, "w/o time-out");
                 struct timespec abs_timeout;
                 struct timeval  timeval;
                 gettimeofday (&timeval, NULL);
@@ -804,7 +804,7 @@ retry:
                 /* wait some time...  */
                 struct timespec abs_timeout;
                 struct timeval  timeval;
-                NDRX_LOG(log_debug, "timed wait...");
+                NDRX_LOG(log_dump, "timed wait...");
                 gettimeofday (&timeval, NULL);
                 
                 
@@ -865,12 +865,12 @@ retry:
     attr->mq_curmsgs++;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
-    NDRX_LOG(log_debug, "into: emq_timedsend - return 0");
+    NDRX_LOG(log_dump, "into: emq_timedsend - return 0");
     return(0);
 
 err:
     pthread_mutex_unlock(&emqhdr->emqh_lock);
-    NDRX_LOG(log_debug, "into: emq_timedsend - return -1");
+    NDRX_LOG(log_dump, "into: emq_timedsend - return -1");
     return(-1);
 }
 
@@ -892,7 +892,7 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
     struct mq_attr *attr;
     struct emq_info *emqinfo;
 
-    NDRX_LOG(log_debug, "into: emq_setattr");
+    NDRX_LOG(log_dump, "into: emq_setattr");
 
     if (!qd_hash_chk((mqd_t) emqd)) {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
@@ -925,18 +925,18 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
         emqinfo->emqi_flags &= ~O_NONBLOCK;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
-    NDRX_LOG(log_debug, "into: emq_setattr - return 0");
+    NDRX_LOG(log_dump, "into: emq_setattr - return 0");
     return(0);
 }
 
 expublic int emq_unlink(const char *pathname)
 {
-    NDRX_LOG(log_debug, "into: emq_unlink");
+    NDRX_LOG(log_dump, "into: emq_unlink");
     if (unlink(get_path(pathname)) == -1)
     {
-        NDRX_LOG(log_debug, "into: emq_unlink ret -1");
+        NDRX_LOG(log_dump, "into: emq_unlink ret -1");
         return(-1);
     }
-    NDRX_LOG(log_debug, "into: emq_unlink ret 0");
+    NDRX_LOG(log_dump, "into: emq_unlink ret 0");
     return(0);
 }
