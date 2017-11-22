@@ -172,10 +172,14 @@ rm *.log
 
 set_dom1;
 xadmin down -y
+# Let system to cleanup if any
+sleep 2
 xadmin start -y || go_out 1
 
 set_dom2;
 xadmin down -y
+# Let system to cleanup if any
+sleep 2
 xadmin start -y || go_out 2
 
 #exit 0
