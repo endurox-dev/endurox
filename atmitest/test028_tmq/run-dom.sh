@@ -134,6 +134,8 @@ cp q.conf.tpl q.conf
 
 set_dom1;
 xadmin stop -y
+# let ndrxd to finish
+sleep 2
 xadmin start -y || go_out 1
 
 # Go to domain 1
@@ -167,6 +169,8 @@ fi
 #find ./QSPACE1 -type f
 
 xadmin stop -y
+# let ndrxd to finish
+sleep 2
 xadmin start -y || go_out 1
 clean_logs;
 
@@ -423,6 +427,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 xadmin stop -y
+sleep 2
 xadmin start -y || go_out 1
 clean_logs;
 
