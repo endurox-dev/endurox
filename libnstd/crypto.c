@@ -1,7 +1,7 @@
 /* 
-** Q util
+** Cryptography related routines
 **
-** @file xasrvutil.c
+** @file crypto.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,73 +29,43 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
+#include <ndrx_config.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <regex.h>
-#include <utlist.h>
+#include <memory.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <stdarg.h>
 
-#include <ndebug.h>
-#include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
 #include <ndrstandard.h>
-#include <ubf.h>
-#include <Exfields.h>
-
-#include <exnet.h>
-#include <ndrxdcmn.h>
-
-#include "tmqd.h"
-#include "../libatmisrv/srv_int.h"
-#include <xa_cmn.h>
-#include <atmi_int.h>
-#include <exuuid.h>
+#include <ndebug.h>
+#include <nstdutil.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/* TODO: Have ptr to crypto func... (to have a hook) */
+
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Extract info from msgid.
- * 
- * @param msgid_in
- * @param p_nodeid
- * @param p_srvid
- */
-expublic void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
+
+expublic int ndrx_crypto_getkey(char *key_out, long klen)
 {
-    *p_nodeid = 0;
-    *p_srvid = 0;
-    
-    memcpy((char *)p_nodeid, msgid+sizeof(exuuid_t), sizeof(short));
-    memcpy((char *)p_srvid, msgid+sizeof(exuuid_t)+sizeof(short), sizeof(short));
-    
-    NDRX_LOG(log_info, "Extracted nodeid=%hd srvid=%hd", 
-            *p_nodeid, *p_srvid);
+    return EXFAIL;
 }
 
-/**
- * Generate serialized version of the string
- * @param msgid_in, length defined by constant TMMSGIDLEN
- * @param msgidstr_out
- * @return msgidstr_out
- */
-expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
+expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long olen)
 {
-    size_t out_len;
-    
-    NDRX_DUMP(log_debug, "Original CORID", corid_in, TMCORRIDLEN);
-    
-    ndrx_xa_base64_encode((unsigned char *)corid_in, TMCORRIDLEN, &out_len, corid_str_out);
+    return EXFAIL;
+}
 
-    corid_str_out[out_len] = EXEOS;
-    
-    NDRX_LOG(log_debug, "CORID after serialize: [%s]", corid_str_out);
-    
-    return corid_str_out;
+expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long olen)
+{
+    return EXFAIL;
 }

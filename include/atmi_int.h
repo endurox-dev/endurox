@@ -661,17 +661,6 @@ extern NDRX_API int ndrx_q_type_get(char *q);
 
 extern NDRX_API int ndrx_atmiutil_init(void);
 
-/* Base64 encode/decode with file system valid output */
-extern NDRX_API char * atmi_xa_base64_encode(unsigned char *data,
-                    size_t input_length,
-                    size_t *output_length,
-                    char *encoded_data);
-    
-extern NDRX_API unsigned char *atmi_xa_base64_decode(unsigned char *data,
-                             size_t input_length,
-                             size_t *output_length,
-                             char *decoded_data);
-
 /* ATMI calls */
 extern NDRX_API int ndrx_tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
@@ -723,11 +712,6 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 extern NDRX_API int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata);
-
-extern NDRX_API char * atmi_base64_encode(unsigned char *data, size_t input_length, 
-        size_t *output_length, char *encoded_data);
-extern NDRX_API unsigned char *atmi_base64_decode(const char *data, size_t input_length, 
-        size_t *output_length, char *decoded_data);
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
