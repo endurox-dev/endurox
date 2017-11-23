@@ -1,7 +1,7 @@
 /* 
-** Q util
+** Base64 handling
 **
-** @file xasrvutil.c
+** @file exbase64.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,73 +29,44 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <regex.h>
-#include <utlist.h>
+#ifndef EXBASE64_H
+#define EXBASE64_H
 
-#include <ndebug.h>
-#include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
-#include <ubf.h>
-#include <Exfields.h>
 
-#include <exnet.h>
-#include <ndrxdcmn.h>
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-#include "tmqd.h"
-#include "../libatmisrv/srv_int.h"
-#include <xa_cmn.h>
-#include <atmi_int.h>
-#include <exuuid.h>
+    
+/*---------------------------Includes-----------------------------------*/
+#include <ndrx_config.h>
 /*---------------------------Externs------------------------------------*/
-/*---------------------------Macros-------------------------------------*/
+/*---------------------------Macros-------------------------------------*/    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Extract info from msgid.
- * 
- * @param msgid_in
- * @param p_nodeid
- * @param p_srvid
- */
-expublic void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid)
-{
-    *p_nodeid = 0;
-    *p_srvid = 0;
+extern NDRX_API char * ndrx_base64_encode(unsigned char *data, size_t input_length, 
+        size_t *output_length, char *encoded_data);
+extern NDRX_API unsigned char *ndrx_base64_decode(const char *data, size_t input_length, 
+        size_t *output_length, char *decoded_data);
+        
+/* Base64 encode/decode with file system valid output */
+extern NDRX_API char * ndrx_xa_base64_encode(unsigned char *data,
+                    size_t input_length,
+                    size_t *output_length,
+                    char *encoded_data);
     
-    memcpy((char *)p_nodeid, msgid+sizeof(exuuid_t), sizeof(short));
-    memcpy((char *)p_srvid, msgid+sizeof(exuuid_t)+sizeof(short), sizeof(short));
-    
-    NDRX_LOG(log_info, "Extracted nodeid=%hd srvid=%hd", 
-            *p_nodeid, *p_srvid);
-}
+extern NDRX_API unsigned char *ndrx_xa_base64_decode(unsigned char *data,
+                             size_t input_length,
+                             size_t *output_length,
+                             char *decoded_data);
 
-/**
- * Generate serialized version of the string
- * @param msgid_in, length defined by constant TMMSGIDLEN
- * @param msgidstr_out
- * @return msgidstr_out
- */
-expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
-{
-    size_t out_len;
-    
-    NDRX_DUMP(log_debug, "Original CORID", corid_in, TMCORRIDLEN);
-    
-    ndrx_xa_base64_encode((unsigned char *)corid_in, TMCORRIDLEN, &out_len, corid_str_out);
-
-    corid_str_out[out_len] = EXEOS;
-    
-    NDRX_LOG(log_debug, "CORID after serialize: [%s]", corid_str_out);
-    
-    return corid_str_out;
+#if defined(__cplusplus)
 }
+#endif
+
+
+#endif

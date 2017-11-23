@@ -304,7 +304,7 @@ expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
     
     NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
     
-    atmi_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
+    ndrx_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
 
     msgid_str_out[out_len] = EXEOS;
     
@@ -327,7 +327,7 @@ expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
     
     memset(msgid_out, 0, TMMSGIDLEN);
         
-    atmi_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
+    ndrx_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
     
     NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
     
