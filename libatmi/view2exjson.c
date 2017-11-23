@@ -201,7 +201,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                     NDRX_LOG(log_debug, "Field is binary..."
                             " convert from b64...");
 
-                    if (NULL==atmi_base64_decode(str_val,
+                    if (NULL==ndrx_base64_decode(str_val,
                             strlen(str_val),
                             &st_len,
                             bin_buf))
@@ -315,7 +315,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
                             if (IS_BIN(cnametyp))
                             {
                                 size_t st_len;
-                                if (NULL==atmi_base64_decode(str_val,
+                                if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
                                         bin_buf))
@@ -592,7 +592,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                     size_t outlen;
                     NDRX_LOG(log_debug, "Field is binary... convert to b64");
 
-                    if (NULL==atmi_base64_encode((unsigned char *)strval, flen, 
+                    if (NULL==ndrx_base64_encode((unsigned char *)strval, flen, 
                                 &outlen, b64_buf))
                     {
                         NDRX_LOG(log_error, "Failed to convert to b64!");
