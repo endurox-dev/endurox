@@ -3,7 +3,10 @@
 ** We have a poor logging options where, because logger might not be initialized
 ** when we will require to log some messages. Thus critical things will be logged
 ** to the userlog();
-**
+** The first byte of data will indicate the length of padding used.
+** We also need to introduce standard library error handling there. This is needed
+** for fact that we might want to give some explanation why decryption failed at
+** at the application boot.
 ** @file crypto.c
 ** 
 ** -----------------------------------------------------------------------------
@@ -50,8 +53,12 @@
 #include <excrypto.h>
 #include <userlog.h>
 #include <expluginbase.h>
+#include <exaes.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define IV_INIT { 0xab, 0xcc, 0x1b, 0xc2, 0x3d, 0xe4, 0x44, 0x11, 0x30, 0x54, 0x34, 0x09, 0xef, 0xaf, 0xfc, 0xf5 }
+      
+#define CRYPTODEBUG
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -113,11 +120,19 @@ exprivate int ndrx_get_final_key(char *sha1key)
         EXFAIL_OUT(ret);
     }
     
+#ifdef CRYPTODEBUG
+    NDRX_LOG(log_debug, "Clear password: [%s]", password);
+#endif
+    
     /* make sha1 */
-    EXSHA1( sha1key, password, strlen(password) );   
+    EXSHA1( sha1key, password, strlen(password) );
+    
+#ifdef CRYPTODEBUG
+    NDRX_DUMP(log_debug, "SHA1 key", sha1key, sizeof(sha1key));
+#endif
     
 out:
-    return;
+    return ret;
 }
 
 /**
@@ -128,16 +143,49 @@ out:
  * @param obufsz encrypted data block buffer size
  * @return EXSUCCED/EXFAIL
  */
-expublic int ndrx_crypto_enc(char *input, long ibufsz, char *output, long obufsz)
+expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
 {
     int ret = EXSUCCEED;
     char sha1key[NDRX_ENCKEY_LEN];
+    long size_estim;
+    uint32_t *len_ind = (uint32_t *)output;
+    uint8_t  iv[]  = IV_INIT;
     /* encrypt data block */
     
     if (EXSUCCEED!=ndrx_get_final_key(sha1key))
     {
         EXFAIL_OUT(ret);
     }
+    
+    /* estimate the encrypted data len */
+    /* 4x bytes are for data len indicator */
+    size_estim = ilen + ilen % NDRX_ENC_BLOCK_SIZE + 4;
+    
+#ifdef CRYPTODEBUG
+    NDRX_LOG(log_debug, "Data size: %ld, estimated: %ld, output buffer: %ld",
+            ilen, size_estim, *olen);
+    NDRX_DUMP(log_debug, "About to encrypt: ", input, ilen);
+#endif
+    if (size_estim > *olen)
+    {
+        userlog("Encryption output buffer to short, estimated: %ld, but on input: %ld",
+                size_estim, *olen);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* so data len will not be encrypted */
+    *len_ind = htonl((uint32_t)ilen);
+    
+    EXAES_CBC_encrypt_buffer((uint8_t*)(output+4), (uint8_t*)input, ilen, 
+            (const uint8_t*)sha1key, (const uint8_t*) iv);
+    
+    /* DUMP the data block */
+    
+#ifdef CRYPTODEBUG
+    
+    NDRX_DUMP(log_debug, "Encrypt data block", output, size_estim);
+    
+#endif
     
 out:
     return ret;
