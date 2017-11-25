@@ -275,6 +275,7 @@ extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);
 extern NDRX_API string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str);
 
 extern NDRX_API char *ndrx_sys_get_cur_username(void);
+extern NDRX_API int ndrx_sys_get_hostname(char *out_hostname, long out_bufsz);
 extern NDRX_API string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2, 
         char *filter3, char *filter4, char *regex1);
 extern NDRX_API string_list_t * ndrx_sys_ps_getchilds(pid_t ppid);
