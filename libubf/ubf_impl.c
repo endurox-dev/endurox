@@ -802,7 +802,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         }
 #endif
 
-        if (eof=UBF_EOF(hdr, p))
+        if (EXTRUE==(eof=UBF_EOF(hdr, p)))
         {
             break;
         }
