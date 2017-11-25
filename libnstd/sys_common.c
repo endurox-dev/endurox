@@ -59,6 +59,7 @@
 
 #include "userlog.h"
 #include "exregex.h"
+#include "exparson.h"
 
 
 
@@ -409,6 +410,26 @@ expublic char *ndrx_sys_get_cur_username(void)
     }
 
     return "";
+}
+
+/**
+ * Return hostname
+ * @param out_hostname
+ * @param bufsz
+ * @return 
+ */
+expublic int ndrx_sys_get_hostname(char *out_hostname, long out_bufsz)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=gethostname(out_hostname, out_bufsz))
+    {
+        userlog("Failed to get hostname: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
 }
 
 /**
