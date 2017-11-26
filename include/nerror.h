@@ -52,7 +52,9 @@ extern "C" {
 #define NETOUT              8 /* Time-out condition */
 #define NENOCONN            9 /* Connection not found */
 #define NELIMIT            10 /* Limit reached */
-#define NMAXVAL            10 /* max error */
+#define NEPLUGIN           11 /* Plugin error */
+#define NENOSPACE          12 /* No space */
+#define NMAXVAL            12 /* max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 
