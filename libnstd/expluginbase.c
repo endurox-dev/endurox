@@ -55,8 +55,11 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
 
     /* Is plugins loaded? */
     .plugins_loaded = EXFALSE,
+    
     /* Standard encryption encryption key function: */
-    .p_ndrx_crypto_getkey = ndrx_crypto_getkey_std
+    .p_ndrx_crypto_getkey = ndrx_crypto_getkey_std,
+    .ndrx_crypto_getkey_provider = "built in"
+            
     };
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/

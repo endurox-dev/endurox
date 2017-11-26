@@ -56,18 +56,22 @@
 #include <exaes.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define IV_INIT { 0xab, 0xcc, 0x1b, 0xc2, 0x3d, 0xe4, 0x44, 0x11, 0x30, 0x54, 0x34, 0x09, 0xef, 0xaf, 0xfc, 0xf5 }
+#define IV_INIT {   0xab, 0xcc, 0x1b, 0xc2, \
+                    0x3d, 0xe4, 0x44, 0x11, \
+                    0x30, 0x54, 0x34, 0x09, \
+                    0xef, 0xaf, 0xfc, 0xf5 \
+                }
       
 #define CRYPTODEBUG
 
 #define CRYPTO_LEN_PFX_BYTES    4
+
+#define API_ENTRY {_Nunset_error();}
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-
-/* TODO: Have ptr to crypto func... (to have a hook) */
-
 /*---------------------------Prototypes---------------------------------*/
 
 
@@ -76,15 +80,17 @@
  * This is used in expluginbase.c for default crypto function.
  * @param key_out
  * @param klen
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_crypto_getkey_std(char *key_out, long key_out_bufsz)
 {
     int ret = EXSUCCEED;
     long len;
+    API_ENTRY;
 
     if (EXSUCCEED!=ndrx_sys_get_hostname(key_out, key_out_bufsz))
     {
+        _Nset_error_fmt(NEUNIX, "Failed to get hostname!");
         EXFAIL_OUT(ret);
     }
     
@@ -97,7 +103,9 @@ expublic int ndrx_crypto_getkey_std(char *key_out, long key_out_bufsz)
                 ndrx_sys_get_cur_username());
     }
     
-    userlog("YOPT! password: [%s]", key_out);
+#ifdef CRYPTODEBUG
+    NDRX_LOG(log_debug, "Password built: [%s]", key_out);
+#endif
     
 out:
     return ret;
@@ -106,19 +114,25 @@ out:
 /**
  * Get final key
  * @param sha1key, buffer size NDRX_ENCKEY_LEN
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 exprivate int ndrx_get_final_key(char *sha1key)
 {
     int ret = EXSUCCEED;
-    
     char password[PATH_MAX+1];
     
     /* first we take password & hash it */
     
     if (ndrx_G_plugins.p_ndrx_crypto_getkey(password, sizeof(password)))
     {
-        userlog("Failed to get encryption key!");
+        userlog("Failed to get encryption key by plugin "
+                "function, provider: [%s]", 
+                ndrx_G_plugins.ndrx_crypto_getkey_provider);
+        
+        _Nset_error_fmt(NEPLUGIN, "Failed to get encryption key by plugin "
+                "function, provider: [%s]", 
+                ndrx_G_plugins.ndrx_crypto_getkey_provider);
+        
         EXFAIL_OUT(ret);
     }
     
@@ -138,20 +152,21 @@ out:
 }
 
 /**
- * Decrypt data block
+ * Decrypt data block (internal version, no API entry)
  * @param input input data block
  * @param ibufsz input data block buffer size
  * @param output encrypted data block
  * @param obufsz encrypted data block buffer size
  * @return EXSUCCED/EXFAIL
  */
-expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
+exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *olen)
 {
     int ret = EXSUCCEED;
     char sha1key[NDRX_ENCKEY_LEN];
     long size_estim;
     uint32_t *len_ind = (uint32_t *)output;
     uint8_t  iv[]  = IV_INIT;
+    
     /* encrypt data block */
     
     if (EXSUCCEED!=ndrx_get_final_key(sha1key))
@@ -172,6 +187,11 @@ expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
     {
         userlog("Encryption output buffer to short, estimated: %ld, but on input: %ld",
                 size_estim, *olen);
+        
+        _Nset_error_fmt(NENOSPACE, "Encryption output buffer to short, "
+                "estimated: %ld, but on input: %ld",
+                size_estim, *olen);
+        
         EXFAIL_OUT(ret);
     }
     
@@ -194,21 +214,33 @@ out:
 }
 
 /**
- * Decrypt data block
- * @param input
- * @param ilen
- * @param output
- * @param olen
- * @return 
+ * Decrypt data block (API entry function)
+ * @param input input data block
+ * @param ibufsz input data block buffer size
+ * @param output encrypted data block
+ * @param obufsz encrypted data block buffer size
+ * @return EXSUCCED/EXFAIL
  */
-expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
+expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
+{
+    API_ENTRY;
+    return ndrx_crypto_enc(input, ilen, output, olen);
+}
+
+/**
+ * Decrypt data block (internal, no API entry)
+ * @param input input buffer
+ * @param ilen input len
+ * @param output output buffer
+ * @param olen on input indicates the buffer length on output, output data len
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *olen)
 {
     int ret = EXSUCCEED;
     char sha1key[NDRX_ENCKEY_LEN];
-    long size_estim;
     uint32_t *len_ind = (uint32_t *)input;
     uint8_t  iv[]  = IV_INIT;
-    
     long data_size = ntohl(*len_ind);
     
     /* encrypt data block */
@@ -230,9 +262,14 @@ expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
     {
         userlog("Decryption output buffer too short, data: %ld, output buffer: %ld",
                 data_size, *olen);
+        
+        _Nset_error_fmt(NENOSPACE, "Decryption output buffer too short, "
+                "data: %ld, output buffer: %ld",
+                data_size, *olen);
+        
         EXFAIL_OUT(ret);
     }
-    
+    *olen = data_size;
     EXAES_CBC_decrypt_buffer((uint8_t*)(output), 
             (uint8_t*)(input+CRYPTO_LEN_PFX_BYTES), ilen-CRYPTO_LEN_PFX_BYTES, 
             (const uint8_t*)sha1key, (const uint8_t*) iv);
@@ -241,9 +278,53 @@ expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
     
 #ifdef CRYPTODEBUG
     
-    NDRX_DUMP(log_debug, "Decrypted data block", output, size_estim);
+    NDRX_DUMP(log_debug, "Decrypted data block", output, *olen);
     
 #endif
+    
+out:
+    return ret;
+}
+
+/**
+ * Decrypt data block, API entry
+ * @param input input buffer
+ * @param ilen input len
+ * @param output output buffer
+ * @param olen on input indicates the buffer length on output, output data len
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
+{
+    API_ENTRY;
+    return ndrx_crypto_dec_int(input, ilen, output, olen);
+}
+
+
+
+/**
+ * Encrypt string
+ * @param input input string, zero terminated
+ * @param output base64 string
+ * @param olen output buffer length
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_crypto_enc_string(char *input, char *output, long *olen)
+{
+    int ret = EXSUCCEED;
+    char buf[NDRX_MSGSIZEMAX];
+    long bufsz = sizeof(buf);
+    API_ENTRY;
+    
+    /* encrypt data block */
+    if (EXSUCCEED!=ndrx_crypto_enc_int(input, strlen(input), buf, &bufsz))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    /* translate data block the the base64 (with size estim) */
+    
+    
     
 out:
     return ret;

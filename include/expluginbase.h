@@ -36,9 +36,7 @@
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
-/* Define some mode flags:
- * 
- */
+#define NDRX_PLUGIN_PROVIDER_LEN        64
 
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -52,6 +50,7 @@ struct ndrx_pluginbase {
      * @param key_out_bufsz buffer size of 'key_out'
      */
     int (*p_ndrx_crypto_getkey) (char *key_out, long key_out_bufsz);
+    char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDER_LEN+1];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;

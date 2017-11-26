@@ -74,7 +74,9 @@ struct err_msg
     {NEFORMAT,      "Invalid format"}, /* 7 */
     {NETOUT,        "Timed-out"}, /* 8 */
     {NENOCONN,      "No Connection"}, /* 9 */
-    {NELIMIT,       "Limit reached"} /* 10 */
+    {NELIMIT,       "Limit reached"}, /* 10 */
+    {NEPLUGIN,      "Plugin error"}, /* 11 */
+    {NENOSPACE,     "No space to store output buffer"} /* 12 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -195,7 +197,7 @@ expublic void _Nset_error_fmt(int error_code, const char *fmt, ...)
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(G_nstd_tls->M_nstd_error_msg_buf, msg);
+        NDRX_STRCPY_SAFE(G_nstd_tls->M_nstd_error_msg_buf, msg);
         G_nstd_tls->M_nstd_error = error_code;
         
     }
