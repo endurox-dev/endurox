@@ -59,6 +59,8 @@
 #define IV_INIT { 0xab, 0xcc, 0x1b, 0xc2, 0x3d, 0xe4, 0x44, 0x11, 0x30, 0x54, 0x34, 0x09, 0xef, 0xaf, 0xfc, 0xf5 }
       
 #define CRYPTODEBUG
+
+#define CRYPTO_LEN_PFX_BYTES    4
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -159,11 +161,11 @@ expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
     
     /* estimate the encrypted data len */
     /* 4x bytes are for data len indicator */
-    size_estim = ilen + ilen % NDRX_ENC_BLOCK_SIZE + 4;
+    size_estim = ilen + ilen % NDRX_ENC_BLOCK_SIZE + CRYPTO_LEN_PFX_BYTES;
     
 #ifdef CRYPTODEBUG
-    NDRX_LOG(log_debug, "Data size: %ld, estimated: %ld, output buffer: %ld",
-            ilen, size_estim, *olen);
+    NDRX_LOG(log_debug, "%s: Data size: %ld, estimated: %ld, output buffer: %ld",
+            __func__, ilen, size_estim, *olen);
     NDRX_DUMP(log_debug, "About to encrypt: ", input, ilen);
 #endif
     if (size_estim > *olen)
@@ -176,8 +178,8 @@ expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
     /* so data len will not be encrypted */
     *len_ind = htonl((uint32_t)ilen);
     
-    EXAES_CBC_encrypt_buffer((uint8_t*)(output+4), (uint8_t*)input, ilen, 
-            (const uint8_t*)sha1key, (const uint8_t*) iv);
+    EXAES_CBC_encrypt_buffer((uint8_t*)(output+CRYPTO_LEN_PFX_BYTES), 
+            (uint8_t*)input, ilen, (const uint8_t*)sha1key, (const uint8_t*) iv);
     
     /* DUMP the data block */
     
@@ -199,7 +201,50 @@ out:
  * @param olen
  * @return 
  */
-expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long olen)
+expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    char sha1key[NDRX_ENCKEY_LEN];
+    long size_estim;
+    uint32_t *len_ind = (uint32_t *)input;
+    uint8_t  iv[]  = IV_INIT;
+    
+    long data_size = ntohl(*len_ind);
+    
+    /* encrypt data block */
+    
+    if (EXSUCCEED!=ndrx_get_final_key(sha1key))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+#ifdef CRYPTODEBUG
+    
+    NDRX_DUMP(log_debug, "About to decrypt (incl 4 byte len): ", input, ilen);
+    
+    NDRX_LOG(log_debug, "Data size: %ld, %ld, output buffer: %ld",
+            data_size, olen);
+    
+#endif
+    if (data_size > *olen)
+    {
+        userlog("Decryption output buffer too short, data: %ld, output buffer: %ld",
+                data_size, *olen);
+        EXFAIL_OUT(ret);
+    }
+    
+    EXAES_CBC_decrypt_buffer((uint8_t*)(output), 
+            (uint8_t*)(input+CRYPTO_LEN_PFX_BYTES), ilen-CRYPTO_LEN_PFX_BYTES, 
+            (const uint8_t*)sha1key, (const uint8_t*) iv);
+    
+    /* DUMP the data block */
+    
+#ifdef CRYPTODEBUG
+    
+    NDRX_DUMP(log_debug, "Decrypted data block", output, size_estim);
+    
+#endif
+    
+out:
+    return ret;
 }
