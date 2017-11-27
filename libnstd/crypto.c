@@ -54,6 +54,7 @@
 #include <userlog.h>
 #include <expluginbase.h>
 #include <exaes.h>
+#include <exbase64.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IV_INIT {   0xab, 0xcc, 0x1b, 0xc2, \
@@ -300,8 +301,6 @@ expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
     return ndrx_crypto_dec_int(input, ilen, output, olen);
 }
 
-
-
 /**
  * Encrypt string
  * @param input input string, zero terminated
@@ -309,22 +308,47 @@ expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
  * @param olen output buffer length
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_crypto_enc_string(char *input, char *output, long *olen)
+expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
 {
     int ret = EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
     long bufsz = sizeof(buf);
+    long estim_size;
+    long inlen = strlen(input);
+    size_t b64len;
     API_ENTRY;
     
     /* encrypt data block */
-    if (EXSUCCEED!=ndrx_crypto_enc_int(input, strlen(input), buf, &bufsz))
+    if (EXSUCCEED!=ndrx_crypto_enc_int(input, inlen, buf, &bufsz))
     {
         EXFAIL_OUT(ret);
     }
     
     /* translate data block the the base64 (with size estim) */
+    estim_size = NDRX_BASE64_SIZE(bufsz) + 1;
+    if (NDRX_BASE64_SIZE(bufsz) +1 /* for EOS */ > olen)
+    {
+        userlog("Output buffer too short. Required for base64 %ld bytes, but got %ld",
+              estim_size, olen);
+        
+        _Nset_error_fmt(NENOSPACE, "Output buffer too short. Required for "
+                "base64 %ld bytes, but got %ld",
+              estim_size, olen);
+        EXFAIL_OUT(ret);
+    }
     
+    /* encode to base64... */
     
+    ndrx_base64_encode(input, inlen, &b64len, output);
+    
+    output[b64len] = EXEOS;
+    
+#ifdef CRYPTODEBUG
+    
+    NDRX_LOG(log_debug, "%s: input: [%s]", __func__, input);
+    NDRX_LOG(log_debug, "%s: output: [%s]", __func__, output);
+    
+#endif
     
 out:
     return ret;
