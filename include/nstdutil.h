@@ -49,7 +49,7 @@ extern "C" {
 #define NDRX_QENV_SUBST(t, p) strncpy(t, p, sizeof(t)-1);\
                 t[sizeof(t)-1] = (char)0;\
                 ndrx_str_env_subs_len(t, sizeof(t));
-    
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
