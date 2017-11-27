@@ -41,6 +41,9 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 /*---------------------------Externs------------------------------------*/
+    
+#define NDRX_BASE64_SIZE(X) (((X+2)/3)*4)
+
 /*---------------------------Macros-------------------------------------*/    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -50,6 +53,7 @@ extern "C" {
 
 extern NDRX_API char * ndrx_base64_encode(unsigned char *data, size_t input_length, 
         size_t *output_length, char *encoded_data);
+
 extern NDRX_API unsigned char *ndrx_base64_decode(const char *data, size_t input_length, 
         size_t *output_length, char *decoded_data);
         
