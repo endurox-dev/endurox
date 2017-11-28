@@ -214,10 +214,10 @@ VIEW FLAGS
 ----------
 
 *F*::
-    Map the field from C to UBF (will be processed by *Bvstof(3)*).
+    Map the field from C struct to UBF (will be processed by *Bvstof(3)*).
     
 *S*::
-    Map the field from C to UBF (will be processed by *Bvftos(3)*). 
+    Map the field from UBF to C struct (will be processed by *Bvftos(3)*). 
     
 *N*:: 
     Do not perform UBF mappings at all (*Bvstof(3)*, *Bvftos(3)* will skip the
