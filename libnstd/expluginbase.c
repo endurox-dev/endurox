@@ -64,3 +64,23 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Load the plugins from the NDRX_PLUGINS - semicolon separated list of
+ * dynamic link libraries. Once we load the lib, we call `long ndrx_init()'
+ * This shall in case of success it must return the flags of which functionality
+ * the library provides. Thus then we search for globals in the library and
+ * send our pointer to it.
+ * 
+ * In case of failure the init shall return -1. We will print the warning to the
+ * ULOG and skip the plugin.
+ * 
+ * @return 
+ */
+expublic int ndrx_plugins_load()
+{
+    int ret = EXSUCCEED;
+    
+    
+out:
+    return ret;
+}

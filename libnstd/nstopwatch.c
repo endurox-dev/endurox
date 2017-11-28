@@ -1,7 +1,7 @@
 /* 
 ** Basic stop-watch implementation.
 **
-** @file ntimer.c
+** @file nstopwatch.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
