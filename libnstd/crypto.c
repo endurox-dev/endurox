@@ -158,7 +158,7 @@ out:
  * @param ibufsz input data block buffer size
  * @param output encrypted data block
  * @param obufsz encrypted data block buffer size
- * @return EXSUCCED/EXFAIL
+ * @return EXSUCCEED/EXFAIL
  */
 exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *olen)
 {
@@ -220,7 +220,7 @@ out:
  * @param ibufsz input data block buffer size
  * @param output encrypted data block
  * @param obufsz encrypted data block buffer size
- * @return EXSUCCED/EXFAIL
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
 {
@@ -353,3 +353,24 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
 out:
     return ret;
 }
+
+/**
+ * Decrypt the base64 string
+ * @param input base64 containing encrypted data
+ * @param output clear text output storage
+ * @param olen output buffer size
+ */
+expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
+{
+	int ret = EXSUCCEED;
+	API_ENTRY;
+	
+	/* convert base64 to bin */
+	
+	/* extract the length bytes */	
+	
+	/* decrypt the data to the output buffer */
+	
+	return ret;
+}
+
