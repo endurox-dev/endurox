@@ -362,16 +362,34 @@ out:
  */
 expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
 {
-	int ret = EXSUCCEED;
-	API_ENTRY;
-	
-	/* convert base64 to bin */
-	
-	/* extract the length bytes */	
-	
-	/* decrypt the data to the output buffer */
-	
-	return ret;
+    int ret = EXSUCCEED;
+    char buf[NDRX_MSGSIZEMAX];
+    size_t bufsz = sizeof(buf);
+    
+    API_ENTRY;
+    
+#ifdef CRYPTODEBUG
+    NDRX_LOG(log_debug, "%s, output buf %p, olen=%ld", __func__, output, olen);
+    NDRX_LOG(log_debug, "%s: About to decrypt (b64): [%s]", __func__, input);
+#endif
+
+    /* convert base64 to bin */
+    ndrx_base64_decode(input, strlen(input), &bufsz, buf);
+
+#ifdef CRYPTODEBUG
+    NDRX_DUMP(log_debug, "Binary data to decrypt: ", buf, bufsz);
+#endif
+    	
+    /* decrypt the data to the output buffer */
+    
+    if (EXSUCCEED!=ndrx_crypto_dec_int(buf, bufsz, output, &olen))
+    {
+        #ifdef CRYPTODEBUG
+        NDRX_LOG(log_error, "%s: Failed to decrypt [%s]!", __func__, input);
+        #endif
+        userlog("%s: Failed to decrypt [%s]!", __func__, input);
+    }
+    return ret;
 }
 
 

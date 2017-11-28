@@ -456,17 +456,27 @@ out:
 
 /**
  * This initializes debug out form ndebug.conf
+ * NOTE This also loads the common configuration at standard library level 
+ * 
  */
 expublic void ndrx_init_debug(void)
 {
     char *cfg_file = getenv(CONF_NDRX_DEBUG_CONF);
     FILE *f;
     int finish_off = EXFALSE;
-    ndrx_inicfg_t *cconfig = ndrx_get_G_cconfig();
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
+    ndrx_inicfg_t *cconfig = NULL;
+    
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
+    
+    /* Thus here we need to load a plugins if any... */
+    
+    
+    
+    cconfig = ndrx_get_G_cconfig();
+    
     
     /* Initialize with defaults.. */
     G_ndrx_debug.dbg_f_ptr = stderr;
