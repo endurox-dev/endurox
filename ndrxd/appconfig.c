@@ -167,8 +167,10 @@ expublic int load_active_config(config_t **app_config, pm_node_t **process_model
     NDRX_LOG(log_debug, "building process model");
 
     /* Allocate hash, OK? */
-    NDRX_LOG(log_debug, "G_sys_config.max_servers = %d", ndrx_get_G_atmi_env()->max_servers);
-    *process_model_hash = (pm_node_t **)NDRX_CALLOC(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_node_t *));
+    NDRX_LOG(log_debug, "G_sys_config.max_servers = %d", 
+            ndrx_get_G_atmi_env()->max_servers);
+    *process_model_hash = (pm_node_t **)NDRX_CALLOC(ndrx_get_G_atmi_env()->max_servers, 
+            sizeof(pm_node_t *));
 
     if (NULL==*process_model_hash)
     {
@@ -177,7 +179,8 @@ expublic int load_active_config(config_t **app_config, pm_node_t **process_model
         goto out;
     }
 
-    *process_model_pid_hash = (pm_pidhash_t **)NDRX_CALLOC(ndrx_get_G_atmi_env()->max_servers, sizeof(pm_pidhash_t *));
+    *process_model_pid_hash = (pm_pidhash_t **)NDRX_CALLOC(ndrx_get_G_atmi_env()->max_servers, 
+            sizeof(pm_pidhash_t *));
 
     if (NULL==*process_model_pid_hash)
     {
@@ -316,7 +319,8 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     NDRX_LOG(log_warn, "Trimming default exportsvcs");
                     p[sizeof(config->default_exportsvcs)-3] = EXEOS;
                 }
-                sprintf(config->default_exportsvcs, ",%s,", p);
+                snprintf(config->default_exportsvcs, 
+                        sizeof(config->default_exportsvcs), ",%s,", p);
                 NDRX_LOG(log_debug, "exportsvcs: [%s]", 
                             config->default_exportsvcs);
                 xmlFree(p);
@@ -330,7 +334,8 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     NDRX_LOG(log_warn, "Trimming default blacklistsvcs");
                     p[sizeof(config->default_blacklistsvcs)-3] = EXEOS;
                 }
-                sprintf(config->default_blacklistsvcs, ",%s,", p);
+                snprintf(config->default_blacklistsvcs, 
+                        sizeof(config->default_blacklistsvcs), ",%s,", p);
                 NDRX_LOG(log_debug, "blacklistsvcs: [%s]", 
                             config->default_blacklistsvcs);
                 xmlFree(p);
@@ -757,7 +762,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_warn, "Trimming server exportsvcs");
                 p[sizeof(p_srvnode->exportsvcs)-3] = EXEOS;
             }
-            sprintf(p_srvnode->exportsvcs, ",%s,", p);
+            snprintf(p_srvnode->exportsvcs, sizeof(p_srvnode->exportsvcs), 
+                    ",%s,", p);
             NDRX_LOG(log_debug, "exportsvcs: [%s]", 
                     p_srvnode->exportsvcs);
             xmlFree(p);
@@ -771,7 +777,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_warn, "blacklistsvcs server blacklistsvcs");
                 p[sizeof(p_srvnode->exportsvcs)-3] = EXEOS;
             }
-            sprintf(p_srvnode->blacklistsvcs, ",%s,", p);
+            snprintf(p_srvnode->blacklistsvcs, sizeof(p_srvnode->blacklistsvcs), 
+                    ",%s,", p);
             NDRX_LOG(log_debug, "blacklistsvcs: [%s]", 
                     p_srvnode->blacklistsvcs);
             xmlFree(p);
@@ -890,8 +897,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         }
         
     }
-    sprintf(p_srvnode->clopt, "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
-    strcpy(p_srvnode->binary_name, srvnm);
+    snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
+            "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
+    NDRX_STRCPY_SAFE(p_srvnode->binary_name, srvnm);
 
     if (EXFAIL==p_srvnode->max)
         p_srvnode->max=config->default_max;
@@ -917,17 +925,17 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     /* Copy default env override */
     if (EXEOS==p_srvnode->env[0] && EXEOS!=config->default_env[0])
-        strcpy(p_srvnode->env, config->default_env);
+        NDRX_STRCPY_SAFE(p_srvnode->env, config->default_env);
     
     if (EXFAIL==p_srvnode->killtime)
         p_srvnode->killtime=config->default_killtime;
     
     /* it could be empty for defaults too - then no problem.  */
     if (EXEOS==p_srvnode->exportsvcs[0])
-        strcpy(p_srvnode->exportsvcs, config->default_exportsvcs);
+        NDRX_STRCPY_SAFE(p_srvnode->exportsvcs, config->default_exportsvcs);
     
     if (EXEOS==p_srvnode->blacklistsvcs[0])
-        strcpy(p_srvnode->blacklistsvcs, config->default_blacklistsvcs);
+        NDRX_STRCPY_SAFE(p_srvnode->blacklistsvcs, config->default_blacklistsvcs);
     
     if (!p_srvnode->srvstartwait)
         p_srvnode->srvstartwait=config->default_srvstartwait;
@@ -936,7 +944,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         p_srvnode->srvstopwait=config->default_srvstopwait;
     
     if (EXEOS==p_srvnode->cctag[0])
-        strcpy(p_srvnode->cctag, config->default_cctag);
+        NDRX_STRCPY_SAFE(p_srvnode->cctag, config->default_cctag);
     
     if (EXFAIL==p_srvnode->isprotected)
         p_srvnode->isprotected = config->default_isprotected;
