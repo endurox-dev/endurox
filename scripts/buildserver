@@ -67,10 +67,23 @@ sub buildmain {
         $NDRX_INCL="-I$ENV{'NDRX_HOME'}/include";
     }
 
+    my $NDRX_LIBPATH="";
+    if (defined $ENV{'NDRX_HOME'})
+    {
+	    if (-d "$ENV{'NDRX_HOME'}/lib64")
+        {
+            $NDRX_LIBPATH="-L$ENV{'NDRX_HOME'}/lib64";
+	    }
+	    else
+	    {
+            $NDRX_LIBPATH="-L$ENV{'NDRX_HOME'}/lib";
+	    }
+    }
+
     # Print out the options we have
-    print "-o $options{o}\n" if defined $options{o};
-    print "-f $options{f}\n" if defined $options{f};
-    print "-l $options{l}\n" if defined $options{l};
+    #print "-o $options{o}\n" if defined $options{o};
+    #print "-f $options{f}\n" if defined $options{f};
+    #print "-l $options{l}\n" if defined $options{l};
 
     # Set RT LIB
     my $dyn_libs = "-lrt -ldl -lpthread";
@@ -87,7 +100,7 @@ sub buildmain {
         $dyn_libs = "-ldl -lpthread";
     }
 
-    my $command="$CC $CFLAGS -o $options{o} $options{l} $options{f} -latmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL";
+    my $command="$CC $CFLAGS -o $options{o} $options{l} $options{f} -latmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL $NDRX_LIBPATH";
 
     # print the build output
     print "$command\n";
