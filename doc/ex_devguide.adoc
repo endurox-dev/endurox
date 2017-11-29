@@ -1364,6 +1364,31 @@ feedback can be received and processed.
 Sample usage can be seen in Enduro/X ATMI test cases 38 and 39.
 
 
+== Adding Enduro/X bindings
+
+Currently Enduro/X have tier 1 bindings for th Go language. This implementation
+can be used as reference for other language implementations. The core for the binding
+development is following:
+
+We classically start with "data structures and algorithms"! Thust firstly define a
+structures.
+
+1. Add enumeration of Enduro/X constants
+
+2. Define error object, either it is just struct or exception classes
+
+3. Create ATMI Context struct/class
+
+4. Define Generic ATMI Buffer Object, add inherited objects to STRING, UBF, JSON, RAW/CARRAY
+
+5. Advertise service (this means from high level language call Ondrx_main(), which will make init callback).
+Needs to advertise service and allow the ndrx_main() to start to poll for messages. Once the message arrives
+we need to callback a language specific function.
+
+The bindings will use all libs server & client (like a Go). Thus it depends on the application logic
+either the binary becomes server or it will be just a client.
+
+
 numbered!:
 
 [bibliography]
