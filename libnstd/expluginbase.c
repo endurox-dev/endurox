@@ -76,9 +76,11 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
  * 
  * @return 
  */
-expublic int ndrx_plugins_load()
+expublic int ndrx_plugins_load(void)
 {
     int ret = EXSUCCEED;
+    
+    /* Get the env and interate it over... */
     
     
 out:
