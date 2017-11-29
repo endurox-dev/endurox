@@ -512,7 +512,11 @@ exprivate int check_long_startup(void)
     DL_FOREACH(G_process_model, p_pm)
     {
         /* PM Counter increment! */
-        p_pm->rsptimer++;
+        if (SANITY_CNT_IDLE!=p_pm->rsptimer)
+        {
+            p_pm->rsptimer++;
+        }
+        
         if (p_pm->conf->pingtime)
         {
             p_pm->pingtimer++;
@@ -526,6 +530,13 @@ exprivate int check_long_startup(void)
         {
             /* Reset ping timer */
             p_pm->pingtimer = SANITY_CNT_START;
+            
+            /* start to watch the response time: */
+            if (SANITY_CNT_IDLE==p_pm->rsptimer)
+            {
+                p_pm->rsptimer = SANITY_CNT_START;
+            }
+            
             /* Send ping command to server */
             srv_send_ping (p_pm);
         }
@@ -542,14 +553,14 @@ exprivate int check_long_startup(void)
                 if (NDRXD_PM_STARTING==p_pm->state &&
                     (delta=p_pm->rsptimer) > p_pm->conf->start_max)
                 {
-                    NDRX_LOG(log_debug, "Startup too long - "
+                    NDRX_LOG(log_error, "Startup too long - "
                                                     "requesting kill");
                     p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->pingtime &&
                     (delta=p_pm->rsptimer) > p_pm->conf->ping_max)
                 {
-                    NDRX_LOG(log_debug, "Ping response not in time - "
+                    NDRX_LOG(log_error, "Ping response not in time - "
                                         "requesting kill (ping_time=%d delta=%d ping_max=%d)",
 					p_pm->conf->pingtime, delta, p_pm->conf->ping_max);
                     p_pm->killreq=EXTRUE;
@@ -557,7 +568,7 @@ exprivate int check_long_startup(void)
                 else if (NDRXD_PM_STOPPING==p_pm->state &&
                     (delta = p_pm->rsptimer) > p_pm->conf->end_max)
                 {
-                    NDRX_LOG(log_debug, "Server did not exit in time "
+                    NDRX_LOG(log_error, "Server did not exit in time "
                                                             "- requesting kill");
                     p_pm->killreq=EXTRUE;
                 }

@@ -51,13 +51,15 @@ extern "C" {
 
 
 #define COMMAND_WAIT_DEFAULT        2 /* seconds */
+
+#define RESPAWN_CNTR_MAX           1000
+#define DEF_SRV_STARTWAIT          30 /* Default process startup time        */
+#define DEF_SRV_STOPWAIT           30 /* Default process shutdown time       */
     
-#define RESPAWN_CNTR_MAX            1000
-#define DEF_SRV_STARTWAIT           30      /* Default process startup time */
-#define DEF_SRV_STOPWAIT            30      /* Default process shutdown time */
-#define SANITY_CNT_START            0   /* Reset value of cycle counter */
+#define SANITY_CNT_IDLE            -1 /* The PING is not issued, do not count*/
+#define SANITY_CNT_START           0  /* Reset value of cycle counter        */
     
-#define MAX_SERVICE_LIST            1024    /* MAX list of exportsvcs */
+#define MAX_SERVICE_LIST           1024    /* MAX list of exportsvcs */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
