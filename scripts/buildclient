@@ -40,7 +40,8 @@ use Cwd;
 sub buildmain {
 
 	my %options=();
-	getopts("o:f:a:", \%options);
+	$options{l} = "";
+	getopts("o:f:a:l:", \%options);
 
 	# Support #104, mvitolin 23/03/2017 - give chance to change compiler
 	my $CC = "cc";
@@ -64,6 +65,7 @@ sub buildmain {
 	# Print out the options we have
 	print "-o $options{o}\n" if defined $options{o};
 	print "-f $options{f}\n" if defined $options{f};
+	print "-l $options{l}\n" if defined $options{l};
 
 	# Set RT LIB
 	my $dyn_libs = "-lrt -ldl -lpthread";
@@ -80,7 +82,7 @@ sub buildmain {
 		$dyn_libs = "-ldl -lpthread";
 	}
 
-	my $command="$CC $CFLAGS -o $options{o} $options{f}  -latmiclt -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL";
+	my $command="$CC $CFLAGS -o $options{o} $options{l} $options{f} -latmiclt -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL";
     # print the build output
     print "$command\n";
     my $output=`$command`;
