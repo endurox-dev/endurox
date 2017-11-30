@@ -145,7 +145,7 @@ exprivate int ndrx_get_final_key(char *sha1key)
     EXSHA1( sha1key, password, strlen(password) );
     
 #ifdef CRYPTODEBUG
-    NDRX_DUMP(log_debug, "SHA1 key", sha1key, sizeof(sha1key));
+    NDRX_DUMP(log_debug, "SHA1 key", sha1key, NDRX_ENCKEY_LEN);
 #endif
     
 out:
@@ -330,6 +330,10 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
     {
         userlog("Output buffer too short. Required for base64 %ld bytes, but got %ld",
               estim_size, olen);
+#ifdef CRYPTODEBUG
+        NDRX_LOG(log_error, "Output buffer too short. Required for base64 %ld bytes, but got %ld",
+              estim_size, olen);
+#endif
         
         _Nset_error_fmt(NENOSPACE, "Output buffer too short. Required for "
                 "base64 %ld bytes, but got %ld",
