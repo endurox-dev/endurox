@@ -45,16 +45,27 @@
  */
 Ensure(test_crypto_enc_string)
 {
-    char buf[1024];
-    char buf2[1024];
-#define ENC_TEST_STRING "HELLO STRING _ 123"
+    char buf[1024]="";
+    char buf2[1024]="";
+    int i;
     
-    assert_equal(
-            ndrx_crypto_enc_string(ENC_TEST_STRING, buf, sizeof(buf)),
-            EXSUCCEED);
+#define ENC_TEST_STRING "HELLO STRING _ 123 hello test"
     
-    NDRX_LOG(log_debug, "Encrypted string: [%s]", buf);
-    
+    for (i=0; i<100; i++)
+    {
+        assert_equal(
+                ndrx_crypto_enc_string(ENC_TEST_STRING, buf, sizeof(buf)),
+                EXSUCCEED);
+
+        NDRX_LOG(log_debug, "Encrypted string: [%s]", buf);
+
+        assert_equal(
+                ndrx_crypto_dec_string(buf, buf2, sizeof(buf2)),
+                EXSUCCEED);
+
+        /* decrypted strings must be equal... */
+        assert_string_equal(buf2, ENC_TEST_STRING);
+    }
 }
 
 /**
