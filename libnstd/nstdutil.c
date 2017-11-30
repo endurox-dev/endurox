@@ -297,6 +297,9 @@ char *ndrx_str_replace(char *orig, char *rep, char *with) {
 
 /**
  * Substitute environment 
+ * TODO: Implement $[<func>:data] substitution. Currently available functions:
+ * $[dec:<encrypted base64 string>] or just will copy to new function
+ * 
  * @param str
  * @param buf_len buffer len for overrun checks
  * @return 
@@ -454,9 +457,13 @@ char *ndrx_decode_num(long tt, int slot, int level, int levels)
     }
     
     if (level==1)
-        strcpy(G_nstd_tls->util_text[slot], tmp);
+    {
+        NDRX_STRCPY_SAFE(G_nstd_tls->util_text[slot], tmp);
+    }
     else
+    {
         strcat(G_nstd_tls->util_text[slot], tmp);
+    }
     
     if (next_t)
         ndrx_decode_num(next_t, slot, level, levels);
