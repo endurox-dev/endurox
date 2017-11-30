@@ -508,6 +508,14 @@ int main(int argc, char** argv)
     TestSuite *suite = create_test_suite();
     int ret;
 
+    /*
+     * NSTD Library tests
+     */
+    add_suite(suite, ubf_nstd_crypto());
+    
+    /*
+     * UBF tests
+     */
     add_suite(suite, ubf_basic_tests());
     add_suite(suite, ubf_Badd_tests());
     add_suite(suite, ubf_genbuf_tests());

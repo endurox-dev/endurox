@@ -50,9 +50,10 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 # Exectuables
 add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c 
-				test_cbget.c test_bdel.c test_expr.c test_bnext.c test_bproj.c
-				test_mem.c test_bupdate.c test_bconcat.c test_find.c test_get.c
-				test_print.c test_macro.c test_readwrite.c test_mkfldhdr.c)
+                test_cbget.c test_bdel.c test_expr.c test_bnext.c test_bproj.c
+                test_mem.c test_bupdate.c test_bconcat.c test_find.c test_get.c
+                test_print.c test_macro.c test_readwrite.c test_mkfldhdr.c
+                test_nstd_crypto.c)
 
 # Link the executable to the UBF library & others...
 
