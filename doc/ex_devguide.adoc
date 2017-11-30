@@ -1373,6 +1373,10 @@ development is following:
 We classically start with "data structures and algorithms"! Thust firstly define a
 structures.
 
+But before we start the development, we need to create a build system for target
+language. The package name is endurox-<language name>, .e.g endurox-java. The 
+build system shall build the corresponding library and test executables.
+
 1. Add enumeration of Enduro/X constants
 
 2. Define error object, either it is just struct or exception classes
