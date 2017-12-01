@@ -46,6 +46,17 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
+/*
+ * Early logs written to memory
+ */
+typedef struct ndrx_memlogger ndrx_memlogger_t;
+struct ndrx_memlogger
+{
+    int level;
+    char line[PATH_MAX+1];
+    ndrx_memlogger_t *next, *prev;
+};
+
 /* Create main debug structure */
 typedef struct
 {
@@ -64,7 +75,9 @@ typedef struct
     int is_threaded; /* are we separating logs by threads? */
     unsigned threadnr; /* thread number to which we are logging */
     long flags;         /* logger code initially */
+    ndrx_memlogger_t *memlog;
 } ndrx_debug_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
