@@ -89,6 +89,8 @@ expublic int ndrx_crypto_getkey_std(char *key_out, long key_out_bufsz)
     long len;
     API_ENTRY;
 
+    /* TODO Add some caching over the crypto key! */
+
     if (EXSUCCEED!=ndrx_sys_get_hostname(key_out, key_out_bufsz))
     {
         _Nset_error_fmt(NEUNIX, "Failed to get hostname!");
