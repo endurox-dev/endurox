@@ -59,6 +59,7 @@
 
 #include "nstd_tls.h"
 #include "userlog.h"
+#include "utlist.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -79,20 +80,53 @@
 
 #define DEFAULT_BUFFER_SIZE         50000
 
+/*
+ * Logger initializer 
+ */
+#define DEBUG_INITIALIZER(MODULE)   \
+{\
+    .level = 0,\
+    .dbg_f_ptr = NULL,\
+    .filename = "",\
+    .filename_th_template="",\
+    .pid = 0,\
+    .buf_lines = 0,\
+    .buffer_size = 0,\
+    .lines_written = 0,\
+    .module=MODULE,\
+    .is_user=0,\
+    .code=0,\
+    .iflags="",\
+    .is_threaded=0,\
+    .threadnr=0,\
+    .flags=0,\
+    .memlog=NULL\
+}
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-ndrx_debug_t G_tp_debug;
-ndrx_debug_t G_ubf_debug;
-ndrx_debug_t G_ndrx_debug;
+ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER("USER");
+ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER("UBF ");
+ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER("NDRX");
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = EXTRUE;
 volatile unsigned M_thread_nr = 0;
+exprivate int __thread M_is_initlock_owner = EXFALSE; /* for recursive logging calls */
 MUTEX_LOCKDECL(M_dbglock);
 MUTEX_LOCKDECL(M_thread_nr_lock);
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Function returns true if current thread init lock owner
+ * @return TRUE (we are performing init) / FALSE (we are not performing init)
+ */
+expublic int ndrx_dbg_is_initlock_owrner(void)
+{
+    return M_is_initlock_owner;
+}
 /**
  * Initialize operating thread number.
  * note default is zero.
@@ -467,13 +501,15 @@ expublic void ndrx_init_debug(void)
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     ndrx_inicfg_t *cconfig = NULL;
     
+    M_is_initlock_owner = EXTRUE;
+    /*
+     * init in declaration...
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
     memset(&G_ndrx_debug, 0, sizeof(G_ndrx_debug));
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
+    */
     
     /* Thus here we need to load a plugins if any... */
-    
-    
     
     cconfig = ndrx_get_G_cconfig();
     
@@ -484,9 +520,11 @@ expublic void ndrx_init_debug(void)
     G_tp_debug.dbg_f_ptr = stderr;
     G_stdout_debug.dbg_f_ptr = stdout;
     
+    /*
     NDRX_STRCPY_SAFE(G_ubf_debug.module, "UBF ");
     NDRX_STRCPY_SAFE(G_ndrx_debug.module, "NDRX");
     NDRX_STRCPY_SAFE(G_tp_debug.module, "USER");
+     */
     
     G_ubf_debug.code = LOG_CODE_UBF;
     G_ndrx_debug.code = LOG_CODE_NDRX;
@@ -608,6 +646,20 @@ expublic void ndrx_init_debug(void)
     }
     
     G_ndrx_debug_first = EXFALSE;
+    
+    M_is_initlock_owner = EXFALSE;
+    
+    /* TODO: We should reply the log here... 
+     ndrx_dbg_reply_memlog();
+     on all loggers, if memlog not NULL.
+     * 
+     G_ubf_debug.code = LOG_CODE_UBF;
+     G_ndrx_debug.code = LOG_CODE_NDRX;
+     G_tp_debug.code = LOG_CODE_TP;
+     * 
+     *
+     */
+
 }
 
 /**
@@ -920,35 +972,78 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
         first = EXFALSE;
     }
     
-    dbg_ptr = get_debug_ptr(dbg_ptr);
-    
-    if (dbg_ptr->level < lev)
+    if (!M_is_initlock_owner)
     {
-        return; /* the level is lowered by thread/request logger */
+        dbg_ptr = get_debug_ptr(dbg_ptr);
+
+        if (dbg_ptr->level < lev)
+        {
+            return; /* the level is lowered by thread/request logger */
+        }
     }
     
     if ((len=strlen(file)) > 8)
+    {
         line_print = (char *)file+len-8;
+    }
     else
+    {
         line_print = (char *)file;
-    
+    }
 
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
-    
+
     snprintf(line_start, sizeof(line_start), 
-	"%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+        "%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
         (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec/1000), line_print, line);
     
-    va_start(ap, fmt);    
-    fputs(line_start, dbg_ptr->dbg_f_ptr);
-    (void) vfprintf(dbg_ptr->dbg_f_ptr, fmt, ap);
-    fputs("\n", dbg_ptr->dbg_f_ptr);
-    va_end(ap);
-    
-    /* Handle some buffering... */
-    BUFFER_CONTROL(dbg_ptr);
+    if (!M_is_initlock_owner)
+    {
+        fputs(line_start, dbg_ptr->dbg_f_ptr);
+        va_start(ap, fmt);    
+        (void) vfprintf(dbg_ptr->dbg_f_ptr, fmt, ap);
+        va_end(ap);
+        fputs("\n", dbg_ptr->dbg_f_ptr);
+        
+        /* Handle some buffering... */
+        BUFFER_CONTROL(dbg_ptr);
+    }
+    else
+    {
+        ndrx_memlogger_t *memline = NDRX_MALLOC(sizeof(ndrx_memlogger_t));
+        
+        if (NULL==memline)
+        {
+            userlog("Failed to malloc mem debug line: %s - skipping log entry", 
+                    strerror(errno));
+        }
+        else
+        {
+            int len;
+            memline->line[0] = EXEOS;
+            memline->level = lev; /* user for log reply to actual logger */
+            /* alloc the storage object */
+            NDRX_STRCPY_SAFE(memline->line, line_start);
+            
+            len = strlen(memline->line);
+            
+            va_start(ap, fmt);    
+            (void) vsnprintf(memline->line+len, sizeof(memline->line)-len, fmt, ap);
+            va_end(ap);
+            
+            len = strlen(memline->line);
+            
+            if (len+1 < sizeof(memline->line))
+            {
+                memline->line[len]='\n';
+                memline->line[len+1] = EXEOS;
+            }
+            /* Add line to the logger */
+            DL_APPEND(dbg_ptr->memlog, memline);
+        }
+    }
 }
 /**
  * Initialize debug library
