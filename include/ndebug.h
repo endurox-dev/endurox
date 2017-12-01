@@ -96,7 +96,19 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define UBF_DBG_INIT(X) (ndrx_dbg_init X )
 #define NDRX_DBG_INIT(X) (ndrx_dbg_init X )
 
-/* Kind of GCC way only... */
+/*
+ * This logger can be used for very early bootstrapping logs - logging when
+ * logger is not yet initialised.
+ * Thus we run alternate route in case init lock is acquired.
+ */
+#define NDRX_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
+            __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+            NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
+            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+
+/*
+ * Normal loggers 
+ */
 #define NDRX_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
             {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
@@ -195,6 +207,7 @@ extern NDRX_API void ndrx_dbg_lock(void);
 extern NDRX_API void ndrx_dbg_unlock(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
+extern NDRX_API int ndrx_dbg_is_initlock_owrner(void);
 extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, ndrx_debug_t *dbg_ptr);
 
 /* TPLOG: */
