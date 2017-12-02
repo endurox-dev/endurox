@@ -37,8 +37,12 @@
 #include <ndrstandard.h>
 #include <expluginbase.h>
 #include <excrypto.h>
+
+#include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+/* same as xatmi.h" CONF_NDRX_PLUGINS */
+#define NDRX_PLUGINS_ENV "NDRX_PLUGINS"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -79,10 +83,42 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
 expublic int ndrx_plugins_load(void)
 {
     int ret = EXSUCCEED;
+    char *plugins_env = getenv(NDRX_PLUGINS_ENV);
+    char *plugins = NULL;
+    char *p;
+    char *fname;
+    char *save_ptr;
+    
+    if (NULL==plugins)
+    {
+        NDRX_LOG_EARLY(log_debug, "%s: no plugins defined by %s", 
+                __func__, NDRX_PLUGINS_ENV);
+        goto out;
+    }
     
     /* Get the env and interate it over... */
     
+    plugins = strdup(plugins_env);
+    
+    NDRX_LOG_EARLY(log_debug, "%s: loading plugins.... [%s]", __func__, plugins);
+    
+    p = strtok_r (plugins, ";", &save_ptr);
+    
+    while (NULL!=p)
+    {
+        /* trim down ltrim/rtrim the name */
+        
+        fname = ndrx_str_lstrip_ptr(p, " \t");
+        ndrx_str_rstrip(fname, " \t");
+        
+        NDRX_LOG_EARLY(log_info, "About to load: [%s]", fname);
+        
+        /* TODO: Resolve symbols... */
+        
+        strtok_r (NULL, ";", &save_ptr);
+    }
     
 out:
     return ret;
 }
+

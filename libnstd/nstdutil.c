@@ -247,7 +247,7 @@ expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
  * @param with replace with
  * @return NULL (if orgin is NULL) or newly allocated string
  */
-char *ndrx_str_replace(char *orig, char *rep, char *with) {
+expublic char *ndrx_str_replace(char *orig, char *rep, char *with) {
     char *result; /* the return string */
     char *ins;    /* the next insert point */
     char *tmp;    /* varies */
@@ -535,6 +535,29 @@ expublic char* ndrx_str_rstrip(char* s, char *needle)
         }
     }
     return s;
+}
+
+/**
+ * Return pointer to data where first non-matched char starts
+ * @param s string to process
+ * @param needle char to strip off
+ * @return ptr to start non matched char
+ */
+expublic char* ndrx_str_lstrip_ptr(char* s, char *needle)
+{
+    int len = strlen(s);
+    int i;
+    char *p =s;
+    
+    for (i=0; i<len; i++)
+    {
+        if (strchr(needle, *p))
+        {
+            p++;
+        }
+    }
+    
+    return p;
 }
 
 /**

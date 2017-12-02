@@ -32,11 +32,21 @@
 #ifndef EXPLUGINBASE_H_
 #define EXPLUGINBASE_H_
 
+#include "ndrx_config.h"
+
+
 /*------------------------------Includes--------------------------------------*/
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
-#define NDRX_PLUGIN_PROVIDER_LEN        64
+#define NDRX_PLUGIN_PROVIDERSTR_LEN        64
+
+
+/**
+ * Function: provides ndrx_plugin_crypto_getkey  
+ */
+#define NDRX_PLUGIN_FUNC_ENCKEY            0x00000001
+
 
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -50,7 +60,7 @@ struct ndrx_pluginbase {
      * @param key_out_bufsz buffer size of 'key_out'
      */
     int (*p_ndrx_crypto_getkey) (char *key_out, long key_out_bufsz);
-    char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDER_LEN+1];
+    char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDERSTR_LEN+1];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;
@@ -59,5 +69,8 @@ typedef struct ndrx_pluginbase ndrx_pluginbase_t;
 extern ndrx_pluginbase_t ndrx_G_plugins;
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
+
+
+extern NDRX_API int ndrx_plugins_load(void);
 
 #endif /* EXPROTO_H_ */
