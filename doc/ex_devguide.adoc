@@ -1385,12 +1385,81 @@ build system shall build the corresponding library and test executables.
 
 4. Define Generic ATMI Buffer Object, add inherited objects to STRING, UBF, JSON, RAW/CARRAY
 
-5. Advertise service (this means from high level language call Ondrx_main(), which will make init callback).
-Needs to advertise service and allow the ndrx_main() to start to poll for messages. Once the message arrives
-we need to callback a language specific function.
+5. Advertise service (this means from high level language call Ondrx_main(), 
+which will make init callback). Needs to advertise service and allow the ndrx_main() 
+to start to poll for messages. Once the message arrives we need to callback a 
+language specific function.
 
-The bindings will use all libs server & client (like a Go). Thus it depends on the application logic
-either the binary becomes server or it will be just a client.
+The bindings will use all libs server & client (like a Go). Thus it depends 
+on the application logic either the binary becomes server or it will be just a client.
+
+== Plugin interface
+
+Enduro/X provides API for writing custom plugins (loaded by shared libraries).
+There are certain criteria to which plugins must correspond. This chapter will
+provide the plugin API definition. Also it will list the functionality which
+can be defined by plugin. Plugins shall be written in thread safe manner.
+
+=== Plugin Initialization
+
+Plugins are registered in 'NDRX_PLUGINS' environment variable, as semicolon separated
+values. Plugins are loaded during the process "boostarp" (basically at the time
+when Enduro/X debug logger is initialized, before the Common-Configuration is
+read. Thus plugins cannot be registered in '[@global]' section. As they must
+be already loaded before the INI file parsing, as for example custom cryptography
+provider might be used. Libraries must be available in current shared library
+search path (e.g. LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, etc..).
+
+Sample configuration:
+
+--------------------------------------------------------------------------------
+
+$ export NDRX_PLUGINS=customcrypto.so;somotherfunc.so
+
+--------------------------------------------------------------------------------
+
+Enduro/X plugin interface requires two *mandatory* symbols to be exported from
+plugin library, which must correspond to the following signature:
+
+--------------------------------------------------------------------------------
+
+long ndrx_plugin_init(char *provider_name, int provider_name_bufsz);
+
+--------------------------------------------------------------------------------
+
+Where 'provider_name' is arbitrary string describing the plugin. 'provider_name_bufsz'
+is buffer size for the plugin description. Typically it is around ~60 bytes.
+
+In case of error function shall return *-1*. In case of success init function
+shall return one or more NDRX_PLUGIN_FUNC_XXXX OR'ed bits, denoting the
+functionality which is being exported.
+
+Currently following flags are available:
+
+. NDRX_PLUGIN_FUNC_ENCKEY - plugin provides cryptography key function
+
+
+During the Initialization, only early logging (mem buffered logs) are available,
+see NDRX_LOG_EARLY/UBF_LOG_EARLY/TP_LOG_EARLY. If use of other log functions is
+made, then must probably program will deadlock.
+
+
+=== NDRX_PLUGIN_FUNC_ENCKEY functions
+
+If plugin exports this flag, then library loader will search for following
+symbol in the shared library:
+
+--------------------------------------------------------------------------------
+
+int ndrx_plugin_crypto_getkey(char *keybuf, int keybuf_bufsz);
+
+--------------------------------------------------------------------------------
+
+Where 'keybuf' is buffer where to install encryption key. The encryption key
+must be zero (0x00) terminated C string. 'keybuf_bufsz' denotes the max buffer
+size (with 0x00 byte). In case of success function shall return 0. In case of 
+failure, function shall return -1. For this function only *EARLY* logging is
+available (NDRX_LOG_EARLY/UBF_LOG_EARLY/TP_LOG_EARLY).
 
 
 numbered!:

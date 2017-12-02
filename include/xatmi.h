@@ -167,9 +167,9 @@ extern "C" {
 #define CONF_NDRX_CONFIG         "NDRX_CONFIG"
 #define CONF_NDRX_QPATH          "NDRX_QPATH"
 #define CONF_NDRX_SHMPATH        "NDRX_SHMPATH"
-#define CONF_NDRX_CMDWAIT        "NDRX_CMDWAIT"     /* Command wait time */
-#define CONF_NDRX_DPID           "NDRX_DPID"        /* PID file for backend-process */
-#define CONF_NDRX_DMNLOG         "NDRX_DMNLOG"       /* Log file for backend process */
+#define CONF_NDRX_CMDWAIT        "NDRX_CMDWAIT"    /* Command wait time */
+#define CONF_NDRX_DPID           "NDRX_DPID"       /* PID file for backend-process */
+#define CONF_NDRX_DMNLOG         "NDRX_DMNLOG"     /* Log file for backend process */
 #define CONF_NDRX_LOG            "NDRX_LOG"        /* Log file for command line utilty */
 #define CONF_NDRX_RNDK           "NDRX_RNDK"       /* Random key */
 #define CONF_NDRX_MSGMAX         "NDRX_MSGMAX"     /* Posix queues, max msgs */
@@ -197,6 +197,7 @@ extern "C" {
 #define CONF_NDRX_MAXSVCSRVS_DFLT       30          /* default for NDRX_MAXSVCSRVS param */
 #define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG"  /* Xadmin config file */
 #define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /* debug config file */
+#define CONF_NDRX_PLUGINS        "NDRX_PLUGINS"     /* list of plugins, ';' seperated */
                                                     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

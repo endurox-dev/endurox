@@ -86,6 +86,7 @@ extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, l
 extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
 extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
 extern NDRX_API char* ndrx_str_rstrip(char* s, char *needle);
+extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, char *needle);
 
 extern NDRX_API int ndrx_isint(char *str);
 extern NDRX_API int ndrx_nr_chars(char *str, char character);
