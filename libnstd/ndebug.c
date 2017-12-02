@@ -83,7 +83,7 @@
 /*
  * Logger initializer 
  */
-#define DEBUG_INITIALIZER(MODULE)   \
+#define DEBUG_INITIALIZER(CODE, MODULE, FLAGS)   \
 {\
     .level = 0,\
     .dbg_f_ptr = NULL,\
@@ -95,20 +95,21 @@
     .lines_written = 0,\
     .module=MODULE,\
     .is_user=0,\
-    .code=0,\
+    .code=CODE,\
     .iflags="",\
     .is_threaded=0,\
     .threadnr=0,\
-    .flags=0,\
+    .flags=FLAGS,\
     .memlog=NULL\
 }
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER("USER");
-ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER("UBF ");
-ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER("NDRX");
+ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", LOG_FACILITY_UBF);
+ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", LOG_FACILITY_NDRX);
+ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER(LOG_CODE_TP, "USER", LOG_FACILITY_TP);
+
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = EXTRUE;
@@ -118,6 +119,25 @@ MUTEX_LOCKDECL(M_dbglock);
 MUTEX_LOCKDECL(M_thread_nr_lock);
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Reply the cached log to the real/initilaized logger
+ * @param dbg logger (after init)
+ */
+exprivate void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
+{
+    ndrx_memlogger_t *line, *tmp;
+    
+    DL_FOREACH_SAFE(dbg->memlog, line, tmp)
+    {
+        if (dbg->level <= dbg->level)
+        {
+            BUFFERED_PRINT_LINE(dbg, line->line)
+        }
+        
+        NDRX_FREE(line);
+        DL_DELETE(dbg->memlog, line);
+    }
+}
 
 /**
  * Function returns true if current thread init lock owner
@@ -509,10 +529,12 @@ expublic void ndrx_init_debug(void)
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
     */
     
+    G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
+    
     /* Thus here we need to load a plugins if any... */
+    ndrx_plugins_load();
     
     cconfig = ndrx_get_G_cconfig();
-    
     
     /* Initialize with defaults.. */
     G_ndrx_debug.dbg_f_ptr = stderr;
@@ -520,21 +542,6 @@ expublic void ndrx_init_debug(void)
     G_tp_debug.dbg_f_ptr = stderr;
     G_stdout_debug.dbg_f_ptr = stdout;
     
-    /*
-    NDRX_STRCPY_SAFE(G_ubf_debug.module, "UBF ");
-    NDRX_STRCPY_SAFE(G_ndrx_debug.module, "NDRX");
-    NDRX_STRCPY_SAFE(G_tp_debug.module, "USER");
-     */
-    
-    G_ubf_debug.code = LOG_CODE_UBF;
-    G_ndrx_debug.code = LOG_CODE_NDRX;
-    G_tp_debug.code = LOG_CODE_TP;
-    
-    G_ubf_debug.flags = LOG_FACILITY_UBF;
-    G_ndrx_debug.flags = LOG_FACILITY_NDRX;
-    G_tp_debug.flags = LOG_FACILITY_TP;
-    
-    G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
     
     /* static coinf */
     G_stdout_debug.buf_lines = 1;
@@ -649,17 +656,27 @@ expublic void ndrx_init_debug(void)
     
     M_is_initlock_owner = EXFALSE;
     
-    /* TODO: We should reply the log here... 
-     ndrx_dbg_reply_memlog();
-     on all loggers, if memlog not NULL.
-     * 
-     G_ubf_debug.code = LOG_CODE_UBF;
-     G_ndrx_debug.code = LOG_CODE_NDRX;
-     G_tp_debug.code = LOG_CODE_TP;
-     * 
-     *
+    /*
+     * Reply memory based logs to the file.
+     * mem debugs are filled only if we are doing the init
+     * and the init was doing some debug (while the debug it self was not
+     * initialized).
      */
-
+    if (NULL!=G_ubf_debug.memlog)
+    {
+        ndrx_dbg_reply_memlog(&G_ubf_debug);
+    }
+    
+    if (NULL!=G_ndrx_debug.memlog)
+    {
+        ndrx_dbg_reply_memlog(&G_ndrx_debug);
+    }
+    
+    if (NULL!=G_tp_debug.memlog)
+    {
+        ndrx_dbg_reply_memlog(&G_tp_debug);
+    }
+    
 }
 
 /**
@@ -992,7 +1009,7 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     }
 
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
-
+    
     snprintf(line_start, sizeof(line_start), 
         "%c:%s:%d:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
         dbg_ptr->code, org_ptr->module, lev, (int)dbg_ptr->pid, 
@@ -1033,13 +1050,6 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
             (void) vsnprintf(memline->line+len, sizeof(memline->line)-len, fmt, ap);
             va_end(ap);
             
-            len = strlen(memline->line);
-            
-            if (len+1 < sizeof(memline->line))
-            {
-                memline->line[len]='\n';
-                memline->line[len+1] = EXEOS;
-            }
             /* Add line to the logger */
             DL_APPEND(dbg_ptr->memlog, memline);
         }

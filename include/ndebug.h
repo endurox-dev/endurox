@@ -104,7 +104,17 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
             __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
             NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+
+#define UBF_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
+            __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+            NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
+            {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+
+#define TP_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
+            __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+            NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
+            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 /*
  * Normal loggers 
