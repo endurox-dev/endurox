@@ -555,6 +555,10 @@ expublic char* ndrx_str_lstrip_ptr(char* s, char *needle)
         {
             p++;
         }
+        else
+        {
+            break;
+        }
     }
     
     return p;
