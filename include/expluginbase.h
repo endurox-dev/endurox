@@ -39,17 +39,36 @@
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
-#define NDRX_PLUGIN_PROVIDERSTR_LEN        64
+#define NDRX_PLUGIN_PROVIDERSTR_BUFSZ        64
 
 
 /**
  * Function: provides ndrx_plugin_crypto_getkey  
  */
-#define NDRX_PLUGIN_FUNC_ENCKEY            0x00000001
+#define NDRX_PLUGIN_FUNC_ENCKEY             0x00000001
 
 
+/* symbols: */
+#define NDRX_PLUGIN_INIT_SYMB               "ndrx_plugin_init"
+#define NDRX_PLUGIN_CRYPTO_GETKEY_SYMB      "ndrx_plugin_crypto_getkey"
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
+
+double (*cosine)(double);
+
+
+/**
+ * Init plugin function
+ */
+typedef long (*ndrx_plugin_init_t)(char *provider_name, int provider_name_bufsz);
+
+/**
+ * Plugin encryption key func:
+ * @param keybuf NUL terminated key
+ * @param keybuf_bufsz
+ */
+typedef int (*ndrx_plugin_crypto_getkey_t)(char *keybuf, int keybuf_bufsz);
+
 
 /* Have some global variable with pointer to callbacks */
 
@@ -60,7 +79,7 @@ struct ndrx_pluginbase {
      * @param key_out_bufsz buffer size of 'key_out'
      */
     int (*p_ndrx_crypto_getkey) (char *key_out, long key_out_bufsz);
-    char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDERSTR_LEN+1];
+    char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;
