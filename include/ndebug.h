@@ -101,17 +101,17 @@ extern NDRX_API volatile int G_ndrx_debug_first;
  * logger is not yet initialised.
  * Thus we run alternate route in case init lock is acquired.
  */
-#define NDRX_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
+#define NDRX_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
             __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
             NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
             {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
-#define UBF_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
+#define UBF_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
             __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
             NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
             {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
-#define TP_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_is_initlock_owrner()) {\
+#define TP_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
             __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
             NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
             {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
@@ -217,7 +217,7 @@ extern NDRX_API void ndrx_dbg_lock(void);
 extern NDRX_API void ndrx_dbg_unlock(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
-extern NDRX_API int ndrx_dbg_is_initlock_owrner(void);
+extern NDRX_API int ndrx_dbg_intlock_isset(void);
 extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, ndrx_debug_t *dbg_ptr);
 
 /* TPLOG: */
@@ -255,6 +255,12 @@ extern NDRX_API void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const 
 extern NDRX_API FILE *ndrx_fopen_dbg(const char *path, const char *mode, long line, const char *file, const char *func);
 extern NDRX_API int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *func);
 extern NDRX_API char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const char *func);
+
+
+/* Bootstrapping: */
+extern NDRX_API int ndrx_dbg_intlock_isset(void);
+extern NDRX_API void ndrx_dbg_intlock_set(void);
+extern NDRX_API void ndrx_dbg_intlock_unset(void);
 
 #ifdef	__cplusplus
 }

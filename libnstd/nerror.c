@@ -76,7 +76,8 @@ struct err_msg
     {NENOCONN,      "No Connection"}, /* 9 */
     {NELIMIT,       "Limit reached"}, /* 10 */
     {NEPLUGIN,      "Plugin error"}, /* 11 */
-    {NENOSPACE,     "No space to store output buffer"} /* 12 */
+    {NENOSPACE,     "No space to store output buffer"}, /* 12 */
+    {NEINVALKEY,    "Probably invalid encryption key"} /* 13 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

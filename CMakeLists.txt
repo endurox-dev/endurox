@@ -314,8 +314,9 @@ add_subdirectory (tmsrv) # Transaction Manager server for XA transactions
 add_subdirectory (tmqueue) # Persistant Queue server
 add_subdirectory (cpmsrv) # Client Process Monitor
 add_subdirectory (xadrv) # XA Drivers for RMs
-add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (cconfsrv) # Common-Config server
+add_subdirectory (plugins) # XA Drivers for RMs
+add_subdirectory (enctools) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing
 
 IF(DEFINE_DISABLEDOC)

@@ -74,11 +74,8 @@ typedef int (*ndrx_plugin_crypto_getkey_t)(char *keybuf, int keybuf_bufsz);
 
 struct ndrx_pluginbase {
     int plugins_loaded;
-    /* pointer to get encryption key function
-     * @param key_out  buffer to store key in
-     * @param key_out_bufsz buffer size of 'key_out'
-     */
-    int (*p_ndrx_crypto_getkey) (char *key_out, long key_out_bufsz);
+    /* pointer to get encryption key function */
+    ndrx_plugin_crypto_getkey_t p_ndrx_crypto_getkey;
     char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 };
 
