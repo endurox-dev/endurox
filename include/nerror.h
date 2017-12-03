@@ -54,7 +54,8 @@ extern "C" {
 #define NELIMIT            10 /* Limit reached */
 #define NEPLUGIN           11 /* Plugin error */
 #define NENOSPACE          12 /* No space */
-#define NMAXVAL            12 /* max error */
+#define NEINVALKEY         13 /* Invalid key (probably) */
+#define NMAXVAL            13 /* max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

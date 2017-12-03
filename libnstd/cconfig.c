@@ -238,6 +238,8 @@ exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
 #ifdef CCONFIG_ENABLE_DEBUG
         userlog("have config at slot [%d] [%s]", slot, config_resources[slot]);
 #endif
+        NDRX_LOG_EARLY(log_debug, "have config at slot [%d] [%s]", 
+                slot, config_resources[slot]);
         
         have_config = EXTRUE;
         if (EXSUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
@@ -322,6 +324,9 @@ expublic int ndrx_cconfig_load(void)
     /* protect against multi-threading */
     MUTEX_LOCK_V(M_load_lock);
     
+    /* Lock the debug... */
+    ndrx_dbg_intlock_set();
+    
     if (first)
     {
         if (NULL==G_cctag)
@@ -333,6 +338,8 @@ expublic int ndrx_cconfig_load(void)
         
         first = EXFALSE;
     }
+    
+    ndrx_dbg_intlock_unset();
     
     MUTEX_UNLOCK_V(M_load_lock);
     

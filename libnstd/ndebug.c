@@ -114,19 +114,24 @@ ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
 volatile int G_ndrx_debug_first = EXTRUE;
 volatile unsigned M_thread_nr = 0;
-exprivate int __thread M_is_initlock_owner = EXFALSE; /* for recursive logging calls */
+exprivate int __thread M_is_initlock_owner = 0; /* for recursive logging calls */
 MUTEX_LOCKDECL(M_dbglock);
 MUTEX_LOCKDECL(M_thread_nr_lock);
+MUTEX_LOCKDECL(M_memlog_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Reply the cached log to the real/initilaized logger
  * @param dbg logger (after init)
  */
-exprivate void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
+expublic void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
 {
     ndrx_memlogger_t *line, *tmp;
     
+    /* This shall be done by one thread only...
+     * Thus we need a lock.
+     */
+    MUTEX_LOCK_V(M_memlog_lock);
     DL_FOREACH_SAFE(dbg->memlog, line, tmp)
     {
         if (dbg->level <= dbg->level)
@@ -134,19 +139,70 @@ exprivate void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
             BUFFERED_PRINT_LINE(dbg, line->line)
         }
         
-        NDRX_FREE(line);
         DL_DELETE(dbg->memlog, line);
+        NDRX_FREE(line);
     }
+    MUTEX_UNLOCK_V(M_memlog_lock);
 }
 
 /**
  * Function returns true if current thread init lock owner
  * @return TRUE (we are performing init) / FALSE (we are not performing init)
  */
-expublic int ndrx_dbg_is_initlock_owrner(void)
+expublic int ndrx_dbg_intlock_isset(void)
 {
     return M_is_initlock_owner;
 }
+
+/**
+ * Sets init lock to us
+ */
+expublic void ndrx_dbg_intlock_set(void)
+{
+    M_is_initlock_owner++;
+}
+
+/**
+ * Unset (decrement) lock & reply logs if we are at the end.
+ */
+expublic void ndrx_dbg_intlock_unset(void)
+{   
+    M_is_initlock_owner--;
+    
+    if (M_is_initlock_owner < 0)
+    {
+        M_is_initlock_owner = 0;
+    }
+    
+    /*
+     * Reply memory based logs to the file.
+     * mem debugs are filled only if we are doing the init
+     * and the init was doing some debug (while the debug it self was not
+     * initialized).
+     */
+    if (0==M_is_initlock_owner)
+    {  
+        /* Check that logs are initialized (in case of call from 
+         * other bootstrap sources, with out call  */
+        NDRX_DBG_INIT_ENTRY;
+
+        if (NULL!=G_ubf_debug.memlog)
+        {
+            ndrx_dbg_reply_memlog(&G_ubf_debug);
+        }
+
+        if (NULL!=G_ndrx_debug.memlog)
+        {
+            ndrx_dbg_reply_memlog(&G_ndrx_debug);
+        }
+
+        if (NULL!=G_tp_debug.memlog)
+        {
+            ndrx_dbg_reply_memlog(&G_tp_debug);
+        }
+    }
+}
+
 /**
  * Initialize operating thread number.
  * note default is zero.
@@ -521,7 +577,8 @@ expublic void ndrx_init_debug(void)
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     ndrx_inicfg_t *cconfig = NULL;
     
-    M_is_initlock_owner = EXTRUE;
+    ndrx_dbg_intlock_set();
+    
     /*
      * init in declaration...
     memset(&G_ubf_debug, 0, sizeof(G_ubf_debug));
@@ -593,7 +650,7 @@ expublic void ndrx_init_debug(void)
         {
             /* no debug configuration set! */
             fprintf(stderr, "To control debug output, set debug"
-                            "config file path in $NDRX_DEBUG_CONF\n");
+                            "config file path in $NDRX_DEBUG_CONF\n");            
         }
     }
     else
@@ -654,28 +711,7 @@ expublic void ndrx_init_debug(void)
     
     G_ndrx_debug_first = EXFALSE;
     
-    M_is_initlock_owner = EXFALSE;
-    
-    /*
-     * Reply memory based logs to the file.
-     * mem debugs are filled only if we are doing the init
-     * and the init was doing some debug (while the debug it self was not
-     * initialized).
-     */
-    if (NULL!=G_ubf_debug.memlog)
-    {
-        ndrx_dbg_reply_memlog(&G_ubf_debug);
-    }
-    
-    if (NULL!=G_ndrx_debug.memlog)
-    {
-        ndrx_dbg_reply_memlog(&G_ndrx_debug);
-    }
-    
-    if (NULL!=G_tp_debug.memlog)
-    {
-        ndrx_dbg_reply_memlog(&G_tp_debug);
-    }
+    ndrx_dbg_intlock_unset();
     
 }
 
@@ -1050,11 +1086,16 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
             (void) vsnprintf(memline->line+len, sizeof(memline->line)-len, fmt, ap);
             va_end(ap);
             
+            
             /* Add line to the logger */
+            MUTEX_LOCK_V(M_memlog_lock);
             DL_APPEND(dbg_ptr->memlog, memline);
+            MUTEX_UNLOCK_V(M_memlog_lock);
+            
         }
     }
 }
+
 /**
  * Initialize debug library
  * Currently default level is to use maximum.

@@ -46,6 +46,7 @@
 #include "nstdutil.h"
 #include "ndebug.h"
 #include "userlog.h"
+#include "atmi_int.h"
 #include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -313,7 +314,11 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
     char *out;
     char *empty="";
     char *malloced;
-
+    char *pval;
+    char *tempbuf = NULL;
+    
+#define FUNCTION_SEPERATOR  '='
+    
     while (NULL!=(p=strstr(next, "${")))
     {
         p2=strstr(next, "\\${");
@@ -339,12 +344,77 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
         char *close =strchr(next, '}');
         if (NULL!=close)
         {
+            long bufsz;
             int cpylen = close-p-2;
             int envlen;
             /* do substitution */
             NDRX_STRNCPY(envnm, p+2, cpylen);
             envnm[cpylen] = EXEOS;
-            env = getenv(envnm);
+            
+            if (NULL==(pval=strchr(env, FUNCTION_SEPERATOR)))
+            {
+                env = getenv(envnm);
+            }
+            else
+            {
+                *pval=EXEOS;
+                pval++;
+                
+                if (0==(bufsz=strlen(pval)))
+                {
+                    userlog("Invalid encrypted data (zero) for: [%s] - fill empty", 
+                            envnm);
+                    out = empty;
+                }
+                else
+                {
+                    int err;
+                    tempbuf = NDRX_MALLOC(bufsz);
+                    
+                    if (NULL==tempbuf)
+                    {
+                        err = errno;
+                        userlog("Failed to allocate %ld bytes for decryption buffer: %s", 
+                                bufsz, strerror(errno));
+                        NDRX_LOG_EARLY(log_error, "Failed to allocate %ld bytes "
+                                "for decryption buffer: %s", 
+                                bufsz, strerror(errno));
+                        goto out;
+                    }
+                    
+                    /* So function is:  
+                     * - 'envnm'
+                     * and the value is 'p'
+                     * So syntax:
+                     * ${dec=<encrypted string>}
+                     */    
+                    if (0==strcmp(envnm, "dec"))
+                    {
+                        /* About to decrypt the value... of p 
+                         * space of the data will be shorter or the same size or smaller
+                         * encrypted block.
+                         */
+                        if (EXSUCCEED!=ndrx_crypto_dec_string(pval, tempbuf, bufsz))
+                        {
+                            userlog("Failed to decrypt [%s] string: %s",
+                                    pval, Nstrerror(Nerror));
+                            NDRX_LOG_EARLY(log_error, "Failed to decrypt [%s] string: %s",
+                                    pval, Nstrerror(Nerror));
+                            out = tempbuf;
+                        }
+                    }
+                    else
+                    {
+                        userlog("Unsupported substitution function: [%s] - skipping", 
+                                pval);
+                        NDRX_LOG_EARLY(log_error, "Failed to decrypt [%s] string: %s",
+                                pval, Nstrerror(Nerror));
+                        out = empty;
+                    }
+                    
+                } /* if data > 0 */
+            } /* if is function instead of env variable */
+            
             if (NULL!=env)
                 out = env;
             else
@@ -363,6 +433,10 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                 if (buf_size > 0 && 
                         strlen(str) + (cpylen+3 - envlen) > buf_size-1 /*incl EOS*/)
                 {
+                    if (NULL!=tempbuf)
+                    {
+                        NDRX_FREE(tempbuf);
+                    }
                     /* cannot continue it is buffer overrun! */
                     return str;
                 }
@@ -381,6 +455,9 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                 memmove(close+missing, close+1, strlen(close+1)+1);
                 memcpy(p, out, envlen);
             }
+            
+            /* free-up if temp buffer allocated. */
+            
             next = p+envlen;
         }
         else
@@ -388,8 +465,14 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
             /* just step forward... */
             next+=2;
         }
+        
+        if (NULL!=tempbuf)
+        {
+            NDRX_FREE(tempbuf);
+        }
     }
     
+out:
     /* replace '\\' -> '\'  */
     if (strstr(str, "\\"))
     {
