@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dlfcn.h>
 
 #include <ndrstandard.h>
 #include <expluginbase.h>
@@ -67,6 +68,65 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
     };
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Load single plugin
+ * @param name shared library name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_plugins_loadone(char *fname)
+{
+    int ret = EXSUCCEED;
+    void *handle;
+    ndrx_plugin_init_t *init;
+    long flags;
+    char provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+    
+    handle = dlopen(fname, RTLD_LOCAL | RTLD_NODELETE);
+    
+    if (NULL==handle)
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to load [%s]: %s", fname, dlerror());
+        EXFAIL_OUT(ret);
+    }
+    
+    /* init the plugin */
+    init = (ndrx_plugin_init_t *)dlsym(handle, NDRX_PLUGIN_INIT_SYMB);
+    
+    if (NULL==init)
+    {
+        NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] - symbol [%s] not found: %s",
+                    fname, NDRX_PLUGIN_INIT_SYMB, dlerror());
+        userlog("Invalid plugin [%s] - symbol [%s] not found: %s",
+                    fname, NDRX_PLUGIN_INIT_SYMB, dlerror());
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG_EARLY("About to call init: %p", init);
+    
+    flags = init(provider, sizeof(provider));
+    
+    if (EXFAIL==flags)
+    {
+        NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] init failed1", fname);
+        userlog("Invalid plugin [%s] init failed1", fname);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* now check which functionality plugin supports... */
+    
+    if (flags & NDRX_PLUGIN_FUNC_ENCKEY)
+    {
+        
+    }
+    
+out:
+    if (NULL!=handle)
+    {
+        dlclose(handle);
+    }
+    return ret;
+}
 
 /**
  * Load the plugins from the NDRX_PLUGINS - semicolon separated list of
@@ -114,6 +174,8 @@ expublic int ndrx_plugins_load(void)
         NDRX_LOG_EARLY(log_info, "About to load: [%s]", fname);
         
         /* TODO: Resolve symbols... */
+        
+        
         
         strtok_r (NULL, ";", &save_ptr);
     }
