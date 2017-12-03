@@ -38,8 +38,10 @@
 #include <ndrstandard.h>
 #include <expluginbase.h>
 #include <excrypto.h>
+#include <inttypes.h>
 
 #include "ndebug.h"
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* same as xatmi.h" CONF_NDRX_PLUGINS */
@@ -78,11 +80,12 @@ expublic int ndrx_plugins_loadone(char *fname)
 {
     int ret = EXSUCCEED;
     void *handle;
-    ndrx_plugin_init_t *init;
+    ndrx_plugin_init_t init;
+    ndrx_plugin_crypto_getkey_t crypto;
     long flags;
     char provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
     
-    handle = dlopen(fname, RTLD_LOCAL | RTLD_NODELETE);
+    handle = dlopen(fname, RTLD_LOCAL | RTLD_LAZY);
     
     if (NULL==handle)
     {
@@ -91,18 +94,18 @@ expublic int ndrx_plugins_loadone(char *fname)
     }
     
     /* init the plugin */
-    init = (ndrx_plugin_init_t *)dlsym(handle, NDRX_PLUGIN_INIT_SYMB);
+    init = (ndrx_plugin_init_t)dlsym(handle, NDRX_PLUGIN_INIT_SYMB);
     
     if (NULL==init)
     {
         NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] - symbol [%s] not found: %s",
-                    fname, NDRX_PLUGIN_INIT_SYMB, dlerror());
+                    fname, NDRX_PLUGIN_INIT_SYMB, dlerror());   
         userlog("Invalid plugin [%s] - symbol [%s] not found: %s",
                     fname, NDRX_PLUGIN_INIT_SYMB, dlerror());
         EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG_EARLY("About to call init: %p", init);
+    NDRX_LOG_EARLY(log_debug, "About to call init: %p", init);
     
     flags = init(provider, sizeof(provider));
     
@@ -115,13 +118,34 @@ expublic int ndrx_plugins_loadone(char *fname)
     
     /* now check which functionality plugin supports... */
     
+    NDRX_LOG_EARLY(log_info, "[%s] flags %lx", fname, flags);
+    
+    
     if (flags & NDRX_PLUGIN_FUNC_ENCKEY)
     {
+        crypto = (ndrx_plugin_crypto_getkey_t)dlsym(handle, NDRX_PLUGIN_CRYPTO_GETKEY_SYMB);
+    
+        if (NULL==init)
+        {
+            NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] - symbol [%s] not "
+                    "found (flags " PRIx64 "): %s",
+                    fname, NDRX_PLUGIN_FUNC_ENCKEY, flags, dlerror());
+            userlog("Invalid plugin [%s] - symbol [%s] not "
+                    "found (flags " PRIx64 "): %s",
+                    fname, NDRX_PLUGIN_FUNC_ENCKEY, flags, dlerror());
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG_EARLY(log_info, "Plugin [%s] provides crypto key function",
+                provider);
+        
+        ndrx_G_plugins.p_ndrx_crypto_getkey = crypto;
+        NDRX_STRCPY_SAFE(ndrx_G_plugins.ndrx_crypto_getkey_provider, provider);
         
     }
     
 out:
-    if (NULL!=handle)
+    if (EXSUCCEED!=ret && NULL!=handle)
     {
         dlclose(handle);
     }
@@ -149,14 +173,15 @@ expublic int ndrx_plugins_load(void)
     char *fname;
     char *save_ptr;
     
-    if (NULL==plugins)
+    if (NULL==plugins_env)
     {
-        NDRX_LOG_EARLY(log_debug, "%s: no plugins defined by %s", 
-                __func__, NDRX_PLUGINS_ENV);
+        NDRX_LOG_EARLY(log_info, "No plugins defined by %s env variable", 
+                NDRX_PLUGINS_ENV);
+        /* nothing to do... */
         goto out;
     }
     
-    /* Get the env and interate it over... */
+    /* Get the env and iterate it over... */
     
     plugins = strdup(plugins_env);
     
@@ -173,11 +198,13 @@ expublic int ndrx_plugins_load(void)
         
         NDRX_LOG_EARLY(log_info, "About to load: [%s]", fname);
         
-        /* TODO: Resolve symbols... */
+        /* Resolve symbols... */
+        if (EXSUCCEED!=ndrx_plugins_loadone(fname))
+        {
+            userlog("Failed to load [%s] plugin...", fname);
+        }
         
-        
-        
-        strtok_r (NULL, ";", &save_ptr);
+        p = strtok_r (NULL, ";", &save_ptr);
     }
     
 out:

@@ -69,6 +69,25 @@ Ensure(test_crypto_enc_string)
 }
 
 /**
+ * Test substitute functions
+ */
+Ensure(test_crypto_subst_func)
+{
+    char encdata[PATH_MAX];
+    char ecdata[PATH_MAX];
+    
+#define ENC_SUBST_STRING "Enduro/X"
+    
+    /* Encrypt "Enduro/X" */
+    
+    assert_equal(ndrx_crypto_enc_string(ENC_SUBST_STRING, encdata, sizeof(encdata)), 
+            EXSUCCEED);
+    
+    
+    
+}
+
+/**
  * Common suite entry
  * @return
  */

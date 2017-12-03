@@ -68,7 +68,7 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
  * Get the encryption key
  * @param keybuf
  * @param keybuf_bufsz
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_plugin_crypto_getkey(char *keybuf, int keybuf_bufsz)
 {

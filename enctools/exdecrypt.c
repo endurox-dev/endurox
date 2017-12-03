@@ -1,11 +1,11 @@
 /* 
-** Cryptography related
+** Decrypt string
 **
-** @file excrypto.h
+** @file exdecrypt.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** Copyright (C) 2017, Mavimax, Ltd. All Rights Reserved.
 ** This software is released under one of the following licenses:
 ** GPL or Mavimax's license for commercial use.
 ** -----------------------------------------------------------------------------
@@ -29,30 +29,58 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef EXCRYPTO_H
-#define	EXCRYPTO_H
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <sys/param.h>
+#include <unistd.h>
+#include <ctype.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-/*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
+
+#include <ndrstandard.h>
+#include <ndebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_ENCKEY_LEN         20 /* binary, no EOS */
-#define NDRX_ENC_BLOCK_SIZE     16
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API int ndrx_crypto_getkey_std(char *key_out, int key_out_bufsz);
-
+/**
+ * Main Entry point..
+ */
+int main(int argc, char** argv)
+{
+    int ret = EXSUCCEED;
+    char clrbuf[PATH_MAX];
+    int i;
     
-#ifdef	__cplusplus
+    /* pull in plugin loader.. */
+    if (argc <= 1)
+    {
+        fprintf(stderr, "usage: %s <string_to_encrypt>\n", argv[0]);
+        EXFAIL_OUT(ret);
+    }
+    
+    for (i=1; i<argc; i++)
+    {
+        NDRX_LOG(log_debug, "Decrypting [%s]", argv[i]);
+
+        if (EXSUCCEED!=ndrx_crypto_dec_string(argv[i], clrbuf, sizeof(clrbuf)))
+        {
+            NDRX_LOG(log_error, "Failed to decrypt string: %s", Nstrerror(Nerror));
+            fprintf(stderr, "Failed to decrypt string: %s\n", Nstrerror(Nerror));
+            EXFAIL_OUT(ret);
+        }
+
+        fprintf(stdout, "%s\n", clrbuf);
+    }
+    
+out:
+    NDRX_LOG(log_debug, "program terminates with: %s", 
+        EXSUCCEED==ret?"SUCCEED":"FAIL");
+    return ret;
 }
-#endif
-
-#endif	/* EXCRYPTO_H */
-
