@@ -504,8 +504,8 @@ fi;
 export TESTDIR=""$NDRX_APPHOME/atmitest/$TESTNAME""
 export PATH=$PATH:$TESTDIR
 
-xadmin killall atmi.sv1 2>/dev/null
-xadmin killall atmiclt1 2>/dev/null
+xadmin killall atmi.sv"+::prov.testid+@" 2>/dev/null
+xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
 
 # client timeout
 export NDRX_TOUT=10

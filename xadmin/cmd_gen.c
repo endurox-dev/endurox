@@ -69,6 +69,7 @@ extern const char G_resource_gen_go_client[];
 extern const char G_resource_gen_c_client[];
 extern const char G_resource_gen_c_server[];
 extern const char G_resource_gen_ubf_tab[];
+extern const char G_resource_gen_test_local[];
 
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
@@ -207,6 +208,7 @@ expublic int cmd_gen_load_scripts(void)
         || EXSUCCEED!=reg_cmd("c server", G_resource_gen_c_server, NULL)
         || EXSUCCEED!=reg_cmd("c client", G_resource_gen_c_client, NULL)
         || EXSUCCEED!=reg_cmd("ubf tab", G_resource_gen_ubf_tab, NULL)
+        || EXSUCCEED!=reg_cmd("test local", G_resource_gen_test_local, NULL)
        )
     {
         EXFAIL_OUT(ret);

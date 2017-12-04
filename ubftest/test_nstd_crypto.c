@@ -74,17 +74,26 @@ Ensure(test_crypto_enc_string)
 Ensure(test_crypto_subst_func)
 {
     char encdata[PATH_MAX];
-    char ecdata[PATH_MAX];
+    char fmt[PATH_MAX];
+    int i;
     
 #define ENC_SUBST_STRING "Enduro/X"
     
-    /* Encrypt "Enduro/X" */
-    
-    assert_equal(ndrx_crypto_enc_string(ENC_SUBST_STRING, encdata, sizeof(encdata)), 
-            EXSUCCEED);
-    
-    
-    
+    for (i=0; i < 100; i++)
+    {
+        /* Encrypt "Enduro/X" */
+
+        assert_equal(ndrx_crypto_enc_string(ENC_SUBST_STRING, encdata, sizeof(encdata)), 
+                EXSUCCEED);
+
+        snprintf(fmt, sizeof(fmt), "Hello ${dec=%s} from C", encdata);
+
+        NDRX_LOG(log_debug, "String with decrypt func: [%s]", fmt);
+
+        ndrx_str_env_subs_len(fmt, sizeof(fmt));
+
+        assert_string_equal(fmt, "Hello Enduro/X from C");
+    }
 }
 
 /**
@@ -101,6 +110,7 @@ TestSuite *ubf_nstd_crypto(void)
     */
     
     add_test(suite, test_crypto_enc_string);
-
+    add_test(suite, test_crypto_subst_func);
+            
     return suite;
 }
