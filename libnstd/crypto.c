@@ -44,6 +44,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <arpa/inet.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
