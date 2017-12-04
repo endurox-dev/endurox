@@ -60,6 +60,7 @@
 #include "nstd_tls.h"
 #include "userlog.h"
 #include "utlist.h"
+#include <expluginbase.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
