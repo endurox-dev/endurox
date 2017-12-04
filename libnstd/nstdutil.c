@@ -351,9 +351,14 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
             NDRX_STRNCPY(envnm, p+2, cpylen);
             envnm[cpylen] = EXEOS;
             
-            if (NULL==(pval=strchr(env, FUNCTION_SEPERATOR)))
+            if (NULL==(pval=strchr(envnm, FUNCTION_SEPERATOR)))
             {
                 env = getenv(envnm);
+                
+                if (NULL!=env)
+                    out = env;
+                else
+                    out = empty;
             }
             else
             {
@@ -362,8 +367,8 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                 
                 if (0==(bufsz=strlen(pval)))
                 {
-                    userlog("Invalid encrypted data (zero) for: [%s] - fill empty", 
-                            envnm);
+                    userlog("Invalid encrypted data (zero len, maybe invalid sep? not =?) "
+                            "for: [%s] - fill empty", envnm);
                     out = empty;
                 }
                 else
@@ -400,8 +405,9 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                                     pval, Nstrerror(Nerror));
                             NDRX_LOG_EARLY(log_error, "Failed to decrypt [%s] string: %s",
                                     pval, Nstrerror(Nerror));
-                            out = tempbuf;
+                            out = empty;
                         }
+                        out = tempbuf;
                     }
                     else
                     {
@@ -415,10 +421,7 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                 } /* if data > 0 */
             } /* if is function instead of env variable */
             
-            if (NULL!=env)
-                out = env;
-            else
-                out = empty;
+
 
             envlen = strlen(out);
             
