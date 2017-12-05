@@ -1,6 +1,6 @@
 #!/bin/bash
 ## 
-## @(#) Test encrypt/decrypt functionality... - test launcher
+## @(#) Test encryption - test launcher
 ##
 ## @file run.sh
 ## 
@@ -48,13 +48,104 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
+xadmin killall atmi.sv43 2>/dev/null
 xadmin killall atmiclt43 2>/dev/null
 
 # client timeout
 export NDRX_TOUT=10
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
+function go_out {
+    echo "Test exiting with: $1"
+    xadmin killall atmi.sv43 2>/dev/null
+    xadmin killall atmiclt43 2>/dev/null
+    
+    popd 2>/dev/null
+    exit $1
+}
+
 rm *.log
+
+
+ENCSTR=""
+
+#
+# Test standard encryption
+# We test internal key with external plugin key
+#
+for i in 1 2
+do
+    if [ "X$i" == "X2" ]; then
+        export NDRX_PLUGINS=libcryptohost.so
+    fi
+
+    CLR="hello Test $i"
+
+    ENCSTR=`exencrypt "$CLR"`
+    RET=$?
+
+    if [ "$RET" -ne "0" ]; then
+            echo "Failed to encrypt..."
+            go_out -3
+    fi
+
+    echo "Encrypted string: [$ENCSTR]"
+
+    if [ "Xhello Test" == "X$ENCSTR" ]; then
+            echo "ENCSTR must not be equal to non encrypted value!!!"
+            go_out -4
+    fi
+
+
+    DECSTR=`exdecrypt $ENCSTR`
+    RET=$?
+
+    if [ "$RET" -ne "0" ]; then
+            echo "Failed to decrypt..."
+            go_out -5
+    fi
+
+    echo "Decrypted string: [$DECSTR] (clear: [$CLR])"
+
+    if [ "Xhello Test $i" != "X$DECSTR" ]; then
+            echo "DECSTR Must be equal to clear value, but got [$DECSTR]"
+            go_out -6
+    fi
+done
+
+unset NDRX_PLUGINS
+
+#
+# Now if we try to decryp the ENCSTR it should fail or value shall not be equal
+# to clear string, because we are not using cryptohost but default built in
+# crypto key function.
+#
+
+DECSTR=`exdecrypt $ENCSTR`
+RET=$?
+
+echo "Decrypted value (with different key): [$DECSTR]"
+
+if [ "$RET" -eq "0" ] && [ "X$DECSTR" == "Xhello Test 2" ]; then
+    echo "ERROR ! value shall not be decrypted successfully with different key!"
+    go_out -7
+fi
+
+#
+# Export plugin again. Now we will export encrypted string to the global
+# section of the ini file. And this this env variable shall be readable ok
+# from the client process
+#
+export NDRX_PLUGINS=libcryptohost.so
+
+echo "[@global]" > test.conf
+echo "TEST_ENV_PARAM=\${dec=$ENCSTR}" >> test.conf
+
+#
+# Export CC Config
+#
+export NDRX_CCONFIG=`pwd`/test.conf
+
 
 (./atmiclt43 2>&1) > ./atmiclt43.log
 
@@ -63,12 +154,8 @@ RET=$?
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
-	RET=-2
+	go_out -2
 fi
 
-xadmin killall atmiclt43 2>/dev/null
-
-popd 2>/dev/null
-
-exit $RET
+go_out $RET
 

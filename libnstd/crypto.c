@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -56,6 +57,7 @@
 #include <expluginbase.h>
 #include <exaes.h>
 #include <exbase64.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IV_INIT {   0xab, 0xcc, 0x1b, 0xc2, \
@@ -374,14 +376,31 @@ out:
 expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
 {
     int ret = EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    size_t bufsz = sizeof(buf);
+    /*char buf[NDRX_MSGSIZEMAX];  have to allocate buffer dynamically -> NDRX_MSGSIZEMAX 
+     * might not be known at init stage (reading ini)  */
     long len = strlen(input);
-    uint32_t *len_ind = (uint32_t *)buf;
+    char *buf = NULL;
+    size_t bufsz = len;
+    uint32_t *len_ind;
     long data_size;
     
-    
     API_ENTRY;
+    
+    if (NULL==(buf = NDRX_MALLOC(bufsz)))
+    {
+        int err = errno;
+        
+        NDRX_LOG_EARLY(log_error, "%s: Failed to allocate %ld bytes: %s",
+                __func__, len, strerror(err));
+        userlog("%s: Failed to allocate %ld bytes: %s",
+                __func__, len, strerror(err));
+        
+        _Nset_error_fmt(NESYSTEM, "%s: Failed to allocate %ld bytes: %s",
+                __func__, len, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    len_ind = (uint32_t *)buf;
     
 #ifdef CRYPTODEBUG
     NDRX_LOG(log_debug, "%s, output buf %p, olen=%ld input len: %ld", 
@@ -392,7 +411,6 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     /* convert base64 to bin */
     if (NULL==ndrx_base64_decode(input, len, &bufsz, buf))
     {
-        
         _Nset_error_fmt(NEFORMAT, "%s, ndrx_base64_decode failed (input len: %ld", 
                 __func__, len);
         NDRX_LOG_EARLY(log_error, "%s, ndrx_base64_decode failed (input len: %ld", 
@@ -448,5 +466,11 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     }
     
 out:
+
+    if (NULL!=buf)
+    {
+        NDRX_FREE(buf);
+    }
+
     return ret;
 }

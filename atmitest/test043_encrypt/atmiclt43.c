@@ -53,28 +53,34 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
+/**
  * Do the test call to the server
  */
-int main(int argc, char** argv) {
-
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
-    int i;
-    int ret=EXSUCCEED;
+int main(int argc, char** argv)
+{
+    int ret = EXSUCCEED;
+    char *e;
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+#define EXPECTED_VAL    "hello Test 2"
+    if (EXSUCCEED!=tpinit(NULL))
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
-
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        NDRX_LOG(log_error, "TESTERROR ! Failed to init!");
+        EXFAIL_OUT(ret);
+    }
+    
+    e = getenv("TEST_ENV_PARAM");
+    
+    if (NULL==e)
     {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        NDRX_LOG(log_error, "TESTERROR ! [TEST_ENV_PARAM] env variable not present (NULL)!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(e, EXPECTED_VAL))
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Expected [%s] but got [%s]!",
+                EXPECTED_VAL, e);
+        EXFAIL_OUT(ret);
     }
     
 out:

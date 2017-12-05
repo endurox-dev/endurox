@@ -159,7 +159,7 @@ expublic int ndrx_dbg_intlock_isset(void)
  * Sets init lock to us
  */
 expublic void ndrx_dbg_intlock_set(void)
-{
+{   
     M_is_initlock_owner++;
 }
 
@@ -588,9 +588,6 @@ expublic void ndrx_init_debug(void)
     */
     
     G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
-    
-    /* Thus here we need to load a plugins if any... */
-    ndrx_plugins_load();
     
     cconfig = ndrx_get_G_cconfig();
     
