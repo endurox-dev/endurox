@@ -84,6 +84,7 @@ add_subdirectory (test039_tpbroadcast)
 add_subdirectory (test040_typedview)
 add_subdirectory (test041_bigmsg)
 add_subdirectory (test042_bignet)
+add_subdirectory (test043_encrypt)
 
 ################################################################################
 # Master test case driver

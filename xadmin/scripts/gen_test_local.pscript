@@ -203,10 +203,11 @@ extern ""C"" {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
+/**
  * Do the test call to the server
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
     UBFH *p_ub = (UBFH *)tpalloc(""UBF"", NULL, 56000);
     long rsplen;
@@ -440,8 +441,7 @@ set_target_properties(atmiclt"+::prov.testid+@" PROPERTIES LINK_FLAGS ""$ENV{MYL
 //
 		if ("n"==::prov.dom1 && "n"==::prov.dom2 && !::prov.writeFile(::prov.debug, 
 
-@"
-* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx.log
+@"* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx.log
 atmiclt"+::prov.testid+@" file=${TESTDIR}/atmiclt"+::prov.testid+@".log
 atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
 
@@ -512,7 +512,7 @@ export NDRX_TOUT=10
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 function go_out {
-    echo "Test exiting with: $1"
+    echo ""Test exiting with: $1""
     xadmin killall atmi.sv"+::prov.testid+@" 2>/dev/null
     xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
     

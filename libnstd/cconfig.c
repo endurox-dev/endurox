@@ -304,11 +304,15 @@ out:
             *cfg = NULL;
         }
     }
-
+    
     if (EXSUCCEED==ret && is_internal)
     {
         G_tried_to_load = EXTRUE;
     }
+
+    /* Add some debug on config load */
+    NDRX_LOG_EARLY(log_debug, "%s: ret: %d is_internal: %d G_tried_to_load: %d",
+            __func__, ret, is_internal, G_tried_to_load);
 
     return ret;
 }
@@ -321,27 +325,37 @@ expublic int ndrx_cconfig_load(void)
     /* this might be called from debug... */
     static int first = EXTRUE;
     static int first_ret = EXSUCCEED;
-    /* protect against multi-threading */
-    MUTEX_LOCK_V(M_load_lock);
-    
-    /* Lock the debug... */
-    ndrx_dbg_intlock_set();
     
     if (first)
     {
-        if (NULL==G_cctag)
-        {
-            G_cctag = getenv(NDRX_CCTAG);
-        }
-
-        first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
+        /* protect against multi-threading */
+        MUTEX_LOCK_V(M_load_lock);
         
-        first = EXFALSE;
+        /* Lock the debug... */
+        ndrx_dbg_intlock_set();
+        
+        /* if still is not set... */
+        if (first)
+        {
+            /* basically at this point we must load the plugins.. */
+            ndrx_plugins_load();
+            
+            if (NULL==G_cctag)
+            {
+                G_cctag = getenv(NDRX_CCTAG);
+            }
+
+            first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
+
+            first = EXFALSE;
+        }
+        
+        /* Do this outside the lock... */
+        ndrx_dbg_intlock_unset();
+        
+        MUTEX_UNLOCK_V(M_load_lock);
+        
     }
-    
-    ndrx_dbg_intlock_unset();
-    
-    MUTEX_UNLOCK_V(M_load_lock);
     
     return first_ret;
 }
