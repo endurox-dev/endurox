@@ -48,6 +48,11 @@ extern "C" {
 /*---------------------------Prototypes---------------------------------*/
 
 extern NDRX_API int ndrx_crypto_getkey_std(char *key_out, int key_out_bufsz);
+extern NDRX_API int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen);
+extern NDRX_API int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *olen);
+extern NDRX_API int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen);
+extern NDRX_API int ndrx_crypto_enc_string(char *input, char *output, long olen);
+extern NDRX_API int ndrx_crypto_dec_string(char *input, char *output, long olen);
 
     
 #ifdef	__cplusplus
