@@ -511,6 +511,16 @@ xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
 export NDRX_TOUT=10
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
+function go_out {
+    echo "Test exiting with: $1"
+    xadmin killall atmi.sv"+::prov.testid+@" 2>/dev/null
+    xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
+    
+    popd 2>/dev/null
+    exit $1
+}
+
+
 rm *.log
 
 (./atmi.sv"+::prov.testid+@" -i123 2>&1) > ./atmisv"+::prov.testid+@".log &
@@ -522,15 +532,10 @@ RET=$?
 # Catch is there is test error!!!
 if [ ""X`grep TESTERROR *.log`"" != ""X"" ]; then
 	echo ""Test error detected!""
-	RET=-2
+	go_out -2
 fi
 
-xadmin killall atmi.sv"+::prov.testid+@" 2>/dev/null
-xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
-
-popd 2>/dev/null
-
-exit $RET
+go_out $RET
 
 "))
 		{
