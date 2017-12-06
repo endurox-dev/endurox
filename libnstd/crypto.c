@@ -119,7 +119,7 @@ out:
 
 /**
  * Get final key
- * @param sha1key, buffer size NDRX_ENCKEY_LEN
+ * @param sha1key, buffer size NDRX_ENCKEY_BUFSZ
  * @return EXSUCCEED/EXFAIL
  */
 exprivate int ndrx_get_final_key(char *sha1key)
@@ -150,7 +150,7 @@ exprivate int ndrx_get_final_key(char *sha1key)
     EXSHA1( sha1key, password, strlen(password) );
     
 #ifdef CRYPTODEBUG
-    NDRX_DUMP(log_debug, "SHA1 key", sha1key, NDRX_ENCKEY_LEN);
+    NDRX_DUMP(log_debug, "SHA1 key", sha1key, NDRX_ENCKEY_BUFSZ);
 #endif
     
 out:
@@ -168,7 +168,7 @@ out:
 exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *olen)
 {
     int ret = EXSUCCEED;
-    char sha1key[NDRX_ENCKEY_LEN+1];
+    char sha1key[NDRX_ENCKEY_BUFSZ];
     long size_estim;
     uint32_t *len_ind = (uint32_t *)output;
     uint8_t  iv[]  = IV_INIT;
@@ -248,7 +248,7 @@ expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
 expublic int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *olen)
 {
     int ret = EXSUCCEED;
-    char sha1key[NDRX_ENCKEY_LEN];
+    char sha1key[NDRX_ENCKEY_BUFSZ];
     uint32_t *len_ind = (uint32_t *)input;
     uint8_t  iv[]  = IV_INIT;
     long data_size = ntohl(*len_ind);

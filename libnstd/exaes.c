@@ -518,6 +518,8 @@ static void XorWithIv(uint8_t* buf)
   }
 }
 
+//Warning ! This will try to read full block !!!
+//Thus input must be with exact size !!!!
 void EXAES_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
 {
   uintptr_t i;
@@ -535,7 +537,9 @@ void EXAES_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, 
     Iv = (uint8_t*)iv;
   }
 
-  for (i = 0; i < length; i += BLOCKLEN)
+
+  //Fix for the mem read overflow
+  for (i = 0; i < length-extra; i += BLOCKLEN)
   {
     memcpy(output, input, BLOCKLEN);
     XorWithIv(output);
