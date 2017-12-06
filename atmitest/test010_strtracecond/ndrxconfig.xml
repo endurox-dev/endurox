@@ -46,17 +46,17 @@
 	</defaults>
 	<servers>
         <!-- This will be bad one, killed.. -->
-		<server name="atmisv_010">
-			<srvid>1341</srvid>
-			<sysopt>-e ${TESTDIR}/atmisv1.log -r</sysopt>
-            <appopt>BAD</appopt>
+                <server name="atmisv_010">
+                        <srvid>1341</srvid>
+                        <sysopt>-e ${TESTDIR}/atmisv1.log -r</sysopt>
+                        <appopt>BAD</appopt>
 		</server>
-        <server name="atmisv_010">
-            <min>0</min>
-            <max>1</max>
+                <server name="atmisv_010">
+                        <min>0</min>
+                        <max>1</max>
 			<srvid>2411</srvid>
 			<sysopt>-e ${TESTDIR}/atmisv2.log -r</sysopt>
-            <appopt>OK</appopt>
+                        <appopt>OK</appopt>
 		</server>
 	</servers>
 </endurox>
