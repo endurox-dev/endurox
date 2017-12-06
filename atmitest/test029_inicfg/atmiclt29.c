@@ -100,7 +100,11 @@ int main(int argc, char** argv)
     {
         out = NULL;
         
-        system("/bin/cp C_test_template.ini C_test.ini");
+        if (EXSUCCEED!=system("/bin/cp C_test_template.ini C_test.ini"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to copy ini file!!", strerror(errno));
+            EXFAIL_OUT(ret);       
+        }
         
         if (NULL==(cfg=ndrx_inicfg_new()))
         {
@@ -111,7 +115,7 @@ int main(int argc, char** argv)
         /* any sections */
         if (EXSUCCEED!=ndrx_inicfg_add(cfg, "./cfg_folder1", NULL))
         {
-             NDRX_LOG(log_error, "TESTERROR: failed to add resource: %s", Nstrerror(Nerror));
+            NDRX_LOG(log_error, "TESTERROR: failed to add resource: %s", Nstrerror(Nerror));
             EXFAIL_OUT(ret);       
         }
 
