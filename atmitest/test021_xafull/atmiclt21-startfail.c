@@ -151,7 +151,7 @@ out:
 
     tpterm();
     
-    NDRX_LOG(log_error, "Existing with %d", ret);
+    NDRX_LOG(log_error, "Exiting with %d", ret);
             
     return ret;
 }
