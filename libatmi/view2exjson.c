@@ -45,6 +45,7 @@
 #include <ubf.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
+#include <exbase64.h>
 
 #include "tperror.h"
 

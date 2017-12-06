@@ -46,6 +46,7 @@
 #include <Exfields.h>
 #include <typed_buf.h>
 #include <qcommon.h>
+#include <exbase64.h>
 
 #include "tperror.h"
 /*---------------------------Externs------------------------------------*/

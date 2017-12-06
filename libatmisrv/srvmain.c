@@ -300,8 +300,16 @@ int ndrx_init(int argc, char** argv)
                     /* Redirect stdout & stderr to error file */
                     close(1);
                     close(2);
-                    dup(fileno(f));
-                    dup(fileno(f));
+
+                    if (EXFAIL==dup(fileno(f)))
+                    {
+                        userlog("%s: Failed to dup(1): %s", __func__, strerror(errno));
+                    }
+
+                    if (EXFAIL==dup(fileno(f)))
+                    {
+                        userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
+                    }
                 }
                 else
                 {

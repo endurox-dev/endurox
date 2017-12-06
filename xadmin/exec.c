@@ -240,8 +240,15 @@ expublic int start_daemon_idle(void)
             /* Redirect stdout, stderr to log file */
             close(1);
             close(2);
-            dup(fileno(f));
-            dup(fileno(f));
+            if (EXFAIL==dup(fileno(f)))
+            {
+                userlog("%s: Failed to dup(1): %s", __func__, strerror(errno));
+            }
+
+            if (EXFAIL==dup(fileno(f)))
+            {
+                userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
+            }
         }
 
 

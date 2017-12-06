@@ -48,6 +48,7 @@
 #include <cconfig.h>
 #include <nerror.h>
 #include <userlog.h>
+#include <expluginbase.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* #define CCONFIG_ENABLE_DEBUG */

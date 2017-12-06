@@ -37,6 +37,7 @@
 #include <ndrstandard.h>
 #include <string.h>
 #include <ndebug.h>
+#include <excrypto.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
 
