@@ -48,6 +48,7 @@
 #include "userlog.h"
 #include "atmi_int.h"
 #include <errno.h>
+#include <excrypto.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -791,7 +792,11 @@ expublic int ndrx_file_regular(char *path)
 expublic char * ndrx_getline(char *buf, int bufsz)
 {
     int len;
-    fgets(buf, bufsz, stdin);
+
+    if (NULL==fgets(buf, bufsz, stdin))
+    {
+        userlog("%s: fgets fail: %s", __func__, strerror(errno));
+    }
     
     len = strlen(buf);
     
