@@ -168,7 +168,7 @@ out:
 exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *olen)
 {
     int ret = EXSUCCEED;
-    char sha1key[NDRX_ENCKEY_LEN];
+    char sha1key[NDRX_ENCKEY_LEN+1];
     long size_estim;
     uint32_t *len_ind = (uint32_t *)output;
     uint8_t  iv[]  = IV_INIT;
