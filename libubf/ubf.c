@@ -642,7 +642,7 @@ expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
  * @param p_ub_src
  * @return
  */
-int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
+expublic int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
 {
     int ret=EXSUCCEED;
     UBF_header_t *src_h = (UBF_header_t *)p_ub_src;
@@ -714,7 +714,7 @@ int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
  * @param p_ub
  * @return
  */
-long Bused (UBFH *p_ub)
+expublic long Bused (UBFH *p_ub)
 {
     long ret=EXFAIL;
     char fn[] = "Bused";
@@ -741,7 +741,7 @@ long Bused (UBFH *p_ub)
  * @param bfldid
  * @return 
  */
-BFLDID Bmkfldid (int fldtype, BFLDID bfldid)
+expublic BFLDID Bmkfldid (int fldtype, BFLDID bfldid)
 {
 
     BFLDID ret = fldtype << EFFECTIVE_BITS;
@@ -756,7 +756,7 @@ BFLDID Bmkfldid (int fldtype, BFLDID bfldid)
  * @param bfldid
  * @return
  */
-BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid)
+expublic BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid)
 {
     API_ENTRY;
 
@@ -774,7 +774,7 @@ BFLDOCC Boccur (UBFH * p_ub, BFLDID bfldid)
  * Check the field presence
  * API version - no error checking.
  */
-int Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
+expublic int Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 {
     API_ENTRY;
     
