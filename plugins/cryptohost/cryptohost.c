@@ -37,6 +37,7 @@
 #include <ndebug.h>
 #include <nstdutil.h>
 #include <expluginbase.h>
+#include <sys_unix.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
