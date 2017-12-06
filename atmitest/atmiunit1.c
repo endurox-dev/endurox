@@ -363,6 +363,14 @@ Ensure(test042_bignet)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test043_encrypt)
+{
+    int ret;
+    ret=system_dbg("test043_encrypt/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -437,6 +445,8 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test042_bignet);
 #endif
 #endif
+
+    add_test(suite,test043_encrypt);
             
     return suite;
 }
