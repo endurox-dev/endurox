@@ -133,7 +133,8 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->state_changed = SANITY_CNT_START;
             /* Assume we inter in running state, thus reset ping timer */
             p_pm->pingtimer = SANITY_CNT_START; /* reset rsp timer */
-            p_pm->rsptimer = SANITY_CNT_IDLE;
+            p_pm->rspstwatch = SANITY_CNT_START;
+            p_pm->pingstwatch = SANITY_CNT_IDLE;
             p_pm->killreq = EXFALSE;
             
             p_pm->exec_seq_try = 0; /* Reset counter as we are good */
@@ -148,7 +149,8 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->state_changed = SANITY_CNT_START;
             /* Assume we inter in running state, thus reset ping timer */
             p_pm->pingtimer = SANITY_CNT_START;
-            p_pm->rsptimer = SANITY_CNT_IDLE; /* reset rsp timer */
+            p_pm->rspstwatch = SANITY_CNT_START; /* reset rsp timer */
+            p_pm->pingstwatch = SANITY_CNT_IDLE;
             p_pm->killreq = EXFALSE;
             
             remove_startfail_process(p_pm_chk, NULL, NULL);
@@ -185,7 +187,8 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         
         /* reset ping timer */
         p_pm->pingtimer = SANITY_CNT_START;
-        p_pm->rsptimer = SANITY_CNT_IDLE; /* restart rsp timer */
+        p_pm->rspstwatch = SANITY_CNT_START; /* restart rsp timer */
+        p_pm->pingstwatch = SANITY_CNT_IDLE;
         
         /* Bridge stuff: */
         p_pm->flags = srvinfo->srvinfo.flags; /* save flags */

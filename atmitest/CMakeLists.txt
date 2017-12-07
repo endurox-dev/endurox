@@ -85,6 +85,7 @@ add_subdirectory (test040_typedview)
 add_subdirectory (test041_bigmsg)
 add_subdirectory (test042_bignet)
 add_subdirectory (test043_encrypt)
+add_subdirectory (test044_ping)
 
 ################################################################################
 # Master test case driver

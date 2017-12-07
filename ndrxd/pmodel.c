@@ -872,7 +872,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
         
         /* Reset PM timer */
-        p_pm->rsptimer = SANITY_CNT_IDLE;
+        p_pm->rspstwatch = SANITY_CNT_START;
         
         /* Set requested state to started */
         p_pm->reqstate=NDRXD_PM_RUNNING_OK;
@@ -993,7 +993,9 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     p_pm->state = NDRXD_PM_STOPPING;
     p_pm->state_changed = SANITY_CNT_START;
     /* Reset response timer */
-    p_pm->rsptimer = SANITY_CNT_IDLE;
+    p_pm->rspstwatch = SANITY_CNT_START;
+    /* Reset ping too */
+    p_pm->pingstwatch = SANITY_CNT_IDLE;
     
 
     if (NULL!=cmd_call && NULL!=p_shutdown_progress)

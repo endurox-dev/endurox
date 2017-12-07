@@ -93,7 +93,7 @@ expublic int do_respawn_check(void)
 		    NDRX_LOG(6, "respawn param is off -> continue with next...");
 		    continue;
 	    }
-            delta = p_pm->rsptimer;
+            delta = p_pm->rspstwatch;
             NDRX_LOG(6, "Respawn delta: %ld", delta);
             
             /* Check is it time for startup? */
