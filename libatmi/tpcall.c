@@ -893,7 +893,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     NDRX_LOG(log_debug, "%s: enter", __func__);
 
     flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
-                        * because we do want anser back! */
+                        * because we do want answer back! */
     
     if (flags & TPTRANSUSPEND)
     {
