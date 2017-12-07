@@ -21,24 +21,40 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Call the XATMI service by given 'svc' name asynchronously. The 'data' is optional input XATMI buffer. If it is not a NULL, then it must be allocated with *tpcalloc()* call, 'len' is used for buffer types such *CARRAY*, where buffer length is not described by type. If call succeeds, the function return the call descriptor. With call descriptor it is possible later to receive the response by using *tpgetrply()* If *TPNOTRAN* is not specified and current process is in global transaction, then system will make destination process run in same destination process.
+Call the XATMI service by given 'svc' name asynchronously. The 'data' is 
+optional input XATMI buffer. If it is not a NULL, then it must be allocated 
+with *tpcalloc()* call, 'len' is used for buffer types such *CARRAY*, where 
+buffer length is not described by type. If call succeeds, the function return 
+the call descriptor. With call descriptor it is possible later to receive the 
+response by using *tpgetrply()* If *TPNOTRAN* is not specified and current 
+process is in global transaction, then system will make destination process 
+run in same destination process.
 
 *Valid flags*
 
-*TPNOTRAN* Do not call service in transaction mode. This is effective in case if caller process is running in transaction mode, but destination process shall not run in the same global transaction
+*TPNOTRAN* Do not call service in transaction mode. This is effective in 
+case if caller process is running in transaction mode, but destination 
+process shall not run in the same global transaction
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+*TPSIGRSTRT* Restart the system call in progress if interrupted by 
+signal handler. This affects only underlaying mq_* function calls.
+
+*TPNOBLOCK* In case of target service queue is full, do not wait on queue, but
+return error. The error code for this situation is *TPEBLOCK*.
 
 RETURN VALUE
 ------------
-On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+with *tperrno* set to indicate the error.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
-*TPEINVAL* Invalid parameter is given to function. Either service name is NULL or flags does not allow to change the value.
+*TPEINVAL* Invalid parameter is given to function. Either service name is 
+NULL or flags does not allow to change the value.
 
 *TPENOENT* No service ('svc' parameter) advertised in system.
 
@@ -46,11 +62,16 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
 
-*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+*TPESVCERR* System level service failure. Server died during the message 
+presence in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
+
+*TPEBLOCK* Service queue was full and *TPNOBLOCK* flag was specified.
 
 EXAMPLE
 -------
@@ -58,7 +79,7 @@ See *atmitest/test001_basiccall/atmiclt1.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
