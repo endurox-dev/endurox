@@ -131,7 +131,8 @@ expublic int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int 
         /* Well... we should not count the time unless the
          * ping has been issued.
          *  */
-        p_pm->rsptimer = SANITY_CNT_IDLE;
+        p_pm->rspstwatch = SANITY_CNT_START;
+        p_pm->pingstwatch = SANITY_CNT_IDLE;
     }
     else
     {

@@ -1322,7 +1322,8 @@ expublic int test_config(int reload, command_call_t * call,
                 new->reqstate = old->reqstate;
                 new->num_term_sigs = old->num_term_sigs;
                 new->last_sig = old->last_sig;
-                new->rsptimer = old->rsptimer;
+                new->rspstwatch = old->rspstwatch;
+                new->pingstwatch = old->pingstwatch;
                 new->killreq = old->killreq;
                 /* Flags were missing after reload! */
                 new->flags = old->flags;
