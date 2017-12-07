@@ -60,7 +60,7 @@
  */
 int main(int argc, char** argv) {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024*1024*1024+1024); /* + hdr */
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, TEST_MSGSIZE+1024); /* + hdr */
     long rsplen;
     int i, j;
     int ret=EXSUCCEED;
