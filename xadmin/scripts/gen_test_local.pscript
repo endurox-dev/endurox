@@ -586,11 +586,11 @@ go_out $RET
         have not completed initialization, sec -->
         <start_max>20</start_max>
         <!--
-        Ping server in every X seconds (minimum step is <sanity>).
+        Ping server in every X sanity units
         -->
         <pingtime>9</pingtime>
         <!--
-        Max time in seconds in which server must respond.
+        Max number of sanity units in which server must respond.
         The granularity is sanity time.
         -->
         <ping_max>40</ping_max>
@@ -670,12 +670,11 @@ go_out $RET
         have not completed initialization, sec -->
         <start_max>20</start_max>
         <!--
-        Ping server in every X seconds (minimum step is <sanity>).
+        Ping server in every X sanity checks
         -->
         <pingtime>9</pingtime>
         <!--
-        Max time in seconds in which server must respond.
-        The granularity is sanity time.
+        Max number of sanity units in which server must respond.
         -->
         <ping_max>40</ping_max>
         <!--
@@ -832,9 +831,10 @@ function go_out {
     xadmin stop -y
     xadmin down -y
 
+"+("y"==::prov.dom2?@"
     set_dom2;
     xadmin stop -y
-    xadmin down -y
+    xadmin down -y":"")+@"
 
     # If some alive stuff left...
     xadmin killall atmiclt"+::prov.testid+@"

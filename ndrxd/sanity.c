@@ -512,9 +512,11 @@ exprivate int check_long_startup(void)
     DL_FOREACH(G_process_model, p_pm)
     {
         /* PM Counter increment! */
-        if (SANITY_CNT_IDLE!=p_pm->rsptimer)
+        p_pm->rspstwatch++;
+		/* Increment ping stopwatch (if was issued) */
+        if (SANITY_CNT_IDLE!=p_pm->pingstwatch)
         {
-            p_pm->rsptimer++;
+            p_pm->pingstwatch++;
         }
         
         if (p_pm->conf->pingtime)
@@ -531,10 +533,10 @@ exprivate int check_long_startup(void)
             /* Reset ping timer */
             p_pm->pingtimer = SANITY_CNT_START;
             
-            /* start to watch the response time: */
-            if (SANITY_CNT_IDLE==p_pm->rsptimer)
+            /* start to watch the ping response time: */
+            if (SANITY_CNT_IDLE==p_pm->pingstwatch)
             {
-                p_pm->rsptimer = SANITY_CNT_START;
+                p_pm->pingstwatch = SANITY_CNT_START;
             }
             
             /* Send ping command to server */
@@ -544,21 +546,22 @@ exprivate int check_long_startup(void)
         /* If still starting */
         if (p_pm->autokill)
         {
-            NDRX_LOG(6, "proc: %s/%d rsp: %ld sty ping timer: %ld sty", 
+            NDRX_LOG(6, "proc: %s/%d ping stopwatch: %ld, rsp: %ld sty ping timer: %ld sty", 
                     p_pm->binary_name, p_pm->srvid,
-                    p_pm->rsptimer, 
+                    p_pm->pingstwatch,
+                    p_pm->rspstwatch,
                     p_pm->pingtimer);
             if (!p_pm->killreq)
             {
                 if (NDRXD_PM_STARTING==p_pm->state &&
-                    (delta=p_pm->rsptimer) > p_pm->conf->start_max)
+                    (delta=p_pm->rspstwatch) > p_pm->conf->start_max)
                 {
                     NDRX_LOG(log_error, "Startup too long - "
                                                     "requesting kill");
                     p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->pingtime &&
-                    (delta=p_pm->rsptimer) > p_pm->conf->ping_max)
+                    (delta=p_pm->pingstwatch) > p_pm->conf->ping_max)
                 {
                     NDRX_LOG(log_error, "Ping response not in time - "
                                         "requesting kill (ping_time=%d delta=%d ping_max=%d)",
@@ -566,7 +569,7 @@ exprivate int check_long_startup(void)
                     p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_STOPPING==p_pm->state &&
-                    (delta = p_pm->rsptimer) > p_pm->conf->end_max)
+                    (delta = p_pm->rspstwatch) > p_pm->conf->end_max)
                 {
                     NDRX_LOG(log_error, "Server did not exit in time "
                                                             "- requesting kill");

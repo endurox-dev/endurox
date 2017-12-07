@@ -68,13 +68,13 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     *send_size += (sizeof(command_reply_ppm_t) - sizeof(command_reply_t));
 
     /* Copy data to reply structure */
-    strcpy(ppm_info->binary_name, p_pm->binary_name);
+    NDRX_STRCPY_SAFE(ppm_info->binary_name, p_pm->binary_name);
     ppm_info->srvid = p_pm->srvid;
     ppm_info->state = p_pm->state;
     ppm_info->reqstate = p_pm->reqstate;
     ppm_info->autostart = p_pm->autostart;   
     ppm_info->exec_seq_try = p_pm->exec_seq_try;
-    ppm_info->last_startup = p_pm->rsptimer;
+    ppm_info->last_startup = p_pm->rspstwatch;
     ppm_info->num_term_sigs = p_pm->num_term_sigs;
     ppm_info->last_sig = p_pm->last_sig;
     ppm_info->autokill = p_pm->autokill;

@@ -127,28 +127,29 @@ struct pm_node
     conf_server_node_t *conf; /* <<< This can be NULL?  */
     char binary_name[MAXTIDENT+1]; /* Name of the binary*/
     int srvid;
-    char clopt[PATH_MAX - 128]; /* take off -i xxxxx PID and some key  */
-    long state;             /* process state code (current)  */
-    long reqstate;          /* Requested state               */
-    short autostart;        /* Start automatically after "start" cmd */
-    int exec_seq_try;       /* Sequental start try           */
-    long rsptimer;           /* Sanity cycle counter for (start/ping/stop)     */
-    long pingtimer;    /* Timer which counts ping intervals              */
-    ndrx_stopwatch_t pingroundtrip; /* Ping  roundtrip tipe         */
-    int pingseq;            /* Last ping sequence sent       */
+    char clopt[PATH_MAX - 128]; /* take off -i xxxxx PID and some key       */
+    long state;             /* process state code (current)                 */
+    long reqstate;          /* Requested state                              */
+    short autostart;        /* Start automatically after "start" cmd        */
+    int exec_seq_try;       /* Sequental start try                          */
+    long rspstwatch;        /* Sanity cycle counter for (start/ping/stop)   */
+    long pingstwatch;       /* Ping stopwatch  (measures stanity cycles)    */
+    long pingtimer;    /* Timer which counts ping intervals                 */
+    ndrx_stopwatch_t pingroundtrip; /* Ping  roundtrip tipe                 */
+    int pingseq;            /* Last ping sequence sent                      */
             
-    int num_term_sigs;      /* Number of times to send term sig, before -9 */
-    long last_sig;          /* Time when signal was sent     */
-    int autokill;           /* Kill the process if not started in time */
+    int num_term_sigs;      /* Number of times to send term sig, before -9  */
+    long last_sig;          /* Time when signal was sent                    */
+    int autokill;           /* Kill the process if not started in time      */
     int killreq;            /* process kill is requested (long startup, 
-                             * no ping, long shutdown) */
-    pid_t pid;            /* process PID                   */
-    long state_changed;     /* Timer for state changed       */
-    pm_node_svc_t   *svcs;  /* list of services              */
-    int flags;              /* Flags sent by server info     */
-    short   nodeid;         /* other node id, if this is bridge */
-    int reloadonchange_cksum; /* Checksum code of the binary */
-    char binary_path[PATH_MAX+1]; /* Path were binary lives... */
+                             * no ping, long shutdown)                      */
+    pid_t pid;              /* process PID                                  */
+    long state_changed;     /* Timer for state changed                      */
+    pm_node_svc_t   *svcs;  /* list of services                             */
+    int flags;              /* Flags sent by server info                    */
+    short   nodeid;         /* other node id, if this is bridge             */
+    int reloadonchange_cksum; /* Checksum code of the binary                */
+    char binary_path[PATH_MAX+1]; /* Path were binary lives...              */
     
     /* Linked list */
     pm_node_t *prev;
