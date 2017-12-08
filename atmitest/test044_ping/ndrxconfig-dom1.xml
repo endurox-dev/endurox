@@ -52,7 +52,7 @@
         <end_max>30</end_max>
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
-        <killtime>20</killtime>
+        <killtime>3</killtime>
     </defaults>
     <servers>
     <server name="atmi.sv44">
