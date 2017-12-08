@@ -892,9 +892,6 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     
     NDRX_LOG(log_debug, "%s: enter", __func__);
 
-    flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
-                        * because we do want answer back! */
-    
     if (flags & TPTRANSUSPEND)
     {
         memset(&tranid, 0, sizeof(tranid));
@@ -911,8 +908,15 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
         ret=EXFAIL;
         goto out;
-    }
-    else if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
+    } 
+
+    /* Support #259 Do this only after tpacall, because we might do
+     * non blocked requests, but responses we way in blocked mode.
+     */
+    flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
+                        * because we do want answer back! */
+    
+    if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
             p_tranid)))
     {
         NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
