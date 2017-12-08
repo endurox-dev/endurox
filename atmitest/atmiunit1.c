@@ -370,6 +370,12 @@ Ensure(test043_encrypt)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test044_ping)
+{
+    int ret;
+    ret=system_dbg("test044_ping/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
 
 TestSuite *atmi_test_all(void)
 {
@@ -447,6 +453,7 @@ TestSuite *atmi_test_all(void)
 #endif
 
     add_test(suite,test043_encrypt);
+    add_test(suite,test044_ping);
             
     return suite;
 }
