@@ -54,7 +54,7 @@ export NDRX_TOUT=10
 #
 # Domain 1 - here client will live
 #
-set_dom1() {
+function set_dom1 {
     echo "Setting domain 1"
     . ../dom1.sh
     export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
@@ -64,7 +64,7 @@ set_dom1() {
 }
 
 
-get_pid() {
+function get_pid {
 
     local retpid=""
     if [ "$(uname)" == "FreeBSD" ]; then
@@ -73,7 +73,7 @@ get_pid() {
             retpid=`ps -ef | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
     fi
 
-    return $retpid
+    echo $retpid
 }
 
 #
