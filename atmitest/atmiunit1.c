@@ -377,6 +377,13 @@ Ensure(test044_ping)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test045_tpcallnoblock)
+{
+    int ret;
+    ret=system_dbg("test045_tpcallnoblock/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -454,6 +461,7 @@ TestSuite *atmi_test_all(void)
 
     add_test(suite,test043_encrypt);
     add_test(suite,test044_ping);
+    add_test(suite,test045_tpcallnoblock);
             
     return suite;
 }
