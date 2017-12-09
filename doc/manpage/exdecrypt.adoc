@@ -1,0 +1,75 @@
+EXDECRYPT(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+exdecrypt - Decrypt the string value
+
+
+SYNOPSIS
+--------
+*exdecrypt* STRING [STRING...]
+
+
+DESCRIPTION
+-----------
+Program decrypts one or many *STRING* value passed on command line. 
+In the result program prints to *stdout* clear string value. 
+The debug is configured in standard way as for all other binaries via
+'ndrxdebug.conf' or Common Config.
+
+The encrypted value of the string can be made by *exencrypt(8)* utility.
+
+Encryption keys which are used for string encryption are either by using built
+in algorithm (username+hostname). Or from vendor specific loaded plugin.
+
+The encryption principles allows to encrypt the sensitive data and store on disk
+in PCI/DSS compatible way. And *exdecrypt* can be used for scripts to get in
+runtime the clear values needed.
+
+In case of decrypt failure, logs needs to be analyzed. There could be problems
+with base64 string or invalid encryption key. In case decrypt process founds
+the binary zero (0x00 byte) in output string, error is generated automatically,
+because this value if forbidden in string decryption.
+
+EXAMPLE
+-------
+
+Single string decryption:
+
+--------------------------------------------------------------------------------
+$ exdecrypt AAAAC196L/d4Sj4OC8cSZh2492I=
+HELLO WORLD
+--------------------------------------------------------------------------------
+
+
+Two string decryption:
+
+--------------------------------------------------------------------------------
+$ exdecrypt AAAABbBtKbtIv9BXe1SioTYi5xw= AAAABRaPhXxibr6ZktcZ6S71i50=
+HELLO
+WORLD
+--------------------------------------------------------------------------------
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*exencrypt(3)*, *ex_env(5)*, *ndrxdebug.conf(5)*
+
+COPYING
+-------
+(C) Mavimax, ltd.
+
