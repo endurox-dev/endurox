@@ -92,10 +92,10 @@ EXAMPLE
 -------
 See *atmitest/test040_typedview* for sample usage.
 
-
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
+
 
 SEE ALSO
 --------
