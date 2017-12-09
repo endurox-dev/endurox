@@ -22,8 +22,9 @@ The debug is configured in standard way as for all other binaries via
 
 The encrypted value of the string can be made by *exencrypt(8)* utility.
 
-Encryption keys which are used for string encryption are either by using built
-in algorithm (username+hostname). Or from vendor specific loaded plugin.
+Encryption keys which are used for string encryption are provided either by using
+built-in algorithm (username+hostname) hashed with SHA1.
+Or from vendor specific loaded plugin.
 
 The encryption principles allows to encrypt the sensitive data and store on disk
 in PCI/DSS compatible way. And *exdecrypt* can be used for scripts to get in
