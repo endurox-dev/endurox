@@ -86,6 +86,7 @@ add_subdirectory (test041_bigmsg)
 add_subdirectory (test042_bignet)
 add_subdirectory (test043_encrypt)
 add_subdirectory (test044_ping)
+add_subdirectory (test045_tpcallnoblock)
 
 ################################################################################
 # Master test case driver

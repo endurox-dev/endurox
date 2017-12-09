@@ -53,10 +53,13 @@ with destination process. This is suitable in cases when *XA* adapter does not
 allow multiple processes/sessions to have active same transaction 
 in the same transaction branch.
 
+*TPNOBLOCK* In case of target service request queue is full, do not wait on queue, but
+return error. The error code for this situation is *TPEBLOCK*. This affects only
+request part of the call. This flag does not affect waiting for response from server.
+
 RETURN VALUE
 ------------ 
 set to indicate the error.
-
 
 ERRORS
 ------
@@ -77,6 +80,8 @@ or flags does not allow to change the value.
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+
+*TPEBLOCK* Service request queue was full and *TPNOBLOCK* flag was specified.
 
 EXAMPLE
 -------
