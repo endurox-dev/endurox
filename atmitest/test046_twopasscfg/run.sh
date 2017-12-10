@@ -148,6 +148,16 @@ if [ "X$VTEST3" != "XVTEST3=Enduro/X is middleware" ]; then
     go_out -1
 fi
 
+
+#
+# TODO: Test what variables sees ATMI46 server
+#
+
+#
+# Update config global section
+# and check what server sees now. The values must be changed..
+#
+
 RET=0
 
 if [[ "X$RET" != "X0" ]]; then
