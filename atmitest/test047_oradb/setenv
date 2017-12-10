@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export PATH=$PATH:/u01/app/oracle/product/11.2.0/dbhome_1/bin
+export ORACLE_SID=ROCKY
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/u01/app/oracle/product/11.2.0/dbhome_1/lib
+
