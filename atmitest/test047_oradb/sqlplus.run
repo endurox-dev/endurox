@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sqlplus endurotest/endurotest1@ROCKY
