@@ -77,7 +77,7 @@ static char* strncpy0(char* dest, const char* src, size_t size)
  * Needs to do some buffering...
  */
 int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
-                     void* user, void *user2)
+                     void* user, void *user2, void *user3)
 {
     /* Uses a fair bit of stack (use heap instead if you need to) */
 #if INI_USE_STACK
@@ -139,7 +139,7 @@ line_buffered:
         else if (*prev_name && *start && start > line) {
             /* Non-blank line with leading whitespace, treat as continuation
                of previous name's value (as per Python configparser). */
-            if (!handler(user, user2, section, prev_name, start) && !error)
+            if (!handler(user, user2, user3, section, prev_name, start) && !error)
                 error = lineno;
         }
 #endif
@@ -220,7 +220,7 @@ line_buffered:
                     else
                     {
                         /* Send value to user and continue with next line */
-                        if (!handler(user, user2, section, name, value) && !error)
+                        if (!handler(user, user2, user3, section, name, value) && !error)
                         {
                             error = lineno;
                         }
@@ -241,13 +241,13 @@ line_buffered:
                 }
                 
                 /* so if we get here, this was last line, process it accordingly.. */
-                if (!handler(user, user2, section, name, value) && !error)
+                if (!handler(user, user2, user3, section, name, value) && !error)
                 {
                     error = lineno;
                 }
                 
 #else
-                if (!handler(user, user2, section, name, value) && !error)
+                if (!handler(user, user2, user3, section, name, value) && !error)
                     error = lineno;
 #endif
                 
@@ -274,13 +274,15 @@ line_buffered:
 }
 
 /* See documentation in header file. */
-int ini_parse_file(FILE* file, ini_handler handler, void* user, void *user2)
+int ini_parse_file(FILE* file, ini_handler handler, void* user, void *user2, 
+        void *user3)
 {
-    return ini_parse_stream((ini_reader)fgets, file, handler, user, user2);
+    return ini_parse_stream((ini_reader)fgets, file, handler, user, user2, user3);
 }
 
 /* See documentation in header file. */
-int ini_parse(const char* filename, ini_handler handler, void* user, void *user2)
+int ini_parse(const char* filename, ini_handler handler, void* user, 
+        void *user2, void *user3)
 {
     FILE* file;
     int error;
@@ -288,7 +290,7 @@ int ini_parse(const char* filename, ini_handler handler, void* user, void *user2
     file = NDRX_FOPEN(filename, "r");
     if (!file)
         return -1;
-    error = ini_parse_file(file, handler, user, user2);
+    error = ini_parse_file(file, handler, user, user2, user3);
     NDRX_FCLOSE(file);
     return error;
 }
