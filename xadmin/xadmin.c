@@ -728,7 +728,9 @@ expublic int ndrx_init(int need_init)
             EXFAIL_OUT(ret);
         }
         
-        /* Add config file */
+        /* Add config file 
+         * Looks like global section does not needs to be parsed here.
+         */
         if (EXSUCCEED!=ndrx_inicfg_add(cfg, G_xadmin_config_file, NULL))
         {
              NDRX_LOG(log_error, "Failed to add resource [%s]: %s", 
