@@ -55,30 +55,17 @@
 void TESTSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
-    char testbuf[1024];
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
-
-    /* Just print the buffer */
-    Bprint(p_ub);
     
-    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, getenv("VTEST3"), 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
                  Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
-    }
-    
-    if (0!=strcmp(testbuf, VALUE_EXPECTED))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
-            VALUE_EXPECTED, testbuf);
-        ret=EXFAIL;
-        goto out;
-    }
-        
+    }        
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
