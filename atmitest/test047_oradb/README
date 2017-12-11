@@ -10,7 +10,7 @@ To perform Oracle DB tests, needs following configuration:
 
 SQL> @tables.sql
 
-5) Configure database settings in run.sh, NDRX_XA_*. Note that demo data is fillyed with: SID=ROCKY user=endurotest pass=endurotest1
+5) Configure database settings in run.sh, NDRX_XA_*. Note that demo data is filled with: SID=ROCKY user=endurotest pass=endurotest1
 
 6) run off ./run.sh
 
