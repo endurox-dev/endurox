@@ -384,6 +384,14 @@ Ensure(test045_tpcallnoblock)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test046_twopasscfg)
+{
+    int ret;
+    ret=system_dbg("test046_twopasscfg/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -462,6 +470,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test043_encrypt);
     add_test(suite,test044_ping);
     add_test(suite,test045_tpcallnoblock);
+    add_test(suite,test046_twopasscfg);
             
     return suite;
 }

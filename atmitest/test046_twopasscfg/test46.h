@@ -37,8 +37,6 @@ extern "C" {
 #endif
 
 
-#define VALUE_EXPECTED "Hello EnduroX"
-
 #ifdef  __cplusplus
 }
 #endif
