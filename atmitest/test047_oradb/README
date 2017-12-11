@@ -17,3 +17,6 @@ SQL> @tables.sql
 
 To build the all this, firstly -DENABLE_TEST47=ON must be added to cmake configuration. But before build you have to run 1) and 2).
 otherwise build will not see "proc" PRO*C precompiler.
+
+This project folder also inlcudes pcscfg.cfg file for faster manual configuration (/u01/app/oracle/product/11.2.0/dbhome_1/precomp/admin/pcscfg.cfg).
+pcscfg.cfg needs to be adjusted too for target platform and installed in proper place.
