@@ -86,6 +86,13 @@ add_subdirectory (test041_bigmsg)
 add_subdirectory (test042_bignet)
 add_subdirectory (test043_encrypt)
 add_subdirectory (test044_ping)
+add_subdirectory (test045_tpcallnoblock)
+add_subdirectory (test046_twopasscfg)
+
+IF (ENABLE_TEST47)
+add_subdirectory (test047_oradb)
+ENDIF()
+
 
 ################################################################################
 # Master test case driver
