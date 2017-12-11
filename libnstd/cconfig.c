@@ -331,7 +331,7 @@ exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal,
 
         /* Loop over and load the stuff... */
         EXHASH_ITER(hh, keyvals, keyvals_iter, keyvals_iter_tmp)
-        {
+        {   
 #ifdef CCONFIG_ENABLE_DEBUG
             userlog("settings %s=%s", keyvals_iter->key, keyvals_iter->val);
 #endif
@@ -405,6 +405,9 @@ expublic int ndrx_cconfig_load(void)
             if (NULL==G_cctag)
             {
                 G_cctag = getenv(NDRX_CCTAG);
+                
+                NDRX_LOG_EARLY(log_debug, "CC tag set to: [%s]", 
+                        (G_cctag?G_cctag:""));
             }
 
             first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
