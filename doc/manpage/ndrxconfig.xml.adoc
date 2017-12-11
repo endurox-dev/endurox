@@ -332,8 +332,29 @@ DEBUG CONFIGURATION FILE SYNTAX
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
     The default is *0*.
 	
+VARIABLE SUBSTITUTION
+---------------------
+
+Several parameters in the ndrxconfig.xml file are processed via substitution 
+engine. Engine processes puts the environment variables or special functions
+in the placeholders. Placeholder is defined as ${ENV_VARIABLE} for environment
+variables and ${FUNC=[PARAMETER]} for functions. The value can be escaped with 
+\${some_value}.
+
+Functions are processed in case if statement in brackets contains equal sign '='.
+As the sign is not allowed for environment variables, Enduro/X uses it to 
+distinguish between env variable and function.
+
+Following *FUNC* (functions) are defined:
+
+*dec*::
+    Decrypt base64 string in *PARAMETER* and replace the placeholder with the
+    value. To get encrypted value, it is possible to use *exencrypt(8)* tool.
+
+
 EXAMPLE
 -------
+
 Sample configuration:
 ---------------------------------------------------------------------
 <?xml version="1.0" ?>
@@ -395,7 +416,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*,
+*exencrytp(8)*
 
 COPYING
 -------

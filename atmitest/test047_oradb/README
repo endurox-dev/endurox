@@ -1,0 +1,22 @@
+To perform Oracle DB tests, needs following configuration:
+
+1) Configure settings in setenv
+
+2) Load the settings with $ source setenv
+
+3) Create database user
+
+4) Configure settings in sqlplus.run. When SQLPLUS is running, execute:
+
+SQL> @tables.sql
+
+5) Configure database settings in run.sh, NDRX_XA_*. Note that demo data is filled with: SID=ROCKY user=endurotest pass=endurotest1
+
+6) run off ./run.sh
+
+
+To build the all this, firstly -DENABLE_TEST47=ON must be added to cmake configuration. But before build you have to run 1) and 2).
+otherwise build will not see "proc" PRO*C precompiler.
+
+This project folder also inlcudes pcscfg.cfg file for faster manual configuration (/u01/app/oracle/product/11.2.0/dbhome_1/precomp/admin/pcscfg.cfg).
+pcscfg.cfg needs to be adjusted too for target platform and installed in proper place.

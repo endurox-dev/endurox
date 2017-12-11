@@ -1,7 +1,7 @@
 /* 
-** Enduro/X common-config
+** Test tpcall noblock operation - client
 **
-** @file cconfig.h
+** @file atmiclt45.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,64 +29,85 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef _CCONFIG_H
-#define	_CCONFIG_H
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <sys/stat.h>
-#include <ndrxdcmn.h>
-#include <stdint.h>
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
 #include <nstopwatch.h>
-#include <exhash.h>
-#include <sys_unix.h>
-#include <inicfg.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test45.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_CCONFIG5 "NDRX_CCONFIG5"
-#define NDRX_CCONFIG4 "NDRX_CCONFIG4"
-#define NDRX_CCONFIG3 "NDRX_CCONFIG3"
-#define NDRX_CCONFIG2 "NDRX_CCONFIG2"
-#define NDRX_CCONFIG1 "NDRX_CCONFIG1"
-#define NDRX_CCONFIG  "NDRX_CCONFIG"
-    
-#define NDRX_CCTAG "NDRX_CCTAG" /* common-config tag */
-    
-#define NDRX_CONF_SECTION_GLOBAL "@global"
-#define NDRX_CONF_SECTION_DEBUG  "@debug"
-#define NDRX_CONF_SECTION_QUEUE  "@queue"
-    
-    
-#define NDRX_CCTAG_MAX      32          /* max len of cctag */
-    
-/*
- * Command for cconfig
- */
-#define NDRX_CCONFIG_CMD_GET        'g' /* get config (default) */
-#define NDRX_CCONFIG_CMD_LIST       'l' /* list config */
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Do the test call to the server
+ */
+int main(int argc, char** argv)
+{
+
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
     
-extern NDRX_API int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out);
-extern NDRX_API int ndrx_cconfig_load(void);
-extern NDRX_API ndrx_inicfg_t *ndrx_get_G_cconfig(void);
-extern NDRX_API int ndrx_cconfig_reload(void);
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+    
+    /* firstly we will do tpacall to fill the queue */
+    while (EXFAIL!=tpacall("TESTSV", (char *)p_ub, 0L, TPNOBLOCK))
+    {
+        
+    }
+    
+    if (tperrno!=TPEBLOCK)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpacall other failure: %s - must be TPEBLOCK!",
+                tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* then then these must give TPEBLOCK */
+    for (i=0; i<1000; i++)
+    {
+        if (EXFAIL != tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, 
+                &rsplen,TPNOBLOCK))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpcall must fail!");
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        if (tperrno!=TPEBLOCK)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpcall other failure: %s - must be TPEBLOCK!",
+                    tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+    }
+    
+out:
+    tpterm();
+    fprintf(stderr, "Exit with %d\n", ret);
 
-/* for user: */
-extern NDRX_API int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg);
-extern NDRX_API int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, 
-        ndrx_inicfg_section_keyval_t **out);
-
-#ifdef	__cplusplus
+    return ret;
 }
-#endif
-
-#endif	/* _CCONFIG_H */
-

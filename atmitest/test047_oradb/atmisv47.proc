@@ -1,0 +1,321 @@
+/* 
+** Oracle PRO*C Sample database server
+**
+** @file atmisv47.proc
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifndef ORA_PROC
+#include <ndebug.h>
+#endif
+
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include "test47.h"
+
+#include <sqlca.h> 
+
+
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Read "account" balance from DB
+ * This will work with out transactions (as read only)
+ */
+void BALANCE (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    EXEC SQL BEGIN DECLARE SECTION;
+    long h_balance;
+    char h_accnum[1024];
+    EXEC SQL END DECLARE SECTION;
+    
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, h_accnum, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    NDRX_LOG(log_info, "Search for account: %s", h_accnum);
+    
+    EXEC SQL SELECT balance INTO :h_balance
+             FROM accounts
+             WHERE accnum = :h_accnum;
+    
+    NDRX_LOG(log_info, "Result: %d", sqlca.sqlcode);
+    
+    if (sqlca.sqlcode != 0)
+    {
+        NDRX_LOG(log_error, "Failed to select: %d: %.70s", 
+                sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&h_balance, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set h_balance: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * This service will make an account
+ */
+void ACCOPEN (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    int tran_started=EXFALSE;
+    EXEC SQL BEGIN DECLARE SECTION;
+    long h_balance;
+    char h_accnum[1024];
+    EXEC SQL END DECLARE SECTION;
+    
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    if (!tpgetlev())
+    {
+        /* start a transaction */
+        if (EXSUCCEED!=tpbegin(60, 0))
+        {
+            NDRX_LOG(log_error, "Failed to start transaction: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        tran_started=EXTRUE;
+    }
+    
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, h_accnum, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXFAIL==Bget(p_ub, T_LONG_FLD, 0, (char *)&h_balance, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get h_balance: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    NDRX_LOG(log_info, "Opening account: [%s] balance: [%ld]", 
+            h_accnum, h_balance);
+    
+    
+    EXEC SQL INSERT INTO accounts(accnum, balance)
+        VALUES(:h_accnum, :h_balance);
+    
+    NDRX_LOG(log_info, "Result: %d", sqlca.sqlcode);
+    
+    if (sqlca.sqlcode != 0)
+    {
+        NDRX_LOG(log_error, "Failed to select: %d: %.70s", 
+                sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+        
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno))
+                ret=EXFAIL;
+            }
+        }
+        
+        if (EXFAIL==ret)
+        {
+            if (EXSUCCEED!=tpabort(0))
+            {
+                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno))
+            }
+        }
+    }
+
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+
+/**
+ * This service will make an account
+ */
+void ACCCLEAN (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    int tran_started=EXFALSE;
+    EXEC SQL BEGIN DECLARE SECTION;
+    long h_balance;
+    char h_accnum[1024];
+    EXEC SQL END DECLARE SECTION;
+    
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    if (!tpgetlev())
+    {
+        /* start a transaction */
+        if (EXSUCCEED!=tpbegin(60, 0))
+        {
+            NDRX_LOG(log_error, "Failed to start transaction: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        tran_started=EXTRUE;
+    }
+    
+    EXEC SQL DELETE FROM ACCOUNTS;
+    
+    NDRX_LOG(log_info, "Result: %d", sqlca.sqlcode);
+    
+    if (sqlca.sqlcode != 0 && sqlca.sqlcode != 100)
+    {
+        NDRX_LOG(log_error, "Failed to delete: %d: %.70s", 
+                sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+        
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno))
+                ret=EXFAIL;
+            }
+        }
+        
+        if (EXFAIL==ret)
+        {
+            if (EXSUCCEED!=tpabort(0))
+            {
+                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno))
+            }
+        }
+    }
+
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                NULL,
+                0L,
+                0L);
+}
+
+
+/**
+ * Do initialization
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret = EXSUCCEED;
+    NDRX_LOG(log_debug, "tpsvrinit called");
+    
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "Failed to open DB!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("BALANCE", BALANCE))
+    {
+        NDRX_LOG(log_error, "Failed to initialize BALANCE!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("ACCOPEN", ACCOPEN))
+    {
+        NDRX_LOG(log_error, "Failed to initialize ACCOPEN!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("ACCCLEAN", ACCCLEAN))
+    {
+        NDRX_LOG(log_error, "Failed to initialize ACCCLEAN!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return EXSUCCEED;
+}
+
+/**
+ * Do de-initialization
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+    
+    tpclose();
+    
+}
+

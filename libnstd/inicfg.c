@@ -60,14 +60,14 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-exprivate ndrx_inicfg_t * _ndrx_inicfg_new(void);
+exprivate ndrx_inicfg_t * _ndrx_inicfg_new(int load_global_env);
 exprivate int _ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with);
 exprivate void cfg_mark_not_loaded(ndrx_inicfg_t *cfg, char *resource);
 exprivate void cfg_remove_not_marked(ndrx_inicfg_t *cfg);
 exprivate ndrx_inicfg_section_t * cfg_section_new(ndrx_inicfg_section_t **sections_h, char *section);
 exprivate ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sections_h, char *section);
-exprivate int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
-                   const char* value);
+exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr, 
+        const char* section, const char* name, const char* value);
 exprivate int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with);
 exprivate ndrx_inicfg_file_t* cfg_single_file_get(ndrx_inicfg_t *cfg, char *fullname);
@@ -95,7 +95,7 @@ exprivate void _ndrx_inicfg_free(ndrx_inicfg_t *cfg);
  * Create new config handler
  * @return ptr to config handler or NULL
  */
-exprivate ndrx_inicfg_t * _ndrx_inicfg_new(void)
+exprivate ndrx_inicfg_t * _ndrx_inicfg_new(int load_global_env)
 {
     ndrx_inicfg_t *ret = NULL;
     
@@ -108,6 +108,10 @@ exprivate ndrx_inicfg_t * _ndrx_inicfg_new(void)
 #endif
         goto out;
     }
+    
+    ret->load_global_env = load_global_env;
+    
+    NDRX_LOG_EARLY(log_debug, "%s: load_global_env: %d", __func__, load_global_env);
     
 out:
 #ifdef INICFG_ENABLE_DEBUG
@@ -259,12 +263,13 @@ exprivate ndrx_inicfg_section_t * cfg_section_get(ndrx_inicfg_section_t **sectio
  * @param value
  * @return 
  */
-exprivate int handler(void* cf_ptr, void *vsection_start_with, const char* section, const char* name,
-                   const char* value)
+exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr, 
+        const char* section, const char* name, const char* value)
 {
     int ret = 1;
     int value_len;
     ndrx_inicfg_file_t *cf = (ndrx_inicfg_file_t*)cf_ptr;
+    ndrx_inicfg_t *cfg = (ndrx_inicfg_t *)cfg_ptr;
     char **section_start_with = (char **)vsection_start_with;
     char *p;
     int needed = EXTRUE;
@@ -431,7 +436,8 @@ exprivate int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
 #endif
 
     /* start to parse the file by inih */
-    if (EXSUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, (void *)section_start_with)))
+    if (EXSUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, 
+            (void *)section_start_with, (void *)cfg)))
     {
         _Nset_error_fmt(NEINVALINI, "%s: Invalid ini file: [%s] error on line: %d", 
                 fn, fullname, ret);
@@ -1129,7 +1135,6 @@ expublic int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
     return _ndrx_inicfg_reload(cfg, section_start_with);
 }
 
-
 /**
  * Create new config handler
  * @return ptr to config handler or NULL
@@ -1137,10 +1142,18 @@ expublic int ndrx_inicfg_reload(ndrx_inicfg_t *cfg, char **section_start_with)
 expublic ndrx_inicfg_t * ndrx_inicfg_new(void)
 {
     API_ENTRY;
-    return _ndrx_inicfg_new();
+    return _ndrx_inicfg_new(EXFALSE);
 }
 
-
+/**
+ * Parametrised version of config new
+ * @return ptr to config handler or NULL
+ */
+expublic ndrx_inicfg_t * ndrx_inicfg_new2(int load_global_env)
+{
+    API_ENTRY;
+    return _ndrx_inicfg_new(load_global_env);
+}
 
 /**
  * API version of _ndrx_inicfg_load_single_file
@@ -1153,8 +1166,6 @@ expublic int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
     return _ndrx_inicfg_load_single_file(cfg, resource, fullname, section_start_with);
     
 }
-
-
 
 /**
  * API version of _ndrx_inicfg_update_single_file

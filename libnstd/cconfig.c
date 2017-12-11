@@ -65,8 +65,16 @@ exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL,
                         NDRX_CONF_SECTION_DEBUG, 
                         NDRX_CONF_SECTION_QUEUE, 
                         NULL};
+
+/* for first pass load only global! */
+exprivate char *M_sections_first_pass[] = {NDRX_CONF_SECTION_GLOBAL,
+                        NULL};
+
 MUTEX_LOCKDECL(M_load_lock);
 /*---------------------------Prototypes---------------------------------*/
+
+exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal, 
+        char **section_start_with);
 
 /**
  * Split up the CCTAG (by tokens)
@@ -170,10 +178,61 @@ expublic int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
 }
 
 /**
- * Load config (for Enduro/X only)
+ * Two pass config load orchestrator
+ * First pass will load global variables (environment)
+ * Second pass will allow to reference for example other variable from global
+ * section.
+ * Firstly we will load dummy value (${XXX} not substituted as empty), but second
+ * pass will once again load the actual resolved values.
+ * @param cfg
+ * @param is_internal
  * @return 
  */
 exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
+{
+    int ret = EXSUCCEED;
+    
+    if (is_internal)
+    {
+        ndrx_inicfg_t *cfg_first_pass = NULL;
+        /* two pass loading */
+        
+        /* first pass will go with dummy config, then we make it free... 
+         * and we are interested only in global section
+         */
+        if (EXSUCCEED!=_ndrx_cconfig_load_pass(&cfg_first_pass, EXTRUE, 
+                M_sections_first_pass))
+        {
+            userlog("Failed to load first pass config!");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* release the config 
+         * Load second pass only when first was ok i.e. present.
+         */
+        if (NULL!=cfg_first_pass)
+        {
+            ndrx_inicfg_free(cfg_first_pass);
+            ret = _ndrx_cconfig_load_pass(cfg, EXTRUE, M_sections);
+        }
+        
+    }
+    else
+    {
+        /* single pass */
+        ret = _ndrx_cconfig_load_pass(cfg, EXFALSE, NULL);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Load config (for Enduro/X only)
+ * @return 
+ */
+exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal, 
+        char **section_start_with)
 {
     int ret = EXSUCCEED;
     int slot = 0;
@@ -225,7 +284,7 @@ exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     }
         
     /* Check if envs are set before try to load */
-    if (NULL==(*cfg = ndrx_inicfg_new()))
+    if (NULL==(*cfg = ndrx_inicfg_new2(EXTRUE)))
     {
         userlog("%s: %s", fn, Nstrerror(Nerror));
         EXFAIL_OUT(ret);
@@ -233,7 +292,7 @@ exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     
     /* Load the stuff */
     slot = 0;
-    
+
     while (NULL!=config_resources[slot])
     {
 #ifdef CCONFIG_ENABLE_DEBUG
@@ -243,20 +302,22 @@ exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
                 slot, config_resources[slot]);
         
         have_config = EXTRUE;
-        if (EXSUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], 
-                (is_internal?(char **)M_sections:NULL)))
+        
+        
+        if (EXSUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], section_start_with))
         {
             userlog("%s: %s", fn, Nstrerror(Nerror));
             EXFAIL_OUT(ret);
         }
+        
         slot++;
     }
 
-   if (NULL==config_resources[0])
-   {
+    if (NULL==config_resources[0])
+    {
         have_config = EXFALSE;
         goto out;
-   }
+    }
     
     if (is_internal)
     {

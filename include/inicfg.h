@@ -102,6 +102,7 @@ typedef struct ndrx_inicfg_file ndrx_inicfg_file_t;
  */
 struct ndrx_inicfg
 {
+    int load_global_env; /* Should we load global env */
     /* resource files (if set to EOS, not used) */
     /* List of resources */
     string_hash_t *resource_hash;
@@ -115,6 +116,7 @@ typedef struct ndrx_inicfg ndrx_inicfg_t;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API  ndrx_inicfg_t * ndrx_inicfg_new(void);
+extern NDRX_API ndrx_inicfg_t * ndrx_inicfg_new2(int load_global_env);
 extern NDRX_API  int ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg, 
         char *resource, char *fullname, char **section_start_with);
 extern NDRX_API  int ndrx_inicfg_update_single_file(ndrx_inicfg_t *cfg, 
