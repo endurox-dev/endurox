@@ -1,0 +1,39 @@
+LIBCRYPTOHOST(8)
+================
+:doctype: manpage
+
+
+NAME
+----
+libcryptohost - Encryption key provider plugin
+
+SYNOPSIS
+--------
+*export NDRX_PLUGINS=libcryptohost.so*
+
+DESCRIPTION
+-----------
+This is dynamic link library which provides Enduro/X cryptography key. This library
+makes the encryption key from the computer host name hashed with SHA1 key.
+
+EXIT STATUS
+-----------
+When plugins are loaded, their failures do not make system to fail, instead error
+is printed in ULOG.
+
+EXAMPLE
+-------
+See *atmitest/test043_encrypt* for sample usage.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd

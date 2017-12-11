@@ -52,7 +52,7 @@ export NDRX_TOUT=10
 
 # We will make some tests with config
 export NDRX_CCONFIG=$TESTDIR
-export NDRX_CCTAG="2"
+export NDRX_CCTAG="2/A"
 
 #
 # Domain 1 - here client will live
@@ -145,18 +145,50 @@ echo "echo got VTEST3=[$VTEST3]"
 
 if [ "X$VTEST3" != "XVTEST3=Enduro/X is middleware" ]; then
     echo "Expected [VTEST3=Enduro/X is middleware] but got [$VTEST3]"
-    go_out -1
+    go_out -2
 fi
 
 
 #
-# TODO: Test what variables sees ATMI46 server
+# Test what variables sees ATMI46 server
 #
+
+SVCOUT=`cat << EOF | ud | grep T_STRING_FLD | cut -f2
+SRVCNM	TESTSV
+EOF
+`
+
+echo "Service out: [$SVCOUT]"
+
+if [ "X$SVCOUT" !=  "XEnduro/X is middleware" ]; then
+    echo "Invalid output from service: [$SVCOUT]"
+    go_out  -3
+fi
+
+echo "Update config and check that we have new value"
+
+
+echo "[@global/A]" >> $NDRX_CCONFIG/app.ini
+echo "VTEST3=this is changed" >> $NDRX_CCONFIG/app.ini
+
+xadmin sr -s atmi.sv46
 
 #
 # Update config global section
 # and check what server sees now. The values must be changed..
 #
+
+SVCOUT=`cat << EOF | ud | grep T_STRING_FLD | cut -f2
+SRVCNM	TESTSV
+EOF
+`
+
+echo "Service out: [$SVCOUT]"
+
+if [ "X$SVCOUT" !=  "Xthis is changed" ]; then
+    echo "Invalid output from service: [$SVCOUT]"
+    go_out  -4
+fi
 
 RET=0
 
