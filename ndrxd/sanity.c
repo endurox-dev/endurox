@@ -294,8 +294,12 @@ exprivate int unlink_dead_queue(char *qname)
     NDRX_LOG(log_warn, "Unlinking queue [%s]", p);
     if (EXSUCCEED!=ndrx_mq_unlink(p))
     {
+        int err = errno;
         NDRX_LOG(log_error, "Failed to unlink dead queue [%s]: %s", 
-                p, strerror(errno));
+                p, strerror(err));
+        /* Feature #237 */
+        userlog("Failed to unlink dead queue [%s]: %s", 
+                p, strerror(err));
         ret=EXFAIL;
     }
     
