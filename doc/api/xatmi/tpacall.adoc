@@ -42,6 +42,9 @@ signal handler. This affects only underlaying mq_* function calls.
 *TPNOBLOCK* In case of target service queue is full, do not wait on queue, but
 return error. The error code for this situation is *TPEBLOCK*.
 
+*TPNOREPLY* Do not expect reply from the call. This works with principle
+"send and forget". In this case return value for successful call is *0*.
+
 RETURN VALUE
 ------------
 On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
