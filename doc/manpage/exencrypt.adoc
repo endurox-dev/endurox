@@ -1,0 +1,68 @@
+EXENCRYPT(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+exencrypt - Encrypt string and print the Base64 value to stdout
+
+
+SYNOPSIS
+--------
+*exencrypt* STRING [STRING...]
+
+
+DESCRIPTION
+-----------
+Program encrypts the *STRING* value passed on command line. In the result program
+prints to *stdout* encrypted value of the string. The encrypted values is base64
+string. The debug is configured in standard way as for all other binaries via
+'ndrxdebug.conf' or Common Config.
+
+Encryption keys which are used for encryption are provided either by using built-in
+algorithm (username+hostname) hashed with SHA1. Or from vendor specific loaded plugin.
+
+The encryption principles allows to encrypt the sensitive data and store on disk
+in PCI/DSS compatible way.
+
+
+EXAMPLE
+-------
+
+Single string encryption:
+
+--------------------------------------------------------------------------------
+$ exencrypt 'HELLO WORLD'
+AAAAC196L/d4Sj4OC8cSZh2492I=
+--------------------------------------------------------------------------------
+
+
+Two string encryption:
+
+--------------------------------------------------------------------------------
+$ exencrypt HELLO WORLD
+AAAABbBtKbtIv9BXe1SioTYi5xw=
+AAAABRaPhXxibr6ZktcZ6S71i50=
+--------------------------------------------------------------------------------
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*exdecrypt(3)*, *ex_env(5)*, *ndrxdebug.conf(5)*
+
+COPYING
+-------
+(C) Mavimax, ltd.
+

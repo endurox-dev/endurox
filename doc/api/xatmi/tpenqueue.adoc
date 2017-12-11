@@ -23,17 +23,37 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Enqueue message to transactional message queue. Queue subsystem (see *tmqueue(8)* and *persistent_message_queues_overview(guides)*) must be configured before using this function. 'qspace' is queue space name (logical queue sub-system name, that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 'ctl' is control structure that contains various details for message, how it shall be enqueued. Also 'ctl' returns some diagnostics information. 'data'/'len' pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* allows to specify exactly which *tmqueue* server will process the request, by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' from *ndrxconfig.xml(5).
+Enqueue message to transactional message queue. Queue subsystem (see *tmqueue(8)* 
+and *persistent_message_queues_overview(guides)*) must be configured before using 
+this function. 'qspace' is queue space name (logical queue sub-system name, 
+that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 
+'ctl' is control structure that contains various details for message, how it 
+shall be enqueued. Also 'ctl' returns some diagnostics information. 'data'/'len' 
+pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* 
+allows to specify exactly which *tmqueue* server will process the request, 
+by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' 
+from *ndrxconfig.xml(5).
 
-Functions are transactional and can participate in user's global transaction. It is not possible to enqueue and dequeue message within same global transaction.
+Functions are transactional and can participate in user's global transaction. 
+It is not possible to enqueue and dequeue message within same global transaction.
 
 *Valid flags*
 
-*TPNOTRAN* Do not run the equeue in the users global transaction. In this case *tmqueue* will open it's own transaction, and will commit it uppon retrun.
+*TPNOTRAN* Do not run the equeue in the users global transaction. 
+In this case *tmqueue* will open it's own transaction, and will commit 
+transaction upon return.
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler.
+This affects only underlaying mq_* function calls.
 
-*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). 
+Wait for reply for infinitely.
+
+*TPNOBLOCK* In case of queue server request, if request IPC queue is full, 
+do not wait on queue, but return error. The error code for this 
+situation is *TPEBLOCK*. This affects only request part of the call. 
+This flag does not affect waiting for response from the TMQ server.
+
 
 The *TPQCTL* structure is following:
 
@@ -66,23 +86,35 @@ Valid *'TPQCTL.flags'*
 
 *TPNOFLAGS* No flags set.
 
-*TPQCORRID* Use the correlator ID set in 'TPQCTL.corrid'. Note that each byte in 'corrid' is significant.
+*TPQCORRID* Use the correlator ID set in 'TPQCTL.corrid'. 
+Note that each byte in 'corrid' is significant.
 
-*TPQREPLYQ* Use the 'replyqueue' for submitting response messages of services which were invoked for automatic queues. If this flag is set, with response buffer message will be enqueued to 'replyqueue'.
+*TPQREPLYQ* Use the 'replyqueue' for submitting response messages of services 
+which were invoked for automatic queues. If this flag is set, with 
+response buffer message will be enqueued to 'replyqueue'.
 
-*TPQFAILUREQ* Send the message to 'failurequeue' if *tpcall()* for service invoke for automatic queues failed.
+*TPQFAILUREQ* Send the message to 'failurequeue' if *tpcall()* for 
+service invoke for automatic queues failed.
 
-Fields 'TPQCTL.deq_time', 'TPQCTL.priority', 'TPQCTL.urcode', 'TPQCTL.appkey', 'TPQCTL.delivery_qos', 'TPQCTL.reply_qos', 'TPQCTL.exp_time' are reserved for future use. 'TPQCTL.cltid' is automatically set by Enduro/X system when passing message to *tmqueue* server.
+Fields 'TPQCTL.deq_time', 'TPQCTL.priority', 'TPQCTL.urcode', 'TPQCTL.appkey', 
+'TPQCTL.delivery_qos', 'TPQCTL.reply_qos', 'TPQCTL.exp_time' are reserved 
+for future use. 'TPQCTL.cltid' is 
+automatically set by Enduro/X system when passing message to *tmqueue* server.
 
 RETURN VALUE
 ------------
-On success, *tpenqueue()* return 0; on error, -1 is returned, with *tperrno* set to indicate the error. Also 'TPQCTL.diagnostic' and 'TPQCTL.diagmsg' will contain additional information.
+On success, *tpenqueue()* return 0; on error, -1 is returned, with 
+*tperrno* set to indicate the error. Also 'TPQCTL.diagnostic' and 
+'TPQCTL.diagmsg' will contain additional information.
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
-*TPEINVAL* 'data' is NULL, 'qspace' is NULL, or 'nodeid' and 'srvid' is 0. Error can be generate in case if 'qname' is empty or NULL. 'ctl' is NULL or 'data' does not point to *tpalloc()* allocated buffer.
+*TPEINVAL* 'data' is NULL, 'qspace' is NULL, or 'nodeid' and 'srvid' is 0. 
+Error can be generate in case if 'qname' is empty or NULL. 'ctl' is NULL or 
+'data' does not point to *tpalloc()* allocated buffer.
 
 *TPENOENT* Tmqueue server is not available.
 
@@ -92,11 +124,13 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPESVCFAIL* Tmqueue Service returned 'TPFAIL'. This is application level failure.
 
-*TPESVCERR* Tmqueue service got system level failure. Server died during the message presence in service queue.
+*TPESVCERR* Tmqueue service got system level failure. Server died during the 
+message presence in service queue.
 
 *TPESYSTEM* Enduro/X internal error occurred. See logs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info.
 
 *Values for 'TPQCTL.diagnostic'*
 
@@ -104,7 +138,12 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *QMEOS* Operating system problems. Might be insufficient memory.
 
-*QMESYSTEM* Enduro/X internal problems. Might be issues with saving messages to disk.
+*QMESYSTEM* Enduro/X internal problems. Might be issues with saving 
+messages to disk.
+
+*TPEBLOCK* XATMI IPC Service request queue was full and *TPNOBLOCK* 
+flag was specified.
+
 
 EXAMPLE
 -------
@@ -112,7 +151,7 @@ See *atmitest/test028_tmq/atmiclt28.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
