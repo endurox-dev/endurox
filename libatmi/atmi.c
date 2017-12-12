@@ -659,7 +659,7 @@ out:
  * @param flags
  * @return
  */
-int tppost(char *eventname, char *data, long len, long flags)
+expublic int tppost(char *eventname, char *data, long len, long flags)
 {
     long ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -680,7 +680,7 @@ out:
 /**
  * API entry for tpsubscribe
  */
-long tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
+expublic long tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 {
     long ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -701,7 +701,7 @@ out:
 /**
  * API version of tpunsubscribe
  */
-int tpunsubscribe(long subscription, long flags)
+expublic int tpunsubscribe(long subscription, long flags)
 {
     long ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -719,19 +719,52 @@ out:
     return ret;
 }
 
-
 /**
- * Not supported, Just for build compliance.
- * @param 
- * @param 
- * @param 
- * @return 
+ * Convert Enduro/X identifier to string representation
+ * @param str in/out string version of identifier
+ * @param bin in/out binary version of identifier
+ * @param flags (TPCONVCLTID or TPCONVTRANID or TPCONVXID) and TPTOSTRING
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tpconvert (char *strrep, char *binrep, long flags)
+expublic int tpconvert (char *str, char *bin, long flags)
 {
-    NDRX_LOG(log_error, "tpconvert - ATMI dummy");
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        EXFAIL_OUT(ret);
+    }
     
-    return EXSUCCEED;
+    /* Check arguments */
+    if (NULL==str)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "`str' must not be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==bin)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "`bin' must not be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* check the string value in case if converting from string to bin */
+    if (!(flags & TPTOSTRING))
+    {
+        /* so we are converting from string -> bin. The string must not be empty */
+        if (EXEOS==str[0])
+        {
+            ndrx_TPset_error_msg(TPEINVAL, "Converting from string, `str' is empty!");
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    ret=ndrx_tpconvert(str, bin, flags);
+            
+out:
+    return ret;    
 }
 
 /**

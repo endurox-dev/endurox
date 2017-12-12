@@ -53,6 +53,8 @@
 
 #include "gencall.h"
 #include "userlog.h"
+#include "exsha1.h"
+#include "exbase64.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -585,7 +587,7 @@ out:
  */
 expublic void ndrx_myid_to_my_id_str(TPMYID *p_myid, char *my_id)
 {
-    snprintf(my_id, NDRX_MAX_ID_SIZE, NDRX_MY_ID_CLT, 
+    snprintf(my_id, NDRX_MAX_ID_SIZE+1, NDRX_MY_ID_CLT, 
         p_myid->binary_name,
         p_myid->pid,
         p_myid->contextid,
@@ -625,6 +627,7 @@ expublic int ndrx_atmiutil_init(void)
 out:
     return ret;
 }
+
 /**
  * Return queue type classifier
  * @param q full queue (with prefix)
@@ -664,4 +667,83 @@ out:
     return ret;
 }
 
+/**
+ * Internal version of tpconvert()
+ * @param str in/out string format, the buffer size should be atleast 
+ * @param bin
+ * @param flags
+ * @return 
+ */
+expublic int ndrx_tpconvert(char *str, char *bin, long flags)
+{
+    int ret = EXSUCCEED;
+    CLIENTID *cltid;
+    size_t out_len;
+    
+    if (flags & TPTOSTRING)
+    {
+        out_len = TPCONVMAXSTR;
+        NDRX_LOG(log_debug, "%s: convert to string: "PRIx64, flags);
+        
+        if (flags & TPCONVCLTID)
+        {
+            /* client id is already string... */
+            cltid = (CLIENTID *)bin;
+            NDRX_STRNCPY_SAFE(str, cltid->clientdata, TPCONVMAXSTR);
+        }
+        else if (flags & TPCONVTRANID)
+        {
+            /* maybe needs to think about cross platform way?
+             * but currently do not see reason for this
+             */
+            ndrx_xa_base64_encode(bin, sizeof(TPTRANID), &out_len, str);
+        }
+        else if (flags & TPCONVXID)
+        {
+            atmi_xa_serialize_xid((XID *)bin, str);
+        }
+        else
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid convert flags: " PRIx64, flags);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "%s: convert to bin: "PRIx64, flags);
+        
+        if (flags & TPCONVCLTID)
+        {
+            /* client id is already string... */
+            cltid = (CLIENTID *)bin;
+            NDRX_STRCPY_SAFE(cltid->clientdata, str);
+        }
+        else if (flags & TPCONVTRANID)
+        {
+            /* Decode binary data: */
+            out_len = sizeof(TPTRANID);
+            if (NULL==(ndrx_xa_base64_decode(str, strlen(str), &out_len, bin)))
+            {
+                ndrx_TPset_error_msg(TPEINVAL, "Failed to decode string, possible "
+                        "bad base64 coding.");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (flags & TPCONVXID)
+        {
+            /* Deserialize xid. */
+            atmi_xa_deserialize_xid(str, (XID *)bin);
+        }
+        else
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid convert flags: " PRIx64, flags);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
+
+    return ret;
+}
 

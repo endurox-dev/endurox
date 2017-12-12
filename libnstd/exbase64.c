@@ -124,7 +124,7 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
 {
     if (decoding_table_xa == NULL)
     {
-            decoding_table_xa =  build_decoding_table(encoding_table_xa);
+        decoding_table_xa =  build_decoding_table(encoding_table_xa);
     }
     
     return b64_decode((unsigned char *)data, input_length, output_length, 
