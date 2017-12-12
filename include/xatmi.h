@@ -440,7 +440,7 @@ extern "C" {
 /* client/caller identifier */
 struct clientid_t
 {
-    char    clientdata[NDRX_MAX_ID_SIZE];
+    char    clientdata[NDRX_MAX_ID_SIZE+1]; /* +1 for EOS */
 };
 typedef struct clientid_t CLIENTID;
 
