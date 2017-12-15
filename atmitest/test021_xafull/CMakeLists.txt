@@ -55,6 +55,7 @@ add_executable (atmiclt21 atmiclt21.c)
 add_executable (atmiclt21-105 atmiclt21-105.c)
 add_executable (atmiclt21-try atmiclt21-try.c)
 add_executable (atmiclt21-startfail atmiclt21-startfail.c)
+add_executable (atmiclt21-tpconvert atmiclt21-tpconvert.c)
 
 # Conversations
 add_executable (convsv21 convsv21.c ../../libatmisrv/rawmain_integra.c)
@@ -73,6 +74,7 @@ target_link_libraries (atmiclt21 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m
 target_link_libraries (atmiclt21-105 atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 target_link_libraries (atmiclt21-try atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 target_link_libraries (atmiclt21-startfail atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
+target_link_libraries (atmiclt21-tpconvert atmiclt atmi ubf nstd ${RT_LIB} xadrv pthread m)
 
 # Conversations test
 target_link_libraries (convsv21 atmisrvinteg atmi ubf nstd  ${RT_LIB} xadrv pthread m)
@@ -88,6 +90,7 @@ set_target_properties(atmi.sv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21-105 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt21-startfail PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt21-tpconvert PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Conversation test
 set_target_properties(convsv21 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
