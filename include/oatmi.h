@@ -64,7 +64,7 @@ extern NDRX_API long Otptypes(TPCONTEXT_T *p_ctxt, char *ptr, char *type, char *
 extern NDRX_API int Otpabort(TPCONTEXT_T *p_ctxt, long flags);
 extern NDRX_API int Otpbegin(TPCONTEXT_T *p_ctxt, unsigned long timeout, long flags);
 extern NDRX_API int Otpcommit(TPCONTEXT_T *p_ctxt, long flags);
-extern NDRX_API int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long flags);
+extern NDRX_API int Otpconvert(TPCONTEXT_T *p_ctxt, char *str, char *bin, long flags);
 extern NDRX_API int Otpsuspend(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags);
 extern NDRX_API int Otpresume(TPCONTEXT_T *p_ctxt, TPTRANID *tranid, long flags);
 extern NDRX_API int Otpopen(TPCONTEXT_T *p_ctxt);

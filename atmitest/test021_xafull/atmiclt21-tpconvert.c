@@ -57,15 +57,16 @@ int main(int argc, char** argv) {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 9216);
     long rsplen;
-    int i=0;
     int ret=EXSUCCEED;
+    TPTRANID t;
+    char cnvstr[TPCONVMAXSTR];
+    char cnvbin[TPCONVMAXSTR];
     
     if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
     /***************************************************************************/
@@ -76,8 +77,7 @@ int main(int argc, char** argv) {
     {
         NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
     /*
@@ -87,10 +87,10 @@ int main(int argc, char** argv) {
      * - convert to binary, must be equal to TPSVCINFO.cltid
      * ... because we have always in string format
      */
-    if (EXSUCCEED!=tpcall("TESTCLTID", NULL, 0L, (char **)&p_ub, &rsplen, 0L))
+    if (EXSUCCEED!=tpcall("TESTCLTID", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTRAN))
     {
-        NDRX_LOG(log_error, "Failed to call TESTCLTID: %s - client id convert failed!", 
-                tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to call TESTCLTID: %s - "
+                "client id convert failed!", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -100,7 +100,42 @@ int main(int argc, char** argv) {
      * - convert id from string to bin
      * - resume transaction with convert bin tid
      */
+    if (EXSUCCEED!=tpsuspend(&t, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to suspend transaction: %s!",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
+    cnvstr[0] = EXEOS;
+    cnvbin[0] = EXEOS;
+    
+    if (EXSUCCEED!=tpconvert(cnvstr, (char *)&t, TPCONVTRANID | TPTOSTRING))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpconvert() "
+                "TPCONVTRANID | TPTOSTRING: %s!", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* convert back to bin */
+    NDRX_LOG(log_debug, "Convert TPCONVTRANID from string to bin: [%s]",
+            cnvstr);
+    
+    if (EXSUCCEED!=tpconvert(cnvstr, cnvbin, TPCONVTRANID))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpconvert() "
+                "TPCONVTRANID from string: %s!",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* resume transaction with convert bin */
+    if (EXSUCCEED!=tpresume((TPTRANID *)cnvbin, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to resume transaction: %s!",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
     /*
      * Testing on XID:
@@ -110,7 +145,40 @@ int main(int argc, char** argv) {
      * - compare with TPTRANID, must be equal 
      */
     
-
+    cnvstr[0] = EXEOS;
+    cnvbin[0] = EXEOS;        
+    
+    /* t.tmxid is string,  convert to binary */
+    if (EXSUCCEED!=tpconvert(t.tmxid, cnvbin, TPCONVXID))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpconvert() "
+                "TPCONVXID from string: %s!",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* thy must not match */
+    if (0==strcmp(t.tmxid, cnvbin))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpconvert() TPCONVXID "
+                "binary equal string [%s]!!!", cnvbin);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpconvert(cnvstr, cnvstr, TPCONVXID | TPTOSTRING))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpconvert() TPCONVXID | "
+                "TPTOSTRING failed: %s!", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(t.tmxid, cnvstr))
+    {
+        NDRX_LOG(log_error, "TESTERROR: TPCONVXID strings must match!!! "
+                "tmxid: [%s] vs cnvstr [%s]", t.tmxid, cnvstr);
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXSUCCEED==tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
@@ -121,8 +189,9 @@ int main(int argc, char** argv) {
     
     if (TPETIME!=tperrno)
     {
-        NDRX_LOG(log_error, "TESTERROR: Expected TPETIME, Got tpcommit()==%d fail: %d:[%s]", 
-                                            ret, tperrno, tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Expected TPETIME, "
+                "Got tpcommit()==%d fail: %d:[%s]", 
+                ret, tperrno, tpstrerror(tperrno));
         
         ret=EXFAIL;
         goto out;

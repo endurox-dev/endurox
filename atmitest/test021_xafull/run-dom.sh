@@ -374,7 +374,7 @@ echo "DOM2 PINGs by xa_start TMJOIN: [$PING_DOM2]"
 if [ "X$PING_DOM2" == "X" ]; then
     echo "DOM2 PINGs not working!"
     RET=-1
-    go_out $RETs
+    go_out $RET
 fi
 
 echo "DOM2 pings OK"
@@ -382,8 +382,16 @@ echo "DOM2 pings OK"
 ################################################################################
 echo  "Test tpconvert()"
 ################################################################################
+xadmin psc
 
+(./atmiclt21-tpconvert 2>&1) > ./atmiclt21-tpconvert.log
 
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "atmiclt21-tpconvert failed"
+    
+    go_out $RET
+fi
 
 ################################################################################
 # Normal tests
