@@ -20,27 +20,48 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Connect to the XA resource manager. Note that environment for process must be configured, so that Enduro/X can load correct resource manager drivers. See the *ex_env(5)* man page for environment variables, that must be set. Basically Enduro/X will dynamically load library set in *NDRX_XA_DRIVERLIB* env variable. This is the driver which provides in unified way of getting *xa_switch*. As the xa_switches can be located in different Resource Managers, the second library migth be need to load and that is marked in *NDRX_XA_RMLIB* env variable. The resource manager ID is set in *NDRX_XA_RES_ID* env variable. If your application needs different resource managers or different transaction branches, then you can use environment variable override functionality, see *ex_envover(5)* and *ndrxconfig.xml(5)*. XA connection strings for Enduro/X drivers are stored into *NDRX_XA_OPEN_STR* and *NDRX_XA_CLOSE_STR* variables. Enduro/X will try to init XA sub-system  as soon as possible (i.e. load drivers, etc.). If you want to delay this till actual *tpopen()*, then you may set *NDRX_XA_LAZY_INIT* to 1. 
+Connect to the XA resource manager. Note that environment for process must be 
+configured, so that Enduro/X can load correct resource manager drivers. 
+See the *ex_env(5)* man page for environment variables, that must be set. 
+Basically Enduro/X will dynamically load library set in *NDRX_XA_DRIVERLIB* env 
+variable. This is the driver which provides in unified way of getting *xa_switch*. 
+As the xa_switches can be located in different Resource Managers, the second 
+library might be need to load and that is marked in *NDRX_XA_RMLIB* env variable. 
+The resource manager ID is set in *NDRX_XA_RES_ID* env variable. If your 
+application needs different resource managers or different transaction branches, 
+then you can use environment variable override functionality, see *ex_envover(5)* 
+and *ndrxconfig.xml(5)*. XA connection strings for Enduro/X drivers are stored 
+into *NDRX_XA_OPEN_STR* and *NDRX_XA_CLOSE_STR* variables. Enduro/X will try 
+to init XA sub-system  as soon as possible (i.e. load drivers, etc.). 
+If you want to delay this till actual *tpopen()*, 
+then you may set *NDRX_XA_LAZY_INIT* to 1. 
 
-This function at lowest level, basically calls XA switches *xa_open_entry()* function with *NDRX_XA_OPEN_STR* string.
+This function at lowest level, basically calls XA switches *xa_open_entry()* 
+function with *NDRX_XA_OPEN_STR* string.
 
-If *tpopen()* was already call and XA is initialised, then function will succeed, and no error will be generated.
+If *tpopen()* was already call and XA is initialised, then function will succeed,
+ and no error will be generated.
 
 RETURN VALUE
 ------------
-On success, *tpopen()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpopen()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
+*TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more 
+info from last call.
 
-*TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more info from last call.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. 
+user log, or debugs for more info. This could also be a 
+problem with dynamical driver loading.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. This could also be a problem with dynamical driver loading.
-
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
 EXAMPLE
 -------

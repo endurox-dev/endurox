@@ -109,6 +109,7 @@ set(MAN3_NAMES
         tpchkunsol
         tpviewtojson
         tpjsontoview
+        tpconvert
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
