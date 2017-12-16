@@ -1,0 +1,87 @@
+TPCONVERT(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpconvert - Convert Enduro/X identifier to or from string representation
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpconvert (char *'str', char *'bin', long 'flags');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi 
+-lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used to convert Enduro/X identifiers like client id, transaction id
+and XA two-phase commit xid to string representation. Function also offers to
+convert value from string back to binary (Enduro/X) identifier. If converting
+to string, then 'bin' is pointer to binary identifier, casted to char pointer.
+It is assumed that 'str' is at least *TPCONVMAXSTR* bytes long (currently 512).
+If converting to binary representation, then destination size must match the
+target structure, i.e. *CLIENTID*, *TPTRANID* or *XID* from *xa.h*.
+
+*Valid flags*
+
+*TPCONVCLTID* Convert *CLIENTID* type from *atmi.h* to/from string.
+
+*TPCONVTRANID* Convert *TPTRANID* type from *atmi.h* to/from string. Note that 
+string version converted is platform specific. And not will not be valid 
+(restorable) on different platform type (i.e. little-endian, big-endian, 32bit or 64bit).
+
+*TPCONVXID* Convert *XID* type from *xa.h* to/from string.
+
+*TPTOSTRING* In this mode the value from 'bin' parameter is converted to 'str'
+parameter. If flag is not present then value from 'str' is converted to 'bin'.
+
+If multiple TPCONV flags are present, then execution will pick up the first flag
+for processing in following order: *TPCONVCLTID*, *TPCONVTRANID*, *TPCONVXID*.
+
+RETURN VALUE
+------------
+On success, *tpconvert()* return zero; on error, -1 is returned, with *tperrno* set 
+to indicate the error.
+
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* 'str' or 'bin' params are NULL. Error is returned also in cases if 
+'TPTOSTRING' is present, but 'str' parameter is zero length (first byte 0x00).
+Also in cases if none of *TPCONVCLTID*, *TPCONVTRANID* or *TPCONVXID* are present
+this error will be returned too.
+
+*TPEINVAL* Enduro/X tpinit failed - environment variables not configured, 
+see ex_env(5) page.
+
+*TPESYSTEM*  During Enduro/X init - system failure occurred during serving. 
+See logs i.e. user log, or debugs for more info.
+
+*TPEOS* During Enduor/X init operating system failure occurred during serving. 
+See logs i.e. user log, or debugs for more info.
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21-tpconvert.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpinit(3)* *tpsuspend(3)* *tpresume(3)* *tpservice(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd

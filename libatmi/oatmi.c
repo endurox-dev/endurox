@@ -1273,7 +1273,7 @@ out:
 /**
  * Object-API wrapper for tpconvert() - Auto generated.
  */
-expublic int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long flags) 
+expublic int Otpconvert(TPCONTEXT_T *p_ctxt, char *str, char *bin, long flags) 
 {
     int ret = EXSUCCEED;
     int did_set = EXFALSE;
@@ -1323,7 +1323,7 @@ expublic int Otpconvert(TPCONTEXT_T *p_ctxt, char *strrep, char *binrep, long fl
                 p_ctxt, G_atmi_tls);
     }
     
-    ret = tpconvert(strrep, binrep, flags);
+    ret = tpconvert(str, bin, flags);
 
     if (did_set)
     {

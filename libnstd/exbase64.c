@@ -111,10 +111,10 @@ expublic char * ndrx_xa_base64_encode(unsigned char *data,
 
 /**
  * XA Version of base64 decode
- * @param data
- * @param input_length
- * @param output_length
- * @param decoded_data
+ * @param data input data
+ * @param input_length input len
+ * @param output_length output data len (ptr to). Only output len, no len checking.
+ * @param decoded_data decoded output data
  * @return 
  */
 expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
