@@ -255,6 +255,13 @@ Feature #230, Bug #234, Feature #244, Bug #243, Feature #248, Bug #240, Bug #238
 
 - Version 5.1.2  released on 18/10/2017. (stable) Bug #250
 
+- Version 5.2.1  released on 18/12/2017. (development) Major work on support for PCI/DSS mandatory
+configuration encryption. Introduction of plugin architecture (currently used for
+crypto key providers). Implemented tpconvert() ATMI call. Now @global section for ini files are 
+read twice. Thus ini file can reference to previosly defined env/global variable. 
+Fixes: #261 Bug, #118 Feature, #237 Feature, #236 Bug, #245 Feature, #258
+Support, #259 Support, #255 Bug, #254 Bug.
+
 # Build configurations
 
 ## Configure make with: 
