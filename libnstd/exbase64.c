@@ -94,6 +94,7 @@ exprivate unsigned char *b64_decode(unsigned char *data,
 
 /**
  * XA Version of Base64 encode
+ * WARNING ! EOS Is not installed in output data!
  * @param data
  * @param input_length
  * @param output_length
@@ -111,10 +112,10 @@ expublic char * ndrx_xa_base64_encode(unsigned char *data,
 
 /**
  * XA Version of base64 decode
- * @param data
- * @param input_length
- * @param output_length
- * @param decoded_data
+ * @param data input data
+ * @param input_length input len
+ * @param output_length output data len (ptr to). Only output len, no len checking.
+ * @param decoded_data decoded output data
  * @return 
  */
 expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
@@ -124,7 +125,7 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
 {
     if (decoding_table_xa == NULL)
     {
-            decoding_table_xa =  build_decoding_table(encoding_table_xa);
+        decoding_table_xa =  build_decoding_table(encoding_table_xa);
     }
     
     return b64_decode((unsigned char *)data, input_length, output_length, 
@@ -134,6 +135,7 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
 
 /**
  * Standard Version of Base64 encode
+ * WARNING ! EOS Is not installed in output data!
  * @param data
  * @param input_length
  * @param output_length
@@ -173,6 +175,7 @@ unsigned char *ndrx_base64_decode(const char *data,
 
 /**
  * Encode the data
+ * WARNING NO EOS is set in the string!!!
  * @param data
  * @param input_length
  * @param output_length
