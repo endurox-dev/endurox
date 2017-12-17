@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=tpconvert(cnvstr, cnvstr, TPCONVXID | TPTOSTRING))
+    if (EXSUCCEED!=tpconvert(cnvstr, cnvbin, TPCONVXID | TPTOSTRING))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to tpconvert() TPCONVXID | "
                 "TPTOSTRING failed: %s!", tpstrerror(tperrno));
@@ -179,20 +179,10 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED==tpcommit(0))
+    if (EXSUCCEED!=tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
                                             ret, tperrno, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (TPETIME!=tperrno)
-    {
-        NDRX_LOG(log_error, "TESTERROR: Expected TPETIME, "
-                "Got tpcommit()==%d fail: %d:[%s]", 
-                ret, tperrno, tpstrerror(tperrno));
-        
         ret=EXFAIL;
         goto out;
     }
