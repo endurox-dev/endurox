@@ -669,10 +669,10 @@ out:
 
 /**
  * Internal version of tpconvert()
- * @param str in/out string format, the buffer size should be atleast 
- * @param bin
- * @param flags
- * @return 
+ * @param str in/out string format, the buffer size should be at least 
+ * @param bin binary data
+ * @param flags flags (see API descr)
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpconvert(char *str, char *bin, long flags)
 {
@@ -683,7 +683,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
     if (flags & TPTOSTRING)
     {
         out_len = TPCONVMAXSTR;
-        NDRX_LOG(log_debug, "%s: convert to string: "PRIx64, flags);
+        NDRX_LOG(log_debug, "%s: convert to string: %"PRIx64, __func__, flags);
         
         if (flags & TPCONVCLTID)
         {
@@ -697,6 +697,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
              * but currently do not see reason for this
              */
             ndrx_xa_base64_encode(bin, sizeof(TPTRANID), &out_len, str);
+            str[out_len] = EXEOS;
         }
         else if (flags & TPCONVXID)
         {
@@ -704,13 +705,14 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         }
         else
         {
-            ndrx_TPset_error_fmt(TPEINVAL, "Invalid convert flags: " PRIx64, flags);
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid convert flags: %"PRIx64, 
+                    __func__, flags);
             EXFAIL_OUT(ret);
         }
     }
     else
     {
-        NDRX_LOG(log_debug, "%s: convert to bin: "PRIx64, flags);
+        NDRX_LOG(log_debug, "%s: convert to bin: %"PRIx64, __func__, flags);
         
         if (flags & TPCONVCLTID)
         {
@@ -736,7 +738,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         }
         else
         {
-            ndrx_TPset_error_fmt(TPEINVAL, "Invalid convert flags: " PRIx64, flags);
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid convert flags: %"PRIx64, flags);
             EXFAIL_OUT(ret);
         }
     }
