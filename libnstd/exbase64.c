@@ -94,6 +94,7 @@ exprivate unsigned char *b64_decode(unsigned char *data,
 
 /**
  * XA Version of Base64 encode
+ * WARNING ! EOS Is not installed in output data!
  * @param data
  * @param input_length
  * @param output_length
@@ -134,6 +135,7 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
 
 /**
  * Standard Version of Base64 encode
+ * WARNING ! EOS Is not installed in output data!
  * @param data
  * @param input_length
  * @param output_length
@@ -173,6 +175,7 @@ unsigned char *ndrx_base64_decode(const char *data,
 
 /**
  * Encode the data
+ * WARNING NO EOS is set in the string!!!
  * @param data
  * @param input_length
  * @param output_length
