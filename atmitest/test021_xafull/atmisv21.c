@@ -42,6 +42,46 @@
 
 extern int __write_to_tx_file(char *buf);
 
+/**
+ * Not related with XA transactions
+ * used for CTLID testing...
+ */
+void TESTCLTID(TPSVCINFO *p_svc)
+{
+    char cnvstr[TPCONVMAXSTR]={EXEOS};
+    char cnvbin[TPCONVMAXSTR]={EXEOS};
+    int ret = EXSUCCEED;
+    
+    if (EXEOS==p_svc->cltid.clientdata[0])
+    {
+        NDRX_LOG(log_error, "TESTERROR: Received emtpy client ID!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpconvert(cnvstr, (char *)&p_svc->cltid, TPTOSTRING|TPCONVCLTID))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to convert cltid to string: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpconvert(cnvstr, cnvbin, TPCONVCLTID))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to convert cltid to string: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=strcmp(cnvbin, (char *)&p_svc->cltid))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to convert cltid to string: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+out:
+
+    tpreturn (ret==EXSUCCEED?TPSUCCESS:TPFAIL, 0L, NULL, 0L, 0L);
+}
 
 void NOTRANFAIL(TPSVCINFO *p_svc)
 {
@@ -110,12 +150,9 @@ void RUNTX(TPSVCINFO *p_svc)
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    char svcnm[16];
-    int i;
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
-    
-    
+   
     if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
@@ -137,6 +174,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("NOTRANFAIL", NOTRANFAIL))
     {
         NDRX_LOG(log_error, "Failed to initialize NOTRANFAIL!");
+    }
+    
+    if (EXSUCCEED!=tpadvertise("TESTCLTID", TESTCLTID))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TESTCLTID!");
     }
     
 out:

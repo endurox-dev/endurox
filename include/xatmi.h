@@ -440,7 +440,7 @@ extern "C" {
 /* client/caller identifier */
 struct clientid_t
 {
-    char    clientdata[NDRX_MAX_ID_SIZE];
+    char    clientdata[NDRX_MAX_ID_SIZE+1]; /* +1 for EOS */
 };
 typedef struct clientid_t CLIENTID;
 
@@ -567,7 +567,7 @@ extern NDRX_API void tpforward (char *svc, char *data, long len, long flags);
 extern NDRX_API int tpabort (long flags);
 extern NDRX_API int tpbegin (unsigned long timeout, long flags);
 extern NDRX_API int tpcommit (long flags);
-extern NDRX_API int tpconvert (char *strrep, char *binrep, long flags);
+extern NDRX_API int tpconvert (char *str, char *bin, long flags);
 extern NDRX_API int tpsuspend (TPTRANID *tranid, long flags);
 extern NDRX_API int tpresume (TPTRANID *tranid, long flags);
 extern NDRX_API int tpopen (void);

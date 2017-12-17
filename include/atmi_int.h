@@ -426,7 +426,7 @@ struct tp_command_call
     char reply_to[NDRX_MAX_Q_SIZE+1];
     /* Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
-    char my_id[NDRX_MAX_ID_SIZE]; /* ID of caller */
+    char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
     int rval;
@@ -464,7 +464,7 @@ struct tp_notif_call
     /* </standard comms header> */
     
     /* See clientid_t, same fields */
-    char destclient[NDRX_MAX_ID_SIZE];      /* Destination client ID */
+    char destclient[NDRX_MAX_ID_SIZE+1];      /* Destination client ID */
     
     /* fields from boradcast */
     char nodeid[MAXTIDENT*2]; /* In case of using regex */
@@ -479,7 +479,7 @@ struct tp_notif_call
     char reply_to[NDRX_MAX_Q_SIZE+1];
     /* Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
-    char my_id[NDRX_MAX_ID_SIZE]; /* ID of caller */
+    char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
     int rval;
