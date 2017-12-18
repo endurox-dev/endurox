@@ -68,7 +68,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*exencrypt(3)*, *ex_env(5)*, *ndrxdebug.conf(5)*
+*exencrypt(8)*, *ex_env(5)*, *ndrxdebug.conf(5)*
 
 COPYING
 -------
