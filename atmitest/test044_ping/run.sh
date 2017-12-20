@@ -120,7 +120,7 @@ if [ "X$PROCPID" != "X$PROCPID2" ]; then
 fi
 
 echo "Stopping..."
-kill -19 $PROCPID2
+kill -STOP $PROCPID2
 
 sleep 40
 
