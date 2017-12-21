@@ -49,7 +49,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
-export NDRX_TOUT=10
+export NDRX_TOUT=2
 
 #
 # Domain 1 - here client will live
@@ -120,7 +120,10 @@ if [ "X$PROCPID" != "X$PROCPID2" ]; then
 fi
 
 echo "Stopping..."
-kill -STOP $PROCPID2
+cat << EOF | ud
+SRVCNM	TESTSV
+
+EOF
 
 sleep 40
 
