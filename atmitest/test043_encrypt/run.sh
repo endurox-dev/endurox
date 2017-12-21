@@ -77,6 +77,12 @@ for i in 1 2
 do
     if [ "X$i" == "X2" ]; then
         export NDRX_PLUGINS=libcryptohost.so
+
+	if [ "$(uname)" == "Darwin" ]; then
+        	echo "Darwin host"
+        	export NDRX_PLUGINS=libcryptohost.dylib
+	fi
+
     fi
 
     CLR="hello Test $i"
@@ -137,6 +143,11 @@ fi
 # from the client process
 #
 export NDRX_PLUGINS=libcryptohost.so
+
+if [ "$(uname)" == "Darwin" ]; then
+	echo "Darwin host"
+	export NDRX_PLUGINS=libcryptohost.dylib
+fi
 
 echo "[@global]" > test.conf
 echo "TEST_ENV_PARAM=\${dec=$ENCSTR}" >> test.conf
