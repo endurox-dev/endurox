@@ -262,6 +262,9 @@ read twice. Thus ini file can reference to previosly defined env/global variable
 Fixes: #261 Bug, #118 Feature, #237 Feature, #236 Bug, #245 Feature, #258
 Support, #259 Support, #255 Bug, #254 Bug.
 
+- Version 5.2.2 released on 21/12/2017. (stable) First stable version of Enduor/X 5.2. Rolled
+back changes of CLIENTID in xatmi.h for binary compatiblity with existing binaries.
+
 # Build configurations
 
 ## Configure make with: 
