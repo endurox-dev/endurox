@@ -73,6 +73,9 @@ function go_out {
 
 rm *.log
 
+# Run some extra cleanup
+xadmin down -y
+xadmin killall ndrxd
 xadmin down -y
 
 # Will do stall servers
