@@ -125,7 +125,7 @@ SRVCNM	TESTSV
 
 EOF
 
-sleep 40
+sleep 60
 
 PROCPID2=$(get_pid)   # or result=`myfunc`
 
