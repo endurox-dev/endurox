@@ -68,6 +68,8 @@
       
 /* #define CRYPTODEBUG */
 
+/* #define CRYPTODEBUG_DUMP */
+
 #define CRYPTO_LEN_PFX_BYTES    4
 
 #define API_ENTRY {_Nunset_error();}
@@ -110,7 +112,7 @@ expublic int ndrx_crypto_getkey_std(char *key_out, int key_out_bufsz)
     }
     
 #ifdef CRYPTODEBUG
-    NDRX_LOG(log_debug, "Password built: [%s]", key_out);
+    NDRX_LOG_EARLY(log_debug, "Password built: [%s]", key_out);
 #endif
     
 out:
@@ -143,13 +145,13 @@ exprivate int ndrx_get_final_key(char *sha1key)
     }
     
 #ifdef CRYPTODEBUG
-    NDRX_LOG(log_debug, "Clear password: [%s]", password);
+    NDRX_LOG_EARLY(log_debug, "Clear password: [%s]", password);
 #endif
     
     /* make sha1 */
     EXSHA1( sha1key, password, strlen(password) );
     
-#ifdef CRYPTODEBUG
+#ifdef CRYPTODEBUG_DUMP
     NDRX_DUMP(log_debug, "SHA1 key", sha1key, NDRX_ENCKEY_BUFSZ);
 #endif
     
@@ -187,8 +189,10 @@ exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *ol
             + CRYPTO_LEN_PFX_BYTES;
     
 #ifdef CRYPTODEBUG
-    NDRX_LOG(log_debug, "%s: Data size: %ld, estimated: %ld, output buffer: %ld",
+    NDRX_LOG_EARLY(log_debug, "%s: Data size: %ld, estimated: %ld, output buffer: %ld",
             __func__, ilen, size_estim, *olen);
+#endif
+#ifdef CRYPTODEBUG_DUMP
     NDRX_DUMP(log_debug, "About to encrypt: ", input, ilen);
 #endif
     if (size_estim > *olen)
@@ -212,7 +216,7 @@ exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *ol
     
     *olen = size_estim;
     
-#ifdef CRYPTODEBUG
+#ifdef CRYPTODEBUG_DUMP
     
     /* DUMP the data block */
     NDRX_DUMP(log_debug, "Encrypted data block", output, *olen);
@@ -260,14 +264,15 @@ expublic int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *ole
         EXFAIL_OUT(ret);
     }
     
-#ifdef CRYPTODEBUG
-    
+#ifdef CRYPTODEBUG_DUMP
     NDRX_DUMP(log_debug, "About to decrypt (incl 4 byte len): ", input, ilen);
-    
-    NDRX_LOG(log_debug, "Data size: %ld, %ld, output buffer: %ld",
-            data_size, olen);
-    
 #endif
+    
+#ifdef CRYPTODEBUG
+    NDRX_LOG_EARLY(log_debug, "Data size: %ld, %ld, output buffer: %ld",
+            data_size, olen);
+#endif
+
     if (data_size > *olen)
     {
         userlog("Decryption output buffer too short, data: %ld, output buffer: %ld",
@@ -286,10 +291,8 @@ expublic int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *ole
     
     /* DUMP the data block */
     
-#ifdef CRYPTODEBUG
-    
+#ifdef CRYPTODEBUG_DUMP
     NDRX_DUMP(log_debug, "Decrypted data block", output, *olen);
-    
 #endif
     
 out:
@@ -340,7 +343,7 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
         userlog("Output buffer too short. Required for "
                 "base64 %ld bytes, but got %ld", estim_size, olen);
 #ifdef CRYPTODEBUG
-        NDRX_LOG(log_error, "Output buffer too short. Required for "
+        NDRX_LOG_EARLY(log_error, "Output buffer too short. Required for "
                 "base64 %ld bytes, but got %ld", estim_size, olen);
 #endif
         
@@ -352,14 +355,14 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
     
     /* encode to base64... */
     
-    ndrx_base64_encode(buf, bufsz, &b64len, output);
+    ndrx_base64_encode((unsigned char *)buf, bufsz, &b64len, output);
     
     output[b64len] = EXEOS;
     
 #ifdef CRYPTODEBUG
     
-    NDRX_LOG(log_debug, "%s: input: [%s]", __func__, input);
-    NDRX_LOG(log_debug, "%s: output: [%s]", __func__, output);
+    NDRX_LOG_EARLY(log_debug, "%s: input: [%s]", __func__, input);
+    NDRX_LOG_EARLY(log_debug, "%s: output: [%s]", __func__, output);
     
 #endif
     
@@ -403,9 +406,9 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     len_ind = (uint32_t *)buf;
     
 #ifdef CRYPTODEBUG
-    NDRX_LOG(log_debug, "%s, output buf %p, olen=%ld input len: %ld", 
+    NDRX_LOG_EARLY(log_debug, "%s, output buf %p, olen=%ld input len: %ld", 
             __func__, output, olen, len);
-    NDRX_LOG(log_debug, "%s: About to decrypt (b64): [%s]", __func__, input);
+    NDRX_LOG_EARLY(log_debug, "%s: About to decrypt (b64): [%s]", __func__, input);
 #endif
 
     /* convert base64 to bin */
@@ -420,7 +423,7 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
         EXFAIL_OUT(ret);
     }
 
-#ifdef CRYPTODEBUG
+#ifdef CRYPTODEBUG_DUMP
     NDRX_DUMP(log_debug, "Binary data to decrypt: ", buf, bufsz);
 #endif
     
@@ -444,7 +447,7 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     if (EXSUCCEED!=ndrx_crypto_dec_int(buf, bufsz, output, &olen))
     {
         #ifdef CRYPTODEBUG
-        NDRX_LOG(log_error, "%s: Failed to decrypt [%s]!", __func__, input);
+        NDRX_LOG_EARLY(log_error, "%s: Failed to decrypt [%s]!", __func__, input);
         #endif
         userlog("%s: Failed to decrypt [%s]!", __func__, input);
     }
