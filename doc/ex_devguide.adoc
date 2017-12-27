@@ -1462,7 +1462,7 @@ failure, function shall return -1. For this function only *EARLY* logging is
 available (NDRX_LOG_EARLY/UBF_LOG_EARLY/TP_LOG_EARLY).
 
 
-== Starting Enduro/X from other thread than main
+== Starting Enduro/X XATMI server from other thread than main
 
 For some scenarios it might be needed to create XATMI server to which main thread
 is busy with some other functionality. And only auxiliary thread may perform XATMI
@@ -1599,7 +1599,7 @@ To boot the server, you may add it to ndrxconfig.xml and boot it up:
                 </server>
 ...
         </servers>
-,,,
+...
 --------------------------------------------------------------------------------
 
 
