@@ -1462,6 +1462,173 @@ failure, function shall return -1. For this function only *EARLY* logging is
 available (NDRX_LOG_EARLY/UBF_LOG_EARLY/TP_LOG_EARLY).
 
 
+== Starting Enduro/X from other thread than main
+
+For some scenarios it might be needed to create XATMI server to which main thread
+is busy with some other functionality. And only auxiliary thread may perform XATMI
+servicing actions. All this can be simply done with help of "libatmisrvinteg" and
+ndrx_main_integra() function. Thus following code fragment creates a simple server
+and provides command to build it under GNU/Linux.
+
+--------------------------------------------------------------------------------
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <unistd.h>
+
+
+int M_argc;
+char **M_argv;
+
+
+/**
+ * Service does not return anything...
+ */
+void HELLOSVC (TPSVCINFO *p_svc)
+{
+   tpreturn (TPSUCCESS, 0L, NULL, 0L, 0L);
+}
+
+
+/**
+ * XATMI init callback
+ */
+int tpsvrinit(int argc, char **argv)
+{
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("HELLOSVC", HELLOSVC))
+    {
+        NDRX_LOG(log_error, "Failed to initialize HELLOSVC!");
+        return -1;
+    }
+
+    return 0;
+}
+
+/**
+ * Do de-initialization
+ */
+void tpsvrdone(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+
+/**
+ * Run run_xatmi_server from thread
+ */
+void run_xatmi_server ( void *ptr )
+{
+    if (0!=ndrx_main_integra(M_argc, M_argv, 
+        /* set callbacks: */
+        tpsvrinit, tpsvrdone, 
+        0L))
+    {
+        NDRX_LOG(log_error, "Failed to run Enduro/X main: %s", 
+        tpstrerror(tperrno));
+        exit(1);
+    }
+}
+
+
+/**
+ * Standard main entry...
+ */
+int main(int argc, char** argv) 
+{
+
+    pthread_t thread1;
+    pthread_attr_t pthread_custom_attr;
+
+    M_argc = argc;
+    M_argv = argv;
+
+    pthread_attr_init(&pthread_custom_attr);
+
+    /* Configure stack, using Enduro/X internal method...
+     * but you can configure it by your self.
+     */
+    pthread_attr_setstacksize(&pthread_custom_attr, 
+            ndrx_platf_stack_get_size());
+     
+    pthread_create (&thread1, &pthread_custom_attr, (void *) &run_xatmi_server, NULL);
+
+
+    pthread_join(thread1, NULL);
+
+
+    return 0;
+}
+
+--------------------------------------------------------------------------------
+
+To compile the code, you may just use C compiler:
+
+--------------------------------------------------------------------------------
+
+$ cc -o samplesv  sample.c -latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -ldl -lm
+
+--------------------------------------------------------------------------------
+
+To boot the server, you may add it to ndrxconfig.xml and boot it up:
+
+
+--------------------------------------------------------------------------------
+...
+        <servers>
+...
+                <server name="samplesv">
+                        <srvid>1600</srvid>
+                        <min>1</min>
+                        <max>1</max>
+                        <sysopt>-e /tmp/SAMPLE_1 -r</sysopt>
+                </server>
+...
+        </servers>
+,,,
+--------------------------------------------------------------------------------
+
+
+Finally give it a test:
+
+--------------------------------------------------------------------------------
+
+NDRX> start -y
+...
+exec samplesv -k 0myWI5nu -i 1600 -e /tmp/SAMPLE_1 -r --  :
+	process id=9650 ... Started.
+...
+
+NDRX> psc
+Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
+-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----
+...
+1  HELLOSVC     HELLOSVC     samplesv  1600  0     0     0ms      0ms      AVAIL
+...
+NDRX> 
+
+--------------------------------------------------------------------------------
+
+*NOTE*: the process is started with standard command line with args like -k/-i/-e
+and '--'. If your existing software also uses CLI arguments, then it must be modified
+so that it does not crash with unknown keys. Also Enduro/X XATMI server will not
+tolerate any other third party keys. Those other keys user might add it "appopts"
+section, followed by "--". See ndrxconfig.xml(5) for more details.
+
 numbered!:
 
 [bibliography]

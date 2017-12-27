@@ -71,6 +71,7 @@ Ensure(test_crypto_enc_string)
 
 /**
  * Test substitute functions
+ * Bug #268 issues with env substituion after crypto
  */
 Ensure(test_crypto_subst_func)
 {
@@ -79,6 +80,10 @@ Ensure(test_crypto_subst_func)
     int i;
     
 #define ENC_SUBST_STRING "Enduro/X"
+
+    assert_equal(setenv("UBFTESTENV", "ENVTEST", EXTRUE), EXSUCCEED);
+    assert_equal(setenv("UBFTESTENV2", "ENVTEST2", EXTRUE), EXSUCCEED);
+
     
     for (i=0; i < 100; i++)
     {
@@ -87,13 +92,14 @@ Ensure(test_crypto_subst_func)
         assert_equal(ndrx_crypto_enc_string(ENC_SUBST_STRING, encdata, sizeof(encdata)), 
                 EXSUCCEED);
 
-        snprintf(fmt, sizeof(fmt), "Hello ${dec=%s} from C", encdata);
+        snprintf(fmt, sizeof(fmt), "Hello ${dec=%s} ${UBFTESTENV} "
+            "${dec=%s} ${UBFTESTENV2} from C", encdata, encdata);
 
         NDRX_LOG(log_debug, "String with decrypt func: [%s]", fmt);
 
         ndrx_str_env_subs_len(fmt, sizeof(fmt));
 
-        assert_string_equal(fmt, "Hello Enduro/X from C");
+        assert_string_equal(fmt, "Hello Enduro/X ENVTEST Enduro/X ENVTEST2 from C");
     }
 }
 
