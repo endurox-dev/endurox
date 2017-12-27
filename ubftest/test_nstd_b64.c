@@ -37,6 +37,7 @@
 #include <ndrstandard.h>
 #include <string.h>
 #include <ndebug.h>
+#include <exbase64.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "xatmi.h"

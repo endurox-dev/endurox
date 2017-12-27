@@ -68,6 +68,8 @@ exprivate int ndrx_please_increase_stack(void)
     volatile char buf[M_stack_estim];
     
     buf[M_stack_estim-1] = EXSUCCEED;
+
+    return EXSUCCEED;
 }
 
 /**
