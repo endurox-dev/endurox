@@ -163,6 +163,8 @@ It is assumed that xlC is default compiler on the system, thus following shall m
 
 ---------------------------------------------------------------------
 $ export OBJECT_MODE=64
+# This is found in AIX 6.1, fails to build with XLC:
+$ export PATH=$PATH:/usr/vacpp/bin:/usr/vac/bin
 $ cd /home/user1/endurox
 $ cmake -DCMAKE_C_COMPILER=xlc -DCMAKE_CXX_COMPILER=xlC -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON\
       -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
