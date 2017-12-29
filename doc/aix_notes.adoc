@@ -164,7 +164,8 @@ It is assumed that xlC is default compiler on the system, thus following shall m
 ---------------------------------------------------------------------
 $ export OBJECT_MODE=64
 $ cd /home/user1/endurox
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DCMAKE_C_COMPILER=xlc -DCMAKE_CXX_COMPILER=xlC -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON\
+      -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
