@@ -10,7 +10,14 @@ exdb_dump - LMDB/NDRXDB environment export tool
 
 SYNOPSIS
 --------
-*exdb_dump* [*-V*] [*-f* 'file'] [*-l*] [*-n*] [*-p*] [*-a* | *-s* 'subdb']  'envpath'
+*exdb_dump* [*-V*] [*-f* 'file'] [*-l*] [*-n*] [*-p*] [*-a* | *-s* 'subdb'] 'envpath'
+
+DESCRIPTION
+-----------
+
+The *exdb_dump* utility reads a database and writes its contents to the 
+standard output using a portable flat-text format understood by the 
+*exdb_load(8)* utility.
 
 
 OPTIONS
@@ -71,7 +78,7 @@ Howard Chu of Symas Corporation <http://www.symas.com>
 
 SEE ALSO
 --------
-*exdb_load(5)*
+*exdb_load(8)*
 
 COPYING
 -------
