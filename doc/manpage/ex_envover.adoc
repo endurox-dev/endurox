@@ -7,12 +7,6 @@ NAME
 ----
 ex_envover - EnduroX Environment override configuration file
 
-DESCRIPTION
------------
-This is simple text file with shell like syntax for environment variable setup.
-Used for per ATMI server environment process environment variable override. File
-is configured in *ndrxconfig.xml(5)* config file.
-
 SYNOPSYS
 --------
 Configuration file synax:
@@ -22,6 +16,12 @@ export PARAM_NAME=VALUE
 #
 PARAM_NAME_2=PARAM_VALUE_2
 ---------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+This is simple text file with shell like syntax for environment variable setup.
+Used for per ATMI server environment process environment variable override. File
+is configured in *ndrxconfig.xml(5)* config file.
 
 
 PARAMTERS
