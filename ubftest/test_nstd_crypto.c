@@ -104,7 +104,7 @@ Ensure(test_crypto_subst_func)
 }
 
 /**
- * Common suite entry
+ * LMDB/EXDB tests
  * @return
  */
 TestSuite *ubf_nstd_crypto(void)
