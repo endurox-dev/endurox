@@ -1,0 +1,80 @@
+EXDB_DUMP(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+exdb_dump - LMDB/NDRXDB environment export tool
+
+
+SYNOPSIS
+--------
+*exdb_dump* [*-V*] [*-f* 'file'] [*-l*] [*-n*] [*-p*] [*-a* | *-s* 'subdb']  'envpath'
+
+
+OPTIONS
+-------
+
+[*-V*]:: 
+Write the library version number to the standard output, and exit.
+
+[*-f*]:: 'file'
+Write to the specified file instead of to the standard output.
+
+[*-l*]::
+List the databases stored in the environment. Just the names will be listed, 
+no data will be output.
+
+[*-n*]::
+Dump an NDRXDB database which does not use subdirectories.
+
+[*-p*]::
+If  characters in either the key or data items are printing characters 
+(as defined by isprint(3)), output them directly. This option permits users to 
+use standard text editors and tools to modify the contents of databases.
+
+*Note*: different systems may have different notions about what characters are 
+considered printing characters, and databases dumped in this manner 
+may be less portable to external systems.
+
+[*-a*]::
+Dump all of the subdatabases in the environment.
+
+[*-s*]:: 'subdb'
+Dump a specific subdatabase. If no database is specified, only the main 
+database is dumped.
+
+
+EXIT STATUS
+-----------
+Exit status is zero if no errors occur. Errors result in a non-zero exit 
+status and a diagnostic message being written to standard error.
+
+Dumping and reloading databases that use user-defined comparison 
+functions will result in new databases that use the default comparison functions.  
+In this case it is quite likely that the reloaded database will  be  damaged
+beyond repair permitting neither record storage nor retrieval.
+
+The only available workaround is to modify the source for the 
+exdb_load(1) utility to load the database using the correct comparison functions.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+AUTHOR
+------
+
+Howard Chu of Symas Corporation <http://www.symas.com>
+
+
+SEE ALSO
+--------
+*exdb_load(5)*
+
+COPYING
+-------
+(C) Symas Corporation
+(C) Mavimax, Ltd
+

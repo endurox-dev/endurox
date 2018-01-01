@@ -53,7 +53,7 @@ FILE *M_test_temp_file=NULL;
  */
 void open_test_temp(char *mode)
 {
-    strcpy(M_test_temp_filename, "/tmp/ubf-test-com-XXXXXX");
+    NDRX_STRCPY_SAFE(M_test_temp_filename, "/tmp/ubf-test-com-XXXXXX");
     assert_not_equal(mkstemp(M_test_temp_filename), EXFAIL);
     assert_not_equal((M_test_temp_file=fopen(M_test_temp_filename, mode)), NULL);
 }
@@ -514,6 +514,11 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_nstd_crypto());
     add_suite(suite, ubf_nstd_base64());
     
+    add_suite(suite, ubf_nstd_mtest());
+    add_suite(suite, ubf_nstd_mtest2());
+    add_suite(suite, ubf_nstd_mtest3());
+    add_suite(suite, ubf_nstd_mtest4());
+    add_suite(suite, ubf_nstd_mtest5());
     
     /*
      * UBF tests
