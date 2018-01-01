@@ -43,7 +43,7 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Exectuables
+# Executables
 add_executable (xmemck xmemck.c)
 
 # Link the executable to the UBF library & others...

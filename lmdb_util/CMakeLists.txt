@@ -1,6 +1,5 @@
 ## 
-## Enduro Execution platform's UBF library tests
-## Using Cgreen framework for tests.
+## LMDB/EXDB admin utilties
 ##
 ## @file CMakeLists.txt
 ## 
@@ -31,35 +30,41 @@
 ## -----------------------------------------------------------------------------
 ##
 
+# Set a minimum version
+cmake_minimum_required(VERSION 2.8)
 
-# Make sure the compiler can find include files from UBF library
+# Make sure the compiler can find inclxmemcke files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
-					 ${ENDUROX_SOURCE_DIR}/include
-					 ${ENDUROX_SOURCE_DIR}/libnstd)
+                        ${ENDUROX_SOURCE_DIR}/libatmi
+                        ${ENDUROX_SOURCE_DIR}/libatmiclt
+                        ${ENDUROX_SOURCE_DIR}/include
+                        ${ENDUROX_SOURCE_DIR}/libnstd)
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Add debug options
-# By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
-	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
-	ADD_DEFINITIONS("-D UBF_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
-
-# Exectuables
-add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c 
-                test_cbget.c test_bdel.c test_expr.c test_bnext.c test_bproj.c
-                test_mem.c test_bupdate.c test_bconcat.c test_find.c test_get.c
-                test_print.c test_macro.c test_readwrite.c test_mkfldhdr.c
-                test_nstd_crypto.c test_nstd_b64.c
-                test_nstd_mtest.c test_nstd_mtest2.c test_nstd_mtest3.c
-                test_nstd_mtest4.c test_nstd_mtest5.c)
+# Executables
+add_executable (exdb_stat exdb_stat.c)
+add_executable (exdb_load exdb_load.c)
+add_executable (exdb_dump exdb_dump.c)
+add_executable (exdb_copy exdb_copy.c)
 
 # Link the executable to the UBF library & others...
+target_link_libraries (exdb_stat atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (exdb_load atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (exdb_dump atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (exdb_copy atmiclt atmi ubf nstd ${RT_LIB} pthread m)
 
-target_link_libraries (ubfunit1 ubf cgreen m nstd ${RT_LIB} pthread)
+set_target_properties(exdb_stat PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(exdb_load PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(exdb_dump PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(exdb_copy PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
-set_target_properties(ubfunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
+# Install bin
+install (TARGETS 
+    exdb_stat
+    exdb_load
+    exdb_dump
+    exdb_copy
+    DESTINATION bin)
