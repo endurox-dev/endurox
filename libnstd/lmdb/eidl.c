@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include "eidl.h"
 
-/** @defgroup internal	NDRXDB Internals
+/** @defgroup internal	EXDB Internals
  *	@{
  */
 /** @defgroup idls	ID List Management
@@ -31,7 +31,7 @@
  */
 #define CMP(x,y)	 ( (x) < (y) ? -1 : (x) > (y) )
 
-unsigned exdb_eidl_search( EXDB_IDL ids, EXDB_ID id )
+unsigned edb_eidl_search( EDB_IDL ids, EDB_ID id )
 {
 	/*
 	 * binary search of id in ids
@@ -67,11 +67,11 @@ unsigned exdb_eidl_search( EXDB_IDL ids, EXDB_ID id )
 }
 
 #if 0	/* superseded by append/sort */
-int exdb_eidl_insert( EXDB_IDL ids, EXDB_ID id )
+int edb_eidl_insert( EDB_IDL ids, EDB_ID id )
 {
 	unsigned x, i;
 
-	x = exdb_eidl_search( ids, id );
+	x = edb_eidl_search( ids, id );
 	assert( x > 0 );
 
 	if( x < 1 ) {
@@ -85,7 +85,7 @@ int exdb_eidl_insert( EXDB_IDL ids, EXDB_ID id )
 		return -1;
 	}
 
-	if ( ++ids[0] >= EXDB_IDL_DB_MAX ) {
+	if ( ++ids[0] >= EDB_IDL_DB_MAX ) {
 		/* no room */
 		--ids[0];
 		return -2;
@@ -101,9 +101,9 @@ int exdb_eidl_insert( EXDB_IDL ids, EXDB_ID id )
 }
 #endif
 
-EXDB_IDL exdb_eidl_alloc(int num)
+EDB_IDL edb_eidl_alloc(int num)
 {
-	EXDB_IDL ids = malloc((num+2) * sizeof(EXDB_ID));
+	EDB_IDL ids = malloc((num+2) * sizeof(EDB_ID));
 	if (ids) {
 		*ids++ = num;
 		*ids = 0;
@@ -111,28 +111,28 @@ EXDB_IDL exdb_eidl_alloc(int num)
 	return ids;
 }
 
-void exdb_eidl_free(EXDB_IDL ids)
+void edb_eidl_free(EDB_IDL ids)
 {
 	if (ids)
 		free(ids-1);
 }
 
-void exdb_eidl_shrink( EXDB_IDL *idp )
+void edb_eidl_shrink( EDB_IDL *idp )
 {
-	EXDB_IDL ids = *idp;
-	if (*(--ids) > EXDB_IDL_UM_MAX &&
-		(ids = realloc(ids, (EXDB_IDL_UM_MAX+2) * sizeof(EXDB_ID))))
+	EDB_IDL ids = *idp;
+	if (*(--ids) > EDB_IDL_UM_MAX &&
+		(ids = realloc(ids, (EDB_IDL_UM_MAX+2) * sizeof(EDB_ID))))
 	{
-		*ids++ = EXDB_IDL_UM_MAX;
+		*ids++ = EDB_IDL_UM_MAX;
 		*idp = ids;
 	}
 }
 
-static int exdb_eidl_grow( EXDB_IDL *idp, int num )
+static int edb_eidl_grow( EDB_IDL *idp, int num )
 {
-	EXDB_IDL idn = *idp-1;
+	EDB_IDL idn = *idp-1;
 	/* grow it */
-	idn = realloc(idn, (*idn + num + 2) * sizeof(EXDB_ID));
+	idn = realloc(idn, (*idn + num + 2) * sizeof(EDB_ID));
 	if (!idn)
 		return ENOMEM;
 	*idn++ += num;
@@ -140,13 +140,13 @@ static int exdb_eidl_grow( EXDB_IDL *idp, int num )
 	return 0;
 }
 
-int exdb_eidl_need( EXDB_IDL *idp, unsigned num )
+int edb_eidl_need( EDB_IDL *idp, unsigned num )
 {
-	EXDB_IDL ids = *idp;
+	EDB_IDL ids = *idp;
 	num += ids[0];
 	if (num > ids[-1]) {
 		num = (num + num/4 + (256 + 2)) & -256;
-		if (!(ids = realloc(ids-1, num * sizeof(EXDB_ID))))
+		if (!(ids = realloc(ids-1, num * sizeof(EDB_ID))))
 			return ENOMEM;
 		*ids++ = num - 2;
 		*idp = ids;
@@ -154,12 +154,12 @@ int exdb_eidl_need( EXDB_IDL *idp, unsigned num )
 	return 0;
 }
 
-int exdb_eidl_append( EXDB_IDL *idp, EXDB_ID id )
+int edb_eidl_append( EDB_IDL *idp, EDB_ID id )
 {
-	EXDB_IDL ids = *idp;
+	EDB_IDL ids = *idp;
 	/* Too big? */
 	if (ids[0] >= ids[-1]) {
-		if (exdb_eidl_grow(idp, EXDB_IDL_UM_MAX))
+		if (edb_eidl_grow(idp, EDB_IDL_UM_MAX))
 			return ENOMEM;
 		ids = *idp;
 	}
@@ -168,26 +168,26 @@ int exdb_eidl_append( EXDB_IDL *idp, EXDB_ID id )
 	return 0;
 }
 
-int exdb_eidl_append_list( EXDB_IDL *idp, EXDB_IDL app )
+int edb_eidl_append_list( EDB_IDL *idp, EDB_IDL app )
 {
-	EXDB_IDL ids = *idp;
+	EDB_IDL ids = *idp;
 	/* Too big? */
 	if (ids[0] + app[0] >= ids[-1]) {
-		if (exdb_eidl_grow(idp, app[0]))
+		if (edb_eidl_grow(idp, app[0]))
 			return ENOMEM;
 		ids = *idp;
 	}
-	memcpy(&ids[ids[0]+1], &app[1], app[0] * sizeof(EXDB_ID));
+	memcpy(&ids[ids[0]+1], &app[1], app[0] * sizeof(EDB_ID));
 	ids[0] += app[0];
 	return 0;
 }
 
-int exdb_eidl_append_range( EXDB_IDL *idp, EXDB_ID id, unsigned n )
+int edb_eidl_append_range( EDB_IDL *idp, EDB_ID id, unsigned n )
 {
-	EXDB_ID *ids = *idp, len = ids[0];
+	EDB_ID *ids = *idp, len = ids[0];
 	/* Too big? */
 	if (len + n > ids[-1]) {
-		if (exdb_eidl_grow(idp, n | EXDB_IDL_UM_MAX))
+		if (edb_eidl_grow(idp, n | EDB_IDL_UM_MAX))
 			return ENOMEM;
 		ids = *idp;
 	}
@@ -198,10 +198,10 @@ int exdb_eidl_append_range( EXDB_IDL *idp, EXDB_ID id, unsigned n )
 	return 0;
 }
 
-void exdb_eidl_xmerge( EXDB_IDL idl, EXDB_IDL merge )
+void edb_eidl_xmerge( EDB_IDL idl, EDB_IDL merge )
 {
-	EXDB_ID old_id, merge_id, i = merge[0], j = idl[0], k = i+j, total = k;
-	idl[0] = (EXDB_ID)-1;		/* delimiter for idl scan below */
+	EDB_ID old_id, merge_id, i = merge[0], j = idl[0], k = i+j, total = k;
+	idl[0] = (EDB_ID)-1;		/* delimiter for idl scan below */
 	old_id = idl[j];
 	while (i) {
 		merge_id = merge[i--];
@@ -218,12 +218,12 @@ void exdb_eidl_xmerge( EXDB_IDL idl, EXDB_IDL merge )
 #define	EIDL_SWAP(a,b)	{ itmp=(a); (a)=(b); (b)=itmp; }
 
 void
-exdb_eidl_sort( EXDB_IDL ids )
+edb_eidl_sort( EDB_IDL ids )
 {
 	/* Max possible depth of int-indexed tree * 2 items/level */
 	int istack[sizeof(int)*CHAR_BIT * 2];
 	int i,j,k,l,ir,jstack;
-	EXDB_ID a, itmp;
+	EDB_ID a, itmp;
 
 	ir = (int)ids[0];
 	l = 1;
@@ -278,7 +278,7 @@ exdb_eidl_sort( EXDB_IDL ids )
 	}
 }
 
-unsigned exdb_mid2l_search( EXDB_ID2L ids, EXDB_ID id )
+unsigned edb_mid2l_search( EDB_ID2L ids, EDB_ID id )
 {
 	/*
 	 * binary search of id in ids
@@ -313,11 +313,11 @@ unsigned exdb_mid2l_search( EXDB_ID2L ids, EXDB_ID id )
 	return cursor;
 }
 
-int exdb_mid2l_insert( EXDB_ID2L ids, EXDB_ID2 *id )
+int edb_mid2l_insert( EDB_ID2L ids, EDB_ID2 *id )
 {
 	unsigned x, i;
 
-	x = exdb_mid2l_search( ids, id->mid );
+	x = edb_mid2l_search( ids, id->mid );
 
 	if( x < 1 ) {
 		/* internal error */
@@ -329,7 +329,7 @@ int exdb_mid2l_insert( EXDB_ID2L ids, EXDB_ID2 *id )
 		return -1;
 	}
 
-	if ( ids[0].mid >= EXDB_IDL_UM_MAX ) {
+	if ( ids[0].mid >= EDB_IDL_UM_MAX ) {
 		/* too big */
 		return -2;
 
@@ -344,10 +344,10 @@ int exdb_mid2l_insert( EXDB_ID2L ids, EXDB_ID2 *id )
 	return 0;
 }
 
-int exdb_mid2l_append( EXDB_ID2L ids, EXDB_ID2 *id )
+int edb_mid2l_append( EDB_ID2L ids, EDB_ID2 *id )
 {
 	/* Too big? */
-	if (ids[0].mid >= EXDB_IDL_UM_MAX) {
+	if (ids[0].mid >= EDB_IDL_UM_MAX) {
 		return -2;
 	}
 	ids[0].mid++;
@@ -355,8 +355,8 @@ int exdb_mid2l_append( EXDB_ID2L ids, EXDB_ID2 *id )
 	return 0;
 }
 
-#ifdef EXDB_VL32
-unsigned exdb_mid3l_search( EXDB_ID3L ids, EXDB_ID id )
+#ifdef EDB_VL32
+unsigned edb_mid3l_search( EDB_ID3L ids, EDB_ID id )
 {
 	/*
 	 * binary search of id in ids
@@ -391,11 +391,11 @@ unsigned exdb_mid3l_search( EXDB_ID3L ids, EXDB_ID id )
 	return cursor;
 }
 
-int exdb_mid3l_insert( EXDB_ID3L ids, EXDB_ID3 *id )
+int edb_mid3l_insert( EDB_ID3L ids, EDB_ID3 *id )
 {
 	unsigned x, i;
 
-	x = exdb_mid3l_search( ids, id->mid );
+	x = edb_mid3l_search( ids, id->mid );
 
 	if( x < 1 ) {
 		/* internal error */
@@ -415,7 +415,7 @@ int exdb_mid3l_insert( EXDB_ID3L ids, EXDB_ID3 *id )
 
 	return 0;
 }
-#endif /* EXDB_VL32 */
+#endif /* EDB_VL32 */
 
 /** @} */
 /** @} */
