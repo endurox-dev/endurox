@@ -1,5 +1,5 @@
 /* 
-** xadmin down tests
+** tpbroadcast tests
 **
 ** @file atmiclt37.c
 ** 
@@ -50,6 +50,8 @@
 /*---------------------------Statics------------------------------------*/
 exprivate int M_shutdown = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
+
+int test_tpchkunsol_ret_num(void);
 
 /**
  * Set notification handler 
@@ -288,6 +290,68 @@ int bc_listen(void)
 out:
     return ret;    
 }
+/**
+ * Check the number of events received
+ * Bug #269
+ * @return EXSUCCEED/EXFAIL
+ */
+int test_tpchkunsol_ret_num(void)
+{
+    int ret = EXSUCCEED;
+    UBFH *p_ub = NULL;
+    char tmp[32];
+    int i;
+    int cnt;
+    
+    if (NULL!=tpsetunsol(notification_callback))
+    {
+        NDRX_LOG(log_error, "TESTERRORR: Previous handler must be NULL!");
+        EXFAIL_OUT(ret);
+    }
+      
+    /* Allocate some buffer */
+    if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to allocate test buffer!");
+        EXFAIL_OUT(ret);
+    }
+#define NUMCALLS    7
+    
+    for (i=0; i<NUMCALLS; i++)
+    {
+        /* Let servers to provide back replies... */
+        /* Have a fixed buffer len, so that we do not need to realloc... */
+        
+        snprintf(tmp, sizeof(tmp), "AA%02ld%08d", tpgetnodeid(), i);
+        
+        if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
+                    tmp, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=tpbroadcast(NULL, NULL, "atmicltA39", (char *)p_ub, 0L, TPREGEXMATCH))
+        {
+            NDRX_LOG(log_error, "TESTERRROR: Failed to broadcast: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+    }
+    
+    sleep(10);
+    
+    if (NUMCALLS!=(cnt=tpchkunsol()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected numcalls: %d but got %d!!!",
+                NUMCALLS, cnt);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;    
+}
 
 void sighandler(int signum)
 {
@@ -313,8 +377,12 @@ int main(int argc, char** argv)
     
     memset(&init, 0, sizeof(init));
     
-    
-    if (0==strcmp(argv[1], "broadcast"))
+    if (0==strcmp(argv[1], "retnum"))
+    {
+        NDRX_LOG(log_error, "Running: broadcast");
+        ret = test_tpchkunsol_ret_num();
+    }
+    else if (0==strcmp(argv[1], "broadcast"))
     {
         NDRX_LOG(log_error, "Running: broadcast");
         ret = run_broadcast();
@@ -350,6 +418,8 @@ out:
     {
         NDRX_LOG(log_error, "TESTERROR: main() finishing with error %d!", ret);
     }
+
+    tpterm();
 
     return ret;
     
