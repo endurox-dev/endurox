@@ -1,23 +1,23 @@
-EXDB_LOAD(8)
-============
+EDB_LOAD(8)
+===========
 :doctype: manpage
 
 NAME
 ----
-exdb_load - LMDB/NDRXDB environment import tool
+edb_load - LMDB/EXDB environment import tool
 
 
 SYNOPSIS
 --------
-*exdb_load* [*-V*] [*-f* 'file'] [*-n*] [*-s* 'subdb'] [*-N*] [*-T*]  'envpath'
+*edb_load* [*-V*] [*-f* 'file'] [*-n*] [*-s* 'subdb'] [*-N*] [*-T*]  'envpath'
 
 
 DESCRIPTION
 -----------
-The  *exdb_load*  utility  reads  from  the standard input and loads it into the 
-NDRXDB environment envpath.
+The  *edb_load*  utility  reads  from  the standard input and loads it into the 
+EXDB environment envpath.
 
-The input to *exdb_load* must be in the output format specified by the *exdb_dump(8)*
+The input to *edb_load* must be in the output format specified by the *edb_dump(8)*
 utility  or  as specified by the *-T* option below.
 
 
@@ -30,7 +30,7 @@ Write the library version number to the standard output, and exit.
 Read from the specified file instead of from the standard input.
 
 [*-n*]::
-Load an NDRXDB database which does not use subdirectories.
+Load an EXDB database which does not use subdirectories.
 
 [*-s*]:: 'subdb'
 Load  a  specific  subdatabase.  If no database is specified, 
@@ -56,7 +56,7 @@ of  a  single character; for example, \0a is a newline character in the ASCII
 character set.
 
 For  this  reason,  any  backslash  or newline characters that naturally 
-occur in the text input must be escaped to avoid misinterpretation by *exdb_load*.
+occur in the text input must be escaped to avoid misinterpretation by *edb_load*.
 
             
 EXIT STATUS
@@ -76,7 +76,7 @@ Howard Chu of Symas Corporation <http://www.symas.com>
 
 SEE ALSO
 --------
-*exdb_dump(8)*
+*edb_dump(8)*
 
 COPYING
 -------
