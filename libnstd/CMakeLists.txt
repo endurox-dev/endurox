@@ -85,7 +85,7 @@ add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                             sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
                             sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
                             exregex.c platform.c msgsizemax.c exaes.c exsha1.c
-                            exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/exdb.c)
+                            exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/edb.c)
 
 if(${CMAKE_OS_NAME} STREQUAL "AIX")
     # for tls support
