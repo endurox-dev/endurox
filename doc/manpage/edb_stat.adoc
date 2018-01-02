@@ -1,22 +1,22 @@
-EXDB_STAT(8)
-============
+EDB_STAT(8)
+===========
 :doctype: manpage
 
 
 NAME
 ----
-exdb_stat - LMDB/NDRXDB environment status tool
+edb_stat - LMDB/EXDB environment status tool
 
 
 SYNOPSIS
 --------
-*exdb_stat* [*-V*] [*-e*] [*-f*[*f*[*f*]]] [*-n*] [*-r*[*r*]] [*-a* | *-s* 'subdb']  *envpath*
+*edb_stat* [*-V*] [*-e*] [*-f*[*f*[*f*]]] [*-n*] [*-r*[*r*]] [*-a* | *-s* 'subdb']  *envpath*
 
 
 DESCRIPTION
 -----------
 
-The *exdb_stat* utility displays the status of an NDRXDB environment.
+The *edb_stat* utility displays the status of an EXDB environment.
 
 
 OPTIONS
@@ -34,7 +34,7 @@ If *-ff* is given, summarize each freelist entry.  If *-fff* is given,
 display the full list of page IDs in the freelist.
 
 [*-n*]::
-Display the status of an NDRXDB database which does not use subdirectories.
+Display the status of an EXDB database which does not use subdirectories.
 
 [*-r*]::
 Display  information about the environment reader table.  Shows the process ID, 
@@ -68,7 +68,7 @@ Howard Chu of Symas Corporation <http://www.symas.com>
 
 SEE ALSO
 --------
-*exdb_copy(8)*
+*edb_copy(8)*
 
 COPYING
 -------

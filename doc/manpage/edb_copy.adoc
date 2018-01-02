@@ -1,21 +1,21 @@
-EXDB_COPY(8)
-============
+EDB_COPY(8)
+===========
 :doctype: manpage
 
 NAME
 ----
-exdb_dump - LMDB/NDRXDB environment copy tool
+edb_dump - LMDB/EXDB environment copy tool
 
 
 SYNOPSIS
 --------
-*exdb_copy* [*-V*] [*-c*] [*-n*] *srcpath* [*dstpath*]
+*edb_copy* [*-V*] [*-c*] [*-n*] *srcpath* [*dstpath*]
 
 
 DESCRIPTION
 -----------
 
-The *exdb_copy* utility copies an NDRXDB environment. The environment can be 
+The *edb_copy* utility copies an EXDB environment. The environment can be 
 copied regardless of whether it is currently in use. No lockfile is created, 
 since it gets recreated at need.
 
@@ -54,7 +54,7 @@ Howard Chu of Symas Corporation <http://www.symas.com>
 
 SEE ALSO
 --------
-*exdb_stat(8)*
+*edb_stat(8)*
 
 COPYING
 -------
