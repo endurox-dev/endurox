@@ -266,6 +266,8 @@ Support, #259 Support, #255 Bug, #254 Bug.
 
 - Version 5.2.4 released on 22/12/2017. (stable) Fixed Bug #268.
 
+- Version 5.2.6 released on 02/01/2018. (stable) Happy New Year! Fixed Bug #269.
+
 # Build configurations
 
 ## Configure make with: 

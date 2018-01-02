@@ -1357,7 +1357,7 @@ expublic void ndrx_ndrx_tmunsolerr_handler (char *data, long len, long flags)
 
 /**
  * Check unsolicited messages by client
- * @return FAIL
+ * @return -1 on error, or number of messages processed
  */
 expublic int tpchkunsol(void) 
 {
@@ -1370,7 +1370,10 @@ expublic int tpchkunsol(void)
         EXFAIL_OUT(ret);
     }   
     
-    if (ndrx_tpchkunsol()<0)
+    /* Bug #269 - return the number of messages processed... */
+    ret=ndrx_tpchkunsol();
+    
+    if (ret<0)
     {
         NDRX_LOG(log_error, "ndrx_tpchkunsol failed");
         EXFAIL_OUT(ret);
