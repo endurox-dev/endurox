@@ -55,6 +55,7 @@
 #include "userlog.h"
 #include "exsha1.h"
 #include "exbase64.h"
+#include <xa_cmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -696,7 +697,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
             /* maybe needs to think about cross platform way?
              * but currently do not see reason for this
              */
-            ndrx_xa_base64_encode(bin, sizeof(TPTRANID), &out_len, str);
+            ndrx_xa_base64_encode((unsigned char *)bin, sizeof(TPTRANID), &out_len, str);
             str[out_len] = EXEOS;
         }
         else if (flags & TPCONVXID)
@@ -724,7 +725,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         {
             /* Decode binary data: */
             out_len = sizeof(TPTRANID);
-            if (NULL==(ndrx_xa_base64_decode(str, strlen(str), &out_len, bin)))
+            if (NULL==(ndrx_xa_base64_decode((unsigned char *)str, strlen(str), &out_len, bin)))
             {
                 ndrx_TPset_error_msg(TPEINVAL, "Failed to decode string, possible "
                         "bad base64 coding.");
