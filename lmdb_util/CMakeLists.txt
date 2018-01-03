@@ -1,5 +1,5 @@
 ## 
-## LMDB/EXDB admin utilties
+## LMDB/EDB admin utilties
 ##
 ## @file CMakeLists.txt
 ## 
@@ -44,27 +44,27 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Executables
-add_executable (exdb_stat exdb_stat.c)
-add_executable (exdb_load exdb_load.c)
-add_executable (exdb_dump exdb_dump.c)
-add_executable (exdb_copy exdb_copy.c)
+add_executable (edb_stat edb_stat.c)
+add_executable (edb_load edb_load.c)
+add_executable (edb_dump edb_dump.c)
+add_executable (edb_copy edb_copy.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (exdb_stat atmiclt atmi ubf nstd ${RT_LIB} pthread m)
-target_link_libraries (exdb_load atmiclt atmi ubf nstd ${RT_LIB} pthread m)
-target_link_libraries (exdb_dump atmiclt atmi ubf nstd ${RT_LIB} pthread m)
-target_link_libraries (exdb_copy atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (edb_stat atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (edb_load atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (edb_dump atmiclt atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (edb_copy atmiclt atmi ubf nstd ${RT_LIB} pthread m)
 
-set_target_properties(exdb_stat PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(exdb_load PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(exdb_dump PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(exdb_copy PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(edb_stat PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(edb_load PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(edb_dump PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(edb_copy PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 
 # Install bin
 install (TARGETS 
-    exdb_stat
-    exdb_load
-    exdb_dump
-    exdb_copy
+    edb_stat
+    edb_load
+    edb_dump
+    edb_copy
     DESTINATION bin)
