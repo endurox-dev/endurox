@@ -1,4 +1,4 @@
-/* exdb_stat.c - memory-mapped database status tool */
+/* edb_stat.c - memory-mapped database status tool */
 /*
  * Copyright 2011-2017 Howard Chu, Symas Corp.
  * All rights reserved.
@@ -15,12 +15,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "ndrxdb.h"
+#include "exdb.h"
 
-#define Z	EXDB_FMT_Z
-#define Yu	EXDB_PRIy(u)
+#define Z	EDB_FMT_Z
+#define Yu	EDB_PRIy(u)
 
-static void prstat(EXDB_stat *ms)
+static void prstat(EDB_stat *ms)
 {
 #if 0
 	printf("  Page size: %u\n", ms->ms_psize);
@@ -41,11 +41,11 @@ static void usage(char *prog)
 int main(int argc, char *argv[])
 {
 	int i, rc;
-	EXDB_env *env;
-	EXDB_txn *txn;
-	EXDB_dbi dbi;
-	EXDB_stat mst;
-	EXDB_envinfo mei;
+	EDB_env *env;
+	EDB_txn *txn;
+	EDB_dbi dbi;
+	EDB_stat mst;
+	EDB_envinfo mei;
 	char *prog = argv[0];
 	char *envname;
 	char *subname = NULL;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 	while ((i = getopt(argc, argv, "Vaefnrs:")) != EOF) {
 		switch(i) {
 		case 'V':
-			printf("%s\n", EXDB_VERSION_STRING);
+			printf("%s\n", EDB_VERSION_STRING);
 			exit(0);
 			break;
 		case 'a':
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 			freinfo++;
 			break;
 		case 'n':
-			envflags |= EXDB_NOSUBDIR;
+			envflags |= EDB_NOSUBDIR;
 			break;
 		case 'r':
 			rdrinfo++;
@@ -101,25 +101,25 @@ int main(int argc, char *argv[])
 		usage(prog);
 
 	envname = argv[optind];
-	rc = exdb_env_create(&env);
+	rc = edb_env_create(&env);
 	if (rc) {
-		fprintf(stderr, "exdb_env_create failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_env_create failed, error %d %s\n", rc, edb_strerror(rc));
 		return EXIT_FAILURE;
 	}
 
 	if (alldbs || subname) {
-		exdb_env_set_maxdbs(env, 4);
+		edb_env_set_maxdbs(env, 4);
 	}
 
-	rc = exdb_env_open(env, envname, envflags | EXDB_RDONLY, 0664);
+	rc = edb_env_open(env, envname, envflags | EDB_RDONLY, 0664);
 	if (rc) {
-		fprintf(stderr, "exdb_env_open failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_env_open failed, error %d %s\n", rc, edb_strerror(rc));
 		goto env_close;
 	}
 
 	if (envinfo) {
-		(void)exdb_env_stat(env, &mst);
-		(void)exdb_env_info(env, &mei);
+		(void)edb_env_stat(env, &mst);
+		(void)edb_env_info(env, &mei);
 		printf("Environment Info\n");
 		printf("  Map address: %p\n", mei.me_mapaddr);
 		printf("  Map size: %"Yu"\n", mei.me_mapsize);
@@ -133,47 +133,47 @@ int main(int argc, char *argv[])
 
 	if (rdrinfo) {
 		printf("Reader Table Status\n");
-		rc = exdb_reader_list(env, (EXDB_msg_func *)fputs, stdout);
+		rc = edb_reader_list(env, (EDB_msg_func *)fputs, stdout);
 		if (rdrinfo > 1) {
 			int dead;
-			exdb_reader_check(env, &dead);
+			edb_reader_check(env, &dead);
 			printf("  %d stale readers cleared.\n", dead);
-			rc = exdb_reader_list(env, (EXDB_msg_func *)fputs, stdout);
+			rc = edb_reader_list(env, (EDB_msg_func *)fputs, stdout);
 		}
 		if (!(subname || alldbs || freinfo))
 			goto env_close;
 	}
 
-	rc = exdb_txn_begin(env, NULL, EXDB_RDONLY, &txn);
+	rc = edb_txn_begin(env, NULL, EDB_RDONLY, &txn);
 	if (rc) {
-		fprintf(stderr, "exdb_txn_begin failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_txn_begin failed, error %d %s\n", rc, edb_strerror(rc));
 		goto env_close;
 	}
 
 	if (freinfo) {
-		EXDB_cursor *cursor;
-		EXDB_val key, data;
-		exdb_size_t pages = 0, *iptr;
+		EDB_cursor *cursor;
+		EDB_val key, data;
+		edb_size_t pages = 0, *iptr;
 
 		printf("Freelist Status\n");
 		dbi = 0;
-		rc = exdb_cursor_open(txn, dbi, &cursor);
+		rc = edb_cursor_open(txn, dbi, &cursor);
 		if (rc) {
-			fprintf(stderr, "exdb_cursor_open failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_cursor_open failed, error %d %s\n", rc, edb_strerror(rc));
 			goto txn_abort;
 		}
-		rc = exdb_stat(txn, dbi, &mst);
+		rc = edb_stat(txn, dbi, &mst);
 		if (rc) {
-			fprintf(stderr, "exdb_stat failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_stat failed, error %d %s\n", rc, edb_strerror(rc));
 			goto txn_abort;
 		}
 		prstat(&mst);
-		while ((rc = exdb_cursor_get(cursor, &key, &data, EXDB_NEXT)) == 0) {
+		while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
 			iptr = data.mv_data;
 			pages += *iptr;
 			if (freinfo > 1) {
 				char *bad = "";
-				exdb_size_t pg, prev;
+				edb_size_t pg, prev;
 				ssize_t i, j, span = 0;
 				j = *iptr++;
 				for (i = j, prev = 1; --i >= 0; ) {
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 					for (; i >= span && iptr[i-span] == pg; span++, pg++) ;
 				}
 				printf("    Transaction %"Yu", %"Z"d pages, maxspan %"Z"d%s\n",
-					*(exdb_size_t *)key.mv_data, j, span, bad);
+					*(edb_size_t *)key.mv_data, j, span, bad);
 				if (freinfo > 2) {
 					for (--j; j >= 0; ) {
 						pg = iptr[j];
@@ -196,65 +196,65 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		exdb_cursor_close(cursor);
+		edb_cursor_close(cursor);
 		printf("  Free pages: %"Yu"\n", pages);
 	}
 
-	rc = exdb_open(txn, subname, 0, &dbi);
+	rc = edb_open(txn, subname, 0, &dbi);
 	if (rc) {
-		fprintf(stderr, "exdb_open failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_open failed, error %d %s\n", rc, edb_strerror(rc));
 		goto txn_abort;
 	}
 
-	rc = exdb_stat(txn, dbi, &mst);
+	rc = edb_stat(txn, dbi, &mst);
 	if (rc) {
-		fprintf(stderr, "exdb_stat failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_stat failed, error %d %s\n", rc, edb_strerror(rc));
 		goto txn_abort;
 	}
 	printf("Status of %s\n", subname ? subname : "Main DB");
 	prstat(&mst);
 
 	if (alldbs) {
-		EXDB_cursor *cursor;
-		EXDB_val key;
+		EDB_cursor *cursor;
+		EDB_val key;
 
-		rc = exdb_cursor_open(txn, dbi, &cursor);
+		rc = edb_cursor_open(txn, dbi, &cursor);
 		if (rc) {
-			fprintf(stderr, "exdb_cursor_open failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_cursor_open failed, error %d %s\n", rc, edb_strerror(rc));
 			goto txn_abort;
 		}
-		while ((rc = exdb_cursor_get(cursor, &key, NULL, EXDB_NEXT_NODUP)) == 0) {
+		while ((rc = edb_cursor_get(cursor, &key, NULL, EDB_NEXT_NODUP)) == 0) {
 			char *str;
-			EXDB_dbi db2;
+			EDB_dbi db2;
 			if (memchr(key.mv_data, '\0', key.mv_size))
 				continue;
 			str = malloc(key.mv_size+1);
 			memcpy(str, key.mv_data, key.mv_size);
 			str[key.mv_size] = '\0';
-			rc = exdb_open(txn, str, 0, &db2);
-			if (rc == EXDB_SUCCESS)
+			rc = edb_open(txn, str, 0, &db2);
+			if (rc == EDB_SUCCESS)
 				printf("Status of %s\n", str);
 			free(str);
 			if (rc) continue;
-			rc = exdb_stat(txn, db2, &mst);
+			rc = edb_stat(txn, db2, &mst);
 			if (rc) {
-				fprintf(stderr, "exdb_stat failed, error %d %s\n", rc, exdb_strerror(rc));
+				fprintf(stderr, "edb_stat failed, error %d %s\n", rc, edb_strerror(rc));
 				goto txn_abort;
 			}
 			prstat(&mst);
-			exdb_close(env, db2);
+			edb_close(env, db2);
 		}
-		exdb_cursor_close(cursor);
+		edb_cursor_close(cursor);
 	}
 
-	if (rc == EXDB_NOTFOUND)
-		rc = EXDB_SUCCESS;
+	if (rc == EDB_NOTFOUND)
+		rc = EDB_SUCCESS;
 
-	exdb_close(env, dbi);
+	edb_close(env, dbi);
 txn_abort:
-	exdb_txn_abort(txn);
+	edb_txn_abort(txn);
 env_close:
-	exdb_env_close(env);
+	edb_env_close(env);
 
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
