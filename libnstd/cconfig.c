@@ -64,6 +64,7 @@ int G_tried_to_load = EXFALSE; /* did we try to load the config? */
 exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
                         NDRX_CONF_SECTION_DEBUG, 
                         NDRX_CONF_SECTION_QUEUE, 
+                        NDRX_CONF_SECTION_CACHE, /* read cache */
                         NULL};
 
 /* for first pass load only global! */
