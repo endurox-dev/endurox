@@ -1,4 +1,4 @@
-/* exdb_dump.c - memory-mapped database dump tool */
+/* edb_dump.c - memory-mapped database dump tool */
 /*
  * Copyright 2011-2017 Howard Chu, Symas Corp.
  * All rights reserved.
@@ -18,9 +18,9 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <signal.h>
-#include "ndrxdb.h"
+#include "exdb.h"
 
-#define Yu	EXDB_PRIy(u)
+#define Yu	EDB_PRIy(u)
 
 #define PRINT	1
 static int mode;
@@ -31,12 +31,12 @@ typedef struct flagbit {
 } flagbit;
 
 flagbit dbflags[] = {
-	{ EXDB_REVERSEKEY, "reversekey" },
-	{ EXDB_DUPSORT, "dupsort" },
-	{ EXDB_INTEGERKEY, "integerkey" },
-	{ EXDB_DUPFIXED, "dupfixed" },
-	{ EXDB_INTEGERDUP, "integerdup" },
-	{ EXDB_REVERSEDUP, "reversedup" },
+	{ EDB_REVERSEKEY, "reversekey" },
+	{ EDB_DUPSORT, "dupsort" },
+	{ EDB_INTEGERKEY, "integerkey" },
+	{ EDB_DUPFIXED, "dupfixed" },
+	{ EDB_INTEGERDUP, "integerdup" },
+	{ EDB_REVERSEDUP, "reversedup" },
 	{ 0, NULL }
 };
 
@@ -55,7 +55,7 @@ static void hex(unsigned char c)
 	putchar(hexc[c & 0xf]);
 }
 
-static void text(EXDB_val *v)
+static void text(EDB_val *v)
 {
 	unsigned char *c, *end;
 
@@ -74,7 +74,7 @@ static void text(EXDB_val *v)
 	putchar('\n');
 }
 
-static void byte(EXDB_val *v)
+static void byte(EDB_val *v)
 {
 	unsigned char *c, *end;
 
@@ -88,22 +88,22 @@ static void byte(EXDB_val *v)
 }
 
 /* Dump in BDB-compatible format */
-static int dumpit(EXDB_txn *txn, EXDB_dbi dbi, char *name)
+static int dumpit(EDB_txn *txn, EDB_dbi dbi, char *name)
 {
-	EXDB_cursor *mc;
-	EXDB_stat ms;
-	EXDB_val key, data;
-	EXDB_envinfo info;
+	EDB_cursor *mc;
+	EDB_stat ms;
+	EDB_val key, data;
+	EDB_envinfo info;
 	unsigned int flags;
 	int rc, i;
 
-	rc = exdb_dbi_flags(txn, dbi, &flags);
+	rc = edb_dbi_flags(txn, dbi, &flags);
 	if (rc) return rc;
 
-	rc = exdb_stat(txn, dbi, &ms);
+	rc = edb_stat(txn, dbi, &ms);
 	if (rc) return rc;
 
-	rc = exdb_env_info(exdb_txn_env(txn), &info);
+	rc = edb_env_info(edb_txn_env(txn), &info);
 	if (rc) return rc;
 
 	printf("VERSION=3\n");
@@ -116,7 +116,7 @@ static int dumpit(EXDB_txn *txn, EXDB_dbi dbi, char *name)
 		printf("mapaddr=%p\n", info.me_mapaddr);
 	printf("maxreaders=%u\n", info.me_maxreaders);
 
-	if (flags & EXDB_DUPSORT)
+	if (flags & EDB_DUPSORT)
 		printf("duplicates=1\n");
 
 	for (i=0; dbflags[i].bit; i++)
@@ -126,10 +126,10 @@ static int dumpit(EXDB_txn *txn, EXDB_dbi dbi, char *name)
 	printf("db_pagesize=%d\n", ms.ms_psize);
 	printf("HEADER=END\n");
 
-	rc = exdb_cursor_open(txn, dbi, &mc);
+	rc = edb_cursor_open(txn, dbi, &mc);
 	if (rc) return rc;
 
-	while ((rc = exdb_cursor_get(mc, &key, &data, EXDB_NEXT) == EXDB_SUCCESS)) {
+	while ((rc = edb_cursor_get(mc, &key, &data, EDB_NEXT) == EDB_SUCCESS)) {
 		if (gotsig) {
 			rc = EINTR;
 			break;
@@ -143,8 +143,8 @@ static int dumpit(EXDB_txn *txn, EXDB_dbi dbi, char *name)
 		}
 	}
 	printf("DATA=END\n");
-	if (rc == EXDB_NOTFOUND)
-		rc = EXDB_SUCCESS;
+	if (rc == EDB_NOTFOUND)
+		rc = EDB_SUCCESS;
 
 	return rc;
 }
@@ -158,9 +158,9 @@ static void usage(char *prog)
 int main(int argc, char *argv[])
 {
 	int i, rc;
-	EXDB_env *env;
-	EXDB_txn *txn;
-	EXDB_dbi dbi;
+	EDB_env *env;
+	EDB_txn *txn;
+	EDB_dbi dbi;
 	char *prog = argv[0];
 	char *envname;
 	char *subname = NULL;
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 	while ((i = getopt(argc, argv, "af:lnps:V")) != EOF) {
 		switch(i) {
 		case 'V':
-			printf("%s\n", EXDB_VERSION_STRING);
+			printf("%s\n", EDB_VERSION_STRING);
 			exit(0);
 			break;
 		case 'l':
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'n':
-			envflags |= EXDB_NOSUBDIR;
+			envflags |= EDB_NOSUBDIR;
 			break;
 		case 'p':
 			mode |= PRINT;
@@ -228,55 +228,55 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, dumpsig);
 
 	envname = argv[optind];
-	rc = exdb_env_create(&env);
+	rc = edb_env_create(&env);
 	if (rc) {
-		fprintf(stderr, "exdb_env_create failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_env_create failed, error %d %s\n", rc, edb_strerror(rc));
 		return EXIT_FAILURE;
 	}
 
 	if (alldbs || subname) {
-		exdb_env_set_maxdbs(env, 2);
+		edb_env_set_maxdbs(env, 2);
 	}
 
-	rc = exdb_env_open(env, envname, envflags | EXDB_RDONLY, 0664);
+	rc = edb_env_open(env, envname, envflags | EDB_RDONLY, 0664);
 	if (rc) {
-		fprintf(stderr, "exdb_env_open failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_env_open failed, error %d %s\n", rc, edb_strerror(rc));
 		goto env_close;
 	}
 
-	rc = exdb_txn_begin(env, NULL, EXDB_RDONLY, &txn);
+	rc = edb_txn_begin(env, NULL, EDB_RDONLY, &txn);
 	if (rc) {
-		fprintf(stderr, "exdb_txn_begin failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_txn_begin failed, error %d %s\n", rc, edb_strerror(rc));
 		goto env_close;
 	}
 
-	rc = exdb_open(txn, subname, 0, &dbi);
+	rc = edb_open(txn, subname, 0, &dbi);
 	if (rc) {
-		fprintf(stderr, "exdb_open failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_open failed, error %d %s\n", rc, edb_strerror(rc));
 		goto txn_abort;
 	}
 
 	if (alldbs) {
-		EXDB_cursor *cursor;
-		EXDB_val key;
+		EDB_cursor *cursor;
+		EDB_val key;
 		int count = 0;
 
-		rc = exdb_cursor_open(txn, dbi, &cursor);
+		rc = edb_cursor_open(txn, dbi, &cursor);
 		if (rc) {
-			fprintf(stderr, "exdb_cursor_open failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_cursor_open failed, error %d %s\n", rc, edb_strerror(rc));
 			goto txn_abort;
 		}
-		while ((rc = exdb_cursor_get(cursor, &key, NULL, EXDB_NEXT_NODUP)) == 0) {
+		while ((rc = edb_cursor_get(cursor, &key, NULL, EDB_NEXT_NODUP)) == 0) {
 			char *str;
-			EXDB_dbi db2;
+			EDB_dbi db2;
 			if (memchr(key.mv_data, '\0', key.mv_size))
 				continue;
 			count++;
 			str = malloc(key.mv_size+1);
 			memcpy(str, key.mv_data, key.mv_size);
 			str[key.mv_size] = '\0';
-			rc = exdb_open(txn, str, 0, &db2);
-			if (rc == EXDB_SUCCESS) {
+			rc = edb_open(txn, str, 0, &db2);
+			if (rc == EDB_SUCCESS) {
 				if (list) {
 					printf("%s\n", str);
 					list++;
@@ -285,29 +285,29 @@ int main(int argc, char *argv[])
 					if (rc)
 						break;
 				}
-				exdb_close(env, db2);
+				edb_close(env, db2);
 			}
 			free(str);
 			if (rc) continue;
 		}
-		exdb_cursor_close(cursor);
+		edb_cursor_close(cursor);
 		if (!count) {
 			fprintf(stderr, "%s: %s does not contain multiple databases\n", prog, envname);
-			rc = EXDB_NOTFOUND;
-		} else if (rc == EXDB_NOTFOUND) {
-			rc = EXDB_SUCCESS;
+			rc = EDB_NOTFOUND;
+		} else if (rc == EDB_NOTFOUND) {
+			rc = EDB_SUCCESS;
 		}
 	} else {
 		rc = dumpit(txn, dbi, subname);
 	}
-	if (rc && rc != EXDB_NOTFOUND)
-		fprintf(stderr, "%s: %s: %s\n", prog, envname, exdb_strerror(rc));
+	if (rc && rc != EDB_NOTFOUND)
+		fprintf(stderr, "%s: %s: %s\n", prog, envname, edb_strerror(rc));
 
-	exdb_close(env, dbi);
+	edb_close(env, dbi);
 txn_abort:
-	exdb_txn_abort(txn);
+	edb_txn_abort(txn);
 env_close:
-	exdb_env_close(env);
+	edb_env_close(env);
 
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }

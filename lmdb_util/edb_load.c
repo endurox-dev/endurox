@@ -1,4 +1,4 @@
-/* exdb_load.c - memory-mapped database load tool */
+/* edb_load.c - memory-mapped database load tool */
 /*
  * Copyright 2011-2017 Howard Chu, Symas Corp.
  * All rights reserved.
@@ -17,7 +17,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include "ndrxdb.h"
+#include "exdb.h"
 
 #define PRINT	1
 #define NOHDR	2
@@ -25,7 +25,7 @@ static int mode;
 
 static char *subname = NULL;
 
-static exdb_size_t lineno;
+static edb_size_t lineno;
 static int version;
 
 static int flags;
@@ -34,11 +34,11 @@ static char *prog;
 
 static int Eof;
 
-static EXDB_envinfo info;
+static EDB_envinfo info;
 
-static EXDB_val kbuf, dbuf;
+static EDB_val kbuf, dbuf;
 
-#define Yu	EXDB_PRIy(u)
+#define Yu	EDB_PRIy(u)
 
 #define STRLENOF(s)	(sizeof(s)-1)
 
@@ -51,12 +51,12 @@ typedef struct flagbit {
 #define S(s)	s, STRLENOF(s)
 
 flagbit dbflags[] = {
-	{ EXDB_REVERSEKEY, S("reversekey") },
-	{ EXDB_DUPSORT, S("dupsort") },
-	{ EXDB_INTEGERKEY, S("integerkey") },
-	{ EXDB_DUPFIXED, S("dupfixed") },
-	{ EXDB_INTEGERDUP, S("integerdup") },
-	{ EXDB_REVERSEDUP, S("reversedup") },
+	{ EDB_REVERSEKEY, S("reversekey") },
+	{ EDB_DUPSORT, S("dupsort") },
+	{ EDB_INTEGERKEY, S("integerkey") },
+	{ EDB_DUPFIXED, S("dupfixed") },
+	{ EDB_INTEGERDUP, S("integerdup") },
+	{ EDB_REVERSEDUP, S("reversedup") },
 	{ 0, NULL, 0 }
 };
 
@@ -109,7 +109,7 @@ static void readhdr(void)
 			ptr = memchr(dbuf.mv_data, '\n', dbuf.mv_size);
 			if (ptr) *ptr = '\0';
 			i = sscanf((char *)dbuf.mv_data+STRLENOF("mapsize="),
-				"%" EXDB_SCNy(u), &info.me_mapsize);
+				"%" EDB_SCNy(u), &info.me_mapsize);
 			if (i != 1) {
 				fprintf(stderr, "%s: line %"Yu": invalid mapsize %s\n",
 					prog, lineno, (char *)dbuf.mv_data+STRLENOF("mapsize="));
@@ -170,7 +170,7 @@ static int unhex(unsigned char *c2)
 	return c;
 }
 
-static int readline(EXDB_val *out, EXDB_val *buf)
+static int readline(EDB_val *out, EDB_val *buf)
 {
 	unsigned char *c1, *c2, *end;
 	size_t len, l2;
@@ -281,10 +281,10 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
 	int i, rc;
-	EXDB_env *env;
-	EXDB_txn *txn;
-	EXDB_cursor *mc;
-	EXDB_dbi dbi;
+	EDB_env *env;
+	EDB_txn *txn;
+	EDB_cursor *mc;
+	EDB_dbi dbi;
 	char *envname;
 	int envflags = 0, putflags = 0;
 	int dohdr = 0;
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 	while ((i = getopt(argc, argv, "f:ns:NTV")) != EOF) {
 		switch(i) {
 		case 'V':
-			printf("%s\n", EXDB_VERSION_STRING);
+			printf("%s\n", EDB_VERSION_STRING);
 			exit(0);
 			break;
 		case 'f':
@@ -316,13 +316,13 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'n':
-			envflags |= EXDB_NOSUBDIR;
+			envflags |= EDB_NOSUBDIR;
 			break;
 		case 's':
 			subname = strdup(optarg);
 			break;
 		case 'N':
-			putflags = EXDB_NOOVERWRITE|EXDB_NODUPDATA;
+			putflags = EDB_NOOVERWRITE|EDB_NODUPDATA;
 			break;
 		case 'T':
 			mode |= NOHDR | PRINT;
@@ -342,34 +342,34 @@ int main(int argc, char *argv[])
 		readhdr();
 
 	envname = argv[optind];
-	rc = exdb_env_create(&env);
+	rc = edb_env_create(&env);
 	if (rc) {
-		fprintf(stderr, "exdb_env_create failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_env_create failed, error %d %s\n", rc, edb_strerror(rc));
 		return EXIT_FAILURE;
 	}
 
-	exdb_env_set_maxdbs(env, 2);
+	edb_env_set_maxdbs(env, 2);
 
 	if (info.me_maxreaders)
-		exdb_env_set_maxreaders(env, info.me_maxreaders);
+		edb_env_set_maxreaders(env, info.me_maxreaders);
 
 	if (info.me_mapsize)
-		exdb_env_set_mapsize(env, info.me_mapsize);
+		edb_env_set_mapsize(env, info.me_mapsize);
 
 	if (info.me_mapaddr)
-		envflags |= EXDB_FIXEDMAP;
+		envflags |= EDB_FIXEDMAP;
 
-	rc = exdb_env_open(env, envname, envflags, 0664);
+	rc = edb_env_open(env, envname, envflags, 0664);
 	if (rc) {
-		fprintf(stderr, "exdb_env_open failed, error %d %s\n", rc, exdb_strerror(rc));
+		fprintf(stderr, "edb_env_open failed, error %d %s\n", rc, edb_strerror(rc));
 		goto env_close;
 	}
 
-	kbuf.mv_size = exdb_env_get_maxkeysize(env) * 2 + 2;
+	kbuf.mv_size = edb_env_get_maxkeysize(env) * 2 + 2;
 	kbuf.mv_data = malloc(kbuf.mv_size);
 
 	while(!Eof) {
-		EXDB_val key, data;
+		EDB_val key, data;
 		int batch = 0;
 		flags = 0;
 
@@ -378,21 +378,21 @@ int main(int argc, char *argv[])
 		} else if (!(mode & NOHDR))
 			readhdr();
 		
-		rc = exdb_txn_begin(env, NULL, 0, &txn);
+		rc = edb_txn_begin(env, NULL, 0, &txn);
 		if (rc) {
-			fprintf(stderr, "exdb_txn_begin failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_txn_begin failed, error %d %s\n", rc, edb_strerror(rc));
 			goto env_close;
 		}
 
-		rc = exdb_open(txn, subname, flags|EXDB_CREATE, &dbi);
+		rc = edb_open(txn, subname, flags|EDB_CREATE, &dbi);
 		if (rc) {
-			fprintf(stderr, "exdb_open failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_open failed, error %d %s\n", rc, edb_strerror(rc));
 			goto txn_abort;
 		}
 
-		rc = exdb_cursor_open(txn, dbi, &mc);
+		rc = edb_cursor_open(txn, dbi, &mc);
 		if (rc) {
-			fprintf(stderr, "exdb_cursor_open failed, error %d %s\n", rc, exdb_strerror(rc));
+			fprintf(stderr, "edb_cursor_open failed, error %d %s\n", rc, edb_strerror(rc));
 			goto txn_abort;
 		}
 
@@ -407,48 +407,48 @@ int main(int argc, char *argv[])
 				goto txn_abort;
 			}
 
-			rc = exdb_cursor_put(mc, &key, &data, putflags);
-			if (rc == EXDB_KEYEXIST && putflags)
+			rc = edb_cursor_put(mc, &key, &data, putflags);
+			if (rc == EDB_KEYEXIST && putflags)
 				continue;
 			if (rc) {
-				fprintf(stderr, "exdb_cursor_put failed, error %d %s\n", rc, exdb_strerror(rc));
+				fprintf(stderr, "edb_cursor_put failed, error %d %s\n", rc, edb_strerror(rc));
 				goto txn_abort;
 			}
 			batch++;
 			if (batch == 100) {
-				rc = exdb_txn_commit(txn);
+				rc = edb_txn_commit(txn);
 				if (rc) {
 					fprintf(stderr, "%s: line %"Yu": txn_commit: %s\n",
-						prog, lineno, exdb_strerror(rc));
+						prog, lineno, edb_strerror(rc));
 					goto env_close;
 				}
-				rc = exdb_txn_begin(env, NULL, 0, &txn);
+				rc = edb_txn_begin(env, NULL, 0, &txn);
 				if (rc) {
-					fprintf(stderr, "exdb_txn_begin failed, error %d %s\n", rc, exdb_strerror(rc));
+					fprintf(stderr, "edb_txn_begin failed, error %d %s\n", rc, edb_strerror(rc));
 					goto env_close;
 				}
-				rc = exdb_cursor_open(txn, dbi, &mc);
+				rc = edb_cursor_open(txn, dbi, &mc);
 				if (rc) {
-					fprintf(stderr, "exdb_cursor_open failed, error %d %s\n", rc, exdb_strerror(rc));
+					fprintf(stderr, "edb_cursor_open failed, error %d %s\n", rc, edb_strerror(rc));
 					goto txn_abort;
 				}
 				batch = 0;
 			}
 		}
-		rc = exdb_txn_commit(txn);
+		rc = edb_txn_commit(txn);
 		txn = NULL;
 		if (rc) {
 			fprintf(stderr, "%s: line %"Yu": txn_commit: %s\n",
-				prog, lineno, exdb_strerror(rc));
+				prog, lineno, edb_strerror(rc));
 			goto env_close;
 		}
-		exdb_dbi_close(env, dbi);
+		edb_dbi_close(env, dbi);
 	}
 
 txn_abort:
-	exdb_txn_abort(txn);
+	edb_txn_abort(txn);
 env_close:
-	exdb_env_close(env);
+	edb_env_close(env);
 
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }
