@@ -140,6 +140,21 @@ echo "Running off client"
 # Dom 1 set
 #
 set_dom1;
+
+#
+# Bug #269 unit test, check the return number of tpchkunsol()
+#
+
+./atmicltA39 retnum > ./atmicltA39-retnum-dom1.log  2>&1
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+#
+# Continue with normal tests
+#
 (./atmicltA39 listen 2>&1 ) > ./atmicltA39-listen-dom1.log &
 (./atmicltA39 mutted 2>&1 ) > ./atmicltA39-mutted-dom1.log  &
 

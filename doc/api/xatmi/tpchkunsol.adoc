@@ -45,8 +45,8 @@ Thus there is no need for *tpchkunsol(3)* invocation during this time.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* 
-set to indicate the error.
+On success, *tpchkunsol()* returns number of notifications processed; 
+on error, -1 is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------
