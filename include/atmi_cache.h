@@ -30,8 +30,8 @@
 ** -----------------------------------------------------------------------------
 */
 
-#ifndef ATMI_INT_H
-#define	ATMI_INT_H
+#ifndef ATMI_CACHE_H
+#define	ATMI_CACHE_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -74,5 +74,5 @@ typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
 }
 #endif
 
-#endif	/* ATMI_INT_H */
+#endif	/* ATMI_CACHE_H */
 
