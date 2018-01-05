@@ -64,6 +64,7 @@ struct ndrx_tpcache_db
     long expiry;                /* cache expiry milliseconds                        */
     int strategy;               /* cache strategy                                   */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
+    /* TODO: This shall be hashable by cachedbnm */
 };
 typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
 
