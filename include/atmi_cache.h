@@ -42,6 +42,7 @@ extern "C" {
 #include <atmi.h>
 #include <atmi_int.h>
 #include <exhash.h>
+#include <exdb.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -51,6 +52,9 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_FIFO      0x00000008   /* First in, first out cache        */
 #define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /* reset cache on boot              */
     
+    
+#define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
+#define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -60,7 +64,8 @@ extern "C" {
 struct ndrx_tpcache_db
 {
     char cachedbnm[NDRX_CCTAG_MAX]; /* cache db logical name (subsect of @cachedb)  */
-    char resource[PATH_MAX+1];  /* physical path of the cache, file or folder       */
+    char resource[PATH_MAX+1];  /* physical path of the cache
+    /* Make structure hashable: */, file or folder       */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
     long flags;                 /* configuration flags for this cache               */
     long max_readers;           /* db settings? */
@@ -115,7 +120,34 @@ struct ndrx_tpcallcache
     ndrx_tpcallcache_t *next, *prev;
 };
 
+/**
+ * This is hash of services which are cached.
+ */
+struct ndrx_tpcache_svc
+{
+    char svcnm[MAXTIDENT+1]; /* cache db logical name (subsect of @cachedb)  */
+    
+    ndrx_tpcallcache_t *caches; /* This list list of caches */
+        
+    /* Make structure hashable: */
+    EX_hash_handle hh;
+};
+typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
 
+
+/**
+ * Structure for holding data up
+ */
+struct ndrx_tpcache_data
+{
+    int atmi_error;
+    long tpurcode;
+    char atmi_buf[0]; /* the data follows (th */
+};
+
+/*
+ * NOTE: Key is used directly as binary data and length 
+ */
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

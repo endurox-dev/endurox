@@ -35,7 +35,9 @@ reserved following keywords as a prefixes for identifiers:
 
 . B - used for UBF buffer API
 
-. atmi - internal identifiers for tp funcs 
+. atmi - internal identifiers for tp functions
+
+. edb - LMDB renamed for Enduro/X internal usage
 
 === Global variable naming policy
 
