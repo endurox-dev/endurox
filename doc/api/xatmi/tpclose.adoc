@@ -20,24 +20,31 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Close connection to XA resource manager. This basically calls underlaying XA switches *xa_close_entry()* with *NDRX_XA_CLOSE_STR*.
+Close connection to XA resource manager. This basically calls underlaying XA 
+switches *xa_close_entry()* with *NDRX_XA_CLOSE_STR*.
 
-If *tpclose()* was already call and XA is closed, then function will succeed, and no error will be generated.
+If *tpclose()* was already call and XA is closed, then function will succeed, 
+and no error will be generated.
 
 RETURN VALUE
 ------------
-On success, *tpclose()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpclose()* return zero; on error, -1 is returned, 
+with *tperrno* set to indicate the error.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
 
-*TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more info from last call.
+*TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more 
+info from last call.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. This could also be a problem with dynamical driver loading.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info. This could also be a problem with dynamical driver loading.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
 EXAMPLE
 -------
