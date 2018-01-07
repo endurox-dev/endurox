@@ -38,35 +38,84 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <sys_mqueue.h>
-#include <xa.h>
+#include <cconfig.h>
 #include <atmi.h>
 #include <atmi_int.h>
-#include <cconfig.h>
+#include <exhash.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_TPCACHE_STRATEGY_NONE      0   /* records persist for ever         */
-#define NDRX_TPCACHE_STRATEGY_EXPIRY    1   /* Cache recoreds expires after add */
-#define NDRX_TPCACHE_STRATEGY_LRU       2   /* limited, last recently used stays*/
-#define NDRX_TPCACHE_STRATEGY_HITS      3   /* limited, more hits, longer stay  */
-#define NDRX_TPCACHE_STRATEGY_FIFO      4   /* First in, first out cache        */
+#define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
+#define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
+#define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /* limited, more hits, longer stay  */
+#define NDRX_TPCACHE_FLAGS_FIFO      0x00000008   /* First in, first out cache        */
+#define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /* reset cache on boot              */
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * Cache database hash
+ * Cache database 
  */
 struct ndrx_tpcache_db
 {
     char cachedbnm[NDRX_CCTAG_MAX]; /* cache db logical name (subsect of @cachedb)  */
     char resource[PATH_MAX+1];  /* physical path of the cache, file or folder       */
-    long expiry;                /* cache expiry milliseconds                        */
-    int strategy;               /* cache strategy                                   */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
-    /* TODO: This shall be hashable by cachedbnm */
+    long flags;                 /* configuration flags for this cache               */
+    long max_readers;           /* db settings? */
+    long map_size;              /* db settings? */
+    
+    /* LMDB Related */
+    
+    EDB_env *env; /* env handler */
+    
+#if 0
+    /*
+     see test_nstd_mtest.c
+     * 
+     * 
+     * Prepare the env:
+                E(edb_env_create(&env));
+                E(edb_env_set_maxreaders(env, 1));
+                E(edb_env_set_mapsize(env, 10485760));
+                E(edb_env_open(env, "./testdb", EDB_FIXEDMAP /*|EDB_NOSYNC*/, 0664));
+     */
+#endif
+    
+    
+    /* Make structure hashable: */
+    EX_hash_handle hh;
 };
 typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
+
+/**
+ * cache entry, this is linked list as 
+ */
+typedef struct ndrx_tpcallcache ndrx_tpcallcache_t;
+struct ndrx_tpcallcache
+{
+    char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
+    char ubf_keyfmt[PATH_MAX+1];
+    char ubf_save[PATH_MAX+1];
+    char ubf_rule[PATH_MAX+1];
+    
+    /* optional return code expression 
+     * In case if missing, only TPSUCCESS messages are saved.
+     * If expression is set, we will load the tperrno() and tpurcode() in the
+     * following UBF fields:
+     * EX_TPERRNO and TPURCODE. Then the user might evalue the value to decide
+     * keep the values or not.
+     * 
+     * The tperrno and tpurcode must be smulated when stored in cache db.
+     */
+    char ubf_keyfmt[PATH_MAX/2];
+    
+    /* this is linked list of caches */
+    ndrx_tpcallcache_t *next, *prev;
+};
+
+
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
