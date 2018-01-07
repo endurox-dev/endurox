@@ -110,6 +110,7 @@ set(MAN3_NAMES
         tpviewtojson
         tpjsontoview
         tpconvert
+        tpurcode
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
