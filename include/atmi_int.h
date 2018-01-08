@@ -736,6 +736,7 @@ extern NDRX_API int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, cha
         char **data, long *len, long flags);
 
 extern NDRX_API void ndrx_tpfreectxt(TPCONTEXT_T context);
+extern NDRX_API int ndrx_tpconvert(char *str, char *bin, long flags);
 
 /* debug logging */
 extern NDRX_API int ndrx_tplogsetreqfile(char **data, char *filename, char *filesvc);
