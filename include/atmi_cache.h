@@ -64,8 +64,7 @@ extern "C" {
 struct ndrx_tpcache_db
 {
     char cachedbnm[NDRX_CCTAG_MAX]; /* cache db logical name (subsect of @cachedb)  */
-    char resource[PATH_MAX+1];  /* physical path of the cache
-    /* Make structure hashable: */, file or folder       */
+    char resource[PATH_MAX+1];  /* physical path of the cache folder                */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
     long flags;                 /* configuration flags for this cache               */
     long max_readers;           /* db settings? */
