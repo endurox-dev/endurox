@@ -4,7 +4,7 @@ EDB_COPY(8)
 
 NAME
 ----
-edb_dump - LMDB/EXDB environment copy tool
+edb_copy - LMDB/EXDB environment copy tool
 
 
 SYNOPSIS
@@ -48,7 +48,6 @@ Report bugs to support@mavimax.com
 
 AUTHOR
 ------
-
 Howard Chu of Symas Corporation <http://www.symas.com>
 
 
