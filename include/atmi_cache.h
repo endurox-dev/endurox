@@ -100,9 +100,10 @@ typedef struct ndrx_tpcallcache ndrx_tpcallcache_t;
 struct ndrx_tpcallcache
 {
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
-    char ubf_keyfmt[PATH_MAX+1];
-    char ubf_save[PATH_MAX+1];
-    char ubf_rule[PATH_MAX+1];
+    char keyfmt[PATH_MAX+1];
+    char save[PATH_MAX+1];
+    char rule[PATH_MAX+1];
+    typed_buffer_descr_t *buf_type;
     
     /* optional return code expression 
      * In case if missing, only TPSUCCESS messages are saved.
@@ -113,7 +114,7 @@ struct ndrx_tpcallcache
      * 
      * The tperrno and tpurcode must be smulated when stored in cache db.
      */
-    char ubf_keyfmt[PATH_MAX/2];
+    char errfmt[PATH_MAX/2];
     
     /* this is linked list of caches */
     ndrx_tpcallcache_t *next, *prev;
@@ -140,7 +141,7 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
 struct ndrx_tpcache_data
 {
     int atmi_error;
-    long tpurcode;
+    long saved_tpurcode;
     char atmi_buf[0]; /* the data follows (th */
 };
 
@@ -151,6 +152,9 @@ struct ndrx_tpcache_data
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+extern NDRX_API int ndrx_cache_init(int mode);
+
 #ifdef	__cplusplus
 }
 #endif

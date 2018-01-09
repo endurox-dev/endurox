@@ -39,12 +39,15 @@
 #include <string.h>
 #include "thlock.h"
 #include "userlog.h"
+#include <exparson.h>
 #include <atmi_cache.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
 #define NDRX_TPCACHE_DEBUG
+
+#define CACHES_BLOCK    "caches"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -61,6 +64,14 @@ exprivate ndrx_tpcache_db_t *M_tpcache_db = NULL; /* ptr to cache database */
 expublic int ndrx_cache_init(int mode)
 {
     int ret = EXSUCCEED;
+    char *svc;
+    EXJSON_Value *root_value;
+    EXJSON_Object *root_object;
+    EXJSON_Array *array;
+    int type;
+    int nrcaches;
+    char *name;
+
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
     /* So if we are here, the configuration file should be already parsed 
@@ -95,10 +106,63 @@ expublic int ndrx_cache_init(int mode)
         
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_info, "Found cache service: key: [%s] value: [%s]",
-                val->key, val->val);       
+                val->key, val->val);
 #endif
         /* Have to sort out the entries and build the AST */
+        
+        
+        if (0!=strncmp(val->key, "svc ", 4))
+        {
+            continue;
+        }
+        
+        svc = val->key+4;
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_info, "Got service: [%s] ... parsing json config", svc);
+#endif
+        
+        /* parse json block */
+        root_value = exjson_parse_string_with_comments(val->val);
+
+        type = exjson_value_get_type(root_value);
+        NDRX_LOG(log_error, "Type is %d", type);
+
+        if (exjson_value_get_type(root_value) != EXJSONObject)
+        {
+            NDRX_LOG(log_error, "cache: invalid service [%s] cache: Failed "
+                    "to parse root element", svc);
+            userlog("cache: invalid service [%s] cache: Failed to parse root element", 
+                    svc);
+            EXFAIL_OUT(ret);
+        }
+
+        root_object = exjson_value_get_object(root_value);
+
+        nrcaches = exjson_object_get_count(root_object);
+        
+        if (1!=nrcaches)
+        {
+            NDRX_LOG(log_error, "cache: Expected single element in JSON block: [%s], "
+                    "got nr: [%d]", CACHES_BLOCK, nrcaches);
             
+            userlog("cache: invalid service [%s] cache: Failed to parse root element", 
+                    svc);
+            
+            EXFAIL_OUT(ret);
+        }
+        
+        name = (char *)exjson_object_get_name(root_object, 0);
+        
+        if (0!=strcmp(CACHES_BLOCK, name))
+        {
+            NDRX_LOG(log_error, "cache: Expected [%s] got [%s]",
+                    CACHES_BLOCK, name);
+            
+            userlog("cache: Expected [%s] got [%s]",
+                    CACHES_BLOCK, name);
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
