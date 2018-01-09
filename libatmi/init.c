@@ -56,6 +56,7 @@
 #include <atmi_tls.h>
 #include <cconfig.h>
 #include <typed_view.h>
+#include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
@@ -800,6 +801,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                     {
                         NDRX_LOG(log_error, "SHM ok, but sem fail -"
                                 " cannot operate in this mode!");
+                        MUTEX_UNLOCK;
                         EXFAIL_OUT(ret);
                     }
                 }
@@ -813,9 +815,19 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                     {
                         NDRX_LOG(log_error, "SHM ok, but sem fail -"
                                 " cannot operate in this mode!");
+                        MUTEX_UNLOCK;
                         EXFAIL_OUT(ret);
                     }
                 }
+            }
+
+
+            /* Read the init cache */
+            if (EXSUCCEED!=ndrx_cache_init(NDRX_TPCACH_INIT_NORMAL))
+            {
+                NDRX_LOG(log_error, "Cache init failed");
+               MUTEX_UNLOCK;
+               EXFAIL_OUT(ret);
             }
             
             first = EXFALSE;

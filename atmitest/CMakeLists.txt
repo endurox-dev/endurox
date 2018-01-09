@@ -93,6 +93,8 @@ IF (ENABLE_TEST47)
 add_subdirectory (test047_oradb)
 ENDIF()
 
+add_subdirectory (test048_cache)
+
 
 ################################################################################
 # Master test case driver

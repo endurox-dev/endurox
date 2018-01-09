@@ -82,7 +82,7 @@ expublic int ndrx_cache_init(int mode)
      * Then for each ^svc\ .* we parse the json block and build
      * up the cache descriptor
      */
-    if (NULL!=ndrx_get_G_cconfig())
+    if (NULL==ndrx_get_G_cconfig())
     {
         /* no config used... nothing to do.. */
 #ifdef NDRX_TPCACHE_DEBUG
