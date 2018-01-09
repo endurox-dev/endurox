@@ -65,13 +65,14 @@ expublic int ndrx_cache_init(int mode)
 {
     int ret = EXSUCCEED;
     char *svc;
-    EXJSON_Value *root_value;
-    EXJSON_Object *root_object;
+    EXJSON_Value *root_value, *array_value;
+    EXJSON_Object *root_object, *array_object;
     EXJSON_Array *array;
     int type;
     int nrcaches;
     char *name;
-
+    size_t i;
+    
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
     /* So if we are here, the configuration file should be already parsed 
@@ -163,8 +164,30 @@ expublic int ndrx_cache_init(int mode)
                     CACHES_BLOCK, name);
             EXFAIL_OUT(ret);
         }
+
+        /* getting array from root value */
+        NDRX_LOG(log_error, "getting array from root value");
+        array = exjson_object_get_array(root_object, CACHES_BLOCK);
+        i = exjson_array_get_count(array);
+
+        NDRX_LOG(log_error, "Got array values %d", i);
+        for (i = 0; i < exjson_array_get_count(array); i++)
+        {
+            array_object = exjson_array_get_object(array, i);
+
+            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
+                    "cachedb", exjson_object_get_string(array_object, "cachedb"));
+            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
+                    "buffer", exjson_object_get_string(array_object, "buffer"));
+            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
+                    "keyfmt", exjson_object_get_string(array_object, "keyfmt"));
+            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
+                    "save", exjson_object_get_string(array_object, "save"));
+            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
+                    "rule", exjson_object_get_string(array_object, "rule"));
+        }
     }
-    
+
 out:
 
     if (NULL!=csection)
