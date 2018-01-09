@@ -84,7 +84,8 @@ exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal,
  * @param section
  * @return 
  */
-expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_section_keyval_t **out)
+expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, 
+        ndrx_inicfg_section_keyval_t **out)
 {
     int ret = EXSUCCEED;
     int len;
