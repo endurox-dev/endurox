@@ -53,9 +53,77 @@
 /*---------------------------Globals------------------------------------*/
 
 exprivate ndrx_tpcache_db_t *M_tpcache_db = NULL; /* ptr to cache database */
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Check the cachedb existence in cache, if exists, return
+ * @param cachedb cache name
+ * @return ptr to cache db or NULL if not found
+ */
+expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
+{
+    ndrx_tpcache_db_t *ret;
+    
+    EXHASH_FIND_STR( M_tpcache_db, cachedb, ret);
+    
+    return ret;
+}
+
+
+/**
+ * Reslove cache db
+ * @param cachedb name of cache db
+ * @param mode either normal or create mode (started by ndrxd)
+ * @return NULL in case of failure, non NULL, resolved ptr to cache db record
+ */
+expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
+{
+    int ret = EXSUCCEED;
+    ndrx_tpcache_db_t* db;
+    ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
+    /* len of @cachedb + / + subsect + EOS */
+    char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX+1];
+    
+    if (NULL!=(db = ndrx_cache_dbget(cachedb)))
+    {
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Cache db [%s] already loaded", cachedb);
+        goto out;
+#endif        
+    }
+
+    /* Lookup the section from configuration */
+    
+    snprintf(cachesection, sizeof(cachesection), "%s/%s",
+            NDRX_CONF_SECTION_CACHEDB, cachedb);
+    
+    NDRX_LOG(log_debug, "cache db [%s] mode %d looking up: [%s]", 
+            cachedb, mode, cachesection);
+    
+    if (EXSUCCEED!=ndrx_inicfg_get_subsect(ndrx_get_G_cconfig(), 
+                        NULL,  /* all config files */
+                        cachesection,  /* global section */
+                        csection))
+    {
+        NDRX_LOG(log_error, "%s: Failed to get section [%s]: %s", 
+                __func__, cachesection, Nstrerror(Nerror));
+        userlog("%s: Failed to get section [%s]: %s", __func__, cachesection, 
+                Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+   }
+    
+   /* TODO: Parse arguments in the loop */
+    
+out:
+
+    if (NULL!=csection)
+    {
+        ndrx_keyval_hash_free(csection);
+    }
+
+    return ret;
+}
 
 /**
  * Normal init (used by server & clients)
@@ -71,6 +139,7 @@ expublic int ndrx_cache_init(int mode)
     int type;
     int nrcaches;
     char *name;
+    int cnt;
     size_t i;
     
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
@@ -110,14 +179,14 @@ expublic int ndrx_cache_init(int mode)
                 val->key, val->val);
 #endif
         /* Have to sort out the entries and build the AST */
-        
-        
-        if (0!=strncmp(val->key, "svc ", 4))
+  
+        if (0!=strncmp(val->key, "svc ", 4) && 0!=strncmp(val->key, "svc\t", 4) )
         {
             continue;
         }
         
-        svc = val->key+4;
+        /* Strip to remove the whitespace */
+        svc = ndrx_str_lstrip_ptr(val->key+4, "\t ");
         
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_info, "Got service: [%s] ... parsing json config", svc);
@@ -166,15 +235,17 @@ expublic int ndrx_cache_init(int mode)
         }
 
         /* getting array from root value */
-        NDRX_LOG(log_error, "getting array from root value");
         array = exjson_object_get_array(root_object, CACHES_BLOCK);
-        i = exjson_array_get_count(array);
+        cnt = exjson_array_get_count(array);
 
-        NDRX_LOG(log_error, "Got array values %d", i);
-        for (i = 0; i < exjson_array_get_count(array); i++)
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Got array values %d", cnt);
+#endif
+        for (i = 0; i < cnt; i++)
         {
             array_object = exjson_array_get_object(array, i);
 
+#ifdef NDRX_TPCACHE_DEBUG
             NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
                     "cachedb", exjson_object_get_string(array_object, "cachedb"));
             NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
@@ -185,6 +256,11 @@ expublic int ndrx_cache_init(int mode)
                     "save", exjson_object_get_string(array_object, "save"));
             NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
                     "rule", exjson_object_get_string(array_object, "rule"));
+#endif
+            
+            /* Resolve the cache db - if missing load & open */
+            
+            
         }
     }
 
