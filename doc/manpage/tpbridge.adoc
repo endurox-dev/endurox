@@ -30,7 +30,7 @@ connection can be made.
 
 If connection is dropped, active node will re-try to connect.
 
-All data messages are prefixed with two byte message length indicator.
+All data messages are prefixed with 4 byte message length indicator.
 Meaning that the logical message can be split over the multiple packets or
 within one packed can be carried multiple logical messages - 'tpbridge' will
 solve that.
