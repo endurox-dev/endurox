@@ -33,6 +33,7 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <ndrstandard.h>
 #include <atmi.h>
 #include <atmi_tls.h>
@@ -72,7 +73,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
 
 
 /**
- * Reslove cache db
+ * Resolve cache db
  * @param cachedb name of cache db
  * @param mode either normal or create mode (started by ndrxd)
  * @return NULL in case of failure, non NULL, resolved ptr to cache db record
@@ -104,7 +105,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     if (EXSUCCEED!=ndrx_inicfg_get_subsect(ndrx_get_G_cconfig(), 
                         NULL,  /* all config files */
                         cachesection,  /* global section */
-                        csection))
+                        &csection))
     {
         NDRX_LOG(log_error, "%s: Failed to get section [%s]: %s", 
                 __func__, cachesection, Nstrerror(Nerror));
@@ -115,6 +116,37 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
    /* TODO: Parse arguments in the loop */
     
+    NDRX_MALLOC_OUT(db, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
+    
+    EXHASH_ITER(hh, csection, val, val_tmp)
+    {
+        if (0==strcmp(val->key, "dbpath"))
+        {
+            
+        } /* Also float: Parse 1000, 1K, 1M, 1G */
+        else if (0==strcmp(val->key, "limit"))
+        {
+            
+        }
+        else if (0==strcmp(val->key, "flags"))
+        {
+            
+        } /* Also float: Parse 1000, 1K, 1M, 1G */
+        else if (0==strcmp(val->key, "max_readers"))
+        {
+            
+        }
+        /* Parse float: 1000.5, 1.2K, 1M, 1G */
+        else if (0==strcmp(val->key, "map_size"))
+        {
+            
+        }
+        else
+        {
+            NDRX_LOG(log_warn, "Ignoring unknown flag: [%s]", val->key);
+        }
+    }
+    
 out:
 
     if (NULL!=csection)
@@ -122,7 +154,19 @@ out:
         ndrx_keyval_hash_free(csection);
     }
 
-    return ret;
+    if (EXSUCCEED!=ret && NULL!=db)
+    {
+        NDRX_FREE((char *)db);
+    }
+
+    if (EXSUCCEED!=ret)
+    {
+        return NULL;
+    }
+    else
+    {
+        return db;
+    }
 }
 
 /**

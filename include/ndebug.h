@@ -189,6 +189,46 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 #endif
 
+
+/* Quick macros for standard memory allocation with error printing and
+ * returning to out with ret flag
+ */
+
+/**
+ * Allocate buffer, if error goto out. Do not init memory to 0
+ * @param PTR__ pointer to give the address to 
+ * @param SIZE__ number of bytes to allocate
+ * @param TYPE__ type to allocated buffer (dest type not ptr)
+ */
+#define NDRX_MALLOC_OUT(PTR__, SIZE__, TYPE__) \
+if ( (PTR__ = (TYPE__ *)NDRX_MALLOC(SIZE__)) == NULL) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "%s: Failed to mallocate %ld bytes: %s",\
+        __func__, (long)SIZE__, strerror(ERR__));\
+    userlog("%s: Failed to mallocate %ld bytes: %s",\
+        __func__, (long)SIZE__, strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
+
+/**
+ * Allocate buffer, if error goto out. Do init memory to 0
+ * @param PTR__ pointer to give the address to 
+ * @param NMEMB__ Number of members
+ * @param SIZE__ number of bytes to allocate
+ * @param TYPE__ type to allocated buffer (dest type not ptr)
+ */
+#define NDRX_CALLOC_OUT(PTR__, NMEMB__, SIZE__, TYPE__) \
+if ( (PTR__ = (TYPE__ *)NDRX_MALLOC(NMEMB__, SIZE__)) == NULL) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "%s: Failed to callocate %ld bytes: %s",\
+        __func__, (long)(NMEMB__ *SIZE__), strerror(ERR__));\
+    userlog("%s: Failed to mallocate %ld bytes: %s",\
+        __func__, (long)(NMEMB__ *SIZE__), strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
