@@ -84,6 +84,8 @@ extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
 extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
 
 extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
+extern NDRX_API double ndrx_num_dec_parsecfg(char * str);
+extern NDRX_API double ndrx_num_time_parsecfg(char * str);
 extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
 extern NDRX_API char* ndrx_str_rstrip(char* s, char *needle);
 extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, char *needle);

@@ -499,13 +499,108 @@ expublic char * ndrx_str_env_subs(char * str)
 {
     return ndrx_str_env_subs_len(str, 0);
 }
+
+/**
+ * Decode numbers from config file ending with K, M, G
+ * NOTE! This does change the str value!!!!
+ * @param str
+ * @return number parsed/built
+ */
+expublic double ndrx_num_dec_parsecfg(char * str)
+{
+    double ret = 0;
+    double multipler = 1;
+    int len = strlen(str);
+    int mapplied = EXFALSE;
+    
+    if (len>1)
+    {
+        switch (str[len-1])
+        {
+            case 'k':
+            case 'K':
+                multipler = 1000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'm':
+            case 'M':
+                multipler = 1000000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'g':
+            case 'G':
+                multipler = 1000000000.0f;
+                mapplied = EXTRUE;
+                break;
+        }
+        /* Avoid precision issues... */
+        if (mapplied)
+        {
+            str[len-1] = EXEOS;
+        }
+    }
+    
+    ret = atof(str);
+    
+    ret*=multipler;
+    
+    return ret;
+}
+
+/**
+ * Parse milli-seconds based record
+ * @param str NOTE string is modified (last postfix removed for parsing)
+ * @return parsed number of milliseconds
+ */
+expublic double ndrx_num_time_parsecfg(char * str)
+{
+    double ret = 0;
+    double multipler = 1;
+    int len = strlen(str);
+    int mapplied = EXFALSE;
+    
+    if (len>1)
+    {
+        switch (str[len-1])
+        {
+            case 's':
+                /* second */
+                multipler = 1000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'm':
+                /* minute */
+                multipler = 60.0f * 1000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'h':
+                /* hour */
+                multipler = 60.0f * 60.0f * 1000.0f;
+                mapplied = EXTRUE;
+                break;
+        }
+        /* Avoid precision issues... */
+        if (mapplied)
+        {
+            str[len-1] = EXEOS;
+        }
+    }
+    
+    ret = atof(str);
+    
+    ret*=multipler;
+    
+    return ret;
+}
+
+
 /**
  * Decode number
  * @param t
  * @param slot
  * @return 
  */
-char *ndrx_decode_num(long tt, int slot, int level, int levels)
+expublic char *ndrx_decode_num(long tt, int slot, int level, int levels)
 {
     char tmp[128];
     long next_t=0;

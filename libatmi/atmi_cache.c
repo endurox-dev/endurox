@@ -49,6 +49,9 @@
 #define NDRX_TPCACHE_DEBUG
 
 #define CACHES_BLOCK    "caches"
+
+#define CACHE_MAX_READERS_DFLT      1000
+#define CACHE_MAP_SIZE_DFLT         160000 /* 160K */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -85,6 +88,9 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     /* len of @cachedb + / + subsect + EOS */
     char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX+1];
+    char *p, *p2;
+    char *saveptr1 = NULL;
+
     
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -114,36 +120,85 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         EXFAIL_OUT(ret);
    }
     
-   /* TODO: Parse arguments in the loop */
+   /* Parse arguments in the loop */
     
     NDRX_MALLOC_OUT(db, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
+    
+    /* Set max_readers, map_size defaults */
+    
+    db->max_readers = CACHE_MAX_READERS_DFLT;
+    db->map_size = CACHE_MAP_SIZE_DFLT;
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
         if (0==strcmp(val->key, "dbpath"))
         {
+            NDRX_STRCPY_SAFE(db->cachedb, val->val);
             
         } /* Also float: Parse 1000, 1K, 1M, 1G */
         else if (0==strcmp(val->key, "limit"))
         {
-            
+            db->limit = (long)ndrx_num_dec_parsecfg(val->val);
+        }
+        else if (0==strcmp(val->key, "expiry"))
+        {
+            db->expiry = (long)ndrx_num_time_parsecfg(val->val);
         }
         else if (0==strcmp(val->key, "flags"))
         {
+            /* Decode flags... */
+            p = strtok_r (val->val, ",", &saveptr1);
+            while (p != NULL)
+            {
+                
+                /* strip off the string... */
+                ndrx_str_strip(p, "\t ");
+                
+                /* bootreset,lru,hits,fifo */
+                
+                if (0==strcmp(p, "bootreset"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_BOOTRST;
+                }
+                else if (0==strcmp(p, "lru"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_LRU;
+                }
+                else if (0==strcmp(p, "hits"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_HITS;
+                }
+                else if (0==strcmp(p, "fifo"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_FIFO;
+                }
+                else
+                {
+                    /* unknown flag */
+                    NDRX_LOG(log_warn, "Ignoring unknown cachedb [%s] flag: [%s]",
+                            cachedb, p);
+                    userlog("Ignoring unknown cachedb [%s] flag: [%s]",
+                            cachedb, p);
+                }
+                p = strtok_r (NULL, ",", &saveptr1);
+            }
             
         } /* Also float: Parse 1000, 1K, 1M, 1G */
         else if (0==strcmp(val->key, "max_readers"))
         {
-            
+            db->max_readers = (long)ndrx_num_dec_parsecfg(val->val);
         }
         /* Parse float: 1000.5, 1.2K, 1M, 1G */
         else if (0==strcmp(val->key, "map_size"))
         {
-            
+            db->map_size = (long)ndrx_num_dec_parsecfg(val->val);
         }
         else
         {
-            NDRX_LOG(log_warn, "Ignoring unknown flag: [%s]", val->key);
+            NDRX_LOG(log_warn, "Ignoring unknown cache configuration param: [%s]", 
+                    val->key);
+            userlog("Ignoring unknown cache configuration param: [%s]", 
+                    val->key);
         }
     }
     

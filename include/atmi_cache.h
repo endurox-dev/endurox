@@ -63,9 +63,10 @@ extern "C" {
  */
 struct ndrx_tpcache_db
 {
-    char cachedb[NDRX_CCTAG_MAX]; /* cache db logical name (subsect of @cachedb)  */
+    char cachedb[NDRX_CCTAG_MAX]; /* cache db logical name (subsect of @cachedb)    */
     char resource[PATH_MAX+1];  /* physical path of the cache folder                */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
+    long expiry;                /* Number of milli-seconds for record to live       */
     long flags;                 /* configuration flags for this cache               */
     long max_readers;           /* db settings? */
     long map_size;              /* db settings? */
