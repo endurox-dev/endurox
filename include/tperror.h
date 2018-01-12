@@ -40,6 +40,7 @@ extern "C" {
 #include <regex.h>
 #include <ndrstandard.h>
 #include <ubf_int.h>
+#include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TP_ERROR_LEN   1024
@@ -69,6 +70,7 @@ extern NDRX_API void ndrx_TPset_error_fmt_rsn_silent(int error_code,
 extern NDRX_API void ndrx_TPunset_error(void);
 extern NDRX_API int ndrx_TPis_error(void);
 extern NDRX_API void ndrx_TPappend_error_msg(char *msg);
+extern NDRX_API int ndrx_TPerror_mapunix(int unixerr);
 extern NDRX_API void ndrx_TPoverride_code(int error_code);
 
 extern NDRX_API void ndrx_TPsave_error(atmi_error_t *p_err);

@@ -88,9 +88,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     /* len of @cachedb + / + subsect + EOS */
     char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX+1];
-    char *p, *p2;
+    char *p; 
     char *saveptr1 = NULL;
-
     
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -143,6 +142,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         else if (0==strcmp(val->key, "expiry"))
         {
             db->expiry = (long)ndrx_num_time_parsecfg(val->val);
+            db->flags|=NDRX_TPCACHE_FLAGS_EXPIRY;
         }
         else if (0==strcmp(val->key, "flags"))
         {
@@ -201,6 +201,63 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                     val->key);
         }
     }
+    
+    /* Dump the DB config and open it and if we run in boot mode  
+     * we have to reset the 
+     */
+#ifdef NDRX_TPCACHE_DEBUG
+    NDRX_TPCACHEDB_DUMPCFG(log_info, db);
+#endif
+    
+    /* Open the database */
+    if (EXSUCCEED!=(ret=edb_env_create(db->env)))
+    {
+        NDRX_LOG(log_error, "Failed to open env for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        userlog("Failed to open env for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_TPerror_mapunix(ret), 
+                "Failed to create env for [%s]: %s", 
+                db->cachedb, strerror(errno));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=edb_env_set_maxreaders(db->env, db->max_readers)))
+    {
+        NDRX_LOG(log_error, "Failed to set max readers for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        userlog("Failed to set max readers for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_TPerror_mapunix(ret), 
+                "Failed to set max readers for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=edb_env_set_mapsize(db->env, db->map_size)))
+    {
+        NDRX_LOG(log_error, "Failed to set map size for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        userlog("Failed to set map size for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_TPerror_mapunix(ret), 
+                "Failed to set map size for [%s]: %s", 
+                db->cachedb, strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NDRX_TPCACH_INIT_BOOT==mode)
+    {
+        /* R */
+    }
+    
+    /* TODO: open the db file... */
     
 out:
 
