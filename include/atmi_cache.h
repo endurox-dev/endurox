@@ -55,6 +55,26 @@ extern "C" {
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
+    
+/**
+ * Dump the cache database configuration
+ */
+#define NDRX_TPCACHEDB_DUMPCFG(LEV, CACHEDB)\
+    NDRX_LOG(LEV, "============ CACHE DB CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "cachedb=[%s]", CACHEDB->cachedb);\
+    NDRX_LOG(LEV, "resource=[%s]", CACHEDB->resource);\
+    NDRX_LOG(LEV, "limit=[%ld]", CACHEDB->limit);\
+    NDRX_LOG(LEV, "expiry=[%ld] msec", CACHEDB->expiry);\
+    NDRX_LOG(LEV, "flags=[%ld]", CACHEDB->flags);\
+    NDRX_LOG(LEV, "flags, 'expiry' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_EXPIRY));\
+    NDRX_LOG(LEV, "flags, 'lru' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_LRU));\
+    NDRX_LOG(LEV, "flags, 'hits' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_HITS));\
+    NDRX_LOG(LEV, "flags, 'fifo' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_FIFO));\
+    NDRX_LOG(LEV, "flags, 'bootreset' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BOOTRST));\
+    NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
+    NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
+    NDRX_LOG(LEV, "=================================================");
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
