@@ -97,20 +97,6 @@ struct ndrx_tpcache_db
     EDB_env *env; /* env handler */
     EDB_dbi dbi;  /* named (unnamed) db */
     
-#if 0
-    /*
-     see test_nstd_mtest.c
-     * 
-     * 
-     * Prepare the env:
-                E(edb_env_create(&env));
-                E(edb_env_set_maxreaders(env, 1));
-                E(edb_env_set_mapsize(env, 10485760));
-                E(edb_env_open(env, "./testdb", EDB_FIXEDMAP /*|EDB_NOSYNC*/, 0664));
-     */
-#endif
-    
-    
     /* Make structure hashable: */
     EX_hash_handle hh;
 };
@@ -123,6 +109,7 @@ typedef struct ndrx_tpcallcache ndrx_tpcallcache_t;
 struct ndrx_tpcallcache
 {
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
+    ndrx_tpcache_db_t *cachedb;
     char keyfmt[PATH_MAX+1];
     char save[PATH_MAX+1];
     char rule[PATH_MAX+1];
@@ -163,7 +150,7 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
  */
 struct ndrx_tpcache_data
 {
-    int atmi_error;
+    int saved_tperrno;
     long saved_tpurcode;
     char atmi_buf[0]; /* the data follows (th */
 };
