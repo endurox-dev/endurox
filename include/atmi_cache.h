@@ -73,6 +73,7 @@ extern "C" {
     NDRX_LOG(LEV, "flags, 'bootreset' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BOOTRST));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
+    NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
     NDRX_LOG(LEV, "=================================================");
 
 /*---------------------------Enums--------------------------------------*/
@@ -90,10 +91,11 @@ struct ndrx_tpcache_db
     long flags;                 /* configuration flags for this cache               */
     long max_readers;           /* db settings? */
     long map_size;              /* db settings? */
-    
+    int perms;                  /* permissions of the database resource             */
     /* LMDB Related */
     
     EDB_env *env; /* env handler */
+    EDB_dbi dbi;  /* named (unnamed) db */
     
 #if 0
     /*
