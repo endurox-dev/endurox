@@ -376,18 +376,6 @@ expublic void ndrx_TPappend_error_msg(char *msg)
     strncat(G_atmi_tls->M_atmi_error_msg_buf, msg, n);
 }
 
-/**
- * Map unix error
- * @param unixerr unix error
- * @return TP Error
- */
-expublic int ndrx_TPerror_mapunix(int unixerr)
-{
-    int ret = TPEOS;
-    
-    return ret;
-}
-
 /* <XA Error handling - used by ATMI lib & TM server>*/
 
 /**
