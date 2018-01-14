@@ -113,6 +113,8 @@ struct ndrx_tpcallcache
     char keyfmt[PATH_MAX+1];
     char save[PATH_MAX+1];
     char rule[PATH_MAX+1];
+    char str_buf_type[XATMI_TYPE_LEN+1];
+    char str_buf_subtype[XATMI_SUBTYPE_LEN+1];
     typed_buffer_descr_t *buf_type;
     
     /* optional return code expression 
