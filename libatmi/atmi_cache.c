@@ -1,5 +1,6 @@
 /* 
 ** ATMI level cache
+** No using named databases. Each environment is associated with single db
 **
 ** @file atmi_cache.c
 ** 
@@ -52,6 +53,7 @@
 
 #define CACHE_MAX_READERS_DFLT      1000
 #define CACHE_MAP_SIZE_DFLT         160000 /* 160K */
+#define CACHE_PERMS_DFLT            0664
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -59,6 +61,19 @@
 exprivate ndrx_tpcache_db_t *M_tpcache_db = NULL; /* ptr to cache database */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Map unix error
+ * @param unixerr unix error
+ * @return TP Error
+ */
+expublic int ndrx_cache_maperr(int unixerr)
+{
+    int ret = TPEOS;
+    
+    return ret;
+}
+
 
 /**
  * Check the cachedb existence in cache, if exists, return
@@ -73,7 +88,6 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
     
     return ret;
 }
-
 
 /**
  * Resolve cache db
@@ -90,7 +104,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX+1];
     char *p; 
     char *saveptr1 = NULL;
-    
+    EDB_txn *txn;
+
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
 #ifdef NDRX_TPCACHE_DEBUG
@@ -127,14 +142,24 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     db->max_readers = CACHE_MAX_READERS_DFLT;
     db->map_size = CACHE_MAP_SIZE_DFLT;
+    db->perms = CACHE_PERMS_DFLT;
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
         if (0==strcmp(val->key, "dbpath"))
         {
             NDRX_STRCPY_SAFE(db->cachedb, val->val);
-            
-        } /* Also float: Parse 1000, 1K, 1M, 1G */
+        } 
+        else if (0==strcmp(val->key, "resource"))
+        {
+            NDRX_STRCPY_SAFE(db->resource, val->val);
+        }
+        else if (0==strcmp(val->key, "perms"))
+        {
+            char *pend;
+            db->perms = strtol(val->val, &pend, 0);
+        }
+        /* Also float: Parse 1000, 1K, 1M, 1G */
         else if (0==strcmp(val->key, "limit"))
         {
             db->limit = (long)ndrx_num_dec_parsecfg(val->val);
@@ -210,55 +235,135 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
 #endif
     
     /* Open the database */
-    if (EXSUCCEED!=(ret=edb_env_create(db->env)))
+    if (EXSUCCEED!=(ret=edb_env_create(&db->env)))
     {
-        NDRX_LOG(log_error, "Failed to open env for [%s]: %s", 
-                db->cachedb, strerror(ret));
-        userlog("Failed to open env for [%s]: %s", 
-                db->cachedb, strerror(ret));
+        NDRX_LOG(log_error, "CACHE: Failed to open env for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("CACHE: Failed to open env for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
         
-        ndrx_TPset_error_fmt(ndrx_TPerror_mapunix(ret), 
-                "Failed to create env for [%s]: %s", 
-                db->cachedb, strerror(errno));
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "CACHE: Failed to create env for [%s]: %s", 
+                db->cachedb, edb_strerror(errno));
         
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=(ret=edb_env_set_maxreaders(db->env, db->max_readers)))
     {
-        NDRX_LOG(log_error, "Failed to set max readers for [%s]: %s", 
-                db->cachedb, strerror(ret));
-        userlog("Failed to set max readers for [%s]: %s", 
-                db->cachedb, strerror(ret));
+        NDRX_LOG(log_error, "CACHE: Failed to set max readers for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("CACHE: Failed to set max readers for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
         
-        ndrx_TPset_error_fmt(ndrx_TPerror_mapunix(ret), 
-                "Failed to set max readers for [%s]: %s", 
-                db->cachedb, strerror(ret));
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "CACHE: Failed to set max readers for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
         
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=(ret=edb_env_set_mapsize(db->env, db->map_size)))
     {
-        NDRX_LOG(log_error, "Failed to set map size for [%s]: %s", 
-                db->cachedb, strerror(ret));
+        NDRX_LOG(log_error, "CACHE: Failed to set map size for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
         userlog("Failed to set map size for [%s]: %s", 
-                db->cachedb, strerror(ret));
+                db->cachedb, edb_strerror(ret));
         
-        ndrx_TPset_error_fmt(ndrx_TPerror_mapunix(ret), 
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
                 "Failed to set map size for [%s]: %s", 
-                db->cachedb, strerror(ret));
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Open the DB */
+    if (EXSUCCEED!=(ret=edb_env_open(db->env, db->resource, 0L, db->perms)))
+    {
+        NDRX_LOG(log_error, "Failed to open env [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("Failed to open env [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to open env [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Prepare the DB */
+    if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, 0, &txn)))
+    {
+        NDRX_LOG(log_error, "Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* open named db */
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, NULL, 0, &db->dbi)))
+    {
+        NDRX_LOG(log_error, "Failed to open named db for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("Failed to open named db for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to open named db for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
         
         EXFAIL_OUT(ret);
     }
     
     if (NDRX_TPCACH_INIT_BOOT==mode)
     {
-        /* R */
+        NDRX_LOG(log_info, "Resetting cache db [%s]", db->cachedb);
+        if (EXSUCCEED!=(ret=edb_drop(txn, db->dbi, 0)))
+        {
+            NDRX_LOG(log_error, "CACHE: Failed to clear db: [%s]: %s", 
+                    db->cachedb, edb_strerror(ret));
+            userlog("CACHE: Failed to clear db: [%s]: %s", 
+                    db->cachedb, edb_strerror(ret));
+
+            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                    "CACHE: Failed to clear db: [%s]: %s", 
+                    db->cachedb, edb_strerror(ret));
+
+            EXFAIL_OUT(ret);
+        }
+        
     }
     
-    /* TODO: open the db file... */
+    /* commit the tran */
+    if (EXSUCCEED!=(ret=edb_txn_commit(txn)))
+    {
+        NDRX_LOG(log_error, "Failed to open named db for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("Failed to open named db for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to open named db for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);        
+    }
     
+    /* Add object to the hash */
+    
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Cache [%s] path: [%s] is open!", 
+                db->resource, db->cachedb);
+#endif
+        
+        
 out:
 
     if (NULL!=csection)
