@@ -35,10 +35,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include <ndrstandard.h>
 #include <atmi.h>
 #include <atmi_tls.h>
-#include <string.h>
+#include <typed_buf.h>
+
 #include "thlock.h"
 #include "userlog.h"
 #include <exparson.h>
@@ -549,21 +551,52 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
             
-            /* TODO: Resolve the DB */
-            
-            /* get buffer type */
-            if (NULL==(tmp = exjson_object_get_string(array_object, "buffer")))
+            /* Resolve the DB */
+            if (EXSUCCEED!=(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - missing [buffer] "
-                        "for service [%s], buffer index: %d", svc, i);                
-                userlog("CACHE: invalid config - missing [buffer] for service [%s], "
-                        "buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
-                        "[buffer] for service [%s], buffer index: %d", svc, i);
+                NDRX_LOG(log_error, "%s failed", __func__);
                 EXFAIL_OUT(ret);
             }
             
-            /* TODO: Resolve buffer */
+            /* get buffer type */
+            if (NULL==(tmp = exjson_object_get_string(array_object, "type")))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - missing [type] "
+                        "for service [%s], buffer index: %d", svc, i);                
+                userlog("CACHE: invalid config - missing [type] for service [%s], "
+                        "buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                        "[type] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_STRCPY_SAFE(cache->str_buf_type, tmp);
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "type")))
+            {
+                NDRX_STRCPY_SAFE(cache->str_buf_subtype, tmp);
+            }
+            
+            /* Resolve buffer */
+            if (NULL==(cache->buf_type = ndrx_get_buffer_descr(cache->str_buf_type, 
+                    cache->str_buf_subtype)))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid buffer type "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
+                
+                userlog("CACHE: invalid buffer type "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
+                
+                ndrx_TPset_error_fmt(TPEOTYPE, "CACHE: invalid buffer type "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
+                EXFAIL_OUT(ret);
+            }
             
             /* get key format */
             if (NULL==(tmp = exjson_object_get_string(array_object, "keyfmt")))
@@ -577,7 +610,9 @@ expublic int ndrx_cache_init(int mode)
                 EXFAIL_OUT(ret);
             }
             
-            /* get save rule */
+            NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
+            
+            /* get fields to save */
             if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
             {
                 NDRX_LOG(log_error, "CACHE: invalid config - missing [save] "
@@ -589,6 +624,25 @@ expublic int ndrx_cache_init(int mode)
                 EXFAIL_OUT(ret);
             }
             
+            NDRX_STRCPY_SAFE(cache->save, tmp);
+            
+            /* Rule to be true to save to cache */
+            if (NULL==(tmp = exjson_object_get_string(array_object, "rule")))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - missing [rule] "
+                        "for service [%s], buffer index: %d", svc, i);                
+                userlog("CACHE: invalid config - missing [rule] for service [%s], "
+                        "buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                        "[rule] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_STRCPY_SAFE(cache->rule, tmp);
+            
+            /* TODO: Compile the boolean expression! */
+            
+            /* TODO: Get & Compile response rule */
             
             
 #ifdef NDRX_TPCACHE_DEBUG
