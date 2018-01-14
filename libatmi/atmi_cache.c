@@ -89,6 +89,22 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
     return ret;
 }
 
+
+/**
+ * Close database
+ * @param db descr struct
+ */
+exprivate void ndrx_cache_close_db(ndrx_tpcache_db_t *db)
+{
+    /* func checks the dbi validity */
+    edb_dbi_close(db->env, db->dbi);
+
+    if (NULL!=db->env)
+    {
+        edb_env_close(db->env);
+    }
+}
+
 /**
  * Resolve cache db
  * @param cachedb name of cache db
@@ -104,7 +120,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX+1];
     char *p; 
     char *saveptr1 = NULL;
-    EDB_txn *txn;
+    EDB_txn *txn = NULL;
 
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -352,17 +368,18 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
                 "Failed to open named db for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
-        
+        txn = NULL;
         EXFAIL_OUT(ret);        
     }
     
     /* Add object to the hash */
     
+    EXHASH_ADD_PTR(M_tpcache_db, cachedb, db);
+    
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Cache [%s] path: [%s] is open!", 
                 db->resource, db->cachedb);
 #endif
-        
         
 out:
 
@@ -371,13 +388,19 @@ out:
         ndrx_keyval_hash_free(csection);
     }
 
-    if (EXSUCCEED!=ret && NULL!=db)
-    {
-        NDRX_FREE((char *)db);
-    }
-
     if (EXSUCCEED!=ret)
     {
+        
+        if (NULL!=txn)
+        {
+            edb_txn_abort(txn);
+        }
+        
+        if (NULL!=db)
+        {
+            ndrx_cache_close_db(db);
+            NDRX_FREE((char *)db);
+        }       
         return NULL;
     }
     else
@@ -401,7 +424,9 @@ expublic int ndrx_cache_init(int mode)
     int nrcaches;
     char *name;
     int cnt;
+    const char *tmp;
     size_t i;
+    ndrx_tpcallcache_t *cache = NULL;
     
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
@@ -505,7 +530,67 @@ expublic int ndrx_cache_init(int mode)
         for (i = 0; i < cnt; i++)
         {
             array_object = exjson_array_get_object(array, i);
+            
+            
+            NDRX_MALLOC_OUT(cache, sizeof(ndrx_tpcallcache_t), ndrx_tpcallcache_t);
+            
+            /* get db name */
+            if (NULL==(tmp = exjson_object_get_string(array_object, "cachedb")))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - missing [cachedb] "
+                        "for service [%s], buffer index: %d", svc, i);
+                userlog("CACHE: invalid config - missing [cachedb] for service [%s], "
+                        "buffer index: %d", svc, i);
 
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                        "[cachedb] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
+            
+            /* TODO: Resolve the DB */
+            
+            /* get buffer type */
+            if (NULL==(tmp = exjson_object_get_string(array_object, "buffer")))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - missing [buffer] "
+                        "for service [%s], buffer index: %d", svc, i);                
+                userlog("CACHE: invalid config - missing [buffer] for service [%s], "
+                        "buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                        "[buffer] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* TODO: Resolve buffer */
+            
+            /* get key format */
+            if (NULL==(tmp = exjson_object_get_string(array_object, "keyfmt")))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - missing [keyfmt] "
+                        "for service [%s], buffer index: %d", svc, i);                
+                userlog("CACHE: invalid config - missing [keyfmt] for service [%s], "
+                        "buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                        "[keyfmt] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* get save rule */
+            if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - missing [save] "
+                        "for service [%s], buffer index: %d", svc, i);                
+                userlog("CACHE: invalid config - missing [save] for service [%s], "
+                        "buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                        "[save] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            
+            
 #ifdef NDRX_TPCACHE_DEBUG
             NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
                     "cachedb", exjson_object_get_string(array_object, "cachedb"));
@@ -519,7 +604,9 @@ expublic int ndrx_cache_init(int mode)
                     "rule", exjson_object_get_string(array_object, "rule"));
 #endif
             
-            /* Resolve the cache db - if missing load & open */
+            /* Resolve the cache db - if missing load & open 
+            expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
+            */
             
             
         }
@@ -530,6 +617,11 @@ out:
     if (NULL!=csection)
     {
         ndrx_keyval_hash_free(csection);
+    }
+
+    if (EXSUCCEED!=ret && NULL!=cache)
+    {
+        NDRX_FREE(cache);
     }
 
     return ret;
