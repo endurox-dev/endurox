@@ -349,8 +349,8 @@ out:
 
 /**
  * Subscribe to event
- * EV_MASK - event mask (char 255)
- * EV_FILTER - filter (char 255)
+ * EV_MASK - event mask (NDRX_EVENT_EXPR_MAX)
+ * EV_FILTER - filter (NDRX_EVENT_EXPR_MAX)
  * EV_FLAGS - flags
  * -- Part of TPEVCTL --
  * EV_SRVCNM - name1 (service name)
@@ -379,7 +379,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
 
     memset((char *)p_ee, 0, sizeof(event_entry_t));
 
-    strcpy(p_ee->my_id, ndrx_get_G_last_call()->my_id);
+    NDRX_STRCPY_SAFE(p_ee->my_id, ndrx_get_G_last_call()->my_id);
     len=sizeof(p_ee->eventexpr);
     if (Bpres(p_ub, EV_MASK, 0) && EXFAIL==Bget(p_ub, EV_MASK, 0,
                             p_ee->eventexpr, &len))
