@@ -465,7 +465,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
     {
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
-            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!",
+                __func__, data);
             EXFAIL_OUT(ret);
         }
     }

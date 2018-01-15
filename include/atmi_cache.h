@@ -51,11 +51,17 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /* limited, more hits, longer stay  */
 #define NDRX_TPCACHE_FLAGS_FIFO      0x00000008   /* First in, first out cache        */
 #define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /* reset cache on boot              */
+#define NDRX_TPCACHE_FLAGS_BROADCAST 0x00000020   /* Shall we broadcast the events?   */
     
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
     
+    
+#define NDRX_TPCACHE_ENOTFOUND               -2   /* Record not found                 */
+#define NDRX_TPCACHE_ENOTFOUNADD             -3   /* Record not found, but should, add*/
+#define NDRX_TPCACHE_ENOCACHE                -4   /* Service not in cache config      */
+
 /**
  * Dump the cache database configuration
  */
@@ -71,11 +77,34 @@ extern "C" {
     NDRX_LOG(LEV, "flags, 'hits' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_HITS));\
     NDRX_LOG(LEV, "flags, 'fifo' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_FIFO));\
     NDRX_LOG(LEV, "flags, 'bootreset' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BOOTRST));\
+    NDRX_LOG(LEV, "flags, 'broadcast' = [%d]", !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BROADCAST));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
+    NDRX_LOG(LEV, "subscr_put=[%o]", CACHEDB->subscr_put);\
+    NDRX_LOG(LEV, "subscr_del=[%o]", CACHEDB->subscr_del);\
     NDRX_LOG(LEV, "=================================================");
 
+    
+/**
+ * Dump tpcall configuration
+ */
+#define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
+    NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "cachedbnm=[%s]", TPCALLCACHE->cachedbnm);\
+    NDRX_LOG(LEV, "cachedb=[%p]", TPCALLCACHE->cachedb);\
+    NDRX_LOG(LEV, "keyfmt=[%s]", TPCALLCACHE->keyfmt);\
+    NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->save);\
+    NDRX_LOG(LEV, "rule=[%s]", TPCALLCACHE->rule);\
+    NDRX_LOG(LEV, "rule_tree=[%p]", TPCALLCACHE->rule_tree);\
+    NDRX_LOG(LEV, "rsprule=[%s]", TPCALLCACHE->rsprule);\
+    NDRX_LOG(LEV, "rsprule_tree=[%s]", TPCALLCACHE->rsprule_tree);\
+    NDRX_LOG(LEV, "str_buf_type=[%s]", TPCALLCACHE->str_buf_type);\
+    NDRX_LOG(LEV, "str_buf_subtype=[%s]", TPCALLCACHE->str_buf_subtype);\
+    NDRX_LOG(LEV, "buf_type=[%p]", TPCALLCACHE->buf_type);\
+    NDRX_LOG(LEV, "errfmt=[%s]", TPCALLCACHE->errfmt);\
+    NDRX_LOG(LEV, "=================================================");
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -84,14 +113,19 @@ extern "C" {
  */
 struct ndrx_tpcache_db
 {
-    char cachedb[NDRX_CCTAG_MAX]; /* cache db logical name (subsect of @cachedb)    */
+    char cachedb[NDRX_CCTAG_MAX];/* cache db logical name (subsect of @cachedb)     s*/
     char resource[PATH_MAX+1];  /* physical path of the cache folder                */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
     long expiry;                /* Number of milli-seconds for record to live       */
     long flags;                 /* configuration flags for this cache               */
-    long max_readers;           /* db settings? */
-    long map_size;              /* db settings? */
+    long max_readers;           /* db settings                                      */
+    long map_size;              /* db settings                                      */
+    int broadcast;              /* Shall we broadcast the events                    */
     int perms;                  /* permissions of the database resource             */
+    
+    char subscr_put[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events    */
+    char subscr_del[NDRX_EVENT_EXPR_MAX]; /* expression for consuming DEL events    */
+    
     /* LMDB Related */
     
     EDB_env *env; /* env handler */
