@@ -107,46 +107,72 @@ exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
     {
         edb_env_close(db->env);
     }
+    
+    NDRX_FREE(db);
 }
 
 /**
  * Delete single tpcall cache
- * @param svc
+ * @param tpc Tpcall cache
  * @return 
  */
-expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *svc)
+expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *tpc)
 {
-    /* TODO: */
+    if (NULL!=tpc->rule_tree)
+    {
+        Btreefree(tpc->rule_tree);
+    }
+    
+    if (NULL!=tpc->rsprule_tree)
+    {
+        Btreefree(tpc->rsprule_tree);
+    }
+    
+    NDRX_FREE(tpc);
 }
-
 
 /**
  * Delete single service
- * @param svc
- * @return 
+ * @param svc service cache
  */
 expublic void ndrx_cache_svc_free(ndrx_tpcache_svc_t *svc)
 {
-    /* TODO: */
+    ndrx_tpcallcache_t *elt, *el;
+    
+    /* killall tpcalls */
+    DL_FOREACH_SAFE(svc->caches, el, elt)
+    {
+        DL_DELETE(svc->caches, el);
+        ndrx_cache_tpcallcache_free(el);
+    }
+    
+    NDRX_FREE(svc);
 }
 
-
 /**
- * Delete all services open
- * @return 
+ * Delete all service caches
  */
 expublic void ndrx_cache_svcs_free(void)
 {
-    
+    ndrx_tpcache_svc_t *el, *elt;
+    EXHASH_ITER(hh, M_tpcache_svc, el, elt)
+    {
+        EXHASH_DEL(M_tpcache_svc, el);
+        ndrx_cache_svc_free(el);
+    }
 }
 
 /**
  * Delete all databases open
- * @return 
  */
-expublic void ndrx_cache_db_close_and_delete(void)
+expublic void ndrx_cache_dbs_free(void)
 {
-    
+    ndrx_tpcache_db_t *el, *elt;
+    EXHASH_ITER(hh, M_tpcache_db, el, elt)
+    {
+        EXHASH_DEL(M_tpcache_db, el);
+        ndrx_cache_db_free(el);
+    }
 }
 
 /**
@@ -257,6 +283,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_FIFO;
                 }
+                else if (0==strcmp(p, "broadcast"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_BROADCAST;
+                }
                 else
                 {
                     /* unknown flag */
@@ -277,6 +307,14 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         else if (0==strcmp(val->key, "map_size"))
         {
             db->map_size = (long)ndrx_num_dec_parsecfg(val->val);
+        }
+        else if (0==strcmp(val->key, "subscr_put"))
+        {
+            NDRX_STRCPY_SAFE(db->subscr_put, val->val);
+        }
+        else if (0==strcmp(val->key, "subscr_del"))
+        {
+            NDRX_STRCPY_SAFE(db->subscr_del, val->val);
         }
         else
         {
@@ -443,8 +481,8 @@ out:
         if (NULL!=db)
         {
             ndrx_cache_db_free(db);
-            NDRX_FREE((char *)db);
-        }       
+        }
+        
         return NULL;
     }
     else
@@ -647,6 +685,35 @@ expublic int ndrx_cache_init(int mode)
                 EXFAIL_OUT(ret);
             }
             
+            /* validate the type */
+            switch (cache->buf_type->type_id)
+            {
+                case BUF_TYPE_UBF:
+                    /* OK accepted */
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "UBF type accepted for cache");
+#endif
+                    break;
+                default:
+                    NDRX_LOG(log_error, "CACHE: buffer type not supported "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
+                
+                    userlog("CACHE: buffer type not supported "
+                            "for service [%s], buffer index: %d - Unknown type "
+                            "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                            cache->str_buf_subtype);
+
+                    ndrx_TPset_error_fmt(TPEOTYPE, "CACHE: buffer type not supported "
+                            "for service [%s], buffer index: %d - Unknown type "
+                            "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                            cache->str_buf_subtype);
+                    EXFAIL_OUT(ret);
+                    
+                    break;
+            }
+            
             /* get key format */
             if (NULL==(tmp = exjson_object_get_string(array_object, "keyfmt")))
             {
@@ -689,19 +756,22 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->rule, tmp);
             
-            /* Compile the boolean expression! */
-            if (NULL==(cache->rule_tree=Bboolco (cache->rule)))
+            if (BUF_TYPE_UBF==cache->buf_type->type_id)
             {
-                NDRX_LOG(log_error, "CACHE: failed to compile rule [%s] "
-                        "for service [%s], buffer index: %d: %s", 
-                        cache->rule, svc, i, Bstrerror(Berror));
-                userlog("CACHE: failed to compile rule [%s] "
-                        "for service [%s], buffer index: %d: %s", 
-                        cache->rule, svc, i, Bstrerror(Berror));
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to compile rule [%s] "
-                        "for service [%s], buffer index: %d: %s", 
-                        cache->rule, svc, i, Bstrerror(Berror));
-                EXFAIL_OUT(ret);
+                /* Compile the boolean expression! */
+                if (NULL==(cache->rule_tree=Bboolco (cache->rule)))
+                {
+                    NDRX_LOG(log_error, "CACHE: failed to compile rule [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->rule, svc, i, Bstrerror(Berror));
+                    userlog("CACHE: failed to compile rule [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->rule, svc, i, Bstrerror(Berror));
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to compile rule [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->rule, svc, i, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
             }
             
             /* Get & Compile response rule */
@@ -727,11 +797,17 @@ expublic int ndrx_cache_init(int mode)
             }
             /* Add to linked list */
             DL_APPEND(M_tpcache_svc->caches, cache);
+            
+#ifdef NDRX_TPCACHE_DEBUG
+            NDRX_TPCACHETPCALL_DUMPCFG(log_debug, cache);
+#endif
+            
             cache = NULL;
         }
         
         EXHASH_ADD_PTR(M_tpcache_svc, svcnm, cachesvc);
         cachesvc = NULL;
+                
     }
 
 out:
@@ -755,8 +831,143 @@ out:
         
         /*  Remove all services already initialized... */
         ndrx_cache_svcs_free();
+        
+        /* Remove all databases */
+        ndrx_cache_dbs_free();
     }
 
     return ret;
 }
 
+/**
+ * Find tpcall cache
+ * @param idata XATMI buffer data
+ * @param ilen data len
+ * @return NULL - no cache found or not supported, ptr - to tpcall cache
+ */
+expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
+        typed_buffer_descr_t *buf_type, char *idata, long ilen)
+{
+    ndrx_tpcallcache_t* el;
+    int ret = EXSUCCEED;
+    
+    DL_FOREACH(svcc->caches, el)
+    {
+        if (el->buf_type->type_id == buf_type->type_id)
+        {
+            /* ok, test the expression, is it valid for call
+             * - process only 
+             */
+            switch (el->buf_type->type_id)
+            {
+                case BUF_TYPE_UBF:
+                    
+                    ret=Bboolev((UBFH *)idata, el->rule_tree);
+                    
+                    if (EXFAIL==ret)
+                    {
+                        NDRX_LOG(log_error, "%s: Failed to evaluate buffer [%s]: %s", 
+                                __func__, el->rule, Bstrerror(Berror));
+                        userlog("%s: Failed to evaluate buffer [%s]: %s", 
+                                __func__, el->rule, Bstrerror(Berror));
+                        
+                        return NULL;
+                    }
+                    else if (EXTRUE==ret)
+                    {
+#ifdef NDRX_TPCACHE_DEBUG
+                        NDRX_LOG(log_debug, "Buffer RULE TRUE [%s]", el->rule);
+#endif
+                        return el;
+                    }
+                    else
+                    {
+#ifdef NDRX_TPCACHE_DEBUG
+                        NDRX_LOG(log_debug, "Buffer RULE FALSE [%s]", el->rule);
+#endif
+                        /* search next... */
+                    }
+                    break;
+                default:
+                    NDRX_LOG(log_error, "%s: Unsupported buffer type [%s] for cache", 
+                                __func__, el->buf_type->type);
+                    userlog("%s: Unsupported buffer type [%s] for cache", 
+                                __func__, el->buf_type->type);
+
+                    return NULL;
+                    break;
+            }
+        }
+    }
+    
+    return NULL;
+    
+}
+
+/**
+ * Lookup service in cache
+ * @param svc
+ * @param idata
+ * @param ilen
+ * @param odata
+ * @param olen
+ * @param flags
+ * @param should_cache
+ * @return 
+ */
+expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
+        char **odata, long *olen, long flags)
+{
+    int ret = EXSUCCEED;
+    int should_add = EXFALSE;
+    ndrx_tpcache_svc_t *svcc = NULL;
+    typed_buffer_descr_t *buf_type;
+    buffer_obj_t *buffer_info;
+    ndrx_tpcallcache_t *tpc;
+    
+    /* get buffer type & sub-type */
+        
+    /* Find service in cache */
+    EXHASH_FIND_PTR(M_tpcache_svc, ((void **)&svc), svcc);
+    
+    if (NULL==svcc)
+    {
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "No cache defined for [%s]", svc);
+#endif
+        ret = NDRX_TPCACHE_ENOCACHE;
+        goto out;
+    }
+    
+    if (NULL!=idata)
+    {
+        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
+                    __func__, idata);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    buf_type = &G_buf_descr[buffer_info->type_id];
+    
+    /* Test the buffers & */
+    if (NULL==(tpc = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen)))
+    {
+        ret = NDRX_TPCACHE_ENOCACHE;
+        goto out;
+    }
+    
+    /* Test the rule, if and not found then stage to NDRX_TPCACHE_ENOTFOUNADD 
+     * OK, we need to build a key
+     */
+        
+    
+    
+    /* Build the key... */
+    
+    /* Lookup */
+    
+out:
+    return ret;
+}
