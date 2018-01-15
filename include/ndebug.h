@@ -219,7 +219,7 @@ if ( (PTR__ = (TYPE__ *)NDRX_MALLOC(SIZE__)) == NULL) \
  * @param TYPE__ type to allocated buffer (dest type not ptr)
  */
 #define NDRX_CALLOC_OUT(PTR__, NMEMB__, SIZE__, TYPE__) \
-if ( (PTR__ = (TYPE__ *)NDRX_MALLOC(NMEMB__, SIZE__)) == NULL) \
+if ( (PTR__ = (TYPE__ *)NDRX_CALLOC(NMEMB__, SIZE__)) == NULL) \
 {\
     int ERR__ = errno;\
     NDRX_LOG(log_error, "%s: Failed to callocate %ld bytes: %s",\
