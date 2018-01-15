@@ -43,6 +43,7 @@
 
 #include "thlock.h"
 #include "userlog.h"
+#include "utlist.h"
 #include <exparson.h>
 #include <atmi_cache.h>
 
@@ -61,6 +62,7 @@
 /*---------------------------Globals------------------------------------*/
 
 exprivate ndrx_tpcache_db_t *M_tpcache_db = NULL; /* ptr to cache database */
+exprivate ndrx_tpcache_svc_t *M_tpcache_svc = NULL; /* service cache       */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -96,7 +98,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
  * Close database
  * @param db descr struct
  */
-exprivate void ndrx_cache_close_db(ndrx_tpcache_db_t *db)
+exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
 {
     /* func checks the dbi validity */
     edb_dbi_close(db->env, db->dbi);
@@ -105,6 +107,46 @@ exprivate void ndrx_cache_close_db(ndrx_tpcache_db_t *db)
     {
         edb_env_close(db->env);
     }
+}
+
+/**
+ * Delete single tpcall cache
+ * @param svc
+ * @return 
+ */
+expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *svc)
+{
+    /* TODO: */
+}
+
+
+/**
+ * Delete single service
+ * @param svc
+ * @return 
+ */
+expublic void ndrx_cache_svc_free(ndrx_tpcache_svc_t *svc)
+{
+    /* TODO: */
+}
+
+
+/**
+ * Delete all services open
+ * @return 
+ */
+expublic void ndrx_cache_svcs_free(void)
+{
+    
+}
+
+/**
+ * Delete all databases open
+ * @return 
+ */
+expublic void ndrx_cache_db_close_and_delete(void)
+{
+    
 }
 
 /**
@@ -154,7 +196,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
    /* Parse arguments in the loop */
     
-    NDRX_MALLOC_OUT(db, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
+    NDRX_CALLOC_OUT(db, 1, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
     
     /* Set max_readers, map_size defaults */
     
@@ -400,7 +442,7 @@ out:
         
         if (NULL!=db)
         {
-            ndrx_cache_close_db(db);
+            ndrx_cache_db_free(db);
             NDRX_FREE((char *)db);
         }       
         return NULL;
@@ -429,6 +471,7 @@ expublic int ndrx_cache_init(int mode)
     const char *tmp;
     size_t i;
     ndrx_tpcallcache_t *cache = NULL;
+    ndrx_tpcache_svc_t *cachesvc = NULL;
     
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
@@ -529,12 +572,18 @@ expublic int ndrx_cache_init(int mode)
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Got array values %d", cnt);
 #endif
+        
+        
+        NDRX_CALLOC_OUT(M_tpcache_svc, 1, sizeof(ndrx_tpcache_svc_t), ndrx_tpcache_svc_t);
+        
+        NDRX_STRCPY_SAFE(M_tpcache_svc->svcnm, svc);
+        
         for (i = 0; i < cnt; i++)
         {
+            
+            NDRX_CALLOC_OUT(cache, 1, sizeof(ndrx_tpcallcache_t), ndrx_tpcallcache_t);
+            
             array_object = exjson_array_get_object(array, i);
-            
-            
-            NDRX_MALLOC_OUT(cache, sizeof(ndrx_tpcallcache_t), ndrx_tpcallcache_t);
             
             /* get db name */
             if (NULL==(tmp = exjson_object_get_string(array_object, "cachedb")))
@@ -640,30 +689,49 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->rule, tmp);
             
-            /* TODO: Compile the boolean expression! */
+            /* Compile the boolean expression! */
+            if (NULL==(cache->rule_tree=Bboolco (cache->rule)))
+            {
+                NDRX_LOG(log_error, "CACHE: failed to compile rule [%s] "
+                        "for service [%s], buffer index: %d: %s", 
+                        cache->rule, svc, i, Bstrerror(Berror));
+                userlog("CACHE: failed to compile rule [%s] "
+                        "for service [%s], buffer index: %d: %s", 
+                        cache->rule, svc, i, Bstrerror(Berror));
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to compile rule [%s] "
+                        "for service [%s], buffer index: %d: %s", 
+                        cache->rule, svc, i, Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
             
-            /* TODO: Get & Compile response rule */
-            
-            
-#ifdef NDRX_TPCACHE_DEBUG
-            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
-                    "cachedb", exjson_object_get_string(array_object, "cachedb"));
-            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
-                    "buffer", exjson_object_get_string(array_object, "buffer"));
-            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
-                    "keyfmt", exjson_object_get_string(array_object, "keyfmt"));
-            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
-                    "save", exjson_object_get_string(array_object, "save"));
-            NDRX_LOG(log_error, "cache[%d]: Object [%s] Value [%s]", i,
-                    "rule", exjson_object_get_string(array_object, "rule"));
-#endif
-            
-            /* Resolve the cache db - if missing load & open 
-            expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
-            */
-            
-            
+            /* Get & Compile response rule */
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "rsprule")))
+            {
+                NDRX_STRCPY_SAFE(cache->rsprule, tmp);
+                
+                /* Compile the boolean expression! */
+                if (NULL==(cache->rsprule_tree=Bboolco (cache->rsprule)))
+                {
+                    NDRX_LOG(log_error, "CACHE: failed to compile rsprule [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->rsprule, svc, i, Bstrerror(Berror));
+                    userlog("CACHE: failed to compile rsprule [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->rsprule, svc, i, Bstrerror(Berror));
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to "
+                            "compile rsprule [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->rsprule, svc, i, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+            }
+            /* Add to linked list */
+            DL_APPEND(M_tpcache_svc->caches, cache);
+            cache = NULL;
         }
+        
+        EXHASH_ADD_PTR(M_tpcache_svc, svcnm, cachesvc);
+        cachesvc = NULL;
     }
 
 out:
@@ -673,10 +741,22 @@ out:
         ndrx_keyval_hash_free(csection);
     }
 
-    if (EXSUCCEED!=ret && NULL!=cache)
+    if (EXSUCCEED!=ret)
     {
-        NDRX_FREE(cache);
+        if (NULL!=cache)
+        {
+            ndrx_cache_tpcallcache_free(cache);
+        }
+        
+        if (NULL!=cachesvc)
+        {
+            ndrx_cache_svc_free(cachesvc);
+        }
+        
+        /*  Remove all services already initialized... */
+        ndrx_cache_svcs_free();
     }
 
     return ret;
 }
+
