@@ -330,6 +330,7 @@ extern "C" {
     
     
 #define NDRX_EVENT_EXPR_MAX    255
+#define NDRX_CACHE_KEY_MAX     16384        /* Max size of cache key            */
     
 /* EnduroX system ATMI flags */
 #define SYS_FLAG_REPLY_ERROR    0x00000001
