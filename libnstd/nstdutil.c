@@ -494,26 +494,29 @@ out:
  * temp buffer size? Alloc temp space in the size of the buf_size? 
  * Also we need to have configurable open/close symbols.
  * We will have two data pointers
+ * This works with NDRX logger.
  */
-expublic char * ndrx_str_subs_context(char * str, int buf_size, char open, char close,
-        void *data1, void *data2)
+expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char closesymb,
+        void *data1, void *data2, 
+        int (*pf_get_data) (void *data1, void *data2, char *symbol, char *outbuf, long outbufsz))
 {
     char *p, *p2, *p3;
     char *next = str;
-    char envnm[1024];
-    char *env;
-    char *out;
-    char *empty="";
+    char symbol[1024];
     char *malloced;
-    char *pval;
     char *tempbuf = NULL;
+    char open1[]={'$',opensymb,EXEOS};
+    char open2[]={'\\', '$', opensymb, EXEOS};
+    char open3[]={'\\', '\\', '$', opensymb, EXEOS};
+    char *outbuf = NULL;
+    int ret = EXSUCCEED;
     
-#define FUNCTION_SEPERATOR  '='
+    NDRX_MALLOC_OUT(outbuf, buf_size, char);
     
-    while (NULL!=(p=strstr(next, "$[")))
+    while (NULL!=(p=strstr(next, open1)))
     {
-        p2=strstr(next, "\\$[");
-        p3=strstr(next, "\\\\$[");
+        p2=strstr(next, open2);
+        p3=strstr(next, open3);
         
         /* this is escaped stuff, we shall ignore that */
         if (p == p3+2)
@@ -532,112 +535,49 @@ expublic char * ndrx_str_subs_context(char * str, int buf_size, char open, char 
             continue;
         }
         
-        char *close =strchr(next, ']');
+        char *close =strchr(next, closesymb);
         if (NULL!=close)
         {
             long bufsz;
             int cpylen = close-p-2;
             int envlen;
             /* do substitution */
-            NDRX_STRNCPY(envnm, p+2, cpylen);
-            envnm[cpylen] = EXEOS;
+            NDRX_STRNCPY(symbol, p+2, cpylen);
+            symbol[cpylen] = EXEOS;
             
-            if (NULL==(pval=strchr(envnm, FUNCTION_SEPERATOR)))
+            if (EXSUCCEED!=(ret=pf_get_data(data1, data2, symbol, outbuf, buf_size)))
             {
-                env = getenv(envnm);
-                
-                if (NULL!=env)
-                    out = env;
-                else
-                    out = empty;
+                NDRX_LOG(log_error, "Failed to substitute [%s] error: %d", symbol, ret);
+                goto out;
             }
-            else
-            {
-                *pval=EXEOS;
-                pval++;
-                
-                if (0==(bufsz=strlen(pval)))
-                {
-                    userlog("Invalid encrypted data (zero len, maybe invalid sep? not =?) "
-                            "for: [%s] - fill empty", envnm);
-                    out = empty;
-                }
-                else
-                {
-                    int err;
-                    tempbuf = NDRX_MALLOC(bufsz);
-                    
-                    if (NULL==tempbuf)
-                    {
-                        err = errno;
-                        userlog("Failed to allocate %ld bytes for decryption buffer: %s", 
-                                bufsz, strerror(errno));
-                        NDRX_LOG_EARLY(log_error, "Failed to allocate %ld bytes "
-                                "for decryption buffer: %s", 
-                                bufsz, strerror(errno));
-                        goto out;
-                    }
-                    
-                    /* So function is:  
-                     * - 'envnm'
-                     * and the value is 'p'
-                     * So syntax:
-                     * ${dec=<encrypted string>}
-                     */    
-                    if (0==strcmp(envnm, "dec"))
-                    {
-                        /* About to decrypt the value... of p 
-                         * space of the data will be shorter or the same size or smaller
-                         * encrypted block.
-                         */
-                        if (EXSUCCEED!=ndrx_crypto_dec_string(pval, tempbuf, bufsz))
-                        {
-                            userlog("Failed to decrypt [%s] string: %s",
-                                    pval, Nstrerror(Nerror));
-                            NDRX_LOG_EARLY(log_error, "Failed to decrypt [%s] string: %s",
-                                    pval, Nstrerror(Nerror));
-                            out = empty;
-                        }
-                        out = tempbuf;
-                    }
-                    else
-                    {
-                        userlog("Unsupported substitution function: [%s] - skipping", 
-                                pval);
-                        NDRX_LOG_EARLY(log_error, "Failed to decrypt [%s] string: %s",
-                                pval, Nstrerror(Nerror));
-                        out = empty;
-                    }
-                    
-                } /* if data > 0 */
-            } /* if is function instead of env variable */
             
-
-
-            envlen = strlen(out);
+            envlen = strlen(outbuf);
             
             /* fix up the buffer!!! */
             if (cpylen+3==envlen)
             {
-                memcpy(p, out, envlen);
+                memcpy(p, outbuf, envlen);
             }
             else if (cpylen+3 > envlen)
             {
+                int totlen;
                 /* if buf_len == 0, skip the checks. */
                 if (buf_size > 0 && 
-                        strlen(str) + (cpylen+3 - envlen) > buf_size-1 /*incl EOS*/)
+                        (totlen=(strlen(str) + (cpylen+3 - envlen))) > buf_size-1 /*incl EOS*/)
                 {
                     if (NULL!=tempbuf)
                     {
                         NDRX_FREE(tempbuf);
                     }
-                    /* cannot continue it is buffer overrun! */
-                    return str;
+                    /* cannot continue it is buffer overrun! Maybe fail here? */
+                    NDRX_LOG(log_error, "buffer overrun in string "
+                            "formatting totlen=%d, bufsz-1=%d", totlen, buf_size-1);
+                    EXFAIL_OUT(ret);
                 }
                 
                 /*int overleft = cpylen+2 - envlen; */
                 /* copy there, and reduce total len */
-                memcpy(p, out, envlen);
+                memcpy(p, outbuf, envlen);
                 /* copy left overs after } at the end of the env, including eos */
                 memmove(p+envlen, close+1, strlen(close+1)+1);
             }
@@ -647,7 +587,7 @@ expublic char * ndrx_str_subs_context(char * str, int buf_size, char open, char 
                 
                 /* we have to stretch that stuff and then copy in, including eos */
                 memmove(close+missing, close+1, strlen(close+1)+1);
-                memcpy(p, out, envlen);
+                memcpy(p, outbuf, envlen);
             }
             
             /* free-up if temp buffer allocated. */
@@ -676,8 +616,13 @@ out:
         strcpy(str, malloced);
         NDRX_FREE(malloced);
     }
-    
-    return str;
+
+    if (NULL!=outbuf)
+    {
+        NDRX_FREE(outbuf);
+    }
+
+    return ret;
 }
 
 

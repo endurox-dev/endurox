@@ -61,7 +61,7 @@ extern "C" {
 #define NDRX_TPCACHE_ENOTFOUND               -2   /* Record not found                 */
 #define NDRX_TPCACHE_ENOTFOUNADD             -3   /* Record not found, but should, add*/
 #define NDRX_TPCACHE_ENOCACHE                -4   /* Service not in cache config      */
-
+#define NDRX_TPCACHE_ENOKEYDATA              -5   /* No key data found */
 /**
  * Dump the cache database configuration
  */
@@ -152,6 +152,7 @@ struct ndrx_tpcallcache
     char *rsprule_tree;
     char str_buf_type[XATMI_TYPE_LEN+1];
     char str_buf_subtype[XATMI_SUBTYPE_LEN+1];
+    
     typed_buffer_descr_t *buf_type;
     
     /* optional return code expression 
@@ -198,11 +199,35 @@ struct ndrx_tpcache_data
  * NOTE: Key is used directly as binary data and length 
  */
 
+/*
+ * Need a structure for holding the buffer rules according to data types
+ */
+typedef struct ndrx_tpcache_typesupp ndrx_tpcache_typesupp_t;
+struct ndrx_tpcache_typesupp
+{
+    int type_id;
+    int (*pf_rule_compile) (ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz);
+    int (*pf_rule_eval) (ndrx_tpcallcache_t *cache, char *idata, long ilen, 
+                char *errdet, int errdetbufsz);
+    int (*pf_get_key) (char *idata, long ilen, char *okey, char *okey_bufsz);
+};
+
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 extern NDRX_API int ndrx_cache_init(int mode);
+
+/* UBF support: */
+extern NDRX_API int ndrx_tpcache_keyget_ubf (char *idata, long ilen, char *okey, 
+        char *okey_bufsz);
+
+extern NDRX_API int ndrx_tpcache_rulcomp_ubf (ndrx_tpcallcache_t *cache, 
+        char *errdet, int errdetbufsz);
+
+extern NDRX_API int ndrx_tpcache_ruleval_ubf (ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen,  char *errdet, int errdetbufsz);
 
 #ifdef	__cplusplus
 }
