@@ -55,16 +55,134 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Return key data (read field from UBF...).
+ * This will read the field from buffer. We detect OK, field not found or error!
+ * 
+ * All fields are processed as zero terminated strings. !!!
+ * 
+ * @param data1 ptr to UBF buffer
+ * @param data2 error detail buffer
+ * @param data3 err det buffer size
+ * @param data4 NULL
+ * @param symbol filed to lookup
+ * @param outbuf output buffer
+ * @param outbufsz output buffer size
+ * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
+ */
+exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
+        char *symbol, char *outbuf, long outbufsz)
+{
+    int ret = EXSUCCEED;
+    BFLDID fid;
+    int *p_errdetbufsz = (int *)data3;
+    UBFH *p_ub = (UBFH *)data1;
+    char tmpsymbol[BF_LENGTH+2+5+1]; /* +2 [] + NNNNN (occ) + EOS */
+    char *p_start_sq;
+    char *p_stop_sq;
+    char tmp[256];
+    BFLDLEN len = (BFLDLEN)outbufsz;
+    BFLDOCC occ = 0;
+    NDRX_STRCPY_SAFE(tmpsymbol, symbol);
+    
+    
+    if (NULL!=(p_start_sq = strchr(tmpsymbol, '[')))
+    {
+        p_stop_sq = strchr(tmpsymbol, ']');
+        
+        if (NULL==p_stop_sq)
+        {
+            NDRX_LOG(log_error, "Invalid field id (%s): cannot "
+                    "find closing bracket ']'", tmpsymbol);
+            snprintf(tmp, sizeof(tmp), "Invalid field id (%s): cannot "
+                    "find closing bracket ']'", tmpsymbol);
+            NDRX_STRNCPY_SAFE(((char *)data2), tmp, *p_errdetbufsz);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (p_start_sq >= p_stop_sq)
+        {
+            NDRX_LOG(log_error, "Invalid/empty field (%s) brackets", 
+                    tmpsymbol);
+            snprintf(tmp, sizeof(tmp), "Invalid/empty field (%s) brackets", 
+                    tmpsymbol);
+            NDRX_STRNCPY_SAFE(((char *)data2), tmp, *p_errdetbufsz);
+            EXFAIL_OUT(ret);
+        }
+        
+        *p_start_sq = EXEOS;
+        *p_stop_sq = EXEOS;
+        
+        p_start_sq++;
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Converting to occurrence: [%s]", p_start_sq);
+#endif
+        
+        occ = atoi(p_start_sq);
+        
+    }
+    /* resolve field id */
+    if (EXSUCCEED!=(fid = Bfldid(tmpsymbol)))
+    {
+        NDRX_LOG(log_error, "Failed to resolve field [%s] id: %s", 
+                tmpsymbol, Bstrerror(Berror));
+        NDRX_STRNCPY_SAFE(((char *)data2), Bstrerror(Berror), *p_errdetbufsz);
+        EXFAIL_OUT(ret);
+    }
+
+#ifdef NDRX_TPCACHE_DEBUG
+    NDRX_LOG(log_debug, "Reading occurrence: %d", occ);
+#endif
+    
+    /* we shall extract index if any within a key */    
+    
+    if (EXSUCCEED!=CBget(p_ub, fid, occ, outbuf, &len, BFLD_STRING))
+    {
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Failed to get field %d[%d]: %s", 
+                fid, occ, Bstrerror(Berror));
+#endif
+        if (BNOTPRES==Berror)
+        {
+            ret = NDRX_TPCACHE_ENOKEYDATA;
+        }
+        else
+        {
+            ret = EXFAIL;
+        }
+        goto out;
+    }
+    
+    NDRX_LOG(log_error, "Field (%s) extracted: [%s]", symbol, outbuf);
+    
+out:
+
+    return ret;    
+}
+
+/**
  * Get key for UBF typed buffer
  * @param idata input buffer
  * @param ilen input buffer len
  * @param okey output key
  * @param okey_bufsz output key buffer size
- * @return EXSUCCEED/EXFAIL (syserr) /NDRX_TPCACHE_ENOKEYDATA (cannot build key)
+ * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
  */
-expublic int ndrx_tpcache_keyget_ubf (char *idata, long ilen, char *okey, char *okey_bufsz)
+expublic int ndrx_tpcache_keyget_ubf (ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen, char *okey, int okey_bufsz, 
+        char *errdet, int errdetbufsz)
 {
-    /* TODO Build key */
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=ndrx_str_subs_context(okey, okey_bufsz, '(', ')',
+        (void *)idata, errdet, &errdetbufsz, NULL, get_key_data)))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
 }
 
 /**

@@ -90,9 +90,9 @@ extern "C" {
 
 #ifndef EXOFFSET
 #ifdef SYS64BIT
-#define EXOFFSET(s,e)   ((long) &(((s *)0)->e) )
+#define EXOFFSET(STRUCT,ELM)   ((long) &(((STRUCT *)0)->ELM) )
 #else
-#define EXOFFSET(s,e)   ((const int) &(((s *)0)->e) )
+#define EXOFFSET(STRUCT,ELM)   ((const int) &(((STRUCT *)0)->ELM) )
 #endif
 #endif
 
@@ -100,7 +100,7 @@ extern "C" {
 #define NDRX_WORD_SIZE  (int)sizeof(void *)*8
 
 #ifndef EXELEM_SIZE
-#define EXELEM_SIZE(s,e)        (sizeof(((s *)0)->e))
+#define EXELEM_SIZE(STRUCT,ELM)        (sizeof(((STRUCT *)0)->ELM))
 #endif
 
 #define NDRX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))

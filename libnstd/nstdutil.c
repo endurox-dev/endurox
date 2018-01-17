@@ -497,8 +497,9 @@ out:
  * This works with NDRX logger.
  */
 expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char closesymb,
-        void *data1, void *data2, 
-        int (*pf_get_data) (void *data1, void *data2, char *symbol, char *outbuf, long outbufsz))
+        void *data1, void *data2, void *data3, void *data4,
+        int (*pf_get_data) (void *data1, void *data2, void *data3, void *data4,
+            char *symbol, char *outbuf, long outbufsz))
 {
     char *p, *p2, *p3;
     char *next = str;
@@ -545,7 +546,8 @@ expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char
             NDRX_STRNCPY(symbol, p+2, cpylen);
             symbol[cpylen] = EXEOS;
             
-            if (EXSUCCEED!=(ret=pf_get_data(data1, data2, symbol, outbuf, buf_size)))
+            if (EXSUCCEED!=(ret=pf_get_data(data1, data2, data3, data4,
+                    symbol, outbuf, buf_size)))
             {
                 NDRX_LOG(log_error, "Failed to substitute [%s] error: %d", symbol, ret);
                 goto out;

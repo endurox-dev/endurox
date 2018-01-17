@@ -50,8 +50,6 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#define NDRX_TPCACHE_DEBUG
-
 #define CACHES_BLOCK    "caches"
 
 #define CACHE_MAX_READERS_DFLT      1000
@@ -513,7 +511,7 @@ expublic int ndrx_cache_init(int mode)
 {
     int ret = EXSUCCEED;
     char *svc;
-    EXJSON_Value *root_value, *array_value;
+    EXJSON_Value *root_value;
     EXJSON_Object *root_object, *array_object;
     EXJSON_Array *array;
     int type;
@@ -856,54 +854,48 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
 {
     ndrx_tpcallcache_t* el;
     int ret = EXSUCCEED;
+    char errdet[MAX_TP_ERROR_LEN+1];
     
     DL_FOREACH(svcc->caches, el)
     {
         if (el->buf_type->type_id == buf_type->type_id)
         {
-            
-            
-            /* ok, test the expression, is it valid for call
-             * - process only 
-             */
-            switch (el->buf_type->type_id)
+            if (M_types[el->buf_type->type_id].pf_get_key)
             {
-                case BUF_TYPE_UBF:
-                    
-                    ret=Bboolev((UBFH *)idata, el->rule_tree);
-                    
-                    if (EXFAIL==ret)
-                    {
-                        NDRX_LOG(log_error, "%s: Failed to evaluate buffer [%s]: %s", 
-                                __func__, el->rule, Bstrerror(Berror));
-                        userlog("%s: Failed to evaluate buffer [%s]: %s", 
-                                __func__, el->rule, Bstrerror(Berror));
-                        
-                        return NULL;
-                    }
-                    else if (EXTRUE==ret)
-                    {
-#ifdef NDRX_TPCACHE_DEBUG
-                        NDRX_LOG(log_debug, "Buffer RULE TRUE [%s]", el->rule);
-#endif
-                        return el;
-                    }
-                    else
-                    {
-#ifdef NDRX_TPCACHE_DEBUG
-                        NDRX_LOG(log_debug, "Buffer RULE FALSE [%s]", el->rule);
-#endif
-                        /* search next... */
-                    }
-                    break;
-                default:
-                    NDRX_LOG(log_error, "%s: Unsupported buffer type [%s] for cache", 
-                                __func__, el->buf_type->type);
-                    userlog("%s: Unsupported buffer type [%s] for cache", 
-                                __func__, el->buf_type->type);
-
+                ret = M_types[el->buf_type->type_id].pf_rule_eval(el, idata, ilen, 
+                        errdet, sizeof(errdet));
+                if (EXFAIL==ret)
+                {
+                    NDRX_LOG(log_error, "%s: Failed to evaluate buffer [%s]: %s", 
+                            __func__, el->rule, errdet);
+                    userlog("%s: Failed to evaluate buffer [%s]: %s", 
+                            __func__, el->rule, errdet);
                     return NULL;
-                    break;
+                }
+                else if (EXTRUE==ret)
+                {
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "Buffer RULE TRUE [%s]", el->rule);
+#endif
+                    return el;
+                }
+                else
+                {
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s]", el->rule);
+#endif
+                    /* search next... */
+                }
+            }
+            else
+            {
+                /* We should not get here! */
+                NDRX_LOG(log_error, "%s: Unsupported buffer type [%s] for cache", 
+                                __func__, el->buf_type->type);
+                userlog("%s: Unsupported buffer type [%s] for cache", 
+                            __func__, el->buf_type->type);
+
+                return NULL;
             }
         }
     }
@@ -914,25 +906,29 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
 
 /**
  * Lookup service in cache
- * @param svc
- * @param idata
- * @param ilen
- * @param odata
- * @param olen
- * @param flags
- * @param should_cache
- * @return 
+ * @param svc service to call
+ * @param idata intput data buffer
+ * @param ilen input len
+ * @param odata output data buffer
+ * @param olen output len
+ * @param flags flags
+ * @param should_cache should record be cached?
+ * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
  */
 expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
-        char **odata, long *olen, long flags)
+        char **odata, long *olen, long flags, int *should_cache)
 {
     int ret = EXSUCCEED;
-    int should_add = EXFALSE;
     ndrx_tpcache_svc_t *svcc = NULL;
     typed_buffer_descr_t *buf_type;
     buffer_obj_t *buffer_info;
-    ndrx_tpcallcache_t *tpc;
+    ndrx_tpcallcache_t *cache;
     char key[NDRX_CACHE_KEY_MAX+1];
+    char errdet[MAX_TP_ERROR_LEN+1];
+    EDB_txn *txn;
+    int tran_started;
+    EDB_val cachedata;
+    
     /* Key size - assume 16K should be fine */
     
     /* get buffer type & sub-type */
@@ -962,23 +958,201 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     buf_type = &G_buf_descr[buffer_info->type_id];
     
     /* Test the buffers rules */
-    if (NULL==(tpc = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen)))
+    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen)))
     {
         ret = NDRX_TPCACHE_ENOCACHE;
         goto out;
     }
     
-    should_add=EXTRUE;
+    *should_cache=EXTRUE;
             
     /* Test the rule, if and not found then stage to NDRX_TPCACHE_ENOTFOUNADD 
      * OK, we need to build a key
      */
-   
     
+    NDRX_STRCPY_SAFE(key, cache->keyfmt);
+       
     /* Build the key... */
+    if (EXSUCCEED!=(ret = M_types[buffer_info->type_id].pf_get_key(cache, idata, 
+            ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to build key: ", errdet);
+            
+            /* generate TP error here! */
+            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+            
+    }
     
     /* Lookup */
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    tran_started = EXTRUE;
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata)))
+    {
+        /* error already provided by wrapper */
+        NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
+        goto out;
+    }
+    
+    /* OK we have a raw data... lets dump something... */
+#ifdef NDRX_TPCACHE_DEBUG
+    NDRX_LOG(log_debug, "Got cache record for key [%s] of service [%s]", key, svc);
+    
+    /* TODO: Dump more correctly with admin info */
+    NDRX_DUMP(log_debug, "Got cache data", (char *)cachedata.mv_data, 
+            (int)cachedata.mv_size);
+#endif
+    
+    /* Error shall be set by func */
+    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_prepare_from_cache
+        (idata, ilen, odata, olen, flags))
+    {
+        NDRX_LOG(log_error, "%s: Failed to receive data: ", __func__);
+        goto out;
+    }
+    
+out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            ndrx_cache_edb_commit(cache->cachedb, txn);
+        }
+        else
+        {
+            ndrx_cache_edb_abort(cache->cachedb, txn);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * Begin MDB transaction
+ * @param db db handler
+ * @param txn transaction obj (out)
+ * @return EXSUCCEED or edb error
+ */
+expublic int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, 0, txn)))
+    {
+        NDRX_LOG(log_error, "Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        goto out;
+    }
     
 out:
     return ret;
 }
+
+/**
+ * Commit transaction
+ * @param db db handler
+ * @param txn transaction (in)
+ * @return EXSUCCEED or edb error
+ */
+expublic int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=edb_txn_commit(txn)))
+    {
+        NDRX_LOG(log_error, "Failed to commit transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        userlog("Failed to commit transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to commit transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Abort transaction
+ * @param db db handler
+ * @param txn transaction (in)
+ * @return EXSUCCEED or edb error
+ */
+expublic int ndrx_cache_edb_abort(ndrx_tpcache_db_t *db, EDB_txn *txn)
+{
+    int ret = EXSUCCEED;
+    
+    edb_txn_abort(txn);
+    
+out:
+    return ret;
+}
+
+/**
+ * Get data from DB with transaction.
+ * @param db db handler
+ * @param key string key
+ * @param data_out data out obj data is valid till update or end of tran
+ * @return EXSUCCEED/edb error
+ */
+expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        char *key, EDB_val *data_out)
+{
+    int ret = EXSUCCEED;
+    EDB_val keydb;
+    
+    keydb.mv_data = key;
+    keydb.mv_size = strlen(key);
+            
+    if (EXSUCCEED!=(ret=edb_get(txn, db->dbi, &keydb, data_out)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_LOG(log_error, "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+            
+            userlog("Failed to get data from db [%s] for key [%s]: %s", 
+                    db->cachedb, key, edb_strerror(ret));
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+        }
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+    }
+    
+out:
+    return ret;
+}
+
