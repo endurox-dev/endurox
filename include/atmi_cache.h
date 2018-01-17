@@ -46,6 +46,9 @@ extern "C" {
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+    
+#define NDRX_TPCACHE_DEBUG
+
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
 #define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /* limited, more hits, longer stay  */
@@ -209,7 +212,11 @@ struct ndrx_tpcache_typesupp
     int (*pf_rule_compile) (ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz);
     int (*pf_rule_eval) (ndrx_tpcallcache_t *cache, char *idata, long ilen, 
                 char *errdet, int errdetbufsz);
-    int (*pf_get_key) (char *idata, long ilen, char *okey, char *okey_bufsz);
+    int (*pf_get_key) (ndrx_tpcallcache_t *cache, char *idata, long ilen, char
+                *okey, int okey_bufsz, char *errdet, int errdetbufsz);
+    
+    /* Receive message from cache */
+    int (*pf_prepare_from_cache) (char *idata, long ilen, char **odata, long *olen, long flags);
 };
 
 
@@ -219,9 +226,16 @@ struct ndrx_tpcache_typesupp
 
 extern NDRX_API int ndrx_cache_init(int mode);
 
+extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        char *key, EDB_val *data_out);
+extern NDRX_API int ndrx_cache_edb_abort(ndrx_tpcache_db_t *db, EDB_txn *txn);
+extern NDRX_API int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn);
+extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn);
+
 /* UBF support: */
-extern NDRX_API int ndrx_tpcache_keyget_ubf (char *idata, long ilen, char *okey, 
-        char *okey_bufsz);
+extern NDRX_API int ndrx_tpcache_keyget_ubf (ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen, char *okey, int okey_bufsz, 
+        char *errdet, int errdetbufsz);
 
 extern NDRX_API int ndrx_tpcache_rulcomp_ubf (ndrx_tpcallcache_t *cache, 
         char *errdet, int errdetbufsz);
