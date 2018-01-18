@@ -241,7 +241,7 @@ out:
  * @param flags flags
  * @return EXSUCCED/EXFAIL
  */
-expublic int ndrx_cache_from_cache_ubf (ndrx_tpcache_data_t *exdata, 
+expublic int ndrx_cache_get_ubf (ndrx_tpcache_data_t *exdata, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, 
         char **odata, long *olen, long flags)
 {
@@ -268,9 +268,40 @@ out:
  * @param flags
  * @return 
  */
-expublic int ndrx_cache_to_cache_ubf (ndrx_tpcache_data_t *exdata, 
+expublic int ndrx_cache_put_ubf (ndrx_tpcache_data_t *exdata, 
         typed_buffer_descr_t *descr, char *idata, long ilen, long flags)
 {
+    /* Figure out the  */
+}
+
+
+/**
+ * Process flags
+ * @param cache
+ * @param errdet
+ * @param errdetbufsz
+ * @return 
+ */
+expublic int ndrx_process_flags_ubf(ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz)
+{
+    /* TODO: Process some addtional rules
+     * - If no save strategy is given, then '*' means full buffer
+     * - If '*' is not found, then build a project copy list
+     */
     
 }
 
+/**
+ * Free up internal resources
+ * @param cache
+ * @return 
+ */
+expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
+{
+    if (NULL!=cache->rule_tree)
+    {
+        Btreefree(cache->rule_tree);
+    }
+    
+    return EXSUCCEED;
+}
