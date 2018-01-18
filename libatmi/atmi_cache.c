@@ -44,6 +44,7 @@
 #include "thlock.h"
 #include "userlog.h"
 #include "utlist.h"
+#include "exregex.h"
 #include <exparson.h>
 #include <atmi_cache.h>
 
@@ -130,14 +131,20 @@ exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
  */
 expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *tpc)
 {
-    if (NULL!=tpc->rule_tree)
+    
+    if (NULL!=M_types[tpc->buf_type->type_id].pf_cache_delete)
     {
-        Btreefree(tpc->rule_tree);
+        M_types[tpc->buf_type->type_id].pf_cache_delete(tpc);
     }
     
     if (NULL!=tpc->rsprule_tree)
     {
         Btreefree(tpc->rsprule_tree);
+    }
+    
+    if (tpc->save_regex_compiled)
+    {
+        ndrx_regfree(&tpc->save_regex);
     }
     
     NDRX_FREE(tpc);
@@ -519,11 +526,14 @@ expublic int ndrx_cache_init(int mode)
     char *name;
     int cnt;
     const char *tmp;
+    char flagstr[NDRX_CACHE_FLAGS_MAX+1];
     size_t i;
     ndrx_tpcallcache_t *cache = NULL;
     ndrx_tpcache_svc_t *cachesvc = NULL;
     char errdet[MAX_TP_ERROR_LEN+1];
+    char *p_flags;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
+    char *saveptr1 = NULL;
     
     /* So if we are here, the configuration file should be already parsed 
      * We need to load the config file to AST
@@ -671,7 +681,7 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->str_buf_type, tmp);
             
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "type")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "subtype")))
             {
                 NDRX_STRCPY_SAFE(cache->str_buf_subtype, tmp);
             }
@@ -731,18 +741,7 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
             
-            /* get fields to save */
-            if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
-            {
-                NDRX_LOG(log_error, "CACHE: invalid config - missing [save] "
-                        "for service [%s], buffer index: %d", svc, i);                
-                userlog("CACHE: invalid config - missing [save] for service [%s], "
-                        "buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
-                        "[save] for service [%s], buffer index: %d", svc, i);
-                EXFAIL_OUT(ret);
-            }
-            
+           
             NDRX_STRCPY_SAFE(cache->save, tmp);
             
             /* Rule to be true to save to cache */
@@ -759,6 +758,117 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->rule, tmp);
             
+            /* process flags.. by strtok.. but we need a temp buffer*/            
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "flags")))
+            {
+                NDRX_STRCPY_SAFE(flagstr, tmp);
+                
+                /* clean up the string */
+                ndrx_str_strip(flagstr, " \t");
+                NDRX_STRCPY_SAFE(cache->flagsstr, flagstr);
+                
+#ifdef NDRX_TPCACHE_DEBUG
+                NDRX_LOG(log_debug, "Processing flags: [%s]", flagstr);
+#endif                
+                        
+                p_flags = strtok_r (flagstr, ",", &saveptr1);
+                while (p_flags != NULL)
+                {
+                    if (0==strcmp(p_flags, "putrex"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
+                    }
+                    else if (0==strcmp(p_flags, "getrepl")) /* default */
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_REPL;
+                    }
+                    else if (0==strcmp(p_flags, "getmerge"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
+                    }
+                    else if (0==strcmp(p_flags, "putfull"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_SAVEFULL;
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_warn, "For service [%s] buffer index %d, "
+                                "invalid flag: [%s] - ignore", svc, i, p_flags);
+                        userlog("For service [%s] buffer index %d, "
+                                "invalid flag: [%s] - ignore", svc, i, p_flags);
+                    }
+                    
+                    p_flags = strtok_r (NULL, ",", &saveptr1);
+                }
+            }
+            
+            /* set some defaults if not already set... */
+            if ((cache->flags & NDRX_TPCACHE_TPCF_SAVEREG) && 
+                    (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
+                        "flags `putrex' and `putfull' "
+                        "for service [%s], buffer index: %d", svc, i);
+                userlog("CACHE: invalid config - conflicting "
+                        "flags `putrex' and `putfull' "
+                        "for service [%s], buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                        "flags `putrex' and `putfull' "
+                        "for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* get fields to save */
+            if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
+            {
+                if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
+                {
+                    NDRX_LOG(log_error, "CACHE: invalid config - missing [save] "
+                            "for service [%s], buffer index: %d", svc, i);                
+                    userlog("CACHE: invalid config - missing [save] for service [%s], "
+                            "buffer index: %d", svc, i);
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                            "[save] for service [%s], buffer index: %d", svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* if it is regex, then compile */
+                if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
+                {
+                    if (EXSUCCEED!=ndrx_regcomp(&cache->save_regex, cache->save))
+                    {
+                        userlog("CACHE: failed to compile [save] regex [%s] for svc [%s], "
+                            "buffer index: %d - see ndrx logs", svc, cache->save, i);
+                        ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to compile [save] "
+                            "regex [%s] for svc [%s], "
+                            "buffer index: %d - see ndrx logs", svc, cache->save, i);
+                    }
+                    cache->save_regex_compiled=EXTRUE;
+                }
+            }
+            
+            if (NULL!=M_types[cache->buf_type->type_id].pf_process_flags)
+            {
+                if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_process_flags(cache, 
+                        errdet, sizeof(errdet)))
+                    
+                {
+                    NDRX_LOG(log_error, "CACHE: failed to check flags [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->flagsstr, svc, i, errdet);
+                    userlog("CACHE: failed to check flags [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->flagsstr, svc, i, errdet);
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to check flags [%s] "
+                            "for service [%s], buffer index: %d: %s", 
+                            cache->flagsstr, svc, i, errdet);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
+            /* Rule to be true to save to cache */
+            
             if (NULL!=M_types[cache->buf_type->type_id].pf_rule_compile)
             {
                 /* Compile the boolean expression! */
@@ -766,7 +876,7 @@ expublic int ndrx_cache_init(int mode)
                         cache, errdet, sizeof(errdet)))
                 {
                     NDRX_LOG(log_error, "CACHE: failed to compile rule [%s] "
-                            "for service [%s], buffer index: %ds", 
+                            "for service [%s], buffer index: %d: %s", 
                             cache->rule, svc, i, errdet);
                     userlog("CACHE: failed to compile rule [%s] "
                             "for service [%s], buffer index: %d: %s", 
@@ -811,7 +921,6 @@ expublic int ndrx_cache_init(int mode)
         
         EXHASH_ADD_PTR(M_tpcache_svc, svcnm, cachesvc);
         cachesvc = NULL;
-                
     }
 
 out:
@@ -1021,7 +1130,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 #endif
     
     /* Error shall be set by func */
-    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_from_cache
+    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_cache_get
         (exdata, buf_type, idata, ilen, odata, olen, flags))
     {
         NDRX_LOG(log_error, "%s: Failed to receive data: ", __func__);
