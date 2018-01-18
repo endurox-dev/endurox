@@ -928,7 +928,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     EDB_txn *txn;
     int tran_started;
     EDB_val cachedata;
-    
+    ndrx_tpcache_data_t *exdata;
     /* Key size - assume 16K should be fine */
     
     /* get buffer type & sub-type */
@@ -1008,19 +1008,21 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
         goto out;
     }
+    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
     
     /* OK we have a raw data... lets dump something... */
+    
 #ifdef NDRX_TPCACHE_DEBUG
     NDRX_LOG(log_debug, "Got cache record for key [%s] of service [%s]", key, svc);
-    
-    /* TODO: Dump more correctly with admin info */
-    NDRX_DUMP(log_debug, "Got cache data", (char *)cachedata.mv_data, 
+    /* Dump more correctly with admin info */
+    NDRX_DUMP(6, "Got cache data", (char *)cachedata.mv_data, 
             (int)cachedata.mv_size);
+    NDRX_TPCACHETPCALL_DBDATA(log_debug, exdata);
 #endif
     
     /* Error shall be set by func */
-    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_prepare_from_cache
-        (idata, ilen, odata, olen, flags))
+    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_from_cache
+        (exdata, buf_type, idata, ilen, odata, olen, flags))
     {
         NDRX_LOG(log_error, "%s: Failed to receive data: ", __func__);
         goto out;
