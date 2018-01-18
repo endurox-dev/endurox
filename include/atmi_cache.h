@@ -58,8 +58,9 @@ extern "C" {
     
 
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
-#define NDRX_TPCACHE_TPCF_RSPRPL     0x00000002      /* Replace buf                   */
+#define NDRX_TPCACHE_TPCF_REPL       0x00000002      /* Replace buf                   */
 #define NDRX_TPCACHE_TPCF_MERGE      0x00000004      /* Merge buffers                 */
+#define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008      /* Save full buffer              */
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
@@ -163,10 +164,11 @@ struct ndrx_tpcallcache
     char keyfmt[PATH_MAX+1];
     char save[PATH_MAX+1]; /* can be plain, or regex */
     /* Save can be regexp, so we need to compile it...! */
-    regex_t *p_save_regex;
+    int save_regex_compiled;
+    regex_t save_regex;
     void *p_save_typpriv; /* TODO: private list of save data, could be projcpy list? */
     /* We need a flags here to allow regex, for example. But the regex is */
-    char flagsstr[128];
+    char flagsstr[NDRX_CACHE_FLAGS_MAX+1];
     long flags;
     char rule[PATH_MAX+1];
     char *rule_tree;
@@ -239,6 +241,12 @@ struct ndrx_tpcache_typesupp
     /* Receive message from cache */
     int (*pf_cache_get) (ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type,
             char *idata, long ilen, char **odata, long *olen, long flags);
+    
+    /* check flags for given type and process the save rule if any */
+    int (*pf_process_flags)(ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz);
+    
+    /* cache delete callback, to free up memory of any */
+    int (*pf_cache_delete)(ndrx_tpcallcache_t *cache);
 };
 
 
