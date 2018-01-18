@@ -56,6 +56,8 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /* reset cache on boot              */
 #define NDRX_TPCACHE_FLAGS_BROADCAST 0x00000020   /* Shall we broadcast the events?   */
     
+
+#define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
@@ -107,6 +109,15 @@ extern "C" {
     NDRX_LOG(LEV, "buf_type=[%p]", TPCALLCACHE->buf_type);\
     NDRX_LOG(LEV, "errfmt=[%s]", TPCALLCACHE->errfmt);\
     NDRX_LOG(LEV, "=================================================");
+
+
+#define NDRX_TPCACHETPCALL_DBDATA(LEV, DBDATA)\
+    NDRX_LOG(LEV, "================== DB DATA DUMP =================");\
+    NDRX_LOG(LEV, "saved_tperrno = [%d]", DBDATA->saved_tperrno);\
+    NDRX_LOG(LEV, "saved_tpurcode = [%ld]", DBDATA->saved_tpurcode);\
+    NDRX_LOG(LEV, "atmi_buf_len = [%ld]", DBDATA->saved_tpurcode);\
+    NDRX_DUMP(LEV, "BLOB data", DBDATA->atmi_buf, DBDATA->atmi_buf_len);\
+    NDRX_LOG(LEV, "=================================================");
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -148,7 +159,11 @@ struct ndrx_tpcallcache
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
     ndrx_tpcache_db_t *cachedb;
     char keyfmt[PATH_MAX+1];
-    char save[PATH_MAX+1];
+    char save[PATH_MAX+1]; /* can be plain, or regex */
+    /* Save can be regexp, so we need to compile it...! */
+    regex_t *p_save_regex;
+    /* We need a flags here to allow regex, for example. But the regex is */
+    char flags[128];
     char rule[PATH_MAX+1];
     char *rule_tree;
     char rsprule[PATH_MAX+1];
@@ -195,8 +210,10 @@ struct ndrx_tpcache_data
 {
     int saved_tperrno;
     long saved_tpurcode;
+    long atmi_buf_len;  /* saved buffer len */
     char atmi_buf[0]; /* the data follows (th */
 };
+typedef struct ndrx_tpcache_data ndrx_tpcache_data_t;
 
 /*
  * NOTE: Key is used directly as binary data and length 
@@ -216,7 +233,8 @@ struct ndrx_tpcache_typesupp
                 *okey, int okey_bufsz, char *errdet, int errdetbufsz);
     
     /* Receive message from cache */
-    int (*pf_prepare_from_cache) (char *idata, long ilen, char **odata, long *olen, long flags);
+    int (*pf_from_cache) (ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type,
+            char *idata, long ilen, char **odata, long *olen, long flags);
 };
 
 

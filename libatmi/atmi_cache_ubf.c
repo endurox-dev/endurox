@@ -230,3 +230,47 @@ expublic int ndrx_tpcache_ruleval_ubf (ndrx_tpcallcache_t *cache,
 out:
     return ret;
 }
+
+/**
+ * We receive data from cache
+ * @param exdata database data
+ * @param idata incoming xatmi data buffer
+ * @param ilen incoming xatmi data len
+ * @param odata output data buffer
+ * @param olen output len
+ * @param flags flags
+ * @return EXSUCCED/EXFAIL
+ */
+expublic int ndrx_cache_from_cache_ubf (ndrx_tpcache_data_t *exdata, 
+        typed_buffer_descr_t *buf_type, char *idata, long ilen, 
+        char **odata, long *olen, long flags)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret = buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
+            exdata->atmi_buf_len, odata, olen, flags)))
+    {
+        /* the error shall be set already */
+        NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Prepare data for saving to UBF buffer
+ * At this stage we have to filter 
+ * @param exdata
+ * @param descr
+ * @param idata
+ * @param ilen
+ * @param flags
+ * @return 
+ */
+expublic int ndrx_cache_to_cache_ubf (ndrx_tpcache_data_t *exdata, 
+        typed_buffer_descr_t *descr, char *idata, long ilen, long flags)
+{
+    
+}
+
