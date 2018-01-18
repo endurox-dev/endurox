@@ -233,7 +233,7 @@ struct ndrx_tpcache_typesupp
                 *okey, int okey_bufsz, char *errdet, int errdetbufsz);
     
     /* Receive message from cache */
-    int (*pf_from_cache) (ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type,
+    int (*pf_cache_get) (ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type,
             char *idata, long ilen, char **odata, long *olen, long flags);
 };
 
