@@ -58,11 +58,12 @@ extern "C" {
     
 
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
+#define NDRX_TPCACHE_TPCF_RSPRPL     0x00000002      /* Replace buf                   */
+#define NDRX_TPCACHE_TPCF_MERGE      0x00000004      /* Merge buffers                 */
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
-    
-    
+
 #define NDRX_TPCACHE_ENOTFOUND               -2   /* Record not found                 */
 #define NDRX_TPCACHE_ENOTFOUNADD             -3   /* Record not found, but should, add*/
 #define NDRX_TPCACHE_ENOCACHE                -4   /* Service not in cache config      */
@@ -108,6 +109,7 @@ extern "C" {
     NDRX_LOG(LEV, "str_buf_subtype=[%s]", TPCALLCACHE->str_buf_subtype);\
     NDRX_LOG(LEV, "buf_type=[%p]", TPCALLCACHE->buf_type);\
     NDRX_LOG(LEV, "errfmt=[%s]", TPCALLCACHE->errfmt);\
+    NDRX_LOG(LEV, "flags=[%s]", TPCALLCACHE->flags);\
     NDRX_LOG(LEV, "=================================================");
 
 
@@ -162,8 +164,10 @@ struct ndrx_tpcallcache
     char save[PATH_MAX+1]; /* can be plain, or regex */
     /* Save can be regexp, so we need to compile it...! */
     regex_t *p_save_regex;
+    void *p_save_typpriv; /* TODO: private list of save data, could be projcpy list? */
     /* We need a flags here to allow regex, for example. But the regex is */
-    char flags[128];
+    char flagsstr[128];
+    long flags;
     char rule[PATH_MAX+1];
     char *rule_tree;
     char rsprule[PATH_MAX+1];
