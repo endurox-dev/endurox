@@ -280,7 +280,6 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
             p = strtok_r (val->val, ",", &saveptr1);
             while (p != NULL)
             {
-                
                 /* strip off the string... */
                 ndrx_str_strip(p, "\t ");
                 

@@ -47,6 +47,7 @@
 #include <atmi_cache.h>
 
 /*---------------------------Externs------------------------------------*/
+#define NDRX_TPCACHE_MINLIST          1024    /* Allocate buffer with min 1KB */
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -117,7 +118,6 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Converting to occurrence: [%s]", p_start_sq);
 #endif
-        
         occ = atoi(p_start_sq);
         
     }
@@ -274,6 +274,20 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcache_data_t *exdata,
     /* Figure out the  */
 }
 
+/**
+ * Add projection field, perform automatic buffer resize.
+ * @param cache
+ * @param idx
+ * @param fid
+ * @return 
+ */
+exprivate int add_proj_field(ndrx_tpcallcache_t *cache, int idx, BFLDID fid)
+{
+    int ret = EXSUCCEED;
+    
+out:
+    return ret;
+}
 
 /**
  * Process flags
@@ -284,11 +298,46 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcache_data_t *exdata,
  */
 expublic int ndrx_process_flags_ubf(ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz)
 {
-    /* TODO: Process some addtional rules
+    int ret = EXSUCCEED;
+    char *saveptr1 = NULL;
+    char *p;
+    char tmp[PATH_MAX+1];
+    
+    /* TODO: Process some additional rules
      * - If no save strategy is given, then '*' means full buffer
      * - If '*' is not found, then build a project copy list
      */
-    
+    if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEREG) && !(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
+    {
+        if (strcmp(cache->save, "*"))
+        {
+#ifdef NDRX_TPCACHE_DEBUG
+            NDRX_LOG(log_debug, "Save strategy defaulted to full UBF buffer");
+#endif
+            cache->flags |= NDRX_TPCACHE_TPCF_SAVEFULL;
+        }
+        else
+        {
+            cache->flags |= NDRX_TPCACHE_TPCF_SAVESETOF;
+#ifdef NDRX_TPCACHE_DEBUG
+            NDRX_LOG(log_debug, "Save strategy: list of fields - parsing...");
+#endif
+            /* clean up save string... */            
+            ndrx_str_strip(tmp, "\t ");
+            
+            /* TODO: Strtok... & build the list of projection copy fields */
+            p = strtok_r (tmp, ",", &saveptr1);
+            while (p != NULL)
+            {
+                
+                /* Lookup the field id,  */
+                
+                p = strtok_r (NULL, ",", &saveptr1);
+            }
+        }
+    }
+out:
+    return ret;    
 }
 
 /**
