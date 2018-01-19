@@ -61,6 +61,7 @@ extern "C" {
 #define NDRX_TPCACHE_TPCF_REPL       0x00000002      /* Replace buf                   */
 #define NDRX_TPCACHE_TPCF_MERGE      0x00000004      /* Merge buffers                 */
 #define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008      /* Save full buffer              */
+#define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010      /* Save set of fields            */
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
