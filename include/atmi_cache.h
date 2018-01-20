@@ -96,6 +96,7 @@ extern "C" {
     
 /**
  * Dump tpcall configuration
+ * TODO dump flags!
  */
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
     NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
@@ -168,6 +169,7 @@ struct ndrx_tpcallcache
     int save_regex_compiled;
     regex_t save_regex;
     void *p_save_typpriv; /* TODO: private list of save data, could be projcpy list? */
+    long save_typpriv2;
     /* We need a flags here to allow regex, for example. But the regex is */
     char flagsstr[NDRX_CACHE_FLAGS_MAX+1];
     long flags;
@@ -243,6 +245,10 @@ struct ndrx_tpcache_typesupp
     int (*pf_cache_get) (ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type,
             char *idata, long ilen, char **odata, long *olen, long flags);
     
+    int (*pf_cache_put) (ndrx_tpcache_data_t *exdata, 
+        typed_buffer_descr_t *descr, char *idata, long ilen, long flags);
+    
+    
     /* check flags for given type and process the save rule if any */
     int (*pf_process_flags)(ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz);
     
@@ -264,15 +270,21 @@ extern NDRX_API int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn);
 
 /* UBF support: */
-extern NDRX_API int ndrx_tpcache_keyget_ubf (ndrx_tpcallcache_t *cache, 
+extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);
+extern NDRX_API int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache, 
+        char *errdet, int errdetbufsz);
+extern NDRX_API int ndrx_cache_put_ubf (ndrx_tpcache_data_t *exdata, 
+        typed_buffer_descr_t *descr, char *idata, long ilen, long flags);
+extern NDRX_API int ndrx_cache_get_ubf (ndrx_tpcache_data_t *exdata, 
+        typed_buffer_descr_t *buf_type, char *idata, long ilen, 
+        char **odata, long *olen, long flags);
+extern NDRX_API int ndrx_cache_ruleval_ubf (ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen,  char *errdet, int errdetbufsz);
+extern NDRX_API int ndrx_cache_rulcomp_ubf (ndrx_tpcallcache_t *cache, 
+        char *errdet, int errdetbufsz);
+extern NDRX_API int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, char *okey, int okey_bufsz, 
         char *errdet, int errdetbufsz);
-
-extern NDRX_API int ndrx_tpcache_rulcomp_ubf (ndrx_tpcallcache_t *cache, 
-        char *errdet, int errdetbufsz);
-
-extern NDRX_API int ndrx_tpcache_ruleval_ubf (ndrx_tpcallcache_t *cache, 
-        char *idata, long ilen,  char *errdet, int errdetbufsz);
 
 #ifdef	__cplusplus
 }
