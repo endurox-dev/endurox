@@ -55,6 +55,7 @@
 #include <xa_cmn.h>
 #include <atmi_shm.h>
 #include <atmi_tls.h>
+#include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -811,7 +812,8 @@ expublic int ndrx_tpgetrply (int *cd,
                  */
                 if (TPSUCCESS!=rply->rval)
                 {
-                    ndrx_TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
+                    ndrx_TPset_error_fmt(TPESVCFAIL, "Service returned %d", 
+                            rply->rval);
                     ret=EXFAIL;
                     goto out;
                 }
@@ -889,9 +891,43 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     int ret=EXSUCCEED;
     int cd_req = 0;
     int cd_rply = 0;
+    int should_cache = EXFALSE;
+    int saved_tperrno;
+    long saved_tpurcode;
+    
     TPTRANID tranid, *p_tranid;
     
     NDRX_LOG(log_debug, "%s: enter", __func__);
+    
+    /* tpcall cache implementation: lookup */
+    if (!(flags & TPNOCACHELOOK) && ndrx_cache_used())
+    {
+        /* lookup cache */
+        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svc, idata, ilen, 
+            odata, olen, flags, &should_cache, &saved_tperrno, &saved_tpurcode)))
+        {
+            /* failed to get cache data */
+            if (EXFAIL==ret)
+            {
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                /* ignore the error (probably data not found) */
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Response read form cache!");
+            G_atmi_tls->M_svc_return_code = saved_tpurcode;
+            
+            if (0!=saved_tperrno)
+            {
+                ndrx_TPset_error_msg(saved_tperrno, "Cached error response");
+                ret=EXFAIL;
+            }
+        }
+    }
 
     if (flags & TPTRANSUSPEND)
     {
@@ -935,9 +971,28 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
         goto out;
     }
 
-
 out:
     NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
+
+    /* tpcall cache implementation: add to cache if required */
+    if (!(flags & TPNOCACHEADD) && should_cache)
+    {
+        int ret2;
+        
+        /* lookup cache */
+        if (EXSUCCEED!=(ret2=ndrx_cache_save (svc, *odata, 
+            *olen, tperrno, G_atmi_tls->M_svc_return_code, 
+                G_atmi_env.our_nodeid, flags)))
+        {
+            /* return error if failed to cache? */
+            
+            if (EXSUCCEED!=ret2)
+            {
+                NDRX_LOG(log_error, "Failed to cache data!");
+                ret=EXFAIL;
+            }
+        }
+    }
 
     return ret;
 }

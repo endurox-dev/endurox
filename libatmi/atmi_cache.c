@@ -87,6 +87,20 @@ expublic ndrx_tpcache_typesupp_t M_types[] =
 };
 
 /**
+ * Function returns TRUE if cache is used
+ * @return 
+ */
+expublic int ndrx_cache_used(void)
+{
+    if (NULL!=M_tpcache_db && NULL!=M_tpcache_svc)
+    {
+        return EXTRUE;
+    }
+    
+    return EXFALSE;
+}
+
+/**
  * Map unix error
  * @param unixerr unix error
  * @return TP Error
@@ -94,6 +108,15 @@ expublic ndrx_tpcache_typesupp_t M_types[] =
 expublic int ndrx_cache_maperr(int unixerr)
 {
     int ret = TPEOS;
+    
+    switch (unixerr)
+    {
+        case EDB_NOTFOUND:
+            
+            ret = TPENOENT;
+            
+            break;
+    }
     
     return ret;
 }
@@ -202,6 +225,62 @@ expublic void ndrx_cache_dbs_free(void)
 }
 
 /**
+ * Compare cache entries
+ * @param a
+ * @param b
+ * @return -1, 0, 1
+ */
+exprivate int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b)
+{
+    ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
+    ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
+    int result = 0;
+    
+    
+    if (ad->t > bd->t)
+    {
+        result = 1;
+    }
+    else if (ad->t < bd->t)
+    {
+        result = -1;
+    }
+    else
+    {
+        /* equals compare, microsec */
+        
+        if (ad->tusec > bd->tusec)
+        {
+            result = 1;
+        }
+        else if (ad->tusec < bd->tusec)
+        {
+            result = -1;
+        }
+        else
+        {
+            /* equals now decide from node id, the higher number wins */
+            
+            if (ad->nodeid > bd->nodeid)
+            {
+                result = 1;
+            }
+            else if (ad->nodeid < bd->nodeid)
+            {
+                result = -1;
+            }
+            else
+            {
+                /* local node two records a the same time, so equals... */
+                result = 0;
+            }
+        }
+    }
+    
+    return result;
+}
+
+/**
  * Resolve cache db
  * @param cachedb name of cache db
  * @param mode either normal or create mode (started by ndrxd)
@@ -217,6 +296,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     char *p; 
     char *saveptr1 = NULL;
     EDB_txn *txn = NULL;
+    unsigned int dbi_flags;
 
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -311,6 +391,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 else if (0==strcmp(p, "broadcast"))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_BROADCAST;
+                }
+                else if (0==strcmp(p, "timesync"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_TIMESYNC;
                 }
                 else
                 {
@@ -431,7 +515,19 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     }
     
     /* open named db */
-    if (EXSUCCEED!=(ret=edb_dbi_open(txn, NULL, 0, &db->dbi)))
+    if (db->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+    {
+        /* We must perform sorting too so that first rec is 
+         * is one we need to process and then we check for others to dump...
+         */
+        dbi_flags = EDB_DUPSORT | EDB_DUPSORT;
+    }
+    else
+    {
+        dbi_flags = 0;
+    }
+    
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, NULL, dbi_flags, &db->dbi)))
     {
         NDRX_LOG(log_error, "Failed to open named db for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
@@ -785,11 +881,11 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
                     }
-                    else if (0==strcmp(p_flags, "getrepl")) /* default */
+                    else if (0==strcmp(p_flags, "getreplace")) /* default */
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_REPL;
                     }
-                    else if (0==strcmp(p_flags, "getmerge"))
+                    else if (0==strcmp(p_flags, "getreplace"))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
                     }
@@ -807,6 +903,30 @@ expublic int ndrx_cache_init(int mode)
                     
                     p_flags = strtok_r (NULL, ",", &saveptr1);
                 }
+            }
+            
+            if ((cache->flags & NDRX_TPCACHE_TPCF_REPL) && 
+                    (cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
+                    )
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
+                        "flags `getreplace' and `getreplace' "
+                        "for service [%s], buffer index: %d", svc, i);
+                userlog("CACHE: invalid config - conflicting "
+                        "flags `getreplace' and `getreplace' "
+                        "for service [%s], buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                        "flags `getreplace' and `getreplace' "
+                        "for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* default to replace */
+            if ( !(cache->flags & NDRX_TPCACHE_TPCF_REPL) && 
+                    !(cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
+                    )
+            {
+                cache->flags & NDRX_TPCACHE_TPCF_REPL;
             }
             
             /* set some defaults if not already set... */
@@ -1020,9 +1140,98 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
 }
 
 /**
+ * Save data to cache
+ * @param idata
+ * @param ilen
+ * @param save_tperrno
+ * @param save_tpurcode
+ * @param nodeid
+ * @return EXSUCCEED/EXFAIL/NDRX_TPCACHE_ENOCACHE
+ */
+expublic int ndrx_cache_save (char *svc, char *idata, 
+        long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags)
+{
+    int ret = EXSUCCEED;
+    /* have a buffer in size of ATMI message */
+    char buf[NDRX_MSGSIZEMAX];
+    ndrx_tpcache_svc_t *svcc = NULL;
+    typed_buffer_descr_t *buf_type;
+    buffer_obj_t *buffer_info;
+    ndrx_tpcallcache_t *cache;
+    ndrx_tpcache_data_t *data = (ndrx_tpcache_data_t *)buf;
+    
+    memset(data, 0, sizeof(ndrx_tpcache_data_t));
+    
+    data->nodeid = nodeid;
+    data->saved_tperrno = save_tperrno;
+    data->saved_tpurcode = save_tpurcode;
+    
+    /* get current timestamp */
+    ndrx_utc_tstamp2(&data->t, &data->tusec);
+    
+    /* OK now translate the thing to db format (i.e. make outgoing message) */
+    
+    
+     /* Find service in cache */
+    EXHASH_FIND_PTR(M_tpcache_svc, ((void **)&svc), svcc);
+    
+    if (NULL==svcc)
+    {
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "No cache defined for [%s]", svc);
+#endif
+        ret = NDRX_TPCACHE_ENOCACHE;
+        goto out;
+    }
+    
+    if (NULL!=idata)
+    {
+        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
+                    __func__, idata);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    buf_type = &G_buf_descr[buffer_info->type_id];
+    
+    /* Test the buffers rules */
+    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen)))
+    {
+        ret = NDRX_TPCACHE_ENOCACHE;
+        goto out;
+    }
+    
+    data->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
+            
+    if (NULL==M_types[cache->buf_type->type_id].pf_cache_put)
+    {
+        ret = NDRX_TPCACHE_ENOTYPESUPP;
+        goto out;
+        
+    }
+    
+    if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_cache_put(cache, data, 
+            buf_type, idata, ilen, flags))
+    {
+        /* Error shall be set by func */
+        NDRX_LOG(log_error, "Failed to convert to cache format!!!");
+        EXFAIL_OUT(ret);
+        
+    }
+    
+    NDRX_LOG(log_info, "About to cache data for service: [%s]", svc);
+    
+out:
+            
+    return ret;
+}
+
+/**
  * Lookup service in cache
  * @param svc service to call
- * @param idata intput data buffer
+ * @param idata input data buffer
  * @param ilen input len
  * @param odata output data buffer
  * @param olen output len
@@ -1031,7 +1240,8 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
  * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
  */
 expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
-        char **odata, long *olen, long flags, int *should_cache)
+        char **odata, long *olen, long flags, int *should_cache, 
+        int *saved_tperrno, long *saved_tpurcode)
 {
     int ret = EXSUCCEED;
     ndrx_tpcache_svc_t *svcc = NULL;
@@ -1041,7 +1251,9 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     char key[NDRX_CACHE_KEY_MAX+1];
     char errdet[MAX_TP_ERROR_LEN+1];
     EDB_txn *txn;
-    int tran_started;
+    int cursor_open = EXFALSE;
+    EDB_cursor *cursor;
+    int tran_started = EXFALSE;
     EDB_val cachedata;
     ndrx_tpcache_data_t *exdata;
     /* Key size - assume 16K should be fine */
@@ -1117,16 +1329,55 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     }
     tran_started = EXTRUE;
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata)))
+    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
     {
-        /* error already provided by wrapper */
-        NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
-        goto out;
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Performing timesync based complex lookup");
+#endif        
+        if (EXSUCCEED!=ndrx_cache_edb_set_dupsort(cache->cachedb, txn, 
+                ndrx_cache_cmp_fun))
+        {
+            NDRX_LOG(log_error, "Failed to set dupsort!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=ndrx_cache_edb_cursor_open(cache->cachedb, txn, &cursor))
+        {
+            NDRX_LOG(log_error, "Failed to open cursor!");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* OK fetch the first rec of cursor, next records we shall kill (if any) */
+        /* first: EDB_FIRST_DUP - this we accept and process */
+        
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
+                    key, &cachedata, EDB_FIRST_DUP)))
+        {
+            if (EDB_NOTFOUND!=ret)
+            {
+                NDRX_LOG(log_error, "Failed to scan for data!");
+                EXFAIL_OUT(ret);
+            }
+            /* no data found */
+            ret = NDRX_TPCACHE_ENOCACHEDATA;
+            goto out;
+        }
     }
+    else
+    {
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "Performing simple lookup");
+#endif
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata)))
+        {
+            /* error already provided by wrapper */
+            NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
+            goto out;
+        }
+    }
+    
     exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
-    
     /* OK we have a raw data... lets dump something... */
-    
 #ifdef NDRX_TPCACHE_DEBUG
     NDRX_LOG(log_debug, "Got cache record for key [%s] of service [%s]", key, svc);
     /* Dump more correctly with admin info */
@@ -1136,14 +1387,56 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 #endif
     
     /* Error shall be set by func */
-    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_cache_get
-        (exdata, buf_type, idata, ilen, odata, olen, flags))
+    
+    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_cache_get(cache, exdata, 
+            buf_type, idata, ilen, odata, olen, flags))
     {
         NDRX_LOG(log_error, "%s: Failed to receive data: ", __func__);
         goto out;
     }
     
+    *saved_tperrno = exdata->saved_tperrno;
+    *saved_tpurcode = exdata->saved_tpurcode;
+    
+    NDRX_LOG(log_debug, "cache tperrno: %d tpurcode: %ld",
+            *saved_tperrno, *saved_tpurcode);
+    
+    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+    {
+        /* fetch next for dups and remove them.. if any.. */
+        /* next: MDB_NEXT_DUP  - we kill this! */
+        while (EXSUCCEED==(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
+                    key, &cachedata, EDB_NEXT_DUP)))
+        {
+            /* delete the record, not needed, some old cache rec */
+            
+            if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, 
+                    key, &cachedata)))
+            {
+                if (ret!=EDB_NOTFOUND)
+                {
+                    /* if not found maybe next key will be found */
+                    break;
+                }
+            }
+        }
+        
+        if (ret!=EDB_NOTFOUND)
+        {
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            ret = EXSUCCEED;
+        }
+    }
+    
 out:
+
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
 
     if (tran_started)
     {
@@ -1257,18 +1550,161 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
             
             userlog("Failed to get data from db [%s] for key [%s]: %s", 
                     db->cachedb, key, edb_strerror(ret));
+            
+            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+            
         }
         else
         {
-            NDRX_LOG(log_info, "Failed to get data from db [%s] for key [%s]: %s", 
+            NDRX_LOG(log_debug, "Failed to get data from db [%s] for key [%s]: %s", 
                 db->cachedb, key, edb_strerror(ret));
         }
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
-                "Failed to get data from db [%s] for key [%s]: %s", 
-                db->cachedb, key, edb_strerror(ret));
     }
     
+out:
+    return ret;
+}
+
+/**
+ * Get data for cursor
+ * @param db
+ * @param cursor
+ * @param key
+ * @param data_out
+ * @param op
+ * @return 
+ */
+expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
+        char *key, EDB_val *data_out, EDB_cursor_op op)
+{
+    int ret = EXSUCCEED;
+    EDB_val keydb;
+    
+    keydb.mv_data = key;
+    keydb.mv_size = strlen(key);
+            
+    if (EXSUCCEED!=(ret=edb_cursor_get(cursor, &keydb, data_out, op)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_LOG(log_error, "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+            
+            userlog("Failed to get data from db [%s] for key [%s]: %s", 
+                    db->cachedb, key, edb_strerror(ret));
+            
+            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "EOF [%s] for key [%s]: %s", 
+                db->cachedb, key, edb_strerror(ret));
+        }
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Set compare function
+ * @param db
+ * @param txn
+ * @param cmp
+ * @return 
+ */
+expublic int ndrx_cache_edb_set_dupsort(ndrx_tpcache_db_t *db, EDB_txn *txn, 
+            EDB_cmp_func *cmp)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=edb_set_dupsort(txn, db->dbi, cmp)))
+    {
+        NDRX_LOG(log_error, "Failed to set dupsort cmp func for db [%s] %p: %s", 
+            db->cachedb, cmp, edb_strerror(ret));
+
+        userlog("Failed to set dupsort cmp func for db [%s] %p: %s", 
+            db->cachedb, cmp, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to set dupsort cmp func for db [%s] %p: %s", 
+            db->cachedb, cmp, edb_strerror(ret));
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Open cursor 
+ * @param db
+ * @param txn
+ * @param cursor cursor out
+ * @return 
+ */
+expublic int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *txn, 
+            EDB_cursor ** cursor)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=edb_cursor_open(txn, db->dbi, cursor)))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+
+        userlog("Failed to open cursor [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to open cursor [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Delete db record full or particular
+ * @param db handler
+ * @param txn transaction
+ * @param key key (string based)
+ * @param data data to delete, can be NULL, then full delete. Only for duplicate recs
+ * @return EXSUCCEED/EXFAIL/DBERR
+ */
+expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn, char *key, EDB_val *data)
+{
+    int ret = EXSUCCEED;
+    EDB_val keydb;
+    
+    keydb.mv_data = key;
+    keydb.mv_size = strlen(key);
+            
+    if (EXSUCCEED!=(ret=edb_del(txn, db->dbi, &keydb, data)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_LOG(log_error, "Failed to delete from db [%s] for key [%s], data: %p: %s", 
+                db->cachedb, key, data, edb_strerror(ret));
+            
+            userlog("Failed to delete from db [%s] for key [%s], data: %p: %s", 
+                    db->cachedb, key, data, edb_strerror(ret));
+            
+            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+                "Failed to delete from db [%s] for key [%s], data: %p: %s", 
+                db->cachedb, key, data, edb_strerror(ret));
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "EOF [%s] for delete of key [%s] data: %p: %s", 
+                db->cachedb, key, data, edb_strerror(ret));
+        }
+    }
 out:
     return ret;
 }
