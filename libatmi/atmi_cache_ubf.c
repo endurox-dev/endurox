@@ -43,6 +43,7 @@
 #include "thlock.h"
 #include "userlog.h"
 #include "utlist.h"
+#include "exregex.h"
 #include <exparson.h>
 #include <atmi_cache.h>
 
@@ -54,6 +55,9 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+exprivate int add_proj_field(char **arr, long *arrsz, int idx, BFLDID fid, 
+        char *errdet, int errdetbufsz);
 
 /**
  * Return key data (read field from UBF...).
@@ -241,17 +245,79 @@ out:
  * @param flags flags
  * @return EXSUCCED/EXFAIL
  */
-expublic int ndrx_cache_get_ubf (ndrx_tpcache_data_t *exdata, 
-        typed_buffer_descr_t *buf_type, char *idata, long ilen, 
-        char **odata, long *olen, long flags)
+expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
+        ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type, 
+        char *idata, long ilen, char **odata, long *olen, long flags)
 {
     int ret = EXSUCCEED;
+    UBFH *p_ub;
+    UBFH *p_ub_cache;
     
-    if (EXSUCCEED!=(ret = buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-            exdata->atmi_buf_len, odata, olen, flags)))
+    /* Figure out how data to replace, either full replace or merge */
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
     {
-        /* the error shall be set already */
-        NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+        if (EXSUCCEED!=(ret = buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
+                exdata->atmi_buf_len, odata, olen, flags)))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+        }
+    }
+    else if (cache->flags & NDRX_TPCACHE_TPCF_MERGE)
+    {
+        /* So assume data we have normal data buffer in cache
+         * and we just run update */
+        
+        p_ub = (UBFH *)idata;
+        p_ub_cache = (UBFH *)exdata->atmi_buf;
+        /* reallocate place in output buffer */
+        
+        *olen = Bsizeof(p_ub) + exdata->atmi_buf_len + 1024;
+        if (NULL==(*odata = tprealloc(idata, *olen)))
+        {
+            /* tperror will be set already */
+            
+            NDRX_LOG(log_error, "Failed to realloc input buffer %p to size: %ld: %s", 
+                    idata, *olen, tpstrerror(tperrno));
+            
+            userlog("Failed to realloc input buffer %p to size: %ld: %s", 
+                    idata, *olen, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        p_ub = (UBFH *)odata;
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        ndrx_debug_dump_UBF(log_debug, "Updating output with", p_ub_cache);
+#endif
+        if (EXSUCCEED!=Bupdate(p_ub, p_ub_cache))
+        {
+            NDRX_LOG(log_error, "Failed to update/merge buffer: %s", 
+                    Bstrerror(Berror));
+            
+            userlog("Failed to update/merge buffer: %s", 
+                    Bstrerror(Berror));
+            
+            ndrx_TPset_error_fmt(TPESYSTEM, 
+                            "Failed to update/merge buffer: %s", 
+                    Bstrerror(Berror));
+            
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid buffer get mode: flags %ld", 
+                    cache->flags);
+            
+            userlog("Invalid buffer get mode: flags %ld", 
+                    cache->flags);
+            
+            ndrx_TPset_error_fmt(TPEINVAL, 
+                            "Invalid buffer get mode: flags %ld", 
+                    cache->flags);
+            EXFAIL_OUT(ret);
     }
     
 out:
@@ -261,79 +327,192 @@ out:
 /**
  * Prepare data for saving to UBF buffer
  * At this stage we have to filter 
- * @param exdata
- * @param descr
+ * @param exdata node the len must be set to free space..
+ * @param descr type description
  * @param idata
  * @param ilen
  * @param flags
  * @return 
  */
-expublic int ndrx_cache_put_ubf (ndrx_tpcache_data_t *exdata, 
-        typed_buffer_descr_t *descr, char *idata, long ilen, long flags)
+expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
+        ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *descr, char *idata, 
+        long ilen, long flags)
 {
-    /* Figure out the  */
+    int ret = EXSUCCEED;
+    UBFH *p_ub = NULL;
+    char *buf_to_save;
+    char *list = NULL;
+    long list_len = 0;
+    BFLDID fid;
+    BFLDOCC occ;
+    int idx;
+    char errdet[MAX_TP_ERROR_LEN+1];
+    /* Figure out what to put */
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
+    {
+        NDRX_LOG(log_debug, "save by regular expression, field by field");
+        fid = BFIRSTFLDID;
+        
+        while(1==Bnext(p_ub, &fid, &occ, NULL, NULL))
+        {
+            if (0==occ)
+            {
+                /* Test the field against regex */
+                char * nm = Bfname(fid);
+                
+                if (EXSUCCEED==ndrx_regexec(&cache->save_regex, nm))
+                {
+                    /* loop over, match regexp, if ok, add field to projection list */
+                    if (EXSUCCEED!=add_proj_field(&list, &list_len, idx, fid, 
+                            errdet, sizeof(errdet)))
+                    {
+                        NDRX_LOG(log_error, "Failed to add field to projection list: %s", errdet);
+                        userlog("Failed to add field to projection list: %s", errdet);
+
+                        ndrx_TPset_error_fmt(TPESYSTEM, 
+                            "Failed to add field to projection list: %s", errdet);
+                        EXFAIL_OUT(ret);
+                    }
+                }
+            }
+        } /* loop over the buffer */
+        /* copy off the projection */   
+    }
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL)
+    {
+        NDRX_LOG(log_debug, "Saving full buffer to cache");
+        buf_to_save = idata;
+    }
+    else if (cache->flags & NDRX_TPCACHE_TPCF_SAVESETOF ||
+            cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
+    {
+        BFLDID * cpylist;
+        p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof((UBFH *)idata));
+        
+        if (NULL==p_ub)
+        {
+            NDRX_LOG(log_error, "Failed to alloc temp buffer!");
+            userlog("Failed to alloc temp buffer: %s", tpstrerror(tperrno));
+        }
+        
+        if (cache->flags & NDRX_TPCACHE_TPCF_SAVESETOF)
+        {
+            cpylist = (BFLDID *)cache->p_save_typpriv;
+        }
+        else
+        {
+            cpylist = (BFLDID *)list;
+        }
+        
+        /* OK, we have to make a projection copy */
+        
+        if (EXSUCCEED!=Bprojcpy(p_ub, (UBFH *)idata, cpylist))
+        {
+            NDRX_LOG(log_error, "Projection copy failed for cache data: %s", 
+                    Bstrerror(Berror));
+            userlog("Projection copy failed for cache data: %s", 
+                    Bstrerror(Berror));
+            
+            ndrx_TPset_error_fmt(TPESYSTEM, 
+                "Projection copy failed for cache data: %s", Bstrerror(Berror));
+            
+            EXFAIL_OUT(ret);
+        }
+        
+        buf_to_save = (char *)p_ub;
+    }
+    
+    ndrx_debug_dump_UBF(log_debug, "Saving to cache", (UBFH *)buf_to_save);
+    
+    if (EXSUCCEED!=descr->pf_prepare_outgoing (descr, buf_to_save, 
+                0, exdata->atmi_buf, &exdata->atmi_buf_len, flags))
+        {
+            NDRX_LOG(log_error, "Failed to prepare buffer for saving");
+            userlog("Failed to prepare buffer for saving: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    
+    
+out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    if (NULL!=list)
+    {
+        NDRX_FREE(list);
+    }
+
+    return ret;
 }
 
 /**
- * Add projection field, perform automatic buffer resize.
- * @param cache cache
+ * Store UBF field list in dynamic array
+ * @param arr list to alloc
+ * @param arsz array size
  * @param idx field index zero based
  * @param fid field id (compiled)
+ * @param errdet error detail
+ * @param errdetbufsz error detail buffer size
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int add_proj_field(ndrx_tpcallcache_t *cache, int idx, BFLDID fid, 
+exprivate int add_proj_field(char **arr, long *arrsz, int idx, BFLDID fid, 
         char *errdet, int errdetbufsz)
 {
     int ret = EXSUCCEED;
-    BFLDID *arr;
-    if (NULL==cache->p_save_typpriv)
+    BFLDID *arri;
+    if (NULL==*arr)
     {
         /* Allocate it... */
         
-        cache->save_typpriv2 = NDRX_TPCACHE_MINLIST;
+        *arrsz = NDRX_TPCACHE_MINLIST;
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "About to alloc UBF list storage: %ld", 
-                cache->save_typpriv2*sizeof(BFLDID));
+                (*arrsz)*sizeof(BFLDID));
 #endif
-        cache->p_save_typpriv = NDRX_MALLOC(cache->save_typpriv2*sizeof(BFLDID));
+        *arr = NDRX_MALLOC((*arrsz)*sizeof(BFLDID));
         
-        if (NULL==cache->p_save_typpriv)
+        if (NULL==*arr)
         {
             int err = errno;
             NDRX_LOG(log_error, "%s: Failed to malloc %ld: %s", __func__, 
-                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+                    (*arrsz)*sizeof(BFLDID), strerror(err));
             snprintf(errdet, errdetbufsz, "%s: Failed to malloc %ld: %s", __func__, 
-                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+                    (*arrsz)*sizeof(BFLDID), strerror(err));
             EXFAIL_OUT(ret);        
         }
         
     }
-    else if (cache->save_typpriv2<idx+2) /* idx zero based, thus +1 and 1+ for BBADFLDID */
+    else if (*arrsz<idx+2) /* idx zero based, thus +1 and 1+ for BBADFLDID */
     {
         
-        cache->save_typpriv2 += NDRX_TPCACHE_MINLIST;
+        *arrsz = *arrsz + NDRX_TPCACHE_MINLIST;
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "About to realloc UBF list storage: %ld", 
-                cache->save_typpriv2*sizeof(BFLDID));
+                (*arrsz)*sizeof(BFLDID));
 #endif        
-        cache->p_save_typpriv = NDRX_REALLOC(cache->p_save_typpriv, 
-                cache->save_typpriv2*sizeof(BFLDID));
+        *arr = NDRX_REALLOC(*arr, 
+                (*arrsz)*sizeof(BFLDID));
         
-        if (NULL==cache->p_save_typpriv)
+        if (NULL==*arr)
         {
             int err = errno;
             NDRX_LOG(log_error, "%s: Failed to realloc (%ld): %s", __func__, 
-                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+                    (*arrsz)*sizeof(BFLDID), strerror(errno));
             snprintf(errdet, errdetbufsz, "%s: Failed to malloc (%ld): %s", __func__, 
-                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+                    (*arrsz)*sizeof(BFLDID), strerror(errno));
             EXFAIL_OUT(ret);        
         }
     }
     
     /* OK we are done... add at index */
-    arr = (BFLDID *)cache->save_typpriv2;
-    arr[idx] = fid;
-    arr[idx+1] = BBADFLDID;
+    arri = (BFLDID *)(*arr);
+    arri[idx] = fid;
+    arri[idx+1] = BBADFLDID;
     
 out:
     return ret;
@@ -393,11 +572,12 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
                     EXFAIL_OUT(ret);
                 }
                 
-                if (EXSUCCEED!=add_proj_field(cache, idx, fid, errdet, errdetbufsz))
+                if (EXSUCCEED!=add_proj_field((char **)&cache->p_save_typpriv, 
+                            &cache->save_typpriv2, idx, fid, errdet, errdetbufsz))
                 {
                     NDRX_LOG(log_error, "Failed to add field to projection list!");
                     EXFAIL_OUT(ret);
-                }        
+                }
                 
                 p = strtok_r (NULL, ",", &saveptr1);
                 idx++;
