@@ -412,6 +412,8 @@ typedef struct tp_command_generic tp_command_generic_t;
 
 /*
  * Call handler.
+ * For storing the tppost associated timestamp, we could allow data to be installed
+ * in the rval/rcode for requests...
  */
 struct tp_command_call
 {
@@ -429,7 +431,7 @@ struct tp_command_call
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
-    int rval;
+    int rval;   /* This also should be present only on reply... */
     long rcode; /* should be preset on reply only */
     char extradata[31+1]; /* Extra char data to be passed over the call */
     long flags; /* should be preset on reply only */
@@ -482,9 +484,9 @@ struct tp_notif_call
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
-    int rval;
-    long rcode; /* should be preset on reply only */
-    long flags; /* should be preset on reply only */
+    int rval; /* on request -> userfield1 */
+    long rcode; /* should be preset on reply only, on request -> userfield2 */
+    long flags; 
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
     /* message sequence for conversational over multithreaded bridges*/

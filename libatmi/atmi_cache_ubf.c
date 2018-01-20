@@ -47,7 +47,7 @@
 #include <atmi_cache.h>
 
 /*---------------------------Externs------------------------------------*/
-#define NDRX_TPCACHE_MINLIST          1024    /* Allocate buffer with min 1KB */
+#define NDRX_TPCACHE_MINLIST          100    /* Min number of elements */
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -169,7 +169,7 @@ out:
  * @param okey_bufsz output key buffer size
  * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
  */
-expublic int ndrx_tpcache_keyget_ubf (ndrx_tpcallcache_t *cache, 
+expublic int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, char *okey, int okey_bufsz, 
         char *errdet, int errdetbufsz)
 {
@@ -192,7 +192,7 @@ out:
  * @param errdetbufsz errro detail buffer size
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_tpcache_rulcomp_ubf (ndrx_tpcallcache_t *cache, 
+expublic int ndrx_cache_rulcomp_ubf (ndrx_tpcallcache_t *cache, 
         char *errdet, int errdetbufsz)
 {
     int ret = EXSUCCEED;
@@ -216,7 +216,7 @@ out:
  * @param errdetbufsz error detail buffer size
  * @return EXFAIL/EXTRUE/EXFALSE
  */
-expublic int ndrx_tpcache_ruleval_ubf (ndrx_tpcallcache_t *cache, 
+expublic int ndrx_cache_ruleval_ubf (ndrx_tpcallcache_t *cache, 
         char *idata, long ilen,  char *errdet, int errdetbufsz)
 {
     int ret = EXFALSE;
@@ -276,32 +276,85 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcache_data_t *exdata,
 
 /**
  * Add projection field, perform automatic buffer resize.
- * @param cache
- * @param idx
- * @param fid
- * @return 
+ * @param cache cache
+ * @param idx field index zero based
+ * @param fid field id (compiled)
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int add_proj_field(ndrx_tpcallcache_t *cache, int idx, BFLDID fid)
+exprivate int add_proj_field(ndrx_tpcallcache_t *cache, int idx, BFLDID fid, 
+        char *errdet, int errdetbufsz)
 {
     int ret = EXSUCCEED;
+    BFLDID *arr;
+    if (NULL==cache->p_save_typpriv)
+    {
+        /* Allocate it... */
+        
+        cache->save_typpriv2 = NDRX_TPCACHE_MINLIST;
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "About to alloc UBF list storage: %ld", 
+                cache->save_typpriv2*sizeof(BFLDID));
+#endif
+        cache->p_save_typpriv = NDRX_MALLOC(cache->save_typpriv2*sizeof(BFLDID));
+        
+        if (NULL==cache->p_save_typpriv)
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "%s: Failed to malloc %ld: %s", __func__, 
+                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+            snprintf(errdet, errdetbufsz, "%s: Failed to malloc %ld: %s", __func__, 
+                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+            EXFAIL_OUT(ret);        
+        }
+        
+    }
+    else if (cache->save_typpriv2<idx+2) /* idx zero based, thus +1 and 1+ for BBADFLDID */
+    {
+        
+        cache->save_typpriv2 += NDRX_TPCACHE_MINLIST;
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "About to realloc UBF list storage: %ld", 
+                cache->save_typpriv2*sizeof(BFLDID));
+#endif        
+        cache->p_save_typpriv = NDRX_REALLOC(cache->p_save_typpriv, 
+                cache->save_typpriv2*sizeof(BFLDID));
+        
+        if (NULL==cache->p_save_typpriv)
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "%s: Failed to realloc (%ld): %s", __func__, 
+                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+            snprintf(errdet, errdetbufsz, "%s: Failed to malloc (%ld): %s", __func__, 
+                    cache->save_typpriv2*sizeof(BFLDID), strerror(errno));
+            EXFAIL_OUT(ret);        
+        }
+    }
+    
+    /* OK we are done... add at index */
+    arr = (BFLDID *)cache->save_typpriv2;
+    arr[idx] = fid;
+    arr[idx+1] = BBADFLDID;
     
 out:
     return ret;
 }
 
 /**
- * Process flags
+ * Process flags. Here we preprepare projection copy if needed.
  * @param cache
  * @param errdet
  * @param errdetbufsz
  * @return 
  */
-expublic int ndrx_process_flags_ubf(ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz)
+expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache, 
+        char *errdet, int errdetbufsz)
 {
     int ret = EXSUCCEED;
     char *saveptr1 = NULL;
     char *p;
     char tmp[PATH_MAX+1];
+    BFLDID fid;
+    int idx = 0;
     
     /* TODO: Process some additional rules
      * - If no save strategy is given, then '*' means full buffer
@@ -325,14 +378,29 @@ expublic int ndrx_process_flags_ubf(ndrx_tpcallcache_t *cache, char *errdet, int
             /* clean up save string... */            
             ndrx_str_strip(tmp, "\t ");
             
-            /* TODO: Strtok... & build the list of projection copy fields */
+            /* Strtok... & build the list of projection copy fields */
             p = strtok_r (tmp, ",", &saveptr1);
             while (p != NULL)
             {
-                
                 /* Lookup the field id,  */
+                p = strtok_r (NULL, ",", &saveptr1);
+                if (EXSUCCEED!=(fid=Bfldid(p)))
+                {
+                    NDRX_LOG(log_error, "Failed to resolve filed id: [%s]: %s", 
+                            p, Bstrerror(Berror));
+                    snprintf(errdet, errdetbufsz, "Failed to resolve filed id: [%s]: %s", 
+                            p, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (EXSUCCEED!=add_proj_field(cache, idx, fid, errdet, errdetbufsz))
+                {
+                    NDRX_LOG(log_error, "Failed to add field to projection list!");
+                    EXFAIL_OUT(ret);
+                }        
                 
                 p = strtok_r (NULL, ",", &saveptr1);
+                idx++;
             }
         }
     }
@@ -342,14 +410,19 @@ out:
 
 /**
  * Free up internal resources
- * @param cache
- * @return 
+ * @param cache cache to free-up
+ * @return EXSUCCEED
  */
 expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
 {
     if (NULL!=cache->rule_tree)
     {
         Btreefree(cache->rule_tree);
+    }
+    
+    if (NULL!=cache->p_save_typpriv)
+    {
+        NDRX_FREE(cache->p_save_typpriv);
     }
     
     return EXSUCCEED;
