@@ -1,6 +1,13 @@
 /* 
 ** ATMI level cache
 ** No using named databases. Each environment is associated with single db
+** To resolve conflicts in cluster mode we shall compare time with a microseconds
+** for this we will extend tppost so that we can send rval as userfield1 and
+** rcode as userfield2. When cache server receives request we add the records
+** even if it is duplicate (for this timesync flag must be present). Then when
+** we read all records, if two or more records found, then we will use the youngest
+** one by UTC. If times stamps equals, then we use record as priority from the cluster
+** node with a highest node id number.
 **
 ** @file atmi_cache.c
 ** 
@@ -68,7 +75,7 @@ exprivate ndrx_tpcache_svc_t *M_tpcache_svc = NULL; /* service cache       */
 expublic ndrx_tpcache_typesupp_t M_types[] =
 {
     /* typeid (idx), rule_compile func,      rule eval func,           get key func,  */
-    {BUF_TYPE_UBF, ndrx_tpcache_rulcomp_ubf, ndrx_tpcache_ruleval_ubf, ndrx_tpcache_keyget_ubf},
+    {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf, ndrx_cache_ruleval_ubf, ndrx_cache_keyget_ubf, ndrx_cache_get_ubf, ndrx_cache_put_ubf, ndrx_cache_proc_flags_ubf, ndrx_cache_delete_ubf},
     {1, NULL, NULL, NULL}, /* dummy */
     {BUF_TYPE_INIT, NULL, NULL, NULL},
     {BUF_TYPE_NULL, NULL, NULL, NULL},
