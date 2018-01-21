@@ -926,6 +926,9 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                 ndrx_TPset_error_msg(saved_tperrno, "Cached error response");
                 ret=EXFAIL;
             }
+            /*  We are already in cache! */
+            should_cache = EXFALSE;
+            goto out;
         }
     }
 

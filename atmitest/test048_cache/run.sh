@@ -50,6 +50,7 @@ export NDRX_CCONFIG=`pwd`
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_TOUT=10
+export NDRX_ULOG=$TESTDIR
 
 #
 # Domain 1 - here client will live
@@ -101,7 +102,7 @@ xadmin ppm
 echo "Running off client"
 
 set_dom1;
-(./atmiclt48 2>&1) > ./atmiclt-dom1.log
+(time ./atmiclt48 2>&1) > ./atmiclt-dom1.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt48 2>&1) > ./atmiclt-dom1.log
 
 RET=$?

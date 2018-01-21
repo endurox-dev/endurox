@@ -126,7 +126,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
         
     }
     /* resolve field id */
-    if (EXSUCCEED!=(fid = Bfldid(tmpsymbol)))
+    if (BBADFLDID==(fid = Bfldid(tmpsymbol)))
     {
         NDRX_LOG(log_error, "Failed to resolve field [%s] id: %s", 
                 tmpsymbol, Bstrerror(Berror));
@@ -367,11 +367,14 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
                     if (EXSUCCEED!=add_proj_field(&list, &list_len, idx, fid, 
                             errdet, sizeof(errdet)))
                     {
-                        NDRX_LOG(log_error, "Failed to add field to projection list: %s", errdet);
-                        userlog("Failed to add field to projection list: %s", errdet);
+                        NDRX_LOG(log_error, "Failed to add field to projection list: %s", 
+                                errdet);
+                        userlog("Failed to add field to projection list: %s", 
+                                errdet);
 
                         ndrx_TPset_error_fmt(TPESYSTEM, 
-                            "Failed to add field to projection list: %s", errdet);
+                            "Failed to add field to projection list: %s", 
+                                errdet);
                         EXFAIL_OUT(ret);
                     }
                 }

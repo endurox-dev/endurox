@@ -78,7 +78,14 @@ void TESTSV (TPSVCINFO *p_svc)
         ret=EXFAIL;
         goto out;
     }
-        
+    
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 1, VALUE_EXPECTED_RET, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD[1]: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
