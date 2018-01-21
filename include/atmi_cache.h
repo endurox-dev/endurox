@@ -100,8 +100,8 @@ extern "C" {
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
-    NDRX_LOG(LEV, "subscr_put=[%o]", CACHEDB->subscr_put);\
-    NDRX_LOG(LEV, "subscr_del=[%o]", CACHEDB->subscr_del);\
+    NDRX_LOG(LEV, "subscr_put=[%s]", CACHEDB->subscr_put);\
+    NDRX_LOG(LEV, "subscr_del=[%s]", CACHEDB->subscr_del);\
     NDRX_LOG(LEV, "=================================================");
 
     
@@ -223,8 +223,9 @@ struct ndrx_tpcallcache
  */
 struct ndrx_tpcache_svc
 {
-    char svcnm[MAXTIDENT+1]; /* cache db logical name (subsect of @cachedb)  */
-    
+    char svcnm[MAXTIDENT+1];    /* cache db logical name (subsect of @cachedb)*/
+
+    int in_hash;                /* Are we added to hash list?                 */
     ndrx_tpcallcache_t *caches; /* This list list of caches */
         
     /* Make structure hashable: */
@@ -315,7 +316,7 @@ extern NDRX_API int ndrx_cache_edb_set_dupsort(ndrx_tpcache_db_t *db, EDB_txn *t
 extern NDRX_API int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data);
 
-extern int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+extern NDRX_API int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data, unsigned int flags);
 
 /* UBF support: */
