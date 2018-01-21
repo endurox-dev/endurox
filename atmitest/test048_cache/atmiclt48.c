@@ -55,6 +55,9 @@
 
 /**
  * Do the test call to the server
+ * So some testing for cache could be for time based fields
+ * If time stamp not changed, it is from cache
+ * If changed then new data
  */
 int main(int argc, char** argv)
 {
