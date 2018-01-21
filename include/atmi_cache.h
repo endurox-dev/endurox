@@ -242,6 +242,12 @@ struct ndrx_tpcache_data
     long saved_tpurcode;
     long t;             /* UTC timestamp of message */
     long tusec;         /* UTC microseconds         */
+    
+    /* time when we picked up the record */
+    long hit_t;         /* UTC timestamp of message */
+    long hit_tusec;     /* UTC microseconds         */
+    unsigned long hits; /* Number of cache hits     */
+    
     int  nodeid;        /* Node id who put the msg  */
     long atmi_buf_len;  /* saved buffer len         */
     char atmi_buf[0]; /* the data follows           */
@@ -308,6 +314,9 @@ extern NDRX_API int ndrx_cache_edb_set_dupsort(ndrx_tpcache_db_t *db, EDB_txn *t
 
 extern NDRX_API int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data);
+
+extern int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        char *key, EDB_val *data, unsigned int flags);
 
 /* UBF support: */
 extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);
