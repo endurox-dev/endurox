@@ -133,6 +133,9 @@ EX_QNUMDEQ		    226 	long	-	Number of dequeues
 EX_NERROR_CODE           300         short  -        Result code (error code)
 EX_NERROR_MSG            301         string -        Result message
 EX_NREQLOGFILE           302         string -        Request log file
+
+EX_TPERRNO               350         long -          TP error number
+EX_TPURCODE              351         long -          TP user return code
 ################################################################################
 # Fields for Common Config Server (ccsrv)
 # Config commands:
