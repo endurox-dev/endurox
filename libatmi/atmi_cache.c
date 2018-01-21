@@ -1159,6 +1159,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     buffer_obj_t *buffer_info;
     ndrx_tpcallcache_t *cache;
     ndrx_tpcache_data_t *data = (ndrx_tpcache_data_t *)buf;
+    unsigned int dbflags;
     
     memset(data, 0, sizeof(ndrx_tpcache_data_t));
     
@@ -1223,6 +1224,28 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     NDRX_LOG(log_info, "About to cache data for service: [%s]", svc);
     
+    
+#if 0
+    /* TODO:! */
+    /* Add the record to the DB, to specific key! */
+    
+    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+    {
+        dbflags = EDB_APPENDDUP;
+    }
+    else
+    {
+        dbflags = 0;
+    }
+            
+    if (EXSUCCEED!=ndrx_cache_edb_put (cache->cachedb, *txn, 
+        char *key, EDB_val *data, unsigned int flags))
+    {
+        
+    }
+#endif
+    
+    
 out:
             
     return ret;
@@ -1255,10 +1278,15 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     EDB_cursor *cursor;
     int tran_started = EXFALSE;
     EDB_val cachedata;
+    EDB_val cachedata_update;
     ndrx_tpcache_data_t *exdata;
+    ndrx_tpcache_data_t *exdata_update;
     /* Key size - assume 16K should be fine */
     
     /* get buffer type & sub-type */
+        
+    cachedata_update.mv_size = 0;
+    cachedata_update.mv_data = NULL;
         
     /* Find service in cache */
     EXHASH_FIND_PTR(M_tpcache_svc, ((void **)&svc), svcc);
@@ -1351,6 +1379,20 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         /* first: EDB_FIRST_DUP - this we accept and process */
         
         if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
+                    key, &cachedata, EDB_SET_KEY)))
+        {
+            if (EDB_NOTFOUND!=ret)
+            {
+                NDRX_LOG(log_error, "Failed to scan for data!");
+                EXFAIL_OUT(ret);
+            }
+            /* no data found */
+            ret = NDRX_TPCACHE_ENOCACHEDATA;
+            goto out;
+        }
+        
+        /* not sure but we should position on first.. ? Do we need this ? */
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
                     key, &cachedata, EDB_FIRST_DUP)))
         {
             if (EDB_NOTFOUND!=ret)
@@ -1362,6 +1404,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             ret = NDRX_TPCACHE_ENOCACHEDATA;
             goto out;
         }
+        
     }
     else
     {
@@ -1401,7 +1444,67 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     NDRX_LOG(log_debug, "cache tperrno: %d tpurcode: %ld",
             *saved_tperrno, *saved_tpurcode);
     
-    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+    /* Update cache (if needed) */
+    
+    
+    /* perform copy if needed for cache update */
+    if ((cache->cachedb->flags & NDRX_TPCACHE_FLAGS_LRU) ||
+            (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_HITS))
+    {
+        cachedata_update.mv_size = cachedata.mv_size;
+        cachedata_update.mv_data = NDRX_MALLOC(cachedata.mv_size);
+        
+        if (NULL==cachedata_update.mv_data)
+        {
+            int err = errno;
+            
+            NDRX_LOG(log_error, "Failed to allocate %ld bytes: %s",
+                    (long)cachedata_update.mv_size, strerror(err));
+            userlog("Failed to allocate %ld bytes: %s",
+                    (long)cachedata_update.mv_size, strerror(err));
+            
+            ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %ld bytes: %s",
+                    (long)cachedata_update.mv_size, strerror(err));
+        }
+        
+        memcpy(cachedata_update.mv_data, cachedata.mv_data, cachedata.mv_size);
+        
+        exdata_update = (ndrx_tpcache_data_t *)cachedata_update.mv_data;
+        /* ok this might overflow, then it will be time for cache to reset...
+         * but that will be long number of requests away...
+         */
+
+        exdata_update->hits++;
+        ndrx_utc_tstamp2(&exdata_update->t, &exdata_update->tusec);
+
+#ifdef NDRX_TPCACHE_DEBUG        
+        NDRX_LOG(log_debug, "hits=%ld t=%ld t=%ld", exdata_update->hits,
+                exdata_update->t, exdata_update->tusec);
+#endif
+        if (cursor_open)
+        {
+            edb_cursor_close(cursor);
+        }
+        cursor_open=EXFALSE;
+        
+        /* delete all records */
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, 
+            key, NULL)))
+        {
+            if (EDB_NOTFOUND==ret)
+            {
+                ret=EXSUCCEED;
+            }
+            else
+            {
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* Add record */
+        
+    }
+    else if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
     {
         /* fetch next for dups and remove them.. if any.. */
         /* next: MDB_NEXT_DUP  - we kill this! */
@@ -1430,6 +1533,8 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             ret = EXSUCCEED;
         }
     }
+    
+
     
 out:
 
@@ -1677,7 +1782,8 @@ out:
  * @param data data to delete, can be NULL, then full delete. Only for duplicate recs
  * @return EXSUCCEED/EXFAIL/DBERR
  */
-expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn, char *key, EDB_val *data)
+expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        char *key, EDB_val *data)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
@@ -1704,6 +1810,40 @@ expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn, char *key,
             NDRX_LOG(log_debug, "EOF [%s] for delete of key [%s] data: %p: %s", 
                 db->cachedb, key, data, edb_strerror(ret));
         }
+    }
+out:
+    return ret;
+}
+
+/**
+ * Add data to database
+ * @param db db hander
+ * @param txn transaction
+ * @param key string key
+ * @param data data to put
+ * @param flags LMDB flags
+ * @return EXSUCCEED/LMDB err
+ */
+expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        char *key, EDB_val *data, unsigned int flags)
+{
+    int ret = EXSUCCEED;
+    EDB_val keydb;
+    
+    keydb.mv_data = key;
+    keydb.mv_size = strlen(key);
+            
+    if (EXSUCCEED!=(ret=edb_put(txn, db->dbi, &keydb, data, flags)))
+    {
+        NDRX_LOG(log_error, "Failed to to put to db [%s] key [%s], data: %p: %s", 
+            db->cachedb, key, data, edb_strerror(ret));
+
+        userlog("Failed to to put to db [%s] key [%s], data: %p: %s", 
+            db->cachedb, key, data, edb_strerror(ret));
+
+        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+            "Failed to to put to db [%s] key [%s], data: %p: %s", 
+            db->cachedb, key, data, edb_strerror(ret));
     }
 out:
     return ret;
