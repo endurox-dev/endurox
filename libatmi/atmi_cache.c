@@ -162,7 +162,8 @@ exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
 expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *tpc)
 {
     
-    if (NULL!=M_types[tpc->buf_type->type_id].pf_cache_delete)
+    if (tpc->buf_type && 
+            NULL!=M_types[tpc->buf_type->type_id].pf_cache_delete)
     {
         M_types[tpc->buf_type->type_id].pf_cache_delete(tpc);
     }
@@ -338,7 +339,13 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
-        if (0==strcmp(val->key, "dbpath"))
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "%s: config: key: [%s] value: [%s]",
+                    __func__, val->key, val->val);
+#endif
+        
+        if (0==strcmp(val->key, "cachedb"))
         {
             NDRX_STRCPY_SAFE(db->cachedb, val->val);
         } 
@@ -735,10 +742,9 @@ expublic int ndrx_cache_init(int mode)
         NDRX_LOG(log_debug, "Got array values %d", cnt);
 #endif
         
+        NDRX_CALLOC_OUT(cachesvc, 1, sizeof(ndrx_tpcache_svc_t), ndrx_tpcache_svc_t);
         
-        NDRX_CALLOC_OUT(M_tpcache_svc, 1, sizeof(ndrx_tpcache_svc_t), ndrx_tpcache_svc_t);
-        
-        NDRX_STRCPY_SAFE(M_tpcache_svc->svcnm, svc);
+        NDRX_STRCPY_SAFE(cachesvc->svcnm, svc);
         
         for (i = 0; i < cnt; i++)
         {
@@ -763,7 +769,7 @@ expublic int ndrx_cache_init(int mode)
             NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
             
             /* Resolve the DB */
-            if (EXSUCCEED!=(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
+            if (NULL==(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
             {
                 NDRX_LOG(log_error, "%s failed", __func__);
                 EXFAIL_OUT(ret);
@@ -1050,6 +1056,8 @@ expublic int ndrx_cache_init(int mode)
     }
 
 out:
+            
+    /* TODO: Free up json parser! */
 
     if (NULL!=csection)
     {
@@ -1158,17 +1166,22 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     typed_buffer_descr_t *buf_type;
     buffer_obj_t *buffer_info;
     ndrx_tpcallcache_t *cache;
-    ndrx_tpcache_data_t *data = (ndrx_tpcache_data_t *)buf;
+    ndrx_tpcache_data_t *exdata = (ndrx_tpcache_data_t *)buf;
     unsigned int dbflags;
+    int tran_started = EXFALSE;
+    EDB_txn *txn;
+    char key[NDRX_CACHE_KEY_MAX+1];
+    char errdet[MAX_TP_ERROR_LEN+1];
+    EDB_val cachedata;
     
-    memset(data, 0, sizeof(ndrx_tpcache_data_t));
+    memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
     
-    data->nodeid = nodeid;
-    data->saved_tperrno = save_tperrno;
-    data->saved_tpurcode = save_tpurcode;
+    exdata->nodeid = nodeid;
+    exdata->saved_tperrno = save_tperrno;
+    exdata->saved_tpurcode = save_tpurcode;
     
     /* get current timestamp */
-    ndrx_utc_tstamp2(&data->t, &data->tusec);
+    ndrx_utc_tstamp2(&exdata->t, &exdata->tusec);
     
     /* OK now translate the thing to db format (i.e. make outgoing message) */
     
@@ -1204,7 +1217,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
-    data->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
+    exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
             
     if (NULL==M_types[cache->buf_type->type_id].pf_cache_put)
     {
@@ -1213,7 +1226,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         
     }
     
-    if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_cache_put(cache, data, 
+    if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_cache_put(cache, exdata, 
             buf_type, idata, ilen, flags))
     {
         /* Error shall be set by func */
@@ -1225,10 +1238,38 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     NDRX_LOG(log_info, "About to cache data for service: [%s]", svc);
     
     
-#if 0
-    /* TODO:! */
-    /* Add the record to the DB, to specific key! */
+    NDRX_STRCPY_SAFE(key, cache->keyfmt);
+       
+    /* Build the key... */
+    if (EXSUCCEED!=(ret = M_types[buffer_info->type_id].pf_get_key(cache, idata, 
+            ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to build key: ", errdet);
+            
+            /* generate TP error here! */
+            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+            
+    }
     
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    tran_started = EXTRUE;
+    
+    
+    /* Add the record to the DB, to specific key! */
     if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
     {
         dbflags = EDB_APPENDDUP;
@@ -1237,17 +1278,35 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     {
         dbflags = 0;
     }
-            
-    if (EXSUCCEED!=ndrx_cache_edb_put (cache->cachedb, *txn, 
-        char *key, EDB_val *data, unsigned int flags))
-    {
-        
-    }
-#endif
     
+    cachedata.mv_data = (void *)exdata;
+    cachedata.mv_size = exdata->atmi_buf_len + sizeof(ndrx_tpcache_data_t);
+    
+    
+    NDRX_LOG(log_info, "About to put to cache: svc: [%s] key: [%s]: size: %ld",
+            svcc->svcnm, key, (long)cachedata.mv_size);
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
+            key, &cachedata, dbflags)))
+    {
+        NDRX_LOG(log_debug, "Failed to put DB record!");
+        goto out;
+    }
     
 out:
-            
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            ndrx_cache_edb_commit(cache->cachedb, txn);
+        }
+        else
+        {
+            ndrx_cache_edb_abort(cache->cachedb, txn);
+        }
+    }
+
     return ret;
 }
 
