@@ -584,7 +584,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     /* Add object to the hash */
     
-    EXHASH_ADD_PTR(M_tpcache_db, cachedb, db);
+    EXHASH_ADD_STR(M_tpcache_db, cachedb, db);
     
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Cache [%s] path: [%s] is open!", 
@@ -932,7 +932,7 @@ expublic int ndrx_cache_init(int mode)
                     !(cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
                     )
             {
-                cache->flags & NDRX_TPCACHE_TPCF_REPL;
+                cache->flags |= NDRX_TPCACHE_TPCF_REPL;
             }
             
             /* set some defaults if not already set... */
@@ -1051,7 +1051,7 @@ expublic int ndrx_cache_init(int mode)
             cache = NULL;
         }
         
-        EXHASH_ADD_PTR(M_tpcache_svc, svcnm, cachesvc);
+        EXHASH_ADD_STR(M_tpcache_svc, svcnm, cachesvc);
         cachesvc = NULL;
     }
 
@@ -1259,7 +1259,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     
      /* Find service in cache */
-    EXHASH_FIND_PTR(M_tpcache_svc, ((void **)&svc), svcc);
+    EXHASH_FIND_STR(M_tpcache_svc, svc, svcc);
     
     if (NULL==svcc)
     {
@@ -1386,6 +1386,8 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
+    NDRX_LOG(log_debug, "Data cached");
+    
 out:
 
     if (tran_started)
@@ -1441,7 +1443,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     cachedata_update.mv_data = NULL;
         
     /* Find service in cache */
-    EXHASH_FIND_PTR(M_tpcache_svc, ((void **)&svc), svcc);
+    EXHASH_FIND_STR(M_tpcache_svc, svc, svcc);
     
     if (NULL==svcc)
     {

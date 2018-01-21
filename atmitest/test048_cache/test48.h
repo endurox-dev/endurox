@@ -38,6 +38,8 @@ extern "C" {
 
 
 #define VALUE_EXPECTED "Hello EnduroX"
+    
+#define VALUE_EXPECTED_RET "This is response from server!"
 
 #ifdef  __cplusplus
 }
