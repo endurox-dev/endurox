@@ -118,12 +118,12 @@ extern "C" {
     NDRX_LOG(LEV, "rule=[%s]", TPCALLCACHE->rule);\
     NDRX_LOG(LEV, "rule_tree=[%p]", TPCALLCACHE->rule_tree);\
     NDRX_LOG(LEV, "rsprule=[%s]", TPCALLCACHE->rsprule);\
-    NDRX_LOG(LEV, "rsprule_tree=[%s]", TPCALLCACHE->rsprule_tree);\
+    NDRX_LOG(LEV, "rsprule_tree=[%p]", TPCALLCACHE->rsprule_tree);\
     NDRX_LOG(LEV, "str_buf_type=[%s]", TPCALLCACHE->str_buf_type);\
     NDRX_LOG(LEV, "str_buf_subtype=[%s]", TPCALLCACHE->str_buf_subtype);\
-    NDRX_LOG(LEV, "buf_type=[%p]", TPCALLCACHE->buf_type);\
+    NDRX_LOG(LEV, "buf_type=[%s]", TPCALLCACHE->buf_type->type);\
     NDRX_LOG(LEV, "errfmt=[%s]", TPCALLCACHE->errfmt);\
-    NDRX_LOG(LEV, "flags=[%s]", TPCALLCACHE->flags);\
+    NDRX_LOG(LEV, "flags=[%s]", TPCALLCACHE->flagsstr);\
     NDRX_LOG(LEV, "flags, 'putrex' = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVEREG));\
     NDRX_LOG(LEV, "flags, 'getreplace' = [%d]", \

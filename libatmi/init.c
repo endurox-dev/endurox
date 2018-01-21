@@ -826,8 +826,8 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             if (EXSUCCEED!=ndrx_cache_init(NDRX_TPCACH_INIT_NORMAL))
             {
                 NDRX_LOG(log_error, "Cache init failed");
-               MUTEX_UNLOCK;
-               EXFAIL_OUT(ret);
+                MUTEX_UNLOCK;
+                EXFAIL_OUT(ret);
             }
             
             first = EXFALSE;

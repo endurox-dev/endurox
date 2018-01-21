@@ -63,19 +63,78 @@ int main(int argc, char** argv)
     long rsplen;
     int i;
     int ret=EXSUCCEED;
-    
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
-    {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
+    char testbuf[1024];
+    BFLDID emtpy [] = {BBADFLDID};
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    for (i=0; i<1000000; i++)
     {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        if (EXSUCCEED!=Bproj(p_ub, emtpy))
+        {
+            NDRX_LOG(log_debug, "Failed to reset buffer: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        } 
+
+        if (EXFAIL==CBchg(p_ub, T_STRING_3_FLD, 0, "HELLO", 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_3_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        } 
+
+        if (EXFAIL==CBchg(p_ub, T_STRING_2_FLD, 1, "WORLD", 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_2_FLD[1]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXFAIL==CBchg(p_ub, T_LONG_FLD, 0, "4", 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_LONG_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXFAIL==CBchg(p_ub, T_SHORT_FLD, 0, "3", 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_SHORT_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        } 
+
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        /* validate response... */
+        
+        if (EXFAIL==Bget(p_ub, T_STRING_FLD, 1, testbuf, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                     Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (0!=strcmp(testbuf, VALUE_EXPECTED_RET))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+                VALUE_EXPECTED_RET, testbuf);
+            ret=EXFAIL;
+            goto out;
+        }
+        
     }
     
 out:
