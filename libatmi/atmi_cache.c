@@ -54,7 +54,7 @@
 #include "exregex.h"
 #include <exparson.h>
 #include <atmi_cache.h>
-
+#include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -1042,7 +1042,7 @@ expublic int ndrx_cache_init(int mode)
                 }
             }
             /* Add to linked list */
-            DL_APPEND(M_tpcache_svc->caches, cache);
+            DL_APPEND(cachesvc->caches, cache);
             
 #ifdef NDRX_TPCACHE_DEBUG
             NDRX_TPCACHETPCALL_DUMPCFG(log_debug, cache);
@@ -1148,6 +1148,78 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
 }
 
 /**
+ * Check response rule, should we cache this or not
+ * @param cache cache object
+ * @param save_tperrno tperror number
+ * @param save_tpurcode user return code
+ * @return EXFAIL/EXFALSE/EXTRUE
+ */
+exprivate int ndrx_cache_chkrsprule(ndrx_tpcallcache_t *cache, 
+            long save_tperrno, long save_tpurcode)
+{
+    int ret = EXFALSE;
+    char buf[512];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    if (EXSUCCEED!=Binit(p_ub, sizeof(buf)))
+    {
+        NDRX_LOG(log_error, "cache: failed to init response check buffer: %s",
+                Bstrerror(Berror));
+        userlog("cache: failed to init response check buffer: %s",
+                Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "cache: failed to init response check buffer: %s",
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Load the data into buffer */
+    
+    if (EXSUCCEED!=Bchg(p_ub, EX_TPERRNO, 0, (char *)&save_tperrno, 0L))
+    {
+        NDRX_LOG(log_error, "cache: Failed to set EX_TPERRNO[0] to %ld: %s",
+                save_tperrno, Bstrerror(Berror));
+        userlog("cache: Failed to set EX_TPERRNO[0] to %ld: %s",
+                save_tperrno, Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "cache: Failed to set EX_TPERRNO[0] to %ld: %s",
+                save_tperrno, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=Bchg(p_ub, EX_TPURCODE, 0, (char *)&save_tpurcode, 0L))
+    {
+        NDRX_LOG(log_error, "cache: Failed to set EX_TPURCODE[0] to %ld: %s",
+                save_tpurcode, Bstrerror(Berror));
+        userlog("cache: Failed to set EX_TPURCODE[0] to %ld: %s",
+                save_tpurcode, Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "cache: Failed to set EX_TPURCODE[0] to %ld: %s",
+                save_tpurcode, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Finally evaluate the expression */
+    
+    if (EXFAIL==(ret=Bboolev(p_ub, cache->rsprule_tree)))
+    {
+        NDRX_LOG(log_error, "cache: Failed to evalute [%s] tree: %p expression: %s",
+                cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
+        userlog("cache: Failed to evalute [%s] tree: %p expression: %s",
+                cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "cache: Failed to evalute [%s] "
+                "tree: %p expression: %s",
+                cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Response expression [%s]: %s", cache->rsprule,
+            (EXTRUE==ret?"TRUE":"FALSE"));
+    
+out:
+            
+    return ret;
+
+}
+
+/**
  * Save data to cache
  * @param idata
  * @param ilen
@@ -1224,6 +1296,27 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         ret = NDRX_TPCACHE_ENOTYPESUPP;
         goto out;
         
+    }
+    
+    /* Check the response rule if defined */
+    
+    if (NULL!=cache->rsprule_tree)
+    {
+        if (EXFAIL==(ret=ndrx_cache_chkrsprule(cache, (long)save_tperrno, 
+                save_tpurcode)))
+        {
+            NDRX_LOG(log_error, "Failed to test response code");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXFALSE==ret)
+        {
+            NDRX_LOG(log_info, "Response shall not be saved according to rsp rule");
+            ret = EXSUCCEED;
+            goto out;
+        }
+        
+        ret = EXSUCCEED;
     }
     
     if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_cache_put(cache, exdata, 
