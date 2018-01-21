@@ -891,7 +891,7 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_REPL;
                     }
-                    else if (0==strcmp(p_flags, "getreplace"))
+                    else if (0==strcmp(p_flags, "getmerge"))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
                     }
