@@ -236,6 +236,30 @@ out:
 }
 
 /**
+ * Refresh rule evaluate
+ * @param cache cache on which to test
+ * @param idata input buffer
+ * @param ilen input buffer len (if applicable)
+ * @param errdet error detail out
+ * @param errdetbufsz error detail buffer size
+ * @return EXFAIL/EXTRUE/EXFALSE
+ */
+expublic int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen,  char *errdet, int errdetbufsz)
+{
+    int ret = EXFALSE;
+    
+    if (EXFAIL==(ret=Bboolev((UBFH *)idata, cache->refreshrule_tree)))
+    {
+        snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * We receive data from cache
  * @param exdata database data
  * @param idata incoming xatmi data buffer

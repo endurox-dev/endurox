@@ -63,6 +63,7 @@ extern "C" {
 #define NDRX_TPCACHE_TPCF_MERGE      0x00000004      /* Merge buffers                 */
 #define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008      /* Save full buffer              */
 #define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010      /* Save set of fields            */
+#define NDRX_TPCACHE_TPCF_INVAL      0x00000020      /* Invalidate other cache        */
     
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
@@ -117,6 +118,8 @@ extern "C" {
     NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->save);\
     NDRX_LOG(LEV, "rule=[%s]", TPCALLCACHE->rule);\
     NDRX_LOG(LEV, "rule_tree=[%p]", TPCALLCACHE->rule_tree);\
+    NDRX_LOG(LEV, "refreshrule=[%s]", TPCALLCACHE->refreshrule);\
+    NDRX_LOG(LEV, "refreshrule_tree=[%p]", TPCALLCACHE->refreshrule_tree);\
     NDRX_LOG(LEV, "rsprule=[%s]", TPCALLCACHE->rsprule);\
     NDRX_LOG(LEV, "rsprule_tree=[%p]", TPCALLCACHE->rsprule_tree);\
     NDRX_LOG(LEV, "str_buf_type=[%s]", TPCALLCACHE->str_buf_type);\
@@ -132,8 +135,13 @@ extern "C" {
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_MERGE));\
     NDRX_LOG(LEV, "flags, 'putfull' = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVEFULL));\
+    NDRX_LOG(LEV, "flags 'inval' = [%d]", \
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_INVAL));\
     NDRX_LOG(LEV, "flags (computed) save list = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVESETOF));\
+    NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
+    NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
+    NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
     NDRX_LOG(LEV, "=================================================");
 
 
@@ -194,8 +202,15 @@ struct ndrx_tpcallcache
     /* We need a flags here to allow regex, for example. But the regex is */
     char flagsstr[NDRX_CACHE_FLAGS_MAX+1];
     long flags;
+    
+    /* Rule for refreshing the data (this is higher priority) */
+    char refreshrule[PATH_MAX+1];
+    char *refreshrule_tree;
+    
+    /* Rule for saving the data: */
     char rule[PATH_MAX+1];
     char *rule_tree;
+    
     char rsprule[PATH_MAX+1];
     char *rsprule_tree;
     char str_buf_type[XATMI_TYPE_LEN+1];
@@ -213,6 +228,12 @@ struct ndrx_tpcallcache
      * The tperrno and tpurcode must be smulated when stored in cache db.
      */
     char errfmt[PATH_MAX/2];
+    
+    
+    /* For invalidating their cache */
+    ndrx_tpcallcache_t *inval_cache;    /* their cache to invalidate        */
+    char inval_svc[MAXTIDENT+1];        /* Service name of their cache      */
+    int inval_idx;                      /* Index of their cache, 0 based    */
     
     /* this is linked list of caches */
     ndrx_tpcallcache_t *next, *prev;
@@ -266,9 +287,16 @@ typedef struct ndrx_tpcache_typesupp ndrx_tpcache_typesupp_t;
 struct ndrx_tpcache_typesupp
 {
     int type_id;
+    /* This shall compile the refresh rule too */
     int (*pf_rule_compile) (ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz);
+    
     int (*pf_rule_eval) (ndrx_tpcallcache_t *cache, char *idata, long ilen, 
                 char *errdet, int errdetbufsz);
+    
+    /* Refresh rule evaluate */
+    int (*pf_refreshrule_eval) (ndrx_tpcallcache_t *cache, char *idata, long ilen, 
+                char *errdet, int errdetbufsz);
+    
     int (*pf_get_key) (ndrx_tpcallcache_t *cache, char *idata, long ilen, char
                 *okey, int okey_bufsz, char *errdet, int errdetbufsz);
     
@@ -336,7 +364,8 @@ extern NDRX_API int ndrx_cache_rulcomp_ubf (ndrx_tpcallcache_t *cache,
 extern NDRX_API int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, char *okey, int okey_bufsz, 
         char *errdet, int errdetbufsz);
-
+extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen,  char *errdet, int errdetbufsz);
 
 #ifdef	__cplusplus
 }
