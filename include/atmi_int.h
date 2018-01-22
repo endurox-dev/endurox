@@ -431,9 +431,17 @@ struct tp_command_call
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
+    /* User1 field in request: */
     int rval;   /* This also should be present only on reply... */
+    /* User2 field in request: */
     long rcode; /* should be preset on reply only */
-    char extradata[31+1]; /* Extra char data to be passed over the call */
+    /* Extended size for storing cache updates in format
+     * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
+     * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
+     * where @CA -> Cache Add, @CD -> Cache delete, 002 -> source node id
+     * Flgs -> max 4 flags ascii letters. And service name
+     */
+    char extradata[42+1]; /* Extra char data to be passed over the call */
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
