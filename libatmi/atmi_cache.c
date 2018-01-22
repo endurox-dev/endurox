@@ -74,15 +74,31 @@ exprivate ndrx_tpcache_svc_t *M_tpcache_svc = NULL; /* service cache       */
 /* NOTE! Table shall contain all defined buffer types  */
 expublic ndrx_tpcache_typesupp_t M_types[] =
 {
-    /* typeid (idx), rule_compile func,      rule eval func,           get key func,  */
-    {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf, ndrx_cache_ruleval_ubf, ndrx_cache_keyget_ubf, ndrx_cache_get_ubf, ndrx_cache_put_ubf, ndrx_cache_proc_flags_ubf, ndrx_cache_delete_ubf},
-    {1, NULL, NULL, NULL}, /* dummy */
-    {BUF_TYPE_INIT, NULL, NULL, NULL},
-    {BUF_TYPE_NULL, NULL, NULL, NULL},
-    {BUF_TYPE_STRING, NULL, NULL, NULL},
-    {BUF_TYPE_CARRAY, NULL, NULL, NULL},
-    {BUF_TYPE_JSON, NULL, NULL, NULL},
-    {BUF_TYPE_VIEW, NULL, NULL, NULL},
+    /* typeid (idx), rule_compile func,         rule eval func,             refresh rule eval  */
+    {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf,      ndrx_cache_ruleval_ubf,     ndrx_cache_refeval_ubf, 
+                    ndrx_cache_keyget_ubf,      ndrx_cache_get_ubf,         ndrx_cache_put_ubf, 
+                    ndrx_cache_proc_flags_ubf,  ndrx_cache_delete_ubf},
+    {1,             NULL,                       NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL}, /* dummy */
+    {BUF_TYPE_INIT, NULL,                       NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL},
+    {BUF_TYPE_NULL, NULL, NULL, NULL,
+                    NULL, NULL, NULL,
+                    NULL, NULL},
+    {BUF_TYPE_STRING, NULL, NULL, NULL,
+                    NULL, NULL, NULL,
+                    NULL, NULL},
+    {BUF_TYPE_CARRAY, NULL, NULL, NULL,
+                    NULL, NULL, NULL,
+                    NULL, NULL},
+    {BUF_TYPE_JSON, NULL, NULL, NULL,
+                    NULL, NULL, NULL,
+                    NULL, NULL},
+    {BUF_TYPE_VIEW, NULL, NULL, NULL,
+                    NULL, NULL, NULL,
+                    NULL, NULL},
     {EXFAIL}
 };
 
@@ -753,25 +769,93 @@ expublic int ndrx_cache_init(int mode)
             
             array_object = exjson_array_get_object(array, i);
             
-            /* get db name */
-            if (NULL==(tmp = exjson_object_get_string(array_object, "cachedb")))
+            /* process flags.. by strtok.. but we need a temp buffer
+             * Process flags first as some logic depends on them!
+             */
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "flags")))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - missing [cachedb] "
+                NDRX_STRCPY_SAFE(flagstr, tmp);
+                
+                /* clean up the string */
+                ndrx_str_strip(flagstr, " \t");
+                NDRX_STRCPY_SAFE(cache->flagsstr, flagstr);
+                
+#ifdef NDRX_TPCACHE_DEBUG
+                NDRX_LOG(log_debug, "Processing flags: [%s]", flagstr);
+#endif                
+                        
+                p_flags = strtok_r (flagstr, ",", &saveptr1);
+                while (p_flags != NULL)
+                {
+                    if (0==strcmp(p_flags, "putrex"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
+                    }
+                    else if (0==strcmp(p_flags, "getreplace")) /* default */
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_REPL;
+                    }
+                    else if (0==strcmp(p_flags, "getmerge"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
+                    }
+                    else if (0==strcmp(p_flags, "putfull"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_SAVEFULL;
+                    }
+                    else if (0==strcmp(p_flags, "inval"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_INVAL;
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_warn, "For service [%s] buffer index %d, "
+                                "invalid flag: [%s] - ignore", svc, i, p_flags);
+                        userlog("For service [%s] buffer index %d, "
+                                "invalid flag: [%s] - ignore", svc, i, p_flags);
+                    }
+                    
+                    p_flags = strtok_r (NULL, ",", &saveptr1);
+                }
+            }
+            
+            if ((cache->flags & NDRX_TPCACHE_TPCF_REPL) && 
+                    (cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
+                    )
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
+                        "flags `getreplace' and `getreplace' "
                         "for service [%s], buffer index: %d", svc, i);
-                userlog("CACHE: invalid config - missing [cachedb] for service [%s], "
-                        "buffer index: %d", svc, i);
-
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
-                        "[cachedb] for service [%s], buffer index: %d", svc, i);
+                userlog("CACHE: invalid config - conflicting "
+                        "flags `getreplace' and `getreplace' "
+                        "for service [%s], buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                        "flags `getreplace' and `getreplace' "
+                        "for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
             }
             
-            NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
-            
-            /* Resolve the DB */
-            if (NULL==(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
+            /* default to replace */
+            if ( !(cache->flags & NDRX_TPCACHE_TPCF_REPL) && 
+                    !(cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
+                    )
             {
-                NDRX_LOG(log_error, "%s failed", __func__);
+                cache->flags |= NDRX_TPCACHE_TPCF_REPL;
+            }
+            
+            /* set some defaults if not already set... */
+            if ((cache->flags & NDRX_TPCACHE_TPCF_SAVEREG) && 
+                    (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
+                        "flags `putrex' and `putfull' "
+                        "for service [%s], buffer index: %d", svc, i);
+                userlog("CACHE: invalid config - conflicting "
+                        "flags `putrex' and `putfull' "
+                        "for service [%s], buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                        "flags `putrex' and `putfull' "
+                        "for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
             }
             
@@ -785,6 +869,39 @@ expublic int ndrx_cache_init(int mode)
                 ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
                         "[type] for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
+            }
+            
+            /* get db name */
+            if (!(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
+                
+            {
+                if (NULL==(tmp = exjson_object_get_string(array_object, "cachedb")))
+                {
+                    NDRX_LOG(log_error, "CACHE: invalid config - missing [cachedb] "
+                            "for service [%s], buffer index: %d", svc, i);
+                    userlog("CACHE: invalid config - missing [cachedb] for service [%s], "
+                            "buffer index: %d", svc, i);
+
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                            "[cachedb] for service [%s], buffer index: %d", svc, i);
+                    EXFAIL_OUT(ret);
+                }
+
+                NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
+
+                /* Resolve the DB */
+                if (NULL==(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
+                {
+                    NDRX_LOG(log_error, "%s failed", __func__);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                /* 
+                 !! TODO: So we are NDRX_TPCACHE_TPCF_INVAL resolve the other cache..
+                 * And lookup other keys too of inval cache
+                 */
             }
             
             NDRX_STRCPY_SAFE(cache->str_buf_type, tmp);
@@ -865,91 +982,7 @@ expublic int ndrx_cache_init(int mode)
             }
             
             NDRX_STRCPY_SAFE(cache->rule, tmp);
-            
-            /* process flags.. by strtok.. but we need a temp buffer*/            
-            
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "flags")))
-            {
-                NDRX_STRCPY_SAFE(flagstr, tmp);
-                
-                /* clean up the string */
-                ndrx_str_strip(flagstr, " \t");
-                NDRX_STRCPY_SAFE(cache->flagsstr, flagstr);
-                
-#ifdef NDRX_TPCACHE_DEBUG
-                NDRX_LOG(log_debug, "Processing flags: [%s]", flagstr);
-#endif                
-                        
-                p_flags = strtok_r (flagstr, ",", &saveptr1);
-                while (p_flags != NULL)
-                {
-                    if (0==strcmp(p_flags, "putrex"))
-                    {
-                        cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
-                    }
-                    else if (0==strcmp(p_flags, "getreplace")) /* default */
-                    {
-                        cache->flags|=NDRX_TPCACHE_TPCF_REPL;
-                    }
-                    else if (0==strcmp(p_flags, "getmerge"))
-                    {
-                        cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
-                    }
-                    else if (0==strcmp(p_flags, "putfull"))
-                    {
-                        cache->flags|=NDRX_TPCACHE_TPCF_SAVEFULL;
-                    }
-                    else
-                    {
-                        NDRX_LOG(log_warn, "For service [%s] buffer index %d, "
-                                "invalid flag: [%s] - ignore", svc, i, p_flags);
-                        userlog("For service [%s] buffer index %d, "
-                                "invalid flag: [%s] - ignore", svc, i, p_flags);
-                    }
-                    
-                    p_flags = strtok_r (NULL, ",", &saveptr1);
-                }
-            }
-            
-            if ((cache->flags & NDRX_TPCACHE_TPCF_REPL) && 
-                    (cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
-                    )
-            {
-                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
-                        "flags `getreplace' and `getreplace' "
-                        "for service [%s], buffer index: %d", svc, i);
-                userlog("CACHE: invalid config - conflicting "
-                        "flags `getreplace' and `getreplace' "
-                        "for service [%s], buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
-                        "flags `getreplace' and `getreplace' "
-                        "for service [%s], buffer index: %d", svc, i);
-                EXFAIL_OUT(ret);
-            }
-            
-            /* default to replace */
-            if ( !(cache->flags & NDRX_TPCACHE_TPCF_REPL) && 
-                    !(cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
-                    )
-            {
-                cache->flags |= NDRX_TPCACHE_TPCF_REPL;
-            }
-            
-            /* set some defaults if not already set... */
-            if ((cache->flags & NDRX_TPCACHE_TPCF_SAVEREG) && 
-                    (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
-            {
-                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
-                        "flags `putrex' and `putfull' "
-                        "for service [%s], buffer index: %d", svc, i);
-                userlog("CACHE: invalid config - conflicting "
-                        "flags `putrex' and `putfull' "
-                        "for service [%s], buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
-                        "flags `putrex' and `putfull' "
-                        "for service [%s], buffer index: %d", svc, i);
-                EXFAIL_OUT(ret);
-            }
+           
             
             /* get fields to save */
             if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
