@@ -643,7 +643,7 @@ expublic int ndrx_cache_init(int mode)
 {
     int ret = EXSUCCEED;
     char *svc;
-    EXJSON_Value *root_value;
+    EXJSON_Value *root_value=NULL;
     EXJSON_Object *root_object, *array_object;
     EXJSON_Array *array;
     int type;
@@ -1090,7 +1090,11 @@ expublic int ndrx_cache_init(int mode)
 
 out:
             
-    /* TODO: Free up json parser! */
+    /* cleanup code */
+    if (NULL!=exjson_value_free(root_value))
+    {
+        exjson_value_free(root_value);
+    }
 
     if (NULL!=csection)
     {
