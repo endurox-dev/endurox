@@ -516,7 +516,7 @@ expublic int sv_serve_connect(int *service, int *status)
     /* Prepare the call buffer */
     /* TODO: Check buffer type - if invalid this should raise segfault! */
     /* We can have data len 0! */
-    if (call->data_len>0)
+    if (call->data_len > 0)
     {
         call_type = &G_buf_descr[call->buffer_type_id];
 
