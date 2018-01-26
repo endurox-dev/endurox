@@ -54,9 +54,55 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 srv_conf_t G_server_conf;
+ndrx_svchash_t *ndrx_G_svchash_skip = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Add service to skip advertise list
+ * @param svcnm
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_skipsvc_add(char *svc_nm)
+{
+    int ret = EXSUCCEED;
+    ndrx_svchash_t *el = NULL;
+    
+    if (NULL==(el = NDRX_MALLOC(sizeof(ndrx_svchash_t))))
+    {
+        NDRX_LOG(log_error, "%s: Failed to malloc: %s", 
+                __func__, strerror(errno));
+        userlog("%s: Failed to malloc: %s", 
+                __func__, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_STRCPY_SAFE(el->svc_nm, svc_nm);
+    EXHASH_ADD_STR( ndrx_G_svchash_skip, svc_nm, el);
+    
+out:
+    return ret;
+}
+
+/**
+ * Check service is it for advertise
+ * @param svcnm
+ * @return EXFALSE/EXTRUE
+ */
+expublic int ndrx_skipsvc_chk(char *svc_nm)
+{
+    int ret = EXFALSE;
+    ndrx_svchash_t *el = NULL;
+    
+    EXHASH_FIND_STR( ndrx_G_svchash_skip, svc_nm, el);
+    
+    if (NULL!=el)
+    {
+        return EXTRUE;
+    }
+    
+    return EXFALSE;
+}
 
 /**
  * Parse service argument (-s)
@@ -68,7 +114,7 @@ srv_conf_t G_server_conf;
  * @param argv
  * @return
  */
-int parse_svc_arg(char *arg)
+expublic int parse_svc_arg(char *arg)
 {
     char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char *p;
@@ -95,8 +141,9 @@ int parse_svc_arg(char *arg)
         /* allocate memory for entry */
         if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
         {
-                ndrx_TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
-                                    sizeof(svc_entry_t));
+                ndrx_TPset_error_fmt(TPMINVAL, 
+                        "Failed to allocate %d bytes while parsing -s",
+                        sizeof(svc_entry_t));
                 return EXFAIL; /* <<< return FAIL! */
         }
 
@@ -251,7 +298,7 @@ int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:N--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:Nn:--")) != EXFAIL)
     {
         switch(c)
         {
@@ -276,6 +323,15 @@ int ndrx_init(int argc, char** argv)
             case 'N':
                 /* Do not advertise all services */
                 G_server_conf.advertise_all = 0;
+                break;
+            case 'n':
+                /* Do not advertise single service */
+                if (EXSUCCEED!=ndrx_skipsvc_add(optarg))
+                {
+                    ndrx_TPset_error_msg(TPESYSTEM, "Malloc failed");
+                    
+                    EXFAIL_OUT(ret);
+                }
                 break;
             case 'r': /* Not used. */
                 /* Not sure actually what does this mean, but ok, lets have it. */
@@ -421,7 +477,7 @@ int ndrx_main(int argc, char** argv)
     }
     
     /*
-     * Initialise polling subsystem
+     * Initialize polling subsystem
      */
     ndrx_epoll_sys_init();
     
@@ -445,7 +501,7 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
 
-    /* initialise the library */
+    /* initialize the library */
     if (EXSUCCEED!=atmisrv_initialise_atmi_library())
     {
         NDRX_LOG(log_error, "initialise_atmi_library() fail");

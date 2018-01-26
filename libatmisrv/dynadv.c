@@ -296,7 +296,7 @@ out:
  * @param svcname
  * @return 
  */
-expublic int	dynamic_advertise(svc_entry_fn_t *entry_new, 
+expublic int dynamic_advertise(svc_entry_fn_t *entry_new, 
                     char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
 {
     int ret=EXSUCCEED;
@@ -349,10 +349,11 @@ expublic int	dynamic_advertise(svc_entry_fn_t *entry_new,
     service = G_server_conf.adv_service_count - ATMI_SRV_Q_ADJUST;
     
 #ifdef EX_USE_POLL
-    sprintf(entry_new->listen_q, NDRX_SVC_QFMT_SRVID, 
+    snprintf(entry_new->listen_q, sizeof(entry_new->listen_q), NDRX_SVC_QFMT_SRVID, 
             G_server_conf.q_prefix, entry_new->svc_nm, (short)G_server_conf.srv_id);
 #else
-    sprintf(entry_new->listen_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, entry_new->svc_nm);
+    snprintf(entry_new->listen_q, sizeof(entry_new->listen_q), NDRX_SVC_QFMT, 
+            G_server_conf.q_prefix, entry_new->svc_nm);
 #endif
     
     /* We are good to go, open q? */

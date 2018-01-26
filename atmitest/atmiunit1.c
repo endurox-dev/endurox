@@ -391,6 +391,12 @@ Ensure(test046_twopasscfg)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test049_masksvc)
+{
+    int ret;
+    ret=system_dbg("test049_masksvc/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
 
 TestSuite *atmi_test_all(void)
 {

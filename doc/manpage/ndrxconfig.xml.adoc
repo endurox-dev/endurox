@@ -265,7 +265,9 @@ DEBUG CONFIGURATION FILE SYNTAX
     can be aliased to single existing service.
     The format is: '-s<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The ',' can be
     used as separator too, but for certain platforms it does not work, thus '/' is
-    recommended.
+    recommended. When using full advertise (all service) some of them can be masked
+    by '-n' flag. For example '-sSERVICE4' will advertise all, but 'SERVICE4'. Flag
+    '-n' can be repeated multiple times.
     Server binaries output is controlled via '-e LOG_FILE', which means
     that stdout & stderr of server is dumped to LOG_FILE.
     There are few internal params: param '-k' is just a random key

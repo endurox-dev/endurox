@@ -294,22 +294,35 @@ expublic int atmisrv_build_advertise_list(void)
 
     }
     
-    /* phase 2. advertise all, that we have from tpadvertise (only in case if we have -A) */
+    /* phase 2. advertise all, that we have from tpadvertise 
+     * (only in case if we have -A) 
+     */
     if (G_server_conf.advertise_all)
     {
         DL_FOREACH_SAFE(G_server_conf.service_raw_list,f_el,f_tmp)
         {
+            
+            /* check that this service isn't masked out for advertise */
+            
+            if (ndrx_skipsvc_chk(f_el->svc_nm))
+            {
+                NDRX_LOG(log_info, "%s masked by -n - not advertising", 
+                        f_el->svc_nm);
+                continue;
+            }
+            
             svn_nm_srch=f_el->svc_nm;
             svn_nm_add=f_el->svc_nm;
 
-             if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
-             {
-                 NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
-                 goto out;
-             }
+            if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, 
+                    svn_nm_add, NULL)))
+            {
+                NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
+                goto out;
+            }
         }
     }
-
+    
     ret=build_service_array_list();
 
 out:
