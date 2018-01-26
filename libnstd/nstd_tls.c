@@ -146,6 +146,11 @@ expublic void ndrx_nstd_tls_free(void *data)
             }
             G_nstd_tls=NULL;
         }
+        
+        /* Close debug loggers? Bug #274 */
+        
+        ndrx_nstd_tls_loggers_close((nstd_tls_t *)data);
+        
         NDRX_FREE((char*)data);
     }
 }

@@ -268,6 +268,8 @@ Support, #259 Support, #255 Bug, #254 Bug.
 
 - Version 5.2.6 released on 02/01/2018. (stable) Happy New Year! Fixed Bug #269.
 
+- Version 5.2.8 released on 26/01/2018. (stable) Fixed Bug #274 - too many open files, when threaded logger using for multi-contexting (like go runtime)
+
 # Build configurations
 
 ## Configure make with: 
