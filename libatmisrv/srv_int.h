@@ -97,6 +97,16 @@ struct xbufcvt_entry
 };
 
 /**
+ * Skip service from advertse Feature #275
+ */
+typedef struct ndrx_svchash ndrx_svchash_t;
+struct ndrx_svchash
+{
+    char svc_nm[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
+    EX_hash_handle hh;         /* makes this structure hashable */
+};
+
+/**
  * Service entry descriptor.
  */
 typedef struct svc_entry_fn svc_entry_fn_t;
@@ -242,6 +252,8 @@ extern NDRX_API int atmisrv_initialise_atmi_library(void);
 extern NDRX_API void atmisrv_un_initialize(int fork_uninit);
 
 extern NDRX_API int atmisrv_array_remove_element(void *arr, int elem, int len, int sz);
+
+extern NDRX_API int ndrx_skipsvc_chk(char *svc_nm);
 
 #ifdef	__cplusplus
 }

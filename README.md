@@ -268,7 +268,11 @@ Support, #259 Support, #255 Bug, #254 Bug.
 
 - Version 5.2.6 released on 02/01/2018. (stable) Happy New Year! Fixed Bug #269.
 
-- Version 5.2.8 released on 26/01/2018. (stable) Fixed Bug #274 - too many open files, when threaded logger using for multi-contexting (like go runtime)
+- Version 5.2.8 released on 26/01/2018. (stable) Fixed Bug #274 - too many open files,
+when threaded logger using for multi-contexting (like go runtime)
+
+- Version 5.2.10 released on 27/01/2018. (stable) Feature #275 - allow to mask
+service for advertise list at server boot by -n flag in clopt
 
 # Build configurations
 
