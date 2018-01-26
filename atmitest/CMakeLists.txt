@@ -93,6 +93,7 @@ IF (ENABLE_TEST47)
 add_subdirectory (test047_oradb)
 ENDIF()
 
+add_subdirectory (test049_masksvc)
 
 ################################################################################
 # Master test case driver
