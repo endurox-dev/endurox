@@ -244,6 +244,7 @@ extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *m
 extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
+extern NDRX_API void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls);
 
 /* memory debugging */
 extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func);
