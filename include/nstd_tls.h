@@ -86,7 +86,6 @@ typedef struct
     
     ndrx_debug_t requestlog_tp; /* logfile on per request-basis */
 
-
     ndrx_debug_t threadlog_ndrx; /* thread private logging */  
     ndrx_debug_t requestlog_ndrx; /* logfile on per request-basis */
     
