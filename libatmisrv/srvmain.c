@@ -91,7 +91,6 @@ out:
  */
 expublic int ndrx_skipsvc_chk(char *svc_nm)
 {
-    int ret = EXFALSE;
     ndrx_svchash_t *el = NULL;
     
     EXHASH_FIND_STR( ndrx_G_svchash_skip, svc_nm, el);
@@ -102,6 +101,20 @@ expublic int ndrx_skipsvc_chk(char *svc_nm)
     }
     
     return EXFALSE;
+}
+
+/**
+ * Delete hash list (un-init)
+ */
+expublic void ndrx_skipsvc_delhash(void)
+{
+    ndrx_svchash_t *el = NULL, *elt = NULL;
+    
+    EXHASH_ITER(hh, ndrx_G_svchash_skip, el, elt)
+    {
+        EXHASH_DEL(ndrx_G_svchash_skip, el);
+        NDRX_FREE(el);
+    }
 }
 
 /**
