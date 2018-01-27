@@ -430,8 +430,8 @@ expublic void atmisrv_un_initialize(int fork_uninit)
     
     /* close XA if was open.. */
     atmi_xa_uninit();
-    
-    /* Mark our environment as un-initialised 
+    ndrx_skipsvc_delhash();
+    /* Mark our environment as un-initialized 
      * In external main() function cases, they might want to reuse the ATMI
      * context, and it is not server any more.
      */
