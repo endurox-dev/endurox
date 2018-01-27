@@ -254,6 +254,7 @@ extern NDRX_API void atmisrv_un_initialize(int fork_uninit);
 extern NDRX_API int atmisrv_array_remove_element(void *arr, int elem, int len, int sz);
 
 extern NDRX_API int ndrx_skipsvc_chk(char *svc_nm);
+extern NDRX_API void ndrx_skipsvc_delhash(void);
 
 #ifdef	__cplusplus
 }
