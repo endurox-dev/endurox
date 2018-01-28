@@ -1,4 +1,3 @@
-
 #!/bin/bash
 ## 
 ## @(#) test big messages over 64kb - test launcher
