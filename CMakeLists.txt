@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "5.2.10")
+set(VERSION "5.2.12")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
