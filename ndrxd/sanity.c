@@ -492,6 +492,8 @@ exprivate int send_kill(pm_node_t *p_pm, int sig, int delta)
 {
     NDRX_LOG(log_warn, "Killing PID: %d/%s/%d with signal -%d", 
             p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
+    userlog("Killing PID: %d/%s/%d with signal -%d", 
+            p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
     if (EXSUCCEED!=kill(p_pm->pid, sig))
     {
         NDRX_LOG(log_error, "Failed to kill PID %d with error: %s",
@@ -560,16 +562,29 @@ exprivate int check_long_startup(void)
                 if (NDRXD_PM_STARTING==p_pm->state &&
                     (delta=p_pm->rspstwatch) > p_pm->conf->start_max)
                 {
-                    NDRX_LOG(log_error, "Startup too long - "
-                                                    "requesting kill");
+                    NDRX_LOG(log_error, "Startup too long - requesting "
+                            "kill pid=%d/bin=%s/srvid=%d",
+                             p_pm->pid, p_pm->binary_name, p_pm->srvid);
+                    /* Support #276 */
+                    userlog("Startup too long - requesting "
+                            "kill pid=%d/bin=%s/srvid=%d",
+                             p_pm->pid, p_pm->binary_name, p_pm->srvid);
                     p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->pingtime &&
                     (delta=p_pm->pingstwatch) > p_pm->conf->ping_max)
                 {
                     NDRX_LOG(log_error, "Ping response not in time - "
-                                        "requesting kill (ping_time=%d delta=%d ping_max=%d)",
-					p_pm->conf->pingtime, delta, p_pm->conf->ping_max);
+                                        "requesting kill (ping_time=%d delta=%d "
+                                        "ping_max=%d) pid=%d/%s/srvid=%d",
+					p_pm->conf->pingtime, delta, p_pm->conf->ping_max,
+                                        p_pm->pid, p_pm->binary_name, p_pm->srvid);
+                    /* Support #276 */
+                    userlog("Ping response not in time - "
+                                        "requesting kill (ping_time=%d delta=%d "
+                                        "ping_max=%d) pid=%d/bin=%s/srvid=%d",
+					p_pm->conf->pingtime, delta, p_pm->conf->ping_max,
+                                        p_pm->pid, p_pm->binary_name, p_pm->srvid);
                     p_pm->killreq=EXTRUE;
                 }
                 else if (NDRXD_PM_STOPPING==p_pm->state &&
