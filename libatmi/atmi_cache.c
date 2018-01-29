@@ -63,6 +63,16 @@
 #define CACHE_MAX_READERS_DFLT      1000
 #define CACHE_MAP_SIZE_DFLT         160000 /* 160K */
 #define CACHE_PERMS_DFLT            0664
+
+#define NDRX_CACHE_TPERROR(atmierr, fmt, ...)\
+        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
+        userlog(fmt, ##__VA_ARGS__);\
+        ndrx_TPset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
+
+#define NDRX_CACHE_ERROR(fmt, ...)\
+        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
+        userlog(fmt, ##__VA_ARGS__);
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -78,27 +88,34 @@ expublic ndrx_tpcache_typesupp_t M_types[] =
     {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf,      ndrx_cache_ruleval_ubf,     ndrx_cache_refeval_ubf, 
                     ndrx_cache_keyget_ubf,      ndrx_cache_get_ubf,         ndrx_cache_put_ubf, 
                     ndrx_cache_proc_flags_ubf,  ndrx_cache_delete_ubf},
+    /* dummy */
     {1,             NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL}, /* dummy */
+                    NULL,                       NULL},
+                    
     {BUF_TYPE_INIT, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
                     NULL,                       NULL},
-    {BUF_TYPE_NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL,
-                    NULL, NULL},
-    {BUF_TYPE_STRING, NULL, NULL, NULL,
-                    NULL, NULL, NULL,
-                    NULL, NULL},
-    {BUF_TYPE_CARRAY, NULL, NULL, NULL,
-                    NULL, NULL, NULL,
-                    NULL, NULL},
-    {BUF_TYPE_JSON, NULL, NULL, NULL,
-                    NULL, NULL, NULL,
-                    NULL, NULL},
-    {BUF_TYPE_VIEW, NULL, NULL, NULL,
-                    NULL, NULL, NULL,
-                    NULL, NULL},
+                    
+    {BUF_TYPE_NULL, NULL,                       NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL},
+                    
+    {BUF_TYPE_STRING,NULL,                      NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL},
+                    
+    {BUF_TYPE_CARRAY, NULL,                     NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL},
+                    
+    {BUF_TYPE_JSON, NULL,                       NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL},
+                    
+    {BUF_TYPE_VIEW, NULL,                       NULL,                       NULL,
+                    NULL,                       NULL,                       NULL,
+                    NULL,                       NULL},
     {EXFAIL}
 };
 
@@ -807,6 +824,10 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_INVAL;
                     }
+                    else if (0==strcmp(p_flags, "next"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_NEXT;
+                    }
                     else
                     {
                         NDRX_LOG(log_warn, "For service [%s] buffer index %d, "
@@ -859,6 +880,21 @@ expublic int ndrx_cache_init(int mode)
                 EXFAIL_OUT(ret);
             }
             
+            if ((cache->flags & NDRX_TPCACHE_TPCF_NEXT) && 
+                    !(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
+                        "flags `next' can be used only with `inval' "
+                        "for service [%s], buffer index: %d", svc, i);
+                userlog("CACHE: invalid config - conflicting "
+                        "flags `next' can be used only with `inval' "
+                        "for service [%s], buffer index: %d", svc, i);
+                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                        "flags `next' can be used only with `inval' "
+                        "for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
             /* get buffer type */
             if (NULL==(tmp = exjson_object_get_string(array_object, "type")))
             {
@@ -868,6 +904,34 @@ expublic int ndrx_cache_init(int mode)
                         "buffer index: %d", svc, i);
                 ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
                         "[type] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_STRCPY_SAFE(cache->str_buf_type, tmp);
+            
+             if (NULL!=(tmp = exjson_object_get_string(array_object, "subtype")))
+            {
+                NDRX_STRCPY_SAFE(cache->str_buf_subtype, tmp);
+            }
+            
+            /* Resolve buffer */
+            if (NULL==(cache->buf_type = ndrx_get_buffer_descr(cache->str_buf_type, 
+                    cache->str_buf_subtype)))
+            {
+                NDRX_LOG(log_error, "CACHE: invalid buffer type "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
+                
+                userlog("CACHE: invalid buffer type "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
+                
+                ndrx_TPset_error_fmt(TPEOTYPE, "CACHE: invalid buffer type "
+                        "for service [%s], buffer index: %d - Unknown type "
+                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
+                        cache->str_buf_subtype);
                 EXFAIL_OUT(ret);
             }
             
@@ -902,35 +966,44 @@ expublic int ndrx_cache_init(int mode)
                  !! TODO: So we are NDRX_TPCACHE_TPCF_INVAL resolve the other cache..
                  * And lookup other keys too of inval cache
                  */
-            }
-            
-            NDRX_STRCPY_SAFE(cache->str_buf_type, tmp);
-            
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "subtype")))
-            {
-                NDRX_STRCPY_SAFE(cache->str_buf_subtype, tmp);
-            }
-            
-            /* Resolve buffer */
-            if (NULL==(cache->buf_type = ndrx_get_buffer_descr(cache->str_buf_type, 
-                    cache->str_buf_subtype)))
-            {
-                NDRX_LOG(log_error, "CACHE: invalid buffer type "
-                        "for service [%s], buffer index: %d - Unknown type "
-                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                        cache->str_buf_subtype);
                 
-                userlog("CACHE: invalid buffer type "
-                        "for service [%s], buffer index: %d - Unknown type "
-                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                        cache->str_buf_subtype);
+                /* Get data for invalidating their cache */
                 
-                ndrx_TPset_error_fmt(TPEOTYPE, "CACHE: invalid buffer type "
-                        "for service [%s], buffer index: %d - Unknown type "
-                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                        cache->str_buf_subtype);
-                EXFAIL_OUT(ret);
+                if (NULL==(tmp = exjson_object_get_string(array_object, "inval_svc")))
+                {
+                    NDRX_LOG(log_error, "CACHE: invalid config - missing [inval_svc] "
+                            "for service [%s], buffer index: %d", svc, i);                
+                    userlog("CACHE: invalid config - missing [inval_svc] for service [%s], "
+                            "buffer index: %d", svc, i);
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                            "[inval_svc] for service [%s], buffer index: %d", svc, i);
+                    EXFAIL_OUT(ret);
+                }
+
+                NDRX_STRCPY_SAFE(cache->inval_svc, tmp);
+                
+                
+                if (NULL==(tmp = exjson_object_get_string(array_object, "inval_idx")))
+                {
+                    NDRX_LOG(log_error, "CACHE: invalid config - missing [inval_idx] "
+                            "for service [%s], buffer index: %d", svc, i);                
+                    userlog("CACHE: invalid config - missing [inval_idx] for service [%s], "
+                            "buffer index: %d", svc, i);
+                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                            "[inval_idx] for service [%s], buffer index: %d", svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+                cache->inval_idx = atoi(tmp);
+                    
+#if 0
+                    TODO: Resolve
+                    ndrx_tpcallcache_t *inval_cache;    /* their cache to invalidate        */
+#endif
+                    
+
             }
+           
             
             /* validate the type */
             if (NULL==M_types[cache->buf_type->type_id].pf_get_key)
@@ -966,9 +1039,6 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
             
-           
-            NDRX_STRCPY_SAFE(cache->save, tmp);
-            
             /* Rule to be true to save to cache */
             if (NULL==(tmp = exjson_object_get_string(array_object, "rule")))
             {
@@ -982,7 +1052,12 @@ expublic int ndrx_cache_init(int mode)
             }
             
             NDRX_STRCPY_SAFE(cache->rule, tmp);
-           
+            
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "refreshrule")))
+            {
+                NDRX_STRCPY_SAFE(cache->rule, tmp);
+            }
             
             /* get fields to save */
             if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
@@ -997,6 +1072,8 @@ expublic int ndrx_cache_init(int mode)
                             "[save] for service [%s], buffer index: %d", svc, i);
                     EXFAIL_OUT(ret);
                 }
+                
+                NDRX_STRCPY_SAFE(cache->save, tmp);
                 
                 /* if it is regex, then compile */
                 if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
@@ -1091,7 +1168,7 @@ expublic int ndrx_cache_init(int mode)
 out:
             
     /* cleanup code */
-    if (NULL!=exjson_value_free(root_value))
+    if (NULL!=root_value)
     {
         exjson_value_free(root_value);
     }
