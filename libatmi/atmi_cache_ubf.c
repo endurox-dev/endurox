@@ -207,6 +207,14 @@ expublic int ndrx_cache_rulcomp_ubf (ndrx_tpcallcache_t *cache,
         EXFAIL_OUT(ret);
     }
     
+    /* Compile refresh rule too */
+    
+    if (NULL==(cache->refreshrule_tree=Bboolco (cache->refreshrule)))
+    {
+        snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     return ret;
 }
@@ -625,6 +633,11 @@ expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
     if (NULL!=cache->rule_tree)
     {
         Btreefree(cache->rule_tree);
+    }
+    
+    if (NULL!=cache->refreshrule_tree)
+    {
+        Btreefree(cache->refreshrule_tree);
     }
     
     if (NULL!=cache->p_save_typpriv)
