@@ -975,7 +975,7 @@ expublic int ndrx_cache_init(int mode)
 
                 if (NULL==svcc)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: inval_svc [%s] not found, "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: inval_s    vc [%s] not found, "
                             "or defined later (at this or another config file)");
                     EXFAIL_OUT(ret);
                 }
