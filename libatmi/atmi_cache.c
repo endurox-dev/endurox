@@ -353,10 +353,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                         cachesection,  /* global section */
                         &csection))
     {
-        NDRX_LOG(log_error, "%s: Failed to get section [%s]: %s", 
+        NDRX_CACHE_ERROR("%s: Failed to get section [%s]: %s", 
                 __func__, cachesection, Nstrerror(Nerror));
-        userlog("%s: Failed to get section [%s]: %s", __func__, cachesection, 
-                Nstrerror(Nerror));
         EXFAIL_OUT(ret);
    }
     
@@ -439,9 +437,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 else
                 {
                     /* unknown flag */
-                    NDRX_LOG(log_warn, "Ignoring unknown cachedb [%s] flag: [%s]",
-                            cachedb, p);
-                    userlog("Ignoring unknown cachedb [%s] flag: [%s]",
+                    NDRX_CACHE_ERROR("Ignoring unknown cachedb [%s] flag: [%s]",
                             cachedb, p);
                 }
                 p = strtok_r (NULL, ",", &saveptr1);
@@ -484,26 +480,15 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     /* Open the database */
     if (EXSUCCEED!=(ret=edb_env_create(&db->env)))
     {
-        NDRX_LOG(log_error, "CACHE: Failed to open env for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("CACHE: Failed to open env for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "CACHE: Failed to create env for [%s]: %s", 
                 db->cachedb, edb_strerror(errno));
-        
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=(ret=edb_env_set_maxreaders(db->env, db->max_readers)))
     {
-        NDRX_LOG(log_error, "CACHE: Failed to set max readers for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("CACHE: Failed to set max readers for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "CACHE: Failed to set max readers for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -512,12 +497,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     if (EXSUCCEED!=(ret=edb_env_set_mapsize(db->env, db->map_size)))
     {
-        NDRX_LOG(log_error, "CACHE: Failed to set map size for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to set map size for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to set map size for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -527,12 +507,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     /* Open the DB */
     if (EXSUCCEED!=(ret=edb_env_open(db->env, db->resource, 0L, db->perms)))
     {
-        NDRX_LOG(log_error, "Failed to open env [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to open env [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open env [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -542,12 +517,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     /* Prepare the DB */
     if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, 0, &txn)))
     {
-        NDRX_LOG(log_error, "Failed to begin transaction for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to begin transaction for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to begin transaction for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -569,12 +539,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     if (EXSUCCEED!=(ret=edb_dbi_open(txn, NULL, dbi_flags, &db->dbi)))
     {
-        NDRX_LOG(log_error, "Failed to open named db for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to open named db for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open named db for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -586,12 +551,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         NDRX_LOG(log_info, "Resetting cache db [%s]", db->cachedb);
         if (EXSUCCEED!=(ret=edb_drop(txn, db->dbi, 0)))
         {
-            NDRX_LOG(log_error, "CACHE: Failed to clear db: [%s]: %s", 
-                    db->cachedb, edb_strerror(ret));
-            userlog("CACHE: Failed to clear db: [%s]: %s", 
-                    db->cachedb, edb_strerror(ret));
-
-            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                     "CACHE: Failed to clear db: [%s]: %s", 
                     db->cachedb, edb_strerror(ret));
 
@@ -603,12 +563,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     /* commit the tran */
     if (EXSUCCEED!=(ret=edb_txn_commit(txn)))
     {
-        NDRX_LOG(log_error, "Failed to open named db for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to open named db for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open named db for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         txn = NULL;
@@ -651,6 +606,78 @@ out:
         return db;
     }
 }
+
+/**
+ * Find tpcall cache
+ * @param idata XATMI buffer data
+ * @param ilen data len
+ * @param idx optional index (if not -1)
+ * @return NULL - no cache found or not supported, ptr - to tpcall cache
+ */
+expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
+        typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx)
+{
+    ndrx_tpcallcache_t* el;
+    int ret = EXSUCCEED;
+    char errdet[MAX_TP_ERROR_LEN+1];
+    int i = 0;
+    
+    DL_FOREACH(svcc->caches, el)
+    {
+        if (el->buf_type->type_id == buf_type->type_id)
+        {
+            if (i==idx)
+            {
+                return el;
+            }
+            
+            if (M_types[el->buf_type->type_id].pf_rule_eval)
+            {
+                ret = M_types[el->buf_type->type_id].pf_rule_eval(el, idata, ilen, 
+                        errdet, sizeof(errdet));
+                if (EXFAIL==ret)
+                {
+                    NDRX_CACHE_ERROR("%s: Failed to evaluate buffer [%s]: %s", 
+                            __func__, el->rule, errdet);
+                    return NULL;
+                }
+                else if (EXTRUE==ret)
+                {
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "Buffer RULE TRUE [%s]", el->rule);
+#endif
+                    return el;
+                }
+                else
+                {
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s]", el->rule);
+#endif
+                    /* search next... */
+                }
+            }
+            else
+            {
+                /* We should not get here! */
+                NDRX_CACHE_ERROR("%s: Unsupported buffer type [%s] for cache", 
+                                __func__, el->buf_type->type);
+                return NULL;
+            }
+        }
+        else if (i==idx)
+        {
+            NDRX_CACHE_ERROR("%s: Cache found at index [%d] but types "
+                    "does not match [%s] vs [%s]", __func__,  el->buf_type->type, 
+                    buf_type->type);
+                return NULL;
+        }
+        
+        i++;
+    }
+    
+    return NULL;
+}
+
 
 /**
  * Normal init (used by server & clients)
@@ -733,10 +760,8 @@ expublic int ndrx_cache_init(int mode)
 
         if (exjson_value_get_type(root_value) != EXJSONObject)
         {
-            NDRX_LOG(log_error, "cache: invalid service [%s] cache: Failed "
+            NDRX_CACHE_ERROR("cache: invalid service [%s] cache: Failed "
                     "to parse root element", svc);
-            userlog("cache: invalid service [%s] cache: Failed to parse root element", 
-                    svc);
             EXFAIL_OUT(ret);
         }
 
@@ -746,12 +771,8 @@ expublic int ndrx_cache_init(int mode)
         
         if (1!=nrcaches)
         {
-            NDRX_LOG(log_error, "cache: Expected single element in JSON block: [%s], "
-                    "got nr: [%d]", CACHES_BLOCK, nrcaches);
-            
-            userlog("cache: invalid service [%s] cache: Failed to parse root element", 
-                    svc);
-            
+            NDRX_CACHE_ERROR("CACHE: invalid service [%s] cache: "
+                    "Failed to parse root element",  svc);
             EXFAIL_OUT(ret);
         }
         
@@ -759,10 +780,7 @@ expublic int ndrx_cache_init(int mode)
         
         if (0!=strcmp(CACHES_BLOCK, name))
         {
-            NDRX_LOG(log_error, "cache: Expected [%s] got [%s]",
-                    CACHES_BLOCK, name);
-            
-            userlog("cache: Expected [%s] got [%s]",
+            NDRX_CACHE_ERROR("CACHE: Expected [%s] got [%s]",
                     CACHES_BLOCK, name);
             EXFAIL_OUT(ret);
         }
@@ -844,13 +862,7 @@ expublic int ndrx_cache_init(int mode)
                     (cache->flags & NDRX_TPCACHE_TPCF_MERGE) 
                     )
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
-                        "flags `getreplace' and `getreplace' "
-                        "for service [%s], buffer index: %d", svc, i);
-                userlog("CACHE: invalid config - conflicting "
-                        "flags `getreplace' and `getreplace' "
-                        "for service [%s], buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config - conflicting "
                         "flags `getreplace' and `getreplace' "
                         "for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
@@ -868,13 +880,7 @@ expublic int ndrx_cache_init(int mode)
             if ((cache->flags & NDRX_TPCACHE_TPCF_SAVEREG) && 
                     (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
-                        "flags `putrex' and `putfull' "
-                        "for service [%s], buffer index: %d", svc, i);
-                userlog("CACHE: invalid config - conflicting "
-                        "flags `putrex' and `putfull' "
-                        "for service [%s], buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config - conflicting "
                         "flags `putrex' and `putfull' "
                         "for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
@@ -883,13 +889,7 @@ expublic int ndrx_cache_init(int mode)
             if ((cache->flags & NDRX_TPCACHE_TPCF_NEXT) && 
                     !(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - conflicting "
-                        "flags `next' can be used only with `inval' "
-                        "for service [%s], buffer index: %d", svc, i);
-                userlog("CACHE: invalid config - conflicting "
-                        "flags `next' can be used only with `inval' "
-                        "for service [%s], buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config - conflicting "
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config - conflicting "
                         "flags `next' can be used only with `inval' "
                         "for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
@@ -898,11 +898,7 @@ expublic int ndrx_cache_init(int mode)
             /* get buffer type */
             if (NULL==(tmp = exjson_object_get_string(array_object, "type")))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - missing [type] "
-                        "for service [%s], buffer index: %d", svc, i);                
-                userlog("CACHE: invalid config - missing [type] for service [%s], "
-                        "buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                         "[type] for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
             }
@@ -918,17 +914,7 @@ expublic int ndrx_cache_init(int mode)
             if (NULL==(cache->buf_type = ndrx_get_buffer_descr(cache->str_buf_type, 
                     cache->str_buf_subtype)))
             {
-                NDRX_LOG(log_error, "CACHE: invalid buffer type "
-                        "for service [%s], buffer index: %d - Unknown type "
-                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                        cache->str_buf_subtype);
-                
-                userlog("CACHE: invalid buffer type "
-                        "for service [%s], buffer index: %d - Unknown type "
-                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                        cache->str_buf_subtype);
-                
-                ndrx_TPset_error_fmt(TPEOTYPE, "CACHE: invalid buffer type "
+                NDRX_CACHE_TPERROR(TPEOTYPE, "CACHE: invalid buffer type "
                         "for service [%s], buffer index: %d - Unknown type "
                         "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
                         cache->str_buf_subtype);
@@ -941,12 +927,7 @@ expublic int ndrx_cache_init(int mode)
             {
                 if (NULL==(tmp = exjson_object_get_string(array_object, "cachedb")))
                 {
-                    NDRX_LOG(log_error, "CACHE: invalid config - missing [cachedb] "
-                            "for service [%s], buffer index: %d", svc, i);
-                    userlog("CACHE: invalid config - missing [cachedb] for service [%s], "
-                            "buffer index: %d", svc, i);
-
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                             "[cachedb] for service [%s], buffer index: %d", svc, i);
                     EXFAIL_OUT(ret);
                 }
@@ -962,6 +943,7 @@ expublic int ndrx_cache_init(int mode)
             }
             else
             {
+                ndrx_tpcache_svc_t *svcc;
                 /* 
                  !! TODO: So we are NDRX_TPCACHE_TPCF_INVAL resolve the other cache..
                  * And lookup other keys too of inval cache
@@ -971,11 +953,7 @@ expublic int ndrx_cache_init(int mode)
                 
                 if (NULL==(tmp = exjson_object_get_string(array_object, "inval_svc")))
                 {
-                    NDRX_LOG(log_error, "CACHE: invalid config - missing [inval_svc] "
-                            "for service [%s], buffer index: %d", svc, i);                
-                    userlog("CACHE: invalid config - missing [inval_svc] for service [%s], "
-                            "buffer index: %d", svc, i);
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                             "[inval_svc] for service [%s], buffer index: %d", svc, i);
                     EXFAIL_OUT(ret);
                 }
@@ -985,40 +963,38 @@ expublic int ndrx_cache_init(int mode)
                 
                 if (NULL==(tmp = exjson_object_get_string(array_object, "inval_idx")))
                 {
-                    NDRX_LOG(log_error, "CACHE: invalid config - missing [inval_idx] "
-                            "for service [%s], buffer index: %d", svc, i);                
-                    userlog("CACHE: invalid config - missing [inval_idx] for service [%s], "
-                            "buffer index: %d", svc, i);
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                             "[inval_idx] for service [%s], buffer index: %d", svc, i);
                     EXFAIL_OUT(ret);
                 }
                 
                 cache->inval_idx = atoi(tmp);
-                    
-#if 0
-                    TODO: Resolve
-                    ndrx_tpcallcache_t *inval_cache;    /* their cache to invalidate        */
-#endif
-                    
+                
+                /* Find service in cache */
+                EXHASH_FIND_STR(M_tpcache_svc, cache->inval_svc, svcc);
 
+                if (NULL==svcc)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: inval_svc [%s] not found, "
+                            "or defined later (at this or another config file)");
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (NULL==(cache->inval_cache =  ndrx_cache_findtpcall(svcc, 
+                    cache->buf_type, NULL, EXFAIL, cache->inval_idx)))
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: tpcall cache not found "
+                            "for service [%s], index=%d, type=[%s]", 
+                            cache->inval_svc, cache->inval_idx, 
+                            cache->buf_type->type);
+                    EXFAIL_OUT(ret);
+                }   
             }
-           
             
             /* validate the type */
             if (NULL==M_types[cache->buf_type->type_id].pf_get_key)
             {
-                NDRX_LOG(log_error, "CACHE: buffer type not supported "
-                    "for service [%s], buffer index: %d - Unknown type "
-                    "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                    cache->str_buf_subtype);
-
-                userlog("CACHE: buffer type not supported "
-                        "for service [%s], buffer index: %d - Unknown type "
-                        "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
-                        cache->str_buf_subtype);
-
-                ndrx_TPset_error_fmt(TPEOTYPE, "CACHE: buffer type not supported "
+                NDRX_CACHE_TPERROR(TPEOTYPE, "CACHE: buffer type not supported "
                         "for service [%s], buffer index: %d - Unknown type "
                         "[%s]/subtype[%s]", svc, i, cache->str_buf_type, 
                         cache->str_buf_subtype);
@@ -1028,11 +1004,7 @@ expublic int ndrx_cache_init(int mode)
             /* get key format */
             if (NULL==(tmp = exjson_object_get_string(array_object, "keyfmt")))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - missing [keyfmt] "
-                        "for service [%s], buffer index: %d", svc, i);                
-                userlog("CACHE: invalid config - missing [keyfmt] for service [%s], "
-                        "buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                         "[keyfmt] for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
             }
@@ -1042,11 +1014,7 @@ expublic int ndrx_cache_init(int mode)
             /* Rule to be true to save to cache */
             if (NULL==(tmp = exjson_object_get_string(array_object, "rule")))
             {
-                NDRX_LOG(log_error, "CACHE: invalid config - missing [rule] "
-                        "for service [%s], buffer index: %d", svc, i);                
-                userlog("CACHE: invalid config - missing [rule] for service [%s], "
-                        "buffer index: %d", svc, i);
-                ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                         "[rule] for service [%s], buffer index: %d", svc, i);
                 EXFAIL_OUT(ret);
             }
@@ -1064,11 +1032,7 @@ expublic int ndrx_cache_init(int mode)
             {
                 if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
                 {
-                    NDRX_LOG(log_error, "CACHE: invalid config - missing [save] "
-                            "for service [%s], buffer index: %d", svc, i);                
-                    userlog("CACHE: invalid config - missing [save] for service [%s], "
-                            "buffer index: %d", svc, i);
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: invalid config missing "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                             "[save] for service [%s], buffer index: %d", svc, i);
                     EXFAIL_OUT(ret);
                 }
@@ -1080,9 +1044,7 @@ expublic int ndrx_cache_init(int mode)
                 {
                     if (EXSUCCEED!=ndrx_regcomp(&cache->save_regex, cache->save))
                     {
-                        userlog("CACHE: failed to compile [save] regex [%s] for svc [%s], "
-                            "buffer index: %d - see ndrx logs", svc, cache->save, i);
-                        ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to compile [save] "
+                        NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile [save] "
                             "regex [%s] for svc [%s], "
                             "buffer index: %d - see ndrx logs", svc, cache->save, i);
                     }
@@ -1096,13 +1058,7 @@ expublic int ndrx_cache_init(int mode)
                         errdet, sizeof(errdet)))
                     
                 {
-                    NDRX_LOG(log_error, "CACHE: failed to check flags [%s] "
-                            "for service [%s], buffer index: %d: %s", 
-                            cache->flagsstr, svc, i, errdet);
-                    userlog("CACHE: failed to check flags [%s] "
-                            "for service [%s], buffer index: %d: %s", 
-                            cache->flagsstr, svc, i, errdet);
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to check flags [%s] "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to check flags [%s] "
                             "for service [%s], buffer index: %d: %s", 
                             cache->flagsstr, svc, i, errdet);
                     EXFAIL_OUT(ret);
@@ -1117,13 +1073,7 @@ expublic int ndrx_cache_init(int mode)
                 if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_rule_compile(
                         cache, errdet, sizeof(errdet)))
                 {
-                    NDRX_LOG(log_error, "CACHE: failed to compile rule [%s] "
-                            "for service [%s], buffer index: %d: %s", 
-                            cache->rule, svc, i, errdet);
-                    userlog("CACHE: failed to compile rule [%s] "
-                            "for service [%s], buffer index: %d: %s", 
-                            cache->rule, svc, i, errdet);
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to compile rule [%s] "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile rule [%s] "
                             "for service [%s], buffer index: %d: %s", 
                             cache->rule, svc, i, errdet);
                     EXFAIL_OUT(ret);
@@ -1138,13 +1088,7 @@ expublic int ndrx_cache_init(int mode)
                 /* Compile the boolean expression! */
                 if (NULL==(cache->rsprule_tree=Bboolco (cache->rsprule)))
                 {
-                    NDRX_LOG(log_error, "CACHE: failed to compile rsprule [%s] "
-                            "for service [%s], buffer index: %d: %s", 
-                            cache->rsprule, svc, i, Bstrerror(Berror));
-                    userlog("CACHE: failed to compile rsprule [%s] "
-                            "for service [%s], buffer index: %d: %s", 
-                            cache->rsprule, svc, i, Bstrerror(Berror));
-                    ndrx_TPset_error_fmt(TPEINVAL, "CACHE: failed to "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to "
                             "compile rsprule [%s] "
                             "for service [%s], buffer index: %d: %s", 
                             cache->rsprule, svc, i, Bstrerror(Berror));
@@ -1201,67 +1145,6 @@ out:
 }
 
 /**
- * Find tpcall cache
- * @param idata XATMI buffer data
- * @param ilen data len
- * @return NULL - no cache found or not supported, ptr - to tpcall cache
- */
-expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
-        typed_buffer_descr_t *buf_type, char *idata, long ilen)
-{
-    ndrx_tpcallcache_t* el;
-    int ret = EXSUCCEED;
-    char errdet[MAX_TP_ERROR_LEN+1];
-    
-    DL_FOREACH(svcc->caches, el)
-    {
-        if (el->buf_type->type_id == buf_type->type_id)
-        {
-            if (M_types[el->buf_type->type_id].pf_get_key)
-            {
-                ret = M_types[el->buf_type->type_id].pf_rule_eval(el, idata, ilen, 
-                        errdet, sizeof(errdet));
-                if (EXFAIL==ret)
-                {
-                    NDRX_LOG(log_error, "%s: Failed to evaluate buffer [%s]: %s", 
-                            __func__, el->rule, errdet);
-                    userlog("%s: Failed to evaluate buffer [%s]: %s", 
-                            __func__, el->rule, errdet);
-                    return NULL;
-                }
-                else if (EXTRUE==ret)
-                {
-#ifdef NDRX_TPCACHE_DEBUG
-                    NDRX_LOG(log_debug, "Buffer RULE TRUE [%s]", el->rule);
-#endif
-                    return el;
-                }
-                else
-                {
-#ifdef NDRX_TPCACHE_DEBUG
-                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s]", el->rule);
-#endif
-                    /* search next... */
-                }
-            }
-            else
-            {
-                /* We should not get here! */
-                NDRX_LOG(log_error, "%s: Unsupported buffer type [%s] for cache", 
-                                __func__, el->buf_type->type);
-                userlog("%s: Unsupported buffer type [%s] for cache", 
-                            __func__, el->buf_type->type);
-
-                return NULL;
-            }
-        }
-    }
-    
-    return NULL;
-    
-}
-
-/**
  * Check response rule, should we cache this or not
  * @param cache cache object
  * @param save_tperrno tperror number
@@ -1277,11 +1160,7 @@ exprivate int ndrx_cache_chkrsprule(ndrx_tpcallcache_t *cache,
     
     if (EXSUCCEED!=Binit(p_ub, sizeof(buf)))
     {
-        NDRX_LOG(log_error, "cache: failed to init response check buffer: %s",
-                Bstrerror(Berror));
-        userlog("cache: failed to init response check buffer: %s",
-                Bstrerror(Berror));
-        ndrx_TPset_error_fmt(TPESYSTEM, "cache: failed to init response check buffer: %s",
+        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: failed to init response check buffer: %s",
                 Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
@@ -1290,22 +1169,14 @@ exprivate int ndrx_cache_chkrsprule(ndrx_tpcallcache_t *cache,
     
     if (EXSUCCEED!=Bchg(p_ub, EX_TPERRNO, 0, (char *)&save_tperrno, 0L))
     {
-        NDRX_LOG(log_error, "cache: Failed to set EX_TPERRNO[0] to %ld: %s",
-                save_tperrno, Bstrerror(Berror));
-        userlog("cache: Failed to set EX_TPERRNO[0] to %ld: %s",
-                save_tperrno, Bstrerror(Berror));
-        ndrx_TPset_error_fmt(TPESYSTEM, "cache: Failed to set EX_TPERRNO[0] to %ld: %s",
+        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: Failed to set EX_TPERRNO[0] to %ld: %s",
                 save_tperrno, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=Bchg(p_ub, EX_TPURCODE, 0, (char *)&save_tpurcode, 0L))
     {
-        NDRX_LOG(log_error, "cache: Failed to set EX_TPURCODE[0] to %ld: %s",
-                save_tpurcode, Bstrerror(Berror));
-        userlog("cache: Failed to set EX_TPURCODE[0] to %ld: %s",
-                save_tpurcode, Bstrerror(Berror));
-        ndrx_TPset_error_fmt(TPESYSTEM, "cache: Failed to set EX_TPURCODE[0] to %ld: %s",
+        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: Failed to set EX_TPURCODE[0] to %ld: %s",
                 save_tpurcode, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
@@ -1314,11 +1185,7 @@ exprivate int ndrx_cache_chkrsprule(ndrx_tpcallcache_t *cache,
     
     if (EXFAIL==(ret=Bboolev(p_ub, cache->rsprule_tree)))
     {
-        NDRX_LOG(log_error, "cache: Failed to evalute [%s] tree: %p expression: %s",
-                cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
-        userlog("cache: Failed to evalute [%s] tree: %p expression: %s",
-                cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
-        ndrx_TPset_error_fmt(TPESYSTEM, "cache: Failed to evalute [%s] "
+        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: Failed to evalute [%s] "
                 "tree: %p expression: %s",
                 cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
         EXFAIL_OUT(ret);
@@ -1372,7 +1239,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     /* OK now translate the thing to db format (i.e. make outgoing message) */
     
     
-     /* Find service in cache */
+    /* Find service in cache */
     EXHASH_FIND_STR(M_tpcache_svc, svc, svcc);
     
     if (NULL==svcc)
@@ -1397,7 +1264,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     buf_type = &G_buf_descr[buffer_info->type_id];
     
     /* Test the buffers rules */
-    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen)))
+    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
     {
         ret = NDRX_TPCACHE_ENOCACHE;
         goto out;
@@ -1549,10 +1416,11 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     EDB_val cachedata_update;
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
-    /* Key size - assume 16K should be fine */
-    
-    /* get buffer type & sub-type */
+    ndrx_tpcallcache_t* el;
+    int is_matched;
         
+    /* Key size - assume 16K should be fine */
+    /* get buffer type & sub-type */
     cachedata_update.mv_size = 0;
     cachedata_update.mv_data = NULL;
         
@@ -1578,45 +1446,147 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         }
     }
     
-    buf_type = &G_buf_descr[buffer_info->type_id];
     
+    /* TODO: Loop over the tpcallcaches, if `next' flag present, then perform next
+     * if we get invalidate their, then delete target records by the key */
+    buf_type = &G_buf_descr[buffer_info->type_id];
+#if 0
     /* Test the buffers rules */
-    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen)))
+    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
     {
         ret = NDRX_TPCACHE_ENOCACHE;
         goto out;
     }
+#endif
     
-    *should_cache=EXTRUE;
-            
-    /* Test the rule, if and not found then stage to NDRX_TPCACHE_ENOTFOUNADD 
-     * OK, we need to build a key
-     */
-    
-    NDRX_STRCPY_SAFE(key, cache->keyfmt);
-       
-    /* Build the key... */
-    if (EXSUCCEED!=(ret = M_types[buffer_info->type_id].pf_get_key(cache, idata, 
-            ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    /* TODO: *should_cache=EXTRUE; */
+    DL_FOREACH(svcc->caches, cache)
     {
-        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        is_matched = EXFALSE;
+        
+        if (cache->buf_type->type_id == buf_type->type_id)
         {
-            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
-            goto out;
+            if (M_types[el->buf_type->type_id].pf_rule_eval)
+            {
+                ret = M_types[el->buf_type->type_id].pf_rule_eval(cache, idata, ilen, 
+                        errdet, sizeof(errdet));
+                if (EXFAIL==ret)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "%s: Failed to evaluate buffer [%s]: %s", 
+                            __func__, cache->rule, errdet);
+                    
+                    EXFAIL_OUT(ret);
+                }
+                else if (EXFALSE==ret)
+                {
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - continue", cache->rule);
+#endif
+                    continue;
+                }
+                
+                is_matched = EXTRUE;
+                ret = EXSUCCEED;
+            }
+            else
+            {
+                /* We should not get here! */
+                NDRX_CACHE_TPERROR(TPEINVAL,"%s: Unsupported buffer type [%s] for cache", 
+                                __func__, el->buf_type->type);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* if we are here, the cache is matched */
+        
+        if (!(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
+        {
+            /* ONLY IN CASE IF NOT INVAL - Check should we refresh? */
+            if (NULL!=M_types[cache->buf_type->type_id].pf_refreshrule_eval &&
+                    EXEOS!=cache->refreshrule[0])
+            {
+                ret = M_types[cache->buf_type->type_id].pf_refreshrule_eval(cache, 
+                        idata, ilen, errdet, sizeof(errdet));
+                if (EXFAIL==ret)
+                {
+                    /* Failed to eval refresh rule */
+                    NDRX_LOG(log_error, "Failed to eval refresh rule: %s", errdet);
+
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to eval refresh rule: %s", 
+                            errdet);
+                    EXFAIL_OUT(ret);
+                }
+                else if (EXTRUE==ret)
+                {
+                    NDRX_LOG(log_info, "Cache will be refreshed - rule matched "
+                            "(do not continue cache lookup)");
+                    ret = NDRX_TPCACHE_ENOCACHEDATA;
+                    goto out;
+                }
+            }
+        }
+
+        /* Test the rule, if and not found then stage to NDRX_TPCACHE_ENOTFOUNADD 
+         * OK, we need to build a key
+         */
+
+        NDRX_STRCPY_SAFE(key, cache->keyfmt);
+
+        /* Build the key... */
+        if (EXSUCCEED!=(ret = M_types[buffer_info->type_id].pf_get_key(cache, idata, 
+                ilen, key, sizeof(key), errdet, sizeof(errdet))))
+        {
+            if (NDRX_TPCACHE_ENOKEYDATA==ret)
+            {
+                NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+                goto out;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to build key: ", errdet);
+
+                /* generate TP error here! */
+                ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                        __func__, errdet);
+                goto out;
+            }
+        }
+        
+        if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
+        {
+            /* TODO: Invalidate their cache */
+        }
+        
+        
+        if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
+        {
+#ifdef NDRX_TPCACHE_DEBUG
+            NDRX_LOG(log_debug, "Next flag present, go to next cache (if have one)");
+#endif
+            continue;
         }
         else
         {
-            NDRX_LOG(log_error, "Failed to build key: ", errdet);
-            
-            /* generate TP error here! */
-            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
-                    __func__, errdet);
-            goto out;
+            break;
         }
-            
+        
     }
     
-    /* Lookup */
+    /* cache not found */
+    if (!is_matched)
+    {
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "No cache defined for [%s], buffer type [%s] "
+                "or all was invalidate", svc, buf_type->type);
+#endif
+        ret = NDRX_TPCACHE_ENOCACHE;
+        goto out;
+    }
+    
+    /* LOOP END */
+    
+    /* Lookup DB */
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
     {
@@ -1726,12 +1696,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         {
             int err = errno;
             
-            NDRX_LOG(log_error, "Failed to allocate %ld bytes: %s",
-                    (long)cachedata_update.mv_size, strerror(err));
-            userlog("Failed to allocate %ld bytes: %s",
-                    (long)cachedata_update.mv_size, strerror(err));
-            
-            ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %ld bytes: %s",
+            NDRX_CACHE_TPERROR(TPEOS, "Failed to allocate %ld bytes: %s",
                     (long)cachedata_update.mv_size, strerror(err));
         }
         
@@ -1838,12 +1803,7 @@ expublic int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn)
     
     if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, 0, txn)))
     {
-        NDRX_LOG(log_error, "Failed to begin transaction for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to begin transaction for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to begin transaction for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -1866,12 +1826,7 @@ expublic int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn)
     
     if (EXSUCCEED!=(ret=edb_txn_commit(txn)))
     {
-        NDRX_LOG(log_error, "Failed to commit transaction for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        userlog("Failed to commit transaction for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to commit transaction for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
         
@@ -1918,13 +1873,7 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
     {
         if (ret!=EDB_NOTFOUND)
         {
-            NDRX_LOG(log_error, "Failed to get data from db [%s] for key [%s]: %s", 
-                db->cachedb, key, edb_strerror(ret));
-            
-            userlog("Failed to get data from db [%s] for key [%s]: %s", 
-                    db->cachedb, key, edb_strerror(ret));
-            
-            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to get data from db [%s] for key [%s]: %s", 
                 db->cachedb, key, edb_strerror(ret));
             
@@ -1962,13 +1911,7 @@ expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * curso
     {
         if (ret!=EDB_NOTFOUND)
         {
-            NDRX_LOG(log_error, "Failed to get data from db [%s] for key [%s]: %s", 
-                db->cachedb, key, edb_strerror(ret));
-            
-            userlog("Failed to get data from db [%s] for key [%s]: %s", 
-                    db->cachedb, key, edb_strerror(ret));
-            
-            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to get data from db [%s] for key [%s]: %s", 
                 db->cachedb, key, edb_strerror(ret));
         }
@@ -1998,13 +1941,7 @@ expublic int ndrx_cache_edb_set_dupsort(ndrx_tpcache_db_t *db, EDB_txn *txn,
     
     if (EXSUCCEED!=(ret=edb_set_dupsort(txn, db->dbi, cmp)))
     {
-        NDRX_LOG(log_error, "Failed to set dupsort cmp func for db [%s] %p: %s", 
-            db->cachedb, cmp, edb_strerror(ret));
-
-        userlog("Failed to set dupsort cmp func for db [%s] %p: %s", 
-            db->cachedb, cmp, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to set dupsort cmp func for db [%s] %p: %s", 
             db->cachedb, cmp, edb_strerror(ret));
     }
@@ -2027,13 +1964,7 @@ expublic int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *txn,
     
     if (EXSUCCEED!=(ret=edb_cursor_open(txn, db->dbi, cursor)))
     {
-        NDRX_LOG(log_error, "Failed to open cursor [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-
-        userlog("Failed to open cursor [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open cursor [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
     }
@@ -2063,13 +1994,7 @@ expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
     {
         if (ret!=EDB_NOTFOUND)
         {
-            NDRX_LOG(log_error, "Failed to delete from db [%s] for key [%s], data: %p: %s", 
-                db->cachedb, key, data, edb_strerror(ret));
-            
-            userlog("Failed to delete from db [%s] for key [%s], data: %p: %s", 
-                    db->cachedb, key, data, edb_strerror(ret));
-            
-            ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to delete from db [%s] for key [%s], data: %p: %s", 
                 db->cachedb, key, data, edb_strerror(ret));
         }
@@ -2103,13 +2028,7 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
             
     if (EXSUCCEED!=(ret=edb_put(txn, db->dbi, &keydb, data, flags)))
     {
-        NDRX_LOG(log_error, "Failed to to put to db [%s] key [%s], data: %p: %s", 
-            db->cachedb, key, data, edb_strerror(ret));
-
-        userlog("Failed to to put to db [%s] key [%s], data: %p: %s", 
-            db->cachedb, key, data, edb_strerror(ret));
-
-        ndrx_TPset_error_fmt(ndrx_cache_maperr(ret), 
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
             "Failed to to put to db [%s] key [%s], data: %p: %s", 
             db->cachedb, key, data, edb_strerror(ret));
     }
