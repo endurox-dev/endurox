@@ -231,7 +231,7 @@ struct ndrx_tpcallcache
     char errfmt[PATH_MAX/2];
     
     
-    /* For invalidating their cache */
+    /* For invalidating their cache, in case if rule matched */
     ndrx_tpcallcache_t *inval_cache;    /* their cache to invalidate        */
     char inval_svc[MAXTIDENT+1];        /* Service name of their cache      */
     int inval_idx;                      /* Index of their cache, 0 based    */
@@ -332,6 +332,9 @@ extern NDRX_API int ndrx_cache_save (char *svc, char *idata,
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
         int *saved_tperrno, long *saved_tpurcode);
+
+extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
+        typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
 
 extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data_out);
