@@ -152,14 +152,19 @@ extern "C" {
 #define NDRX_SHM_BRINFO         "%s,shm,brinfo"         /* Bridge info SHM */
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"          /* Service operations... */
 #define NDRX_KEY_FMT            "-k %s"                 /* format string for process key */
+
+/* Format @C<P|D>/<Node Id>/<Service name> */
+#define NDRX_CACHE_EV_PUT       "@CP/%d/%s"             /* Put data in cache, event      */
+#define NDRX_CACHE_EV_DEL       "@CD/%d/%s"             /* Delete data form cache, event */
+
 /*
  * globals
  */
 #define ATMI_MSG_MAX_SIZE   NDRX_MSGSIZEMAX
 #define NDRX_MAX_Q_SIZE     128
 #define NDRX_MAX_ID_SIZE    96      /* pfx + binary name + server id + pid + nodeid */
-#define NDRX_MAX_KEY_SIZE   128     /* Key size for random key                  */
-#define NDRX_QDIAG_MSG_SIZE 256     /* Q diagnostic message size               */
+#define NDRX_MAX_KEY_SIZE   128     /* Key size for random key                      */
+#define NDRX_QDIAG_MSG_SIZE 256     /* Q diagnostic message size                    */
 /* List of configuration environment variables */
 #define CONF_NDRX_TOUT           "NDRX_TOUT"
 #define CONF_NDRX_ULOG           "NDRX_ULOG"
@@ -295,10 +300,11 @@ extern "C" {
 #define X_C_TYPE	"X_C_TYPE"
 #define X_COMMON	"X_COMMON"
 
-#define MAXTIDENT                   30		/* Internal identifed max len   */
+#define MAXTIDENT                   30      /* Internal identifed max len   */
 #define XATMI_SERVICE_NAME_LENGTH   MAXTIDENT
-#define XATMI_TYPE_LEN           8       /* Max type len                 */
+#define XATMI_TYPE_LEN              8       /* Max type len                 */
 #define XATMI_SUBTYPE_LEN           33      /* Max sub-type len             */
+#define XATMI_EVENT_MAX             42      /* Max len of event to bcast    */
      
 /* Range for cluster ID's
  * Currently we allow 254 nodes.

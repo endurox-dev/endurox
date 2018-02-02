@@ -86,7 +86,9 @@ add_library (atmi SHARED
                 identifiers.c
                 atmi_cache.c
                 atmi_cache_edb.c
+                atmi_cache_ops.c
                 atmi_cache_ubf.c
+                atmi_cache_events.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

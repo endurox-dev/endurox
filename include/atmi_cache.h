@@ -54,8 +54,9 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /* limited, more hits, longer stay  */
 #define NDRX_TPCACHE_FLAGS_FIFO      0x00000008   /* First in, first out cache        */
 #define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /* reset cache on boot              */
-#define NDRX_TPCACHE_FLAGS_BROADCAST 0x00000020   /* Shall we broadcast the events?   */
-#define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000040   /* Perfrom timsync                  */
+#define NDRX_TPCACHE_FLAGS_BCASTPUT  0x00000020   /* Shall we broadcast the events?   */
+#define NDRX_TPCACHE_FLAGS_BCASTDEL  0x00000040   /* Broadcast delete events?         */
+#define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /* Perfrom timsync                  */
     
 
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
@@ -75,6 +76,19 @@ extern "C" {
 #define NDRX_TPCACHE_ENOCACHE                -4   /* Service not in cache config      */
 #define NDRX_TPCACHE_ENOKEYDATA              -5   /* No key data found                */
 #define NDRX_TPCACHE_ENOTYPESUPP             -6   /* Type not supported               */
+
+
+#define NDRX_TPCACHE_BCAST_DFLT              ""   /* default event                    */
+#define NDRX_TPCACHE_BCAST_DELFULL           "F"  /* delete full                      */
+    
+#define NDRX_CACHES_BLOCK                   "caches"
+#define NDRX_CACHE_MAX_READERS_DFLT         1000
+#define NDRX_CACHE_MAP_SIZE_DFLT            160000 /* 160K */
+#define NDRX_CACHE_PERMS_DFLT               0664
+
+#define NDRX_CACHE_BCAST_MODE_PUT           1
+#define NDRX_CACHE_BCAST_MODE_DEL           2
+
 /**
  * Dump the cache database configuration
  */
@@ -95,8 +109,10 @@ extern "C" {
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_FIFO));\
     NDRX_LOG(LEV, "flags, 'bootreset' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BOOTRST));\
-    NDRX_LOG(LEV, "flags, 'broadcast' = [%d]", \
-                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BROADCAST));\
+    NDRX_LOG(LEV, "flags, 'bcastput' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BCASTPUT));\
+    NDRX_LOG(LEV, "flags, 'bcastdel' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BCASTDEL));\
     NDRX_LOG(LEV, "flags, 'timesync' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_TIMESYNC));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
@@ -329,6 +345,14 @@ struct ndrx_tpcache_typesupp
 
 
 /*---------------------------Globals------------------------------------*/
+
+extern NDRX_API ndrx_tpcache_db_t *ndrx_G_tpcache_db; /* ptr to cache database */
+extern NDRX_API ndrx_tpcache_svc_t *ndrx_G_tpcache_svc; /* service cache       */
+extern NDRX_API ndrx_tpcache_typesupp_t ndrx_G_tpcache_types[];
+
+/*---------------------------Prototypes---------------------------------*/
+
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -345,6 +369,8 @@ extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
+
+extern NDRX_API int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b);
 
 extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data_out);
@@ -380,6 +406,11 @@ extern NDRX_API int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache,
         char *errdet, int errdetbufsz);
 extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache, 
         char *idata, long ilen,  char *errdet, int errdetbufsz);
+
+/* eventing: */
+
+extern NDRX_API int ndrx_cache_broadcast(char *svc, char *idata, long ilen, 
+           int event_type, char *flags);
 
 #ifdef	__cplusplus
 }

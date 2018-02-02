@@ -56,6 +56,62 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Compare cache entries
+ * @param a
+ * @param b
+ * @return -1, 0 (equals), 1
+ */
+expublic int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b)
+{
+    ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
+    ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
+    int result = 0;
+    
+    
+    if (ad->t > bd->t)
+    {
+        result = 1;
+    }
+    else if (ad->t < bd->t)
+    {
+        result = -1;
+    }
+    else
+    {
+        /* equals compare, microsec */
+        
+        if (ad->tusec > bd->tusec)
+        {
+            result = 1;
+        }
+        else if (ad->tusec < bd->tusec)
+        {
+            result = -1;
+        }
+        else
+        {
+            /* equals now decide from node id, the higher number wins */
+            
+            if (ad->nodeid > bd->nodeid)
+            {
+                result = 1;
+            }
+            else if (ad->nodeid < bd->nodeid)
+            {
+                result = -1;
+            }
+            else
+            {
+                /* local node two records a the same time, so equals... */
+                result = 0;
+            }
+        }
+    }
+    
+    return result;
+}
+
+/**
  * Begin MDB transaction
  * @param db db handler
  * @param txn transaction obj (out)

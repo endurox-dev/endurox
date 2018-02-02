@@ -356,6 +356,8 @@ out:
     return ret;
 }
 
+/* TODO: Do we need a set of fields to use for delete notification? */
+
 /**
  * Prepare data for saving to UBF buffer
  * At this stage we have to filter 
@@ -463,11 +465,11 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
     
     if (EXSUCCEED!=descr->pf_prepare_outgoing (descr, buf_to_save, 
                 0, exdata->atmi_buf, &exdata->atmi_buf_len, flags))
-        {
-            NDRX_LOG(log_error, "Failed to prepare buffer for saving");
-            userlog("Failed to prepare buffer for saving: %s", tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
+    {
+        NDRX_LOG(log_error, "Failed to prepare buffer for saving");
+        userlog("Failed to prepare buffer for saving: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
     
 out:
