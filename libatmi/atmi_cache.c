@@ -64,15 +64,6 @@
 #define CACHE_MAP_SIZE_DFLT         160000 /* 160K */
 #define CACHE_PERMS_DFLT            0664
 
-#define NDRX_CACHE_TPERROR(atmierr, fmt, ...)\
-        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
-        userlog(fmt, ##__VA_ARGS__);\
-        ndrx_TPset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
-
-#define NDRX_CACHE_ERROR(fmt, ...)\
-        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
-        userlog(fmt, ##__VA_ARGS__);
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
