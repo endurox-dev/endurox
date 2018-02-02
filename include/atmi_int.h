@@ -441,7 +441,7 @@ struct tp_command_call
      * where @CA -> Cache Add, @CD -> Cache delete, 002 -> source node id
      * Flgs -> max 4 flags ascii letters. And service name
      */
-    char extradata[42+1]; /* Extra char data to be passed over the call */
+    char extradata[XATMI_EVENT_MAX+1]; /* Extra char data to be passed over the call */
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;

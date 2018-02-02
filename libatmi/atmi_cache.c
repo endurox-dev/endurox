@@ -57,23 +57,16 @@
 #include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
-#define CACHES_BLOCK    "caches"
-
-#define CACHE_MAX_READERS_DFLT      1000
-#define CACHE_MAP_SIZE_DFLT         160000 /* 160K */
-#define CACHE_PERMS_DFLT            0664
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate ndrx_tpcache_db_t *M_tpcache_db = NULL; /* ptr to cache database */
-exprivate ndrx_tpcache_svc_t *M_tpcache_svc = NULL; /* service cache       */
+expublic ndrx_tpcache_db_t *ndrx_G_tpcache_db = NULL; /* ptr to cache database */
+expublic ndrx_tpcache_svc_t *ndrx_G_tpcache_svc = NULL; /* service cache       */
 /*---------------------------Prototypes---------------------------------*/
 
 /* NOTE! Table shall contain all defined buffer types  */
-expublic ndrx_tpcache_typesupp_t M_types[] =
+expublic ndrx_tpcache_typesupp_t ndrx_G_tpcache_types[] =
 {
     /* typeid (idx), rule_compile func,         rule eval func,             refresh rule eval  */
     {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf,      ndrx_cache_ruleval_ubf,     ndrx_cache_refeval_ubf, 
@@ -116,7 +109,7 @@ expublic ndrx_tpcache_typesupp_t M_types[] =
  */
 expublic int ndrx_cache_used(void)
 {
-    if (NULL!=M_tpcache_db && NULL!=M_tpcache_svc)
+    if (NULL!=ndrx_G_tpcache_db && NULL!=ndrx_G_tpcache_svc)
     {
         return EXTRUE;
     }
@@ -155,7 +148,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
 {
     ndrx_tpcache_db_t *ret;
     
-    EXHASH_FIND_STR( M_tpcache_db, cachedb, ret);
+    EXHASH_FIND_STR( ndrx_G_tpcache_db, cachedb, ret);
     
     return ret;
 }
@@ -187,9 +180,9 @@ expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *tpc)
 {
     
     if (tpc->buf_type && 
-            NULL!=M_types[tpc->buf_type->type_id].pf_cache_delete)
+            NULL!=ndrx_G_tpcache_types[tpc->buf_type->type_id].pf_cache_delete)
     {
-        M_types[tpc->buf_type->type_id].pf_cache_delete(tpc);
+        ndrx_G_tpcache_types[tpc->buf_type->type_id].pf_cache_delete(tpc);
     }
     
     if (NULL!=tpc->rsprule_tree)
@@ -229,9 +222,9 @@ expublic void ndrx_cache_svc_free(ndrx_tpcache_svc_t *svc)
 expublic void ndrx_cache_svcs_free(void)
 {
     ndrx_tpcache_svc_t *el, *elt;
-    EXHASH_ITER(hh, M_tpcache_svc, el, elt)
+    EXHASH_ITER(hh, ndrx_G_tpcache_svc, el, elt)
     {
-        EXHASH_DEL(M_tpcache_svc, el);
+        EXHASH_DEL(ndrx_G_tpcache_svc, el);
         ndrx_cache_svc_free(el);
     }
 }
@@ -242,67 +235,11 @@ expublic void ndrx_cache_svcs_free(void)
 expublic void ndrx_cache_dbs_free(void)
 {
     ndrx_tpcache_db_t *el, *elt;
-    EXHASH_ITER(hh, M_tpcache_db, el, elt)
+    EXHASH_ITER(hh, ndrx_G_tpcache_db, el, elt)
     {
-        EXHASH_DEL(M_tpcache_db, el);
+        EXHASH_DEL(ndrx_G_tpcache_db, el);
         ndrx_cache_db_free(el);
     }
-}
-
-/**
- * Compare cache entries
- * @param a
- * @param b
- * @return -1, 0, 1
- */
-exprivate int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b)
-{
-    ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
-    ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
-    int result = 0;
-    
-    
-    if (ad->t > bd->t)
-    {
-        result = 1;
-    }
-    else if (ad->t < bd->t)
-    {
-        result = -1;
-    }
-    else
-    {
-        /* equals compare, microsec */
-        
-        if (ad->tusec > bd->tusec)
-        {
-            result = 1;
-        }
-        else if (ad->tusec < bd->tusec)
-        {
-            result = -1;
-        }
-        else
-        {
-            /* equals now decide from node id, the higher number wins */
-            
-            if (ad->nodeid > bd->nodeid)
-            {
-                result = 1;
-            }
-            else if (ad->nodeid < bd->nodeid)
-            {
-                result = -1;
-            }
-            else
-            {
-                /* local node two records a the same time, so equals... */
-                result = 0;
-            }
-        }
-    }
-    
-    return result;
 }
 
 /**
@@ -355,9 +292,9 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     /* Set max_readers, map_size defaults */
     
-    db->max_readers = CACHE_MAX_READERS_DFLT;
-    db->map_size = CACHE_MAP_SIZE_DFLT;
-    db->perms = CACHE_PERMS_DFLT;
+    db->max_readers = NDRX_CACHE_MAX_READERS_DFLT;
+    db->map_size = NDRX_CACHE_MAP_SIZE_DFLT;
+    db->perms = NDRX_CACHE_PERMS_DFLT;
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
@@ -417,9 +354,13 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_FIFO;
                 }
-                else if (0==strcmp(p, "broadcast"))
+                else if (0==strcmp(p, "bcastput"))
                 {
-                    db->flags|=NDRX_TPCACHE_FLAGS_BROADCAST;
+                    db->flags|=NDRX_TPCACHE_FLAGS_BCASTPUT;
+                }
+                else if (0==strcmp(p, "bcastdel"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_BCASTDEL;
                 }
                 else if (0==strcmp(p, "timesync"))
                 {
@@ -563,7 +504,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     /* Add object to the hash */
     
-    EXHASH_ADD_STR(M_tpcache_db, cachedb, db);
+    EXHASH_ADD_STR(ndrx_G_tpcache_db, cachedb, db);
     
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Cache [%s] path: [%s] is open!", 
@@ -622,10 +563,10 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
                 return el;
             }
             
-            if (M_types[el->buf_type->type_id].pf_rule_eval)
+            if (ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval)
             {
-                ret = M_types[el->buf_type->type_id].pf_rule_eval(el, idata, ilen, 
-                        errdet, sizeof(errdet));
+                ret = ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval(el, 
+                        idata, ilen, errdet, sizeof(errdet));
                 if (EXFAIL==ret)
                 {
                     NDRX_CACHE_ERROR("%s: Failed to evaluate buffer [%s]: %s", 
@@ -669,7 +610,6 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
     return NULL;
 }
 
-
 /**
  * Normal init (used by server & clients)
  * @param mode See NDRX_TPCACH_INIT_*
@@ -698,7 +638,7 @@ expublic int ndrx_cache_init(int mode)
     /* So if we are here, the configuration file should be already parsed 
      * We need to load the config file to AST
      */
-    
+
     /* Firstly we search for [@cache[/sub-sect]] 
      * Then for each ^svc\ .* we parse the json block and build
      * up the cache descriptor
@@ -721,6 +661,7 @@ expublic int ndrx_cache_init(int mode)
 #endif
         goto out;
     }
+
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
@@ -769,15 +710,15 @@ expublic int ndrx_cache_init(int mode)
         
         name = (char *)exjson_object_get_name(root_object, 0);
         
-        if (0!=strcmp(CACHES_BLOCK, name))
+        if (0!=strcmp(NDRX_CACHES_BLOCK, name))
         {
             NDRX_CACHE_ERROR("CACHE: Expected [%s] got [%s]",
-                    CACHES_BLOCK, name);
+                    NDRX_CACHES_BLOCK, name);
             EXFAIL_OUT(ret);
         }
 
         /* getting array from root value */
-        array = exjson_object_get_array(root_object, CACHES_BLOCK);
+        array = exjson_object_get_array(root_object, NDRX_CACHES_BLOCK);
         cnt = exjson_array_get_count(array);
 
 #ifdef NDRX_TPCACHE_DEBUG
@@ -962,7 +903,7 @@ expublic int ndrx_cache_init(int mode)
                 cache->inval_idx = atoi(tmp);
                 
                 /* Find service in cache */
-                EXHASH_FIND_STR(M_tpcache_svc, cache->inval_svc, svcc);
+                EXHASH_FIND_STR(ndrx_G_tpcache_svc, cache->inval_svc, svcc);
 
                 if (NULL==svcc)
                 {
@@ -983,7 +924,7 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* validate the type */
-            if (NULL==M_types[cache->buf_type->type_id].pf_get_key)
+            if (NULL==ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key)
             {
                 NDRX_CACHE_TPERROR(TPEOTYPE, "CACHE: buffer type not supported "
                         "for service [%s], buffer index: %d - Unknown type "
@@ -1043,9 +984,9 @@ expublic int ndrx_cache_init(int mode)
                 }
             }
             
-            if (NULL!=M_types[cache->buf_type->type_id].pf_process_flags)
+            if (NULL!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_process_flags)
             {
-                if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_process_flags(cache, 
+                if (EXSUCCEED!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_process_flags(cache, 
                         errdet, sizeof(errdet)))
                     
                 {
@@ -1058,10 +999,10 @@ expublic int ndrx_cache_init(int mode)
             
             /* Rule to be true to save to cache */
             
-            if (NULL!=M_types[cache->buf_type->type_id].pf_rule_compile)
+            if (NULL!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_rule_compile)
             {
                 /* Compile the boolean expression! */
-                if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_rule_compile(
+                if (EXSUCCEED!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_rule_compile(
                         cache, errdet, sizeof(errdet)))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile rule [%s] "
@@ -1096,10 +1037,10 @@ expublic int ndrx_cache_init(int mode)
             cache = NULL;
         }
         
-        EXHASH_ADD_STR(M_tpcache_svc, svcnm, cachesvc);
+        EXHASH_ADD_STR(ndrx_G_tpcache_svc, svcnm, cachesvc);
         cachesvc = NULL;
     }
-
+        
 out:
             
     /* cleanup code */
@@ -1134,651 +1075,3 @@ out:
 
     return ret;
 }
-
-/**
- * Check response rule, should we cache this or not
- * @param cache cache object
- * @param save_tperrno tperror number
- * @param save_tpurcode user return code
- * @return EXFAIL/EXFALSE/EXTRUE
- */
-exprivate int ndrx_cache_chkrsprule(ndrx_tpcallcache_t *cache, 
-            long save_tperrno, long save_tpurcode)
-{
-    int ret = EXFALSE;
-    char buf[512];
-    UBFH *p_ub = (UBFH *)buf;
-    
-    if (EXSUCCEED!=Binit(p_ub, sizeof(buf)))
-    {
-        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: failed to init response check buffer: %s",
-                Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    /* Load the data into buffer */
-    
-    if (EXSUCCEED!=Bchg(p_ub, EX_TPERRNO, 0, (char *)&save_tperrno, 0L))
-    {
-        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: Failed to set EX_TPERRNO[0] to %ld: %s",
-                save_tperrno, Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=Bchg(p_ub, EX_TPURCODE, 0, (char *)&save_tpurcode, 0L))
-    {
-        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: Failed to set EX_TPURCODE[0] to %ld: %s",
-                save_tpurcode, Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    /* Finally evaluate the expression */
-    
-    if (EXFAIL==(ret=Bboolev(p_ub, cache->rsprule_tree)))
-    {
-        NDRX_CACHE_TPERROR(TPESYSTEM, "cache: Failed to evalute [%s] "
-                "tree: %p expression: %s",
-                cache->rsprule, cache->rsprule_tree, Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    NDRX_LOG(log_debug, "Response expression [%s]: %s", cache->rsprule,
-            (EXTRUE==ret?"TRUE":"FALSE"));
-    
-out:
-            
-    return ret;
-
-}
-
-/**
- * Save data to cache
- * @param idata
- * @param ilen
- * @param save_tperrno
- * @param save_tpurcode
- * @param nodeid
- * @return EXSUCCEED/EXFAIL/NDRX_TPCACHE_ENOCACHE
- */
-expublic int ndrx_cache_save (char *svc, char *idata, 
-        long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags)
-{
-    int ret = EXSUCCEED;
-    /* have a buffer in size of ATMI message */
-    char buf[NDRX_MSGSIZEMAX];
-    ndrx_tpcache_svc_t *svcc = NULL;
-    typed_buffer_descr_t *buf_type;
-    buffer_obj_t *buffer_info;
-    ndrx_tpcallcache_t *cache;
-    ndrx_tpcache_data_t *exdata = (ndrx_tpcache_data_t *)buf;
-    unsigned int dbflags;
-    int tran_started = EXFALSE;
-    EDB_txn *txn;
-    char key[NDRX_CACHE_KEY_MAX+1];
-    char errdet[MAX_TP_ERROR_LEN+1];
-    EDB_val cachedata;
-    
-    memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
-    
-    exdata->nodeid = nodeid;
-    exdata->saved_tperrno = save_tperrno;
-    exdata->saved_tpurcode = save_tpurcode;
-    
-    /* get current timestamp */
-    ndrx_utc_tstamp2(&exdata->t, &exdata->tusec);
-    
-    /* OK now translate the thing to db format (i.e. make outgoing message) */
-    
-    
-    /* Find service in cache */
-    EXHASH_FIND_STR(M_tpcache_svc, svc, svcc);
-    
-    if (NULL==svcc)
-    {
-#ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "No cache defined for [%s]", svc);
-#endif
-        ret = NDRX_TPCACHE_ENOCACHE;
-        goto out;
-    }
-    
-    if (NULL!=idata)
-    {
-        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
-                    __func__, idata);
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    buf_type = &G_buf_descr[buffer_info->type_id];
-    
-    /* Test the buffers rules */
-    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
-    {
-        ret = NDRX_TPCACHE_ENOCACHE;
-        goto out;
-    }
-    
-    exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
-            
-    if (NULL==M_types[cache->buf_type->type_id].pf_cache_put)
-    {
-        ret = NDRX_TPCACHE_ENOTYPESUPP;
-        goto out;
-        
-    }
-    
-    /* Check the response rule if defined */
-    
-    if (NULL!=cache->rsprule_tree)
-    {
-        if (EXFAIL==(ret=ndrx_cache_chkrsprule(cache, (long)save_tperrno, 
-                save_tpurcode)))
-        {
-            NDRX_LOG(log_error, "Failed to test response code");
-            EXFAIL_OUT(ret);
-        }
-        
-        if (EXFALSE==ret)
-        {
-            NDRX_LOG(log_info, "Response shall not be saved according to rsp rule");
-            ret = EXSUCCEED;
-            goto out;
-        }
-        
-        ret = EXSUCCEED;
-    }
-    
-    if (EXSUCCEED!=M_types[cache->buf_type->type_id].pf_cache_put(cache, exdata, 
-            buf_type, idata, ilen, flags))
-    {
-        /* Error shall be set by func */
-        NDRX_LOG(log_error, "Failed to convert to cache format!!!");
-        EXFAIL_OUT(ret);
-        
-    }
-    
-    NDRX_LOG(log_info, "About to cache data for service: [%s]", svc);
-    
-    
-    NDRX_STRCPY_SAFE(key, cache->keyfmt);
-       
-    /* Build the key... */
-    if (EXSUCCEED!=(ret = M_types[buffer_info->type_id].pf_get_key(cache, idata, 
-            ilen, key, sizeof(key), errdet, sizeof(errdet))))
-    {
-        if (NDRX_TPCACHE_ENOKEYDATA==ret)
-        {
-            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
-            goto out;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Failed to build key: ", errdet);
-            
-            /* generate TP error here! */
-            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
-                    __func__, errdet);
-            goto out;
-        }
-            
-    }
-    
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
-    {
-        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
-        goto out;
-    }
-    tran_started = EXTRUE;
-    
-    
-    /* Add the record to the DB, to specific key! */
-    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
-    {
-        dbflags = EDB_APPENDDUP;
-    }
-    else
-    {
-        dbflags = 0;
-    }
-    
-    cachedata.mv_data = (void *)exdata;
-    cachedata.mv_size = exdata->atmi_buf_len + sizeof(ndrx_tpcache_data_t);
-    
-    
-    NDRX_LOG(log_info, "About to put to cache: svc: [%s] key: [%s]: size: %ld",
-            svcc->svcnm, key, (long)cachedata.mv_size);
-    
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
-            key, &cachedata, dbflags)))
-    {
-        NDRX_LOG(log_debug, "Failed to put DB record!");
-        goto out;
-    }
-    
-    NDRX_LOG(log_debug, "Data cached");
-    
-out:
-
-    if (tran_started)
-    {
-        if (EXSUCCEED==ret)
-        {
-            ndrx_cache_edb_commit(cache->cachedb, txn);
-        }
-        else
-        {
-            ndrx_cache_edb_abort(cache->cachedb, txn);
-        }
-    }
-
-    return ret;
-}
-
-/**
- * Lookup service in cache
- * @param svc service to call
- * @param idata input data buffer
- * @param ilen input len
- * @param odata output data buffer
- * @param olen output len
- * @param flags flags
- * @param should_cache should record be cached?
- * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
- */
-expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
-        char **odata, long *olen, long flags, int *should_cache, 
-        int *saved_tperrno, long *saved_tpurcode)
-{
-    int ret = EXSUCCEED;
-    ndrx_tpcache_svc_t *svcc = NULL;
-    typed_buffer_descr_t *buf_type;
-    buffer_obj_t *buffer_info;
-    ndrx_tpcallcache_t *cache;
-    char key[NDRX_CACHE_KEY_MAX+1];
-    char errdet[MAX_TP_ERROR_LEN+1];
-    EDB_txn *txn;
-    int cursor_open = EXFALSE;
-    EDB_cursor *cursor;
-    int tran_started = EXFALSE;
-    EDB_val cachedata;
-    EDB_val cachedata_update;
-    ndrx_tpcache_data_t *exdata;
-    ndrx_tpcache_data_t *exdata_update;
-    ndrx_tpcallcache_t* el;
-    int is_matched;
-        
-    /* Key size - assume 16K should be fine */
-    /* get buffer type & sub-type */
-    cachedata_update.mv_size = 0;
-    cachedata_update.mv_data = NULL;
-        
-    /* Find service in cache */
-    EXHASH_FIND_STR(M_tpcache_svc, svc, svcc);
-    
-    if (NULL==svcc)
-    {
-#ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "No cache defined for [%s]", svc);
-#endif
-        ret = NDRX_TPCACHE_ENOCACHE;
-        goto out;
-    }
-    
-    if (NULL!=idata)
-    {
-        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
-                    __func__, idata);
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    
-    /* TODO: Loop over the tpcallcaches, if `next' flag present, then perform next
-     * if we get invalidate their, then delete target records by the key */
-    buf_type = &G_buf_descr[buffer_info->type_id];
-#if 0
-    /* Test the buffers rules */
-    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
-    {
-        ret = NDRX_TPCACHE_ENOCACHE;
-        goto out;
-    }
-#endif
-    
-    /* TODO: *should_cache=EXTRUE; */
-    DL_FOREACH(svcc->caches, cache)
-    {
-        is_matched = EXFALSE;
-        
-        if (cache->buf_type->type_id == buf_type->type_id)
-        {
-            if (M_types[el->buf_type->type_id].pf_rule_eval)
-            {
-                ret = M_types[el->buf_type->type_id].pf_rule_eval(cache, idata, ilen, 
-                        errdet, sizeof(errdet));
-                if (EXFAIL==ret)
-                {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "%s: Failed to evaluate buffer [%s]: %s", 
-                            __func__, cache->rule, errdet);
-                    
-                    EXFAIL_OUT(ret);
-                }
-                else if (EXFALSE==ret)
-                {
-#ifdef NDRX_TPCACHE_DEBUG
-                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - continue", cache->rule);
-#endif
-                    continue;
-                }
-                
-                is_matched = EXTRUE;
-                ret = EXSUCCEED;
-            }
-            else
-            {
-                /* We should not get here! */
-                NDRX_CACHE_TPERROR(TPEINVAL,"%s: Unsupported buffer type [%s] for cache", 
-                                __func__, el->buf_type->type);
-                EXFAIL_OUT(ret);
-            }
-        }
-        
-        /* if we are here, the cache is matched */
-        
-        if (!(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
-        {
-            /* ONLY IN CASE IF NOT INVAL - Check should we refresh? */
-            if (NULL!=M_types[cache->buf_type->type_id].pf_refreshrule_eval &&
-                    EXEOS!=cache->refreshrule[0])
-            {
-                ret = M_types[cache->buf_type->type_id].pf_refreshrule_eval(cache, 
-                        idata, ilen, errdet, sizeof(errdet));
-                if (EXFAIL==ret)
-                {
-                    /* Failed to eval refresh rule */
-                    NDRX_LOG(log_error, "Failed to eval refresh rule: %s", errdet);
-
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to eval refresh rule: %s", 
-                            errdet);
-                    EXFAIL_OUT(ret);
-                }
-                else if (EXTRUE==ret)
-                {
-                    NDRX_LOG(log_info, "Cache will be refreshed - rule matched "
-                            "(do not continue cache lookup)");
-                    ret = NDRX_TPCACHE_ENOCACHEDATA;
-                    goto out;
-                }
-            }
-        }
-
-        /* Test the rule, if and not found then stage to NDRX_TPCACHE_ENOTFOUNADD 
-         * OK, we need to build a key
-         */
-
-        NDRX_STRCPY_SAFE(key, cache->keyfmt);
-
-        /* Build the key... */
-        if (EXSUCCEED!=(ret = M_types[buffer_info->type_id].pf_get_key(cache, idata, 
-                ilen, key, sizeof(key), errdet, sizeof(errdet))))
-        {
-            if (NDRX_TPCACHE_ENOKEYDATA==ret)
-            {
-                NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
-                goto out;
-            }
-            else
-            {
-                NDRX_LOG(log_error, "Failed to build key: ", errdet);
-
-                /* generate TP error here! */
-                ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
-                        __func__, errdet);
-                goto out;
-            }
-        }
-        
-        if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
-        {
-            /* TODO: Invalidate their cache */
-        }
-        
-        
-        if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
-        {
-#ifdef NDRX_TPCACHE_DEBUG
-            NDRX_LOG(log_debug, "Next flag present, go to next cache (if have one)");
-#endif
-            continue;
-        }
-        else
-        {
-            break;
-        }
-        
-    }
-    
-    /* cache not found */
-    if (!is_matched)
-    {
-        
-#ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "No cache defined for [%s], buffer type [%s] "
-                "or all was invalidate", svc, buf_type->type);
-#endif
-        ret = NDRX_TPCACHE_ENOCACHE;
-        goto out;
-    }
-    
-    /* LOOP END */
-    
-    /* Lookup DB */
-    
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
-    {
-        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
-        goto out;
-    }
-    tran_started = EXTRUE;
-    
-    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
-    {
-#ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "Performing timesync based complex lookup");
-#endif        
-        if (EXSUCCEED!=ndrx_cache_edb_set_dupsort(cache->cachedb, txn, 
-                ndrx_cache_cmp_fun))
-        {
-            NDRX_LOG(log_error, "Failed to set dupsort!");
-            EXFAIL_OUT(ret);
-        }
-        
-        if (EXSUCCEED!=ndrx_cache_edb_cursor_open(cache->cachedb, txn, &cursor))
-        {
-            NDRX_LOG(log_error, "Failed to open cursor!");
-            EXFAIL_OUT(ret);
-        }
-        
-        /* OK fetch the first rec of cursor, next records we shall kill (if any) */
-        /* first: EDB_FIRST_DUP - this we accept and process */
-        
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_SET_KEY)))
-        {
-            if (EDB_NOTFOUND!=ret)
-            {
-                NDRX_LOG(log_error, "Failed to scan for data!");
-                EXFAIL_OUT(ret);
-            }
-            /* no data found */
-            ret = NDRX_TPCACHE_ENOCACHEDATA;
-            goto out;
-        }
-        
-        /* not sure but we should position on first.. ? Do we need this ? */
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_FIRST_DUP)))
-        {
-            if (EDB_NOTFOUND!=ret)
-            {
-                NDRX_LOG(log_error, "Failed to scan for data!");
-                EXFAIL_OUT(ret);
-            }
-            /* no data found */
-            ret = NDRX_TPCACHE_ENOCACHEDATA;
-            goto out;
-        }
-        
-    }
-    else
-    {
-#ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "Performing simple lookup");
-#endif
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata)))
-        {
-            /* error already provided by wrapper */
-            NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
-            goto out;
-        }
-    }
-    
-    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
-    /* OK we have a raw data... lets dump something... */
-#ifdef NDRX_TPCACHE_DEBUG
-    NDRX_LOG(log_debug, "Got cache record for key [%s] of service [%s]", key, svc);
-    /* Dump more correctly with admin info */
-    NDRX_DUMP(6, "Got cache data", (char *)cachedata.mv_data, 
-            (int)cachedata.mv_size);
-    NDRX_TPCACHETPCALL_DBDATA(log_debug, exdata);
-#endif
-    
-    /* Error shall be set by func */
-    
-    if (EXSUCCEED!=M_types[buffer_info->type_id].pf_cache_get(cache, exdata, 
-            buf_type, idata, ilen, odata, olen, flags))
-    {
-        NDRX_LOG(log_error, "%s: Failed to receive data: ", __func__);
-        goto out;
-    }
-    
-    *saved_tperrno = exdata->saved_tperrno;
-    *saved_tpurcode = exdata->saved_tpurcode;
-    
-    NDRX_LOG(log_debug, "cache tperrno: %d tpurcode: %ld",
-            *saved_tperrno, *saved_tpurcode);
-    
-    /* Update cache (if needed) */
-    
-    
-    /* perform copy if needed for cache update */
-    if ((cache->cachedb->flags & NDRX_TPCACHE_FLAGS_LRU) ||
-            (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_HITS))
-    {
-        cachedata_update.mv_size = cachedata.mv_size;
-        cachedata_update.mv_data = NDRX_MALLOC(cachedata.mv_size);
-        
-        if (NULL==cachedata_update.mv_data)
-        {
-            int err = errno;
-            
-            NDRX_CACHE_TPERROR(TPEOS, "Failed to allocate %ld bytes: %s",
-                    (long)cachedata_update.mv_size, strerror(err));
-        }
-        
-        memcpy(cachedata_update.mv_data, cachedata.mv_data, cachedata.mv_size);
-        
-        exdata_update = (ndrx_tpcache_data_t *)cachedata_update.mv_data;
-        /* ok this might overflow, then it will be time for cache to reset...
-         * but that will be long number of requests away...
-         */
-
-        exdata_update->hits++;
-        ndrx_utc_tstamp2(&exdata_update->t, &exdata_update->tusec);
-
-#ifdef NDRX_TPCACHE_DEBUG        
-        NDRX_LOG(log_debug, "hits=%ld t=%ld t=%ld", exdata_update->hits,
-                exdata_update->t, exdata_update->tusec);
-#endif
-        if (cursor_open)
-        {
-            edb_cursor_close(cursor);
-        }
-        cursor_open=EXFALSE;
-        
-        /* delete all records */
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, 
-            key, NULL)))
-        {
-            if (EDB_NOTFOUND==ret)
-            {
-                ret=EXSUCCEED;
-            }
-            else
-            {
-                EXFAIL_OUT(ret);
-            }
-        }
-        
-        /* Add record */
-        
-    }
-    else if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
-    {
-        /* fetch next for dups and remove them.. if any.. */
-        /* next: MDB_NEXT_DUP  - we kill this! */
-        while (EXSUCCEED==(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_NEXT_DUP)))
-        {
-            /* delete the record, not needed, some old cache rec */
-            
-            if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, 
-                    key, &cachedata)))
-            {
-                if (ret!=EDB_NOTFOUND)
-                {
-                    /* if not found maybe next key will be found */
-                    break;
-                }
-            }
-        }
-        
-        if (ret!=EDB_NOTFOUND)
-        {
-            EXFAIL_OUT(ret);
-        }
-        else
-        {
-            ret = EXSUCCEED;
-        }
-    }
-    
-
-    
-out:
-
-    if (cursor_open)
-    {
-        edb_cursor_close(cursor);
-    }
-
-    if (tran_started)
-    {
-        if (EXSUCCEED==ret)
-        {
-            ndrx_cache_edb_commit(cache->cachedb, txn);
-        }
-        else
-        {
-            ndrx_cache_edb_abort(cache->cachedb, txn);
-        }
-    }
-
-    return ret;
-}
-
