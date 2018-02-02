@@ -662,7 +662,6 @@ expublic int ndrx_cache_init(int mode)
         goto out;
     }
 
-    
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
         
@@ -754,6 +753,10 @@ expublic int ndrx_cache_init(int mode)
                 p_flags = strtok_r (flagstr, ",", &saveptr1);
                 while (p_flags != NULL)
                 {
+                    /*
+                     * New flags: delrex, delfull - used for delete buffer prepration
+                     * if not set, defaults to delfull
+                     */
                     if (0==strcmp(p_flags, "putrex"))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
