@@ -154,6 +154,16 @@ extern "C" {
     NDRX_DUMP(LEV, "BLOB data", DBDATA->atmi_buf, DBDATA->atmi_buf_len);\
     NDRX_LOG(LEV, "=================================================");
     
+
+#define NDRX_CACHE_TPERROR(atmierr, fmt, ...)\
+        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
+        userlog(fmt, ##__VA_ARGS__);\
+        ndrx_TPset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
+
+#define NDRX_CACHE_ERROR(fmt, ...)\
+        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
+        userlog(fmt, ##__VA_ARGS__);
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
