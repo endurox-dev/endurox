@@ -85,6 +85,7 @@ add_library (atmi SHARED
                 tpnotify.c
                 identifiers.c
                 atmi_cache.c
+                atmi_cache_edb.c
                 atmi_cache_ubf.c
             )
 
