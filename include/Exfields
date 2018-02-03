@@ -176,6 +176,7 @@ EX_NETGATEWAY               551         string -        Network gateway service
 EX_NETCONNID                552         long  -         Network Connection id at gateway
 EX_NETCORR                  553         string  -       Network request correlator field
 EX_NETFLAGS                 554         string  -       Flags of the network call
+EX_NETCONNIDCOMP            555         long  -         Compiled connection id
 
 ################################################################################
 # View processing

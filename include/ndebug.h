@@ -51,15 +51,16 @@ extern NDRX_API ndrx_debug_t G_ndrx_debug;
 extern NDRX_API ndrx_debug_t G_stdout_debug;
 extern NDRX_API volatile int G_ndrx_debug_first;
 /*---------------------------Macros-------------------------------------*/
-/**
+
+/*
  * Log levels
  */
-#define log_always      1 
-#define log_error       2
-#define log_warn        3
-#define log_info        4
-#define log_debug       5
-#define log_dump        6
+#define log_always                  1 
+#define log_error                   2
+#define log_warn                    3
+#define log_info                    4
+#define log_debug                   5
+#define log_dump                    6
 
 /*
  * Logging settings
@@ -74,17 +75,17 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define LOG_FACILITY_NDRX_REQUEST   0x00080 /* ndrx request logging             */
 #define LOG_FACILITY_UBF_REQUEST    0x00100 /* ubf request logging              */
     
-#define LOG_CODE_NDRX       'N'
-#define LOG_CODE_UBF        'U'
-#define LOG_CODE_TP         't'
-#define LOG_CODE_TP_THREAD  'T'
-#define LOG_CODE_TP_REQUEST 'R'
+#define LOG_CODE_NDRX               'N'
+#define LOG_CODE_UBF                'U'
+#define LOG_CODE_TP                 't'
+#define LOG_CODE_TP_THREAD          'T'
+#define LOG_CODE_TP_REQUEST         'R'
 
-#define LOG_CODE_NDRX_THREAD  'n'
-#define LOG_CODE_NDRX_REQUEST 'm'
+#define LOG_CODE_NDRX_THREAD        'n'
+#define LOG_CODE_NDRX_REQUEST       'm'
 
-#define LOG_CODE_UBF_THREAD  'u'
-#define LOG_CODE_UBF_REQUEST 'v'
+#define LOG_CODE_UBF_THREAD         'u'
+#define LOG_CODE_UBF_REQUEST        'v'
     
 #define NDRX_DBG_MAX_LEV log_dump
 /* Have double check on G_ndrx_debug_first, as on after getting first mutex, object
@@ -102,59 +103,59 @@ extern NDRX_API volatile int G_ndrx_debug_first;
  * Thus we run alternate route in case init lock is acquired.
  */
 #define NDRX_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
-            __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
-            NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+    __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+    NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
+    {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 #define UBF_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
-            __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
-            NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+    __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+    NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
+    {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 #define TP_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
-            __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
-            NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+    __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+    NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
+    {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 /*
  * Normal loggers 
  */
 #define NDRX_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
 #define UBF_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 /* User logging */
 #define TP_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
 /* Extended user logging, with filename name and line */
 #define TP_LOGEX(lev, file, line, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(&G_tp_debug, lev, file, line, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_tp_debug, lev, file, line, __func__, fmt, ##__VA_ARGS__);}}
 
 #define TP_LOGGETIFLAGS {NDRX_DBG_INIT_ENTRY; return G_tp_debug.iflags; }
 
 #define UBF_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug_dump__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define NDRX_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug_dump__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define STDOUT_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_stdout_debug.level)\
-            {__ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define TP_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 
 #define UBF_DUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+    {__ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define NDRX_DUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug_dump_diff__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+    {__ndrx_debug_dump_diff__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define TP_DUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+    {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define NDRX_DBG_SETTHREAD(X) ndrx_dbg_setthread(X)
 
