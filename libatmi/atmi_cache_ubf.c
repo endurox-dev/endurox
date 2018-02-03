@@ -356,7 +356,23 @@ out:
     return ret;
 }
 
-/* TODO: Do we need a set of fields to use for delete notification? */
+/**
+ * Get delete buffer
+ * @param cache
+ * @param descr
+ * @param idata
+ * @param ilen
+ * @param odata
+ * @param olen
+ * @param flags
+ * @return 
+ */
+expublic int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, 
+        typed_buffer_descr_t *descr, char *idata, long ilen, 
+        char **odata, long *olen, long flags)
+{
+    
+}
 
 /**
  * Prepare data for saving to UBF buffer
