@@ -395,7 +395,7 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
                 /* Test the field against regex */
                 char * nm = Bfname(fid);
                 
-                if (EXSUCCEED==ndrx_regexec(&cache->save_regex, nm))
+                if (EXSUCCEED==ndrx_regexec(&cache->saveproj.regex, nm))
                 {
                     /* loop over, match regexp, if ok, add field to projection list */
                     if (EXSUCCEED!=add_proj_field(&list, &list_len, idx, fid, 
@@ -436,7 +436,7 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         
         if (cache->flags & NDRX_TPCACHE_TPCF_SAVESETOF)
         {
-            cpylist = (BFLDID *)cache->p_save_typpriv;
+            cpylist = (BFLDID *)cache->saveproj.typpriv;
         }
         else
         {
@@ -556,16 +556,23 @@ out:
 }
 
 /**
- * Process flags. Here we preprepare projection copy if needed.
- * @param cache
- * @param errdet
- * @param errdetbufsz
- * @return 
+ * Process typed flags of the buffer projection
+ * @param cache cache object
+ * @param pb projection buffer
+ * @param op operation (for debug - string)
+ * @param flags_projreg flag constant for regex save/del
+ * @param flags_projfull flag constant for proj full
+ * @param flags_projsetof flag constant for save set of
+ * @param errdet error detail return
+ * @param errdetbufsz error buffer size
+ * @return EXSUCCEED/EXFAIL (TP error not set ar error detail returned)
  */
-expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache, 
+exprivate int proc_flags_typed(ndrx_tpcallcache_t *cache, 
+        ndrx_tpcache_projbuf_t *pb, char *op,
+        long flags_projreg, long flags_projfull, long flags_projsetof,
         char *errdet, int errdetbufsz)
 {
-    int ret = EXSUCCEED;
+   int ret = EXSUCCEED;
     char *saveptr1 = NULL;
     char *p;
     char tmp[PATH_MAX+1];
@@ -576,20 +583,20 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
      * - If no save strategy is given, then '*' means full buffer
      * - If '*' is not found, then build a project copy list
      */
-    if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEREG) && !(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
+    if (!(cache->flags & flags_projreg) && !(cache->flags & flags_projfull))
     {
-        if (strcmp(cache->save, "*"))
+        if (0==strcmp(pb->expression, "*") || EXEOS==pb->expression[0])
         {
 #ifdef NDRX_TPCACHE_DEBUG
-            NDRX_LOG(log_debug, "Save strategy defaulted to full UBF buffer");
+            NDRX_LOG(log_debug, "%s strategy defaulted to full UBF buffer", op);
 #endif
-            cache->flags |= NDRX_TPCACHE_TPCF_SAVEFULL;
+            cache->flags |= flags_projfull;
         }
         else
         {
-            cache->flags |= NDRX_TPCACHE_TPCF_SAVESETOF;
+            cache->flags |= flags_projsetof;
 #ifdef NDRX_TPCACHE_DEBUG
-            NDRX_LOG(log_debug, "Save strategy: list of fields - parsing...");
+            NDRX_LOG(log_debug, "%s strategy: list of fields - parsing...", op);
 #endif
             /* clean up save string... */            
             ndrx_str_strip(tmp, "\t ");
@@ -609,8 +616,8 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
                     EXFAIL_OUT(ret);
                 }
                 
-                if (EXSUCCEED!=add_proj_field((char **)&cache->p_save_typpriv, 
-                            &cache->save_typpriv2, idx, fid, errdet, errdetbufsz))
+                if (EXSUCCEED!=add_proj_field((char **)&pb->typpriv, 
+                            &pb->typpriv2, idx, fid, errdet, errdetbufsz))
                 {
                     NDRX_LOG(log_error, "Failed to add field to projection list!");
                     EXFAIL_OUT(ret);
@@ -621,6 +628,42 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
             }
         }
     }
+out:
+    return ret;    
+}
+
+/**
+ * Process flags. Here we prepare projection copy if needed.
+ * @param cache cache on which to execute
+ * @param errdet error detail
+ * @param errdetbufsz error buffer size
+ * @return EXSUCCEED/EXFAIL (no tperror)
+ */
+expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache, 
+        char *errdet, int errdetbufsz)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret = proc_flags_typed(cache, 
+        &cache->saveproj, "save",
+        NDRX_TPCACHE_TPCF_SAVEREG, 
+        NDRX_TPCACHE_TPCF_SAVEFULL,
+        NDRX_TPCACHE_TPCF_SAVESETOF,
+        errdet, errdetbufsz)))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret = proc_flags_typed(cache, 
+        &cache->delproj, "delete",
+        NDRX_TPCACHE_TPCF_DELREG, 
+        NDRX_TPCACHE_TPCF_DELFULL,
+        NDRX_TPCACHE_TPCF_DELSETOF,
+        errdet, errdetbufsz)))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     return ret;    
 }
@@ -642,9 +685,14 @@ expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
         Btreefree(cache->refreshrule_tree);
     }
     
-    if (NULL!=cache->p_save_typpriv)
+    if (NULL!=cache->saveproj.typpriv)
     {
-        NDRX_FREE(cache->p_save_typpriv);
+        NDRX_FREE(cache->saveproj.typpriv);
+    }
+    
+    if (NULL!=cache->delproj.typpriv)
+    {
+        NDRX_FREE(cache->delproj.typpriv);
     }
     
     return EXSUCCEED;

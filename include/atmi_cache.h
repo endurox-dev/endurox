@@ -67,6 +67,11 @@ extern "C" {
 #define NDRX_TPCACHE_TPCF_INVAL      0x00000020      /* Invalidate other cache        */
 #define NDRX_TPCACHE_TPCF_NEXT       0x00000040      /* Process next rule (only for inval)*/
     
+#define NDRX_TPCACHE_TPCF_DELREG     0x00000080      /* Delete record can be regexp   */
+#define NDRX_TPCACHE_TPCF_DELFULL    0x00000100      /* Delete full buffer            */
+#define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200      /* Delete set of fields          */
+
+    
 #define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
 
@@ -125,14 +130,14 @@ extern "C" {
     
 /**
  * Dump tpcall configuration
- * TODO dump flags!
  */
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
     NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
     NDRX_LOG(LEV, "cachedbnm=[%s]", TPCALLCACHE->cachedbnm);\
     NDRX_LOG(LEV, "cachedb=[%p]", TPCALLCACHE->cachedb);\
     NDRX_LOG(LEV, "keyfmt=[%s]", TPCALLCACHE->keyfmt);\
-    NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->save);\
+    NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->saveproj.expression);\
+    NDRX_LOG(LEV, "delete=[%s]", TPCALLCACHE->delproj.expression);\
     NDRX_LOG(LEV, "rule=[%s]", TPCALLCACHE->rule);\
     NDRX_LOG(LEV, "rule_tree=[%p]", TPCALLCACHE->rule_tree);\
     NDRX_LOG(LEV, "refreshrule=[%s]", TPCALLCACHE->refreshrule);\
@@ -156,6 +161,12 @@ extern "C" {
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_INVAL));\
     NDRX_LOG(LEV, "flags (computed) save list = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVESETOF));\
+    NDRX_LOG(LEV, "flags, 'delrex' = [%d]", \
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELREG));\
+    NDRX_LOG(LEV, "flags, 'delfull' = [%d]", \
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELFULL));\
+    NDRX_LOG(LEV, "flags (computed) delete list = [%d]", \
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELSETOF));\
     NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
     NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
     NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
@@ -212,6 +223,21 @@ struct ndrx_tpcache_db
 typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
 
 /**
+ * This structure describes how to project a slice of the buffer
+ */
+struct ndrx_tpcache_projbuf
+{
+    char expression[PATH_MAX+1]; /* Projection expression               */
+    
+    /* Save can be regexp, so we need to compile it...!                 */
+    int regex_compiled;
+    regex_t regex;
+    void *typpriv; /* private list of save data, could be projcpy list? */
+    long typpriv2;
+};
+typedef struct ndrx_tpcache_projbuf ndrx_tpcache_projbuf_t;
+
+/**
  * cache entry, this is linked list as 
  */
 typedef struct ndrx_tpcallcache ndrx_tpcallcache_t;
@@ -220,12 +246,10 @@ struct ndrx_tpcallcache
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
     ndrx_tpcache_db_t *cachedb;
     char keyfmt[PATH_MAX+1];
-    char save[PATH_MAX+1]; /* can be plain, or regex */
-    /* Save can be regexp, so we need to compile it...! */
-    int save_regex_compiled;
-    regex_t save_regex;
-    void *p_save_typpriv; /* TODO: private list of save data, could be projcpy list? */
-    long save_typpriv2;
+    
+    ndrx_tpcache_projbuf_t saveproj;    /* Save buffer projection           */
+    ndrx_tpcache_projbuf_t delproj;     /* Delete buffer projection         */
+    
     /* We need a flags here to allow regex, for example. But the regex is */
     char flagsstr[NDRX_CACHE_FLAGS_MAX+1];
     long flags;
