@@ -275,6 +275,8 @@ when threaded logger using for multi-contexting (like go runtime)
 
 - Version 5.2.12 released on 27/01/2018. (stable) Feature #275 - fixes for server un-init (not critical)
 
+- Version 5.2.14 released on 03/02/2018. (stable) Feature #278 - new fields for compiled connection id
+
 # Build configurations
 
 ## Configure make with: 
