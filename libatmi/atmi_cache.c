@@ -190,9 +190,14 @@ expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *tpc)
         Btreefree(tpc->rsprule_tree);
     }
     
-    if (tpc->save_regex_compiled)
+    if (tpc->saveproj.regex_compiled)
     {
-        ndrx_regfree(&tpc->save_regex);
+        ndrx_regfree(&tpc->saveproj.regex);
+    }
+    
+    if (tpc->delproj.regex_compiled)
+    {
+        ndrx_regfree(&tpc->delproj.regex);
     }
     
     NDRX_FREE(tpc);
@@ -757,7 +762,15 @@ expublic int ndrx_cache_init(int mode)
                      * New flags: delrex, delfull - used for delete buffer prepration
                      * if not set, defaults to delfull
                      */
-                    if (0==strcmp(p_flags, "putrex"))
+                    if (0==strcmp(p_flags, "delrex"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_DELREG;
+                    }
+                    else if (0==strcmp(p_flags, "delfull"))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_DELFULL;
+                    }
+                    else if (0==strcmp(p_flags, "putrex"))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
                     }
@@ -963,6 +976,7 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* get fields to save */
+            
             if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
             {
                 if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
@@ -972,18 +986,43 @@ expublic int ndrx_cache_init(int mode)
                     EXFAIL_OUT(ret);
                 }
                 
-                NDRX_STRCPY_SAFE(cache->save, tmp);
+                NDRX_STRCPY_SAFE(cache->saveproj.expression, tmp);
                 
                 /* if it is regex, then compile */
                 if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
                 {
-                    if (EXSUCCEED!=ndrx_regcomp(&cache->save_regex, cache->save))
+                    if (EXSUCCEED!=ndrx_regcomp(&cache->saveproj.regex, 
+                            cache->saveproj.expression))
                     {
                         NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile [save] "
                             "regex [%s] for svc [%s], "
-                            "buffer index: %d - see ndrx logs", svc, cache->save, i);
+                            "buffer index: %d - see ndrx logs", 
+                                svc, cache->saveproj.expression, i);
                     }
-                    cache->save_regex_compiled=EXTRUE;
+                    cache->saveproj.regex_compiled=EXTRUE;
+                }
+            }
+            
+            /* process delete fields */
+            if (!(cache->flags & NDRX_TPCACHE_TPCF_DELFULL))
+            {
+                if (NULL!=(tmp = exjson_object_get_string(array_object, "delete")))
+                {                    
+                    NDRX_STRCPY_SAFE(cache->delproj.expression, tmp);
+
+                    /* if it is regex, then compile */
+                    if (cache->flags & NDRX_TPCACHE_TPCF_DELREG)
+                    {
+                        if (EXSUCCEED!=ndrx_regcomp(&cache->delproj.regex, 
+                                cache->delproj.expression))
+                        {
+                            NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to "
+                                "compile [delete] regex [%s] for svc [%s], "
+                                "buffer index: %d - see ndrx logs", 
+                                        svc, cache->delproj.expression, i);
+                        }
+                        cache->delproj.regex_compiled=EXTRUE;
+                    }
                 }
             }
             
