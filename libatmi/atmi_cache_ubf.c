@@ -357,40 +357,22 @@ out:
 }
 
 /**
- * Get delete buffer
- * @param cache
- * @param descr
- * @param idata
- * @param ilen
- * @param odata
- * @param olen
- * @param flags
- * @return 
+ * Prepare UBF buffer projection (for pur or delete)
+ * @param cache cache descriptor
+ * @param pb projection descriptor
+ * @param p_ub_in UBF buffer in
+ * @param p_ub_out UBF buffer out (if addr not changed, then same as in)
+ * @param flags_projreg flag of NDRX_TPCACHE_TPCF_*REG
+ * @param flags_projfull flag of NDRX_TPCACHE_TPCF_*FULL
+ * @param flags_projsetof flag of NDRX_TPCACHE_TPCF_*SETOF
+ * @return EXSUCCED/EXFAIL (tp error set)
  */
-expublic int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, 
-        typed_buffer_descr_t *descr, char *idata, long ilen, 
-        char **odata, long *olen, long flags)
-{
-    
-}
-
-/**
- * Prepare data for saving to UBF buffer
- * At this stage we have to filter 
- * @param exdata node the len must be set to free space..
- * @param descr type description
- * @param idata
- * @param ilen
- * @param flags
- * @return 
- */
-expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
-        ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *descr, char *idata, 
-        long ilen, long flags)
+expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache, 
+        ndrx_tpcache_projbuf_t *pb,
+        UBFH *p_ub_in, UBFH **p_ub_out,
+        long flags_projreg, long flags_projfull, long flags_projsetof)
 {
     int ret = EXSUCCEED;
-    UBFH *p_ub = NULL;
-    char *buf_to_save;
     char *list = NULL;
     long list_len = 0;
     BFLDID fid;
@@ -399,30 +381,25 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
     char errdet[MAX_TP_ERROR_LEN+1];
     /* Figure out what to put */
     
-    if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
+    if (cache->flags & flags_projreg)
     {
-        NDRX_LOG(log_debug, "save by regular expression, field by field");
+        NDRX_LOG(log_debug, "project buffer by regular expression, field by field");
         fid = BFIRSTFLDID;
         
-        while(1==Bnext(p_ub, &fid, &occ, NULL, NULL))
+        while(1==Bnext(p_ub_in, &fid, &occ, NULL, NULL))
         {
             if (0==occ)
             {
                 /* Test the field against regex */
                 char * nm = Bfname(fid);
                 
-                if (EXSUCCEED==ndrx_regexec(&cache->saveproj.regex, nm))
+                if (EXSUCCEED==ndrx_regexec(&pb->regex, nm))
                 {
                     /* loop over, match regexp, if ok, add field to projection list */
                     if (EXSUCCEED!=add_proj_field(&list, &list_len, idx, fid, 
                             errdet, sizeof(errdet)))
                     {
-                        NDRX_LOG(log_error, "Failed to add field to projection list: %s", 
-                                errdet);
-                        userlog("Failed to add field to projection list: %s", 
-                                errdet);
-
-                        ndrx_TPset_error_fmt(TPESYSTEM, 
+                        NDRX_CACHE_TPERROR(TPESYSTEM, 
                             "Failed to add field to projection list: %s", 
                                 errdet);
                         EXFAIL_OUT(ret);
@@ -433,26 +410,26 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         /* copy off the projection */   
     }
     
-    if (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL)
+    if (cache->flags & flags_projfull)
     {
-        NDRX_LOG(log_debug, "Saving full buffer to cache");
-        buf_to_save = idata;
+        NDRX_LOG(log_debug, "Project full buffer");
+        *p_ub_out = p_ub_in;
     }
-    else if (cache->flags & NDRX_TPCACHE_TPCF_SAVESETOF ||
-            cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
+    else if (cache->flags & flags_projsetof ||
+            cache->flags & flags_projreg)
     {
         BFLDID * cpylist;
-        p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof((UBFH *)idata));
+        *p_ub_out = (UBFH *)tpalloc("UBF", NULL, Bsizeof((UBFH *)p_ub_in));
         
-        if (NULL==p_ub)
+        if (NULL==*p_ub_out)
         {
             NDRX_LOG(log_error, "Failed to alloc temp buffer!");
             userlog("Failed to alloc temp buffer: %s", tpstrerror(tperrno));
         }
         
-        if (cache->flags & NDRX_TPCACHE_TPCF_SAVESETOF)
+        if (cache->flags & flags_projsetof)
         {
-            cpylist = (BFLDID *)cache->saveproj.typpriv;
+            cpylist = (BFLDID *)pb->typpriv;
         }
         else
         {
@@ -461,20 +438,82 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         
         /* OK, we have to make a projection copy */
         
-        if (EXSUCCEED!=Bprojcpy(p_ub, (UBFH *)idata, cpylist))
+        if (EXSUCCEED!=Bprojcpy(*p_ub_out, (UBFH *)p_ub_in, cpylist))
         {
-            NDRX_LOG(log_error, "Projection copy failed for cache data: %s", 
-                    Bstrerror(Berror));
-            userlog("Projection copy failed for cache data: %s", 
-                    Bstrerror(Berror));
-            
-            ndrx_TPset_error_fmt(TPESYSTEM, 
+            NDRX_CACHE_TPERROR(TPESYSTEM, 
                 "Projection copy failed for cache data: %s", Bstrerror(Berror));
             
             EXFAIL_OUT(ret);
         }
-        
-        buf_to_save = (char *)p_ub;
+    }
+    
+out:
+
+    if (NULL!=list)
+    {
+        NDRX_FREE(list);
+    }
+
+    return ret;
+}
+
+/**
+ * Prepare delete buffer to project to 
+ * @param cache cache
+ * @param descr buffer descriptor
+ * @param idata input data
+ * @param ilen input data len (not used)
+ * @param odata output data (double ptr) maybe same as input -> not allocated
+ * @param olen not used
+ * @return EXSUCCEED/EXFAIL (tperror set)
+ */
+expublic int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, 
+        typed_buffer_descr_t *descr, char *idata, long ilen,
+        char **odata, long *olen)
+{
+    int ret = EXSUCCEED;
+    
+    
+    if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->saveproj,
+        (UBFH *)idata, (UBFH **)odata,
+            NDRX_TPCACHE_TPCF_DELREG, 
+            NDRX_TPCACHE_TPCF_DELFULL, 
+            NDRX_TPCACHE_TPCF_DELSETOF))
+    {
+        NDRX_LOG(log_error, "Failed to prepare outgoing buffer for delete call!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;    
+}
+
+/**
+ * Prepare data for saving to UBF buffer
+ * At this stage we have to filter 
+ * @param exdata node the len must be set to free space..
+ * @param descr type description
+ * @param idata input data
+ * @param ilen input data len
+ * @param flags flags used for prepare outgoing (from tpcall)
+ * @return EXSUCEED/EXFAIL (tp error set)
+ */
+expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
+        ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *descr, char *idata,
+        long ilen, long flags)
+{
+    int ret = EXSUCCEED;
+    UBFH *p_ub =(UBFH *)idata;
+    char *buf_to_save;
+    
+    if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->saveproj,
+        (UBFH *)idata, (UBFH **)buf_to_save, 
+            NDRX_TPCACHE_TPCF_SAVEREG, 
+            NDRX_TPCACHE_TPCF_SAVEFULL, 
+            NDRX_TPCACHE_TPCF_SAVESETOF))
+    {
+        NDRX_LOG(log_error, "Failed to prepare buffer for save to cache!");
+        EXFAIL_OUT(ret);
     }
     
     ndrx_debug_dump_UBF(log_debug, "Saving to cache", (UBFH *)buf_to_save);
@@ -487,17 +526,11 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         EXFAIL_OUT(ret);
     }
     
-    
 out:
 
-    if (NULL!=p_ub)
+    if (buf_to_save!=idata)
     {
-        tpfree((char *)p_ub);
-    }
-
-    if (NULL!=list)
-    {
-        NDRX_FREE(list);
+        tpfree((char *)buf_to_save);
     }
 
     return ret;

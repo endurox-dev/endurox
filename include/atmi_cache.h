@@ -359,6 +359,8 @@ struct ndrx_tpcache_typesupp
     int (*pf_cache_put) (ndrx_tpcallcache_t *cache, ndrx_tpcache_data_t *exdata, 
         typed_buffer_descr_t *descr, char *idata, long ilen, long flags);
     
+    int (*pf_cache_del) (ndrx_tpcallcache_t *cache, typed_buffer_descr_t *descr, 
+        char *idata, long ilen, char **odata, long *olen);
     
     /* check flags for given type and process the save rule if any */
     int (*pf_process_flags)(ndrx_tpcallcache_t *cache, char *errdet, int errdetbufsz);
@@ -418,6 +420,9 @@ extern NDRX_API int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
 extern NDRX_API int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         ndrx_tpcache_data_t *exdata,  typed_buffer_descr_t *descr, 
         char *idata, long ilen, long flags);
+extern NDRX_API int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, 
+        typed_buffer_descr_t *descr, char *idata, long ilen,
+        char **odata, long *olen);
 extern NDRX_API int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
         ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type, 
         char *idata, long ilen, char **odata, long *olen, long flags);
