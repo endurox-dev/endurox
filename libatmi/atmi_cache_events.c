@@ -88,7 +88,7 @@ expublic int ndrx_cache_broadcast(char *svc, char *idata, long ilen,
     
     /* Build the event to broadcast */
     
-    snprintf(event, sizeof(event), fmt, (int)tpgetnodeid(), svc);
+    snprintf(event, sizeof(event), fmt, (int)tpgetnodeid(), flags, svc);
     
     NDRX_LOG(log_debug, "Broadcasting event: [%s]", event);
     
