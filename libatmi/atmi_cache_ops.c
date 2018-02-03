@@ -279,6 +279,15 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     NDRX_LOG(log_debug, "Data cached");
     
+    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTPUT)
+    {
+        if (EXSUCCEED!=ndrx_cache_broadcast(svc, idata, ilen, 
+                NDRX_CACHE_BCAST_MODE_PUT, NDRX_TPCACHE_BCAST_DFLT))
+        {
+            NDRX_LOG(log_error, "WARNING ! Failed to broadcast put event - continue");
+        }
+    }
+    
 out:
 
     if (tran_started)

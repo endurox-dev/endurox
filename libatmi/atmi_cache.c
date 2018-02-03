@@ -71,35 +71,35 @@ expublic ndrx_tpcache_typesupp_t ndrx_G_tpcache_types[] =
     /* typeid (idx), rule_compile func,         rule eval func,             refresh rule eval  */
     {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf,      ndrx_cache_ruleval_ubf,     ndrx_cache_refeval_ubf, 
                     ndrx_cache_keyget_ubf,      ndrx_cache_get_ubf,         ndrx_cache_put_ubf, 
-                    ndrx_cache_proc_flags_ubf,  ndrx_cache_delete_ubf},
+                    ndrx_cache_del_ubf,         ndrx_cache_proc_flags_ubf,  ndrx_cache_delete_ubf},
     /* dummy */
     {1,             NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
                     
     {BUF_TYPE_INIT, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
                     
     {BUF_TYPE_NULL, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
                     
     {BUF_TYPE_STRING,NULL,                      NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
                     
     {BUF_TYPE_CARRAY, NULL,                     NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
                     
     {BUF_TYPE_JSON, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
                     
     {BUF_TYPE_VIEW, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL},
+                    NULL,                       NULL,                       NULL},
     {EXFAIL}
 };
 
