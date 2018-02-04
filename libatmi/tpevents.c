@@ -57,7 +57,7 @@
  * Internal version of tpsubscribe.
  * Actually do the main logic of the function
  */
-long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
+expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -169,7 +169,7 @@ out:
  * Internal version of tpunsubscribe.
  * Actually do the main logic of the function
  */
- long ndrx_tpunsubscribe(long subscription, long flags)
+expublic long ndrx_tpunsubscribe(long subscription, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -224,14 +224,17 @@ out:
 }
 
 /**
- *
+ * Internal version of tppost
  * @param eventname
  * @param data
  * @param len
  * @param flags
+ * @param user1 user data field 1
+ * @param user2 user data field 2
  * @return
  */
-int ndrx_tppost(char *eventname, char *data, long len, long flags)
+expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
+            int user1, long user2)
 {
     int ret=EXSUCCEED;
     char *ret_buf;
@@ -248,7 +251,8 @@ int ndrx_tppost(char *eventname, char *data, long len, long flags)
 
     /* Post the */
     if (EXFAIL!=(ret=tpcallex(NDRX_SYS_SVC_PFX EV_TPEVPOST, 
-            data, len, &ret_buf, &ret_len, flags, eventname, EXFAIL, 0)))
+            data, len, &ret_buf, &ret_len, flags, eventname, EXFAIL, 0,
+            user1, user2)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }

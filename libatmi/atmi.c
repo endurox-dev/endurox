@@ -85,7 +85,8 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!
      causes problems with serice async replies!, See doc for tpacall! */
             
-    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL); /* no reply queue */
+    /* no reply queue */
+    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL, 0, 0);
     
 out:
     return ret;
@@ -97,10 +98,13 @@ out:
  * @param data
  * @param len
  * @param flags
+ * @param user1 user data field 1 (only for request)
+ * @param user2 user data field 2 (only for request)
  * @return
  */
 expublic int tpacallex (char *svc, char *data, 
-        long len, long flags, char *extradata, int dest_node, int ex_flags)
+        long len, long flags, char *extradata, int dest_node, int ex_flags,
+        int user1, long user2)
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -115,8 +119,10 @@ expublic int tpacallex (char *svc, char *data,
 
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!
      causes problems with serice async replies!, See doc for tpacall! */
-            
-    ret=ndrx_tpacall(svc, data, len, flags, extradata, dest_node, ex_flags, NULL); /* no reply queue */
+    
+    /* no reply queue */
+    ret=ndrx_tpacall(svc, data, len, flags, extradata, dest_node, ex_flags, 
+            NULL, user1, user2);
     
 out:
     return ret;
@@ -221,7 +227,7 @@ expublic int tpcall (char *svc, char *idata, long ilen,
         goto out;
     }
 
-    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0);
+    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0, 0, 0);
     
 out:
     return ret;
@@ -296,7 +302,8 @@ out:
  */
 expublic int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags)
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2)
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -331,7 +338,8 @@ expublic int tpcallex (char *svc, char *idata, long ilen,
         goto out;
     }
 
-    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, extradata, dest_node, ex_flags);
+    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, extradata, 
+            dest_node, ex_flags, user1, user2);
 
 out:
     return ret;
@@ -671,7 +679,7 @@ expublic int tppost(char *eventname, char *data, long len, long flags)
         goto out;
     }
 
-    ret=ndrx_tppost(eventname, data, len, flags);
+    ret=ndrx_tppost(eventname, data, len, flags, 0, 0);
 
 out:
     return ret;
