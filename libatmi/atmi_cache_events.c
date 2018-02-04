@@ -63,10 +63,13 @@
  * @param ilen input data len
  * @param event_type event type, see
  * @param flags flags to put in event NDRX_CACHE_BCAST_MODE_*
+ * @param user1 user data field 1 (microseconds)
+ * @param user2 user data field 2 (epoch seconds)
  * @return EXSUCCEED/EXFAIL, tperror installed if any
  */
 expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, 
-        char *svc, char *idata, long ilen, int event_type, char *flags)
+        char *svc, char *idata, long ilen, int event_type, char *flags,
+        int user1, long user2)
 {
     int ret = EXSUCCEED;
     char *fmt;
@@ -114,9 +117,10 @@ expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache,
     
     snprintf(event, sizeof(event), fmt, (int)tpgetnodeid(), flags, svc);
     
-    NDRX_LOG(log_debug, "Broadcasting event: [%s]", event);
+    NDRX_LOG(log_debug, "Broadcasting event: [%s] user1=%d user2=%ld", event,
+            user1, user2);
     
-    if (EXSUCCEED!=tppost(event, idata, ilen, TPNOTRAN|TPNOREPLY))
+    if (EXSUCCEED!=ndrx_tppost(event, idata, ilen, TPNOTRAN|TPNOREPLY, user1, user2))
     {
         NDRX_CACHE_ERROR("Failed to send event [%s]: %s", 
                 event, tpstrerror(tperrno));
