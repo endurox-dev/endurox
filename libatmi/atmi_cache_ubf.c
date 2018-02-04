@@ -460,19 +460,16 @@ out:
 /**
  * Prepare delete buffer to project to 
  * @param cache cache
- * @param descr buffer descriptor
  * @param idata input data
  * @param ilen input data len (not used)
  * @param odata output data (double ptr) maybe same as input -> not allocated
  * @param olen not used
  * @return EXSUCCEED/EXFAIL (tperror set)
  */
-expublic int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, 
-        typed_buffer_descr_t *descr, char *idata, long ilen,
+expublic int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, char *idata, long ilen,
         char **odata, long *olen)
 {
     int ret = EXSUCCEED;
-    
     
     if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->saveproj,
         (UBFH *)idata, (UBFH **)odata,
@@ -628,7 +625,7 @@ exprivate int proc_flags_typed(ndrx_tpcallcache_t *cache,
     BFLDID fid;
     int idx = 0;
     
-    /* TODO: Process some additional rules
+    /* Process some additional rules
      * - If no save strategy is given, then '*' means full buffer
      * - If '*' is not found, then build a project copy list
      */

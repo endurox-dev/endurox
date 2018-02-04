@@ -57,6 +57,7 @@
 
 /**
  * Broadcast buffer as event
+ * @param cache cache on which we perform broadcast
  * @param svc service name of cache event occurring
  * @param idata input data
  * @param ilen input data len
@@ -64,20 +65,43 @@
  * @param flags flags to put in event NDRX_CACHE_BCAST_MODE_*
  * @return EXSUCCEED/EXFAIL, tperror installed if any
  */
-expublic int ndrx_cache_broadcast(char *svc, char *idata, long ilen, 
-           int event_type, char *flags)
+expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, 
+        char *svc, char *idata, long ilen, int event_type, char *flags)
 {
     int ret = EXSUCCEED;
     char *fmt;
     char event[XATMI_EVENT_MAX+1];
+    char *odata = NULL;
+    long olen;
     
     if (NDRX_CACHE_BCAST_MODE_PUT==event_type)
     {
         fmt = NDRX_CACHE_EV_PUT;
+        
+        odata = idata;
+        olen = ilen;
     }
     else if (NDRX_CACHE_BCAST_MODE_DEL==event_type)
     {
         fmt = NDRX_CACHE_EV_DEL;
+        
+        /* prepare projection on what we want to broadcast */
+        
+        if (ndrx_G_tpcache_types[cache->buf_type->type_id].pf_cache_del)
+        {
+            if (EXSUCCEED!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_cache_del(
+                    cache, idata, ilen, &odata, &olen))
+            {
+                NDRX_LOG(log_error, "Failed to prepare broadcast data for delete");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            odata = idata;
+            olen = ilen;
+        }
+        
     }
     else
     {
@@ -96,10 +120,20 @@ expublic int ndrx_cache_broadcast(char *svc, char *idata, long ilen,
     {
         NDRX_CACHE_ERROR("Failed to send event [%s]: %s", 
                 event, tpstrerror(tperrno));
+        
+        /* ignore status, unset error */
+        
+        ndrx_TPunset_error();
+        
         EXFAIL_OUT(ret);
     }
     
 out:
+
+    if (odata!=NULL && odata!=idata)
+    {
+        tpfree(odata);
+    }
 
     return ret;
 }
