@@ -390,13 +390,9 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         {
             db->map_size = (long)ndrx_num_dec_parsecfg(val->val);
         }
-        else if (0==strcmp(val->key, "subscr_put"))
+        else if (0==strcmp(val->key, "subscr"))
         {
-            NDRX_STRCPY_SAFE(db->subscr_put, val->val);
-        }
-        else if (0==strcmp(val->key, "subscr_del"))
-        {
-            NDRX_STRCPY_SAFE(db->subscr_del, val->val);
+            NDRX_STRCPY_SAFE(db->subscr, val->val);
         }
         else
         {
