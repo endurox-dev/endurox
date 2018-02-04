@@ -52,6 +52,7 @@
 #include <atmi_shm.h>
 #include <exregex.h>
 #include "tpcachesv.h"
+#include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -101,10 +102,15 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-    char tmpsvc[MAXTIDENT+1];             
+    char cachesvc[MAXTIDENT+1];
+    char mgmtsvc[MAXTIDENT+1];
     long nodeid;
+    string_list_t *list = NULL, *el;
+    TPEVCTL evctl;
     
     NDRX_LOG(log_debug, "%s called", __func__);
+    
+    memset(&evctl, 0, sizeof(evctl));
     
     nodeid = tpgetnodeid();
     
@@ -114,25 +120,52 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_CACHE_EVSVC, nodeid);
+    snprintf(cachesvc, sizeof(cachesvc), NDRX_CACHE_EVSVC, nodeid);
 
-    if (EXSUCCEED!=tpadvertise(tmpsvc, CACHEEV))
+    if (EXSUCCEED!=tpadvertise(cachesvc, CACHEEV))
     {
-        NDRX_LOG(log_error, "Failed to initialize [%s]!", tmpsvc);
-        ret=EXFAIL;
-        goto out;
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", cachesvc);
+        EXFAIL_OUT(ret);
     }
     
-    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_CACHE_MGSVC, nodeid);
+    snprintf(mgmtsvc, sizeof(mgmtsvc), NDRX_CACHE_MGSVC, nodeid);
     
-    if (EXSUCCEED!=tpadvertise(tmpsvc, CACHEEV))
+    if (EXSUCCEED!=tpadvertise(mgmtsvc, CACHEEV))
     {
-        NDRX_LOG(log_error, "Failed to initialize [%s]!", tmpsvc);
-        ret=EXFAIL;
-        goto out;
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", mgmtsvc);
+        EXFAIL_OUT(ret);
+    }
+        
+    /* Process the caches and subscribe to corresponding events */
+    
+    if (EXSUCCEED!=ndrx_cache_events_get(&list))
+    {
+        NDRX_LOG(log_error, "Failed to get list of events to subscribe to!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* loop over the list and subscribe to */
+    
+    LL_FOREACH(list, el)
+    {
+        NDRX_STRCPY_SAFE(evctl.name1, cachesvc);
+        evctl.flags|=TPEVSERVICE;
+        
+        if (EXSUCCEED!=tpsubscribe(el->qname, NULL, &evctl, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to subscribe to event: [%s] "
+                "target service: [%s]", el->qname, evctl.name1);
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
+
+    if (NULL!=list)
+    {
+        ndrx_string_list_free(list);
+    }
+
     return ret;
 }
 
@@ -140,4 +173,3 @@ void NDRX_INTEGRA(tpsvrdone) (void)
 {
     NDRX_LOG(log_debug, "%s called", __func__);
 }
-
