@@ -438,7 +438,7 @@ extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache,
 
 /* eventing: */
 extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc, 
-        char *idata, long ilen, int event_type, char *flags);
+        char *idata, long ilen, int event_type, char *flags, int user1, long user2);
 
 #ifdef	__cplusplus
 }

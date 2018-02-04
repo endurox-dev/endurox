@@ -105,7 +105,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     {
         if (EXSUCCEED!=ndrx_cache_broadcast(cache->inval_cache, 
                 cache->inval_svc, idata, ilen, 
-                NDRX_CACHE_BCAST_MODE_DEL, NDRX_TPCACHE_BCAST_DELFULL))
+                NDRX_CACHE_BCAST_MODE_DEL, NDRX_TPCACHE_BCAST_DELFULL, 0, 0))
         {
             NDRX_LOG(log_error, "WARNING ! Failed to broadcast delete event - continue");
             

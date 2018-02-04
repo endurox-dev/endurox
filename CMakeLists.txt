@@ -296,6 +296,7 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
 ENDIF()
 
 add_subdirectory (tpevsrv)
+add_subdirectory (tpcachesv)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
