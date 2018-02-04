@@ -281,7 +281,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTPUT)
     {
-        if (EXSUCCEED!=ndrx_cache_broadcast(svc, idata, ilen, 
+        if (EXSUCCEED!=ndrx_cache_broadcast(cache, svc, idata, ilen, 
                 NDRX_CACHE_BCAST_MODE_PUT, NDRX_TPCACHE_BCAST_DFLT))
         {
             NDRX_LOG(log_error, "WARNING ! Failed to broadcast put event - continue");
@@ -366,7 +366,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     }
     
     
-    /* TODO: Loop over the tpcallcaches, if `next' flag present, then perform next
+    /* Loop over the tpcallcaches, if `next' flag present, then perform next
      * if we get invalidate their, then delete target records by the key */
     buf_type = &G_buf_descr[buffer_info->type_id];
 #if 0
@@ -378,7 +378,6 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     }
 #endif
     
-    /* TODO: *should_cache=EXTRUE; */
     DL_FOREACH(svcc->caches, cache)
     {
         is_matched = EXFALSE;
@@ -473,9 +472,13 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         
         if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
         {
-            /* TODO: Invalidate their cache */
+            /* Invalidate their cache */
+            if (EXSUCCEED!=ndrx_cache_inval_their(svc, cache, key, idata, ilen))
+            {
+                NDRX_LOG(log_error, "Failed to invalidate their cache!");
+            }
+            
         }
-        
         
         if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
         {
@@ -504,6 +507,9 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     }
     
     /* LOOP END */
+    
+    *should_cache=EXTRUE;
+    
     
     /* Lookup DB */
     

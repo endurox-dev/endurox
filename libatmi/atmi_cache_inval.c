@@ -62,19 +62,74 @@
  * @param key key built (their key)
  * @param idata input data
  * @param ilen input data len
- * @return EXSUCCEED/EXFAIL (tperror not set)
+ * @return EXSUCCEED/EXFAIL (tperror set)
  */
-exprivate int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
+expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
         char *key, char *idata, long ilen)
 {
     int ret = EXFALSE;
+    int tran_started = EXFALSE;
+    EDB_txn *txn;
     
-    /* TODO:
+    /*
      * just delete record from theyr cache, ptr to cache we have already inside
      * the cache object 
      */
     
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->inval_cache->cachedb, &txn)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+    
+    NDRX_LOG(log_debug, "Delete their cache [%s] idx %d",
+            cache->inval_svc, cache->inval_idx);
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->inval_cache->cachedb, txn, 
+            key, NULL)))
+    {
+        if (EDB_NOTFOUND==ret)
+        {
+            ret=EXSUCCEED;
+        }
+        else
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* broadcast if needed */
+    if (cache->inval_cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTPUT)
+    {
+        if (EXSUCCEED!=ndrx_cache_broadcast(cache->inval_cache, 
+                cache->inval_svc, idata, ilen, 
+                NDRX_CACHE_BCAST_MODE_DEL, NDRX_TPCACHE_BCAST_DELFULL))
+        {
+            NDRX_LOG(log_error, "WARNING ! Failed to broadcast delete event - continue");
+            
+            if (0!=tperrno)
+            {
+                NDRX_LOG(log_error, "TP Error set -> fail");
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
 out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            ndrx_cache_edb_commit(cache->inval_cache->cachedb, txn);
+        }
+        else
+        {
+            ndrx_cache_edb_abort(cache->inval_cache->cachedb, txn);
+        }
+    }
+
     return ret;
 }
-
