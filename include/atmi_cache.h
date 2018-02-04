@@ -123,8 +123,7 @@ extern "C" {
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
-    NDRX_LOG(LEV, "subscr_put=[%s]", CACHEDB->subscr_put);\
-    NDRX_LOG(LEV, "subscr_del=[%s]", CACHEDB->subscr_del);\
+    NDRX_LOG(LEV, "subscr=[%s]", CACHEDB->subscr);\
     NDRX_LOG(LEV, "=================================================");
 
     
@@ -209,8 +208,7 @@ struct ndrx_tpcache_db
     int broadcast;              /* Shall we broadcast the events                    */
     int perms;                  /* permissions of the database resource             */
     
-    char subscr_put[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events    */
-    char subscr_del[NDRX_EVENT_EXPR_MAX]; /* expression for consuming DEL events    */
+    char subscr[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events    */
     
     /* LMDB Related */
     
@@ -439,6 +437,7 @@ extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache,
 /* eventing: */
 extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc, 
         char *idata, long ilen, int event_type, char *flags, int user1, long user2);
+extern NDRX_API int ndrx_cache_events_get(string_list_t **list);
 
 #ifdef	__cplusplus
 }

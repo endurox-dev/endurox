@@ -141,3 +141,40 @@ out:
 
     return ret;
 }
+
+/**
+ * Return list of event to which subscribe in current CCTAG. Note that we have
+ * only service instance of cache events. thus we must see all cctags of caches
+ * Multiple executables may run
+ * @param list string list of events to subscribe to
+ * @return EXFAIL/EXSUCCEED (in case of succeed string list free required if not
+ * NULLL)
+ */
+expublic int ndrx_cache_events_get(string_list_t **list)
+{
+    int ret = EXSUCCEED;
+    ndrx_tpcache_db_t *el, *elt;
+    
+    /* loop over all databases and get subscribe events */
+    
+    EXHASH_ITER(hh, ndrx_G_tpcache_db, el, elt)
+    {
+        if (EXSUCCEED!=ndrx_string_list_add(list, el->subscr))
+        {
+            NDRX_LOG(log_error, "%s: failed to add string to list [%s]", 
+                    el->subscr);
+            EXFAIL_OUT(ret);
+        }
+
+    }
+    
+out:
+
+    if (EXSUCCEED!=ret && NULL!=*list)
+    {
+        ndrx_string_list_free(*list);
+        *list = NULL;
+    }
+
+    return ret;
+}
