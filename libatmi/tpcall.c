@@ -386,11 +386,14 @@ expublic void cancel_if_expected(tp_command_call_t *call)
  * @param len
  * @param flags - should be managed from parent function (is it real async call
  *                  or tpcall wrapper)
+ * @param user1 - user data field 1
+ * @param user2 - user data field 2
  * @return call descriptor
  */
 expublic int ndrx_tpacall (char *svc, char *data,
                 long len, long flags, char *extradata, 
-                int dest_node, int ex_flags, TPTRANID *p_tranid)
+                int dest_node, int ex_flags, TPTRANID *p_tranid, 
+                int user1, long user2)
 {
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
@@ -558,12 +561,17 @@ expublic int ndrx_tpacall (char *svc, char *data,
     call->cd = tpcall_cd;
     call->timestamp = timestamp;
     
+    call->rval = user1;
+    call->rcode = user2;
+    
     /* Reset call timer */
     ndrx_stopwatch_reset(&call->timer);
     
     NDRX_STRCPY_SAFE(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
-    NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d callseq=%u", 
-            send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq);
+    NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d "
+            "callseq=%u (user1=%d, user2=%ld)", 
+            send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq,
+            call->rval, call->rcode);
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
@@ -882,11 +890,14 @@ out:
  * @param odata
  * @param olen
  * @param flags
+ * @param user1 user data field 1
+ * @param user2 user data field 2
  * @return
  */
 expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags)
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2)
 {
     int ret=EXSUCCEED;
     int cd_req = 0;
@@ -943,7 +954,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     }
     
     if (EXFAIL==(cd_req=ndrx_tpacall (svc, idata, ilen, flags, extradata, 
-            dest_node, ex_flags, p_tranid)))
+            dest_node, ex_flags, p_tranid, user1, user2)))
     {
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
         ret=EXFAIL;
