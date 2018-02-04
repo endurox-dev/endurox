@@ -156,6 +156,8 @@ extern "C" {
 /* Format @C<P|D>/<Node Id>/<Service name> */
 #define NDRX_CACHE_EV_PUT       "@CP/%d/%s"             /* Put data in cache, event      */
 #define NDRX_CACHE_EV_DEL       "@CD/%d/%s"             /* Delete data form cache, event */
+#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"         /* Cache event service           */
+#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"         /* Cache managemtn service       */
 
 /*
  * globals
