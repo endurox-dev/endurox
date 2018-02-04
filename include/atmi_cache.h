@@ -359,7 +359,7 @@ struct ndrx_tpcache_typesupp
     int (*pf_cache_put) (ndrx_tpcallcache_t *cache, ndrx_tpcache_data_t *exdata, 
         typed_buffer_descr_t *descr, char *idata, long ilen, long flags);
     
-    int (*pf_cache_del) (ndrx_tpcallcache_t *cache, typed_buffer_descr_t *descr, 
+    int (*pf_cache_del) (ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, char **odata, long *olen);
     
     /* check flags for given type and process the save rule if any */
@@ -392,7 +392,8 @@ extern NDRX_API int ndrx_cache_save (char *svc, char *idata,
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
         int *saved_tperrno, long *saved_tpurcode);
-
+extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
+        char *key, char *idata, long ilen);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
 
@@ -421,8 +422,7 @@ extern NDRX_API int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         ndrx_tpcache_data_t *exdata,  typed_buffer_descr_t *descr, 
         char *idata, long ilen, long flags);
 extern NDRX_API int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, 
-        typed_buffer_descr_t *descr, char *idata, long ilen,
-        char **odata, long *olen);
+        char *idata, long ilen, char **odata, long *olen);
 extern NDRX_API int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
         ndrx_tpcache_data_t *exdata, typed_buffer_descr_t *buf_type, 
         char *idata, long ilen, char **odata, long *olen, long flags);
@@ -437,9 +437,8 @@ extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache,
         char *idata, long ilen,  char *errdet, int errdetbufsz);
 
 /* eventing: */
-
-extern NDRX_API int ndrx_cache_broadcast(char *svc, char *idata, long ilen, 
-           int event_type, char *flags);
+extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc, 
+        char *idata, long ilen, int event_type, char *flags);
 
 #ifdef	__cplusplus
 }

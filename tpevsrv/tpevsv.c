@@ -41,6 +41,7 @@
 
 #include <ndebug.h>
 #include <atmi.h>
+#include <sys_unix.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
 #include <ndrstandard.h>
@@ -113,7 +114,7 @@ exprivate int compile_eventexpr(event_entry_t *p_ee)
  */
 exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
 {
-       int ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     char *data = p_svc->data;
     event_entry_t *elt, *tmp;
     long numdisp = 0;
@@ -122,6 +123,9 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     char buf_subtype[17];
     long buf_len;
     tp_command_call_t * last_call;
+    
+    /* Support #279 */
+    string_hash_t *dup_chk = NULL;
     
     memset(buf_type, 0, sizeof(buf_type));
     memset(buf_subtype, 0, sizeof(buf_subtype));
@@ -177,6 +181,15 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                                                     elt->name1, elt->my_id);
 
                     /* todo: Call in async: Do we need to pass there original flags? */
+                    
+                    /* Support #279: check for duplicate */
+                    if (ndrx_string_hash_get(dup_chk, elt->name1))
+                    {
+                        NDRX_LOG(log_debug, "Service already called: [%s] - skip dup",
+                                elt->name1);
+                        continue; /* <<<<<<<<<<<<<<< CONTINUE! */
+                    }
+                    
                     if (EXFAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
                                     elt->flags | TPNOREPLY, elt->my_id, EXFAIL, EXTRUE)))
                     {
@@ -189,6 +202,14 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     }
                     else
                     {
+                        /* Add to hash */
+                        if (EXSUCCEED!=ndrx_string_hash_add(&dup_chk, elt->name1))
+                        {
+                            NDRX_LOG(log_error, "Failed to add service [%s] to "
+                                    "dup hash list!", elt->name1);
+                            EXFAIL_OUT(ret);
+                        }
+                        
                         numdisp++;
 			/* free up connection descriptor */
                         if (err)
@@ -272,6 +293,12 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     }
     
 out:
+
+    if (NULL!=dup_chk)
+    {
+        ndrx_string_hash_free(dup_chk);
+    }
+                                
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 numdisp,
                 NULL,
