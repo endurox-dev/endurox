@@ -674,7 +674,7 @@ extern NDRX_API int ndrx_atmiutil_init(void);
 /* ATMI calls */
 extern NDRX_API int ndrx_tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
-                TPTRANID *p_tran);
+                TPTRANID *p_tran, int user1, long user2);
 extern NDRX_API int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
@@ -711,14 +711,18 @@ extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);
 /* Extended version of tpcall, accepts extradata (31+1) symbols */
 extern NDRX_API int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags);
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2);
 
 extern NDRX_API int tpacallex (char *svc, char *data, 
-        long len, long flags, char *extradata, int dest_node, int is_evpost);
+        long len, long flags, char *extradata, int dest_node, int is_evpost,
+        int user1, long user2);
 /* event API implementation */
 extern NDRX_API long ndrx_tpunsubscribe(long subscription, long flags);
 extern NDRX_API long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
-extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flags);
+extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flags,
+        int user1, long user2);
+
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 extern NDRX_API int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata);
@@ -727,7 +731,8 @@ extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 extern NDRX_API int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags);
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2);
 extern NDRX_API int ndrx_tpgetrply (int *cd,
                        int cd_exp,
                        char * *data ,
