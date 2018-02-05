@@ -393,7 +393,7 @@ expublic void cancel_if_expected(tp_command_call_t *call)
 expublic int ndrx_tpacall (char *svc, char *data,
                 long len, long flags, char *extradata, 
                 int dest_node, int ex_flags, TPTRANID *p_tranid, 
-                int user1, long user2)
+                int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
@@ -564,14 +564,17 @@ expublic int ndrx_tpacall (char *svc, char *data,
     call->rval = user1;
     call->rcode = user2;
     
+    call->user3 = user3;
+    call->user4 = user4;
+    
     /* Reset call timer */
     ndrx_stopwatch_reset(&call->timer);
     
     NDRX_STRCPY_SAFE(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
     NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d "
-            "callseq=%u (user1=%d, user2=%ld)", 
+            "callseq=%u (user1=%d, user2=%ld, user3=%d, user4=%ld)", 
             send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq,
-            call->rval, call->rcode);
+            call->rval, call->rcode, call->user3, call->user4);
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
@@ -897,7 +900,7 @@ out:
 expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
-                int user1, long user2)
+                int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     int cd_req = 0;
@@ -954,7 +957,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     }
     
     if (EXFAIL==(cd_req=ndrx_tpacall (svc, idata, ilen, flags, extradata, 
-            dest_node, ex_flags, p_tranid, user1, user2)))
+            dest_node, ex_flags, p_tranid, user1, user2, user3, user4)))
     {
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
         ret=EXFAIL;
@@ -996,7 +999,7 @@ out:
         /* lookup cache */
         if (EXSUCCEED!=(ret2=ndrx_cache_save (svc, *odata, 
             *olen, tperrno, G_atmi_tls->M_svc_return_code, 
-                G_atmi_env.our_nodeid, flags)))
+                G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL)))
         {
             /* return error if failed to cache? */
             

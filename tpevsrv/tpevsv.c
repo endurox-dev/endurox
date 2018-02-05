@@ -191,9 +191,11 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     }
                     
                     if (EXFAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
-                                    elt->flags | TPNOREPLY, elt->my_id, EXFAIL, EXTRUE,
+                                    elt->flags | TPNOREPLY, last_call->extradata, 
+                                    EXFAIL, EXTRUE,
                                     /* Pass user data in request via these rsp fields */
-                                    last_call->rval, last_call->rcode)))
+                                    last_call->rval, last_call->rcode, 
+                                    last_call->user3, last_call->user4)))
                     {
                         NDRX_LOG(log_error, "Failed to call service [%s/%s]: %s"
                                 " - unsubscribing %ld",
@@ -274,7 +276,8 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                         &tmp_data, &olen,
                         0, last_call->extradata, nodeid, TPCALL_BRCALL, 
                         /* we re-use for requests rval as user1 and rcode as user2 */
-                        last_call->rval, last_call->rcode)))
+                        last_call->rval, last_call->rcode,
+                        last_call->user3, last_call->user4)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
                                     nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));

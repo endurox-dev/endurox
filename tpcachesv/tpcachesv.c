@@ -68,7 +68,100 @@
 void CACHEEV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
+    tp_command_call_t * last_call;
+    char extradata[XATMI_EVENT_MAX+1];
+    char nodeidstr[3+1];
+    char *op;
+    int nodeid;
+    char *flags;
+    char *svcnm;
+    int len;
+    
+    /* now understand what request this was 
+     * also we need to get timestamps
+     */
+    last_call=ndrx_get_G_last_call();
+    
+    NDRX_STRCPY_SAFE(extradata, last_call->extradata);
+    
+    NDRX_LOG(log_info, "Received event op: [%s]", extradata);
+    
+    if (NULL==(op = strtok(extradata, "/")))
+    {
+        NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'operation'", 
+                last_call->extradata);
+        EXFAIL_OUT(ret);
+    }
+    
+    len = strlen(op);
+    
+    if (len != NDRX_CACHE_EV_PFXLEN)
+    {
+        NDRX_LOG(log_error, "Invalid event prefix, expected len: %d, got: %d",
+                NDRX_CACHE_EV_PFXLEN, len);
+        EXFAIL_OUT(ret);
+    }
+    
+    nodeidstr[0] = op[3];
+    nodeidstr[1] = op[3+1];
+    nodeidstr[2] = op[3+2];
+    nodeidstr[3] = EXEOS;
+    
+    nodeid = atoi(nodeidstr);
+    
+    if (nodeid<=0)
+    {
+        NDRX_LOG(log_error, "Invalid node id received [%d] must be > 0!", 
+                nodeid);
+        EXFAIL_OUT(ret);
+    }
+    
+    op[3] = EXEOS;
+    
+    if (NULL==(flags = strtok(NULL, "/")))
+    {
+        NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'flags'",
+                last_call->extradata);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(svcnm = strtok(NULL, "/")))
+    {
+        NDRX_LOG(log_error, "Invalid event [%s] received - failed to get "
+                "'service name' for cache op", last_call->extradata);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_info, "Received operation [%s] flags [%s] for service [%s]",
+            op, flags, svcnm);
+    
+    /* check is op correct? */
+    if (0==strcmp(op, NDRX_CACHE_EV_PUTCMD))
+    {
+        NDRX_LOG(log_debug, "performing put (save to cache)...");
 
+        /* ok we shall get the cluster node id of the caller.. */
+        if (EXSUCCEED!=ndrx_cache_save (svcnm, p_svc->data, 
+            p_svc->len, last_call->user3, last_call->user4, nodeid, 0L,
+                /* user1 & user2: */
+                last_call->rval, last_call->rcode))
+        {
+            NDRX_LOG(log_error, "Failed to save cache data: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (0==strcmp(op, NDRX_CACHE_EV_DELCMD))
+    {
+        /* TODO: Delete buffer - find which cache corresponds and delete it. */
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Unsupported cache command received [%s]",
+                op);
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
