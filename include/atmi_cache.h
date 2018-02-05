@@ -72,27 +72,27 @@ extern "C" {
 #define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200      /* Delete set of fields          */
 
     
-#define NDRX_TPCACH_INIT_NORMAL     0             /* Normal init (client & server)    */
-#define NDRX_TPCACH_INIT_BOOT       1             /* Boot mode init (ndrxd startst)   */
+#define NDRX_TPCACH_INIT_NORMAL      0   /* Normal init (client & server)    */
+#define NDRX_TPCACH_INIT_BOOT        1   /* Boot mode init (ndrxd startst)   */
 
 /* -1 = EXFAIL standard error */
-#define NDRX_TPCACHE_ENOTFOUND               -2   /* Record not found                 */
-#define NDRX_TPCACHE_ENOCACHEDATA            -3   /* Data not cached                  */
-#define NDRX_TPCACHE_ENOCACHE                -4   /* Service not in cache config      */
-#define NDRX_TPCACHE_ENOKEYDATA              -5   /* No key data found                */
-#define NDRX_TPCACHE_ENOTYPESUPP             -6   /* Type not supported               */
+#define NDRX_TPCACHE_ENOTFOUND      -2   /* Record not found                 */
+#define NDRX_TPCACHE_ENOCACHEDATA   -3   /* Data not cached                  */
+#define NDRX_TPCACHE_ENOCACHE       -4   /* Service not in cache config      */
+#define NDRX_TPCACHE_ENOKEYDATA     -5   /* No key data found                */
+#define NDRX_TPCACHE_ENOTYPESUPP    -6   /* Type not supported               */
 
 
-#define NDRX_TPCACHE_BCAST_DFLT              ""   /* default event                    */
-#define NDRX_TPCACHE_BCAST_DELFULL           "F"  /* delete full                      */
+#define NDRX_TPCACHE_BCAST_DFLT     ""   /* default event                    */
+#define NDRX_TPCACHE_BCAST_DELFULL  "F"  /* delete full                      */
     
-#define NDRX_CACHES_BLOCK                   "caches"
-#define NDRX_CACHE_MAX_READERS_DFLT         1000
-#define NDRX_CACHE_MAP_SIZE_DFLT            160000 /* 160K */
-#define NDRX_CACHE_PERMS_DFLT               0664
+#define NDRX_CACHES_BLOCK           "caches"
+#define NDRX_CACHE_MAX_READERS_DFLT 1000
+#define NDRX_CACHE_MAP_SIZE_DFLT    160000 /* 160K */
+#define NDRX_CACHE_PERMS_DFLT       0664
 
-#define NDRX_CACHE_BCAST_MODE_PUT           1
-#define NDRX_CACHE_BCAST_MODE_DEL           2
+#define NDRX_CACHE_BCAST_MODE_PUT   1
+#define NDRX_CACHE_BCAST_MODE_DEL   2
 
 /**
  * Dump the cache database configuration
@@ -385,7 +385,8 @@ extern NDRX_API int ndrx_cache_init(int mode);
 extern NDRX_API int ndrx_cache_used(void);
 
 extern NDRX_API int ndrx_cache_save (char *svc, char *idata, 
-        long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags);
+        long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,
+        long t, int tusec);
 
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
@@ -436,7 +437,8 @@ extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache,
 
 /* eventing: */
 extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc, 
-        char *idata, long ilen, int event_type, char *flags, int user1, long user2);
+        char *idata, long ilen, int event_type, char *flags, int user1, long user2,
+        int user3, long user4);
 extern NDRX_API int ndrx_cache_events_get(string_list_t **list);
 
 #ifdef	__cplusplus

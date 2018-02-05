@@ -435,6 +435,8 @@ struct tp_command_call
     int rval;   /* This also should be present only on reply... */
     /* User2 field in request: */
     long rcode; /* should be preset on reply only */
+    int user3;  /* user field 3, request */
+    long user4; /* user field 4, request */
     /* Extended size for storing cache updates in format
      * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
@@ -457,6 +459,7 @@ struct tp_command_call
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;
     
+    /* Payload: */
     long data_len;
     char data[0];
 };
@@ -674,7 +677,7 @@ extern NDRX_API int ndrx_atmiutil_init(void);
 /* ATMI calls */
 extern NDRX_API int ndrx_tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
-                TPTRANID *p_tran, int user1, long user2);
+                TPTRANID *p_tran, int user1, long user2, int user3, long user4);
 extern NDRX_API int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
@@ -712,16 +715,16 @@ extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);
 extern NDRX_API int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
-                int user1, long user2);
+                int user1, long user2, int user3, long user4);
 
 extern NDRX_API int tpacallex (char *svc, char *data, 
         long len, long flags, char *extradata, int dest_node, int is_evpost,
-        int user1, long user2);
+        int user1, long user2, int user3, long user4);
 /* event API implementation */
 extern NDRX_API long ndrx_tpunsubscribe(long subscription, long flags);
 extern NDRX_API long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
 extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flags,
-        int user1, long user2);
+        int user1, long user2, int user3, long user4);
 
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
@@ -732,7 +735,7 @@ extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 extern NDRX_API int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
-                int user1, long user2);
+                int user1, long user2, int user3, long user4);
 extern NDRX_API int ndrx_tpgetrply (int *cd,
                        int cd_exp,
                        char * *data ,
