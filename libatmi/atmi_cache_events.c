@@ -65,11 +65,13 @@
  * @param flags flags to put in event NDRX_CACHE_BCAST_MODE_*
  * @param user1 user data field 1 (microseconds)
  * @param user2 user data field 2 (epoch seconds)
+ * @param user3 user data field 1 (tperrno)
+ * @param user4 user data field 2 (tpurcode)
  * @return EXSUCCEED/EXFAIL, tperror installed if any
  */
 expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, 
         char *svc, char *idata, long ilen, int event_type, char *flags,
-        int user1, long user2)
+        int user1, long user2, int user3, long user4)
 {
     int ret = EXSUCCEED;
     char *fmt;
@@ -117,10 +119,11 @@ expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache,
     
     snprintf(event, sizeof(event), fmt, (int)tpgetnodeid(), flags, svc);
     
-    NDRX_LOG(log_debug, "Broadcasting event: [%s] user1=%d user2=%ld", event,
-            user1, user2);
+    NDRX_LOG(log_debug, "Broadcasting event: [%s] user1=%d user2=%ld "
+            "user3=%d user4=%ld", event, user1, user2, user3, user4);
     
-    if (EXSUCCEED!=ndrx_tppost(event, idata, ilen, TPNOTRAN|TPNOREPLY, user1, user2))
+    if (EXSUCCEED!=ndrx_tppost(event, idata, ilen, TPNOTRAN|TPNOREPLY, user1, user2,
+            user3, user4))
     {
         NDRX_CACHE_ERROR("Failed to send event [%s]: %s", 
                 event, tpstrerror(tperrno));
@@ -178,3 +181,21 @@ out:
 
     return ret;
 }
+
+/**
+ * Delete cache record by data
+ * @param svc Service name to search cache for
+ * @param idata input data (XATMI buffer) received from their node
+ * @param ilen input data len (XATMI buffer)
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen)
+{
+    int ret = EXSUCCEED;
+    
+    /* TODO: find svc, find cache, build key, delete record */
+    
+out:
+    return ret;
+}
+

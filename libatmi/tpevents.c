@@ -234,7 +234,7 @@ out:
  * @return
  */
 expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
-            int user1, long user2)
+            int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     char *ret_buf;
@@ -252,7 +252,7 @@ expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
     /* Post the */
     if (EXFAIL!=(ret=tpcallex(NDRX_SYS_SVC_PFX EV_TPEVPOST, 
             data, len, &ret_buf, &ret_len, flags, eventname, EXFAIL, 0,
-            user1, user2)))
+            user1, user2, user3, user4)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }

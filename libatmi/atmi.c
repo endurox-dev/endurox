@@ -86,7 +86,7 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
      causes problems with serice async replies!, See doc for tpacall! */
             
     /* no reply queue */
-    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL, 0, 0);
+    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL, 0, 0, 0, 0);
     
 out:
     return ret;
@@ -98,13 +98,16 @@ out:
  * @param data
  * @param len
  * @param flags
+ * @param extradata (say user0) string
  * @param user1 user data field 1 (only for request)
  * @param user2 user data field 2 (only for request)
+ * @param user3 user data field 3
+ * @param user4 user data field 4
  * @return
  */
 expublic int tpacallex (char *svc, char *data, 
         long len, long flags, char *extradata, int dest_node, int ex_flags,
-        int user1, long user2)
+        int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -122,7 +125,7 @@ expublic int tpacallex (char *svc, char *data,
     
     /* no reply queue */
     ret=ndrx_tpacall(svc, data, len, flags, extradata, dest_node, ex_flags, 
-            NULL, user1, user2);
+            NULL, user1, user2, user3, user4);
     
 out:
     return ret;
@@ -227,7 +230,7 @@ expublic int tpcall (char *svc, char *idata, long ilen,
         goto out;
     }
 
-    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0, 0, 0);
+    ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0, 0, 0, 0, 0);
     
 out:
     return ret;
@@ -303,7 +306,7 @@ out:
 expublic int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
-                int user1, long user2)
+                int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -339,7 +342,7 @@ expublic int tpcallex (char *svc, char *idata, long ilen,
     }
 
     ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, extradata, 
-            dest_node, ex_flags, user1, user2);
+            dest_node, ex_flags, user1, user2, user3, user4);
 
 out:
     return ret;
@@ -679,7 +682,7 @@ expublic int tppost(char *eventname, char *data, long len, long flags)
         goto out;
     }
 
-    ret=ndrx_tppost(eventname, data, len, flags, 0, 0);
+    ret=ndrx_tppost(eventname, data, len, flags, 0, 0, 0, 0);
 
 out:
     return ret;

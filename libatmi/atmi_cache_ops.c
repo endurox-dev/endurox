@@ -116,11 +116,14 @@ out:
  * @param ilen
  * @param save_tperrno
  * @param save_tpurcode
- * @param nodeid
+ * @param nodeid cluster node id who put the message in cache
+ * @param t time stamp sec from EPOCH
+ * @param tusec micro seconds of ECPOCH time
  * @return EXSUCCEED/EXFAIL/NDRX_TPCACHE_ENOCACHE
  */
 expublic int ndrx_cache_save (char *svc, char *idata, 
-        long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags)
+        long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,
+        long t, int tusec)
 {
     int ret = EXSUCCEED;
     /* have a buffer in size of ATMI message */
@@ -144,10 +147,22 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     exdata->saved_tpurcode = save_tpurcode;
     
     /* get current timestamp */
-    ndrx_utc_tstamp2(&exdata->t, &exdata->tusec);
+    if (EXFAIL==t)
+    {
+        ndrx_utc_tstamp2(&exdata->t, &exdata->tusec);
+    }
+    else
+    {
+        exdata->t = t;
+        exdata->tusec = (long)tusec;
+    }
     
+#ifdef NDRX_TPCACHE_DEBUG
+    NDRX_LOG(log_debug, "Cache time: t=%ld tusec=%ld",
+            exdata->t, exdata->tusec);
+#endif
+        
     /* OK now translate the thing to db format (i.e. make outgoing message) */
-    
     
     /* Find service in cache */
     EXHASH_FIND_STR(ndrx_G_tpcache_svc, svc, svcc);
@@ -283,7 +298,8 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     {
         if (EXSUCCEED!=ndrx_cache_broadcast(cache, svc, idata, ilen, 
                 NDRX_CACHE_BCAST_MODE_PUT, NDRX_TPCACHE_BCAST_DFLT, 
-                (int)exdata->tusec, (long)exdata->t))
+                (int)exdata->tusec, (long)exdata->t, 
+                save_tperrno, save_tpurcode))
         {
             NDRX_LOG(log_error, "WARNING ! Failed to broadcast put event - continue");
         }
