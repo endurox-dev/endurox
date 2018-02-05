@@ -151,7 +151,7 @@ out:
  * Multiple executables may run
  * @param list string list of events to subscribe to
  * @return EXFAIL/EXSUCCEED (in case of succeed string list free required if not
- * NULLL)
+ * NULL)
  */
 expublic int ndrx_cache_events_get(string_list_t **list)
 {
