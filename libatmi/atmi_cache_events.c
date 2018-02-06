@@ -193,18 +193,124 @@ out:
 expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *flags)
 {
     int ret = EXSUCCEED;
+    ndrx_tpcache_svc_t *svcc = NULL;
+    buffer_obj_t *buffer_info;
+    typed_buffer_descr_t *buf_type;
+    ndrx_tpcallcache_t *cache;
+    char key[NDRX_CACHE_KEY_MAX+1];
+    char errdet[MAX_TP_ERROR_LEN+1];
+    int tran_started = EXFALSE;
+    EDB_txn *txn = NULL;
     
-    /* TODO: find svc, find cache, build key, delete record */
+    /* find svc, find cache, build key, delete record 
+     * The logic will be more or less like a cache lookup...
+     */
+    
+    /* Find service in cache */
+    EXHASH_FIND_STR(ndrx_G_tpcache_svc, svc, svcc);
+    
+    if (NULL==svcc)
+    {
+        NDRX_LOG(log_debug, "No cache defined for service [%s]", svc);
+        ret = NDRX_TPCACHE_ENOCACHE;
+        ndrx_TPset_error_fmt(TPENOENT, "No cache defined for service [%s]", svc);
+        goto out;
+    }
+    
+    if (NULL!=idata)
+    {
+        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
+                    __func__, idata);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* Loop over the tpcallcaches, if `next' flag present, then perform next
+     * if we get invalidate their, then delete target records by the key */
+    buf_type = &G_buf_descr[buffer_info->type_id];
     
     
+    /* find exact cache */
+    if (NULL!=(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
+    {
+        NDRX_LOG(log_debug, "No caches matched by expressions for [%s]", svc);
+        ndrx_TPset_error_fmt(TPENOENT, "No caches matched by expressions for [%s]", 
+                svc);
+        ret = NDRX_TPCACHE_ENOCACHE;
+        goto out;
+    }
     
+    /* now delete the record, generate key */
+    /* Build the key... */
+    if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[buffer_info->type_id].pf_get_key(
+            cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to build key: ", errdet);
+
+            /* generate TP error here! */
+            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+    }
+    
+    /* now delete the record */
+    
+    NDRX_LOG(log_debug, "Delete record by key [%s] from cache svc [%s] index: %d", 
+            key, cache->svcnm, cache->idx);
+    
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    /* delete record (fully) */
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, key, NULL)))
+    {
+        /* ignore not deleted error... */
+        if (EDB_NOTFOUND==ret)
+        {
+            ret=EXSUCCEED;
+        }    
+    }
     
 out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(cache->cachedb, txn))
+            {
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(cache->cachedb, txn);
+        }
+    }
+    
+
     return ret;
 }
 
 /**
  * Drop cache by name
+ * This does not perform any kind of broadcast
  * @param cachedbnm cache dabase name (in config, subsect)
  * @return EXSUCCEED/EXFAIL (tperror set)
  */
@@ -265,6 +371,22 @@ out:
         }
     }
     
+    return ret;
+}
+
+/**
+ * Invalidate cache by expression
+ * @param cachedbnm
+ * @param keyexpr
+ * @return EXSUCCED/EXFAIL (tperror set)
+ */
+expublic int ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr)
+{
+    int ret = EXSUCCEED;
+    
+    /* TODO: */
+    
+out:
     return ret;
 }
 
