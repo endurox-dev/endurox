@@ -153,7 +153,15 @@ void CACHEEV (TPSVCINFO *p_svc)
     }
     else if (0==strcmp(op, NDRX_CACHE_EV_DELCMD))
     {
-        /* TODO: Delete buffer - find which cache corresponds and delete it. */
+        /* Delete cache according to flags, if FULL specified, then drop all matched 
+         * cache (no matter of they keys)
+         */
+        if (EXSUCCEED!=ndrx_cache_inval_by_data(svcnm, p_svc->data, p_svc->len, flags))
+        {
+            NDRX_LOG(log_error, "Failed to save cache data: %s",
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
     }
     else
     {
