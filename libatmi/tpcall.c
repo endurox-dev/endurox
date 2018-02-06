@@ -999,7 +999,7 @@ out:
         /* lookup cache */
         if (EXSUCCEED!=(ret2=ndrx_cache_save (svc, *odata, 
             *olen, tperrno, G_atmi_tls->M_svc_return_code, 
-                G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL)))
+                G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL, EXFALSE)))
         {
             /* return error if failed to cache? */
             

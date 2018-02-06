@@ -386,7 +386,7 @@ extern NDRX_API int ndrx_cache_used(void);
 
 extern NDRX_API int ndrx_cache_save (char *svc, char *idata, 
         long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,
-        long t, int tusec);
+        long t, int tusec, int is_event);
 
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
@@ -396,7 +396,7 @@ extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
 
 extern NDRX_API int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen,
         char *flags);
-
+extern NDRX_API int ndrx_cache_maperr(int unixerr);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
 
@@ -416,6 +416,11 @@ extern NDRX_API int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
 
 extern NDRX_API int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data, unsigned int flags);
+
+extern NDRX_API  int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *txn, 
+            EDB_cursor ** cursor);
+extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
+        char *key, EDB_val *data_out, EDB_cursor_op op);
 
 /* UBF support: */
 extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);

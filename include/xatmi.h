@@ -157,10 +157,12 @@ extern "C" {
 #define NDRX_CACHE_EV_PFXLEN    6                       /* prefix len @CXNNN             */
 #define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"         /* Put data in cache, event      */
 #define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"         /* Delete data form cache, event */
+#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"         /* Kill the database             */
 #define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"         /* Cache event service, delete   */
 #define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"         /* Cache managemtn service       */
 #define NDRX_CACHE_EV_PUTCMD    "@CP"                   /* Put command in event          */
 #define NDRX_CACHE_EV_DELCMD    "@CD"                   /* Delete command in event       */
+#define NDRX_CACHE_EV_KILCMD    "@CK"                   /* Kill command in event         */
     
 /*
  * globals
