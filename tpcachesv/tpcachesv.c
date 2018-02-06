@@ -144,7 +144,7 @@ void CACHEEV (TPSVCINFO *p_svc)
         if (EXSUCCEED!=ndrx_cache_save (svcnm, p_svc->data, 
             p_svc->len, last_call->user3, last_call->user4, nodeid, 0L,
                 /* user1 & user2: */
-                last_call->rval, last_call->rcode))
+                last_call->rval, last_call->rcode, EXTRUE))
         {
             NDRX_LOG(log_error, "Failed to save cache data: %s", 
                     tpstrerror(tperrno));

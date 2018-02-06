@@ -119,11 +119,12 @@ out:
  * @param nodeid cluster node id who put the message in cache
  * @param t time stamp sec from EPOCH
  * @param tusec micro seconds of ECPOCH time
+ * @param is_event did we receive this from event server?
  * @return EXSUCCEED/EXFAIL/NDRX_TPCACHE_ENOCACHE
  */
 expublic int ndrx_cache_save (char *svc, char *idata, 
         long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,
-        long t, int tusec)
+        long t, int tusec, int is_event)
 {
     int ret = EXSUCCEED;
     /* have a buffer in size of ATMI message */
@@ -294,7 +295,8 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     NDRX_LOG(log_debug, "Data cached");
     
-    if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTPUT)
+    if ((cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTPUT)
+        && !is_event)
     {
         if (EXSUCCEED!=ndrx_cache_broadcast(cache, svc, idata, ilen, 
                 NDRX_CACHE_BCAST_MODE_PUT, NDRX_TPCACHE_BCAST_DFLT, 
