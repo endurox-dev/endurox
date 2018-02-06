@@ -163,6 +163,35 @@ void CACHEEV (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
+    else if (0==strcmp(op, NDRX_CACHE_EV_KILCMD))
+    {
+        /*
+         * In this case the svcnm is database and we remove all records from it
+         */
+        if (EXSUCCEED!=ndrx_cache_drop(svcnm))
+        {
+            NDRX_LOG(log_error, "Failed to drop cache: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (0==strcmp(op, NDRX_CACHE_EV_MSKDELCMD))
+    {
+        /* TODO: delete by key mask, received UBF buffer 
+         * This is sent from xadmin tooling
+         * EX_CACHE_OPEXPR -> Operation expression
+         * EX_CACHE_DBNAME -> Db name of cache
+         * EX_CACHE_BUFTYP -> buffer type id
+         * EX_CACHE_DUMP   -> Data dump, carray
+         * EX_CACHE_TPERRNO
+         * EX_CACHE_TPRUCODE
+         * EX_CACHE_TIM
+         * EX_CACHE_TIMUSEC
+         * EX_CACHE_HITT
+         * EX_CACHE_HITTU
+         * EX_CACHE_NODEID
+         * EX_CACHE_CMDID  -> flags of commands
+         */
+    }
     else
     {
         NDRX_LOG(log_error, "Unsupported cache command received [%s]",
