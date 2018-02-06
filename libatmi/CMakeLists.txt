@@ -84,7 +84,7 @@ add_library (atmi SHARED
                 onerror.c
                 tpnotify.c
                 identifiers.c
-                atmi_cache.c
+                atmi_cache_init.c
                 atmi_cache_edb.c
                 atmi_cache_ops.c
                 atmi_cache_ubf.c

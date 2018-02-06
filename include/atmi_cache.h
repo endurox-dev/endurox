@@ -134,6 +134,7 @@ extern "C" {
     NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
     NDRX_LOG(LEV, "cachedbnm=[%s]", TPCALLCACHE->cachedbnm);\
     NDRX_LOG(LEV, "cachedb=[%p]", TPCALLCACHE->cachedb);\
+    NDRX_LOG(LEV, "idx=[%d]", TPCALLCACHE->idx);\
     NDRX_LOG(LEV, "keyfmt=[%s]", TPCALLCACHE->keyfmt);\
     NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->saveproj.expression);\
     NDRX_LOG(LEV, "delete=[%s]", TPCALLCACHE->delproj.expression);\
@@ -241,9 +242,11 @@ typedef struct ndrx_tpcache_projbuf ndrx_tpcache_projbuf_t;
 typedef struct ndrx_tpcallcache ndrx_tpcallcache_t;
 struct ndrx_tpcallcache
 {
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
     ndrx_tpcache_db_t *cachedb;
     char keyfmt[PATH_MAX+1];
+    int idx;                            /* index of this cache for service  */
     
     ndrx_tpcache_projbuf_t saveproj;    /* Save buffer projection           */
     ndrx_tpcache_projbuf_t delproj;     /* Delete buffer projection         */
