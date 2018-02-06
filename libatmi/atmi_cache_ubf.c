@@ -45,6 +45,7 @@
 #include "utlist.h"
 #include "exregex.h"
 #include <exparson.h>
+#include <ubfutil.h>
 #include <atmi_cache.h>
 
 /*---------------------------Externs------------------------------------*/
