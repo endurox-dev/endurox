@@ -393,6 +393,10 @@ extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         int *saved_tperrno, long *saved_tpurcode);
 extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
         char *key, char *idata, long ilen);
+
+extern NDRX_API int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen,
+        char *flags);
+
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
 

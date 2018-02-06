@@ -187,9 +187,10 @@ out:
  * @param svc Service name to search cache for
  * @param idata input data (XATMI buffer) received from their node
  * @param ilen input data len (XATMI buffer)
+ * @param flags how to delete - if "F" then do not check they key, just full db drop
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen)
+expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *flags)
 {
     int ret = EXSUCCEED;
     
