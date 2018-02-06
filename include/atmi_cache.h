@@ -305,7 +305,7 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
 
 
 /**
- * Structure for holding data up
+ * Structure for holding data up, payload
  */
 struct ndrx_tpcache_data
 {
@@ -320,6 +320,9 @@ struct ndrx_tpcache_data
     unsigned long hits; /* Number of cache hits     */
     
     int  nodeid;        /* Node id who put the msg  */
+    short atmi_type_id; /* ATMI type id           */
+    
+    /* Payload data */
     long atmi_buf_len;  /* saved buffer len         */
     char atmi_buf[0]; /* the data follows           */
 };
@@ -396,6 +399,7 @@ extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
 
 extern NDRX_API int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen,
         char *flags);
+extern NDRX_API ndrx_cache_drop(char *cachedbnm);
 extern NDRX_API int ndrx_cache_maperr(int unixerr);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
@@ -421,6 +425,7 @@ extern NDRX_API  int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *
             EDB_cursor ** cursor);
 extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
         char *key, EDB_val *data_out, EDB_cursor_op op);
+extern NDRX_API ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
 
 /* UBF support: */
 extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);

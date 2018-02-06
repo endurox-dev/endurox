@@ -196,6 +196,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
+    exdata->atmi_type_id = buffer_info->type_id;
     exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
             
     if (NULL==ndrx_G_tpcache_types[cache->buf_type->type_id].pf_cache_put)

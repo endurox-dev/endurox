@@ -196,7 +196,75 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     
     /* TODO: find svc, find cache, build key, delete record */
     
+    
+    
+    
 out:
+    return ret;
+}
+
+/**
+ * Drop cache by name
+ * @param cachedbnm cache dabase name (in config, subsect)
+ * @return EXSUCCEED/EXFAIL (tperror set)
+ */
+expublic int ndrx_cache_drop(char *cachedbnm)
+{
+    int ret = EXSUCCEED;
+    EDB_txn *txn = NULL;
+    ndrx_tpcache_db_t* db;
+    int tran_started = EXFALSE;
+    
+    NDRX_LOG(log_info, "Resetting cache db [%s]", db->cachedb);
+    
+    /* find cachedb */
+    
+    if (NULL==(db=ndrx_cache_dbresolve(cachedbnm, NDRX_TPCACH_INIT_NORMAL)))
+    {
+        NDRX_LOG(log_error, "Failed to get cache record for [%s]: %s", cachedbnm,
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+    
+    if (EXSUCCEED!=(ret=edb_drop(txn, db->dbi, 0)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "CACHE: Failed to clear db: [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_warn, "Cache [%s] dropped", cachedbnm);
+
+out:
+
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+    
     return ret;
 }
 
