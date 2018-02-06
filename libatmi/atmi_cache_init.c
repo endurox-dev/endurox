@@ -735,6 +735,9 @@ expublic int ndrx_cache_init(int mode)
             NDRX_CALLOC_OUT(cache, 1, sizeof(ndrx_tpcallcache_t), ndrx_tpcallcache_t);
             
             array_object = exjson_array_get_object(array, i);
+                
+            cache->idx = i;
+            NDRX_STRCPY_SAFE(cache->svcnm, cachesvc->svcnm);
             
             /* process flags.. by strtok.. but we need a temp buffer
              * Process flags first as some logic depends on them!
