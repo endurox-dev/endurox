@@ -147,23 +147,24 @@ extern "C" {
 #define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /* Number of separators in myid of client */
 
 /* Shared memory formats */
-#define NDRX_SHM_SRVINFO        "%s,shm,srvinfo"        /* Server info SHM               */
-#define NDRX_SHM_SVCINFO        "%s,shm,svcinfo"        /* Service info SHM              */
-#define NDRX_SHM_BRINFO         "%s,shm,brinfo"         /* Bridge info SHM               */
-#define NDRX_SEM_SVCOP          "%s,sem,svcop"          /* Service operations...         */
-#define NDRX_KEY_FMT            "-k %s"                 /* format string for process key */
+#define NDRX_SHM_SRVINFO        "%s,shm,srvinfo"    /* Server info SHM               */
+#define NDRX_SHM_SVCINFO        "%s,shm,svcinfo"    /* Service info SHM              */
+#define NDRX_SHM_BRINFO         "%s,shm,brinfo"     /* Bridge info SHM               */
+#define NDRX_SEM_SVCOP          "%s,sem,svcop"      /* Service operations...         */
+#define NDRX_KEY_FMT            "-k %s"             /* format string for process key */
 
 /* Format @C<P|D>NID/Flags/<Service name> */
-#define NDRX_CACHE_EV_PFXLEN    6                       /* prefix len @CXNNN             */
-#define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"         /* Put data in cache, event      */
-#define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"         /* Delete data form cache, event */
-#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"         /* Kill the database             */
-#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"         /* Cache event service, delete   */
-#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"         /* Cache managemtn service       */
-#define NDRX_CACHE_EV_PUTCMD    "@CP"                   /* Put command in event          */
-#define NDRX_CACHE_EV_DELCMD    "@CD"                   /* Delete command in event       */
-#define NDRX_CACHE_EV_KILCMD    "@CK"                   /* Kill command in event         */
-    
+#define NDRX_CACHE_EV_PFXLEN    6                   /* prefix len @CXNNN             */
+#define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"     /* Put data in cache, event      */
+#define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"     /* Delete data form cache, event */
+#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"     /* Kill the database             */
+#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /* Cache event service, delete   */
+#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /* Cache managemtn service       */
+#define NDRX_CACHE_EV_PUTCMD    "@CP"               /* Put command in event          */
+#define NDRX_CACHE_EV_DELCMD    "@CD"               /* Delete command in event       */
+#define NDRX_CACHE_EV_KILCMD    "@CK"               /* Kill/drop ache event          */
+#define NDRX_CACHE_EV_MSKDELCMD "@CM"               /* Delete data by mask, event    */
+
 /*
  * globals
  */
