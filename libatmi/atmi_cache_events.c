@@ -309,6 +309,7 @@ out:
 }
 
 /**
+ * TODO: add not check for broadcast
  * Drop cache by name
  * This does not perform any kind of broadcast
  * @param cachedbnm cache dabase name (in config, subsect)
@@ -378,9 +379,11 @@ out:
  * Invalidate cache by expression
  * @param cachedbnm
  * @param keyexpr
+ * @cmds binary commands, here we are interested either regexp kill or plain single key delete
+ * @nodeid nodeid posting the record, if it is ours then broadcast event, if ours then broadcast (if required)
  * @return EXSUCCED/EXFAIL (tperror set)
  */
-expublic int ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr)
+expublic int ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, long cmds, short nodeid)
 {
     int ret = EXSUCCEED;
     
@@ -389,4 +392,5 @@ expublic int ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr)
 out:
     return ret;
 }
+
 
