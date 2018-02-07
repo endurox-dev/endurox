@@ -189,8 +189,12 @@ void CACHEEV (TPSVCINFO *p_svc)
          * EX_CACHE_HITT
          * EX_CACHE_HITTU
          * EX_CACHE_NODEID
-         * EX_CACHE_CMDID  -> flags of commands
+         * EX_CACHE_CMDS  -> flags of commands
          */
+        /* DB name should be in event, we just need OPEXPR to remove records by
+         * regex
+         */
+        
     }
     else
     {
