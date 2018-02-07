@@ -531,7 +531,7 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
         char cmd;
         NDRX_LOG(log_debug, "Same node -> broadcast event of drop");
         
-        if (NULL==(p_ub = tpalloc("UBF", NULL, 1024)))
+        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
         {
             NDRX_LOG(log_error, "Failed to allocate UBF buffer!");
             EXFAIL_OUT(ret);
@@ -612,15 +612,115 @@ out:
  * plain single key delete
  * @nodeid nodeid posting the record, if it is ours then broadcast event, 
  * if ours then broadcast (if required)
- * @return EXSUCCED/EXFAIL (tperror set)
+ * @return 0..1 - nr of recs deleted/EXFAIL (tperror set)
  */
-expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *keyexpr, short nodeid)
+expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
 {
     int ret = EXSUCCEED;
+    EDB_txn *txn = NULL;
+    ndrx_tpcache_db_t* db;
+    int tran_started = EXFALSE;
+    UBFH *p_ub = NULL;
+    int deleted = 0;
+    char cmd;
+        
+    NDRX_LOG(log_info, "%s: Delete cache db [%s] record by key [%s] source node: [%hd]", 
+            __func__, db->cachedb, key, nodeid);
     
-    /* TODO: */
+    /* find cachedb */
+    
+    if (NULL==(db=ndrx_cache_dbresolve(cachedbnm, NDRX_TPCACH_INIT_NORMAL)))
+    {
+        NDRX_CACHE_TPERRORNOU(TPENOENT, "Failed to get cache record for [%s]: %s", 
+                cachedbnm, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    {
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, key, NULL)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            EXFAIL_OUT(ret);
+        }    
+    }
+    else
+    {
+        deleted = 1;
+    }
+    
+    /* continue anyway, we need a broadcast */
+    
+    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTPUT) &&
+            tpgetnodeid()==nodeid )
+    {
+        NDRX_LOG(log_debug, "Same node -> broadcast event of delete key");
+        
+        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+        {
+            NDRX_LOG(log_error, "Failed to allocate UBF buffer!");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* Set command code (optional, actual command is encoded in event) */
+        cmd = NDRX_CACHE_SVCMD_DELBYKEY;
+        if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_CMD, 0, &cmd, 0L))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to set command code of "
+                    "[%c] to UBF: %s", __func__, cmd, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* Set expression string, mandatory */
+        if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_OPEXPR, 0, key, 0L))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to set operation expression "
+                    "[%s] to UBF: %s", __func__, key, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* Broadcast NULL buffer event (ignore result) */
+        if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, NULL, 0, 
+                NDRX_CACHE_BCAST_MODE_DKY,  NDRX_TPCACHE_BCAST_DFLT, 0, 0, 0, 0))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to broadcast: %s", 
+                    __func__, tpstrerror(tperrno));
+        }
+    }
     
 out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
+                    __func__, tpstrerror(tperrno));
+                ndrx_cache_edb_abort(db, txn);
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    
     return ret;
 }
 

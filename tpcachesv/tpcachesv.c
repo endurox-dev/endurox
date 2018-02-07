@@ -116,6 +116,15 @@ void CACHEEV (TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
+    /* if it is our node then skip update as processed locally by caller */
+    
+    if (nodeid == tpgetnodeid())
+    {
+        NDRX_LOG(log_debug, "Event received from our node (%d) - skip processing",
+                nodeid);
+        goto out;
+    }
+    
     op[3] = EXEOS;
     
     if (NULL==(flags = strtok(NULL, "/")))
@@ -153,6 +162,7 @@ void CACHEEV (TPSVCINFO *p_svc)
     }
     else if (0==strcmp(op, NDRX_CACHE_EV_DELCMD))
     {
+        NDRX_LOG(log_debug, "Delete record by data");
         /* Delete cache according to flags, if FULL specified, then drop all matched 
          * cache (no matter of they keys)
          */
@@ -165,6 +175,7 @@ void CACHEEV (TPSVCINFO *p_svc)
     }
     else if (0==strcmp(op, NDRX_CACHE_EV_KILCMD))
     {
+        NDRX_LOG(log_debug, "Drop cache event");
         /*
          * In this case the svcnm is database and we remove all records from it
          */
@@ -180,6 +191,8 @@ void CACHEEV (TPSVCINFO *p_svc)
         char keyexpr[NDRX_CACHE_OPEXPRMAX+1];
         UBFH *p_ub = (UBFH *)p_svc->data;
         BFLDLEN len = sizeof(keyexpr);
+        
+        NDRX_LOG(log_debug, "Delete by mask event");
         
         if (EXSUCCEED!=Bget(p_ub, EX_CACHE_OPEXPR, 0, keyexpr, &len))
         {
@@ -198,6 +211,32 @@ void CACHEEV (TPSVCINFO *p_svc)
         NDRX_LOG(log_info, "Delete %ld cache records matching key expression [%s]",
                 deleted, keyexpr);
     }
+    else if (0==strcmp(op, NDRX_CACHE_EV_KEYDEL))
+    {
+        int deleted;
+        char key[NDRX_CACHE_OPEXPRMAX+1];
+        UBFH *p_ub = (UBFH *)p_svc->data;
+        BFLDLEN len = sizeof(key);
+        
+        NDRX_LOG(log_debug, "Delete by key event");
+        
+        if (EXSUCCEED!=Bget(p_ub, EX_CACHE_OPEXPR, 0, key, &len))
+        {
+            NDRX_CACHE_TPERROR(TPENOENT, "Missing expression for mask delete "
+                    "for [%s] db!", svcnm);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0 > (deleted = ndrx_cache_inval_by_key(svcnm, key, nodeid)))
+        {
+            NDRX_LOG(log_error, "Failed to delete db [%s] by key [%s]",
+                    svcnm, key);
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_info, "Delete %ld cache records matching key [%s]",
+                deleted, key);
+    }    
     else
     {
         NDRX_LOG(log_error, "Unsupported cache command received [%s]",
