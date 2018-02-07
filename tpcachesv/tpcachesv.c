@@ -168,7 +168,7 @@ void CACHEEV (TPSVCINFO *p_svc)
         /*
          * In this case the svcnm is database and we remove all records from it
          */
-        if (EXSUCCEED!=ndrx_cache_drop(svcnm))
+        if (EXSUCCEED!=ndrx_cache_drop(svcnm, nodeid))
         {
             NDRX_LOG(log_error, "Failed to drop cache: %s", tpstrerror(tperrno));
             EXFAIL_OUT(ret);
@@ -176,25 +176,27 @@ void CACHEEV (TPSVCINFO *p_svc)
     }
     else if (0==strcmp(op, NDRX_CACHE_EV_MSKDELCMD))
     {
-        /* TODO: delete by key mask, received UBF buffer 
-         * This is sent from xadmin tooling
-         * EX_CACHE_OPEXPR -> Operation expression
-         * EX_CACHE_DBNAME -> Db name of cache
-         * EX_CACHE_BUFTYP -> buffer type id
-         * EX_CACHE_DUMP   -> Data dump, carray
-         * EX_CACHE_TPERRNO
-         * EX_CACHE_TPRUCODE
-         * EX_CACHE_TIM
-         * EX_CACHE_TIMUSEC
-         * EX_CACHE_HITT
-         * EX_CACHE_HITTU
-         * EX_CACHE_NODEID
-         * EX_CACHE_CMDS  -> flags of commands
-         */
-        /* DB name should be in event, we just need OPEXPR to remove records by
-         * regex
-         */
+        int deleted;
+        char keyexpr[NDRX_CACHE_OPEXPRMAX+1];
+        UBFH *p_ub = (UBFH *)p_svc->data;
+        BFLDLEN len = sizeof(keyexpr);
         
+        if (EXSUCCEED!=Bget(p_ub, EX_CACHE_OPEXPR, 0, keyexpr, &len))
+        {
+            NDRX_CACHE_TPERROR(TPENOENT, "Missing expression for mask delete "
+                    "for [%s] db!", svcnm);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0 > (deleted = ndrx_cache_inval_by_expr(svcnm, keyexpr, nodeid)))
+        {
+            NDRX_LOG(log_error, "Failed to delete db [%s] by key expression [%s]",
+                    svcnm, keyexpr);
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_info, "Delete %ld cache records matching key expression [%s]",
+                deleted, keyexpr);
     }
     else
     {

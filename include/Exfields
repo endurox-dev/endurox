@@ -209,8 +209,9 @@ EX_CACHE_TIMUSEC            657         long -         Cache put epoch usecs
 EX_CACHE_HITT               658         long -         Cache hit epoch secs
 EX_CACHE_HITTU              659         long -         Cache hit epcoh usec
 EX_CACHE_NODEID             660         short -        Cache put source node id
-EX_CACHE_CMDS               661         long -         Binary flags of commands
-EX_CACHE_HITS               662         long -         Number of times cache was read
+EX_CACHE_CMD                661         char -         Cache command
+EX_CACHE_FLAGS              662         long -         Command flags
+EX_CACHE_HITS               663         long -         Number of times cache was read
 
 $#endif
 
