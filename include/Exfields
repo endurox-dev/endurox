@@ -136,6 +136,7 @@ EX_NREQLOGFILE           302         string -        Request log file
 
 EX_TPERRNO               350         long -          TP error number
 EX_TPURCODE              351         long -          TP user return code
+EX_TPSTRERROR            352         string -        TP error message
 ################################################################################
 # Fields for Common Config Server (ccsrv)
 # Config commands:
@@ -194,7 +195,22 @@ EX_VIEW_CKSUM               601         long   -       Checksum calculate of typ
 # the 1 -> field is included in buffer and must be installed back in structure.
 EX_VIEW_INCLFLDS            602         string -       Field include flags
 
-
+################################################################################
+# Cache processing
+################################################################################
+EX_CACHE_OPEXPR             650         string -       Operation expression
+EX_CACHE_DBNAME             651         string -       Db name of cache
+EX_CACHE_BUFTYP             652         short -        buffer type id
+EX_CACHE_DUMP               653         carray -       Data dump, carray
+EX_CACHE_TPERRNO            654         long -         TP Error code
+EX_CACHE_TPRUCODE           655         long -         TP Return code
+EX_CACHE_TIM                656         long -         Cache put epoch secs
+EX_CACHE_TIMUSEC            657         long -         Cache put epoch usecs
+EX_CACHE_HITT               658         long -         Cache hit epoch secs
+EX_CACHE_HITTU              659         long -         Cache hit epcoh usec
+EX_CACHE_NODEID             660         short -        Cache put source node id
+EX_CACHE_CMDS               661         long -         Binary flags of commands
+EX_CACHE_HITS               662         long -         Number of times cache was read
 
 $#endif
 
