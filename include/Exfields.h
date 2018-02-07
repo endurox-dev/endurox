@@ -104,6 +104,7 @@
 #define	EX_NREQLOGFILE	((BFLDID32)167772562)	/* number: 402	 type: string */
 #define	EX_TPERRNO	((BFLDID32)33554882)	/* number: 450	 type: long */
 #define	EX_TPURCODE	((BFLDID32)33554883)	/* number: 451	 type: long */
+#define	EX_TPSTRERROR	((BFLDID32)167772612)	/* number: 452	 type: string */
 #define	EX_CC_CMD	((BFLDID32)67109364)	/* number: 500	 type: char */
 #define	EX_CC_RESOURCE	((BFLDID32)167772661)	/* number: 501	 type: string */
 #define	EX_CC_LOOKUPSECTION	((BFLDID32)167772662)	/* number: 502	 type: string */
@@ -125,4 +126,17 @@
 #define	EX_VIEW_NAME	((BFLDID32)167772860)	/* number: 700	 type: string */
 #define	EX_VIEW_CKSUM	((BFLDID32)33555133)	/* number: 701	 type: long */
 #define	EX_VIEW_INCLFLDS	((BFLDID32)167772862)	/* number: 702	 type: string */
+#define	EX_CACHE_OPEXPR	((BFLDID32)167772910)	/* number: 750	 type: string */
+#define	EX_CACHE_DBNAME	((BFLDID32)167772911)	/* number: 751	 type: string */
+#define	EX_CACHE_BUFTYP	((BFLDID32)752)	/* number: 752	 type: short */
+#define	EX_CACHE_DUMP	((BFLDID32)201327345)	/* number: 753	 type: carray */
+#define	EX_CACHE_TPERRNO	((BFLDID32)33555186)	/* number: 754	 type: long */
+#define	EX_CACHE_TPRUCODE	((BFLDID32)33555187)	/* number: 755	 type: long */
+#define	EX_CACHE_TIM	((BFLDID32)33555188)	/* number: 756	 type: long */
+#define	EX_CACHE_TIMUSEC	((BFLDID32)33555189)	/* number: 757	 type: long */
+#define	EX_CACHE_HITT	((BFLDID32)33555190)	/* number: 758	 type: long */
+#define	EX_CACHE_HITTU	((BFLDID32)33555191)	/* number: 759	 type: long */
+#define	EX_CACHE_NODEID	((BFLDID32)760)	/* number: 760	 type: short */
+#define	EX_CACHE_CMDS	((BFLDID32)33555193)	/* number: 761	 type: long */
+#define	EX_CACHE_HITS	((BFLDID32)33555194)	/* number: 762	 type: long */
 #endif
