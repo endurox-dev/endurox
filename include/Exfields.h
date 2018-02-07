@@ -137,6 +137,7 @@
 #define	EX_CACHE_HITT	((BFLDID32)33555190)	/* number: 758	 type: long */
 #define	EX_CACHE_HITTU	((BFLDID32)33555191)	/* number: 759	 type: long */
 #define	EX_CACHE_NODEID	((BFLDID32)760)	/* number: 760	 type: short */
-#define	EX_CACHE_CMDS	((BFLDID32)33555193)	/* number: 761	 type: long */
-#define	EX_CACHE_HITS	((BFLDID32)33555194)	/* number: 762	 type: long */
+#define	EX_CACHE_CMD	((BFLDID32)67109625)	/* number: 761	 type: char */
+#define	EX_CACHE_FLAGS	((BFLDID32)33555194)	/* number: 762	 type: long */
+#define	EX_CACHE_HITS	((BFLDID32)33555195)	/* number: 763	 type: long */
 #endif

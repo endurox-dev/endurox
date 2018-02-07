@@ -108,6 +108,22 @@ expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache,
         }
         
     }
+    else if (NDRX_CACHE_BCAST_MODE_KIL==event_type)
+    {
+        fmt = NDRX_CACHE_EV_KILL;
+        
+        odata = idata;
+        olen = ilen;
+        
+    }
+    else if (NDRX_CACHE_BCAST_MODE_MSK==event_type)
+    {
+        fmt = NDRX_CACHE_EV_MSKDEL;
+        
+        odata = idata;
+        olen = ilen;
+        
+    }
     else
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "Invalid broadcast event type: %d", 
@@ -315,28 +331,29 @@ out:
  * @param cachedbnm cache dabase name (in config, subsect)
  * @return EXSUCCEED/EXFAIL (tperror set)
  */
-expublic int ndrx_cache_drop(char *cachedbnm)
+expublic int ndrx_cache_drop(char *cachedbnm, short nodeid)
 {
     int ret = EXSUCCEED;
     EDB_txn *txn = NULL;
     ndrx_tpcache_db_t* db;
     int tran_started = EXFALSE;
     
-    NDRX_LOG(log_info, "Resetting cache db [%s]", db->cachedb);
+    NDRX_LOG(log_info, "Resetting cache db [%s] source node: [%hd]", 
+            db->cachedb, nodeid);
     
     /* find cachedb */
     
     if (NULL==(db=ndrx_cache_dbresolve(cachedbnm, NDRX_TPCACH_INIT_NORMAL)))
     {
-        NDRX_LOG(log_error, "Failed to get cache record for [%s]: %s", cachedbnm,
-                tpstrerror(tperrno));
+        NDRX_CACHE_TPERRORNOU(TPENOENT, "Failed to get cache record for [%s]: %s", 
+                cachedbnm, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     /* start transaction */
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
     {
-        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
         goto out;
     }
     
@@ -351,10 +368,25 @@ expublic int ndrx_cache_drop(char *cachedbnm)
         EXFAIL_OUT(ret);
     }
     
+    /* check if we should broadcast the drop */
+    
     NDRX_LOG(log_warn, "Cache [%s] dropped", cachedbnm);
-
+    
+    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTPUT) &&
+            tpgetnodeid()==nodeid )
+    {
+        NDRX_LOG(log_debug, "Same node -> broadcast event of drop");
+        
+        /* Broadcast NULL buffer event (ignore result) */
+        if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, NULL, 0, 
+                NDRX_CACHE_BCAST_MODE_KIL,  NDRX_TPCACHE_BCAST_DFLT, 0, 0, 0, 0))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to broadcast: %s", 
+                    __func__, tpstrerror(tperrno));
+        }
+    }
+    
 out:
-
 
     if (tran_started)
     {
@@ -362,8 +394,9 @@ out:
         {
             if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
             {
-                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
-                ret=EXFAIL;
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
+                    __func__, tpstrerror(tperrno));
+                ndrx_cache_edb_abort(db, txn);
             }
         }
         else
@@ -379,11 +412,209 @@ out:
  * Invalidate cache by expression
  * @param cachedbnm
  * @param keyexpr
- * @cmds binary commands, here we are interested either regexp kill or plain single key delete
- * @nodeid nodeid posting the record, if it is ours then broadcast event, if ours then broadcast (if required)
+ * @cmds binary commands, here we are interested either regexp kill or 
+ * plain single key delete
+ * @nodeid nodeid posting the record, if it is ours then broadcast event, 
+ * if ours then broadcast (if required)
+ * @return 0>= - number of records deleted /EXFAIL (tperror set)
+ */
+expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nodeid)
+{
+    int ret = EXSUCCEED;
+    EDB_txn *txn = NULL;
+    ndrx_tpcache_db_t* db;
+    int tran_started = EXFALSE;
+    regex_t re;
+    int re_compiled = EXFALSE;
+    EDB_cursor *cursor;
+    EDB_cursor_op op;
+    EDB_val keydb, val;
+    int deleted = 0;
+    UBFH *p_ub = NULL;
+    
+    NDRX_LOG(log_info, "delete cachedb [%s] by expression [%s] from node %d", 
+            db->cachedb, keyexpr, nodeid);
+    
+    /* try compile regexp */
+    if (EXSUCCEED!=ndrx_regcomp(&re, keyexpr))
+    {
+        NDRX_CACHE_TPERRORNOU(TPEINVAL, "Failed to compile regexp [%s]", keyexpr);
+        EXFAIL_OUT(ret);
+    }
+    re_compiled = EXTRUE;
+    /* find cachedb */
+    
+    if (NULL==(db=ndrx_cache_dbresolve(cachedbnm, NDRX_TPCACH_INIT_NORMAL)))
+    {
+        NDRX_CACHE_TPERRORNOU(TPENOENT, "Failed to get cache record for [%s]: %s", 
+                cachedbnm, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    {
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+    
+    
+    /* loop over the database */
+    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* loop over the db and match records  */
+    
+    op = EDB_FIRST;
+    do
+    {
+        if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
+                &keydb, &val, op)))
+        {
+            if (EDB_NOTFOUND==ret)
+            {
+                /* this is ok */
+                ret = EXSUCCEED;
+                break;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to loop over the [%s] db", cachedbnm);
+                break;
+            }
+        }
+        
+        /* test is last symbols EOS of data, if not this might cause core dump! */
+        
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        {
+            NDRX_DUMP(log_error, "Invalid cache key", 
+                    keydb.mv_data, keydb.mv_size);
+            
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Invalid cache key, len: %ld not "
+                    "terminated with EOS!", __func__, keydb.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* match regex on key */
+        
+        if (EXSUCCEED==ndrx_regexec(&re, keydb.mv_data))
+        {
+            NDRX_LOG(log_debug, "Key [%s] matched - deleting", keydb.mv_data);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
+        {
+            NDRX_LOG(log_debug, "Failed to delete record by key [%s]", keydb.mv_data);
+            EXFAIL_OUT(ret);
+        }
+        
+        deleted++;
+        
+        if (EDB_FIRST == op)
+        {
+            op = EDB_NEXT;
+        }
+        
+    } while (EXSUCCEED==ret);
+    
+
+    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTPUT) &&
+            tpgetnodeid()==nodeid )
+    {
+        char cmd;
+        NDRX_LOG(log_debug, "Same node -> broadcast event of drop");
+        
+        if (NULL==(p_ub = tpalloc("UBF", NULL, 1024)))
+        {
+            NDRX_LOG(log_error, "Failed to allocate UBF buffer!");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* Set command code (optional, actual command is encoded in event) */
+        cmd = NDRX_CACHE_SVCMD_DELBYEXPR;
+        if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_CMD, 0, &cmd, 0L))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to set command code of "
+                    "[%c] to UBF: %s", __func__, cmd, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* Set expression string, mandatory */
+        if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_OPEXPR, 0, keyexpr, 0L))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to set operation expression "
+                    "[%s] to UBF: %s", __func__, keyexpr, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        
+        if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, (char *)p_ub, 0, 
+                NDRX_CACHE_BCAST_MODE_MSK, NDRX_TPCACHE_BCAST_DFLT,
+                0, 0, 0, 0))
+        {
+            NDRX_LOG(log_error, "Failed to post event of [%s] expression delete",
+                    keyexpr);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
+                    __func__, tpstrerror(tperrno));
+                ndrx_cache_edb_abort(db, txn);
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
+    if (re_compiled)
+    {
+        ndrx_regfree(&re);
+    }
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    if (EXSUCCEED==ret)
+    {
+        return deleted;
+    }
+    else
+    {
+        return ret;
+    }
+}
+
+/**
+ * Invalidate cache by expression
+ * @param cachedbnm
+ * @param keyexpr
+ * @cmds binary commands, here we are interested either regexp kill or 
+ * plain single key delete
+ * @nodeid nodeid posting the record, if it is ours then broadcast event, 
+ * if ours then broadcast (if required)
  * @return EXSUCCED/EXFAIL (tperror set)
  */
-expublic int ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, long cmds, short nodeid)
+expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *keyexpr, short nodeid)
 {
     int ret = EXSUCCEED;
     
