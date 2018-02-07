@@ -93,6 +93,17 @@ extern "C" {
 
 #define NDRX_CACHE_BCAST_MODE_PUT   1
 #define NDRX_CACHE_BCAST_MODE_DEL   2
+#define NDRX_CACHE_BCAST_MODE_KIL   3       /* drop the database              */
+#define NDRX_CACHE_BCAST_MODE_MSK   4       /* Delete by mask                 */
+
+/*
+ * Command code sent to tpcachesv
+ */
+#define NDRX_CACHE_SVCMD_DELBYEXPR  'E'     /* Delete by expression           */
+#define NDRX_CACHE_SVCMD_DELBYKEY   'K'     /* Delete by key (direct lookup)  */
+    
+    
+#define NDRX_CACHE_OPEXPRMAX        PATH_MAX /* max len of operation expression*/
 
 /**
  * Dump the cache database configuration
@@ -190,6 +201,11 @@ extern "C" {
 #define NDRX_CACHE_ERROR(fmt, ...)\
         NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
         userlog(fmt, ##__VA_ARGS__);
+    
+    
+#define NDRX_CACHE_TPERRORNOU(atmierr, fmt, ...)\
+        NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
+        ndrx_TPset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -402,7 +418,9 @@ extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
 
 extern NDRX_API int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen,
         char *flags);
-extern NDRX_API ndrx_cache_drop(char *cachedbnm);
+extern NDRX_API ndrx_cache_drop(char *cachedbnm, short nodeid);
+extern NDRX_API long ndrx_cache_inval_by_expr(char *cachedbnm, 
+        char *keyexpr, short nodeid);
 extern NDRX_API int ndrx_cache_maperr(int unixerr);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
@@ -428,6 +446,10 @@ extern NDRX_API  int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *
             EDB_cursor ** cursor);
 extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
         char *key, EDB_val *data_out, EDB_cursor_op op);
+
+extern NDRX_API int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, 
+        EDB_cursor * cursor, EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op);
+
 extern NDRX_API ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
 
 /* UBF support: */

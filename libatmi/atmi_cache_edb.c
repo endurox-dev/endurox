@@ -187,7 +187,7 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
     EDB_val keydb;
     
     keydb.mv_data = key;
-    keydb.mv_size = strlen(key);
+    keydb.mv_size = strlen(key)+1;
             
     if (EXSUCCEED!=(ret=edb_get(txn, db->dbi, &keydb, data_out)))
     {
@@ -225,7 +225,7 @@ expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * curso
     EDB_val keydb;
     
     keydb.mv_data = key;
-    keydb.mv_size = strlen(key);
+    keydb.mv_size = strlen(key)+1;
             
     if (EXSUCCEED!=(ret=edb_cursor_get(cursor, &keydb, data_out, op)))
     {
@@ -246,6 +246,38 @@ out:
     return ret;
 }
 
+/**
+ * Get data for cursor
+ * @param db
+ * @param cursor
+ * @param key get by real key
+ * @param data_out
+ * @param op
+ * @return 
+ */
+expublic int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
+        EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op)
+{
+    int ret = EXSUCCEED;
+            
+    if (EXSUCCEED!=(ret=edb_cursor_get(cursor, keydb, data_out, op)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to get data from db [%s] for key [%s]: %s", 
+                db->cachedb, keydb->mv_data, edb_strerror(ret));
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "EOF [%s] for key [%s]: %s", 
+                db->cachedb, keydb->mv_data, edb_strerror(ret));
+        }
+    }
+    
+out:
+    return ret;
+}
 
 /**
  * Set compare function
@@ -308,7 +340,7 @@ expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
     EDB_val keydb;
     
     keydb.mv_data = key;
-    keydb.mv_size = strlen(key);
+    keydb.mv_size = strlen(key)+1;
             
     if (EXSUCCEED!=(ret=edb_del(txn, db->dbi, &keydb, data)))
     {
@@ -329,6 +361,38 @@ out:
 }
 
 /**
+ * Delete db record full or particular
+ * @param db handler
+ * @param txn transaction
+ * @param key full 
+ * @param data data to delete, can be NULL, then full delete. Only for duplicate recs
+ * @return EXSUCCEED/EXFAIL/DBERR
+ */
+expublic int ndrx_cache_edb_delfullkey (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        EDB_val *keydb, EDB_val *data)
+{
+    int ret = EXSUCCEED;
+            
+    if (EXSUCCEED!=(ret=edb_del(txn, db->dbi, keydb, data)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to delete from db [%s] for key [%s], data: %p: %s", 
+                db->cachedb, keydb->mv_data, data, edb_strerror(ret));
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "EOF [%s] for delete of key [%s] data: %p: %s", 
+                db->cachedb, keydb->mv_data, data, edb_strerror(ret));
+        }
+    }
+out:
+    return ret;
+}
+
+
+/**
  * Add data to database
  * @param db db hander
  * @param txn transaction
@@ -344,7 +408,7 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
     EDB_val keydb;
     
     keydb.mv_data = key;
-    keydb.mv_size = strlen(key);
+    keydb.mv_size = strlen(key)+1;
             
     if (EXSUCCEED!=(ret=edb_put(txn, db->dbi, &keydb, data, flags)))
     {
