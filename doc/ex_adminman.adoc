@@ -174,7 +174,7 @@ variable, see ex_env(5) man page.
 Also what should be noted, as Enduro/X mostly uses stack allocation
 instead of heap allocation (for safer and faster code), then there are requirements
 against the stack size. The stack size (ulimit -s) must be at least size of message
-multiplied with 30. So for example is message size is set to 1 MegaByte, then stack
+multiplied with 30. So for example if message size is set to 1 MegaByte, then stack
 size shall be set to 30 Mega bytes (ulimit -s 30720 KB). If the stack is not sufficient
 the following error will be print when attempting to run any Enduro/X based software:
 
