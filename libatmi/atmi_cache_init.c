@@ -7,7 +7,9 @@
 ** even if it is duplicate (for this timesync flag must be present). Then when
 ** we read all records, if two or more records found, then we will use the youngest
 ** one by UTC. If times stamps equals, then we use record as priority from the cluster
-** node with a highest node id number.
+** node with a highest node id number.Z
+** TODO: If want in feature stream latent commands (LCS tech), 
+** then we need locking! if config is changed.
 **
 ** @file atmi_cache.c
 ** 
@@ -245,6 +247,15 @@ expublic void ndrx_cache_dbs_free(void)
         EXHASH_DEL(ndrx_G_tpcache_db, el);
         ndrx_cache_db_free(el);
     }
+}
+
+/**
+ * Return hash handler of the global cache database
+ * @return ptr to cache DB
+ */
+expublic ndrx_tpcache_db_t ndrx_cache_dbgethash(void)
+{
+    return ndrx_G_tpcache_db;
 }
 
 /**
