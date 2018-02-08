@@ -712,7 +712,7 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char ** last_checked,
                             char **last_matched,
                             int *last_occ,
-                            get_fld_loc_info_t *last_start)
+                            Bfld_loc_info_t *last_start)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     BFLDID   *p_bfldid = &hdr->bfldid;
@@ -957,10 +957,11 @@ out:
  * If adding the first value, the buffer should be large enought and last
  * BFLDID should stay at BADFLID, because will not be overwritten.
  * Also last entry always must at BBADFLDID! This is the rule.
+ * @param next_fld ptr to next field after this is added
  */
 expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, 
                     char *buf, BFLDLEN len,
-                    get_fld_loc_info_t *last_start)
+                    Bfld_loc_info_t *last_start, Bfld_loc_info_t *next_fld)
 {
     int ret=EXSUCCEED;
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
@@ -1023,8 +1024,13 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
         EXFAIL_OUT(ret);
     }
 
+    if (NULL!=next_fld && NULL!=next_fld->last_checked)
+    {
+	p_bfldid = next_fld->last_checked;
+	p = (char *)next_fld->last_checked;
+    }
     /* Allow to continue - better performance for concat */
-    if (NULL!=last_start)
+    else if (NULL!=last_start)
     {
         p_bfldid = last_start->last_checked;
         p = (char *)last_start->last_checked;
@@ -1047,6 +1053,10 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
     /* Seek position where we should insert the data... */
     while (!UBF_EOF(hdr, p_bfldid) && bfldid >= *p_bfldid)
     {
+	dtype_str_t *dtype;
+        int step;
+	int type;
+	
         /*
          * Save the point from which we can continue (suitable for Bconcat)
          */
@@ -1057,7 +1067,7 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
 
         /* Got to next position */
         /* Get type */
-        int type = (*p_bfldid>>EFFECTIVE_BITS);
+        type = (*p_bfldid>>EFFECTIVE_BITS);
         if (IS_TYPE_INVALID(type))
         {
             ndrx_Bset_error_fmt(BALIGNERR, "%s: Unknown data type referenced %d",
@@ -1065,8 +1075,8 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
             EXFAIL_OUT(ret);
         }
         /* Get type descriptor */
-        dtype_str_t *dtype = &G_dtype_str_map[type];
-        int step = dtype->p_next(dtype, p, NULL);
+        dtype = &G_dtype_str_map[type];
+        step = dtype->p_next(dtype, p, NULL);
 
         /* Move to next... */
         p+=step;
@@ -1103,7 +1113,7 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
         move_size = (last-p+1);
         /* Get some free space here!
          * So from last element we take off current position,
-         * so we get lenght. to which we should move.
+         * so we get length. to which we should move.
          */
         memmove(p+new_dat_size, p, move_size);
         /* Put the data in! */
@@ -1118,6 +1128,13 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
         ubf_cache_shift(p_ub, bfldid, new_dat_size);
         
     }
+    
+    if (NULL!=next_fld)
+    {
+	/* so mark as next by data size */
+	next_fld->last_checked = (BFLDID *)(p + new_dat_size);
+    }
+    
 out:
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
@@ -1172,7 +1189,7 @@ out:
  */
 expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len,
-                            get_fld_loc_info_t *last_start)
+                            Bfld_loc_info_t *last_start)
 {
     int ret=EXSUCCEED;
 
