@@ -53,11 +53,6 @@ extern "C" {
 #define UBF_BINSRCH_GET_LAST_CHG        0x02 /* for change */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/* get_loc state info */
-typedef struct
-{
-    BFLDID *last_checked;
-} get_fld_loc_info_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -69,7 +64,7 @@ extern char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char ** last_checked,
                             char ** last_matched,
                             int *last_occ,
-                            get_fld_loc_info_t *last_start);
+                            Bfld_loc_info_t *last_start);
 extern void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff);
 extern void ubf_cache_dump(UBFH *p_ub, char *msg);
 extern int ubf_cache_update(UBFH *p_ub);
@@ -77,9 +72,10 @@ extern int ubf_cache_update(UBFH *p_ub);
 extern int ndrx_Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN * buflen);
 extern int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
-                                get_fld_loc_info_t *last_start);
+                                Bfld_loc_info_t *last_start, 
+				Bfld_loc_info_t *next_fld);
 extern int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
-                            char * buf, BFLDLEN len, get_fld_loc_info_t *last_start);
+                            char * buf, BFLDLEN len, Bfld_loc_info_t *last_start);
 extern int have_buffer_size(UBFH *p_ub, int add_size, int set_err);
 extern int validate_entry(UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, int mode);
 extern char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,

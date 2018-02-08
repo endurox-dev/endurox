@@ -143,7 +143,32 @@ expublic int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
         return EXFAIL;
     }
     
-    return ndrx_Badd (p_ub, bfldid, buf, len, NULL);
+    return ndrx_Badd (p_ub, bfldid, buf, len, NULL, NULL);
+}
+
+/**
+ * Fast path adding of data to buffer, by providing reference to last field added
+ * ending. the next_fld shall be used only if adding occurrences of the same field
+ * to buffer. Or you are sure that you are adding new fldid, which is greater than
+ * fldid in last add operation
+ * @param p_ub UBF buffer
+ * @param bfldid field to add
+ * @param buf value to add
+ * @param len len of value (if needed)
+ * @param next_fld saved from previous call. Initially memset to 0
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, 
+	Bfld_loc_info_t *next_fld)
+{
+    API_ENTRY;
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    {
+        UBF_LOG(log_warn, "Badd: arguments fail!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Badd (p_ub, bfldid, buf, len, NULL, next_fld);
 }
 
 /**
@@ -457,7 +482,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "CBadd: the same types - direct call!");
-        return ndrx_Badd(p_ub, bfldid, buf, len, NULL); /* <<<< RETURN!!! */
+        return ndrx_Badd(p_ub, bfldid, buf, len, NULL, NULL); /* <<<< RETURN!!! */
     }
     /* if types are not the same then go the long way... */
 
@@ -474,7 +499,7 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
 
     if (NULL!=cvn_buf)
     {
-        ret=ndrx_Badd (p_ub, bfldid, cvn_buf, cvn_len, NULL);
+        ret=ndrx_Badd (p_ub, bfldid, cvn_buf, cvn_len, NULL, NULL);
     }
     else
     {

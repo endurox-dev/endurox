@@ -277,6 +277,8 @@ when threaded logger using for multi-contexting (like go runtime)
 
 - Version 5.2.14 released on 03/02/2018. (stable) Feature #278 - new fields for compiled connection id
 
+- Version 5.2.15 released on 08/02/2018. (development) Feature #282 - new UBF api Baddfast()
+
 # Build configurations
 
 ## Configure make with: 
