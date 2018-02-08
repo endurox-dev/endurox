@@ -41,6 +41,7 @@
 #include <ubf.h>
 #include <ubf_int.h>
 #include <ndebug.h>
+#include <getopt.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/    
 /*---------------------------Enums--------------------------------------*/
@@ -57,18 +58,88 @@ exprivate int M_shutdown = EXFALSE;  /* do we have shutdown requested?    */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Monitor for termination signals
+ * @param arg
+ * @return 
+ */
+exprivate void * sig_thread(void *arg)
+{
+    sigset_t *set = arg;
+    int s, sig;
+
+    for (;;) {
+        s = sigwait(set, &sig);
+        if (s != 0)
+        {
+            NDRX_LOG(log_error, "Failed to wait for signal: %s", tpstrerror(errno))
+        }
+        
+        NDRX_LOG(log_warn, "Got signal: %d", sig);
+        
+        if (SIGTERM==sig || SIGINT==sig)
+        {
+            NDRX_LOG(log_warn, "Shutdown requested");
+            M_shutdown = EXTRUE;
+            break; /* terminate the monitor */
+        }
+    }
+}
+
+
+/**
  * Perform init (read -i command line argument - interval)
  * @return 
  */
 expublic int init(int argc, char** argv)
 {
     int ret = EXSUCCEED;
+    signed char c;
+    pthread_t thread;
+    sigset_t set;
+    int s;
     
-    
-    /* get -i argument. */
+    /* Parse command line  */
+    while ((c = getopt(argc, argv, "i:")) != -1)
+    {
+        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        switch(c)
+        {
+            case 'i': 
+                M_sleep = atoi(optarg);
+                break;
+            default:
+                /*return FAIL;*/
+                break;
+        }
+    }
+
+    NDRX_LOG(log_debug, "Periodic sleep: %d secs", M_sleep);
     
     
     /* mask signal */
+
+    /* Block SIGQUIT and SIGUSR1; other threads created by main()
+       will inherit a copy of the signal mask. */
+
+    sigemptyset(&set);
+    sigaddset(&set, SIGINT);
+    sigaddset(&set, SIGTERM);
+    
+    s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+    if (s != 0)
+    {
+        NDRX_LOG(log_error, "Failed to block SIGINT, SIGTERM: %s", 
+                strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    s = pthread_create(&thread, NULL, &sig_thread, (void *) &set);
+    if (s != 0)
+    {
+        NDRX_LOG(log_error, "Failed to create signal watch thread: %s", 
+                strerror(errno));
+        EXFAIL_OUT(ret);
+    }
     
 out:
     return ret;
@@ -109,6 +180,10 @@ expublic int main(int argc, char** argv)
     
     while (!M_shutdown)
     {
+        /* Get the DBs
+         */
+        
+        
         
     }
     
