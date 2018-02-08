@@ -60,9 +60,15 @@ exprivate int M_shutdown = EXFALSE;  /* do we have shutdown requested?    */
  * Perform init (read -i command line argument - interval)
  * @return 
  */
-expublic int init(void)
+expublic int init(int argc, char** argv)
 {
     int ret = EXSUCCEED;
+    
+    
+    /* get -i argument. */
+    
+    
+    /* mask signal */
     
 out:
     return ret;
@@ -76,7 +82,15 @@ expublic int main(int argc, char** argv)
 
     int ret=EXSUCCEED;
     
-    /* ATMI init first */
+    /* local init */
+    
+    if (EXSUCCEED!=init(argc, argv))
+    {
+        NDRX_LOG(log_error, "Failed to init!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* ATMI init */
     
     if (EXSUCCEED!=tpinit(NULL))
     {
@@ -88,7 +102,7 @@ expublic int main(int argc, char** argv)
      * loop over all databases
      * if database is limited (i.e. limit > 0), then do following:
      * - Read keys or (header with out data) into memory (linear mem)
-     * and perform correspoding qsort
+     * and perform corresponding qsort
      * then remove records which we have at tail of the array.
      * - sleep configured time
      */
