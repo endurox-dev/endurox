@@ -55,36 +55,9 @@ exprivate int M_sleep = 5;          /* perform actions at every X seconds */
 /* for this mask, sigint, sigterm, check sigs periodically */
 exprivate int M_shutdown = EXFALSE;  /* do we have shutdown requested?    */
 
+exprivate sigset_t  M_mask;
+
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Monitor for termination signals
- * @param arg
- * @return 
- */
-exprivate void * sig_thread(void *arg)
-{
-    sigset_t *set = arg;
-    int s, sig;
-
-    for (;;) {
-        s = sigwait(set, &sig);
-        if (s != 0)
-        {
-            NDRX_LOG(log_error, "Failed to wait for signal: %s", tpstrerror(errno))
-        }
-        
-        NDRX_LOG(log_warn, "Got signal: %d", sig);
-        
-        if (SIGTERM==sig || SIGINT==sig)
-        {
-            NDRX_LOG(log_warn, "Shutdown requested");
-            M_shutdown = EXTRUE;
-            break; /* terminate the monitor */
-        }
-    }
-}
-
 
 /**
  * Perform init (read -i command line argument - interval)
@@ -97,6 +70,7 @@ expublic int init(int argc, char** argv)
     pthread_t thread;
     sigset_t set;
     int s;
+    sigset_t    mask;
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "i:")) != -1)
@@ -117,30 +91,16 @@ expublic int init(int argc, char** argv)
     
     
     /* mask signal */
+    sigemptyset(&M_mask);
+    sigaddset(&M_mask, SIGINT);
+    sigaddset(&M_mask, SIGTERM);
 
-    /* Block SIGQUIT and SIGUSR1; other threads created by main()
-       will inherit a copy of the signal mask. */
-
-    sigemptyset(&set);
-    sigaddset(&set, SIGINT);
-    sigaddset(&set, SIGTERM);
-    
-    s = pthread_sigmask(SIG_BLOCK, &set, NULL);
-    if (s != 0)
+    if (EXSUCCEED!=sigprocmask(SIG_SETMASK, &M_mask, NULL))
     {
-        NDRX_LOG(log_error, "Failed to block SIGINT, SIGTERM: %s", 
-                strerror(errno));
+        NDRX_LOG(log_error, "Failed to set SIG_SETMASK: %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
 
-    s = pthread_create(&thread, NULL, &sig_thread, (void *) &set);
-    if (s != 0)
-    {
-        NDRX_LOG(log_error, "Failed to create signal watch thread: %s", 
-                strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    
 out:
     return ret;
 }
@@ -152,7 +112,11 @@ expublic int main(int argc, char** argv)
 {
 
     int ret=EXSUCCEED;
-    
+
+    struct timespec timeout;
+    siginfo_t info;
+    int result = 0;
+
     /* local init */
     
     if (EXSUCCEED!=init(argc, argv))
@@ -178,12 +142,42 @@ expublic int main(int argc, char** argv)
      * - sleep configured time
      */
     
+    timeout.tv_sec = M_sleep;
+    timeout.tv_nsec = 0;
+
+
     while (!M_shutdown)
     {
         /* Get the DBs
          */
         
-        
+        /* sleep 1 sec, do work every M_sleep sleeps
+see: https://stackoverflow.com/questions/48409070/difference-between-a-process-signal-mask-blocked-signal-set-and-a-blocked-sign
+         * 
+         */
+
+        result = sigtimedwait( &M_mask, &info, &timeout );
+
+        if (result > 0)
+        {
+            if (SIGINT == result || SIGTERM == result)
+            {
+                NDRX_LOG(log_warn, "Signal received: %d - shutting down", result);
+                M_shutdown = EXTRUE;
+                break;
+            }
+            else
+            {
+                NDRX_LOG(log_warn, "Signal received: %d - ignore", result);
+            }
+        }
+        else if (EXFAIL==result)
+        {
+            NDRX_LOG(log_error, "sigtimedwait failed: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* TODO: interval process */
         
     }
     
