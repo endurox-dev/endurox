@@ -279,6 +279,9 @@ when threaded logger using for multi-contexting (like go runtime)
 
 - Version 5.2.15 released on 08/02/2018. (development) Feature #282 - new UBF api Baddfast()
 
+- Version 5.2.16 released on 09/02/2018. (stable) Feature #282 - new UBF api Baddfast(), finished
+documentation and added unit tests.
+
 # Build configurations
 
 ## Configure make with: 
