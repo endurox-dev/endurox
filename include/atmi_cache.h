@@ -419,7 +419,7 @@ extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
 
 extern NDRX_API int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen,
         char *flags);
-extern NDRX_API ndrx_cache_drop(char *cachedbnm, short nodeid);
+extern NDRX_API int ndrx_cache_drop(char *cachedbnm, short nodeid);
 extern NDRX_API long ndrx_cache_inval_by_expr(char *cachedbnm, 
         char *keyexpr, short nodeid);
 extern NDRX_API int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid);
@@ -451,6 +451,9 @@ extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor 
 
 extern NDRX_API int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, 
         EDB_cursor * cursor, EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op);
+
+extern NDRX_API int ndrx_cache_edb_delfullkey (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        EDB_val *keydb, EDB_val *data);
 
 extern NDRX_API ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
 
