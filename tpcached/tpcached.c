@@ -42,6 +42,7 @@
 #include <ubf_int.h>
 #include <ndebug.h>
 #include <getopt.h>
+#include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/    
 /*---------------------------Enums--------------------------------------*/
@@ -150,11 +151,6 @@ expublic int main(int argc, char** argv)
     {
         /* Get the DBs
          */
-        
-        /* sleep 1 sec, do work every M_sleep sleeps
-see: https://stackoverflow.com/questions/48409070/difference-between-a-process-signal-mask-blocked-signal-set-and-a-blocked-sign
-         * 
-         */
 
         result = sigtimedwait( &M_mask, &info, &timeout );
 
@@ -178,6 +174,10 @@ see: https://stackoverflow.com/questions/48409070/difference-between-a-process-s
         }
 
         /* TODO: interval process */
+	
+	
+	
+	
         
     }
     
