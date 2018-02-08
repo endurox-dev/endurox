@@ -168,6 +168,12 @@ expublic int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
         return EXFAIL;
     }
     
+    if (NULL==next_fld)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "next_fld must not be NULL!");
+        return EXFAIL;
+    }
+    
     return ndrx_Badd (p_ub, bfldid, buf, len, NULL, next_fld);
 }
 

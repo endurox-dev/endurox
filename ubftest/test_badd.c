@@ -171,6 +171,98 @@ Ensure(test_Badd_str)
 }
 
 /**
+ * Test of FAST add test
+ * Single field in buffer
+ */
+Ensure(test_Baddfast1)
+{
+    Bfld_loc_info_t state;
+    int i;
+    char str[16];
+    char buf1[56000];
+    UBFH *p_ub1 = (UBFH *)buf1;
+    
+    char buf2[56000];
+    UBFH *p_ub2 = (UBFH *)buf2;
+
+    
+    memset(buf1, 0, sizeof(buf1));
+    memset(buf2, 0, sizeof(buf2));
+    
+    assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(buf2)), EXSUCCEED);
+    
+    memset(&state, 0, sizeof(state));
+    
+    for (i=0; i<100; i++)
+    {
+	snprintf(str, sizeof(str), "%i", i);
+	assert_equal(Baddfast(p_ub1, T_STRING_FLD, str, 0, &state), EXSUCCEED);
+        assert_equal(Badd(p_ub2, T_STRING_FLD, str, 0), EXSUCCEED);
+    }
+    
+    /* the buffer shall be equal */
+    
+    assert_equal(memcmp(buf1, buf2, sizeof(buf1)), 0);
+    
+}
+
+/**
+ * Test of FAST add test
+ * Some field exists before and after 
+ */
+Ensure(test_Baddfast2)
+{
+    Bfld_loc_info_t state;
+    int i;
+    char str[16];
+    char buf1[56000];
+    UBFH *p_ub1 = (UBFH *)buf1;
+    
+    char buf2[56000];
+    UBFH *p_ub2 = (UBFH *)buf2;
+
+    
+    memset(buf1, 0, sizeof(buf1));
+    memset(buf2, 0, sizeof(buf2));
+    
+    assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(buf2)), EXSUCCEED);
+    
+    
+    
+    assert_equal(Badd(p_ub1, T_STRING_2_FLD, "HELLO", 0), EXSUCCEED);
+    assert_equal(Badd(p_ub2, T_STRING_2_FLD, "HELLO", 0), EXSUCCEED);
+    
+    assert_equal(CBadd(p_ub1, T_SHORT_FLD, "14", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub2, T_SHORT_FLD, "14", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBadd(p_ub1, T_CARRAY_FLD, "WORLD", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBadd(p_ub2, T_CARRAY_FLD, "WORLD", 0, BFLD_STRING), EXSUCCEED);
+    
+    /* now perform fast add */
+    memset(&state, 0, sizeof(state));
+    
+    for (i=0; i<100; i++)
+    {
+	snprintf(str, sizeof(str), "%i", i);
+	assert_equal(Baddfast(p_ub1, T_STRING_FLD, str, 0, &state), EXSUCCEED);
+        assert_equal(Badd(p_ub2, T_STRING_FLD, str, 0), EXSUCCEED);
+    }
+    
+    /* the buffer shall be equal */
+    
+    assert_equal(memcmp(buf1, buf2, sizeof(buf1)), 0);
+    
+    
+    /* should fail if state is NULL */
+    
+    assert_equal(Baddfast(p_ub1, T_STRING_FLD, str, 0, NULL), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+}
+
+/**
  * Common suite entry
  * @return
  */
@@ -182,6 +274,8 @@ TestSuite *ubf_Badd_tests(void)
     set_teardown(suite, basic_teardown1);
 
     add_test(suite, test_Badd_str);
+    add_test(suite, test_Baddfast1);
+    add_test(suite, test_Baddfast2);
 
     return suite;
 }
