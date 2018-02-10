@@ -93,7 +93,7 @@ extern TestSuite *ubf_nstd_mtest2(void);
 extern TestSuite *ubf_nstd_mtest3(void);
 extern TestSuite *ubf_nstd_mtest4(void);
 extern TestSuite *ubf_nstd_mtest5(void);
-
+extern TestSuite *ubf_nstd_mtest6_dupcursor(void);
 #ifdef	__cplusplus
 }
 #endif

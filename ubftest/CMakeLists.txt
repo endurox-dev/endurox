@@ -55,7 +55,7 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
                 test_print.c test_macro.c test_readwrite.c test_mkfldhdr.c
                 test_nstd_crypto.c test_nstd_b64.c
                 test_nstd_mtest.c test_nstd_mtest2.c test_nstd_mtest3.c
-                test_nstd_mtest4.c test_nstd_mtest5.c)
+                test_nstd_mtest4.c test_nstd_mtest5.c test_nstd_mtest6_dupcursor.c)
 
 # Link the executable to the UBF library & others...
 

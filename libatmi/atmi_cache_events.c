@@ -506,16 +506,15 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
         if (EXSUCCEED==ndrx_regexec(&re, keydb.mv_data))
         {
             NDRX_LOG(log_debug, "Key [%s] matched - deleting", keydb.mv_data);
-            EXFAIL_OUT(ret);
+
+            if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
+            {
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", keydb.mv_data);
+                EXFAIL_OUT(ret);
+            }
+
+            deleted++;
         }
-        
-        if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
-        {
-            NDRX_LOG(log_debug, "Failed to delete record by key [%s]", keydb.mv_data);
-            EXFAIL_OUT(ret);
-        }
-        
-        deleted++;
         
         if (EDB_FIRST == op)
         {
@@ -724,4 +723,58 @@ out:
     return ret;
 }
 
+/**
+ * Broadcast delete by key
+ * @param cachedbnm cache database name
+ * @param key key to delete
+ * @param nodeid cluster node id
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_cache_broadcast_by_delkey(char *cachedbnm, char *key, short nodeid)
+{
+    int ret = EXSUCCEED;
+    UBFH *p_ub = NULL;
+    char cmd;
+
+    NDRX_LOG(log_debug, "Same node -> broadcast event of delete key");
+
+    if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+    {
+        NDRX_LOG(log_error, "Failed to allocate UBF buffer!");
+        EXFAIL_OUT(ret);
+    }
+
+    /* Set command code (optional, actual command is encoded in event) */
+    cmd = NDRX_CACHE_SVCMD_DELBYKEY;
+    if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_CMD, 0, &cmd, 0L))
+    {
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to set command code of "
+                "[%c] to UBF: %s", __func__, cmd, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    /* Set expression string, mandatory */
+    if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_OPEXPR, 0, key, 0L))
+    {
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to set operation expression "
+                "[%s] to UBF: %s", __func__, key, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    /* Broadcast NULL buffer event (ignore result) */
+    if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, NULL, 0, 
+            NDRX_CACHE_BCAST_MODE_DKY,  NDRX_TPCACHE_BCAST_DFLT, 0, 0, 0, 0))
+    {
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to broadcast: %s", 
+                __func__, tpstrerror(tperrno));
+    }
+out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    return ret;
+}
 

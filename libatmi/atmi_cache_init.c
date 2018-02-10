@@ -381,6 +381,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_TIMESYNC;
                 }
+                else if (0==strcmp(p, "scandup"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_SCANDUP;
+                }
                 else
                 {
                     /* unknown flag */
@@ -412,6 +416,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                     val->key);
         }
     }
+    
+    /* TODO: check for flags! */
     
     /* Dump the DB config and open it and if we run in boot mode  
      * we have to reset the 
@@ -473,7 +479,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         /* We must perform sorting too so that first rec is 
          * is one we need to process and then we check for others to dump...
          */
-        dbi_flags = EDB_DUPSORT | EDB_DUPSORT;
+        dbi_flags = EDB_DUPSORT;
     }
     else
     {
