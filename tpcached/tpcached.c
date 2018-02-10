@@ -68,10 +68,6 @@ expublic int init(int argc, char** argv)
 {
     int ret = EXSUCCEED;
     signed char c;
-    pthread_t thread;
-    sigset_t set;
-    int s;
-    sigset_t    mask;
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "i:")) != -1)
@@ -108,49 +104,652 @@ out:
 
 /**
  * Process database by record expiry
- * @param db
- * @return 
+ * loop over the db and remove expired records.
+ * @param db cache database 
+ * @return EXSUCCED/EXFAIL
  */
 exprivate int proc_db_expiry(ndrx_tpcache_db_t *db)
 {
     int ret = EXSUCCEED;
-
-    /* loop over the db and remove expired records. */
+    EDB_txn *txn = NULL;
+    int tran_started = EXFALSE;
+    EDB_cursor *cursor;
+    EDB_cursor_op op;
+    EDB_val keydb, val;
+    long t;
+    long tusec;
+    long nodeid = tpgetnodeid();
+    long deleted = 0;
+    ndrx_tpcache_data_t *pdata;
+    
+    NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
+    
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran: %s", __func__, 
+                tpstrerror(tperrno));
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+    
+    
+    /* loop over the database */
+    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor");
+        EXFAIL_OUT(ret);
+    }
+    
+    ndrx_utc_tstamp2(&t, &tusec);
+    
+    /* loop over the db and match records  */
+    
+    op = EDB_FIRST;
+    do
+    {
+        if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
+                &keydb, &val, op)))
+        {
+            if (EDB_NOTFOUND==ret)
+            {
+                /* this is ok */
+                ret = EXSUCCEED;
+                break;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to loop over the [%s] db", db->cachedb);
+                break;
+            }
+        }
+        
+        /* test is last symbols EOS of data, if not this might cause core dump! */
+        
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        {
+            NDRX_DUMP(log_error, "Invalid cache key", 
+                    keydb.mv_data, keydb.mv_size);
+            
+            NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
+                    "terminated with EOS!", __func__, keydb.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        pdata = (ndrx_tpcache_data_t *)val.mv_data;
+        
+        
+        if (val.mv_size < sizeof(ndrx_tpcache_data_t))
+        {
+            NDRX_LOG(log_error, "Corrupted data - invalid minimums size, "
+                    "expected: %ld, got %ld", 
+                    (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NDRX_CACHE_MAGIC!=pdata->magic)
+        {
+            NDRX_LOG(log_error, "Corrupted data - invalid magic expected: %x got %x",
+                    pdata->magic, NDRX_CACHE_MAGIC);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* we have timestamp for putting record in DB, but we need to calculate
+         * the difference between 
+         */
+        if (pdata->hit_t + db->expiry < t)
+        {
+            NDRX_LOG(log_info, "Record with key [%s] expired: current UTC: %ld, "
+                    "record %ld (+%ld = %ld)", 
+                    keydb.mv_data, pdata->hit_t,  db->expiry, pdata->hit_t + db->expiry);
+            
+            if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
+            {
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
+                        keydb.mv_data);
+                EXFAIL_OUT(ret);
+            }
+            
+            deleted++;
+            
+            /* Broadcast! 
+             * The broadcast event will be KEY based
+             */
+            if (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
+            {
+                if (EXSUCCEED!=ndrx_cache_broadcast_by_delkey(db->cachedb, 
+                        keydb.mv_data, (short)nodeid))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+        }
+        
+        if (EDB_FIRST == op)
+        {
+            op = EDB_NEXT;
+        }
+        
+    } while (EXSUCCEED==ret);
+    
+    
+    NDRX_LOG(log_info, "Deleted %ld records", deleted);
     
 out:
-                
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
+                    __func__, tpstrerror(tperrno));
+                ndrx_cache_edb_abort(db, txn);
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
     return ret;
+}
+
+/**
+ * Compare in reverse 
+ * @param a
+ * @param b
+ * @return 
+ */
+exprivate int cmpfunc_lru (const void * a, const void * b)
+{
+    
+    ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
+    ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
+    
+    ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
+    ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;
+            
+    /* if records are empty (not filled, malloc'd then numbers will be higher anyway */
+    
+    /* to get newer rec first, we change the compare order */
+    return ndrx_utc_cmp(&bv->hit_t, &bv->hit_tusec, &av->hit_t, &av->hit_tusec);
+    
+}
+/**
+ * Sort by hits
+ * @param a
+ * @param b
+ * @return 
+ */
+exprivate int cmpfunc_hits (const void * a, const void * b) 
+{
+    ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
+    ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
+    
+    ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
+    ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;
+    
+    long res = bv->hits - av->hits;
+ 
+    /* do some custom work because of int */
+    if (res < 0)
+    {
+        return -1;
+    }
+    else if (res > 0)
+    {
+        return 1;
+    }
+    
+    return 0;
+}
+
+/**
+ * Fifo order by date
+ * @param a
+ * @param b
+ * @return 
+ */
+exprivate int cmpfunc_fifo (const void * a, const void * b) 
+{
+    ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
+    ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
+    
+    ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
+    ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;    
+    
+    /* do some custom work because of int */
+    return ndrx_utc_cmp(&bv->t, &bv->tusec, &av->t, &av->tusec);
 }
 
 /**
  * Process single db - by limit rule
  * @param db
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
 {
     int ret = EXSUCCEED;
-    
-    
+    EDB_stat stat;
+    EDB_txn *txn = NULL;
+    int tran_started = EXFALSE;
+    ndrx_tpcache_datasort_t **dsort = NULL;
+    EDB_cursor_op op;
+    EDB_val keydb, val;
+    EDB_cursor *cursor;
+    ndrx_tpcache_data_t *pdata;
+    long i;
+    long nodeid = tpgetnodeid();
+    long deleted=0, dupsdel=0;
+    NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
+    
+    /* start transaction */
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn))
+    {
+        NDRX_LOG(log_error, "Failed start transaction: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    tran_started = EXTRUE;
+    
+    
+    if (EXSUCCEED!=ndrx_cache_edb_stat (db, txn, &stat))
+    {
+        NDRX_LOG(log_error, "Failed to get db statistics: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "number of keys in db: %ld, limit: %d", 
+            stat.ms_entries, db->limit);
+    
+    if (stat.ms_entries <= db->limit)
+    {
+        NDRX_LOG(6, "Under the limit -> no need to delete recs..");
+        goto out;
+    }
     
     /* allocate ptr array of number elements in db */
     
-    /* transfer all keys to array (allocate each cell) */
+    NDRX_CALLOC_OUT(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t*), 
+            void);
     
-    /* sort array to according technique:
+    for (i=0; i<stat.ms_entries; i++)
+    {
+        NDRX_CALLOC_OUT(dsort[i], 1, sizeof(ndrx_tpcache_datasort_t), ndrx_tpcache_datasort_t);
+    }
+    
+    
+    /* open cursor firstly... */
+    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* transfer all keys to array (allocate each cell), also got to copy key data/strdup.. */
+    op = EDB_FIRST;
+    i = 0;
+    do
+    {
+        if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
+                &keydb, &val, op)))
+        {
+            if (EDB_NOTFOUND==ret)
+            {
+                /* this is ok */
+                ret = EXSUCCEED;
+                break;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to loop over the [%s] db", db->cachedb);
+                break;
+            }
+        }
+        
+        /* test is last symbols EOS of data, if not this might cause core dump! */
+        
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        {
+            NDRX_DUMP(log_error, "Invalid cache key", 
+                    keydb.mv_data, keydb.mv_size);
+            
+            NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
+                    "terminated with EOS!", __func__, keydb.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        pdata = (ndrx_tpcache_data_t *)val.mv_data;
+        
+        
+        if (val.mv_size < sizeof(ndrx_tpcache_data_t))
+        {
+            NDRX_LOG(log_error, "Corrupted data - invalid minimums size, "
+                    "expected: %ld, got %ld", 
+                    (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NDRX_CACHE_MAGIC!=pdata->magic)
+        {
+            NDRX_LOG(log_error, "Corrupted data - invalid magic expected: %x got %x",
+                    pdata->magic, NDRX_CACHE_MAGIC);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* check isn't duplicate records in DB? 
+         * Well we need a test case here... to see how lmdb will act in this
+         * case will it return only first sorted? Or return all keys in random
+         * order?
+         */
+        
+        if (0<i && 0!=strcmp(dsort[i]->key.mv_data, keydb.mv_data) || 0==i)
+        {
+            /* populate array */
+            memcpy(&dsort[i]->data, pdata, sizeof(ndrx_tpcache_data_t));
+
+            /* duplicate key data (it is string!) */
+
+            if (NULL==(dsort[i]->key.mv_data = NDRX_STRDUP(keydb.mv_data)))
+            {
+                NDRX_LOG(log_error, "Failed to strdup: %s", keydb.mv_data);
+                EXFAIL_OUT(ret);
+            }
+
+            dsort[i]->key.mv_size = strlen(dsort[i]->key.mv_data)+1;
+        } 
+        else 
+        {
+            /* this is duplicate record, we will help the system and clean it up */
+            NDRX_LOG(log_debug, "Removing duplicate: [%s]", keydb.mv_data);
+            if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, keydb.mv_data, &val)))
+            {
+                if (ret!=EDB_NOTFOUND)
+                {
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    ret=EXSUCCEED;
+                }
+            }
+            dupsdel++;
+        }
+        
+        if (EDB_FIRST == op)
+        {
+            op = EDB_NEXT;
+        }
+        
+        i++;
+        
+    } while (EXSUCCEED==ret);
+    
+    /* sort array to according techniques:
      * lru, hits, fifo (tstamp based) */
     
-    /* duplicate records we shall ignore (not add to list) */
+    if (db->flags & NDRX_TPCACHE_FLAGS_LRU)
+    {
+        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t *),
+                  cmpfunc_lru);
+    }
+    else if (db->flags & NDRX_TPCACHE_FLAGS_HITS)
+    {
+        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t *),
+                  cmpfunc_hits);
+    }
+    else if (db->flags & NDRX_TPCACHE_FLAGS_FIFO)
+    {
+        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t *),
+                  cmpfunc_fifo);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid db flags: %ld", db->flags);
+        EXFAIL_OUT(ret);
+    }    
     
     /* empty lists are always at the end of the array */
     
     /* then go over the linear array, and remove records which goes over the cache */
+    
+    for (i=db->limit; i<stat.ms_entries; i++)
+    {
+        char *p = dsort[i]->key.mv_data;
+        if (EXEOS!=p[0])
+        {
+            /* this is ok entry, lets remove it! */        
+            
+            NDRX_LOG(log_info, "About to delete: key=[%s]", dsort[i]->key.mv_data);
+            
+            if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &dsort[i]->key, NULL))
+            {
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
+                        dsort[i]->key.mv_data);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* Broadcast! 
+             * The broadcast event will be KEY based
+             */
+            if (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
+            {
+                if (EXSUCCEED!=ndrx_cache_broadcast_by_delkey(db->cachedb, 
+                        dsort[i]->key.mv_data, (short)nodeid))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            deleted++;
+        }
+    }
+    
+    NDRX_LOG(log_info, "Deleted %ld records, %ld duplicates del", deleted, dupsdel);
 
 out:
+                
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
+                    __func__, tpstrerror(tperrno));
+                ndrx_cache_edb_abort(db, txn);
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
+    /* kill the list -> free some memory! */
+    if (NULL!=dsort)
+    {
+        for (i=0; i<stat.ms_entries; i++)
+        {
+            NDRX_FREE(dsort[i]->key.mv_data);
+            NDRX_FREE(dsort[i]);
+        }
+        
+        NDRX_FREE(dsort);
+        dsort = NULL;
+    }
+
     return ret;
 }
 
+/**
+ * Scan for duplicates and remove them. This could be useful for services
+ * for which there are lot of caching, but less later accessing. Thus have
+ * some housekeeping
+ * @param db
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
+{
+    int ret = EXSUCCEED;
+    EDB_txn *txn = NULL;
+    int tran_started = EXFALSE;
+    EDB_cursor_op op;
+    EDB_val keydb, val;
+    EDB_cursor *cursor;
+    long deleted=0;
+    long i;
+    ndrx_tpcache_data_t *pdata;
+    char *prvkey = NULL;
+    NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
+    /* Get size of db */
+    
+    /* start transaction */
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn))
+    {
+        NDRX_LOG(log_error, "Failed start transaction: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    tran_started = EXTRUE;
+    
+    /* open cursor firstly... */
+    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* transfer all keys to array (allocate each cell), also got to copy key data/strdup.. */
+    op = EDB_FIRST;
+    i = 0;
+    do
+    {
+        if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
+                &keydb, &val, op)))
+        {
+            if (EDB_NOTFOUND==ret)
+            {
+                /* this is ok */
+                ret = EXSUCCEED;
+                break;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to loop over the [%s] db", db->cachedb);
+                break;
+            }
+        }
+        
+        /* test is last symbols EOS of data, if not this might cause core dump! */
+        
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        {
+            NDRX_DUMP(log_error, "Invalid cache key", 
+                    keydb.mv_data, keydb.mv_size);
+            
+            NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
+                    "terminated with EOS!", __func__, keydb.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        pdata = (ndrx_tpcache_data_t *)val.mv_data;
+        
+        
+        if (val.mv_size < sizeof(ndrx_tpcache_data_t))
+        {
+            NDRX_LOG(log_error, "Corrupted data - invalid minimums size, "
+                    "expected: %ld, got %ld", 
+                    (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NDRX_CACHE_MAGIC!=pdata->magic)
+        {
+            NDRX_LOG(log_error, "Corrupted data - invalid magic expected: %x got %x",
+                    pdata->magic, NDRX_CACHE_MAGIC);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* store prev key */
+        if (i!=0)
+        {
+            /* this is duplicate record, we will help the system and clean it up */
+            
+            if (0==strcmp(prvkey, (char *)keydb.mv_data))
+            {
+                NDRX_LOG(log_debug, "Removing duplicate: [%s]", keydb.mv_data);
+                if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, keydb.mv_data, &val)))
+                {
+                    if (ret!=EDB_NOTFOUND)
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    else
+                    {
+                        ret=EXSUCCEED;
+                    }
+                }
+            }
+            else
+            {
+                NDRX_FREE(prvkey);
+            }
+        }
+        
+        if (NULL==(prvkey = NDRX_STRDUP(keydb.mv_data)))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "Failed to strdup: %s", strerror(err));
+            userlog("Failed to strdup: %s", strerror(err));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EDB_FIRST == op)
+        {
+            op = EDB_NEXT;
+        }
+        
+        i++;
+        
+    } while (EXSUCCEED==ret);
+    
+   
+    NDRX_LOG(log_info, "Deleted %ld duplicated records", deleted);
+
+out:
+                
+    if (NULL!=prvkey)
+    {
+        NDRX_FREE(prvkey);
+    }
+                
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
+                    __func__, tpstrerror(tperrno));
+                ndrx_cache_edb_abort(db, txn);
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
+    return ret;
+}
 /**
  * Main entry point for `tpcached' utility
  */
@@ -180,7 +779,7 @@ expublic int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO:
+    /* 
      * loop over all databases
      * if database is limited (i.e. limit > 0), then do following:
      * - Read keys or (header with out data) into memory (linear mem)
@@ -220,34 +819,46 @@ expublic int main(int argc, char** argv)
         }
 
         /* TODO: interval process */
-	 dbh = ndrx_cache_dbgethash();
-         
-         EXHASH_ITER(hh, dbh, el, elt)
-         {
-             /* process db */
-             if (el->flags & NDRX_TPCACHE_FLAGS_EXPIRY)
-             {
-                 if (EXSUCCEED!=proc_db_expiry(el))
-                 {
-                    NDRX_LOG(log_error, "Failed to process expiry cache: [%s]", 
-                            el->cachedb);
-                    EXFAIL_OUT(ret);
-                 }
-             }
-             else if (
-                        el->flags & NDRX_TPCACHE_FLAGS_LRU ||
-                        el->flags & NDRX_TPCACHE_FLAGS_HITS ||
-                        el->flags & NDRX_TPCACHE_FLAGS_FIFO
+        dbh = ndrx_cache_dbgethash();
+
+        EXHASH_ITER(hh, dbh, el, elt)
+        {
+            /* process db */
+            if (el->flags & NDRX_TPCACHE_FLAGS_EXPIRY)
+            {
+                if (EXSUCCEED!=proc_db_expiry(el))
+                {
+                   NDRX_LOG(log_error, "Failed to process expiry cache: [%s]", 
+                           el->cachedb);
+                   EXFAIL_OUT(ret);
+                }
+            }
+            else if (
+                       el->flags & NDRX_TPCACHE_FLAGS_LRU ||
+                       el->flags & NDRX_TPCACHE_FLAGS_HITS ||
+                       el->flags & NDRX_TPCACHE_FLAGS_FIFO
                     ) 
-             {
-                 if (EXSUCCEED!=proc_db_limit(el))
-                 {
-                    NDRX_LOG(log_error, "Failed to process limit cache: [%s]", 
-                            el->cachedb);
-                    EXFAIL_OUT(ret);
-                 }
-             }
-         }
+            {
+                if (EXSUCCEED!=proc_db_limit(el))
+                {
+                   NDRX_LOG(log_error, "Failed to process limit cache: [%s]", 
+                           el->cachedb);
+                   EXFAIL_OUT(ret);
+                }
+            }
+            
+            if (el->flags & NDRX_TPCACHE_FLAGS_SCANDUP)
+            {
+               NDRX_LOG(log_error, "scanning for duplicates");
+               
+                if (EXSUCCEED!=proc_db_dups(el))
+                {
+                   NDRX_LOG(log_error, "Failed to process limit cache: [%s]", 
+                           el->cachedb);
+                   EXFAIL_OUT(ret);
+                }
+            }
+        }
     }
     
 out:

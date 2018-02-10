@@ -57,7 +57,7 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_BCASTPUT  0x00000020   /* Shall we broadcast the events?   */
 #define NDRX_TPCACHE_FLAGS_BCASTDEL  0x00000040   /* Broadcast delete events?         */
 #define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /* Perfrom timsync                  */
-    
+#define NDRX_TPCACHE_FLAGS_SCANDUP   0x00000100   /* Scan for duplicates by tpcached  */
 
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
 #define NDRX_TPCACHE_TPCF_REPL       0x00000002      /* Replace buf                   */
@@ -207,6 +207,8 @@ extern "C" {
 #define NDRX_CACHE_TPERRORNOU(atmierr, fmt, ...)\
         NDRX_LOG(log_error, fmt, ##__VA_ARGS__);\
         ndrx_TPset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
+    
+#define NDRX_CACHE_MAGIC        0xab4388ef
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -329,6 +331,7 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
  */
 struct ndrx_tpcache_data
 {
+    int magic;          /* Magic bytes              */
     int saved_tperrno;
     long saved_tpurcode;
     long t;             /* UTC timestamp of message */
@@ -348,6 +351,16 @@ struct ndrx_tpcache_data
 };
 typedef struct ndrx_tpcache_data ndrx_tpcache_data_t;
 
+
+struct ndrx_tpcache_datasort
+{
+    /* we need a ptr to key too... */
+    
+    EDB_val key; /* allocated key */
+    
+    ndrx_tpcache_data_t data; /* just copy header of data block */
+};
+typedef struct ndrx_tpcache_datasort ndrx_tpcache_datasort_t;
 /*
  * NOTE: Key is used directly as binary data and length 
  */
@@ -444,6 +457,9 @@ extern NDRX_API int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
 extern NDRX_API int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         char *key, EDB_val *data, unsigned int flags);
 
+extern NDRX_API int ndrx_cache_edb_stat (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        EDB_stat * stat);
+
 extern NDRX_API  int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *txn, 
             EDB_cursor ** cursor);
 extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
@@ -483,6 +499,8 @@ extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache,
 extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc, 
         char *idata, long ilen, int event_type, char *flags, int user1, long user2,
         int user3, long user4);
+extern NDRX_API int ndrx_cache_broadcast_by_delkey(char *cachedbnm, char *key, 
+        short nodeid);
 extern NDRX_API int ndrx_cache_events_get(string_list_t **list);
 
 #ifdef	__cplusplus

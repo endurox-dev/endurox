@@ -84,6 +84,7 @@ extern NDRX_API int ndrx_str_subs_context(char * str, int buf_size, char opensym
             char *symbol, char *outbuf, long outbufsz));
 extern NDRX_API char *ndrx_str_replace(char *orig, char *rep, char *with);
 extern NDRX_API void ndrx_utc_tstamp2(long *t, long *tusec);
+extern NDRX_API int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2);
 extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
 extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
 
