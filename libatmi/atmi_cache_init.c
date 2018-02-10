@@ -155,7 +155,6 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
     return ret;
 }
 
-
 /**
  * Close database
  * @param db descr struct
@@ -253,7 +252,7 @@ expublic void ndrx_cache_dbs_free(void)
  * Return hash handler of the global cache database
  * @return ptr to cache DB
  */
-expublic ndrx_tpcache_db_t ndrx_cache_dbgethash(void)
+expublic ndrx_tpcache_db_t *ndrx_cache_dbgethash(void)
 {
     return ndrx_G_tpcache_db;
 }

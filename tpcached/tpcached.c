@@ -107,6 +107,51 @@ out:
 }
 
 /**
+ * Process database by record expiry
+ * @param db
+ * @return 
+ */
+exprivate int proc_db_expiry(ndrx_tpcache_db_t *db)
+{
+    int ret = EXSUCCEED;
+
+    /* loop over the db and remove expired records. */
+    
+out:
+                
+    return ret;
+}
+
+/**
+ * Process single db - by limit rule
+ * @param db
+ * @return 
+ */
+exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
+{
+    int ret = EXSUCCEED;
+    
+    
+    /* Get size of db */
+    
+    /* allocate ptr array of number elements in db */
+    
+    /* transfer all keys to array (allocate each cell) */
+    
+    /* sort array to according technique:
+     * lru, hits, fifo (tstamp based) */
+    
+    /* duplicate records we shall ignore (not add to list) */
+    
+    /* empty lists are always at the end of the array */
+    
+    /* then go over the linear array, and remove records which goes over the cache */
+
+out:
+    return ret;
+}
+
+/**
  * Main entry point for `tpcached' utility
  */
 expublic int main(int argc, char** argv)
@@ -117,6 +162,7 @@ expublic int main(int argc, char** argv)
     struct timespec timeout;
     siginfo_t info;
     int result = 0;
+    ndrx_tpcache_db_t *dbh, *el, *elt;
 
     /* local init */
     
@@ -174,11 +220,34 @@ expublic int main(int argc, char** argv)
         }
 
         /* TODO: interval process */
-	
-	
-	
-	
-        
+	 dbh = ndrx_cache_dbgethash();
+         
+         EXHASH_ITER(hh, dbh, el, elt)
+         {
+             /* process db */
+             if (el->flags & NDRX_TPCACHE_FLAGS_EXPIRY)
+             {
+                 if (EXSUCCEED!=proc_db_expiry(el))
+                 {
+                    NDRX_LOG(log_error, "Failed to process expiry cache: [%s]", 
+                            el->cachedb);
+                    EXFAIL_OUT(ret);
+                 }
+             }
+             else if (
+                        el->flags & NDRX_TPCACHE_FLAGS_LRU ||
+                        el->flags & NDRX_TPCACHE_FLAGS_HITS ||
+                        el->flags & NDRX_TPCACHE_FLAGS_FIFO
+                    ) 
+             {
+                 if (EXSUCCEED!=proc_db_limit(el))
+                 {
+                    NDRX_LOG(log_error, "Failed to process limit cache: [%s]", 
+                            el->cachedb);
+                    EXFAIL_OUT(ret);
+                 }
+             }
+         }
     }
     
 out:
