@@ -111,6 +111,22 @@ expublic int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b)
     return result;
 }
 
+
+/**
+ * Sort data blocks by date
+ * @param a
+ * @param b
+ * @return 
+ */
+exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
+{
+    ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
+    ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
+    
+    /* to get newer rec first, we change the compare order */
+    return ndrx_utc_cmp(&bd->t, &bd->tusec, &ad->t, &ad->tusec);
+}
+
 /**
  * Begin MDB transaction
  * @param db db handler
@@ -128,6 +144,19 @@ expublic int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn)
                 db->cachedb, edb_strerror(ret));
         
         goto out;
+    }
+    
+    /* set data sort, if dups are allowed */
+    if (db->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+    {
+        if (EXSUCCEED!=(ret=edb_set_dupsort(*txn, db->dbi, sort_data_bydate)))
+        {
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+            goto out;
+        }
     }
     
 out:
@@ -415,6 +444,28 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
             "Failed to to put to db [%s] key [%s], data: %p: %s", 
             db->cachedb, key, data, edb_strerror(ret));
+    }
+out:
+    return ret;
+}
+
+/**
+ * Get database statistics
+ * @param db db handlers
+ * @param txn transaction
+ * @param stat where to return infos
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_cache_edb_stat (ndrx_tpcache_db_t *db, EDB_txn *txn, 
+        EDB_stat * stat)
+{
+    int ret = EXSUCCEED;
+            
+    if (EXSUCCEED!=(ret=edb_stat(txn, db->dbi, stat)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+            "Failed to stat [%s] db: %s", 
+            db->cachedb, edb_strerror(ret));
     }
 out:
     return ret;

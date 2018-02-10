@@ -143,6 +143,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
     
+    exdata->magic = NDRX_CACHE_MAGIC;
     exdata->nodeid = nodeid;
     exdata->saved_tperrno = save_tperrno;
     exdata->saved_tpurcode = save_tpurcode;
@@ -544,14 +545,8 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     {
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Performing timesync based complex lookup");
-#endif        
-        if (EXSUCCEED!=ndrx_cache_edb_set_dupsort(cache->cachedb, txn, 
-                ndrx_cache_cmp_fun))
-        {
-            NDRX_LOG(log_error, "Failed to set dupsort!");
-            EXFAIL_OUT(ret);
-        }
-        
+#endif
+
         if (EXSUCCEED!=ndrx_cache_edb_cursor_open(cache->cachedb, txn, &cursor))
         {
             NDRX_LOG(log_error, "Failed to open cursor!");
@@ -563,20 +558,6 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         
         if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
                     key, &cachedata, EDB_SET_KEY)))
-        {
-            if (EDB_NOTFOUND!=ret)
-            {
-                NDRX_LOG(log_error, "Failed to scan for data!");
-                EXFAIL_OUT(ret);
-            }
-            /* no data found */
-            ret = NDRX_TPCACHE_ENOCACHEDATA;
-            goto out;
-        }
-        
-        /* not sure but we should position on first.. ? Do we need this ? */
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_FIRST_DUP)))
         {
             if (EDB_NOTFOUND!=ret)
             {

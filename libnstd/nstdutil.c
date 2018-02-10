@@ -85,7 +85,31 @@ expublic int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
     return (int)res3;
     
 }
-
+/**
+ * Return -1 in case if t1/tusec1 is less than t2/tusec2
+ * return 0 in case if t1/tusec1 equals t2/tusec2
+ * return 1 in case if t1/tusec1 greater t2/tusec2
+ * @param t1 tstamp1
+ * @param tusec1 tstamp1 (microsec)
+ * @param t2 tstamp2
+ * @param tusec2 tstamp2 (microsec)
+ * @return see descr
+ */
+expublic int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2)
+{
+    if (*t1 < *t2 || *t1 == *t2 && *tusec1 < *tusec2)
+    {
+        return -1;
+    }
+    else if (*t1 == *t2 && *tusec1 == *tusec2)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
 
 /**
  * Return timestamp split in two fields
