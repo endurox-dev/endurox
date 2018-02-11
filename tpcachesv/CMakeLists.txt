@@ -50,7 +50,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ###############################
-add_executable (tpcachesv tpcachesv.c ../libatmisrv/rawmain_integra.c)
+add_executable (tpcachesv tpcachesv.c mgt.c ../libatmisrv/rawmain_integra.c)
 target_link_libraries (tpcachesv atmisrvinteg atmi ubf nstd ${RT_LIB} pthread m)
 set_target_properties(tpcachesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

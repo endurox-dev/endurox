@@ -225,7 +225,7 @@ extern "C" {
  */
 struct ndrx_tpcache_db
 {
-    char cachedb[NDRX_CCTAG_MAX];/* cache db logical name (subsect of @cachedb)     s*/
+    char cachedb[NDRX_CCTAG_MAX+1];/* cache db logical name (subsect of @cachedb)   */
     char resource[PATH_MAX+1];  /* physical path of the cache folder                */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
     long expiry;                /* Number of milli-seconds for record to live       */
@@ -482,12 +482,12 @@ extern NDRX_API int ndrx_cache_edb_delfullkey (ndrx_tpcache_db_t *db, EDB_txn *t
 extern NDRX_API ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
 
 /* management */
-extern NDRX_API int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, 
-        UBFH **pp_ub, int incl_blob);
-
 
 extern NDRX_API int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata, 
-        char **data);
+        char **data, char **keydata);
+
+extern NDRX_API int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, char *keydata,
+        UBFH **pp_ub, int incl_blob);
 
 /* UBF support: */
 extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);

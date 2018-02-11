@@ -203,17 +203,12 @@ expublic unsigned long long ndrx_utc_tstamp_micro(void)
  * @param ts
  * @return 
  */
-expublic char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
+expublic char * ndrx_get_strtstamp_from_sec(int slot, long ts)
 {
     time_t t;
     struct tm utc;
     
     NSTD_TLS_ENTRY;
-    
-    if (sizeof(unsigned long long)>=8) 
-    {
-        ts = ts / 1000000;
-    }
     
     t = ts;
     gmtime_r(&t, &utc);

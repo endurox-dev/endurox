@@ -30,8 +30,8 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef NUTIL_H
-#define	NUTIL_H
+#ifndef NSTDUTIL_H
+#define	NSTDUTIL_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -74,7 +74,7 @@ struct charstrmap
 extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
 extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
 extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
-extern NDRX_API char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts);
+extern NDRX_API char * ndrx_get_strtstamp_from_sec(int slot, long ts);
 extern NDRX_API unsigned long long ndrx_get_micro_resolution_for_sec(void);
 extern NDRX_API char * ndrx_str_env_subs(char * str);
 extern NDRX_API char * ndrx_str_env_subs_len(char * str, int buf_size);
@@ -137,5 +137,5 @@ extern NDRX_API long ndrx_platf_stack_get_size(void);
 }
 #endif
 
-#endif	/* NUTIL_H */
+#endif	/* NSTDUTIL_H */
 
