@@ -253,25 +253,6 @@ out:
 }
 
 /**
- * Process management requests (list headers, list all, list 
- * single, delete all, delete single).
- * The dump shall be provided in tpexport format.
- * 
- * @param p_svc
- */
-void CACHEMG (TPSVCINFO *p_svc)
-{
-    int ret=EXSUCCEED;
-
-out:
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
-                0,
-                NULL,
-                0L,
-                0L);
-}
-
-/**
  * Standard server init
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)

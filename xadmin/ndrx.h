@@ -1,4 +1,5 @@
 /* 
+** xadmin tooling header file
 **
 ** @file ndrx.h
 ** 
@@ -230,6 +231,9 @@ extern int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
 extern int cmd_gen_load_scripts(void);
 extern int cmd_gen_help(void);
 extern int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* cache:  */
+extern int cmd_cs(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 #ifdef	__cplusplus
 }
 #endif

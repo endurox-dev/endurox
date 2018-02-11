@@ -43,25 +43,10 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-typedef struct event_entry event_entry_t;
-
-
-struct event_entry
-{
-    char eventexpr[NDRX_EVENT_EXPR_MAX+1]; /* Compile the regex? */
-    char filter[NDRX_EVENT_EXPR_MAX+1];
-    char name1[32]; /* currently service name only */
-    long flags;
-    regex_t re; /* compiled regex */
-    long subscriberNr;
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* caller ID */
-    event_entry_t *next;
-    event_entry_t *prev;
-};
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
+extern void CACHEMG (TPSVCINFO *p_svc);
 
 #ifdef	__cplusplus
 }

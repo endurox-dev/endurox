@@ -112,15 +112,26 @@ expublic char* ndrx_cache_mgt_getsvc(void)
  * @param incl_blob if !=0, then data will be loaded to UBF
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, 
+expublic int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, char *keydata,
         UBFH **pp_ub, int incl_blob)
 {
     int ret = EXSUCCEED;
     int new_size;
     
+    /* Remove any existing fields (may be left from previous run) */
+    Bdel(*pp_ub, EX_CACHE_TPERRNO, 0);
+    Bdel(*pp_ub, EX_CACHE_TPRUCODE, 0);
+    Bdel(*pp_ub, EX_CACHE_TIM, 0);
+    Bdel(*pp_ub, EX_CACHE_TIMUSEC, 0);
+    Bdel(*pp_ub, EX_CACHE_HITT, 0);
+    Bdel(*pp_ub, EX_CACHE_TIMUSEC, 0);
+    Bdel(*pp_ub, EX_CACHE_HITS, 0);
+    Bdel(*pp_ub, EX_CACHE_NODEID, 0);
+    Bdel(*pp_ub, EX_CACHE_BUFTYP, 0);
+    
     /* Get some 1K free */
     
-    new_size=Bused(*pp_ub)+1024;
+    new_size=Bused(*pp_ub) + strlen(keydata) + 1024;
     
     *pp_ub = (UBFH *)tprealloc((char *)*pp_ub, new_size);
     
@@ -150,11 +161,13 @@ expublic int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata,
 
         if (NULL==*pp_ub)
         {
-            NDRX_LOG(log_error, "Failed to reallocate new buffer size: %ld", new_size);
+            NDRX_LOG(log_error, "Failed to reallocate new buffer size: %ld", 
+                    new_size);
             EXFAIL_OUT(ret);
         }
         
-        if (EXSUCCEED!=Bchg(*pp_ub, EX_CACHE_DUMP, 0, cdata->atmi_buf, cdata->atmi_buf_len))
+        if (EXSUCCEED!=Bchg(*pp_ub, EX_CACHE_DUMP, 0, cdata->atmi_buf, 
+                cdata->atmi_buf_len))
         {
             NDRX_LOG(log_error, "Failed to set EX_CACHE_DUMP field: %s", 
                     Bstrerror(Berror));
@@ -176,7 +189,7 @@ out:
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata, 
-        char **data)
+        char **blob, char **keydata)
 {
     int ret = EXSUCCEED;
     BFLDLEN len;
@@ -189,7 +202,7 @@ expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata,
     
     /* Load the blob if present and data is set */
     
-    if (NULL!=data)
+    if (NULL!=blob)
     {
         if (0>(len = Blen(p_ub, EX_CACHE_DUMP, 0)))
         {
@@ -197,16 +210,48 @@ expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata,
                     Bstrerror(Berror));
         }
         
-        NDRX_MALLOC_OUT(*data, len, char);
+        NDRX_MALLOC_OUT(*blob, len, char);
         
         /* hmm we need to get some statistics about the field */
-        if (EXSUCCEED!=Bget(p_ub, EX_CACHE_DUMP, 0, *data, &len))
+        if (EXSUCCEED!=Bget(p_ub, EX_CACHE_DUMP, 0, *blob, &len))
         {
             NDRX_LOG(log_error, "Failed to get cache data: %s", Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
     }
     
+    if (NULL!=keydata)
+    {
+        if (0>(len = Blen(p_ub, EX_CACHE_OPEXPR, 0)))
+        {
+            NDRX_LOG(log_error, "Failed to estimate EX_CACHE_OPEXPR size: %s", 
+                    Bstrerror(Berror));
+        }
+        
+        NDRX_MALLOC_OUT(*keydata, len, char);
+        
+        if (EXSUCCEED!=Bget(p_ub, EX_CACHE_OPEXPR, 0, *keydata, &len))
+        {
+            NDRX_LOG(log_error, "Failed to get key data: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
 out:
+
+    if (EXSUCCEED!=ret)
+    {
+        if (NULL!=blob && *blob!=NULL)
+        {
+            NDRX_FREE(*blob);
+            *keydata=NULL;
+        }
+        
+        if (NULL!=keydata && *keydata!=NULL)
+        {
+            NDRX_FREE(*keydata);
+            *keydata=NULL;
+        }
+    }
     return ret;
 }
