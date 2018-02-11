@@ -47,12 +47,49 @@
 #include <exparson.h>
 #include <atmi_cache.h>
 #include <Exfields.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define OFSZ(s,e)   EXOFFSET(s,e), EXELEM_SIZE(s,e)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+
+/**
+ * Cache data mapping structure to UBF buffer
+ */
+static ubf_c_map_t M_cachedata_map[] = 
+{
+    {EX_CACHE_TPERRNO,  0, OFSZ(ndrx_tpcache_data_t, saved_tperrno),  BFLD_INT}, /* 0 */
+    {EX_CACHE_TPRUCODE, 0, OFSZ(ndrx_tpcache_data_t, saved_tpurcode), BFLD_LONG}, /* 1 */
+    {EX_CACHE_TIM,      0, OFSZ(ndrx_tpcache_data_t, t),              BFLD_LONG}, /* 2 */
+    {EX_CACHE_TIMUSEC,  0, OFSZ(ndrx_tpcache_data_t, tusec),          BFLD_LONG}, /* 3 */
+    {EX_CACHE_HITT,     0, OFSZ(ndrx_tpcache_data_t, hit_t),          BFLD_LONG}, /* 4 */
+    {EX_CACHE_TIMUSEC,  0, OFSZ(ndrx_tpcache_data_t, hit_tusec),      BFLD_LONG}, /* 5 */
+    {EX_CACHE_HITS,     0, OFSZ(ndrx_tpcache_data_t, hits),           BFLD_LONG}, /* 6 */
+    {EX_CACHE_NODEID,   0, OFSZ(ndrx_tpcache_data_t, nodeid),         BFLD_SHORT}, /* 7 */
+    {EX_CACHE_BUFTYP,   0, OFSZ(ndrx_tpcache_data_t, atmi_type_id),   BFLD_SHORT}, /* 8 */
+    {BBADFLDID}
+};
+
+/**
+ * Cache data exchange optionality - all required.
+ */
+static long M_cachedata_req[] = 
+{
+    UBFUTIL_EXPORT,/* 0 */
+    UBFUTIL_EXPORT,/* 1 */
+    UBFUTIL_EXPORT,/* 2 */
+    UBFUTIL_EXPORT,/* 3 */
+    UBFUTIL_EXPORT,/* 4 */
+    UBFUTIL_EXPORT,/* 5 */
+    UBFUTIL_EXPORT,/* 6 */
+    UBFUTIL_EXPORT,/* 7 */
+    UBFUTIL_EXPORT /* 8 */
+};
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -68,24 +105,108 @@ expublic char* ndrx_cache_mgt_getsvc(void)
     return svcnm;
 }
 
-
-expublic char* ndrx_cache_mgt_hdr2ubf(void)
+/**
+ * Convert data to UBF
+ * @param cdata data to convert
+ * @param pp_ub double ptr to UBF, will be reallocated to get some space
+ * @param incl_blob if !=0, then data will be loaded to UBF
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, 
+        UBFH **pp_ub, int incl_blob)
 {
-    /* TODO: */
+    int ret = EXSUCCEED;
+    int new_size;
+    
+    /* Get some 1K free */
+    
+    new_size=Bused(*pp_ub)+1024;
+    
+    *pp_ub = (UBFH *)tprealloc((char *)*pp_ub, new_size);
+    
+    if (NULL==*pp_ub)
+    {
+        NDRX_LOG(log_error, "Failed to reallocate new buffer size: %ld", new_size);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=atmi_cvt_c_to_ubf(M_cachedata_map, cdata, 
+            *pp_ub, M_cachedata_req)))
+    {
+        NDRX_LOG(log_error, "%s: failed to convert data to UBF", __func__);
+        NDRX_TPCACHETPCALL_DBDATA(log_debug, cdata);
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* if putting blob, then even more we need. */
+    
+    if (incl_blob)
+    {
+        /* Have a bit over for TLV. */
+        new_size=Bused(*pp_ub)+cdata->atmi_buf_len+256;
+
+        *pp_ub = (UBFH *)tprealloc((char *)*pp_ub, new_size);
+
+        if (NULL==*pp_ub)
+        {
+            NDRX_LOG(log_error, "Failed to reallocate new buffer size: %ld", new_size);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=Bchg(*pp_ub, EX_CACHE_DUMP, 0, cdata->atmi_buf, cdata->atmi_buf_len))
+        {
+            NDRX_LOG(log_error, "Failed to set EX_CACHE_DUMP field: %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    return ret;
 }
 
-expublic char* ndrx_cache_mgt_ubf2hdr(void)
-{
-    /* TODO: */
-}
 
-expublic char* ndrx_cache_mgt_data2ubf(void)
+/**
+ * Convert UBF to data structure. The blob will be loaded separately in allocated
+ * space.
+ * @param pp_ub UBF will EX_CACHE* fields
+ * @param cdata output struct where to load the incoming data
+ * @param data ptr to space where to allocate the incoming blob (if present in UBF)
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata, 
+        char **data)
 {
-    /* TODO: */
+    int ret = EXSUCCEED;
+    BFLDLEN len;
+    
+    if (EXSUCCEED!=atmi_cvt_ubf_to_c(M_cachedata_map, p_ub, cdata, M_cachedata_req))
+    {
+        NDRX_LOG(log_error, "Failed to convert ubf to tpcache_data");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Load the blob if present and data is set */
+    
+    if (NULL!=data)
+    {
+        if (0>(len = Blen(p_ub, EX_CACHE_DUMP, 0)))
+        {
+            NDRX_LOG(log_error, "Failed to estimate EX_CACHE_DUMP size: %s", 
+                    Bstrerror(Berror));
+        }
+        
+        NDRX_MALLOC_OUT(*data, len, char);
+        
+        /* hmm we need to get some statistics about the field */
+        if (EXSUCCEED!=Bget(p_ub, EX_CACHE_DUMP, 0, *data, &len))
+        {
+            NDRX_LOG(log_error, "Failed to get cache data: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    return ret;
 }
-
-expublic char* ndrx_cache_mgt_ubf2data(void)
-{
-    /* TODO: */
-}
-
