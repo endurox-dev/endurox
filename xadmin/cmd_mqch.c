@@ -125,7 +125,7 @@ expublic int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         EXFAIL_OUT(ret);
     }
     
-    sprintf(qspacesvc, NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
+    snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
     
     NDRX_LOG(log_info, "Calling: %s", qspacesvc);
 

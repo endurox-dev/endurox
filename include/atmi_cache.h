@@ -102,6 +102,11 @@ extern "C" {
  */
 #define NDRX_CACHE_SVCMD_DELBYEXPR  'E'     /* Delete by expression           */
 #define NDRX_CACHE_SVCMD_DELBYKEY   'K'     /* Delete by key (direct lookup)  */
+
+/* Command line commands: */
+#define NDRX_CACHE_SVCMD_CLSHOW     's'     /* Show cache cli                 */
+#define NDRX_CACHE_SVCMD_CLCDUMP    'd'     /* Dump cli                       */
+#define NDRX_CACHE_SVCMD_CLDEL      'D'     /* Delete, cli                    */
     
     
 #define NDRX_CACHE_OPEXPRMAX        PATH_MAX /* max len of operation expression*/
@@ -419,6 +424,7 @@ extern NDRX_API ndrx_tpcache_typesupp_t ndrx_G_tpcache_types[];
 extern NDRX_API int ndrx_cache_init(int mode);
 extern NDRX_API ndrx_tpcache_db_t *ndrx_cache_dbgethash(void);
 extern NDRX_API int ndrx_cache_used(void);
+extern NDRX_API char* ndrx_cache_mgt_getsvc(void);
 
 extern NDRX_API int ndrx_cache_save (char *svc, char *idata, 
         long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,

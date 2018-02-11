@@ -11,7 +11,7 @@
 ** TODO: If want in feature stream latent commands (LCS tech), 
 ** then we need locking! if config is changed.
 **
-** @file atmi_cache.c
+** @file atmi_cache_init.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
