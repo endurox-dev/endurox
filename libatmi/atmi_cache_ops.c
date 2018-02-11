@@ -390,15 +390,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     /* Loop over the tpcallcaches, if `next' flag present, then perform next
      * if we get invalidate their, then delete target records by the key */
     buf_type = &G_buf_descr[buffer_info->type_id];
-#if 0
-    /* Test the buffers rules */
-    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
-    {
-        ret = NDRX_TPCACHE_ENOCACHE;
-        goto out;
-    }
-#endif
-    
+
     DL_FOREACH(svcc->caches, cache)
     {
         is_matched = EXFALSE;
@@ -584,6 +576,26 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     }
     
     exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    
+    /* validate record */
+        
+    if (cachedata.mv_size < sizeof(ndrx_tpcache_data_t))
+    {
+        NDRX_CACHE_ERROR("Corrupted cache data - invalid minimums size, "
+                "expected: %ld, got %ld for key: [%s]", 
+                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata.mv_size, key);
+
+        EXFAIL_OUT(ret);
+    }
+
+    if (NDRX_CACHE_MAGIC!=exdata->magic)
+
+    {
+        NDRX_CACHE_ERROR("Corrupted cache data - invalid "
+                "magic expected: %x got %x", exdata->magic, NDRX_CACHE_MAGIC);
+        EXFAIL_OUT(ret);
+    }
+
     /* OK we have a raw data... lets dump something... */
 #ifdef NDRX_TPCACHE_DEBUG
     NDRX_LOG(log_debug, "Got cache record for key [%s] of service [%s]", key, svc);
