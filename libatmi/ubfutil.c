@@ -66,7 +66,25 @@ expublic int atmi_cvt_c_to_ubf(ubf_c_map_t *map, void *c_struct, UBFH *p_ub, lon
         if (*rules & UBFUTIL_EXPORT)
         {
             char *data_ptr = (char *)(c_struct+map->offset);
-            if (EXSUCCEED!=CBchg(p_ub, map->fld, map->occ, data_ptr, map->buf_size, 
+            
+            if (BFLD_INT==map->ftype)
+            {
+                long l;
+                int *i = (int *)data_ptr;
+                
+                l = *i;
+                
+                if (EXSUCCEED!=CBchg(p_ub, map->fld, map->occ, (char *)&l, map->buf_size, 
+                    BFLD_LONG))
+                {
+                    int be = Berror;
+                    NDRX_LOG(log_error, "Failed to install mapped long "
+                            "field %d:[%s] to UBF buffer: %s", 
+                            Bfname(map->fld), Bstrerror(be));
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (EXSUCCEED!=CBchg(p_ub, map->fld, map->occ, data_ptr, map->buf_size, 
                     map->ftype))
             {
                 int be = Berror;
@@ -99,7 +117,33 @@ expublic int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, lon
         {
             char *data_ptr = (char *)(c_struct+map->offset);
             len = map->buf_size; /* have the buffer size */
-            if (EXSUCCEED!=CBget(p_ub, map->fld, map->occ, data_ptr, &len, map->ftype))
+            
+            if (BFLD_INT==map->ftype)
+            {
+                long l;
+                int *i = (int *)data_ptr;
+                if (EXSUCCEED!=CBget(p_ub, map->fld, map->occ, (char *)&l, 0, BFLD_LONG))
+                {
+                    int be = Berror;
+                    NDRX_LOG(log_error, "Failed to get mapped in field %d:[%s"
+                            "] from UBF buffer: %s", 
+                            map->fld, Bfname(map->fld), Bstrerror(be));
+
+                    if (*rules & UBFUTIL_OPTIONAL)
+                    {
+                        NDRX_LOG(log_warn, "Field %d:[%s] is optional - continue");
+                    }
+                    else
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                else
+                {
+                    *i = (int)l;
+                }
+            }
+            else if (EXSUCCEED!=CBget(p_ub, map->fld, map->occ, data_ptr, &len, map->ftype))
             {
                 int be = Berror;
                 NDRX_LOG(log_error, "Failed to get field %d:[%s] from UBF buffer: %s", 

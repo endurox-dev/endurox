@@ -137,6 +137,8 @@ extern "C" {
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BCASTDEL));\
     NDRX_LOG(LEV, "flags, 'timesync' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_TIMESYNC));\
+    NDRX_LOG(LEV, "flags, 'scandup' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_SCANDUP));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
@@ -345,9 +347,9 @@ struct ndrx_tpcache_data
     /* time when we picked up the record */
     long hit_t;         /* UTC timestamp of message */
     long hit_tusec;     /* UTC microseconds         */
-    unsigned long hits; /* Number of cache hits     */
+    long hits;          /* Number of cache hits     */
     
-    int  nodeid;        /* Node id who put the msg  */
+    short nodeid;       /* Node id who put the msg  */
     short atmi_type_id; /* ATMI type id           */
     
     /* Payload data */
@@ -478,6 +480,14 @@ extern NDRX_API int ndrx_cache_edb_delfullkey (ndrx_tpcache_db_t *db, EDB_txn *t
         EDB_val *keydb, EDB_val *data);
 
 extern NDRX_API ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode);
+
+/* management */
+extern NDRX_API int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, 
+        UBFH **pp_ub, int incl_blob);
+
+
+extern NDRX_API int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata, 
+        char **data);
 
 /* UBF support: */
 extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);
