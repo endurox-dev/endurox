@@ -401,6 +401,13 @@ void CACHEMG (TPSVCINFO *p_svc)
     switch (cmd)
     {
         case NDRX_CACHE_SVCMD_CLSHOW:
+            
+            if (EXSUCCEED!=cache_show(p_svc->cd, &p_ub))
+            {
+                NDRX_LOG(log_error, "Failed to call cache_show()");
+                EXFAIL_OUT(ret);
+            }
+            
             break;
         case NDRX_CACHE_SVCMD_CLCDUMP:
             
@@ -412,6 +419,9 @@ void CACHEMG (TPSVCINFO *p_svc)
             
             break;
         case NDRX_CACHE_SVCMD_CLDEL:
+            
+            
+            
             break;
         default:
             snprintf(tmp, sizeof(tmp), "Invalid command [%c]", cmd);
