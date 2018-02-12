@@ -203,7 +203,8 @@ expublic long ndrx_tpunsubscribe(long subscription, long flags)
         goto out;
     }
 
-    if (EXFAIL!=(ret=tpcall(NDRX_SYS_SVC_PFX "TPEVUNSUBS", (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
+    if (EXFAIL!=(ret=tpcall(NDRX_SYS_SVC_PFX "TPEVUNSUBS", (char *)p_ub, 0L, 
+            &ret_buf, &ret_len, flags)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }
