@@ -212,6 +212,8 @@ EX_CACHE_NODEID             660         short -        Cache put source node id
 EX_CACHE_CMD                661         char -         Cache command
 EX_CACHE_FLAGS              662         long -         Command flags
 EX_CACHE_HITS               663         long -         Number of times cache was read
+EX_CACHE_NRDEL              664         long -         Number of records deleted
+EX_CACHE_NRDUPDEL           665         long -         Number of duplicates deleted
 
 $#endif
 
