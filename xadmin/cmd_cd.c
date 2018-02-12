@@ -50,6 +50,7 @@
 #include <ndrx.h>
 #include <qcommon.h>
 #include <atmi_cache.h>
+#include <typed_buf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -99,18 +100,17 @@ out:
  * Call cache server
  * @return
  */
-exprivate int call_cache(char *dbname, char *key)
+exprivate int call_cache(char *dbname, char *key, int interpret)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", 1024);
     int ret=EXSUCCEED;
-    int cd;
-    long revent;
-    int recv_continue = 1;
-    int tp_errno;
-    int rcv_count = 0;
+    long rcvlen;
     char *svcnm;
-    char cmd = NDRX_CACHE_SVCMD_CLDUMP;
-    
+    char cmd = NDRX_CACHE_SVCMD_CLCDUMP;
+    long tperr;
+    ndrx_tpcache_data_t cdata;
+    char *keydata = NULL;
+    char *data = NULL;
     
     svcnm = ndrx_cache_mgt_getsvc();
             
@@ -143,13 +143,56 @@ exprivate int call_cache(char *dbname, char *key)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: Call cache server! */
+    /* Call cache server! */
+    if (EXSUCCEED!=tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rcvlen, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to call [%s]: %s", svcnm, tpstrerror(tperrno));
+        fprintf(stderr, "Failed to call cache server [%s]: %s\n", 
+                svcnm, tpstrerror(tperrno));
+        
+        if (Bpres(p_ub, EX_TPSTRERROR, 0))
+        {
+            fprintf(stderr, "%s\n", Bfind(p_ub, EX_TPSTRERROR, 0, 0L));
+        }
+        
+        EXFAIL_OUT(ret);
+    }
     
-    
-    
-    /* TODO: Dump results to stdout (currently hex dump of buffer) 
+    /* Dump results to stdout (currently hex dump of buffer) 
      * If it is UBF buffer, then we might want to interpret it as UBF...
      */
+    if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, &data, &keydata))
+    {
+        NDRX_LOG(log_error, "Failed to get mandatory UBF data!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Print the results */
+    printf("nodeid: %hd\n", cdata.nodeid);
+    printf("saved_tperrno: %d\n", cdata.saved_tperrno);
+    printf("saved_tpurcode: %ld\n", cdata.saved_tpurcode);
+    printf("time_added: %ld (%s)\n", cdata.t, ndrx_get_strtstamp_from_sec(0, cdata.t));
+    printf("time_added_usec: %ld\n", cdata.tusec);
+    printf("time_hit: %ld (%s)\n", cdata.hit_t, ndrx_get_strtstamp_from_sec(0, cdata.hit_t));
+    printf("time_hit_usec: %ld\n", cdata.hit_tusec);
+    printf("hits: %ld\n", cdata.hits);
+    printf("atmi_type_id: %hd\n", cdata.atmi_type_id);
+    printf("atmi_buf_len: %ld\n", cdata.atmi_buf_len);
+    
+    STDOUT_DUMP(log_info, "Massage dump", data, cdata.atmi_buf_len);
+    
+    if (interpret)
+    {
+        UBFH *p_ubf_h = (UBFH *)data;
+        /* interpret the results, currently we support UBF buffer only */
+        
+        if (BUF_TYPE_UBF==cdata.atmi_type_id)
+        {
+            printf("===== UBF buffer: =====");
+            Bprint(p_ubf_h);
+            printf("=======================");
+        }
+    }
 
 out:
 
@@ -158,17 +201,27 @@ out:
         tpfree((char *)p_ub);
     }
 
+    if (NULL!=keydata)
+    {
+        NDRX_FREE(keydata);
+    }
+    
+    if (NULL!=data)
+    {
+        NDRX_FREE(data);
+    }
+
     return ret;
 }
 
 /**
- * Cache Show command
+ * Cache Dump command
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-expublic int cmd_cs(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_cd(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=EXSUCCEED;
     char dbname[NDRX_CCTAG_MAX+1]={EXEOS};
@@ -203,11 +256,11 @@ expublic int cmd_cs(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    
-    if (EXSUCCEED!=call_cache(dbname))
+    if (EXSUCCEED!=call_cache(dbname, key, interpret))
     {
         NDRX_LOG(log_debug, "Failed to call cache server for db [%s]", dbname);
-        fprintf(stderr, "Failed to call cache server!");
+        fprintf(stderr, "Failed to call cache server!\n");
+        EXFAIL_OUT(ret);
     }
         
 out:
