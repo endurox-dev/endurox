@@ -235,6 +235,138 @@ out:
 }
 
 /**
+ * Write cache record to UBF
+ * @param pp_ub
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int cache_dump(UBFH **pp_ub)
+{
+    int ret = EXSUCCEED;
+    char cachedb[NDRX_CCTAG_MAX+1];
+    ndrx_tpcache_db_t *db;
+    char tmp[256];
+    EDB_txn *txn = NULL;
+    EDB_cursor *cursor;
+    EDB_val keydb, val;
+    int tran_started = EXFALSE;
+    ndrx_tpcache_data_t *cdata;
+    char *key;
+    
+    /* ok get db name */
+    
+    if (EXSUCCEED!=Bget(*pp_ub, EX_CACHE_DBNAME, 0, cachedb, 0L))
+    {
+        NDRX_LOG(log_error, "Missing EX_CACHE_DBNAME: %s", Bstrerror(Berror));
+        REJECT(*pp_ub, TPESYSTEM, "Failed to get EX_CACHE_DBNAME!");
+    }
+    
+    NDRX_LOG(log_debug, "[%s] db lookup", cachedb);
+    
+    if (NULL==(db = ndrx_cache_dbresolve(cachedb, NDRX_TPCACH_INIT_NORMAL)))
+    {
+        /* if have ATMI error use, else failed to open db */
+        
+        if (ndrx_TPis_error())
+        {
+            REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
+        }
+        else
+        {
+            snprintf(tmp, sizeof(tmp), "Failed to resolve [%s] db", cachedb);
+            REJECT(*pp_ub, TPENOENT, tmp);
+        }
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* OK we have a cache, so loop over (this will include duplicate records too
+     * so that admin can see the picture of all this)
+     */
+
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    {
+        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+
+    /* loop over the database */
+    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(key = Bgetalloc(*pp_ub, EX_CACHE_OPEXPR, 0, NULL)))
+    {
+        REJECT(*pp_ub, TPESYSTEM, "Failed to get EX_CACHE_OPEXPR");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* read db record */
+    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val))
+    {
+        REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Validate DB rec */
+    if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+    {
+        NDRX_DUMP(log_error, "Invalid cache key", 
+                keydb.mv_data, keydb.mv_size);
+
+        NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
+                "terminated with EOS!", __func__, keydb.mv_size);
+        REJECT(*pp_ub, TPESYSTEM, "Corrupted db - Invalid key format");
+        EXFAIL_OUT(ret);
+    }
+
+    if (val.mv_size < sizeof(ndrx_tpcache_data_t))
+    {
+        snprintf(tmp, sizeof(tmp), "Corrupted data - invalid minimums size, "
+                "expected: %ld, got %ld", 
+                (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
+        REJECT(*pp_ub, TPESYSTEM, tmp);
+        EXFAIL_OUT(ret);
+    }
+
+    /* Load record into UBF and send it away... */
+
+    cdata = (ndrx_tpcache_data_t *)val.mv_data;
+
+    if (NDRX_CACHE_MAGIC!=cdata->magic)
+    {
+        snprintf(tmp, sizeof(tmp), "Corrupted data - invalid magic expected: %x got %x",
+                cdata->magic, NDRX_CACHE_MAGIC);
+        REJECT(*pp_ub, TPESYSTEM, tmp);
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=ndrx_cache_mgt_data2ubf(cdata, keydb.mv_data, pp_ub, EXFALSE))
+    {
+        REJECT(*pp_ub, TPESYSTEM, "Failed to load data info UBF!");
+        EXFAIL_OUT(ret);
+    }
+
+out:
+
+    if (tran_started)
+    {
+        ndrx_cache_edb_abort(db, txn);
+    }
+
+    if (NULL!=key)
+    {
+        NDRX_FREE(key);
+    }
+
+    return ret;
+}
+
+/**
  * Process management requests (list headers, list all, list 
  * single, delete all, delete single).
  * The dump shall be provided in tpexport format.
@@ -264,11 +396,20 @@ void CACHEMG (TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
+    NDRX_LOG(log_info, "Management command: %c", cmd);
+    
     switch (cmd)
     {
         case NDRX_CACHE_SVCMD_CLSHOW:
             break;
         case NDRX_CACHE_SVCMD_CLCDUMP:
+            
+            if (EXSUCCEED!=cache_dump(&p_ub))
+            {
+                NDRX_LOG(log_error, "Failed to call cache_dump()");
+                EXFAIL_OUT(ret);
+            }
+            
             break;
         case NDRX_CACHE_SVCMD_CLDEL:
             break;
