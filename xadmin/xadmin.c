@@ -191,7 +191,7 @@ cmd_mapping_t M_command_map[] =
     {"cacheshow", cmd_cs,EXFAIL,   2,  3,  1, "Alias for `cs' ", NULL},
     {"cd",        cmd_cd,EXFAIL,   3,  4,  1, "Dump message in cache\n"
                                     "\t args: cd -d <dbname> -k <key> [-i interpret_result]", NULL},
-    {"cachedel",  cmd_cd,EXFAIL,   3,  4,  1, "Alias for `cd' ", NULL}
+    {"cachedump", cmd_cd,EXFAIL,   3,  4,  1, "Alias for `cd' ", NULL}
 };
 
 /*
