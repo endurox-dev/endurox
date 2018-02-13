@@ -1,5 +1,7 @@
 /* 
-** ATMI level cache - operations
+** ATMI level cache - operations.
+** Inval - their change only at point when we are going to save the results
+** in DB. And hopefully we get hopefully we get the newest result?
 **
 ** @file atmi_cache_ops.c
 ** 
@@ -140,6 +142,8 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     char key[NDRX_CACHE_KEY_MAX+1];
     char errdet[MAX_TP_ERROR_LEN+1];
     EDB_val cachedata;
+    int is_matched=EXFALSE;
+    ndrx_tpcallcache_t* el;
     
     memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
     
@@ -190,12 +194,103 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     buf_type = &G_buf_descr[buffer_info->type_id];
     
-    /* Test the buffers rules */
-    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
+    DL_FOREACH(svcc->caches, cache)
     {
+        is_matched = EXFALSE;
+        
+        if (cache->buf_type->type_id == buf_type->type_id)
+        {
+            if (ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval)
+            {
+                ret = ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval(
+                        cache, idata, ilen, errdet, sizeof(errdet));
+                if (EXFAIL==ret)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "%s: Failed to evaluate buffer [%s]: %s", 
+                            __func__, cache->rule, errdet);
+                    
+                    EXFAIL_OUT(ret);
+                }
+                else if (EXFALSE==ret)
+                {
+#ifdef NDRX_TPCACHE_DEBUG
+                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - continue", cache->rule);
+#endif
+                    continue;
+                }
+                
+                is_matched = EXTRUE;
+                ret = EXSUCCEED;
+            }
+            else
+            {
+                /* We should not get here! */
+                NDRX_CACHE_TPERROR(TPEINVAL,"%s: Unsupported buffer type [%s] for cache", 
+                                __func__, el->buf_type->type);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* Test the rule, if and not found then stage to NDRX_TPCACHE_ENOTFOUNADD 
+         * OK, we need to build a key
+         */
+
+        NDRX_STRCPY_SAFE(key, cache->keyfmt);
+
+        /* Build the key... */
+        if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[buffer_info->type_id].pf_get_key(
+                cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
+        {
+            if (NDRX_TPCACHE_ENOKEYDATA==ret)
+            {
+                NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+                goto out;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to build key: ", errdet);
+
+                /* generate TP error here! */
+                ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                        __func__, errdet);
+                goto out;
+            }
+        }
+        
+        if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
+        {
+            /* Invalidate their cache */
+            if (EXSUCCEED!=ndrx_cache_inval_their(svc, cache, key, idata, ilen))
+            {
+                NDRX_LOG(log_error, "Failed to invalidate their cache!");
+            }
+        }
+        
+        if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
+        {
+#ifdef NDRX_TPCACHE_DEBUG
+            NDRX_LOG(log_debug, "Next flag present, go to next cache (if have one)");
+#endif
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    /* cache not found */
+    if (!is_matched)
+    {
+        
+#ifdef NDRX_TPCACHE_DEBUG
+        NDRX_LOG(log_debug, "No cache defined for [%s], buffer type [%s] "
+                "or all was invalidate", svc, buf_type->type);
+#endif
         ret = NDRX_TPCACHE_ENOCACHE;
         goto out;
     }
+    
     
     exdata->atmi_type_id = buffer_info->type_id;
     exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
@@ -483,6 +578,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             }
         }
         
+#if 0
         if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
         {
             /* Invalidate their cache */
@@ -492,6 +588,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             }
             
         }
+#endif
         
         if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
         {
