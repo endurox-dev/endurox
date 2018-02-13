@@ -654,6 +654,3 @@ expublic void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int
 {
     UBF_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
-
-
-
