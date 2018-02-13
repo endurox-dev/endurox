@@ -107,6 +107,9 @@ extern "C" {
 #define NDRX_CACHE_SVCMD_CLSHOW     's'     /* Show cache cli                 */
 #define NDRX_CACHE_SVCMD_CLCDUMP    'd'     /* Dump cli                       */
 #define NDRX_CACHE_SVCMD_CLDEL      'D'     /* Delete, cli                    */
+
+/* Command flags */
+#define NDRX_CACHE_SVCMDF_DELREG    0x00000001    /* Delete key by regexp     */
     
     
 #define NDRX_CACHE_OPEXPRMAX        PATH_MAX /* max len of operation expression*/
