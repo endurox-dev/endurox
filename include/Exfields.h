@@ -140,4 +140,6 @@
 #define	EX_CACHE_CMD	((BFLDID32)67109625)	/* number: 761	 type: char */
 #define	EX_CACHE_FLAGS	((BFLDID32)33555194)	/* number: 762	 type: long */
 #define	EX_CACHE_HITS	((BFLDID32)33555195)	/* number: 763	 type: long */
+#define	EX_CACHE_NRDEL	((BFLDID32)33555196)	/* number: 764	 type: long */
+#define	EX_CACHE_NRDUPDEL	((BFLDID32)33555197)	/* number: 765	 type: long */
 #endif

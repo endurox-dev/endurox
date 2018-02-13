@@ -250,7 +250,7 @@ exprivate int cache_dump(UBFH **pp_ub)
     EDB_val keydb, val;
     int tran_started = EXFALSE;
     ndrx_tpcache_data_t *cdata;
-    char *key;
+    char *key = NULL;
     
     /* ok get db name */
     
@@ -278,10 +278,6 @@ exprivate int cache_dump(UBFH **pp_ub)
         
         EXFAIL_OUT(ret);
     }
-    
-    /* OK we have a cache, so loop over (this will include duplicate records too
-     * so that admin can see the picture of all this)
-     */
 
     /* start transaction */
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
@@ -345,7 +341,7 @@ exprivate int cache_dump(UBFH **pp_ub)
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=ndrx_cache_mgt_data2ubf(cdata, keydb.mv_data, pp_ub, EXFALSE))
+    if (EXSUCCEED!=ndrx_cache_mgt_data2ubf(cdata, keydb.mv_data, pp_ub, EXTRUE))
     {
         REJECT(*pp_ub, TPESYSTEM, "Failed to load data info UBF!");
         EXFAIL_OUT(ret);
@@ -357,6 +353,120 @@ out:
     {
         ndrx_cache_edb_abort(db, txn);
     }
+
+    if (NULL!=key)
+    {
+        NDRX_FREE(key);
+    }
+
+    return ret;
+}
+
+/**
+ * Delete cache
+ * - if present only db, then drop full db
+ * - if present key only, then remove by key
+ * - if present key with EX_CACHE_FLAGS, then delete 
+ * @param pp_ub
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int cache_del(UBFH **pp_ub)
+{
+    int ret = EXSUCCEED;
+    char cachedb[NDRX_CCTAG_MAX+1];
+    long flags;
+    char *key = NULL;
+    char tmp[256];
+    long deleted;
+    
+    /* ok get db name */
+    
+    /* resize buffer a bit */
+    
+    if (NULL==(*pp_ub = (UBFH *)tprealloc((char *)*pp_ub, Bused(*pp_ub) + 1024)))
+    {
+        NDRX_LOG(log_error, "Failed to realloc!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=Bget(*pp_ub, EX_CACHE_DBNAME, 0, cachedb, 0L))
+    {
+        NDRX_LOG(log_error, "Missing EX_CACHE_DBNAME: %s", Bstrerror(Berror));
+        REJECT(*pp_ub, TPESYSTEM, "Failed to get EX_CACHE_DBNAME!");
+    }
+    
+    /* get key if have one */
+    key = Bgetalloc(*pp_ub, EX_CACHE_OPEXPR, 0, 0L);
+    
+    if (Bpres(*pp_ub, EX_CACHE_FLAGS, 0))
+    {
+        if (EXSUCCEED!=Bget(*pp_ub, EX_CACHE_FLAGS, 0, (char *)&flags, 0L))
+        {
+            snprintf(tmp, sizeof(tmp), "Failed to get EX_CACHE_FLAGS: %s", 
+                    Bstrerror(Berror));
+            REJECT(*pp_ub, TPENOENT, tmp);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    if (NULL==key)
+    {
+        /* Drop full DB */
+        NDRX_LOG(log_info, "Delete full database: [%s]", cachedb);
+        
+        if (EXSUCCEED!=ndrx_cache_drop(cachedb, (short)tpgetnodeid()))
+        {
+            REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+    }
+    else if (flags & NDRX_CACHE_SVCMDF_DELREG)
+    {
+        NDRX_LOG(log_info, "Delete by regular expression: [%s] expr: [%s]", 
+                cachedb, key);
+        
+        if (0>(deleted=ndrx_cache_inval_by_key(cachedb, key, (short)tpgetnodeid())))
+        {
+            REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_info, "Deleted %ld records", deleted);
+        
+        if (EXSUCCEED!=Bchg(*pp_ub, EX_CACHE_NRDEL, 0, (char *)&deleted, 0L))
+        {
+            snprintf(tmp, sizeof(tmp), "Failed to set EX_CACHE_NRDEL: %s", 
+                    Bstrerror(Berror));
+            REJECT(*pp_ub, TPESYSTEM, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        /* delete by key */
+        NDRX_LOG(log_info, "Delete by key. DB: [%s] Key: [%s]", 
+                cachedb, key);
+        
+        if (0>(deleted=ndrx_cache_inval_by_expr(cachedb, key, (short)tpgetnodeid())))
+        {
+            REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_info, "Deleted %ld records", deleted);
+        
+        if (EXSUCCEED!=Bchg(*pp_ub, EX_CACHE_NRDEL, 0, (char *)&deleted, 0L))
+        {
+            snprintf(tmp, sizeof(tmp), "Failed to set EX_CACHE_NRDEL: %s", 
+                    Bstrerror(Berror));
+            REJECT(*pp_ub, TPESYSTEM, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+
+out:
+
 
     if (NULL!=key)
     {
@@ -420,7 +530,11 @@ void CACHEMG (TPSVCINFO *p_svc)
             break;
         case NDRX_CACHE_SVCMD_CLDEL:
             
-            
+            if (EXSUCCEED!=cache_del(&p_ub))
+            {
+                NDRX_LOG(log_error, "Failed to call cache_del()");
+                EXFAIL_OUT(ret);
+            }
             
             break;
         default:

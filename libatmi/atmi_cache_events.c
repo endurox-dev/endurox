@@ -607,9 +607,9 @@ out:
  * Invalidate cache by expression
  * @param cachedbnm
  * @param keyexpr
- * @cmds binary commands, here we are interested either regexp kill or 
+ * @param cmds binary commands, here we are interested either regexp kill or 
  * plain single key delete
- * @nodeid nodeid posting the record, if it is ours then broadcast event, 
+ * @param nodeid nodeid posting the record, if it is ours then broadcast event, 
  * if ours then broadcast (if required)
  * @return 0..1 - nr of recs deleted/EXFAIL (tperror set)
  */
