@@ -150,6 +150,15 @@ expublic int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, char *keydata,
         EXFAIL_OUT(ret);
     }
     
+    /* Load they key */
+    
+    if (EXSUCCEED!=Bchg(*pp_ub, EX_CACHE_OPEXPR, 0, (char *)keydata, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to set EX_CACHE_OPEXPR field: %s", 
+                    Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
     /* if putting blob, then even more we need. */
     
     if (incl_blob)

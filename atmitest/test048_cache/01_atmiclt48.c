@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     char testbuf[1024];
     BFLDID emtpy [] = {BBADFLDID};
 
-    for (i=0; i<1000000; i++)
+    for (i=0; i<100; i++)
     {
         if (EXSUCCEED!=Bproj(p_ub, emtpy))
         {
@@ -113,9 +113,9 @@ int main(int argc, char** argv)
             goto out;
         } 
 
-        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (EXFAIL == tpcall("TESTSV01", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
-            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            NDRX_LOG(log_error, "TESTSV01 failed: %s", tpstrerror(tperrno));
             ret=EXFAIL;
             goto out;
         }

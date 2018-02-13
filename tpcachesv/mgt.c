@@ -159,7 +159,7 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
         
         /* Validate DB rec */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
         {
             NDRX_DUMP(log_error, "Invalid cache key", 
                     keydb.mv_data, keydb.mv_size);
@@ -197,6 +197,8 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
             REJECT(*pp_ub, TPESYSTEM, "Failed to load data info UBF!");
             EXFAIL_OUT(ret);
         }
+        
+        ndrx_debug_dump_UBF(log_debug, "Sending packet", *pp_ub);
         
         /* send stuff away */
         if (EXFAIL == tpsend(cd,
@@ -309,7 +311,7 @@ exprivate int cache_dump(UBFH **pp_ub)
     }
     
     /* Validate DB rec */
-    if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+    if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
     {
         NDRX_DUMP(log_error, "Invalid cache key", 
                 keydb.mv_data, keydb.mv_size);
@@ -492,7 +494,7 @@ void CACHEMG (TPSVCINFO *p_svc)
     char tmp[256];
     /* Reallocate the p_svc  */
     
-    if (NULL!=tprealloc((char *)p_ub, Bused(p_ub)+1024))
+    if (NULL==(p_ub=(UBFH *)tprealloc((char *)p_ub, Bused(p_ub)+1024)))
     {
         NDRX_LOG(log_error, "Failed to realloc UBF!");
         EXFAIL_OUT(ret);
