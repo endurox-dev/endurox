@@ -210,10 +210,13 @@ expublic int ndrx_cache_rulcomp_ubf (ndrx_tpcallcache_t *cache,
     
     /* Compile refresh rule too */
     
-    if (NULL==(cache->refreshrule_tree=Bboolco (cache->refreshrule)))
+    if (EXEOS!=cache->refreshrule[0])
     {
-        snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
+        if (NULL==(cache->refreshrule_tree=Bboolco (cache->refreshrule)))
+        {
+            snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
@@ -505,7 +508,7 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
     char *buf_to_save;
     
     if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->saveproj,
-        (UBFH *)idata, (UBFH **)buf_to_save, 
+        (UBFH *)idata, (UBFH **)&buf_to_save, 
             NDRX_TPCACHE_TPCF_SAVEREG, 
             NDRX_TPCACHE_TPCF_SAVEFULL, 
             NDRX_TPCACHE_TPCF_SAVESETOF))

@@ -286,7 +286,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     snprintf(mgmtsvc, sizeof(mgmtsvc), NDRX_CACHE_MGSVC, nodeid);
     
-    if (EXSUCCEED!=tpadvertise(mgmtsvc, CACHEEV))
+    if (EXSUCCEED!=tpadvertise(mgmtsvc, CACHEMG))
     {
         NDRX_LOG(log_error, "Failed to initialize [%s]!", mgmtsvc);
         EXFAIL_OUT(ret);

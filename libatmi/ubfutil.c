@@ -61,7 +61,7 @@ expublic int atmi_cvt_c_to_ubf(ubf_c_map_t *map, void *c_struct, UBFH *p_ub, lon
 {
     int ret = EXSUCCEED;
     
-    while (BBADFLDID!=map->ftype)
+    while (BBADFLDID!=map->fld)
     {
         if (*rules & UBFUTIL_EXPORT)
         {

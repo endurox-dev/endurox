@@ -1,8 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) TP Cache tests - test launcher
+## @(#) Basic cache calls
 ##
-## @file run.sh
+## @file 01_run.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -102,10 +102,22 @@ xadmin ppm
 echo "Running off client"
 
 set_dom1;
-(time ./atmiclt48 2>&1) > ./atmiclt-dom1.log
+(time ./01_atmiclt48 2>&1) > ./atmiclt-dom1.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt48 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
+
+echo "Show cache... "
+xadmin cs -d db01
+
+TMP=$?
+
+echo "xadmin ret $TMP"
+
+if [ $TMP -ne 0 ]; then
+    echo "xadmin failed"
+    RET=1
+fi
 
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET

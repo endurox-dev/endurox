@@ -274,6 +274,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     char *saveptr1 = NULL;
     EDB_txn *txn = NULL;
     unsigned int dbi_flags;
+    int any_config = EXFALSE;
 
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -314,6 +315,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
         
+        any_config = EXTRUE;
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "%s: config: key: [%s] value: [%s]",
                     __func__, val->key, val->val);
@@ -417,7 +419,47 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         }
     }
     
-    /* TODO: check for flags! */
+    if (!any_config)
+    {
+        NDRX_CACHE_ERROR("Cache db [%s] not found in configuartion", cachedb);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* check mandatory attributes */
+    
+    if (EXEOS==db->cachedb[0])
+    {
+        NDRX_CACHE_ERROR("Missing `cachedb' parameter for cache [%s]", cachedb);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==db->resource[0])
+    {
+        NDRX_CACHE_ERROR("Missing `resource' parameter for cache [%s]", cachedb);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Check invalid flags */
+
+    if (((db->flags & NDRX_TPCACHE_FLAGS_LRU) &&
+                       (db->flags & NDRX_TPCACHE_FLAGS_HITS) ||
+                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO))
+        ||
+            
+        (db->flags & NDRX_TPCACHE_FLAGS_HITS) &&
+                       (db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
+                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO)
+        ||
+        (db->flags & NDRX_TPCACHE_FLAGS_FIFO) &&
+                       (db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
+                       (db->flags & NDRX_TPCACHE_FLAGS_HITS)
+            
+            )
+    {
+        NDRX_CACHE_ERROR("For cache db [%s] flags lru,hits and fifo cannot be mixed!", 
+                cachedb);
+        EXFAIL_OUT(ret);
+    }
     
     /* Dump the DB config and open it and if we run in boot mode  
      * we have to reset the 
@@ -987,7 +1029,7 @@ expublic int ndrx_cache_init(int mode)
             
             if (NULL!=(tmp = exjson_object_get_string(array_object, "refreshrule")))
             {
-                NDRX_STRCPY_SAFE(cache->rule, tmp);
+                NDRX_STRCPY_SAFE(cache->refreshrule, tmp);
             }
             
             /* get fields to save */

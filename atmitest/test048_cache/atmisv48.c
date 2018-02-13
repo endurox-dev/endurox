@@ -52,7 +52,7 @@
 /**
  * Standard service entry
  */
-void TESTSV (TPSVCINFO *p_svc)
+void TESTSV01 (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     char testbuf[1024];
@@ -102,9 +102,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    if (EXSUCCEED!=tpadvertise("TESTSV01", TESTSV01))
     {
-        NDRX_LOG(log_error, "Failed to initialize TESTSV!");
+        NDRX_LOG(log_error, "Failed to initialize TESTSV01!");
     }
     
     return EXSUCCEED;

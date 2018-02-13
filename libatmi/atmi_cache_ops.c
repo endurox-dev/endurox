@@ -143,7 +143,6 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     char errdet[MAX_TP_ERROR_LEN+1];
     EDB_val cachedata;
     int is_matched=EXFALSE;
-    ndrx_tpcallcache_t* el;
     
     memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
     
@@ -200,9 +199,9 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         
         if (cache->buf_type->type_id == buf_type->type_id)
         {
-            if (ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval)
+            if (ndrx_G_tpcache_types[cache->buf_type->type_id].pf_rule_eval)
             {
-                ret = ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval(
+                ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_rule_eval(
                         cache, idata, ilen, errdet, sizeof(errdet));
                 if (EXFAIL==ret)
                 {
@@ -226,7 +225,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             {
                 /* We should not get here! */
                 NDRX_CACHE_TPERROR(TPEINVAL,"%s: Unsupported buffer type [%s] for cache", 
-                                __func__, el->buf_type->type);
+                                __func__, cache->buf_type->type);
                 EXFAIL_OUT(ret);
             }
         }
@@ -451,7 +450,6 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     EDB_val cachedata_update;
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
-    ndrx_tpcallcache_t* el;
     int is_matched;
         
     /* Key size - assume 16K should be fine */
@@ -491,10 +489,10 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         is_matched = EXFALSE;
         
         if (cache->buf_type->type_id == buf_type->type_id)
-        {
-            if (ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval)
+        {   
+            if (ndrx_G_tpcache_types[cache->buf_type->type_id].pf_rule_eval)
             {
-                ret = ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval(
+                ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_rule_eval(
                         cache, idata, ilen, errdet, sizeof(errdet));
                 if (EXFAIL==ret)
                 {
@@ -518,7 +516,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             {
                 /* We should not get here! */
                 NDRX_CACHE_TPERROR(TPEINVAL,"%s: Unsupported buffer type [%s] for cache", 
-                                __func__, el->buf_type->type);
+                                __func__, cache->buf_type->type);
                 EXFAIL_OUT(ret);
             }
         }
