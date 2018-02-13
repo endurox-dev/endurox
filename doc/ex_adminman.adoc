@@ -211,6 +211,22 @@ Some overhead is added by Enduro/X, message headers, for bridge protocol format
 extra data is added for TLV structure. Thus to be safe, for example if expected
 data size is 64K, then message size should be set to something like 80KB.
 
+== Enduro/X Smart Cache
+
+Enduro/X support SOA level cache. This means that administrator can configure
+system configuration, so that certain services are cached. Thus if some client
+process calls some service X, and it gots valid results back, then data key is
+built (specified in config) and for this key data is saved to 
+Lightning Memory-Mapped Database (LMDB). Next time service is called, the cache
+is checked, again key is built, and lookup to LMDB is made. If results are found
+in db, then actual service is X is not called, but instead saved buffer from
+cache is returned back to caller. Cache works for tpcall() function.
+
+Cache supports different features, for example:
+
+. Drop the cache at Enduro/X boot time.
+
+
 :numbered!:
 
 [bibliography]

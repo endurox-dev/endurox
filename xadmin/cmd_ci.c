@@ -183,7 +183,7 @@ expublic int cmd_ci(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 	 * Boolean flag
 	 */
 	{'r', BFLD_SHORT, (void *)&regex, sizeof(regex), 
-				NCLOPT_OPT|NCLOPT_TRUEBOOL, "Interpret?"},
+				NCLOPT_OPT|NCLOPT_TRUEBOOL, "Use regexp?"},
         {0}
     };
         
