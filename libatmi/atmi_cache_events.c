@@ -178,13 +178,15 @@ expublic int ndrx_cache_events_get(string_list_t **list)
     
     EXHASH_ITER(hh, ndrx_G_tpcache_db, el, elt)
     {
-        if (EXSUCCEED!=ndrx_string_list_add(list, el->subscr))
+        if (EXEOS!=el->subscr[0])
         {
-            NDRX_LOG(log_error, "%s: failed to add string to list [%s]", 
-                    el->subscr);
-            EXFAIL_OUT(ret);
+            if (EXSUCCEED!=ndrx_string_list_add(list, el->subscr))
+            {
+                NDRX_LOG(log_error, "%s: failed to add string to list [%s]", 
+                        el->subscr);
+                EXFAIL_OUT(ret);
+            }
         }
-
     }
     
 out:

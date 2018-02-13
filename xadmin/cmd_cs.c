@@ -80,6 +80,8 @@ exprivate int print_buffer(UBFH *p_ub, char *dbname)
     ndrx_tpcache_data_t cdata;
     char *keydata = NULL;
     
+    ndrx_debug_dump_UBF(log_debug, "Got reply buffer", p_ub);
+    
     if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, NULL, &keydata))
     {
         NDRX_LOG(log_error, "Failed to get mandatory UBF data!");
@@ -152,6 +154,7 @@ exprivate int call_cache(char *dbname)
                                     TPRECVONLY)))
     {
         NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
+        fprintf(stderr, "Connect error [%s]\n", tpstrerror(tperrno));
         ret = EXFAIL;
         goto out;
     }
@@ -250,7 +253,8 @@ expublic int cmd_cs(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     if (EXSUCCEED!=call_cache(dbname))
     {
         NDRX_LOG(log_debug, "Failed to call cache server for db [%s]", dbname);
-        fprintf(stderr, "Failed to call cache server!");
+        fprintf(stderr, "Failed to call cache server!\n");
+        EXFAIL_OUT(ret);
     }
         
 out:

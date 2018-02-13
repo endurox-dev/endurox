@@ -167,7 +167,7 @@ exprivate int proc_db_expiry(ndrx_tpcache_db_t *db)
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
         {
             NDRX_DUMP(log_error, "Invalid cache key", 
                     keydb.mv_data, keydb.mv_size);
@@ -416,7 +416,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
         {
             NDRX_DUMP(log_error, "Invalid cache key", 
                     keydb.mv_data, keydb.mv_size);
@@ -650,7 +650,7 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
         {
             NDRX_DUMP(log_error, "Invalid cache key", 
                     keydb.mv_data, keydb.mv_size);
@@ -833,7 +833,9 @@ expublic int main(int argc, char** argv)
                    EXFAIL_OUT(ret);
                 }
             }
-            else if (
+            
+            /* Allow expiry messages to be space limited too */
+            if (
                        el->flags & NDRX_TPCACHE_FLAGS_LRU ||
                        el->flags & NDRX_TPCACHE_FLAGS_HITS ||
                        el->flags & NDRX_TPCACHE_FLAGS_FIFO
@@ -847,6 +849,7 @@ expublic int main(int argc, char** argv)
                 }
             }
             
+            /* And we might search for duplicates in cluster configuration */
             if (el->flags & NDRX_TPCACHE_FLAGS_SCANDUP)
             {
                NDRX_LOG(log_error, "scanning for duplicates");
