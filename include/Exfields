@@ -214,6 +214,7 @@ EX_CACHE_FLAGS              662         long -         Command flags
 EX_CACHE_HITS               663         long -         Number of times cache was read
 EX_CACHE_NRDEL              664         long -         Number of records deleted
 EX_CACHE_NRDUPDEL           665         long -         Number of duplicates deleted
+EX_CACHE_BUFLEN             667         long -         Data len, bytes
 
 $#endif
 

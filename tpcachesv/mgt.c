@@ -249,7 +249,7 @@ exprivate int cache_dump(UBFH **pp_ub)
     char tmp[256];
     EDB_txn *txn = NULL;
     EDB_cursor *cursor;
-    EDB_val keydb, val;
+    EDB_val val;
     int tran_started = EXFALSE;
     ndrx_tpcache_data_t *cdata;
     char *key = NULL;
@@ -311,16 +311,6 @@ exprivate int cache_dump(UBFH **pp_ub)
     }
     
     /* Validate DB rec */
-    if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
-    {
-        NDRX_DUMP(log_error, "Invalid cache key", 
-                keydb.mv_data, keydb.mv_size);
-
-        NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
-                "terminated with EOS!", __func__, keydb.mv_size);
-        REJECT(*pp_ub, TPESYSTEM, "Corrupted db - Invalid key format");
-        EXFAIL_OUT(ret);
-    }
 
     if (val.mv_size < sizeof(ndrx_tpcache_data_t))
     {
@@ -343,11 +333,14 @@ exprivate int cache_dump(UBFH **pp_ub)
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=ndrx_cache_mgt_data2ubf(cdata, keydb.mv_data, pp_ub, EXTRUE))
+    if (EXSUCCEED!=ndrx_cache_mgt_data2ubf(cdata, key, pp_ub, EXTRUE))
     {
         REJECT(*pp_ub, TPESYSTEM, "Failed to load data info UBF!");
         EXFAIL_OUT(ret);
     }
+    
+    ndrx_debug_dump_UBF(log_debug, "Dump buffer built", *pp_ub);
+    
 
 out:
 

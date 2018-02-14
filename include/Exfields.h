@@ -142,4 +142,5 @@
 #define	EX_CACHE_HITS	((BFLDID32)33555195)	/* number: 763	 type: long */
 #define	EX_CACHE_NRDEL	((BFLDID32)33555196)	/* number: 764	 type: long */
 #define	EX_CACHE_NRDUPDEL	((BFLDID32)33555197)	/* number: 765	 type: long */
+#define	EX_CACHE_BUFLEN	((BFLDID32)33555199)	/* number: 767	 type: long */
 #endif

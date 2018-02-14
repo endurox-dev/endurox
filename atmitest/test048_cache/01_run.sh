@@ -108,6 +108,10 @@ set_dom1;
 RET=$?
 
 echo "Show cache... "
+
+#
+# TODO Test with out -d...
+#
 xadmin cs -d db01
 
 TMP=$?
@@ -118,6 +122,10 @@ if [ $TMP -ne 0 ]; then
     echo "xadmin failed"
     RET=1
 fi
+
+
+xadmin cd -d db01 -k SV1HELLO-1 -i
+
 
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET

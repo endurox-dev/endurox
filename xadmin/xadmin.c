@@ -723,7 +723,7 @@ expublic int ndrx_init(int need_init)
         
         if (NULL==cctag)
         {
-            strcpy(cfg_section, "@xadmin");
+            NDRX_STRCPY_SAFE(cfg_section, "@xadmin");
         }
         else
         {
