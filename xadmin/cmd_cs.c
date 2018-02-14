@@ -119,7 +119,7 @@ exprivate int call_cache(char *dbname)
     long revent;
     int recv_continue = 1;
     int tp_errno;
-    int rcv_count = 0;
+    long rcv_count = 0;
     char *svcnm;
     char cmd = NDRX_CACHE_SVCMD_CLSHOW;
     
@@ -198,6 +198,8 @@ exprivate int call_cache(char *dbname)
             recv_continue=1;
         }
     }
+    
+    printf("%ld records cached in \"%s\" database\n", rcv_count, dbname);
 
 out:
 

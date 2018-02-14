@@ -44,7 +44,7 @@ extern "C" {
     
     
     
-extern void test048_stamp_get(char *buf);
+extern void test048_stamp_get(char *buf, int bufsz);
 extern int test048_stamp_isequal(char *stamp1, char *stamp2);
 
 
