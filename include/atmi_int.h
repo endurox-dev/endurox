@@ -223,7 +223,7 @@ extern "C" {
                     __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
     fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-    fprintf(stderr, "Copyright (C) 2017 Mavimax Ltd. All Rights Reserved.\n\n");\
+    fprintf(stderr, "Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
     fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
     

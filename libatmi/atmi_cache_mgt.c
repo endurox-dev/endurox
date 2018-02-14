@@ -67,10 +67,11 @@ static ubf_c_map_t M_cachedata_map[] =
     {EX_CACHE_TIM,      0, OFSZ(ndrx_tpcache_data_t, t),              BFLD_LONG}, /* 2 */
     {EX_CACHE_TIMUSEC,  0, OFSZ(ndrx_tpcache_data_t, tusec),          BFLD_LONG}, /* 3 */
     {EX_CACHE_HITT,     0, OFSZ(ndrx_tpcache_data_t, hit_t),          BFLD_LONG}, /* 4 */
-    {EX_CACHE_TIMUSEC,  0, OFSZ(ndrx_tpcache_data_t, hit_tusec),      BFLD_LONG}, /* 5 */
+    {EX_CACHE_HITTU,    0, OFSZ(ndrx_tpcache_data_t, hit_tusec),      BFLD_LONG}, /* 5 */
     {EX_CACHE_HITS,     0, OFSZ(ndrx_tpcache_data_t, hits),           BFLD_LONG}, /* 6 */
     {EX_CACHE_NODEID,   0, OFSZ(ndrx_tpcache_data_t, nodeid),         BFLD_SHORT}, /* 7 */
     {EX_CACHE_BUFTYP,   0, OFSZ(ndrx_tpcache_data_t, atmi_type_id),   BFLD_SHORT}, /* 8 */
+    {EX_CACHE_BUFLEN,   0, OFSZ(ndrx_tpcache_data_t, atmi_buf_len),   BFLD_LONG}, /* 9 */    
     {BBADFLDID}
 };
 
@@ -87,7 +88,8 @@ static long M_cachedata_req[] =
     UBFUTIL_EXPORT,/* 5 */
     UBFUTIL_EXPORT,/* 6 */
     UBFUTIL_EXPORT,/* 7 */
-    UBFUTIL_EXPORT /* 8 */
+    UBFUTIL_EXPORT,/* 8 */
+    UBFUTIL_EXPORT /* 9 */
 };
 
 /*---------------------------Prototypes---------------------------------*/
@@ -140,6 +142,8 @@ expublic int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, char *keydata,
         NDRX_LOG(log_error, "Failed to reallocate new buffer size: %ld", new_size);
         EXFAIL_OUT(ret);
     }
+    
+    NDRX_LOG(log_debug, "tusec=%ld", cdata->tusec);
     
     if (EXSUCCEED!=(ret=atmi_cvt_c_to_ubf(M_cachedata_map, cdata, 
             *pp_ub, M_cachedata_req)))
@@ -217,6 +221,7 @@ expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata,
         {
             NDRX_LOG(log_error, "Failed to estimate EX_CACHE_DUMP size: %s", 
                     Bstrerror(Berror));
+            EXFAIL_OUT(ret);
         }
         
         NDRX_MALLOC_OUT(*blob, len, char);
@@ -225,6 +230,14 @@ expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata,
         if (EXSUCCEED!=Bget(p_ub, EX_CACHE_DUMP, 0, *blob, &len))
         {
             NDRX_LOG(log_error, "Failed to get cache data: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (cdata->atmi_buf_len != len)
+        {
+            NDRX_LOG(log_error, "ERROR ! real data len: %d, but "
+                    "EX_CACHE_BUFLEN says: %ld",
+                    len, cdata->atmi_buf_len);
             EXFAIL_OUT(ret);
         }
     }

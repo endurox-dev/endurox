@@ -1,7 +1,7 @@
 /* 
-** TP Cache tests - common header
+** Test functions
 **
-** @file testtest048_cache.h
+** @file testfuncs.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,28 +29,47 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef TEST48_H
-#define TEST48_H
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test48.h"
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
 
 
-#define VALUE_EXPECTED "Hello EnduroX"
-#define VALUE_EXPECTED_RET "This is response from server!"
+/**
+ * Return tstamp with micro-seconds
+ */
+expublic int test048_stamp_get(char *buf)
+{
     
-#define TSTAMP_BUFSZ        32              /* buffer size for tstamp testing */
+    /* print to bufer tstamp */
     
-    
-    
-extern int test048_stamp_get(char *buf);
-extern int test048_stamp_isequal(char *stamp1, char *stamp2);
-
-
-#ifdef  __cplusplus
+    return EXFAIL;
 }
-#endif
 
-#endif  /* TEST48_H */
+/**
+ * Returns EXTRUE if tstamps are equal
+ */
+expublic int test048_stamp_isequal(char *stamp1, char *stamp2)
+{
+    return EXFAIL;
+}
 

@@ -167,6 +167,8 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
         EXFAIL_OUT(ret);
     }
     
+    ndrx_debug_dump_UBF(log_debug, "Got reply buffer", p_ub);
+    
     /* Print the results */
     printf("nodeid: %hd\n", cdata.nodeid);
     printf("saved_tperrno: %d\n", cdata.saved_tperrno);
@@ -179,7 +181,10 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
     printf("atmi_type_id: %hd\n", cdata.atmi_type_id);
     printf("atmi_buf_len: %ld\n", cdata.atmi_buf_len);
     
+    
+    printf("================================== HEX DUMP ====================================\n");
     STDOUT_DUMP(log_info, "Massage dump", data, cdata.atmi_buf_len);
+    printf("================================================================================\n\n");
     
     if (interpret)
     {
@@ -188,9 +193,9 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
         
         if (BUF_TYPE_UBF==cdata.atmi_type_id)
         {
-            printf("===== UBF buffer: =====");
+            printf("================================== UBF BUFFER ==================================\n");
             Bprint(p_ubf_h);
-            printf("=======================");
+            printf("================================================================================\n");
         }
     }
 
