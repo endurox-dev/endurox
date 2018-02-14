@@ -745,12 +745,12 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 	
 	if (exdata_update->hits < LONG_MAX - 1)
 	{
-		exdata_update->hits++;
+            exdata_update->hits++;
 	}
 	else
 	{
-		/* set to max value (if any runs over) */
-		exdata_update->hits  = LONG_MAX;
+            /* set to max value (if any runs over) */
+            exdata_update->hits  = LONG_MAX;
 	}
 	
         ndrx_utc_tstamp2(&exdata_update->t, &exdata_update->tusec);

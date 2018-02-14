@@ -64,7 +64,8 @@ int main(int argc, char** argv)
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
-    int i;
+    short i;
+    short i_res;
     int ret=EXSUCCEED;
     char testbuf[1024];
     BFLDID emtpy [] = {BBADFLDID};
@@ -92,7 +93,9 @@ int main(int argc, char** argv)
             goto out;
         } 
 
-        if (EXFAIL==CBchg(p_ub, T_STRING_2_FLD, 1, "WORLD", 0, BFLD_STRING))
+        i_res = i / 25;
+        
+        if (EXFAIL==CBchg(p_ub, T_STRING_2_FLD, 1, (char *)&i_res, 0, BFLD_SHORT))
         {
             NDRX_LOG(log_debug, "Failed to set T_STRING_2_FLD[1]: %s", Bstrerror(Berror));
             ret=EXFAIL;
