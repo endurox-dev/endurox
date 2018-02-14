@@ -58,7 +58,7 @@
  * Return tstamp with micro-seconds
  * @param buf where to store tsamp
  */
-expublic void test048_stamp_get(char *buf)
+expublic void test048_stamp_get(char *buf, int bufsz)
 {
     long t, tusec;
     
@@ -66,7 +66,7 @@ expublic void test048_stamp_get(char *buf)
     
     /* print to bufer tstamp */
     
-    sprintf(buf, "%s.%ld", ndrx_get_strtstamp_from_sec(0, t), tusec);
+    snprintf(buf, bufsz, "%s.%ld", ndrx_get_strtstamp_from_sec(0, t), tusec);
 
 }
 

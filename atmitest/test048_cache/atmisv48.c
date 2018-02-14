@@ -57,9 +57,17 @@ void TESTSV01 (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     char testbuf[1024];
     UBFH *p_ub = (UBFH *)p_svc->data;
-
+    char tstamp[TSTAMP_BUFSZ];
     NDRX_LOG(log_debug, "%s got call", __func__);
 
+    
+    if (NULL==(p_ub =(UBFH *)tprealloc((char *)p_ub, Bused(p_ub)+1024)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to reallocate incoming buffer: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     /* Just print the buffer */
     Bprint(p_ub);
     
@@ -67,8 +75,7 @@ void TESTSV01 (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
                  Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
     if (0!=strcmp(testbuf, VALUE_EXPECTED))
@@ -79,12 +86,22 @@ void TESTSV01 (TPSVCINFO *p_svc)
         goto out;
     }
     
-    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 1, VALUE_EXPECTED_RET, 0))
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 1, VALUE_EXPECTED_RET, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD[1]: %s", 
                  Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
+    }
+    
+    /* get stamp */
+    
+    test048_stamp_get(tstamp, sizeof(tstamp));
+    
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_5_FLD, 0, tstamp, 0))
+    {
+        NDRX_LOG(log_error, "Failed to set T_STRING_5_FLD: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
     }
     
 out:

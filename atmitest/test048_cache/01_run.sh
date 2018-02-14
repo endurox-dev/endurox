@@ -102,7 +102,7 @@ xadmin ppm
 echo "Running off client"
 
 set_dom1;
-(time ./01_atmiclt48 2>&1) > ./atmiclt-dom1.log
+(time ./01_atmiclt48 2>&1) > ./01_atmiclt.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt48 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
@@ -124,12 +124,44 @@ if [ $TMP -ne 0 ]; then
 fi
 
 
+#
+# Dump record
+#
 xadmin cd -d db01 -k SV1HELLO-1 -i
 
+TMP=$?
 
-if [[ "X$RET" != "X0" ]]; then
-    go_out $RET
+echo "xadmin ret $TMP"
+
+if [ $TMP -ne 0 ]; then
+    echo "xadmin failed dump record failed"
+    RET=1
 fi
+
+
+#
+# Delete (invalidate) by regexp, all keys containing 2
+#
+
+xadmin ci -d db01 -k '.*2.*' -r
+
+TMP=$?
+
+echo "xadmin ret $TMP"
+
+if [ $TMP -ne 0 ]; then
+    echo "xadmin failed dump record failed"
+    RET=1
+fi
+
+#
+# TODO validate record count
+#
+
+echo "After delete: "
+
+xadmin cs -d db01
+
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

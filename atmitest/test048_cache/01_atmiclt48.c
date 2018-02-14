@@ -65,12 +65,14 @@ int main(int argc, char** argv)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     short i;
-    short i_res;
+    short i_res, i_res_prev = EXFAIL;
     int ret=EXSUCCEED;
     char testbuf[1024];
+    char tstamp[TSTAMP_BUFSZ];
+    char tstamp_prev[TSTAMP_BUFSZ];
     BFLDID emtpy [] = {BBADFLDID};
 
-    for (i=0; i<100; i++)
+    for (i=0; i<200; i++)
     {
         if (EXSUCCEED!=Bproj(p_ub, emtpy))
         {
@@ -91,9 +93,9 @@ int main(int argc, char** argv)
             NDRX_LOG(log_debug, "Failed to set T_STRING_3_FLD[0]: %s", Bstrerror(Berror));
             ret=EXFAIL;
             goto out;
-        } 
+        }
 
-        i_res = i / 25;
+        i_res = i / 5;
         
         if (EXFAIL==CBchg(p_ub, T_STRING_2_FLD, 1, (char *)&i_res, 0, BFLD_SHORT))
         {
@@ -123,6 +125,11 @@ int main(int argc, char** argv)
             goto out;
         }
         
+        /* Dump the reply */
+        
+        ndrx_debug_dump_UBF(log_debug, "Got data from service", p_ub);
+        
+        
         /* validate response... */
         
         if (EXFAIL==Bget(p_ub, T_STRING_FLD, 1, testbuf, 0))
@@ -141,6 +148,38 @@ int main(int argc, char** argv)
             goto out;
         }
         
+        if (EXFAIL==Bget(p_ub, T_STRING_5_FLD, 0, tstamp, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_5_FLD - tstamp: %s", 
+                     Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        if (EXFAIL==i_res_prev)
+        {
+            /* first get cache prev */
+            i_res_prev = i_res;
+            NDRX_STRCPY_SAFE(tstamp_prev, tstamp);
+        }
+        else if (i_res_prev != i_res)
+        {
+            
+            /*  */
+            strcpy(tstamp_prev, tstamp);
+            i_res_prev = i_res;
+        }
+        else
+        {
+            /* compare with cache prev, should be the same as cached */
+            
+            if (0!=strcmp(tstamp, tstamp_prev))
+            {
+                NDRX_LOG(log_error, "TESTERROR ! i_res = %d, tstamp [%d] != tstamp_prev [%d]",
+                        tstamp, tstamp_prev);
+                EXFAIL_OUT(ret);
+            }
+        }
     }
     
 out:
