@@ -56,20 +56,28 @@
 
 /**
  * Return tstamp with micro-seconds
+ * @param buf where to store tsamp
  */
-expublic int test048_stamp_get(char *buf)
+expublic void test048_stamp_get(char *buf)
 {
+    long t, tusec;
+    
+    ndrx_utc_tstamp2(&t, &tusec);
     
     /* print to bufer tstamp */
     
-    return EXFAIL;
+    sprintf(buf, "%s.%ld", ndrx_get_strtstamp_from_sec(0, t), tusec);
+
 }
 
 /**
  * Returns EXTRUE if tstamps are equal
+ * @param stamp1 tstamp 1
+ * @param stamp2 tstamp 2
+ * @return -1, 0 (eq), 1
  */
 expublic int test048_stamp_isequal(char *stamp1, char *stamp2)
 {
-    return EXFAIL;
+    return strcmp(stamp1, stamp2);
 }
 
