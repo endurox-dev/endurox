@@ -435,7 +435,7 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
     UBFH *p_ub = NULL;
     
     NDRX_LOG(log_info, "delete cachedb [%s] by expression [%s] from node %d", 
-            db->cachedb, keyexpr, nodeid);
+            cachedbnm, keyexpr, nodeid);
     
     /* try compile regexp */
     if (EXSUCCEED!=ndrx_regcomp(&re, keyexpr))
@@ -493,7 +493,7 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size])
+        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
         {
             NDRX_DUMP(log_error, "Invalid cache key", 
                     keydb.mv_data, keydb.mv_size);
@@ -516,6 +516,11 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
             }
 
             deleted++;
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Key [%s] matched not matched [%s]", 
+                    keydb.mv_data, keyexpr);
         }
         
         if (EDB_FIRST == op)
@@ -595,6 +600,8 @@ out:
         tpfree((char *)p_ub);
     }
 
+    NDRX_LOG(log_debug, "%s returns %d (deleted: %d)", __func__, ret, deleted);
+    
     if (EXSUCCEED==ret)
     {
         return deleted;
@@ -626,7 +633,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
     char cmd;
         
     NDRX_LOG(log_info, "%s: Delete cache db [%s] record by key [%s] source node: [%hd]", 
-            __func__, db->cachedb, key, nodeid);
+            __func__, cachedbnm, key, nodeid);
     
     /* find cachedb */
     
