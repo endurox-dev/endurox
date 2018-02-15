@@ -56,14 +56,16 @@ target_link_libraries(test48 nstd)
 ############################# Test - executables ###############################
 add_executable (atmi.sv48 atmisv48.c ../../libatmisrv/rawmain_integra.c)
 add_executable (01_atmiclt48 01_atmiclt48.c)
+add_executable (testtool48 testtool48.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmi.sv48 test48 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (01_atmiclt48 atmiclt test48 atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (testtool48 atmiclt test48 atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv48 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(01_atmiclt48 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(testtool48 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
-
 
