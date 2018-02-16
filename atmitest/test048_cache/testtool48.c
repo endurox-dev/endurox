@@ -67,7 +67,7 @@ exprivate int M_numcalls = 1;
 exprivate long M_tpurcode = 0;
 exprivate int M_errcode = 0;
 exprivate int M_first_caches = EXTRUE; /* first call goes to cache (basically from svc) */
-exprivate int M_tpcall_flags = 0; /* Additional tpcall flags */
+exprivate long M_tpcall_flags = 0; /* Additional tpcall flags */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -102,7 +102,6 @@ int main(int argc, char** argv)
         
         switch (c)
         {
-
             case 's':
                 NDRX_STRCPY_SAFE(M_svcnm, optarg);
                 break;
@@ -191,8 +190,43 @@ int main(int argc, char** argv)
         }
     }
     
-    /* TODO: validate config! */
-
+    /* validate config! */    
+    
+    NDRX_LOG(log_debug, "M_svcnm = [%s]", M_svcnm);
+    NDRX_LOG(log_debug, "M_p_ub = %p", M_p_ub);
+    NDRX_LOG(log_debug, "M_tstamp_fld=%d", (int)M_tstamp_fld);
+    NDRX_LOG(log_debug, "M_result_is_cached=%d", M_result_is_cached);
+    NDRX_LOG(log_debug, "M_numcalls=%d", M_numcalls);
+    NDRX_LOG(log_debug, "%M_tpurcode=ld", M_tpurcode);
+    NDRX_LOG(log_debug, "M_errcode=%d", M_errcode);
+    NDRX_LOG(log_debug, "M_first_caches=%d", M_first_caches);
+    NDRX_LOG(log_debug, "M_tpcall_flags %ld", M_tpcall_flags);
+    
+    
+    if (EXEOS==M_svcnm[0])
+    {
+        NDRX_LOG(log_error, "-s: Service name cannot be empty!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==M_p_ub)
+    {
+        NDRX_LOG(log_error, "-b: Mandatory!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (BBADFLDID==M_tstamp_fld)
+    {
+        NDRX_LOG(log_error, "-t: UBF time check field must be set!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (M_numcalls <= 0)
+    {
+        NDRX_LOG(log_error, "-n: Number of call must be possitive!");
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
