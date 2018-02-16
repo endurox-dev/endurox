@@ -86,7 +86,8 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
      causes problems with serice async replies!, See doc for tpacall! */
             
     /* no reply queue */
-    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL, 0, 0, 0, 0);
+    ret=ndrx_tpacall(svc, data, len, flags, NULL, EXFAIL, 0, NULL, 0, 0, 0, 0,
+            NULL);
     
 out:
     return ret;
@@ -125,7 +126,7 @@ expublic int tpacallex (char *svc, char *data,
     
     /* no reply queue */
     ret=ndrx_tpacall(svc, data, len, flags, extradata, dest_node, ex_flags, 
-            NULL, user1, user2, user3, user4);
+            NULL, user1, user2, user3, user4, NULL);
     
 out:
     return ret;
