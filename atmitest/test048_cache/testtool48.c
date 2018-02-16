@@ -64,6 +64,10 @@ exprivate UBFH *M_p_ub = NULL;
 exprivate BFLDID  M_tstamp_fld = BBADFLDID;
 exprivate int M_result_is_cached = EXTRUE;
 exprivate int M_numcalls = 1;
+exprivate long M_tpurcode = 0;
+exprivate int M_errcode = 0;
+exprivate int M_first_caches = EXTRUE; /* first call goes to cache (basically from svc) */
+exprivate int M_tpcall_flags = 0; /* Additional tpcall flags */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -75,7 +79,7 @@ exprivate int M_numcalls = 1;
  * [-n <number of calls>, dflt 1]
  * [-r <tpurcode expected>, dflt 0]
  * [-e <error code expected>, dftl 0]
- * [-f <first_should_cache Y|N, if -n > 1 >, dftl N]
+ * [-f <first_should_cache Y|N, if -n > 1 >, dftl Y]
  * [-l <look in cache flag>, TPNOCACHELOOK tpcall flag]
  * [-x <do not add to cache>, TPNOCACHEADD tpcall flag]
  */
@@ -92,7 +96,7 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:")) != EXFAIL)
+    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lx")) != EXFAIL)
     {
         NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
         
@@ -139,6 +143,30 @@ int main(int argc, char** argv)
             case 'n':
                 M_numcalls = atoi(optarg);
                 break;
+            case 'r':
+                M_tpurcode = atol(optarg);
+                break;
+            case 'e':
+                M_errcode = atoi(optarg);
+                break;
+            case 'f':
+                
+                if ('Y'==optarg[0] || 'y'==optarg[0])
+                {
+                    M_first_caches=EXTRUE;
+                }
+                else
+                {
+                    M_first_caches=EXFALSE;
+                }
+                
+                break;
+            case 'l':
+                M_tpcall_flags|=TPNOCACHELOOK;
+                break;
+            case 'x':
+                M_tpcall_flags|=TPNOCACHEADD;
+                break;
             case '?':
                 if (optopt == 'c')
                 {
@@ -162,6 +190,8 @@ int main(int argc, char** argv)
                 abort ();
         }
     }
+    
+    /* TODO: validate config! */
 
 out:
     tpterm();
