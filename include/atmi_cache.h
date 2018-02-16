@@ -58,7 +58,9 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_BCASTDEL  0x00000040   /* Broadcast delete events?         */
 #define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /* Perfrom timsync                  */
 #define NDRX_TPCACHE_FLAGS_SCANDUP   0x00000100   /* Scan for duplicates by tpcached  */
+#define NDRX_TPCACHE_FLAGS_CLRNOSVC  0x00000200   /* Clean unadvertised svc records   */
 
+    
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
 #define NDRX_TPCACHE_TPCF_REPL       0x00000002      /* Replace buf                   */
 #define NDRX_TPCACHE_TPCF_MERGE      0x00000004      /* Merge buffers                 */
@@ -66,7 +68,7 @@ extern "C" {
 #define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010      /* Save set of fields            */
 #define NDRX_TPCACHE_TPCF_INVAL      0x00000020      /* Invalidate other cache        */
 #define NDRX_TPCACHE_TPCF_NEXT       0x00000040      /* Process next rule (only for inval)*/
-    
+
 #define NDRX_TPCACHE_TPCF_DELREG     0x00000080      /* Delete record can be regexp   */
 #define NDRX_TPCACHE_TPCF_DELFULL    0x00000100      /* Delete full buffer            */
 #define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200      /* Delete set of fields          */
@@ -142,6 +144,8 @@ extern "C" {
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_TIMESYNC));\
     NDRX_LOG(LEV, "flags, 'scandup' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_SCANDUP));\
+    NDRX_LOG(LEV, "flags, 'clrnosvc' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_CLRNOSVC));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
@@ -341,23 +345,24 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
  */
 struct ndrx_tpcache_data
 {
-    int magic;          /* Magic bytes              */
+    int magic;          /* Magic bytes                      */
+    char svcnm[MAXTIDENT+1]; /* Service name of data        */
     int saved_tperrno;
     long saved_tpurcode;
-    long t;             /* UTC timestamp of message */
-    long tusec;         /* UTC microseconds         */
+    long t;             /* UTC timestamp of message         */
+    long tusec;         /* UTC microseconds                 */
     
     /* time when we picked up the record */
-    long hit_t;         /* UTC timestamp of message */
-    long hit_tusec;     /* UTC microseconds         */
-    long hits;          /* Number of cache hits     */
+    long hit_t;         /* UTC timestamp of message         */
+    long hit_tusec;     /* UTC microseconds                 */
+    long hits;          /* Number of cache hits             */
     
-    short nodeid;       /* Node id who put the msg  */
-    short atmi_type_id; /* ATMI type id           */
+    short nodeid;       /* Node id who put the msg          */
+    short atmi_type_id; /* ATMI type id                     */
     
     /* Payload data */
-    long atmi_buf_len;  /* saved buffer len         */
-    char atmi_buf[0]; /* the data follows           */
+    long atmi_buf_len;  /* saved buffer len                 */
+    char atmi_buf[0];   /* the data follows                 */
 };
 typedef struct ndrx_tpcache_data ndrx_tpcache_data_t;
 

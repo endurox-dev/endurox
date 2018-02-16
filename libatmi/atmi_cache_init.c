@@ -387,6 +387,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_SCANDUP;
                 }
+                else if (0==strcmp(p, "clrnosvc"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_CLRNOSVC;
+                }
                 else
                 {
                     /* unknown flag */

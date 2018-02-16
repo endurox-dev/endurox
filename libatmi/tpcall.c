@@ -388,12 +388,16 @@ expublic void cancel_if_expected(tp_command_call_t *call)
  *                  or tpcall wrapper)
  * @param user1 - user data field 1
  * @param user2 - user data field 2
+ * @param user3 - user data field 3
+ * @param user4 - user data field 4
+ * @param p_cachectl cache control - if cache used must be not NULL, else NULL
  * @return call descriptor
  */
 expublic int ndrx_tpacall (char *svc, char *data,
                 long len, long flags, char *extradata, 
                 int dest_node, int ex_flags, TPTRANID *p_tranid, 
-                int user1, long user2, int user3, long user4)
+                int user1, long user2, int user3, long user4, 
+                ndrx_tpcall_cache_ctl_t *p_cachectl)
 {
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
@@ -414,9 +418,6 @@ expublic int ndrx_tpacall (char *svc, char *data,
         atmi_xa_print_knownrms(log_info, "Known RMs before call: ",
                     G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms);
     }
-    
-     /* Might want to remove in future... but it might be dangerouse!*/
-     memset(call, 0, sizeof(tp_command_call_t));
     
     /* Check service availability by SHM? 
      * TODO: We might want to check the flags, the service might be marked for shutdown!
@@ -464,6 +465,33 @@ expublic int ndrx_tpacall (char *svc, char *data,
                  __func__, svc);
         goto out;
     }
+     
+    /* ok service is found we can process cache here */
+    
+    if (!(flags & TPNOCACHELOOK) && NULL!=p_cachectl)
+    {
+        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svc, data, len, 
+                p_cachectl->odata, p_cachectl->olen, flags, 
+                &p_cachectl->should_cache, 
+                &p_cachectl->saved_tperrno, 
+                &p_cachectl->saved_tpurcode)))
+        {
+            /* failed to get cache data */
+            if (EXFAIL==ret)
+            {
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                /* ignore the error (probably data not found) */
+                NDRX_LOG(log_debug, "Cache lookup failed ... continue with svc call");
+            }
+        }
+    }
+    
+    /* Might want to remove in future... but it might be dangerous!*/
+     memset(call, 0, sizeof(tp_command_call_t));
+     
 
     if (NULL!=data)
     {
@@ -609,7 +637,6 @@ out:
 
 /**
  * Internal version of tpgetrply.
- * TODO: How about TPGETANY|TPNOCHANGE?
  * @param cd
  * @param data
  * @param len
@@ -905,46 +932,15 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     int ret=EXSUCCEED;
     int cd_req = 0;
     int cd_rply = 0;
-    int should_cache = EXFALSE;
-    int saved_tperrno;
-    long saved_tpurcode;
+    ndrx_tpcall_cache_ctl_t cachectl;
+    int cache_used = EXFALSE;
     
     TPTRANID tranid, *p_tranid;
     
     NDRX_LOG(log_debug, "%s: enter", __func__);
     
-    /* tpcall cache implementation: lookup */
-    if (!(flags & TPNOCACHELOOK) && ndrx_cache_used())
-    {
-        /* lookup cache */
-        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svc, idata, ilen, 
-            odata, olen, flags, &should_cache, &saved_tperrno, &saved_tpurcode)))
-        {
-            /* failed to get cache data */
-            if (EXFAIL==ret)
-            {
-                EXFAIL_OUT(ret);
-            }
-            else
-            {
-                /* ignore the error (probably data not found) */
-            }
-        }
-        else
-        {
-            NDRX_LOG(log_info, "Response read form cache!");
-            G_atmi_tls->M_svc_return_code = saved_tpurcode;
-            
-            if (0!=saved_tperrno)
-            {
-                ndrx_TPset_error_msg(saved_tperrno, "Cached error response");
-                ret=EXFAIL;
-            }
-            /*  We are already in cache! */
-            should_cache = EXFALSE;
-            goto out;
-        }
-    }
+    cachectl.should_cache = EXFALSE;
+    cachectl.cached_rsp = EXFALSE;
 
     if (flags & TPTRANSUSPEND)
     {
@@ -956,13 +952,40 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
         p_tranid = NULL;
     }
     
+    if (ndrx_cache_used())
+    {
+        cache_used = EXTRUE;
+        memset(&cachectl, 0, sizeof(cachectl));
+        
+        cachectl.odata = odata;
+        cachectl.olen = olen;
+    }
+    
     if (EXFAIL==(cd_req=ndrx_tpacall (svc, idata, ilen, flags, extradata, 
-            dest_node, ex_flags, p_tranid, user1, user2, user3, user4)))
+            dest_node, ex_flags, p_tranid, user1, user2, user3, user4,
+            (cache_used?&cachectl:NULL) )))
     {
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
         ret=EXFAIL;
         goto out;
     } 
+    
+    if (cachectl.cached_rsp)
+    {
+        NDRX_LOG(log_debug, "Reply from cache");
+        
+        NDRX_LOG(log_info, "Response read form cache!");
+        G_atmi_tls->M_svc_return_code = cachectl.saved_tpurcode;
+
+        if (0!=cachectl.saved_tperrno)
+        {
+            ndrx_TPset_error_msg(cachectl.saved_tperrno, "Cached error response");
+            ret=EXFAIL;
+        }
+        
+        /*  We are already in cache! */
+        goto out;
+    }
 
     /* Support #259 Do this only after tpacall, because we might do
      * non blocked requests, but responses we way in blocked mode.
@@ -992,7 +1015,7 @@ out:
     NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
 
     /* tpcall cache implementation: add to cache if required */
-    if (!(flags & TPNOCACHEADD) && should_cache)
+    if (!(flags & TPNOCACHEADD) && cachectl.should_cache)
     {
         int ret2;
         
