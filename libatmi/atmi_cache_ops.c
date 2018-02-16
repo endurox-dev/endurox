@@ -147,6 +147,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
     
     exdata->magic = NDRX_CACHE_MAGIC;
+    NDRX_STRCPY_SAFE(exdata->svcnm, svc);
     exdata->nodeid = nodeid;
     exdata->saved_tperrno = save_tperrno;
     exdata->saved_tpurcode = save_tpurcode;
