@@ -487,6 +487,12 @@ expublic int ndrx_tpacall (char *svc, char *data,
                 NDRX_LOG(log_debug, "Cache lookup failed ... continue with svc call");
             }
         }
+        else
+        {
+            p_cachectl->cached_rsp = EXTRUE;
+            /* data from cache, return... */
+            goto out;
+        }
     }
     
     /* Might want to remove in future... but it might be dangerous!*/
