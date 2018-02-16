@@ -59,8 +59,11 @@ extern char *optarg;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-char M_svcnm[MAXTIDENT+1] = {EXEOS};
-UBFH *M_p_ub = NULL;
+exprivate char M_svcnm[MAXTIDENT+1] = {EXEOS};
+exprivate UBFH *M_p_ub = NULL;
+exprivate BFLDID  M_tstamp_fld = BBADFLDID;
+exprivate int M_result_is_cached = EXTRUE;
+exprivate int M_numcalls = 1;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -68,7 +71,7 @@ UBFH *M_p_ub = NULL;
  * -s service_name
  * -b "json2ubf buffer"
  * -t tstamp_field
- * -c Y|N - should result be out from cache or newly allocated?
+ * [-c Y|N - should result be out from cache or newly allocated?, default TRUE]
  * [-n <number of calls>, dflt 1]
  * [-r <tpurcode expected>, dflt 0]
  * [-e <error code expected>, dftl 0]
@@ -90,44 +93,74 @@ int main(int argc, char** argv)
     }
     
     while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:")) != EXFAIL)
-    switch (c)
     {
-        case 's':
-            NDRX_STRCPY_SAFE(M_svcnm, optarg);
-            break;
-        case 'b':
-            /* JSON buffer, build UBF... */
+        NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
+        
+        switch (c)
+        {
 
-            NDRX_LOG(log_debug, "Parsing: [%s]", optarg);
+            case 's':
+                NDRX_STRCPY_SAFE(M_svcnm, optarg);
+                break;
+            case 'b':
+                /* JSON buffer, build UBF... */
 
-            if (EXSUCCEED!=tpjsontoubf(M_p_ub, optarg))
-            {
-                NDRX_LOG(log_error, "Failed to parse [%s]", optarg);
-                EXFAIL_OUT(ret);
-            }
+                NDRX_LOG(log_debug, "Parsing: [%s]", optarg);
 
-            break;
-        case '?':
-            if (optopt == 'c')
-            {
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-                EXFAIL_OUT(ret);
-            }
-            else if (isprint (optopt))
-            {
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                EXFAIL_OUT(ret);
-            }
-            else
-            {
-                fprintf (stderr,
-                    "Unknown option character `\\x%x'.\n",
-                    optopt);
-                EXFAIL_OUT(ret);
-            }
-            return 1;
-        default:
-            abort ();
+                if (EXSUCCEED!=tpjsontoubf(M_p_ub, optarg))
+                {
+                    NDRX_LOG(log_error, "Failed to parse [%s]", optarg);
+                    EXFAIL_OUT(ret);
+                }
+
+                break;
+            case 't':
+                NDRX_LOG(log_debug, "Timestamp field [%s]", optarg);
+
+                if (BBADFLDID==(M_tstamp_fld = Bfldid(optarg)))
+                {
+                    NDRX_LOG(log_error, "Failed to parse: [%s]: %s", Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+
+                break;
+            case 'c':
+
+                if ('Y'==optarg[0] || 'y'==optarg[0])
+                {
+                    M_result_is_cached=EXTRUE;
+                }
+                else
+                {
+                    M_result_is_cached=EXFALSE;
+                }
+
+                break;
+            case 'n':
+                M_numcalls = atoi(optarg);
+                break;
+            case '?':
+                if (optopt == 'c')
+                {
+                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                    EXFAIL_OUT(ret);
+                }
+                else if (isprint (optopt))
+                {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    fprintf (stderr,
+                        "Unknown option character `\\x%x'.\n",
+                        optopt);
+                    EXFAIL_OUT(ret);
+                }
+                return 1;
+            default:
+                abort ();
+        }
     }
 
 out:
