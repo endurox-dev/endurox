@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
+#include <ubfutil.h>
 #include "test48.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
