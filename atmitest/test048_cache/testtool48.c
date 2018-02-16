@@ -1,5 +1,7 @@
 /* 
 ** Test Tool 48 - basically call service and test for cache data
+** Field T_STRING_10_FLD - this stores the name of timestamp field, so that
+** service knows where to store the timestamp
 **
 ** @file testtool48.c
 ** 
@@ -47,6 +49,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
+#include <ubf_int.h>
 #include "test48.h"
 /*---------------------------Externs------------------------------------*/
 
@@ -62,13 +65,77 @@ extern char *optarg;
 exprivate char M_svcnm[MAXTIDENT+1] = {EXEOS};
 exprivate UBFH *M_p_ub = NULL;
 exprivate BFLDID  M_tstamp_fld = BBADFLDID;
-exprivate int M_result_is_cached = EXTRUE;
+exprivate char M_stamp_fld_str[UBFFLDMAX+1]; /* field where to store timestamp (name) */
+exprivate int M_result_must_from_cache = EXTRUE;
 exprivate int M_numcalls = 1;
 exprivate long M_tpurcode = 0;
 exprivate int M_errcode = 0;
-exprivate int M_first_caches = EXTRUE; /* first call goes to cache (basically from svc) */
+exprivate int M_first_goes_to_cache = EXTRUE; /* first call goes to cache (basically from svc) */
 exprivate long M_tpcall_flags = 0; /* Additional tpcall flags */
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Perform the testing
+ * @return 
+ */
+exprivate int main_loop(void)
+{
+    int ret = EXSUCCEED;
+    long i;
+    UBFH *p_ub = NULL;
+    /* take a copy from UBF */
+    
+    
+    for (i=0; i<M_numcalls; i++)
+    {
+        NDRX_LOG(log_debug, "into loop %ld", i);
+        usleep(2000); /* sleep 2ms for new timestamp */
+        
+        if (NULL==(p_ub = tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024)))
+        {
+            NDRX_LOG(log_error, "Failed to allocate test buffer: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=Bcpy(p_ub, M_p_ub))
+        {
+            NDRX_LOG(log_error, "Failed to copy test buffer: %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* get tstamp here... */
+        
+        /* call services */
+        
+        /* if tstamp from service >= tstamp, then data comes from service and
+         * not from cache
+         * Store stamps here:
+         * T_LONG_2_FLD
+         * T_LONG_3_FLD
+         */
+        
+        if (i==0 && M_first_goes_to_cache && data_from_cache)
+        {
+            /* TESTERROR, record must be new */
+        }
+        else if (M_result_must_from_cache && !data_from_cache)
+        {
+            /* TESTERROR, record must be from cache */
+        }
+        else if (!M_result_must_from_cache && data_from_cache)
+        {
+            /* TESTERROR, record must be new!!! */
+        }
+        
+        
+    }
+    
+    
+out:
+    return ret;
+}
 
 /**
  * We shall load arguments like:
@@ -125,17 +192,19 @@ int main(int argc, char** argv)
                     NDRX_LOG(log_error, "Failed to parse: [%s]: %s", Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
+                
+                NDRX_STRCPY_SAFE(M_stamp_fld_str, optarg);
 
                 break;
             case 'c':
 
                 if ('Y'==optarg[0] || 'y'==optarg[0])
                 {
-                    M_result_is_cached=EXTRUE;
+                    M_result_must_from_cache=EXTRUE;
                 }
                 else
                 {
-                    M_result_is_cached=EXFALSE;
+                    M_result_must_from_cache=EXFALSE;
                 }
 
                 break;
@@ -152,11 +221,11 @@ int main(int argc, char** argv)
                 
                 if ('Y'==optarg[0] || 'y'==optarg[0])
                 {
-                    M_first_caches=EXTRUE;
+                    M_first_goes_to_cache=EXTRUE;
                 }
                 else
                 {
-                    M_first_caches=EXFALSE;
+                    M_first_goes_to_cache=EXFALSE;
                 }
                 
                 break;
@@ -195,13 +264,16 @@ int main(int argc, char** argv)
     NDRX_LOG(log_debug, "M_svcnm = [%s]", M_svcnm);
     NDRX_LOG(log_debug, "M_p_ub = %p", M_p_ub);
     NDRX_LOG(log_debug, "M_tstamp_fld=%d", (int)M_tstamp_fld);
-    NDRX_LOG(log_debug, "M_result_is_cached=%d", M_result_is_cached);
+    NDRX_LOG(log_debug, "M_stamp_fld_str=[%s]", M_stamp_fld_str);
+    NDRX_LOG(log_debug, "M_result_must_from_cache=%d", M_result_must_from_cache);
     NDRX_LOG(log_debug, "M_numcalls=%d", M_numcalls);
     NDRX_LOG(log_debug, "%M_tpurcode=ld", M_tpurcode);
     NDRX_LOG(log_debug, "M_errcode=%d", M_errcode);
-    NDRX_LOG(log_debug, "M_first_caches=%d", M_first_caches);
+    NDRX_LOG(log_debug, "M_first_goes_to_cache=%d", M_first_goes_to_cache);
     NDRX_LOG(log_debug, "M_tpcall_flags %ld", M_tpcall_flags);
     
+    
+    /* TODO: Copy to string 10! */
     
     if (EXEOS==M_svcnm[0])
     {
@@ -227,7 +299,19 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    /* loop over */
+    if (EXSUCCEED!=main_loop())
+    {
+        EXFAIL_OUT(ret);
+    }
+    
 out:
+                
+    if (NULL!=M_p_ub)
+    {
+        tpfree((char *)M_p_ub);
+    }
+
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 
