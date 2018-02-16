@@ -64,12 +64,10 @@ extern char *optarg;
 
 exprivate char M_svcnm[MAXTIDENT+1] = {EXEOS};
 exprivate UBFH *M_p_ub = NULL;
-exprivate BFLDID  M_tstamp_fld = BBADFLDID;
-exprivate char M_stamp_fld_str[UBFFLDMAX+1]; /* field where to store timestamp (name) */
 exprivate int M_result_must_from_cache = EXTRUE;
 exprivate int M_numcalls = 1;
 exprivate long M_tpurcode = 0;
-exprivate int M_errcode = 0;
+exprivate int M_tperrno = 0;
 exprivate int M_first_goes_to_cache = EXTRUE; /* first call goes to cache (basically from svc) */
 exprivate long M_tpcall_flags = 0; /* Additional tpcall flags */
 /*---------------------------Prototypes---------------------------------*/
@@ -83,6 +81,14 @@ exprivate int main_loop(void)
     int ret = EXSUCCEED;
     long i;
     UBFH *p_ub = NULL;
+    long t;
+    long tusec;
+    
+    long t_svc;
+    long tusec_svc;
+    
+    long olen;
+    int data_from_cache;
     /* take a copy from UBF */
     
     
@@ -91,7 +97,7 @@ exprivate int main_loop(void)
         NDRX_LOG(log_debug, "into loop %ld", i);
         usleep(2000); /* sleep 2ms for new timestamp */
         
-        if (NULL==(p_ub = tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024)))
+        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024)))
         {
             NDRX_LOG(log_error, "Failed to allocate test buffer: %s", 
                     tpstrerror(tperrno));
@@ -106,8 +112,35 @@ exprivate int main_loop(void)
         }
         
         /* get tstamp here... */
+        ndrx_utc_tstamp2(&t, &tusec);
         
         /* call services */
+        
+        ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&M_p_ub, &olen, M_tpcall_flags);
+        
+        if (M_tperrno!=0)
+        {
+            if (tperrno!=M_tperrno)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected tperrno=%d got %d", 
+                        M_tperrno, tperrno);
+                EXFAIL_OUT(ret);
+            }
+            
+            ret = EXSUCCEED;
+        }
+        else if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR: service call shall SUCCEED, but FAILED!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (M_tpurcode!=tpurcode)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected tpurcode=%ld got %ld", 
+                    M_tpurcode, tpurcode);
+            EXFAIL_OUT(ret);
+        }
         
         /* if tstamp from service >= tstamp, then data comes from service and
          * not from cache
@@ -115,6 +148,10 @@ exprivate int main_loop(void)
          * T_LONG_2_FLD
          * T_LONG_3_FLD
          */
+        
+        
+        
+        
         
         if (i==0 && M_first_goes_to_cache && data_from_cache)
         {
@@ -130,10 +167,18 @@ exprivate int main_loop(void)
         }
         
         
+        tpfree((char *)p_ub);
+        p_ub = NULL;
     }
     
     
 out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
     return ret;
 }
 
@@ -184,18 +229,6 @@ int main(int argc, char** argv)
                 }
 
                 break;
-            case 't':
-                NDRX_LOG(log_debug, "Timestamp field [%s]", optarg);
-
-                if (BBADFLDID==(M_tstamp_fld = Bfldid(optarg)))
-                {
-                    NDRX_LOG(log_error, "Failed to parse: [%s]: %s", Bstrerror(Berror));
-                    EXFAIL_OUT(ret);
-                }
-                
-                NDRX_STRCPY_SAFE(M_stamp_fld_str, optarg);
-
-                break;
             case 'c':
 
                 if ('Y'==optarg[0] || 'y'==optarg[0])
@@ -215,7 +248,7 @@ int main(int argc, char** argv)
                 M_tpurcode = atol(optarg);
                 break;
             case 'e':
-                M_errcode = atoi(optarg);
+                M_tperrno = atoi(optarg);
                 break;
             case 'f':
                 
@@ -263,12 +296,10 @@ int main(int argc, char** argv)
     
     NDRX_LOG(log_debug, "M_svcnm = [%s]", M_svcnm);
     NDRX_LOG(log_debug, "M_p_ub = %p", M_p_ub);
-    NDRX_LOG(log_debug, "M_tstamp_fld=%d", (int)M_tstamp_fld);
-    NDRX_LOG(log_debug, "M_stamp_fld_str=[%s]", M_stamp_fld_str);
     NDRX_LOG(log_debug, "M_result_must_from_cache=%d", M_result_must_from_cache);
     NDRX_LOG(log_debug, "M_numcalls=%d", M_numcalls);
     NDRX_LOG(log_debug, "%M_tpurcode=ld", M_tpurcode);
-    NDRX_LOG(log_debug, "M_errcode=%d", M_errcode);
+    NDRX_LOG(log_debug, "M_errcode=%d", M_tperrno);
     NDRX_LOG(log_debug, "M_first_goes_to_cache=%d", M_first_goes_to_cache);
     NDRX_LOG(log_debug, "M_tpcall_flags %ld", M_tpcall_flags);
     
@@ -284,12 +315,6 @@ int main(int argc, char** argv)
     if (NULL==M_p_ub)
     {
         NDRX_LOG(log_error, "-b: Mandatory!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (BBADFLDID==M_tstamp_fld)
-    {
-        NDRX_LOG(log_error, "-t: UBF time check field must be set!");
         EXFAIL_OUT(ret);
     }
     
