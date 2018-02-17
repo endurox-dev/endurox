@@ -140,12 +140,12 @@ exprivate int call_cache(char *dbname, char *key, int regexp)
         {
             NDRX_LOG(log_error, "Failed to get EX_CACHE_NRDEL: %s", 
                     Bstrerror(Berror));
-            printf("WARNING: Failed to get delete results from EX_CACHE_NRDEL: %s\n", 
+            fprintf(stderr, "WARNING: Failed to get delete results from EX_CACHE_NRDEL: %s\n", 
                     Bstrerror(Berror));
         }
         else
         {
-            printf("%ld records deleted\n", deleted);
+            fprintf(stderr, "%ld records deleted\n", deleted);
         }
     }
     

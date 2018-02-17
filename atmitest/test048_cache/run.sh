@@ -33,6 +33,7 @@ run_test () {
 }
 
 run_test "01_run"
+run_test "02_run"
 
 echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures"
 
