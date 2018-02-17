@@ -83,6 +83,7 @@ extern TestSuite *ubf_print_tests(void);
 extern TestSuite *ubf_macro_tests(void);
 extern TestSuite *ubf_readwrite_tests(void);
 extern TestSuite *ubf_mkfldhdr_tests(void);
+extern TestSuite *ubf_bcmp_tests(void);
 
 /* Standard library suites */
 extern TestSuite *ubf_nstd_crypto(void);

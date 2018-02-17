@@ -83,7 +83,8 @@ struct dtype_ext1 {
     /* allocate conversation buffer for user. */
     char *(*p_talloc) (struct dtype_ext1 *t, int *len);
     /* Fn to compare two values of data type */
-    int (*p_cmp) (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
+    int (*p_cmp) (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, 
+        BFLDLEN len2, long mode);
 };
 
 typedef struct dtype_ext1 dtype_ext1_t;

@@ -376,9 +376,9 @@ int main(int argc, char** argv)
     
     ndrx_debug_dump_UBF(log_debug, "Send buffer", M_p_ub);
     
-    if (NULL!=M_result_must_from_cache)
+    if (NULL!=M_p_ub_cmp_cache)
     {
-        ndrx_debug_dump_UBF(log_debug, "Cache compare buffer", M_result_must_from_cache);
+        ndrx_debug_dump_UBF(log_debug, "Cache compare buffer", M_p_ub_cmp_cache);
     }
     
     if (EXEOS==M_svcnm[0])
