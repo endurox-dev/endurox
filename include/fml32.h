@@ -106,6 +106,8 @@ extern "C" {
 #define Frstrindex32 Brstrindex
 #define Ferror32 Berror
 #define Fielded32 Bisubf
+#define Fcmp32 Bcmp
+#define Fsubset32 Bsubset
     
 /* VIEW related */
 #define Fvnull32 Bvnull

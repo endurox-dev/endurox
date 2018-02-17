@@ -41,7 +41,7 @@ See *ubftest/test_genbuf.c* for sample code.
 
 BUGS
 ----
-Report bugs to support@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
