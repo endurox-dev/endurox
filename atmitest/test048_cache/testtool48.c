@@ -1,7 +1,5 @@
 /* 
 ** Test Tool 48 - basically call service and test for cache data
-** Field T_STRING_10_FLD - this stores the name of timestamp field, so that
-** service knows where to store the timestamp
 **
 ** @file testtool48.c
 ** 
@@ -51,6 +49,7 @@
 #include <nstdutil.h>
 #include <ubf_int.h>
 #include "test48.h"
+#include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
 
 extern int optind, optopt, opterr;
@@ -95,7 +94,6 @@ exprivate int main_loop(void)
     for (i=0; i<M_numcalls; i++)
     {
         NDRX_LOG(log_debug, "into loop %ld", i);
-        usleep(2000); /* sleep 2ms for new timestamp */
         
         if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024)))
         {
@@ -116,7 +114,11 @@ exprivate int main_loop(void)
         
         /* call services */
         
-        ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&M_p_ub, &olen, M_tpcall_flags);
+        ndrx_debug_dump_UBF(log_debug, "Sending buffer", p_ub);
+        
+        ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&p_ub, &olen, M_tpcall_flags);
+        
+        ndrx_debug_dump_UBF(log_debug, "Received buffer", p_ub);
         
         if (M_tperrno!=0)
         {
@@ -145,32 +147,63 @@ exprivate int main_loop(void)
         /* if tstamp from service >= tstamp, then data comes from service and
          * not from cache
          * Store stamps here:
-         * T_LONG_2_FLD
-         * T_LONG_3_FLD
+         * T_LONG_2_FLD[0] -> sec
+         * T_LONG_2_FLD[1] -> usec
          */
         
+        if (EXSUCCEED!=Bget(p_ub, T_LONG_2_FLD, 0, (char *)&t_svc, 0L)
+                || EXSUCCEED!=Bget(p_ub, T_LONG_2_FLD, 1, (char *)&tusec_svc, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get timestamp "
+                    "fields from service!");
+            EXFAIL_OUT(ret);
+        }
+            
+        NDRX_LOG(log_info, "timestamp from service %ld.%ld local tstamp %ld.%ld",
+                t_svc, tusec_svc, t, tusec);
         
         
-        
+        /* so if, tsvc < t, then data is from cache */
+        if (-1 == ndrx_utc_cmp(&t_svc, &tusec_svc, &t, &tusec))
+        {
+            NDRX_LOG(log_debug, "Data from cache");
+            data_from_cache = EXTRUE;
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Data from service");
+            data_from_cache = EXFALSE;
+        }
         
         if (i==0 && M_first_goes_to_cache && data_from_cache)
         {
-            /* TESTERROR, record must be new */
+            NDRX_LOG(log_error, "TESTERROR (%ld), record must be new for loop 0, "
+                    "but got from cache!", i);
+            EXFAIL_OUT(ret);
+        }
+        else if (i==0 && M_first_goes_to_cache && !data_from_cache)
+        {
+            /* ok... */
+            NDRX_LOG(log_debug, "OK, first new rec.");
         }
         else if (M_result_must_from_cache && !data_from_cache)
         {
-            /* TESTERROR, record must be from cache */
+            NDRX_LOG(log_error, "TESTERROR (%ld), record must be from cache, "
+                    "but got new!", i);
+            EXFAIL_OUT(ret);
         }
         else if (!M_result_must_from_cache && data_from_cache)
         {
-            /* TESTERROR, record must be new!!! */
+            NDRX_LOG(log_error, "TESTERROR(%ld) , record must be new but got "
+                    "from cache!", i);
+            EXFAIL_OUT(ret);
         }
-        
         
         tpfree((char *)p_ub);
         p_ub = NULL;
+        
+        usleep(2000); /* sleep 2ms for new timestamp */
     }
-    
     
 out:
 
