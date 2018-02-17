@@ -381,7 +381,7 @@ expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache,
     long list_len = 0;
     BFLDID fid;
     BFLDOCC occ;
-    int idx;
+    int idx = 0;
     char errdet[MAX_TP_ERROR_LEN+1];
     /* Figure out what to put */
     
@@ -397,8 +397,10 @@ expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache,
                 /* Test the field against regex */
                 char * nm = Bfname(fid);
                 
+                NDRX_LOG(log_debug, "REX testing [%s]", nm);
                 if (EXSUCCEED==ndrx_regexec(&pb->regex, nm))
                 {
+                    NDRX_LOG(log_debug, "Testing [%s] - OK for projection", nm);
                     /* loop over, match regexp, if ok, add field to projection list */
                     if (EXSUCCEED!=add_proj_field(&list, &list_len, idx, fid, 
                             errdet, sizeof(errdet)))
@@ -408,10 +410,12 @@ expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache,
                                 errdet);
                         EXFAIL_OUT(ret);
                     }
+                    idx++;
                 }
             }
         } /* loop over the buffer */
-        /* copy off the projection */   
+        /* copy off the projection */
+        
     }
     
     if (cache->flags & flags_projfull)
@@ -589,9 +593,9 @@ exprivate int add_proj_field(char **arr, long *arrsz, int idx, BFLDID fid,
         {
             int err = errno;
             NDRX_LOG(log_error, "%s: Failed to realloc (%ld): %s", __func__, 
-                    (*arrsz)*sizeof(BFLDID), strerror(errno));
+                    (*arrsz)*sizeof(BFLDID), strerror(err));
             snprintf(errdet, errdetbufsz, "%s: Failed to malloc (%ld): %s", __func__, 
-                    (*arrsz)*sizeof(BFLDID), strerror(errno));
+                    (*arrsz)*sizeof(BFLDID), strerror(err));
             EXFAIL_OUT(ret);        
         }
     }
