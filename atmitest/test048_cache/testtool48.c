@@ -214,6 +214,27 @@ exprivate int main_loop(void)
                         "from cache!", i);
                 EXFAIL_OUT(ret);
             }
+            
+            /* Compare the buffer if given */
+            
+            if (NULL!=M_p_ub_cmp_cache && data_from_cache)
+            {
+                /* strip time fields off */
+                Bdel(p_ub, T_LONG_2_FLD, 1);
+                Bdel(p_ub, T_LONG_2_FLD, 0);
+                
+                if (0!=Bcmp(p_ub, M_p_ub_cmp_cache))
+                {
+                    NDRX_LOG(log_error, "TESTERROR ! Failed to compare UBF buffer");
+                    
+                    ndrx_debug_dump_UBF(log_debug, "Received for compare", p_ub);
+                    
+                    ndrx_debug_dump_UBF(log_debug, "Received vs -m", 
+                            M_p_ub_cmp_cache);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
         }
         
         tpfree((char *)p_ub);
@@ -258,7 +279,7 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
 
-    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lx")) != EXFAIL)
+    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lxm:")) != EXFAIL)
     {
         NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
         
@@ -281,6 +302,12 @@ int main(int argc, char** argv)
                 break;
             case 'm':
                 /* JSON buffer, build UBF... */
+                if (NULL==(M_p_ub_cmp_cache = (UBFH *)tpalloc("UBF", NULL, 56000)))
+                {
+                    NDRX_LOG(log_error, "Failed to allocate UBF (2): %s", 
+                            tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
 
                 NDRX_LOG(log_debug, "Parsing: [%s]", optarg);
 
@@ -290,13 +317,6 @@ int main(int argc, char** argv)
                     EXFAIL_OUT(ret);
                 }
                 
-                if (NULL==(M_p_ub_cmp_cache = (UBFH *)tpalloc("UBF", NULL, 56000)))
-                {
-                    NDRX_LOG(log_error, "Failed to allocate UBF (2): %s", 
-                            tpstrerror(tperrno));
-                    EXFAIL_OUT(ret);
-                }
-
                 break;
             case 'c':
 

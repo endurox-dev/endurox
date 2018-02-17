@@ -64,7 +64,7 @@ set_dom1() {
 #    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 }
 
-
+source ./test-func-include.sh
 
 #
 # Generic exit function
@@ -93,8 +93,6 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
-
-
 RET=0
 
 xadmin psc
@@ -109,9 +107,6 @@ RET=$?
 
 echo "Show cache... "
 
-#
-# TODO Test with out -d...
-#
 xadmin cs -d db01
 
 TMP=$?
@@ -120,7 +115,25 @@ echo "xadmin ret $TMP"
 
 if [ $TMP -ne 0 ]; then
     echo "xadmin failed"
-    RET=1
+    go_out 1
+fi
+
+ensure_keys db01 40
+
+
+#
+# Test with out -d...
+#
+
+xadmin cs db01
+
+TMP=$?
+
+echo "xadmin ret $TMP"
+
+if [ $TMP -ne 0 ]; then
+    echo "xadmin failed"
+    go_out 2
 fi
 
 
@@ -135,7 +148,7 @@ echo "xadmin ret $TMP"
 
 if [ $TMP -ne 0 ]; then
     echo "xadmin failed dump record failed"
-    RET=1
+    go_out 3
 fi
 
 
@@ -151,22 +164,23 @@ echo "xadmin ret $TMP"
 
 if [ $TMP -ne 0 ]; then
     echo "xadmin failed dump record failed"
-    RET=1
+    go_out 4
 fi
 
 #
-# TODO validate record count
+# Validate record count
 #
 
 echo "After delete: "
 
 xadmin cs -d db01
 
+ensure_keys db01 27
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-        echo "Test error detected!"
-        RET=-2
+    echo "Test error detected!"
+    go_out 5
 fi
 
 

@@ -186,7 +186,7 @@ cmd_mapping_t M_command_map[] =
                                      "\t args: gen <target> <type> [-d] "
                                      "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
                                      "\t tagets/types available:", cmd_gen_help},
-    {"cs",        cmd_cs,EXFAIL,   2,  3,  1, "Cache show\n"
+    {"cs",        cmd_cs,EXFAIL,   1,  3,  1, "Cache show\n"
                                             "\t args: cs <cache_db_name>|-d <cache_db_name>", NULL},
     {"cacheshow", cmd_cs,EXFAIL,   2,  3,  1, "Alias for `cs' ", NULL},
     {"cd",        cmd_cd,EXFAIL,   3,  4,  1, "Dump message in cache\n"
@@ -569,11 +569,13 @@ exprivate int process_command_buffer(int *p_have_next)
         {
             fprintf(stderr, "Syntax error, too few args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
+            ret=EXFAIL;
         }
         else if ( G_cmd_argc_logical > map->max_args)
         {
             fprintf(stderr, "Syntax error, too many args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
+            ret=EXFAIL;
         }
         else if (map->reqidle && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
         {

@@ -199,7 +199,7 @@ exprivate int call_cache(char *dbname)
         }
     }
     
-    printf("%ld records cached in \"%s\" database\n", rcv_count, dbname);
+    fprintf(stderr, "%ld records cached in \"%s\" database\n", rcv_count, dbname);
 
 out:
 
