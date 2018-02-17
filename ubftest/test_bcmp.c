@@ -117,7 +117,7 @@ exprivate void load3(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"XEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 }
 
@@ -183,20 +183,160 @@ Ensure(test_Bcmp)
     assert_equal(Bcmp(p_ub_2, p_ub), 1);
     
     
-    /* lets check some other data types too, so that we run throught the new
+    /* lets check some other data types too, so that we run through the new
      * comparator functions
-     * TODO!
      */
     
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
+    load1(p_ub);
+    load3(p_ub_2);
+
+    
+    /* short we already tested, now start with long */
+    
+    assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_SHORT_FLD, 0), EXSUCCEED);
+    
+    /* -1021 < 212 */
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+    
+    /* char test... */
+    assert_equal(Bdel(p_ub, T_LONG_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_LONG_FLD, 0), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), 1);
+    assert_equal(Bcmp(p_ub_2, p_ub), -1);
+    
+    
+    /* float test... */
+    assert_equal(Bdel(p_ub, T_CHAR_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_CHAR_FLD, 0), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Berror, 0);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+    /* double test... */
+    assert_equal(Bdel(p_ub, T_FLOAT_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_FLOAT_FLD, 0), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+    /* string test... */
+    assert_equal(Bdel(p_ub, T_DOUBLE_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_DOUBLE_FLD, 0), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+    /* carray test... */
+    assert_equal(Bdel(p_ub, T_STRING_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_STRING_FLD, 0), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+    
+    /* check the length of carray */
+    assert_equal(CBchg(p_ub_2, T_CARRAY_FLD, 0, "HELLO", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), 1);
+    assert_equal(Bcmp(p_ub_2, p_ub), -1);
+    
+    /* test errors */
+    
+    assert_equal(Bcmp(NULL, p_ub_2), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_equal(Bcmp(p_ub, NULL), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    
+    memset(fb, 0, sizeof(fb));
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), EXFAIL);
+    assert_equal(Berror, BNOTFLD);
+    
+    assert_equal(Bcmp(p_ub_2, p_ub), EXFAIL);
+    assert_equal(Berror, BNOTFLD);
     
     
 }
+
+/**
+ * This simply reads all field and adds them to another buffer, then do compare
+ */
+Ensure(test_Bsubset)
+{
+    char fb[1024];
+    char fb_2[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    
+    load1(p_ub);
+    load1(p_ub_2);
+    
+    assert_equal(Bsubset(p_ub, p_ub_2), EXTRUE);
+    
+    
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    load2(p_ub_2);
+    
+    /* ID of first is greater (due to missing occurrences) than second buffer */
+    assert_equal(Bsubset(p_ub, p_ub_2), EXFALSE);
+    
+    /* now reverse check */
+    assert_equal(Bsubset(p_ub_2, p_ub), EXFALSE);
+    
+    
+    /* have a real subset */
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    
+    load1(p_ub);
+    load1(p_ub_2);
+    
+    assert_equal(Bdel(p_ub_2, T_CHAR_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub_2, T_FLOAT_FLD, 0), EXSUCCEED);
+    
+    
+    assert_equal(Bsubset(p_ub, p_ub_2), EXTRUE);
+    assert_equal(Bsubset(p_ub_2, p_ub), EXFALSE);
+    assert_equal(Berror, 0);
+    
+    /* test some errors */
+    
+    assert_equal(Bsubset(NULL, p_ub_2), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_equal(Bsubset(p_ub, NULL), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    memset(fb, 0, sizeof(fb));
+    
+    assert_equal(Bsubset(p_ub, p_ub_2), EXFAIL);
+    assert_equal(Berror, BNOTFLD);
+    
+    assert_equal(Bsubset(p_ub_2, p_ub), EXFAIL);
+    assert_equal(Berror, BNOTFLD);
+    
+    
+}
+
 TestSuite *ubf_bcmp_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_Bcmp);
+    add_test(suite, test_Bsubset);
 
     return suite;
 }

@@ -963,11 +963,11 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
 
     if (mode & UBF_CMP_MODE_STD)
     {
-        return strcmp(val2, val1);
+        return strcmp(val1, val2);
     }
     else if (0==len2)
     {
-        ret=(0==strcmp(val2, val1));
+        ret=(0==strcmp(val1, val2));
     }
     else
     {

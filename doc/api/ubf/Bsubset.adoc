@@ -1,0 +1,56 @@
+BSUBSET(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bsubset - check that buffer 2 is part of the buffer 1 (values and fields
+found in buffer 1)
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bsubset (UBFH *'p_ubf1', UBFH *'p_ubf2');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Test that 'p_ubf2' (needle) is found in 'p_ubf1' (haystack).
+
+RETURN VALUE
+------------
+If 'p_ubf2' occurrences, fields and values are found in 'p_ubf1' the function
+returns *1*, if there are any differences, function returns 0 (not found). In
+case of error -1 is returned with *Berror* set accordingly.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BEINVAL* 'p_ubf1' or 'p_ubf2' are NULL pointers.
+
+*BNOTFLD* 'p_ubf1' or 'p_ubf2' buffers not fielded, 
+not correctly allocated or corrupted.
+
+EXAMPLE
+-------
+See *ubftest/test_bcmp.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bcmp(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

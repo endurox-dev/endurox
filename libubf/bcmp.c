@@ -1,6 +1,6 @@
 /* 
 ** Implementation of Bcmp and Bsubset
-**
+** TODO: Might increase speed if we would use Bfind?
 ** @file bcmp.c
 ** 
 ** -----------------------------------------------------------------------------
@@ -78,48 +78,15 @@ expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
 
     BFLDLEN len1;
     BFLDLEN len2;
-
-    char *buf1 = NULL;
-    char *buf2 = NULL;
     
     int ret1;
     int ret2;
     
+    char *buf1;
+    char *buf2;
+    
     dtype_ext1_t *typ;
     int typcode;
-    
-    long bufsz1;
-    long bufsz2;
-    
-
-    /* we allocate the temp buffers in size of full UBFs to ensure that all fits */
-    
-    bufsz1 = Bused(p_ubf1);
-    bufsz2 = Bused(p_ubf2);
-    
-    if (NULL==(buf1=NDRX_MALLOC(bufsz1)))
-    {
-        int err = errno;
-        UBF_LOG(log_error, "failed to allocate %ld bytes: %s", 
-                bufsz1, strerror(err));
-        userlog("failed to allocate %ld bytes: %s", 
-                bufsz1, strerror(err));
-        
-        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes: %s", 
-                bufsz1, strerror(err));
-    }
-    
-    if (NULL==(buf2=NDRX_MALLOC(bufsz2)))
-    {
-        int err = errno;
-        UBF_LOG(log_error, "failed to allocate %ld bytes (2): %s", 
-                bufsz1, strerror(err));
-        userlog("failed to allocate %ld bytes (2): %s", 
-                bufsz1, strerror(err));
-        
-        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes (2): %s", 
-                bufsz1, strerror(err));
-    }
     
     memset(&state1, 0, sizeof(state1));
     memset(&state2, 0, sizeof(state2));
@@ -128,10 +95,8 @@ expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
     bfldid2 = BFIRSTFLDID;
     while (1)
     {
-        len1 = bufsz1;
-        len2 = bufsz1;
-        ret1=ndrx_Bnext(&state1, p_ubf1, &bfldid1, &occ1, buf1, &len1, NULL);
-        ret2=ndrx_Bnext(&state2, p_ubf2, &bfldid2, &occ2, buf2, &len2, NULL);
+        ret1=ndrx_Bnext(&state1, p_ubf1, &bfldid1, &occ1, NULL, &len1, &buf1);
+        ret2=ndrx_Bnext(&state2, p_ubf2, &bfldid2, &occ2, NULL, &len2, &buf2);
         
         if (EXFAIL==ret1)
         {
@@ -214,16 +179,6 @@ expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
     
 out:
 
-    if (NULL!=buf1)
-    {
-        NDRX_FREE(buf1);
-    }
-
-    if (NULL!=buf2)
-    {
-        NDRX_FREE(buf2);
-    }
-
     return ret;
 }
 
@@ -251,61 +206,26 @@ expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
     char *buf1 = NULL;
     char *buf2 = NULL;
     
-    int ret1;
     int ret2;
     
     dtype_ext1_t *typ;
     int typcode;
     
-    long bufsz1;
-    long bufsz2;
-    
-
-    /* we allocate the temp buffers in size of full UBFs to ensure that all fits */
-    
-    bufsz1 = Bused(p_ubf1);
-    bufsz2 = Bused(p_ubf2);
-    
-    if (NULL==(buf1=NDRX_MALLOC(bufsz1)))
-    {
-        int err = errno;
-        UBF_LOG(log_error, "failed to allocate %ld bytes: %s", 
-                bufsz1, strerror(err));
-        userlog("failed to allocate %ld bytes: %s", 
-                bufsz1, strerror(err));
-        
-        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes: %s", 
-                bufsz1, strerror(err));
-    }
-    
-    if (NULL==(buf2=NDRX_MALLOC(bufsz2)))
-    {
-        int err = errno;
-        UBF_LOG(log_error, "failed to allocate %ld bytes (2): %s", 
-                bufsz1, strerror(err));
-        userlog("failed to allocate %ld bytes (2): %s", 
-                bufsz1, strerror(err));
-        
-        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes (2): %s", 
-                bufsz1, strerror(err));
-    }
     
     memset(&state2, 0, sizeof(state2));
     
+    bfldid2 = BFIRSTFLDID;
     while (1)
     {
-        len1 = bufsz1;
-        len2 = bufsz1;
+        ret2=ndrx_Bnext(&state2, p_ubf2, &bfldid2, &occ2, NULL, &len2, &buf2);    
         
-        ret1=ndrx_Bnext(&state2, p_ubf2, &bfldid2, &occ2, buf2, &len2, NULL);    
-        
-        if (0==ret1)
+        if (0==ret2)
         {
             /* ok we have EOF of buffer, equals */
             ret=EXTRUE;
             goto out;
         }
-        else if (EXFAIL==ret1)
+        else if (EXFAIL==ret2)
         {
             /* something is have failed, Bnext have set error  */
             EXFAIL_OUT(ret);
@@ -313,9 +233,9 @@ expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
         
         /* got the field, now read from haystack */
         
-        ret2=ndrx_Bget(p_ubf1, bfldid2, occ2, buf1, &len1);
+        buf1=ndrx_Bfind(p_ubf1, bfldid2, occ2, &len1, NULL);
         
-        if (EXSUCCEED!=ret2)
+        if (NULL==buf1)
         {
             if (BNOTPRES!=Berror)
             {
@@ -324,6 +244,7 @@ expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
                 EXFAIL_OUT(ret);
             }
             
+            ndrx_Bunset_error();
             /* in this case needle is not part of haystack */
             ret = EXFALSE;
             goto out;
