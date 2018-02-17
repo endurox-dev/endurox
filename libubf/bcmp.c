@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <errno.h>
 
 #include <ubf.h>
 #include <ubf_int.h>	/* Internal headers for UBF... */
@@ -45,6 +46,8 @@
 #include <ndebug.h>
 #include <cf.h>
 #include <ubf_impl.h>
+
+#include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -57,13 +60,170 @@
  * Compare two UBF buffers
  * @param p_ubf1 buffer 1 to compare
  * @param p_ubf2 buffer 2 to compare with 1
- * @return 
+ * @return  0 - buffers are equal
+ * -1 - first ubf1 field is less than ubf2, value of 1 is less than 2
+ *      ubf1 have less fields than ubf2
+ * 1 - vice versa
  */
-expublic int Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
+expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
 {
-    int ret = EXFAIL;
+    int ret = EXSUCCEED;
+    Bnext_state_t state1;
+    Bnext_state_t state2;
+    BFLDID bfldid1;
+    BFLDOCC occ1;
+
+    BFLDID bfldid2;
+    BFLDOCC occ2;
+
+    BFLDLEN len1;
+    BFLDLEN len2;
+
+    char *buf1 = NULL;
+    char *buf2 = NULL;
+    
+    int ret1;
+    int ret2;
+    
+    dtype_ext1_t *typ;
+    int typcode;
+    
+    long bufsz1;
+    long bufsz2;
+    
+
+    /* we allocate the temp buffers in size of full UBFs to ensure that all fits */
+    
+    bufsz1 = Bused(p_ubf1);
+    bufsz2 = Bused(p_ubf2);
+    
+    if (NULL==(buf1=NDRX_MALLOC(bufsz1)))
+    {
+        int err = errno;
+        UBF_LOG(log_error, "failed to allocate %ld bytes: %s", 
+                bufsz1, strerror(err));
+        userlog("failed to allocate %ld bytes: %s", 
+                bufsz1, strerror(err));
+        
+        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes: %s", 
+                bufsz1, strerror(err));
+    }
+    
+    if (NULL==(buf2=NDRX_MALLOC(bufsz2)))
+    {
+        int err = errno;
+        UBF_LOG(log_error, "failed to allocate %ld bytes (2): %s", 
+                bufsz1, strerror(err));
+        userlog("failed to allocate %ld bytes (2): %s", 
+                bufsz1, strerror(err));
+        
+        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes (2): %s", 
+                bufsz1, strerror(err));
+    }
+    
+    memset(&state1, 0, sizeof(state1));
+    memset(&state2, 0, sizeof(state2));
+    
+    bfldid1 = BFIRSTFLDID;
+    bfldid2 = BFIRSTFLDID;
+    while (1)
+    {
+        len1 = bufsz1;
+        len2 = bufsz1;
+        ret1=ndrx_Bnext(&state1, p_ubf1, &bfldid1, &occ1, buf1, &len1, NULL);
+        ret2=ndrx_Bnext(&state2, p_ubf2, &bfldid2, &occ2, buf2, &len2, NULL);
+        
+        if (EXFAIL==ret1)
+        {
+            /* error must be set */
+            UBF_LOG(log_debug, "buffer1 Bnext failed");
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXFAIL==ret2)
+        {
+            /* error must be set */
+            UBF_LOG(log_debug, "buffer2 Bnext failed");
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXTRUE!=ret1 && EXTRUE!=ret2)
+        {
+            UBF_LOG(log_debug, "EOF reached buffers %p vs %p equal",
+                    p_ubf1, p_ubf2);
+            
+            ret = 0;
+            goto out;
+        }
+        else if (EXTRUE!=ret1 && EXTRUE==ret2)
+        {
+            ret=-1;
+            goto out;
+        }
+        else if (EXTRUE==ret1 && EXTRUE!=ret2)
+        {
+            ret=1;
+            goto out;
+        }
+        /* compare IDs */
+        else if (bfldid1 < bfldid2)
+        {
+            ret=-1;
+            goto out;
+        }
+        else if (bfldid1 > bfldid2)
+        {
+            ret=1;
+            goto out;
+        }
+        
+        /* ok, ids are equal, lets compare by value */
+        
+        typcode = Bfldtype(bfldid1);
+        
+        if (typcode > BFLD_MAX || typcode < BFLD_MIN)
+        {
+            ret=-11;
+            userlog("Invalid type id found in buffer %p: %d - corrupted UBF buffer?", 
+                    p_ubf1, typcode);
+            UBF_LOG(log_error, "Invalid type id found in buffer %p: %d "
+                    "- corrupted UBF buffer?",  p_ubf1, typcode)
+            /* set error */
+            ndrx_Bset_error_fmt(BNOTFLD, "Invalid type id found in buffer %p: %d "
+                    "- corrupted UBF buffer?", p_ubf1, typcode);
+            
+            goto out;
+        }
+
+        typ = &G_dtype_ext1_map[typcode];
+
+        ret = typ->p_cmp(typ, buf1, len1, buf2, len2, UBF_CMP_MODE_STD);
+        
+        if (ret < 0)
+        {
+            /* so fields are different */
+            ret = -1;
+            goto out;
+        }
+        else if (ret > 0)
+        {
+            ret = 1;
+            goto out;
+        }
+    }
     
 out:
+
+    if (NULL!=buf1)
+    {
+        NDRX_FREE(buf1);
+    }
+
+    if (NULL!=buf2)
+    {
+        NDRX_FREE(buf2);
+    }
+
     return ret;
 }
 
@@ -74,9 +234,137 @@ out:
  * @param p_ubf2 needle
  * @return EXFALSE not a subset, EXTRUE is subset, EXFAIL (error occurred)
  */
-expublic int Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
+expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
 {
-    int ret = EXFAIL;
+    /* so basically we loop over the p_ubf2 and check every field obf ubf2
+     * presence in ubf1 and compare their values... */
+    
+    int ret = EXSUCCEED;
+    Bnext_state_t state2;
+
+    BFLDID bfldid2;
+    BFLDOCC occ2;
+
+    BFLDLEN len1;
+    BFLDLEN len2;
+
+    char *buf1 = NULL;
+    char *buf2 = NULL;
+    
+    int ret1;
+    int ret2;
+    
+    dtype_ext1_t *typ;
+    int typcode;
+    
+    long bufsz1;
+    long bufsz2;
+    
+
+    /* we allocate the temp buffers in size of full UBFs to ensure that all fits */
+    
+    bufsz1 = Bused(p_ubf1);
+    bufsz2 = Bused(p_ubf2);
+    
+    if (NULL==(buf1=NDRX_MALLOC(bufsz1)))
+    {
+        int err = errno;
+        UBF_LOG(log_error, "failed to allocate %ld bytes: %s", 
+                bufsz1, strerror(err));
+        userlog("failed to allocate %ld bytes: %s", 
+                bufsz1, strerror(err));
+        
+        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes: %s", 
+                bufsz1, strerror(err));
+    }
+    
+    if (NULL==(buf2=NDRX_MALLOC(bufsz2)))
+    {
+        int err = errno;
+        UBF_LOG(log_error, "failed to allocate %ld bytes (2): %s", 
+                bufsz1, strerror(err));
+        userlog("failed to allocate %ld bytes (2): %s", 
+                bufsz1, strerror(err));
+        
+        ndrx_Bset_error_fmt(BEUNIX, "failed to allocate %ld bytes (2): %s", 
+                bufsz1, strerror(err));
+    }
+    
+    memset(&state2, 0, sizeof(state2));
+    
+    while (1)
+    {
+        len1 = bufsz1;
+        len2 = bufsz1;
+        
+        ret1=ndrx_Bnext(&state2, p_ubf2, &bfldid2, &occ2, buf2, &len2, NULL);    
+        
+        if (0==ret1)
+        {
+            /* ok we have EOF of buffer, equals */
+            ret=EXTRUE;
+            goto out;
+        }
+        else if (EXFAIL==ret1)
+        {
+            /* something is have failed, Bnext have set error  */
+            EXFAIL_OUT(ret);
+        }
+        
+        /* got the field, now read from haystack */
+        
+        ret2=ndrx_Bget(p_ubf1, bfldid2, occ2, buf1, &len1);
+        
+        if (EXSUCCEED!=ret2)
+        {
+            if (BNOTPRES!=Berror)
+            {
+                UBF_LOG(log_error, "Failed to get [%d] occ [%d] from haystack buffer", 
+                        bfldid2, occ2);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* in this case needle is not part of haystack */
+            ret = EXFALSE;
+            goto out;
+        }
+        
+        /* we have got the value, now compare boths  */
+        
+        typcode = Bfldtype(bfldid2);
+        
+        if (typcode > BFLD_MAX || typcode < BFLD_MIN)
+        {
+            ret=-1;
+            userlog("Invalid type id found in buffer %p: %d - corrupted UBF buffer?", 
+                    p_ubf1, typcode);
+            UBF_LOG(log_error, "Invalid type id found in buffer %p: %d "
+                    "- corrupted UBF buffer?",  p_ubf1, typcode)
+            /* set error */
+            ndrx_Bset_error_fmt(BNOTFLD, "Invalid type id found in buffer %p: %d "
+                    "- corrupted UBF buffer?", p_ubf1, typcode);
+            
+            goto out;
+        }
+
+        
+        typ = &G_dtype_ext1_map[typcode];
+        
+        ret=typ->p_cmp(typ, buf1, len1, buf2, len2, 0);
+        
+        if (EXFALSE==ret)
+        {
+            UBF_LOG(log_debug, "fields are different, not a subset");
+            ret=EXFALSE;
+            goto out;
+        }
+        else if (EXFAIL==ret)
+        {
+            UBF_LOG(log_error, "error comparing fields");
+            ret=-1;
+            goto out;
+        }
+    }
     
 out:
     return ret;

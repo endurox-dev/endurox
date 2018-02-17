@@ -50,7 +50,10 @@ extern "C" {
     
 #define UBF_BINSRCH_GET_LAST_NONE       0x00
 #define UBF_BINSRCH_GET_LAST            0x01
-#define UBF_BINSRCH_GET_LAST_CHG        0x02 /* for change */
+#define UBF_BINSRCH_GET_LAST_CHG        0x02 /* for change              */
+    
+#define UBF_CMP_MODE_STD          0x00000001 /* standard compare mode   */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -116,6 +119,10 @@ extern int ndrx_Bread  (UBFH * p_ub, FILE * inf);
 extern int ndrx_Bwrite (UBFH *p_ub, FILE * outf);
 extern int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+
+extern int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
+extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
+
 #ifdef	__cplusplus
 }
 #endif
