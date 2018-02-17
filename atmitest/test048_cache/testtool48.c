@@ -63,6 +63,7 @@ extern char *optarg;
 
 exprivate char M_svcnm[MAXTIDENT+1] = {EXEOS};
 exprivate UBFH *M_p_ub = NULL;
+exprivate UBFH *M_p_ub_cmp_cache = NULL; /* compare with cache results  */
 exprivate int M_result_must_from_cache = EXTRUE;
 exprivate int M_numcalls = 1;
 exprivate long M_tpurcode = 0;
@@ -82,6 +83,8 @@ exprivate int main_loop(void)
     UBFH *p_ub = NULL;
     long t;
     long tusec;
+    
+    int err;
     
     long t_svc;
     long tusec_svc;
@@ -118,6 +121,8 @@ exprivate int main_loop(void)
         
         ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&p_ub, &olen, M_tpcall_flags);
         
+        err = tperrno;
+                
         ndrx_debug_dump_UBF(log_debug, "Received buffer", p_ub);
         
         if (M_tperrno!=0)
@@ -154,8 +159,17 @@ exprivate int main_loop(void)
         if (EXSUCCEED!=Bget(p_ub, T_LONG_2_FLD, 0, (char *)&t_svc, 0L)
                 || EXSUCCEED!=Bget(p_ub, T_LONG_2_FLD, 1, (char *)&tusec_svc, 0L))
         {
-            NDRX_LOG(log_error, "TESTERROR: Failed to get timestamp "
-                    "fields from service!");
+            
+            if (TPENOENT!=err)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to get timestamp "
+                        "fields from service!");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (TPENOENT==err)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Service call failed but timestamp present!");
             EXFAIL_OUT(ret);
         }
             
@@ -163,40 +177,43 @@ exprivate int main_loop(void)
                 t_svc, tusec_svc, t, tusec);
         
         
-        /* so if, tsvc < t, then data is from cache */
-        if (-1 == ndrx_utc_cmp(&t_svc, &tusec_svc, &t, &tusec))
+        if (TPENOENT!=err)
         {
-            NDRX_LOG(log_debug, "Data from cache");
-            data_from_cache = EXTRUE;
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "Data from service");
-            data_from_cache = EXFALSE;
-        }
-        
-        if (i==0 && M_first_goes_to_cache && data_from_cache)
-        {
-            NDRX_LOG(log_error, "TESTERROR (%ld), record must be new for loop 0, "
-                    "but got from cache!", i);
-            EXFAIL_OUT(ret);
-        }
-        else if (i==0 && M_first_goes_to_cache && !data_from_cache)
-        {
-            /* ok... */
-            NDRX_LOG(log_debug, "OK, first new rec.");
-        }
-        else if (M_result_must_from_cache && !data_from_cache)
-        {
-            NDRX_LOG(log_error, "TESTERROR (%ld), record must be from cache, "
-                    "but got new!", i);
-            EXFAIL_OUT(ret);
-        }
-        else if (!M_result_must_from_cache && data_from_cache)
-        {
-            NDRX_LOG(log_error, "TESTERROR(%ld) , record must be new but got "
-                    "from cache!", i);
-            EXFAIL_OUT(ret);
+            /* so if, tsvc < t, then data is from cache */
+            if (-1 == ndrx_utc_cmp(&t_svc, &tusec_svc, &t, &tusec))
+            {
+                NDRX_LOG(log_debug, "Data from cache");
+                data_from_cache = EXTRUE;
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Data from service");
+                data_from_cache = EXFALSE;
+            }
+
+            if (i==0 && M_first_goes_to_cache && data_from_cache)
+            {
+                NDRX_LOG(log_error, "TESTERROR (%ld), record must be new for loop 0, "
+                        "but got from cache!", i);
+                EXFAIL_OUT(ret);
+            }
+            else if (i==0 && M_first_goes_to_cache && !data_from_cache)
+            {
+                /* ok... */
+                NDRX_LOG(log_debug, "OK, first new rec.");
+            }
+            else if (M_result_must_from_cache && !data_from_cache)
+            {
+                NDRX_LOG(log_error, "TESTERROR (%ld), record must be from cache, "
+                        "but got new!", i);
+                EXFAIL_OUT(ret);
+            }
+            else if (!M_result_must_from_cache && data_from_cache)
+            {
+                NDRX_LOG(log_error, "TESTERROR(%ld) , record must be new but got "
+                        "from cache!", i);
+                EXFAIL_OUT(ret);
+            }
         }
         
         tpfree((char *)p_ub);
@@ -219,7 +236,7 @@ out:
  * We shall load arguments like:
  * -s service_name
  * -b "json2ubf buffer"
- * -t tstamp_field
+ * -m "compare with cache reseults"
  * [-c Y|N - should result be out from cache or newly allocated?, default TRUE]
  * [-n <number of calls>, dflt 1]
  * [-r <tpurcode expected>, dflt 0]
@@ -240,7 +257,7 @@ int main(int argc, char** argv)
         NDRX_LOG(log_error, "Failed to allocate UBF: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
-    
+
     while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lx")) != EXFAIL)
     {
         NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
@@ -258,6 +275,25 @@ int main(int argc, char** argv)
                 if (EXSUCCEED!=tpjsontoubf(M_p_ub, optarg))
                 {
                     NDRX_LOG(log_error, "Failed to parse [%s]", optarg);
+                    EXFAIL_OUT(ret);
+                }
+
+                break;
+            case 'm':
+                /* JSON buffer, build UBF... */
+
+                NDRX_LOG(log_debug, "Parsing: [%s]", optarg);
+
+                if (EXSUCCEED!=tpjsontoubf(M_p_ub_cmp_cache, optarg))
+                {
+                    NDRX_LOG(log_error, "Failed to parse [%s]", optarg);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (NULL==(M_p_ub_cmp_cache = (UBFH *)tpalloc("UBF", NULL, 56000)))
+                {
+                    NDRX_LOG(log_error, "Failed to allocate UBF (2): %s", 
+                            tpstrerror(tperrno));
                     EXFAIL_OUT(ret);
                 }
 
@@ -329,6 +365,7 @@ int main(int argc, char** argv)
     
     NDRX_LOG(log_debug, "M_svcnm = [%s]", M_svcnm);
     NDRX_LOG(log_debug, "M_p_ub = %p", M_p_ub);
+    NDRX_LOG(log_debug, "M_p_ub_cmp_cache = %p", M_p_ub_cmp_cache);
     NDRX_LOG(log_debug, "M_result_must_from_cache=%d", M_result_must_from_cache);
     NDRX_LOG(log_debug, "M_numcalls=%d", M_numcalls);
     NDRX_LOG(log_debug, "%M_tpurcode=ld", M_tpurcode);
@@ -337,7 +374,12 @@ int main(int argc, char** argv)
     NDRX_LOG(log_debug, "M_tpcall_flags %ld", M_tpcall_flags);
     
     
-    /* TODO: Copy to string 10! */
+    ndrx_debug_dump_UBF(log_debug, "Send buffer", M_p_ub);
+    
+    if (NULL!=M_result_must_from_cache)
+    {
+        ndrx_debug_dump_UBF(log_debug, "Cache compare buffer", M_result_must_from_cache);
+    }
     
     if (EXEOS==M_svcnm[0])
     {
@@ -368,6 +410,11 @@ out:
     if (NULL!=M_p_ub)
     {
         tpfree((char *)M_p_ub);
+    }
+
+    if (NULL!=M_p_ub_cmp_cache)
+    {
+        tpfree((char *)M_p_ub_cmp_cache);
     }
 
     tpterm();

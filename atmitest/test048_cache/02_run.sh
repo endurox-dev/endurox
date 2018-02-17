@@ -104,7 +104,8 @@ echo "Running off client"
 
 set_dom1;
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' -cY -n100 -fY 2>&1) > ./02_testtool48.log
+(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123,"T_CHAR_FLD":"A"}' \
+    -cY -n100 -fY 2>&1) > ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
@@ -115,17 +116,27 @@ fi
 echo "Show cache... "
 
 #
-# Test with out -d...
+# Must be empty
 #
-xadmin cs -d db01
+xadmin cs -d db02_1
 
 if [ $? -ne 0 ]; then
     echo "xadmin cs failed"
     go_out 2
 fi
 
+#
+# Must have some 1 record
+#
+xadmin cs -d db02_2
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44}' -cY -n100 -fY 2>&1) >> ./02_testtool48.log
+if [ $? -ne 0 ]; then
+    echo "xadmin cs failed"
+    go_out 2
+fi
+
+(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
+    -cY -n100 -fY 2>&1) >> ./02_testtool48.log
 
 
 if [ $? -ne 0 ]; then
@@ -133,6 +144,15 @@ if [ $? -ne 0 ]; then
     go_out 3
 fi
 
+#
+# Must have some 2 records
+#
+xadmin cs -d db02_2
+
+if [ $? -ne 0 ]; then
+    echo "xadmin cs failed"
+    go_out 2
+fi
 
 #
 # TODO: Validate there must exist two keys in DB
@@ -152,7 +172,8 @@ xadmin stop -s atmi.sv48
 # Now service call shall fail
 #
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.3"}' -cY -n1 -fY -e6 2>&1) >> ./02_testtool48.log
+(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.3","T_CHAR_FLD":"C"}' \
+    -cY -n1 -fY -e6 2>&1) >> ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "Failed to validate tpcall error 6"
@@ -166,7 +187,8 @@ xadmin start -s atmi.sv48
 # now we shall get cached results...
 #
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.4"}' -cY -n100 -fN 2>&1) >> ./02_testtool48.log
+(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.4","T_CHAR_FLD":"D"}' \
+    -cY -n100 -fN 2>&1) >> ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (3)"
@@ -174,7 +196,8 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.5"}' -cY -n100 -fN 2>&1) >> ./02_testtool48.log
+(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.5","T_CHAR_FLD":"E"}' \
+    -cY -n100 -fN 2>&1) >> ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (4)"
