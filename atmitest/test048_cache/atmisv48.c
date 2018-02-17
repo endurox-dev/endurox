@@ -112,19 +112,123 @@ out:
                 0L);
 }
 
+
+/**
+ * Standard service entry
+ */
+void OKSVC (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    long t, tusec;
+    
+    NDRX_LOG(log_debug, "%s got call", __func__);
+ 
+    if (NULL==(p_ub =(UBFH *)tprealloc((char *)p_ub, Bused(p_ub)+1024)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to reallocate incoming buffer: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Just print the buffer */
+    ndrx_debug_dump_UBF(log_debug, "Received buffer", p_ub);
+    
+    ndrx_utc_tstamp2(&t, &tusec);
+    
+    if (EXSUCCEED!=Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&t, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, T_LONG_2_FLD, 1, (char *)&tusec, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_2_FLD fields!",
+            Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    ndrx_debug_dump_UBF(log_debug, "Response buffer", p_ub);
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Standard service entry, fail
+ */
+void FAILSVC (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    long t, tusec;
+    
+    NDRX_LOG(log_debug, "%s got call", __func__);
+ 
+    if (NULL==(p_ub =(UBFH *)tprealloc((char *)p_ub, Bused(p_ub)+1024)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to reallocate incoming buffer: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Just print the buffer */
+    ndrx_debug_dump_UBF(log_debug, "Received buffer", p_ub);
+    
+    ndrx_utc_tstamp2(&t, &tusec);
+    
+    if (EXSUCCEED!=Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&t, 0L) ||
+            EXSUCCEED!=Bchg(p_ub, T_LONG_2_FLD, 1, (char *)&tusec, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_2_FLD fields!",
+            Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    ndrx_debug_dump_UBF(log_debug, "Response buffer", p_ub);
+    
+out:
+        
+    tpreturn(  TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
 /*
  * Do initialization
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     if (EXSUCCEED!=tpadvertise("TESTSV01", TESTSV01))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV01!");
+        EXFAIL_OUT(ret);
     }
     
-    return EXSUCCEED;
+    if (EXSUCCEED!=tpadvertise("OKSVC", OKSVC))
+    {
+        NDRX_LOG(log_error, "Failed to initialize OKSVC!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("FAILSVC", FAILSVC))
+    {
+        NDRX_LOG(log_error, "Failed to initialize FAILSVC!");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+out:
+    return ret;
 }
 
 /**

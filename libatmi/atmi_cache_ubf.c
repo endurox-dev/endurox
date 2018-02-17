@@ -656,7 +656,6 @@ exprivate int proc_flags_typed(ndrx_tpcallcache_t *cache,
             while (p != NULL)
             {
                 /* Lookup the field id,  */
-                p = strtok_r (NULL, ",", &saveptr1);
                 if (EXSUCCEED!=(fid=Bfldid(p)))
                 {
                     NDRX_LOG(log_error, "Failed to resolve filed id: [%s]: %s", 

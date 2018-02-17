@@ -78,8 +78,11 @@ exprivate svc_entry_fn_t* resolve_service_entry(char *svc)
 {
     svc_entry_fn_t *ret=NULL, eltmp;
 
-    NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
-    DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, svc_entry_fn_cmp);
+    if (NULL!=svc)
+    {
+        NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
+        DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, svc_entry_fn_cmp);
+    }
 
     return ret;
 }
@@ -109,8 +112,8 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
 
     if (NULL==svc_fn)
     {
-        ndrx_TPset_error_fmt(TPENOENT, "There is no entry for [%s]",
-                        svn_nm_srch);
+        ndrx_TPset_error_fmt(TPENOENT, "There is no entry for [%s] [%s]",
+                        svn_nm_srch, svn_nm_add);
         ret=EXFAIL;
     }
     else
