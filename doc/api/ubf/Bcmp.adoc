@@ -1,0 +1,55 @@
+BCMP(3)
+=======
+:doctype: manpage
+
+
+NAME
+----
+Bcmp - compare two UBF buffers
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bcmp (UBFH *'p_ubf1', UBFH *'p_ubf2');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Compares two UBF buffers. 
+
+RETURN VALUE
+------------
+If buffer are equal, value *0* is returned. If 'p_ubf1' have lesser fields,
+field id is lesser than 'p_ubf2' or value of field is lesser than 'p_ubf2' then
+*-1* is returned. In the same way if 'p_ubf1' is greater 'p_buf2', then value
+*1* is returned.
+
+ERRORS
+------
+In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
+generic error message plus custom message with  debug info from last function call.
+
+*BEINVAL* 'p_ubf1' or 'p_ubf2' are NULL pointers.
+
+*BNOTFLD* 'p_ubf1' or 'p_ubf2' buffers not fielded, not correctly allocated or corrupted.
+
+EXAMPLE
+-------
+See *ubftest/test_bcmp.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bsubset(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
