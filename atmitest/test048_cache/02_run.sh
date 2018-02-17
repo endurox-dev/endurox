@@ -53,6 +53,9 @@ export PATH=$PATH:$TESTDIR
 export NDRX_TOUT=10
 export NDRX_ULOG=$TESTDIR
 
+source ./test-func-include.sh
+
+
 #
 # Domain 1 - here client will live
 #
@@ -64,8 +67,6 @@ set_dom1() {
     export NDRX_LOG=$TESTDIR/ndrx-dom1.log
 #    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 }
-
-
 
 #
 # Generic exit function
@@ -105,6 +106,7 @@ echo "Running off client"
 set_dom1;
 
 (time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123,"T_CHAR_FLD":"A"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' \
     -cY -n100 -fY 2>&1) > ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -135,7 +137,10 @@ if [ $? -ne 0 ]; then
     go_out 2
 fi
 
+ensure_keys db02_2 1
+
 (time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44}' \
     -cY -n100 -fY 2>&1) >> ./02_testtool48.log
 
 
@@ -143,6 +148,14 @@ if [ $? -ne 0 ]; then
     echo "testtool48 failed (2)"
     go_out 3
 fi
+
+#
+# Test the message dump for saved fields
+#
+ensure_field db02_2 SV2KEY2 T_STRING_FLD KEY2 1
+ensure_field db02_2 SV2KEY2 T_FLOAT_FLD 1.2 1
+ensure_field db02_2 SV2KEY2 T_SHORT_FLD 44 1
+ensure_field db02_2 SV2KEY2 T_CHAR_FLD B 0
 
 #
 # Must have some 2 records
@@ -154,19 +167,9 @@ if [ $? -ne 0 ]; then
     go_out 2
 fi
 
-#
-# TODO: Validate there must exist two keys in DB
-#
-xadmin cs -d db01
-
-if [ $? -ne 0 ]; then
-    echo "xadmin cs failed"
-    go_out 4
-fi
-
+ensure_keys db02_2 2
 
 xadmin stop -s atmi.sv48
-
 
 #
 # Now service call shall fail
@@ -188,6 +191,7 @@ xadmin start -s atmi.sv48
 #
 
 (time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.4","T_CHAR_FLD":"D"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' \
     -cY -n100 -fN 2>&1) >> ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -197,6 +201,7 @@ fi
 
 
 (time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.5","T_CHAR_FLD":"E"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44}' \
     -cY -n100 -fN 2>&1) >> ./02_testtool48.log
 
 if [ $? -ne 0 ]; then
