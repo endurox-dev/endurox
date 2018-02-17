@@ -1670,8 +1670,8 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         /* Return the value if needed */
         *bfldid = *state->p_cur_bfldid;
         *occ = state->cur_occ;
-        UBF_LOG(log_debug, "%s: Found field %p occ %d",
-                                            fn, *bfldid, *occ);
+        UBF_LOG(log_debug, "%s: Found field buf=%p fldid=%d occ %d",
+                                            fn, p_ub, *bfldid, *occ);
 
         found = 1;
         /* Return the value */

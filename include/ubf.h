@@ -232,6 +232,9 @@ extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 extern NDRX_API int Bjoin(UBFH *dest, UBFH *src);
 extern NDRX_API int Bojoin(UBFH *dest, UBFH *src);
 
+extern NDRX_API int Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
+extern NDRX_API int Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
+
 /* VIEW related */
 extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);
 extern NDRX_API int Bvselinit(char *cstruct, char *cname, char *view);
