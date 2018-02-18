@@ -454,6 +454,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
                  __func__, svc);
         goto out;
     }
+    
+    /* TODO: In case of non shared memory mode, check that queue file exists! */
      
     /* ok service is found we can process cache here */
     
