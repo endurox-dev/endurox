@@ -207,10 +207,11 @@ out:
  * @param db db handler
  * @param key string key
  * @param data_out data out obj data is valid till update or end of tran
+ * @param seterror_not_found if EXTRUE, set error even record is not found
  * @return EXSUCCEED/edb error
  */
 expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data_out)
+        char *key, EDB_val *data_out, int seterror_not_found)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
@@ -229,8 +230,16 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
         }
         else
         {
-            NDRX_LOG(log_debug, "Failed to get data from db [%s] for key [%s]: %s", 
-                db->cachedb, key, edb_strerror(ret));
+            if (seterror_not_found)
+            {
+                NDRX_CACHE_TPERRORNOU(TPENOENT, "Failed to get data from db "
+                        "[%s] for key [%s]: %s", db->cachedb, key, edb_strerror(ret));
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Failed to get data from db [%s] for key [%s]: %s", 
+                    db->cachedb, key, edb_strerror(ret));
+            }
         }
     }
     

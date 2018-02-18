@@ -1,9 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) See README. Test second cache db, test service dissapearance after shutdown
-## have cached results when service is back.
+## @(#) See README. Service cached results must be removed after server shutdown.
 ##
-## @file 02_run.sh
+## @file 03_run.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -95,19 +94,39 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
-
+#
+# Let clients to boot
+#
+sleep 2
 
 RET=0
 
+set_dom1;
 xadmin psc
 xadmin ppm
+xadmin pc
+
+
+
+#
+# Test cache dump (cd) command when record does not exists, we should get error
+# something like .*not.*
+#
+
+xadmin cd -d db03 -k NON_EXISTING_KEY -i
+
+OUT=`(xadmin cd -d db03 -k NON_EXISTING_KEY -i 2>&1) | grep EDB_NOTFOUND`
+
+if [[ "X$OUT" == "X" ]]; then
+    echo "Missing EDB_NOTFOUND in dump invalid key output...!"
+    go_out -1
+fi
+
 echo "Running off client"
 
-set_dom1;
-
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123,"T_CHAR_FLD":"A"}' \
-    -m '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' \
-    -cY -n100 -fY 2>&1) > ./02_testtool48.log
+(time ./testtool48 -sTESTSV03 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
+    -m '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
+    -cY -n100 -fY 2>&1) > ./03_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
@@ -117,31 +136,18 @@ fi
 
 echo "Show cache... "
 
-#
-# Must be empty
-#
-xadmin cs -d db02_1
+xadmin cs -d db03
 
 if [ $? -ne 0 ]; then
     echo "xadmin cs failed"
     go_out 2
 fi
 
-#
-# Must have some 1 record
-#
-xadmin cs -d db02_2
+ensure_keys db03 1
 
-if [ $? -ne 0 ]; then
-    echo "xadmin cs failed"
-    go_out 2
-fi
-
-ensure_keys db02_2 1
-
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44}' \
-    -cY -n100 -fY 2>&1) >> ./02_testtool48.log
+(time ./testtool48 -sTESTSV03 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
+    -cY -n100 -fY 2>&1) >> ./03_testtool48.log
 
 
 if [ $? -ne 0 ]; then
@@ -149,52 +155,51 @@ if [ $? -ne 0 ]; then
     go_out 3
 fi
 
+
+xadmin cd -d db03 -k SV3KEY2 -i
+
 #
 # Test the message dump for saved fields
 #
-ensure_field db02_2 SV2KEY2 T_STRING_FLD KEY2 1
-ensure_field db02_2 SV2KEY2 T_FLOAT_FLD 1.2 1
-ensure_field db02_2 SV2KEY2 T_SHORT_FLD 44 1
-ensure_field db02_2 SV2KEY2 T_CHAR_FLD B 0
+ensure_field db03 SV3KEY2 T_STRING_FLD KEY2 1
+ensure_field db03 SV3KEY2 T_SHORT_FLD 44 1
+ensure_field db03 SV3KEY2 T_CHAR_FLD B 1
+ensure_field db03 SV3KEY2 T_FLOAT_FLD 1.2 0
 
 #
 # Must have some 2 records
 #
-xadmin cs -d db02_2
+xadmin cs -d db03
 
 if [ $? -ne 0 ]; then
     echo "xadmin cs failed"
     go_out 2
 fi
 
-# DB1 is empty
-ensure_keys db02_1 0 
-ensure_keys db02_2 2
+ensure_keys db03 2
 
 xadmin stop -s atmi.sv48
 
-#
-# Now service call shall fail
-#
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.3","T_CHAR_FLD":"C"}' \
-    -cY -n1 -fY -e6 2>&1) >> ./02_testtool48.log
+xadmin psc
 
-if [ $? -ne 0 ]; then
-    echo "Failed to validate tpcall error 6"
-    go_out 5
-fi
+#
+# Let tpcached clean up the results
+#
+sleep 10
 
 xadmin start -s atmi.sv48
 
+
+ensure_keys db03 0
 
 #
 # now we shall get cached results...
 #
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.4","T_CHAR_FLD":"D"}' \
-    -m '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' \
-    -cY -n100 -fN 2>&1) >> ./02_testtool48.log
+(time ./testtool48 -sTESTSV03 -b '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.4","T_CHAR_FLD":"D"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_FLOAT_FLD":"1.4","T_CHAR_FLD":"D"}' \
+    -cY -n100 -fY 2>&1) >> ./03_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (3)"
@@ -202,9 +207,9 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.5","T_CHAR_FLD":"E"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44}' \
-    -cY -n100 -fN 2>&1) >> ./02_testtool48.log
+(time ./testtool48 -sTESTSV03 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.5","T_CHAR_FLD":"E"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.5","T_CHAR_FLD":"E"}' \
+    -cY -n100 -fY 2>&1) >> ./03_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (4)"

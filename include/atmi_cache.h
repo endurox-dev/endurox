@@ -442,7 +442,7 @@ extern NDRX_API int ndrx_cache_save (char *svc, char *idata,
 
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
-        int *saved_tperrno, long *saved_tpurcode);
+        int *saved_tperrno, long *saved_tpurcode, int seterror_not_found);
 extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
         char *key, char *idata, long ilen);
 
@@ -459,7 +459,7 @@ extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *sv
 extern NDRX_API int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b);
 
 extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data_out);
+        char *key, EDB_val *data_out, int seterror_not_found);
 extern NDRX_API int ndrx_cache_edb_abort(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn);

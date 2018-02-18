@@ -474,7 +474,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
                 p_cachectl->odata, p_cachectl->olen, flags, 
                 &p_cachectl->should_cache, 
                 &p_cachectl->saved_tperrno, 
-                &p_cachectl->saved_tpurcode)))
+                &p_cachectl->saved_tpurcode, EXFALSE)))
         {
             /* failed to get cache data */
             if (EXFAIL==ret)

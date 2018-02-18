@@ -304,7 +304,7 @@ exprivate int cache_dump(UBFH **pp_ub)
     }
     
     /* read db record */
-    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val))
+    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val, EXTRUE))
     {
         REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
         EXFAIL_OUT(ret);

@@ -90,7 +90,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
     BFLDOCC occ = 0;
     NDRX_STRCPY_SAFE(tmpsymbol, symbol);
     
-    
+    /* extract occurrences by [] */
     if (NULL!=(p_start_sq = strchr(tmpsymbol, '[')))
     {
         p_stop_sq = strchr(tmpsymbol, ']');
@@ -202,10 +202,13 @@ expublic int ndrx_cache_rulcomp_ubf (ndrx_tpcallcache_t *cache,
 {
     int ret = EXSUCCEED;
     
-    if (NULL==(cache->rule_tree=Bboolco (cache->rule)))
+    if (EXEOS!=cache->rule[0])
     {
-        snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
+        if (NULL==(cache->rule_tree=Bboolco (cache->rule)))
+        {
+            snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     
     /* Compile refresh rule too */
@@ -237,7 +240,11 @@ expublic int ndrx_cache_ruleval_ubf (ndrx_tpcallcache_t *cache,
 {
     int ret = EXFALSE;
     
-    if (EXFAIL==(ret=Bboolev((UBFH *)idata, cache->rule_tree)))
+    if (EXEOS==cache->rule[0])
+    {
+        ret=EXTRUE;
+    }
+    else if (EXFAIL==(ret=Bboolev((UBFH *)idata, cache->rule_tree)))
     {
         snprintf(errdet, errdetbufsz, "%s", Bstrerror(Berror));
         EXFAIL_OUT(ret);
@@ -287,17 +294,18 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
 {
     int ret = EXSUCCEED;
     UBFH *p_ub;
-    UBFH *p_ub_cache;
-    
+    UBFH *p_ub_cache = NULL;
+    long olen_merge;
     /* Figure out how data to replace, either full replace or merge */
     
     if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
     {
-        if (EXSUCCEED!=(ret = buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-                exdata->atmi_buf_len, odata, olen, flags)))
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
+                exdata->atmi_buf_len, odata, olen, flags))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+            EXFAIL_OUT(ret);
         }
     }
     else if (cache->flags & NDRX_TPCACHE_TPCF_MERGE)
@@ -306,7 +314,24 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
          * and we just run update */
         
         p_ub = (UBFH *)idata;
-        p_ub_cache = (UBFH *)exdata->atmi_buf;
+        
+        if (NULL==(p_ub_cache = (UBFH *)tpalloc("UBF", NULL, 1024)))
+        {
+            NDRX_CACHE_ERROR("Failed to realloc input buffer %p to size: %ld: %s", 
+                    idata, *olen, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* we cannot do this way, because stored format is different than UBF... */
+        
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
+                exdata->atmi_buf_len, (char **)&p_ub_cache, &olen_merge, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+            EXFAIL_OUT(ret);
+        }
+        
         /* reallocate place in output buffer */
         
         *olen = Bsizeof(p_ub) + exdata->atmi_buf_len + 1024;
@@ -314,49 +339,39 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
         {
             /* tperror will be set already */
             
-            NDRX_LOG(log_error, "Failed to realloc input buffer %p to size: %ld: %s", 
-                    idata, *olen, tpstrerror(tperrno));
-            
-            userlog("Failed to realloc input buffer %p to size: %ld: %s", 
+            NDRX_CACHE_ERROR("Failed to realloc input buffer %p to size: %ld: %s", 
                     idata, *olen, tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
         
-        p_ub = (UBFH *)odata;
+        p_ub = (UBFH *)*odata;
         
 #ifdef NDRX_TPCACHE_DEBUG
         ndrx_debug_dump_UBF(log_debug, "Updating output with", p_ub_cache);
 #endif
         if (EXSUCCEED!=Bupdate(p_ub, p_ub_cache))
         {
-            NDRX_LOG(log_error, "Failed to update/merge buffer: %s", 
-                    Bstrerror(Berror));
-            
-            userlog("Failed to update/merge buffer: %s", 
-                    Bstrerror(Berror));
-            
-            ndrx_TPset_error_fmt(TPESYSTEM, 
+            NDRX_CACHE_TPERROR(TPESYSTEM, 
                             "Failed to update/merge buffer: %s", 
                     Bstrerror(Berror));
-            
             EXFAIL_OUT(ret);
         }
     }
     else
     {
-        NDRX_LOG(log_error, "Invalid buffer get mode: flags %ld", 
-                    cache->flags);
-            
-            userlog("Invalid buffer get mode: flags %ld", 
-                    cache->flags);
-            
-            ndrx_TPset_error_fmt(TPEINVAL, 
-                            "Invalid buffer get mode: flags %ld", 
-                    cache->flags);
-            EXFAIL_OUT(ret);
+        NDRX_CACHE_TPERROR(TPEINVAL, 
+                        "Invalid buffer get mode: flags %ld", 
+                cache->flags);
+        EXFAIL_OUT(ret);
     }
     
 out:
+
+    if (NULL!=p_ub_cache)
+    {
+        tpfree((char *)p_ub_cache);
+    }
+
     return ret;
 }
 
@@ -427,6 +442,7 @@ expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache,
             cache->flags & flags_projreg)
     {
         BFLDID * cpylist;
+        
         *p_ub_out = (UBFH *)tpalloc("UBF", NULL, Bsizeof((UBFH *)p_ub_in));
         
         if (NULL==*p_ub_out)
@@ -437,10 +453,13 @@ expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache,
         
         if (cache->flags & flags_projsetof)
         {
+            NDRX_LOG(log_debug, "Projection set of");
+            
             cpylist = (BFLDID *)pb->typpriv;
         }
         else
         {
+            NDRX_LOG(log_debug, "Projection regexp");
             cpylist = (BFLDID *)list;
         }
         
@@ -652,6 +671,9 @@ exprivate int proc_flags_typed(ndrx_tpcallcache_t *cache,
 #ifdef NDRX_TPCACHE_DEBUG
             NDRX_LOG(log_debug, "%s strategy: list of fields - parsing...", op);
 #endif
+            /* expression max = PATH_MAX on given platform */
+            NDRX_STRCPY_SAFE(tmp, pb->expression);
+            
             /* clean up save string... */            
             ndrx_str_strip(tmp, "\t ");
             
@@ -660,7 +682,10 @@ exprivate int proc_flags_typed(ndrx_tpcallcache_t *cache,
             while (p != NULL)
             {
                 /* Lookup the field id,  */
-                if (EXSUCCEED!=(fid=Bfldid(p)))
+                
+                NDRX_LOG(log_debug, "Got field [%s]", p);
+                
+                if (EXFAIL==(fid=Bfldid(p)))
                 {
                     NDRX_LOG(log_error, "Failed to resolve filed id: [%s]: %s", 
                             p, Bstrerror(Berror));
