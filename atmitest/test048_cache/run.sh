@@ -4,6 +4,19 @@
 # @(#) Cache tests, master runner
 #
 
+export TESTNAME="test048_cache"
+
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+    # Do nothing 
+    echo > /dev/null
+else
+    # started from parent folder
+    pushd .
+    echo "Doing cd"
+    cd $TESTNAME
+fi;
+
 > ./test.out
 # Have some terminal output...
 tail -f test.out &
