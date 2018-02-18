@@ -63,7 +63,9 @@ expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long
     UBFH *p_ub = NULL;
     char *ret_buf;
     long ret_len;
-
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
+    
     NDRX_LOG(log_debug, "%s enter", __func__);
 
     if (NULL==eventexpr || EXEOS==eventexpr[0])
@@ -143,8 +145,10 @@ expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long
         ret=EXFAIL;
         goto out;
     }
-
-    if (EXFAIL!=(ret=tpcall(NDRX_SYS_SVC_PFX "TPEVSUBS", (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
+    
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVSUBS, nodeid);
+    
+    if (EXFAIL!=(ret=tpcall(tmpsvc, (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }
@@ -175,6 +179,8 @@ expublic long ndrx_tpunsubscribe(long subscription, long flags)
     UBFH *p_ub = NULL;
     char *ret_buf;
     long ret_len;
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
 
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -203,7 +209,8 @@ expublic long ndrx_tpunsubscribe(long subscription, long flags)
         goto out;
     }
 
-    if (EXFAIL!=(ret=tpcall(NDRX_SYS_SVC_PFX "TPEVUNSUBS", (char *)p_ub, 0L, 
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, nodeid);
+    if (EXFAIL!=(ret=tpcall(tmpsvc, (char *)p_ub, 0L, 
             &ret_buf, &ret_len, flags)))
     {
         ret=tpurcode; /* Return code - count of events applied */
@@ -240,6 +247,8 @@ expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
     int ret=EXSUCCEED;
     char *ret_buf;
     long ret_len;
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
     
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -251,9 +260,9 @@ expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
     }
 
     /* Post the */
-    if (EXFAIL!=(ret=tpcallex(NDRX_SYS_SVC_PFX EV_TPEVPOST, 
-            data, len, &ret_buf, &ret_len, flags, eventname, EXFAIL, 0,
-            user1, user2, user3, user4)))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVPOST, nodeid);
+    if (EXFAIL!=(ret=tpcallex(tmpsvc, data, len, &ret_buf, &ret_len, flags, 
+            eventname, EXFAIL, 0, user1, user2, user3, user4)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }

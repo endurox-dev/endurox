@@ -748,7 +748,6 @@ expublic int sv_server_request(char *buf, int len)
     switch (gen_command->command_id)
     {
         case ATMI_COMMAND_TPCALL:
-        case ATMI_COMMAND_EVPOST:
 
             ret=sv_serve_call(&service, &status);
 
@@ -1263,40 +1262,18 @@ expublic int sv_wait_for_request(void)
                 NDRX_LOG(log_debug, "Got request on logical channel %d, fd: %d",
                             G_server_conf.last_call.no, evmqd);
                 
-                if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no && 
-                        ATMI_COMMAND_EVPOST!=p_adm_cmd->command_id)
+                if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no)
                 {
                     NDRX_LOG(log_debug, "Got admin request");
                     ret=process_admin_req(msg_buf, len, &G_shutdown_req);
                 }
                 else
                 {   
-                    /* If this was even post, then we should adjust last call no */
-                    if (ATMI_COMMAND_EVPOST==p_adm_cmd->command_id)
-                    {
-                        G_server_conf.last_call.no = EXFAIL;
-                        for (j=0; j<G_server_conf.adv_service_count; j++)
-                        {
-                            if (0==strcmp(G_server_conf.service_array[j]->svc_nm,
-                                    call->name))
-                            {
-                               G_server_conf.last_call.no = j;
-                               break;
-                            }
-                        }
-                        if (EXFAIL==G_server_conf.last_call.no)
-                        {
-                            NDRX_LOG(log_error, "Failed to find service: [%s] "
-                                    "- ignore event call!", call->name);
-                            continue;
-                        }
-                    }
-                    
                     /* This normally should not happen! */
                     if (EXFAIL==G_server_conf.last_call.no)
                     {
-                        ndrx_TPset_error_fmt(TPESYSTEM, "No service entry for call descriptor %d",
-                                    evmqd);
+                        ndrx_TPset_error_fmt(TPESYSTEM, "No service entry for "
+                                "call descriptor %d", evmqd);
                         ret=EXFAIL;
                         goto out;
                     }

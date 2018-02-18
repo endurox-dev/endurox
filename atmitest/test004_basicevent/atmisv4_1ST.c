@@ -52,7 +52,9 @@ void TEST4_1ST (TPSVCINFO *p_svc)
 
     /* Just print the buffer */
     Bprint(p_ub);
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
+    
+    /* allocate some stuff for more data to put in  */
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096)))
     {
         ret=EXFAIL;
         goto out;
@@ -129,7 +131,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
 
-    strcpy(evctl.name1, "TEST4_1ST");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST4_1ST");
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */
@@ -140,7 +142,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         ret=EXFAIL;
     }
 
-    strcpy(evctl.name1, "TEST4_1ST_2");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST4_1ST_2");
     /* Subscribe to event server */
     if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV", NULL, &evctl, 0L)))
     {
@@ -149,7 +151,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         ret=EXFAIL;
     }
 
-    strcpy(evctl.name1, "TEST4_1ST_2");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST4_1ST_2");
     /* Subscribe to event server */
     if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV2", NULL, &evctl, 0L)))
     {
@@ -158,7 +160,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         ret=EXFAIL;
     }
 
-    strcpy(evctl.name1, "TEST4_1ST_2");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST4_1ST_2");
     /* Subscribe to event server */
     if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST2EV3", NULL, &evctl, 0L)))
     {

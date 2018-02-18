@@ -521,12 +521,16 @@ expublic int brd_add_svc_to_hash(char *svc)
 {
     int ret=EXSUCCEED;
     
-    /* We ignore special services like bridge.. */
+    /* We ignore special services like bridge.. 
+     * but we will export DOPOST as it will be called by local event dispatcher
+     */
     if (0==strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN) ||
-            0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVSUBS) ||
-            0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVUNSUBS) ||
-            0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVPOST) ||
-            0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVDOPOST) ||
+            0==strncmp(svc, NDRX_SYS_SVC_PFX EV_TPEVSUBS, 
+                                strlen(NDRX_SYS_SVC_PFX EV_TPEVSUBS)) ||
+            0==strncmp(svc, NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, 
+                                strlen(NDRX_SYS_SVC_PFX EV_TPEVUNSUBS)) ||
+            0==strncmp(svc, NDRX_SYS_SVC_PFX EV_TPEVPOST, 
+                                strlen(NDRX_SYS_SVC_PFX EV_TPEVPOST)) ||
             /* Also have to skip recovery service for bridges. */
             0==strcmp(svc, NDRX_SYS_SVC_PFX TPRECOVERSVC)
     )
@@ -577,7 +581,7 @@ expublic int brd_add_svc_to_hash_g(bridgedef_svcs_t ** svcs, char *svc)
             goto out;
         }
         r->count++; /* should be 1 */
-        strcpy(r->svc_nm, svc);
+        NDRX_STRCPY_SAFE(r->svc_nm, svc);
         EXHASH_ADD_STR( *svcs, svc_nm, r );
     }
     
