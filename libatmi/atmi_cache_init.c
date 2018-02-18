@@ -1021,15 +1021,14 @@ expublic int ndrx_cache_init(int mode)
             NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
             
             /* Rule to be true to save to cache */
-            if (NULL==(tmp = exjson_object_get_string(array_object, "rule")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "rule")))
             {
-                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                        "[rule] for service [%s], buffer index: %d", svc, i);
-                EXFAIL_OUT(ret);
+                NDRX_STRCPY_SAFE(cache->rule, tmp);
             }
-            
-            NDRX_STRCPY_SAFE(cache->rule, tmp);
-            
+            else
+            {
+                NDRX_LOG(log_info, "Rule is missing - assume cache always");
+            }
             
             if (NULL!=(tmp = exjson_object_get_string(array_object, "refreshrule")))
             {

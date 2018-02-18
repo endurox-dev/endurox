@@ -276,16 +276,17 @@ expublic int start_daemon_idle(void)
 #endif
         if (started)
         {
-            fprintf(stderr, "ndrxd idle instance started.\n");
+            fprintf(stderr, ">>> ndrxd idle instance started.\n");
             G_config.is_idle = EXTRUE;
         }
         else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
         {
-            fprintf(stderr, "ndrxd idle instance not started (something failed?)!\n");
+            fprintf(stderr, ">>> ndrxd idle instance not started (something failed?)!\n");
+            fprintf(stderr, ">>> If tpcache is used, check the config syntax (see ndrxd logs)!\n");
         }
         else
         {
-            fprintf(stderr, "ndrxd instance idle malfunction!\n");
+            fprintf(stderr, ">>> ndrxd instance idle malfunction!\n");
         }
     }
     

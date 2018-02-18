@@ -804,9 +804,7 @@ expublic int main(int argc, char** argv)
 
     while (!M_shutdown)
     {
-        /* Get the DBs
-         */
-
+        /* wait for signal or timeout... */
         result = sigtimedwait( &M_mask, &info, &timeout );
 
         if (result > 0)
@@ -824,10 +822,18 @@ expublic int main(int argc, char** argv)
         }
         else if (EXFAIL==result)
         {
-            NDRX_LOG(log_error, "sigtimedwait failed: %s", strerror(errno));
-            EXFAIL_OUT(ret);
+            int err = errno;
+            
+            if (EAGAIN!=err)
+            {
+                NDRX_LOG(log_error, "sigtimedwait failed: %s", strerror(err));
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_LOG(log_debug, "Scanning...");
         }
 
+        /* Get the DBs */
         /* interval process */
         dbh = ndrx_cache_dbgethash();
 
