@@ -409,6 +409,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     time_t timestamp;
     int is_bridge;
     int tpcall_cd;
+    int have_shm = EXFALSE;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -445,7 +446,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
 #endif
         is_bridge=EXTRUE;
     }
-    else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge))
+    else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge, &have_shm))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);
@@ -455,8 +456,20 @@ expublic int ndrx_tpacall (char *svc, char *data,
         goto out;
     }
     
-    /* TODO: In case of non shared memory mode, check that queue file exists! */
-     
+    /* In case of non shared memory mode, check that queue file exists! */
+    if (!have_shm)
+    {
+        /* test queue */
+        if (!ndrx_q_exists(send_q))
+        {
+            NDRX_LOG(log_error, "%s: Queue [%s] does not exists for %s", 
+                    __func__, send_q);
+            ndrx_TPset_error_fmt(TPENOENT, "%s: Queue [%s] does not exists for %s", 
+                    __func__, send_q);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     /* ok service is found we can process cache here */
     
     if (!(flags & TPNOCACHELOOK) && NULL!=p_cachectl)
