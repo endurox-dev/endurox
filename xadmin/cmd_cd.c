@@ -146,13 +146,15 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
     /* Call cache server! */
     if (EXSUCCEED!=tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rcvlen, 0L))
     {
-        NDRX_LOG(log_error, "Failed to call [%s]: %s", svcnm, tpstrerror(tperrno));
-        fprintf(stderr, "Failed to call cache server [%s]: %s\n", 
-                svcnm, tpstrerror(tperrno));
-        
         if (Bpres(p_ub, EX_TPSTRERROR, 0))
         {
             fprintf(stderr, "%s\n", Bfind(p_ub, EX_TPSTRERROR, 0, 0L));
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to call [%s]: %s", svcnm, tpstrerror(tperrno));
+            fprintf(stderr, "Failed to call cache server [%s]: %s\n", 
+                svcnm, tpstrerror(tperrno));
         }
         
         EXFAIL_OUT(ret);

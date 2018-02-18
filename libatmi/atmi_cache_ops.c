@@ -430,11 +430,12 @@ out:
  * @param olen output len
  * @param flags flags
  * @param should_cache should record be cached?
+ * @param seterror_not_found should we generate error if record is not found?
  * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
  */
 expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache, 
-        int *saved_tperrno, long *saved_tpurcode)
+        int *saved_tperrno, long *saved_tpurcode, int seterror_not_found)
 {
     int ret = EXSUCCEED;
     ndrx_tpcache_svc_t *svcc = NULL;
@@ -663,7 +664,8 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Performing simple lookup");
 #endif
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata)))
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata,
+                seterror_not_found)))
         {
             /* error already provided by wrapper */
             NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
@@ -707,7 +709,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             cache, exdata, buf_type, idata, ilen, odata, olen, flags))
     {
         NDRX_LOG(log_error, "%s: Failed to receive data: ", __func__);
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
     *saved_tperrno = exdata->saved_tperrno;
