@@ -1994,7 +1994,6 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                 (tp_command_call_t *)(ex_buf + sizeof(cmd_br_net_call_t));
                         
                             if (ATMI_COMMAND_TPCALL == more_debug->command_id || 
-                                    ATMI_COMMAND_EVPOST == more_debug->command_id || 
                                     ATMI_COMMAND_CONNECT == more_debug->command_id)
                             {
                             NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 

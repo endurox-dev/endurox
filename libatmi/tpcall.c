@@ -445,17 +445,6 @@ expublic int ndrx_tpacall (char *svc, char *data,
 #endif
         is_bridge=EXTRUE;
     }
-    else if (ex_flags & TPCALL_EVPOST)
-    {
-        if (EXSUCCEED!=_get_evpost_sendq(send_q, sizeof(send_q), extradata))
-        {
-            NDRX_LOG(log_error, "%s: Cannot get send Q for server: [%s]", 
-                     __func__, extradata);
-            ndrx_TPset_error_fmt(TPENOENT, "%s: Cannot get send Q for server: [%s]", 
-                     __func__, extradata);
-            EXFAIL_OUT(ret);
-        }
-    }
     else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
@@ -536,14 +525,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
         call->buffer_type_id = buffer_info->type_id;
 
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
-    if (!(ex_flags & TPCALL_EVPOST))
-    {
-        call->command_id = ATMI_COMMAND_TPCALL;
-    }
-    else
-    {
-        call->command_id = ATMI_COMMAND_EVPOST;
-    }
+    
+    call->command_id = ATMI_COMMAND_TPCALL;
+    
     
     NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
@@ -903,7 +887,9 @@ out:
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
+     * mvitolin, 18/02/2018 Really? Cannot find any references...
      */
+    /*
     if (EXSUCCEED==ret)
     {
         return G_atmi_tls->M_svc_return_code;
@@ -912,6 +898,9 @@ out:
     {
         return ret;
     }
+    */
+    
+    return ret;
 }
 
 /**
@@ -1079,79 +1068,5 @@ expublic long * _exget_tpurcode_addr (void)
     ATMI_TLS_ENTRY;
     return &G_atmi_tls->M_svc_return_code;
 }
-
-/**
- * Get the queue name where we shall post the event!
- * @param send_q
- * @param extradata
- * @return 
- */
-expublic int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata)
-{
-    int ret=EXSUCCEED;
-    char fn[] = "get_evpost_sendq";
-    TPMYID myid;
-    ATMI_TLS_ENTRY;
-    if (NULL==extradata || EXEOS==extradata[0] || NULL==send_q)
-    {
-        NDRX_LOG(log_error, "Invalid arguments");
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    NDRX_LOG(log_debug, "%s: server's id=[%s]", __func__, extradata);
-    
-    if (EXSUCCEED!=ndrx_myid_parse(extradata, &myid, EXFALSE))
-    {
-        NDRX_LOG(log_error, "Failed to parse my_id string [%s]", extradata);
-        /* Do fail? */
-        goto out;
-    }
-    
-    NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d contextid=%ld nodeid=%d",
-            myid.binary_name, myid.srv_id, myid.pid, myid.contextid, myid.nodeid);
-   
-    
-    if (G_atmi_env.our_nodeid!=myid.nodeid)
-    {
-        NDRX_LOG(log_debug, "Server is located on different server, "
-                "our nodeid=%d their=%d",
-                G_atmi_env.our_nodeid, myid.nodeid);
-#ifdef EX_USE_POLL
-        /* poll() mode: */
-        {
-            int is_bridge;
-            char tmpsvc[MAXTIDENT+1];
-
-            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, myid.nodeid);
-
-            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &is_bridge))
-            {
-                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
-                        tmpsvc);
-                EXFAIL_OUT(ret);
-            }
-        }
-#else
-        snprintf(send_q, send_q_bufsz, NDRX_SVC_QBRDIGE, 
-                G_atmi_tls->G_atmi_conf.q_prefix, myid.nodeid);
-#endif
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "This is local server");
-        snprintf(send_q, send_q_bufsz, NDRX_ADMIN_FMT, 
-                G_atmi_tls->G_atmi_conf.q_prefix, myid.binary_name, 
-                myid.srv_id, myid.pid);
-    }
-    
-out:
-                
-    NDRX_LOG(log_debug, "%s returns send_q=[%s] ret=%d", 
-                     __func__, send_q, ret);
-
-    return ret;
-}
-
 
 

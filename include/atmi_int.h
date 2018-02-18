@@ -71,7 +71,7 @@ extern "C" {
 #define ATMI_COMMAND_CONNUNSOL  8
 #define ATMI_COMMAND_CONVACK    9
 #define ATMI_COMMAND_SHUTDOWN   10
-#define ATMI_COMMAND_EVPOST     11
+/* #define ATMI_COMMAND_EVPOST     11 */
 #define ATMI_COMMAND_SELF_SD    12      /* Self shutdown                */
 #define ATMI_COMMAND_TPNOTIFY   13      /* Notification message         */
 #define ATMI_COMMAND_BROADCAST  14      /* Broadcast notification       */
@@ -110,10 +110,10 @@ extern "C" {
 #define Q_SEND_GRACE            10              /* Number of messages for q to wait to process */
     
 /* Even processing */
-#define EV_TPEVSUBS         "TPEVSUBS"
-#define EV_TPEVUNSUBS       "TPEVUNSUBS"
-#define EV_TPEVPOST         "TPEVPOST"
-#define EV_TPEVDOPOST       "TPEVDOPOST"
+#define EV_TPEVSUBS         "TPEVSUBS%03hd"
+#define EV_TPEVUNSUBS       "TPEVUNSUBS%03hd"
+#define EV_TPEVPOST         "TPEVPOST%03hd"
+#define EV_TPEVDOPOST       "TPEVDOPOST%03hd"
     
 /* RECOVERY processing */
 #define TPRECOVERSVC        "TPRECOVER"     /* Recovery administrative service */
@@ -751,7 +751,6 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
 
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
-extern NDRX_API int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata);
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);

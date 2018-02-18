@@ -118,7 +118,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     char *data = p_svc->data;
     event_entry_t *elt, *tmp;
     long numdisp = 0;
-    
+    char tmpsvc[MAXTIDENT+1];
     char buf_type[9];
     char buf_subtype[17];
     long buf_len;
@@ -189,6 +189,9 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                                 elt->name1);
                         continue; /* <<<<<<<<<<<<<<< CONTINUE! */
                     }
+                    
+                    NDRX_LOG(log_debug, "Calling service %s/%s in async mode (2)",
+                                                    elt->name1, elt->my_id);
                     
                     if (EXFAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
                                     elt->flags | TPNOREPLY, last_call->extradata, 
@@ -272,7 +275,10 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     break;
                 }
                 
-                if (EXFAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
+                /* make dopost service */
+                snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVDOPOST, 
+                        (short)nodeid);
+                if (EXFAIL==(tpcallex (tmpsvc, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
                         0, last_call->extradata, nodeid, TPCALL_BRCALL, 
                         /* we re-use for requests rval as user1 and rcode as user2 */
@@ -494,31 +500,37 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
+    
     NDRX_LOG(log_debug, "tpsvrinit called");
-
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVSUBS, TPEVSUBS))
+    
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVSUBS, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVSUBS))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVSUBS!");
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, TPEVUNSUBS))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVUNSUBS))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVUNSUBS!");
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVPOST, TPEVPOST))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVPOST, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVPOST))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVPOST!");
         ret=EXFAIL;
         goto out;
     }
     
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVDOPOST, TPEVDOPOST))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVDOPOST, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVDOPOST))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVDOPOST!");
         ret=EXFAIL;
