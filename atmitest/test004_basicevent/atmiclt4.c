@@ -54,23 +54,34 @@
 int main(int argc, char** argv) {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
-    long rsplen;
     int i;
     int ret=EXSUCCEED;
-
     
+    int num1=2;
+    int num2=1;
+    int num3=0;
+
     CBadd(p_ub, T_DOUBLE_FLD, "5", 0, BFLD_STRING);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
-
+    
+    if (argc>1 && 'Y'==argv[1][0])
+    {
+        /* networked run */
+        num1*=3;
+        num2*=3;
+    }
+    
     /* Do it many times...! */
-    for (i=0; i<9900; i++)
+    for (i=0; i<1000; i++)
     {
         ret=tppost("EVX.TEST", (char*)p_ub, 0L, TPSIGRSTRT);
         NDRX_LOG(log_debug, "dispatched events: %d", ret);
-        if (ret!=6)
+        
+        /* two servers process this */
+        if (ret!=num1)
         {
-            NDRX_LOG(log_error, "Applied event count is not 6 (which is %d)", ret);
+            NDRX_LOG(log_error, "Applied event count is not 2 (which is %d)", ret);
             ret=EXFAIL;
             goto out;
         }
@@ -89,7 +100,8 @@ int main(int argc, char** argv) {
 
     ret=tppost("TEST2EV", (char*)p_ub, 0L, TPSIGRSTRT);
 
-    if (3!=ret)
+    /* one server processes this - Support #279 */
+    if (num2!=ret)
     {
         NDRX_LOG(log_error, "TESTERROR: First post of TEST2EV did not return 3 (%d) ",
                                     ret);
@@ -98,7 +110,7 @@ int main(int argc, char** argv) {
     }
     sleep(10); /* << because server may not complete the unsubscribe! */
     ret=tppost("TEST2EV", (char*)p_ub, 0L, TPSIGRSTRT);
-    if (0!=ret)
+    if (num3!=ret)
     {
         NDRX_LOG(log_error, "TESTERROR: Second post of TEST2EV did not return 0 (%d) ",
                                     ret);
@@ -110,8 +122,9 @@ out:
 
 
     if (ret>=0)
+    {
         ret=EXSUCCEED;
-
+    }
 
     return ret;
 }

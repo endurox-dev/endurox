@@ -97,7 +97,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
 
-    strcpy(evctl.name1, "TEST4_2ND");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST4_2ND");
     evctl.flags|=TPEVSERVICE;
     /* Subscribe to event server */
     if (EXFAIL==tpsubscribe("EV..TEST", "1==1 && T_DOUBLE_FLD==5", &evctl, 0L))

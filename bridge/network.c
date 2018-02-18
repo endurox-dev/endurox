@@ -434,7 +434,6 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
         {
             
             case ATMI_COMMAND_TPCALL:
-            case ATMI_COMMAND_EVPOST:
             case ATMI_COMMAND_CONNECT:
                 NDRX_LOG(log_debug, "tpcall or connect");
                 br_dump_tp_command_call(p_netmsg->call->buf);
