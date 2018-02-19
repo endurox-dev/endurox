@@ -60,43 +60,6 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * List queue definitions
- * We will run in conversation mode.
- * @param svcnm
- * @return SUCCEED/FAIL
- */
-exprivate int print_buffer(UBFH *p_ub, char *dbname)
-{
-    int ret = EXSUCCEED;
-    ndrx_tpcache_data_t cdata;
-    char *keydata = NULL;
-    
-    if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, NULL, &keydata))
-    {
-        NDRX_LOG(log_error, "Failed to get mandatory UBF data!");
-        EXFAIL_OUT(ret);
-    }
-    
-    printf("%-3d %-19.19s %-5.5s %-2hd %-5.5s %s\n"
-            ,cdata.nodeid
-            ,ndrx_get_strtstamp_from_sec(0, cdata.t)
-            ,ndrx_decode_num(cdata.hits, 0, 0, 1)
-            ,cdata.atmi_type_id
-            ,ndrx_decode_num(cdata.atmi_buf_len, 1, 0, 1)
-            ,keydata
-            );
-    
-out:
-
-    if (NULL!=keydata)
-    {
-        NDRX_FREE(keydata);
-    }
-
-    return ret;
-}
-
-/**
  * Call cache server
  * @return
  */
