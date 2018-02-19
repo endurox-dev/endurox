@@ -143,6 +143,7 @@ if [ $? -ne 0 ]; then
     go_out 2
 fi
 
+echo "ensure 1"
 ensure_keys db03 1
 
 (time ./testtool48 -sTESTSV03 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
@@ -176,6 +177,7 @@ if [ $? -ne 0 ]; then
     go_out 2
 fi
 
+echo "ensure 2"
 ensure_keys db03 2
 
 xadmin stop -s atmi.sv48
@@ -191,6 +193,7 @@ sleep 10
 xadmin start -s atmi.sv48
 
 
+echo "ensure 3"
 ensure_keys db03 0
 
 #
