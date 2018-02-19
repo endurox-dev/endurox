@@ -55,6 +55,12 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
+        <!-- Cache boot server -->
+        <server name="tpcachebtsv">
+            <max>1</max>
+            <srvid>1</srvid>
+            <sysopt>-e ${TESTDIR}/tpcachebtsv.log -r</sysopt>
+        </server>
         <server name="tpcachesv">
             <max>1</max>
             <srvid>50</srvid>

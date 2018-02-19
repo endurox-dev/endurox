@@ -230,7 +230,7 @@ extern "C" {
     
     
 /* Used by NDRX_SYSFLAGS env variable */
-#define NDRX_PRC_SYSFLAGS           0x00000001          /* Full application start */
+#define NDRX_PRC_SYSFLAGS_FULLSTART     0x00000001      /* Full application start */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

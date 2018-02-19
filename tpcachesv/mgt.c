@@ -48,6 +48,7 @@
 #include <exregex.h>
 #include "tpcachesv.h"
 #include <atmi_cache.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define REJECT(UB, TPE, MSG)\

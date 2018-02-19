@@ -804,7 +804,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         
         if (G_sys_config.fullstart)
         {
-            sysflags |= NDRX_PRC_SYSFLAGS;
+            sysflags |= NDRX_PRC_SYSFLAGS_FULLSTART;
         }
         
         snprintf(sysflags_str, sizeof(sysflags_str), "%ld", sysflags);

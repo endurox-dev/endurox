@@ -432,6 +432,7 @@ extern NDRX_API ndrx_tpcache_typesupp_t ndrx_G_tpcache_types[];
 /*---------------------------Prototypes---------------------------------*/
 
 extern NDRX_API int ndrx_cache_init(int mode);
+extern NDRX_API void ndrx_cache_uninit(void);
 extern NDRX_API ndrx_tpcache_db_t *ndrx_cache_dbgethash(void);
 extern NDRX_API int ndrx_cache_used(void);
 extern NDRX_API char* ndrx_cache_mgt_getsvc(void);
