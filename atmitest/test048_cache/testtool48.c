@@ -48,6 +48,7 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include <ubf_int.h>
+#include <ubfutil.h>
 #include "test48.h"
 #include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
