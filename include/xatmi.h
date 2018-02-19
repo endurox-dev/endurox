@@ -215,6 +215,7 @@ extern "C" {
 #define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG"  /* Xadmin config file */
 #define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /* debug config file */
 #define CONF_NDRX_PLUGINS        "NDRX_PLUGINS"     /* list of plugins, ';' seperated */
+#define CONF_NDRX_SYSFLAGS       "NDRX_SYSFLAGS"    /* Additional flags to process    */
                                                     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

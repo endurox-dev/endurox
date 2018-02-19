@@ -227,6 +227,11 @@ extern "C" {
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
     fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
     
+    
+    
+/* Used by NDRX_SYSFLAGS env variable */
+#define NDRX_PRC_SYSFLAGS           0x00000001          /* Full application start */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
