@@ -1025,7 +1025,7 @@ out:
     NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
 
     /* tpcall cache implementation: add to cache if required */
-    if (!(flags & TPNOCACHEADD) && cachectl.should_cache)
+    if (!(flags & TPNOCACHEADD) && cachectl.should_cache && !cachectl.cached_rsp)
     {
         int ret2;
         
