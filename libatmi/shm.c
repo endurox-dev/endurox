@@ -472,7 +472,10 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
 #endif
         goto out; /* do not fail, try locally */
     }
-    *have_shm = EXTRUE;
+    if (NULL!=have_shm)
+    {
+        *have_shm = EXTRUE;
+    }
     
     /* Get the service entry */
     if (!_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))

@@ -232,7 +232,7 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* fr
     /* Resolve the service in SHM 
      *   sprintf(svc_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, call->name); */
 
-    if (EXSUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge, NULL))
     {
         NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
                 call->name);
@@ -270,7 +270,7 @@ expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t
     
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
 
-    if (EXSUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge, NULL))
     {
         NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
                 svcnm);

@@ -511,6 +511,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
                     continue;
                 }
                 
+                NDRX_LOG(log_debug, "rule matched");
                 is_matched = EXTRUE;
                 ret = EXSUCCEED;
             }
@@ -546,6 +547,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
                 {
                     NDRX_LOG(log_info, "Cache will be refreshed - rule matched "
                             "(do not continue cache lookup)");
+                    *should_cache=EXTRUE;
                     ret = NDRX_TPCACHE_ENOCACHEDATA;
                     goto out;
                 }
