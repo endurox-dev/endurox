@@ -242,6 +242,7 @@ typedef struct
     short restarting;  /* In restart mode, after restart_to_check expired, 
                         * process becomes in normal mode */
     ndrx_stopwatch_t time_from_restart; /* Time counter, how long we are restarting/learning */
+    int     fullstart;  /* Are we in full start mode or not? */
 } sys_config_t;
 
 /**
