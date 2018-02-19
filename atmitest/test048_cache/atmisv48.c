@@ -39,6 +39,7 @@
 #include <test.fd.h>
 #include <string.h>
 #include <unistd.h>
+#include <ubfutil.h>
 #include "test48.h"
 
 /*---------------------------Externs------------------------------------*/

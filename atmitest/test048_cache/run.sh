@@ -26,6 +26,8 @@ tail -f test.out &
 M_tests=0
 M_ok=0
 M_fail=0
+M_failstr=""
+
 
 run_test () {
 
@@ -42,6 +44,7 @@ run_test () {
                 M_ok=$((M_ok + 1))
         else
                 M_fail=$((M_fail + 1))
+                M_failstr="$M_failstr $test.sh"
         fi
 }
 
@@ -51,7 +54,7 @@ run_test "03_run"
 run_test "04_run"
 run_test "05_run_refresh"
 
-echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures"
+echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures ($M_failstr)"
 
 xadmin killall tail
 
