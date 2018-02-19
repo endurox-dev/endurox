@@ -1,8 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) See README. Test record expiry
+## @(#) See README. Run refresh rule
 ##
-## @file 04_run.sh
+## @file 05_run_refresh.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -112,9 +112,9 @@ echo "Running off client"
 #
 # First record
 #
-(time ./testtool48 -sTESTSV04 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
+(time ./testtool48 -sTESTSV05 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
     -m '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
-    -cY -n100 -fY 2>&1) > ./04_testtool48.log
+    -cY -n100 -fY 2>&1) > ./05_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
@@ -124,9 +124,9 @@ fi
 #
 # Existing record
 #
-(time ./testtool48 -sTESTSV04 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
+(time ./testtool48 -sTESTSV05 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
     -m '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
-    -cY -n100 -fN 2>&1) > ./04_testtool48.log
+    -cY -n100 -fN 2>&1) >> ./05_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (2)"
@@ -135,63 +135,30 @@ fi
 
 
 #
-# First record, 2
+# Run off refresh.. So run multiple tests, all of them must come fresh..
 #
-(time ./testtool48 -sTESTSV04 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
-    -cY -n100 -fY 2>&1) >> ./04_testtool48.log
 
+(time ./testtool48 -sTESTSV05 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"Y","T_SHORT_FLD":155,"T_CHAR_FLD":"B","T_DOUBLE_FLD":5.5}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"Y","T_SHORT_FLD":155,"T_CHAR_FLD":"B","T_DOUBLE_FLD":5.5}' \
+    -cN -n100 -fN 2>&1) >> ./05_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (3)"
-    go_out 3
+    echo "testtool48 failed (4)"
+    go_out 1
 fi
 
-#
-# Existing record, 2
-#
-(time ./testtool48 -sTESTSV04 -b '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_FLOAT_FLD":"1.2","T_SHORT_FLD":44,"T_CHAR_FLD":"B"}' \
-    -cY -n100 -fN 2>&1) >> ./04_testtool48.log
+xadmin cs db05
 
+#
+# The data now shall be cached (after last refresh)
+# The cached data now contains the string field...
+#
+(time ./testtool48 -sTESTSV05 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":155,"T_CHAR_FLD":"B","T_DOUBLE_FLD":5.5}' \
+    -m '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":155,"T_CHAR_FLD":"B","T_DOUBLE_FLD":5.5}' \
+    -cY -n100 -fN 2>&1) >> ./05_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (3)"
-    go_out 3
-fi
-
-
-#
-# Must have some 2 records
-#
-xadmin cs -d db04
-
-if [ $? -ne 0 ]; then
-    echo "xadmin cs failed"
-    go_out 2
-fi
-
-ensure_keys db04 2
-
-sleep 16
-
-#
-# now we shall get cached results...
-#
-
-ensure_keys db04 0
-
-echo "Cache after sleep (expiry)"
-
-#
-# First record
-#
-(time ./testtool48 -sTESTSV04 -b '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
-    -m '{"T_STRING_FLD":"KEY1","T_SHORT_FLD":123,"T_CHAR_FLD":"A","T_DOUBLE_FLD":4.4}' \
-    -cY -n100 -fY 2>&1) > ./04_testtool48.log
-
-if [ $? -ne 0 ]; then
-    echo "testtool48 failed (1)"
+    echo "testtool48 failed (5)"
     go_out 1
 fi
 
