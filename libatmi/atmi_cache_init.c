@@ -541,7 +541,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         EXFAIL_OUT(ret);
     }
     
-    if (NDRX_TPCACH_INIT_BOOT==mode)
+    if (NDRX_TPCACH_INIT_BOOT==mode &&
+            db->flags & NDRX_TPCACHE_FLAGS_BOOTRST)
     {
         NDRX_LOG(log_info, "Resetting cache db [%s]", db->cachedb);
         if (EXSUCCEED!=(ret=edb_drop(txn, db->dbi, 0)))
@@ -552,7 +553,6 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
 
             EXFAIL_OUT(ret);
         }
-        
     }
     
     /* commit the tran */
