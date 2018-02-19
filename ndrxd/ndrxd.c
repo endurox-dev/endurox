@@ -221,17 +221,6 @@ int main_init(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /* Init cache */
-    if (!G_sys_config.restarting)
-    {
-        /* otherwise on restart we do not need cache handle... */
-        if (EXSUCCEED!=ndrx_cache_init(NDRX_TPCACH_INIT_BOOT))
-        {
-            NDRX_LOG(log_error, "Cache init failed");
-            EXFAIL_OUT(ret);
-        }
-    }
-    
     /* We will ignore all stuff requesting shutdown! */
     signal(SIGHUP, SIG_IGN);
     signal(SIGTERM, SIG_IGN);

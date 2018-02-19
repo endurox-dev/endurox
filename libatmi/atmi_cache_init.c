@@ -674,6 +674,19 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
 }
 
 /**
+ * Close any open caches
+ * @return 
+ */
+expublic void ndrx_cache_uninit(void)
+{
+    
+    ndrx_cache_svcs_free();
+    ndrx_cache_dbs_free();
+    
+}
+     
+
+/**
  * Normal init (used by server & clients)
  * @param mode See NDRX_TPCACH_INIT_*
  */

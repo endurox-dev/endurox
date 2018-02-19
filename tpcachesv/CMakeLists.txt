@@ -1,5 +1,5 @@
 ## 
-## TP Event Server
+## Tp Cache servers (management/ops and boot reset)
 ##
 ## @file CMakeLists.txt
 ## 
@@ -51,11 +51,19 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Executables ###############################
 add_executable (tpcachesv tpcachesv.c mgt.c ../libatmisrv/rawmain_integra.c)
+add_executable (tpcachebtsv tpcachebtsv.c mgt.c ../libatmisrv/rawmain_integra.c)
+
+
+
 target_link_libraries (tpcachesv atmisrvinteg atmi ubf nstd ${RT_LIB} pthread m)
+target_link_libraries (tpcachebtsv atmisrvinteg atmi ubf nstd ${RT_LIB} pthread m)
+
 set_target_properties(tpcachesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(tpcachebtsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 # Install bin
 install (TARGETS 
     tpcachesv
+    tpcachebtsv
     DESTINATION bin)
