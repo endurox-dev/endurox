@@ -111,9 +111,6 @@
                 <max>1</max>
                 <srvid>1650</srvid>
                 <sysopt>-e /tmp/tmsrv-dom1.log -r -- -t1 -l/tmp</sysopt>
-                <!-- all app was down and now it start... if start succeeded, execute xadmin script... -->
-                <firstboot>ci -d db01; ci -d db02; ci -db03; ci -db04</firstboot>
-                <reboot>ci -d db01; ci -d db02; ci -db03; ci -db04</reboot>
             </server>
 
             <server name="tmqueue">

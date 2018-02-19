@@ -1,5 +1,5 @@
 /* 
-** EnduroX server API functions
+** Enduro/X server API functions
 **
 ** @file init.c
 ** 
@@ -31,8 +31,6 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

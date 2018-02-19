@@ -48,6 +48,7 @@
 #include "userlog.h"
 #include <atmi_int.h>
 #include <typed_buf.h>
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -295,6 +296,9 @@ int ndrx_init(int argc, char** argv)
     int dbglev;
     char *p;
     char key[NDRX_MAX_KEY_SIZE]={EXEOS};
+    
+    /* Create ATMI context */
+    ATMI_TLS_ENTRY;
 
     /* set pre-check values */
     memset(&G_server_conf, 0, sizeof(G_server_conf));
