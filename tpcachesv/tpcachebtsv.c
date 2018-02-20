@@ -91,9 +91,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_error, "Cache init failed");
                 EXFAIL_OUT(ret);
             }
-            
-            NDRX_LOG(log_info, "Done closing caches...");
-            ndrx_cache_uninit();
         }
         else
         {
@@ -101,7 +98,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
 
-    
+    NDRX_LOG(log_info, "Closing caches...");
+    ndrx_cache_uninit();
 out:
 
     return ret;
