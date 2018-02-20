@@ -163,8 +163,9 @@ out:
 void FAILSVC (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
+    int ret_gen_succ=EXFALSE;
     UBFH *p_ub = (UBFH *)p_svc->data;
-    
+    long l;
     long t, tusec;
     
     NDRX_LOG(log_debug, "%s got call", __func__);
@@ -189,12 +190,21 @@ void FAILSVC (TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
+    /* make succeed if value 1 */
+            
+    if (EXSUCCEED==Bget(p_ub, T_LONG_3_FLD, 0, (char *)&l, 0L))
+    {
+        if (1==l)
+        {
+            ret_gen_succ=EXTRUE;
+        }
+    }
     
     ndrx_debug_dump_UBF(log_debug, "Response buffer", p_ub);
     
 out:
         
-    tpreturn(  TPFAIL,
+    tpreturn(  ret_gen_succ?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,

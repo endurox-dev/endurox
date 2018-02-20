@@ -128,10 +128,10 @@ exprivate int main_loop(void)
         
         if (M_tperrno!=0)
         {
-            if (tperrno!=M_tperrno)
+            if (tperrno!=err)
             {
                 NDRX_LOG(log_error, "TESTERROR: Expected tperrno=%d got %d", 
-                        M_tperrno, tperrno);
+                        M_tperrno, err);
                 EXFAIL_OUT(ret);
             }
             
