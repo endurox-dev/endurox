@@ -122,6 +122,7 @@ extern "C" {
 #define NDRX_TPCACHEDB_DUMPCFG(LEV, CACHEDB)\
     NDRX_LOG(LEV, "============ CACHE DB CONFIG DUMP ===============");\
     NDRX_LOG(LEV, "cachedb=[%s]", CACHEDB->cachedb);\
+    NDRX_LOG(LEV, "cachedb ptr=[%p]", CACHEDB);\
     NDRX_LOG(LEV, "resource=[%s]", CACHEDB->resource);\
     NDRX_LOG(LEV, "limit=[%ld]", CACHEDB->limit);\
     NDRX_LOG(LEV, "expiry=[%ld] msec", CACHEDB->expiry);\

@@ -1,8 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) See README. Run refresh rule
+## @(#) See README. Invalidate their cache records by first cache lookup
 ##
-## @file 06_run_bootreset.sh
+## @file 08_run_invaltheir.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -23,7 +23,7 @@
 ##
 ## You should have received a copy of the GNU General Public License along with
 ## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1307 USA
+## Place, Suite 330, Boston, MA 02111-1308 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -107,71 +107,102 @@ xadmin ppm
 xadmin pc
 
 
-echo "Running off client (warm up the caches)"
+echo "Running off client"
 
-echo "Clean up databases..."
+echo "Warm up their caches"
 
-xadmin ci -d db06_1
-
-if [ $? -ne 0 ]; then
-    echo "xadmin ci -d db06_1 failed (1)"
-    go_out -1
-fi
-
-xadmin ci -d db06_2
-
-if [ $? -ne 0 ]; then
-    echo "xadmin ci -d db06_2 failed (2)"
-    go_out -2
-fi
-
-
-#
-# First db
-#
-(time ./testtool48 -sTESTSV06 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1"}' \
+(time ./testtool48 -sTESTSV08_1 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n100 -fY 2>&1) > ./06_testtool48.log
+    -cY -n100 -fY 2>&1) > ./08_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (1)"
+    go_out 1
+fi
+
+
+(time ./testtool48 -sTESTSV08_1 -b '{"T_STRING_FLD":"KEY2"}' \
+    -m '{"T_STRING_FLD":"KEY2"}' \
+    -cY -n100 -fY 2>&1) >> ./08_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (2)"
+    go_out 1
+fi
+
+
+ensure_keys db08_1 2
+
+
+(time ./testtool48 -sTESTSV08_2 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fY 2>&1) >> ./08_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (3)"
     go_out 1
 fi
 
-#
-# Second db
-#
-(time ./testtool48 -sTESTSV06 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2"}' \
-    -m '{"T_STRING_FLD":"KEY2"}' \
-    -cY -n100 -fY 2>&1) >> ./06_testtool48.log
+ensure_keys db08_2 1
+
+
+echo "Call cache 3 with normal data ... "
+
+
+(time ./testtool48 -sTESTSV08_3 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"HELLO"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"HELLO"}' \
+    -cY -n100 -fY 2>&1) >> ./08_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (4)"
     go_out 1
 fi
 
-ensure_keys db06_1 1
-ensure_keys db06_2 1
 
-xadmin r -s tpcachebtsv
+ensure_keys db08_1 2
+ensure_keys db08_2 1
+ensure_keys db08_3 1
 
-echo "Ensure that no cache changes are made for single binary restart (not full boot)"
-ensure_keys db06_1 1
-ensure_keys db06_2 1
+
+echo "Inval theirs... (ours gets from cache)..."
+
+
+#
+# As inval is doine only when saving to cache, thus we have to cleanup our 08_3 db
+#
+
+xadmin ci -d db08_3
+
+#
+# Key 1
+#
+(time ./testtool48 -sTESTSV08_3 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"INVAL"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"INVAL"}' \
+    -cY -n100 -fY 2>&1) >> ./08_testtool48.log
 
 
 #
-# Restart 
+# Key 2
 #
-xadmin stop -y
-xadmin start -y
+(time ./testtool48 -sTESTSV08_3 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"INVAL"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"INVAL"}' \
+    -cY -n100 -fY 2>&1) >> ./08_testtool48.log
 
-ensure_keys db06_1 1
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (5)"
+    go_out 1
+fi
+
+ensure_keys db08_1 0
+ensure_keys db08_2 0
 
 #
-# Boot reset will clear this...
+# Two keys saved.
 #
-ensure_keys db06_2 0
-
+ensure_keys db08_3 2
 
 go_out $RET
+
+
+
