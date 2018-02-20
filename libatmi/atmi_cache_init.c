@@ -967,7 +967,7 @@ expublic int ndrx_cache_init(int mode)
             {
                 ndrx_tpcache_svc_t *svcc;
                 /* 
-                 !! TODO: So we are NDRX_TPCACHE_TPCF_INVAL resolve the other cache..
+                 * So we are NDRX_TPCACHE_TPCF_INVAL resolve the other cache..
                  * And lookup other keys too of inval cache
                  */
                 
@@ -1050,7 +1050,9 @@ expublic int ndrx_cache_init(int mode)
             
             /* get fields to save */
             
-            if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
+            if (!(cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL) &&
+                    !(cache->flags & NDRX_TPCACHE_TPCF_INVAL)
+                    )
             {
                 if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
                 {

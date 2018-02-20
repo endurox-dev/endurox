@@ -55,6 +55,7 @@ run_test "04_run"
 run_test "05_run_refresh"
 run_test "06_run_bootreset"
 run_test "07_run_failsvc"
+run_test "08_run_invaltheir"
 
 echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures ($M_failstr)"
 
