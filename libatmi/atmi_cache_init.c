@@ -503,8 +503,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     if (EXSUCCEED!=(ret=edb_env_open(db->env, db->resource, 0L, db->perms)))
     {
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                "Failed to open env [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
+                "Failed to open env [%s] [%s]: %s", 
+                db->cachedb, db->resource, edb_strerror(ret));
         
         EXFAIL_OUT(ret);
     }
