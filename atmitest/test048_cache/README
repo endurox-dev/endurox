@@ -23,12 +23,14 @@ changes shall be made to cache
 
 07 - negative response caching tests (rsprule)
 
-08 - limited cache, LRU tests
+08 - invalidate their (two add servcies, inval 1, inval 2, cache result)
 
-09 - limited cache, HITS tests, if running on linux, try /dev/shm as storage
+09 - limited cache, LRU tests
+
+10 - limited cache, HITS tests, if running on linux, try /dev/shm as storage
 folder
 
-10 - limited cache, fifo tests
+11 - limited cache, fifo tests
 
-11 - limited cache, HITS + expiry
+12 - limited cache, HITS + expiry
 
