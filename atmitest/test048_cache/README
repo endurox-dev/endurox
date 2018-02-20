@@ -23,7 +23,7 @@ changes shall be made to cache
 
 07 - negative response caching tests (rsprule)
 
-08 - invalidate their (two add servcies, inval 1, inval 2, cache result)
+08 - invalidate their (two add services, inval 1, inval 2, cache result)
 
 09 - limited cache, LRU tests
 
