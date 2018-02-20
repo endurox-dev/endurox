@@ -506,12 +506,12 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
                 else if (EXFALSE==ret)
                 {
 #ifdef NDRX_TPCACHE_DEBUG
-                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - continue", cache->rule);
+                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - try next", cache->rule);
 #endif
                     continue;
                 }
                 
-                NDRX_LOG(log_debug, "rule matched");
+                NDRX_LOG(log_debug, "rule [%s] matched", cache->rule);
                 is_matched = EXTRUE;
                 ret = EXSUCCEED;
             }

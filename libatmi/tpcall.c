@@ -655,7 +655,6 @@ expublic int ndrx_tpgetrply (int *cd,
                        TPTRANID *p_tranid)
 {
     int ret=EXSUCCEED;
-    char fn[] = "_tpgetrply";
     char *pbuf = NULL;
     long rply_len;
     unsigned prio;
@@ -899,7 +898,8 @@ out:
         NDRX_FREE(pbuf);
     }
                 
-    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
+    NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d", 
+            __func__, ret, G_atmi_tls->M_svc_return_code, G_atmi_tls->M_atmi_error);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
      * mvitolin, 18/02/2018 Really? Cannot find any references...
