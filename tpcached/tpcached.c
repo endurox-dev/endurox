@@ -279,26 +279,15 @@ out:
 exprivate int cmpfunc_lru (const void * a, const void * b)
 {
     
-    ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
-    ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
+    ndrx_tpcache_datasort_t **ad = (ndrx_tpcache_datasort_t **)a;
+    ndrx_tpcache_datasort_t **bd = (ndrx_tpcache_datasort_t **)b;
     
-    
-    NDRX_LOG(log_error, "a = %p b = %p", a, b);
-    
-    /*
-    ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
-    ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;
-            */
     /* if records are empty (not filled, malloc'd then numbers will be higher anyway */
     
     /* to get newer rec first, we change the compare order */
     
-    NDRX_LOG(log_debug, "YOPT LRU !>>> t1 %ld.%ld vs t2 %ld.%ld", 
-            bd->data.hit_t, bd->data.hit_tusec, 
-            ad->data.hit_t, ad->data.hit_tusec);
-    
-    return ndrx_utc_cmp(&bd->data.hit_t, &bd->data.hit_tusec, 
-            &ad->data.hit_t, &ad->data.hit_tusec);
+    return ndrx_utc_cmp(&(*bd)->data.hit_t, &(*bd)->data.hit_tusec, 
+            &(*ad)->data.hit_t, &(*ad)->data.hit_tusec);
     
 }
 /**
@@ -309,13 +298,10 @@ exprivate int cmpfunc_lru (const void * a, const void * b)
  */
 exprivate int cmpfunc_hits (const void * a, const void * b) 
 {
-    ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
-    ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
-    
-    ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
-    ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;
-    
-    long res = bv->hits - av->hits;
+    ndrx_tpcache_datasort_t **ad = (ndrx_tpcache_datasort_t **)a;
+    ndrx_tpcache_datasort_t **bd = (ndrx_tpcache_datasort_t **)b;
+
+    long res = (*bd)->data.hits - (*ad)->data.hits;
  
     /* do some custom work because of int */
     if (res < 0)
@@ -338,20 +324,20 @@ exprivate int cmpfunc_hits (const void * a, const void * b)
  */
 exprivate int cmpfunc_fifo (const void * a, const void * b) 
 {
-    ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
-    ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
-    /*
-    ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
-    ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;    
     
-    */
+    ndrx_tpcache_datasort_t **ad = (ndrx_tpcache_datasort_t **)a;
+    ndrx_tpcache_datasort_t **bd = (ndrx_tpcache_datasort_t **)b;
     
-    /* do some custom work because of int */
-    return ndrx_utc_cmp(&bd->data.t, &bd->data.tusec, &ad->data.t, &ad->data.tusec);
+    /* if records are empty (not filled, malloc'd then numbers will be higher anyway */
+    
+    /* to get newer rec first, we change the compare order */
+    
+    return ndrx_utc_cmp(&(*bd)->data.t, &(*bd)->data.tusec, 
+            &(*ad)->data.t, &(*ad)->data.tusec);
 }
 
 /**
- * Process single db - by limit rule
+ * Process single db - by limit rule    
  * @param db
  * @return EXSUCCEED/EXFAIL
  */
@@ -567,6 +553,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     /* then go over the linear array, and remove records which goes over the cache */
     
     /* just print the sorted arrays... */
+    
     for (i=0; i<stat.ms_entries; i++)
     {
         NDRX_LOG(log_debug, "YOPT !>>> Cache infos: key [%s], last used: %ld.%ld", 
