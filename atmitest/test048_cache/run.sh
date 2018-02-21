@@ -17,6 +17,8 @@ else
     cd $TESTNAME
 fi;
 
+rm *.log
+
 > ./test.out
 # Have some terminal output...
 tail -f test.out &
