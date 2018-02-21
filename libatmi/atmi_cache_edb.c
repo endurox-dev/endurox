@@ -303,13 +303,13 @@ expublic int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, EDB_cursor 
         if (ret!=EDB_NOTFOUND)
         {
             NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                "Failed to get data from db [%s] for key [%s]: %s", 
-                db->cachedb, keydb->mv_data, edb_strerror(ret));
+                "%s: Failed to get data from db [%s]]: %s", 
+                __func__, db->cachedb, edb_strerror(ret));
         }
         else
         {
-            NDRX_LOG(log_debug, "EOF [%s] for key [%s]: %s", 
-                db->cachedb, keydb->mv_data, edb_strerror(ret));
+            NDRX_LOG(log_debug, "%s: EOF [%s]: %s", 
+                __func__, db->cachedb, edb_strerror(ret));
         }
     }
     
