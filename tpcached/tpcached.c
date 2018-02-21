@@ -389,6 +389,14 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     
     /* allocate ptr array of number elements in db */
     
+    /* open cursor firstly... */
+    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
+    {
+        NDRX_LOG(log_error, "Failed to open cursor!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* I guess after cursor open entries shall not grow? */
     NDRX_CALLOC_OUT(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t*), 
             void);
     
@@ -398,18 +406,13 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     }
     
     
-    /* open cursor firstly... */
-    if (EXSUCCEED!=ndrx_cache_edb_cursor_open(db, txn, &cursor))
-    {
-        NDRX_LOG(log_error, "Failed to open cursor!");
-        EXFAIL_OUT(ret);
-    }
-    
     /* transfer all keys to array (allocate each cell), also got to copy key data/strdup.. */
     op = EDB_FIRST;
     i = 0;
     do
     {
+        NDRX_LOG(log_debug, "%s: [%s] db loop %ld, entries: %ld",  
+                        __func__, db->cachedb, i, (long) stat.ms_entries);
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
                 &keydb, &val, op)))
         {
@@ -460,8 +463,10 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
          * Well we need a test case here... to see how lmdb will act in this
          * case will it return only first sorted? Or return all keys in random
          * order?
+         * LMDB sorts ok. no problem where. As first comes the highest order
+         * entry (higher timestamp), thus second we remove...
          */
-        if (0<i && 0!=strcmp(dsort[i]->key.mv_data, keydb.mv_data) || 0==i)
+        if (i>0 && 0!=strcmp(dsort[i-1]->key.mv_data, keydb.mv_data) || 0==i)
         {
             /* populate array */
             memcpy(&dsort[i]->data, pdata, sizeof(ndrx_tpcache_data_t));
@@ -501,6 +506,13 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         
         i++;
         
+        if (i>=stat.ms_entries)
+        {
+            /* TODO: test case when new records appears while one is performing cursor op... */
+            NDRX_LOG(log_debug, "soft EOF");
+            break;
+        }
+        
     } while (EXSUCCEED==ret);
     
     /* sort array to according techniques:
@@ -534,6 +546,12 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     for (i=db->limit; i<stat.ms_entries; i++)
     {
         char *p = dsort[i]->key.mv_data;
+        
+        
+        NDRX_LOG(log_debug, "Cache infos: key [%s], last used: %ld.%ld", 
+                dsort[i]->key.mv_data, dsort[i]->data.hit_t, dsort[i]->data.hit_tusec);
+        
+        
         if (EXEOS!=p[0])
         {
             /* this is ok entry, lets remove it! */        
@@ -855,10 +873,10 @@ expublic int main(int argc, char** argv)
             
             /* Allow expiry messages to be space limited too */
             if (
-                       el->flags & NDRX_TPCACHE_FLAGS_LRU ||
-                       el->flags & NDRX_TPCACHE_FLAGS_HITS ||
-                       el->flags & NDRX_TPCACHE_FLAGS_FIFO
-                    ) 
+                    el->flags & NDRX_TPCACHE_FLAGS_LRU ||
+                    el->flags & NDRX_TPCACHE_FLAGS_HITS ||
+                    el->flags & NDRX_TPCACHE_FLAGS_FIFO
+                 ) 
             {
                 if (EXSUCCEED!=proc_db_limit(el))
                 {

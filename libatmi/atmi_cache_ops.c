@@ -453,7 +453,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
-        
+    long dbflags;
     /* Key size - assume 16K should be fine */
     /* get buffer type & sub-type */
     cachedata_update.mv_size = 0;
@@ -758,11 +758,11 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             exdata_update->hits  = LONG_MAX;
 	}
 	
-        ndrx_utc_tstamp2(&exdata_update->t, &exdata_update->tusec);
+        ndrx_utc_tstamp2(&exdata_update->hit_t, &exdata_update->hit_tusec);
 
 #ifdef NDRX_TPCACHE_DEBUG        
         NDRX_LOG(log_debug, "hits=%ld t=%ld t=%ld", exdata_update->hits,
-                exdata_update->t, exdata_update->tusec);
+                exdata_update->hit_t, exdata_update->hit_tusec);
 #endif
         if (cursor_open)
         {
@@ -770,7 +770,9 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         }
         cursor_open=EXFALSE;
         
-        /* delete all records */
+        /* delete all records 
+         * TODO: Maybe we can skip the delete step?
+         */
         if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, 
             key, NULL)))
         {
@@ -786,13 +788,29 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         
         /* Add record */
         
+        /* dup was mandatory... flag if using sorting, afaik, or not? */
+        if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+        {
+            dbflags = EDB_APPENDDUP;
+        }
+        else
+        {
+            dbflags = 0;
+        }
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
+            key, &cachedata_update, dbflags)))
+        {
+            NDRX_LOG(log_debug, "Failed to put/update DB record!");
+            goto out;
+        }
+        
     }
     else if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
     {
         /* fetch next for dups and remove them.. if any.. */
         /* next: MDB_NEXT_DUP  - we kill this! */
         while (EXSUCCEED==(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_NEXT_DUP)))
+                    key, &cachedata_update, EDB_NEXT_DUP)))
         {
             /* delete the record, not needed, some old cache rec */
             

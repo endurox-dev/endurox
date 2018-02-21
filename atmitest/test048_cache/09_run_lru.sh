@@ -86,7 +86,7 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
+rm *.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
@@ -97,7 +97,7 @@ xadmin start -y || go_out 1
 #
 # Let clients to boot
 #
-sleep 2
+sleep 5
 
 RET=0
 
@@ -105,7 +105,6 @@ set_dom1;
 xadmin psc
 xadmin ppm
 xadmin pc
-
 
 echo "Running off client"
 
@@ -148,12 +147,10 @@ if [ $? -ne 0 ]; then
 fi
 
 
-#
-# Run key 1 again
-#
+echo "Run key 1 again, should live in cache"
 (time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n100 -fY 2>&1) >> ./09_testtool48.log
+    -cY -n100 -fN 2>&1) >> ./09_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (5)"
@@ -181,9 +178,8 @@ if [ $? -ne 0 ]; then
 fi
 
 
-#
-# wait for tpcached to complete scanning... (every 5 sec)
-#
+
+echo "wait for tpcached to complete scanning... (every 5 sec)"
 
 sleep 7
 
@@ -191,6 +187,8 @@ echo "There must be 5 keys"
 ensure_keys db09 5
 
 echo "There check they keys, should be 1,3,4,5,6"
+
+xadmin cs db09
 
 ensure_field db09 SV9KEY1 T_STRING_FLD KEY1 1
 ensure_field db09 SV9KEY2 T_STRING_FLD KEY2 0
