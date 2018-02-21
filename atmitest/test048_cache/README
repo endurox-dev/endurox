@@ -18,7 +18,7 @@ they should be removed from cache. DB set expiry=10s
 
 05 - refresh local cache by special key. tpcache config refreshrule=<some expr>
 
-06 - boot cache reset tests, TODO: try to reboot the only tpcachebt server, no
+06 - boot cache reset tests, try to reboot the only tpcachebt server, no
 changes shall be made to cache
 
 07 - negative response caching tests (rsprule)
