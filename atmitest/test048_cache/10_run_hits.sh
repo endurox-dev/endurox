@@ -1,8 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) See README. Limited cache, recently used lives...
+## @(#) See README. Limited cache, records with more hits live longer, test linux shm
 ##
-## @file 09_run_lru.sh
+## @file 10_run_hits.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -23,7 +23,7 @@
 ##
 ## You should have received a copy of the GNU General Public License along with
 ## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1309 USA
+## Place, Suite 330, Boston, MA 02111-1310 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -54,6 +54,15 @@ export NDRX_ULOG=$TESTDIR
 
 source ./test-func-include.sh
 
+export TESTDIR_SHM=$TESTDIR
+
+if [ -d "/dev/shm" ]; then
+
+    echo "Preparing ramdrive..."
+    mkdir -rf /dev/shm 2>/dev/null
+    mkdir /dev/shm/db10
+    export TESTDIR_SHM="/dev/shm"
+fi
 
 #
 # Domain 1 - here client will live
@@ -106,20 +115,26 @@ xadmin psc
 xadmin ppm
 xadmin pc
 
+
+#
+# Stop th daemon so that it does not interfere with in-progress calls
+#
+xadmin sc -t CACHED
+
 echo "Running off client"
 
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY1"}' \
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n100 -fY 2>&1) > ./09_testtool48.log
+    -cY -n90 -fY 2>&1) > ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY2"}' \
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY2"}' \
     -m '{"T_STRING_FLD":"KEY2"}' \
-    -cY -n100 -fY 2>&1) >> ./09_testtool48.log
+    -cY -n91 -fY 2>&1) >> ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (2)"
@@ -127,9 +142,9 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY3"}' \
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY3"}' \
     -m '{"T_STRING_FLD":"KEY3"}' \
-    -cY -n100 -fY 2>&1) >> ./09_testtool48.log
+    -cY -n92 -fY 2>&1) >> ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (3)"
@@ -137,20 +152,18 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY4"}' \
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY4"}' \
     -m '{"T_STRING_FLD":"KEY4"}' \
-    -cY -n100 -fY 2>&1) >> ./09_testtool48.log
+    -cY -n93 -fY 2>&1) >> ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (4)"
     go_out 1
 fi
 
-
-echo "Run key 1 again, should live in cache"
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY1"}' \
-    -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n100 -fN 2>&1) >> ./09_testtool48.log
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY5"}' \
+    -m '{"T_STRING_FLD":"KEY5"}' \
+    -cY -n94 -fY 2>&1) >> ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (5)"
@@ -158,9 +171,9 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY5"}' \
-    -m '{"T_STRING_FLD":"KEY5"}' \
-    -cY -n100 -fY 2>&1) >> ./09_testtool48.log
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY6"}' \
+    -m '{"T_STRING_FLD":"KEY6"}' \
+    -cY -n95 -fY 2>&1) >> ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (6)"
@@ -168,36 +181,78 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV09 -b '{"T_STRING_FLD":"KEY6"}' \
-    -m '{"T_STRING_FLD":"KEY6"}' \
-    -cY -n100 -fY 2>&1) >> ./09_testtool48.log
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY7"}' \
+    -m '{"T_STRING_FLD":"KEY7"}' \
+    -cY -n96 -fY 2>&1) >> ./10_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (7)"
     go_out 1
 fi
 
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY8"}' \
+    -m '{"T_STRING_FLD":"KEY8"}' \
+    -cY -n97 -fY 2>&1) >> ./10_testtool48.log
 
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (8)"
+    go_out 1
+fi
+
+
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY9"}' \
+    -m '{"T_STRING_FLD":"KEY9"}' \
+    -cY -n98 -fY 2>&1) >> ./10_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (9)"
+    go_out 1
+fi
+
+
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY10"}' \
+    -m '{"T_STRING_FLD":"KEY10"}' \
+    -cY -n99 -fY 2>&1) >> ./10_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (10)"
+    go_out 1
+fi
+
+
+(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY11"}' \
+    -m '{"T_STRING_FLD":"KEY11"}' \
+    -cY -n100 -fY 2>&1) >> ./10_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (11)"
+    go_out 1
+fi
+
+xadmin bc -t CACHED
+
+echo "let client to boot..."
+sleep 5
 
 echo "wait for tpcached to complete scanning... (every 5 sec)"
 
 sleep 7
 
 echo "There must be 5 keys"
-ensure_keys db09 5
+ensure_keys db10 5
 
-echo "There check they keys, should be 1,3,4,5,6"
+xadmin cs db10
 
-xadmin cs db09
-
-ensure_field db09 SV9KEY1 T_STRING_FLD KEY1 1
-ensure_field db09 SV9KEY2 T_STRING_FLD KEY2 0
-ensure_field db09 SV9KEY3 T_STRING_FLD KEY3 1
-ensure_field db09 SV9KEY4 T_STRING_FLD KEY4 1
-ensure_field db09 SV9KEY5 T_STRING_FLD KEY5 1
-ensure_field db09 SV9KEY6 T_STRING_FLD KEY6 1
-
-
+ensure_field db10 SV10KEY11 T_STRING_FLD KEY11 1
+ensure_field db10 SV10KEY10 T_STRING_FLD KEY10 1
+ensure_field db10 SV10KEY9 T_STRING_FLD KEY9 1
+ensure_field db10 SV10KEY8 T_STRING_FLD KEY8 1
+ensure_field db10 SV10KEY7 T_STRING_FLD KEY7 1
+ensure_field db10 SV10KEY6 T_STRING_FLD KEY6 0
+ensure_field db10 SV10KEY5 T_STRING_FLD KEY5 0
+ensure_field db10 SV10KEY4 T_STRING_FLD KEY4 0
+ensure_field db10 SV10KEY3 T_STRING_FLD KEY3 0
+ensure_field db10 SV10KEY2 T_STRING_FLD KEY2 0
+ensure_field db10 SV10KEY1 T_STRING_FLD KEY1 0
 
 go_out $RET
-
