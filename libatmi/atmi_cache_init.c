@@ -451,15 +451,20 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         ||
             
         (db->flags & NDRX_TPCACHE_FLAGS_HITS) &&
-                       (db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
-                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO)
+                       ((db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
+                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO))
         ||
         (db->flags & NDRX_TPCACHE_FLAGS_FIFO) &&
-                       (db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
-                       (db->flags & NDRX_TPCACHE_FLAGS_HITS)
+                       ((db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
+                       (db->flags & NDRX_TPCACHE_FLAGS_HITS))
             
             )
     {
+        
+        NDRX_LOG(log_error, "lru = %d", (db->flags & NDRX_TPCACHE_FLAGS_LRU));
+        NDRX_LOG(log_error, "hits = %d", (db->flags & NDRX_TPCACHE_FLAGS_HITS));
+        NDRX_LOG(log_error, "fifo = %d", (db->flags & NDRX_TPCACHE_FLAGS_FIFO));
+        
         NDRX_CACHE_ERROR("For cache db [%s] flags lru,hits and fifo cannot be mixed!", 
                 cachedb);
         EXFAIL_OUT(ret);
