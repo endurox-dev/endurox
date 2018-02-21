@@ -282,13 +282,23 @@ exprivate int cmpfunc_lru (const void * a, const void * b)
     ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
     ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
     
+    
+    NDRX_LOG(log_error, "a = %p b = %p", a, b);
+    
+    /*
     ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
     ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;
-            
+            */
     /* if records are empty (not filled, malloc'd then numbers will be higher anyway */
     
     /* to get newer rec first, we change the compare order */
-    return ndrx_utc_cmp(&bv->hit_t, &bv->hit_tusec, &av->hit_t, &av->hit_tusec);
+    
+    NDRX_LOG(log_debug, "YOPT LRU !>>> t1 %ld.%ld vs t2 %ld.%ld", 
+            bd->data.hit_t, bd->data.hit_tusec, 
+            ad->data.hit_t, ad->data.hit_tusec);
+    
+    return ndrx_utc_cmp(&bd->data.hit_t, &bd->data.hit_tusec, 
+            &ad->data.hit_t, &ad->data.hit_tusec);
     
 }
 /**
@@ -330,12 +340,14 @@ exprivate int cmpfunc_fifo (const void * a, const void * b)
 {
     ndrx_tpcache_datasort_t *ad = (ndrx_tpcache_datasort_t *)a;
     ndrx_tpcache_datasort_t *bd = (ndrx_tpcache_datasort_t *)b;
-    
+    /*
     ndrx_tpcache_data_t *av = (ndrx_tpcache_data_t *)&ad->data;
     ndrx_tpcache_data_t *bv = (ndrx_tpcache_data_t *)&bd->data;    
     
+    */
+    
     /* do some custom work because of int */
-    return ndrx_utc_cmp(&bv->t, &bv->tusec, &av->t, &av->tusec);
+    return ndrx_utc_cmp(&bd->data.t, &bd->data.tusec, &ad->data.t, &ad->data.tusec);
 }
 
 /**
@@ -403,6 +415,8 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     for (i=0; i<stat.ms_entries; i++)
     {
         NDRX_CALLOC_OUT(dsort[i], 1, sizeof(ndrx_tpcache_datasort_t), ndrx_tpcache_datasort_t);
+        
+        NDRX_LOG(log_error, "Alloc dsort %ld = %p", i, dsort[i]);
     }
     
     
@@ -469,8 +483,17 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         if (i>0 && 0!=strcmp(dsort[i-1]->key.mv_data, keydb.mv_data) || 0==i)
         {
             /* populate array */
-            memcpy(&dsort[i]->data, pdata, sizeof(ndrx_tpcache_data_t));
-
+            
+            
+            NDRX_LOG(log_error, "Adding to qsort... [%ld]", i);
+            
+            /* just copy header, not full data...  */
+            memcpy(&(dsort[i]->data), pdata, sizeof(ndrx_tpcache_data_t));
+            /*
+                    
+            NDRX_DUMP(log_error, "Data", &(dsort[i]->data), sizeof(ndrx_tpcache_data_t));
+            
+*/
             /* duplicate key data (it is string!) */
 
             if (NULL==(dsort[i]->key.mv_data = NDRX_STRDUP(keydb.mv_data)))
@@ -520,17 +543,17 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     
     if (db->flags & NDRX_TPCACHE_FLAGS_LRU)
     {
-        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t *),
+        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t*),
                   cmpfunc_lru);
     }
     else if (db->flags & NDRX_TPCACHE_FLAGS_HITS)
     {
-        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t *),
+        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t*),
                   cmpfunc_hits);
     }
     else if (db->flags & NDRX_TPCACHE_FLAGS_FIFO)
     {
-        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t *),
+        qsort(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t*),
                   cmpfunc_fifo);
     }
     else
@@ -542,6 +565,13 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     /* empty lists are always at the end of the array */
     
     /* then go over the linear array, and remove records which goes over the cache */
+    
+    /* just print the sorted arrays... */
+    for (i=0; i<stat.ms_entries; i++)
+    {
+        NDRX_LOG(log_debug, "YOPT !>>> Cache infos: key [%s], last used: %ld.%ld", 
+                dsort[i]->key.mv_data, dsort[i]->data.hit_t, dsort[i]->data.hit_tusec);
+    }
     
     for (i=db->limit; i<stat.ms_entries; i++)
     {
