@@ -125,7 +125,7 @@ extern "C" {
     NDRX_LOG(LEV, "cachedb ptr=[%p]", CACHEDB);\
     NDRX_LOG(LEV, "resource=[%s]", CACHEDB->resource);\
     NDRX_LOG(LEV, "limit=[%ld]", CACHEDB->limit);\
-    NDRX_LOG(LEV, "expiry=[%ld] msec", CACHEDB->expiry);\
+    NDRX_LOG(LEV, "expiry=[%ld] sec", CACHEDB->expiry);\
     NDRX_LOG(LEV, "flags=[%ld]", CACHEDB->flags);\
     NDRX_LOG(LEV, "flags, 'expiry' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_EXPIRY));\
@@ -236,7 +236,7 @@ struct ndrx_tpcache_db
     char cachedb[NDRX_CCTAG_MAX+1];/* cache db logical name (subsect of @cachedb)   */
     char resource[PATH_MAX+1];  /* physical path of the cache folder                */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
-    long expiry;                /* Number of milli-seconds for record to live       */
+    long expiry;                /* Number of seconds for record to live             */
     long flags;                 /* configuration flags for this cache               */
     long max_readers;           /* db settings                                      */
     long map_size;              /* db settings                                      */
