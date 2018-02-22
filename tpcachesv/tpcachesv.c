@@ -76,6 +76,7 @@ void CACHEEV (TPSVCINFO *p_svc)
     char *flags;
     char *svcnm;
     int len;
+    char *saveptr;
     
     /* now understand what request this was 
      * also we need to get timestamps
@@ -86,7 +87,7 @@ void CACHEEV (TPSVCINFO *p_svc)
     
     NDRX_LOG(log_info, "Received event op: [%s]", extradata);
     
-    if (NULL==(op = strtok(extradata, "/")))
+    if (NULL==(op = strtok_r(extradata, "/", &saveptr)))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'operation'", 
                 last_call->extradata);
@@ -125,16 +126,18 @@ void CACHEEV (TPSVCINFO *p_svc)
         goto out;
     }
     
+    /* why? 
     op[3] = EXEOS;
+    */
     
-    if (NULL==(flags = strtok(NULL, "/")))
+    if (NULL==(flags = strtok_r(NULL, "/", &saveptr)))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'flags'",
                 last_call->extradata);
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(svcnm = strtok(NULL, "/")))
+    if (NULL==(svcnm = strtok_r(NULL, "/", &saveptr)))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get "
                 "'service name' for cache op", last_call->extradata);

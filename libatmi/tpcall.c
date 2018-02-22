@@ -1003,22 +1003,26 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
                         * because we do want answer back! */
     
-    if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
-            p_tranid)))
+    /* event posting might be done with out reply... */
+    if (!(flags&TPNOREPLY))
     {
-        NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
-        goto out;
-    }
+        if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
+                p_tranid)))
+        {
+            NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
+            goto out;
+        }
 
-    /*
-     * Did we get back what we asked for?
-     */
-    if (cd_req!=cd_rply)
-    {
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
-                                         __func__, cd_req, cd_rply);
-        goto out;
+        /*
+         * Did we get back what we asked for?
+         */
+        if (cd_req!=cd_rply)
+        {
+            ret=EXFAIL;
+            ndrx_TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
+                                             __func__, cd_req, cd_rply);
+            goto out;
+        }
     }
 
 out:
