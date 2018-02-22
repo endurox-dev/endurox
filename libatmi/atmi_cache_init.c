@@ -341,7 +341,17 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         }
         else if (0==strcmp(val->key, "expiry"))
         {
-            db->expiry = (long)ndrx_num_time_parsecfg(val->val);
+            db->expiry = (long)ndrx_num_time_parsecfg(val->val) / 1000L;
+            
+            /* we run seconds basis, thus divide by 1000 */
+            
+            if (0>=db->expiry)
+            {
+                NDRX_CACHE_ERROR("Invalid expiry specified for db [%s], "
+                        "the minimums is 1 second ", cachedb);
+                EXFAIL_OUT(ret);
+            }
+            
             db->flags|=NDRX_TPCACHE_FLAGS_EXPIRY;
         }
         else if (0==strcmp(val->key, "flags"))

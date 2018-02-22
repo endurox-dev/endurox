@@ -78,6 +78,12 @@
             <srvid>110</srvid>
             <sysopt>-e ${TESTDIR}/atmisv48.log -sTESTSV08_1/TESTSV08_2/TESTSV08_3/TESTSV09/TESTSV10/TESTSV11:OKSVC -r</sysopt>
         </server>
+        <server name="atmi.sv48">
+            <max>1</max>
+            <cctag></cctag>
+            <srvid>120</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv48.log -sTESTSV12:OKSVC -r</sysopt>
+        </server>
         <server name="cpmsrv">
             <max>1</max>
             <max>1</max>
