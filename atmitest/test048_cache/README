@@ -34,3 +34,6 @@ folder
 
 12 - limited cache, HITS + expiry
 
+13 - simple domain operations, check one way replication, domain 1 add, domain 1 delete.
+should be replicated on domain 2.
+
