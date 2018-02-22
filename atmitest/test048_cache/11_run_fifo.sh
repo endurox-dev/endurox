@@ -1,8 +1,8 @@
 #!/bin/bash
 ## 
-## @(#) See README. Limited cache, records with more hits live longer, test linux shm
+## @(#) See README. Limited cache, fifo order
 ##
-## @file 10_run_hits.sh
+## @file 11_run_fifo.sh
 ## 
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -51,18 +51,9 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_TOUT=10
 export NDRX_ULOG=$TESTDIR
-
-source ./test-func-include.sh
-
 export TESTDIR_SHM=$TESTDIR
 
-if [ -d "/dev/shm" ]; then
-
-    echo "Preparing ramdrive..."
-    mkdir -rf /dev/shm 2>/dev/null
-    mkdir /dev/shm/db10
-    export TESTDIR_SHM="/dev/shm"
-fi
+source ./test-func-include.sh
 
 #
 # Domain 1 - here client will live
@@ -123,7 +114,7 @@ xadmin sc -t CACHED
 
 echo "Running off client"
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY1"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
     -cY -n100 -fY 2>&1) > ./10_testtool48.log
 
@@ -132,7 +123,7 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY2"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY2"}' \
     -m '{"T_STRING_FLD":"KEY2"}' \
     -cY -n91 -fY 2>&1) >> ./10_testtool48.log
 
@@ -142,7 +133,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY3"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY3"}' \
     -m '{"T_STRING_FLD":"KEY3"}' \
     -cY -n92 -fY 2>&1) >> ./10_testtool48.log
 
@@ -152,7 +143,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY4"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY4"}' \
     -m '{"T_STRING_FLD":"KEY4"}' \
     -cY -n93 -fY 2>&1) >> ./10_testtool48.log
 
@@ -161,7 +152,7 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY5"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY5"}' \
     -m '{"T_STRING_FLD":"KEY5"}' \
     -cY -n94 -fY 2>&1) >> ./10_testtool48.log
 
@@ -171,7 +162,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY6"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY6"}' \
     -m '{"T_STRING_FLD":"KEY6"}' \
     -cY -n95 -fY 2>&1) >> ./10_testtool48.log
 
@@ -181,7 +172,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY7"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY7"}' \
     -m '{"T_STRING_FLD":"KEY7"}' \
     -cY -n96 -fY 2>&1) >> ./10_testtool48.log
 
@@ -190,7 +181,7 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY8"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY8"}' \
     -m '{"T_STRING_FLD":"KEY8"}' \
     -cY -n97 -fY 2>&1) >> ./10_testtool48.log
 
@@ -200,7 +191,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY9"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY9"}' \
     -m '{"T_STRING_FLD":"KEY9"}' \
     -cY -n98 -fY 2>&1) >> ./10_testtool48.log
 
@@ -210,7 +201,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY10"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY10"}' \
     -m '{"T_STRING_FLD":"KEY10"}' \
     -cY -n99 -fY 2>&1) >> ./10_testtool48.log
 
@@ -220,7 +211,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV10 -b '{"T_STRING_FLD":"KEY11"}' \
+(time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY11"}' \
     -m '{"T_STRING_FLD":"KEY11"}' \
     -cY -n100 -fY 2>&1) >> ./10_testtool48.log
 
@@ -239,20 +230,22 @@ echo "wait for tpcached to complete scanning... (every 5 sec)"
 sleep 7
 
 echo "There must be 5 keys"
-ensure_keys db10 5
+ensure_keys db11 5
 
-xadmin cs db10
+xadmin cs db11
 
-ensure_field db10 SV10KEY11 T_STRING_FLD KEY11 1
-ensure_field db10 SV10KEY10 T_STRING_FLD KEY10 1
-ensure_field db10 SV10KEY9 T_STRING_FLD KEY9 1
-ensure_field db10 SV10KEY8 T_STRING_FLD KEY8 1
-ensure_field db10 SV10KEY7 T_STRING_FLD KEY7 0
-ensure_field db10 SV10KEY6 T_STRING_FLD KEY6 0
-ensure_field db10 SV10KEY5 T_STRING_FLD KEY5 0
-ensure_field db10 SV10KEY4 T_STRING_FLD KEY4 0
-ensure_field db10 SV10KEY3 T_STRING_FLD KEY3 0
-ensure_field db10 SV10KEY2 T_STRING_FLD KEY2 0
-ensure_field db10 SV10KEY1 T_STRING_FLD KEY1 1
+xadmin cd -d db11 -k SV11KEY11 -i
+
+ensure_field db11 SV11KEY11 T_STRING_FLD KEY11 1
+ensure_field db11 SV11KEY10 T_STRING_FLD KEY10 1
+ensure_field db11 SV11KEY9 T_STRING_FLD KEY9 1
+ensure_field db11 SV11KEY8 T_STRING_FLD KEY8 1
+ensure_field db11 SV11KEY7 T_STRING_FLD KEY7 1
+ensure_field db11 SV11KEY6 T_STRING_FLD KEY6 0
+ensure_field db11 SV11KEY5 T_STRING_FLD KEY5 0
+ensure_field db11 SV11KEY4 T_STRING_FLD KEY4 0
+ensure_field db11 SV11KEY3 T_STRING_FLD KEY3 0
+ensure_field db11 SV11KEY2 T_STRING_FLD KEY2 0
+ensure_field db11 SV11KEY1 T_STRING_FLD KEY1 0
 
 go_out $RET
