@@ -205,16 +205,20 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
          * the difference between 
          */
         
+        NDRX_LOG(log_info, "TESTING: Record with key [%s]: current UTC: %ld, "
+                    "record expiry %ld sec. Record expiry UTC: %ld", 
+                    keydb.mv_data, t,  db->expiry, pdata->t + db->expiry);
+        
         /* so either record is expired or service does not exists */
-        if (   ((db->flags & NDRX_TPCACHE_FLAGS_EXPIRY) && (pdata->hit_t + db->expiry < t))
+        if (   ((db->flags & NDRX_TPCACHE_FLAGS_EXPIRY) && (pdata->t + db->expiry < t))
                 ||
                 ((db->flags & NDRX_TPCACHE_FLAGS_CLRNOSVC) && 
                     EXSUCCEED!=ndrx_shm_get_svc(pdata->svcnm, send_q, &tmp_is_bridge, NULL))
             )
         {
             NDRX_LOG(log_info, "Record with key [%s] expired: current UTC: %ld, "
-                    "record %ld (+%ld = %ld)", 
-                    keydb.mv_data, pdata->hit_t,  db->expiry, pdata->hit_t + db->expiry);
+                    "record expiry %ld sec. Record expiry UTC: %ld", 
+                    keydb.mv_data, t,  db->expiry, pdata->t + db->expiry);
             
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
