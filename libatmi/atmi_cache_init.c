@@ -446,17 +446,17 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     /* Check invalid flags */
 
     if (((db->flags & NDRX_TPCACHE_FLAGS_LRU) &&
-                       (db->flags & NDRX_TPCACHE_FLAGS_HITS) ||
-                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO))
+                       ((db->flags & NDRX_TPCACHE_FLAGS_HITS) ||
+                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO)))
         ||
             
-        (db->flags & NDRX_TPCACHE_FLAGS_HITS) &&
+        ((db->flags & NDRX_TPCACHE_FLAGS_HITS) &&
                        ((db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
-                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO))
+                       (db->flags & NDRX_TPCACHE_FLAGS_FIFO)))
         ||
-        (db->flags & NDRX_TPCACHE_FLAGS_FIFO) &&
+        ((db->flags & NDRX_TPCACHE_FLAGS_FIFO) &&
                        ((db->flags & NDRX_TPCACHE_FLAGS_LRU) ||
-                       (db->flags & NDRX_TPCACHE_FLAGS_HITS))
+                       (db->flags & NDRX_TPCACHE_FLAGS_HITS)))
             
             )
     {

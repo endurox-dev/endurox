@@ -76,7 +76,7 @@
             <max>1</max>
             <cctag></cctag>
             <srvid>110</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv48.log -sTESTSV08_1/TESTSV08_2/TESTSV08_3/TESTSV09/TESTSV10:OKSVC -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv48.log -sTESTSV08_1/TESTSV08_2/TESTSV08_3/TESTSV09/TESTSV10/TESTSV11:OKSVC -r</sysopt>
         </server>
         <server name="cpmsrv">
             <max>1</max>
