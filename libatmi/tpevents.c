@@ -261,7 +261,7 @@ expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
 
     /* Post the */
     snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVPOST, nodeid);
-    if (EXFAIL!=(ret=tpcallex(tmpsvc, data, len, &ret_buf, &ret_len, flags, 
+    if (EXFAIL!=(ret=ndrx_tpcall(tmpsvc, data, len, &ret_buf, &ret_len, flags, 
             eventname, EXFAIL, 0, user1, user2, user3, user4)))
     {
         ret=tpurcode; /* Return code - count of events applied */

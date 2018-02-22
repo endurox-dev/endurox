@@ -51,6 +51,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_TOUT=10
 export NDRX_ULOG=$TESTDIR
+export TESTDIR_DB=$TESTDIR
 export TESTDIR_SHM=$TESTDIR
 #
 # Domain 1 - here client will live
@@ -61,7 +62,7 @@ set_dom1() {
     export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
     export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
     export NDRX_LOG=$TESTDIR/ndrx-dom1.log
-#    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
+    export NDRX_CCTAG=dom1
 }
 
 source ./test-func-include.sh
