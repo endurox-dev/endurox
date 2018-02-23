@@ -69,25 +69,33 @@ void CACHEEV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     tp_command_call_t * last_call;
-    char extradata[XATMI_EVENT_MAX+1];
+    char *extradata;
+    char *extradata_p;
     char nodeidstr[3+1];
     char *op;
     int nodeid;
     char *flags;
     char *svcnm;
     int len;
-    char *saveptr;
     
     /* now understand what request this was 
      * also we need to get timestamps
      */
     last_call=ndrx_get_G_last_call();
     
-    NDRX_STRCPY_SAFE(extradata, last_call->extradata);
+    /* NDRX_STRCPY_SAFE(extradata, last_call->extradata); */
+    
+    extradata = extradata_p = NDRX_STRDUP(last_call->extradata);
+    
+    if (NULL==extradata)
+    {
+        NDRX_LOG(log_error, "strdup failed: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
     NDRX_LOG(log_info, "Received event op: [%s]", extradata);
     
-    if (NULL==(op = strtok_r(extradata, "/", &saveptr)))
+    if (NULL==(op = strsep(&extradata, "/")))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'operation'", 
                 last_call->extradata);
@@ -130,14 +138,16 @@ void CACHEEV (TPSVCINFO *p_svc)
     op[3] = EXEOS;
     */
     
-    if (NULL==(flags = strtok_r(NULL, "/", &saveptr)))
+    /* strtok cannot handle empty fields! it goes to next and we get here 
+     * service name as flags... thus use strsep() */
+    if (NULL==(flags = strsep(&extradata, "/")))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'flags'",
                 last_call->extradata);
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(svcnm = strtok_r(NULL, "/", &saveptr)))
+    if (NULL==(svcnm = strsep(&extradata, "/")))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get "
                 "'service name' for cache op", last_call->extradata);
@@ -148,7 +158,7 @@ void CACHEEV (TPSVCINFO *p_svc)
             op, flags, svcnm);
     
     /* check is op correct? */
-    if (0==strcmp(op, NDRX_CACHE_EV_PUTCMD))
+    if (0==strncmp(op, NDRX_CACHE_EV_PUTCMD, NDRX_CACHE_EV_LEN))
     {
         NDRX_LOG(log_debug, "performing put (save to cache)...");
 
@@ -163,7 +173,7 @@ void CACHEEV (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(op, NDRX_CACHE_EV_DELCMD))
+    else if (0==strncmp(op, NDRX_CACHE_EV_DELCMD, NDRX_CACHE_EV_LEN))
     {
         NDRX_LOG(log_debug, "Delete record by data");
         /* Delete cache according to flags, if FULL specified, then drop all matched 
@@ -176,7 +186,7 @@ void CACHEEV (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(op, NDRX_CACHE_EV_KILCMD))
+    else if (0==strncmp(op, NDRX_CACHE_EV_KILCMD, NDRX_CACHE_EV_LEN))
     {
         NDRX_LOG(log_debug, "Drop cache event");
         /*
@@ -188,7 +198,7 @@ void CACHEEV (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(op, NDRX_CACHE_EV_MSKDELCMD))
+    else if (0==strncmp(op, NDRX_CACHE_EV_MSKDELCMD, NDRX_CACHE_EV_LEN))
     {
         int deleted;
         char keyexpr[NDRX_CACHE_OPEXPRMAX+1];
@@ -214,7 +224,7 @@ void CACHEEV (TPSVCINFO *p_svc)
         NDRX_LOG(log_info, "Delete %ld cache records matching key expression [%s]",
                 deleted, keyexpr);
     }
-    else if (0==strcmp(op, NDRX_CACHE_EV_KEYDEL))
+    else if (0==strncmp(op, NDRX_CACHE_EV_KEYDEL, NDRX_CACHE_EV_LEN))
     {
         int deleted;
         char key[NDRX_CACHE_OPEXPRMAX+1];
@@ -248,6 +258,12 @@ void CACHEEV (TPSVCINFO *p_svc)
     }
     
 out:
+
+    if (NULL!=extradata_p)
+    {
+        NDRX_FREE(extradata_p);
+    }
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 NULL,
