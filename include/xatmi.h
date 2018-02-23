@@ -161,6 +161,9 @@ extern "C" {
 #define NDRX_CACHE_EV_MSKDEL    "@CM%03d/%s/%s"     /* Delete by mask                */
 #define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /* Cache event service, delete   */
 #define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /* Cache managemtn service       */
+    
+#define NDRX_CACHE_EV_LEN       3                   /* Number of chars in command    */
+    
 #define NDRX_CACHE_EV_PUTCMD    "@CP"               /* Put command in event          */
 #define NDRX_CACHE_EV_DELCMD    "@CD"               /* Delete command in event       */
 #define NDRX_CACHE_EV_KILCMD    "@CK"               /* Kill/drop ache event          */
