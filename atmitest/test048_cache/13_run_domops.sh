@@ -319,5 +319,63 @@ ensure_field db13 SV13KEY3 T_STRING_FLD KEY3 1
 ensure_field db13 SV13KEY2 T_STRING_FLD KEY2 1
 ensure_field db13 SV13KEY1 T_STRING_FLD KEY1 1
 
+
+echo "*************************************************************************"
+echo "Testing delete broadcast... (single record)"
+echo "*************************************************************************"
+
+echo "Domain 1"
+set_dom1;
+
+xadmin ci -d db13 -k SV13KEY6
+
+ensure_field db13 SV13KEY7 T_STRING_FLD KEY7 1
+ensure_field db13 SV13KEY6 T_STRING_FLD KEY6 0
+ensure_field db13 SV13KEY5 T_STRING_FLD KEY5 1
+
+echo "Domain 2"
+set_dom2;
+
+ensure_field db13 SV13KEY7 T_STRING_FLD KEY7 1
+ensure_field db13 SV13KEY6 T_STRING_FLD KEY6 0
+ensure_field db13 SV13KEY5 T_STRING_FLD KEY5 1
+
+echo "Domain 3"
+set_dom3;
+
+ensure_field db13 SV13KEY7 T_STRING_FLD KEY7 1
+ensure_field db13 SV13KEY6 T_STRING_FLD KEY6 0
+ensure_field db13 SV13KEY5 T_STRING_FLD KEY5 1
+
+
+echo "*************************************************************************"
+echo "Testing delete broadcast... (regexp)"
+echo "*************************************************************************"
+
+echo "Domain 1"
+set_dom1;
+
+xadmin ci -d db13 -k SV13KEY1. -r
+
+ensure_field db13 SV13KEY11 T_STRING_FLD KEY11 0
+ensure_field db13 SV13KEY10 T_STRING_FLD KEY10 0
+ensure_field db13 SV13KEY9 T_STRING_FLD KEY9 1
+
+echo "Domain 2"
+set_dom2;
+
+ensure_field db13 SV13KEY11 T_STRING_FLD KEY11 0
+ensure_field db13 SV13KEY10 T_STRING_FLD KEY10 0
+ensure_field db13 SV13KEY9 T_STRING_FLD KEY9 1
+
+echo "Domain 3"
+set_dom3;
+
+ensure_field db13 SV13KEY11 T_STRING_FLD KEY11 0
+ensure_field db13 SV13KEY10 T_STRING_FLD KEY10 0
+ensure_field db13 SV13KEY9 T_STRING_FLD KEY9 1
+
+
+
 go_out $RET
 
