@@ -1,7 +1,11 @@
 /* 
-** ATMI level cache - invalidate
+** ATMI level cache - keygroup routines
+** Invalidate their cache shall be done by buffer. And not by key. Thus for
+** invalidate their, our key is irrelevant.
+** Delete shall be performed last on keygrp
+** The insert first shall be done in keygrp and then keyitems.
 **
-** @file atmi_cache_inval.c
+** @file atmi_cache_keygrp.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -56,83 +60,66 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Invalidate their cache
- * @param svc service name called
- * @param cache cache descriptor (invalidator)
- * @param key key built (their key)
- * @param idata input data
- * @param ilen input data len
- * @return EXSUCCEED/EXFAIL (tperror set)
+ * Add update keygroup. Only intrersting question is how about duplicate
+ * keys? If it is duplciate, then key group does not change. So there shall be
+ * no problems.
  */
-expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
-        char *key, char *idata, long ilen)
+expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
+            char *idata, long ilen, char *cachekey)
 {
-    int ret = EXFALSE;
-    int tran_started = EXFALSE;
-    EDB_txn *txn;
-    
-    /*
-     * just delete record from theyr cache, ptr to cache we have already inside
-     * the cache object 
+    int ret = EXSUCCEED;
+    /* The storage will be standard UBF buffer
+     * with some extra fields, like dbname from which data is stored here...
+     * EX_CACHE_DBNAME - the database of the group
+     * EX_CACHE_OPEXPR - this will be mulitple occurrences with linked pages
      */
+
+    /* 1. build the key (keygrp) */
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->inval_cache->cachedb, &txn, 0)))
-    {
-        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
-        goto out;
-    }
+    /* 2. Find record in their db */
     
-    tran_started = EXTRUE;
+    /* 2.1 check all occurrenences of EX_CACHE_OPEXPR (we could use Bnext
+     * for fast data checking...), if key is found, then we are done, return. */
     
-    NDRX_LOG(log_debug, "Delete their cache [%s] idx %d",
-            cache->inval_svc, cache->inval_idx);
+    /* 3. if not found, allocate new buffer. Add  EX_CACHE_DBNAME */
     
-    /* TODO: If their is part of the cache group, then we shall 
-     * invalidate whole group.. 
-     */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->inval_cache->cachedb, txn, 
-            key, NULL)))
-    {
-        if (EDB_NOTFOUND==ret)
-        {
-            ret=EXSUCCEED;
-        }
-        else
-        {
-            EXFAIL_OUT(ret);
-        }
-    }
+    /* 4. ensure that in buffer we have cachekey bytes + 1024 */
     
-    /* broadcast if needed */
-    if (cache->inval_cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
-    {
-        if (EXSUCCEED!=ndrx_cache_broadcast(cache->inval_cache, 
-                cache->inval_svc, idata, ilen, 
-                NDRX_CACHE_BCAST_MODE_DEL, NDRX_TPCACHE_BCAST_DELFULL, 0, 0, 0, 0))
-        {
-            NDRX_LOG(log_error, "WARNING ! Failed to broadcast delete event - continue");
-            
-            if (0!=tperrno)
-            {
-                NDRX_LOG(log_error, "TP Error set -> fail");
-                EXFAIL_OUT(ret);
-            }
-        }
-    }
+    /* 5. add key to the buffer */
+    
+    /* 6. save record to the DB.  */
     
 out:
-
-    if (tran_started)
-    {
-        if (EXSUCCEED==ret)
-        {
-            ndrx_cache_edb_commit(cache->inval_cache->cachedb, txn);
-        }
-        else
-        {
-            ndrx_cache_edb_abort(cache->inval_cache->cachedb, txn);
-        }
-    }
-
+            
     return ret;
 }
+
+/**
+ * Delete keygroup record by data.
+ * Can reuse transaction...
+ * use this func in ndrx_cache_inval_by_data
+ */
+expublic int ndrx_cache_keygrp_inval_by_data(char *svc, ndrx_tpcallcache_t *cache, 
+        char *key, char *idata, long ilen, EDB_txn **txn)
+{
+    int ret = EXSUCCEED;
+    
+out:
+            
+    return ret;
+}
+
+/**
+ * Delete by key, group values...
+ * use this func in ndrx_cache_inval_by_key()
+ */
+expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db, char *key, EDB_txn **txn)
+{
+    int ret = EXSUCCEED;
+    
+out:
+            
+    return ret;
+}
+
+

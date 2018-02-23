@@ -2,6 +2,8 @@
 ** ATMI level cache - operations.
 ** Inval - their change only at point when we are going to save the results
 ** in DB. And hopefully we get hopefully we get the newest result?
+** In case of keygroup if keyitem is deleted, then all items shall be deleted,
+** and keygroup shall be removed.
 **
 ** @file atmi_cache_ops.c
 ** 
@@ -113,7 +115,8 @@ out:
 }
 
 /**
- * Save data to cache
+ * Save data to cache. If doing save and this is key item. then we shall update
+ * the key group (add new key to keygroup...).
  * @param idata
  * @param ilen
  * @param save_tperrno
@@ -291,7 +294,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
-    
+    exdata->cache_idx = cache->idx;
     exdata->atmi_type_id = buffer_info->type_id;
     exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
             
@@ -358,7 +361,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             
     }
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
         goto out;
@@ -422,7 +425,8 @@ out:
 }
 
 /**
- * Lookup service in cache
+ * Lookup service in cache.
+ * We do not do writes here, thus we can use read only cursors...
  * @param svc service to call
  * @param idata input data buffer
  * @param ilen input len
@@ -580,18 +584,6 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             }
         }
         
-#if 0
-        if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
-        {
-            /* Invalidate their cache */
-            if (EXSUCCEED!=ndrx_cache_inval_their(svc, cache, key, idata, ilen))
-            {
-                NDRX_LOG(log_error, "Failed to invalidate their cache!");
-            }
-            
-        }
-#endif
-        
         if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
         {
 #ifdef NDRX_TPCACHE_DEBUG
@@ -625,7 +617,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     
     /* Lookup DB */
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, EDB_RDONLY)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
         goto out;

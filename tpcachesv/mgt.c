@@ -121,7 +121,7 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
      */
 
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY)))
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
         goto out;
@@ -283,7 +283,7 @@ exprivate int cache_dump(UBFH **pp_ub)
     }
 
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY)))
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
         goto out;
