@@ -131,7 +131,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran: %s", __func__, 
                 tpstrerror(tperrno));
@@ -368,7 +368,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     /* Get size of db */
     
     /* start transaction */
-    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn))
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
     {
         NDRX_LOG(log_error, "Failed start transaction: %s", 
                 tpstrerror(tperrno));
@@ -666,7 +666,7 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     /* Get size of db */
     
     /* start transaction */
-    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn))
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
     {
         NDRX_LOG(log_error, "Failed start transaction: %s", 
                 tpstrerror(tperrno));

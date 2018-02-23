@@ -291,7 +291,7 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
             key, cache->svcnm, cache->idx);
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
         goto out;
@@ -357,7 +357,7 @@ expublic int ndrx_cache_drop(char *cachedbnm, short nodeid)
     }
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
         goto out;
@@ -458,7 +458,7 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
     }
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
         goto out;
@@ -650,7 +650,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
     }
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
         goto out;

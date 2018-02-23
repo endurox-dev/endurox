@@ -65,21 +65,20 @@ extern "C" {
  */
     
 #define NDRX_TPCACHE_FLAGS_KEYGRP    0x00000800   /* Is this key group?               */
-#define NDRX_TPCACHE_FLAGS_KEYITEM   0x00001000   /* Is this key item?                */
+#define NDRX_TPCACHE_FLAGS_KEYITEMS  0x00001000   /* Is this key item?                */
     
-#define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
-#define NDRX_TPCACHE_TPCF_REPL       0x00000002      /* Replace buf                   */
-#define NDRX_TPCACHE_TPCF_MERGE      0x00000004      /* Merge buffers                 */
-#define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008      /* Save full buffer              */
-#define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010      /* Save set of fields            */
-#define NDRX_TPCACHE_TPCF_INVAL      0x00000020      /* Invalidate other cache        */
-#define NDRX_TPCACHE_TPCF_NEXT       0x00000040      /* Process next rule (only for inval)*/
+#define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001   /* Save record can be regexp        */
+#define NDRX_TPCACHE_TPCF_REPL       0x00000002   /* Replace buf                      */
+#define NDRX_TPCACHE_TPCF_MERGE      0x00000004   /* Merge buffers                    */
+#define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008   /* Save full buffer                 */
+#define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010   /* Save set of fields               */
+#define NDRX_TPCACHE_TPCF_INVAL      0x00000020   /* Invalidate other cache           */
+#define NDRX_TPCACHE_TPCF_NEXT       0x00000040   /* Process next rule (only for inval)*/
+#define NDRX_TPCACHE_TPCF_DELREG     0x00000080   /* Delete record can be regexp      */
+#define NDRX_TPCACHE_TPCF_DELFULL    0x00000100   /* Delete full buffer               */
+#define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200   /* Delete set of fields             */
+#define NDRX_TPCACHE_TPCF_KEYITEMS   0x00000400   /* Cache is items for group         */
 
-#define NDRX_TPCACHE_TPCF_DELREG     0x00000080      /* Delete record can be regexp   */
-#define NDRX_TPCACHE_TPCF_DELFULL    0x00000100      /* Delete full buffer            */
-#define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200      /* Delete set of fields          */
-
-    
 #define NDRX_TPCACH_INIT_NORMAL      0   /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT        1   /* Boot mode init (ndrxd startst)   */
 
@@ -153,10 +152,10 @@ extern "C" {
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_SCANDUP));\
     NDRX_LOG(LEV, "flags, 'clrnosvc' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_CLRNOSVC));\
-    NDRX_LOG(LEV, "flags, 'keygrp' = [%d]", \
+    NDRX_LOG(LEV, "flags, 'keyitems' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYITEMS));\
+    NDRX_LOG(LEV, "flags, 'keygroup' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYGRP));\
-    NDRX_LOG(LEV, "flags, 'keyitem' = [%d]", \
-                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYITEM));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
@@ -173,6 +172,7 @@ extern "C" {
     NDRX_LOG(LEV, "cachedb=[%p]", TPCALLCACHE->cachedb);\
     NDRX_LOG(LEV, "idx=[%d]", TPCALLCACHE->idx);\
     NDRX_LOG(LEV, "keyfmt=[%s]", TPCALLCACHE->keyfmt);\
+    NDRX_LOG(LEV, "keygrpfmt=[%s]", TPCALLCACHE->keygrpfmt);\
     NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->saveproj.expression);\
     NDRX_LOG(LEV, "delete=[%s]", TPCALLCACHE->delproj.expression);\
     NDRX_LOG(LEV, "rule=[%s]", TPCALLCACHE->rule);\
@@ -204,6 +204,8 @@ extern "C" {
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELFULL));\
     NDRX_LOG(LEV, "flags (computed) delete list = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELSETOF));\
+    NDRX_LOG(LEV, "flags (computed) key items = [%d]", \
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_KEYITEMS));\
     NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
     NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
     NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
@@ -290,8 +292,14 @@ struct ndrx_tpcallcache
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
     ndrx_tpcache_db_t *cachedb;
-    ndrx_tpcache_db_t *keygrp;          /* key group indicator              */
+    ndrx_tpcache_db_t *keygrpdb;          /* key group indicator              */
     char keyfmt[PATH_MAX+1];
+    /*
+     * To use key group,
+     * the database shall be marked with flag as "keyitems"
+     * and the master database shall be marked as "keygroup"
+     */
+    char keygrpfmt[PATH_MAX+1];         /* Key group format                 */
     int idx;                            /* index of this cache for service  */
     
     ndrx_tpcache_projbuf_t saveproj;    /* Save buffer projection           */
@@ -477,7 +485,8 @@ extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
         char *key, EDB_val *data_out, int seterror_not_found);
 extern NDRX_API int ndrx_cache_edb_abort(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn);
-extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn);
+extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn,
+        	unsigned int flags);
 
 extern NDRX_API int ndrx_cache_edb_set_dupsort(ndrx_tpcache_db_t *db, EDB_txn *txn, 
             EDB_cmp_func *cmp);
