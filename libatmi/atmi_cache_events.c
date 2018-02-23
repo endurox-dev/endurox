@@ -114,16 +114,19 @@ expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache,
         
         odata = idata;
         olen = ilen;
-        
     }
     else if (NDRX_CACHE_BCAST_MODE_MSK==event_type)
     {
         fmt = NDRX_CACHE_EV_MSKDEL;
-        
         odata = idata;
         olen = ilen;
-        
     }
+    else if (NDRX_CACHE_BCAST_MODE_DKY==event_type)
+    {
+        fmt = NDRX_CACHE_EV_KEYDEL;
+        odata = idata;
+        olen = ilen;
+    }       
     else
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "Invalid broadcast event type: %d", 
