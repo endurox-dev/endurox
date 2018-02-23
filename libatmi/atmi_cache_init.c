@@ -401,6 +401,14 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_CLRNOSVC;
                 }
+                else if (0==strcmp(p, "keyitems"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_KEYITEMS;
+                }
+                else if (0==strcmp(p, "keygroup"))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_KEYGRP;
+                }
                 else
                 {
                     /* unknown flag */
@@ -1028,6 +1036,18 @@ expublic int ndrx_cache_init(int mode)
                 }   
             }
             
+            /* get db if key group is used */
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygrpdb")))
+            {
+                /* Resolve the DB */
+                if (NULL==(cache->keygrpdb=ndrx_cache_dbresolve((char *)tmp, mode)))
+                {
+                    NDRX_LOG(log_error, "%s failed", __func__);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
             /* validate the type */
             if (NULL==ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key)
             {
@@ -1043,6 +1063,15 @@ expublic int ndrx_cache_init(int mode)
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                         "[keyfmt] for service [%s], buffer index: %d", svc, i);
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
+            
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygrpfmt")))
+            {
+                NDRX_STRCPY_SAFE(cache->keygrpfmt, tmp);
                 EXFAIL_OUT(ret);
             }
             
@@ -1159,6 +1188,46 @@ expublic int ndrx_cache_init(int mode)
                     EXFAIL_OUT(ret);
                 }
             }
+            
+            /* Validate key group storage, if used */
+            
+            if (EXEOS!=cache->keygrpfmt[0])
+            {
+                /* this cache is part of key items... */
+                cache->flags|=NDRX_TPCACHE_TPCF_KEYITEMS;
+                
+                /* The database must be defined */
+                
+                if (NULL==cache->keygrpdb)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygrpdb] must be "
+                            "defined if [keygrpfmt] is used!");
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* database must be with keygrp flag */
+                
+                if (!(cache->keygrpdb->flags & NDRX_TPCACHE_FLAGS_KEYGRP))
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygrp] flag must be "
+                            "defined for [%s] database to use it for keyitems for",
+                            " service [%s] buffer index %d",
+                            cache->keygrpdb->cachedb, svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* and linked database must be with keyitems flag */
+                
+                if (!(cache->cachedb->flags & NDRX_TPCACHE_FLAGS_KEYITEMS))
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keyitems] flag must be "
+                            "defined for [%s] database to use it for keyitems for",
+                            " service [%s] buffer index %d",
+                            cache->cachedb->cachedb, svc, i);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
             /* Add to linked list */
             DL_APPEND(cachesvc->caches, cache);
             

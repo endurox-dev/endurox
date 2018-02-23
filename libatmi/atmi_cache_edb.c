@@ -131,13 +131,15 @@ exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
  * Begin MDB transaction
  * @param db db handler
  * @param txn transaction obj (out)
+ * @param flags mdb flags
  * @return EXSUCCEED or edb error
  */
-expublic int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn)
+expublic int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn,
+        unsigned int flags)
 {
     int ret = EXSUCCEED;
     
-    if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, 0, txn)))
+    if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, flags, txn)))
     {
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to begin transaction for [%s]: %s", 
