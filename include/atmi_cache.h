@@ -525,7 +525,7 @@ extern NDRX_API int ndrx_cache_refeval_ubf (ndrx_tpcallcache_t *cache,
 extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc, 
         char *idata, long ilen, int event_type, char *flags, int user1, long user2,
         int user3, long user4);
-extern NDRX_API int ndrx_cache_broadcast_by_delkey(char *cachedbnm, char *key, 
+extern NDRX_API int ndrx_cache_inval_by_key_bcastonly(char *cachedbnm, char *key, 
         short nodeid);
 extern NDRX_API int ndrx_cache_events_get(string_list_t **list);
 

@@ -47,6 +47,7 @@
 #include <exparson.h>
 #include <atmi_cache.h>
 #include <Exfields.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,7 +59,7 @@
 /**
  * Broadcast buffer as event
  * @param cache cache on which we perform broadcast
- * @param svc service name of cache event occurring
+ * @param svc service name of cache event occurring or cachedb name (depending on event)
  * @param idata input data
  * @param ilen input data len
  * @param event_type event type, see
@@ -514,7 +515,8 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
 
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
-                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", keydb.mv_data);
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
+                        keydb.mv_data);
                 EXFAIL_OUT(ret);
             }
 
@@ -616,7 +618,7 @@ out:
 }
 
 /**
- * Invalidate cache by expression
+ * Invalidate by key (delete record too)
  * @param cachedbnm
  * @param keyexpr
  * @param cmds binary commands, here we are interested either regexp kill or 
@@ -699,7 +701,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
         }
         
         /* Broadcast NULL buffer event (ignore result) */
-        if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, NULL, 0, 
+        if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, (char *)p_ub, 0, 
                 NDRX_CACHE_BCAST_MODE_DKY,  NDRX_TPCACHE_BCAST_DFLT, 0, 0, 0, 0))
         {
             NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to broadcast: %s", 
@@ -736,13 +738,13 @@ out:
 }
 
 /**
- * Broadcast delete by key
+ * Broadcast delete by key. No local deletes.
  * @param cachedbnm cache database name
  * @param key key to delete
  * @param nodeid cluster node id
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_cache_broadcast_by_delkey(char *cachedbnm, char *key, short nodeid)
+expublic int ndrx_cache_inval_by_key_bcastonly(char *cachedbnm, char *key, short nodeid)
 {
     int ret = EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -774,7 +776,7 @@ expublic int ndrx_cache_broadcast_by_delkey(char *cachedbnm, char *key, short no
     }
 
     /* Broadcast NULL buffer event (ignore result) */
-    if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, NULL, 0, 
+    if (EXSUCCEED!=ndrx_cache_broadcast(NULL, cachedbnm, (char *)p_ub, 0, 
             NDRX_CACHE_BCAST_MODE_DKY,  NDRX_TPCACHE_BCAST_DFLT, 0, 0, 0, 0))
     {
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to broadcast: %s", 

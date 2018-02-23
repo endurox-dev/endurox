@@ -234,7 +234,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
              */
             if (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
             {
-                if (EXSUCCEED!=ndrx_cache_broadcast_by_delkey(db->cachedb, 
+                if (EXSUCCEED!=ndrx_cache_inval_by_key_bcastonly(db->cachedb, 
                         keydb.mv_data, (short)nodeid))
                 {
                     EXFAIL_OUT(ret);
@@ -591,7 +591,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
              */
             if (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
             {
-                if (EXSUCCEED!=ndrx_cache_broadcast_by_delkey(db->cachedb, 
+                if (EXSUCCEED!=ndrx_cache_inval_by_key_bcastonly(db->cachedb, 
                         dsort[i]->key.mv_data, (short)nodeid))
                 {
                     EXFAIL_OUT(ret);
