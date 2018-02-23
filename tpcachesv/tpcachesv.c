@@ -77,6 +77,24 @@ void CACHEEV (TPSVCINFO *p_svc)
     char *flags;
     char *svcnm;
     int len;
+    char type[XATMI_SUBTYPE_LEN+1];
+    
+    /* dump the buffer, if it is UBF... */
+    
+    if (NULL!=p_svc->data)
+    {
+        if (EXFAIL==tptypes(p_svc->data, type, NULL))
+        {
+            NDRX_LOG(log_error, "Faileld to get incoming buffer type: %s",
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0==strcmp(type, "UBF"))
+        {
+            ndrx_debug_dump_UBF(log_debug, "Received UBF:", (UBFH *)p_svc->data);
+        }
+    }
     
     /* now understand what request this was 
      * also we need to get timestamps
@@ -205,8 +223,6 @@ void CACHEEV (TPSVCINFO *p_svc)
         UBFH *p_ub = (UBFH *)p_svc->data;
         BFLDLEN len = sizeof(keyexpr);
         
-        NDRX_LOG(log_debug, "Delete by mask event");
-        
         if (EXSUCCEED!=Bget(p_ub, EX_CACHE_OPEXPR, 0, keyexpr, &len))
         {
             NDRX_CACHE_TPERROR(TPENOENT, "Missing expression for mask delete "
@@ -231,19 +247,17 @@ void CACHEEV (TPSVCINFO *p_svc)
         UBFH *p_ub = (UBFH *)p_svc->data;
         BFLDLEN len = sizeof(key);
         
-        NDRX_LOG(log_debug, "Delete by key event");
-        
         if (EXSUCCEED!=Bget(p_ub, EX_CACHE_OPEXPR, 0, key, &len))
         {
             NDRX_CACHE_TPERROR(TPENOENT, "Missing expression for mask delete "
-                    "for [%s] db!", svcnm);
+                    "for [%s] db!: %s", svcnm, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
         
         if (0 > (deleted = ndrx_cache_inval_by_key(svcnm, key, nodeid)))
         {
-            NDRX_LOG(log_error, "Failed to delete db [%s] by key [%s]",
-                    svcnm, key);
+            NDRX_LOG(log_error, "Failed to delete db [%s] by key [%s]: %s",
+                    svcnm, key, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
         
