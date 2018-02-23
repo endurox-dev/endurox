@@ -224,7 +224,7 @@ void CACHEEV (TPSVCINFO *p_svc)
         NDRX_LOG(log_info, "Delete %ld cache records matching key expression [%s]",
                 deleted, keyexpr);
     }
-    else if (0==strncmp(op, NDRX_CACHE_EV_KEYDEL, NDRX_CACHE_EV_LEN))
+    else if (0==strncmp(op, NDRX_CACHE_EV_KEYDELCMD, NDRX_CACHE_EV_LEN))
     {
         int deleted;
         char key[NDRX_CACHE_OPEXPRMAX+1];

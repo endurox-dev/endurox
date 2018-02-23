@@ -159,6 +159,7 @@ extern "C" {
 #define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"     /* Delete data form cache, event */
 #define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"     /* Kill the database             */
 #define NDRX_CACHE_EV_MSKDEL    "@CM%03d/%s/%s"     /* Delete by mask                */
+#define NDRX_CACHE_EV_KEYDEL    "@CE%03d/%s/%s"     /* Delete by key                 */
 #define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /* Cache event service, delete   */
 #define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /* Cache managemtn service       */
     
@@ -168,7 +169,7 @@ extern "C" {
 #define NDRX_CACHE_EV_DELCMD    "@CD"               /* Delete command in event       */
 #define NDRX_CACHE_EV_KILCMD    "@CK"               /* Kill/drop ache event          */
 #define NDRX_CACHE_EV_MSKDELCMD "@CM"               /* Delete data by mask, event    */
-#define NDRX_CACHE_EV_KEYDEL    "@CE"               /* Delete by key event           */
+#define NDRX_CACHE_EV_KEYDELCMD "@CE"               /* Delete by key event           */
 
 /*
  * globals
