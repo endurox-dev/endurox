@@ -59,7 +59,13 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /* Perfrom timsync                  */
 #define NDRX_TPCACHE_FLAGS_SCANDUP   0x00000100   /* Scan for duplicates by tpcached  */
 #define NDRX_TPCACHE_FLAGS_CLRNOSVC  0x00000200   /* Clean unadvertised svc records   */
-
+    
+/* so in case if this is key item, then add record to keygroup
+ * if removing key group, then remove all linked key items.
+ */
+    
+#define NDRX_TPCACHE_FLAGS_KEYGRP    0x00000800   /* Is this key group?               */
+#define NDRX_TPCACHE_FLAGS_KEYITEM   0x00001000   /* Is this key item?                */
     
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001      /* Save record can be regexp     */
 #define NDRX_TPCACHE_TPCF_REPL       0x00000002      /* Replace buf                   */
@@ -147,6 +153,10 @@ extern "C" {
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_SCANDUP));\
     NDRX_LOG(LEV, "flags, 'clrnosvc' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_CLRNOSVC));\
+    NDRX_LOG(LEV, "flags, 'keygrp' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYGRP));\
+    NDRX_LOG(LEV, "flags, 'keyitem' = [%d]", \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYITEM));\
     NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
     NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
     NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
@@ -231,6 +241,7 @@ extern "C" {
 /**
  * Cache database 
  */
+typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
 struct ndrx_tpcache_db
 {
     char cachedb[NDRX_CCTAG_MAX+1];/* cache db logical name (subsect of @cachedb)   */
@@ -243,7 +254,8 @@ struct ndrx_tpcache_db
     int broadcast;              /* Shall we broadcast the events                    */
     int perms;                  /* permissions of the database resource             */
     
-    char subscr[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events    */
+    char subscr[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events        */
+    
     
     /* LMDB Related */
     
@@ -253,7 +265,6 @@ struct ndrx_tpcache_db
     /* Make structure hashable: */
     EX_hash_handle hh;
 };
-typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
 
 /**
  * This structure describes how to project a slice of the buffer
@@ -279,6 +290,7 @@ struct ndrx_tpcallcache
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     char cachedbnm[NDRX_CCTAG_MAX+1]; /* cache db logical name (subsect of @cachedb)  */
     ndrx_tpcache_db_t *cachedb;
+    ndrx_tpcache_db_t *keygrp;          /* key group indicator              */
     char keyfmt[PATH_MAX+1];
     int idx;                            /* index of this cache for service  */
     
@@ -348,6 +360,7 @@ struct ndrx_tpcache_data
 {
     int magic;          /* Magic bytes                      */
     char svcnm[MAXTIDENT+1]; /* Service name of data        */
+    int cache_idx;      /* this is cache index of adder     */
     int saved_tperrno;
     long saved_tpurcode;
     long t;             /* UTC timestamp of message         */
